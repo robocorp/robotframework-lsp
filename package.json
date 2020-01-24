@@ -1,0 +1,66 @@
+{
+    "name": "robotframework-lsp",
+    "description": "VSCode extension support for Robot Framework",
+    "author": "Fabio Zadrozny",
+    "repository": "https://github.com/robocorp/robotframework-lsp",
+    "license": "MIT",
+    "version": "0.0.1",
+    "publisher": "Robocorp Technologies, Inc.",
+    "engines": {
+        "vscode": "^1.19.0"
+    },
+    "categories": [
+        "Linters",
+        "Programming Languages"
+    ],
+    "activationEvents": [
+        "*"
+    ],
+    "contributes": {
+        "configuration": {
+            "title": "Robot Framework Language Server Configuration",
+            "type": "object",
+            "properties": {
+                "robot.language-server.args": {
+                    "type": "array",
+                    "default": [],
+                    "description": "Specifies the arguments to be passed to the robotframework language server (i.e.: [\"-vv\", \"--log-file=~/robotframework_ls.log\"]). Requires a VSCode restart to take effect."
+                },
+                "robot.python.executable": {
+                    "type": "string",
+                    "default": "python",
+                    "description": "Specifies the path to the python executable to be used for the Robot Framework Language Server (default is searching python on the PATH). Requires a VSCode restart to take effect."
+                }
+            }
+        },
+        "languages": [{
+            "id": "robotframework",
+            "aliases": ["Robot Framework", "robotframework"],
+            "extensions": [".robot"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "robotframework",
+            "scopeName": "source.robot",
+            "path": "./syntaxes/robotframework.tmLanguage.json"
+        }]
+
+    },
+    "main": "./vscode-client/out/extension",
+    "scripts": {
+        "vscode:prepublish": "cd vscode-client && npm run compile && cd ..",
+        "compile": "cd vscode-client && tsc -p ./ && cd ..",
+        "watch": "cd vscode-client && tsc -watch -p ./ && cd ..",
+        "postinstall": "node ./node_modules/vscode/bin/install"
+    },
+    "devDependencies": {
+        "typescript": "^3.6.4",
+        "vscode": "^1.1.4",
+        "@types/node": "^6.0.40",
+        "@types/mocha": "^2.2.32"
+    },
+    "dependencies": {
+        "vscode-languageclient": "^3.4.5",
+        "path-exists": "^3.0.0"
+    }
+}
