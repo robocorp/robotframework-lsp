@@ -3,30 +3,27 @@
 	"name": "Robot Framework",
 	"patterns": [
 		{
-			"include": "#keywords"
+			"match": "(^\\*\\*\\*.*?\\*\\*\\*)|((?<=^\\|)\\s+\\*\\*\\*.*?\\*\\*\\*)",
+			"name": "string.robot.header"
 		},
 		{
-			"include": "#strings"
+			"match": "\\[.*?\\]",
+			"name": "storage.type.method.robot"
+		},
+		{
+			"match": "(\\$\\{.*?\\})|(@\\{.*?\\})",
+			"name": "storage.type.method.robot"
+		},
+		{
+			"begin": "((^\\s*)|(\\s\\s)|\\t)(?<!\\\\)#",
+			"end": "$",
+			"name": "comment.robot"
+		},
+		{
+			"begin": "(^[^ \\t\\*\\n\\|]+)|((?<=^\\|)\\s+[^ \\t\\*\\n\\|]+)",
+			"end": "\\s{2}|\\t|$|\\s+(?=\\|)",
+			"name": "keyword.control.robot"
 		}
 	],
-	"repository": {
-		"keywords": {
-			"patterns": [{
-				"name": "keyword.control.robotframework",
-				"match": "\\b(if|while|for|return)\\b"
-			}]
-		},
-		"strings": {
-			"name": "string.quoted.double.robotframework",
-			"begin": "\"",
-			"end": "\"",
-			"patterns": [
-				{
-					"name": "constant.character.escape.robotframework",
-					"match": "\\\\."
-				}
-			]
-		}
-	},
 	"scopeName": "source.robot"
 }
