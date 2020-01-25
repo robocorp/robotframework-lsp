@@ -28,7 +28,7 @@ def add_arguments(parser):
         "--tcp", action="store_true", help="Use TCP server instead of stdio"
     )
     parser.add_argument("--host", default="127.0.0.1", help="Bind to this address")
-    parser.add_argument("--port", type=int, default=2087, help="Bind to this port")
+    parser.add_argument("--port", type=int, default=1456, help="Bind to this port")
     parser.add_argument(
         "--check-parent-process",
         action="store_true",

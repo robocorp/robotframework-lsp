@@ -65,41 +65,47 @@ function findExecutableInPath(executable: string) {
 
 export function activate(context: ExtensionContext) {
 	let config = workspace.getConfiguration("robot");
-	let executable: string = config.get<string>("python.executable");
-	if (!executable) {
-		// Search python from the path.
-		if (process.platform == "win32") {
-			executable = "python.exe";
-		} else {
-			executable = "python";
-		}
-		executable = findExecutableInPath(executable);
-		if (!fs.existsSync(executable)) {
-			window.showWarningMessage('Could not find python executable on PATH. Please specify in option: robot.python.executable');
-			return;
-		}
+	let port: number = config.get<number>("language-server.tcp-port");
+	if (port) {
+		// For TCP server needs to be started seperately
+		context.subscriptions.push(startLangServerTCP(port, ["robot"]));
+
 	} else {
-		if (!fs.existsSync(executable)) {
-			window.showWarningMessage('Option: robot.python.executable points to wrong file: ' + executable);
+		let executable: string = config.get<string>("python.executable");
+
+		if (!executable) {
+			// Search python from the path.
+			if (process.platform == "win32") {
+				executable = "python.exe";
+			} else {
+				executable = "python";
+			}
+			executable = findExecutableInPath(executable);
+			if (!fs.existsSync(executable)) {
+				window.showWarningMessage('Could not find python executable on PATH. Please specify in option: robot.python.executable');
+				return;
+			}
+		} else {
+			if (!fs.existsSync(executable)) {
+				window.showWarningMessage('Option: robot.python.executable points to wrong file: ' + executable);
+				return;
+			}
+		}
+
+		let targetFile: string = path.resolve(__dirname, '../../robotframework_ls/__main__.py');
+		if (!fs.existsSync(targetFile)) {
+			window.showWarningMessage('Error. Expected: ' + targetFile + " to exist.");
 			return;
 		}
-	}
-	
-	let targetFile: string = path.resolve(__dirname, '../../robotframework_ls/__main__.py');
-	if (!fs.existsSync(targetFile)) {
-		window.showWarningMessage('Error. Expected: ' + targetFile + " to exist.");
-		return;
-	}
 
-	let args: Array<string> = ["-u", targetFile];
-	let lsArgs = config.get<Array<string>>("language-server.args");
-	if(lsArgs) {
-		args = args.concat(lsArgs);
+		let args: Array<string> = ["-u", targetFile];
+		let lsArgs = config.get<Array<string>>("language-server.args");
+		if (lsArgs) {
+			args = args.concat(lsArgs);
+		}
+
+		context.subscriptions.push(startLangServer(executable, args, ["robot"]));
 	}
 
-
-	context.subscriptions.push(startLangServer(executable, args, ["robot"]));
-	// For TCP server needs to be started seperately
-	// context.subscriptions.push(startLangServerTCP(2087, ["robot"]));
 }
 

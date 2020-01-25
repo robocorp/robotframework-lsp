@@ -21,6 +21,11 @@
             "title": "Robot Framework Language Server Configuration",
             "type": "object",
             "properties": {
+                "robot.language-server.tcp-port": {
+                    "type": "number",
+                    "default": 0,
+                    "description": "If the port is specified, connect to the language server previously started at the given port. Requires a VSCode restart to take effect."
+                },
                 "robot.language-server.args": {
                     "type": "array",
                     "default": [],
