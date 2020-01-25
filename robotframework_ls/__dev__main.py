@@ -22,4 +22,6 @@ def dev_main():
 
 
 if __name__ == "__main__":
-    dev_main()
+    while True:
+        print("--- Starting new dev session ---")
+        dev_main()

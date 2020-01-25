@@ -65,10 +65,10 @@ def main(args=None, after_bind=lambda server: None):
         import robotframework_ls  # @UnusedImport
 
     from robotframework_ls.python_ls import (
-        PythonLanguageServer,
         start_io_lang_server,
         start_tcp_lang_server,
     )
+    from robotframework_ls.ext.robotframework_ls import RobotFrameworkLanguageServer
 
     parser = argparse.ArgumentParser()
     add_arguments(parser)
@@ -81,14 +81,12 @@ def main(args=None, after_bind=lambda server: None):
             args.host,
             args.port,
             args.check_parent_process,
-            PythonLanguageServer,
+            RobotFrameworkLanguageServer,
             after_bind=after_bind,
         )
     else:
         stdin, stdout = _binary_stdio()
-        start_io_lang_server(
-            stdin, stdout, args.check_parent_process, PythonLanguageServer
-        )
+        start_io_lang_server(stdin, stdout, args.check_parent_process, RobotFrameworkLanguageServer)
 
 
 def _binary_stdio():
@@ -118,6 +116,9 @@ def _binary_stdio():
 
 
 def _configure_logger(verbose=0, log_config=None, log_file=None):
+    if getattr(_configure_logger, "called", False):
+        return  # i.e.: in dev mode we may call multiple times
+    _configure_logger.called = True
 
     root_logger = logging.root
 

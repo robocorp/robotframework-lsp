@@ -68,7 +68,7 @@ export function activate(context: ExtensionContext) {
 	let port: number = config.get<number>("language-server.tcp-port");
 	if (port) {
 		// For TCP server needs to be started seperately
-		context.subscriptions.push(startLangServerTCP(port, ["robot"]));
+		context.subscriptions.push(startLangServerTCP(port, ["robotframework"]));
 
 	} else {
 		let executable: string = config.get<string>("python.executable");
@@ -104,7 +104,7 @@ export function activate(context: ExtensionContext) {
 			args = args.concat(lsArgs);
 		}
 
-		context.subscriptions.push(startLangServer(executable, args, ["robot"]));
+		context.subscriptions.push(startLangServer(executable, args, ["robotframework"]));
 	}
 
 }

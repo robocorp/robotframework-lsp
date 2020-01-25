@@ -1,5 +1,5 @@
 def test_parse_errors(data_regression):
-    from robotframework_ls.robot.errors import collect_errors
+    from robotframework_ls.ext.errors import collect_errors
 
     source = """*** Settings ***
 Documentation     A test suite with a single test for valid login.
@@ -23,5 +23,11 @@ Valid Login
     [Teardown]    Close Browser"""
 
     errors = collect_errors(source)
-    # Note: convert from namedtuple to odict to dict
-    data_regression.check([dict(e._asdict()) for e in errors])
+
+    data_regression.check([e.to_dict() for e in errors], basename="errors")
+
+    data_regression.check(
+        [e.to_lsp_diagnostic() for e in errors], basename="lsp_diagnostic"
+    )
+
+    assert repr(errors)  # Just check that it works.

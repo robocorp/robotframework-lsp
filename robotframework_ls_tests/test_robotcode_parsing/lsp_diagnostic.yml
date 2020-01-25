@@ -1,0 +1,22 @@
+- message: Non-existing setting '"test"'.
+  range:
+    end:
+      character: 6
+      line: 7
+    start:
+      character: 0
+      line: 7
+  severity: 1
+  source: robotframework
+- message: 'Unrecognized section header ''Invalid Invalid Invalid''. Available headers
+    for data: ''Setting(s)'', ''Variable(s)'', ''Test Case(s)'', ''Task(s)'' and ''Keyword(s)''.
+    Use ''Comment(s)'' to embedded additional data.'
+  range:
+    end:
+      character: 31
+      line: 9
+    start:
+      character: 0
+      line: 9
+  severity: 1
+  source: robotframework

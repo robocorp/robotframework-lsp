@@ -1,25 +1,23 @@
 # Copyright 2017 Palantir Technologies, Inc.
 # License: MIT
-import multiprocessing
 import os
-from threading import Thread
-
-from pyls_jsonrpc.exceptions import JsonRpcMethodNotFound
 import pytest
 
-from robotframework_ls.python_ls import start_io_lang_server, PythonLanguageServer
 
 CALL_TIMEOUT = 10
-
-
-def start_client(client):
-    client.start()
 
 
 class _ClientServer(object):
     """ A class to setup a client/server pair """
 
     def __init__(self, check_parent_process=False):
+        from robotframework_ls.python_ls import (
+            start_io_lang_server,
+            PythonLanguageServer,
+        )
+        from threading import Thread
+        import multiprocessing
+
         # Client to Server pipe
         csr, csw = os.pipe()
         # Server to client pipe
@@ -41,7 +39,7 @@ class _ClientServer(object):
         self.client = PythonLanguageServer(
             os.fdopen(scr, "rb"), os.fdopen(csw, "wb"), start_io_lang_server
         )
-        self.client_thread = Thread(target=start_client, args=[self.client])
+        self.client_thread = Thread(target=self.client.start, args=())
         self.client_thread.daemon = True
         self.client_thread.start()
 
@@ -114,5 +112,7 @@ def test_not_exit_without_check_parent_process_flag(
 
 
 def test_missing_message(client_server):  # pylint: disable=redefined-outer-name
+    from pyls_jsonrpc.exceptions import JsonRpcMethodNotFound
+
     with pytest.raises(JsonRpcMethodNotFound):
         client_server._endpoint.request("unknown_method").result(timeout=CALL_TIMEOUT)

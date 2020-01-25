@@ -14,7 +14,7 @@
         "Programming Languages"
     ],
     "activationEvents": [
-        "*"
+        "onLanguage:robotframework"
     ],
     "contributes": {
         "configuration": {

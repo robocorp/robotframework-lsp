@@ -17,7 +17,6 @@ from .workspace import Workspace
 log = logging.getLogger(__name__)
 
 
-LINT_DEBOUNCE_S = 0.5  # 500 ms
 PARENT_PROCESS_WATCH_INTERVAL = 10  # 10 s
 MAX_WORKERS = 64
 PYTHON_FILE_EXTENSIONS = (".py", ".pyi")
@@ -152,13 +151,13 @@ class PythonLanguageServer(MethodDispatcher):
     def capabilities(self):
         server_capabilities = {
             "codeActionProvider": False,
-            "codeLensProvider": {
-                "resolveProvider": False,  # We may need to make this configurable
-            },
-            "completionProvider": {
-                "resolveProvider": False,  # We know everything ahead of time
-                "triggerCharacters": ["."],
-            },
+            # "codeLensProvider": {
+            #     "resolveProvider": False,  # We may need to make this configurable
+            # },
+            # "completionProvider": {
+            #     "resolveProvider": False,  # We know everything ahead of time
+            #     "triggerCharacters": ["."],
+            # },
             "documentFormattingProvider": False,
             "documentHighlightProvider": False,
             "documentRangeFormattingProvider": False,
@@ -169,9 +168,9 @@ class PythonLanguageServer(MethodDispatcher):
             "referencesProvider": False,
             "renameProvider": False,
             "foldingRangeProvider": False,
-            "signatureHelpProvider": {
-                # 'triggerCharacters': ['(', ',', '=']
-            },
+            # "signatureHelpProvider": {
+            #     'triggerCharacters': ['(', ',', '=']
+            # },
             "textDocumentSync": {
                 "change": lsp.TextDocumentSyncKind.INCREMENTAL,
                 "save": {"includeText": True,},
@@ -240,12 +239,8 @@ class PythonLanguageServer(MethodDispatcher):
     def m_initialized(self, **_kwargs):
         pass
 
-    @_utils.debounce(LINT_DEBOUNCE_S, keyed_by="doc_uri")
     def lint(self, doc_uri, is_saved):
-        # Since we're debounced, the document may no longer be open
-        workspace = self._match_uri_to_workspace(doc_uri)
-        if doc_uri in workspace.documents:
-            workspace.publish_diagnostics(doc_uri, [])
+        raise NotImplementedError("Subclasses must override.")
 
     def m_text_document__did_close(self, textDocument=None, **_kwargs):
         workspace = self._match_uri_to_workspace(textDocument["uri"])
@@ -253,6 +248,9 @@ class PythonLanguageServer(MethodDispatcher):
 
     def m_text_document__did_open(self, textDocument=None, **_kwargs):
         workspace = self._match_uri_to_workspace(textDocument["uri"])
+        if workspace is None:
+            log.critical("Unable to find workspace for: %s", (textDocument,))
+            return
         workspace.put_document(
             textDocument["uri"],
             textDocument["text"],
@@ -264,6 +262,10 @@ class PythonLanguageServer(MethodDispatcher):
         self, contentChanges=None, textDocument=None, **_kwargs
     ):
         workspace = self._match_uri_to_workspace(textDocument["uri"])
+        if workspace is None:
+            log.critical("Unable to find workspace for: %s", (textDocument,))
+            return
+
         for change in contentChanges:
             workspace.update_document(
                 textDocument["uri"], change, version=textDocument.get("version")
