@@ -20,14 +20,13 @@ setup(
         'configparser; python_version<"3.0"',
         'backports.functools_lru_cache; python_version<"3.2"',
         "python-jsonrpc-server>=0.3.2",
-        "pluggy",
         'ujson<=1.35; platform_system!="Windows"',
     ],
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
     # for example:
     # $ pip install -e .[test]
-    extras_require={"test": ["pytest"],},
+    extras_require={"test": ["pytest", "pytest-regressions", "pytest-xdist"],},
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # pip to create the appropriate form of executable for the target platform.
