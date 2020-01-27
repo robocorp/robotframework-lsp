@@ -68,7 +68,9 @@ def main(args=None, after_bind=lambda server: None):
         start_io_lang_server,
         start_tcp_lang_server,
     )
-    from robotframework_ls.ext.robotframework_ls import RobotFrameworkLanguageServer
+    from robotframework_ls.ext.robotframework_ls_impl import (
+        RobotFrameworkLanguageServer,
+    )
 
     parser = argparse.ArgumentParser()
     add_arguments(parser)
@@ -78,15 +80,16 @@ def main(args=None, after_bind=lambda server: None):
 
     if args.tcp:
         start_tcp_lang_server(
-            args.host,
-            args.port,
-            args.check_parent_process,
-            RobotFrameworkLanguageServer,
-            after_bind=after_bind,
+            args.host, args.port, RobotFrameworkLanguageServer, after_bind=after_bind,
         )
     else:
         stdin, stdout = _binary_stdio()
-        start_io_lang_server(stdin, stdout, args.check_parent_process, RobotFrameworkLanguageServer)
+        start_io_lang_server(stdin, stdout, RobotFrameworkLanguageServer)
+
+
+class RedirectedStreamErrorOnAccess(object):
+    def __getattr__(self, mname):
+        raise AssertionError("This stream is now redirected and should not be used.")
 
 
 def _binary_stdio():
@@ -98,19 +101,21 @@ def _binary_stdio():
     PY3K = sys.version_info >= (3, 0)
 
     if PY3K:
-        # pylint: disable=no-member
         stdin, stdout = sys.stdin.buffer, sys.stdout.buffer
     else:
         # Python 2 on Windows opens sys.stdin in text mode, and
         # binary data that read from it becomes corrupted on \r\n
         if sys.platform == "win32":
             # set sys.stdin to binary mode
-            # pylint: disable=no-member,import-error
             import msvcrt
 
             msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
             msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
         stdin, stdout = sys.stdin, sys.stdout
+    sys.stdin, sys.stdout = (
+        RedirectedStreamErrorOnAccess(),
+        RedirectedStreamErrorOnAccess(),
+    )
 
     return stdin, stdout
 

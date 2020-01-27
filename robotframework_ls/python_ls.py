@@ -13,11 +13,12 @@ from pyls_jsonrpc.streams import JsonRpcStreamReader, JsonRpcStreamWriter
 from . import lsp, _utils, uris
 from .config import config
 from .workspace import Workspace
+import time
 
 log = logging.getLogger(__name__)
 
 
-PARENT_PROCESS_WATCH_INTERVAL = 10  # 10 s
+PARENT_PROCESS_WATCH_INTERVAL = 3  # 3 s
 MAX_WORKERS = 64
 PYTHON_FILE_EXTENSIONS = (".py", ".pyi")
 CONFIG_FILEs = ("pycodestyle.cfg", "setup.cfg", "tox.ini", ".flake8")
@@ -30,7 +31,6 @@ class _StreamHandlerWrapper(socketserver.StreamRequestHandler, object):
 
     def setup(self):
         super(_StreamHandlerWrapper, self).setup()
-        # pylint: disable=no-member
         self.delegate = self.DELEGATE_CLASS(self.rfile, self.wfile)
 
     def handle(self):
@@ -40,21 +40,18 @@ class _StreamHandlerWrapper(socketserver.StreamRequestHandler, object):
             if os.name == "nt":
                 # Catch and pass on ConnectionResetError when parent process
                 # dies
-                # pylint: disable=no-member, undefined-variable
                 if isinstance(e, WindowsError) and e.winerror == 10054:
                     pass
 
-        # pylint: disable=no-member
         self.SHUTDOWN_CALL()
 
 
 def start_tcp_lang_server(
-    bind_addr, port, check_parent_process, handler_class, after_bind=lambda server: None
+    bind_addr, port, handler_class, after_bind=lambda server: None
 ):
     """
     :param bind_addr:
     :param port:
-    :param check_parent_process:
     :param handler_class:
     :param after_bind:
         Called right after server.bind (so, it's possible to get the port with
@@ -64,7 +61,6 @@ def start_tcp_lang_server(
         raise ValueError("Handler class must be an instance of PythonLanguageServer")
 
     def shutdown_server(*args):
-        # pylint: disable=unused-argument
         log.debug("Shutting down server")
         # Shutdown call must be done on a thread, to prevent deadlocks
         stop_thread = threading.Thread(target=server.shutdown)
@@ -74,12 +70,7 @@ def start_tcp_lang_server(
     wrapper_class = type(
         handler_class.__name__ + "Handler",
         (_StreamHandlerWrapper,),
-        {
-            "DELEGATE_CLASS": partial(
-                handler_class, check_parent_process=check_parent_process
-            ),
-            "SHUTDOWN_CALL": shutdown_server,
-        },
+        {"DELEGATE_CLASS": partial(handler_class,), "SHUTDOWN_CALL": shutdown_server,},
     )
 
     server = socketserver.TCPServer(
@@ -98,11 +89,13 @@ def start_tcp_lang_server(
         server.server_close()
 
 
-def start_io_lang_server(rfile, wfile, check_parent_process, handler_class):
+def start_io_lang_server(rfile, wfile, handler_class):
     if not issubclass(handler_class, PythonLanguageServer):
         raise ValueError("Handler class must be an instance of PythonLanguageServer")
-    log.info("Starting %s IO language server", handler_class.__name__)
-    server = handler_class(rfile, wfile, check_parent_process)
+    log.info(
+        "Starting %s IO language server. pid: %s", handler_class.__name__, os.getpid()
+    )
+    server = handler_class(rfile, wfile)
     server.start()
 
 
@@ -113,9 +106,7 @@ class PythonLanguageServer(MethodDispatcher):
     Based on: https://github.com/palantir/python-language-server/blob/develop/pyls/python_ls.py
     """
 
-    # pylint: disable=too-many-public-methods,redefined-builtin
-
-    def __init__(self, rx, tx, check_parent_process=False):
+    def __init__(self, rx, tx):
         self.workspace = None
         self.config = None
         self.root_uri = None
@@ -125,7 +116,6 @@ class PythonLanguageServer(MethodDispatcher):
 
         self._jsonrpc_stream_reader = JsonRpcStreamReader(rx)
         self._jsonrpc_stream_writer = JsonRpcStreamWriter(tx)
-        self._check_parent_process = check_parent_process
         self._endpoint = Endpoint(
             self, self._jsonrpc_stream_writer.write, max_workers=MAX_WORKERS
         )
@@ -192,7 +182,7 @@ class PythonLanguageServer(MethodDispatcher):
         **_kwargs
     ):
         log.debug(
-            "Language server initialized with %s %s %s %s",
+            "Language server initialized with:\n    processId: %s\n    rootUri: %s\n    rootPath: %s\n    initializationOptions: %s",
             processId,
             rootUri,
             rootPath,
@@ -212,21 +202,20 @@ class PythonLanguageServer(MethodDispatcher):
         self.workspace = Workspace(rootUri, self._endpoint, self.config)
         self.workspaces[rootUri] = self.workspace
 
-        if (
-            self._check_parent_process
-            and processId is not None
-            and self.watching_thread is None
-        ):
+        if processId not in (None, -1, 0) and self.watching_thread is None:
 
             def watch_parent_process(pid):
                 # exit when the given pid is not alive
-                if not _utils.is_process_alive(pid):
-                    log.info("parent process %s is not alive, exiting!", pid)
-                    self.m_exit()
-                else:
-                    threading.Timer(
-                        PARENT_PROCESS_WATCH_INTERVAL, watch_parent_process, args=[pid]
-                    ).start()
+                while True:
+                    if not _utils.is_process_alive(pid):
+                        # Note: just exit since the parent process already
+                        # exited.
+                        log.info(
+                            "Force-quit process: %s", os.getpid(),
+                        )
+                        os._exit(0)
+
+                    time.sleep(PARENT_PROCESS_WATCH_INTERVAL)
 
             self.watching_thread = threading.Thread(
                 target=watch_parent_process, args=(processId,)

@@ -1,3 +1,10 @@
+import logging
+import itertools
+from functools import partial
+
+log = logging.getLogger(__name__)
+
+
 def _read_into_queue(reader, queue):
     def _put_into_queue(msg):
         queue.put(msg)
@@ -20,12 +27,16 @@ class _LanguageServerClient(object):
 
         t = threading.Thread(target=_read_into_queue, args=(reader, self._queue))
         t.start()
+        self.require_exit_messages = True
+        self.next_id = partial(next, itertools.count())
 
     def write(self, contents):
         self.writer.write(contents)
 
     def next_message(self):
-        return self._queue.get(block=True, timeout=5)
+        from robotframework_ls_tests import conftest
+
+        return self._queue.get(block=True, timeout=conftest.TIMEOUT)
 
     def wait_for_message(self, match):
         found = False
@@ -34,21 +45,24 @@ class _LanguageServerClient(object):
             for key, value in match.items():
                 if msg.get(key) == value:
                     continue
+
+                log.info("Message found:\n%s\nwhile waiting for\n%s" % (msg, match))
                 break
             else:
                 found = True
         return msg
 
-    def initialize(self, root_path, msg_id=0):
+    def initialize(self, root_path, msg_id=None, process_id=None):
         from robotframework_ls.uris import from_fs_path
 
+        msg_id = msg_id if msg_id is not None else self.next_id()
         self.write(
             {
                 "jsonrpc": "2.0",
                 "id": msg_id,
                 "method": "initialize",
                 "params": {
-                    "processId": 18724,
+                    "processId": process_id,
                     "rootPath": root_path,
                     "rootUri": from_fs_path(root_path),
                     "capabilities": {
@@ -93,4 +107,16 @@ class _LanguageServerClient(object):
             }
         )
 
-        self.wait_for_message({"id": msg_id})
+        msg = self.wait_for_message({"id": msg_id})
+        assert "capabilities" in msg["result"]
+        return msg
+
+    def shutdown(self):
+        self.write(
+            {"jsonrpc": "2.0", "id": self.next_id(), "method": "shutdown",}
+        )
+
+    def exit(self):
+        self.write(
+            {"jsonrpc": "2.0", "id": self.next_id(), "method": "exit",}
+        )

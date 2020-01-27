@@ -5,22 +5,35 @@
 https://github.com/Microsoft/vscode-uri/blob/e59cab84f5df6265aed18ae5f43552d3eef13bb9/lib/index.ts
 """
 import re
-from urllib import parse
-from robotframework_ls.constants import IS_WIN
+from robotframework_ls.constants import IS_WIN, IS_PY2
+
+if IS_PY2:
+    from urlparse import (
+        urlparse as parse_urlparse,  # noqa
+        urlunparse as parse_urlunparse,  # noqa
+    )
+    from urllib import quote as parse_quote, unquote as parse_unquote  # noqa
+else:
+    from urllib.parse import (
+        urlparse as parse_urlparse,  # noqa
+        urlunparse as parse_urlunparse,  # noqa
+        quote as parse_quote,  # noqa
+        unquote as parse_unquote,  # noqa
+    )
 
 RE_DRIVE_LETTER_PATH = re.compile(r"^\/[a-zA-Z]:")
 
 
 def urlparse(uri):
     """Parse and decode the parts of a URI."""
-    scheme, netloc, path, params, query, fragment = parse.urlparse(uri)
+    scheme, netloc, path, params, query, fragment = parse_urlparse(uri)
     return (
-        parse.unquote(scheme),
-        parse.unquote(netloc),
-        parse.unquote(path),
-        parse.unquote(params),
-        parse.unquote(query),
-        parse.unquote(fragment),
+        parse_unquote(scheme),
+        parse_unquote(netloc),
+        parse_unquote(path),
+        parse_unquote(params),
+        parse_unquote(query),
+        parse_unquote(fragment),
     )
 
 
@@ -30,18 +43,18 @@ def urlunparse(parts):
 
     # Avoid encoding the windows drive letter colon
     if RE_DRIVE_LETTER_PATH.match(path):
-        quoted_path = path[:3] + parse.quote(path[3:])
+        quoted_path = path[:3] + parse_quote(path[3:])
     else:
-        quoted_path = parse.quote(path)
+        quoted_path = parse_quote(path)
 
-    return parse.urlunparse(
+    return parse_urlunparse(
         (
-            parse.quote(scheme),
-            parse.quote(netloc),
+            parse_quote(scheme),
+            parse_quote(netloc),
             quoted_path,
-            parse.quote(params),
-            parse.quote(query),
-            parse.quote(fragment),
+            parse_quote(params),
+            parse_quote(query),
+            parse_quote(fragment),
         )
     )
 

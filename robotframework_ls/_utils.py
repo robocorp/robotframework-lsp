@@ -139,7 +139,24 @@ if sys.platform == "win32":
     import ctypes
 
     kernel32 = ctypes.windll.kernel32
-    PROCESS_QUERY_INFROMATION = 0x1000
+    PROCESS_SYNCHRONIZE = 0x00100000
+    DWORD = ctypes.c_uint32
+    BOOL = ctypes.c_int
+    LPVOID = ctypes.c_void_p
+    HANDLE = LPVOID
+
+    OpenProcess = kernel32.OpenProcess
+    OpenProcess.argtypes = [DWORD, BOOL, DWORD]
+    OpenProcess.restype = HANDLE
+
+    WaitForSingleObject = kernel32.WaitForSingleObject
+    WaitForSingleObject.argtypes = [HANDLE, DWORD]
+    WaitForSingleObject.restype = DWORD
+
+    WAIT_TIMEOUT = 0x00000102
+    WAIT_ABANDONED = 0x00000080
+    WAIT_OBJECT_0 = 0
+    WAIT_FAILED = 0xFFFFFFFF
 
     def is_process_alive(pid):
         """Check whether the process with the given pid is still alive.
@@ -155,17 +172,21 @@ if sys.platform == "win32":
         Returns:
             bool: False if the process is not alive or don't have permission to check, True otherwise.
         """
-        process = kernel32.OpenProcess(PROCESS_QUERY_INFROMATION, 0, pid)
+        process = OpenProcess(PROCESS_SYNCHRONIZE, 0, pid)
         if process != 0:
-            kernel32.CloseHandle(process)
-            return True
+            try:
+                wait_result = WaitForSingleObject(process, 0)
+                if wait_result == WAIT_TIMEOUT:
+                    return True
+            finally:
+                kernel32.CloseHandle(process)
         return False
 
 
 else:
     import errno
 
-    def is_process_alive(pid):
+    def _is_process_alive(pid):
         """Check whether the process with the given pid is still alive.
 
         Args:
@@ -179,6 +200,82 @@ else:
         try:
             os.kill(pid, 0)
         except OSError as e:
-            return e.errno == errno.EPERM
+            if e.errno == errno.ESRCH:
+                return False  # No such process.
+            elif e.errno == errno.EPERM:
+                return True  # permission denied.
+            else:
+                log.debug("Unexpected errno: %s", e.errno)
+                return False
         else:
             return True
+
+    def is_process_alive(pid):
+        import subprocess
+
+        if _is_process_alive(pid):
+            # Check if zombie...
+            try:
+                cmd = ["ps", "-p", str(pid), "-o", "stat"]
+                try:
+                    process = subprocess.Popen(
+                        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                    )
+                except:
+                    log.exception("Error calling: %s." % (cmd,))
+                else:
+                    stdout, _ = process.communicate()
+                    stdout = stdout.decode("utf-8", "replace")
+                    lines = [line.strip() for line in stdout.splitlines()]
+                    if len(lines) > 1:
+                        if lines[1].startswith("Z"):
+                            return False  # It's a zombie
+            except:
+                log.exception("Error checking if process is alive.")
+
+            return True
+        return False
+
+
+def _kill_process_and_subprocess_linux(pid):
+    import subprocess
+
+    # Ask to stop forking
+    subprocess.call(
+        ["kill", "-stop", str(pid)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+    )
+
+    process = subprocess.Popen(
+        ["pgrep", "-P", str(pid)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+    )
+    for pid in process.communicate()[0].splitlines():
+        _kill_process_and_subprocess_linux(pid.strip())
+
+    subprocess.call(
+        ["kill", "-KILL", str(pid)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+    )
+
+
+def kill_process_and_subprocesses(pid):
+    from subprocess import CalledProcessError
+
+    if sys.platform == "win32":
+        import subprocess
+
+        args = ["taskkill", "/F", "/PID", str(pid), "/T"]
+        retcode = subprocess.call(
+            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE,
+        )
+        if retcode not in (0, 128, 255):
+            raise CalledProcessError(retcode, args)
+    else:
+        _kill_process_and_subprocess_linux(pid)
