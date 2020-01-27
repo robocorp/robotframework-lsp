@@ -55,7 +55,7 @@ def test_missing_message(language_server, ws_root_path):
         }
     )
 
-    # Just ignore this one (it's not a request because it has no id).
+    # Make sure that we have a response if it's a request (i.e.: it has an id).
     language_server.write(
         {
             "jsonrpc": "2.0",
@@ -73,7 +73,7 @@ def test_exit_with_parent_process_died(
     language_server_process, language_server_io, ws_root_path
 ):
     """
-    :note: only check with the language_server_io (because that's in another process).
+    :note: Only check with the language_server_io (because that's in another process).
     """
     import subprocess
     import sys
