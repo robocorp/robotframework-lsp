@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 import os
 
-README = open(os.path.dirname(__file__), "README.md", "r").read()
+README = open(os.path.join(os.path.dirname(__file__), "README.md"), "r").read()
 
 setup(
     name="robotframework-ls",
@@ -26,7 +26,14 @@ setup(
     # dependencies). You can install these using the following syntax,
     # for example:
     # $ pip install -e .[test]
-    extras_require={"test": ["pytest", "pytest-regressions", "pytest-xdist"],},
+    extras_require={
+        "test": [
+            "pytest",
+            "pytest-regressions==1.0.6",
+            "pytest-xdist",
+            "pytest-timeout",
+        ],
+    },
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # pip to create the appropriate form of executable for the target platform.

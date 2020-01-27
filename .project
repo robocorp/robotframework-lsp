@@ -3,7 +3,6 @@
 	<name>robotframework-lsp</name>
 	<comment></comment>
 	<projects>
-		<project>pytest</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

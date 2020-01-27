@@ -1,6 +1,8 @@
 [Language Server Protocol](https://github.com/Microsoft/language-server-protocol) for [Robot Framework](https://robotframework.org/)
 =======
 
+![main](https://github.com/robocorp/robotframework-lsp/workflows/main/badge.svg)
+
 Requirements
 -------------
 
