@@ -128,9 +128,10 @@ def language_server_process(tmpdir):
     if language_server_process.returncode is None:
         kill_process_and_subprocesses(language_server_process.pid)
 
-    print("--- %s contents:" % (log_file,))
-    with open(log_file, "r") as stream:
-        print(stream.read())
+    if os.path.exists(log_file):
+        print("--- %s contents:" % (log_file,))
+        with open(log_file, "r") as stream:
+            print(stream.read())
 
 
 @pytest.fixture

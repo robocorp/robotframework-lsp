@@ -1,6 +1,10 @@
 # Copyright 2017 Palantir Technologies, Inc.
 # License: MIT
-import configparser
+try:
+    import configparser
+except ImportError:
+    from py2_backports import configparser
+    
 import logging
 import os
 import sys

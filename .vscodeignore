@@ -1,0 +1,12 @@
+.vscode/**
+robotframework_ls_tests
+.github
+.pytest_cache
+.settings
+.pydevproject
+.project
+robotframework_ls.egg-info
+vscode-client/src
+.gitignore
+pytest.ini
+*.vsix

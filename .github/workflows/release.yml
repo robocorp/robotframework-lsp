@@ -1,0 +1,40 @@
+on:
+  push:
+    tags:
+      - "*"
+name: Deploy Extension
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: true
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Setup node
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12.x
+    - name: Yarn install
+      uses: borales/actions-yarn@v2.0.0
+      with:
+        cmd: install # will run `yarn install` command
+    - name: Set up Python 2.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: 2.7
+    - run: npm install -g vsce
+    - run: vsce package -o robotframework-lsp.vsix
+    - uses: actions/upload-artifact@v1
+      with:
+        name: robotframework-lsp.vsix
+        path: robotframework-lsp.vsix
+        
+#       - uses: actions/checkout@v2
+#       - run: npm install
+#       - uses: lannonbr/vsce-action@master
+#         with:
+#           args: "publish -p $VSCE_TOKEN"
+#         env:
+#           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}

@@ -1,7 +1,11 @@
 from setuptools import find_packages, setup
 import os
 
-README = open(os.path.join(os.path.dirname(__file__), "README.md"), "r").read()
+_dirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_readme_filename = os.path.join(_dirname, "README.md")
+if not os.path.exists(_readme_filename):
+    raise AssertionError('Expected: %s to exist.' % (_readme_filename,))
+README = open(_readme_filename, "r").read()
 
 setup(
     name="robotframework-ls",
@@ -12,22 +16,21 @@ setup(
     author="Fabio Zadrozny",
     copyright="Robocorp Technologies, Inc.",
     packages=find_packages(exclude=["robotframework_ls_tests",]),
-    # List run-time dependencies here.  These will be installed by pip when
+    
+    # List run-time dependencies here. These will be installed by pip when
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'configparser; python_version<"3.0"',
-        'backports.functools_lru_cache; python_version<"3.2"',
-        "python-jsonrpc-server>=0.3.2",
-        'ujson<=1.35; platform_system!="Windows"',
     ],
+    
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
     # for example:
     # $ pip install -e .[test]
     extras_require={
         "test": [
+            "mock",
             "pytest",
             "pytest-regressions==1.0.6",
             "pytest-xdist",

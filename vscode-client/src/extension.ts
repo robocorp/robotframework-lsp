@@ -92,7 +92,7 @@ export function activate(context: ExtensionContext) {
 			}
 		}
 
-		let targetFile: string = path.resolve(__dirname, '../../robotframework_ls/__main__.py');
+		let targetFile: string = path.resolve(__dirname, '../../src/robotframework_ls/__main__.py');
 		if (!fs.existsSync(targetFile)) {
 			window.showWarningMessage('Error. Expected: ' + targetFile + " to exist.");
 			return;

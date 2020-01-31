@@ -64,8 +64,14 @@ jobs:
     - name: Install robotframework from master
       run: python -W ignore -m pip install https://github.com/robotframework/robotframework/archive/master.zip --no-warn-script-location --disable-pip-version-check
     - name: setup.py install
-      run: python setup.py install
+      run: |
+        cd src
+        python setup.py install
+        cd ..
     - name: Install test deps
-      run: pip install -e .[test]
+      run: |
+        cd tests
+        pip install -r test_requirements.txt
+        cd ..
     - name: Test
-      run: python -m pytest robotframework_ls_tests
+      run: python -m pytest tests/robotframework_ls_tests

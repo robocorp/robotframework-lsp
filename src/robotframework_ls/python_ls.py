@@ -3,7 +3,10 @@
 from functools import partial
 import logging
 import os
-import socketserver
+try:
+    import socketserver
+except ImportError:
+    import SocketServer as socketserver
 import threading
 
 from pyls_jsonrpc.dispatchers import MethodDispatcher
