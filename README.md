@@ -7,6 +7,16 @@ Requirements
 Python 2.7 or Python 3.5+ and pip.
 
 
+Installing
+-----------
+
+Right now `robotframework-lsp` can be installed as a `.vsix` into VSCode.
+
+It can be downloaded from the latest `Deploy Extension` in [Robotframework-lsp Github Actions](https://github.com/robocorp/robotframework-lsp/actions).
+
+See: [Install from a vsix](https://code.visualstudio.com/docs/editor/extension-gallery#_install-from-a-vsix) for details installing a `.vsix` into VSCode.
+
+
 Developing
 -----------
 
