@@ -5,13 +5,12 @@ channels:
 
 dependencies:
   - docutils
-  - ipykernel
+  - ipywidgets
   - jupyterlab >=1.2.6,<1.3.0a0
   - lunr
   - nodejs
   - pillow
   - pip
-  - python
   - python >=3.8,<3.9.0a0
   - pip:
     - robotframework==3.2b1

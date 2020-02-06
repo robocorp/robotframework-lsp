@@ -2,11 +2,12 @@
 set -eux
 
 pushd src
-python -m pip install -e .
+  python -m pip install -e . --ignore-installed --no-deps
 popd
 
 jupyter labextension install --no-build \
-  jupyterlab_robotmode@1.1.1 \
-  @krassowski/jupyterlab-lsp@0.7.1
+  @jupyter-widgets/jupyterlab-manager@1.1.0 \
+  @krassowski/jupyterlab-lsp@0.7.1 \
+  jupyterlab_robotmode@1.1.1
 
 jupyter lab build --dev-build=False --minimize=True
