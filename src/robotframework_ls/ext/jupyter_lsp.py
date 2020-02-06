@@ -1,6 +1,6 @@
 """ optional jupyter[lab]_lsp integration
 """
-def spec(app):
+def spec_v1(app):
     """ A spec loader for jupyter_lsp
     """
     return {

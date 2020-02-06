@@ -42,6 +42,6 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         "console_scripts": ["robotframework_ls = robotframework_ls.__main__:main",],
-        "jupyter_lsp_spec_v1": ["robotframework_ls = robotframework_ls.ext.jupyter_lsp:spec"]
+        "jupyter_lsp_spec_v1": ["robotframework_ls = robotframework_ls.ext.jupyter_lsp:spec_v1"]
     },
 )

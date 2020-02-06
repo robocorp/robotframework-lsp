@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
 set -eux
 
+# this runs _after_ `environment.yml` has been solved, which ensure python, node,
+# and jupyter tooling
+
+# installs the local development assets
 pushd src
   python -m pip install -e . --ignore-installed --no-deps
 popd
 
+# install custom extensions with features for lsp and robotkernel
 jupyter labextension install --no-build \
   @jupyter-widgets/jupyterlab-manager@1.1.0 \
   @krassowski/jupyterlab-lsp@0.7.1 \
   jupyterlab_robotmode@1.1.1
 
+# build jupyterlab, optimized for hosting (5mb vs 35mb)
 jupyter lab build --dev-build=False --minimize=True
