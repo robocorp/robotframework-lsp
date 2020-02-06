@@ -7,7 +7,7 @@ def spec_v1(app):
         "robotframework_ls": dict(
             version=1,
             argv=["robotframework_ls"],
-            languages=["robotframework"],
+            languages=["robotframework", "plain"],
             mime_types=["text/x-robotframework"],
             urls=dict(
                 home="https://github.com/robocorp/robotframework-lsp",
