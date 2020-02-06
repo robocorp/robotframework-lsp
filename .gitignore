@@ -78,6 +78,7 @@ target/
 
 # IPython Notebook
 .ipynb_checkpoints
+.virtual_documents
 
 # pyenv
 .python-version
