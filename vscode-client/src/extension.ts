@@ -8,12 +8,12 @@ import * as net from 'net';
 import * as path from 'path';
 import * as fs from 'fs';
 
-import { workspace, Disposable, ExtensionContext, window, commands } from 'vscode';
+import { workspace, Disposable, ExtensionContext, window, commands, Uri, ConfigurationTarget } from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, ErrorAction, ErrorHandler, CloseAction, TransportKind } from 'vscode-languageclient';
 import { print } from 'util';
 import { exec } from 'child_process';
 
-function startLangServer(command: string, args: string[], documentSelector: string[]): LanguageClient {
+function startLangServerIO(command: string, args: string[], documentSelector: string[]): LanguageClient {
 	const serverOptions: ServerOptions = {
 		command,
 		args,
@@ -64,13 +64,66 @@ function findExecutableInPath(executable: string) {
 	return undefined;
 }
 
-export function activate(context: ExtensionContext) {
+function askPythonExe(context: ExtensionContext, askMessage: string) {
+	let saveInUser: string = 'Yes (save in user settings)';
+	let saveInWorkspace: string = 'Yes (save in workspace settings)';
+
+	window.showWarningMessage(askMessage, ...[saveInUser, saveInWorkspace, 'No']).then((selection) => {
+		// robot.language-server.python
+		if (selection == saveInUser || selection == saveInWorkspace) {
+			window.showOpenDialog({
+				'canSelectMany': false,
+				'openLabel': 'Select python exe'
+			}).then(onfulfilled => {
+				if (onfulfilled && onfulfilled.length > 0) {
+					let configurationTarget: ConfigurationTarget = ConfigurationTarget.Workspace;
+					if (selection == saveInUser) {
+						configurationTarget = ConfigurationTarget.Global;
+					}
+					let config = workspace.getConfiguration("robot");
+					ignoreNextConfigurationChange = true;
+					config.update("language-server.python", onfulfilled[0].fsPath, configurationTarget);
+					startLangServerIOWithPython(context, onfulfilled[0].fsPath);
+				}
+			});
+		}
+	});
+}
+
+function startLangServerIOWithPython(context: ExtensionContext, pythonExecutable: string) {
+	let targetFile: string = path.resolve(__dirname, '../../src/robotframework_ls/__main__.py');
+	if (!fs.existsSync(targetFile)) {
+		window.showWarningMessage('Error. Expected: ' + targetFile + " to exist.");
+		return;
+	}
+
+	let args: Array<string> = ["-u", targetFile];
 	let config = workspace.getConfiguration("robot");
+	let lsArgs = config.get<Array<string>>("language-server.args");
+	if (lsArgs) {
+		args = args.concat(lsArgs);
+	}
+
+	let langServer: LanguageClient = startLangServerIO(pythonExecutable, args, ["robotframework"]);
+	let disposable: Disposable = langServer.start();
+	context.subscriptions.push(disposable);
+
+}
+
+
+// i.e.: we can ignore changes when we know we'll be doing them prior to starting the language server.
+let ignoreNextConfigurationChange: boolean = false;
+
+function startListeningConfigurationChanges() {
 
 	workspace.onDidChangeConfiguration(event => {
+		if (ignoreNextConfigurationChange) {
+			ignoreNextConfigurationChange = false;
+			return;
+		}
 		for (let s of ["robot.language-server.python", "robot.language-server.tcp-port", "robot.language-server.args"]) {
 			if (event.affectsConfiguration(s)) {
-				window.showWarningMessage('Please use "Reload Window" action for changes in ' + s + ' to take effect.', ...["Reload Window"]).then((selection) => {
+				window.showWarningMessage('Please use the "Reload Window" action for changes in ' + s + ' to take effect.', ...["Reload Window"]).then((selection) => {
 					if (selection === "Reload Window") {
 						commands.executeCommand("workbench.action.reloadWindow");
 					}
@@ -79,50 +132,46 @@ export function activate(context: ExtensionContext) {
 			}
 		}
 	});
+}
 
-	let port: number = config.get<number>("language-server.tcp-port");
-	if (port) {
-		// For TCP server needs to be started seperately
-		context.subscriptions.push(startLangServerTCP(port, ["robotframework"]).start());
+export function activate(context: ExtensionContext) {
+	let config = workspace.getConfiguration("robot");
 
-	} else {
-		let languageServerPython: string = config.get<string>("language-server.python");
-		let executable: string = languageServerPython;
 
-		if (!executable || (executable.indexOf('/') == -1 && executable.indexOf('\\') == -1)) {
-			// Search python from the path.
-			if (!executable || executable == "python") {
-				if (process.platform == "win32") {
-					executable = "python.exe";
+	try {
+		let port: number = config.get<number>("language-server.tcp-port");
+		if (port) {
+			// For TCP server needs to be started seperately
+			context.subscriptions.push(startLangServerTCP(port, ["robotframework"]).start());
+
+		} else {
+			let languageServerPython: string = config.get<string>("language-server.python");
+			let executable: string = languageServerPython;
+			let isSelectionValid: boolean = true;
+
+			if (!executable || (executable.indexOf('/') == -1 && executable.indexOf('\\') == -1)) {
+				// Search python from the path.
+				if (!executable || executable == "python") {
+					if (process.platform == "win32") {
+						executable = "python.exe";
+					}
+				}
+				executable = findExecutableInPath(executable);
+				if (!fs.existsSync(executable)) {
+					askPythonExe(context, 'Unable to start robotframework-lsp because: python could not be found on the PATH. Do you want to select a python executable to start robotframework-lsp?');
+					return;
+				}
+			} else {
+				if (!fs.existsSync(executable)) {
+					askPythonExe(context, 'Unable to start robotframework-lsp because: ' + executable + ' does not exist. Do you want to select a new python executable to start robotframework-lsp?');
+					return;
 				}
 			}
-			executable = findExecutableInPath(executable);
-			if (!fs.existsSync(executable)) {
-				window.showWarningMessage('Could not find python executable on PATH. Please specify in option: robot.language-server.python');
-				return;
-			}
-		} else {
-			if (!fs.existsSync(executable)) {
-				window.showWarningMessage('Option: robot.language-server.python points to wrong file: ' + executable);
-				return;
-			}
-		}
 
-		let targetFile: string = path.resolve(__dirname, '../../src/robotframework_ls/__main__.py');
-		if (!fs.existsSync(targetFile)) {
-			window.showWarningMessage('Error. Expected: ' + targetFile + " to exist.");
-			return;
+			startLangServerIOWithPython(context, executable);
 		}
-
-		let args: Array<string> = ["-u", targetFile];
-		let lsArgs = config.get<Array<string>>("language-server.args");
-		if (lsArgs) {
-			args = args.concat(lsArgs);
-		}
-
-		let langServer: LanguageClient = startLangServer(executable, args, ["robotframework"]);
-		let disposable: Disposable = langServer.start();
-		context.subscriptions.push(disposable);
+	} finally {
+		startListeningConfigurationChanges();
 	}
 
 }
