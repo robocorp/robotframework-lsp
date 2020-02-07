@@ -1,0 +1,18 @@
+name: robotframework-lsp
+
+channels:
+  - conda-forge
+
+dependencies:
+  - docutils >=0.16,<1.0
+  - ipywidgets >=7.5.1,<8
+  - jupyterlab >=1.2.6,<1.3.0a0
+  - lunr >=0.5.6,<0.6.0
+  - nodejs >=11,<13
+  - pillow >=7,<8
+  - pip >=20,<21
+  - python >=3.8,<3.9.0a0
+  - pip:
+    - robotframework==3.2b1
+    - jupyter_lsp==0.7.0b0
+    # - robotkernel >=1.3.1
