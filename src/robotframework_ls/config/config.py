@@ -22,7 +22,6 @@ class Config(object):
         self._capabilities = capabilities
 
         self._settings = {}
-        self._plugin_settings = {}
 
         self._config_sources = {}
 
@@ -47,9 +46,8 @@ class Config(object):
         """Settings are constructed from a few sources:
 
             1. User settings, found in user's home directory
-            2. Plugin settings, reported by PyLS plugins
-            3. LSP settings, given to us from didChangeConfiguration
-            4. Project settings, found in config files in the current project.
+            2. LSP settings, given to us from didChangeConfiguration
+            3. Project settings, found in config files in the current project.
 
         Since this function is nondeterministic, it is important to call
         settings.cache_clear() when the config is updated
@@ -68,9 +66,6 @@ class Config(object):
             settings = _utils.merge_dicts(settings, source_conf)
         log.debug("With user configuration: %s", settings)
 
-        settings = _utils.merge_dicts(settings, self._plugin_settings)
-        log.debug("With plugin configuration: %s", settings)
-
         settings = _utils.merge_dicts(settings, self._settings)
         log.debug("With lsp configuration: %s", settings)
 
@@ -87,19 +82,51 @@ class Config(object):
 
         return settings
 
+    SENTINEL = []
+
+    def get_setting(self, key, expected_type, default=SENTINEL):
+        """
+        :param key:
+            The setting to be gotten (i.e.: my.setting.to.get)
+            
+        :param expected_type:
+            The type which we're expecting.
+            
+        :param default:
+            If given, return this value instead of throwing a KeyError.
+            
+        :raises:
+            KeyError if the setting could not be found and default was not provided.
+        """
+        try:
+            s = self.settings()
+            for part in key.split("."):
+                s = s[part]
+
+            if not isinstance(s, expected_type):
+                try:
+                    # Check if we can cast it...
+                    s = expected_type(s)
+                except:
+                    raise KeyError(
+                        "Expected %s to be a setting of type: %s. Found: %s"
+                        % (key, expected_type, type(s))
+                    )
+        except KeyError:
+            if default is not self.SENTINEL:
+                return default
+            raise
+        return s
+
+    def cache_clear(self):
+        self.settings.cache_clear()
+
     def find_parents(self, path, names):
         root_path = uris.to_fs_path(self._root_uri)
         return _utils.find_parents(root_path, path, names)
 
-    def plugin_settings(self, plugin, document_path=None):
-        return (
-            self.settings(document_path=document_path)
-            .get("plugins", {})
-            .get(plugin, {})
-        )
-
     def update(self, settings):
         """Recursively merge the given settings into the current settings."""
-        self.settings.cache_clear()
+        self.cache_clear()
         self._settings = settings
         log.info("Updated settings to %s", self._settings)

@@ -7,6 +7,9 @@ import os
 import sys
 import threading
 from robotframework_ls.constants import IS_PY2
+from contextlib import contextmanager
+
+PARENT_PROCESS_WATCH_INTERVAL = 3  # 3 s
 
 if IS_PY2:
     import pathlib2 as pathlib
@@ -279,3 +282,98 @@ def kill_process_and_subprocesses(pid):
             raise CalledProcessError(retcode, args)
     else:
         _kill_process_and_subprocess_linux(pid)
+
+
+_track_pids_to_exit = set()
+_watching_thread_global = None
+
+
+def exit_when_pid_exists(pid):
+    _track_pids_to_exit.add(pid)
+    global _watching_thread_global
+    if _watching_thread_global is None:
+        import time
+
+        def watch_parent_process():
+            # exit when any of the ids we're tracking exit.
+            while True:
+                for pid in _track_pids_to_exit:
+                    if not is_process_alive(pid):
+                        # Note: just exit since the parent process already
+                        # exited.
+                        log.info(
+                            "Force-quit process: %s", os.getpid(),
+                        )
+                        os._exit(0)
+
+                time.sleep(PARENT_PROCESS_WATCH_INTERVAL)
+
+        _watching_thread_global = threading.Thread(target=watch_parent_process, args=())
+        _watching_thread_global.daemon = True
+        _watching_thread_global.start()
+
+
+def overrides(method):
+    """
+    Meant to be used as
+    
+    class B:
+        @overrides(A.m1)
+        def m1(self):
+            pass
+    """
+
+    @functools.wraps(method)
+    def wrapper(func):
+        if func.__name__ != method.__name__:
+            msg = "Wrong @override: %r expected, but overwriting %r."
+            msg = msg % (func.__name__, method.__name__)
+            raise AssertionError(msg)
+
+        return func
+
+    return wrapper
+
+
+def implements(method):
+    @functools.wraps(method)
+    def wrapper(func):
+        if func.__name__ != method.__name__:
+            msg = "Wrong @implements: %r expected, but implementing %r."
+            msg = msg % (func.__name__, method.__name__)
+            raise AssertionError(msg)
+
+        return func
+
+    return wrapper
+
+
+def log_and_silence_errors(logger):
+    def inner(func):
+        @functools.wraps(func)
+        def new_func(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except:
+                logger.exception("Error calling: %s", func)
+
+        return new_func
+
+    return inner
+
+
+@contextmanager
+def after(obj, method_name, callback):
+    original_method = getattr(obj, method_name)
+
+    @functools.wraps(original_method)
+    def new_method(*args, **kwargs):
+        ret = original_method(*args, **kwargs)
+        callback(*args, **kwargs)
+        return ret
+
+    setattr(obj, method_name, new_method)
+    try:
+        yield
+    finally:
+        setattr(obj, method_name, original_method)

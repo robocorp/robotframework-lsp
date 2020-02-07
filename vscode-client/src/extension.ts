@@ -8,11 +8,12 @@ import * as net from 'net';
 import * as path from 'path';
 import * as fs from 'fs';
 
-import { workspace, Disposable, ExtensionContext, window } from 'vscode';
+import { workspace, Disposable, ExtensionContext, window, commands } from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, ErrorAction, ErrorHandler, CloseAction, TransportKind } from 'vscode-languageclient';
 import { print } from 'util';
+import { exec } from 'child_process';
 
-function startLangServer(command: string, args: string[], documentSelector: string[]): Disposable {
+function startLangServer(command: string, args: string[], documentSelector: string[]): LanguageClient {
 	const serverOptions: ServerOptions = {
 		command,
 		args,
@@ -24,10 +25,10 @@ function startLangServer(command: string, args: string[], documentSelector: stri
 		}
 	}
 	// See: https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
-	return new LanguageClient(command, serverOptions, clientOptions).start();
+	return new LanguageClient(command, serverOptions, clientOptions);
 }
 
-function startLangServerTCP(addr: number, documentSelector: string[]): Disposable {
+function startLangServerTCP(addr: number, documentSelector: string[]): LanguageClient {
 	const serverOptions: ServerOptions = function () {
 		return new Promise((resolve, reject) => {
 			var client = new net.Socket();
@@ -46,7 +47,7 @@ function startLangServerTCP(addr: number, documentSelector: string[]): Disposabl
 			configurationSection: "robot"
 		}
 	}
-	return new LanguageClient(`tcp lang server (port ${addr})`, serverOptions, clientOptions).start();
+	return new LanguageClient(`tcp lang server (port ${addr})`, serverOptions, clientOptions);
 }
 
 function findExecutableInPath(executable: string) {
@@ -65,29 +66,44 @@ function findExecutableInPath(executable: string) {
 
 export function activate(context: ExtensionContext) {
 	let config = workspace.getConfiguration("robot");
+
+	workspace.onDidChangeConfiguration(event => {
+		for (let s of ["robot.language-server.python", "robot.language-server.tcp-port", "robot.language-server.args"]) {
+			if (event.affectsConfiguration(s)) {
+				window.showWarningMessage('Please use "Reload Window" action for changes in ' + s + ' to take effect.', ...["Reload Window"]).then((selection) => {
+					if (selection === "Reload Window") {
+						commands.executeCommand("workbench.action.reloadWindow");
+					}
+				});
+				return;
+			}
+		}
+	});
+
 	let port: number = config.get<number>("language-server.tcp-port");
 	if (port) {
 		// For TCP server needs to be started seperately
-		context.subscriptions.push(startLangServerTCP(port, ["robotframework"]));
+		context.subscriptions.push(startLangServerTCP(port, ["robotframework"]).start());
 
 	} else {
-		let executable: string = config.get<string>("python.executable");
+		let languageServerPython: string = config.get<string>("language-server.python");
+		let executable: string = languageServerPython;
 
-		if (!executable) {
+		if (!executable || (executable.indexOf('/') == -1 && executable.indexOf('\\') == -1)) {
 			// Search python from the path.
-			if (process.platform == "win32") {
-				executable = "python.exe";
-			} else {
-				executable = "python";
+			if (!executable || executable == "python") {
+				if (process.platform == "win32") {
+					executable = "python.exe";
+				}
 			}
 			executable = findExecutableInPath(executable);
 			if (!fs.existsSync(executable)) {
-				window.showWarningMessage('Could not find python executable on PATH. Please specify in option: robot.python.executable');
+				window.showWarningMessage('Could not find python executable on PATH. Please specify in option: robot.language-server.python');
 				return;
 			}
 		} else {
 			if (!fs.existsSync(executable)) {
-				window.showWarningMessage('Option: robot.python.executable points to wrong file: ' + executable);
+				window.showWarningMessage('Option: robot.language-server.python points to wrong file: ' + executable);
 				return;
 			}
 		}
@@ -104,7 +120,9 @@ export function activate(context: ExtensionContext) {
 			args = args.concat(lsArgs);
 		}
 
-		context.subscriptions.push(startLangServer(executable, args, ["robotframework"]));
+		let langServer: LanguageClient = startLangServer(executable, args, ["robotframework"]);
+		let disposable: Disposable = langServer.start();
+		context.subscriptions.push(disposable);
 	}
 
 }

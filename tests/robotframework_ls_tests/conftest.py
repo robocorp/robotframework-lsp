@@ -4,6 +4,8 @@ from contextlib import contextmanager
 import os
 import logging
 
+pytest_plugins = ["robotframework_ls_tests.monitor_fixtures"]
+
 try:
     TimeoutError = TimeoutError  # @ReservedAssignment
 except NameError:
@@ -51,15 +53,20 @@ def ws_root_path(tmpdir):
 
 
 @contextmanager
-def _communicate_lang_server(write_to, read_from):
-    from robotframework_ls_tests.language_server_client import _LanguageServerClient
+def _communicate_lang_server(
+    write_to, read_from, language_server_client_class=None, kwargs={}
+):
+    if language_server_client_class is None:
+        from robotframework_ls_tests.language_server_client import _LanguageServerClient
+
+        language_server_client_class = _LanguageServerClient
 
     from pyls_jsonrpc.streams import JsonRpcStreamReader, JsonRpcStreamWriter
 
     w = JsonRpcStreamWriter(write_to, sort_keys=True)
     r = JsonRpcStreamReader(read_from)
 
-    language_server = _LanguageServerClient(w, r)
+    language_server = language_server_client_class(w, r, **kwargs)
     yield language_server
 
     if language_server.require_exit_messages:

@@ -1,5 +1,5 @@
 def test_parse_errors(data_regression):
-    from robotframework_ls.ext.errors import collect_errors
+    from robotframework_ls.server_api.errors import collect_errors
 
     source = """*** Settings ***
 Documentation     A test suite with a single test for valid login.
