@@ -1,0 +1,15 @@
+id: 2
+jsonrpc: '2.0'
+result:
+- message: 'Unrecognized section header ''foo bar''. Available headers for data: ''Setting(s)'',
+    ''Variable(s)'', ''Test Case(s)'', ''Task(s)'' and ''Keyword(s)''. Use ''Comment(s)''
+    to embedded additional data.'
+  range:
+    end:
+      character: 15
+      line: 0
+    start:
+      character: 0
+      line: 0
+  severity: 1
+  source: robotframework
