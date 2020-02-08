@@ -116,8 +116,8 @@ def start_tcp_lang_server(
 
     try:
         server.server_bind()
-        after_bind(server)
         server.server_activate()
+        after_bind(server)
         log.info("Serving %s on (%s, %s)", handler_class.__name__, bind_addr, port)
         server.serve_forever()
     finally:

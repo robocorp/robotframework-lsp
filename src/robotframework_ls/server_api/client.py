@@ -10,6 +10,7 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         LanguageServerClientBase.__init__(self, writer, reader)
         self.server_process = server_process
         self._check_process_alive()
+        self._version = None
 
     def _check_process_alive(self, raise_exception=True):
         if self.server_process.returncode is not None:
@@ -38,12 +39,15 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         """
         :return:
         """
-        self._check_process_alive()
-        msg_id = self.next_id()
-        msg = self.request({"jsonrpc": "2.0", "id": msg_id, "method": "version"})
+        if self._version is None:
+            self._check_process_alive()
+            msg_id = self.next_id()
+            msg = self.request({"jsonrpc": "2.0", "id": msg_id, "method": "version"})
 
-        version = msg.get("result", "N/A")
-        return version
+            version = msg.get("result", "N/A")
+            self._version = version
+
+        return self._version
 
     def lint(self, source):
         self._check_process_alive()

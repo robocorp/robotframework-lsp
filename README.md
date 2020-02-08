@@ -4,7 +4,8 @@
 Requirements
 -------------
 
-Python 3.7+
+Python 3.7+ and [Robot Framework](https://robotframework.org/) 3.2+ (note that [Robot Framework](https://robotframework.org/)) may
+be installed in a separate python interpreter in case you need to run it with an older version of Python).
 
 
 Installing
@@ -22,7 +23,7 @@ Configuration
 
 After having `robotframework-lsp` installed, some settings may need to be configured:
 
-- the `robot.language-server.python` may need to be configured to point to a Python 3.7+ Python so that the
+- the `robot.language-server.python` may need to be configured to point to a Python 3.7+ interpreter so that the
   Language Server can be started (after changing this setting, VSCode itself may need to be restarted).
   
 - the `robot.python.executable` must point to a Python installation where `robotframework` and dependent 
@@ -46,7 +47,7 @@ After this step, it should be possible to open the `roboframework-lsp` folder in
 Building a VSIX locally
 ------------------------
 
-To build a VSIX, follow the steps in https://code.visualstudio.com/api/working-with-extensions/publishing-extension. 
+To build a VSIX, follow the steps in https://code.visualstudio.com/api/working-with-extensions/publishing-extension.
 
 
 License: MIT

@@ -51,3 +51,108 @@ def test_server(server_api_process_io, data_regression):
     data_regression.check(
         server_api_process_io.lint("*** foo bar ***"), basename="errors"
     )
+
+
+def _build_launch_env():
+    import os
+
+    environ = os.environ.copy()
+    cwd = os.path.abspath(os.path.dirname(__file__))
+    assert os.path.isdir(cwd)
+
+    environ["PYTHONPATH"] = cwd + os.pathsep + environ.get("PYTHONPATH", "")
+    return cwd, environ
+
+
+def _check_in_separate_process(method_name, module_name="test_server", update_env={}):
+    import subprocess
+    import sys
+
+    cwd, environ = _build_launch_env()
+    environ.update(update_env)
+
+    subprocess.check_call(
+        [
+            sys.executable,
+            "-c",
+            "import %(module_name)s;%(module_name)s.%(method_name)s()"
+            % dict(method_name=method_name, module_name=module_name),
+        ],
+        env=environ,
+        cwd=cwd,
+    )
+
+
+def _initialize_robotframework_server_api():
+    from robotframework_ls.server_api.server import RobotFrameworkServerApi
+    from io import BytesIO
+
+    read_from = BytesIO()
+    write_to = BytesIO()
+    robot_framework_server_api = RobotFrameworkServerApi(read_from, write_to)
+    robot_framework_server_api.m_initialize()
+    return robot_framework_server_api
+
+
+def test_check_version():
+    api = _initialize_robotframework_server_api()
+    # In tests we always have at least 3.2.
+    assert api._check_min_version((3, 2))
+
+    assert not api._check_min_version((22, 1))
+
+    api._version = "3.1"
+    assert not api._check_min_version((3, 2))
+
+    api._version = "3.2"
+    assert api._check_min_version((3, 2))
+
+
+def check_no_robotframework():
+    from robotframework_ls._utils import before
+    from robotframework_ls.constants import IS_PY2
+    import sys
+
+    if IS_PY2:
+        import __builtin__ as builtins
+    else:
+        import builtins
+
+    def fail_robot_import(name, *args, **kwargs):
+        if name == "robot" or name.startswith("robot."):
+            raise ImportError()
+
+    with before(builtins, "__import__", fail_robot_import):
+        api = _initialize_robotframework_server_api()
+        assert "robot" not in sys.modules
+        assert api.m_version() == "N/A"
+        result = api.m_lint("something foo bar")
+        assert result == [
+            {
+                "range": {
+                    "start": {"character": 0, "line": 0},
+                    "end": {"character": 0, "line": 1},
+                },
+                "message": (
+                    "robotframework version (N/A) too old for linting.\n"
+                    "Please install a newer version and restart the language server."
+                ),
+                "source": "robotframework",
+                "severity": 1,
+            }
+        ]
+
+
+def check_robotframework_load():
+    import sys
+
+    api = _initialize_robotframework_server_api()
+    # Just initializing should not try to load robotframework
+    assert "robot" not in sys.modules
+    assert api.m_version() is not None
+    assert "robot" in sys.modules
+
+
+def test_server_requisites():
+    _check_in_separate_process("check_no_robotframework")
+    _check_in_separate_process("check_robotframework_load")

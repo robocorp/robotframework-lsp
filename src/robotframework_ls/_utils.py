@@ -6,8 +6,10 @@ import logging
 import os
 import sys
 import threading
+
 from robotframework_ls.constants import IS_PY2
 from contextlib import contextmanager
+
 
 PARENT_PROCESS_WATCH_INTERVAL = 3  # 3 s
 
@@ -375,3 +377,42 @@ def after(obj, method_name, callback):
         yield
     finally:
         setattr(obj, method_name, original_method)
+
+
+@contextmanager
+def before(obj, method_name, callback):
+    original_method = getattr(obj, method_name)
+
+    @functools.wraps(original_method)
+    def new_method(*args, **kwargs):
+        callback(*args, **kwargs)
+        ret = original_method(*args, **kwargs)
+        return ret
+
+    setattr(obj, method_name, new_method)
+    try:
+        yield
+    finally:
+        setattr(obj, method_name, original_method)
+
+
+def check_min_version(version, min_version):
+    """
+    :param version:
+        This is the version of robotframework.
+        
+    :param min_version:
+        This is the minimum version to match.
+        
+    :return bool:
+        True if version >= min_versiond and False otherwise.
+    """
+    if version == "N/A":
+        return False
+
+    try:
+        version = tuple(int(x) for x in version.split("."))
+    except:
+        return False
+
+    return version >= min_version
