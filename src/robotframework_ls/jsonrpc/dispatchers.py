@@ -2,8 +2,8 @@
 import functools
 import re
 
-_RE_FIRST_CAP = re.compile('(.)([A-Z][a-z]+)')
-_RE_ALL_CAP = re.compile('([a-z0-9])([A-Z])')
+_RE_FIRST_CAP = re.compile("(.)([A-Z][a-z]+)")
+_RE_ALL_CAP = re.compile("([a-z0-9])([A-Z])")
 
 
 class MethodDispatcher(object):
@@ -14,7 +14,7 @@ class MethodDispatcher(object):
     """
 
     def __getitem__(self, item):
-        method_name = 'm_{}'.format(_method_to_string(item))
+        method_name = "m_{}".format(_method_to_string(item))
         if hasattr(self, method_name):
             method = getattr(self, method_name)
 
@@ -31,5 +31,5 @@ def _method_to_string(method):
 
 
 def _camel_to_underscore(string):
-    s1 = _RE_FIRST_CAP.sub(r'\1_\2', string)
-    return _RE_ALL_CAP.sub(r'\1_\2', s1).lower()
+    s1 = _RE_FIRST_CAP.sub(r"\1_\2", string)
+    return _RE_ALL_CAP.sub(r"\1_\2", s1).lower()

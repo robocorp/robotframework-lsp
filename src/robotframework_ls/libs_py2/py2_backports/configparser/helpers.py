@@ -41,14 +41,14 @@ except ImportError:
         from _dummy_thread import get_ident
 
 
-__all__ = ['UserDict', 'OrderedDict', 'open']
+__all__ = ["UserDict", "OrderedDict", "open"]
 
 
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
 
 native_str = str
-str = type('str')
+str = type("str")
 
 
 def from_none(exc):
@@ -59,8 +59,8 @@ def from_none(exc):
 
 
 # from reprlib 3.2.1
-def recursive_repr(fillvalue='...'):
-    'Decorator to make a repr function return fillvalue for a recursive call'
+def recursive_repr(fillvalue="..."):
+    "Decorator to make a repr function return fillvalue for a recursive call"
 
     def decorating_function(user_function):
         repr_running = set()
@@ -77,10 +77,10 @@ def recursive_repr(fillvalue='...'):
             return result
 
         # Can't use functools.wraps() here because of bootstrap issues
-        wrapper.__module__ = getattr(user_function, '__module__')
-        wrapper.__doc__ = getattr(user_function, '__doc__')
-        wrapper.__name__ = getattr(user_function, '__name__')
-        wrapper.__annotations__ = getattr(user_function, '__annotations__', {})
+        wrapper.__module__ = getattr(user_function, "__module__")
+        wrapper.__doc__ = getattr(user_function, "__doc__")
+        wrapper.__name__ = getattr(user_function, "__name__")
+        wrapper.__annotations__ = getattr(user_function, "__annotations__", {})
         return wrapper
 
     return decorating_function
@@ -88,7 +88,7 @@ def recursive_repr(fillvalue='...'):
 
 # from collections 3.2.1
 class _ChainMap(MutableMapping):
-    ''' A ChainMap groups multiple dicts (or other mappings) together
+    """ A ChainMap groups multiple dicts (or other mappings) together
     to create a single, updateable view.
 
     The underlying mappings are stored in a list.  That list is public and can
@@ -98,13 +98,13 @@ class _ChainMap(MutableMapping):
     In contrast, writes, updates, and deletions only operate on the first
     mapping.
 
-    '''
+    """
 
     def __init__(self, *maps):
-        '''Initialize a ChainMap by setting *maps* to the given mappings.
+        """Initialize a ChainMap by setting *maps* to the given mappings.
         If no mappings are provided, a single empty dictionary is used.
 
-        '''
+        """
         self.maps = list(maps) or [{}]  # always at least one map
 
     def __missing__(self, key):
@@ -135,13 +135,13 @@ class _ChainMap(MutableMapping):
 
     @recursive_repr()
     def __repr__(self):
-        return '{0.__class__.__name__}({1})'.format(
-            self, ', '.join(map(repr, self.maps))
+        return "{0.__class__.__name__}({1})".format(
+            self, ", ".join(map(repr, self.maps))
         )
 
     @classmethod
     def fromkeys(cls, iterable, *args):
-        'Create a ChainMap with a single dict created from the iterable.'
+        "Create a ChainMap with a single dict created from the iterable."
         return cls(dict.fromkeys(iterable, *args))
 
     def copy(self):
@@ -154,12 +154,12 @@ class _ChainMap(MutableMapping):
     __copy__ = copy
 
     def new_child(self):  # like Django's Context.push()
-        'New ChainMap with a new dict followed by all previous maps.'
+        "New ChainMap with a new dict followed by all previous maps."
         return self.__class__({}, *self.maps)
 
     @property
     def parents(self):  # like Django's Context.pop()
-        'New ChainMap from maps[1:].'
+        "New ChainMap from maps[1:]."
         return self.__class__(*self.maps[1:])
 
     def __setitem__(self, key, value):
@@ -169,7 +169,7 @@ class _ChainMap(MutableMapping):
         try:
             del self.maps[0][key]
         except KeyError:
-            raise KeyError('Key not found in the first mapping: {!r}'.format(key))
+            raise KeyError("Key not found in the first mapping: {!r}".format(key))
 
     def popitem(self):
         """
@@ -179,7 +179,7 @@ class _ChainMap(MutableMapping):
         try:
             return self.maps[0].popitem()
         except KeyError:
-            raise KeyError('No keys found in the first mapping.')
+            raise KeyError("No keys found in the first mapping.")
 
     def pop(self, key, *args):
         """
@@ -190,10 +190,10 @@ class _ChainMap(MutableMapping):
         try:
             return self.maps[0].pop(key, *args)
         except KeyError:
-            raise KeyError('Key not found in the first mapping: {!r}'.format(key))
+            raise KeyError("Key not found in the first mapping: {!r}".format(key))
 
     def clear(self):
-        'Clear maps[0], leaving maps[1:] intact.'
+        "Clear maps[0], leaving maps[1:] intact."
         self.maps[0].clear()
 
 
@@ -205,9 +205,9 @@ except ImportError:
 
 _ABC = getattr(
     abc,
-    'ABC',
+    "ABC",
     # Python 3.3 compatibility
-    abc.ABCMeta(native_str('__ABC'), (object,), dict(__metaclass__=abc.ABCMeta)),
+    abc.ABCMeta(native_str("__ABC"), (object,), dict(__metaclass__=abc.ABCMeta)),
 )
 
 
@@ -223,14 +223,14 @@ class _PathLike(_ABC):
     @classmethod
     def __subclasshook__(cls, subclass):
         return bool(
-            hasattr(subclass, '__fspath__')
+            hasattr(subclass, "__fspath__")
             # workaround for Python 3.5
             or pathlib
             and issubclass(subclass, pathlib.Path)
         )
 
 
-PathLike = getattr(os, 'PathLike', _PathLike)
+PathLike = getattr(os, "PathLike", _PathLike)
 
 
 def _fspath(path):
@@ -244,7 +244,7 @@ def _fspath(path):
     if isinstance(path, (str, bytes)):
         return path
 
-    if not hasattr(path, '__fspath__') and isinstance(path, pathlib.Path):
+    if not hasattr(path, "__fspath__") and isinstance(path, pathlib.Path):
         # workaround for Python 3.5
         return str(path)
 
@@ -255,7 +255,7 @@ def _fspath(path):
         path_repr = path_type.__fspath__(path)
     except AttributeError:
 
-        if hasattr(path_type, '__fspath__'):
+        if hasattr(path_type, "__fspath__"):
             raise
         else:
             raise TypeError(
@@ -271,4 +271,4 @@ def _fspath(path):
         )
 
 
-fspath = getattr(os, 'fspath', _fspath)
+fspath = getattr(os, "fspath", _fspath)

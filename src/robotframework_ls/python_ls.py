@@ -10,9 +10,9 @@ except ImportError:
     import SocketServer as socketserver
 import threading
 
-from pyls_jsonrpc.dispatchers import MethodDispatcher
-from pyls_jsonrpc.endpoint import Endpoint
-from pyls_jsonrpc.streams import JsonRpcStreamReader, JsonRpcStreamWriter
+from robotframework_ls.jsonrpc.dispatchers import MethodDispatcher
+from robotframework_ls.jsonrpc.endpoint import Endpoint
+from robotframework_ls.jsonrpc.streams import JsonRpcStreamReader, JsonRpcStreamWriter
 
 from . import lsp, _utils, uris
 from .config import config
@@ -106,7 +106,7 @@ def start_tcp_lang_server(
     wrapper_class = type(
         handler_class.__name__ + "Handler",
         (_StreamHandlerWrapper,),
-        {"DELEGATE_CLASS": partial(handler_class,), "SHUTDOWN_CALL": shutdown_server,},
+        {"DELEGATE_CLASS": partial(handler_class), "SHUTDOWN_CALL": shutdown_server},
     )
 
     server = socketserver.TCPServer(
@@ -199,7 +199,7 @@ class PythonLanguageServer(MethodDispatcher):
             # },
             "textDocumentSync": {
                 "change": lsp.TextDocumentSyncKind.INCREMENTAL,
-                "save": {"includeText": True,},
+                "save": {"includeText": True},
                 "openClose": True,
             },
             "workspace": {

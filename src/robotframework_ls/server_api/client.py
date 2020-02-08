@@ -29,7 +29,7 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
                 "jsonrpc": "2.0",
                 "id": msg_id,
                 "method": "initialize",
-                "params": {"processId": process_id,},
+                "params": {"processId": process_id},
             },
             timeout=3,
         )
@@ -40,7 +40,7 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         """
         self._check_process_alive()
         msg_id = self.next_id()
-        msg = self.request({"jsonrpc": "2.0", "id": msg_id, "method": "version",})
+        msg = self.request({"jsonrpc": "2.0", "id": msg_id, "method": "version"})
 
         version = msg.get("result", "N/A")
         return version

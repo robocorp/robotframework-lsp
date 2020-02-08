@@ -73,8 +73,12 @@ class _ServerApi(object):
                         from robotframework_ls.server_api.server__main__ import (
                             start_server_process,
                         )
-                        from pyls_jsonrpc.streams import JsonRpcStreamWriter
-                        from pyls_jsonrpc.streams import JsonRpcStreamReader
+                        from robotframework_ls.jsonrpc.streams import (
+                            JsonRpcStreamWriter,
+                        )
+                        from robotframework_ls.jsonrpc.streams import (
+                            JsonRpcStreamReader,
+                        )
 
                         args = []
                         if Setup.options.verbose:

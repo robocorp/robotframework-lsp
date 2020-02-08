@@ -61,7 +61,10 @@ def _communicate_lang_server(
 
         language_server_client_class = _LanguageServerClient
 
-    from pyls_jsonrpc.streams import JsonRpcStreamReader, JsonRpcStreamWriter
+    from robotframework_ls.jsonrpc.streams import (
+        JsonRpcStreamReader,
+        JsonRpcStreamWriter,
+    )
 
     w = JsonRpcStreamWriter(write_to, sort_keys=True)
     r = JsonRpcStreamReader(read_from)

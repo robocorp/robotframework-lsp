@@ -82,7 +82,7 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
 
     if args.tcp:
         start_tcp_lang_server(
-            args.host, args.port, language_server_class, after_bind=after_bind,
+            args.host, args.port, language_server_class, after_bind=after_bind
         )
     else:
         stdin, stdout = binary_stdio()

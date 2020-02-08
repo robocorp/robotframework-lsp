@@ -11,7 +11,6 @@ log = logging.getLogger(__name__)
 
 
 class JsonRpcStreamReader(object):
-
     def __init__(self, rfile):
         self._rfile = rfile
 
@@ -37,7 +36,7 @@ class JsonRpcStreamReader(object):
                 break
 
             try:
-                message_consumer(json.loads(request_str.decode('utf-8')))
+                message_consumer(json.loads(request_str.decode("utf-8")))
             except ValueError:
                 log.exception("Failed to parse JSON message %s", request_str)
                 continue
@@ -68,8 +67,8 @@ class JsonRpcStreamReader(object):
     @staticmethod
     def _content_length(line):
         """Extract the content length from an input line."""
-        if line.startswith(b'Content-Length: '):
-            _, value = line.split(b'Content-Length: ')
+        if line.startswith(b"Content-Length: "):
+            _, value = line.split(b"Content-Length: ")
             value = value.strip()
             try:
                 return int(value)
@@ -80,7 +79,6 @@ class JsonRpcStreamReader(object):
 
 
 class JsonRpcStreamWriter(object):
-
     def __init__(self, wfile, **json_dumps_args):
         self._wfile = wfile
         self._wfile_lock = threading.Lock()
@@ -98,7 +96,9 @@ class JsonRpcStreamWriter(object):
                 body = json.dumps(message, **self._json_dumps_args)
 
                 # Ensure we get the byte length, not the character length
-                content_length = len(body) if isinstance(body, bytes) else len(body.encode('utf-8'))
+                content_length = (
+                    len(body) if isinstance(body, bytes) else len(body.encode("utf-8"))
+                )
 
                 response = (
                     "Content-Length: {}\r\n"
@@ -106,7 +106,7 @@ class JsonRpcStreamWriter(object):
                     "{}".format(content_length, body)
                 )
 
-                self._wfile.write(response.encode('utf-8'))
+                self._wfile.write(response.encode("utf-8"))
                 self._wfile.flush()
             except Exception:  # pylint: disable=broad-except
                 log.exception("Failed to write message to output file %s", message)

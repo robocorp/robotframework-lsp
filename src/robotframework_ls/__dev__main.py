@@ -11,12 +11,7 @@ import sys
 def dev_main():
     from robotframework_ls.__main__ import main
 
-    sys.argv = [
-        sys.argv[0],
-        "-vv",
-        "--tcp",
-        "--port=1456",
-    ]
+    sys.argv = [sys.argv[0], "-vv", "--tcp", "--port=1456"]
 
     main()
 

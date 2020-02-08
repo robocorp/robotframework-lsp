@@ -1,4 +1,6 @@
 import pytest
+
+
 def test_config(tmpdir):
     from robotframework_ls.config.config import Config
 
@@ -21,9 +23,9 @@ def test_config(tmpdir):
     # i.e.: convert to type when possible
     assert config.get_setting("robot.python.value", int) == 10
     assert config.get_setting("robot.python.value_float", float) == 10.5
-    
+
     with pytest.raises(KeyError):
         config.get_setting("robot.python.value_float", int)
-        
+
     with pytest.raises(KeyError):
         assert config.get_setting("robot.not_there", int)

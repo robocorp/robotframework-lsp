@@ -276,7 +276,7 @@ def kill_process_and_subprocesses(pid):
 
         args = ["taskkill", "/F", "/PID", str(pid), "/T"]
         retcode = subprocess.call(
-            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE,
+            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
         )
         if retcode not in (0, 128, 255):
             raise CalledProcessError(retcode, args)
@@ -301,9 +301,7 @@ def exit_when_pid_exists(pid):
                     if not is_process_alive(pid):
                         # Note: just exit since the parent process already
                         # exited.
-                        log.info(
-                            "Force-quit process: %s", os.getpid(),
-                        )
+                        log.info("Force-quit process: %s", os.getpid())
                         os._exit(0)
 
                 time.sleep(PARENT_PROCESS_WATCH_INTERVAL)

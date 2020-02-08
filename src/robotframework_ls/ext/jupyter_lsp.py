@@ -1,5 +1,7 @@
 """ optional jupyter[lab]_lsp integration
 """
+
+
 def spec_v1(app):
     """ A spec loader for jupyter_lsp
     """
@@ -12,6 +14,6 @@ def spec_v1(app):
             urls=dict(
                 home="https://github.com/robocorp/robotframework-lsp",
                 issues="https://github.com/robocorp/robotframework-lsp/issues",
-            )
+            ),
         )
     }

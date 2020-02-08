@@ -4,7 +4,7 @@ try:
     import configparser
 except ImportError:
     from py2_backports import configparser
-    
+
 import logging
 import os
 import sys

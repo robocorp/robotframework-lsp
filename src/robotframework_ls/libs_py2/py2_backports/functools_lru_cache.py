@@ -26,7 +26,7 @@ def update_wrapper(
 
 
 class _HashedSeq(list):
-    __slots__ = 'hashvalue'
+    __slots__ = "hashvalue"
 
     def __init__(self, tup, hash=hash):
         self[:] = tup
@@ -47,7 +47,7 @@ def _make_key(
     type=type,
     len=len,
 ):
-    'Make a cache key from optionally typed positional and keyword arguments'
+    "Make a cache key from optionally typed positional and keyword arguments"
     key = args
     if kwds:
         sorted_items = sorted(kwds.items())

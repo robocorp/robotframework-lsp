@@ -64,9 +64,7 @@ def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regressio
         server_apis.add(server_api)
         server_processes.add(server_api._server_process.pid)
 
-    with _utils.after(
-        _ServerApi, "_get_server_api", on_get_server_api,
-    ):
+    with _utils.after(_ServerApi, "_get_server_api", on_get_server_api):
         language_server_tcp.initialize(ws_root_path, process_id=os.getpid())
 
         check_diagnostics(language_server_tcp, data_regression)
@@ -93,7 +91,7 @@ def test_missing_message(language_server, ws_root_path):
         {
             "jsonrpc": "2.0",
             "method": "invalidMessageSent",
-            "params": {"textDocument": {"uri": "untitled:Untitled-1", "version": 2},},
+            "params": {"textDocument": {"uri": "untitled:Untitled-1", "version": 2}},
         }
     )
 
@@ -103,7 +101,7 @@ def test_missing_message(language_server, ws_root_path):
             "jsonrpc": "2.0",
             "id": "22",
             "method": "invalidMessageSent",
-            "params": {"textDocument": {"uri": "untitled:Untitled-1", "version": 2},},
+            "params": {"textDocument": {"uri": "untitled:Untitled-1", "version": 2}},
         }
     )
 

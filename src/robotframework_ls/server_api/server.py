@@ -1,4 +1,4 @@
-from pyls_jsonrpc.dispatchers import MethodDispatcher
+from robotframework_ls.jsonrpc.dispatchers import MethodDispatcher
 import logging
 
 log = logging.getLogger(__name__)
@@ -12,8 +12,11 @@ class RobotFrameworkServerApi(MethodDispatcher):
     """
 
     def __init__(self, rx, tx):
-        from pyls_jsonrpc.streams import JsonRpcStreamReader, JsonRpcStreamWriter
-        from pyls_jsonrpc.endpoint import Endpoint
+        from robotframework_ls.jsonrpc.streams import (
+            JsonRpcStreamReader,
+            JsonRpcStreamWriter,
+        )
+        from robotframework_ls.jsonrpc.endpoint import Endpoint
 
         self._jsonrpc_stream_reader = JsonRpcStreamReader(rx)
         self._jsonrpc_stream_writer = JsonRpcStreamWriter(tx)

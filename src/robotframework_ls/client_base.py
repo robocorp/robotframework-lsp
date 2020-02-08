@@ -73,7 +73,7 @@ class LanguageServerClientBase(object):
         message_matcher = self._reader_thread.obtain_message_matcher(message_id)
         self.write(contents)
         if not message_matcher.event.wait(timeout=timeout):
-            raise AssertionError("Request timed-out (%s): %s" % (timeout, contents,))
+            raise AssertionError("Request timed-out (%s): %s" % (timeout, contents))
 
         return message_matcher.msg
 
@@ -100,11 +100,7 @@ class LanguageServerClientBase(object):
         return msg
 
     def shutdown(self):
-        self.write(
-            {"jsonrpc": "2.0", "id": self.next_id(), "method": "shutdown",}
-        )
+        self.write({"jsonrpc": "2.0", "id": self.next_id(), "method": "shutdown"})
 
     def exit(self):
-        self.write(
-            {"jsonrpc": "2.0", "id": self.next_id(), "method": "exit",}
-        )
+        self.write({"jsonrpc": "2.0", "id": self.next_id(), "method": "exit"})
