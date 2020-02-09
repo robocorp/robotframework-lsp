@@ -4,8 +4,8 @@
     "author": "Fabio Zadrozny",
     "repository": "https://github.com/robocorp/robotframework-lsp",
     "license": "MIT",
-    "version": "0.0.1",
-    "publisher": "robocorp",
+    "version": "0.0.2",
+    "publisher": "robocorptech",
     "engines": {
         "vscode": "^1.19.0"
     },

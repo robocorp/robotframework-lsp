@@ -1,5 +1,7 @@
 on:
   push:
+#     branches:
+#       - "release"
     tags:
       - "*"
 name: Deploy Extension
@@ -20,21 +22,22 @@ jobs:
       uses: borales/actions-yarn@v2.0.0
       with:
         cmd: install # will run `yarn install` command
-    - name: Set up Python 2.7
+    - name: Set up Python 3.7
       uses: actions/setup-python@v1
       with:
-        python-version: 2.7
+        python-version: 3.7
+    - name: Install deps
+      run: pip install fire
+    - name: Check tag version
+      run: python -m dev check-tag-version
     - run: npm install -g vsce
     - run: vsce package -o robotframework-lsp.vsix
     - uses: actions/upload-artifact@v1
       with:
         name: robotframework-lsp.vsix
         path: robotframework-lsp.vsix
-        
-#       - uses: actions/checkout@v2
-#       - run: npm install
-#       - uses: lannonbr/vsce-action@master
-#         with:
-#           args: "publish -p $VSCE_TOKEN"
-#         env:
-#           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+#     - uses: lannonbr/vsce-action@704da577da0f27de5cdb4ae018374c2f08b5f523
+#       with:
+#         args: "publish -p $VSCE_TOKEN"
+#       env:
+#         VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}

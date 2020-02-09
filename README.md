@@ -28,6 +28,13 @@ After having `robotframework-lsp` installed, some settings may need to be config
   
 - the `robot.python.executable` must point to a Python installation where `robotframework` and dependent 
   libraries are installed.
+  
+
+Features (0.0.2)
+-----------------
+
+- Syntax highlighting
+- Syntax validation
 
 
 Developing
