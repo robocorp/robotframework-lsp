@@ -71,7 +71,7 @@ class Dev(object):
             sys.exit(0)
         else:
             sys.stderr.write(
-                "Version does not match (%s != %s) (exit(1))\n"
+                "Version does not match (lsp: %s != tag: %s) (exit(1))\n"
                 % (robotframework_ls.__version__, version)
             )
             sys.exit(1)
