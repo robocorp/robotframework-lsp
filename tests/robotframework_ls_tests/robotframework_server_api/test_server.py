@@ -28,7 +28,7 @@ def server_api_process_io(server_process):
     """
     Starts a language server in a new process and communicates through stdin/stdout streams.
     """
-    from robotframework_ls_tests.conftest import _communicate_lang_server
+    from robotframework_ls_tests.fixtures import _communicate_lang_server
     from robotframework_ls.server_api.client import RobotFrameworkApiClient
 
     write_to = server_process.stdin

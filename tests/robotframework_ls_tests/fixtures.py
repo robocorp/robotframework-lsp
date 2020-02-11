@@ -4,8 +4,6 @@ from contextlib import contextmanager
 import os
 import logging
 
-pytest_plugins = ["robotframework_ls_tests.monitor_fixtures"]
-
 try:
     TimeoutError = TimeoutError  # @ReservedAssignment
 except NameError:

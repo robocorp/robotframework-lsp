@@ -1,0 +1,23 @@
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: '*** Settings ***'
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: '*** Settings ***'
+    range:
+      end:
+        character: 7
+        line: 0
+      start:
+        character: 0
+        line: 0

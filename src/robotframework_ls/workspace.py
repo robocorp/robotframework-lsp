@@ -3,25 +3,14 @@
 import io
 import logging
 import os
-import re
 
-from . import lsp, uris, _utils
+from . import uris
 
 log = logging.getLogger(__name__)
 
-# TODO: this is not the best e.g. we capture numbers
-RE_START_WORD = re.compile("[A-Za-z_0-9]*$")
-RE_END_WORD = re.compile("^[A-Za-z_0-9]*")
-
 
 class Workspace(object):
-
-    M_PUBLISH_DIAGNOSTICS = "textDocument/publishDiagnostics"
-    M_APPLY_EDIT = "workspace/applyEdit"
-    M_SHOW_MESSAGE = "window/showMessage"
-
     def __init__(self, root_uri, endpoint, config=None):
-        self._config = config
         self._root_uri = root_uri
         self._endpoint = endpoint
         self._root_uri_scheme = uris.urlparse(self._root_uri)[0]
@@ -64,77 +53,45 @@ class Workspace(object):
         self._docs[doc_uri].apply_change(change)
         self._docs[doc_uri].version = version
 
-    def update_config(self, config):
-        self._config = config
-        for doc_uri in self.documents:
-            self.get_document(doc_uri).update_config(config)
-
-    def apply_edit(self, edit):
-        return self._endpoint.request(self.M_APPLY_EDIT, {"edit": edit})
-
-    def publish_diagnostics(self, doc_uri, diagnostics):
-        self._endpoint.notify(
-            self.M_PUBLISH_DIAGNOSTICS,
-            params={"uri": doc_uri, "diagnostics": diagnostics},
-        )
-
-    def show_message(self, message, msg_type=lsp.MessageType.Info):
-        self._endpoint.notify(
-            self.M_SHOW_MESSAGE, params={"type": msg_type, "message": message}
-        )
-
-    def source_roots(self, document_path):
-        """Return the source roots for the given document."""
-        files = (
-            _utils.find_parents(
-                self._root_path, document_path, ["setup.py", "pyproject.toml"]
-            )
-            or []
-        )
-        return list(set((os.path.dirname(project_file) for project_file in files))) or [
-            self._root_path
-        ]
-
     def _create_document(self, doc_uri, source=None, version=None):
-        path = uris.to_fs_path(doc_uri)
-        return Document(
-            doc_uri,
-            source=source,
-            version=version,
-            extra_sys_path=self.source_roots(path),
-            config=self._config,
-            workspace=self,
-        )
+        return Document(doc_uri, source=source, version=version)
 
 
 class Document(object):
-    def __init__(
-        self,
-        uri,
-        source=None,
-        version=None,
-        local=True,
-        extra_sys_path=None,
-        config=None,
-        workspace=None,
-    ):
+    def __init__(self, uri, source=None, version=None):
         self.uri = uri
         self.version = version
         self.path = uris.to_fs_path(uri)
-        self.filename = os.path.basename(self.path)
 
-        self._config = config
-        self._workspace = workspace
-        self._local = local
         self._source = source
-        self._extra_sys_path = extra_sys_path or []
+        self._lines = None
 
     def __str__(self):
         return str(self.uri)
 
+    def __len__(self):
+        return len(self.source)
+
+    def selection(self, line, col):
+        from robotframework_ls.completions.completion_context import DocumentSelection
+
+        return DocumentSelection(self, line, col)
+
+    @property
+    def _source(self):
+        return self.__source
+
+    @_source.setter
+    def _source(self, source):
+        # i.e.: when the source is set, reset the lines.
+        self._lines = None
+        self.__source = source
+
     @property
     def lines(self):
-        return self.source.splitlines(True)
+        if self._lines is None:
+            self._lines = tuple(self.source.splitlines(True))
+        return self._lines
 
     @property
     def source(self):
@@ -143,9 +100,6 @@ class Document(object):
                 return f.read()
         return self._source
 
-    def update_config(self, config):
-        self._config = config
-
     def apply_change(self, change):
         """Apply a change to the document."""
         text = change["text"]
@@ -153,6 +107,7 @@ class Document(object):
 
         if not change_range:
             # The whole file has changed
+
             self._source = text
             return
 
@@ -161,8 +116,9 @@ class Document(object):
         end_line = change_range["end"]["line"]
         end_col = change_range["end"]["character"]
 
-        # Check for an edit occuring at the very end of the file
+        # Check for an edit occurring at the very end of the file
         if start_line == len(self.lines):
+
             self._source = self.source + text
             return
 
@@ -188,30 +144,3 @@ class Document(object):
                 new.write(line[end_col:])
 
         self._source = new.getvalue()
-
-    def offset_at_position(self, position):
-        """Return the byte-offset pointed at by the given position."""
-        return position["character"] + len("".join(self.lines[: position["line"]]))
-
-    def word_at_position(self, position):
-        """Get the word under the cursor returning the start and end positions."""
-        if position["line"] >= len(self.lines):
-            return ""
-
-        line = self.lines[position["line"]]
-        i = position["character"]
-        # Split word in two
-        start = line[:i]
-        end = line[i:]
-
-        # Take end of start and start of end to find word
-        # These are guaranteed to match, even if they match the empty string
-        m_start = RE_START_WORD.findall(start)
-        m_end = RE_END_WORD.findall(end)
-
-        return m_start[0] + m_end[-1]
-
-    def sys_path(self, environment_path=None):
-        # Copy our extra sys path
-        path = list(self._extra_sys_path)
-        return path

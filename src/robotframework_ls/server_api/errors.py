@@ -69,7 +69,7 @@ def collect_errors(source):
     """
     :return list(Error)
     """
-    from robot.parsing.builders import get_model
+    from robot.parsing import get_model
 
     # TODO: Check if we should provide a curdir.
     model = get_model(source, curdir=None)

@@ -7,9 +7,9 @@ log = logging.getLogger(__name__)
 class _LanguageServerClient(LanguageServerClientBase):
     def __init__(self, *args, **kwargs):
         LanguageServerClientBase.__init__(self, *args, **kwargs)
-        from robotframework_ls_tests import conftest
+        from robotframework_ls_tests import fixtures
 
-        self.TIMEOUT = conftest.TIMEOUT
+        self.TIMEOUT = fixtures.TIMEOUT
 
     def initialize(self, root_path, msg_id=None, process_id=None):
         from robotframework_ls.uris import from_fs_path
@@ -69,3 +69,53 @@ class _LanguageServerClient(LanguageServerClientBase):
         msg = self.wait_for_message({"id": msg_id})
         assert "capabilities" in msg["result"]
         return msg
+
+    def open_doc(self, uri, version=1):
+        self.write(
+            {
+                "jsonrpc": "2.0",
+                "method": "textDocument/didOpen",
+                "params": {
+                    "textDocument": {
+                        "uri": uri,
+                        "languageId": "robotframework",
+                        "version": version,
+                        "text": "",
+                    }
+                },
+            }
+        )
+
+    def change_doc(self, uri, version, text):
+        self.write(
+            {
+                "jsonrpc": "2.0",
+                "method": "textDocument/didChange",
+                "params": {
+                    "textDocument": {"uri": uri, "version": version},
+                    "contentChanges": [
+                        {
+                            "range": {
+                                "start": {"line": 0, "character": 0},
+                                "end": {"line": 0, "character": 0},
+                            },
+                            "rangeLength": 0,
+                            "text": text,
+                        }
+                    ],
+                },
+            }
+        )
+
+    def get_completions(self, uri, line, col):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "textDocument/completion",
+                "params": {
+                    "textDocument": {"uri": uri},
+                    "position": {"line": line, "character": col},
+                },
+            }
+        )

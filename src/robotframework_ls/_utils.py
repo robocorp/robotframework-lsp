@@ -348,7 +348,7 @@ def implements(method):
     return wrapper
 
 
-def log_and_silence_errors(logger):
+def log_and_silence_errors(logger, return_on_error=None):
     def inner(func):
         @functools.wraps(func)
         def new_func(*args, **kwargs):
@@ -356,6 +356,7 @@ def log_and_silence_errors(logger):
                 return func(*args, **kwargs)
             except:
                 logger.exception("Error calling: %s", func)
+                return return_on_error
 
         return new_func
 

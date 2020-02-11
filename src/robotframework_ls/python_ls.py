@@ -180,10 +180,9 @@ class PythonLanguageServer(MethodDispatcher):
             # "codeLensProvider": {
             #     "resolveProvider": False,  # We may need to make this configurable
             # },
-            # "completionProvider": {
-            #     "resolveProvider": False,  # We know everything ahead of time
-            #     "triggerCharacters": ["."],
-            # },
+            "completionProvider": {
+                "resolveProvider": False  # We know everything ahead of time
+            },
             "documentFormattingProvider": False,
             "documentHighlightProvider": False,
             "documentRangeFormattingProvider": False,
@@ -287,11 +286,6 @@ class PythonLanguageServer(MethodDispatcher):
 
     def m_workspace__did_change_configuration(self, settings=None):
         self.config.update(settings or {})
-        for workspace_uri in self.workspaces:
-            workspace = self.workspaces[workspace_uri]
-            workspace.update_config(self.config)
-            for doc_uri in workspace.documents:
-                self.lint(doc_uri, is_saved=False)
 
     def m_workspace__did_change_workspace_folders(
         self, added=None, removed=None, **_kwargs

@@ -10,6 +10,22 @@ _critical_error_log_file = os.path.join(
 )
 
 
+def _stderr_reader(stream):
+    from robotframework_ls.constants import IS_PY2
+
+    try:
+        if IS_PY2:
+            for line in stream.readlines():
+                sys.stderr.write(line)
+        else:
+            for line in stream.readlines():
+                sys.stderr.buffer.write(line)
+    except:
+        log.exception("Error reading from server api process stream.")
+    finally:
+        log.debug("Finished reading from server api process stream.")
+
+
 def start_server_process(args=(), python_exe=None):
     """
     Calls this __main__ in another process.
@@ -20,6 +36,7 @@ def start_server_process(args=(), python_exe=None):
             ["-vv", "--log-file=%s" % log_file]
     """
     import subprocess
+    import threading
 
     if python_exe:
         if not os.path.exists(python_exe):
@@ -40,6 +57,10 @@ def start_server_process(args=(), python_exe=None):
         stdin=subprocess.PIPE,
         env=env,
     )
+
+    t = threading.Thread(target=_stderr_reader, args=(language_server_process.stderr,))
+    t.setDaemon(True)
+    t.start()
 
     return language_server_process
 

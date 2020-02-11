@@ -1,0 +1,138 @@
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: '*** Settings ***'
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: '*** Settings ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: '*** Variables ***'
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: '*** Variables ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: '*** Test Cases ***'
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: '*** Test Cases ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: '*** Tasks ***'
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: '*** Tasks ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: '*** Keywords ***'
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: '*** Keywords ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: '*** Comment ***'
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: '*** Comment ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0

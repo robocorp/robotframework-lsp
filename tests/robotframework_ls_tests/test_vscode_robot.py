@@ -2,40 +2,9 @@ import os
 
 
 def check_diagnostics(language_server, data_regression):
-    language_server.write(
-        {
-            "jsonrpc": "2.0",
-            "method": "textDocument/didOpen",
-            "params": {
-                "textDocument": {
-                    "uri": "untitled:Untitled-1",
-                    "languageId": "robotframework",
-                    "version": 1,
-                    "text": "",
-                }
-            },
-        }
-    )
-
-    language_server.write(
-        {
-            "jsonrpc": "2.0",
-            "method": "textDocument/didChange",
-            "params": {
-                "textDocument": {"uri": "untitled:Untitled-1", "version": 2},
-                "contentChanges": [
-                    {
-                        "range": {
-                            "start": {"line": 0, "character": 0},
-                            "end": {"line": 0, "character": 0},
-                        },
-                        "rangeLength": 0,
-                        "text": "*** Invalid Invalid ***",
-                    }
-                ],
-            },
-        }
-    )
+    uri = "untitled:Untitled-1"
+    language_server.open_doc(uri, 1)
+    language_server.change_doc(uri, 2, "*** Invalid Invalid ***")
 
     diag = language_server.wait_for_message(
         {"method": "textDocument/publishDiagnostics"}
@@ -47,6 +16,16 @@ def check_diagnostics(language_server, data_regression):
 def test_diagnostics(language_server, ws_root_path, data_regression):
     language_server.initialize(ws_root_path, process_id=os.getpid())
     check_diagnostics(language_server, data_regression)
+
+
+def test_section_completions(language_server, ws_root_path, data_regression):
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    language_server.open_doc(uri, 1)
+    language_server.change_doc(uri, 2, "*settin")
+    data_regression.check(
+        language_server.get_completions(uri, 0, 7), "completion_settings"
+    )
 
 
 def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regression):
@@ -117,7 +96,7 @@ def test_exit_with_parent_process_died(
     """
     import subprocess
     import sys
-    from robotframework_ls_tests.conftest import wait_for_condition
+    from robotframework_ls_tests.fixtures import wait_for_condition
     from robotframework_ls._utils import is_process_alive
     from robotframework_ls._utils import kill_process_and_subprocesses
 
