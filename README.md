@@ -30,11 +30,12 @@ After having `robotframework-lsp` installed, some settings may need to be config
   libraries are installed.
   
 
-Features (0.0.2)
+Features (0.0.3)
 -----------------
 
 - Syntax highlighting
 - Syntax validation
+- Code-completion for section headers
 
 
 Developing
@@ -56,6 +57,12 @@ Building a VSIX locally
 
 To build a VSIX, follow the steps in https://code.visualstudio.com/api/working-with-extensions/publishing-extension.
 
+New version release
+--------------------
+
+To release a new version, create a tag in the format below and push it:
+
+git tag robotframework-lsp-0.0.0
 
 License: MIT
 -----------------

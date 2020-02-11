@@ -1,7 +1,7 @@
 on:
   push:
-#     branches:
-#       - "release"
+    branches:
+      - "release"
     tags:
       - "*"
 name: Deploy Extension
@@ -36,8 +36,7 @@ jobs:
       with:
         name: robotframework-lsp.vsix
         path: robotframework-lsp.vsix
-#     - uses: lannonbr/vsce-action@704da577da0f27de5cdb4ae018374c2f08b5f523
-#       with:
-#         args: "publish -p $VSCE_TOKEN"
-#       env:
-#         VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+    - name: Publish to vscode marketplace 
+      run: vsce publish -p $VSCE_TOKEN
+      env:
+        VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
