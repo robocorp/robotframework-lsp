@@ -210,8 +210,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
     @log_and_silence_errors(log, return_on_error=[])
     def m_text_document__completion(self, **kwargs):
-        from robotframework_ls.completions.completion_context import CompletionContext
-        from robotframework_ls.completions import section_completions
+        from robotframework_ls.impl.completion_context import CompletionContext
+        from robotframework_ls.impl import section_completions
 
         doc_uri = kwargs["textDocument"]["uri"]
         # Note: 0-based

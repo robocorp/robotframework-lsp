@@ -2,7 +2,7 @@ import pytest
 
 
 def test_strip_leading_chars():
-    from robotframework_ls.completions.text_utilities import TextUtilities
+    from robotframework_ls.impl.text_utilities import TextUtilities
 
     text_utilities = TextUtilities("** f")
     assert text_utilities.strip_leading_chars("*")

@@ -7,8 +7,8 @@ def complete(completion_context):
     from robotframework_ls.lsp import TextEdit
     from robotframework_ls.lsp import Range
     from robotframework_ls.lsp import Position
-    from robotframework_ls.completions import text_utilities
-    from robotframework_ls.completions.string_matcher import StringMatcher
+    from robotframework_ls.impl import text_utilities
+    from robotframework_ls.impl.string_matcher import StringMatcher
 
     selection = completion_context.sel  #: :type selection: DocumentSelection
     current_line = selection.current_line

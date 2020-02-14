@@ -73,7 +73,7 @@ class Document(object):
         return len(self.source)
 
     def selection(self, line, col):
-        from robotframework_ls.completions.completion_context import DocumentSelection
+        from robotframework_ls.impl.completion_context import DocumentSelection
 
         return DocumentSelection(self, line, col)
 

@@ -1,6 +1,6 @@
 def test_section_completions(data_regression):
-    from robotframework_ls.completions import section_completions
-    from robotframework_ls.completions.completion_context import CompletionContext
+    from robotframework_ls.impl import section_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.workspace import Document
 
     doc = Document("unused", source="""**""")
