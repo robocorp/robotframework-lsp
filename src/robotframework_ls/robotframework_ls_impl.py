@@ -9,6 +9,8 @@ from robotframework_ls._utils import (
     is_process_alive,
 )
 import sys
+import weakref
+import os
 
 
 log = logging.getLogger(__name__)
@@ -18,13 +20,25 @@ ROBOT_FILE_EXTENSIONS = (".robot", ".settings")
 
 
 class _ServerApi(object):
-    def __init__(self):
+    def __init__(self, robot_framework_language_server):
         self._server_lock = threading.RLock()
 
         self._used_python_executable = None
+        self._used_environ = None
         self._server_process = None
         self._server_api = None  # :type self._server_api: RobotFrameworkApiClient
         self.config = None
+        self._robot_framework_language_server = weakref.ref(
+            robot_framework_language_server
+        )
+
+    @property
+    def _workspace(self):
+        ls = self._robot_framework_language_server()
+        if ls is None:
+            return None
+
+        return ls.workspace
 
     @property
     def config(self):
@@ -40,6 +54,13 @@ class _ServerApi(object):
                 if python_executable != self._used_python_executable:
                     # It'll be reinitialized when needed.
                     self._dispose_server_process()
+                    return
+            if self._used_environ is not None:
+                environ = self._get_environ()
+                if environ != self._used_environ:
+                    # It'll be reinitialized when needed.
+                    self._dispose_server_process()
+                    return
 
     def _get_python_executable(self):
         config = self._config
@@ -52,9 +73,23 @@ class _ServerApi(object):
             log.warning("self._config not set in %s" % (self.__class__,))
         return python_exe
 
-    def _get_server_api(self):
-        import os
+    def _get_environ(self):
+        config = self._config
+        env = os.environ.copy()
 
+        env.pop("PYTHONPATH", "")
+        env.pop("PYTHONHOME", "")
+        env.pop("VIRTUAL_ENV", "")
+
+        if config is not None:
+            env_in_settings = config.get_setting("robot.python.env", dict, default={})
+            for key, val in env_in_settings.items():
+                env[str(key)] = str(val)
+        else:
+            log.warning("self._config not set in %s" % (self.__class__,))
+        return env
+
+    def _get_server_api(self):
         server_process = self._server_process
         if server_process is None or not is_process_alive(server_process.pid):
             with self._server_lock:
@@ -88,9 +123,13 @@ class _ServerApi(object):
                             args.append("--log-file=" + Setup.options.log_file + ".api")
 
                         python_exe = self._get_python_executable()
+                        environ = self._get_environ()
+
                         self._used_python_executable = python_exe
+                        self._used_environ = environ
+
                         server_process = start_server_process(
-                            args=args, python_exe=python_exe
+                            args=args, python_exe=python_exe, env=environ
                         )
 
                         self._server_process = server_process
@@ -102,6 +141,20 @@ class _ServerApi(object):
 
                         self._server_api = RobotFrameworkApiClient(w, r, server_process)
                         self._server_api.initialize(process_id=os.getpid())
+
+                        # Open existing documents in the API.
+                        for document in self._workspace.iter_documents():
+                            self.forward(
+                                "textDocument/didOpen",
+                                {
+                                    "textDocument": {
+                                        "uri": document.uri,
+                                        "version": document.version,
+                                        "text": document.source,
+                                    }
+                                },
+                            )
+
                     except Exception as e:
                         if server_process is not None:
                             log.exception(
@@ -130,6 +183,7 @@ class _ServerApi(object):
             finally:
                 self._server_process = None
                 self._server_api = None
+                self._used_environ = None
                 self._used_python_executable = None
 
     def lint(self, source):
@@ -137,6 +191,13 @@ class _ServerApi(object):
             api = self._get_server_api()
             if api is not None:
                 return api.lint(source)
+
+    @log_and_silence_errors(log)
+    def forward(self, method_name, params):
+        with self._server_lock:
+            api = self._get_server_api()
+            if api is not None:
+                api.forward(method_name, params)
 
     @log_and_silence_errors(log)
     def exit(self):
@@ -158,7 +219,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def __init__(self, rx, tx):
         from robotframework_ls.lsp import LSPMessages
 
-        self._api = _ServerApi()
+        self._api = _ServerApi(self)
         PythonLanguageServer.__init__(self, rx, tx)
         self._lsp_messages = LSPMessages(self._endpoint)
 
@@ -171,11 +232,50 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         self._config = config
         self._api.config = self.config
 
+    @overrides(PythonLanguageServer.capabilities)
+    def capabilities(self):
+        from robotframework_ls import lsp
+
+        server_capabilities = {
+            "codeActionProvider": False,
+            # "codeLensProvider": {
+            #     "resolveProvider": False,  # We may need to make this configurable
+            # },
+            "completionProvider": {
+                "resolveProvider": False  # We know everything ahead of time
+            },
+            "documentFormattingProvider": False,
+            "documentHighlightProvider": False,
+            "documentRangeFormattingProvider": False,
+            "documentSymbolProvider": False,
+            "definitionProvider": False,
+            "executeCommandProvider": {"commands": []},
+            "hoverProvider": False,
+            "referencesProvider": False,
+            "renameProvider": False,
+            "foldingRangeProvider": False,
+            # "signatureHelpProvider": {
+            #     'triggerCharacters': ['(', ',', '=']
+            # },
+            "textDocumentSync": {
+                "change": lsp.TextDocumentSyncKind.INCREMENTAL,
+                "save": {"includeText": False},
+                "openClose": True,
+            },
+            "workspace": {
+                "workspaceFolders": {"supported": True, "changeNotifications": True}
+            },
+        }
+        log.info("Server capabilities: %s", server_capabilities)
+        return server_capabilities
+
     @overrides(PythonLanguageServer.m_workspace__did_change_configuration)
     @log_and_silence_errors(log)
     def m_workspace__did_change_configuration(self, **kwargs):
         PythonLanguageServer.m_workspace__did_change_configuration(self, **kwargs)
         self._api.config = self.config
+
+    # --- Methods to forward to the api
 
     @overrides(PythonLanguageServer.m_shutdown)
     @log_and_silence_errors(log)
@@ -189,21 +289,60 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         self._api.exit()
         PythonLanguageServer.m_exit(self, **kwargs)
 
+    @overrides(PythonLanguageServer.m_text_document__did_close)
+    def m_text_document__did_close(self, textDocument=None, **_kwargs):
+        self._api.forward("textDocument/didClose", {"textDocument": textDocument})
+        PythonLanguageServer.m_text_document__did_close(
+            self, textDocument=textDocument, **_kwargs
+        )
+
+    @overrides(PythonLanguageServer.m_text_document__did_open)
+    def m_text_document__did_open(self, textDocument=None, **_kwargs):
+        self._api.forward("textDocument/didOpen", {"textDocument": textDocument})
+        PythonLanguageServer.m_text_document__did_open(
+            self, textDocument=textDocument, **_kwargs
+        )
+
+    @overrides(PythonLanguageServer.m_text_document__did_change)
+    def m_text_document__did_change(
+        self, contentChanges=None, textDocument=None, **_kwargs
+    ):
+        self._api.forward(
+            "textDocument/didChange",
+            {"contentChanges": contentChanges, "textDocument": textDocument},
+        )
+        PythonLanguageServer.m_text_document__did_change(
+            self, contentChanges=contentChanges, textDocument=textDocument, **_kwargs
+        )
+
+    @overrides(PythonLanguageServer.m_workspace__did_change_workspace_folders)
+    def m_workspace__did_change_workspace_folders(
+        self, added=None, removed=None, **_kwargs
+    ):
+        self._api.forward(
+            "workspace/didChangeWorkspaceFolders", {"added": added, "removed": removed}
+        )
+        PythonLanguageServer.m_workspace__did_change_workspace_folders(
+            self, added=added, removed=removed, **_kwargs
+        )
+
+    # --- Customized implementation
+
     @overrides(PythonLanguageServer.lint)
     @_utils.debounce(LINT_DEBOUNCE_S, keyed_by="doc_uri")
     def lint(self, doc_uri, is_saved):
         # Since we're debounced, the document may no longer be open
         try:
-            workspace = self._match_uri_to_workspace(doc_uri)
-            if doc_uri in workspace.documents:
-                document = workspace.get_document(doc_uri)
+            document = self.workspace.get_document(doc_uri, create=False)
+            if document is None:
+                return
 
-                source = document.source
-                found = []
-                diagnostics_msg = self._api.lint(source)
-                if diagnostics_msg:
-                    found = diagnostics_msg.get("result", [])
-                self._lsp_messages.publish_diagnostics(doc_uri, found)
+            source = document.source
+            found = []
+            diagnostics_msg = self._api.lint(source)
+            if diagnostics_msg:
+                found = diagnostics_msg.get("result", [])
+            self._lsp_messages.publish_diagnostics(doc_uri, found)
         except Exception:
             # Because it's debounced, we can't use the log_and_silence_errors decorator.
             log.exception("Error linting.")
@@ -217,30 +356,12 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         # Note: 0-based
         line, col = kwargs["position"]["line"], kwargs["position"]["character"]
 
-        workspace = self._match_uri_to_workspace(doc_uri)
-        if doc_uri in workspace.documents:
-            document = workspace.get_document(doc_uri)
+        document = self.workspace.get_document(doc_uri, create=False)
+        if document is None:
+            log.critical("Unable to find document (%s) for completions." % (doc_uri,))
+            return []
 
         ctx = CompletionContext(document, line, col)
         completions = []
         completions.extend(section_completions.complete(ctx))
         return completions
-
-    @overrides(PythonLanguageServer.m_workspace__did_change_watched_files)
-    @log_and_silence_errors(log)
-    def m_workspace__did_change_watched_files(self, changes=None, **_kwargs):
-        changed_files = set()
-        for d in changes or []:
-            if d["uri"].endswith(ROBOT_FILE_EXTENSIONS):
-                changed_files.add(d["uri"])
-
-        if not changed_files:
-            # Only externally changed robot files may result in changed diagnostics.
-            return
-
-        for workspace_uri in self.workspaces:
-            workspace = self.workspaces[workspace_uri]
-            for doc_uri in workspace.documents:
-                # Changes in doc_uri are already handled by m_text_document__did_save
-                if doc_uri not in changed_files:
-                    self.lint(doc_uri, is_saved=False)

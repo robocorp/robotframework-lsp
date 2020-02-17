@@ -5,21 +5,73 @@ import logging
 import os
 
 from . import uris
+from robotframework_ls.uris import uri_scheme, to_fs_path
 
 log = logging.getLogger(__name__)
 
 
 class Workspace(object):
-    def __init__(self, root_uri, endpoint, config=None):
+    def __init__(self, root_uri, workspace_folders=None):
         self._root_uri = root_uri
-        self._endpoint = endpoint
-        self._root_uri_scheme = uris.urlparse(self._root_uri)[0]
-        self._root_path = uris.to_fs_path(self._root_uri)
+        self._root_uri_scheme = uri_scheme(self._root_uri)
+        self._root_path = to_fs_path(self._root_uri)
+        self._folders = {}
         self._docs = {}
 
+        if workspace_folders is not None:
+            for folder in workspace_folders:
+                self.add_folder(folder)
+
+    def _create_document(self, doc_uri, source=None, version=None):
+        return Document(doc_uri, source=source, version=version)
+
+    def add_folder(self, folder):
+        """
+        :param WorkspaceFolder folder:
+        """
+        self._folders[folder.uri] = folder
+
+    def iter_documents(self):
+        return self._docs.values()
+
     @property
-    def documents(self):
-        return self._docs
+    def folders(self):
+        return self._folders
+
+    def get_document(self, doc_uri, create=True):
+        """
+        Return a managed document if-present,
+        else create one pointing at disk.
+
+        See https://github.com/Microsoft/language-server-protocol/issues/177
+        """
+        doc = self._docs.get(doc_uri)
+        if doc is None:
+            if create:
+                doc = self._create_document(doc_uri)
+
+        return doc
+
+    def is_local(self):
+        return (
+            self._root_uri_scheme == "" or self._root_uri_scheme == "file"
+        ) and os.path.exists(self._root_path)
+
+    def put_document(self, text_document):
+        """
+        :param TextDocumentItem text_document:
+        """
+        doc_uri = text_document.uri
+
+        self._docs[doc_uri] = self._create_document(
+            doc_uri, source=text_document.text, version=text_document.version
+        )
+
+    def remove_document(self, doc_uri):
+        self._docs.pop(doc_uri, None)
+
+    def remove_folder(self, folder_uri):
+        self._folders.pop(folder_uri, None)
 
     @property
     def root_path(self):
@@ -29,48 +81,35 @@ class Workspace(object):
     def root_uri(self):
         return self._root_uri
 
-    def is_local(self):
-        return (
-            self._root_uri_scheme == "" or self._root_uri_scheme == "file"
-        ) and os.path.exists(self._root_path)
-
-    def get_document(self, doc_uri):
-        """Return a managed document if-present, else create one pointing at disk.
-
-        See https://github.com/Microsoft/language-server-protocol/issues/177
+    def update_document(self, text_doc, change):
         """
-        return self._docs.get(doc_uri) or self._create_document(doc_uri)
-
-    def put_document(self, doc_uri, source, version=None):
-        self._docs[doc_uri] = self._create_document(
-            doc_uri, source=source, version=version
-        )
-
-    def rm_document(self, doc_uri):
-        self._docs.pop(doc_uri)
-
-    def update_document(self, doc_uri, change, version=None):
-        self._docs[doc_uri].apply_change(change)
-        self._docs[doc_uri].version = version
-
-    def _create_document(self, doc_uri, source=None, version=None):
-        return Document(doc_uri, source=source, version=version)
+        :param TextDocumentItem text_doc:
+        :param TextDocumentContentChangeEvent change:
+        """
+        doc_uri = text_doc["uri"]
+        doc = self._docs[doc_uri]
+        doc.apply_change(change)
+        doc.version = text_doc["version"]
 
 
 class Document(object):
     def __init__(self, uri, source=None, version=None):
         self.uri = uri
         self.version = version
-        self.path = uris.to_fs_path(uri)
+        self.path = uris.to_fs_path(uri)  # Note: may be None.
 
         self._source = source
-        self._lines = None
 
     def __str__(self):
         return str(self.uri)
 
     def __len__(self):
         return len(self.source)
+
+    def __bool__(self):
+        return True
+
+    __nonzero__ = __bool__
 
     def selection(self, line, col):
         from robotframework_ls.impl.completion_context import DocumentSelection
@@ -84,14 +123,29 @@ class Document(object):
     @_source.setter
     def _source(self, source):
         # i.e.: when the source is set, reset the lines.
-        self._lines = None
+        self.__lines = None
         self.__source = source
 
     @property
-    def lines(self):
-        if self._lines is None:
-            self._lines = tuple(self.source.splitlines(True))
+    def _lines(self):
+        if self.__lines is None:
+            self.__lines = tuple(self.source.splitlines(True))
+        return self.__lines
+
+    def get_internal_lines(self):
         return self._lines
+
+    def iter_lines(self, keep_ends=True):
+        lines = self._lines
+        for line in lines:
+            if keep_ends:
+                yield line
+            else:
+                yield line.rstrip("\r\n")
+
+        # If the last line ends with a new line, yield the final empty string.
+        if line.endswith("\r") or line.endswith("\n"):
+            yield ""
 
     @property
     def source(self):
@@ -99,6 +153,39 @@ class Document(object):
             with io.open(self.path, "r", encoding="utf-8") as f:
                 return f.read()
         return self._source
+
+    @source.setter
+    def source(self, source):
+        self._source = source
+
+    def get_line(self, line):
+        try:
+            return self._lines[line].rstrip("\r\n")
+        except IndexError:
+            return ""
+
+    def get_last_line(self):
+        try:
+            last_line = self._lines[-1]
+            if last_line.endswith("\r") or last_line.endswith("\n"):
+                return ""
+            return last_line
+        except IndexError:
+            return ""
+
+    def get_last_line_col(self):
+        lines = self._lines
+        if not lines:
+            return (0, 0)
+        else:
+            last_line = lines[-1]
+            if last_line.endswith("\r") or last_line.endswith("\n"):
+                return len(lines), 0
+            return len(lines) - 1, len(last_line)
+
+    def get_line_count(self):
+        lines = self._lines
+        return len(lines)
 
     def apply_change(self, change):
         """Apply a change to the document."""
@@ -117,7 +204,7 @@ class Document(object):
         end_col = change_range["end"]["character"]
 
         # Check for an edit occurring at the very end of the file
-        if start_line == len(self.lines):
+        if start_line == len(self._lines):
 
             self._source = self.source + text
             return
@@ -127,7 +214,7 @@ class Document(object):
         # Iterate over the existing document until we hit the edit range,
         # at which point we write the new text, then loop until we hit
         # the end of the range and continue writing.
-        for i, line in enumerate(self.lines):
+        for i, line in enumerate(self._lines):
             if i < start_line:
                 new.write(line)
                 continue

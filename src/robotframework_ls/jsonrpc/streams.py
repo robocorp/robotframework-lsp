@@ -23,23 +23,27 @@ class JsonRpcStreamReader(object):
         Args:
             message_consumer (fn): function that is passed each message as it is read off the socket.
         """
-        while not self._rfile.closed:
-            try:
-                request_str = self._read_message()
-            except ValueError:
-                if self._rfile.closed:
-                    return
-                else:
-                    log.exception("Failed to read from rfile")
+        try:
+            while not self._rfile.closed:
+                try:
+                    request_str = self._read_message()
+                    log.debug("Read: %s", request_str)
+                except ValueError:
+                    if self._rfile.closed:
+                        return
+                    else:
+                        log.exception("Failed to read from rfile")
 
-            if request_str is None:
-                break
+                if request_str is None:
+                    break
 
-            try:
-                message_consumer(json.loads(request_str.decode("utf-8")))
-            except ValueError:
-                log.exception("Failed to parse JSON message %s", request_str)
-                continue
+                try:
+                    message_consumer(json.loads(request_str.decode("utf-8")))
+                except ValueError:
+                    log.exception("Failed to parse JSON message %s", request_str)
+                    continue
+        finally:
+            log.debug("Exited JsonRpcStreamReader.")
 
     def _read_message(self):
         """Reads the contents of a message.
@@ -80,19 +84,24 @@ class JsonRpcStreamReader(object):
 
 class JsonRpcStreamWriter(object):
     def __init__(self, wfile, **json_dumps_args):
+        assert wfile is not None
         self._wfile = wfile
         self._wfile_lock = threading.Lock()
         self._json_dumps_args = json_dumps_args
 
     def close(self):
+        log.debug("Will close writer")
         with self._wfile_lock:
             self._wfile.close()
 
     def write(self, message):
+        log.debug("Obtaining writer lock.")
         with self._wfile_lock:
             if self._wfile.closed:
-                return
+                log.debug("Unable to write %s (file already closed).", (message,))
+                return False
             try:
+                log.debug("Writing: %s", message)
                 body = json.dumps(message, **self._json_dumps_args)
 
                 # Ensure we get the byte length, not the character length
@@ -108,5 +117,7 @@ class JsonRpcStreamWriter(object):
 
                 self._wfile.write(response.encode("utf-8"))
                 self._wfile.flush()
+                return True
             except Exception:  # pylint: disable=broad-except
                 log.exception("Failed to write message to output file %s", message)
+                return False

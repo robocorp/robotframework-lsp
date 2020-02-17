@@ -2,9 +2,8 @@ jsonrpc: '2.0'
 method: textDocument/publishDiagnostics
 params:
   diagnostics:
-  - message: 'Unrecognized section header ''Invalid Invalid''. Available headers for
-      data: ''Setting(s)'', ''Variable(s)'', ''Test Case(s)'', ''Task(s)'' and ''Keyword(s)''.
-      Use ''Comment(s)'' to embedded additional data.'
+  - message: 'Unrecognized section header ''*** Invalid Invalid ***''. Valid sections:
+      ''Settings'', ''Variables'', ''Test Cases'', ''Tasks'', ''Keywords'' and ''Comments''.'
     range:
       end:
         character: 23

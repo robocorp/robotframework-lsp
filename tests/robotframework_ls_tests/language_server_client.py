@@ -9,13 +9,23 @@ class _LanguageServerClient(LanguageServerClientBase):
         LanguageServerClientBase.__init__(self, *args, **kwargs)
         from robotframework_ls_tests import fixtures
 
-        self.TIMEOUT = fixtures.TIMEOUT
+        self.DEFAULT_TIMEOUT = fixtures.TIMEOUT
+
+    def settings(self, settings):
+        self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "workspace/didChangeConfiguration",
+                "params": settings,
+            }
+        )
 
     def initialize(self, root_path, msg_id=None, process_id=None):
         from robotframework_ls.uris import from_fs_path
 
         msg_id = msg_id if msg_id is not None else self.next_id()
-        self.write(
+        msg = self.request(
             {
                 "jsonrpc": "2.0",
                 "id": msg_id,
@@ -66,7 +76,6 @@ class _LanguageServerClient(LanguageServerClientBase):
             }
         )
 
-        msg = self.wait_for_message({"id": msg_id})
         assert "capabilities" in msg["result"]
         return msg
 

@@ -1,4 +1,5 @@
 from robotframework_ls.client_base import LanguageServerClientBase
+from robotframework_ls.options import USE_TIMEOUTS, NO_TIMEOUT
 
 
 class SubprocessDiedError(Exception):
@@ -32,7 +33,7 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
                 "method": "initialize",
                 "params": {"processId": process_id},
             },
-            timeout=3,
+            timeout=7 if USE_TIMEOUTS else NO_TIMEOUT,
         )
 
     def get_version(self):
@@ -42,7 +43,12 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         if self._version is None:
             self._check_process_alive()
             msg_id = self.next_id()
-            msg = self.request({"jsonrpc": "2.0", "id": msg_id, "method": "version"})
+            msg = self.request(
+                {"jsonrpc": "2.0", "id": msg_id, "method": "version"}, None
+            )
+            if msg is None:
+                self._check_process_alive()
+                return "Unable to get version."
 
             version = msg.get("result", "N/A")
             self._version = version
@@ -58,5 +64,13 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
                 "id": msg_id,
                 "method": "lint",
                 "params": {"source": source},
-            }
+            },
+            default=[],
+        )
+
+    def forward(self, method_name, params):
+        self._check_process_alive()
+        msg_id = self.next_id()
+        return self.request(
+            {"jsonrpc": "2.0", "id": msg_id, "method": method_name, "params": params}
         )

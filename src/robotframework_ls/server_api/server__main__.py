@@ -14,19 +14,21 @@ def _stderr_reader(stream):
     from robotframework_ls.constants import IS_PY2
 
     try:
-        if IS_PY2:
-            for line in stream.readlines():
+        while True:
+            line = stream.readline()
+            if IS_PY2:
                 sys.stderr.write(line)
-        else:
-            for line in stream.readlines():
+            else:
                 sys.stderr.buffer.write(line)
+            if not line:
+                break
     except:
         log.exception("Error reading from server api process stream.")
     finally:
         log.debug("Finished reading from server api process stream.")
 
 
-def start_server_process(args=(), python_exe=None):
+def start_server_process(args=(), python_exe=None, env=None):
     """
     Calls this __main__ in another process.
     
@@ -44,21 +46,34 @@ def start_server_process(args=(), python_exe=None):
 
     args = [python_exe or sys.executable, "-u", __file__] + list(args)
     log.debug('Starting server api process with args: "%s"' % ('" "'.join(args),))
-    env = os.environ.copy()
-    env.pop("PYTHONPATH", "")
-    env.pop("PYTHONHOME", "")
-    env.pop("VIRTUAL_ENV", "")
-    env["PYTHONIOENCODING"] = "utf-8"
-    log.debug("env: %s" % (env,))
+    environ = os.environ.copy()
+    environ.pop("PYTHONPATH", "")
+    environ.pop("PYTHONHOME", "")
+    environ.pop("VIRTUAL_ENV", "")
+    if env is not None:
+        for key, val in env.items():
+            environ[key] = val
+
+    environ["PYTHONIOENCODING"] = "utf-8"
+    environ["PYTHONUNBUFFERED"] = "1"
+
+    env_log = ["Environ:"]
+    for key, val in environ.items():
+        env_log.append("  %s=%s" % (key, val))
+
+    log.debug("\n".join(env_log))
+
     language_server_process = subprocess.Popen(
         args,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         stdin=subprocess.PIPE,
-        env=env,
+        env=environ,
+        bufsize=0,
     )
 
     t = threading.Thread(target=_stderr_reader, args=(language_server_process.stderr,))
+    t.setName("Stderr from ServerAPI (%s)" % (args,))
     t.setDaemon(True)
     t.start()
 

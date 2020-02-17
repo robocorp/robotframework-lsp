@@ -9,8 +9,12 @@ def server_process(tmpdir):
 
     log_file = str(tmpdir.join("robotframework_api_tests.log"))
 
+    import robot
+
+    env = {"PYTHONPATH": os.path.dirname(os.path.dirname(robot.__file__))}
+
     language_server_api_process = start_server_process(
-        args=["-vv", "--log-file=%s" % log_file]
+        args=["-vv", "--log-file=%s" % log_file], env=env
     )
     assert language_server_api_process.returncode is None
     yield language_server_api_process
@@ -125,7 +129,7 @@ def check_no_robotframework():
     with before(builtins, "__import__", fail_robot_import):
         api = _initialize_robotframework_server_api()
         assert "robot" not in sys.modules
-        assert api.m_version() == "N/A"
+        assert api.m_version() == "NO_ROBOT"
         result = api.m_lint("something foo bar")
         assert result == [
             {
@@ -134,7 +138,7 @@ def check_no_robotframework():
                     "end": {"character": 0, "line": 1},
                 },
                 "message": (
-                    "robotframework version (N/A) too old for linting.\n"
+                    "robotframework version (NO_ROBOT) too old for linting.\n"
                     "Please install a newer version and restart the language server."
                 ),
                 "source": "robotframework",

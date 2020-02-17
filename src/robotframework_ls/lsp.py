@@ -99,13 +99,37 @@ class _Base(object):
 
 
 class TextEdit(_Base):
-    def __init__(self, range, new_text):
+    def __init__(self, range, newText):
         """
         :param Range range:
         :param str new_text:
         """
         self.range = range
-        self.newText = new_text
+        self.newText = newText
+
+
+class TextDocumentItem(_Base):
+    def __init__(self, uri, languageId=None, version=None, text=None):
+        """
+        :param str uri:
+        :param str language_id:
+        :param int version:
+        :param str text:
+        """
+        self.uri = uri
+        self.languageId = languageId
+        self.version = version
+        self.text = text
+
+
+class WorkspaceFolder(_Base):
+    def __init__(self, uri, name):
+        """
+        :param str uri:
+        :param str name:
+        """
+        self.uri = uri
+        self.name = name
 
 
 class CompletionItem(_Base):
@@ -117,13 +141,13 @@ class CompletionItem(_Base):
         documentation=None,  # str
         deprecated=False,
         preselect=False,
-        sort_text=None,  # str
-        filter_text=None,  # str
-        insert_text=None,  # str
-        insert_text_format=None,  # str
+        sortText=None,  # str
+        filterText=None,  # str
+        insertText=None,  # str
+        insertTextFormat=None,  # str
         text_edit=None,  # TextEdit
-        additional_text_edits=None,  # List['TextEdit']
-        commit_characters=None,  # List[str]
+        additionalTextEdits=None,  # List['TextEdit']
+        commitCharacters=None,  # List[str]
         command=None,  # Command
         data=None,
     ):
@@ -133,13 +157,13 @@ class CompletionItem(_Base):
         self.documentation = documentation
         self.deprecated = deprecated
         self.preselect = preselect
-        self.sortText = sort_text
-        self.filterText = filter_text
-        self.insertText = insert_text
-        self.insertTextFormat = insert_text_format
+        self.sortText = sortText
+        self.filterText = filterText
+        self.insertText = insertText
+        self.insertTextFormat = insertTextFormat
         self.textEdit = text_edit
-        self.additionalTextEdits = additional_text_edits
-        self.commitCharacters = commit_characters
+        self.additionalTextEdits = additionalTextEdits
+        self.commitCharacters = commitCharacters
         self.command = command
         self.data = data
 
@@ -224,9 +248,9 @@ class Range(_Base):
 
 
 class TextDocumentContentChangeEvent(_Base):
-    def __init__(self, range, range_length, text):
+    def __init__(self, range, rangeLength, text):
         self.range = range
-        self.rangeLength = range_length
+        self.rangeLength = rangeLength
         self.text = text
 
 

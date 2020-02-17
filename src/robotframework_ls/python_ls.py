@@ -3,6 +3,7 @@
 from functools import partial
 import logging
 import os
+import sys
 
 try:
     import socketserver
@@ -14,7 +15,7 @@ from robotframework_ls.jsonrpc.dispatchers import MethodDispatcher
 from robotframework_ls.jsonrpc.endpoint import Endpoint
 from robotframework_ls.jsonrpc.streams import JsonRpcStreamReader, JsonRpcStreamWriter
 
-from . import lsp, _utils, uris
+from . import uris
 from .config import config
 from .workspace import Workspace
 
@@ -46,9 +47,37 @@ class _StreamHandlerWrapper(socketserver.StreamRequestHandler, object):
         self.SHUTDOWN_CALL()
 
 
-class RedirectedStreamErrorOnAccess(object):
-    def __getattr__(self, mname):
-        raise AssertionError("This stream is now redirected and should not be used.")
+class _DummyStdin(object):
+    def __init__(self, original_stdin=sys.stdin, *args, **kwargs):
+        try:
+            self.encoding = sys.stdin.encoding
+        except:
+            # Not sure if it's available in all Python versions...
+            pass
+        self.original_stdin = original_stdin
+
+        try:
+            self.errors = (
+                sys.stdin.errors
+            )  # Who knew? sys streams have an errors attribute!
+        except:
+            # Not sure if it's available in all Python versions...
+            pass
+
+    def readline(self, *args, **kwargs):
+        return "\n"
+
+    def read(self, *args, **kwargs):
+        return self.readline()
+
+    def write(self, *args, **kwargs):
+        pass
+
+    def flush(self, *args, **kwargs):
+        pass
+
+    def close(self, *args, **kwargs):
+        pass
 
 
 def binary_stdio():
@@ -57,8 +86,6 @@ def binary_stdio():
     This seems to be different for Window/Unix Python2/3, so going by:
         https://stackoverflow.com/questions/2850893/reading-binary-data-from-stdin
     """
-    import sys
-
     PY3K = sys.version_info >= (3, 0)
 
     if PY3K:
@@ -74,10 +101,7 @@ def binary_stdio():
             msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
         stdin, stdout = sys.stdin, sys.stdout
 
-    sys.stdin, sys.stdout = (
-        RedirectedStreamErrorOnAccess(),
-        RedirectedStreamErrorOnAccess(),
-    )
+    sys.stdin, sys.stdout = (_DummyStdin(), open(os.devnull, "w"))
 
     return stdin, stdout
 
@@ -118,7 +142,13 @@ def start_tcp_lang_server(
         server.server_bind()
         server.server_activate()
         after_bind(server)
-        log.info("Serving %s on (%s, %s)", handler_class.__name__, bind_addr, port)
+        log.info(
+            "Serving %s on (%s, %s) - pid: %s",
+            handler_class.__name__,
+            bind_addr,
+            port,
+            os.getpid(),
+        )
         server.serve_forever()
     finally:
         log.info("Shutting down")
@@ -142,18 +172,17 @@ class PythonLanguageServer(MethodDispatcher):
     Based on: https://github.com/palantir/python-language-server/blob/develop/pyls/python_ls.py
     """
 
-    def __init__(self, rx, tx):
+    def __init__(self, rx, tx, max_workers=MAX_WORKERS):
         self.workspace = None
         self.config = None
         self.root_uri = None
         self.watching_thread = None
-        self.workspaces = {}
         self.uri_workspace_mapper = {}
 
         self._jsonrpc_stream_reader = JsonRpcStreamReader(rx)
         self._jsonrpc_stream_writer = JsonRpcStreamWriter(tx)
         self._endpoint = Endpoint(
-            self, self._jsonrpc_stream_writer.write, max_workers=MAX_WORKERS
+            self, self._jsonrpc_stream_writer.write, max_workers=max_workers
         )
         self._shutdown = False
 
@@ -167,46 +196,12 @@ class PythonLanguageServer(MethodDispatcher):
 
     def m_exit(self, **_kwargs):
         self._endpoint.shutdown()
+        # If there's someone reading, we could deadlock here.
         self._jsonrpc_stream_reader.close()
         self._jsonrpc_stream_writer.close()
 
-    def _match_uri_to_workspace(self, uri):
-        workspace_uri = _utils.match_uri_to_workspace(uri, self.workspaces)
-        return self.workspaces.get(workspace_uri, self.workspace)
-
     def capabilities(self):
-        server_capabilities = {
-            "codeActionProvider": False,
-            # "codeLensProvider": {
-            #     "resolveProvider": False,  # We may need to make this configurable
-            # },
-            "completionProvider": {
-                "resolveProvider": False  # We know everything ahead of time
-            },
-            "documentFormattingProvider": False,
-            "documentHighlightProvider": False,
-            "documentRangeFormattingProvider": False,
-            "documentSymbolProvider": False,
-            "definitionProvider": False,
-            "executeCommandProvider": {"commands": []},
-            "hoverProvider": False,
-            "referencesProvider": False,
-            "renameProvider": False,
-            "foldingRangeProvider": False,
-            # "signatureHelpProvider": {
-            #     'triggerCharacters': ['(', ',', '=']
-            # },
-            "textDocumentSync": {
-                "change": lsp.TextDocumentSyncKind.INCREMENTAL,
-                "save": {"includeText": True},
-                "openClose": True,
-            },
-            "workspace": {
-                "workspaceFolders": {"supported": True, "changeNotifications": True}
-            },
-        }
-        log.info("Server capabilities: %s", server_capabilities)
-        return server_capabilities
+        return {}  # Subclasses should override for capabilities.
 
     def m_initialize(
         self,
@@ -214,21 +209,23 @@ class PythonLanguageServer(MethodDispatcher):
         rootUri=None,
         rootPath=None,
         initializationOptions=None,
+        workspaceFolders=None,
         **_kwargs
     ):
         from robotframework_ls._utils import exit_when_pid_exists
+        from robotframework_ls.lsp import WorkspaceFolder
 
         log.debug(
-            "Language server initialized with:\n    processId: %s\n    rootUri: %s\n    rootPath: %s\n    initializationOptions: %s",
+            "Language server initialized with:\n    processId: %s\n    rootUri: %s\n    rootPath: %s\n    initializationOptions: %s\n    workspaceFolders: %s",
             processId,
             rootUri,
             rootPath,
             initializationOptions,
+            workspaceFolders,
         )
         if rootUri is None:
             rootUri = uris.from_fs_path(rootPath) if rootPath is not None else ""
 
-        self.workspaces.pop(self.root_uri, None)
         self.root_uri = rootUri
         self.config = config.Config(
             rootUri,
@@ -236,8 +233,10 @@ class PythonLanguageServer(MethodDispatcher):
             processId,
             _kwargs.get("capabilities", {}),
         )
-        self.workspace = Workspace(rootUri, self._endpoint, self.config)
-        self.workspaces[rootUri] = self.workspace
+        if workspaceFolders:
+            workspaceFolders = [WorkspaceFolder(**w) for w in workspaceFolders]
+
+        self.workspace = Workspace(rootUri, workspaceFolders or [])
 
         if processId not in (None, -1, 0):
             exit_when_pid_exists(processId)
@@ -252,33 +251,32 @@ class PythonLanguageServer(MethodDispatcher):
         raise NotImplementedError("Subclasses must override.")
 
     def m_text_document__did_close(self, textDocument=None, **_kwargs):
-        workspace = self._match_uri_to_workspace(textDocument["uri"])
-        workspace.rm_document(textDocument["uri"])
+        self.workspace.remove_document(textDocument["uri"])
 
     def m_text_document__did_open(self, textDocument=None, **_kwargs):
-        workspace = self._match_uri_to_workspace(textDocument["uri"])
-        if workspace is None:
-            log.critical("Unable to find workspace for: %s", (textDocument,))
-            return
-        workspace.put_document(
-            textDocument["uri"],
-            textDocument["text"],
-            version=textDocument.get("version"),
-        )
+        from robotframework_ls.lsp import TextDocumentItem
+
+        self.workspace.put_document(TextDocumentItem(**textDocument))
         self.lint(textDocument["uri"], is_saved=True)
 
     def m_text_document__did_change(
         self, contentChanges=None, textDocument=None, **_kwargs
     ):
-        workspace = self._match_uri_to_workspace(textDocument["uri"])
-        if workspace is None:
-            log.critical("Unable to find workspace for: %s", (textDocument,))
-            return
+        from robotframework_ls.lsp import TextDocumentItem
+        from robotframework_ls.lsp import TextDocumentContentChangeEvent
 
-        for change in contentChanges:
-            workspace.update_document(
-                textDocument["uri"], change, version=textDocument.get("version")
-            )
+        if contentChanges:
+            for change in contentChanges:
+                try:
+                    self.workspace.update_document(
+                        TextDocumentItem(**textDocument),
+                        TextDocumentContentChangeEvent(**change),
+                    )
+                except:
+                    log.exception(
+                        "Error updating document: %s with changes: %s"
+                        % (textDocument, contentChanges)
+                    )
         self.lint(textDocument["uri"], is_saved=False)
 
     def m_text_document__did_save(self, textDocument=None, **_kwargs):
@@ -287,26 +285,20 @@ class PythonLanguageServer(MethodDispatcher):
     def m_workspace__did_change_configuration(self, settings=None):
         self.config.update(settings or {})
 
-    def m_workspace__did_change_workspace_folders(
-        self, added=None, removed=None, **_kwargs
-    ):
-        for removed_info in removed:
-            removed_uri = removed_info["uri"]
-            self.workspaces.pop(removed_uri)
+    def m_workspace__did_change_workspace_folders(self, event):
+        """Adds/Removes folders from the workspace."""
+        from robotframework_ls.lsp import WorkspaceFolder
 
-        for added_info in added:
-            added_uri = added_info["uri"]
-            self.workspaces[added_uri] = Workspace(
-                added_uri, self._endpoint, self.config
-            )
+        log.info("Workspace folders changed: {}".format(event))
 
-        # Migrate documents that are on the root workspace and have a better
-        # match now
-        doc_uris = list(self.workspace._docs.keys())
-        for uri in doc_uris:
-            doc = self.workspace._docs.pop(uri)
-            new_workspace = self._match_uri_to_workspace(uri)
-            new_workspace._docs[uri] = doc
+        added_folders = event["added"] or []
+        removed_folders = event["removed"] or []
+
+        for f_add in added_folders:
+            self.workspace.add_folder(WorkspaceFolder(**f_add))
+
+        for f_remove in removed_folders:
+            self.workspace.remove_folder(f_remove["uri"])
 
     def m_workspace__did_change_watched_files(self, changes=None, **_kwargs):
         pass

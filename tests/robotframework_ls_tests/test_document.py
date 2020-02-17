@@ -51,7 +51,7 @@ def test_document_end_of_file_edit():
     )
     doc.apply_change(change)
 
-    assert doc.lines == ("print 'a'\n", "print 'b'\n", "o")
+    assert doc.get_internal_lines() == ("print 'a'\n", "print 'b'\n", "o")
 
 
 def test_document_line_edit():
@@ -64,8 +64,8 @@ def test_document_line_edit():
 
 
 def test_document_lines(doc):
-    assert len(doc.lines) == 3
-    assert doc.lines[0] == "document\n"
+    assert len(doc.get_internal_lines()) == 3
+    assert doc.get_internal_lines()[0] == "document\n"
 
 
 def test_document_multiline_edit():
@@ -76,7 +76,7 @@ def test_document_multiline_edit():
     )
     doc.apply_change(change)
 
-    assert doc.lines == ("def hello(a, b):\n", "    print a, b\n")
+    assert doc.get_internal_lines() == ("def hello(a, b):\n", "    print a, b\n")
 
 
 def test_document_props(doc):
@@ -107,3 +107,30 @@ def test_word_at_position(doc):
     assert doc.selection(1, 5).word_at_position == "for"
     assert doc.selection(2, 0).word_at_position == "testing"
     assert doc.selection(4, 0).word_at_position == ""
+
+
+def test_get_line():
+    d = Document(uri="", source="")
+    assert d.get_last_line() == ""
+    d.source = "my\nfoo"
+    assert d.get_line(0) == "my"
+    assert d.get_last_line() == "foo"
+    assert d.get_line_count() == 2
+
+    d.source = "my\nfoo\n"
+    assert d.get_line(0) == "my"
+    assert d.get_line(1) == "foo"
+    assert d.get_line(2) == ""
+    assert d.get_last_line() == ""
+
+    assert list(d.iter_lines()) == ["my\n", "foo\n", ""]
+    assert list(d.iter_lines(False)) == ["my", "foo", ""]
+
+
+def test_get_last_line_col():
+    d = Document(uri="", source="")
+    assert d.get_last_line_col() == (0, 0)
+    d.source = "my"
+    assert d.get_last_line_col() == (0, 2)
+    d.source = "my\n"
+    assert d.get_last_line_col() == (1, 0)

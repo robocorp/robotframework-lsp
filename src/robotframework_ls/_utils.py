@@ -10,6 +10,13 @@ import threading
 from robotframework_ls.constants import IS_PY2
 from contextlib import contextmanager
 
+try:
+    TimeoutError = TimeoutError  # @ReservedAssignment
+except NameError:
+
+    class TimeoutError(RuntimeError):  # @ReservedAssignment
+        pass
+
 
 PARENT_PROCESS_WATCH_INTERVAL = 3  # 3 s
 

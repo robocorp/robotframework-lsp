@@ -1,11 +1,11 @@
-from robotframework_ls.jsonrpc.dispatchers import MethodDispatcher
+from robotframework_ls.python_ls import PythonLanguageServer
 import logging
 
 
 log = logging.getLogger(__name__)
 
 
-class RobotFrameworkServerApi(MethodDispatcher):
+class RobotFrameworkServerApi(PythonLanguageServer):
     """
     This is a custom server. It uses the same message-format used in the language
     server but with custom messages (i.e.: this is not the language server, but
@@ -13,39 +13,25 @@ class RobotFrameworkServerApi(MethodDispatcher):
     """
 
     def __init__(self, read_from, write_to):
-        from robotframework_ls.jsonrpc.streams import (
-            JsonRpcStreamReader,
-            JsonRpcStreamWriter,
-        )
-        from robotframework_ls.jsonrpc.endpoint import Endpoint
-
+        PythonLanguageServer.__init__(self, read_from, write_to, max_workers=1)
         self._version = None
-        self._jsonrpc_stream_reader = JsonRpcStreamReader(read_from)
-        self._jsonrpc_stream_writer = JsonRpcStreamWriter(write_to)
-        self._endpoint = Endpoint(
-            self, self._jsonrpc_stream_writer.write, max_workers=1
-        )
-
-    def start(self):
-        """Entry point for the server."""
-        self._jsonrpc_stream_reader.listen(self._endpoint.consume)
-
-    def m_initialize(self, processId=None, **_kwargs):
-        if processId not in (None, -1, 0):
-            from robotframework_ls._utils import exit_when_pid_exists
-
-            exit_when_pid_exists(processId)
 
     def m_version(self):
         if self._version is not None:
             return self._version
         try:
-            from robot import get_version
-
-            version = get_version(naked=True)
+            import robot  # @UnusedImport
         except:
-            log.exception("Unable to get version.")
-            version = "N/A"  # Too old?
+            log.exception("Unable to import 'robot'.")
+            version = "NO_ROBOT"
+        else:
+            try:
+                from robot import get_version
+
+                version = get_version(naked=True)
+            except:
+                log.exception("Unable to get version.")
+                version = "N/A"  # Too old?
         self._version = version
         return self._version
 
@@ -54,6 +40,9 @@ class RobotFrameworkServerApi(MethodDispatcher):
 
         version = self.m_version()
         return check_min_version(version, min_version)
+
+    def lint(self, *args, **kwargs):
+        pass  # No-op for this server.
 
     def m_lint(self, source=None):
         if not source:
@@ -78,11 +67,3 @@ class RobotFrameworkServerApi(MethodDispatcher):
         except:
             log.exception("Error collecting errors.")
             return []
-
-    def m_shutdown(self, **_kwargs):
-        pass
-
-    def m_exit(self, **_kwargs):
-        self._endpoint.shutdown()
-        self._jsonrpc_stream_reader.close()
-        self._jsonrpc_stream_writer.close()

@@ -15,8 +15,6 @@ def complete(completion_context):
     if not current_line:
         return []
 
-    words = ("Settings", "Variables", "Test Cases", "Tasks", "Keywords", "Comment")
-
     items = []
 
     line_start = current_line[: selection.col]
@@ -26,6 +24,8 @@ def complete(completion_context):
 
         if tu.strip_leading_chars("*"):  # i.e.: the line must start with '*'
             tu.strip()
+
+            words = completion_context.get_accepted_section_header_words()
 
             matcher = StringMatcher(tu.text)
             for word in words:

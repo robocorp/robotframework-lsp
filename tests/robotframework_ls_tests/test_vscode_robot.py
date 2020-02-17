@@ -1,24 +1,41 @@
+import logging
 import os
+
+from robotframework_ls_tests.fixtures import TIMEOUT
+import pytest
+
+
+log = logging.getLogger(__name__)
 
 
 def check_diagnostics(language_server, data_regression):
     uri = "untitled:Untitled-1"
-    language_server.open_doc(uri, 1)
-    language_server.change_doc(uri, 2, "*** Invalid Invalid ***")
-
-    diag = language_server.wait_for_message(
+    message_matcher = language_server.obtain_pattern_message_matcher(
         {"method": "textDocument/publishDiagnostics"}
     )
+    language_server.open_doc(uri, 1)
+    assert message_matcher.event.wait(TIMEOUT)
+
+    message_matcher = language_server.obtain_pattern_message_matcher(
+        {"method": "textDocument/publishDiagnostics"}
+    )
+    language_server.change_doc(uri, 2, "*** Invalid Invalid ***")
+    assert message_matcher.event.wait(TIMEOUT)
+    diag = message_matcher.msg
 
     data_regression.check(diag, basename="diagnostics")
 
 
 def test_diagnostics(language_server, ws_root_path, data_regression):
     language_server.initialize(ws_root_path, process_id=os.getpid())
+    import robot
+
+    env = {"PYTHONPATH": os.path.dirname(os.path.dirname(robot.__file__))}
+    language_server.settings({"settings": {"robot": {"python": {"env": env}}}})
     check_diagnostics(language_server, data_regression)
 
 
-def test_section_completions(language_server, ws_root_path, data_regression):
+def test_section_completions_integrated(language_server, ws_root_path, data_regression):
     language_server.initialize(ws_root_path, process_id=os.getpid())
     uri = "untitled:Untitled-1"
     language_server.open_doc(uri, 1)
@@ -45,6 +62,10 @@ def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regressio
 
     with _utils.after(_ServerApi, "_get_server_api", on_get_server_api):
         language_server_tcp.initialize(ws_root_path, process_id=os.getpid())
+        import robot
+
+        env = {"PYTHONPATH": os.path.dirname(os.path.dirname(robot.__file__))}
+        language_server_tcp.settings({"settings": {"robot": {"python": {"env": env}}}})
 
         check_diagnostics(language_server_tcp, data_regression)
         assert len(server_apis) == 1
@@ -54,6 +75,7 @@ def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regressio
         assert len(server_apis) == 1
         assert len(server_processes) == 1
 
+        log.debug("Killing server api process.")
         for pid in server_processes:
             kill_process_and_subprocesses(pid)
 
@@ -75,7 +97,7 @@ def test_missing_message(language_server, ws_root_path):
     )
 
     # Make sure that we have a response if it's a request (i.e.: it has an id).
-    language_server.write(
+    msg = language_server.request(
         {
             "jsonrpc": "2.0",
             "id": "22",
@@ -84,7 +106,6 @@ def test_missing_message(language_server, ws_root_path):
         }
     )
 
-    msg = language_server.wait_for_message({"id": "22"})
     assert msg["error"]["code"] == -32601
 
 

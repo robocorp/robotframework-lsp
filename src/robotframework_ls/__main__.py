@@ -4,12 +4,12 @@
 import argparse
 import sys
 import os
-import logging.handlers
+import logging
 
 log = logging.getLogger(__name__)
 
 
-LOG_FORMAT = "%(asctime)s UTC - %(levelname)s - %(name)s\n%(message)s\n\n"
+LOG_FORMAT = "%(asctime)s UTC pid: %(process)d - %(threadName)s - %(levelname)s - %(name)s\n%(message)s\n\n"
 
 _critical_error_log_file = os.path.join(
     os.path.expanduser("~"), "robotframework_ls_critical.log"
@@ -78,7 +78,14 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
 
     args = parser.parse_args(args=args if args is not None else sys.argv[1:])
     Setup.options = args
-    _configure_logger(args.verbose, args.log_file)
+    verbose = args.verbose
+    log_file = args.log_file
+
+    if log_file:
+        f, ext = os.path.splitext(log_file)
+        log_file = "%s.%s%s" % (f, os.getpid(), ext)
+
+    _configure_logger(verbose, log_file)
 
     if args.tcp:
         start_tcp_lang_server(
@@ -90,27 +97,22 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
 
 
 def _configure_logger(verbose=0, log_file=None):
-    if getattr(_configure_logger, "called", False):
-        return  # i.e.: in dev mode we may call multiple times
-    _configure_logger.called = True
+    prev_log_handler = getattr(_configure_logger, "log_handler", None)
 
     root_logger = logging.root
 
     formatter = logging.Formatter(LOG_FORMAT)
     if log_file:
         log_file = os.path.expanduser(log_file)
-        log_handler = logging.handlers.RotatingFileHandler(
-            log_file,
-            mode="a",
-            maxBytes=50 * 1024 * 1024,
-            backupCount=10,
-            encoding=None,
-            delay=0,
-        )
+        log_handler = logging.FileHandler(log_file)
     else:
         log_handler = logging.StreamHandler()
     log_handler.setFormatter(formatter)
+    if prev_log_handler is not None:
+        root_logger.removeHandler(prev_log_handler)
+
     root_logger.addHandler(log_handler)
+    _configure_logger.log_handler = log_handler
 
     if verbose == 0:
         level = logging.CRITICAL
