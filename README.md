@@ -11,9 +11,9 @@ be installed in a separate python interpreter in case you need to run it with an
 Installing
 -----------
 
-Right now `robotframework-lsp` can be installed as a `.vsix` into VSCode.
+Right now `robotframework-lsp` can be installed from the ([VisualStudio Marketplace](https://marketplace.visualstudio.com/items?itemName=robocorptech.robotframework-lsp)) or as a `.vsix`.
 
-It can be downloaded from the latest `Deploy Extension` in [Robotframework-lsp Github Actions](https://github.com/robocorp/robotframework-lsp/actions).
+To get a `.vsix`, download the latest `Deploy Extension` in [Robotframework-lsp Github Actions](https://github.com/robocorp/robotframework-lsp/actions).
 
 See: [Install from a vsix](https://code.visualstudio.com/docs/editor/extension-gallery#_install-from-a-vsix) for details installing a `.vsix` into VSCode.
 
@@ -30,12 +30,13 @@ After having `robotframework-lsp` installed, some settings may need to be config
   libraries are installed.
   
 
-Features (0.0.3)
+Features (0.0.4)
 -----------------
 
 - Syntax highlighting
 - Syntax validation
 - Code-completion for section headers
+- Code-completion for section settings
 
 
 Developing
@@ -60,9 +61,12 @@ To build a VSIX, follow the steps in https://code.visualstudio.com/api/working-w
 New version release
 --------------------
 
-To release a new version, create a tag in the format below and push it:
+To release a new version:
 
-git tag robotframework-lsp-0.0.0
+- Update version (python -m dev set-version 0.0.4)
+- Update this README to add notes on features/fixes
+- Create a tag in the format below and push it:
+  git tag robotframework-lsp-0.0.0
 
 License: MIT
 -----------------
