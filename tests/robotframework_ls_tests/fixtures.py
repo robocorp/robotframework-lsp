@@ -72,7 +72,6 @@ def language_server_tcp(log_file):
     Starts a language server in the same process and communicates through tcp.
     """
     from robotframework_ls.__main__ import main
-
     import socket
     from robotframework_ls_tests.monitor_fixtures import dump_threads
 
@@ -83,6 +82,7 @@ def language_server_tcp(log_file):
     config = _LanguageServerConfig()
     start_event = threading.Event()
     finish_event = threading.Event()
+    language_server_instance_final = []
 
     def after_bind(server):
         address = server.socket.getsockname()
@@ -90,6 +90,15 @@ def language_server_tcp(log_file):
         start_event.set()
 
     def start_language_server():
+        def language_server_class(*args, **kwargs):
+            from robotframework_ls.robotframework_ls_impl import (
+                RobotFrameworkLanguageServer,
+            )
+
+            language_server_instance = RobotFrameworkLanguageServer(*args, **kwargs)
+            language_server_instance_final.append(language_server_instance)
+            return language_server_instance
+
         main(
             [
                 "--tcp",
@@ -99,6 +108,7 @@ def language_server_tcp(log_file):
                 "--log-file=%s" % log_file,
             ],
             after_bind=after_bind,
+            language_server_class=language_server_class,
         )
         finish_event.set()
 
@@ -111,6 +121,8 @@ def language_server_tcp(log_file):
     write_to = s.makefile("wb")
     read_from = s.makefile("rb")
     with _communicate_lang_server(write_to, read_from) as lang_server_client:
+        wait_for_condition(lambda: len(language_server_instance_final) == 1)
+        lang_server_client.language_server_instance = language_server_instance_final[0]
         yield lang_server_client
 
     if not finish_event.wait(TIMEOUT):
@@ -155,9 +167,11 @@ def language_server_process(log_file):
         stderr=subprocess.PIPE,
         stdin=subprocess.PIPE,
     )
-    assert language_server_process.returncode is None
+    returncode = language_server_process.poll()
+    assert returncode is None
     yield language_server_process
-    if language_server_process.returncode is None:
+    returncode = language_server_process.poll()
+    if returncode is None:
         kill_process_and_subprocesses(language_server_process.pid)
 
 

@@ -1,0 +1,138 @@
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: '[Arguments]'
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: '[Arguments]'
+    range:
+      end:
+        character: 1
+        line: 2
+      start:
+        character: 0
+        line: 2
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: '[Documentation]'
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: '[Documentation]'
+    range:
+      end:
+        character: 1
+        line: 2
+      start:
+        character: 0
+        line: 2
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: '[Return]'
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: '[Return]'
+    range:
+      end:
+        character: 1
+        line: 2
+      start:
+        character: 0
+        line: 2
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: '[Tags]'
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: '[Tags]'
+    range:
+      end:
+        character: 1
+        line: 2
+      start:
+        character: 0
+        line: 2
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: '[Teardown]'
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: '[Teardown]'
+    range:
+      end:
+        character: 1
+        line: 2
+      start:
+        character: 0
+        line: 2
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: '[Timeout]'
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: '[Timeout]'
+    range:
+      end:
+        character: 1
+        line: 2
+      start:
+        character: 0
+        line: 2

@@ -78,6 +78,8 @@ class _ReaderThread(threading.Thread):
                 message_matcher.notify(None)
 
     def _on_message(self, msg):
+        from robotframework_ls.options import Setup
+
         notify_matchers = []
         log.debug("Will handle read message: %s" % (msg,))
         with self._lock:
@@ -93,14 +95,15 @@ class _ReaderThread(threading.Thread):
                 if message_matcher is not None:
                     notify_matchers.append(message_matcher)
 
-            log.debug(
-                "Notify matchers: %s\nRemaining id matchers: %s\nRemaining pattern matchers: %s"
-                % (
-                    notify_matchers,
-                    self._id_message_matchers,
-                    self._pattern_message_matchers,
+            if Setup.options.DEBUG_MESSAGE_MATCHERS:
+                log.debug(
+                    "Notify matchers: %s\nRemaining id matchers: %s\nRemaining pattern matchers: %s"
+                    % (
+                        notify_matchers,
+                        self._id_message_matchers,
+                        self._pattern_message_matchers,
+                    )
                 )
-            )
 
         for message_matcher in notify_matchers:
             message_matcher.notify(msg)
@@ -169,6 +172,32 @@ class LanguageServerClientBase(object):
         self.next_id = partial(next, itertools.count())
 
     _USE_DEFAULT_TIMEOUT = []
+
+    def request_async(self, contents):
+        """
+        API which allows to wait for the message to complete.
+        
+        To use:
+            message_matcher = client.request_async(contents)
+            if message_matcher is not None:
+                if message_matcher.event.wait(5):
+                    ...
+                    msg = message_matcher.msg
+                else:
+                    # Timed out
+            
+        :param contents:
+        :return _MessageMatcher:
+        """
+        message_id = contents["id"]
+        message_matcher = self._reader_thread.obtain_id_message_matcher(message_id)
+        if message_matcher is None:
+            return None
+
+        if not self.write(contents):
+            return None
+
+        return message_matcher
 
     def request(
         self, contents, timeout=_USE_DEFAULT_TIMEOUT, default=COMMUNICATION_DROPPED

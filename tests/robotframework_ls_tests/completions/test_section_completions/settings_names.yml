@@ -8,19 +8,19 @@
   filterText: null
   insertText: null
   insertTextFormat: null
-  kind: 7
-  label: '*** Comment ***'
+  kind: 2
+  label: Default Tags
   preselect: false
   sortText: null
   textEdit:
-    newText: '*** Comment ***'
+    newText: Default Tags
     range:
       end:
-        character: 2
-        line: 0
+        character: 0
+        line: 3
       start:
         character: 0
-        line: 0
+        line: 3
 - additionalTextEdits: null
   command: null
   commitCharacters: null
@@ -31,19 +31,19 @@
   filterText: null
   insertText: null
   insertTextFormat: null
-  kind: 7
-  label: '*** Comments ***'
+  kind: 2
+  label: Documentation
   preselect: false
   sortText: null
   textEdit:
-    newText: '*** Comments ***'
+    newText: Documentation
     range:
       end:
-        character: 2
-        line: 0
+        character: 0
+        line: 3
       start:
         character: 0
-        line: 0
+        line: 3
 - additionalTextEdits: null
   command: null
   commitCharacters: null
@@ -54,19 +54,19 @@
   filterText: null
   insertText: null
   insertTextFormat: null
-  kind: 7
-  label: '*** Keyword ***'
+  kind: 2
+  label: Force Tags
   preselect: false
   sortText: null
   textEdit:
-    newText: '*** Keyword ***'
+    newText: Force Tags
     range:
       end:
-        character: 2
-        line: 0
+        character: 0
+        line: 3
       start:
         character: 0
-        line: 0
+        line: 3
 - additionalTextEdits: null
   command: null
   commitCharacters: null
@@ -77,19 +77,19 @@
   filterText: null
   insertText: null
   insertTextFormat: null
-  kind: 7
-  label: '*** Keywords ***'
+  kind: 2
+  label: Library
   preselect: false
   sortText: null
   textEdit:
-    newText: '*** Keywords ***'
+    newText: Library
     range:
       end:
-        character: 2
-        line: 0
+        character: 0
+        line: 3
       start:
         character: 0
-        line: 0
+        line: 3
 - additionalTextEdits: null
   command: null
   commitCharacters: null
@@ -100,19 +100,19 @@
   filterText: null
   insertText: null
   insertTextFormat: null
-  kind: 7
-  label: '*** Setting ***'
+  kind: 2
+  label: Metadata
   preselect: false
   sortText: null
   textEdit:
-    newText: '*** Setting ***'
+    newText: Metadata
     range:
       end:
-        character: 2
-        line: 0
+        character: 0
+        line: 3
       start:
         character: 0
-        line: 0
+        line: 3
 - additionalTextEdits: null
   command: null
   commitCharacters: null
@@ -123,19 +123,19 @@
   filterText: null
   insertText: null
   insertTextFormat: null
-  kind: 7
-  label: '*** Settings ***'
+  kind: 2
+  label: Resource
   preselect: false
   sortText: null
   textEdit:
-    newText: '*** Settings ***'
+    newText: Resource
     range:
       end:
-        character: 2
-        line: 0
+        character: 0
+        line: 3
       start:
         character: 0
-        line: 0
+        line: 3
 - additionalTextEdits: null
   command: null
   commitCharacters: null
@@ -146,19 +146,19 @@
   filterText: null
   insertText: null
   insertTextFormat: null
-  kind: 7
-  label: '*** Task ***'
+  kind: 2
+  label: Suite Setup
   preselect: false
   sortText: null
   textEdit:
-    newText: '*** Task ***'
+    newText: Suite Setup
     range:
       end:
-        character: 2
-        line: 0
+        character: 0
+        line: 3
       start:
         character: 0
-        line: 0
+        line: 3
 - additionalTextEdits: null
   command: null
   commitCharacters: null
@@ -169,19 +169,19 @@
   filterText: null
   insertText: null
   insertTextFormat: null
-  kind: 7
-  label: '*** Tasks ***'
+  kind: 2
+  label: Suite Teardown
   preselect: false
   sortText: null
   textEdit:
-    newText: '*** Tasks ***'
+    newText: Suite Teardown
     range:
       end:
-        character: 2
-        line: 0
+        character: 0
+        line: 3
       start:
         character: 0
-        line: 0
+        line: 3
 - additionalTextEdits: null
   command: null
   commitCharacters: null
@@ -192,19 +192,19 @@
   filterText: null
   insertText: null
   insertTextFormat: null
-  kind: 7
-  label: '*** Test Case ***'
+  kind: 2
+  label: Task Setup
   preselect: false
   sortText: null
   textEdit:
-    newText: '*** Test Case ***'
+    newText: Task Setup
     range:
       end:
-        character: 2
-        line: 0
+        character: 0
+        line: 3
       start:
         character: 0
-        line: 0
+        line: 3
 - additionalTextEdits: null
   command: null
   commitCharacters: null
@@ -215,19 +215,19 @@
   filterText: null
   insertText: null
   insertTextFormat: null
-  kind: 7
-  label: '*** Test Cases ***'
+  kind: 2
+  label: Task Teardown
   preselect: false
   sortText: null
   textEdit:
-    newText: '*** Test Cases ***'
+    newText: Task Teardown
     range:
       end:
-        character: 2
-        line: 0
+        character: 0
+        line: 3
       start:
         character: 0
-        line: 0
+        line: 3
 - additionalTextEdits: null
   command: null
   commitCharacters: null
@@ -238,19 +238,19 @@
   filterText: null
   insertText: null
   insertTextFormat: null
-  kind: 7
-  label: '*** Variable ***'
+  kind: 2
+  label: Task Template
   preselect: false
   sortText: null
   textEdit:
-    newText: '*** Variable ***'
+    newText: Task Template
     range:
       end:
-        character: 2
-        line: 0
+        character: 0
+        line: 3
       start:
         character: 0
-        line: 0
+        line: 3
 - additionalTextEdits: null
   command: null
   commitCharacters: null
@@ -261,16 +261,131 @@
   filterText: null
   insertText: null
   insertTextFormat: null
-  kind: 7
-  label: '*** Variables ***'
+  kind: 2
+  label: Task Timeout
   preselect: false
   sortText: null
   textEdit:
-    newText: '*** Variables ***'
+    newText: Task Timeout
     range:
       end:
-        character: 2
-        line: 0
+        character: 0
+        line: 3
       start:
         character: 0
-        line: 0
+        line: 3
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: Test Setup
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: Test Setup
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: Test Teardown
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: Test Teardown
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: Test Template
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: Test Template
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: Test Timeout
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: Test Timeout
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: Variables
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: Variables
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3

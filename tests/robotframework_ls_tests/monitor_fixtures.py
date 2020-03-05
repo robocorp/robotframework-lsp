@@ -78,8 +78,18 @@ def _start_monitoring_threads():
         dump_current_frames_thread.start()
 
 
+@pytest.hookimpl
 def pytest_unconfigure():
     _start_monitoring_threads()
+
+
+@pytest.hookimpl
+def pytest_configure(config):
+    from robotframework_ls.options import USE_TIMEOUTS
+    import os
+
+    if not USE_TIMEOUTS:
+        os.environ["PYTEST_TIMEOUT"] = "999999"
 
 
 @pytest.yield_fixture(scope="session", autouse=True)

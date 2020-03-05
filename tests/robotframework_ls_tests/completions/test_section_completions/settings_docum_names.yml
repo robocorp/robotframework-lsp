@@ -1,0 +1,23 @@
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 2
+  label: Documentation
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: Documentation
+    range:
+      end:
+        character: 5
+        line: 3
+      start:
+        character: 0
+        line: 3

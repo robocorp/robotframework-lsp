@@ -17,7 +17,6 @@ from robotframework_ls.jsonrpc.streams import JsonRpcStreamReader, JsonRpcStream
 
 from . import uris
 from .config import config
-from .workspace import Workspace
 
 log = logging.getLogger(__name__)
 
@@ -117,8 +116,12 @@ def start_tcp_lang_server(
         Called right after server.bind (so, it's possible to get the port with
         server.socket.getsockname() if port 0 was passed).
     """
-    if not issubclass(handler_class, MethodDispatcher):
-        raise ValueError("Handler class must be an instance of MethodDispatcher")
+
+    def create_handler(_, *args, **kwargs):
+        method_dispatcher = handler_class(*args, **kwargs)
+        if not isinstance(method_dispatcher, MethodDispatcher):
+            raise ValueError("Handler class must be an instance of MethodDispatcher")
+        return method_dispatcher
 
     def shutdown_server(*args):
         log.debug("Shutting down server")
@@ -130,7 +133,7 @@ def start_tcp_lang_server(
     wrapper_class = type(
         handler_class.__name__ + "Handler",
         (_StreamHandlerWrapper,),
-        {"DELEGATE_CLASS": partial(handler_class), "SHUTDOWN_CALL": shutdown_server},
+        {"DELEGATE_CLASS": create_handler, "SHUTDOWN_CALL": shutdown_server},
     )
 
     server = socketserver.TCPServer(
@@ -236,13 +239,18 @@ class PythonLanguageServer(MethodDispatcher):
         if workspaceFolders:
             workspaceFolders = [WorkspaceFolder(**w) for w in workspaceFolders]
 
-        self.workspace = Workspace(rootUri, workspaceFolders or [])
+        self.workspace = self._create_workspace(rootUri, workspaceFolders or [])
 
         if processId not in (None, -1, 0):
             exit_when_pid_exists(processId)
 
         # Get our capabilities
         return {"capabilities": self.capabilities()}
+
+    def _create_workspace(self, root_uri, workspace_folders):
+        from .workspace import Workspace
+
+        return Workspace(root_uri, workspace_folders)
 
     def m_initialized(self, **_kwargs):
         pass

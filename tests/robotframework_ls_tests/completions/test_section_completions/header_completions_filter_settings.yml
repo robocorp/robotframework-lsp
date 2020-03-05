@@ -8,7 +8,7 @@
   filterText: null
   insertText: null
   insertTextFormat: null
-  kind: 2
+  kind: 7
   label: '*** Setting ***'
   preselect: false
   sortText: null
@@ -31,7 +31,7 @@
   filterText: null
   insertText: null
   insertTextFormat: null
-  kind: 2
+  kind: 7
   label: '*** Settings ***'
   preselect: false
   sortText: null

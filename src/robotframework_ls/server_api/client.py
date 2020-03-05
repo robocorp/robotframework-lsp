@@ -14,7 +14,8 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         self._version = None
 
     def _check_process_alive(self, raise_exception=True):
-        if self.server_process.returncode is not None:
+        returncode = self.server_process.poll()
+        if returncode is not None:
             if raise_exception:
                 raise SubprocessDiedError(
                     "Process has already exited. Stderr: %s"
@@ -55,7 +56,7 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
 
         return self._version
 
-    def lint(self, source):
+    def lint(self, doc_uri):
         self._check_process_alive()
         msg_id = self.next_id()
         return self.request(
@@ -63,7 +64,7 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
                 "jsonrpc": "2.0",
                 "id": msg_id,
                 "method": "lint",
-                "params": {"source": source},
+                "params": {"doc_uri": doc_uri},
             },
             default=[],
         )
@@ -73,4 +74,26 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         msg_id = self.next_id()
         return self.request(
             {"jsonrpc": "2.0", "id": msg_id, "method": method_name, "params": params}
+        )
+
+    def open(self, uri, version, source):
+        self.forward(
+            "textDocument/didOpen",
+            {"textDocument": {"uri": uri, "version": version, "text": source}},
+        )
+
+    def request_section_name_complete(self, doc_uri, line, col):
+        """
+        :Note: async complete (returns _MessageMatcher).
+        """
+        self._check_process_alive()
+        msg_id = self.next_id()
+        params = {"doc_uri": doc_uri, "line": line, "col": col}
+        return self.request_async(
+            {
+                "jsonrpc": "2.0",
+                "id": msg_id,
+                "method": "sectionNameComplete",
+                "params": params,
+            }
         )

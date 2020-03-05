@@ -11,12 +11,15 @@ from robotframework_ls._utils import (
 import sys
 import weakref
 import os
+from functools import partial
+import itertools
 
 
 log = logging.getLogger(__name__)
 
 LINT_DEBOUNCE_S = 0.5  # 500 ms
 ROBOT_FILE_EXTENSIONS = (".robot", ".settings")
+_next_id = partial(next, itertools.count(0))
 
 
 class _ServerApi(object):
@@ -31,6 +34,11 @@ class _ServerApi(object):
         self._robot_framework_language_server = weakref.ref(
             robot_framework_language_server
         )
+        self._initializing = False
+
+    @property
+    def robot_framework_language_server(self):
+        return self._robot_framework_language_server()
 
     @property
     def _workspace(self):
@@ -90,86 +98,99 @@ class _ServerApi(object):
         return env
 
     def _get_server_api(self):
-        server_process = self._server_process
-        if server_process is None or not is_process_alive(server_process.pid):
-            with self._server_lock:
-                # Check again with lock.
-                if self._server_process is not None:
-                    # If someone killed it, dispose of internal references
-                    # and create a new process.
-                    if not is_process_alive(self._server_process.pid):
-                        self._dispose_server_process()
+        with self._server_lock:
+            server_process = self._server_process
 
-                if self._server_process is None:
-                    try:
-                        from robotframework_ls.options import Setup
-                        from robotframework_ls.server_api.client import (
-                            RobotFrameworkApiClient,
-                        )
-                        from robotframework_ls.server_api.server__main__ import (
-                            start_server_process,
-                        )
-                        from robotframework_ls.jsonrpc.streams import (
-                            JsonRpcStreamWriter,
-                        )
-                        from robotframework_ls.jsonrpc.streams import (
-                            JsonRpcStreamReader,
-                        )
+            if server_process is not None:
+                # If someone killed it, dispose of internal references
+                # and create a new process.
+                if not is_process_alive(server_process.pid):
+                    server_process = None
+                    self._dispose_server_process()
 
-                        args = []
-                        if Setup.options.verbose:
-                            args.append("-" + "v" * int(Setup.options.verbose))
-                        if Setup.options.log_file:
+            if server_process is None:
+                try:
+                    from robotframework_ls.options import Setup
+                    from robotframework_ls.server_api.client import (
+                        RobotFrameworkApiClient,
+                    )
+                    from robotframework_ls.server_api.server__main__ import (
+                        start_server_process,
+                    )
+                    from robotframework_ls.jsonrpc.streams import (
+                        JsonRpcStreamWriter,
+                        JsonRpcStreamReader,
+                    )
+
+                    args = []
+                    if Setup.options.verbose:
+                        args.append("-" + "v" * int(Setup.options.verbose))
+                    if Setup.options.log_file:
+                        log_id = _next_id()
+                        # i.e.: use a log id in case we create more than one in the
+                        # same session.
+                        if log_id == 0:
                             args.append("--log-file=" + Setup.options.log_file + ".api")
+                        else:
+                            args.append(
+                                "--log-file="
+                                + Setup.options.log_file
+                                + (".%s" % (log_id,))
+                                + ".api"
+                            )
 
-                        python_exe = self._get_python_executable()
-                        environ = self._get_environ()
+                    python_exe = self._get_python_executable()
+                    environ = self._get_environ()
 
-                        self._used_python_executable = python_exe
-                        self._used_environ = environ
+                    self._used_python_executable = python_exe
+                    self._used_environ = environ
 
-                        server_process = start_server_process(
-                            args=args, python_exe=python_exe, env=environ
+                    server_process = start_server_process(
+                        args=args, python_exe=python_exe, env=environ
+                    )
+
+                    self._server_process = server_process
+
+                    write_to = server_process.stdin
+                    read_from = server_process.stdout
+                    w = JsonRpcStreamWriter(write_to, sort_keys=True)
+                    r = JsonRpcStreamReader(read_from)
+
+                    api = self._server_api = RobotFrameworkApiClient(
+                        w, r, server_process
+                    )
+                    api.initialize(process_id=os.getpid())
+
+                    # Open existing documents in the API.
+                    for document in self._workspace.iter_documents():
+                        api.forward(
+                            "textDocument/didOpen",
+                            {
+                                "textDocument": {
+                                    "uri": document.uri,
+                                    "version": document.version,
+                                    "text": document.source,
+                                }
+                            },
                         )
 
-                        self._server_process = server_process
-
-                        write_to = server_process.stdin
-                        read_from = server_process.stdout
-                        w = JsonRpcStreamWriter(write_to, sort_keys=True)
-                        r = JsonRpcStreamReader(read_from)
-
-                        self._server_api = RobotFrameworkApiClient(w, r, server_process)
-                        self._server_api.initialize(process_id=os.getpid())
-
-                        # Open existing documents in the API.
-                        for document in self._workspace.iter_documents():
-                            self.forward(
-                                "textDocument/didOpen",
-                                {
-                                    "textDocument": {
-                                        "uri": document.uri,
-                                        "version": document.version,
-                                        "text": document.source,
-                                    }
-                                },
-                            )
-
-                    except Exception as e:
-                        if server_process is not None:
-                            log.exception(
-                                "Error starting robotframework server api (server_process=None)."
-                            )
-                        else:
-                            log.exception(
-                                "Error starting robotframework server api. Exit code: %s Base exception: %s. Stderr: %s"
-                                % (
-                                    server_process.returncode,
-                                    e,
-                                    server_process.stderr.read(),
-                                )
-                            )
-                        self._dispose_server_process()
+                except Exception as e:
+                    if server_process is None:
+                        log.exception(
+                            "Error starting robotframework server api (server_process=None)."
+                        )
+                    else:
+                        log.exception(
+                            "Error starting robotframework server api. Exit code: %s Base exception: %s. Stderr: %s"
+                            % (server_process.poll(), e, server_process.stderr.read())
+                        )
+                    self._dispose_server_process()
+                finally:
+                    if server_process is not None:
+                        log.debug(
+                            "Server api (%s) created pid: %s"
+                            % (self, server_process.pid)
+                        )
 
         return self._server_api
 
@@ -177,6 +198,7 @@ class _ServerApi(object):
     def _dispose_server_process(self):
         with self._server_lock:
             try:
+                log.debug("Dispose server process.")
                 if self._server_process is not None:
                     if is_process_alive(self._server_process.pid):
                         kill_process_and_subprocesses(self._server_process.pid)
@@ -186,11 +208,17 @@ class _ServerApi(object):
                 self._used_environ = None
                 self._used_python_executable = None
 
-    def lint(self, source):
+    def lint(self, doc_uri):
         with self._server_lock:
             api = self._get_server_api()
             if api is not None:
-                return api.lint(source)
+                return api.lint(doc_uri)
+
+    def request_section_name_complete(self, doc_uri, line, col):
+        with self._server_lock:
+            api = self._get_server_api()
+            if api is not None:
+                return api.request_section_name_complete(doc_uri, line, col)
 
     @log_and_silence_errors(log)
     def forward(self, method_name, params):
@@ -198,6 +226,13 @@ class _ServerApi(object):
             api = self._get_server_api()
             if api is not None:
                 api.forward(method_name, params)
+
+    @log_and_silence_errors(log)
+    def open(self, uri, version, source):
+        with self._server_lock:
+            api = self._get_server_api()
+            if api is not None:
+                api.open(uri, version, source)
 
     @log_and_silence_errors(log)
     def exit(self):
@@ -333,13 +368,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def lint(self, doc_uri, is_saved):
         # Since we're debounced, the document may no longer be open
         try:
-            document = self.workspace.get_document(doc_uri, create=False)
-            if document is None:
-                return
-
-            source = document.source
             found = []
-            diagnostics_msg = self._api.lint(source)
+            diagnostics_msg = self._api.lint(doc_uri)
             if diagnostics_msg:
                 found = diagnostics_msg.get("result", [])
             self._lsp_messages.publish_diagnostics(doc_uri, found)
@@ -363,5 +393,19 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         ctx = CompletionContext(document, line, col)
         completions = []
+
+        # Asynchronous completion.
+        message_matcher = self._api.request_section_name_complete(doc_uri, line, col)
         completions.extend(section_completions.complete(ctx))
+
+        if message_matcher is not None:
+            # i.e.: wait 3 seconds for the completion and bail out if we
+            # can't get it.
+            if message_matcher.event.wait(3):
+                msg = message_matcher.msg
+                if msg is not None:
+                    result = msg.get("result")
+                    if result:
+                        completions.extend(result)
+
         return completions

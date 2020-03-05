@@ -11,13 +11,8 @@ def complete(completion_context):
     from robotframework_ls.impl.string_matcher import StringMatcher
 
     selection = completion_context.sel  #: :type selection: DocumentSelection
-    current_line = selection.current_line
-    if not current_line:
-        return []
-
+    line_start = selection.line_to_column
     items = []
-
-    line_start = current_line[: selection.col]
 
     if line_start:
         tu = text_utilities.TextUtilities(line_start)
@@ -42,7 +37,7 @@ def complete(completion_context):
                     # text_edit = None
                     items.append(
                         CompletionItem(
-                            label, kind=CompletionItemKind.Method, text_edit=text_edit
+                            label, kind=CompletionItemKind.Class, text_edit=text_edit
                         )
                     )
 

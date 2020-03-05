@@ -1,8 +1,12 @@
 import logging
 import os.path
+import traceback
 import sys
 
 __file__ = os.path.abspath(__file__)
+if __file__.endswith((".pyc", ".pyo")):
+    __file__ = __file__[:-1]
+
 log = logging.getLogger(__name__)
 
 _critical_error_log_file = os.path.join(
@@ -39,6 +43,7 @@ def start_server_process(args=(), python_exe=None, env=None):
     """
     import subprocess
     import threading
+    from robotframework_ls.options import Setup
 
     if python_exe:
         if not os.path.exists(python_exe):
@@ -61,7 +66,8 @@ def start_server_process(args=(), python_exe=None, env=None):
     for key, val in environ.items():
         env_log.append("  %s=%s" % (key, val))
 
-    log.debug("\n".join(env_log))
+    if Setup.options.DEBUG_PROCESS_ENVIRON:
+        log.debug("\n".join(env_log))
 
     language_server_process = subprocess.Popen(
         args,
@@ -101,7 +107,6 @@ if __name__ == "__main__":
         __main__.main(language_server_class=RobotFrameworkServerApi)
     except:
         # Critical error (the logging may not be set up properly).
-        import traceback
 
         # Print to file and stderr.
         with open(_critical_error_log_file, "a+") as stream:

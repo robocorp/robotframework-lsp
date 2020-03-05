@@ -13,14 +13,17 @@ class Section(object):
 
     # Aliases for names (so, it's possible to use either an alias or the
     # name itself).
-    aliases = ()
+    aliases = {}
 
     # The names that can appear multiple times.
     multi_use = ("Metadata", "Library", "Resource", "Variables")
 
+    names_in_brackets = True
+
 
 class TestCaseFileSettingsSection(Section):
     markers = ("Setting", "Settings")
+    names_in_brackets = False
 
     names = (
         "Documentation",
@@ -47,6 +50,7 @@ class TestCaseFileSettingsSection(Section):
 
 class InitFileSettingsSection(Section):
     markers = ("Setting", "Settings")
+    names_in_brackets = False
 
     names = (
         "Documentation",
@@ -65,6 +69,7 @@ class InitFileSettingsSection(Section):
 
 class ResourceFileSettingsSection(Section):
     markers = ("Setting", "Settings")
+    names_in_brackets = False
 
     names = ("Documentation", "Library", "Resource", "Variables")
 

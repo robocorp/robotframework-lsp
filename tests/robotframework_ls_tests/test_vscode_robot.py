@@ -2,7 +2,6 @@ import logging
 import os
 
 from robotframework_ls_tests.fixtures import TIMEOUT
-import pytest
 
 
 log = logging.getLogger(__name__)
@@ -30,7 +29,9 @@ def test_diagnostics(language_server, ws_root_path, data_regression):
     language_server.initialize(ws_root_path, process_id=os.getpid())
     import robot
 
-    env = {"PYTHONPATH": os.path.dirname(os.path.dirname(robot.__file__))}
+    env = {
+        "PYTHONPATH": os.path.dirname(os.path.dirname(os.path.abspath(robot.__file__)))
+    }
     language_server.settings({"settings": {"robot": {"python": {"env": env}}}})
     check_diagnostics(language_server, data_regression)
 
@@ -56,15 +57,23 @@ def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regressio
     server_processes = set()
 
     def on_get_server_api(server_api):
-        # do something else
-        server_apis.add(server_api)
-        server_processes.add(server_api._server_process.pid)
+        if (
+            server_api.robot_framework_language_server
+            is language_server_tcp.language_server_instance
+        ):
+            # do something else
+            server_apis.add(server_api)
+            server_processes.add(server_api._server_process.pid)
 
     with _utils.after(_ServerApi, "_get_server_api", on_get_server_api):
         language_server_tcp.initialize(ws_root_path, process_id=os.getpid())
         import robot
 
-        env = {"PYTHONPATH": os.path.dirname(os.path.dirname(robot.__file__))}
+        env = {
+            "PYTHONPATH": os.path.dirname(
+                os.path.dirname(os.path.abspath(robot.__file__))
+            )
+        }
         language_server_tcp.settings({"settings": {"robot": {"python": {"env": env}}}})
 
         check_diagnostics(language_server_tcp, data_regression)
@@ -80,8 +89,8 @@ def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regressio
             kill_process_and_subprocesses(pid)
 
         check_diagnostics(language_server_tcp, data_regression)
-        assert len(server_apis) == 1
         assert len(server_processes) == 2
+        assert len(server_apis) == 1
 
 
 def test_missing_message(language_server, ws_root_path):

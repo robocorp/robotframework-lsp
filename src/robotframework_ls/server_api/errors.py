@@ -71,8 +71,7 @@ def collect_errors(source):
     """
     from robot.parsing import get_model
 
-    # TODO: Check if we should provide a curdir.
-    model = get_model(source, curdir=None)
+    model = get_model(source)
 
     errors_visitor = ErrorsVisitor()
     errors_visitor.visit(model)

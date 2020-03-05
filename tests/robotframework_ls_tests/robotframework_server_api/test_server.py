@@ -1,4 +1,9 @@
 import pytest
+import os
+
+__file__ = os.path.abspath(__file__)
+if __file__.endswith((".pyc", ".pyo")):
+    __file__ = __file__[:-1]
 
 
 @pytest.fixture
@@ -11,14 +16,18 @@ def server_process(tmpdir):
 
     import robot
 
-    env = {"PYTHONPATH": os.path.dirname(os.path.dirname(robot.__file__))}
+    env = {
+        "PYTHONPATH": os.path.dirname(os.path.dirname(os.path.abspath(robot.__file__)))
+    }
 
     language_server_api_process = start_server_process(
         args=["-vv", "--log-file=%s" % log_file], env=env
     )
-    assert language_server_api_process.returncode is None
+    returncode = language_server_api_process.poll()
+    assert returncode is None
     yield language_server_api_process
-    if language_server_api_process.returncode is None:
+    returncode = language_server_api_process.poll()
+    if returncode is None:
         kill_process_and_subprocesses(language_server_api_process.pid)
 
     if os.path.exists(log_file):
@@ -52,9 +61,9 @@ def test_server(server_api_process_io, data_regression):
 
     server_api_process_io.initialize(process_id=os.getpid())
     assert server_api_process_io.get_version() == "3.2"
-    data_regression.check(
-        server_api_process_io.lint("*** foo bar ***"), basename="errors"
-    )
+
+    server_api_process_io.open("untitled", 1, "*** foo bar ***")
+    data_regression.check(server_api_process_io.lint("untitled"), basename="errors")
 
 
 def _build_launch_env():

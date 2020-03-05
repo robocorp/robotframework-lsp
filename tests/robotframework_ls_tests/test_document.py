@@ -20,12 +20,13 @@ from robotframework_ls.workspace import Document
 from robotframework_ls.lsp import TextDocumentContentChangeEvent, Position, Range
 from robotframework_ls import uris
 import pytest
+import os.path
 
 DOC = """document
 for
 testing
 """
-DOC_URI = uris.from_fs_path(__file__)
+DOC_URI = uris.from_fs_path(os.path.abspath(__file__))
 
 
 @pytest.fixture

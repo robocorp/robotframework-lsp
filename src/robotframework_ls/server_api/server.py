@@ -44,10 +44,12 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     def lint(self, *args, **kwargs):
         pass  # No-op for this server.
 
-    def m_lint(self, source=None):
-        if not source:
-            return []
+    def _create_workspace(self, root_uri, workspace_folders):
+        from robotframework_ls.impl.robot_workspace import RobotWorkspace
 
+        return RobotWorkspace(root_uri, workspace_folders)
+
+    def m_lint(self, doc_uri):
         if not self._check_min_version((3, 2)):
             from robotframework_ls.server_api.errors import Error
 
@@ -62,8 +64,26 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         try:
             from robotframework_ls.server_api.errors import collect_errors
 
+            document = self.workspace.get_document(doc_uri, create=False)
+            if document is None:
+                return []
+
+            source = document.source
             errors = collect_errors(source)
             return [error.to_lsp_diagnostic() for error in errors]
         except:
             log.exception("Error collecting errors.")
             return []
+
+    def m_section_name_complete(self, doc_uri, line, col):
+        from robotframework_ls.impl import section_name_completions
+        from robotframework_ls.impl.completion_context import CompletionContext
+
+        if not self._check_min_version((3, 2)):
+            log.info("robotframework version too old for completions.")
+            return []
+
+        document = self.workspace.get_document(doc_uri, create=False)
+        if document is None:
+            return []
+        return section_name_completions.complete(CompletionContext(document, line, col))

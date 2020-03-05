@@ -8,6 +8,9 @@ import logging
 
 log = logging.getLogger(__name__)
 
+__file__ = os.path.abspath(__file__)
+if __file__.endswith((".pyc", ".pyo")):
+    __file__ = __file__[:-1]
 
 LOG_FORMAT = "%(asctime)s UTC pid: %(process)d - %(threadName)s - %(levelname)s - %(name)s\n%(message)s\n\n"
 
@@ -58,7 +61,7 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
         sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         import robotframework_ls  # @UnusedImport
 
-    from robotframework_ls.options import Setup
+    from robotframework_ls.options import Setup, Options
 
     from robotframework_ls.python_ls import (
         start_io_lang_server,
@@ -77,7 +80,7 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
     add_arguments(parser)
 
     args = parser.parse_args(args=args if args is not None else sys.argv[1:])
-    Setup.options = args
+    Setup.options = Options(args)
     verbose = args.verbose
     log_file = args.log_file
 

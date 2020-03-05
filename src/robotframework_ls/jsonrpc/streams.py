@@ -95,7 +95,6 @@ class JsonRpcStreamWriter(object):
             self._wfile.close()
 
     def write(self, message):
-        log.debug("Obtaining writer lock.")
         with self._wfile_lock:
             if self._wfile.closed:
                 log.debug("Unable to write %s (file already closed).", (message,))

@@ -26,8 +26,8 @@ jobs:
           "ubuntu-py38",
           "ubuntu-pypy3",
           
-          "macos-py37",
-          "macos-py38",
+#           "macos-py37",
+#           "macos-py38",
         ]
         
         include:
@@ -46,12 +46,14 @@ jobs:
           - name: "ubuntu-pypy3"
             python: "pypy3"
             os: ubuntu-latest
-          - name: "macos-py37"
-            python: "3.7"
-            os: macos-latest
-          - name: "macos-py38"
-            python: "3.8"
-            os: macos-latest
+# Github actions seems to be having issues with Mac (regardless of which is the last action it may not complete)
+# so, leave it commented out for now.
+#           - name: "macos-py37"
+#             python: "3.7"
+#             os: macos-latest
+#           - name: "macos-py38"
+#             python: "3.8"
+#             os: macos-latest
 
     steps:
     - uses: actions/checkout@v1
@@ -74,4 +76,9 @@ jobs:
         pip install -r test_requirements.txt
         cd ..
     - name: Test
-      run: python -m pytest tests/robotframework_ls_tests
+      run: python -u tests/run_tests.py
+    - uses: actions/upload-artifact@v1
+      with:
+        name: tests_output.txt
+        path: tests/tests_output.txt
+
