@@ -11,7 +11,7 @@ be installed in a separate python interpreter in case you need to run it with an
 Installing
 -----------
 
-Right now `robotframework-lsp` can be installed from the ([VisualStudio Marketplace](https://marketplace.visualstudio.com/items?itemName=robocorptech.robotframework-lsp)) or as a `.vsix`.
+`robotframework-lsp` can be installed from the [VisualStudio Marketplace](https://marketplace.visualstudio.com/items?itemName=robocorptech.robotframework-lsp) or as a `.vsix`.
 
 To get a `.vsix`, download the latest `Deploy Extension` in [Robotframework-lsp Github Actions](https://github.com/robocorp/robotframework-lsp/actions).
 
