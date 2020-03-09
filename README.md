@@ -68,15 +68,5 @@ To release a new version:
 - Create a tag in the format below and push it:
   git tag robotframework-lsp-0.0.0
 
-License: MIT
------------------
-
-
-Acknowledgements:
------------------
-
-The basic language server protocol implementation is based on:
-
-https://github.com/palantir/python-jsonrpc-server
-
-https://github.com/palantir/python-language-server
+License: Apache 2.0
+-------------------
