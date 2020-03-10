@@ -11,7 +11,7 @@ def complete(completion_context):
         CompletionItemKind,
     )
 
-    section_name = completion_context.get_section_name()
+    section_name = completion_context.get_current_section_name()
     if section_name:
         from robotframework_ls.impl.string_matcher import StringMatcher
 

@@ -289,3 +289,37 @@ class LSPMessages(object):
         self._endpoint.notify(
             self.M_SHOW_MESSAGE, params={"type": msg_type, "message": message}
         )
+
+
+class Error(object):
+
+    __slots__ = "msg start end".split(" ")
+
+    def __init__(self, msg, start, end):
+        """
+        Note: `start` and `end` are tuples with (line, col).
+        """
+        self.msg = msg
+        self.start = start
+        self.end = end
+
+    def to_dict(self):
+        return dict((name, getattr(self, name)) for name in self.__slots__)
+
+    def __repr__(self):
+        import json
+
+        return json.dumps(self.to_dict())
+
+    __str__ = __repr__
+
+    def to_lsp_diagnostic(self):
+        return {
+            "range": {
+                "start": {"line": self.start[0], "character": self.start[1]},
+                "end": {"line": self.end[0], "character": self.end[1]},
+            },
+            "severity": DiagnosticSeverity.Error,
+            "source": "robotframework",
+            "message": self.msg,
+        }

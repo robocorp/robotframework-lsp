@@ -1,5 +1,7 @@
 import re
 import logging
+from robotframework_ls.impl.robot_workspace import RobotDocument
+from robotframework_ls.cache import instance_cache
 
 log = logging.getLogger(__name__)
 
@@ -63,9 +65,9 @@ _NOT_SET = "NOT_SET"
 
 class CompletionContext(object):
 
-    TYPE_TEST_CASE = "test_case"
-    TYPE_INIT = "init"
-    TYPE_RESOURCE = "resource"
+    TYPE_TEST_CASE = RobotDocument.TYPE_TEST_CASE
+    TYPE_INIT = RobotDocument.TYPE_INIT
+    TYPE_RESOURCE = RobotDocument.TYPE_RESOURCE
 
     def __init__(self, doc, line=_NOT_SET, col=_NOT_SET):
         """
@@ -90,24 +92,30 @@ class CompletionContext(object):
 
         self.sel = doc.selection(line, col)
 
+    @instance_cache
     def get_type(self):
-        path = self.doc.path
-        if not path:
-            return
+        return self.doc.get_type()
 
-        import os.path
+    @instance_cache
+    def get_ast(self):
+        return self.doc.get_ast()
 
-        basename = os.path.basename(path)
-        if basename.startswith("__init__"):
-            return self.TYPE_INIT
+    @instance_cache
+    def get_ast_current_section(self):
+        """
+        :rtype: robot.parsing.model.blocks.Section|NoneType
+        """
+        from robotframework_ls.impl import ast_utils
 
-        if basename.endswith(".resource"):
-            return self.TYPE_RESOURCE
-
-        return self.TYPE_TEST_CASE
+        ast = self.get_ast()
+        section = ast_utils.find_section(ast, self.sel.line)
+        return section
 
     def get_accepted_section_header_words(self):
-        sections = self.get_accepted_sections()
+        """
+        :rtype: list(str)
+        """
+        sections = self._get_accepted_sections()
         ret = []
         for section in sections:
             for marker in section.markers:
@@ -115,7 +123,23 @@ class CompletionContext(object):
         ret.sort()
         return ret
 
-    def get_accepted_sections(self):
+    def get_current_section_name(self):
+        """
+        :rtype: str|NoneType
+        """
+        section = self.get_ast_current_section()
+
+        section_name = None
+        header = getattr(section, "header", None)
+        if header is not None:
+            section_name = header.value
+
+        return section_name
+
+    def _get_accepted_sections(self):
+        """
+        :rtype: list(robot_constants.Section)
+        """
         from robotframework_ls.impl import robot_constants
 
         t = self.get_type()
@@ -132,48 +156,36 @@ class CompletionContext(object):
             log.critical("Unrecognized section: %s", t)
             return robot_constants.TEST_CASE_FILE_SECTIONS
 
-    def get_ast(self):
-        from robotframework_ls.impl import robot_constants
-        from robot.parsing import get_model, get_resource_model, get_init_model
-
-        source = self.doc.source
-
-        t = self.get_type()
-        if t == self.TYPE_TEST_CASE:
-            return get_model(source)
-
-        elif t == self.TYPE_RESOURCE:
-            return get_resource_model(source)
-
-        elif t == self.TYPE_INIT:
-            return get_init_model(source)
-
-        else:
-            log.critical("Unrecognized section: %s", t)
-            return robot_constants.TEST_CASE_FILE_SECTIONS
-
-    def get_section_name(self):
-        ast = self.get_ast()
-        last_section_name = None
-        for section in ast.sections:
-            header = getattr(section, "header", None)
-            if header is not None:
-                # <= because the ast lineno is 1-based.
-                if header.lineno <= self.sel.line:
-                    header_name = header.value
-                    last_section_name = header_name
-
-                else:
-                    return last_section_name
-
-        return last_section_name
-
     def get_section(self, section_name):
+        """
+        :rtype: robot_constants.Section
+        """
         section_name = section_name.lower()
-        accepted_sections = self.get_accepted_sections()
+        accepted_sections = self._get_accepted_sections()
 
         for section in accepted_sections:
             for marker in section.markers:
                 if marker.lower() == section_name:
                     return section
         return None
+
+    def get_current_token(self):
+        """
+        :rtype: robotframework_ls.impl.ast_utils._TokenInfo|NoneType
+        """
+        from robotframework_ls.impl import ast_utils
+
+        section = self.get_ast_current_section()
+        if section is None:
+            return None
+        return ast_utils.find_token(section, self.sel.line, self.sel.col)
+
+    @instance_cache
+    def get_imported_libraries(self):
+        from robotframework_ls.impl import ast_utils
+
+        ast = self.get_ast()
+        ret = []
+        for library_import in ast_utils.iter_library_imports(ast):
+            ret.append(library_import.node)
+        return ret

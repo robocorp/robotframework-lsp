@@ -13,6 +13,7 @@ import weakref
 import os
 from functools import partial
 import itertools
+import time
 
 
 log = logging.getLogger(__name__)
@@ -220,6 +221,12 @@ class _ServerApi(object):
             if api is not None:
                 return api.request_section_name_complete(doc_uri, line, col)
 
+    def request_keyword_complete(self, doc_uri, line, col):
+        with self._server_lock:
+            api = self._get_server_api()
+            if api is not None:
+                return api.request_keyword_complete(doc_uri, line, col)
+
     @log_and_silence_errors(log)
     def forward(self, method_name, params):
         with self._server_lock:
@@ -266,6 +273,12 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def config(self, config):
         self._config = config
         self._api.config = self.config
+
+    @overrides(PythonLanguageServer._create_workspace)
+    def _create_workspace(self, root_uri, workspace_folders):
+        from robotframework_ls.impl.robot_workspace import RobotWorkspace
+
+        return RobotWorkspace(root_uri, workspace_folders)
 
     @overrides(PythonLanguageServer.capabilities)
     def capabilities(self):
@@ -395,17 +408,28 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         completions = []
 
         # Asynchronous completion.
-        message_matcher = self._api.request_section_name_complete(doc_uri, line, col)
+        message_matchers = []
+        message_matchers.append(
+            self._api.request_section_name_complete(doc_uri, line, col)
+        )
+        message_matchers.append(self._api.request_keyword_complete(doc_uri, line, col))
         completions.extend(section_completions.complete(ctx))
 
-        if message_matcher is not None:
-            # i.e.: wait 3 seconds for the completion and bail out if we
-            # can't get it.
-            if message_matcher.event.wait(3):
-                msg = message_matcher.msg
-                if msg is not None:
-                    result = msg.get("result")
-                    if result:
-                        completions.extend(result)
+        curtime = time.time()
+        maxtime = curtime + 3
+        for message_matcher in message_matchers:
+            if message_matcher is not None:
+                # i.e.: wait 3 seconds for the completion and bail out if we
+                # can't get it.
+                available_time = maxtime - time.time()
+                if available_time <= 0:
+                    break
+
+                if message_matcher.event.wait(available_time):
+                    msg = message_matcher.msg
+                    if msg is not None:
+                        result = msg.get("result")
+                        if result:
+                            completions.extend(result)
 
         return completions

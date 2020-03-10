@@ -1,13 +1,13 @@
 def test_section_completions(data_regression):
     from robotframework_ls.impl import section_completions
     from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.workspace import Document
+    from robotframework_ls.impl.robot_workspace import RobotDocument
 
-    doc = Document("unused", source="""**""")
+    doc = RobotDocument("unused", source="""**""")
     completions = section_completions.complete(CompletionContext(doc))
     data_regression.check(completions, basename="header_completions_all")
 
-    doc = Document("unused", source="""**settin""")
+    doc = RobotDocument("unused", source="""**settin""")
     completions = section_completions.complete(CompletionContext(doc))
     data_regression.check(completions, basename="header_completions_filter_settings")
 
@@ -15,9 +15,9 @@ def test_section_completions(data_regression):
 def test_section_name_settings_completions(data_regression):
     from robotframework_ls.impl import section_name_completions
     from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.workspace import Document
+    from robotframework_ls.impl.robot_workspace import RobotDocument
 
-    doc = Document(
+    doc = RobotDocument(
         "unused",
         source="""
 *** Settings ***
@@ -27,7 +27,7 @@ def test_section_name_settings_completions(data_regression):
     completions = section_name_completions.complete(CompletionContext(doc))
     data_regression.check(completions, basename="settings_names")
 
-    doc = Document(
+    doc = RobotDocument(
         "unused",
         source="""
 *** Settings ***
@@ -41,9 +41,9 @@ Docum""",
 def test_section_name_keywords_completions(data_regression):
     from robotframework_ls.impl import section_name_completions
     from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.workspace import Document
+    from robotframework_ls.impl.robot_workspace import RobotDocument
 
-    doc = Document(
+    doc = RobotDocument(
         "unused",
         source="""
 *** keywords ***
@@ -53,7 +53,7 @@ def test_section_name_keywords_completions(data_regression):
     completions = section_name_completions.complete(CompletionContext(doc))
     data_regression.check(completions, basename="keywords_no_names")
 
-    doc = Document(
+    doc = RobotDocument(
         "unused",
         source="""
 *** keywords ***
@@ -62,7 +62,7 @@ def test_section_name_keywords_completions(data_regression):
     completions = section_name_completions.complete(CompletionContext(doc))
     data_regression.check(completions, basename="keywords_names")
 
-    doc = Document(
+    doc = RobotDocument(
         "unused",
         source="""
 *** keywords ***
@@ -71,7 +71,7 @@ def test_section_name_keywords_completions(data_regression):
     completions = section_name_completions.complete(CompletionContext(doc))
     data_regression.check(completions, basename="keywords_docum_names")
 
-    doc = Document(
+    doc = RobotDocument(
         "unused",
         source="""
 *** keywords ***

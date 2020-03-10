@@ -1,5 +1,6 @@
 def test_parse_errors(data_regression):
-    from robotframework_ls.server_api.errors import collect_errors
+    from robotframework_ls.impl.robot_workspace import RobotDocument
+    from robotframework_ls.impl.ast_utils import collect_errors
 
     source = """*** Settings ***
 Documentation     A test suite with a single test for valid login.
@@ -22,7 +23,8 @@ Valid Login
     Welcome Page Should Be Open
     [Teardown]    Close Browser"""
 
-    errors = collect_errors(source)
+    doc = RobotDocument("unsaved", source)
+    errors = collect_errors(doc.get_ast())
 
     data_regression.check([e.to_dict() for e in errors], basename="errors")
 

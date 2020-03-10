@@ -19,7 +19,7 @@ import logging
 try:
     from functools import lru_cache
 except ImportError:
-    from py2_backports.functools_lru_cache import lru_cache
+    from robotframework_ls.libs_py2.py2_backports.functools_lru_cache import lru_cache
 
 
 from robotframework_ls import _utils, uris

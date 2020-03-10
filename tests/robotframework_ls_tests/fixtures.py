@@ -193,3 +193,10 @@ def language_server(request):
         return request.getfixturevalue("language_server_io")
     else:
         return request.getfixturevalue("language_server_tcp")
+
+
+@pytest.fixture
+def workspace():
+    from robotframework_ls_tests.workspace_fixture import WorkspaceFixture
+
+    return WorkspaceFixture()

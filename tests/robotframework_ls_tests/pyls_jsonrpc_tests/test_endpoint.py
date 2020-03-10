@@ -16,7 +16,10 @@
 # limitations under the License.
 
 # pylint: disable=redefined-outer-name
-from concurrent import futures
+try:
+    from concurrent import futures
+except ImportError:
+    from robotframework_ls.libs_py2.concurrent import futures
 import time
 import mock
 import pytest

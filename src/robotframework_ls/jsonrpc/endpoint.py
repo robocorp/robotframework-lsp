@@ -18,7 +18,10 @@ import logging
 import uuid
 import sys
 
-from concurrent import futures
+try:
+    from concurrent import futures
+except ImportError:
+    from robotframework_ls.libs_py2.concurrent import futures
 from .exceptions import (
     JsonRpcException,
     JsonRpcRequestCancelled,

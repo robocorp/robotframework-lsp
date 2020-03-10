@@ -82,18 +82,23 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             {"textDocument": {"uri": uri, "version": version, "text": source}},
         )
 
+    def _build_msg(self, method_name, **params):
+        self._check_process_alive()
+        msg_id = self.next_id()
+        return {"jsonrpc": "2.0", "id": msg_id, "method": method_name, "params": params}
+
     def request_section_name_complete(self, doc_uri, line, col):
         """
         :Note: async complete (returns _MessageMatcher).
         """
-        self._check_process_alive()
-        msg_id = self.next_id()
-        params = {"doc_uri": doc_uri, "line": line, "col": col}
         return self.request_async(
-            {
-                "jsonrpc": "2.0",
-                "id": msg_id,
-                "method": "sectionNameComplete",
-                "params": params,
-            }
+            self._build_msg("sectionNameComplete", doc_uri=doc_uri, line=line, col=col)
+        )
+
+    def request_keyword_complete(self, doc_uri, line, col):
+        """
+        :Note: async complete (returns _MessageMatcher).
+        """
+        return self.request_async(
+            self._build_msg("keywordComplete", doc_uri=doc_uri, line=line, col=col)
         )

@@ -138,8 +138,11 @@ class Document(object):
     @_source.setter
     def _source(self, source):
         # i.e.: when the source is set, reset the lines.
-        self.__lines = None
         self.__source = source
+        self._clear_caches()
+
+    def _clear_caches(self):
+        self.__lines = None
 
     @property
     def _lines(self):

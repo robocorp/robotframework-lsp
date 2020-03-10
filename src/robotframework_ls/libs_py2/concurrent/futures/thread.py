@@ -4,7 +4,7 @@
 """Implements ThreadPoolExecutor."""
 
 import atexit
-from concurrent.futures import _base
+from robotframework_ls.libs_py2.concurrent.futures import _base
 import itertools
 import Queue as queue
 import threading

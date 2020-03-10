@@ -51,8 +51,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
     def m_lint(self, doc_uri):
         if not self._check_min_version((3, 2)):
-            from robotframework_ls.server_api.errors import Error
-
+            from robotframework_ls.lsp import Error
             msg = (
                 "robotframework version (%s) too old for linting.\n"
                 "Please install a newer version and restart the language server."
@@ -62,14 +61,13 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return [Error(msg, (0, 0), (1, 0)).to_lsp_diagnostic()]
 
         try:
-            from robotframework_ls.server_api.errors import collect_errors
-
+            from robotframework_ls.impl.ast_utils import collect_errors
             document = self.workspace.get_document(doc_uri, create=False)
             if document is None:
                 return []
 
-            source = document.source
-            errors = collect_errors(source)
+            ast = document.get_ast()
+            errors = collect_errors(ast)
             return [error.to_lsp_diagnostic() for error in errors]
         except:
             log.exception("Error collecting errors.")
@@ -87,3 +85,16 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if document is None:
             return []
         return section_name_completions.complete(CompletionContext(document, line, col))
+
+    def m_keyword_complete(self, doc_uri, line, col):
+        from robotframework_ls.impl import keyword_completions
+        from robotframework_ls.impl.completion_context import CompletionContext
+
+        if not self._check_min_version((3, 2)):
+            log.info("robotframework version too old for completions.")
+            return []
+
+        document = self.workspace.get_document(doc_uri, create=False)
+        if document is None:
+            return []
+        return keyword_completions.complete(CompletionContext(document, line, col))

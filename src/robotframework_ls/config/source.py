@@ -17,7 +17,7 @@
 try:
     import configparser
 except ImportError:
-    from py2_backports import configparser
+    from robotframework_ls.libs_py2.py2_backports import configparser
 
 import logging
 import os
