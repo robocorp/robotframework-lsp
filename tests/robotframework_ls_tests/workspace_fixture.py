@@ -19,12 +19,12 @@ class WorkspaceFixture(object):
             )
         return self._ws
 
-    def set_root(self, relative_path):
+    def set_root(self, relative_path, **kwargs):
         from robotframework_ls import uris
         from robotframework_ls.impl.robot_workspace import RobotWorkspace
 
         path = self._get_path_relative_to_resources(relative_path)
-        self._ws = RobotWorkspace(uris.from_fs_path(path))
+        self._ws = RobotWorkspace(uris.from_fs_path(path), **kwargs)
 
     def _get_path_relative_to_resources(self, resources_relative_path, must_exist=True):
         path = os.path.join(self.resources_dir, resources_relative_path)

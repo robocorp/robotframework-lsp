@@ -1,5 +1,6 @@
 from robotframework_ls.python_ls import PythonLanguageServer
 import logging
+from robotframework_ls._utils import overrides
 
 
 log = logging.getLogger(__name__)
@@ -13,6 +14,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     """
 
     def __init__(self, read_from, write_to):
+        from robotframework_ls.impl.libspec_manager import LibspecManager
+
+        self.libspec_manager = LibspecManager()
         PythonLanguageServer.__init__(self, read_from, write_to, max_workers=1)
         self._version = None
 
@@ -44,14 +48,18 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     def lint(self, *args, **kwargs):
         pass  # No-op for this server.
 
+    @overrides(PythonLanguageServer._create_workspace)
     def _create_workspace(self, root_uri, workspace_folders):
         from robotframework_ls.impl.robot_workspace import RobotWorkspace
 
-        return RobotWorkspace(root_uri, workspace_folders)
+        return RobotWorkspace(
+            root_uri, workspace_folders, libspec_manager=self.libspec_manager
+        )
 
     def m_lint(self, doc_uri):
         if not self._check_min_version((3, 2)):
             from robotframework_ls.lsp import Error
+
             msg = (
                 "robotframework version (%s) too old for linting.\n"
                 "Please install a newer version and restart the language server."
@@ -61,8 +69,15 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return [Error(msg, (0, 0), (1, 0)).to_lsp_diagnostic()]
 
         try:
+
+            workspace = self.workspace
+            if not workspace:
+                log.info("workspace still not initialized.")
+                return []
+
             from robotframework_ls.impl.ast_utils import collect_errors
-            document = self.workspace.get_document(doc_uri, create=False)
+
+            document = workspace.get_document(doc_uri, create=False)
             if document is None:
                 return []
 
@@ -81,7 +96,11 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             log.info("robotframework version too old for completions.")
             return []
 
-        document = self.workspace.get_document(doc_uri, create=False)
+        workspace = self.workspace
+        if not workspace:
+            log.info("workspace still not initialized.")
+            return []
+        document = workspace.get_document(doc_uri, create=False)
         if document is None:
             return []
         return section_name_completions.complete(CompletionContext(document, line, col))
@@ -93,8 +112,24 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if not self._check_min_version((3, 2)):
             log.info("robotframework version too old for completions.")
             return []
+        workspace = self.workspace
+        if not workspace:
+            log.info("workspace still not initialized.")
+            return []
 
-        document = self.workspace.get_document(doc_uri, create=False)
+        document = workspace.get_document(doc_uri, create=False)
         if document is None:
             return []
-        return keyword_completions.complete(CompletionContext(document, line, col))
+        return keyword_completions.complete(
+            CompletionContext(document, line, col, workspace=workspace)
+        )
+
+    def m_shutdown(self, **_kwargs):
+        ret = PythonLanguageServer.m_shutdown(self, **_kwargs)
+        self.libspec_manager.dispose()
+        return ret
+
+    def m_exit(self, **_kwargs):
+        ret = PythonLanguageServer.m_exit(self, **_kwargs)
+        self.libspec_manager.dispose()
+        return ret

@@ -69,7 +69,7 @@ class CompletionContext(object):
     TYPE_INIT = RobotDocument.TYPE_INIT
     TYPE_RESOURCE = RobotDocument.TYPE_RESOURCE
 
-    def __init__(self, doc, line=_NOT_SET, col=_NOT_SET):
+    def __init__(self, doc, line=_NOT_SET, col=_NOT_SET, workspace=None):
         """
         :param robotframework_ls.workspace.Document doc:
         :param int line:
@@ -91,6 +91,11 @@ class CompletionContext(object):
             line, col = doc.get_last_line_col()
 
         self.sel = doc.selection(line, col)
+        self._workspace = workspace
+
+    @property
+    def workspace(self):
+        return self._workspace
 
     @instance_cache
     def get_type(self):

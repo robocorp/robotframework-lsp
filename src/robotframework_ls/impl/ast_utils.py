@@ -191,7 +191,7 @@ def _iter_nodes_filtered(node, accept_class):
     """
     :rtype: generator(tuple(list,ast.AST))
     """
-    if isinstance(accept_class, (list, tuple, set)):
+    if not isinstance(accept_class, (list, tuple, set)):
         accept_class = (accept_class,)
     for stack, node in _iter_nodes(node):
         if node.__class__.__name__ in accept_class:
@@ -202,6 +202,5 @@ def iter_library_imports(node):
     """
     :rtype: generator(_NodeInfo)
     """
-    print_ast(node)
     for stack, node in _iter_nodes_filtered(node, accept_class="LibraryImport"):
         yield _NodeInfo(tuple(stack), node)

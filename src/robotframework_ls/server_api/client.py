@@ -24,7 +24,9 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             return False
         return True
 
-    def initialize(self, msg_id=None, process_id=None):
+    def initialize(
+        self, msg_id=None, process_id=None, root_uri="", workspace_folders=()
+    ):
         self._check_process_alive()
         msg_id = msg_id if msg_id is not None else self.next_id()
         return self.request(
@@ -32,7 +34,11 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
                 "jsonrpc": "2.0",
                 "id": msg_id,
                 "method": "initialize",
-                "params": {"processId": process_id},
+                "params": {
+                    "processId": process_id,
+                    "rootUri": root_uri,
+                    "workspaceFolders": workspace_folders,
+                },
             },
             timeout=7 if USE_TIMEOUTS else NO_TIMEOUT,
         )

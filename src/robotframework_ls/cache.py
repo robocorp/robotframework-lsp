@@ -15,25 +15,47 @@ def instance_cache(func):
     
     instance = MyClass()
     instance.cache_this()
-    instance.clear_cache(instance)
+    instance.cache_clear(instance)
 
     """
-    cache_name = "__cache__%s" % (func.__name__,)
+    cache_key = "__cache__%s" % (func.__name__,)
 
     @functools.wraps(func)
     def new_func(self, *args, **kwargs):
         try:
-            return getattr(self, cache_name)
-        except AttributeError:
+            cache = getattr(self, "__instance_cache__")
+        except:
+            cache = {}
+            setattr(self, "__instance_cache__", cache)
+
+        try:
+            func_cache = cache[cache_key]
+        except KeyError:
+            func_cache = cache[cache_key] = {}
+
+        args_cache_key = None
+        if args:
+            args_cache_key = (args_cache_key, tuple(args))
+        if kwargs:
+            # We don't do that because if the caller uses args and then
+            # later kwargs, we'd have to match the parameter to the position,
+            # so, simplify for now and don't accept kwargs.
+            raise AssertionError("Cannot currently deal with kwargs.")
+
+        try:
+            return func_cache[args_cache_key]
+        except KeyError:
             ret = func(self, *args, **kwargs)
-            setattr(self, cache_name, ret)
+            func_cache[args_cache_key] = ret
             return ret
 
-    def clear_cache(self):
+    def cache_clear(self):
         try:
-            delattr(self, cache_name)
-        except AttributeError:
+            cache = getattr(self, "__instance_cache__")
+        except:
             pass
+        else:
+            cache.pop(cache_key, None)
 
-    new_func.clear_cache = clear_cache
+    new_func.cache_clear = cache_clear
     return new_func

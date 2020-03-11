@@ -160,7 +160,14 @@ class _ServerApi(object):
                     api = self._server_api = RobotFrameworkApiClient(
                         w, r, server_process
                     )
-                    api.initialize(process_id=os.getpid())
+                    api.initialize(
+                        process_id=os.getpid(),
+                        root_uri=self._workspace.root_uri,
+                        workspace_folders=list(
+                            {"uri": folder.uri, "name": folder.name}
+                            for folder in list(self._workspace.folders.values())
+                        ),
+                    )
 
                     # Open existing documents in the API.
                     for document in self._workspace.iter_documents():
@@ -181,10 +188,18 @@ class _ServerApi(object):
                             "Error starting robotframework server api (server_process=None)."
                         )
                     else:
-                        log.exception(
-                            "Error starting robotframework server api. Exit code: %s Base exception: %s. Stderr: %s"
-                            % (server_process.poll(), e, server_process.stderr.read())
-                        )
+                        exitcode = server_process.poll()
+                        if exitcode is not None:
+                            # Note: only read() if the process exited.
+                            log.exception(
+                                "Error starting robotframework server api. Exit code: %s Base exception: %s. Stderr: %s"
+                                % (exitcode, e, server_process.stderr.read())
+                            )
+                        else:
+                            log.exception(
+                                "Error starting robotframework server api (still running). Base exception: %s."
+                                % (exitcode, e)
+                            )
                     self._dispose_server_process()
                 finally:
                     if server_process is not None:
@@ -278,7 +293,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def _create_workspace(self, root_uri, workspace_folders):
         from robotframework_ls.impl.robot_workspace import RobotWorkspace
 
-        return RobotWorkspace(root_uri, workspace_folders)
+        return RobotWorkspace(root_uri, workspace_folders, generate_ast=False)
 
     @overrides(PythonLanguageServer.capabilities)
     def capabilities(self):

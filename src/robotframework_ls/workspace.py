@@ -46,6 +46,9 @@ class Workspace(object):
         """
         self._folders[folder.uri] = folder
 
+    def remove_folder(self, folder_uri):
+        self._folders.pop(folder_uri, None)
+
     def iter_documents(self):
         return self._docs.values()
 
@@ -84,9 +87,6 @@ class Workspace(object):
 
     def remove_document(self, doc_uri):
         self._docs.pop(doc_uri, None)
-
-    def remove_folder(self, folder_uri):
-        self._folders.pop(folder_uri, None)
 
     @property
     def root_path(self):

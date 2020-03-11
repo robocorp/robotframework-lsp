@@ -15,11 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-
-try:
-    from functools import lru_cache
-except ImportError:
-    from robotframework_ls.libs_py2.py2_backports.functools_lru_cache import lru_cache
+from robotframework_ls.cache import instance_cache
 
 
 from robotframework_ls import _utils, uris
@@ -55,7 +51,7 @@ class Config(object):
     def capabilities(self):
         return self._capabilities
 
-    @lru_cache(maxsize=32)
+    @instance_cache
     def settings(self, document_path=None):
         """Settings are constructed from a few sources:
 
@@ -133,7 +129,7 @@ class Config(object):
         return s
 
     def cache_clear(self):
-        self.settings.cache_clear()
+        self.settings.cache_clear(self)
 
     def find_parents(self, path, names):
         root_path = uris.to_fs_path(self._root_uri)

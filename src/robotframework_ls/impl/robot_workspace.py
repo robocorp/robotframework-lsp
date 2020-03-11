@@ -2,13 +2,35 @@ from robotframework_ls.workspace import Workspace, Document
 import logging
 from robotframework_ls._utils import overrides
 from robotframework_ls.cache import instance_cache
+from robotframework_ls.constants import NULL
 
 log = logging.getLogger(__name__)
 
 
 class RobotWorkspace(Workspace):
+    def __init__(
+        self, root_uri, workspace_folders=None, libspec_manager=NULL, generate_ast=True
+    ):
+        Workspace.__init__(self, root_uri, workspace_folders=workspace_folders)
+        self._generate_ast = generate_ast
+        self.libspec_manager = libspec_manager
+        for folder in self.folders:
+            self.libspec_manager.add_workspace_folder(folder)
+        if root_uri not in self.folders:
+            self.libspec_manager.add_workspace_folder(root_uri)
+
+    @overrides(Workspace.add_folder)
+    def add_folder(self, folder):
+        Workspace.add_folder(self, folder)
+        self.libspec_manager.add_workspace_folder(folder.uri)
+
+    @overrides(Workspace.remove_folder)
+    def remove_folder(self, folder_uri):
+        Workspace.remove_folder(self, folder_uri)
+        self.libspec_manager.remove_workspace_folder(folder_uri)
+
     def _create_document(self, doc_uri, source=None, version=None):
-        return RobotDocument(doc_uri, source, version)
+        return RobotDocument(doc_uri, source, version, generate_ast=self._generate_ast)
 
 
 class RobotDocument(Document):
@@ -17,14 +39,15 @@ class RobotDocument(Document):
     TYPE_INIT = "init"
     TYPE_RESOURCE = "resource"
 
-    def __init__(self, uri, source=None, version=None):
+    def __init__(self, uri, source=None, version=None, generate_ast=True):
         Document.__init__(self, uri, source=source, version=version)
+        self._generate_ast = generate_ast
         self._ast = None
 
     @overrides(Document._clear_caches)
     def _clear_caches(self):
         Document._clear_caches(self)
-        self.get_ast.clear_cache(self)
+        self.get_ast.cache_clear(self)
 
     def get_type(self):
         path = self.path
@@ -45,6 +68,10 @@ class RobotDocument(Document):
 
     @instance_cache
     def get_ast(self):
+        if not self._generate_ast:
+            raise AssertionError(
+                "The AST can only be accessed in the RobotFrameworkServerApi, not in the RobotFrameworkLanguageServer."
+            )
         from robotframework_ls.impl import robot_constants
         from robot.parsing import get_model, get_resource_model, get_init_model
 

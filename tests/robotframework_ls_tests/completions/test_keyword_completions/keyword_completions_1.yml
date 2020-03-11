@@ -1,0 +1,46 @@
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 7
+  label: Verify Another Model
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: Verify Another Model
+    range:
+      end:
+        character: 6
+        line: 7
+      start:
+        character: 4
+        line: 7
+- additionalTextEdits: null
+  command: null
+  commitCharacters: null
+  data: null
+  deprecated: false
+  detail: null
+  documentation: null
+  filterText: null
+  insertText: null
+  insertTextFormat: null
+  kind: 7
+  label: Verify Model
+  preselect: false
+  sortText: null
+  textEdit:
+    newText: Verify Model
+    range:
+      end:
+        character: 6
+        line: 7
+      start:
+        character: 4
+        line: 7
