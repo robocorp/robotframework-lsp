@@ -13,10 +13,13 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     an API to use the bits we need from robotframework in a separate process).
     """
 
-    def __init__(self, read_from, write_to):
+    def __init__(self, read_from, write_to, libspec_manager=None):
         from robotframework_ls.impl.libspec_manager import LibspecManager
 
-        self.libspec_manager = LibspecManager()
+        if libspec_manager is None:
+            libspec_manager = LibspecManager()
+
+        self.libspec_manager = libspec_manager
         PythonLanguageServer.__init__(self, read_from, write_to, max_workers=1)
         self._version = None
 
@@ -45,6 +48,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         version = self.m_version()
         return check_min_version(version, min_version)
 
+    @overrides(PythonLanguageServer.lint)
     def lint(self, *args, **kwargs):
         pass  # No-op for this server.
 

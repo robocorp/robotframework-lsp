@@ -16,7 +16,8 @@
 # limitations under the License.
 """Some Language Server Protocol constants
 
-https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md
+https://github.com/microsoft/language-server-protocol/tree/gh-pages/_specifications
+https://microsoft.github.io/language-server-protocol/specification
 """
 
 

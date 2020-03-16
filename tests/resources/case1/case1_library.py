@@ -12,5 +12,5 @@ def verify_model(model):
     print("verifying model:", model)
 
 
-def verify_another_model(model):
+def verify_another_model(model=10):
     print("verifying another model:", model)

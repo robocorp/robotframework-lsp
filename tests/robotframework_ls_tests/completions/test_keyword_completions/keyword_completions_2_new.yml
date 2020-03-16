@@ -4,16 +4,16 @@
   data: null
   deprecated: false
   detail: null
-  documentation: ''
+  documentation: ':type new_model: int'
   filterText: null
   insertText: null
   insertTextFormat: 2
   kind: 7
-  label: Verify Another Model
+  label: New Verify Model
   preselect: false
   sortText: null
   textEdit:
-    newText: Verify Another Model ${1:model=10}
+    newText: New Verify Model ${1:new model}
     range:
       end:
         character: 10
@@ -27,16 +27,16 @@
   data: null
   deprecated: false
   detail: null
-  documentation: ':type model: int'
+  documentation: ''
   filterText: null
   insertText: null
   insertTextFormat: 2
   kind: 7
-  label: Verify Model
+  label: new Verify Another Model
   preselect: false
   sortText: null
   textEdit:
-    newText: Verify Model ${1:model}
+    newText: new Verify Another Model ${1:new model=10}
     range:
       end:
         character: 10

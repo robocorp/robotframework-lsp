@@ -1,7 +1,8 @@
 def test_keywords_manager(tmpdir, workspace):
+
     from robotframework_ls.impl.libspec_manager import LibspecManager
     import os
-    import pytest
+    from robotframework_ls.impl import robot_constants
 
     user_home = tmpdir.join("user_home")
     libspec_manager = LibspecManager(user_home=str(user_home))
@@ -14,10 +15,11 @@ def test_keywords_manager(tmpdir, workspace):
         )
         assert os.path.exists(libspec_file)
         libspec_manager.synchronize()
-        assert libspec_manager.get_library_names() == ["case1_library"]
+        assert sorted(libspec_manager.get_library_names()) == sorted(
+            ["case1_library"] + list(robot_constants.STDLIBS)
+        )
 
-        with pytest.raises(KeyError):
-            libspec_manager.get_library_info("invalid")
+        assert libspec_manager.get_library_info("invalid") is None
 
         library = libspec_manager.get_library_info("case1_library")
 
@@ -28,9 +30,11 @@ def test_keywords_manager(tmpdir, workspace):
 
         os.remove(libspec_file)
         libspec_manager.synchronize()
-        assert libspec_manager.get_library_names() == []
-        with pytest.raises(KeyError):
-            libspec_manager.get_library_info("case1_library", create=False)
+        assert sorted(libspec_manager.get_library_names()) == sorted(
+            robot_constants.STDLIBS
+        )
+
+        assert libspec_manager.get_library_info("case1_library", create=False) is None
         assert libspec_manager.get_library_info("case1_library") is not None
     finally:
         libspec_manager.dispose()

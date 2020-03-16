@@ -1,5 +1,6 @@
 import pytest
 import os
+from robotframework_ls.constants import NULL
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
@@ -102,7 +103,9 @@ def _initialize_robotframework_server_api():
 
     read_from = BytesIO()
     write_to = BytesIO()
-    robot_framework_server_api = RobotFrameworkServerApi(read_from, write_to)
+    robot_framework_server_api = RobotFrameworkServerApi(
+        read_from, write_to, libspec_manager=NULL
+    )
     robot_framework_server_api.m_initialize()
     return robot_framework_server_api
 

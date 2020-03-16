@@ -7,6 +7,8 @@ import sys
 from robotframework_ls.options import USE_TIMEOUTS, NO_TIMEOUT
 from robotframework_ls._utils import TimeoutError
 
+__file__ = os.path.abspath(__file__)
+
 
 log = logging.getLogger(__name__)
 
@@ -175,6 +177,19 @@ def language_server_process(log_file):
         kill_process_and_subprocesses(language_server_process.pid)
 
 
+@pytest.fixture(autouse=True, scope="session")
+def sync_builtins(tmpdir_factory):
+    """
+    Pre-generate the builtins.
+    """
+    os.environ["ROBOTFRAMEWORK_LS_USER_HOME"] = str(
+        tmpdir_factory.mktemp("ls_user_home")
+    )
+    from robotframework_ls.impl.libspec_manager import LibspecManager
+
+    LibspecManager().synchronize()
+
+
 @pytest.fixture
 def language_server_io(language_server_process):
     """
@@ -195,8 +210,58 @@ def language_server(request):
         return request.getfixturevalue("language_server_tcp")
 
 
-@pytest.fixture
-def workspace():
-    from robotframework_ls_tests.workspace_fixture import WorkspaceFixture
+class _CasesFixture(object):
+    def __init__(self):
+        self.resources_dir = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), "resources"
+        )
+        assert os.path.exists(self.resources_dir)
 
-    return WorkspaceFixture()
+    def get_path(self, resources_relative_path, must_exist=True):
+        path = os.path.join(self.resources_dir, resources_relative_path)
+        if must_exist:
+            assert os.path.exists(path), "%s does not exist." % (path,)
+        return path
+
+    def copy_to(self, case, dest_dir):
+        import shutil
+
+        shutil.copytree(self.get_path(case, must_exist=True), dest_dir)
+
+
+@pytest.fixture
+def cases():
+    return _CasesFixture()
+
+
+class _WorkspaceFixture(object):
+    def __init__(self, cases):
+        self._cases = cases
+        self._ws = None
+
+    @property
+    def ws(self):
+        if self._ws is None:
+            raise AssertionError(
+                "set_root must be called prior to using the workspace."
+            )
+        return self._ws
+
+    def set_root(self, relative_path, **kwargs):
+        from robotframework_ls import uris
+        from robotframework_ls.impl.robot_workspace import RobotWorkspace
+
+        path = self._cases.get_path(relative_path)
+        self._ws = RobotWorkspace(uris.from_fs_path(path), **kwargs)
+
+    def get_doc(self, root_relative_path, create=True):
+        from robotframework_ls import uris
+
+        path = os.path.join(self._ws.root_path, root_relative_path)
+        uri = uris.from_fs_path(path)
+        return self.ws.get_document(uri, create=create)
+
+
+@pytest.fixture
+def workspace(cases):
+    return _WorkspaceFixture(cases)

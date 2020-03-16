@@ -118,3 +118,25 @@ RESOURCE_FILE_SECTIONS = [
     KeywordSection,
     CommentSection,
 ]
+
+
+BUILTIN_LIB = "BuiltIn"
+
+# From robot.libraries.STDLIBS
+STDLIBS = tuple(
+    (
+        BUILTIN_LIB,
+        "Collections",
+        "DateTime",
+        "Dialogs",
+        "Easter",
+        "OperatingSystem",
+        "Process",
+        # "Remote", -- Remote doesn't really have any keywords.
+        "Reserved",
+        "Screenshot",
+        "String",
+        "Telnet",
+        "XML",
+    )
+)
