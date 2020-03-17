@@ -12,6 +12,8 @@ def complete(completion_context):
     )
     from robotframework_ls.impl.string_matcher import StringMatcher
     from robotframework_ls.impl.robot_constants import BUILTIN_LIB
+    from robotframework_ls.impl.robot_specbuilder import markdown_doc
+    from robotframework_ls.lsp import MarkupKind
 
     ret = []
 
@@ -54,8 +56,9 @@ def complete(completion_context):
                                     label,
                                     kind=CompletionItemKind.Class,
                                     text_edit=text_edit,
-                                    documentation=keyword.doc or "",
+                                    documentation=markdown_doc(keyword),
                                     insertTextFormat=InsertTextFormat.Snippet,
+                                    documentationFormat=MarkupKind.Markdown,
                                 ).to_dict()
                             )
 

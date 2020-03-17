@@ -1,17 +1,7 @@
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: Default Tags
   preselect: false
-  sortText: null
   textEdit:
     newText: Default Tags
     range:
@@ -21,20 +11,10 @@
       start:
         character: 0
         line: 3
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: Documentation
   preselect: false
-  sortText: null
   textEdit:
     newText: Documentation
     range:
@@ -44,20 +24,10 @@
       start:
         character: 0
         line: 3
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: Force Tags
   preselect: false
-  sortText: null
   textEdit:
     newText: Force Tags
     range:
@@ -67,20 +37,10 @@
       start:
         character: 0
         line: 3
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: Library
   preselect: false
-  sortText: null
   textEdit:
     newText: Library
     range:
@@ -90,20 +50,10 @@
       start:
         character: 0
         line: 3
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: Metadata
   preselect: false
-  sortText: null
   textEdit:
     newText: Metadata
     range:
@@ -113,20 +63,10 @@
       start:
         character: 0
         line: 3
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: Resource
   preselect: false
-  sortText: null
   textEdit:
     newText: Resource
     range:
@@ -136,20 +76,10 @@
       start:
         character: 0
         line: 3
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: Suite Setup
   preselect: false
-  sortText: null
   textEdit:
     newText: Suite Setup
     range:
@@ -159,20 +89,10 @@
       start:
         character: 0
         line: 3
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: Suite Teardown
   preselect: false
-  sortText: null
   textEdit:
     newText: Suite Teardown
     range:
@@ -182,20 +102,10 @@
       start:
         character: 0
         line: 3
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: Task Setup
   preselect: false
-  sortText: null
   textEdit:
     newText: Task Setup
     range:
@@ -205,20 +115,10 @@
       start:
         character: 0
         line: 3
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: Task Teardown
   preselect: false
-  sortText: null
   textEdit:
     newText: Task Teardown
     range:
@@ -228,20 +128,10 @@
       start:
         character: 0
         line: 3
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: Task Template
   preselect: false
-  sortText: null
   textEdit:
     newText: Task Template
     range:
@@ -251,20 +141,10 @@
       start:
         character: 0
         line: 3
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: Task Timeout
   preselect: false
-  sortText: null
   textEdit:
     newText: Task Timeout
     range:
@@ -274,20 +154,10 @@
       start:
         character: 0
         line: 3
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: Test Setup
   preselect: false
-  sortText: null
   textEdit:
     newText: Test Setup
     range:
@@ -297,20 +167,10 @@
       start:
         character: 0
         line: 3
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: Test Teardown
   preselect: false
-  sortText: null
   textEdit:
     newText: Test Teardown
     range:
@@ -320,20 +180,10 @@
       start:
         character: 0
         line: 3
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: Test Template
   preselect: false
-  sortText: null
   textEdit:
     newText: Test Template
     range:
@@ -343,20 +193,10 @@
       start:
         character: 0
         line: 3
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: Test Timeout
   preselect: false
-  sortText: null
   textEdit:
     newText: Test Timeout
     range:
@@ -366,20 +206,10 @@
       start:
         character: 0
         line: 3
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: Variables
   preselect: false
-  sortText: null
   textEdit:
     newText: Variables
     range:

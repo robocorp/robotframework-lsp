@@ -42,6 +42,11 @@ class CompletionItemKind(object):
     Reference = 18
 
 
+class MarkupKind(object):
+    PlainText = "plaintext"
+    Markdown = "markdown"
+
+
 class DocumentHighlightKind(object):
     Text = 1
     Read = 2
@@ -109,7 +114,8 @@ class _Base(object):
         for key, value in self.__dict__.items():
             if hasattr(value, "to_dict"):
                 value = value.to_dict()
-            new_dict[key] = value
+            if value is not None:
+                new_dict[key] = value
         return new_dict
 
 
@@ -165,6 +171,7 @@ class CompletionItem(_Base):
         commitCharacters=None,  # List[str]
         command=None,  # Command
         data=None,
+        documentationFormat=None,  # str
     ):
         self.label = label
         self.kind = kind
@@ -181,6 +188,7 @@ class CompletionItem(_Base):
         self.commitCharacters = commitCharacters
         self.command = command
         self.data = data
+        self.documentationFormat = documentationFormat
 
 
 class Position(_Base):

@@ -1,20 +1,10 @@
 id: 1
 jsonrpc: '2.0'
 result:
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 7
   label: '*** Setting ***'
   preselect: false
-  sortText: null
   textEdit:
     newText: '*** Setting ***'
     range:
@@ -24,20 +14,10 @@ result:
       start:
         character: 0
         line: 0
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 7
   label: '*** Settings ***'
   preselect: false
-  sortText: null
   textEdit:
     newText: '*** Settings ***'
     range:

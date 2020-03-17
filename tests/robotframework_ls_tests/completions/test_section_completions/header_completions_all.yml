@@ -1,17 +1,7 @@
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 7
   label: '*** Comment ***'
   preselect: false
-  sortText: null
   textEdit:
     newText: '*** Comment ***'
     range:
@@ -21,20 +11,10 @@
       start:
         character: 0
         line: 0
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 7
   label: '*** Comments ***'
   preselect: false
-  sortText: null
   textEdit:
     newText: '*** Comments ***'
     range:
@@ -44,20 +24,10 @@
       start:
         character: 0
         line: 0
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 7
   label: '*** Keyword ***'
   preselect: false
-  sortText: null
   textEdit:
     newText: '*** Keyword ***'
     range:
@@ -67,20 +37,10 @@
       start:
         character: 0
         line: 0
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 7
   label: '*** Keywords ***'
   preselect: false
-  sortText: null
   textEdit:
     newText: '*** Keywords ***'
     range:
@@ -90,20 +50,10 @@
       start:
         character: 0
         line: 0
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 7
   label: '*** Setting ***'
   preselect: false
-  sortText: null
   textEdit:
     newText: '*** Setting ***'
     range:
@@ -113,20 +63,10 @@
       start:
         character: 0
         line: 0
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 7
   label: '*** Settings ***'
   preselect: false
-  sortText: null
   textEdit:
     newText: '*** Settings ***'
     range:
@@ -136,20 +76,10 @@
       start:
         character: 0
         line: 0
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 7
   label: '*** Task ***'
   preselect: false
-  sortText: null
   textEdit:
     newText: '*** Task ***'
     range:
@@ -159,20 +89,10 @@
       start:
         character: 0
         line: 0
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 7
   label: '*** Tasks ***'
   preselect: false
-  sortText: null
   textEdit:
     newText: '*** Tasks ***'
     range:
@@ -182,20 +102,10 @@
       start:
         character: 0
         line: 0
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 7
   label: '*** Test Case ***'
   preselect: false
-  sortText: null
   textEdit:
     newText: '*** Test Case ***'
     range:
@@ -205,20 +115,10 @@
       start:
         character: 0
         line: 0
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 7
   label: '*** Test Cases ***'
   preselect: false
-  sortText: null
   textEdit:
     newText: '*** Test Cases ***'
     range:
@@ -228,20 +128,10 @@
       start:
         character: 0
         line: 0
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 7
   label: '*** Variable ***'
   preselect: false
-  sortText: null
   textEdit:
     newText: '*** Variable ***'
     range:
@@ -251,20 +141,10 @@
       start:
         character: 0
         line: 0
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 7
   label: '*** Variables ***'
   preselect: false
-  sortText: null
   textEdit:
     newText: '*** Variables ***'
     range:

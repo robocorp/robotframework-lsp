@@ -1,17 +1,10 @@
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
+- deprecated: false
   documentation: ':type new_model: int'
-  filterText: null
-  insertText: null
+  documentationFormat: markdown
   insertTextFormat: 2
   kind: 7
   label: New Verify Model
   preselect: false
-  sortText: null
   textEdit:
     newText: New Verify Model ${1:new model}
     range:
@@ -21,20 +14,13 @@
       start:
         character: 4
         line: 7
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
+- deprecated: false
   documentation: ''
-  filterText: null
-  insertText: null
+  documentationFormat: markdown
   insertTextFormat: 2
   kind: 7
   label: new Verify Another Model
   preselect: false
-  sortText: null
   textEdit:
     newText: new Verify Another Model ${1:new model=10}
     range:

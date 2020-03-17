@@ -227,7 +227,7 @@ class LibspecManager(object):
         try:
             log.debug("Generating libspec for: %s", libname)
             call = [sys.executable]
-            call.extend("-m robot.libdoc --format xml".split())
+            call.extend("-m robot.libdoc --format XML:HTML".split())
             call.append(libname)
             call.append(os.path.join(self._libspec_dir, libname + ".libspec"))
             try:

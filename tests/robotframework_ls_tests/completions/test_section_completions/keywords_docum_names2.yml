@@ -1,17 +1,7 @@
-- additionalTextEdits: null
-  command: null
-  commitCharacters: null
-  data: null
-  deprecated: false
-  detail: null
-  documentation: null
-  filterText: null
-  insertText: null
-  insertTextFormat: null
+- deprecated: false
   kind: 2
   label: '[Documentation]'
   preselect: false
-  sortText: null
   textEdit:
     newText: '[Documentation]'
     range:

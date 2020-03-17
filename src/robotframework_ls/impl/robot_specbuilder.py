@@ -16,6 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import weakref
 
 try:
     from xml.etree import cElementTree as ET
@@ -26,6 +27,28 @@ except ImportError:
 class Tags(object):
     def __init__(self, tags=None):
         self.tags = tags
+
+
+def markdown_doc(obj):
+    """
+    
+    :type obj: LibraryDoc|KeywordDoc
+    """
+    if obj is None:
+        return ""
+
+    if not obj.doc:
+        return ""
+
+    if obj.doc_format.lower() == "html":
+        try:
+            return obj.__md_doc__
+        except AttributeError:
+            from robotframework_ls import html_to_markdown
+
+            obj.__md_doc__ = html_to_markdown.convert(obj.doc)
+        return obj.__md_doc__
+    return obj.doc
 
 
 class LibraryDoc(object):
@@ -73,11 +96,20 @@ class LibraryDoc(object):
 
 
 class KeywordDoc(object):
-    def __init__(self, name="", args=(), doc="", tags=()):
+    def __init__(self, weak_libdoc, name="", args=(), doc="", tags=()):
+        self._weak_libdoc = weak_libdoc
         self.name = name
         self.args = args
         self.doc = doc
         self.tags = Tags(tags)
+
+    @property
+    def libdoc(self):
+        return self._weak_libdoc()
+
+    @property
+    def doc_format(self):
+        return self._weak_libdoc().doc_format
 
 
 class SpecDocBuilder(object):
@@ -92,8 +124,8 @@ class SpecDocBuilder(object):
             named_args=self._get_named_args(spec),
             doc_format=spec.get("format", "ROBOT"),
         )
-        libdoc.inits = self._create_keywords(spec, "init")
-        libdoc.keywords = self._create_keywords(spec, "kw")
+        libdoc.inits = self._create_keywords(weakref.ref(libdoc), spec, "init")
+        libdoc.keywords = self._create_keywords(weakref.ref(libdoc), spec, "kw")
         return libdoc
 
     def _parse_spec(self, path):
@@ -110,13 +142,14 @@ class SpecDocBuilder(object):
             return False  # Backwards compatiblity with RF < 2.6.2
         return elem.text == "yes"
 
-    def _create_keywords(self, spec, path):
-        return [self._create_keyword(elem) for elem in spec.findall(path)]
-
-    def _create_keyword(self, elem):
-        return KeywordDoc(
-            name=elem.get("name", ""),
-            args=[a.text for a in elem.findall("arguments/arg")],
-            doc=elem.find("doc").text or "",
-            tags=[t.text for t in elem.findall("tags/tag")],
-        )
+    def _create_keywords(self, weak_libdoc, spec, path):
+        return [
+            KeywordDoc(
+                weak_libdoc,
+                name=elem.get("name", ""),
+                args=[a.text for a in elem.findall("arguments/arg")],
+                doc=elem.find("doc").text or "",
+                tags=[t.text for t in elem.findall("tags/tag")],
+            )
+            for elem in spec.findall(path)
+        ]
