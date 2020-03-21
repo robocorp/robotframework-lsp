@@ -221,7 +221,6 @@ class LibspecManager(object):
         """
         from robotframework_ls import uris
         import time
-        from robotframework_ls.constants import IS_WIN
 
         curtime = time.time()
 
@@ -247,26 +246,20 @@ class LibspecManager(object):
                     )
                 except OSError as e:
                     log.exception("Error calling: %s", call)
-                    if IS_WIN:
-                        if e.errno == 6:
-                            # If we have: Ignore OSError: [WinError 6] The handle is invalid,
-                            # give the result based on whether the file changed on disk.
-                            try:
-                                if mtime != os.path.getmtime(target):
-                                    return True
-                            except:
-                                return False
-                            else:
-                                if not retry:
-                                    return False
-                                # Retry it
-                                raise subprocess.CalledProcessError(
-                                    1, call, b"ImportError"
-                                )
-                        else:
-                            return False
-                    else:
+                    # We may have something as: Ignore OSError: [WinError 6] The handle is invalid,
+                    # give the result based on whether the file changed on disk.
+                    try:
+                        if mtime != os.path.getmtime(target):
+                            return True
+                    except:
+                        pass
+
+                    if not retry:
+                        log.debug("Not retrying after OSError failure.")
                         return False
+
+                    log.debug("Retrying after OSError failure.")
+                    raise subprocess.CalledProcessError(1, call, b"ImportError")
 
             except subprocess.CalledProcessError as e:
                 if b"ImportError" in e.output or b"ModuleNotFoundError" in e.output:
