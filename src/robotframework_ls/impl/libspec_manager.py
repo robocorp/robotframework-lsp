@@ -221,6 +221,7 @@ class LibspecManager(object):
         """
         from robotframework_ls import uris
         import time
+        from robotframework_ls.constants import IS_WIN
 
         curtime = time.time()
 
@@ -229,11 +230,44 @@ class LibspecManager(object):
             call = [sys.executable]
             call.extend("-m robot.libdoc --format XML:HTML".split())
             call.append(libname)
-            call.append(os.path.join(self._libspec_dir, libname + ".libspec"))
+            target = os.path.join(self._libspec_dir, libname + ".libspec")
+            call.append(target)
+
+            mtime = -1
             try:
-                subprocess.check_output(
-                    call, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, env=env
-                )
+                mtime = os.path.getmtime(target)
+            except:
+                pass
+
+            try:
+                try:
+                    # Note: stdout is always subprocess.PIPE in this call.
+                    subprocess.check_output(
+                        call, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, env=env
+                    )
+                except OSError as e:
+                    log.exception("Error calling: %s", call)
+                    if IS_WIN:
+                        if e.errno == 6:
+                            # If we have: Ignore OSError: [WinError 6] The handle is invalid,
+                            # give the result based on whether the file changed on disk.
+                            try:
+                                if mtime != os.path.getmtime(target):
+                                    return True
+                            except:
+                                return False
+                            else:
+                                if not retry:
+                                    return False
+                                # Retry it
+                                raise subprocess.CalledProcessError(
+                                    1, call, b"ImportError"
+                                )
+                        else:
+                            return False
+                    else:
+                        return False
+
             except subprocess.CalledProcessError as e:
                 if b"ImportError" in e.output or b"ModuleNotFoundError" in e.output:
                     if retry:

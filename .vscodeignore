@@ -1,5 +1,6 @@
 .vscode/**
-robotframework_ls_tests
+tests/**
+devtools_src/**
 .github
 .pytest_cache
 .settings

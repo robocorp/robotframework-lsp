@@ -6,6 +6,7 @@
 <path>/${PROJECT_DIR_NAME}/src</path>
 <path>/${PROJECT_DIR_NAME}/tests</path>
 <path>/${PROJECT_DIR_NAME}/devtools_src</path>
+<path>/${PROJECT_DIR_NAME}/src/robotframework_ls/libs/watchdog_lib</path>
 </pydev_pathproperty>
 <pydev_property name="org.python.pydev.PYTHON_ADDITIONAL_GRAMMAR_VALIDATION">2.7, 3.5</pydev_property>
 </pydev_project>
