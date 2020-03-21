@@ -1,6 +1,6 @@
 - deprecated: false
   documentation: ':type new_model: int'
-  documentationFormat: markdown
+  documentationFormat: plaintext
   insertTextFormat: 2
   kind: 7
   label: New Verify Model
@@ -16,7 +16,7 @@
         line: 7
 - deprecated: false
   documentation: ''
-  documentationFormat: markdown
+  documentationFormat: plaintext
   insertTextFormat: 2
   kind: 7
   label: new Verify Another Model

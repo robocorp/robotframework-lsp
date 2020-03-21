@@ -12,8 +12,8 @@ def complete(completion_context):
     )
     from robotframework_ls.impl.string_matcher import StringMatcher
     from robotframework_ls.impl.robot_constants import BUILTIN_LIB
-    from robotframework_ls.impl.robot_specbuilder import markdown_doc
     from robotframework_ls.lsp import MarkupKind
+    from robotframework_ls.impl.robot_specbuilder import docs_and_format
 
     ret = []
 
@@ -50,15 +50,21 @@ def complete(completion_context):
                                 ),
                                 text,
                             )
+                            docs, docs_format = docs_and_format(keyword)
+
                             # text_edit = None
                             ret.append(
                                 CompletionItem(
                                     label,
                                     kind=CompletionItemKind.Class,
                                     text_edit=text_edit,
-                                    documentation=markdown_doc(keyword),
+                                    documentation=docs,
                                     insertTextFormat=InsertTextFormat.Snippet,
-                                    documentationFormat=MarkupKind.Markdown,
+                                    documentationFormat=(
+                                        MarkupKind.Markdown
+                                        if docs_format == "markdown"
+                                        else MarkupKind.PlainText
+                                    ),
                                 ).to_dict()
                             )
 

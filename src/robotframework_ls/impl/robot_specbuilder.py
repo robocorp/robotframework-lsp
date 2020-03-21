@@ -51,6 +51,13 @@ def markdown_doc(obj):
     return obj.doc
 
 
+def docs_and_format(obj):
+    doc_format = obj.doc_format
+    if doc_format.lower() == "html":
+        return markdown_doc(obj), "markdown"
+    return obj.doc, doc_format
+
+
 class LibraryDoc(object):
     def __init__(
         self,
