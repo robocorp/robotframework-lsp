@@ -20,7 +20,7 @@ def test_keyword_completions_builtin(workspace, libspec_manager):
     ]
 
 
-def test_keyword_completions_user(
+def test_keyword_completions_user_library(
     data_regression, workspace, tmpdir, cases, libspec_manager
 ):
     import os.path
@@ -50,3 +50,24 @@ def test_keyword_completions_user(
         CompletionContext(doc, workspace=workspace.ws)
     )
     data_regression.check(completions, basename="keyword_completions_2_new")
+
+
+def test_keyword_completions_user_in_robot_file(
+    data_regression, workspace, tmpdir, cases, libspec_manager
+):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    workspace_dir = str(tmpdir.join("workspace"))
+    cases.copy_to("case2", workspace_dir)
+
+    workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case2.robot")
+    doc.source = doc.source + "\n    my equ"
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    data_regression.check(
+        completions, basename="keyword_completions_user_in_robot_file"
+    )

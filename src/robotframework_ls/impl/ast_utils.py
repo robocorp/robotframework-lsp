@@ -138,7 +138,7 @@ def find_section(node, line):
     return last_section
 
 
-def _iter_nodes(node, stack=None):
+def _iter_nodes(node, stack=None, recursive=True):
     """
     :note: the yielded stack is actually always the same (mutable) list, so,
     clients that want to return it somewhere else should create a copy.
@@ -151,18 +151,20 @@ def _iter_nodes(node, stack=None):
             for item in value:
                 if isinstance(item, ast.AST):
                     yield stack, item
-                    stack.append(item)
-                    for o in _iter_nodes(item, stack):
-                        yield o
-                    stack.pop()
+                    if recursive:
+                        stack.append(item)
+                        for o in _iter_nodes(item, stack, recursive=recursive):
+                            yield o
+                        stack.pop()
         elif isinstance(value, ast.AST):
-            yield stack, value
-            stack.append(value)
+            if recursive:
+                yield stack, value
+                stack.append(value)
 
-            for o in _iter_nodes(value, stack):
-                yield o
+                for o in _iter_nodes(value, stack, recursive=recursive):
+                    yield o
 
-            stack.pop()
+                stack.pop()
 
 
 _NodeInfo = namedtuple("_NodeInfo", "stack, node")
@@ -187,13 +189,13 @@ def find_token(node, line, col):
                 return _TokenInfo(tuple(stack), node, token)
 
 
-def _iter_nodes_filtered(node, accept_class):
+def _iter_nodes_filtered(node, accept_class, recursive=True):
     """
     :rtype: generator(tuple(list,ast.AST))
     """
     if not isinstance(accept_class, (list, tuple, set)):
         accept_class = (accept_class,)
-    for stack, node in _iter_nodes(node):
+    for stack, node in _iter_nodes(node, recursive=recursive):
         if node.__class__.__name__ in accept_class:
             yield stack, node
 
@@ -204,3 +206,18 @@ def iter_library_imports(node):
     """
     for stack, node in _iter_nodes_filtered(node, accept_class="LibraryImport"):
         yield _NodeInfo(tuple(stack), node)
+
+
+def iter_keywords(node):
+    """
+    :rtype: generator(_NodeInfo)
+    """
+    for stack, node in _iter_nodes_filtered(node, accept_class="Keyword"):
+        yield _NodeInfo(tuple(stack), node)
+
+
+def iter_keyword_arguments_as_str(node):
+    for _stack, node in _iter_nodes_filtered(node, accept_class="Arguments"):
+        for token in node.tokens:
+            if token.type == token.ARGUMENT:
+                yield str(token)
