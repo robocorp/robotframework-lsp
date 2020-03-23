@@ -61,6 +61,7 @@ def docs_and_format(obj):
 class LibraryDoc(object):
     def __init__(
         self,
+        filename,
         name="",
         doc="",
         version="",
@@ -69,6 +70,7 @@ class LibraryDoc(object):
         named_args=True,
         doc_format="",
     ):
+        self.filename = filename
         self.name = name
         self.doc = doc
         self.version = version
@@ -101,6 +103,15 @@ class LibraryDoc(object):
 
         return Tags(chain.from_iterable(kw.tags for kw in self.keywords))
 
+    def __repr__(self):
+        return "LibraryDoc(%s, %s, keywords:%s)" % (
+            self.filename,
+            self.name,
+            len(self.keywords),
+        )
+
+    __str__ = __repr__
+
 
 class KeywordDoc(object):
     def __init__(self, weak_libdoc, name="", args=(), doc="", tags=()):
@@ -123,6 +134,7 @@ class SpecDocBuilder(object):
     def build(self, path):
         spec = self._parse_spec(path)
         libdoc = LibraryDoc(
+            path,
             name=spec.get("name"),
             type=spec.get("type"),
             version=spec.find("version").text or "",

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<keywordspec name="Reserved" type="library" format="HTML" generated="20200323 13:11:20">
+<version></version>
+<scope>global</scope>
+<namedargs>yes</namedargs>
+<doc>&lt;p&gt;Documentation for library &lt;code&gt;Reserved&lt;/code&gt;.&lt;/p&gt;</doc>
+<kw name="Break" deprecated="false">
+<arguments>
+<arg>*varargs</arg>
+</arguments>
+<doc></doc>
+<tags>
+</tags>
+</kw>
+<kw name="Continue" deprecated="false">
+<arguments>
+<arg>*varargs</arg>
+</arguments>
+<doc></doc>
+<tags>
+</tags>
+</kw>
+<kw name="Elif" deprecated="false">
+<arguments>
+<arg>*varargs</arg>
+</arguments>
+<doc></doc>
+<tags>
+</tags>
+</kw>
+<kw name="Else" deprecated="false">
+<arguments>
+<arg>*varargs</arg>
+</arguments>
+<doc></doc>
+<tags>
+</tags>
+</kw>
+<kw name="Else If" deprecated="false">
+<arguments>
+<arg>*varargs</arg>
+</arguments>
+<doc></doc>
+<tags>
+</tags>
+</kw>
+<kw name="End" deprecated="false">
+<arguments>
+<arg>*varargs</arg>
+</arguments>
+<doc></doc>
+<tags>
+</tags>
+</kw>
+<kw name="For" deprecated="false">
+<arguments>
+<arg>*varargs</arg>
+</arguments>
+<doc></doc>
+<tags>
+</tags>
+</kw>
+<kw name="If" deprecated="false">
+<arguments>
+<arg>*varargs</arg>
+</arguments>
+<doc></doc>
+<tags>
+</tags>
+</kw>
+<kw name="Return" deprecated="false">
+<arguments>
+<arg>*varargs</arg>
+</arguments>
+<doc></doc>
+<tags>
+</tags>
+</kw>
+<kw name="While" deprecated="false">
+<arguments>
+<arg>*varargs</arg>
+</arguments>
+<doc></doc>
+<tags>
+</tags>
+</kw>
+</keywordspec>

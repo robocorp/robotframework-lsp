@@ -1,0 +1,1300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<keywordspec name="OperatingSystem" type="library" format="HTML" generated="20200323 13:11:22">
+<version>3.2b3.dev1</version>
+<scope>global</scope>
+<namedargs>yes</namedargs>
+<doc>&lt;p&gt;A test library providing keywords for OS related tasks.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;OperatingSystem&lt;/code&gt; is Robot Framework's standard library that enables various operating system related tasks to be performed in the system where Robot Framework is running. It can, among other things, execute commands (e.g. `Run`), create and remove files and directories (e.g. `Create File`, `Remove Directory`), check whether files or directories exists or contain something (e.g. `File Should Exist`, `Directory Should Be Empty`) and manipulate environment variables (e.g. `Set Environment Variable`).&lt;/p&gt;
+&lt;h3&gt;Table of contents&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;`Path separators`&lt;/li&gt;
+&lt;li&gt;`Pattern matching`&lt;/li&gt;
+&lt;li&gt;`Tilde expansion`&lt;/li&gt;
+&lt;li&gt;`Boolean arguments`&lt;/li&gt;
+&lt;li&gt;`Example`&lt;/li&gt;
+&lt;li&gt;`Shortcuts`&lt;/li&gt;
+&lt;li&gt;`Keywords`&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Path separators&lt;/h2&gt;
+&lt;p&gt;Because Robot Framework uses the backslash (&lt;code&gt;\&lt;/code&gt;) as an escape character in the test data, using a literal backslash requires duplicating it like in &lt;code&gt;c:\\path\\file.txt&lt;/code&gt;. That can be inconvenient especially with longer Windows paths, and thus all keywords expecting paths as arguments convert forward slashes to backslashes automatically on Windows. This also means that paths like &lt;code&gt;${CURDIR}/path/file.txt&lt;/code&gt; are operating system independent.&lt;/p&gt;
+&lt;p&gt;Notice that the automatic path separator conversion does not work if the path is only a part of an argument like with `Run` and `Start Process` keywords. In these cases the built-in variable &lt;code&gt;${/}&lt;/code&gt; that contains &lt;code&gt;\&lt;/code&gt; or &lt;code&gt;/&lt;/code&gt;, depending on the operating system, can be used instead.&lt;/p&gt;
+&lt;h2&gt;Pattern matching&lt;/h2&gt;
+&lt;p&gt;Some keywords allow their arguments to be specified as &lt;a href="http://en.wikipedia.org/wiki/Glob_(programming)"&gt;glob patterns&lt;/a&gt; where:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;*&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;matches any string, even an empty string&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;?&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;matches any single character&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;[chars]&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;matches one character in the bracket&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;[!chars]&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;matches one character not in the bracket&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;[a-z]&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;matches one character from the range in the bracket&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;[!a-z]&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;matches one character not from the range in the bracket&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;Unless otherwise noted, matching is case-insensitive on case-insensitive operating systems such as Windows.&lt;/p&gt;
+&lt;p&gt;Starting from Robot Framework 2.9.1, globbing is not done if the given path matches an existing file even if it would contain a glob pattern.&lt;/p&gt;
+&lt;h2&gt;Tilde expansion&lt;/h2&gt;
+&lt;p&gt;Paths beginning with &lt;code&gt;~&lt;/code&gt; or &lt;code&gt;~username&lt;/code&gt; are expanded to the current or specified user's home directory, respectively. The resulting path is operating system dependent, but typically e.g. &lt;code&gt;~/robot&lt;/code&gt; is expanded to &lt;code&gt;C:\Users\&amp;lt;user&amp;gt;\robot&lt;/code&gt; on Windows and &lt;code&gt;/home/&amp;lt;user&amp;gt;/robot&lt;/code&gt; on Unixes.&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;~username&lt;/code&gt; form does not work on Jython.&lt;/p&gt;
+&lt;h2&gt;Boolean arguments&lt;/h2&gt;
+&lt;p&gt;Some keywords accept arguments that are handled as Boolean values true or false. If such an argument is given as a string, it is considered false if it is an empty string or equal to &lt;code&gt;FALSE&lt;/code&gt;, &lt;code&gt;NONE&lt;/code&gt;, &lt;code&gt;NO&lt;/code&gt;, &lt;code&gt;OFF&lt;/code&gt; or &lt;code&gt;0&lt;/code&gt;, case-insensitively. Other strings are considered true regardless their value, and other argument types are tested using the same &lt;a href="http://docs.python.org/library/stdtypes.html#truth"&gt;rules as in Python&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;True examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;`Remove Directory`&lt;/td&gt;
+&lt;td&gt;${path}&lt;/td&gt;
+&lt;td&gt;recursive=True&lt;/td&gt;
+&lt;td&gt;# Strings are generally true.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;`Remove Directory`&lt;/td&gt;
+&lt;td&gt;${path}&lt;/td&gt;
+&lt;td&gt;recursive=yes&lt;/td&gt;
+&lt;td&gt;# Same as the above.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;`Remove Directory`&lt;/td&gt;
+&lt;td&gt;${path}&lt;/td&gt;
+&lt;td&gt;recursive=${TRUE}&lt;/td&gt;
+&lt;td&gt;# Python &lt;code&gt;True&lt;/code&gt; is true.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;`Remove Directory`&lt;/td&gt;
+&lt;td&gt;${path}&lt;/td&gt;
+&lt;td&gt;recursive=${42}&lt;/td&gt;
+&lt;td&gt;# Numbers other than 0 are true.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;False examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;`Remove Directory`&lt;/td&gt;
+&lt;td&gt;${path}&lt;/td&gt;
+&lt;td&gt;recursive=False&lt;/td&gt;
+&lt;td&gt;# String &lt;code&gt;false&lt;/code&gt; is false.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;`Remove Directory`&lt;/td&gt;
+&lt;td&gt;${path}&lt;/td&gt;
+&lt;td&gt;recursive=no&lt;/td&gt;
+&lt;td&gt;# Also string &lt;code&gt;no&lt;/code&gt; is false.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;`Remove Directory`&lt;/td&gt;
+&lt;td&gt;${path}&lt;/td&gt;
+&lt;td&gt;recursive=${EMPTY}&lt;/td&gt;
+&lt;td&gt;# Empty string is false.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;`Remove Directory`&lt;/td&gt;
+&lt;td&gt;${path}&lt;/td&gt;
+&lt;td&gt;recursive=${FALSE}&lt;/td&gt;
+&lt;td&gt;# Python &lt;code&gt;False&lt;/code&gt; is false.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;Considering string &lt;code&gt;NONE&lt;/code&gt; false is new in Robot Framework 3.0.3 and considering also &lt;code&gt;OFF&lt;/code&gt; and &lt;code&gt;0&lt;/code&gt; false is new in Robot Framework 3.1.&lt;/p&gt;
+&lt;h2&gt;Example&lt;/h2&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;th&gt;Setting&lt;/th&gt;
+&lt;th&gt;Value&lt;/th&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Library&lt;/td&gt;
+&lt;td&gt;OperatingSystem&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;th&gt;Variable&lt;/th&gt;
+&lt;th&gt;Value&lt;/th&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${PATH}&lt;/td&gt;
+&lt;td&gt;${CURDIR}/example.txt&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;th&gt;Test Case&lt;/th&gt;
+&lt;th&gt;Action&lt;/th&gt;
+&lt;th&gt;Argument&lt;/th&gt;
+&lt;th&gt;Argument&lt;/th&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Example&lt;/td&gt;
+&lt;td&gt;Create File&lt;/td&gt;
+&lt;td&gt;${PATH}&lt;/td&gt;
+&lt;td&gt;Some text&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;File Should Exist&lt;/td&gt;
+&lt;td&gt;${PATH}&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;Copy File&lt;/td&gt;
+&lt;td&gt;${PATH}&lt;/td&gt;
+&lt;td&gt;~/file.txt&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;${output} =&lt;/td&gt;
+&lt;td&gt;Run&lt;/td&gt;
+&lt;td&gt;${TEMPDIR}${/}script.py arg&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;</doc>
+<kw name="Append To Environment Variable" deprecated="false">
+<arguments>
+<arg>name</arg>
+<arg>*values</arg>
+<arg>**config</arg>
+</arguments>
+<doc>&lt;p&gt;Appends given &lt;code&gt;values&lt;/code&gt; to environment variable &lt;code&gt;name&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;If the environment variable already exists, values are added after it, and otherwise a new environment variable is created.&lt;/p&gt;
+&lt;p&gt;Values are, by default, joined together using the operating system path separator (&lt;code&gt;;&lt;/code&gt; on Windows, &lt;code&gt;:&lt;/code&gt; elsewhere). This can be changed by giving a separator after the values like &lt;code&gt;separator=value&lt;/code&gt;. No other configuration parameters are accepted.&lt;/p&gt;
+&lt;p&gt;Examples (assuming &lt;code&gt;NAME&lt;/code&gt; and &lt;code&gt;NAME2&lt;/code&gt; do not exist initially):&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;Append To Environment Variable&lt;/td&gt;
+&lt;td&gt;NAME&lt;/td&gt;
+&lt;td&gt;first&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;%{NAME}&lt;/td&gt;
+&lt;td&gt;first&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Append To Environment Variable&lt;/td&gt;
+&lt;td&gt;NAME&lt;/td&gt;
+&lt;td&gt;second&lt;/td&gt;
+&lt;td&gt;third&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;%{NAME}&lt;/td&gt;
+&lt;td&gt;first${:}second${:}third&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Append To Environment Variable&lt;/td&gt;
+&lt;td&gt;NAME2&lt;/td&gt;
+&lt;td&gt;first&lt;/td&gt;
+&lt;td&gt;separator=-&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;%{NAME2}&lt;/td&gt;
+&lt;td&gt;first&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Append To Environment Variable&lt;/td&gt;
+&lt;td&gt;NAME2&lt;/td&gt;
+&lt;td&gt;second&lt;/td&gt;
+&lt;td&gt;separator=-&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;%{NAME2}&lt;/td&gt;
+&lt;td&gt;first-second&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Append To File" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>content</arg>
+<arg>encoding=UTF-8</arg>
+</arguments>
+<doc>&lt;p&gt;Appends the given content to the specified file.&lt;/p&gt;
+&lt;p&gt;If the file exists, the given text is written to its end. If the file does not exist, it is created.&lt;/p&gt;
+&lt;p&gt;Other than not overwriting possible existing files, this keyword works exactly like `Create File`. See its documentation for more details about the usage.&lt;/p&gt;
+&lt;p&gt;Note that special encodings &lt;code&gt;SYSTEM&lt;/code&gt; and &lt;code&gt;CONSOLE&lt;/code&gt; only work with this keyword starting from Robot Framework 3.1.2.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Copy Directory" deprecated="false">
+<arguments>
+<arg>source</arg>
+<arg>destination</arg>
+</arguments>
+<doc>&lt;p&gt;Copies the source directory into the destination.&lt;/p&gt;
+&lt;p&gt;If the destination exists, the source is copied under it. Otherwise the destination directory and the possible missing intermediate directories are created.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Copy File" deprecated="false">
+<arguments>
+<arg>source</arg>
+<arg>destination</arg>
+</arguments>
+<doc>&lt;p&gt;Copies the source file into the destination.&lt;/p&gt;
+&lt;p&gt;Source must be a path to an existing file or a glob pattern (see `Pattern matching`) that matches exactly one file. How the destination is interpreted is explained below.&lt;/p&gt;
+&lt;p&gt;1) If the destination is an existing file, the source file is copied over it.&lt;/p&gt;
+&lt;p&gt;2) If the destination is an existing directory, the source file is copied into it. A possible file with the same name as the source is overwritten.&lt;/p&gt;
+&lt;p&gt;3) If the destination does not exist and it ends with a path separator (&lt;code&gt;/&lt;/code&gt; or &lt;code&gt;\&lt;/code&gt;), it is considered a directory. That directory is created and a source file copied into it. Possible missing intermediate directories are also created.&lt;/p&gt;
+&lt;p&gt;4) If the destination does not exist and it does not end with a path separator, it is considered a file. If the path to the file does not exist, it is created.&lt;/p&gt;
+&lt;p&gt;The resulting destination path is returned since Robot Framework 2.9.2.&lt;/p&gt;
+&lt;p&gt;See also `Copy Files`, `Move File`, and `Move Files`.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Copy Files" deprecated="false">
+<arguments>
+<arg>*sources_and_destination</arg>
+</arguments>
+<doc>&lt;p&gt;Copies specified files to the target directory.&lt;/p&gt;
+&lt;p&gt;Source files can be given as exact paths and as glob patterns (see `Pattern matching`). At least one source must be given, but it is not an error if it is a pattern that does not match anything.&lt;/p&gt;
+&lt;p&gt;Last argument must be the destination directory. If the destination does not exist, it will be created.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;Copy Files&lt;/td&gt;
+&lt;td&gt;${dir}/file1.txt&lt;/td&gt;
+&lt;td&gt;${dir}/file2.txt&lt;/td&gt;
+&lt;td&gt;${dir2}&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Copy Files&lt;/td&gt;
+&lt;td&gt;${dir}/file-*.txt&lt;/td&gt;
+&lt;td&gt;${dir2}&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;See also `Copy File`, `Move File`, and `Move Files`.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Count Directories In Directory" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>pattern=None</arg>
+</arguments>
+<doc>&lt;p&gt;Wrapper for `Count Items In Directory` returning only directory count.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Count Files In Directory" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>pattern=None</arg>
+</arguments>
+<doc>&lt;p&gt;Wrapper for `Count Items In Directory` returning only file count.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Count Items In Directory" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>pattern=None</arg>
+</arguments>
+<doc>&lt;p&gt;Returns and logs the number of all items in the given directory.&lt;/p&gt;
+&lt;p&gt;The argument &lt;code&gt;pattern&lt;/code&gt; has the same semantics as with `List Directory` keyword. The count is returned as an integer, so it must be checked e.g. with the built-in keyword `Should Be Equal As Integers`.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Create Binary File" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>content</arg>
+</arguments>
+<doc>&lt;p&gt;Creates a binary file with the given content.&lt;/p&gt;
+&lt;p&gt;If content is given as a Unicode string, it is first converted to bytes character by character. All characters with ordinal below 256 can be used and are converted to bytes with same values. Using characters with higher ordinal is an error.&lt;/p&gt;
+&lt;p&gt;Byte strings, and possible other types, are written to the file as is.&lt;/p&gt;
+&lt;p&gt;If the directory for the file does not exist, it is created, along with missing intermediate directories.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;Create Binary File&lt;/td&gt;
+&lt;td&gt;${dir}/example.png&lt;/td&gt;
+&lt;td&gt;${image content}&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Create Binary File&lt;/td&gt;
+&lt;td&gt;${path}&lt;/td&gt;
+&lt;td&gt;\x01\x00\xe4\x00&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;Use `Create File` if you want to create a text file using a certain encoding. `File Should Not Exist` can be used to avoid overwriting existing files.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Create Directory" deprecated="false">
+<arguments>
+<arg>path</arg>
+</arguments>
+<doc>&lt;p&gt;Creates the specified directory.&lt;/p&gt;
+&lt;p&gt;Also possible intermediate directories are created. Passes if the directory already exists, but fails if the path exists and is not a directory.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Create File" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>content=</arg>
+<arg>encoding=UTF-8</arg>
+</arguments>
+<doc>&lt;p&gt;Creates a file with the given content and encoding.&lt;/p&gt;
+&lt;p&gt;If the directory where the file is created does not exist, it is automatically created along with possible missing intermediate directories. Possible existing file is overwritten.&lt;/p&gt;
+&lt;p&gt;On Windows newline characters (&lt;code&gt;\n&lt;/code&gt;) in content are automatically converted to Windows native newline sequence (&lt;code&gt;\r\n&lt;/code&gt;).&lt;/p&gt;
+&lt;p&gt;See `Get File` for more information about possible &lt;code&gt;encoding&lt;/code&gt; values, including special values &lt;code&gt;SYSTEM&lt;/code&gt; and &lt;code&gt;CONSOLE&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;Create File&lt;/td&gt;
+&lt;td&gt;${dir}/example.txt&lt;/td&gt;
+&lt;td&gt;Hello, world!&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Create File&lt;/td&gt;
+&lt;td&gt;${path}&lt;/td&gt;
+&lt;td&gt;Hyv\xe4 esimerkki&lt;/td&gt;
+&lt;td&gt;Latin-1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Create File&lt;/td&gt;
+&lt;td&gt;/tmp/foo.txt&lt;/td&gt;
+&lt;td&gt;3\nlines\nhere\n&lt;/td&gt;
+&lt;td&gt;SYSTEM&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;Use `Append To File` if you want to append to an existing file and `Create Binary File` if you need to write bytes without encoding. `File Should Not Exist` can be used to avoid overwriting existing files.&lt;/p&gt;
+&lt;p&gt;The support for &lt;code&gt;SYSTEM&lt;/code&gt; and &lt;code&gt;CONSOLE&lt;/code&gt; encodings is new in Robot Framework 3.0. Automatically converting &lt;code&gt;\n&lt;/code&gt; to &lt;code&gt;\r\n&lt;/code&gt; on Windows is new in Robot Framework 3.1.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Directory Should Be Empty" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails unless the specified directory is empty.&lt;/p&gt;
+&lt;p&gt;The default error message can be overridden with the &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Directory Should Exist" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails unless the given path points to an existing directory.&lt;/p&gt;
+&lt;p&gt;The path can be given as an exact path or as a glob pattern. The pattern matching syntax is explained in `introduction`. The default error message can be overridden with the &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Directory Should Not Be Empty" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails if the specified directory is empty.&lt;/p&gt;
+&lt;p&gt;The default error message can be overridden with the &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Directory Should Not Exist" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails if the given path points to an existing file.&lt;/p&gt;
+&lt;p&gt;The path can be given as an exact path or as a glob pattern. The pattern matching syntax is explained in `introduction`. The default error message can be overridden with the &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Empty Directory" deprecated="false">
+<arguments>
+<arg>path</arg>
+</arguments>
+<doc>&lt;p&gt;Deletes all the content from the given directory.&lt;/p&gt;
+&lt;p&gt;Deletes both files and sub-directories, but the specified directory itself if not removed. Use `Remove Directory` if you want to remove the whole directory.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Environment Variable Should Be Set" deprecated="false">
+<arguments>
+<arg>name</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails if the specified environment variable is not set.&lt;/p&gt;
+&lt;p&gt;The default error message can be overridden with the &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Environment Variable Should Not Be Set" deprecated="false">
+<arguments>
+<arg>name</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails if the specified environment variable is set.&lt;/p&gt;
+&lt;p&gt;The default error message can be overridden with the &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="File Should Be Empty" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails unless the specified file is empty.&lt;/p&gt;
+&lt;p&gt;The default error message can be overridden with the &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="File Should Exist" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails unless the given &lt;code&gt;path&lt;/code&gt; points to an existing file.&lt;/p&gt;
+&lt;p&gt;The path can be given as an exact path or as a glob pattern. The pattern matching syntax is explained in `introduction`. The default error message can be overridden with the &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="File Should Not Be Empty" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails if the specified directory is empty.&lt;/p&gt;
+&lt;p&gt;The default error message can be overridden with the &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="File Should Not Exist" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails if the given path points to an existing file.&lt;/p&gt;
+&lt;p&gt;The path can be given as an exact path or as a glob pattern. The pattern matching syntax is explained in `introduction`. The default error message can be overridden with the &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Get Binary File" deprecated="false">
+<arguments>
+<arg>path</arg>
+</arguments>
+<doc>&lt;p&gt;Returns the contents of a specified file.&lt;/p&gt;
+&lt;p&gt;This keyword reads the specified file and returns the contents as is. See also `Get File`.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Get Environment Variable" deprecated="false">
+<arguments>
+<arg>name</arg>
+<arg>default=None</arg>
+</arguments>
+<doc>&lt;p&gt;Returns the value of an environment variable with the given name.&lt;/p&gt;
+&lt;p&gt;If no such environment variable is set, returns the default value, if given. Otherwise fails the test case.&lt;/p&gt;
+&lt;p&gt;Returned variables are automatically decoded to Unicode using the system encoding.&lt;/p&gt;
+&lt;p&gt;Note that you can also access environment variables directly using the variable syntax &lt;code&gt;%{ENV_VAR_NAME}&lt;/code&gt;.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Get Environment Variables" deprecated="false">
+<arguments>
+</arguments>
+<doc>&lt;p&gt;Returns currently available environment variables as a dictionary.&lt;/p&gt;
+&lt;p&gt;Both keys and values are decoded to Unicode using the system encoding. Altering the returned dictionary has no effect on the actual environment variables.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Get File" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>encoding=UTF-8</arg>
+<arg>encoding_errors=strict</arg>
+</arguments>
+<doc>&lt;p&gt;Returns the contents of a specified file.&lt;/p&gt;
+&lt;p&gt;This keyword reads the specified file and returns the contents. Line breaks in content are converted to platform independent form. See also `Get Binary File`.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;encoding&lt;/code&gt; defines the encoding of the file. The default value is &lt;code&gt;UTF-8&lt;/code&gt;, which means that UTF-8 and ASCII encoded files are read correctly. In addition to the encodings supported by the underlying Python implementation, the following special encoding values can be used:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;SYSTEM&lt;/code&gt;: Use the default system encoding.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CONSOLE&lt;/code&gt;: Use the console encoding. Outside Windows this is same as the system encoding.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;code&gt;encoding_errors&lt;/code&gt; argument controls what to do if decoding some bytes fails. All values accepted by &lt;code&gt;decode&lt;/code&gt; method in Python are valid, but in practice the following values are most useful:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;strict&lt;/code&gt;: Fail if characters cannot be decoded (default).&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ignore&lt;/code&gt;: Ignore characters that cannot be decoded.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;replace&lt;/code&gt;: Replace characters that cannot be decoded with a replacement character.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Support for &lt;code&gt;SYSTEM&lt;/code&gt; and &lt;code&gt;CONSOLE&lt;/code&gt; encodings in Robot Framework 3.0.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Get File Size" deprecated="false">
+<arguments>
+<arg>path</arg>
+</arguments>
+<doc>&lt;p&gt;Returns and logs file size as an integer in bytes.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Get Modified Time" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>format=timestamp</arg>
+</arguments>
+<doc>&lt;p&gt;Returns the last modification time of a file or directory.&lt;/p&gt;
+&lt;p&gt;How time is returned is determined based on the given &lt;code&gt;format&lt;/code&gt; string as follows. Note that all checks are case-insensitive. Returned time is also automatically logged.&lt;/p&gt;
+&lt;p&gt;1) If &lt;code&gt;format&lt;/code&gt; contains the word &lt;code&gt;epoch&lt;/code&gt;, the time is returned in seconds after the UNIX epoch. The return value is always an integer.&lt;/p&gt;
+&lt;p&gt;2) If &lt;code&gt;format&lt;/code&gt; contains any of the words &lt;code&gt;year&lt;/code&gt;, &lt;code&gt;month&lt;/code&gt;, &lt;code&gt;day&lt;/code&gt;, &lt;code&gt;hour&lt;/code&gt;, &lt;code&gt;min&lt;/code&gt; or &lt;code&gt;sec&lt;/code&gt;, only the selected parts are returned. The order of the returned parts is always the one in the previous sentence and the order of the words in &lt;code&gt;format&lt;/code&gt; is not significant. The parts are returned as zero-padded strings (e.g. May -&amp;gt; &lt;code&gt;05&lt;/code&gt;).&lt;/p&gt;
+&lt;p&gt;3) Otherwise, and by default, the time is returned as a timestamp string in the format &lt;code&gt;2006-02-24 15:08:31&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Examples (when the modified time of &lt;code&gt;${CURDIR}&lt;/code&gt; is 2006-03-29 15:06:21):&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${time} =&lt;/td&gt;
+&lt;td&gt;Get Modified Time&lt;/td&gt;
+&lt;td&gt;${CURDIR}&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${secs} =&lt;/td&gt;
+&lt;td&gt;Get Modified Time&lt;/td&gt;
+&lt;td&gt;${CURDIR}&lt;/td&gt;
+&lt;td&gt;epoch&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${year} =&lt;/td&gt;
+&lt;td&gt;Get Modified Time&lt;/td&gt;
+&lt;td&gt;${CURDIR}&lt;/td&gt;
+&lt;td&gt;return year&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${y}&lt;/td&gt;
+&lt;td&gt;${d} =&lt;/td&gt;
+&lt;td&gt;Get Modified Time&lt;/td&gt;
+&lt;td&gt;${CURDIR}&lt;/td&gt;
+&lt;td&gt;year,day&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;@{time} =&lt;/td&gt;
+&lt;td&gt;Get Modified Time&lt;/td&gt;
+&lt;td&gt;${CURDIR}&lt;/td&gt;
+&lt;td&gt;year,month,day,hour,min,sec&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;=&amp;gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;${time} = '2006-03-29 15:06:21'&lt;/li&gt;
+&lt;li&gt;${secs} = 1143637581&lt;/li&gt;
+&lt;li&gt;${year} = '2006'&lt;/li&gt;
+&lt;li&gt;${y} = '2006' &amp;amp; ${d} = '29'&lt;/li&gt;
+&lt;li&gt;@{time} = ['2006', '03', '29', '15', '06', '21']&lt;/li&gt;
+&lt;/ul&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Grep File" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>pattern</arg>
+<arg>encoding=UTF-8</arg>
+<arg>encoding_errors=strict</arg>
+</arguments>
+<doc>&lt;p&gt;Returns the lines of the specified file that match the &lt;code&gt;pattern&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;This keyword reads a file from the file system using the defined &lt;code&gt;path&lt;/code&gt;, &lt;code&gt;encoding&lt;/code&gt; and &lt;code&gt;encoding_errors&lt;/code&gt; similarly as `Get File`. A difference is that only the lines that match the given &lt;code&gt;pattern&lt;/code&gt; are returned. Lines are returned as a single string catenated back together with newlines and the number of matched lines is automatically logged. Possible trailing newline is never returned.&lt;/p&gt;
+&lt;p&gt;A line matches if it contains the &lt;code&gt;pattern&lt;/code&gt; anywhere in it and it &lt;b&gt;does not need to match the pattern fully&lt;/b&gt;. The pattern matching syntax is explained in `introduction`, and in this case matching is case-sensitive.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${errors} =&lt;/td&gt;
+&lt;td&gt;Grep File&lt;/td&gt;
+&lt;td&gt;/var/log/myapp.log&lt;/td&gt;
+&lt;td&gt;ERROR&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${ret} =&lt;/td&gt;
+&lt;td&gt;Grep File&lt;/td&gt;
+&lt;td&gt;${CURDIR}/file.txt&lt;/td&gt;
+&lt;td&gt;[Ww]ildc??d ex*ple&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;If more complex pattern matching is needed, it is possible to use `Get File` in combination with String library keywords like `Get Lines Matching Regexp`.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Join Path" deprecated="false">
+<arguments>
+<arg>base</arg>
+<arg>*parts</arg>
+</arguments>
+<doc>&lt;p&gt;Joins the given path part(s) to the given base path.&lt;/p&gt;
+&lt;p&gt;The path separator (&lt;code&gt;/&lt;/code&gt; or &lt;code&gt;\&lt;/code&gt;) is inserted when needed and the possible absolute paths handled as expected. The resulted path is also normalized.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${path} =&lt;/td&gt;
+&lt;td&gt;Join Path&lt;/td&gt;
+&lt;td&gt;my&lt;/td&gt;
+&lt;td&gt;path&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${p2} =&lt;/td&gt;
+&lt;td&gt;Join Path&lt;/td&gt;
+&lt;td&gt;my/&lt;/td&gt;
+&lt;td&gt;path/&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${p3} =&lt;/td&gt;
+&lt;td&gt;Join Path&lt;/td&gt;
+&lt;td&gt;my&lt;/td&gt;
+&lt;td&gt;path&lt;/td&gt;
+&lt;td&gt;my&lt;/td&gt;
+&lt;td&gt;file.txt&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${p4} =&lt;/td&gt;
+&lt;td&gt;Join Path&lt;/td&gt;
+&lt;td&gt;my&lt;/td&gt;
+&lt;td&gt;/path&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${p5} =&lt;/td&gt;
+&lt;td&gt;Join Path&lt;/td&gt;
+&lt;td&gt;/my/path/&lt;/td&gt;
+&lt;td&gt;..&lt;/td&gt;
+&lt;td&gt;path2&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;=&amp;gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;${path} = 'my/path'&lt;/li&gt;
+&lt;li&gt;${p2} = 'my/path'&lt;/li&gt;
+&lt;li&gt;${p3} = 'my/path/my/file.txt'&lt;/li&gt;
+&lt;li&gt;${p4} = '/path'&lt;/li&gt;
+&lt;li&gt;${p5} = '/my/path2'&lt;/li&gt;
+&lt;/ul&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Join Paths" deprecated="false">
+<arguments>
+<arg>base</arg>
+<arg>*paths</arg>
+</arguments>
+<doc>&lt;p&gt;Joins given paths with base and returns resulted paths.&lt;/p&gt;
+&lt;p&gt;See `Join Path` for more information.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;@{p1} =&lt;/td&gt;
+&lt;td&gt;Join Paths&lt;/td&gt;
+&lt;td&gt;base&lt;/td&gt;
+&lt;td&gt;example&lt;/td&gt;
+&lt;td&gt;other&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;@{p2} =&lt;/td&gt;
+&lt;td&gt;Join Paths&lt;/td&gt;
+&lt;td&gt;/my/base&lt;/td&gt;
+&lt;td&gt;/example&lt;/td&gt;
+&lt;td&gt;other&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;@{p3} =&lt;/td&gt;
+&lt;td&gt;Join Paths&lt;/td&gt;
+&lt;td&gt;my/base&lt;/td&gt;
+&lt;td&gt;example/path/&lt;/td&gt;
+&lt;td&gt;other&lt;/td&gt;
+&lt;td&gt;one/more&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;=&amp;gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;@{p1} = ['base/example', 'base/other']&lt;/li&gt;
+&lt;li&gt;@{p2} = ['/example', '/my/base/other']&lt;/li&gt;
+&lt;li&gt;@{p3} = ['my/base/example/path', 'my/base/other', 'my/base/one/more']&lt;/li&gt;
+&lt;/ul&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="List Directories In Directory" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>pattern=None</arg>
+<arg>absolute=False</arg>
+</arguments>
+<doc>&lt;p&gt;Wrapper for `List Directory` that returns only directories.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="List Directory" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>pattern=None</arg>
+<arg>absolute=False</arg>
+</arguments>
+<doc>&lt;p&gt;Returns and logs items in a directory, optionally filtered with &lt;code&gt;pattern&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;File and directory names are returned in case-sensitive alphabetical order, e.g. &lt;code&gt;['A Name', 'Second', 'a lower case name', 'one more']&lt;/code&gt;. Implicit directories &lt;code&gt;.&lt;/code&gt; and &lt;code&gt;..&lt;/code&gt; are not returned. The returned items are automatically logged.&lt;/p&gt;
+&lt;p&gt;File and directory names are returned relative to the given path (e.g. &lt;code&gt;'file.txt'&lt;/code&gt;) by default. If you want them be returned in absolute format (e.g. &lt;code&gt;'/home/robot/file.txt'&lt;/code&gt;), give the &lt;code&gt;absolute&lt;/code&gt; argument a true value (see `Boolean arguments`).&lt;/p&gt;
+&lt;p&gt;If &lt;code&gt;pattern&lt;/code&gt; is given, only items matching it are returned. The pattern matching syntax is explained in `introduction`, and in this case matching is case-sensitive.&lt;/p&gt;
+&lt;p&gt;Examples (using also other `List Directory` variants):&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;@{items} =&lt;/td&gt;
+&lt;td&gt;List Directory&lt;/td&gt;
+&lt;td&gt;${TEMPDIR}&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;@{files} =&lt;/td&gt;
+&lt;td&gt;List Files In Directory&lt;/td&gt;
+&lt;td&gt;/tmp&lt;/td&gt;
+&lt;td&gt;*.txt&lt;/td&gt;
+&lt;td&gt;absolute&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${count} =&lt;/td&gt;
+&lt;td&gt;Count Files In Directory&lt;/td&gt;
+&lt;td&gt;${CURDIR}&lt;/td&gt;
+&lt;td&gt;???&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="List Files In Directory" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>pattern=None</arg>
+<arg>absolute=False</arg>
+</arguments>
+<doc>&lt;p&gt;Wrapper for `List Directory` that returns only files.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Log Environment Variables" deprecated="false">
+<arguments>
+<arg>level=INFO</arg>
+</arguments>
+<doc>&lt;p&gt;Logs all environment variables using the given log level.&lt;/p&gt;
+&lt;p&gt;Environment variables are also returned the same way as with `Get Environment Variables` keyword.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Log File" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>encoding=UTF-8</arg>
+<arg>encoding_errors=strict</arg>
+</arguments>
+<doc>&lt;p&gt;Wrapper for `Get File` that also logs the returned file.&lt;/p&gt;
+&lt;p&gt;The file is logged with the INFO level. If you want something else, just use `Get File` and the built-in keyword `Log` with the desired level.&lt;/p&gt;
+&lt;p&gt;See `Get File` for more information about &lt;code&gt;encoding&lt;/code&gt; and &lt;code&gt;encoding_errors&lt;/code&gt; arguments.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Move Directory" deprecated="false">
+<arguments>
+<arg>source</arg>
+<arg>destination</arg>
+</arguments>
+<doc>&lt;p&gt;Moves the source directory into a destination.&lt;/p&gt;
+&lt;p&gt;Uses `Copy Directory` keyword internally, and &lt;code&gt;source&lt;/code&gt; and &lt;code&gt;destination&lt;/code&gt; arguments have exactly same semantics as with that keyword.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Move File" deprecated="false">
+<arguments>
+<arg>source</arg>
+<arg>destination</arg>
+</arguments>
+<doc>&lt;p&gt;Moves the source file into the destination.&lt;/p&gt;
+&lt;p&gt;Arguments have exactly same semantics as with `Copy File` keyword. Destination file path is returned since Robot Framework 2.9.2.&lt;/p&gt;
+&lt;p&gt;If the source and destination are on the same filesystem, rename operation is used. Otherwise file is copied to the destination filesystem and then removed from the original filesystem.&lt;/p&gt;
+&lt;p&gt;See also `Move Files`, `Copy File`, and `Copy Files`.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Move Files" deprecated="false">
+<arguments>
+<arg>*sources_and_destination</arg>
+</arguments>
+<doc>&lt;p&gt;Moves specified files to the target directory.&lt;/p&gt;
+&lt;p&gt;Arguments have exactly same semantics as with `Copy Files` keyword.&lt;/p&gt;
+&lt;p&gt;See also `Move File`, `Copy File`, and `Copy Files`.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Normalize Path" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>case_normalize=False</arg>
+</arguments>
+<doc>&lt;p&gt;Normalizes the given path.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Collapses redundant separators and up-level references.&lt;/li&gt;
+&lt;li&gt;Converts &lt;code&gt;/&lt;/code&gt; to &lt;code&gt;\&lt;/code&gt; on Windows.&lt;/li&gt;
+&lt;li&gt;Replaces initial &lt;code&gt;~&lt;/code&gt; or &lt;code&gt;~user&lt;/code&gt; by that user's home directory. The latter is not supported on Jython.&lt;/li&gt;
+&lt;li&gt;If &lt;code&gt;case_normalize&lt;/code&gt; is given a true value (see `Boolean arguments`) on Windows, converts the path to all lowercase. New in Robot Framework 3.1.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${path1} =&lt;/td&gt;
+&lt;td&gt;Normalize Path&lt;/td&gt;
+&lt;td&gt;abc/&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${path2} =&lt;/td&gt;
+&lt;td&gt;Normalize Path&lt;/td&gt;
+&lt;td&gt;abc/../def&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${path3} =&lt;/td&gt;
+&lt;td&gt;Normalize Path&lt;/td&gt;
+&lt;td&gt;abc/./def//ghi&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${path4} =&lt;/td&gt;
+&lt;td&gt;Normalize Path&lt;/td&gt;
+&lt;td&gt;~robot/stuff&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;=&amp;gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;${path1} = 'abc'&lt;/li&gt;
+&lt;li&gt;${path2} = 'def'&lt;/li&gt;
+&lt;li&gt;${path3} = 'abc/def/ghi'&lt;/li&gt;
+&lt;li&gt;${path4} = '/home/robot/stuff'&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;On Windows result would use &lt;code&gt;\&lt;/code&gt; instead of &lt;code&gt;/&lt;/code&gt; and home directory would be different.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Remove Directory" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>recursive=False</arg>
+</arguments>
+<doc>&lt;p&gt;Removes the directory pointed to by the given &lt;code&gt;path&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;If the second argument &lt;code&gt;recursive&lt;/code&gt; is given a true value (see `Boolean arguments`), the directory is removed recursively. Otherwise removing fails if the directory is not empty.&lt;/p&gt;
+&lt;p&gt;If the directory pointed to by the &lt;code&gt;path&lt;/code&gt; does not exist, the keyword passes, but it fails, if the &lt;code&gt;path&lt;/code&gt; points to a file.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Remove Environment Variable" deprecated="false">
+<arguments>
+<arg>*names</arg>
+</arguments>
+<doc>&lt;p&gt;Deletes the specified environment variable.&lt;/p&gt;
+&lt;p&gt;Does nothing if the environment variable is not set.&lt;/p&gt;
+&lt;p&gt;It is possible to remove multiple variables by passing them to this keyword as separate arguments.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Remove File" deprecated="false">
+<arguments>
+<arg>path</arg>
+</arguments>
+<doc>&lt;p&gt;Removes a file with the given path.&lt;/p&gt;
+&lt;p&gt;Passes if the file does not exist, but fails if the path does not point to a regular file (e.g. it points to a directory).&lt;/p&gt;
+&lt;p&gt;The path can be given as an exact path or as a glob pattern. The pattern matching syntax is explained in `introduction`. If the path is a pattern, all files matching it are removed.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Remove Files" deprecated="false">
+<arguments>
+<arg>*paths</arg>
+</arguments>
+<doc>&lt;p&gt;Uses `Remove File` to remove multiple files one-by-one.&lt;/p&gt;
+&lt;p&gt;Example:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;Remove Files&lt;/td&gt;
+&lt;td&gt;${TEMPDIR}${/}foo.txt&lt;/td&gt;
+&lt;td&gt;${TEMPDIR}${/}bar.txt&lt;/td&gt;
+&lt;td&gt;${TEMPDIR}${/}zap.txt&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Run" deprecated="false">
+<arguments>
+<arg>command</arg>
+</arguments>
+<doc>&lt;p&gt;Runs the given command in the system and returns the output.&lt;/p&gt;
+&lt;p&gt;The execution status of the command &lt;b&gt;is not checked&lt;/b&gt; by this keyword, and it must be done separately based on the returned output. If the execution return code is needed, either `Run And Return RC` or `Run And Return RC And Output` can be used.&lt;/p&gt;
+&lt;p&gt;The standard error stream is automatically redirected to the standard output stream by adding &lt;code&gt;2&amp;gt;&amp;amp;1&lt;/code&gt; after the executed command. This automatic redirection is done only when the executed command does not contain additional output redirections. You can thus freely forward the standard error somewhere else, for example, like &lt;code&gt;my_command 2&amp;gt;stderr.txt&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;The returned output contains everything written into the standard output or error streams by the command (unless either of them is redirected explicitly). Many commands add an extra newline (&lt;code&gt;\n&lt;/code&gt;) after the output to make it easier to read in the console. To ease processing the returned output, this possible trailing newline is stripped by this keyword.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${output} =&lt;/td&gt;
+&lt;td&gt;Run&lt;/td&gt;
+&lt;td&gt;ls -lhF /tmp&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Log&lt;/td&gt;
+&lt;td&gt;${output}&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${result} =&lt;/td&gt;
+&lt;td&gt;Run&lt;/td&gt;
+&lt;td&gt;${CURDIR}${/}tester.py arg1 arg2&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Not Contain&lt;/td&gt;
+&lt;td&gt;${result}&lt;/td&gt;
+&lt;td&gt;FAIL&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${stdout} =&lt;/td&gt;
+&lt;td&gt;Run&lt;/td&gt;
+&lt;td&gt;/opt/script.sh 2&amp;gt;/tmp/stderr.txt&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;${stdout}&lt;/td&gt;
+&lt;td&gt;TEST PASSED&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;File Should Be Empty&lt;/td&gt;
+&lt;td&gt;/tmp/stderr.txt&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;&lt;b&gt;TIP:&lt;/b&gt; `Run Process` keyword provided by the &lt;a href="http://robotframework.org/robotframework/latest/libraries/Process.html"&gt;Process library&lt;/a&gt; supports better process configuration and is generally recommended as a replacement for this keyword.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Run And Return Rc" deprecated="false">
+<arguments>
+<arg>command</arg>
+</arguments>
+<doc>&lt;p&gt;Runs the given command in the system and returns the return code.&lt;/p&gt;
+&lt;p&gt;The return code (RC) is returned as a positive integer in range from 0 to 255 as returned by the executed command. On some operating systems (notable Windows) original return codes can be something else, but this keyword always maps them to the 0-255 range. Since the RC is an integer, it must be checked e.g. with the keyword `Should Be Equal As Integers` instead of `Should Be Equal` (both are built-in keywords).&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${rc} =&lt;/td&gt;
+&lt;td&gt;Run and Return RC&lt;/td&gt;
+&lt;td&gt;${CURDIR}${/}script.py arg&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal As Integers&lt;/td&gt;
+&lt;td&gt;${rc}&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${rc} =&lt;/td&gt;
+&lt;td&gt;Run and Return RC&lt;/td&gt;
+&lt;td&gt;/path/to/example.rb arg1 arg2&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be True&lt;/td&gt;
+&lt;td&gt;0 &amp;lt; ${rc} &amp;lt; 42&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;See `Run` and `Run And Return RC And Output` if you need to get the output of the executed command.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;TIP:&lt;/b&gt; `Run Process` keyword provided by the &lt;a href="http://robotframework.org/robotframework/latest/libraries/Process.html"&gt;Process library&lt;/a&gt; supports better process configuration and is generally recommended as a replacement for this keyword.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Run And Return Rc And Output" deprecated="false">
+<arguments>
+<arg>command</arg>
+</arguments>
+<doc>&lt;p&gt;Runs the given command in the system and returns the RC and output.&lt;/p&gt;
+&lt;p&gt;The return code (RC) is returned similarly as with `Run And Return RC` and the output similarly as with `Run`.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${rc}&lt;/td&gt;
+&lt;td&gt;${output} =&lt;/td&gt;
+&lt;td&gt;Run and Return RC and Output&lt;/td&gt;
+&lt;td&gt;${CURDIR}${/}mytool&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal As Integers&lt;/td&gt;
+&lt;td&gt;${rc}&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Not Contain&lt;/td&gt;
+&lt;td&gt;${output}&lt;/td&gt;
+&lt;td&gt;FAIL&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${rc}&lt;/td&gt;
+&lt;td&gt;${stdout} =&lt;/td&gt;
+&lt;td&gt;Run and Return RC and Output&lt;/td&gt;
+&lt;td&gt;/opt/script.sh 2&amp;gt;/tmp/stderr.txt&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be True&lt;/td&gt;
+&lt;td&gt;${rc} &amp;gt; 42&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;${stdout}&lt;/td&gt;
+&lt;td&gt;TEST PASSED&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;File Should Be Empty&lt;/td&gt;
+&lt;td&gt;/tmp/stderr.txt&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;&lt;b&gt;TIP:&lt;/b&gt; `Run Process` keyword provided by the &lt;a href="http://robotframework.org/robotframework/latest/libraries/Process.html"&gt;Process library&lt;/a&gt; supports better process configuration and is generally recommended as a replacement for this keyword.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Set Environment Variable" deprecated="false">
+<arguments>
+<arg>name</arg>
+<arg>value</arg>
+</arguments>
+<doc>&lt;p&gt;Sets an environment variable to a specified value.&lt;/p&gt;
+&lt;p&gt;Values are converted to strings automatically. Set variables are automatically encoded using the system encoding.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Set Modified Time" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>mtime</arg>
+</arguments>
+<doc>&lt;p&gt;Sets the file modification and access times.&lt;/p&gt;
+&lt;p&gt;Changes the modification and access times of the given file to the value determined by &lt;code&gt;mtime&lt;/code&gt;. The time can be given in different formats described below. Note that all checks involving strings are case-insensitive. Modified time can only be set to regular files.&lt;/p&gt;
+&lt;p&gt;1) If &lt;code&gt;mtime&lt;/code&gt; is a number, or a string that can be converted to a number, it is interpreted as seconds since the UNIX epoch (1970-01-01 00:00:00 UTC). This documentation was originally written about 1177654467 seconds after the epoch.&lt;/p&gt;
+&lt;p&gt;2) If &lt;code&gt;mtime&lt;/code&gt; is a timestamp, that time will be used. Valid timestamp formats are &lt;code&gt;YYYY-MM-DD hh:mm:ss&lt;/code&gt; and &lt;code&gt;YYYYMMDD hhmmss&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;3) If &lt;code&gt;mtime&lt;/code&gt; is equal to &lt;code&gt;NOW&lt;/code&gt;, the current local time is used.&lt;/p&gt;
+&lt;p&gt;4) If &lt;code&gt;mtime&lt;/code&gt; is equal to &lt;code&gt;UTC&lt;/code&gt;, the current time in &lt;a href="http://en.wikipedia.org/wiki/Coordinated_Universal_Time"&gt;UTC&lt;/a&gt; is used.&lt;/p&gt;
+&lt;p&gt;5) If &lt;code&gt;mtime&lt;/code&gt; is in the format like &lt;code&gt;NOW - 1 day&lt;/code&gt; or &lt;code&gt;UTC + 1 hour 30 min&lt;/code&gt;, the current local/UTC time plus/minus the time specified with the time string is used. The time string format is described in an appendix of Robot Framework User Guide.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;Set Modified Time&lt;/td&gt;
+&lt;td&gt;/path/file&lt;/td&gt;
+&lt;td&gt;1177654467&lt;/td&gt;
+&lt;td&gt;# Time given as epoch seconds&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Set Modified Time&lt;/td&gt;
+&lt;td&gt;/path/file&lt;/td&gt;
+&lt;td&gt;2007-04-27 9:14:27&lt;/td&gt;
+&lt;td&gt;# Time given as a timestamp&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Set Modified Time&lt;/td&gt;
+&lt;td&gt;/path/file&lt;/td&gt;
+&lt;td&gt;NOW&lt;/td&gt;
+&lt;td&gt;# The local time of execution&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Set Modified Time&lt;/td&gt;
+&lt;td&gt;/path/file&lt;/td&gt;
+&lt;td&gt;NOW - 1 day&lt;/td&gt;
+&lt;td&gt;# 1 day subtracted from the local time&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Set Modified Time&lt;/td&gt;
+&lt;td&gt;/path/file&lt;/td&gt;
+&lt;td&gt;UTC + 1h 2min 3s&lt;/td&gt;
+&lt;td&gt;# 1h 2min 3s added to the UTC time&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Should Exist" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails unless the given path (file or directory) exists.&lt;/p&gt;
+&lt;p&gt;The path can be given as an exact path or as a glob pattern. The pattern matching syntax is explained in `introduction`. The default error message can be overridden with the &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Should Not Exist" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails if the given path (file or directory) exists.&lt;/p&gt;
+&lt;p&gt;The path can be given as an exact path or as a glob pattern. The pattern matching syntax is explained in `introduction`. The default error message can be overridden with the &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Split Extension" deprecated="false">
+<arguments>
+<arg>path</arg>
+</arguments>
+<doc>&lt;p&gt;Splits the extension from the given path.&lt;/p&gt;
+&lt;p&gt;The given path is first normalized (e.g. possible trailing path separators removed, special directories &lt;code&gt;..&lt;/code&gt; and &lt;code&gt;.&lt;/code&gt; removed). The base path and extension are returned as separate components so that the dot used as an extension separator is removed. If the path contains no extension, an empty string is returned for it. Possible leading and trailing dots in the file name are never considered to be extension separators.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${path}&lt;/td&gt;
+&lt;td&gt;${ext} =&lt;/td&gt;
+&lt;td&gt;Split Extension&lt;/td&gt;
+&lt;td&gt;file.extension&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${p2}&lt;/td&gt;
+&lt;td&gt;${e2} =&lt;/td&gt;
+&lt;td&gt;Split Extension&lt;/td&gt;
+&lt;td&gt;path/file.ext&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${p3}&lt;/td&gt;
+&lt;td&gt;${e3} =&lt;/td&gt;
+&lt;td&gt;Split Extension&lt;/td&gt;
+&lt;td&gt;path/file&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${p4}&lt;/td&gt;
+&lt;td&gt;${e4} =&lt;/td&gt;
+&lt;td&gt;Split Extension&lt;/td&gt;
+&lt;td&gt;p1/../p2/file.ext&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${p5}&lt;/td&gt;
+&lt;td&gt;${e5} =&lt;/td&gt;
+&lt;td&gt;Split Extension&lt;/td&gt;
+&lt;td&gt;path/.file.ext&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${p6}&lt;/td&gt;
+&lt;td&gt;${e6} =&lt;/td&gt;
+&lt;td&gt;Split Extension&lt;/td&gt;
+&lt;td&gt;path/.file&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;=&amp;gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;${path} = 'file' &amp;amp; ${ext} = 'extension'&lt;/li&gt;
+&lt;li&gt;${p2} = 'path/file' &amp;amp; ${e2} = 'ext'&lt;/li&gt;
+&lt;li&gt;${p3} = 'path/file' &amp;amp; ${e3} = ''&lt;/li&gt;
+&lt;li&gt;${p4} = 'p2/file' &amp;amp; ${e4} = 'ext'&lt;/li&gt;
+&lt;li&gt;${p5} = 'path/.file' &amp;amp; ${e5} = 'ext'&lt;/li&gt;
+&lt;li&gt;${p6} = 'path/.file' &amp;amp; ${e6} = ''&lt;/li&gt;
+&lt;/ul&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Split Path" deprecated="false">
+<arguments>
+<arg>path</arg>
+</arguments>
+<doc>&lt;p&gt;Splits the given path from the last path separator (&lt;code&gt;/&lt;/code&gt; or &lt;code&gt;\&lt;/code&gt;).&lt;/p&gt;
+&lt;p&gt;The given path is first normalized (e.g. a possible trailing path separator is removed, special directories &lt;code&gt;..&lt;/code&gt; and &lt;code&gt;.&lt;/code&gt; removed). The parts that are split are returned as separate components.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${path1}&lt;/td&gt;
+&lt;td&gt;${dir} =&lt;/td&gt;
+&lt;td&gt;Split Path&lt;/td&gt;
+&lt;td&gt;abc/def&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${path2}&lt;/td&gt;
+&lt;td&gt;${file} =&lt;/td&gt;
+&lt;td&gt;Split Path&lt;/td&gt;
+&lt;td&gt;abc/def/ghi.txt&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${path3}&lt;/td&gt;
+&lt;td&gt;${d2}  =&lt;/td&gt;
+&lt;td&gt;Split Path&lt;/td&gt;
+&lt;td&gt;abc/../def/ghi/&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;=&amp;gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;${path1} = 'abc' &amp;amp; ${dir} = 'def'&lt;/li&gt;
+&lt;li&gt;${path2} = 'abc/def' &amp;amp; ${file} = 'ghi.txt'&lt;/li&gt;
+&lt;li&gt;${path3} = 'def' &amp;amp; ${d2} = 'ghi'&lt;/li&gt;
+&lt;/ul&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Touch" deprecated="false">
+<arguments>
+<arg>path</arg>
+</arguments>
+<doc>&lt;p&gt;Emulates the UNIX touch command.&lt;/p&gt;
+&lt;p&gt;Creates a file, if it does not exist. Otherwise changes its access and modification times to the current time.&lt;/p&gt;
+&lt;p&gt;Fails if used with the directories or the parent directory of the given file does not exist.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Wait Until Created" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>timeout=1 minute</arg>
+</arguments>
+<doc>&lt;p&gt;Waits until the given file or directory is created.&lt;/p&gt;
+&lt;p&gt;The path can be given as an exact path or as a glob pattern. The pattern matching syntax is explained in `introduction`. If the path is a pattern, the keyword returns when an item matching it is created.&lt;/p&gt;
+&lt;p&gt;The optional &lt;code&gt;timeout&lt;/code&gt; can be used to control the maximum time of waiting. The timeout is given as a timeout string, e.g. in a format &lt;code&gt;15 seconds&lt;/code&gt;, &lt;code&gt;1min 10s&lt;/code&gt; or just &lt;code&gt;10&lt;/code&gt;. The time string format is described in an appendix of Robot Framework User Guide.&lt;/p&gt;
+&lt;p&gt;If the timeout is negative, the keyword is never timed-out. The keyword returns immediately, if the path already exists.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Wait Until Removed" deprecated="false">
+<arguments>
+<arg>path</arg>
+<arg>timeout=1 minute</arg>
+</arguments>
+<doc>&lt;p&gt;Waits until the given file or directory is removed.&lt;/p&gt;
+&lt;p&gt;The path can be given as an exact path or as a glob pattern. The pattern matching syntax is explained in `introduction`. If the path is a pattern, the keyword waits until all matching items are removed.&lt;/p&gt;
+&lt;p&gt;The optional &lt;code&gt;timeout&lt;/code&gt; can be used to control the maximum time of waiting. The timeout is given as a timeout string, e.g. in a format &lt;code&gt;15 seconds&lt;/code&gt;, &lt;code&gt;1min 10s&lt;/code&gt; or just &lt;code&gt;10&lt;/code&gt;. The time string format is described in an appendix of Robot Framework User Guide.&lt;/p&gt;
+&lt;p&gt;If the timeout is negative, the keyword is never timed-out. The keyword returns immediately, if the path does not exist in the first place.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+</keywordspec>

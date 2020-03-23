@@ -7,7 +7,7 @@ import sys
 from robotframework_ls.options import USE_TIMEOUTS, NO_TIMEOUT
 from robotframework_ls._utils import TimeoutError
 
-__file__ = os.path.abspath(__file__)
+__file__ = os.path.abspath(__file__)  # @ReservedAssignment
 
 
 log = logging.getLogger(__name__)
@@ -15,6 +15,81 @@ log = logging.getLogger(__name__)
 TIMEOUT = int(os.getenv("PYTEST_TIMEOUT", 7))
 if not USE_TIMEOUTS:
     TIMEOUT = NO_TIMEOUT  # i.e.: None
+
+LIBSPEC_1 = """<?xml version="1.0" encoding="UTF-8"?>
+<keywordspec name="case1_library" type="library" format="ROBOT" generated="20200316 10:45:35">
+<version></version>
+<scope>global</scope>
+<namedargs>yes</namedargs>
+<doc>Documentation for library ``case1_library``.</doc>
+<kw name="new Verify Another Model">
+<arguments>
+<arg>new model=10</arg>
+</arguments>
+<doc></doc>
+<tags>
+</tags>
+</kw>
+<kw name="New Verify Model">
+<arguments>
+<arg>new model</arg>
+</arguments>
+<doc>:type new_model: int</doc>
+<tags>
+</tags>
+</kw>
+</keywordspec>
+"""
+
+LIBSPEC_2 = """<?xml version="1.0" encoding="UTF-8"?>
+<keywordspec name="case2_library" type="library" format="ROBOT" generated="20200316 10:45:35">
+<version></version>
+<scope>global</scope>
+<namedargs>yes</namedargs>
+<doc>Documentation for library ``case2_library``.</doc>
+<kw name="Case 2 Verify Another Model">
+<arguments>
+<arg>new model=10</arg>
+</arguments>
+<doc></doc>
+<tags>
+</tags>
+</kw>
+<kw name="Case 2 Verify Model">
+<arguments>
+<arg>new model</arg>
+</arguments>
+<doc>:type new_model: int</doc>
+<tags>
+</tags>
+</kw>
+</keywordspec>
+"""
+
+LIBSPEC_2_A = """<?xml version="1.0" encoding="UTF-8"?>
+<keywordspec name="case2_library" type="library" format="ROBOT" generated="20200316 10:45:35">
+<version></version>
+<scope>global</scope>
+<namedargs>yes</namedargs>
+<doc>Documentation for library ``case2_library``.</doc>
+<kw name="Case 2 A Verify Another Model">
+<arguments>
+<arg>new model=10</arg>
+</arguments>
+<doc></doc>
+<tags>
+</tags>
+</kw>
+<kw name="Case 2 A Verify Model">
+<arguments>
+<arg>new model</arg>
+</arguments>
+<doc>:type new_model: int</doc>
+<tags>
+</tags>
+</kw>
+</keywordspec>
+"""
 
 
 def wait_for_condition(condition, msg=None, timeout=TIMEOUT, sleep=1 / 20.0):
@@ -178,16 +253,45 @@ def language_server_process(log_file):
 
 
 @pytest.fixture(autouse=True, scope="session")
-def sync_builtins(tmpdir_factory):
+def sync_builtins(tmpdir_factory, cases):
     """
     Pre-generate the builtins.
     """
-    os.environ["ROBOTFRAMEWORK_LS_USER_HOME"] = str(
-        tmpdir_factory.mktemp("ls_user_home")
-    )
+    from robotframework_ls.impl.libspec_manager import LibspecManager
+    import shutil
+
+    user_home = str(tmpdir_factory.mktemp("ls_user_home"))
+    os.environ["ROBOTFRAMEWORK_LS_USER_HOME"] = user_home
+    internal_libspec_dir = LibspecManager.get_internal_builtins_libspec_dir()
+    try:
+        os.makedirs(internal_libspec_dir)
+    except:
+        # Ignore exception if it's already created.
+        pass
+
+    builtin_libs = cases.get_path("builtin_libs")
+
+    # Uncomment the line to regenerate the libspec files for the builtin libraries.
+    # LibspecManager(builtin_libspec_dir=builtin_libs)
+
+    # Note: use private copy instead of re-creating because it's one of the
+    # slowest things when starting test cases.
+    # Locally it's the difference from the test suite taking 15 or 25 seconds
+    # (with tests with 12 cpus in parallel).
+
+    for name in os.listdir(builtin_libs):
+        shutil.copyfile(
+            os.path.join(builtin_libs, name), os.path.join(internal_libspec_dir, name)
+        )
+
+
+@pytest.fixture
+def libspec_manager(tmpdir):
     from robotframework_ls.impl.libspec_manager import LibspecManager
 
-    LibspecManager().synchronize()
+    libspec_manager = LibspecManager(user_libspec_dir=str(tmpdir.join("user_libspec")))
+    yield libspec_manager
+    libspec_manager.dispose()
 
 
 @pytest.fixture
@@ -229,7 +333,7 @@ class _CasesFixture(object):
         shutil.copytree(self.get_path(case, must_exist=True), dest_dir)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def cases():
     return _CasesFixture()
 

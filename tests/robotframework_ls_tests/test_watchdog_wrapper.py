@@ -1,23 +1,31 @@
+import time
+
+
 def test_watchdog(tmpdir):
     from robotframework_ls_tests.fixtures import wait_for_condition
-    from robotframework_ls.watchdog_wrapper import notify_on_extensions_change
     from robotframework_ls.watchdog_wrapper import PathInfo
+    from robotframework_ls import watchdog_wrapper
 
     tmpdir.join("dir_not_rec").mkdir()
     tmpdir.join("dir_rec").mkdir()
 
     found = []
 
-    def on_change(filepath):
+    def on_change(filepath, *args):
         found.append(filepath)
+        assert args == ("foo", "bar")
 
-    handle = notify_on_extensions_change(
+    notifier = watchdog_wrapper.create_notifier(on_change, timeout=0.1)
+    observer = watchdog_wrapper.create_observer()
+
+    watch = observer.notify_on_extensions_change(
         [
             PathInfo(tmpdir.join("dir_not_rec"), False),
             PathInfo(tmpdir.join("dir_rec"), True),
         ],
         ["libspec"],
-        on_change,
+        notifier.on_change,
+        call_args=("foo", "bar"),
     )
 
     try:
@@ -77,5 +85,16 @@ def test_watchdog(tmpdir):
             msg=lambda: "Expected to find myd.libspec. Found:\n%s"
             % ("\n".join(found),),
         )
+
+        watch.stop_tracking()
+        del found[:]
+        tmpdir.join("dir_rec").join("mye.txt").write("foo")
+        tmpdir.join("dir_rec").join("mye.libspec").write("foo")
+
+        # Give time to check if some change arrives.
+        time.sleep(1)
+        assert not found
+
     finally:
-        handle.stop()
+        notifier.dispose()
+        observer.dispose()

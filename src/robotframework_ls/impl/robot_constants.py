@@ -123,7 +123,7 @@ RESOURCE_FILE_SECTIONS = [
 BUILTIN_LIB = "BuiltIn"
 
 # From robot.libraries.STDLIBS
-STDLIBS = tuple(
+STDLIBS = frozenset(
     (
         BUILTIN_LIB,
         "Collections",

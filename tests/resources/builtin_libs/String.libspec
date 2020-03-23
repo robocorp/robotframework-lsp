@@ -1,0 +1,1039 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<keywordspec name="String" type="library" format="HTML" generated="20200323 13:11:21">
+<version>3.2b3.dev1</version>
+<scope>global</scope>
+<namedargs>yes</namedargs>
+<doc>&lt;p&gt;A test library for string manipulation and verification.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;String&lt;/code&gt; is Robot Framework's standard library for manipulating strings (e.g. `Replace String Using Regexp`, `Split To Lines`) and verifying their contents (e.g. `Should Be String`).&lt;/p&gt;
+&lt;p&gt;Following keywords from &lt;code&gt;BuiltIn&lt;/code&gt; library can also be used with strings:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;`Catenate`&lt;/li&gt;
+&lt;li&gt;`Get Length`&lt;/li&gt;
+&lt;li&gt;`Length Should Be`&lt;/li&gt;
+&lt;li&gt;`Should (Not) Be Empty`&lt;/li&gt;
+&lt;li&gt;`Should (Not) Be Equal (As Strings/Integers/Numbers)`&lt;/li&gt;
+&lt;li&gt;`Should (Not) Match (Regexp)`&lt;/li&gt;
+&lt;li&gt;`Should (Not) Contain`&lt;/li&gt;
+&lt;li&gt;`Should (Not) Start With`&lt;/li&gt;
+&lt;li&gt;`Should (Not) End With`&lt;/li&gt;
+&lt;li&gt;`Convert To String`&lt;/li&gt;
+&lt;li&gt;`Convert To Bytes`&lt;/li&gt;
+&lt;/ul&gt;</doc>
+<kw name="Convert To Lower Case" deprecated="false">
+<arguments>
+<arg>string</arg>
+</arguments>
+<doc>&lt;p&gt;Converts string to lower case.&lt;/p&gt;
+&lt;p&gt;Uses Python's standard &lt;a href="https://docs.python.org/library/stdtypes.html#str.lower"&gt;lower()&lt;/a&gt; method.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${str1} =&lt;/td&gt;
+&lt;td&gt;Convert To Lower Case&lt;/td&gt;
+&lt;td&gt;ABC&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${str2} =&lt;/td&gt;
+&lt;td&gt;Convert To Lower Case&lt;/td&gt;
+&lt;td&gt;1A2c3D&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;${str1}&lt;/td&gt;
+&lt;td&gt;abc&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;${str2}&lt;/td&gt;
+&lt;td&gt;1a2c3d&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Convert To Title Case" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>exclude=None</arg>
+</arguments>
+<doc>&lt;p&gt;Converts string to title case.&lt;/p&gt;
+&lt;p&gt;Uses the following algorithm:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Split the string to words from whitespace characters (spaces, newlines, etc.).&lt;/li&gt;
+&lt;li&gt;Exclude words that are not all lower case. This preserves, for example, "OK" and "iPhone".&lt;/li&gt;
+&lt;li&gt;Exclude also words listed in the optional &lt;code&gt;exclude&lt;/code&gt; argument.&lt;/li&gt;
+&lt;li&gt;Title case the first alphabetical character of each word that has not been excluded.&lt;/li&gt;
+&lt;li&gt;Join all words together so that original whitespace is preserved.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Explicitly excluded words can be given as a list or as a string with words separated by a comma and an optional space. Excluded words are actually considered to be regular expression patterns, so it is possible to use something like "example[.!?]?" to match the word "example" on it own and also if followed by ".", "!" or "?". See `BuiltIn.Should Match Regexp` for more information about Python regular expression syntax in general and how to use it in Robot Framework test data in particular.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${str1} =&lt;/td&gt;
+&lt;td&gt;Convert To Title Case&lt;/td&gt;
+&lt;td&gt;hello, world!&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${str2} =&lt;/td&gt;
+&lt;td&gt;Convert To Title Case&lt;/td&gt;
+&lt;td&gt;it's an OK iPhone&lt;/td&gt;
+&lt;td&gt;exclude=a, an, the&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${str3} =&lt;/td&gt;
+&lt;td&gt;Convert To Title Case&lt;/td&gt;
+&lt;td&gt;distance is 1 km.&lt;/td&gt;
+&lt;td&gt;exclude=is, km.?&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;${str1}&lt;/td&gt;
+&lt;td&gt;Hello, World!&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;${str2}&lt;/td&gt;
+&lt;td&gt;It's an OK iPhone&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;${str3}&lt;/td&gt;
+&lt;td&gt;Distance is 1 km.&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;The reason this keyword does not use Python's standard &lt;a href="https://docs.python.org/library/stdtypes.html#str.title"&gt;title()&lt;/a&gt; method is that it can yield undesired results, for example, if strings contain upper case letters or special characters like apostrophes. It would, for example, convert "it's an OK iPhone" to "It'S An Ok Iphone".&lt;/p&gt;
+&lt;p&gt;New in Robot Framework 3.2.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Convert To Upper Case" deprecated="false">
+<arguments>
+<arg>string</arg>
+</arguments>
+<doc>&lt;p&gt;Converts string to upper case.&lt;/p&gt;
+&lt;p&gt;Uses Python's standard &lt;a href="https://docs.python.org/library/stdtypes.html#str.upper"&gt;upper()&lt;/a&gt; method.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${str1} =&lt;/td&gt;
+&lt;td&gt;Convert To Upper Case&lt;/td&gt;
+&lt;td&gt;abc&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${str2} =&lt;/td&gt;
+&lt;td&gt;Convert To Upper Case&lt;/td&gt;
+&lt;td&gt;1a2C3d&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;${str1}&lt;/td&gt;
+&lt;td&gt;ABC&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;${str2}&lt;/td&gt;
+&lt;td&gt;1A2C3D&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Decode Bytes To String" deprecated="false">
+<arguments>
+<arg>bytes</arg>
+<arg>encoding</arg>
+<arg>errors=strict</arg>
+</arguments>
+<doc>&lt;p&gt;Decodes the given &lt;code&gt;bytes&lt;/code&gt; to a Unicode string using the given &lt;code&gt;encoding&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;errors&lt;/code&gt; argument controls what to do if decoding some bytes fails. All values accepted by &lt;code&gt;decode&lt;/code&gt; method in Python are valid, but in practice the following values are most useful:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;strict&lt;/code&gt;: fail if characters cannot be decoded (default)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ignore&lt;/code&gt;: ignore characters that cannot be decoded&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;replace&lt;/code&gt;: replace characters that cannot be decoded with a replacement character&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${string} =&lt;/td&gt;
+&lt;td&gt;Decode Bytes To String&lt;/td&gt;
+&lt;td&gt;${bytes}&lt;/td&gt;
+&lt;td&gt;UTF-8&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${string} =&lt;/td&gt;
+&lt;td&gt;Decode Bytes To String&lt;/td&gt;
+&lt;td&gt;${bytes}&lt;/td&gt;
+&lt;td&gt;ASCII&lt;/td&gt;
+&lt;td&gt;errors=ignore&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;Use `Encode String To Bytes` if you need to convert Unicode strings to byte strings, and `Convert To String` in &lt;code&gt;BuiltIn&lt;/code&gt; if you need to convert arbitrary objects to Unicode strings.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Encode String To Bytes" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>encoding</arg>
+<arg>errors=strict</arg>
+</arguments>
+<doc>&lt;p&gt;Encodes the given Unicode &lt;code&gt;string&lt;/code&gt; to bytes using the given &lt;code&gt;encoding&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;errors&lt;/code&gt; argument controls what to do if encoding some characters fails. All values accepted by &lt;code&gt;encode&lt;/code&gt; method in Python are valid, but in practice the following values are most useful:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;strict&lt;/code&gt;: fail if characters cannot be encoded (default)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ignore&lt;/code&gt;: ignore characters that cannot be encoded&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;replace&lt;/code&gt;: replace characters that cannot be encoded with a replacement character&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${bytes} =&lt;/td&gt;
+&lt;td&gt;Encode String To Bytes&lt;/td&gt;
+&lt;td&gt;${string}&lt;/td&gt;
+&lt;td&gt;UTF-8&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${bytes} =&lt;/td&gt;
+&lt;td&gt;Encode String To Bytes&lt;/td&gt;
+&lt;td&gt;${string}&lt;/td&gt;
+&lt;td&gt;ASCII&lt;/td&gt;
+&lt;td&gt;errors=ignore&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;Use `Convert To Bytes` in &lt;code&gt;BuiltIn&lt;/code&gt; if you want to create bytes based on character or integer sequences. Use `Decode Bytes To String` if you need to convert byte strings to Unicode strings and `Convert To String` in &lt;code&gt;BuiltIn&lt;/code&gt; if you need to convert arbitrary objects to Unicode.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Fetch From Left" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>marker</arg>
+</arguments>
+<doc>&lt;p&gt;Returns contents of the &lt;code&gt;string&lt;/code&gt; before the first occurrence of &lt;code&gt;marker&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;If the &lt;code&gt;marker&lt;/code&gt; is not found, whole string is returned.&lt;/p&gt;
+&lt;p&gt;See also `Fetch From Right`, `Split String` and `Split String From Right`.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Fetch From Right" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>marker</arg>
+</arguments>
+<doc>&lt;p&gt;Returns contents of the &lt;code&gt;string&lt;/code&gt; after the last occurrence of &lt;code&gt;marker&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;If the &lt;code&gt;marker&lt;/code&gt; is not found, whole string is returned.&lt;/p&gt;
+&lt;p&gt;See also `Fetch From Left`, `Split String` and `Split String From Right`.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Format String" deprecated="false">
+<arguments>
+<arg>template</arg>
+<arg>*positional</arg>
+<arg>**named</arg>
+</arguments>
+<doc>&lt;p&gt;Formats a &lt;code&gt;template&lt;/code&gt; using the given &lt;code&gt;positional&lt;/code&gt; and &lt;code&gt;named&lt;/code&gt; arguments.&lt;/p&gt;
+&lt;p&gt;The template can be either be a string or an absolute path to an existing file. In the latter case the file is read and its contents are used as the template. If the template file contains non-ASCII characters, it must be encoded using UTF-8.&lt;/p&gt;
+&lt;p&gt;The template is formatted using Python's &lt;a href="https://docs.python.org/library/string.html#format-string-syntax"&gt;format string syntax&lt;/a&gt;. Placeholders are marked using &lt;code&gt;{}&lt;/code&gt; with possible field name and format specification inside. Literal curly braces can be inserted by doubling them like `{{` and `}}`.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${to} =&lt;/td&gt;
+&lt;td&gt;Format String&lt;/td&gt;
+&lt;td&gt;To: {} &amp;lt;{}&amp;gt;&lt;/td&gt;
+&lt;td&gt;${user}&lt;/td&gt;
+&lt;td&gt;${email}&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${to} =&lt;/td&gt;
+&lt;td&gt;Format String&lt;/td&gt;
+&lt;td&gt;To: {name} &amp;lt;{email}&amp;gt;&lt;/td&gt;
+&lt;td&gt;name=${name}&lt;/td&gt;
+&lt;td&gt;email=${email}&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${to} =&lt;/td&gt;
+&lt;td&gt;Format String&lt;/td&gt;
+&lt;td&gt;To: {user.name} &amp;lt;{user.email}&amp;gt;&lt;/td&gt;
+&lt;td&gt;user=${user}&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${xx} =&lt;/td&gt;
+&lt;td&gt;Format String&lt;/td&gt;
+&lt;td&gt;{:*^30}&lt;/td&gt;
+&lt;td&gt;centered&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${yy} =&lt;/td&gt;
+&lt;td&gt;Format String&lt;/td&gt;
+&lt;td&gt;{0:{width}{base}}&lt;/td&gt;
+&lt;td&gt;${42}&lt;/td&gt;
+&lt;td&gt;base=X&lt;/td&gt;
+&lt;td&gt;width=10&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${zz} =&lt;/td&gt;
+&lt;td&gt;Format String&lt;/td&gt;
+&lt;td&gt;${CURDIR}/template.txt&lt;/td&gt;
+&lt;td&gt;positional&lt;/td&gt;
+&lt;td&gt;named=value&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;New in Robot Framework 3.1.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Generate Random String" deprecated="false">
+<arguments>
+<arg>length=8</arg>
+<arg>chars=[LETTERS][NUMBERS]</arg>
+</arguments>
+<doc>&lt;p&gt;Generates a string with a desired &lt;code&gt;length&lt;/code&gt; from the given &lt;code&gt;chars&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;The population sequence &lt;code&gt;chars&lt;/code&gt; contains the characters to use when generating the random string. It can contain any characters, and it is possible to use special markers explained in the table below:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;th&gt;Marker&lt;/th&gt;
+&lt;th&gt;Explanation&lt;/th&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;[LOWER]&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Lowercase ASCII characters from &lt;code&gt;a&lt;/code&gt; to &lt;code&gt;z&lt;/code&gt;.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;[UPPER]&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Uppercase ASCII characters from &lt;code&gt;A&lt;/code&gt; to &lt;code&gt;Z&lt;/code&gt;.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;[LETTERS]&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Lowercase and uppercase ASCII characters.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;[NUMBERS]&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Numbers from 0 to 9.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${ret} =&lt;/td&gt;
+&lt;td&gt;Generate Random String&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${low} =&lt;/td&gt;
+&lt;td&gt;Generate Random String&lt;/td&gt;
+&lt;td&gt;12&lt;/td&gt;
+&lt;td&gt;[LOWER]&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${bin} =&lt;/td&gt;
+&lt;td&gt;Generate Random String&lt;/td&gt;
+&lt;td&gt;8&lt;/td&gt;
+&lt;td&gt;01&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${hex} =&lt;/td&gt;
+&lt;td&gt;Generate Random String&lt;/td&gt;
+&lt;td&gt;4&lt;/td&gt;
+&lt;td&gt;[NUMBERS]abcdef&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Get Line" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>line_number</arg>
+</arguments>
+<doc>&lt;p&gt;Returns the specified line from the given &lt;code&gt;string&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Line numbering starts from 0 and it is possible to use negative indices to refer to lines from the end. The line is returned without the newline character.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${first} =&lt;/td&gt;
+&lt;td&gt;Get Line&lt;/td&gt;
+&lt;td&gt;${string}&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${2nd last} =&lt;/td&gt;
+&lt;td&gt;Get Line&lt;/td&gt;
+&lt;td&gt;${string}&lt;/td&gt;
+&lt;td&gt;-2&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;Use `Split To Lines` if all lines are needed.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Get Line Count" deprecated="false">
+<arguments>
+<arg>string</arg>
+</arguments>
+<doc>&lt;p&gt;Returns and logs the number of lines in the given string.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Get Lines Containing String" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>pattern</arg>
+<arg>case_insensitive=False</arg>
+</arguments>
+<doc>&lt;p&gt;Returns lines of the given &lt;code&gt;string&lt;/code&gt; that contain the &lt;code&gt;pattern&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;pattern&lt;/code&gt; is always considered to be a normal string, not a glob or regexp pattern. A line matches if the &lt;code&gt;pattern&lt;/code&gt; is found anywhere on it.&lt;/p&gt;
+&lt;p&gt;The match is case-sensitive by default, but giving &lt;code&gt;case_insensitive&lt;/code&gt; a true value makes it case-insensitive. The value is considered true if it is a non-empty string that is not equal to &lt;code&gt;false&lt;/code&gt;, &lt;code&gt;none&lt;/code&gt; or &lt;code&gt;no&lt;/code&gt;. If the value is not a string, its truth value is got directly in Python. Considering &lt;code&gt;none&lt;/code&gt; false is new in RF 3.0.3.&lt;/p&gt;
+&lt;p&gt;Lines are returned as one string catenated back together with newlines. Possible trailing newline is never returned. The number of matching lines is automatically logged.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${lines} =&lt;/td&gt;
+&lt;td&gt;Get Lines Containing String&lt;/td&gt;
+&lt;td&gt;${result}&lt;/td&gt;
+&lt;td&gt;An example&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${ret} =&lt;/td&gt;
+&lt;td&gt;Get Lines Containing String&lt;/td&gt;
+&lt;td&gt;${ret}&lt;/td&gt;
+&lt;td&gt;FAIL&lt;/td&gt;
+&lt;td&gt;case-insensitive&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;See `Get Lines Matching Pattern` and `Get Lines Matching Regexp` if you need more complex pattern matching.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Get Lines Matching Pattern" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>pattern</arg>
+<arg>case_insensitive=False</arg>
+</arguments>
+<doc>&lt;p&gt;Returns lines of the given &lt;code&gt;string&lt;/code&gt; that match the &lt;code&gt;pattern&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;pattern&lt;/code&gt; is a &lt;i&gt;glob pattern&lt;/i&gt; where:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;*&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;matches everything&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;?&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;matches any single character&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;[chars]&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;matches any character inside square brackets (e.g. &lt;code&gt;[abc]&lt;/code&gt; matches either &lt;code&gt;a&lt;/code&gt;, &lt;code&gt;b&lt;/code&gt; or &lt;code&gt;c&lt;/code&gt;)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;[!chars]&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;matches any character not inside square brackets&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;A line matches only if it matches the &lt;code&gt;pattern&lt;/code&gt; fully.&lt;/p&gt;
+&lt;p&gt;The match is case-sensitive by default, but giving &lt;code&gt;case_insensitive&lt;/code&gt; a true value makes it case-insensitive. The value is considered true if it is a non-empty string that is not equal to &lt;code&gt;false&lt;/code&gt;, &lt;code&gt;none&lt;/code&gt; or &lt;code&gt;no&lt;/code&gt;. If the value is not a string, its truth value is got directly in Python. Considering &lt;code&gt;none&lt;/code&gt; false is new in RF 3.0.3.&lt;/p&gt;
+&lt;p&gt;Lines are returned as one string catenated back together with newlines. Possible trailing newline is never returned. The number of matching lines is automatically logged.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${lines} =&lt;/td&gt;
+&lt;td&gt;Get Lines Matching Pattern&lt;/td&gt;
+&lt;td&gt;${result}&lt;/td&gt;
+&lt;td&gt;Wild???? example&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${ret} =&lt;/td&gt;
+&lt;td&gt;Get Lines Matching Pattern&lt;/td&gt;
+&lt;td&gt;${ret}&lt;/td&gt;
+&lt;td&gt;FAIL: *&lt;/td&gt;
+&lt;td&gt;case_insensitive=true&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;See `Get Lines Matching Regexp` if you need more complex patterns and `Get Lines Containing String` if searching literal strings is enough.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Get Lines Matching Regexp" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>pattern</arg>
+<arg>partial_match=False</arg>
+</arguments>
+<doc>&lt;p&gt;Returns lines of the given &lt;code&gt;string&lt;/code&gt; that match the regexp &lt;code&gt;pattern&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;See `BuiltIn.Should Match Regexp` for more information about Python regular expression syntax in general and how to use it in Robot Framework test data in particular.&lt;/p&gt;
+&lt;p&gt;By default lines match only if they match the pattern fully, but partial matching can be enabled by giving the &lt;code&gt;partial_match&lt;/code&gt; argument a true value. The value is considered true if it is a non-empty string that is not equal to &lt;code&gt;false&lt;/code&gt;, &lt;code&gt;none&lt;/code&gt; or &lt;code&gt;no&lt;/code&gt;. If the value is not a string, its truth value is got directly in Python. Considering &lt;code&gt;none&lt;/code&gt; false is new in RF 3.0.3.&lt;/p&gt;
+&lt;p&gt;If the pattern is empty, it matches only empty lines by default. When partial matching is enabled, empty pattern matches all lines.&lt;/p&gt;
+&lt;p&gt;Notice that to make the match case-insensitive, you need to prefix the pattern with case-insensitive flag &lt;code&gt;(?i)&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Lines are returned as one string concatenated back together with newlines. Possible trailing newline is never returned. The number of matching lines is automatically logged.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${lines} =&lt;/td&gt;
+&lt;td&gt;Get Lines Matching Regexp&lt;/td&gt;
+&lt;td&gt;${result}&lt;/td&gt;
+&lt;td&gt;Reg\\w{3} example&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${lines} =&lt;/td&gt;
+&lt;td&gt;Get Lines Matching Regexp&lt;/td&gt;
+&lt;td&gt;${result}&lt;/td&gt;
+&lt;td&gt;Reg\\w{3} example&lt;/td&gt;
+&lt;td&gt;partial_match=true&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${ret} =&lt;/td&gt;
+&lt;td&gt;Get Lines Matching Regexp&lt;/td&gt;
+&lt;td&gt;${ret}&lt;/td&gt;
+&lt;td&gt;(?i)FAIL: .*&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;See `Get Lines Matching Pattern` and `Get Lines Containing String` if you do not need full regular expression powers (and complexity).&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;partial_match&lt;/code&gt; argument is new in Robot Framework 2.9. In earlier versions exact match was always required.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Get Regexp Matches" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>pattern</arg>
+<arg>*groups</arg>
+</arguments>
+<doc>&lt;p&gt;Returns a list of all non-overlapping matches in the given string.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;string&lt;/code&gt; is the string to find matches from and &lt;code&gt;pattern&lt;/code&gt; is the regular expression. See `BuiltIn.Should Match Regexp` for more information about Python regular expression syntax in general and how to use it in Robot Framework test data in particular.&lt;/p&gt;
+&lt;p&gt;If no groups are used, the returned list contains full matches. If one group is used, the list contains only contents of that group. If multiple groups are used, the list contains tuples that contain individual group contents. All groups can be given as indexes (starting from 1) and named groups also as names.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${no match} =&lt;/td&gt;
+&lt;td&gt;Get Regexp Matches&lt;/td&gt;
+&lt;td&gt;the string&lt;/td&gt;
+&lt;td&gt;xxx&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${matches} =&lt;/td&gt;
+&lt;td&gt;Get Regexp Matches&lt;/td&gt;
+&lt;td&gt;the string&lt;/td&gt;
+&lt;td&gt;t..&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${one group} =&lt;/td&gt;
+&lt;td&gt;Get Regexp Matches&lt;/td&gt;
+&lt;td&gt;the string&lt;/td&gt;
+&lt;td&gt;t(..)&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${named group} =&lt;/td&gt;
+&lt;td&gt;Get Regexp Matches&lt;/td&gt;
+&lt;td&gt;the string&lt;/td&gt;
+&lt;td&gt;t(?P&amp;lt;name&amp;gt;..)&lt;/td&gt;
+&lt;td&gt;name&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${two groups} =&lt;/td&gt;
+&lt;td&gt;Get Regexp Matches&lt;/td&gt;
+&lt;td&gt;the string&lt;/td&gt;
+&lt;td&gt;t(.)(.)&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;2&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;=&amp;gt;&lt;/p&gt;
+&lt;pre&gt;
+${no match} = []
+${matches} = ['the', 'tri']
+${one group} = ['he', 'ri']
+${named group} = ['he', 'ri']
+${two groups} = [('h', 'e'), ('r', 'i')]
+&lt;/pre&gt;
+&lt;p&gt;New in Robot Framework 2.9.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Get Substring" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>start</arg>
+<arg>end=None</arg>
+</arguments>
+<doc>&lt;p&gt;Returns a substring from &lt;code&gt;start&lt;/code&gt; index to &lt;code&gt;end&lt;/code&gt; index.&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;start&lt;/code&gt; index is inclusive and &lt;code&gt;end&lt;/code&gt; is exclusive. Indexing starts from 0, and it is possible to use negative indices to refer to characters from the end.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${ignore first} =&lt;/td&gt;
+&lt;td&gt;Get Substring&lt;/td&gt;
+&lt;td&gt;${string}&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${ignore last} =&lt;/td&gt;
+&lt;td&gt;Get Substring&lt;/td&gt;
+&lt;td&gt;${string}&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;-1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${5th to 10th} =&lt;/td&gt;
+&lt;td&gt;Get Substring&lt;/td&gt;
+&lt;td&gt;${string}&lt;/td&gt;
+&lt;td&gt;4&lt;/td&gt;
+&lt;td&gt;10&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${first two} =&lt;/td&gt;
+&lt;td&gt;Get Substring&lt;/td&gt;
+&lt;td&gt;${string}&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${last two} =&lt;/td&gt;
+&lt;td&gt;Get Substring&lt;/td&gt;
+&lt;td&gt;${string}&lt;/td&gt;
+&lt;td&gt;-2&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Remove String" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>*removables</arg>
+</arguments>
+<doc>&lt;p&gt;Removes all &lt;code&gt;removables&lt;/code&gt; from the given &lt;code&gt;string&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;removables&lt;/code&gt; are used as literal strings. Each removable will be matched to a temporary string from which preceding removables have been already removed. See second example below.&lt;/p&gt;
+&lt;p&gt;Use `Remove String Using Regexp` if more powerful pattern matching is needed. If only a certain number of matches should be removed, `Replace String` or `Replace String Using Regexp` can be used.&lt;/p&gt;
+&lt;p&gt;A modified version of the string is returned and the original string is not altered.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${str} =&lt;/td&gt;
+&lt;td&gt;Remove String&lt;/td&gt;
+&lt;td&gt;Robot Framework&lt;/td&gt;
+&lt;td&gt;work&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;${str}&lt;/td&gt;
+&lt;td&gt;Robot Frame&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${str} =&lt;/td&gt;
+&lt;td&gt;Remove String&lt;/td&gt;
+&lt;td&gt;Robot Framework&lt;/td&gt;
+&lt;td&gt;o&lt;/td&gt;
+&lt;td&gt;bt&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;${str}&lt;/td&gt;
+&lt;td&gt;R Framewrk&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Remove String Using Regexp" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>*patterns</arg>
+</arguments>
+<doc>&lt;p&gt;Removes &lt;code&gt;patterns&lt;/code&gt; from the given &lt;code&gt;string&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;This keyword is otherwise identical to `Remove String`, but the &lt;code&gt;patterns&lt;/code&gt; to search for are considered to be a regular expression. See `Replace String Using Regexp` for more information about the regular expression syntax. That keyword can also be used if there is a need to remove only a certain number of occurrences.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Replace String" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>search_for</arg>
+<arg>replace_with</arg>
+<arg>count=-1</arg>
+</arguments>
+<doc>&lt;p&gt;Replaces &lt;code&gt;search_for&lt;/code&gt; in the given &lt;code&gt;string&lt;/code&gt; with &lt;code&gt;replace_with&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;search_for&lt;/code&gt; is used as a literal string. See `Replace String Using Regexp` if more powerful pattern matching is needed. If you need to just remove a string see `Remove String`.&lt;/p&gt;
+&lt;p&gt;If the optional argument &lt;code&gt;count&lt;/code&gt; is given, only that many occurrences from left are replaced. Negative &lt;code&gt;count&lt;/code&gt; means that all occurrences are replaced (default behaviour) and zero means that nothing is done.&lt;/p&gt;
+&lt;p&gt;A modified version of the string is returned and the original string is not altered.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${str} =&lt;/td&gt;
+&lt;td&gt;Replace String&lt;/td&gt;
+&lt;td&gt;Hello, world!&lt;/td&gt;
+&lt;td&gt;world&lt;/td&gt;
+&lt;td&gt;tellus&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;${str}&lt;/td&gt;
+&lt;td&gt;Hello, tellus!&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${str} =&lt;/td&gt;
+&lt;td&gt;Replace String&lt;/td&gt;
+&lt;td&gt;Hello, world!&lt;/td&gt;
+&lt;td&gt;l&lt;/td&gt;
+&lt;td&gt;${EMPTY}&lt;/td&gt;
+&lt;td&gt;count=1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;${str}&lt;/td&gt;
+&lt;td&gt;Helo, world!&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Replace String Using Regexp" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>pattern</arg>
+<arg>replace_with</arg>
+<arg>count=-1</arg>
+</arguments>
+<doc>&lt;p&gt;Replaces &lt;code&gt;pattern&lt;/code&gt; in the given &lt;code&gt;string&lt;/code&gt; with &lt;code&gt;replace_with&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;This keyword is otherwise identical to `Replace String`, but the &lt;code&gt;pattern&lt;/code&gt; to search for is considered to be a regular expression.  See `BuiltIn.Should Match Regexp` for more information about Python regular expression syntax in general and how to use it in Robot Framework test data in particular.&lt;/p&gt;
+&lt;p&gt;If you need to just remove a string see `Remove String Using Regexp`.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${str} =&lt;/td&gt;
+&lt;td&gt;Replace String Using Regexp&lt;/td&gt;
+&lt;td&gt;${str}&lt;/td&gt;
+&lt;td&gt;20\\d\\d-\\d\\d-\\d\\d&lt;/td&gt;
+&lt;td&gt;&amp;lt;DATE&amp;gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${str} =&lt;/td&gt;
+&lt;td&gt;Replace String Using Regexp&lt;/td&gt;
+&lt;td&gt;${str}&lt;/td&gt;
+&lt;td&gt;(Hello|Hi)&lt;/td&gt;
+&lt;td&gt;${EMPTY}&lt;/td&gt;
+&lt;td&gt;count=1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Should Be Byte String" deprecated="false">
+<arguments>
+<arg>item</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails if the given &lt;code&gt;item&lt;/code&gt; is not a byte string.&lt;/p&gt;
+&lt;p&gt;Use `Should Be Unicode String` if you want to verify the &lt;code&gt;item&lt;/code&gt; is a Unicode string, or `Should Be String` if both Unicode and byte strings are fine. See `Should Be String` for more details about Unicode strings and byte strings.&lt;/p&gt;
+&lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Should Be Lowercase" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails if the given &lt;code&gt;string&lt;/code&gt; is not in lowercase.&lt;/p&gt;
+&lt;p&gt;For example, &lt;code&gt;'string'&lt;/code&gt; and &lt;code&gt;'with specials!'&lt;/code&gt; would pass, and &lt;code&gt;'String'&lt;/code&gt;, &lt;code&gt;''&lt;/code&gt; and &lt;code&gt;' '&lt;/code&gt; would fail.&lt;/p&gt;
+&lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;
+&lt;p&gt;See also `Should Be Uppercase` and `Should Be Titlecase`.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Should Be String" deprecated="false">
+<arguments>
+<arg>item</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails if the given &lt;code&gt;item&lt;/code&gt; is not a string.&lt;/p&gt;
+&lt;p&gt;With Python 2, except with IronPython, this keyword passes regardless is the &lt;code&gt;item&lt;/code&gt; a Unicode string or a byte string. Use `Should Be Unicode String` or `Should Be Byte String` if you want to restrict the string type. Notice that with Python 2, except with IronPython, &lt;code&gt;'string'&lt;/code&gt; creates a byte string and &lt;code&gt;u'unicode'&lt;/code&gt; must be used to create a Unicode string.&lt;/p&gt;
+&lt;p&gt;With Python 3 and IronPython, this keyword passes if the string is a Unicode string but fails if it is bytes. Notice that with both Python 3 and IronPython, &lt;code&gt;'string'&lt;/code&gt; creates a Unicode string, and &lt;code&gt;b'bytes'&lt;/code&gt; must be used to create a byte string.&lt;/p&gt;
+&lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Should Be Titlecase" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails if given &lt;code&gt;string&lt;/code&gt; is not title.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;string&lt;/code&gt; is a titlecased string if there is at least one character in it, uppercase characters only follow uncased characters and lowercase characters only cased ones.&lt;/p&gt;
+&lt;p&gt;For example, &lt;code&gt;'This Is Title'&lt;/code&gt; would pass, and &lt;code&gt;'Word In UPPER'&lt;/code&gt;, &lt;code&gt;'Word In lower'&lt;/code&gt;, &lt;code&gt;''&lt;/code&gt; and &lt;code&gt;' '&lt;/code&gt; would fail.&lt;/p&gt;
+&lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;
+&lt;p&gt;See also `Should Be Uppercase` and `Should Be Lowercase`.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Should Be Unicode String" deprecated="false">
+<arguments>
+<arg>item</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails if the given &lt;code&gt;item&lt;/code&gt; is not a Unicode string.&lt;/p&gt;
+&lt;p&gt;Use `Should Be Byte String` if you want to verify the &lt;code&gt;item&lt;/code&gt; is a byte string, or `Should Be String` if both Unicode and byte strings are fine. See `Should Be String` for more details about Unicode strings and byte strings.&lt;/p&gt;
+&lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Should Be Uppercase" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails if the given &lt;code&gt;string&lt;/code&gt; is not in uppercase.&lt;/p&gt;
+&lt;p&gt;For example, &lt;code&gt;'STRING'&lt;/code&gt; and &lt;code&gt;'WITH SPECIALS!'&lt;/code&gt; would pass, and &lt;code&gt;'String'&lt;/code&gt;, &lt;code&gt;''&lt;/code&gt; and &lt;code&gt;' '&lt;/code&gt; would fail.&lt;/p&gt;
+&lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;
+&lt;p&gt;See also `Should Be Titlecase` and `Should Be Lowercase`.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Should Not Be String" deprecated="false">
+<arguments>
+<arg>item</arg>
+<arg>msg=None</arg>
+</arguments>
+<doc>&lt;p&gt;Fails if the given &lt;code&gt;item&lt;/code&gt; is a string.&lt;/p&gt;
+&lt;p&gt;See `Should Be String` for more details about Unicode strings and byte strings.&lt;/p&gt;
+&lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Split String" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>separator=None</arg>
+<arg>max_split=-1</arg>
+</arguments>
+<doc>&lt;p&gt;Splits the &lt;code&gt;string&lt;/code&gt; using &lt;code&gt;separator&lt;/code&gt; as a delimiter string.&lt;/p&gt;
+&lt;p&gt;If a &lt;code&gt;separator&lt;/code&gt; is not given, any whitespace string is a separator. In that case also possible consecutive whitespace as well as leading and trailing whitespace is ignored.&lt;/p&gt;
+&lt;p&gt;Split words are returned as a list. If the optional &lt;code&gt;max_split&lt;/code&gt; is given, at most &lt;code&gt;max_split&lt;/code&gt; splits are done, and the returned list will have maximum &lt;code&gt;max_split + 1&lt;/code&gt; elements.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;@{words} =&lt;/td&gt;
+&lt;td&gt;Split String&lt;/td&gt;
+&lt;td&gt;${string}&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;@{words} =&lt;/td&gt;
+&lt;td&gt;Split String&lt;/td&gt;
+&lt;td&gt;${string}&lt;/td&gt;
+&lt;td&gt;,${SPACE}&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${pre}&lt;/td&gt;
+&lt;td&gt;${post} =&lt;/td&gt;
+&lt;td&gt;Split String&lt;/td&gt;
+&lt;td&gt;${string}&lt;/td&gt;
+&lt;td&gt;::&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;See `Split String From Right` if you want to start splitting from right, and `Fetch From Left` and `Fetch From Right` if you only want to get first/last part of the string.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Split String From Right" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>separator=None</arg>
+<arg>max_split=-1</arg>
+</arguments>
+<doc>&lt;p&gt;Splits the &lt;code&gt;string&lt;/code&gt; using &lt;code&gt;separator&lt;/code&gt; starting from right.&lt;/p&gt;
+&lt;p&gt;Same as `Split String`, but splitting is started from right. This has an effect only when &lt;code&gt;max_split&lt;/code&gt; is given.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${first}&lt;/td&gt;
+&lt;td&gt;${rest} =&lt;/td&gt;
+&lt;td&gt;Split String&lt;/td&gt;
+&lt;td&gt;${string}&lt;/td&gt;
+&lt;td&gt;-&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${rest}&lt;/td&gt;
+&lt;td&gt;${last} =&lt;/td&gt;
+&lt;td&gt;Split String From Right&lt;/td&gt;
+&lt;td&gt;${string}&lt;/td&gt;
+&lt;td&gt;-&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Split String To Characters" deprecated="false">
+<arguments>
+<arg>string</arg>
+</arguments>
+<doc>&lt;p&gt;Splits the given &lt;code&gt;string&lt;/code&gt; to characters.&lt;/p&gt;
+&lt;p&gt;Example:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;@{characters} =&lt;/td&gt;
+&lt;td&gt;Split String To Characters&lt;/td&gt;
+&lt;td&gt;${string}&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Split To Lines" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>start=0</arg>
+<arg>end=None</arg>
+</arguments>
+<doc>&lt;p&gt;Splits the given string to lines.&lt;/p&gt;
+&lt;p&gt;It is possible to get only a selection of lines from &lt;code&gt;start&lt;/code&gt; to &lt;code&gt;end&lt;/code&gt; so that &lt;code&gt;start&lt;/code&gt; index is inclusive and &lt;code&gt;end&lt;/code&gt; is exclusive. Line numbering starts from 0, and it is possible to use negative indices to refer to lines from the end.&lt;/p&gt;
+&lt;p&gt;Lines are returned without the newlines. The number of returned lines is automatically logged.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;@{lines} =&lt;/td&gt;
+&lt;td&gt;Split To Lines&lt;/td&gt;
+&lt;td&gt;${manylines}&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;@{ignore first} =&lt;/td&gt;
+&lt;td&gt;Split To Lines&lt;/td&gt;
+&lt;td&gt;${manylines}&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;@{ignore last} =&lt;/td&gt;
+&lt;td&gt;Split To Lines&lt;/td&gt;
+&lt;td&gt;${manylines}&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;-1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;@{5th to 10th} =&lt;/td&gt;
+&lt;td&gt;Split To Lines&lt;/td&gt;
+&lt;td&gt;${manylines}&lt;/td&gt;
+&lt;td&gt;4&lt;/td&gt;
+&lt;td&gt;10&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;@{first two} =&lt;/td&gt;
+&lt;td&gt;Split To Lines&lt;/td&gt;
+&lt;td&gt;${manylines}&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;@{last two} =&lt;/td&gt;
+&lt;td&gt;Split To Lines&lt;/td&gt;
+&lt;td&gt;${manylines}&lt;/td&gt;
+&lt;td&gt;-2&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;Use `Get Line` if you only need to get a single line.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Strip String" deprecated="false">
+<arguments>
+<arg>string</arg>
+<arg>mode=both</arg>
+<arg>characters=None</arg>
+</arguments>
+<doc>&lt;p&gt;Remove leading and/or trailing whitespaces from the given string.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;mode&lt;/code&gt; is either &lt;code&gt;left&lt;/code&gt; to remove leading characters, &lt;code&gt;right&lt;/code&gt; to remove trailing characters, &lt;code&gt;both&lt;/code&gt; (default) to remove the characters from both sides of the string or &lt;code&gt;none&lt;/code&gt; to return the unmodified string.&lt;/p&gt;
+&lt;p&gt;If the optional &lt;code&gt;characters&lt;/code&gt; is given, it must be a string and the characters in the string will be stripped in the string. Please note, that this is not a substring to be removed but a list of characters, see the example below.&lt;/p&gt;
+&lt;p&gt;Examples:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${stripped}=&lt;/td&gt;
+&lt;td&gt;Strip String&lt;/td&gt;
+&lt;td&gt;${SPACE}Hello${SPACE}&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;${stripped}&lt;/td&gt;
+&lt;td&gt;Hello&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${stripped}=&lt;/td&gt;
+&lt;td&gt;Strip String&lt;/td&gt;
+&lt;td&gt;${SPACE}Hello${SPACE}&lt;/td&gt;
+&lt;td&gt;mode=left&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;${stripped}&lt;/td&gt;
+&lt;td&gt;Hello${SPACE}&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${stripped}=&lt;/td&gt;
+&lt;td&gt;Strip String&lt;/td&gt;
+&lt;td&gt;aabaHelloeee&lt;/td&gt;
+&lt;td&gt;characters=abe&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Should Be Equal&lt;/td&gt;
+&lt;td&gt;${stripped}&lt;/td&gt;
+&lt;td&gt;Hello&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;New in Robot Framework 3.0.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+</keywordspec>

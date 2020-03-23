@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<keywordspec name="Dialogs" type="library" format="HTML" generated="20200323 13:11:20">
+<version>3.2b3.dev1</version>
+<scope>global</scope>
+<namedargs>yes</namedargs>
+<doc>&lt;p&gt;A test library providing dialogs for interacting with users.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;Dialogs&lt;/code&gt; is Robot Framework's standard library that provides means for pausing the test execution and getting input from users. The dialogs are slightly different depending on whether tests are run on Python, IronPython or Jython but they provide the same functionality.&lt;/p&gt;
+&lt;p&gt;Long lines in the provided messages are wrapped automatically. If you want to wrap lines manually, you can add newlines using the &lt;code&gt;\n&lt;/code&gt; character sequence.&lt;/p&gt;
+&lt;p&gt;The library has a known limitation that it cannot be used with timeouts on Python. Support for IronPython was added in Robot Framework 2.9.2.&lt;/p&gt;</doc>
+<kw name="Execute Manual Step" deprecated="false">
+<arguments>
+<arg>message</arg>
+<arg>default_error=</arg>
+</arguments>
+<doc>&lt;p&gt;Pauses test execution until user sets the keyword status.&lt;/p&gt;
+&lt;p&gt;User can press either &lt;code&gt;PASS&lt;/code&gt; or &lt;code&gt;FAIL&lt;/code&gt; button. In the latter case execution fails and an additional dialog is opened for defining the error message.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;message&lt;/code&gt; is the instruction shown in the initial dialog and &lt;code&gt;default_error&lt;/code&gt; is the default value shown in the possible error message dialog.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Get Selection From User" deprecated="false">
+<arguments>
+<arg>message</arg>
+<arg>*values</arg>
+</arguments>
+<doc>&lt;p&gt;Pauses test execution and asks user to select a value.&lt;/p&gt;
+&lt;p&gt;The selected value is returned. Pressing &lt;code&gt;Cancel&lt;/code&gt; fails the keyword.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;message&lt;/code&gt; is the instruction shown in the dialog and &lt;code&gt;values&lt;/code&gt; are the options given to the user.&lt;/p&gt;
+&lt;p&gt;Example:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${user} =&lt;/td&gt;
+&lt;td&gt;Get Selection From User&lt;/td&gt;
+&lt;td&gt;Select user&lt;/td&gt;
+&lt;td&gt;user1&lt;/td&gt;
+&lt;td&gt;user2&lt;/td&gt;
+&lt;td&gt;admin&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Get Selections From User" deprecated="false">
+<arguments>
+<arg>message</arg>
+<arg>*values</arg>
+</arguments>
+<doc>&lt;p&gt;Pauses test execution and asks user to select multiple values.&lt;/p&gt;
+&lt;p&gt;The selected values are returned as a list. Selecting no values is OK and in that case the returned list is empty. Pressing &lt;code&gt;Cancel&lt;/code&gt; fails the keyword.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;message&lt;/code&gt; is the instruction shown in the dialog and &lt;code&gt;values&lt;/code&gt; are the options given to the user.&lt;/p&gt;
+&lt;p&gt;Example:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${users} =&lt;/td&gt;
+&lt;td&gt;Get Selections From User&lt;/td&gt;
+&lt;td&gt;Select users&lt;/td&gt;
+&lt;td&gt;user1&lt;/td&gt;
+&lt;td&gt;user2&lt;/td&gt;
+&lt;td&gt;admin&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;New in Robot Framework 3.1.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Get Value From User" deprecated="false">
+<arguments>
+<arg>message</arg>
+<arg>default_value=</arg>
+<arg>hidden=False</arg>
+</arguments>
+<doc>&lt;p&gt;Pauses test execution and asks user to input a value.&lt;/p&gt;
+&lt;p&gt;Value typed by the user, or the possible default value, is returned. Returning an empty value is fine, but pressing &lt;code&gt;Cancel&lt;/code&gt; fails the keyword.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;message&lt;/code&gt; is the instruction shown in the dialog and &lt;code&gt;default_value&lt;/code&gt; is the possible default value shown in the input field.&lt;/p&gt;
+&lt;p&gt;If &lt;code&gt;hidden&lt;/code&gt; is given a true value, the value typed by the user is hidden. &lt;code&gt;hidden&lt;/code&gt; is considered true if it is a non-empty string not equal to &lt;code&gt;false&lt;/code&gt;, &lt;code&gt;none&lt;/code&gt; or &lt;code&gt;no&lt;/code&gt;, case-insensitively. If it is not a string, its truth value is got directly using same &lt;a href="http://docs.python.org/library/stdtypes.html#truth"&gt;rules as in Python&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Example:&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;${username} =&lt;/td&gt;
+&lt;td&gt;Get Value From User&lt;/td&gt;
+&lt;td&gt;Input user name&lt;/td&gt;
+&lt;td&gt;default&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;${password} =&lt;/td&gt;
+&lt;td&gt;Get Value From User&lt;/td&gt;
+&lt;td&gt;Input password&lt;/td&gt;
+&lt;td&gt;hidden=yes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;Considering strings &lt;code&gt;false&lt;/code&gt; and &lt;code&gt;no&lt;/code&gt; to be false is new in RF 2.9 and considering string &lt;code&gt;none&lt;/code&gt; false is new in RF 3.0.3.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Pause Execution" deprecated="false">
+<arguments>
+<arg>message=Test execution paused. Press OK to continue.</arg>
+</arguments>
+<doc>&lt;p&gt;Pauses test execution until user clicks &lt;code&gt;Ok&lt;/code&gt; button.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;message&lt;/code&gt; is the message shown in the dialog.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+</keywordspec>

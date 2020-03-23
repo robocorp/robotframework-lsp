@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<keywordspec name="Screenshot" type="library" format="HTML" generated="20200323 13:11:22">
+<version>3.2b3.dev1</version>
+<scope>test suite</scope>
+<namedargs>yes</namedargs>
+<doc>&lt;p&gt;Test library for taking screenshots on the machine where tests are run.&lt;/p&gt;
+&lt;p&gt;Notice that successfully taking screenshots requires tests to be run with a physical or virtual display.&lt;/p&gt;
+&lt;h3&gt;Table of contents&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;`Using with Python`&lt;/li&gt;
+&lt;li&gt;`Using with Jython and IronPython`&lt;/li&gt;
+&lt;li&gt;`Where screenshots are saved`&lt;/li&gt;
+&lt;li&gt;`ScreenCapLibrary`&lt;/li&gt;
+&lt;li&gt;`Importing`&lt;/li&gt;
+&lt;li&gt;`Shortcuts`&lt;/li&gt;
+&lt;li&gt;`Keywords`&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Using with Python&lt;/h2&gt;
+&lt;p&gt;How screenshots are taken when using Python depends on the operating system. On OSX screenshots are taken using the built-in &lt;code&gt;screencapture&lt;/code&gt; utility. On other operating systems you need to have one of the following tools or Python modules installed. You can specify the tool/module to use when `importing` the library. If no tool or module is specified, the first one found will be used.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;wxPython :: &lt;a href="http://wxpython.org"&gt;http://wxpython.org&lt;/a&gt; :: Required also by RIDE so many Robot Framework users already have this module installed.&lt;/li&gt;
+&lt;li&gt;PyGTK :: &lt;a href="http://pygtk.org"&gt;http://pygtk.org&lt;/a&gt; :: This module is available by default on most Linux distributions.&lt;/li&gt;
+&lt;li&gt;Pillow :: &lt;a href="http://python-pillow.github.io"&gt;http://python-pillow.github.io&lt;/a&gt; :: Only works on Windows. Also the original PIL package is supported.&lt;/li&gt;
+&lt;li&gt;Scrot :: &lt;a href="http://en.wikipedia.org/wiki/Scrot"&gt;http://en.wikipedia.org/wiki/Scrot&lt;/a&gt; :: Not used on Windows. Install with &lt;code&gt;apt-get install scrot&lt;/code&gt; or similar.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Using &lt;code&gt;screencapture&lt;/code&gt; on OSX and specifying explicit screenshot module are new in Robot Framework 2.9.2. The support for using &lt;code&gt;scrot&lt;/code&gt; is new in Robot Framework 3.0.&lt;/p&gt;
+&lt;h2&gt;Using with Jython and IronPython&lt;/h2&gt;
+&lt;p&gt;With Jython and IronPython this library uses APIs provided by JVM and .NET platforms, respectively. These APIs are always available and thus no external modules are needed.&lt;/p&gt;
+&lt;h2&gt;Where screenshots are saved&lt;/h2&gt;
+&lt;p&gt;By default screenshots are saved into the same directory where the Robot Framework log file is written. If no log is created, screenshots are saved into the directory where the XML output file is written.&lt;/p&gt;
+&lt;p&gt;It is possible to specify a custom location for screenshots using &lt;code&gt;screenshot_directory&lt;/code&gt; argument when `importing` the library and using `Set Screenshot Directory` keyword during execution. It is also possible to save screenshots using an absolute path.&lt;/p&gt;
+&lt;h2&gt;ScreenCapLibrary&lt;/h2&gt;
+&lt;p&gt;&lt;a href="https://github.com/mihaiparvu/ScreenCapLibrary"&gt;ScreenCapLibrary&lt;/a&gt; is an external Robot Framework library that can be used as an alternative, which additionally provides support for multiple formats, adjusting the quality, using GIFs and video capturing.&lt;/p&gt;</doc>
+<init>
+<arguments>
+<arg>screenshot_directory=None</arg>
+<arg>screenshot_module=None</arg>
+</arguments>
+<doc>&lt;p&gt;Configure where screenshots are saved.&lt;/p&gt;
+&lt;p&gt;If &lt;code&gt;screenshot_directory&lt;/code&gt; is not given, screenshots are saved into same directory as the log file. The directory can also be set using `Set Screenshot Directory` keyword.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;screenshot_module&lt;/code&gt; specifies the module or tool to use when using this library on Python outside OSX. Possible values are &lt;code&gt;wxPython&lt;/code&gt;, &lt;code&gt;PyGTK&lt;/code&gt;, &lt;code&gt;PIL&lt;/code&gt; and &lt;code&gt;scrot&lt;/code&gt;, case-insensitively. If no value is given, the first module/tool found is used in that order. See `Using with Python` for more information.&lt;/p&gt;
+&lt;p&gt;Examples (use only one of these):&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;th&gt;Setting&lt;/th&gt;
+&lt;th&gt;Value&lt;/th&gt;
+&lt;th&gt;Value&lt;/th&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Library&lt;/td&gt;
+&lt;td&gt;Screenshot&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Library&lt;/td&gt;
+&lt;td&gt;Screenshot&lt;/td&gt;
+&lt;td&gt;${TEMPDIR}&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Library&lt;/td&gt;
+&lt;td&gt;Screenshot&lt;/td&gt;
+&lt;td&gt;screenshot_module=PyGTK&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;Specifying explicit screenshot module is new in Robot Framework 2.9.2.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</init>
+<kw name="Set Screenshot Directory" deprecated="false">
+<arguments>
+<arg>path</arg>
+</arguments>
+<doc>&lt;p&gt;Sets the directory where screenshots are saved.&lt;/p&gt;
+&lt;p&gt;It is possible to use &lt;code&gt;/&lt;/code&gt; as a path separator in all operating systems. Path to the old directory is returned.&lt;/p&gt;
+&lt;p&gt;The directory can also be set in `importing`.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Take Screenshot" deprecated="false">
+<arguments>
+<arg>name=screenshot</arg>
+<arg>width=800px</arg>
+</arguments>
+<doc>&lt;p&gt;Takes a screenshot in JPEG format and embeds it into the log file.&lt;/p&gt;
+&lt;p&gt;Name of the file where the screenshot is stored is derived from the given &lt;code&gt;name&lt;/code&gt;. If the &lt;code&gt;name&lt;/code&gt; ends with extension &lt;code&gt;.jpg&lt;/code&gt; or &lt;code&gt;.jpeg&lt;/code&gt;, the screenshot will be stored with that exact name. Otherwise a unique name is created by adding an underscore, a running index and an extension to the &lt;code&gt;name&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;The name will be interpreted to be relative to the directory where the log file is written. It is also possible to use absolute paths. Using &lt;code&gt;/&lt;/code&gt; as a path separator works in all operating systems.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;width&lt;/code&gt; specifies the size of the screenshot in the log file.&lt;/p&gt;
+&lt;p&gt;Examples: (LOGDIR is determined automatically by the library)&lt;/p&gt;
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;td&gt;Take Screenshot&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;# LOGDIR/screenshot_1.jpg (index automatically incremented)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Take Screenshot&lt;/td&gt;
+&lt;td&gt;mypic&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;# LOGDIR/mypic_1.jpg (index automatically incremented)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Take Screenshot&lt;/td&gt;
+&lt;td&gt;${TEMPDIR}/mypic&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;# /tmp/mypic_1.jpg (index automatically incremented)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Take Screenshot&lt;/td&gt;
+&lt;td&gt;pic.jpg&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;# LOGDIR/pic.jpg (always uses this file)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Take Screenshot&lt;/td&gt;
+&lt;td&gt;images/login.jpg&lt;/td&gt;
+&lt;td&gt;80%&lt;/td&gt;
+&lt;td&gt;# Specify both name and width.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Take Screenshot&lt;/td&gt;
+&lt;td&gt;width=550px&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;# Specify only width.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;p&gt;The path where the screenshot is saved is returned.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+<kw name="Take Screenshot Without Embedding" deprecated="false">
+<arguments>
+<arg>name=screenshot</arg>
+</arguments>
+<doc>&lt;p&gt;Takes a screenshot and links it from the log file.&lt;/p&gt;
+&lt;p&gt;This keyword is otherwise identical to `Take Screenshot` but the saved screenshot is not embedded into the log file. The screenshot is linked so it is nevertheless easily available.&lt;/p&gt;</doc>
+<tags>
+</tags>
+</kw>
+</keywordspec>
