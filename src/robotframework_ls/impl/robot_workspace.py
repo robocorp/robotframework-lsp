@@ -72,7 +72,6 @@ class RobotDocument(Document):
             raise AssertionError(
                 "The AST can only be accessed in the RobotFrameworkServerApi, not in the RobotFrameworkLanguageServer."
             )
-        from robotframework_ls.impl import robot_constants
         from robot.parsing import get_model, get_resource_model, get_init_model
 
         source = self.source
@@ -89,4 +88,4 @@ class RobotDocument(Document):
 
         else:
             log.critical("Unrecognized section: %s", t)
-            return robot_constants.TEST_CASE_FILE_SECTIONS
+            return get_model(source)

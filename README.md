@@ -23,15 +23,15 @@ Configuration
 
 After having `robotframework-lsp` installed, some settings may need to be configured:
 
-- the `robot.language-server.python` may need to be configured to point to a Python 3.7+ interpreter so that the
+- `robot.language-server.python` may need to be configured to point to a Python 3.7+ interpreter so that the
   Language Server can be started (after changing this setting, VSCode itself may need to be restarted).
   
-- the `robot.python.executable` must point to a Python installation where `robotframework` and dependent 
+- `robot.python.executable` must point to a Python installation where `robotframework` and dependent 
   libraries are installed.
   
-- the `robot.python.env` can be used to set the environment used by `robot.python.executable`.
+- `robot.python.env` can be used to set the environment used by `robot.python.executable`.
 
-- the `robot.variables` can be used to set custom variables which would usually be passed in the command line to `robotframework`.
+- `robot.variables` can be used to set custom variables which would usually be passed in the command line to `robotframework`.
   
 
 Features (0.0.4)

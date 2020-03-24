@@ -53,15 +53,12 @@ def test_keyword_completions_user_library(
 
 
 def test_keyword_completions_user_in_robot_file(
-    data_regression, workspace, tmpdir, cases, libspec_manager
+    data_regression, workspace, cases, libspec_manager
 ):
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
 
-    workspace_dir = str(tmpdir.join("workspace"))
-    cases.copy_to("case2", workspace_dir)
-
-    workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
+    workspace.set_root(cases.get_path("case2"), libspec_manager=libspec_manager)
     doc = workspace.get_doc("case2.robot")
     doc.source = doc.source + "\n    my equ"
 
@@ -70,4 +67,30 @@ def test_keyword_completions_user_in_robot_file(
     )
     data_regression.check(
         completions, basename="keyword_completions_user_in_robot_file"
+    )
+
+
+def test_keyword_completions_from_resource_files(
+    data_regression, workspace, tmpdir, cases, libspec_manager
+):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.config.config import Config
+    from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_VARIABLES
+
+    config = Config(root_uri="", init_opts={}, process_id=-1, capabilities={})
+    config.update({"robot": {"variables": {"ext_folder": cases.get_path("ext")}}})
+    assert config.get_setting(OPTION_ROBOT_VARIABLES, dict, {}) == {
+        "ext_folder": cases.get_path("ext")
+    }
+
+    workspace.set_root(cases.get_path("case3"), libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case3.robot")
+    doc.source = doc.source + "\n    equal redef"
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws, config=config)
+    )
+    data_regression.check(
+        completions, basename="keyword_completions_from_resource_files"
     )

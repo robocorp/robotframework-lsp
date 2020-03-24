@@ -40,6 +40,23 @@ class Workspace(object):
     def _create_document(self, doc_uri, source=None, version=None):
         return Document(doc_uri, source=source, version=version)
 
+    def create_untracked_document(self, doc_uri):
+        """
+        Creates a document from an uri which points to the filesystem.
+        
+        The returned document is not referenced by the workspace and is
+        not kept in sync afterwards (it's meant to be used and thrown away).
+        
+        The use-case is code completion referencing existing files (because
+        right now if we get a document from the filesystem it's not kept in
+        sync if changes happen in the filesystem -- after this is done, this
+        API can be removed).
+        
+        :param str doc_uri:
+            The uri for the document.
+        """
+        return self._create_document(doc_uri)
+
     def add_folder(self, folder):
         """
         :param WorkspaceFolder folder:

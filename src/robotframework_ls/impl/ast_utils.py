@@ -208,6 +208,14 @@ def iter_library_imports(node):
         yield _NodeInfo(tuple(stack), node)
 
 
+def iter_resource_imports(node):
+    """
+    :rtype: generator(_NodeInfo)
+    """
+    for stack, node in _iter_nodes_filtered(node, accept_class="ResourceImport"):
+        yield _NodeInfo(tuple(stack), node)
+
+
 def iter_keywords(node):
     """
     :rtype: generator(_NodeInfo)
@@ -217,7 +225,19 @@ def iter_keywords(node):
 
 
 def iter_keyword_arguments_as_str(node):
+    """
+    :rtype: generator(str)
+    """
     for _stack, node in _iter_nodes_filtered(node, accept_class="Arguments"):
         for token in node.tokens:
             if token.type == token.ARGUMENT:
                 yield str(token)
+
+
+def get_documentation(node):
+    doc = []
+    for _stack, node in _iter_nodes_filtered(node, accept_class="Documentation"):
+        for token in node.tokens:
+            if token.type == token.ARGUMENT:
+                doc.append(str(token).strip())
+    return "\n".join(doc)

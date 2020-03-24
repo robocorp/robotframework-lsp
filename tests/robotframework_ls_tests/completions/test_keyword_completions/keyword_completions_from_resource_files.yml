@@ -1,0 +1,36 @@
+- deprecated: false
+  documentation: ''
+  documentationFormat: markdown
+  insertTextFormat: 2
+  kind: 7
+  label: My Equal Redefined
+  preselect: false
+  textEdit:
+    newText: My Equal Redefined ${1:${arg1}} ${2:${arg2}}
+    range:
+      end:
+        character: 34
+        line: 9
+      start:
+        character: 12
+        line: 9
+- deprecated: false
+  documentation: 'Yes, this is redefined.
+
+    2nd line.
+
+    3rd line.'
+  documentationFormat: markdown
+  insertTextFormat: 2
+  kind: 7
+  label: Yet Another Equal Redefined
+  preselect: false
+  textEdit:
+    newText: Yet Another Equal Redefined ${1:${arg1}} ${2:${arg2}}
+    range:
+      end:
+        character: 55
+        line: 9
+      start:
+        character: 12
+        line: 9

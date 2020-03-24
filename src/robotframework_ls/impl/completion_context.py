@@ -69,7 +69,7 @@ class CompletionContext(object):
     TYPE_INIT = RobotDocument.TYPE_INIT
     TYPE_RESOURCE = RobotDocument.TYPE_RESOURCE
 
-    def __init__(self, doc, line=_NOT_SET, col=_NOT_SET, workspace=None):
+    def __init__(self, doc, line=_NOT_SET, col=_NOT_SET, workspace=None, config=None):
         """
         :param robotframework_ls.workspace.Document doc:
         :param int line:
@@ -92,6 +92,11 @@ class CompletionContext(object):
 
         self.sel = doc.selection(line, col)
         self._workspace = workspace
+        self._config = config
+
+    @property
+    def config(self):
+        return self._config
 
     @property
     def workspace(self):
@@ -193,4 +198,24 @@ class CompletionContext(object):
         ret = []
         for library_import in ast_utils.iter_library_imports(ast):
             ret.append(library_import.node)
-        return ret
+        return tuple(ret)
+
+    @instance_cache
+    def get_resource_imports(self):
+        from robotframework_ls.impl import ast_utils
+
+        ast = self.get_ast()
+        ret = []
+        for resource in ast_utils.iter_resource_imports(ast):
+            ret.append(resource.node)
+        return tuple(ret)
+
+    def convert_robot_variable(self, var_name):
+        from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_VARIABLES
+
+        robot_variables = self.config.get_setting(OPTION_ROBOT_VARIABLES, dict, {})
+        value = robot_variables.get(var_name)
+        if value is None:
+            log.info("Unable to find variable: %s", var_name)
+            value = ""
+        return str(value)

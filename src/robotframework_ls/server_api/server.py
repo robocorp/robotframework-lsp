@@ -94,38 +94,37 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
     def m_section_name_complete(self, doc_uri, line, col):
         from robotframework_ls.impl import section_name_completions
-        from robotframework_ls.impl.completion_context import CompletionContext
 
-        if not self._check_min_version((3, 2)):
-            log.info("robotframework version too old for completions.")
+        completion_context = self._create_completion_context(doc_uri, line, col)
+        if completion_context is None:
             return []
 
-        workspace = self.workspace
-        if not workspace:
-            log.info("workspace still not initialized.")
-            return []
-        document = workspace.get_document(doc_uri, create=False)
-        if document is None:
-            return []
-        return section_name_completions.complete(CompletionContext(document, line, col))
+        return section_name_completions.complete(completion_context)
 
     def m_keyword_complete(self, doc_uri, line, col):
         from robotframework_ls.impl import keyword_completions
+
+        completion_context = self._create_completion_context(doc_uri, line, col)
+        if completion_context is None:
+            return []
+        return keyword_completions.complete(completion_context)
+
+    def _create_completion_context(self, doc_uri, line, col):
         from robotframework_ls.impl.completion_context import CompletionContext
 
         if not self._check_min_version((3, 2)):
             log.info("robotframework version too old for completions.")
-            return []
+            return None
         workspace = self.workspace
         if not workspace:
             log.info("workspace still not initialized.")
-            return []
+            return None
 
         document = workspace.get_document(doc_uri, create=False)
         if document is None:
-            return []
-        return keyword_completions.complete(
-            CompletionContext(document, line, col, workspace=workspace)
+            return None
+        return CompletionContext(
+            document, line, col, workspace=workspace, config=self.config
         )
 
     def m_shutdown(self, **_kwargs):
