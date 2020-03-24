@@ -72,17 +72,23 @@ class _ServerApi(object):
                     return
 
     def _get_python_executable(self):
+        from robotframework_ls.impl.robot_lsp_constants import (
+            OPTION_ROBOT_PYTHON_EXECUTABLE,
+        )
+
         config = self._config
         python_exe = sys.executable
         if config is not None:
             python_exe = config.get_setting(
-                "robot.python.executable", str, default=python_exe
+                OPTION_ROBOT_PYTHON_EXECUTABLE, str, default=python_exe
             )
         else:
             log.warning("self._config not set in %s" % (self.__class__,))
         return python_exe
 
     def _get_environ(self):
+        from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHON_ENV
+
         config = self._config
         env = os.environ.copy()
 
@@ -91,7 +97,9 @@ class _ServerApi(object):
         env.pop("VIRTUAL_ENV", "")
 
         if config is not None:
-            env_in_settings = config.get_setting("robot.python.env", dict, default={})
+            env_in_settings = config.get_setting(
+                OPTION_ROBOT_PYTHON_ENV, dict, default={}
+            )
             for key, val in env_in_settings.items():
                 env[str(key)] = str(val)
         else:

@@ -40,6 +40,16 @@
                     "type": "string",
                     "default": "",
                     "description": "Specifies the path to the python executable to be used to load `robotframework` code and dependent libraries (the default is using the same python used for the language server)."
+                },
+                "robot.python.env": {
+                    "type": "object",
+                    "default": {},
+                    "description": "Specifies the environment to be used when loading `robotframework` code and dependent libraries."
+                },
+                "robot.variables": {
+                    "type": "object",
+                    "default": {},
+                    "description": "Specifies custom variables which would usually be passed in the command line to `robotframework`. i.e.: {\"RESOURCES\": \"c:/temp/resources\"}"
                 }
             }
         },

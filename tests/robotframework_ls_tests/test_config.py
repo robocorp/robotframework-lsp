@@ -2,7 +2,13 @@ import pytest
 
 
 def test_config(tmpdir):
+    from robotframework_ls.impl.robot_lsp_constants import (
+        OPTION_ROBOT_PYTHON_EXECUTABLE,
+    )
     from robotframework_ls.config.config import Config
+    from robotframework_ls.impl.robot_lsp_constants import (
+        OPTION_ROBOT_LANGUAGE_SERVER_TCP_PORT,
+    )
 
     config = Config(
         root_uri=str(tmpdir), init_opts={}, process_id=None, capabilities={}
@@ -17,8 +23,8 @@ def test_config(tmpdir):
         }
     }
     config.update(settings)
-    assert config.get_setting("robot.python.executable", str) == "foobar"
-    assert config.get_setting("robot.language-server.tcp-port", int) == 1456
+    assert config.get_setting(OPTION_ROBOT_PYTHON_EXECUTABLE, str) == "foobar"
+    assert config.get_setting(OPTION_ROBOT_LANGUAGE_SERVER_TCP_PORT, int) == 1456
 
     # i.e.: convert to type when possible
     assert config.get_setting("robot.python.value", int) == 10

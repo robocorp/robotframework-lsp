@@ -1,5 +1,9 @@
 import os
 import sys
+from robotframework_ls.impl.robot_lsp_constants import (
+    ENV_OPTION_ROBOT_LSP_DEBUG_PROCESS_ENVIRON,
+    ENV_OPTION_ROBOT_LSP_DEBUG_MESSAGE_MATCHERS,
+)
 
 
 def _is_true_in_env(env_key):
@@ -14,8 +18,10 @@ class Options(object):
     log_file = None
     verbose = 0
 
-    DEBUG_MESSAGE_MATCHERS = _is_true_in_env("ROBOT_LSP_DEBUG_MESSAGE_MATCHERS")
-    DEBUG_PROCESS_ENVIRON = _is_true_in_env("ROBOT_LSP_DEBUG_PROCESS_ENVIRON")
+    DEBUG_MESSAGE_MATCHERS = _is_true_in_env(
+        ENV_OPTION_ROBOT_LSP_DEBUG_MESSAGE_MATCHERS
+    )
+    DEBUG_PROCESS_ENVIRON = _is_true_in_env(ENV_OPTION_ROBOT_LSP_DEBUG_PROCESS_ENVIRON)
 
     def __init__(self, args=None):
         """

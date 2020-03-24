@@ -29,6 +29,10 @@ After having `robotframework-lsp` installed, some settings may need to be config
 - the `robot.python.executable` must point to a Python installation where `robotframework` and dependent 
   libraries are installed.
   
+- the `robot.python.env` can be used to set the environment used by `robot.python.executable`.
+
+- the `robot.variables` can be used to set custom variables which would usually be passed in the command line to `robotframework`.
+  
 
 Features (0.0.4)
 -----------------
