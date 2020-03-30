@@ -153,7 +153,7 @@ class _Collector(object):
         text = label
 
         for i, arg in enumerate(args):
-            text += " ${%s:%s}" % (i + 1, arg)
+            text += "    ${%s:%s}" % (i + 1, arg)
 
         text_edit = TextEdit(
             Range(

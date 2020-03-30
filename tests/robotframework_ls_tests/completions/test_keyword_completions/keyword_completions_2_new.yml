@@ -6,7 +6,7 @@
   label: New Verify Model
   preselect: false
   textEdit:
-    newText: New Verify Model ${1:new model}
+    newText: New Verify Model    ${1:new model}
     range:
       end:
         character: 10
@@ -22,7 +22,7 @@
   label: new Verify Another Model
   preselect: false
   textEdit:
-    newText: new Verify Another Model ${1:new model=10}
+    newText: new Verify Another Model    ${1:new model=10}
     range:
       end:
         character: 10

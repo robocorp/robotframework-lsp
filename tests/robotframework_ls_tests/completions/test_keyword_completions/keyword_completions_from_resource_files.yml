@@ -6,7 +6,7 @@
   label: My Equal Redefined
   preselect: false
   textEdit:
-    newText: My Equal Redefined ${1:${arg1}} ${2:${arg2}}
+    newText: My Equal Redefined    ${1:${arg1}}    ${2:${arg2}}
     range:
       end:
         character: 15
@@ -26,7 +26,7 @@
   label: Yet Another Equal Redefined
   preselect: false
   textEdit:
-    newText: Yet Another Equal Redefined ${1:${arg1}} ${2:${arg2}}
+    newText: Yet Another Equal Redefined    ${1:${arg1}}    ${2:${arg2}}
     range:
       end:
         character: 15
