@@ -34,13 +34,14 @@ After having `robotframework-lsp` installed, some settings may need to be config
 - `robot.variables` can be used to set custom variables which would usually be passed in the command line to `robotframework`.
   
 
-Features (0.0.4)
+Features (0.0.5)
 -----------------
 
 - Syntax highlighting
 - Syntax validation
-- Code-completion for section headers
-- Code-completion for section settings
+- Code completion for section headers
+- Code completion for section settings
+- Code completion for keywords (new in 0.0.5)
 
 
 Developing
