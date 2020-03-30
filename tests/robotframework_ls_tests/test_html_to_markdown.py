@@ -28,7 +28,7 @@ def test_html_to_markdown():
 
 
 def test_underscore():
-    assert md("_hey_dude_") == "\_hey\_dude\_"
+    assert md("_hey_dude_") == r"\_hey\_dude\_"
 
 
 def test_xml_entities():
@@ -141,7 +141,7 @@ def test_li():
 
 
 nested_uls = re.sub(
-    "\s+",
+    r"\s+",
     "",
     """
     <ul>
@@ -205,7 +205,7 @@ def test_div():
 
 
 def test_escape():
-    assert md("<span>**escape** []#</span>") == "\*\*escape\*\* \[\]\#"
+    assert md("<span>**escape** []#</span>") == r"\*\*escape\*\* \[\]\#"
 
 
 def test_table():

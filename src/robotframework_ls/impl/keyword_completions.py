@@ -4,76 +4,35 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def _create_completion_item_from_keyword(
-    keyword_name, args, docs_format, docs, selection, token
-):
-    from robotframework_ls.lsp import (
-        CompletionItem,
-        CompletionItemKind,
-        InsertTextFormat,
-        Position,
-        Range,
-        TextEdit,
-    )
-    from robotframework_ls.lsp import MarkupKind
-
-    label = keyword_name
-    text = label
-
-    for i, arg in enumerate(args):
-        text += " ${%s:%s}" % (i + 1, arg)
-
-    text_edit = TextEdit(
-        Range(
-            start=Position(selection.line, token.col_offset),
-            end=Position(selection.line, token.end_col_offset),
-        ),
-        text,
-    )
-
-    # text_edit = None
-    return CompletionItem(
-        keyword_name,
-        kind=CompletionItemKind.Class,
-        text_edit=text_edit,
-        documentation=docs,
-        insertTextFormat=InsertTextFormat.Snippet,
-        documentationFormat=(
-            MarkupKind.Markdown if docs_format == "markdown" else MarkupKind.PlainText
-        ),
-    ).to_dict()
-
-
-def _collect_completions_from_ast(ast, completion_context, token, matcher, ret):
+def _collect_completions_from_ast(ast, completion_context, collector):
     from robotframework_ls.impl import ast_utils
 
     for keyword in ast_utils.iter_keywords(ast):
         keyword_name = keyword.node.name
-        if matcher.accepts(keyword_name):
-            args = []
+        if collector.accepts(keyword_name):
+            keyword_args = []
             for arg in ast_utils.iter_keyword_arguments_as_str(keyword.node):
-                args.append(arg)
+                keyword_args.append(arg)
             # TODO: Get docs
             docs_format = "markdown"
             docs = ast_utils.get_documentation(keyword.node)
-            ret.append(
-                _create_completion_item_from_keyword(
-                    keyword_name, args, docs_format, docs, completion_context.sel, token
-                )
+
+            collector.on_keyword(
+                keyword_name, keyword_args, docs, docs_format, completion_context
             )
 
 
-def _append_current_doc_keywords(completion_context, token, matcher, ret):
+def _collect_current_doc_keywords(completion_context, collector):
     """
     :param CompletionContext completion_context:
     """
     # Get keywords defined in the file itself
 
     ast = completion_context.get_ast()
-    _collect_completions_from_ast(ast, completion_context, token, matcher, ret)
+    _collect_completions_from_ast(ast, completion_context, collector)
 
 
-def _append_libraries_keywords(completion_context, token, matcher, ret):
+def _collect_libraries_keywords(completion_context, collector):
     """
     :param CompletionContext completion_context:
     """
@@ -92,25 +51,23 @@ def _append_libraries_keywords(completion_context, token, matcher, ret):
             #: :type keyword: KeywordDoc
             for keyword in library_info.keywords:
                 keyword_name = keyword.name
-                if matcher.accepts(keyword_name):
-                    args = []
-                    if keyword.args:
-                        args = keyword.args
-                    docs, docs_format = docs_and_format(keyword)
+                if collector.accepts(keyword_name):
 
-                    ret.append(
-                        _create_completion_item_from_keyword(
-                            keyword_name,
-                            args,
-                            docs_format,
-                            docs,
-                            completion_context.sel,
-                            token,
-                        )
+                    keyword_args = []
+                    if keyword.args:
+                        keyword_args = keyword.args
+
+                    docs, docs_format = docs_and_format(keyword)
+                    collector.on_keyword(
+                        keyword_name,
+                        keyword_args,
+                        docs,
+                        docs_format,
+                        completion_context,
                     )
 
 
-def _append_resource_imports_keywords(completion_context, token, matcher, ret):
+def _collect_resource_imports_keywords(completion_context, collector):
     """
     :param CompletionContext completion_context:
     """
@@ -154,10 +111,80 @@ def _append_resource_imports_keywords(completion_context, token, matcher, ret):
                 if resource_doc is None:
                     resource_doc = ws.create_untracked_document(doc_uri)
 
-                ast = resource_doc.get_ast()
-                _collect_completions_from_ast(
-                    ast, completion_context, token, matcher, ret
-                )
+                new_ctx = completion_context.create_copy(resource_doc)
+                _complete_following_imports(new_ctx, collector)
+
+
+def _complete_following_imports(completion_context, collector):
+    if completion_context.memo.follow_import(completion_context.doc.uri):
+        # i.e.: prevent collecting keywords for the same doc more than once.
+
+        _collect_current_doc_keywords(completion_context, collector)
+
+        _collect_resource_imports_keywords(completion_context, collector)
+
+        _collect_libraries_keywords(completion_context, collector)
+
+
+class _Collector(object):
+    def __init__(self, selection, token, matcher):
+        self.matcher = matcher
+        self.completion_items = []
+        self.selection = selection
+        self.token = token
+
+    def accepts(self, keyword_name):
+        return self.matcher.accepts(keyword_name)
+
+    def _create_completion_item_from_keyword(
+        self, keyword_name, args, docs_format, docs, selection, token
+    ):
+        from robotframework_ls.lsp import (
+            CompletionItem,
+            CompletionItemKind,
+            InsertTextFormat,
+            Position,
+            Range,
+            TextEdit,
+        )
+        from robotframework_ls.lsp import MarkupKind
+
+        label = keyword_name
+        text = label
+
+        for i, arg in enumerate(args):
+            text += " ${%s:%s}" % (i + 1, arg)
+
+        text_edit = TextEdit(
+            Range(
+                start=Position(selection.line, token.col_offset),
+                end=Position(selection.line, token.end_col_offset),
+            ),
+            text,
+        )
+
+        # text_edit = None
+        return CompletionItem(
+            keyword_name,
+            kind=CompletionItemKind.Class,
+            text_edit=text_edit,
+            documentation=docs,
+            insertTextFormat=InsertTextFormat.Snippet,
+            documentationFormat=(
+                MarkupKind.Markdown
+                if docs_format == "markdown"
+                else MarkupKind.PlainText
+            ),
+        ).to_dict()
+
+    def on_keyword(
+        self, keyword_name, keyword_args, docs, docs_format, completion_context
+    ):
+        item = self._create_completion_item_from_keyword(
+            keyword_name, keyword_args, docs_format, docs, self.selection, self.token
+        )
+
+        self.completion_items.append(item)
 
 
 def complete(completion_context):
@@ -166,20 +193,15 @@ def complete(completion_context):
     """
     from robotframework_ls.impl.string_matcher import StringMatcher
 
-    ret = []
-
     token_info = completion_context.get_current_token()
     if token_info is not None:
         token = token_info.token
         if token.type == token.KEYWORD:
             # We're in a context where we should complete keywords.
 
-            matcher = StringMatcher(token.value)
+            collector = _Collector(
+                completion_context.sel, token, StringMatcher(token.value)
+            )
+            _complete_following_imports(completion_context, collector)
 
-            _append_current_doc_keywords(completion_context, token, matcher, ret)
-
-            _append_resource_imports_keywords(completion_context, token, matcher, ret)
-
-            _append_libraries_keywords(completion_context, token, matcher, ret)
-
-    return ret
+    return collector.completion_items

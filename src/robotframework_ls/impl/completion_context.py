@@ -63,19 +63,35 @@ class DocumentSelection(object):
 _NOT_SET = "NOT_SET"
 
 
+class _Memo(object):
+    def __init__(self):
+        self._followed_imports = {}
+
+    def follow_import(self, uri):
+        if uri not in self._followed_imports:
+            self._followed_imports[uri] = True
+            return True
+
+        return False
+
+
 class CompletionContext(object):
 
     TYPE_TEST_CASE = RobotDocument.TYPE_TEST_CASE
     TYPE_INIT = RobotDocument.TYPE_INIT
     TYPE_RESOURCE = RobotDocument.TYPE_RESOURCE
 
-    def __init__(self, doc, line=_NOT_SET, col=_NOT_SET, workspace=None, config=None):
+    def __init__(
+        self, doc, line=_NOT_SET, col=_NOT_SET, workspace=None, config=None, memo=None
+    ):
         """
         :param robotframework_ls.workspace.Document doc:
         :param int line:
         :param int col:
+        :param RobotWorkspace workspace:
+        :param robotframework_ls.config.config.Config config:
+        :param _Memo memo:
         """
-        self.doc = doc
 
         if col is _NOT_SET or line is _NOT_SET:
             assert col is _NOT_SET, (
@@ -90,9 +106,52 @@ class CompletionContext(object):
             # If both are not set, use the doc len as the selection.
             line, col = doc.get_last_line_col()
 
-        self.sel = doc.selection(line, col)
+        memo = _Memo() if memo is None else memo
+
+        sel = doc.selection(line, col)
+
+        self._doc = doc
+        self._sel = sel
         self._workspace = workspace
         self._config = config
+        self._memo = memo
+        self._original_ctx = None
+
+    def create_copy(self, doc):
+        ctx = CompletionContext(
+            doc,
+            line=0,
+            col=0,
+            workspace=self._workspace,
+            config=self._config,
+            memo=self._memo,
+        )
+        ctx._original_ctx = self
+        return ctx
+
+    @property
+    def original_doc(self):
+        if self._original_ctx is None:
+            return self._doc
+        return self._original_ctx.original_doc
+
+    @property
+    def original_sel(self):
+        if self._original_ctx is None:
+            return self._sel
+        return self._original_ctx.original_sel
+
+    @property
+    def doc(self):
+        return self._doc
+
+    @property
+    def sel(self):
+        return self._sel
+
+    @property
+    def memo(self):
+        return self._memo
 
     @property
     def config(self):

@@ -94,3 +94,22 @@ def test_keyword_completions_from_resource_files(
     data_regression.check(
         completions, basename="keyword_completions_from_resource_files"
     )
+
+
+def test_keyword_completions_from_recursively_included_resource_files(
+    data_regression, workspace, tmpdir, cases, libspec_manager
+):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    workspace.set_root(cases.get_path("case4"), libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+    doc.source = doc.source + "\n    equal redef"
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+
+    data_regression.check(
+        completions, basename="keyword_completions_from_recursively_resource_files"
+    )

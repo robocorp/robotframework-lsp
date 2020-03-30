@@ -10,10 +10,10 @@
     range:
       end:
         character: 15
-        line: 9
+        line: 10
       start:
         character: 4
-        line: 9
+        line: 10
 - deprecated: false
   documentation: 'Yes, this is redefined.
 
@@ -30,7 +30,7 @@
     range:
       end:
         character: 15
-        line: 9
+        line: 10
       start:
         character: 4
-        line: 9
+        line: 10
