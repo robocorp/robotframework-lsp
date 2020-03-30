@@ -41,7 +41,7 @@ def start_server_process(args=(), python_exe=None, env=None):
         i.e.:
             ["-vv", "--log-file=%s" % log_file]
     """
-    import subprocess
+    from robotframework_ls.subprocess_wrapper import subprocess
     import threading
     from robotframework_ls.options import Setup
 

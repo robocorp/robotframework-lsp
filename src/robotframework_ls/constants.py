@@ -2,6 +2,7 @@ import sys
 
 IS_WIN = sys.platform == "win32"
 IS_PY2 = sys.version_info.major == 2
+IS_PY37_ONWARDS = sys.version_info[:2] >= (3, 7)
 
 
 class Null:

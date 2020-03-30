@@ -1,5 +1,4 @@
 import os
-import subprocess
 import sys
 import logging
 from collections import namedtuple
@@ -374,6 +373,7 @@ class LibspecManager(object):
         from robotframework_ls import uris
         import time
         from robotframework_ls.impl import robot_constants
+        from robotframework_ls.subprocess_wrapper import subprocess
 
         curtime = time.time()
 

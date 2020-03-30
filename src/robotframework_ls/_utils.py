@@ -237,7 +237,7 @@ else:
             return True
 
     def is_process_alive(pid):
-        import subprocess
+        from robotframework_ls.subprocess_wrapper import subprocess
 
         if _is_process_alive(pid):
             # Check if zombie...
@@ -264,7 +264,7 @@ else:
 
 
 def _kill_process_and_subprocess_linux(pid):
-    import subprocess
+    from robotframework_ls.subprocess_wrapper import subprocess
 
     # Ask to stop forking
     subprocess.call(
@@ -295,7 +295,7 @@ def kill_process_and_subprocesses(pid):
     from subprocess import CalledProcessError
 
     if sys.platform == "win32":
-        import subprocess
+        from robotframework_ls.subprocess_wrapper import subprocess
 
         args = ["taskkill", "/F", "/PID", str(pid), "/T"]
         retcode = subprocess.call(
