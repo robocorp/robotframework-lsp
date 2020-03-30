@@ -5,6 +5,7 @@
     "repository": "https://github.com/robocorp/robotframework-lsp",
     "license": "MIT",
     "version": "0.0.4",
+    "icon": "images/icon.png",
     "publisher": "robocorptech",
     "engines": {
         "vscode": "^1.19.0"
