@@ -145,3 +145,12 @@ def test_exit_with_parent_process_died(
     wait_for_condition(lambda: not is_process_alive(dummy_process.pid))
     wait_for_condition(lambda: not is_process_alive(language_server_process.pid))
     language_server_io.require_exit_messages = False
+
+
+def test_code_format_integrated(language_server, ws_root_path, data_regression):
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    language_server.open_doc(uri, 1)
+    language_server.change_doc(uri, 2, "***settings***\nDocumentation  Some doc")
+    ret = language_server.request_source_format(uri)
+    data_regression.check(ret, basename="test_code_format_integrated_text_edits")

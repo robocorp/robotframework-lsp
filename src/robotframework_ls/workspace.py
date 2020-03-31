@@ -124,6 +124,11 @@ class Workspace(object):
         doc.version = text_doc["version"]
 
 
+class _LineInfo(object):
+    def __init__(self):
+        pass
+
+
 class Document(object):
     def __init__(self, uri, source=None, version=None):
         self.uri = uri
@@ -131,6 +136,7 @@ class Document(object):
         self.path = uris.to_fs_path(uri)  # Note: may be None.
 
         self._source = source
+        self.__line_start_offsets = None
 
     def __str__(self):
         return str(self.uri)
@@ -160,6 +166,7 @@ class Document(object):
 
     def _clear_caches(self):
         self.__lines = None
+        self.__line_start_offsets = None
 
     @property
     def _lines(self):
@@ -182,11 +189,39 @@ class Document(object):
         if line.endswith("\r") or line.endswith("\n"):
             yield ""
 
+    def _compute_line_start_offsets(self):
+        line_start_offset_to_info = self.__line_start_offsets
+        if line_start_offset_to_info is None:
+
+            line_start_offset_to_info = []
+            offset = 0
+            for line in self.iter_lines():
+                line_start_offset_to_info.append(offset)
+                offset += len(line)
+
+        return line_start_offset_to_info
+
+    def offset_to_line_col(self, offset):
+        if offset < 0:
+            raise ValueError("Expected offset to be >0. Found: %s" % (offset,))
+
+        import bisect
+
+        line_start_offset_to_info = self._compute_line_start_offsets()
+        i_line = bisect.bisect_left(line_start_offset_to_info, offset)
+        if (
+            i_line >= len(line_start_offset_to_info)
+            or line_start_offset_to_info[i_line] > offset
+        ):
+            i_line -= 1
+        line_start_offset = line_start_offset_to_info[i_line]
+        return (i_line, offset - line_start_offset)
+
     @property
     def source(self):
         if self._source is None:
             with io.open(self.path, "r", encoding="utf-8") as f:
-                return f.read()
+                self._source = f.read()
         return self._source
 
     @source.setter
@@ -226,7 +261,9 @@ class Document(object):
         """Apply a change to the document."""
         text = change["text"]
         change_range = change.get("range")
+        self._apply_change(change_range, text)
 
+    def _apply_change(self, change_range, text):
         if not change_range:
             # The whole file has changed
 
@@ -266,3 +303,7 @@ class Document(object):
                 new.write(line[end_col:])
 
         self._source = new.getvalue()
+
+    def apply_text_edits(self, text_edits):
+        for text_edit in reversed(text_edits):
+            self._apply_change(text_edit["range"], text_edit["newText"])

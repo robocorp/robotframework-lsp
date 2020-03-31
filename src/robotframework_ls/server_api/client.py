@@ -108,3 +108,11 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         return self.request_async(
             self._build_msg("keywordComplete", doc_uri=doc_uri, line=line, col=col)
         )
+
+    def request_source_format(self, text_document, options):
+        """
+        :Note: async complete (returns _MessageMatcher).
+        """
+        return self.request_async(
+            self._build_msg("codeFormat", text_document=text_document, options=options)
+        )

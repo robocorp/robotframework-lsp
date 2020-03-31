@@ -109,6 +109,28 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return []
         return keyword_completions.complete(completion_context)
 
+    def m_code_format(self, text_document, options):
+        from robotframework_ls.impl.formatting import robot_source_format
+        from robotframework_ls.impl.formatting import create_text_edit_from_diff
+        from robotframework_ls.lsp import TextDocumentItem
+
+        text_document_item = TextDocumentItem(**text_document)
+        text = text_document_item.text
+        if not text:
+            completion_context = self._create_completion_context(
+                text_document_item.uri, 0, 0
+            )
+            if completion_context is None:
+                return None
+            text = completion_context.doc.source
+
+        if options is None:
+            options = {}
+        tab_size = options.get("tabSize", 4)
+
+        new_contents = robot_source_format(text, space_count=tab_size)
+        return [x.to_dict() for x in create_text_edit_from_diff(text, new_contents)]
+
     def _create_completion_context(self, doc_uri, line, col):
         from robotframework_ls.impl.completion_context import CompletionContext
 

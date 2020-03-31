@@ -1,0 +1,58 @@
+- newText: ' '
+  range:
+    end:
+      character: 3
+      line: 1
+    start:
+      character: 3
+      line: 1
+- newText: ' '
+  range:
+    end:
+      character: 11
+      line: 1
+    start:
+      character: 11
+      line: 1
+- newText: ' '
+  range:
+    end:
+      character: 3
+      line: 4
+    start:
+      character: 3
+      line: 4
+- newText: ' '
+  range:
+    end:
+      character: 12
+      line: 4
+    start:
+      character: 12
+      line: 4
+- newText: '  '
+  range:
+    end:
+      character: 10
+      line: 6
+    start:
+      character: 10
+      line: 6
+- newText: '  '
+  range:
+    end:
+      character: 13
+      line: 6
+    start:
+      character: 13
+      line: 6
+- newText: '
+
+    '
+  range:
+    end:
+      character: 14
+      line: 6
+    start:
+      character: 14
+      line: 6

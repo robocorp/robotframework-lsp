@@ -250,6 +250,12 @@ class _ServerApi(object):
             if api is not None:
                 return api.request_keyword_complete(doc_uri, line, col)
 
+    def request_source_format(self, text_document, options):
+        with self._server_lock:
+            api = self._get_server_api()
+            if api is not None:
+                return api.request_source_format(text_document, options)
+
     @log_and_silence_errors(log)
     def forward(self, method_name, params):
         with self._server_lock:
@@ -315,7 +321,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             "completionProvider": {
                 "resolveProvider": False  # We know everything ahead of time
             },
-            "documentFormattingProvider": False,
+            "documentFormattingProvider": True,
             "documentHighlightProvider": False,
             "documentRangeFormattingProvider": False,
             "documentSymbolProvider": False,
@@ -359,6 +365,31 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def m_exit(self, **kwargs):
         self._api.exit()
         PythonLanguageServer.m_exit(self, **kwargs)
+
+    def m_text_document__formatting(self, textDocument=None, options=None):
+        message_matcher = self._api.request_source_format(
+            text_document=textDocument, options=options
+        )
+        if message_matcher is None:
+            raise RuntimeError(
+                "Error requesting code formatting (message_matcher==None)."
+            )
+        curtime = time.time()
+        maxtime = curtime + 3
+
+        # i.e.: wait 3 seconds for the code format and bail out if we
+        # can't get it.
+        available_time = maxtime - time.time()
+        if available_time <= 0:
+            raise RuntimeError("Code formatting timed-out (available_time <= 0).")
+
+        if message_matcher.event.wait(available_time):
+            msg = message_matcher.msg
+            if msg is not None:
+                result = msg.get("result")
+                if result:
+                    return result
+        raise RuntimeError("Code formatting timed-out.")
 
     @overrides(PythonLanguageServer.m_text_document__did_close)
     def m_text_document__did_close(self, textDocument=None, **_kwargs):

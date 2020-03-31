@@ -128,3 +128,13 @@ class _LanguageServerClient(LanguageServerClientBase):
                 },
             }
         )
+
+    def request_source_format(self, uri):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "textDocument/formatting",
+                "params": {"textDocument": {"uri": uri}},
+            }
+        )

@@ -147,3 +147,36 @@ def test_get_ast():
 
     d.source = "*** Foobar"
     assert d.get_ast() is not ast
+
+
+def test_offset_to_line_col_1():
+    d = Document(uri="", source="my\nfo\nba")
+    assert d.offset_to_line_col(0) == (0, 0)
+    assert d.offset_to_line_col(1) == (0, 1)
+    assert d.offset_to_line_col(2) == (0, 2)
+
+    assert d.offset_to_line_col(3) == (1, 0)
+    assert d.offset_to_line_col(4) == (1, 1)
+    assert d.offset_to_line_col(5) == (1, 2)
+
+    assert d.offset_to_line_col(6) == (2, 0)
+    assert d.offset_to_line_col(7) == (2, 1)
+    assert d.offset_to_line_col(8) == (2, 2)
+
+    # Note: block below is out of bounds
+    assert d.offset_to_line_col(9) == (2, 3)
+    assert d.offset_to_line_col(10) == (2, 4)
+
+
+def test_offset_to_line_col_2():
+    d = Document(uri="", source="\n\n\n")
+    with pytest.raises(ValueError):
+        assert d.offset_to_line_col(-1)
+
+    assert d.offset_to_line_col(0) == (0, 0)
+    assert d.offset_to_line_col(1) == (1, 0)
+    assert d.offset_to_line_col(2) == (2, 0)
+
+    # Note: block below is out of bounds
+    assert d.offset_to_line_col(3) == (3, 0)
+    assert d.offset_to_line_col(4) == (3, 1)

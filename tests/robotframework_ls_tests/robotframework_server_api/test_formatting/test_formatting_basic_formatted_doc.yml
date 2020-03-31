@@ -1,0 +1,2 @@
+"\n*** Settings ***\n[Documentation]Some doc\n\n*** Test Case ***\nCheck\n    Call\
+  \    1    2\n"

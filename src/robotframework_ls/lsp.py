@@ -118,6 +118,11 @@ class _Base(object):
                 new_dict[key] = value
         return new_dict
 
+    def __repr__(self):
+        import json
+
+        return json.dumps(self.to_dict(), indent=4)
+
 
 class TextEdit(_Base):
     def __init__(self, range, newText):
@@ -250,14 +255,11 @@ class Position(_Base):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def __repr__(self):
-        return "{}:{}".format(self.line, self.character)
-
 
 class Range(_Base):
     def __init__(self, start, end):
-        self.start = start
-        self.end = end
+        self.start = Position(*start) if start.__class__ in (list, tuple) else start
+        self.end = Position(*end) if end.__class__ in (list, tuple) else end
 
     def __eq__(self, other):
         return (
@@ -266,8 +268,8 @@ class Range(_Base):
             and self.end == other.end
         )
 
-    def __repr__(self):
-        return "{}-{}".format(self.start, self.end)
+    def __ne__(self, other):
+        return not (self == other)
 
 
 class TextDocumentContentChangeEvent(_Base):
