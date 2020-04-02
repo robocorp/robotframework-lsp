@@ -42,6 +42,7 @@ Features (0.0.6)
 - Code completion for section headers
 - Code completion for section settings
 - Code completion for keywords (new in 0.0.5)
+- Code Formatting (new in 0.0.6)
 
 
 Developing
@@ -68,7 +69,7 @@ New version release
 
 To release a new version:
 
-- Update version (python -m dev set-version 0.0.4)
+- Update version (python -m dev set-version 0.0.X)
 - Update this README to add notes on features/fixes
 - Create a tag in the format below and push it:
   git tag robotframework-lsp-0.0.0
