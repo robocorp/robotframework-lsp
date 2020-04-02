@@ -75,10 +75,10 @@ jobs:
         cd tests
         pip install -r test_requirements.txt
         cd ..
-    - name: Test
-      run: python -u tests/run_tests.py
-    - uses: actions/upload-artifact@v1
-      with:
-        name: tests_output.txt
-        path: tests/tests_output.txt
+#     - name: Test
+#       run: python -u tests/run_tests.py
+#     - uses: actions/upload-artifact@v1
+#       with:
+#         name: tests_output.txt
+#         path: tests/tests_output.txt
 
