@@ -66,22 +66,37 @@ class JsonRpcStreamReader(object):
         Returns:
             body of message if parsable else None
         """
-        line = self._rfile.readline()
 
-        if not line:
-            return None
+        content_length = None
+        line = "<ignore>"
 
-        content_length = self._content_length(line)
-
-        # Blindly consume all header lines
+        # Blindly consume all header lines (until \r\n) except for the content-len.
         while line and line.strip():
             line = self._rfile.readline()
+            if not line:
+                return None
+            if content_length is None:
+                content_length = self._content_length(line)
 
-        if not line:
-            return None
+        if not content_length:
+            raise AssertionError("Error in protocol: did not find 'Content-Length:'.")
 
         # Grab the body
-        return self._rfile.read(content_length)
+        buf = b""
+        while True:
+            data = self._rfile.read(content_length - len(buf))
+            if not buf and len(data) == content_length:
+                # Common case
+                return data
+            buf += data
+            if len(buf) == content_length:
+                return buf
+            if len(buf) > content_length:
+                raise AssertionError(
+                    "Expected to read message up to len == %s (already read: %s). Found:\n%s"
+                    % (content_length, len(buf), buf.decode("utf-8", "replace"))
+                )
+            # len(buf) < content_length (just keep on going).
 
     @staticmethod
     def _content_length(line):

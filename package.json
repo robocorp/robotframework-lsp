@@ -57,7 +57,7 @@
         "languages": [{
             "id": "robotframework",
             "aliases": ["Robot Framework", "robotframework"],
-            "extensions": [".robot"],
+            "extensions": [".robot", ".resource"],
             "configuration": "./language-configuration.json"
         }],
         "grammars": [{

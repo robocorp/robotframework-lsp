@@ -9,9 +9,24 @@ import sys
 
 
 def dev_main():
+    import os.path
+
+    try:
+        import robotframework_ls
+    except ImportError:
+        # Automatically add it to the path if __main__ is being executed.
+        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        import robotframework_ls  # @UnusedImport
+
     from robotframework_ls.__main__ import main
 
-    sys.argv = [sys.argv[0], "-vv", "--tcp", "--port=1456"]
+    sys.argv = [
+        sys.argv[0],
+        "-vv",
+        "--tcp",
+        "--port=1456",
+        # "--log-file=c:/temp/robotlog.log",
+    ]
 
     main()
 

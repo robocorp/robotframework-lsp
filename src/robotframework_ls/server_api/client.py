@@ -40,7 +40,7 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
                     "workspaceFolders": workspace_folders,
                 },
             },
-            timeout=7 if USE_TIMEOUTS else NO_TIMEOUT,
+            timeout=15 if USE_TIMEOUTS else NO_TIMEOUT,
         )
 
     def get_version(self):

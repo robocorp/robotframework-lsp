@@ -14,6 +14,7 @@ import os
 from functools import partial
 import itertools
 import time
+from robotframework_ls.constants import DEFAULT_COMPLETIONS_TIMEOUT
 
 
 log = logging.getLogger(__name__)
@@ -205,7 +206,7 @@ class _ServerApi(object):
                             )
                         else:
                             log.exception(
-                                "Error starting robotframework server api (still running). Base exception: %s."
+                                "Error (%s) starting robotframework server api (still running). Base exception: %s."
                                 % (exitcode, e)
                             )
                     self._dispose_server_process()
@@ -375,9 +376,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                 "Error requesting code formatting (message_matcher==None)."
             )
         curtime = time.time()
-        maxtime = curtime + 3
+        maxtime = curtime + DEFAULT_COMPLETIONS_TIMEOUT
 
-        # i.e.: wait 3 seconds for the code format and bail out if we
+        # i.e.: wait X seconds for the code format and bail out if we
         # can't get it.
         available_time = maxtime - time.time()
         if available_time <= 0:
@@ -470,10 +471,10 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         completions.extend(section_completions.complete(ctx))
 
         curtime = time.time()
-        maxtime = curtime + 3
+        maxtime = curtime + DEFAULT_COMPLETIONS_TIMEOUT
         for message_matcher in message_matchers:
             if message_matcher is not None:
-                # i.e.: wait 3 seconds for the completion and bail out if we
+                # i.e.: wait X seconds for the completion and bail out if we
                 # can't get it.
                 available_time = maxtime - time.time()
                 if available_time <= 0:

@@ -67,6 +67,7 @@ def add_arguments(parser):
 
 
 def main(args=None, after_bind=lambda server: None, language_server_class=None):
+    original_args = args if args is not None else sys.argv[1:]
 
     try:
         import robotframework_ls
@@ -93,7 +94,7 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
     parser = argparse.ArgumentParser()
     add_arguments(parser)
 
-    args = parser.parse_args(args=args if args is not None else sys.argv[1:])
+    args = parser.parse_args(args=original_args)
     Setup.options = Options(args)
     verbose = args.verbose
     log_file = args.log_file
@@ -103,6 +104,15 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
         log_file = "%s.%s%s" % (f, os.getpid(), ext)
 
     _configure_logger(verbose, log_file)
+
+    log.debug("Arguments: %s", original_args)
+    log.debug(
+        "Python version: %s - platform: %s - sys.prefix: %s - sys.executable: %s",
+        sys.version,
+        sys.platform,
+        sys.prefix,
+        sys.executable,
+    )
 
     if args.tcp:
         start_tcp_lang_server(
