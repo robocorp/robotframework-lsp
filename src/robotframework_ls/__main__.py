@@ -107,8 +107,9 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
 
     log.debug("Arguments: %s", original_args)
     log.debug(
-        "Python version: %s - platform: %s - sys.prefix: %s - sys.executable: %s",
+        "Python: %s - lsp: %s - platform: %s - sys.prefix: %s - sys.executable: %s",
         sys.version,
+        robotframework_ls.__version__,
         sys.platform,
         sys.prefix,
         sys.executable,
