@@ -26,7 +26,7 @@ jobs:
           "ubuntu-py38",
           "ubuntu-pypy3",
           
-#           "macos-py37",
+          "macos-py37",
 #           "macos-py38",
         ]
         
@@ -48,9 +48,9 @@ jobs:
             os: ubuntu-latest
 # Github actions seems to be having issues with Mac (regardless of which is the last action it may not complete)
 # so, leave it commented out for now.
-#           - name: "macos-py37"
-#             python: "3.7"
-#             os: macos-latest
+          - name: "macos-py37"
+            python: "3.7"
+            os: macos-latest
 #           - name: "macos-py38"
 #             python: "3.8"
 #             os: macos-latest
