@@ -102,16 +102,7 @@ class _LanguageServerClient(LanguageServerClientBase):
                 "method": "textDocument/didChange",
                 "params": {
                     "textDocument": {"uri": uri, "version": version},
-                    "contentChanges": [
-                        {
-                            "range": {
-                                "start": {"line": 0, "character": 0},
-                                "end": {"line": 0, "character": 0},
-                            },
-                            "rangeLength": 0,
-                            "text": text,
-                        }
-                    ],
+                    "contentChanges": [{"range": None, "rangeLength": 0, "text": text}],
                 },
             }
         )

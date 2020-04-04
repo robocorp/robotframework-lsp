@@ -121,14 +121,19 @@ class RobotFrameworkServerApi(PythonLanguageServer):
                 text_document_item.uri, 0, 0
             )
             if completion_context is None:
-                return None
+                return []
             text = completion_context.doc.source
+
+        if not text:
+            return []
 
         if options is None:
             options = {}
         tab_size = options.get("tabSize", 4)
 
         new_contents = robot_source_format(text, space_count=tab_size)
+        if new_contents is None or new_contents == text:
+            return []
         return [x.to_dict() for x in create_text_edit_from_diff(text, new_contents)]
 
     def _create_completion_context(self, doc_uri, line, col):

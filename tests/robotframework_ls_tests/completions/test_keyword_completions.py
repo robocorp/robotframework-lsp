@@ -115,9 +115,7 @@ def test_keyword_completions_from_recursively_included_resource_files(
     )
 
 
-def test_keyword_completions_builtin_duplicated(
-    data_regression, workspace, cases, libspec_manager
-):
+def test_keyword_completions_builtin_duplicated(workspace, cases, libspec_manager):
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
 

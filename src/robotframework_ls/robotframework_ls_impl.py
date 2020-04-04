@@ -390,6 +390,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                 result = msg.get("result")
                 if result:
                     return result
+                else:
+                    return []
         raise RuntimeError("Code formatting timed-out.")
 
     @overrides(PythonLanguageServer.m_text_document__did_close)

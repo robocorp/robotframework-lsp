@@ -154,3 +154,7 @@ def test_code_format_integrated(language_server, ws_root_path, data_regression):
     language_server.change_doc(uri, 2, "***settings***\nDocumentation  Some doc")
     ret = language_server.request_source_format(uri)
     data_regression.check(ret, basename="test_code_format_integrated_text_edits")
+
+    language_server.change_doc(uri, 3, "[Documentation]\n")
+    ret = language_server.request_source_format(uri)
+    assert ret["result"] == []
