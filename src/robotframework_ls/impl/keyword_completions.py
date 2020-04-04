@@ -46,6 +46,9 @@ def _collect_libraries_keywords(completion_context, collector):
     libspec_manager = completion_context.workspace.libspec_manager
 
     for library_name in library_names:
+        if not completion_context.memo.complete_for_library(library_name):
+            continue
+
         library_info = libspec_manager.get_library_info(library_name, create=True)
         if library_info is not None:
             #: :type keyword: KeywordDoc

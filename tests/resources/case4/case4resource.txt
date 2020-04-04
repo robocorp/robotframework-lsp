@@ -1,4 +1,7 @@
 *** Settings ***
 
 Resource    case4resource2.robot
+Resource    case4resource2.robot
+
+Resource    case4resource3.robot
 Resource    case4resource3.robot

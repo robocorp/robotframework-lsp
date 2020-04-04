@@ -1,6 +1,7 @@
 *** Settings ***
 
 Resource    case4resource.txt
+Resource    case4resource.txt
 
 *** Test Cases ***
 Can use resource keywords

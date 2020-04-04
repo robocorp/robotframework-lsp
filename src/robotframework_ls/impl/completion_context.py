@@ -66,10 +66,18 @@ _NOT_SET = "NOT_SET"
 class _Memo(object):
     def __init__(self):
         self._followed_imports = {}
+        self._completed_libraries = {}
 
     def follow_import(self, uri):
         if uri not in self._followed_imports:
             self._followed_imports[uri] = True
+            return True
+
+        return False
+
+    def complete_for_library(self, library_name):
+        if library_name not in self._completed_libraries:
+            self._completed_libraries[library_name] = True
             return True
 
         return False
