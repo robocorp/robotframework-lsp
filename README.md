@@ -34,7 +34,7 @@ After having `robotframework-lsp` installed, some settings may need to be config
 - `robot.variables` can be used to set custom variables which would usually be passed in the command line to `robotframework`.
   
 
-Features (0.0.6)
+Features (0.0.7)
 -----------------
 
 - Syntax highlighting
