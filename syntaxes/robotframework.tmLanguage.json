@@ -8,7 +8,7 @@
             "begin": "(?i)^(\\*+ ?(?:Settings|Setting)[ *]*)(?= {2,}| ?\\t| ?$)",
             "beginCaptures": {
                 "1": {
-                    "name": "storage.class.robot"
+                    "name": "entity.name.section.robot"
                 }
             },
             "end": "^(?=\\*)",
@@ -150,7 +150,7 @@
             "begin": "(?i)^(\\*+ ?(?:Variables|Variable)[ *]*)(?= {2,}| ?\\t| ?$)",
             "beginCaptures": {
                 "1": {
-                    "name": "storage.class.robot"
+                    "name": "entity.name.section.robot"
                 }
             },
             "end": "^(?=\\*)",
@@ -217,7 +217,7 @@
             "begin": "(?i)^(\\*+ ?(?:Test Cases|Test Case|Tasks|Task)[ *]*)(?= {2,}| ?\\t| ?$)",
             "beginCaptures": {
                 "1": {
-                    "name": "storage.class.robot"
+                    "name": "entity.name.section.robot"
                 }
             },
             "end": "^(?=\\*)",
@@ -286,7 +286,7 @@
             "begin": "(?i)^(\\*+ ?(?:Keywords|Keyword)[ *]*)(?= {2,}| ?\\t| ?$)",
             "beginCaptures": {
                 "1": {
-                    "name": "storage.class.robot"
+                    "name": "entity.name.section.robot"
                 }
             },
             "end": "^(?=\\*)",
@@ -356,14 +356,14 @@
             "begin": "(?i)^(\\*+\\s*comments?[\\s*].*)",
             "beginCaptures": {
                 "1": {
-                    "name": "storage.class.robot"
+                    "name": "entity.name.section.robot"
                 }
             },
             "contentName": "comment.line.robot",
             "name": "meta.table.comments.robot"
         },
         "variables": {
-            "match": "(?i)(?:(?:(?<!^)(?<!\\\\)|(?<=\\\\\\\\))([$@&%]\\{)(?:((?:\\d+\\.?\\d*)|(?:0x[\/da-f]+)|(?:0o[0-7]+)|(?:0b[01]+))|(true|false|none|null|empty|space|\/|:|\\\\n)|(.+?}*))(\\})(?:(\\[)(?:(\\d+)|(.*?))?(\\]))?)",
+            "match": "(?i)(?:(?:(?<!^)(?<!\\\\)|(?<=\\\\\\\\))([$@&%]\\{)(?:((?:\\d+\\.?\\d*)|(?:0x[\/da-f]+)|(?:0o[0-7]+)|(?:0b[01]+))|(true|false|none|null|empty|space|\/|:|\\\\n)|((.+?}*)))(\\})(?:(\\[)(?:(\\d+)|(.*?))?(\\]))?)",
             "captures": {
                 "1": {
                     "name": "keyword.operator.robot"
@@ -378,18 +378,21 @@
                     "name": "constant.other.robot"
                 },
                 "5": {
-                    "name": "keyword.operator.robot"
+                    "name": "variable.other.robot"
                 },
                 "6": {
                     "name": "keyword.operator.robot"
                 },
                 "7": {
-                    "name": "constant.numeric.robot"
+                    "name": "keyword.operator.robot"
                 },
                 "8": {
-                    "name": "variable.other.robot"
+                    "name": "constant.numeric.robot"
                 },
                 "9": {
+                    "name": "variable.other.robot"
+                },
+                "10": {
                     "name": "keyword.operator.robot"
                 }
             },
@@ -585,7 +588,6 @@
                     "name": "variable.function.robot"
                 }
             },
-            "contentName": "constant.other.robot",
             "patterns": [
                 {
                     "include": "#escape"
@@ -935,7 +937,7 @@
                     "name": "storage.type.method.robot"
                 }
             },
-            "contentName": "constant.other.robot",
+            "contentName": "string.quoted.single.robot",
             "patterns": [
                 {
                     "include": "#escape"
