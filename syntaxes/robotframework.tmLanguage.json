@@ -100,7 +100,7 @@
                     "name": "storage.type.setting.robot"
                 },
                 "2": {
-                    "name": "variable.function.robot"
+                    "name": "support.function.robot"
                 }
             },
             "end": "^(?!\\s*\\.\\.\\.)",
@@ -445,7 +445,7 @@
             "name": "meta.bdd.keyword.body.robot",
             "endCaptures": {
                 "1": {
-                    "name": "variable.function.robot"
+                    "name": "support.function.robot"
                 }
             }
         },
@@ -460,7 +460,7 @@
                     "name": "string.interpolated.robot"
                 },
                 "3": {
-                    "name": "variable.function.robot"
+                    "name": "support.function.robot"
                 }
             },
             "contentName": "string.quoted.single.robot",
@@ -500,7 +500,7 @@
                     "name": "keyword.operator.robot"
                 },
                 "6": {
-                    "name": "variable.function.robot"
+                    "name": "support.function.robot"
                 }
             },
             "contentName": "string.quoted.single.robot",
@@ -534,7 +534,7 @@
                     "name": "keyword.operator.robot"
                 },
                 "4": {
-                    "name": "variable.function.robot"
+                    "name": "support.function.robot"
                 }
             },
             "contentName": "string.quoted.single.robot",
@@ -585,7 +585,7 @@
                     "name": "keyword.operator.robot"
                 },
                 "4": {
-                    "name": "variable.function.robot"
+                    "name": "support.function.robot"
                 }
             },
             "patterns": [
@@ -637,7 +637,7 @@
                     "name": "keyword.operator.robot"
                 },
                 "4": {
-                    "name": "variable.function.robot"
+                    "name": "support.function.robot"
                 },
                 "1": {
                     "name": "keyword.operator.robot"
@@ -739,7 +739,7 @@
                     "name": "keyword.operator.robot"
                 },
                 "4": {
-                    "name": "variable.function.robot"
+                    "name": "support.function.robot"
                 }
             },
             "contentName": "string.quoted.single.robot",
@@ -900,7 +900,7 @@
             "begin": "^(?!(?: {2,}| ?\\t ?)+(?:(?=[$\\[@&%]|\\.)))(?: {2,}| ?\\t ?)+(.*?)(?= {2,}| ?\\t ?| ?$)",
             "beginCaptures": {
                 "1": {
-                    "name": "variable.function.robot"
+                    "name": "support.function.robot"
                 }
             },
             "contentName": "string.quoted.single.robot",
@@ -1008,9 +1008,18 @@
             "name": "meta.returning.keyword.robot"
         },
         "variable_assignment_from_kw": {
-            "end": "( ?=)?(?: {2,}| ?\\t+ ?| ?$)(?!\\.\\.\\.)([^#$@& \\n\\r].*?)(?: {2,}| ?\\t+| ?$)",
+            "name": "meta.variable.assignment.keyword.robot",
             "begin": "(?<=^\\s)(?:\\s*)(?=[$@&])",
-            "contentName": "string.quoted.single.robot",
+            "contentName": "support.function.robot",
+            "end": "( ?=)?(?: {2,}| ?\\t+ ?| ?$)(?!\\.\\.\\.)([^#$@& \\n\\r].*?)(?: {2,}| ?\\t+| ?$)",
+            "endCaptures": {
+                "1": {
+                    "name": "keyword.operator.robot"
+                },
+                "2": {
+                    "name": "support.function.robot"
+                }
+            },
             "patterns": [
                 {
                     "include": "#parameter"
@@ -1024,16 +1033,7 @@
                 {
                     "include": "#comment"
                 }
-            ],
-            "name": "meta.variable.assignment.keyword.robot",
-            "endCaptures": {
-                "1": {
-                    "name": "keyword.operator.robot"
-                },
-                "2": {
-                    "name": "entity.name.function.robot"
-                }
-            }
+            ]
         },
         "line_continuation": {
             "match": "^(\\s*\\.\\.\\.)(?: {2,}| ?\\t+| ?$)(?!ELSE)",
