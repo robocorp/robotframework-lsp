@@ -17,11 +17,20 @@
     "activationEvents": [
         "onLanguage:robotframework"
     ],
+    "galleryBanner": {
+        "theme": "dark",
+        "color": "#000000"
+    },
     "contributes": {
         "configuration": {
             "title": "Robot Framework Language Server Configuration",
             "type": "object",
             "properties": {
+                "robot.editor.4spacesTab": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Replaces the key stroke of tab with 4 spaces. Set to 'false' to active VSCode default."
+                },
                 "robot.language-server.tcp-port": {
                     "type": "number",
                     "default": 0,
@@ -54,18 +63,37 @@
                 }
             }
         },
-        "languages": [{
-            "id": "robotframework",
-            "aliases": ["Robot Framework", "robotframework"],
-            "extensions": [".robot", ".resource"],
-            "configuration": "./language-configuration.json"
-        }],
-        "grammars": [{
-            "language": "robotframework",
-            "scopeName": "source.robot",
-            "path": "./syntaxes/robotframework.tmLanguage.json"
-        }]
-
+        "languages": [
+            {
+                "id": "robotframework",
+                "aliases": [
+                    "Robot Framework",
+                    "robotframework"
+                ],
+                "extensions": [
+                    ".robot",
+                    ".resource"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "robotframework",
+                "scopeName": "source.robot",
+                "path": "./syntaxes/robotframework.tmLanguage.json"
+            }
+        ],
+        "keybindings": [
+            {
+                "key": "tab",
+                "command": "type",
+                "args": {
+                    "text": "    "
+                },
+                "when": "editorTextFocus && editorLangId == robotframework && !editorHasSelection && config.robot.editor.4spacesTab"
+            }
+        ]
     },
     "main": "./vscode-client/out/extension",
     "scripts": {
