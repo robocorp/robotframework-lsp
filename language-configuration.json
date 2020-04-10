@@ -17,12 +17,14 @@
         ["\"", "\""],
         ["'", "'"]
     ],
-    // symbols that that can be used to surround a selection
+    // symbols that can be used to surround a selection
     "surroundingPairs": [
         ["{", "}"],
         ["[", "]"],
         ["(", ")"],
         ["\"", "\""],
-        ["'", "'"]
+        ["'", "'"],
+        ["*", "*"],
+        ["_", "_"]
     ]
 }
