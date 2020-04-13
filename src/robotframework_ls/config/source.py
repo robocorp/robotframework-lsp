@@ -14,16 +14,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from robotframework_ls.robotframework_log import get_logger
+
 try:
     import configparser
 except ImportError:
     from robotframework_ls.libs_py2.py2_backports import configparser
 
-import logging
 import os
 import sys
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 class ConfigSource(object):

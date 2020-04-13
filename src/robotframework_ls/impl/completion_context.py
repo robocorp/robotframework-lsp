@@ -1,9 +1,9 @@
 import re
-import logging
 from robotframework_ls.impl.robot_workspace import RobotDocument
 from robotframework_ls.cache import instance_cache
+from robotframework_ls.robotframework_log import get_logger
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 # TODO: this is not the best e.g. we capture numbers
 RE_START_WORD = re.compile("[A-Za-z_0-9]*$")

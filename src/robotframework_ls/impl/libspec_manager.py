@@ -1,10 +1,10 @@
 import os
 import sys
-import logging
 from collections import namedtuple
 from robotframework_ls.constants import NULL
+from robotframework_ls.robotframework_log import get_logger
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 _LibInfo = namedtuple("_LibInfo", "library_doc, mtime")
 

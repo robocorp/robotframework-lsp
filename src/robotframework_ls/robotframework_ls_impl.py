@@ -15,9 +15,10 @@ from functools import partial
 import itertools
 import time
 from robotframework_ls.constants import DEFAULT_COMPLETIONS_TIMEOUT
+from robotframework_ls.robotframework_log import get_logger
 
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 LINT_DEBOUNCE_S = 0.5  # 500 ms
 ROBOT_FILE_EXTENSIONS = (".robot", ".settings")

@@ -18,9 +18,7 @@
 import argparse
 import sys
 import os
-import logging
 
-log = logging.getLogger(__name__)
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
@@ -77,6 +75,8 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
         import robotframework_ls  # @UnusedImport
 
     from robotframework_ls.options import Setup, Options
+    from robotframework_ls.robotframework_log import configure_logger
+    from robotframework_ls.robotframework_log import get_logger
 
     from robotframework_ls.python_ls import (
         start_io_lang_server,
@@ -97,13 +97,10 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
     args = parser.parse_args(args=original_args)
     Setup.options = Options(args)
     verbose = args.verbose
-    log_file = args.log_file
+    log_file = args.log_file or ""
 
-    if log_file:
-        f, ext = os.path.splitext(log_file)
-        log_file = "%s.%s%s" % (f, os.getpid(), ext)
-
-    _configure_logger(verbose, log_file)
+    configure_logger("lsp", verbose, log_file)
+    log = get_logger("robotframework_ls.__main__")
 
     log.debug("Arguments: %s", original_args)
     log.debug(
@@ -124,38 +121,8 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
         start_io_lang_server(stdin, stdout, language_server_class)
 
 
-def _configure_logger(verbose=0, log_file=None):
-    prev_log_handler = getattr(_configure_logger, "log_handler", None)
-
-    root_logger = logging.root
-
-    formatter = logging.Formatter(LOG_FORMAT)
-    if log_file:
-        log_file = os.path.expanduser(log_file)
-        log_handler = logging.FileHandler(log_file)
-    else:
-        log_handler = logging.StreamHandler()
-    log_handler.setFormatter(formatter)
-    if prev_log_handler is not None:
-        root_logger.removeHandler(prev_log_handler)
-
-    root_logger.addHandler(log_handler)
-    _configure_logger.log_handler = log_handler
-
-    if verbose == 0:
-        level = logging.CRITICAL
-    elif verbose == 1:
-        level = logging.WARNING
-    elif verbose >= 2:
-        level = logging.DEBUG
-
-    root_logger.setLevel(level)
-
-
 if __name__ == "__main__":
     try:
-        log.info("Initializing Language Server. Args: %s", (sys.argv[1:],))
-
         main()
     except:
         # Critical error (the logging may not be set up properly).

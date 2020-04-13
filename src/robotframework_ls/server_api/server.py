@@ -1,9 +1,9 @@
 from robotframework_ls.python_ls import PythonLanguageServer
-import logging
 from robotframework_ls._utils import overrides
+from robotframework_ls.robotframework_log import get_logger
 
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 class RobotFrameworkServerApi(PythonLanguageServer):

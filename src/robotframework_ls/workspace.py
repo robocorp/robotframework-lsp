@@ -16,13 +16,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import io
-import logging
 import os
 
 from . import uris
 from robotframework_ls.uris import uri_scheme, to_fs_path
+from robotframework_ls.robotframework_log import get_logger
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 class Workspace(object):

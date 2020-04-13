@@ -27,7 +27,7 @@ def test_libspec_manager_caches(libspec_manager, tmpdir):
 
     # Give a timeout so that the next write will have at least 1 second
     # difference (1s is the minimum for poll to work).
-    time.sleep(1)
+    time.sleep(1.1)
     with open(os.path.join(ws_dir, "my2.libspec"), "w") as stream:
         stream.write(LIBSPEC_2)
 

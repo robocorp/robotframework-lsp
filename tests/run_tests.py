@@ -2,28 +2,57 @@ import sys
 import os
 import subprocess
 import time
+from contextlib import contextmanager
 
-if __name__ == "__main__":
-    directory = os.path.dirname(os.path.abspath(__file__))
-    os.chdir(directory)
-    with open("./tests_output.txt", "w") as stream:
+__file__ = os.path.abspath(__file__)
+if __file__.endswith((".pyc", ".pyo")):
+    __file__ = __file__[:-1]
+
+
+@contextmanager
+def _noop_ctx():
+    yield None
+
+
+def main():
+    args = sys.argv[1:]
+    if len(args) >= 1:
+        if len(args) != 1:
+            raise AssertionError(
+                "Expected at most 1 argument. Found: %s (%s)" % (len(args), args)
+            )
+        test_output_filename = args[0]
+        open_stream = lambda: open(
+            os.path.join(os.path.dirname(__file__), test_output_filename), "w"
+        )
+    else:
+        # Without arguments runs without logging to any file.
+        open_stream = _noop_ctx
+
+    with open_stream() as stream:
 
         def write(msg):
             for s in (sys.stderr, stream):
-                s.write(msg)
-                s.write("\n")
-                s.flush()
+                if s is not None:
+                    s.write(msg)
+                    s.write("\n")
+                    s.flush()
 
         write("=== Initializing test run ===")
         retcode = 1
         initial_time = time.time()
         try:
-            # process = subprocess.Popen(
-            #     [sys.executable, "-c", "import sys;print(sys.executable)"],
-            #     cwd=directory,
-            # )
+            directory = os.path.dirname(os.path.abspath(__file__))
+            os.chdir(directory)
             process = subprocess.Popen(
-                [sys.executable, "-m", "pytest", "-vv", "robotframework_ls_tests"],
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "-vv",
+                    "robotframework_ls_tests",
+                    "robotframework_debug_adapter_tests",
+                ],
                 cwd=directory,
             )
             pid = process.pid
@@ -52,10 +81,8 @@ if __name__ == "__main__":
                             cmdline = s.cmdline()
                         except Exception as e:
                             cmdline = str(e)
-                        sys.stderr.write("Subprocess leaked: %s (%s)\n" % (s, cmdline))
+                        write("Subprocess leaked: %s (%s)\n" % (s, cmdline))
                         pids.append(s.pid)
-
-                    sys.stderr.flush()
 
                     from robotframework_ls._utils import kill_process_and_subprocesses
 
@@ -70,3 +97,7 @@ if __name__ == "__main__":
                 "=== Finalizing test run. Total time: %.2fs ==="
                 % (time.time() - initial_time)
             )
+
+
+if __name__ == "__main__":
+    main()

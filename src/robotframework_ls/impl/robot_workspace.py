@@ -3,8 +3,9 @@ import logging
 from robotframework_ls._utils import overrides
 from robotframework_ls.cache import instance_cache
 from robotframework_ls.constants import NULL
+from robotframework_ls.robotframework_log import get_logger
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 class RobotWorkspace(Workspace):

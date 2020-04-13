@@ -23,7 +23,7 @@ import * as net from 'net';
 import * as path from 'path';
 import * as fs from 'fs';
 
-import { workspace, Disposable, ExtensionContext, window, commands, Uri, ConfigurationTarget } from 'vscode';
+import { workspace, Disposable, ExtensionContext, window, commands, Uri, ConfigurationTarget, debug, DebugAdapterExecutable } from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, ErrorAction, ErrorHandler, CloseAction, TransportKind } from 'vscode-languageclient';
 import { print } from 'util';
 import { exec } from 'child_process';
@@ -105,6 +105,43 @@ function askPythonExe(context: ExtensionContext, askMessage: string) {
 	});
 }
 
+
+
+function afterStartLangServer(pythonExecutable: string) {
+	function createDebugAdapterExecutable(env: { [key: string]: string }): DebugAdapterExecutable{
+		let config = workspace.getConfiguration("robot");
+		if (!pythonExecutable) {
+			let executableAndMessage = getDefaultLanguageServerPythonExecutable();
+			if (executableAndMessage.executable) {
+				pythonExecutable = executableAndMessage.executable;
+			} else {
+				window.showWarningMessage('Error getting language server python executable for creating a debug adapter.');
+				return;
+			}
+		}
+
+		let targetFile: string = path.resolve(__dirname, '../../src/robotframework_debug_adapter/__main__.py');
+		if (!fs.existsSync(targetFile)) {
+			window.showWarningMessage('Error. Expected: ' + targetFile + " to exist.");
+			return;
+		}
+		if(env){
+			return new DebugAdapterExecutable(pythonExecutable, ['-u', targetFile], {"env": env});
+
+		}else{
+			return new DebugAdapterExecutable(pythonExecutable, ['-u', targetFile]);
+		}
+	};
+
+
+	debug.registerDebugAdapterDescriptorFactory('robotframework-lsp', {
+		createDebugAdapterDescriptor: session => {
+			let env = session.configuration.env;
+			return createDebugAdapterExecutable(env);
+		}
+	});
+}
+
 function startLangServerIOWithPython(context: ExtensionContext, pythonExecutable: string) {
 	let targetFile: string = path.resolve(__dirname, '../../src/robotframework_ls/__main__.py');
 	if (!fs.existsSync(targetFile)) {
@@ -121,6 +158,7 @@ function startLangServerIOWithPython(context: ExtensionContext, pythonExecutable
 
 	let langServer: LanguageClient = startLangServerIO(pythonExecutable, args, ["robotframework"]);
 	let disposable: Disposable = langServer.start();
+	afterStartLangServer(pythonExecutable);
 	context.subscriptions.push(disposable);
 
 }
@@ -149,6 +187,44 @@ function startListeningConfigurationChanges() {
 	});
 }
 
+function getDefaultLanguageServerPythonExecutable() {
+	let config = workspace.getConfiguration("robot");
+	let languageServerPython: string = config.get<string>("language-server.python");
+	let executable: string = languageServerPython;
+
+	if (!executable || (executable.indexOf('/') == -1 && executable.indexOf('\\') == -1)) {
+		// Search python from the path.
+		if (!executable || executable == "python") {
+			if (process.platform == "win32") {
+				executable = "python.exe";
+			}
+		}
+		executable = findExecutableInPath(executable);
+		if (!fs.existsSync(executable)) {
+			return {
+				executable: undefined,
+				'message': 'Unable to start robotframework-lsp because: python could not be found on the PATH. Do you want to select a python executable to start robotframework-lsp?'
+			};
+		}
+		return {
+			executable: executable,
+			'message': undefined
+		};
+
+	} else {
+		if (!fs.existsSync(executable)) {
+			return {
+				executable: undefined,
+				'message': 'Unable to start robotframework-lsp because: ' + executable + ' does not exist. Do you want to select a new python executable to start robotframework-lsp?'
+			};
+		}
+		return {
+			executable: executable,
+			'message': undefined
+		};
+	}
+}
+
 export function activate(context: ExtensionContext) {
 	let config = workspace.getConfiguration("robot");
 
@@ -157,33 +233,19 @@ export function activate(context: ExtensionContext) {
 		let port: number = config.get<number>("language-server.tcp-port");
 		if (port) {
 			// For TCP server needs to be started seperately
-			context.subscriptions.push(startLangServerTCP(port, ["robotframework"]).start());
+			let langServer = startLangServerTCP(port, ["robotframework"]);
+			let disposable: Disposable = langServer.start();
+			afterStartLangServer(undefined);
+			context.subscriptions.push(disposable);
 
 		} else {
-			let languageServerPython: string = config.get<string>("language-server.python");
-			let executable: string = languageServerPython;
-			let isSelectionValid: boolean = true;
-
-			if (!executable || (executable.indexOf('/') == -1 && executable.indexOf('\\') == -1)) {
-				// Search python from the path.
-				if (!executable || executable == "python") {
-					if (process.platform == "win32") {
-						executable = "python.exe";
-					}
-				}
-				executable = findExecutableInPath(executable);
-				if (!fs.existsSync(executable)) {
-					askPythonExe(context, 'Unable to start robotframework-lsp because: python could not be found on the PATH. Do you want to select a python executable to start robotframework-lsp?');
-					return;
-				}
-			} else {
-				if (!fs.existsSync(executable)) {
-					askPythonExe(context, 'Unable to start robotframework-lsp because: ' + executable + ' does not exist. Do you want to select a new python executable to start robotframework-lsp?');
-					return;
-				}
+			let executableAndMessage = getDefaultLanguageServerPythonExecutable();
+			if (executableAndMessage.message) {
+				askPythonExe(context, executableAndMessage.message);
+				return;
 			}
 
-			startLangServerIOWithPython(context, executable);
+			startLangServerIOWithPython(context, executableAndMessage.executable);
 		}
 	} finally {
 		startListeningConfigurationChanges();

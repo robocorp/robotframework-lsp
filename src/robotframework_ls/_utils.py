@@ -16,13 +16,14 @@
 # limitations under the License.
 import functools
 import inspect
-import logging
 import os
 import sys
 import threading
 
 from robotframework_ls.constants import IS_PY2
 from contextlib import contextmanager
+from robotframework_ls.options import DEFAULT_TIMEOUT
+from robotframework_ls.robotframework_log import get_logger
 
 try:
     TimeoutError = TimeoutError  # @ReservedAssignment
@@ -36,10 +37,23 @@ PARENT_PROCESS_WATCH_INTERVAL = 3  # 3 s
 
 if IS_PY2:
     import pathlib2 as pathlib
+
+    def as_str(s):
+        if isinstance(s, unicode):
+            return s.encode("utf-8", "replace")
+        return s
+
+
 else:
     import pathlib
 
-log = logging.getLogger(__name__)
+    def as_str(s):
+        if isinstance(s, bytes):
+            return s.decode("utf-8", "replace")
+        return s
+
+
+log = get_logger(__name__)
 
 
 def debounce(interval_s, keyed_by=None):
@@ -438,3 +452,24 @@ def check_min_version(version, min_version):
         return False
 
     return version >= min_version
+
+
+def wait_for_condition(condition, msg=None, timeout=DEFAULT_TIMEOUT, sleep=1 / 20.0):
+    import time
+
+    curtime = time.time()
+
+    while True:
+        if condition():
+            break
+        if timeout is not None and (time.time() - curtime > timeout):
+            error_msg = "Condition not reached in %s seconds" % (timeout,)
+            if msg is not None:
+                error_msg += "\n"
+                if callable(msg):
+                    error_msg += msg()
+                else:
+                    error_msg += str(msg)
+
+            raise TimeoutError(error_msg)
+        time.sleep(sleep)

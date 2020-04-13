@@ -1,10 +1,10 @@
-import logging
 import ast
 from robotframework_ls.lsp import Error
 import sys
 from collections import namedtuple
+from robotframework_ls.robotframework_log import get_logger
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 class _NodesProviderVisitor(ast.NodeVisitor):

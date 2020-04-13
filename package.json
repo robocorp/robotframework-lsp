@@ -2,6 +2,7 @@
     "name": "robotframework-lsp",
     "description": "VSCode extension support for Robot Framework",
     "author": "Fabio Zadrozny",
+    "homepage": "https://github.com/robocorp/robotframework-lsp/blob/master/README.md",
     "repository": {
         "type": "git",
         "url": "https://github.com/robocorp/robotframework-lsp.git"
@@ -11,14 +12,16 @@
     "icon": "images/icon.png",
     "publisher": "robocorptech",
     "engines": {
-        "vscode": "^1.19.0"
+        "vscode": "^1.40.0"
     },
     "categories": [
         "Linters",
         "Programming Languages"
     ],
     "activationEvents": [
-        "onLanguage:robotframework"
+        "onLanguage:robotframework",
+        "onDebugInitialConfigurations",
+        "onDebugResolve:robotframework-lsp"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -95,6 +98,69 @@
                     "text": "    "
                 },
                 "when": "editorTextFocus && editorLangId == robotframework && !editorHasSelection && config.robot.editor.4spacesTab"
+            }
+        ],
+        "debuggers": [
+            {
+                "type": "robotframework-lsp",
+                "label": "RobotFramework",
+                "languages": [
+                    "robotframework"
+                ],
+                "configurationAttributes": {
+                    "launch": {
+                        "properties": {
+                            "target": {
+                                "type": "string",
+                                "description": "The .robot file or a folder containing .robot files to be launched.",
+                                "default": "${file}"
+                            },
+                            "args": {
+                                "type": "array",
+                                "description": "The command line arguments passed to the target."
+                            },
+                            "cwd": {
+                                "type": "string",
+                                "description": "The working directory for the launch.",
+                                "default": "${workspaceFolder}"
+                            },
+                            "env": {
+                                "type": "object",
+                                "description": "Environment variables to be added to the launch."
+                            },
+                            "terminal": {
+                                "type": "string",
+                                "enum": [
+                                    "none",
+                                    "integrated",
+                                    "external"
+                                ],
+                                "enumDescriptions": [
+                                    "No terminal (pipes the output to the client debug console).",
+                                    "Use terminal integrated in client.",
+                                    "External terminal (configured in user settings)."
+                                ],
+                                "description": "The terminal to launch the program.",
+                                "default": "none"
+                            }
+                        }
+                    }
+                },
+                "configurationSnippets": [
+                    {
+                        "label": "Robot: Launch .robot file",
+                        "description": "Add a new configuration for launching Robot Framework.",
+                        "body": {
+                            "type": "robotframework-lsp",
+                            "name": "Robot: Current File",
+                            "request": "launch",
+                            "cwd": "^\"\\${workspaceFolder}\"",
+                            "target": "^\"\\${file}\"",
+                            "terminal": "none",
+                            "env": {}
+                        }
+                    }
+                ]
             }
         ]
     },

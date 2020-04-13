@@ -14,15 +14,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
 import threading
+from robotframework_ls.robotframework_log import get_logger
 
 try:
     import ujson as json
 except Exception:  # pylint: disable=broad-except
     import json
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 class JsonRpcStreamReader(object):

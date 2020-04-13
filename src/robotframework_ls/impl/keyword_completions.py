@@ -1,7 +1,7 @@
 import os.path
-import logging
+from robotframework_ls.robotframework_log import get_logger
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 def _collect_completions_from_ast(ast, completion_context, collector):
