@@ -138,7 +138,7 @@ class _Logger(object):
     def _report(self, levelname, show_stacktrace, msg="", *args):
         msg = _as_str(msg)
         if args:
-            args = [_as_str(arg) for arg in args]
+            args = tuple(_as_str(arg) for arg in args)
             try:
                 message = msg % args
             except:

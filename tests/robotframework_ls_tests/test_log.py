@@ -15,7 +15,7 @@ def test_log(tmpdir):
     try:
         raise AssertionError("someerror")
     except:
-        log.exception("rara")
+        log.exception("rara: %s - %s", "str1", "str2")
 
     def get_log_files():
         log_files = [
@@ -33,3 +33,4 @@ def test_log(tmpdir):
         assert "someerror" in contents
         assert "something" in contents
         assert "rara" in contents
+        assert "rara: str1 - str2" in contents

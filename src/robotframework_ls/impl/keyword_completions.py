@@ -6,6 +6,7 @@ log = get_logger(__name__)
 
 def _collect_completions_from_ast(ast, completion_context, collector):
     from robotframework_ls.impl import ast_utils
+    from robotframework_ls.lsp import CompletionItemKind
 
     for keyword in ast_utils.iter_keywords(ast):
         keyword_name = keyword.node.name
@@ -18,7 +19,12 @@ def _collect_completions_from_ast(ast, completion_context, collector):
             docs = ast_utils.get_documentation(keyword.node)
 
             collector.on_keyword(
-                keyword_name, keyword_args, docs, docs_format, completion_context
+                keyword_name,
+                keyword_args,
+                docs,
+                docs_format,
+                completion_context,
+                CompletionItemKind.Function,
             )
 
 
@@ -39,6 +45,7 @@ def _collect_libraries_keywords(completion_context, collector):
     # Get keywords from libraries
     from robotframework_ls.impl.robot_constants import BUILTIN_LIB
     from robotframework_ls.impl.robot_specbuilder import docs_and_format
+    from robotframework_ls.lsp import CompletionItemKind
 
     libraries = completion_context.get_imported_libraries()
     library_names = set(library.name for library in libraries)
@@ -67,6 +74,7 @@ def _collect_libraries_keywords(completion_context, collector):
                         docs,
                         docs_format,
                         completion_context,
+                        CompletionItemKind.Method,
                     )
 
 
@@ -140,11 +148,10 @@ class _Collector(object):
         return self.matcher.accepts(keyword_name)
 
     def _create_completion_item_from_keyword(
-        self, keyword_name, args, docs_format, docs, selection, token
+        self, keyword_name, args, docs_format, docs, selection, token, kind
     ):
         from robotframework_ls.lsp import (
             CompletionItem,
-            CompletionItemKind,
             InsertTextFormat,
             Position,
             Range,
@@ -169,7 +176,7 @@ class _Collector(object):
         # text_edit = None
         return CompletionItem(
             keyword_name,
-            kind=CompletionItemKind.Class,
+            kind=kind,
             text_edit=text_edit,
             documentation=docs,
             insertTextFormat=InsertTextFormat.Snippet,
@@ -181,10 +188,22 @@ class _Collector(object):
         ).to_dict()
 
     def on_keyword(
-        self, keyword_name, keyword_args, docs, docs_format, completion_context
+        self,
+        keyword_name,
+        keyword_args,
+        docs,
+        docs_format,
+        completion_context,
+        completion_item_kind,
     ):
         item = self._create_completion_item_from_keyword(
-            keyword_name, keyword_args, docs_format, docs, self.selection, self.token
+            keyword_name,
+            keyword_args,
+            docs_format,
+            docs,
+            self.selection,
+            self.token,
+            completion_item_kind,
         )
 
         self.completion_items.append(item)
@@ -207,4 +226,6 @@ def complete(completion_context):
             )
             _complete_following_imports(completion_context, collector)
 
-    return collector.completion_items
+            return collector.completion_items
+
+    return []

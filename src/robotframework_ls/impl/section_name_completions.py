@@ -64,7 +64,7 @@ def complete(completion_context):
                     # text_edit = None
                     ret.append(
                         CompletionItem(
-                            label, kind=CompletionItemKind.Method, text_edit=text_edit
+                            label, kind=CompletionItemKind.Keyword, text_edit=text_edit
                         ).to_dict()
                     )
 

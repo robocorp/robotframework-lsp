@@ -2,7 +2,7 @@
   documentation: ':type new_model: int'
   documentationFormat: plaintext
   insertTextFormat: 2
-  kind: 7
+  kind: 2
   label: New Verify Model
   preselect: false
   textEdit:
@@ -18,7 +18,7 @@
   documentation: ''
   documentationFormat: plaintext
   insertTextFormat: 2
-  kind: 7
+  kind: 2
   label: new Verify Another Model
   preselect: false
   textEdit:
