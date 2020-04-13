@@ -8,7 +8,7 @@
             "begin": "(?i)^(\\*+ ?(?:Settings|Setting)[ *]*)(?= {2,}| ?\\t| ?$)",
             "beginCaptures": {
                 "1": {
-                    "name": "entity.name.section.robot"
+                    "name": "entity.name.type.robot"
                 }
             },
             "end": "^(?=\\*)",
@@ -150,7 +150,7 @@
             "begin": "(?i)^(\\*+ ?(?:Variables|Variable)[ *]*)(?= {2,}| ?\\t| ?$)",
             "beginCaptures": {
                 "1": {
-                    "name": "entity.name.section.robot"
+                    "name": "entity.name.type.robot"
                 }
             },
             "end": "^(?=\\*)",
@@ -217,7 +217,7 @@
             "begin": "(?i)^(\\*+ ?(?:Test Cases|Test Case|Tasks|Task)[ *]*)(?= {2,}| ?\\t| ?$)",
             "beginCaptures": {
                 "1": {
-                    "name": "entity.name.section.robot"
+                    "name": "entity.name.type.robot"
                 }
             },
             "end": "^(?=\\*)",
@@ -286,7 +286,7 @@
             "begin": "(?i)^(\\*+ ?(?:Keywords|Keyword)[ *]*)(?= {2,}| ?\\t| ?$)",
             "beginCaptures": {
                 "1": {
-                    "name": "entity.name.section.robot"
+                    "name": "entity.name.type.robot"
                 }
             },
             "end": "^(?=\\*)",
@@ -356,7 +356,7 @@
             "begin": "(?i)^(\\*+\\s*comments?[\\s*].*)",
             "beginCaptures": {
                 "1": {
-                    "name": "entity.name.section.robot"
+                    "name": "entity.name.type.robot"
                 }
             },
             "contentName": "comment.line.robot",
