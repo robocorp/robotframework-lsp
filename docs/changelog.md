@@ -1,5 +1,5 @@
 
-New in 0.0.8
+New in 0.0.8 (2020-04-14)
 -----------------------------
 
 - Launch robotframework directly from VSCode (note: right now debugging is still not supported 
