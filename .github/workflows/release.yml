@@ -27,7 +27,12 @@ jobs:
       with:
         python-version: 3.7
     - name: Install deps
-      run: pip install fire
+      run: pip install --upgrade pip fire twine wheel setuptools
+    - name: Build wheel
+      working-directory: ./src
+      run: |
+        cp ../README.md ./README.md
+        python setup.py sdist bdist_wheel --universal
     - name: Check tag version
       run: python -m dev check-tag-version
     - run: npm install -g vsce
