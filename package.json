@@ -37,6 +37,12 @@
                     "default": true,
                     "description": "Replaces the key stroke of tab with 4 spaces. Set to 'false' to active VSCode default."
                 },
+                "robot.completions.section_headers.form": {
+                    "type": "string",
+                    "default": "plural",
+                    "description": "Defines how completions should be shown for section headers (i.e.: *** Setting(s) ***).",
+                    "enum": ["plural", "singular", "both"]
+                },
                 "robot.language-server.tcp-port": {
                     "type": "number",
                     "default": 0,

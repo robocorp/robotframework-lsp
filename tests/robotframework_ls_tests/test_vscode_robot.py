@@ -41,9 +41,36 @@ def test_section_completions_integrated(language_server, ws_root_path, data_regr
     uri = "untitled:Untitled-1"
     language_server.open_doc(uri, 1)
     language_server.change_doc(uri, 2, "*settin")
-    data_regression.check(
-        language_server.get_completions(uri, 0, 7), "completion_settings"
+
+    def check(expected):
+        completions = language_server.get_completions(uri, 0, 7)
+        del completions["id"]
+        data_regression.check(completions, expected)
+
+    check("completion_settings_plural")
+
+    language_server.settings(
+        {
+            "settings": {
+                "robot": {"completions": {"section_headers": {"form": "singular"}}}
+            }
+        }
     )
+    check("completion_settings_singular")
+
+    language_server.settings(
+        {"settings": {"robot": {"completions": {"section_headers": {"form": "both"}}}}}
+    )
+    check("completion_settings_both")
+
+    language_server.settings(
+        {
+            "settings": {
+                "robot": {"completions": {"section_headers": {"form": "plural"}}}
+            }
+        }
+    )
+    check("completion_settings_plural")
 
 
 def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regression):

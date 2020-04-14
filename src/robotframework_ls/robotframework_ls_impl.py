@@ -462,7 +462,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             log.critical("Unable to find document (%s) for completions." % (doc_uri,))
             return []
 
-        ctx = CompletionContext(document, line, col)
+        ctx = CompletionContext(document, line, col, config=self.config)
         completions = []
 
         # Asynchronous completion.
