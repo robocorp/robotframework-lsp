@@ -75,7 +75,10 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
         import robotframework_ls  # @UnusedImport
 
     from robotframework_ls.options import Setup, Options
-    from robotframework_ls.robotframework_log import configure_logger
+    from robotframework_ls.robotframework_log import (
+        configure_logger,
+        log_args_and_python,
+    )
     from robotframework_ls.robotframework_log import get_logger
 
     from robotframework_ls.python_ls import (
@@ -101,16 +104,7 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
 
     configure_logger("lsp", verbose, log_file)
     log = get_logger("robotframework_ls.__main__")
-
-    log.debug("Arguments: %s", original_args)
-    log.debug(
-        "Python: %s - lsp: %s - platform: %s - sys.prefix: %s - sys.executable: %s",
-        sys.version,
-        robotframework_ls.__version__,
-        sys.platform,
-        sys.prefix,
-        sys.executable,
-    )
+    log_args_and_python(log, original_args)
 
     if args.tcp:
         start_tcp_lang_server(

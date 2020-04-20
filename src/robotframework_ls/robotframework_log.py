@@ -199,3 +199,17 @@ def configure_logger(postfix, log_level=None, log_file=None):
             traceback.print_exc()
 
     _configure_logger(postfix, log_level, log_file)
+
+
+def log_args_and_python(log, argv):
+    import robotframework_ls
+
+    log.debug("Arguments: %s", argv)
+    log.debug(
+        "Python: %s - lsp: %s - platform: %s - sys.prefix: %s - sys.executable: %s",
+        sys.version,
+        robotframework_ls.__version__,
+        sys.platform,
+        sys.prefix,
+        sys.executable,
+    )

@@ -21,7 +21,7 @@ def connect(port):
     from robotframework_ls.impl.robot_lsp_constants import ENV_OPTION_ROBOT_DAP_TIMEOUT
     from robotframework_ls.robotframework_log import get_logger
 
-    log = get_logger(__name__)
+    log = get_logger("robotframework_debug_adapter.run_robot__main__.py")
 
     #  Set TCP keepalive on an open socket.
     #  It activates after 1 second (TCP_KEEPIDLE,) of idleness,
@@ -102,7 +102,7 @@ class _DAPCommandProcessor(threading.Thread):
             READER_THREAD_STOPPED,
         )
 
-        log = get_logger(__name__)
+        log = get_logger("robotframework_debug_adapter.run_robot__main__.py")
         if protocol_message is READER_THREAD_STOPPED:
             if DEBUG:
                 log.debug("_DAPCommandProcessor: READER_THREAD_STOPPED.")
@@ -184,10 +184,15 @@ def main():
         sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         import robotframework_ls  # @UnusedImport
 
-    from robotframework_ls.robotframework_log import configure_logger
+    from robotframework_ls.robotframework_log import (
+        configure_logger,
+        log_args_and_python,
+    )
     from robotframework_ls.robotframework_log import get_logger
 
     configure_logger("robot")
+    log = get_logger("robotframework_debug_adapter.run_robot__main__.py")
+    log_args_and_python(log, sys.argv)
 
     from robotframework_ls.options import DEFAULT_TIMEOUT
 
@@ -213,9 +218,7 @@ def main():
     finally:
         processor.terminate()
         if processor.terminated.wait(2):
-            get_logger("robotframework_debug_adapter.run_robot__main__.py").debug(
-                "Processed dap terminate event in robot."
-            )
+            log.debug("Processed dap terminate event in robot.")
     sys.exit(exitcode)
 
 

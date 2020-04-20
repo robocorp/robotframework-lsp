@@ -55,16 +55,20 @@ def main():
         from robotframework_debug_adapter.debug_adapter_threads import (
             STOP_WRITER_THREAD,
         )
-        from robotframework_ls.robotframework_log import get_logger, configure_logger
+        from robotframework_ls.robotframework_log import (
+            get_logger,
+            configure_logger,
+            log_args_and_python,
+        )
         import traceback
 
         configure_logger("dap")
         log = get_logger("robotframework_debug_adapter.__main__")
+        log_args_and_python(log, sys.argv)
 
         from robotframework_debug_adapter.debug_adapter_threads import reader_thread
         from robotframework_debug_adapter.debug_adapter_threads import writer_thread
         from robotframework_debug_adapter.command_processor import CommandProcessor
-        from robotframework_debug_adapter.constants import DEBUG
 
         try:
             from queue import Queue
@@ -73,9 +77,6 @@ def main():
 
         write_queue = Queue()
         command_processor = CommandProcessor(write_queue)
-
-        if DEBUG:
-            log.debug("Starting. Args: %s\n" % (", ".join(sys.argv),))
 
         write_to = sys.stdout
         read_from = sys.stdin

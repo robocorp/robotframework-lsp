@@ -310,7 +310,7 @@ class LaunchProcess(object):
         args = request.arguments.kwargs.get("args") or []
         args = [str(arg) for arg in args]
 
-        env = os.environ.copy()
+        env = {}
         request_env = request.arguments.kwargs.get("env")
         if isinstance(request_env, dict) and request_env:
             env.update(request_env)
@@ -318,6 +318,10 @@ class LaunchProcess(object):
         pythonpath = env.get("PYTHONPATH", "")
         pythonpath += os.pathsep + os.path.dirname(os.path.dirname(__file__))
         env["PYTHONPATH"] = pythonpath
+
+        for key, value in os.environ.items():
+            if "ROBOTFRAMEWORK" in key:
+                env[key] = value
 
         env = dict(((as_str(key), as_str(value)) for (key, value) in env.items()))
 
@@ -443,7 +447,8 @@ class LaunchProcess(object):
                     % (self._cmdline,)
                 )
 
-            env = self._env
+            env = os.environ.copy()
+            env.update(self._env)
             self._popen = subprocess.Popen(
                 self._cmdline,
                 stdout=subprocess.PIPE,

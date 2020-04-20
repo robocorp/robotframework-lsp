@@ -57,6 +57,7 @@ def launch(debugger_api, target, debug=True, success=True, terminal="none"):
     from robotframework_debug_adapter.dap.dap_schema import LaunchResponse
     from robotframework_debug_adapter.dap.dap_schema import RunInTerminalRequest
     from robotframework_ls._utils import as_str
+    import os
 
     debugger_api.write(
         LaunchRequest(
@@ -71,7 +72,7 @@ def launch(debugger_api, target, debug=True, success=True, terminal="none"):
 
     if terminal == "external":
         run_in_terminal_request = debugger_api.read(RunInTerminalRequest)
-        env = {}
+        env = os.environ.copy()
         for key, val in run_in_terminal_request.arguments.env.to_dict().items():
             env[as_str(key)] = as_str(val)
         subprocess.Popen(
