@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<keywordspec name="Screenshot" type="library" format="HTML" generated="20200323 13:11:22">
-<version>3.2b3.dev1</version>
+<keywordspec name="Screenshot" type="LIBRARY" format="HTML" scope="SUITE" namedargs="true" generated="2020-04-14T18:21:03Z" specversion="2" source="X:\vscode-robot\robotframework\src\robot\libraries\Screenshot.py" lineno="52">
+<version>3.2rc2.dev1</version>
 <scope>test suite</scope>
 <namedargs>yes</namedargs>
 <doc>&lt;p&gt;Test library for taking screenshots on the machine where tests are run.&lt;/p&gt;
@@ -31,7 +31,7 @@
 &lt;p&gt;It is possible to specify a custom location for screenshots using &lt;code&gt;screenshot_directory&lt;/code&gt; argument when `importing` the library and using `Set Screenshot Directory` keyword during execution. It is also possible to save screenshots using an absolute path.&lt;/p&gt;
 &lt;h2&gt;ScreenCapLibrary&lt;/h2&gt;
 &lt;p&gt;&lt;a href="https://github.com/mihaiparvu/ScreenCapLibrary"&gt;ScreenCapLibrary&lt;/a&gt; is an external Robot Framework library that can be used as an alternative, which additionally provides support for multiple formats, adjusting the quality, using GIFs and video capturing.&lt;/p&gt;</doc>
-<init>
+<init lineno="112">
 <arguments>
 <arg>screenshot_directory=None</arg>
 <arg>screenshot_module=None</arg>
@@ -63,20 +63,16 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Specifying explicit screenshot module is new in Robot Framework 2.9.2.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </init>
-<kw name="Set Screenshot Directory" deprecated="false">
+<kw name="Set Screenshot Directory" lineno="153">
 <arguments>
 <arg>path</arg>
 </arguments>
 <doc>&lt;p&gt;Sets the directory where screenshots are saved.&lt;/p&gt;
 &lt;p&gt;It is possible to use &lt;code&gt;/&lt;/code&gt; as a path separator in all operating systems. Path to the old directory is returned.&lt;/p&gt;
 &lt;p&gt;The directory can also be set in `importing`.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Take Screenshot" deprecated="false">
+<kw name="Take Screenshot" lineno="168">
 <arguments>
 <arg>name=screenshot</arg>
 <arg>width=800px</arg>
@@ -125,16 +121,12 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;The path where the screenshot is saved is returned.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Take Screenshot Without Embedding" deprecated="false">
+<kw name="Take Screenshot Without Embedding" lineno="197">
 <arguments>
 <arg>name=screenshot</arg>
 </arguments>
 <doc>&lt;p&gt;Takes a screenshot and links it from the log file.&lt;/p&gt;
 &lt;p&gt;This keyword is otherwise identical to `Take Screenshot` but the saved screenshot is not embedded into the log file. The screenshot is linked so it is nevertheless easily available.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
 </keywordspec>

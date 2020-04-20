@@ -125,11 +125,11 @@ class _Logger(object):
             self._report("EXCEPTION", True, msg, *args)
 
     def info(self, msg="", *args):
-        if _log_config.log_level > 1:
+        if _log_config.log_level >= 1:
             self._report("INFO", False, msg, *args)
 
     def debug(self, msg="", *args):
-        if _log_config.log_level > 2:
+        if _log_config.log_level >= 2:
             self._report("DEBUG", False, msg, *args)
 
     warn = warning = info

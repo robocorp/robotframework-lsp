@@ -8,7 +8,7 @@ def complete(completion_context):
     from robotframework_ls.lsp import Range
     from robotframework_ls.lsp import Position
     from robotframework_ls.impl import text_utilities
-    from robotframework_ls.impl.string_matcher import StringMatcher
+    from robotframework_ls.impl.string_matcher import RobotStringMatcher
     from robotframework_ls.impl.robot_lsp_constants import (
         OPTION_ROBOT_COMPLETION_SECTION_HEADERS_FORM,
     )
@@ -34,7 +34,7 @@ def complete(completion_context):
                 str,
                 OPTION_ROBOT_COMPLETION_SECTION_HEADERS_FORM_PLURAL,
             )
-            matcher = StringMatcher(tu.text)
+            matcher = RobotStringMatcher(tu.text)
             for word in words:
                 if form == "plural":
                     if not word.endswith("s"):

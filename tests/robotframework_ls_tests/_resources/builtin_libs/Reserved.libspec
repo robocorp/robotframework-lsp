@@ -1,87 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<keywordspec name="Reserved" type="library" format="HTML" generated="20200323 13:11:20">
+<keywordspec name="Reserved" type="LIBRARY" format="HTML" scope="GLOBAL" namedargs="true" generated="2020-04-14T18:21:03Z" specversion="2" source="X:\vscode-robot\robotframework\src\robot\libraries\Reserved.py" lineno="20">
 <version></version>
 <scope>global</scope>
 <namedargs>yes</namedargs>
 <doc>&lt;p&gt;Documentation for library &lt;code&gt;Reserved&lt;/code&gt;.&lt;/p&gt;</doc>
-<kw name="Break" deprecated="false">
+<kw name="Break">
 <arguments>
 <arg>*varargs</arg>
 </arguments>
 <doc></doc>
-<tags>
-</tags>
 </kw>
-<kw name="Continue" deprecated="false">
+<kw name="Continue">
 <arguments>
 <arg>*varargs</arg>
 </arguments>
 <doc></doc>
-<tags>
-</tags>
 </kw>
-<kw name="Elif" deprecated="false">
+<kw name="Elif">
 <arguments>
 <arg>*varargs</arg>
 </arguments>
 <doc></doc>
-<tags>
-</tags>
 </kw>
-<kw name="Else" deprecated="false">
+<kw name="Else">
 <arguments>
 <arg>*varargs</arg>
 </arguments>
 <doc></doc>
-<tags>
-</tags>
 </kw>
-<kw name="Else If" deprecated="false">
+<kw name="Else If">
 <arguments>
 <arg>*varargs</arg>
 </arguments>
 <doc></doc>
-<tags>
-</tags>
 </kw>
-<kw name="End" deprecated="false">
+<kw name="End">
 <arguments>
 <arg>*varargs</arg>
 </arguments>
 <doc></doc>
-<tags>
-</tags>
 </kw>
-<kw name="For" deprecated="false">
+<kw name="For">
 <arguments>
 <arg>*varargs</arg>
 </arguments>
 <doc></doc>
-<tags>
-</tags>
 </kw>
-<kw name="If" deprecated="false">
+<kw name="If">
 <arguments>
 <arg>*varargs</arg>
 </arguments>
 <doc></doc>
-<tags>
-</tags>
 </kw>
-<kw name="Return" deprecated="false">
+<kw name="Return">
 <arguments>
 <arg>*varargs</arg>
 </arguments>
 <doc></doc>
-<tags>
-</tags>
 </kw>
-<kw name="While" deprecated="false">
+<kw name="While">
 <arguments>
 <arg>*varargs</arg>
 </arguments>
 <doc></doc>
-<tags>
-</tags>
 </kw>
 </keywordspec>

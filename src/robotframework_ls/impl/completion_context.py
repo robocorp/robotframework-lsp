@@ -209,7 +209,10 @@ class CompletionContext(object):
         section_name = None
         header = getattr(section, "header", None)
         if header is not None:
-            section_name = header.value
+            try:
+                section_name = header.name
+            except AttributeError:
+                section_name = header.value  # older version of 3.2
 
         return section_name
 

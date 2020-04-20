@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<keywordspec name="DateTime" type="library" format="HTML" generated="20200323 13:11:23">
-<version>3.2b3.dev1</version>
+<keywordspec name="DateTime" type="LIBRARY" format="HTML" scope="GLOBAL" namedargs="true" generated="2020-04-14T18:21:03Z" specversion="2" source="X:\vscode-robot\robotframework\src\robot\libraries\DateTime.py" lineno="1">
+<version>3.2rc2.dev1</version>
 <scope>global</scope>
 <namedargs>yes</namedargs>
 <doc>&lt;p&gt;A test library for handling date and time values.&lt;/p&gt;
@@ -448,7 +448,7 @@ def example_keyword(date, interval):
     interval = Time(interval).convert('number')
     # ...
 &lt;/pre&gt;</doc>
-<kw name="Add Time To Date" deprecated="false">
+<kw name="Add Time To Date" lineno="428">
 <arguments>
 <arg>date</arg>
 <arg>time</arg>
@@ -492,10 +492,8 @@ def example_keyword(date, interval):
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Add Time To Time" deprecated="false">
+<kw name="Add Time To Time" lineno="476">
 <arguments>
 <arg>time1</arg>
 <arg>time2</arg>
@@ -545,10 +543,8 @@ def example_keyword(date, interval):
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Convert Date" deprecated="false">
+<kw name="Convert Date" lineno="359">
 <arguments>
 <arg>date</arg>
 <arg>result_format=timestamp</arg>
@@ -608,10 +604,8 @@ def example_keyword(date, interval):
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Convert Time" deprecated="false">
+<kw name="Convert Time" lineno="382">
 <arguments>
 <arg>time</arg>
 <arg>result_format=number</arg>
@@ -669,10 +663,8 @@ def example_keyword(date, interval):
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Current Date" deprecated="false">
+<kw name="Get Current Date" lineno="317">
 <arguments>
 <arg>time_zone=local</arg>
 <arg>increment=0</arg>
@@ -756,10 +748,8 @@ def example_keyword(date, interval):
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Subtract Date From Date" deprecated="false">
+<kw name="Subtract Date From Date" lineno="402">
 <arguments>
 <arg>date1</arg>
 <arg>date2</arg>
@@ -809,10 +799,8 @@ def example_keyword(date, interval):
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Subtract Time From Date" deprecated="false">
+<kw name="Subtract Time From Date" lineno="452">
 <arguments>
 <arg>date</arg>
 <arg>time</arg>
@@ -856,10 +844,8 @@ def example_keyword(date, interval):
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Subtract Time From Time" deprecated="false">
+<kw name="Subtract Time From Time" lineno="497">
 <arguments>
 <arg>time1</arg>
 <arg>time2</arg>
@@ -905,7 +891,5 @@ def example_keyword(date, interval):
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
 </keywordspec>

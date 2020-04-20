@@ -109,6 +109,43 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return []
         return keyword_completions.complete(completion_context)
 
+    def m_find_definition(self, doc_uri, line, col):
+        from robotframework_ls.impl.find_definition import find_definition
+        import os.path
+        from robotframework_ls.lsp import Location, Range
+        from robotframework_ls import uris
+
+        completion_context = self._create_completion_context(doc_uri, line, col)
+        if completion_context is None:
+            return None
+        definitions = find_definition(completion_context)
+        ret = []
+        for definition in definitions:
+            if definition.source:
+                if not os.path.exists(definition.source):
+                    log.info(
+                        "Found definition: %s (but source does not exist).", definition
+                    )
+                    continue
+                lineno = definition.lineno
+                if lineno is None or lineno < 0:
+                    lineno = 0
+
+                end_lineno = definition.end_lineno
+                if end_lineno is None or end_lineno < 0:
+                    end_lineno = 0
+
+                col_offset = definition.col_offset
+                end_col_offset = definition.end_col_offset
+
+                ret.append(
+                    Location(
+                        uris.from_fs_path(definition.source),
+                        Range((lineno, col_offset), (end_lineno, end_col_offset)),
+                    ).to_dict()
+                )
+        return ret
+
     def m_code_format(self, text_document, options):
         from robotframework_ls.impl.formatting import robot_source_format
         from robotframework_ls.impl.formatting import create_text_edit_from_diff

@@ -69,6 +69,8 @@ class LibraryDoc(object):
         scope="",
         named_args=True,
         doc_format="",
+        source=None,
+        lineno=-1,
     ):
         self.filename = filename
         self.name = name
@@ -78,6 +80,8 @@ class LibraryDoc(object):
         self.scope = scope
         self.named_args = named_args
         self.doc_format = doc_format or "ROBOT"
+        self.source = source
+        self.lineno = lineno
         self.inits = []
         self.keywords = []
 
@@ -114,12 +118,20 @@ class LibraryDoc(object):
 
 
 class KeywordDoc(object):
-    def __init__(self, weak_libdoc, name="", args=(), doc="", tags=()):
+    def __init__(
+        self, weak_libdoc, name="", args=(), doc="", tags=(), source=None, lineno=-1
+    ):
         self._weak_libdoc = weak_libdoc
         self.name = name
         self.args = args
         self.doc = doc
         self.tags = Tags(tags)
+        self.source = source
+        self.lineno = lineno
+
+    @property
+    def deprecated(self):
+        return self.doc.startswith("*DEPRECATED") and "*" in self.doc[1:]
 
     @property
     def libdoc(self):
@@ -139,13 +151,28 @@ class SpecDocBuilder(object):
             type=spec.get("type"),
             version=spec.find("version").text or "",
             doc=spec.find("doc").text or "",
-            scope=spec.find("scope").text or "",
+            scope=self._get_scope(spec),
             named_args=self._get_named_args(spec),
             doc_format=spec.get("format", "ROBOT"),
+            source=spec.get("source"),
+            lineno=int(spec.get("lineno", -1)),
         )
         libdoc.inits = self._create_keywords(weakref.ref(libdoc), spec, "init")
         libdoc.keywords = self._create_keywords(weakref.ref(libdoc), spec, "kw")
         return libdoc
+
+    def _get_scope(self, spec):
+        # RF >= 3.2 has "scope" attribute w/ value 'GLOBAL', 'SUITE, or 'TEST'.
+        if "scope" in spec.attrib:
+            return spec.get("scope")
+        # RF < 3.2 has "scope" element. Need to map old values to new.
+        scope = spec.find("scope").text
+        return {
+            "": "GLOBAL",  # Was used with resource files.
+            "global": "GLOBAL",
+            "test suite": "SUITE",
+            "test case": "TEST",
+        }[scope]
 
     def _parse_spec(self, path):
         if not os.path.isfile(path):
@@ -169,6 +196,8 @@ class SpecDocBuilder(object):
                 args=[a.text for a in elem.findall("arguments/arg")],
                 doc=elem.find("doc").text or "",
                 tags=[t.text for t in elem.findall("tags/tag")],
+                source=elem.get("source"),
+                lineno=int(elem.get("lineno", -1)),
             )
             for elem in spec.findall(path)
         ]

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<keywordspec name="Process" type="library" format="HTML" generated="20200323 13:11:22">
-<version>3.2b3.dev1</version>
+<keywordspec name="Process" type="LIBRARY" format="HTML" scope="GLOBAL" namedargs="true" generated="2020-04-14T18:21:03Z" specversion="2" source="X:\vscode-robot\robotframework\src\robot\libraries\Process.py" lineno="30">
+<version>3.2rc2.dev1</version>
 <scope>global</scope>
 <namedargs>yes</namedargs>
 <doc>&lt;p&gt;Robot Framework test library for running processes.&lt;/p&gt;
@@ -352,26 +352,22 @@ Example
     ${result} =    `Wait For Process`    First
     `Should Be Equal As Integers`    ${result.rc}    0
 &lt;/pre&gt;</doc>
-<kw name="Get Process Id" deprecated="false">
+<kw name="Get Process Id" lineno="626">
 <arguments>
 <arg>handle=None</arg>
 </arguments>
 <doc>&lt;p&gt;Returns the process ID (pid) of the process as an integer.&lt;/p&gt;
 &lt;p&gt;If &lt;code&gt;handle&lt;/code&gt; is not given, uses the current `active process`.&lt;/p&gt;
 &lt;p&gt;Notice that the pid is not the same as the handle returned by `Start Process` that is used internally by this library.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Process Object" deprecated="false">
+<kw name="Get Process Object" lineno="636">
 <arguments>
 <arg>handle=None</arg>
 </arguments>
 <doc>&lt;p&gt;Return the underlying &lt;code&gt;subprocess.Popen&lt;/code&gt; object.&lt;/p&gt;
 &lt;p&gt;If &lt;code&gt;handle&lt;/code&gt; is not given, uses the current `active process`.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Process Result" deprecated="false">
+<kw name="Get Process Result" lineno="643">
 <arguments>
 <arg>handle=None</arg>
 <arg>rc=False</arg>
@@ -491,20 +487,16 @@ Example
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Although getting results of a previously executed process can be handy in general, the main use case for this keyword is returning results over the remote library interface. The remote interface does not support returning the whole result object, but individual attributes can be returned without problems.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Is Process Running" deprecated="false">
+<kw name="Is Process Running" lineno="371">
 <arguments>
 <arg>handle=None</arg>
 </arguments>
 <doc>&lt;p&gt;Checks is the process running or not.&lt;/p&gt;
 &lt;p&gt;If &lt;code&gt;handle&lt;/code&gt; is not given, uses the current `active process`.&lt;/p&gt;
 &lt;p&gt;Returns &lt;code&gt;True&lt;/code&gt; if the process is still running and &lt;code&gt;False&lt;/code&gt; otherwise.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Join Command Line" deprecated="false">
+<kw name="Join Command Line" lineno="741">
 <arguments>
 <arg>*args</arg>
 </arguments>
@@ -527,10 +519,8 @@ Example
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;New in Robot Framework 2.9.2.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Process Should Be Running" deprecated="false">
+<kw name="Process Should Be Running" lineno="380">
 <arguments>
 <arg>handle=None</arg>
 <arg>error_message=Process is not running.</arg>
@@ -538,10 +528,8 @@ Example
 <doc>&lt;p&gt;Verifies that the process is running.&lt;/p&gt;
 &lt;p&gt;If &lt;code&gt;handle&lt;/code&gt; is not given, uses the current `active process`.&lt;/p&gt;
 &lt;p&gt;Fails if the process has stopped.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Process Should Be Stopped" deprecated="false">
+<kw name="Process Should Be Stopped" lineno="391">
 <arguments>
 <arg>handle=None</arg>
 <arg>error_message=Process is running.</arg>
@@ -549,10 +537,8 @@ Example
 <doc>&lt;p&gt;Verifies that the process is not running.&lt;/p&gt;
 &lt;p&gt;If &lt;code&gt;handle&lt;/code&gt; is not given, uses the current `active process`.&lt;/p&gt;
 &lt;p&gt;Fails if the process is still running.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Run Process" deprecated="false">
+<kw name="Run Process" lineno="305">
 <arguments>
 <arg>command</arg>
 <arg>*arguments</arg>
@@ -602,10 +588,8 @@ Example
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;This keyword does not change the `active process`.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Send Signal To Process" deprecated="false">
+<kw name="Send Signal To Process" lineno="572">
 <arguments>
 <arg>signal</arg>
 <arg>handle=None</arg>
@@ -637,10 +621,8 @@ Example
 &lt;p&gt;This keyword is only supported on Unix-like machines, not on Windows. What signals are supported depends on the system. For a list of existing signals on your system, see the Unix man pages related to signal handling (typically &lt;code&gt;man signal&lt;/code&gt; or &lt;code&gt;man 7 signal&lt;/code&gt;).&lt;/p&gt;
 &lt;p&gt;By default sends the signal only to the parent process, not to possible child processes started by it. Notice that when `running processes in shell`, the shell is the parent process and it depends on the system does the shell propagate the signal to the actual started process.&lt;/p&gt;
 &lt;p&gt;To send the signal to the whole process group, &lt;code&gt;group&lt;/code&gt; argument can be set to any true value (see `Boolean arguments`). This is not supported by Jython, however.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Split Command Line" deprecated="false">
+<kw name="Split Command Line" lineno="724">
 <arguments>
 <arg>args</arg>
 <arg>escaping=False</arg>
@@ -661,10 +643,8 @@ Example
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;New in Robot Framework 2.9.2.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Start Process" deprecated="false">
+<kw name="Start Process" lineno="344">
 <arguments>
 <arg>command</arg>
 <arg>*arguments</arg>
@@ -674,10 +654,8 @@ Example
 &lt;p&gt;See `Specifying command and arguments` and `Process configuration` for more information about the arguments, and `Run Process` keyword for related examples.&lt;/p&gt;
 &lt;p&gt;Makes the started process new `active process`. Returns an identifier that can be used as a handle to activate the started process if needed.&lt;/p&gt;
 &lt;p&gt;Processes are started so that they create a new process group. This allows sending signals to and terminating also possible child processes. This is not supported on Jython.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Switch Process" deprecated="false">
+<kw name="Switch Process" lineno="702">
 <arguments>
 <arg>handle</arg>
 </arguments>
@@ -711,20 +689,16 @@ Example
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Terminate All Processes" deprecated="false">
+<kw name="Terminate All Processes" lineno="557">
 <arguments>
 <arg>kill=False</arg>
 </arguments>
 <doc>&lt;p&gt;Terminates all still running processes started by this library.&lt;/p&gt;
 &lt;p&gt;This keyword can be used in suite teardown or elsewhere to make sure that all processes are stopped,&lt;/p&gt;
 &lt;p&gt;By default tries to terminate processes gracefully, but can be configured to forcefully kill them immediately. See `Terminate Process` that this keyword uses internally for more details.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Terminate Process" deprecated="false">
+<kw name="Terminate Process" lineno="482">
 <arguments>
 <arg>handle=None</arg>
 <arg>kill=False</arg>
@@ -762,10 +736,8 @@ Example
 &lt;li&gt;Stopping the whole process group is not supported when using Jython.&lt;/li&gt;
 &lt;li&gt;On Windows forceful kill only stops the main process, not possible child processes.&lt;/li&gt;
 &lt;/ul&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Wait For Process" deprecated="false">
+<kw name="Wait For Process" lineno="402">
 <arguments>
 <arg>handle=None</arg>
 <arg>timeout=None</arg>
@@ -871,7 +843,5 @@ Example
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Ignoring timeout if it is string &lt;code&gt;NONE&lt;/code&gt;, zero, or negative is new in Robot Framework 3.2.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
 </keywordspec>

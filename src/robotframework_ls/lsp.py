@@ -279,6 +279,44 @@ class TextDocumentContentChangeEvent(_Base):
         self.text = text
 
 
+class LocationLink(_Base):
+    def __init__(
+        self, original_selection_range, target_uri, target_range, target_selection_range
+    ):
+        """
+        :param original_selection_range:
+            Span of the origin of this link.
+            Used as the underlined span for mouse interaction. Defaults to the word range at
+            the mouse position.
+            
+        :param target_uri:
+            The target resource identifier of this link.
+            
+        :param target_range:
+            The full target range of this link. If the target for example is a symbol then target range is the
+            range enclosing this symbol not including leading/trailing whitespace but everything else
+            like comments. This information is typically used to highlight the range in the editor.
+            
+        :param target_selection_range:
+            The range that should be selected and revealed when this link is being followed, e.g the name of a function.
+            Must be contained by the the `targetRange`. See also `DocumentSymbol#range`
+        """
+        self.originalSelectionRange = original_selection_range
+        self.targetUri = target_uri
+        self.targetRange = target_range
+        self.targetSelectionRange = target_selection_range
+
+
+class Location(_Base):
+    def __init__(self, uri, range):
+        """
+        :param str uri:
+        :param Range range:
+        """
+        self.uri = uri
+        self.range = range
+
+
 class LSPMessages(object):
     M_PUBLISH_DIAGNOSTICS = "textDocument/publishDiagnostics"
     M_APPLY_EDIT = "workspace/applyEdit"

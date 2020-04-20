@@ -13,7 +13,7 @@ def complete(completion_context):
 
     section_name = completion_context.get_current_section_name()
     if section_name:
-        from robotframework_ls.impl.string_matcher import StringMatcher
+        from robotframework_ls.impl.string_matcher import RobotStringMatcher
 
         section = completion_context.get_section(section_name)
         if section is not None:
@@ -33,11 +33,11 @@ def complete(completion_context):
                 else:
                     return []
 
-                matcher = StringMatcher(line_to_col)
+                matcher = RobotStringMatcher(line_to_col)
 
             else:
                 # i.e.: Needs to be the first char
-                matcher = StringMatcher(line_to_col)
+                matcher = RobotStringMatcher(line_to_col)
                 replace_from_col = 0
 
             ret = []

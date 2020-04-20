@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<keywordspec name="Collections" type="library" format="HTML" generated="20200323 13:11:21">
-<version>3.2b3.dev1</version>
+<keywordspec name="Collections" type="LIBRARY" format="HTML" scope="GLOBAL" namedargs="true" generated="2020-04-14T18:21:03Z" specversion="2" source="X:\vscode-robot\robotframework\src\robot\libraries\Collections.py" lineno="830">
+<version>3.2rc2.dev1</version>
 <scope>global</scope>
 <namedargs>yes</namedargs>
 <doc>&lt;p&gt;A test library providing keywords for handling lists and dictionaries.&lt;/p&gt;
@@ -161,7 +161,7 @@
 &lt;h2&gt;Data in examples&lt;/h2&gt;
 &lt;p&gt;List related keywords use variables in format &lt;code&gt;${Lx}&lt;/code&gt; in their examples. They mean lists with as many alphabetic characters as specified by &lt;code&gt;x&lt;/code&gt;. For example, &lt;code&gt;${L1}&lt;/code&gt; means &lt;code&gt;['a']&lt;/code&gt; and &lt;code&gt;${L3}&lt;/code&gt; means &lt;code&gt;['a', 'b', 'c']&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Dictionary keywords use similar &lt;code&gt;${Dx}&lt;/code&gt; variables. For example, &lt;code&gt;${D1}&lt;/code&gt; means &lt;code&gt;{'a': 1}&lt;/code&gt; and &lt;code&gt;${D3}&lt;/code&gt; means &lt;code&gt;{'a': 1, 'b': 2, 'c': 3}&lt;/code&gt;.&lt;/p&gt;</doc>
-<kw name="Append To List" deprecated="false">
+<kw name="Append To List" lineno="41">
 <arguments>
 <arg>list_</arg>
 <arg>*values</arg>
@@ -189,10 +189,8 @@
 ${L1} = ['a', 'xxx']
 ${L2} = ['a', 'b', 'x', 'y', 'z']
 &lt;/pre&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Combine Lists" deprecated="false">
+<kw name="Combine Lists" lineno="79">
 <arguments>
 <arg>*lists</arg>
 </arguments>
@@ -221,10 +219,8 @@ ${x} = ['a', 'a', 'b']
 ${y} = ['a', 'a', 'b', 'a']
 ${L1} and ${L2} are not changed.
 &lt;/pre&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Convert To Dictionary" deprecated="false">
+<kw name="Convert To Dictionary" lineno="480">
 <arguments>
 <arg>item</arg>
 </arguments>
@@ -232,19 +228,15 @@ ${L1} and ${L2} are not changed.
 &lt;p&gt;Mainly useful for converting other mappings to normal dictionaries. This includes converting Robot Framework's own &lt;code&gt;DotDict&lt;/code&gt; instances that it uses if variables are created using the &lt;code&gt;&amp;amp;{var}&lt;/code&gt; syntax.&lt;/p&gt;
 &lt;p&gt;Use `Create Dictionary` from the BuiltIn library for constructing new dictionaries.&lt;/p&gt;
 &lt;p&gt;New in Robot Framework 2.9.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Convert To List" deprecated="false">
+<kw name="Convert To List" lineno="33">
 <arguments>
 <arg>item</arg>
 </arguments>
 <doc>&lt;p&gt;Converts the given &lt;code&gt;item&lt;/code&gt; to a Python &lt;code&gt;list&lt;/code&gt; type.&lt;/p&gt;
 &lt;p&gt;Mainly useful for converting tuples and other iterable to lists. Use `Create List` from the BuiltIn library for constructing new lists.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Copy Dictionary" deprecated="false">
+<kw name="Copy Dictionary" lineno="575">
 <arguments>
 <arg>dictionary</arg>
 <arg>deepcopy=False</arg>
@@ -252,10 +244,8 @@ ${L1} and ${L2} are not changed.
 <doc>&lt;p&gt;Returns a copy of the given dictionary.&lt;/p&gt;
 &lt;p&gt;The &lt;code&gt;deepcopy&lt;/code&gt; argument controls should the returned dictionary be a &lt;a href="https://docs.python.org/library/copy.html"&gt;shallow or deep copy&lt;/a&gt;. By default returns a shallow copy, but that can be changed by giving &lt;code&gt;deepcopy&lt;/code&gt; a true value (see `Boolean arguments`). This is a new option in Robot Framework 3.1.2. Earlier versions always returned shallow copies.&lt;/p&gt;
 &lt;p&gt;The given dictionary is never altered by this keyword.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Copy List" deprecated="false">
+<kw name="Copy List" lineno="266">
 <arguments>
 <arg>list_</arg>
 <arg>deepcopy=False</arg>
@@ -263,10 +253,8 @@ ${L1} and ${L2} are not changed.
 <doc>&lt;p&gt;Returns a copy of the given list.&lt;/p&gt;
 &lt;p&gt;If the optional &lt;code&gt;deepcopy&lt;/code&gt; is given a true value, the returned list is a deep copy. New option in Robot Framework 3.1.2.&lt;/p&gt;
 &lt;p&gt;The given list is never altered by this keyword.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Count Values In List" deprecated="false">
+<kw name="Count Values In List" lineno="227">
 <arguments>
 <arg>list_</arg>
 <arg>value</arg>
@@ -289,10 +277,8 @@ ${L1} and ${L2} are not changed.
 ${x} = 1
 ${L3} is not changed
 &lt;/pre&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Dictionaries Should Be Equal" deprecated="false">
+<kw name="Dictionaries Should Be Equal" lineno="744">
 <arguments>
 <arg>dict1</arg>
 <arg>dict2</arg>
@@ -302,10 +288,8 @@ ${L3} is not changed
 <doc>&lt;p&gt;Fails if the given dictionaries are not equal.&lt;/p&gt;
 &lt;p&gt;First the equality of dictionaries' keys is checked and after that all the key value pairs. If there are differences between the values, those are listed in the error message. The types of the dictionaries do not need to be same.&lt;/p&gt;
 &lt;p&gt;See `Lists Should Be Equal` for more information about configuring the error message with &lt;code&gt;msg&lt;/code&gt; and &lt;code&gt;values&lt;/code&gt; arguments.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Dictionary Should Contain Item" deprecated="false">
+<kw name="Dictionary Should Contain Item" lineno="713">
 <arguments>
 <arg>dictionary</arg>
 <arg>key</arg>
@@ -315,10 +299,8 @@ ${L3} is not changed
 <doc>&lt;p&gt;An item of &lt;code&gt;key&lt;/code&gt; / &lt;code&gt;value&lt;/code&gt; must be found in a &lt;code&gt;dictionary&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Value is converted to unicode for comparison.&lt;/p&gt;
 &lt;p&gt;Use the &lt;code&gt;msg&lt;/code&gt; argument to override the default error message.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Dictionary Should Contain Key" deprecated="false">
+<kw name="Dictionary Should Contain Key" lineno="695">
 <arguments>
 <arg>dictionary</arg>
 <arg>key</arg>
@@ -326,10 +308,8 @@ ${L3} is not changed
 </arguments>
 <doc>&lt;p&gt;Fails if &lt;code&gt;key&lt;/code&gt; is not found from &lt;code&gt;dictionary&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Use the &lt;code&gt;msg&lt;/code&gt; argument to override the default error message.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Dictionary Should Contain Sub Dictionary" deprecated="false">
+<kw name="Dictionary Should Contain Sub Dictionary" lineno="760">
 <arguments>
 <arg>dict1</arg>
 <arg>dict2</arg>
@@ -338,10 +318,8 @@ ${L3} is not changed
 </arguments>
 <doc>&lt;p&gt;Fails unless all items in &lt;code&gt;dict2&lt;/code&gt; are found from &lt;code&gt;dict1&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;See `Lists Should Be Equal` for more information about configuring the error message with &lt;code&gt;msg&lt;/code&gt; and &lt;code&gt;values&lt;/code&gt; arguments.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Dictionary Should Contain Value" deprecated="false">
+<kw name="Dictionary Should Contain Value" lineno="726">
 <arguments>
 <arg>dictionary</arg>
 <arg>value</arg>
@@ -349,10 +327,8 @@ ${L3} is not changed
 </arguments>
 <doc>&lt;p&gt;Fails if &lt;code&gt;value&lt;/code&gt; is not found from &lt;code&gt;dictionary&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Use the &lt;code&gt;msg&lt;/code&gt; argument to override the default error message.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Dictionary Should Not Contain Key" deprecated="false">
+<kw name="Dictionary Should Not Contain Key" lineno="704">
 <arguments>
 <arg>dictionary</arg>
 <arg>key</arg>
@@ -360,10 +336,8 @@ ${L3} is not changed
 </arguments>
 <doc>&lt;p&gt;Fails if &lt;code&gt;key&lt;/code&gt; is found from &lt;code&gt;dictionary&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Use the &lt;code&gt;msg&lt;/code&gt; argument to override the default error message.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Dictionary Should Not Contain Value" deprecated="false">
+<kw name="Dictionary Should Not Contain Value" lineno="735">
 <arguments>
 <arg>dictionary</arg>
 <arg>value</arg>
@@ -371,10 +345,8 @@ ${L3} is not changed
 </arguments>
 <doc>&lt;p&gt;Fails if &lt;code&gt;value&lt;/code&gt; is found from &lt;code&gt;dictionary&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Use the &lt;code&gt;msg&lt;/code&gt; argument to override the default error message.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Dictionary Items" deprecated="false">
+<kw name="Get Dictionary Items" lineno="647">
 <arguments>
 <arg>dictionary</arg>
 <arg>sort_keys=True</arg>
@@ -404,10 +376,8 @@ ${sorted} = ['a', 1, 'b', 2, 'c', 3]
 ${unsorted} = ['b', 2, 'a', 1, 'c', 3]    # Order depends on Python version.
 &lt;/pre&gt;
 &lt;p&gt;&lt;code&gt;sort_keys&lt;/code&gt; is a new option in Robot Framework 3.1.2. Earlier items were always sorted based on keys.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Dictionary Keys" deprecated="false">
+<kw name="Get Dictionary Keys" lineno="592">
 <arguments>
 <arg>dictionary</arg>
 <arg>sort_keys=True</arg>
@@ -436,10 +406,8 @@ ${sorted} = ['a', 'b', 'c']
 ${unsorted} = ['b', 'a', 'c']   # Order depends on Python version.
 &lt;/pre&gt;
 &lt;p&gt;&lt;code&gt;sort_keys&lt;/code&gt; is a new option in Robot Framework 3.1.2. Earlier keys were always sorted.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Dictionary Values" deprecated="false">
+<kw name="Get Dictionary Values" lineno="622">
 <arguments>
 <arg>dictionary</arg>
 <arg>sort_keys=True</arg>
@@ -468,10 +436,8 @@ ${sorted} = [1, 2, 3]
 ${unsorted} = [2, 1, 3]    # Order depends on Python version.
 &lt;/pre&gt;
 &lt;p&gt;&lt;code&gt;sort_keys&lt;/code&gt; is a new option in Robot Framework 3.1.2. Earlier values were always sorted based on keys.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get From Dictionary" deprecated="false">
+<kw name="Get From Dictionary" lineno="676">
 <arguments>
 <arg>dictionary</arg>
 <arg>key</arg>
@@ -492,10 +458,8 @@ ${unsorted} = [2, 1, 3]    # Order depends on Python version.
 &lt;pre&gt;
 ${value} = 2
 &lt;/pre&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get From List" deprecated="false">
+<kw name="Get From List" lineno="172">
 <arguments>
 <arg>list_</arg>
 <arg>index</arg>
@@ -526,10 +490,8 @@ ${x} = 'a'
 ${y} = 'd'
 ${L5} is not changed
 &lt;/pre&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Index From List" deprecated="false">
+<kw name="Get Index From List" lineno="243">
 <arguments>
 <arg>list_</arg>
 <arg>value</arg>
@@ -552,10 +514,8 @@ ${L5} is not changed
 ${x} = 3
 ${L5} is not changed
 &lt;/pre&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Match Count" deprecated="false">
+<kw name="Get Match Count" lineno="989">
 <arguments>
 <arg>list</arg>
 <arg>pattern</arg>
@@ -591,10 +551,8 @@ ${L5} is not changed
 &lt;td&gt;# ${matches} will be the count of strings beginning with 'a' or 'A'&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Matches" deprecated="false">
+<kw name="Get Matches" lineno="973">
 <arguments>
 <arg>list</arg>
 <arg>pattern</arg>
@@ -630,10 +588,8 @@ ${L5} is not changed
 &lt;td&gt;# ${matches} will contain any string beginning with 'a' or 'A'&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Slice From List" deprecated="false">
+<kw name="Get Slice From List" lineno="197">
 <arguments>
 <arg>list_</arg>
 <arg>start=0</arg>
@@ -677,10 +633,8 @@ ${y} = ['b', 'c', 'd', 'e']
 ${z} = ['a', 'b', 'c']
 ${L5} is not changed
 &lt;/pre&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Insert Into List" deprecated="false">
+<kw name="Insert Into List" lineno="55">
 <arguments>
 <arg>list_</arg>
 <arg>index</arg>
@@ -709,10 +663,8 @@ ${L5} is not changed
 ${L1} = ['xxx', 'a']
 ${L2} = ['a', 'xxx', 'b']
 &lt;/pre&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Keep In Dictionary" deprecated="false">
+<kw name="Keep In Dictionary" lineno="560">
 <arguments>
 <arg>dictionary</arg>
 <arg>*keys</arg>
@@ -733,10 +685,8 @@ ${L2} = ['a', 'xxx', 'b']
 &lt;pre&gt;
 ${D5} = {'b': 2, 'd': 4}
 &lt;/pre&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="List Should Contain Sub List" deprecated="false">
+<kw name="List Should Contain Sub List" lineno="421">
 <arguments>
 <arg>list1</arg>
 <arg>list2</arg>
@@ -746,10 +696,8 @@ ${D5} = {'b': 2, 'd': 4}
 <doc>&lt;p&gt;Fails if not all of the elements in &lt;code&gt;list2&lt;/code&gt; are found in &lt;code&gt;list1&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;The order of values and the number of values are not taken into account.&lt;/p&gt;
 &lt;p&gt;See `Lists Should Be Equal` for more information about configuring the error message with &lt;code&gt;msg&lt;/code&gt; and &lt;code&gt;values&lt;/code&gt; arguments.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="List Should Contain Value" deprecated="false">
+<kw name="List Should Contain Value" lineno="305">
 <arguments>
 <arg>list_</arg>
 <arg>value</arg>
@@ -757,10 +705,8 @@ ${D5} = {'b': 2, 'd': 4}
 </arguments>
 <doc>&lt;p&gt;Fails if the &lt;code&gt;value&lt;/code&gt; is not found from &lt;code&gt;list&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Use the &lt;code&gt;msg&lt;/code&gt; argument to override the default error message.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="List Should Not Contain Duplicates" deprecated="false">
+<kw name="List Should Not Contain Duplicates" lineno="323">
 <arguments>
 <arg>list_</arg>
 <arg>msg=None</arg>
@@ -768,10 +714,8 @@ ${D5} = {'b': 2, 'd': 4}
 <doc>&lt;p&gt;Fails if any element in the &lt;code&gt;list&lt;/code&gt; is found from it more than once.&lt;/p&gt;
 &lt;p&gt;The default error message lists all the elements that were found from the &lt;code&gt;list&lt;/code&gt; multiple times, but it can be overridden by giving a custom &lt;code&gt;msg&lt;/code&gt;. All multiple times found items and their counts are also logged.&lt;/p&gt;
 &lt;p&gt;This keyword works with all iterables that can be converted to a list. The original iterable is never altered.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="List Should Not Contain Value" deprecated="false">
+<kw name="List Should Not Contain Value" lineno="314">
 <arguments>
 <arg>list_</arg>
 <arg>value</arg>
@@ -779,10 +723,8 @@ ${D5} = {'b': 2, 'd': 4}
 </arguments>
 <doc>&lt;p&gt;Fails if the &lt;code&gt;value&lt;/code&gt; is found from &lt;code&gt;list&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Use the &lt;code&gt;msg&lt;/code&gt; argument to override the default error message.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Lists Should Be Equal" deprecated="false">
+<kw name="Lists Should Be Equal" lineno="348">
 <arguments>
 <arg>list1</arg>
 <arg>list2</arg>
@@ -857,10 +799,8 @@ ${D5} = {'b': 2, 'd': 4}
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Log Dictionary" deprecated="false">
+<kw name="Log Dictionary" lineno="776">
 <arguments>
 <arg>dictionary</arg>
 <arg>level=INFO</arg>
@@ -868,10 +808,8 @@ ${D5} = {'b': 2, 'd': 4}
 <doc>&lt;p&gt;Logs the size and contents of the &lt;code&gt;dictionary&lt;/code&gt; using given &lt;code&gt;level&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Valid levels are TRACE, DEBUG, INFO (default), and WARN.&lt;/p&gt;
 &lt;p&gt;If you only want to log the size, use keyword `Get Length` from the BuiltIn library.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Log List" deprecated="false">
+<kw name="Log List" lineno="435">
 <arguments>
 <arg>list_</arg>
 <arg>level=INFO</arg>
@@ -879,10 +817,8 @@ ${D5} = {'b': 2, 'd': 4}
 <doc>&lt;p&gt;Logs the length and contents of the &lt;code&gt;list&lt;/code&gt; using given &lt;code&gt;level&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Valid levels are TRACE, DEBUG, INFO (default), and WARN.&lt;/p&gt;
 &lt;p&gt;If you only want to the length, use keyword `Get Length` from the BuiltIn library.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Pop From Dictionary" deprecated="false">
+<kw name="Pop From Dictionary" lineno="539">
 <arguments>
 <arg>dictionary</arg>
 <arg>key</arg>
@@ -905,19 +841,15 @@ ${val} = 2
 ${D3} = {'a': 1, 'c': 3}
 &lt;/pre&gt;
 &lt;p&gt;New in Robot Framework 2.9.2.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Remove Duplicates" deprecated="false">
+<kw name="Remove Duplicates" lineno="155">
 <arguments>
 <arg>list_</arg>
 </arguments>
 <doc>&lt;p&gt;Returns a list without duplicates based on the given &lt;code&gt;list&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Creates and returns a new list that contains all items in the given list so that one item can appear only once. Order of the items in the new list is the same as in the original except for missing duplicates. Number of the removed duplicates is logged.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Remove From Dictionary" deprecated="false">
+<kw name="Remove From Dictionary" lineno="520">
 <arguments>
 <arg>dictionary</arg>
 <arg>*keys</arg>
@@ -938,10 +870,8 @@ ${D3} = {'a': 1, 'c': 3}
 &lt;pre&gt;
 ${D3} = {'a': 1, 'c': 3}
 &lt;/pre&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Remove From List" deprecated="false">
+<kw name="Remove From List" lineno="134">
 <arguments>
 <arg>list_</arg>
 <arg>index</arg>
@@ -962,10 +892,8 @@ ${D3} = {'a': 1, 'c': 3}
 ${x} = 'a'
 ${L2} = ['b']
 &lt;/pre&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Remove Values From List" deprecated="false">
+<kw name="Remove Values From List" lineno="119">
 <arguments>
 <arg>list_</arg>
 <arg>*values</arg>
@@ -987,10 +915,8 @@ ${L2} = ['b']
 &lt;pre&gt;
 ${L4} = ['b', 'd']
 &lt;/pre&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Reverse List" deprecated="false">
+<kw name="Reverse List" lineno="279">
 <arguments>
 <arg>list_</arg>
 </arguments>
@@ -1006,10 +932,8 @@ ${L4} = ['b', 'd']
 &lt;pre&gt;
 ${L3} = ['c', 'b', 'a']
 &lt;/pre&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Set List Value" deprecated="false">
+<kw name="Set List Value" lineno="98">
 <arguments>
 <arg>list_</arg>
 <arg>index</arg>
@@ -1036,10 +960,8 @@ ${L3} = ['c', 'b', 'a']
 &lt;pre&gt;
 ${L3} = ['a', 'xxx', 'yyy']
 &lt;/pre&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Set To Dictionary" deprecated="false">
+<kw name="Set To Dictionary" lineno="494">
 <arguments>
 <arg>dictionary</arg>
 <arg>*key_value_pairs</arg>
@@ -1071,10 +993,8 @@ ${D1} = {'a': 1, 'key': 'value', 'second': 2}
 &lt;/table&gt;
 &lt;p&gt;The latter syntax is typically more convenient to use, but it has a limitation that keys must be strings.&lt;/p&gt;
 &lt;p&gt;If given keys already exist in the dictionary, their values are updated.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Should Contain Match" deprecated="false">
+<kw name="Should Contain Match" lineno="913">
 <arguments>
 <arg>list</arg>
 <arg>pattern</arg>
@@ -1141,10 +1061,8 @@ ${D1} = {'a': 1, 'key': 'value', 'second': 2}
 &lt;td&gt;# Same as the above but also ignore case.&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Should Not Contain Match" deprecated="false">
+<kw name="Should Not Contain Match" lineno="958">
 <arguments>
 <arg>list</arg>
 <arg>pattern</arg>
@@ -1154,17 +1072,13 @@ ${D1} = {'a': 1, 'key': 'value', 'second': 2}
 </arguments>
 <doc>&lt;p&gt;Fails if &lt;code&gt;pattern&lt;/code&gt; is found in &lt;code&gt;list&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Exact opposite of `Should Contain Match` keyword. See that keyword for information about arguments and usage in general.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Sort List" deprecated="false">
+<kw name="Sort List" lineno="292">
 <arguments>
 <arg>list_</arg>
 </arguments>
 <doc>&lt;p&gt;Sorts the given list in place.&lt;/p&gt;
 &lt;p&gt;Sorting fails if items in the list are not comparable with each others. On Python 2 most objects are comparable, but on Python 3 comparing, for example, strings with numbers is not possible.&lt;/p&gt;
 &lt;p&gt;Note that the given list is changed and nothing is returned. Use `Copy List` first, if you need to keep also the original order.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
 </keywordspec>

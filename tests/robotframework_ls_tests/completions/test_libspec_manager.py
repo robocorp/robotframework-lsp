@@ -1,3 +1,17 @@
+def test_libspec_info(libspec_manager, tmpdir):
+    from robotframework_ls.impl.robot_specbuilder import LibraryDoc
+    from robotframework_ls.impl.robot_specbuilder import KeywordDoc
+
+    assert "BuiltIn" in libspec_manager.get_library_names()
+    lib_info = libspec_manager.get_library_info("BuiltIn", create=False)
+    assert isinstance(lib_info, LibraryDoc)
+    assert lib_info.source is not None
+    assert lib_info.source.endswith("BuiltIn.py")
+    for keyword in lib_info.keywords:
+        assert isinstance(keyword, KeywordDoc)
+        assert keyword.lineno > 0
+
+
 def test_libspec_manager_caches(libspec_manager, tmpdir):
     from robotframework_ls import uris
     from os.path import os
