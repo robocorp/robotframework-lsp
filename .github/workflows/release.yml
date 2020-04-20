@@ -33,14 +33,17 @@ jobs:
       run: |
         cp ../README.md ./README.md
         python setup.py sdist bdist_wheel --universal
-    - name: Check tag version
-      run: python -m dev check-tag-version
     - run: npm install -g vsce
     - run: vsce package -o robotframework-lsp.vsix
     - uses: actions/upload-artifact@v1
       with:
         name: robotframework-lsp.vsix
         path: robotframework-lsp.vsix
+    - name: Check tag version
+      run: python -m dev check-tag-version
+    - name: Upload to PyPI
+      working-directory: ./src
+      run: twine upload dist/*
     - name: Publish to vscode marketplace 
       run: vsce publish -p $VSCE_TOKEN
       env:

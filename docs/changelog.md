@@ -1,4 +1,11 @@
 
+New in 0.0.9 (2020-04-20)
+-----------------------------
+
+- Go to definition implemented for keywords.
+- Only environment variables set by the user when launching are passed when launching in integrated terminal.
+- `~` is properly expanded when it's specified in the logging file.
+
 New in 0.0.8 (2020-04-14)
 -----------------------------
 

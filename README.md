@@ -30,11 +30,12 @@ may be needed.
 See: [Config](docs/config.md) for details.
   
 
-Features (0.0.8)
+Features (0.0.9)
 -----------------
 
-- Launch .robot files (new in 0.0.8)
+- Launch .robot files
 - Code completion for keywords, section headers and section settings
+- Go to definition for keywords (new in 0.0.9)
 - Syntax highlighting
 - Syntax validation
 - Code Formatting
