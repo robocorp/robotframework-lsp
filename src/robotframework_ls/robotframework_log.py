@@ -181,6 +181,7 @@ def configure_logger(postfix, log_level=None, log_file=None):
 
     if log_file:
         try:
+            log_file = os.path.expanduser(log_file)
             log_file = os.path.realpath(os.path.abspath(log_file))
             dirname = os.path.dirname(log_file)
             basename = os.path.basename(log_file)
