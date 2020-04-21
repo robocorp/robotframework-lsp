@@ -1,5 +1,6 @@
 {
     "name": "robotframework-lsp",
+    "displayName": "Robot Framework Language Server",
     "description": "VSCode extension support for Robot Framework",
     "author": "Fabio Zadrozny",
     "homepage": "https://github.com/robocorp/robotframework-lsp/blob/master/README.md",
