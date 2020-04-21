@@ -103,6 +103,7 @@ class CommandProcessor(object):
 
         # : :type launch_response: LaunchResponse
         launch_response = build_response(request)
+        launch_process = None
         try:
 
             self._launched_process = launch_process = LaunchProcess(
@@ -118,6 +119,8 @@ class CommandProcessor(object):
             launch_response.message = str(e)
 
         self.write_message(launch_response)  # acknowledge it
+        if launch_process is not None:
+            launch_process.after_launch_response_sent()
 
     def on_configurationDone_request(self, request):
         """
