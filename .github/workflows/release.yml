@@ -44,6 +44,9 @@ jobs:
     - name: Upload to PyPI
       working-directory: ./src
       run: twine upload dist/*
+      env:
+        TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
     - name: Publish to vscode marketplace 
       run: vsce publish -p $VSCE_TOKEN
       env:
