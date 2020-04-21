@@ -185,8 +185,15 @@ def find_token(node, line, col):
             if lineno != line:
                 continue
 
-            if token.col_offset <= col <= token.end_col_offset:
-                return _TokenInfo(tuple(stack), node, token)
+            if token.type == token.SEPARATOR:
+                # For separator tokens, it must be entirely within the section
+                # i.e.: if it's in the boundary for a word, we want the word,
+                # not the separator.
+                if token.col_offset < col < token.end_col_offset:
+                    return _TokenInfo(tuple(stack), node, token)
+            else:
+                if token.col_offset <= col <= token.end_col_offset:
+                    return _TokenInfo(tuple(stack), node, token)
 
 
 def _iter_nodes_filtered(node, accept_class, recursive=True):
