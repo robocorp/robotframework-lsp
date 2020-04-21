@@ -8,3 +8,13 @@
       line: 7
   severity: 1
   source: robotframework
+- message: 'Undefined keyword: Also not there.'
+  range:
+    end:
+      character: 32
+      line: 8
+    start:
+      character: 18
+      line: 8
+  severity: 1
+  source: robotframework

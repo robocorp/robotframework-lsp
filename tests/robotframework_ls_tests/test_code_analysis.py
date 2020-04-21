@@ -4,7 +4,9 @@ def test_keywords_analyzed(workspace, libspec_manager, data_regression):
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
-    doc.source = doc.source + "\n    This keyword does not exist\n"
+    doc.source = doc.source + (
+        "\n    This keyword does not exist" "\n    [Teardown]    Also not there"
+    )
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)
 

@@ -174,6 +174,7 @@ def _iter_nodes(node, stack=None, recursive=True):
 
 _NodeInfo = namedtuple("_NodeInfo", "stack, node")
 _TokenInfo = namedtuple("_TokenInfo", "stack, node, token")
+_KeywordUsageInfo = namedtuple("_KeywordUsageInfo", "stack, node, token, name")
 
 
 def find_token(node, line, col):
@@ -246,13 +247,26 @@ def iter_keyword_arguments_as_str(node):
                 yield str(token)
 
 
-def iter_keyword_calls(node):
+def iter_keyword_usage_tokens(node):
     """
-    :rtype: generator(tuple(keyword_name,_NodeInfo))
+    Iterates through all the places where a keyword name is being used, providing
+    the stack, node, token and name.
+    
+    :return: generator(_KeywordUsageInfo)
     """
-    for stack, node in _iter_nodes_filtered(node, accept_class="KeywordCall"):
-        keyword_name = node.keyword
-        yield keyword_name, _NodeInfo(tuple(stack), node)
+    from robot.parsing.lexer.tokens import Token
+    from robot.parsing.model.statements import Fixture
+
+    for stack, node in _iter_nodes(node, recursive=True):
+        if node.__class__.__name__ == "KeywordCall":
+            token = node.get_token(Token.KEYWORD)
+            keyword_name = token.value
+            yield _KeywordUsageInfo(tuple(stack), node, token, keyword_name)
+
+        if isinstance(node, Fixture):
+            token = node.get_token(Token.NAME)
+            keyword_name = token.value
+            yield _KeywordUsageInfo(tuple(stack), node, token, keyword_name)
 
 
 def get_documentation(node):
