@@ -73,20 +73,16 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return [Error(msg, (0, 0), (1, 0)).to_lsp_diagnostic()]
 
         try:
-
-            workspace = self.workspace
-            if not workspace:
-                log.info("workspace still not initialized.")
-                return []
-
             from robotframework_ls.impl.ast_utils import collect_errors
+            from robotframework_ls.impl import code_analysis
 
-            document = workspace.get_document(doc_uri, create=False)
-            if document is None:
+            completion_context = self._create_completion_context(doc_uri, 0, 0)
+            if completion_context is None:
                 return []
 
-            ast = document.get_ast()
+            ast = completion_context.get_ast()
             errors = collect_errors(ast)
+            errors.extend(code_analysis.collect_analysis_errors(completion_context))
             return [error.to_lsp_diagnostic() for error in errors]
         except:
             log.exception("Error collecting errors.")

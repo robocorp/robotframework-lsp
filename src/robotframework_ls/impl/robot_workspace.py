@@ -1,5 +1,4 @@
 from robotframework_ls.workspace import Workspace, Document
-import logging
 from robotframework_ls._utils import overrides
 from robotframework_ls.cache import instance_cache
 from robotframework_ls.constants import NULL

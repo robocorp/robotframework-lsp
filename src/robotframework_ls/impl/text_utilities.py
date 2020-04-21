@@ -20,3 +20,7 @@ class TextUtilities(object):
 
     def strip(self):
         self.text = self.text.strip()
+
+
+def normalize_robot_name(text):
+    return text.lower().replace("_", " ")

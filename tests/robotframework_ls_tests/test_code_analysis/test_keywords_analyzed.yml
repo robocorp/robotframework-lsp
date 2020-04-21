@@ -1,0 +1,10 @@
+- message: 'Undefined keyword: This keyword does not exist.'
+  range:
+    end:
+      character: 31
+      line: 7
+    start:
+      character: 4
+      line: 7
+  severity: 1
+  source: robotframework

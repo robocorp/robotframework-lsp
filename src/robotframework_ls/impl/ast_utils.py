@@ -88,30 +88,35 @@ class _PrinterVisitor(ast.NodeVisitor):
 
 def collect_errors(node):
     """
-    :return list(_Error)
+    :return list(Error)
     """
     errors = []
     for _stack, node in _iter_nodes_filtered(node, accept_class="Error"):
-        tokens = node.tokens
         msg = node.error
 
-        if not tokens:
-            log.log("No tokens found when visiting error.")
-            start = (0, 0)
-            end = (0, 0)
-        else:
-            # line is 1-based and col is 0-based (make both 0-based for the error).
-            start = (tokens[0].lineno - 1, tokens[0].col_offset)
-
-            # If we only have one token make the error cover the whole line.
-            end = (start[0] + 1, 0)
-
-            if len(tokens) > 1:
-                end = (tokens[-1].lineno - 1, tokens[-1].col_offset)
-
-        errors.append(Error(msg, start, end))
+        errors.append(create_error_from_node(node, msg))
 
     return errors
+
+
+def create_error_from_node(node, msg, tokens=None):
+    """
+    :return Error:
+    """
+    if tokens is None:
+        tokens = node.tokens
+
+    if not tokens:
+        log.log("No tokens found when visiting %s." % (node.__class__,))
+        start = (0, 0)
+        end = (0, 0)
+    else:
+        # line is 1-based and col is 0-based (make both 0-based for the error).
+        start = (tokens[0].lineno - 1, tokens[0].col_offset)
+        end = (tokens[-1].lineno - 1, tokens[-1].end_col_offset)
+
+    error = Error(msg, start, end)
+    return error
 
 
 def print_ast(node, stream=None):
@@ -239,6 +244,15 @@ def iter_keyword_arguments_as_str(node):
         for token in node.tokens:
             if token.type == token.ARGUMENT:
                 yield str(token)
+
+
+def iter_keyword_calls(node):
+    """
+    :rtype: generator(tuple(keyword_name,_NodeInfo))
+    """
+    for stack, node in _iter_nodes_filtered(node, accept_class="KeywordCall"):
+        keyword_name = node.keyword
+        yield keyword_name, _NodeInfo(tuple(stack), node)
 
 
 def get_documentation(node):
