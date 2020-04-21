@@ -14,13 +14,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
 from robotframework_ls.cache import instance_cache
 
 
 from robotframework_ls import _utils, uris
+from robotframework_ls.robotframework_log import get_logger
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 class Config(object):

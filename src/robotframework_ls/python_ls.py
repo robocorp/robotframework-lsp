@@ -17,6 +17,7 @@
 import logging
 import os
 import sys
+from robotframework_ls.robotframework_log import get_logger
 
 try:
     import socketserver
@@ -31,7 +32,7 @@ from robotframework_ls.jsonrpc.streams import JsonRpcStreamReader, JsonRpcStream
 from . import uris
 from .config import config
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 MAX_WORKERS = 64

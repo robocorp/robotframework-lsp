@@ -1,10 +1,10 @@
 import os
 import sys
-import logging
 from collections import namedtuple
 from robotframework_ls.constants import NULL
+from robotframework_ls.robotframework_log import get_logger
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 _LibInfo = namedtuple("_LibInfo", "library_doc, mtime")
 
@@ -374,6 +374,7 @@ class LibspecManager(object):
         import time
         from robotframework_ls.impl import robot_constants
         from robotframework_ls.subprocess_wrapper import subprocess
+        from robotframework_ls.constants import IS_PY2
 
         curtime = time.time()
 
@@ -429,6 +430,11 @@ class LibspecManager(object):
                                 # Let's see if we can find the module in the workspace (if we
                                 # can, fix the PYTHONPATH to include it).
                                 env_cp = os.environ.copy()
+                                if IS_PY2:
+                                    if not isinstance(folder, bytes):
+                                        folder = folder.encode(
+                                            sys.getfilesystemencoding()
+                                        )
                                 env_cp["PYTHONPATH"] = (
                                     folder
                                     + os.pathsep

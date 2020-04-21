@@ -1,10 +1,10 @@
-import logging
 import itertools
 from functools import partial
 import threading
 from robotframework_ls._utils import TimeoutError
+from robotframework_ls.robotframework_log import get_logger
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 class _MessageMatcher(object):

@@ -15,9 +15,10 @@ from functools import partial
 import itertools
 import time
 from robotframework_ls.constants import DEFAULT_COMPLETIONS_TIMEOUT
+from robotframework_ls.robotframework_log import get_logger
 
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 LINT_DEBOUNCE_S = 0.5  # 500 ms
 ROBOT_FILE_EXTENSIONS = (".robot", ".settings")
@@ -251,6 +252,12 @@ class _ServerApi(object):
             if api is not None:
                 return api.request_keyword_complete(doc_uri, line, col)
 
+    def request_find_definition(self, doc_uri, line, col):
+        with self._server_lock:
+            api = self._get_server_api()
+            if api is not None:
+                return api.request_find_definition(doc_uri, line, col)
+
     def request_source_format(self, text_document, options):
         with self._server_lock:
             api = self._get_server_api()
@@ -326,7 +333,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             "documentHighlightProvider": False,
             "documentRangeFormattingProvider": False,
             "documentSymbolProvider": False,
-            "definitionProvider": False,
+            "definitionProvider": True,
             "executeCommandProvider": {"commands": []},
             "hoverProvider": False,
             "referencesProvider": False,
@@ -447,6 +454,28 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             # Because it's debounced, we can't use the log_and_silence_errors decorator.
             log.exception("Error linting.")
 
+    def m_text_document__definition(self, **kwargs):
+        doc_uri = kwargs["textDocument"]["uri"]
+        # Note: 0-based
+        line, col = kwargs["position"]["line"], kwargs["position"]["character"]
+
+        document = self.workspace.get_document(doc_uri, create=False)
+        if document is None:
+            msg = "Unable to find document (%s) for completions." % (doc_uri,)
+            log.critical(msg)
+            raise RuntimeError(msg)
+
+        message_matchers = [self._api.request_find_definition(doc_uri, line, col)]
+        accepted_message_matchers = self._wait_for_message_matchers(message_matchers)
+        for message_matcher in accepted_message_matchers:
+            msg = message_matcher.msg
+            if msg is not None:
+                result = msg.get("result")
+                if result:
+                    return result
+
+        return None
+
     @log_and_silence_errors(log, return_on_error=[])
     def m_text_document__completion(self, **kwargs):
         from robotframework_ls.impl.completion_context import CompletionContext
@@ -461,7 +490,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             log.critical("Unable to find document (%s) for completions." % (doc_uri,))
             return []
 
-        ctx = CompletionContext(document, line, col)
+        ctx = CompletionContext(document, line, col, config=self.config)
         completions = []
 
         # Asynchronous completion.
@@ -472,21 +501,28 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         message_matchers.append(self._api.request_keyword_complete(doc_uri, line, col))
         completions.extend(section_completions.complete(ctx))
 
+        accepted_message_matchers = self._wait_for_message_matchers(message_matchers)
+        for message_matcher in accepted_message_matchers:
+            msg = message_matcher.msg
+            if msg is not None:
+                result = msg.get("result")
+                if result:
+                    completions.extend(result)
+
+        return completions
+
+    def _wait_for_message_matchers(self, message_matchers):
+        accepted_message_matchers = []
         curtime = time.time()
         maxtime = curtime + DEFAULT_COMPLETIONS_TIMEOUT
         for message_matcher in message_matchers:
             if message_matcher is not None:
-                # i.e.: wait X seconds for the completion and bail out if we
-                # can't get it.
+                # i.e.: wait X seconds and bail out if we can't get it.
                 available_time = maxtime - time.time()
                 if available_time <= 0:
-                    break
+                    available_time = 0.0001  # Wait at least a bit for each.
 
                 if message_matcher.event.wait(available_time):
-                    msg = message_matcher.msg
-                    if msg is not None:
-                        result = msg.get("result")
-                        if result:
-                            completions.extend(result)
+                    accepted_message_matchers.append(message_matcher)
 
-        return completions
+        return accepted_message_matchers

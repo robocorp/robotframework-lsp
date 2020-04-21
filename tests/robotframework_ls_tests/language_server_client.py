@@ -79,7 +79,11 @@ class _LanguageServerClient(LanguageServerClientBase):
         assert "capabilities" in msg["result"]
         return msg
 
-    def open_doc(self, uri, version=1):
+    def open_doc(self, uri, version=1, text=""):
+        """
+        :param text:
+            If None, the contents will be loaded from the disk.
+        """
         self.write(
             {
                 "jsonrpc": "2.0",
@@ -89,7 +93,7 @@ class _LanguageServerClient(LanguageServerClientBase):
                         "uri": uri,
                         "languageId": "robotframework",
                         "version": version,
-                        "text": "",
+                        "text": text,
                     }
                 },
             }
@@ -127,5 +131,18 @@ class _LanguageServerClient(LanguageServerClientBase):
                 "id": self.next_id(),
                 "method": "textDocument/formatting",
                 "params": {"textDocument": {"uri": uri}},
+            }
+        )
+
+    def find_definitions(self, uri, line, col):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "textDocument/definition",
+                "params": {
+                    "textDocument": {"uri": uri},
+                    "position": {"line": line, "character": col},
+                },
             }
         )

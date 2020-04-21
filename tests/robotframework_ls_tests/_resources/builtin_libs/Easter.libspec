@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<keywordspec name="Easter" type="library" format="HTML" generated="20200323 13:11:20">
+<keywordspec name="Easter" type="LIBRARY" format="HTML" scope="GLOBAL" namedargs="true" generated="2020-04-14T18:21:03Z" specversion="2" source="X:\vscode-robot\robotframework\src\robot\libraries\Easter.py" lineno="1">
 <version></version>
 <scope>global</scope>
 <namedargs>yes</namedargs>
 <doc>&lt;p&gt;Documentation for library &lt;code&gt;Easter&lt;/code&gt;.&lt;/p&gt;</doc>
-<kw name="None Shall Pass" deprecated="false">
+<kw name="None Shall Pass" lineno="19">
 <arguments>
 <arg>who</arg>
 </arguments>
 <doc></doc>
-<tags>
-</tags>
 </kw>
 </keywordspec>

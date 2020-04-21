@@ -1,4 +1,3 @@
-import logging
 import os.path
 import traceback
 import sys
@@ -7,7 +6,6 @@ __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
     __file__ = __file__[:-1]
 
-log = logging.getLogger(__name__)
 
 _critical_error_log_file = os.path.join(
     os.path.expanduser("~"), "robotframework_server_api_critical.log"
@@ -16,6 +14,9 @@ _critical_error_log_file = os.path.join(
 
 def _stderr_reader(stream):
     from robotframework_ls.constants import IS_PY2
+    from robotframework_ls.robotframework_log import get_logger
+
+    log = get_logger(__name__)
 
     try:
         while True:
@@ -41,9 +42,12 @@ def start_server_process(args=(), python_exe=None, env=None):
         i.e.:
             ["-vv", "--log-file=%s" % log_file]
     """
+    from robotframework_ls.robotframework_log import get_logger
     from robotframework_ls.subprocess_wrapper import subprocess
     import threading
     from robotframework_ls.options import Setup
+
+    log = get_logger(__name__)
 
     if python_exe:
         if not os.path.exists(python_exe):
@@ -88,7 +92,6 @@ def start_server_process(args=(), python_exe=None, env=None):
 
 if __name__ == "__main__":
     try:
-        log.info("Initializing RobotFramework Server api. Args: %s", (sys.argv[1:],))
 
         try:
             import robotframework_ls
@@ -100,6 +103,12 @@ if __name__ == "__main__":
                 )
             )
             import robotframework_ls  # @UnusedImport
+
+        from robotframework_ls.robotframework_log import get_logger
+
+        log = get_logger(__name__)
+
+        log.info("Initializing RobotFramework Server api. Args: %s", (sys.argv[1:],))
 
         from robotframework_ls import __main__
         from robotframework_ls.server_api.server import RobotFrameworkServerApi

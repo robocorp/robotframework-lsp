@@ -1,5 +1,5 @@
 - deprecated: false
-  kind: 2
+  kind: 14
   label: '[Arguments]'
   preselect: false
   textEdit:
@@ -12,7 +12,7 @@
         character: 0
         line: 2
 - deprecated: false
-  kind: 2
+  kind: 14
   label: '[Documentation]'
   preselect: false
   textEdit:
@@ -25,7 +25,7 @@
         character: 0
         line: 2
 - deprecated: false
-  kind: 2
+  kind: 14
   label: '[Return]'
   preselect: false
   textEdit:
@@ -38,7 +38,7 @@
         character: 0
         line: 2
 - deprecated: false
-  kind: 2
+  kind: 14
   label: '[Tags]'
   preselect: false
   textEdit:
@@ -51,7 +51,7 @@
         character: 0
         line: 2
 - deprecated: false
-  kind: 2
+  kind: 14
   label: '[Teardown]'
   preselect: false
   textEdit:
@@ -64,7 +64,7 @@
         character: 0
         line: 2
 - deprecated: false
-  kind: 2
+  kind: 14
   label: '[Timeout]'
   preselect: false
   textEdit:

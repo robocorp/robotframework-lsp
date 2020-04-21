@@ -119,3 +119,7 @@ server
 node_modules
 .vscode-dev
 *.vsix
+
+**/log.html
+**/output.xml
+**/report.html

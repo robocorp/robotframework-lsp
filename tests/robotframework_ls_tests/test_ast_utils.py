@@ -2,7 +2,9 @@ def test_iter_nodes():
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.robot_workspace import RobotDocument
 
-    doc = RobotDocument("unused", source="*** settings ***")
+    doc = RobotDocument(
+        "unused", source="*** settings ***\nResource    my_resource.resource"
+    )
     lst = []
     for stack, node in ast_utils._iter_nodes(doc.get_ast()):
         lst.append(
@@ -11,7 +13,7 @@ def test_iter_nodes():
     assert lst == [
         "[] - SettingSection",
         "['SettingSection'] - SettingSectionHeader",
-        "['SettingSection'] - Body",
+        "['SettingSection'] - ResourceImport",
     ]
 
 
@@ -40,7 +42,7 @@ def test_find_token(workspace):
     doc = workspace.get_doc("case1.robot")
 
     section = ast_utils.find_section(doc.get_ast(), 3)
-    assert section.header.value == "Test Cases"
+    assert section.header.name == "Test Cases"
 
     token_info = ast_utils.find_token(section, 4, 1)
     assert token_info.token.type == token_info.token.TESTCASE_NAME

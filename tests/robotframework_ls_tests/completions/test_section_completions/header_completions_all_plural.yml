@@ -1,0 +1,78 @@
+- deprecated: false
+  kind: 7
+  label: '*** Comments ***'
+  preselect: false
+  textEdit:
+    newText: '*** Comments ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0
+- deprecated: false
+  kind: 7
+  label: '*** Keywords ***'
+  preselect: false
+  textEdit:
+    newText: '*** Keywords ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0
+- deprecated: false
+  kind: 7
+  label: '*** Settings ***'
+  preselect: false
+  textEdit:
+    newText: '*** Settings ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0
+- deprecated: false
+  kind: 7
+  label: '*** Tasks ***'
+  preselect: false
+  textEdit:
+    newText: '*** Tasks ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0
+- deprecated: false
+  kind: 7
+  label: '*** Test Cases ***'
+  preselect: false
+  textEdit:
+    newText: '*** Test Cases ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0
+- deprecated: false
+  kind: 7
+  label: '*** Variables ***'
+  preselect: false
+  textEdit:
+    newText: '*** Variables ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<keywordspec name="XML" type="library" format="HTML" generated="20200323 13:11:20">
-<version>3.2b3.dev1</version>
+<keywordspec name="XML" type="LIBRARY" format="HTML" scope="GLOBAL" namedargs="true" generated="2020-04-14T18:21:03Z" specversion="2" source="X:\vscode-robot\robotframework\src\robot\libraries\XML.py" lineno="36">
+<version>3.2rc2.dev1</version>
 <scope>global</scope>
 <namedargs>yes</namedargs>
 <doc>&lt;p&gt;Robot Framework test library for verifying and modifying XML documents.&lt;/p&gt;
@@ -585,17 +585,15 @@
 &lt;/table&gt;
 &lt;p&gt;Unlike with glob patterns normally, path separator characters &lt;code&gt;/&lt;/code&gt; and &lt;code&gt;\&lt;/code&gt; and the newline character &lt;code&gt;\n&lt;/code&gt; are matches by the above wildcards.&lt;/p&gt;
 &lt;p&gt;Support for brackets like &lt;code&gt;[abc]&lt;/code&gt; and &lt;code&gt;[!a-z]&lt;/code&gt; is new in Robot Framework 3.1&lt;/p&gt;</doc>
-<init>
+<init lineno="452">
 <arguments>
 <arg>use_lxml=False</arg>
 </arguments>
 <doc>&lt;p&gt;Import library with optionally lxml mode enabled.&lt;/p&gt;
 &lt;p&gt;By default this library uses Python's standard &lt;a href="http://docs.python.org/library/xml.etree.elementtree.html"&gt;ElementTree&lt;/a&gt; module for parsing XML. If &lt;code&gt;use_lxml&lt;/code&gt; argument is given a true value (see `Boolean arguments`), the library will use &lt;a href="http://lxml.de"&gt;lxml&lt;/a&gt; module instead. See `Using lxml` section for benefits provided by lxml.&lt;/p&gt;
 &lt;p&gt;Using lxml requires that the lxml module is installed on the system. If lxml mode is enabled but the module is not installed, this library will emit a warning and revert back to using the standard ElementTree.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </init>
-<kw name="Add Element" deprecated="false">
+<kw name="Add Element" lineno="1112">
 <arguments>
 <arg>source</arg>
 <arg>element</arg>
@@ -644,10 +642,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Use `Remove Element` or `Remove Elements` to remove elements.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Clear Element" deprecated="false">
+<kw name="Clear Element" lineno="1221">
 <arguments>
 <arg>source</arg>
 <arg>xpath=.</arg>
@@ -709,10 +705,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Use `Remove Element` to remove the whole element.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Copy Element" deprecated="false">
+<kw name="Copy Element" lineno="1254">
 <arguments>
 <arg>source</arg>
 <arg>xpath=.</arg>
@@ -771,10 +765,8 @@
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Element Attribute Should Be" deprecated="false">
+<kw name="Element Attribute Should Be" lineno="804">
 <arguments>
 <arg>source</arg>
 <arg>name</arg>
@@ -804,10 +796,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;See also `Element Attribute Should Match` and `Get Element Attribute`.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Element Attribute Should Match" deprecated="false">
+<kw name="Element Attribute Should Match" lineno="829">
 <arguments>
 <arg>source</arg>
 <arg>name</arg>
@@ -835,10 +825,8 @@
 &lt;td&gt;xpath=third/second&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Element Should Exist" deprecated="false">
+<kw name="Element Should Exist" lineno="616">
 <arguments>
 <arg>source</arg>
 <arg>xpath=.</arg>
@@ -847,10 +835,8 @@
 <doc>&lt;p&gt;Verifies that one or more element match the given &lt;code&gt;xpath&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Arguments &lt;code&gt;source&lt;/code&gt; and &lt;code&gt;xpath&lt;/code&gt; have exactly the same semantics as with `Get Elements` keyword. Keyword passes if the &lt;code&gt;xpath&lt;/code&gt; matches one or more elements in the &lt;code&gt;source&lt;/code&gt;. The default error message can be overridden with the &lt;code&gt;message&lt;/code&gt; argument.&lt;/p&gt;
 &lt;p&gt;See also `Element Should Not Exist` as well as `Get Element Count` that this keyword uses internally.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Element Should Not Exist" deprecated="false">
+<kw name="Element Should Not Exist" lineno="631">
 <arguments>
 <arg>source</arg>
 <arg>xpath=.</arg>
@@ -859,10 +845,8 @@
 <doc>&lt;p&gt;Verifies that no element match the given &lt;code&gt;xpath&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Arguments &lt;code&gt;source&lt;/code&gt; and &lt;code&gt;xpath&lt;/code&gt; have exactly the same semantics as with `Get Elements` keyword. Keyword fails if the &lt;code&gt;xpath&lt;/code&gt; matches any element in the &lt;code&gt;source&lt;/code&gt;. The default error message can be overridden with the &lt;code&gt;message&lt;/code&gt; argument.&lt;/p&gt;
 &lt;p&gt;See also `Element Should Exist` as well as `Get Element Count` that this keyword uses internally.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Element Should Not Have Attribute" deprecated="false">
+<kw name="Element Should Not Have Attribute" lineno="850">
 <arguments>
 <arg>source</arg>
 <arg>name</arg>
@@ -888,10 +872,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;See also `Get Element Attribute`, `Get Element Attributes`, `Element Text Should Be` and `Element Text Should Match`.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Element Text Should Be" deprecated="false">
+<kw name="Element Text Should Be" lineno="715">
 <arguments>
 <arg>source</arg>
 <arg>expected</arg>
@@ -930,10 +912,8 @@
 &lt;td&gt;normalize_whitespace=yes&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Element Text Should Match" deprecated="false">
+<kw name="Element Text Should Match" lineno="742">
 <arguments>
 <arg>source</arg>
 <arg>pattern</arg>
@@ -965,10 +945,8 @@
 &lt;td&gt;normalize_whitespace=yes&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Element To String" deprecated="false">
+<kw name="Element To String" lineno="1275">
 <arguments>
 <arg>source</arg>
 <arg>xpath=.</arg>
@@ -978,10 +956,8 @@
 &lt;p&gt;The element to convert to a string is specified using &lt;code&gt;source&lt;/code&gt; and &lt;code&gt;xpath&lt;/code&gt;. They have exactly the same semantics as with `Get Element` keyword.&lt;/p&gt;
 &lt;p&gt;By default the string is returned as Unicode. If &lt;code&gt;encoding&lt;/code&gt; argument is given any value, the string is returned as bytes in the specified encoding. The resulting string never contains the XML declaration.&lt;/p&gt;
 &lt;p&gt;See also `Log Element` and `Save XML`.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Elements Should Be Equal" deprecated="false">
+<kw name="Elements Should Be Equal" lineno="872">
 <arguments>
 <arg>source</arg>
 <arg>expected</arg>
@@ -1032,10 +1008,8 @@
 &lt;/table&gt;
 &lt;p&gt;The last example may look a bit strange because the &lt;code&gt;&amp;lt;p&amp;gt;&lt;/code&gt; element only has text &lt;code&gt;Text with&lt;/code&gt;. The reason is that rest of the text inside &lt;code&gt;&amp;lt;p&amp;gt;&lt;/code&gt; actually belongs to the child elements. This includes the &lt;code&gt;.&lt;/code&gt; at the end that is the `tail` text of the &lt;code&gt;&amp;lt;i&amp;gt;&lt;/code&gt; element.&lt;/p&gt;
 &lt;p&gt;See also `Elements Should Match`.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Elements Should Match" deprecated="false">
+<kw name="Elements Should Match" lineno="912">
 <arguments>
 <arg>source</arg>
 <arg>expected</arg>
@@ -1061,10 +1035,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;See `Elements Should Be Equal` for more examples.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Evaluate Xpath" deprecated="false">
+<kw name="Evaluate Xpath" lineno="1348">
 <arguments>
 <arg>source</arg>
 <arg>expression</arg>
@@ -1119,10 +1091,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;This keyword works only if lxml mode is taken into use when `importing` the library.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Child Elements" deprecated="false">
+<kw name="Get Child Elements" lineno="586">
 <arguments>
 <arg>source</arg>
 <arg>xpath=.</arg>
@@ -1157,10 +1127,8 @@
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Element" deprecated="false">
+<kw name="Get Element" lineno="521">
 <arguments>
 <arg>source</arg>
 <arg>xpath=.</arg>
@@ -1185,10 +1153,8 @@
 &lt;/table&gt;
 &lt;p&gt;`Parse XML` is recommended for parsing XML when the whole structure is needed. It must be used if there is a need to configure how XML namespaces are handled.&lt;/p&gt;
 &lt;p&gt;Many other keywords use this keyword internally, and keywords modifying XML are typically documented to both to modify the given source and to return it. Modifying the source does not apply if the source is given as a string. The XML structure parsed based on the string and then modified is nevertheless returned.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Element Attribute" deprecated="false">
+<kw name="Get Element Attribute" lineno="762">
 <arguments>
 <arg>source</arg>
 <arg>name</arg>
@@ -1234,10 +1200,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;See also `Get Element Attributes`, `Element Attribute Should Be`, `Element Attribute Should Match` and `Element Should Not Have Attribute`.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Element Attributes" deprecated="false">
+<kw name="Get Element Attributes" lineno="784">
 <arguments>
 <arg>source</arg>
 <arg>xpath=.</arg>
@@ -1273,10 +1237,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Use `Get Element Attribute` to get the value of a single attribute.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Element Count" deprecated="false">
+<kw name="Get Element Count" lineno="604">
 <arguments>
 <arg>source</arg>
 <arg>xpath=.</arg>
@@ -1284,10 +1246,8 @@
 <doc>&lt;p&gt;Returns and logs how many elements the given &lt;code&gt;xpath&lt;/code&gt; matches.&lt;/p&gt;
 &lt;p&gt;Arguments &lt;code&gt;source&lt;/code&gt; and &lt;code&gt;xpath&lt;/code&gt; have exactly the same semantics as with `Get Elements` keyword that this keyword uses internally.&lt;/p&gt;
 &lt;p&gt;See also `Element Should Exist` and `Element Should Not Exist`.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Element Text" deprecated="false">
+<kw name="Get Element Text" lineno="646">
 <arguments>
 <arg>source</arg>
 <arg>xpath=.</arg>
@@ -1343,10 +1303,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;See also `Get Elements Texts`, `Element Text Should Be` and `Element Text Should Match`.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Elements" deprecated="false">
+<kw name="Get Elements" lineno="564">
 <arguments>
 <arg>source</arg>
 <arg>xpath</arg>
@@ -1381,10 +1339,8 @@
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Elements Texts" deprecated="false">
+<kw name="Get Elements Texts" lineno="695">
 <arguments>
 <arg>source</arg>
 <arg>xpath</arg>
@@ -1420,10 +1376,8 @@
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Log Element" deprecated="false">
+<kw name="Log Element" lineno="1295">
 <arguments>
 <arg>source</arg>
 <arg>level=INFO</arg>
@@ -1432,10 +1386,8 @@
 <doc>&lt;p&gt;Logs the string representation of the specified element.&lt;/p&gt;
 &lt;p&gt;The element specified with &lt;code&gt;source&lt;/code&gt; and &lt;code&gt;xpath&lt;/code&gt; is first converted into a string using `Element To String` keyword internally. The resulting string is then logged using the given &lt;code&gt;level&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;The logged string is also returned.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Parse Xml" deprecated="false">
+<kw name="Parse Xml" lineno="479">
 <arguments>
 <arg>source</arg>
 <arg>keep_clark_notation=False</arg>
@@ -1467,10 +1419,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Use `Get Element` keyword if you want to get a certain element and not the whole structure. See `Parsing XML` section for more details and examples.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Remove Element" deprecated="false">
+<kw name="Remove Element" lineno="1148">
 <arguments>
 <arg>source</arg>
 <arg>xpath=</arg>
@@ -1511,10 +1461,8 @@
 &lt;td&gt;normalize_whitespace=yes&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Remove Element Attribute" deprecated="false">
+<kw name="Remove Element Attribute" lineno="1047">
 <arguments>
 <arg>source</arg>
 <arg>name</arg>
@@ -1539,10 +1487,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Can only remove an attribute from a single element. Use `Remove Elements Attribute` to remove an attribute of multiple elements in one call.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Remove Element Attributes" deprecated="false">
+<kw name="Remove Element Attributes" lineno="1081">
 <arguments>
 <arg>source</arg>
 <arg>xpath=.</arg>
@@ -1566,10 +1512,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Can only remove attributes from a single element. Use `Remove Elements Attributes` to remove all attributes of multiple elements in one call.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Remove Elements" deprecated="false">
+<kw name="Remove Elements" lineno="1174">
 <arguments>
 <arg>source</arg>
 <arg>xpath=</arg>
@@ -1597,10 +1541,8 @@
 &lt;td&gt;xpath=third/child&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Remove Elements Attribute" deprecated="false">
+<kw name="Remove Elements Attribute" lineno="1072">
 <arguments>
 <arg>source</arg>
 <arg>name</arg>
@@ -1608,20 +1550,16 @@
 </arguments>
 <doc>&lt;p&gt;Removes attribute &lt;code&gt;name&lt;/code&gt; from the specified elements.&lt;/p&gt;
 &lt;p&gt;Like `Remove Element Attribute` but removes the attribute of all elements matching the given &lt;code&gt;xpath&lt;/code&gt;.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Remove Elements Attributes" deprecated="false">
+<kw name="Remove Elements Attributes" lineno="1103">
 <arguments>
 <arg>source</arg>
 <arg>xpath=.</arg>
 </arguments>
 <doc>&lt;p&gt;Removes all attributes from the specified elements.&lt;/p&gt;
 &lt;p&gt;Like `Remove Element Attributes` but removes all attributes of all elements matching the given &lt;code&gt;xpath&lt;/code&gt;.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Save Xml" deprecated="false">
+<kw name="Save Xml" lineno="1308">
 <arguments>
 <arg>source</arg>
 <arg>path</arg>
@@ -1637,10 +1575,8 @@
 &lt;li&gt;Other small differences are possible depending on the ElementTree or lxml version.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;Use `Element To String` if you just need a string representation of the element.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Set Element Attribute" deprecated="false">
+<kw name="Set Element Attribute" lineno="1011">
 <arguments>
 <arg>source</arg>
 <arg>name</arg>
@@ -1682,10 +1618,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Can only set an attribute of a single element. Use `Set Elements Attribute` to set an attribute of multiple elements in one call.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Set Element Tag" deprecated="false">
+<kw name="Set Element Tag" lineno="940">
 <arguments>
 <arg>source</arg>
 <arg>tag</arg>
@@ -1727,10 +1661,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Can only set the tag of a single element. Use `Set Elements Tag` to set the tag of multiple elements in one call.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Set Element Text" deprecated="false">
+<kw name="Set Element Text" lineno="971">
 <arguments>
 <arg>source</arg>
 <arg>text=None</arg>
@@ -1786,10 +1718,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Can only set the text/tail of a single element. Use `Set Elements Text` to set the text/tail of multiple elements in one call.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Set Elements Attribute" deprecated="false">
+<kw name="Set Elements Attribute" lineno="1038">
 <arguments>
 <arg>source</arg>
 <arg>name</arg>
@@ -1798,10 +1728,8 @@
 </arguments>
 <doc>&lt;p&gt;Sets attribute &lt;code&gt;name&lt;/code&gt; of the specified elements to &lt;code&gt;value&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Like `Set Element Attribute` but sets the attribute of all elements matching the given &lt;code&gt;xpath&lt;/code&gt;.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Set Elements Tag" deprecated="false">
+<kw name="Set Elements Tag" lineno="962">
 <arguments>
 <arg>source</arg>
 <arg>tag</arg>
@@ -1809,10 +1737,8 @@
 </arguments>
 <doc>&lt;p&gt;Sets the tag of the specified elements.&lt;/p&gt;
 &lt;p&gt;Like `Set Element Tag` but sets the tag of all elements matching the given &lt;code&gt;xpath&lt;/code&gt;.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Set Elements Text" deprecated="false">
+<kw name="Set Elements Text" lineno="1002">
 <arguments>
 <arg>source</arg>
 <arg>text=None</arg>
@@ -1821,7 +1747,5 @@
 </arguments>
 <doc>&lt;p&gt;Sets text and/or tail text of the specified elements.&lt;/p&gt;
 &lt;p&gt;Like `Set Element Text` but sets the text or tail of all elements matching the given &lt;code&gt;xpath&lt;/code&gt;.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
 </keywordspec>

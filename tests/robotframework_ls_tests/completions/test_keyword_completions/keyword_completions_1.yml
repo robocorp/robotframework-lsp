@@ -2,7 +2,7 @@
   documentation: ''
   documentationFormat: markdown
   insertTextFormat: 2
-  kind: 7
+  kind: 2
   label: Verify Another Model
   preselect: false
   textEdit:
@@ -21,7 +21,7 @@
     '
   documentationFormat: markdown
   insertTextFormat: 2
-  kind: 7
+  kind: 2
   label: Verify Model
   preselect: false
   textEdit:

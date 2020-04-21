@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<keywordspec name="Dialogs" type="library" format="HTML" generated="20200323 13:11:20">
-<version>3.2b3.dev1</version>
+<keywordspec name="Dialogs" type="LIBRARY" format="HTML" scope="GLOBAL" namedargs="true" generated="2020-04-14T18:21:03Z" specversion="2" source="X:\vscode-robot\robotframework\src\robot\libraries\Dialogs.py" lineno="1">
+<version>3.2rc2.dev1</version>
 <scope>global</scope>
 <namedargs>yes</namedargs>
 <doc>&lt;p&gt;A test library providing dialogs for interacting with users.&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;Dialogs&lt;/code&gt; is Robot Framework's standard library that provides means for pausing the test execution and getting input from users. The dialogs are slightly different depending on whether tests are run on Python, IronPython or Jython but they provide the same functionality.&lt;/p&gt;
 &lt;p&gt;Long lines in the provided messages are wrapped automatically. If you want to wrap lines manually, you can add newlines using the &lt;code&gt;\n&lt;/code&gt; character sequence.&lt;/p&gt;
 &lt;p&gt;The library has a known limitation that it cannot be used with timeouts on Python. Support for IronPython was added in Robot Framework 2.9.2.&lt;/p&gt;</doc>
-<kw name="Execute Manual Step" deprecated="false">
+<kw name="Execute Manual Step" lineno="55">
 <arguments>
 <arg>message</arg>
 <arg>default_error=</arg>
@@ -15,10 +15,8 @@
 <doc>&lt;p&gt;Pauses test execution until user sets the keyword status.&lt;/p&gt;
 &lt;p&gt;User can press either &lt;code&gt;PASS&lt;/code&gt; or &lt;code&gt;FAIL&lt;/code&gt; button. In the latter case execution fails and an additional dialog is opened for defining the error message.&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;message&lt;/code&gt; is the instruction shown in the initial dialog and &lt;code&gt;default_error&lt;/code&gt; is the default value shown in the possible error message dialog.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Selection From User" deprecated="false">
+<kw name="Get Selection From User" lineno="96">
 <arguments>
 <arg>message</arg>
 <arg>*values</arg>
@@ -37,10 +35,8 @@
 &lt;td&gt;admin&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Selections From User" deprecated="false">
+<kw name="Get Selections From User" lineno="110">
 <arguments>
 <arg>message</arg>
 <arg>*values</arg>
@@ -60,10 +56,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;New in Robot Framework 3.1.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Value From User" deprecated="false">
+<kw name="Get Value From User" lineno="70">
 <arguments>
 <arg>message</arg>
 <arg>default_value=</arg>
@@ -89,16 +83,12 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Considering strings &lt;code&gt;false&lt;/code&gt; and &lt;code&gt;no&lt;/code&gt; to be false is new in RF 2.9 and considering string &lt;code&gt;none&lt;/code&gt; false is new in RF 3.0.3.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Pause Execution" deprecated="false">
+<kw name="Pause Execution" lineno="47">
 <arguments>
 <arg>message=Test execution paused. Press OK to continue.</arg>
 </arguments>
 <doc>&lt;p&gt;Pauses test execution until user clicks &lt;code&gt;Ok&lt;/code&gt; button.&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;message&lt;/code&gt; is the message shown in the dialog.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
 </keywordspec>

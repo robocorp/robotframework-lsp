@@ -14,9 +14,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
 import uuid
 import sys
+from robotframework_ls.robotframework_log import get_logger
 
 try:
     from concurrent import futures
@@ -29,7 +29,7 @@ from .exceptions import (
     JsonRpcMethodNotFound,
 )
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 JSONRPC_VERSION = "2.0"
 CANCEL_METHOD = "$/cancelRequest"
 

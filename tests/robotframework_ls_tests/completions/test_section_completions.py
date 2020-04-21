@@ -2,14 +2,23 @@ def test_section_completions(data_regression):
     from robotframework_ls.impl import section_completions
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.robot_workspace import RobotDocument
+    from robotframework_ls.config.config import Config
+
+    config = Config(root_uri="", init_opts={}, process_id=-1, capabilities={})
+    config.update({"robot": {"completions": {"section_headers": {"form": "both"}}}})
 
     doc = RobotDocument("unused", source="""**""")
-    completions = section_completions.complete(CompletionContext(doc))
+    completions = section_completions.complete(CompletionContext(doc, config=config))
     data_regression.check(completions, basename="header_completions_all")
 
     doc = RobotDocument("unused", source="""**settin""")
-    completions = section_completions.complete(CompletionContext(doc))
+    completions = section_completions.complete(CompletionContext(doc, config=config))
     data_regression.check(completions, basename="header_completions_filter_settings")
+
+    config.update({})
+    doc = RobotDocument("unused", source="""**""")
+    completions = section_completions.complete(CompletionContext(doc, config=config))
+    data_regression.check(completions, basename="header_completions_all_plural")
 
 
 def test_section_name_settings_completions(data_regression):

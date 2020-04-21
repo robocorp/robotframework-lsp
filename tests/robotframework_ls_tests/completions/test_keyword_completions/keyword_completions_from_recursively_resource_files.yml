@@ -2,7 +2,7 @@
   documentation: ''
   documentationFormat: markdown
   insertTextFormat: 2
-  kind: 7
+  kind: 3
   label: My Equal Redefined
   preselect: false
   textEdit:
@@ -22,7 +22,7 @@
     3rd line.'
   documentationFormat: markdown
   insertTextFormat: 2
-  kind: 7
+  kind: 3
   label: Yet Another Equal Redefined
   preselect: false
   textEdit:

@@ -1,10 +1,10 @@
-[Language Server Protocol](https://github.com/Microsoft/language-server-protocol) for [Robot Framework](https://robotframework.org/)
-=======
+[Language Server Protocol](https://github.com/Microsoft/language-server-protocol) implementation for [Robot Framework](https://robotframework.org/)
+=============
 
 Requirements
 -------------
 
-Python 3.7+ and [Robot Framework](https://robotframework.org/) 3.2+ (note that [Robot Framework](https://robotframework.org/)) may
+Python 3.7+ and [Robot Framework](https://robotframework.org/) 3.2+ (note that [Robot Framework](https://robotframework.org/) may
 be installed in a separate python interpreter in case you need to run it with an older version of Python).
 
 
@@ -13,66 +13,40 @@ Installing
 
 `robotframework-lsp` can be installed from the [VisualStudio Marketplace](https://marketplace.visualstudio.com/items?itemName=robocorptech.robotframework-lsp) or as a `.vsix`.
 
-To get a `.vsix`, download the latest `Deploy Extension` in [Robotframework-lsp Github Actions](https://github.com/robocorp/robotframework-lsp/actions).
+To get a `.vsix`, download the latest `Deploy Extension` in [Robotframework-lsp Github Actions](https://github.com/robocorp/robotframework-lsp/actions?query=workflow%3A%22Deploy+Extension%22).
 
 See: [Install from a vsix](https://code.visualstudio.com/docs/editor/extension-gallery#_install-from-a-vsix) for details installing a `.vsix` into VSCode.
+
+See: [Getting Started](https://hub.robocorp.com/development/best-practices/language-server-protocol-for-robot-framework/) for a tutorial with some screenshots.
 
 
 Configuration
 -------------
 
-After having `robotframework-lsp` installed, some settings may need to be configured:
+After having `robotframework-lsp` installed, some configurations (such as specifying
+the python executable used for launching the Language Server or Robot Framework)
+may be needed.
 
-- `robot.language-server.python` may need to be configured to point to a Python 3.7+ interpreter so that the
-  Language Server can be started (after changing this setting, VSCode itself may need to be restarted).
-  
-- `robot.python.executable` must point to a Python installation where `robotframework` and dependent 
-  libraries are installed.
-  
-- `robot.python.env` can be used to set the environment used by `robot.python.executable`.
-
-- `robot.variables` can be used to set custom variables which would usually be passed in the command line to `robotframework`.
+See: [Config](docs/config.md) for details.
   
 
-Features (0.0.8)
+Features (0.0.9)
 -----------------
 
-- Syntax highlighting (improved in 0.0.8)
+- Launch .robot files
+- Code completion for keywords, section headers and section settings
+- Go to definition for keywords (new in 0.0.9)
+- Syntax highlighting
 - Syntax validation
-- Code completion for section headers
-- Code completion for section settings
-- Code completion for keywords (new in 0.0.5)
-- Code Formatting (new in 0.0.6)
+- Code Formatting
+
+See: [Changelog](docs/changelog.md) for details.
 
 
 Developing
------------
+------------
 
-Install NodeJs (https://nodejs.org/en/) -- make sure that `node` and `npm` are in the `PATH`.
-
-Install Yarn (https://yarnpkg.com/) -- make sure that `yarn` is in the `PATH`.
-
-Download the sources, head to the root directory (where `package.json` is located)
-and run: `yarn install`.
-
-After this step, it should be possible to open the `roboframework-lsp` folder in VSCode and launch
-`Extension: Roboframework-lsp` to have a new instance of VSCode with the loaded extension.
-
-
-Building a VSIX locally
-------------------------
-
-To build a VSIX, follow the steps in https://code.visualstudio.com/api/working-with-extensions/publishing-extension.
-
-New version release
---------------------
-
-To release a new version:
-
-- Update version (python -m dev set-version 0.0.X)
-- Update this README to add notes on features/fixes
-- Create a tag in the format below and push it:
-  git tag robotframework-lsp-0.0.0
+See: [Developing](docs/develop.md) for details on how to develop `robotframework-lsp` itself.
 
 License: Apache 2.0
 -------------------

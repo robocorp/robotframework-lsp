@@ -48,3 +48,5 @@ if "GITHUB_WORKFLOW" not in os.environ:
         USE_TIMEOUTS = False
 
 NO_TIMEOUT = None
+
+DEFAULT_TIMEOUT = 10

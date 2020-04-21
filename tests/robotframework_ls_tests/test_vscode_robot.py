@@ -41,9 +41,36 @@ def test_section_completions_integrated(language_server, ws_root_path, data_regr
     uri = "untitled:Untitled-1"
     language_server.open_doc(uri, 1)
     language_server.change_doc(uri, 2, "*settin")
-    data_regression.check(
-        language_server.get_completions(uri, 0, 7), "completion_settings"
+
+    def check(expected):
+        completions = language_server.get_completions(uri, 0, 7)
+        del completions["id"]
+        data_regression.check(completions, expected)
+
+    check("completion_settings_plural")
+
+    language_server.settings(
+        {
+            "settings": {
+                "robot": {"completions": {"section_headers": {"form": "singular"}}}
+            }
+        }
     )
+    check("completion_settings_singular")
+
+    language_server.settings(
+        {"settings": {"robot": {"completions": {"section_headers": {"form": "both"}}}}}
+    )
+    check("completion_settings_both")
+
+    language_server.settings(
+        {
+            "settings": {
+                "robot": {"completions": {"section_headers": {"form": "plural"}}}
+            }
+        }
+    )
+    check("completion_settings_plural")
 
 
 def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regression):
@@ -158,3 +185,49 @@ def test_code_format_integrated(language_server, ws_root_path, data_regression):
     language_server.change_doc(uri, 3, "[Documentation]\n")
     ret = language_server.request_source_format(uri)
     assert ret["result"] == []
+
+
+def test_find_definition_integrated_library(language_server, cases, tmpdir):
+    from robotframework_ls import uris
+
+    workspace_dir = str(tmpdir.join("workspace"))
+    cases.copy_to("case1", workspace_dir)
+
+    language_server.initialize(workspace_dir, process_id=os.getpid())
+    case1_robot = os.path.join(workspace_dir, "case1.robot")
+    assert os.path.exists(case1_robot)
+    uri = uris.from_fs_path(case1_robot)
+
+    language_server.open_doc(uri, 1, text=None)
+    ret = language_server.find_definitions(uri, 5, 6)
+    result = ret["result"]
+    assert len(result) == 1
+    check = next(iter(result))
+    assert check["uri"].endswith("case1_library.py")
+    assert check["range"] == {
+        "start": {"line": 7, "character": 0},
+        "end": {"line": 7, "character": 0},
+    }
+
+
+def test_find_definition_keywords(language_server, cases, tmpdir):
+    from robotframework_ls import uris
+
+    workspace_dir = str(tmpdir.join("workspace"))
+    cases.copy_to("case2", workspace_dir)
+
+    language_server.initialize(workspace_dir, process_id=os.getpid())
+    case2_robot = os.path.join(workspace_dir, "case2.robot")
+    assert os.path.exists(case2_robot)
+    uri = uris.from_fs_path(case2_robot)
+
+    language_server.open_doc(uri, 1, text=None)
+    ret = language_server.find_definitions(uri, 7, 6)
+    result = ret["result"]
+    assert len(result) == 1
+    check = next(iter(result))
+    assert check["uri"].endswith("case2.robot")
+    assert check["range"] == {
+        "start": {"line": 1, "character": 0},
+        "end": {"line": 4, "character": 5},
+    }

@@ -1,0 +1,15 @@
+jsonrpc: '2.0'
+result:
+- deprecated: false
+  kind: 7
+  label: '*** Settings ***'
+  preselect: false
+  textEdit:
+    newText: '*** Settings ***'
+    range:
+      end:
+        character: 7
+        line: 0
+      start:
+        character: 0
+        line: 0

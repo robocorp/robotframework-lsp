@@ -1,3 +1,17 @@
+def test_libspec_info(libspec_manager, tmpdir):
+    from robotframework_ls.impl.robot_specbuilder import LibraryDoc
+    from robotframework_ls.impl.robot_specbuilder import KeywordDoc
+
+    assert "BuiltIn" in libspec_manager.get_library_names()
+    lib_info = libspec_manager.get_library_info("BuiltIn", create=False)
+    assert isinstance(lib_info, LibraryDoc)
+    assert lib_info.source is not None
+    assert lib_info.source.endswith("BuiltIn.py")
+    for keyword in lib_info.keywords:
+        assert isinstance(keyword, KeywordDoc)
+        assert keyword.lineno > 0
+
+
 def test_libspec_manager_caches(libspec_manager, tmpdir):
     from robotframework_ls import uris
     from os.path import os
@@ -27,7 +41,7 @@ def test_libspec_manager_caches(libspec_manager, tmpdir):
 
     # Give a timeout so that the next write will have at least 1 second
     # difference (1s is the minimum for poll to work).
-    time.sleep(1)
+    time.sleep(1.1)
     with open(os.path.join(ws_dir, "my2.libspec"), "w") as stream:
         stream.write(LIBSPEC_2)
 

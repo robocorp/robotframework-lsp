@@ -109,6 +109,14 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             self._build_msg("keywordComplete", doc_uri=doc_uri, line=line, col=col)
         )
 
+    def request_find_definition(self, doc_uri, line, col):
+        """
+        :Note: async complete (returns _MessageMatcher).
+        """
+        return self.request_async(
+            self._build_msg("findDefinition", doc_uri=doc_uri, line=line, col=col)
+        )
+
     def request_source_format(self, text_document, options):
         """
         :Note: async complete (returns _MessageMatcher).

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<keywordspec name="Telnet" type="library" format="HTML" generated="20200323 13:11:21">
-<version>3.2b3.dev1</version>
+<keywordspec name="Telnet" type="LIBRARY" format="HTML" scope="SUITE" namedargs="true" generated="2020-04-14T18:21:03Z" specversion="2" source="X:\vscode-robot\robotframework\src\robot\libraries\Telnet.py" lineno="36">
+<version>3.2rc2.dev1</version>
 <scope>test suite</scope>
 <namedargs>yes</namedargs>
 <doc>&lt;p&gt;A test library providing communication over Telnet connections.&lt;/p&gt;
@@ -186,7 +186,7 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Considering string &lt;code&gt;NONE&lt;/code&gt; false is new in Robot Framework 3.0.3 and considering also &lt;code&gt;OFF&lt;/code&gt; and &lt;code&gt;0&lt;/code&gt; false is new in Robot Framework 3.1.&lt;/p&gt;</doc>
-<init>
+<init lineno="283">
 <arguments>
 <arg>timeout=3 seconds</arg>
 <arg>newline=CRLF</arg>
@@ -272,19 +272,15 @@
 &lt;td&gt;# disable logging messages from the underlying telnetlib&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </init>
-<kw name="Close All Connections" deprecated="false">
+<kw name="Close All Connections" lineno="472">
 <arguments>
 </arguments>
 <doc>&lt;p&gt;Closes all open connections and empties the connection cache.&lt;/p&gt;
 &lt;p&gt;If multiple connections are opened, this keyword should be used in a test or suite teardown to make sure that all connections are closed. It is not an error is some of the connections have already been closed by `Close Connection`.&lt;/p&gt;
 &lt;p&gt;After this keyword, new indexes returned by `Open Connection` keyword are reset to 1.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Close Connection" deprecated="false">
+<kw name="Close Connection" lineno="689">
 <arguments>
 <arg>loglevel=None</arg>
 </arguments>
@@ -292,10 +288,8 @@
 &lt;p&gt;Remaining output in the connection is read, logged, and returned. It is not an error to close an already closed connection.&lt;/p&gt;
 &lt;p&gt;Use `Close All Connections` if you want to make sure all opened connections are closed.&lt;/p&gt;
 &lt;p&gt;See `Logging` section for more information about log levels.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Execute Command" deprecated="false">
+<kw name="Execute Command" lineno="1058">
 <arguments>
 <arg>command</arg>
 <arg>loglevel=None</arg>
@@ -322,10 +316,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;See `Logging` section for more information about log levels and `Read Until Prompt` for more information about the &lt;code&gt;strip_prompt&lt;/code&gt; parameter.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Login" deprecated="false">
+<kw name="Login" lineno="707">
 <arguments>
 <arg>username</arg>
 <arg>password</arg>
@@ -340,10 +332,8 @@
 &lt;p&gt;1) If the prompt is set, this keyword reads the output until the prompt is found using the normal timeout. If no prompt is found, login is considered failed and also this keyword fails. Note that in this case both &lt;code&gt;login_timeout&lt;/code&gt; and &lt;code&gt;login_incorrect&lt;/code&gt; arguments are ignored.&lt;/p&gt;
 &lt;p&gt;2) If the prompt is not set, this keywords sleeps until &lt;code&gt;login_timeout&lt;/code&gt; and then reads all the output available on the connection. If the output contains &lt;code&gt;login_incorrect&lt;/code&gt; text, login is considered failed and also this keyword fails.&lt;/p&gt;
 &lt;p&gt;See `Configuration` section for more information about setting newline, timeout, and prompt.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Open Connection" deprecated="false">
+<kw name="Open Connection" lineno="364">
 <arguments>
 <arg>host</arg>
 <arg>alias=None</arg>
@@ -365,19 +355,15 @@
 <doc>&lt;p&gt;Opens a new Telnet connection to the given host and port.&lt;/p&gt;
 &lt;p&gt;The &lt;code&gt;timeout&lt;/code&gt;, &lt;code&gt;newline&lt;/code&gt;, &lt;code&gt;prompt&lt;/code&gt;, &lt;code&gt;prompt_is_regexp&lt;/code&gt;, &lt;code&gt;encoding&lt;/code&gt;, &lt;code&gt;default_log_level&lt;/code&gt;, &lt;code&gt;window_size&lt;/code&gt;, &lt;code&gt;environ_user&lt;/code&gt;, &lt;code&gt;terminal_emulation&lt;/code&gt;, &lt;code&gt;terminal_type&lt;/code&gt; and &lt;code&gt;telnetlib_log_level&lt;/code&gt; arguments get default values when the library is &lt;a href="#Importing"&gt;imported&lt;/a&gt;. Setting them here overrides those values for the opened connection. See `Configuration`, `Terminal emulation` and `Logging` sections for more information about these parameters and their possible values.&lt;/p&gt;
 &lt;p&gt;Possible already opened connections are cached and it is possible to switch back to them using `Switch Connection` keyword. It is possible to switch either using explicitly given &lt;code&gt;alias&lt;/code&gt; or using index returned by this keyword. Indexing starts from 1 and is reset back to it by `Close All Connections` keyword.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Read" deprecated="false">
+<kw name="Read" lineno="877">
 <arguments>
 <arg>loglevel=None</arg>
 </arguments>
 <doc>&lt;p&gt;Reads everything that is currently available in the output.&lt;/p&gt;
 &lt;p&gt;Read output is both returned and logged. See `Logging` section for more information about log levels.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Read Until" deprecated="false">
+<kw name="Read Until" lineno="891">
 <arguments>
 <arg>expected</arg>
 <arg>loglevel=None</arg>
@@ -385,10 +371,8 @@
 <doc>&lt;p&gt;Reads output until &lt;code&gt;expected&lt;/code&gt; text is encountered.&lt;/p&gt;
 &lt;p&gt;Text up to and including the match is returned and logged. If no match is found, this keyword fails. How much to wait for the output depends on the &lt;a href="#Configuration"&gt;configured timeout&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;See `Logging` section for more information about log levels. Use `Read Until Regexp` if more complex matching is needed.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Read Until Prompt" deprecated="false">
+<kw name="Read Until Prompt" lineno="1013">
 <arguments>
 <arg>loglevel=None</arg>
 <arg>strip_prompt=False</arg>
@@ -398,10 +382,8 @@
 &lt;p&gt;By default, text up to and including the prompt is returned and logged. If no prompt is found, this keyword fails. How much to wait for the output depends on the &lt;a href="#Configuration"&gt;configured timeout&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;If you want to exclude the prompt from the returned output, set &lt;code&gt;strip_prompt&lt;/code&gt; to a true value (see `Boolean arguments`). If your prompt is a regular expression, make sure that the expression spans the whole prompt, because only the part of the output that matches the regular expression is stripped away.&lt;/p&gt;
 &lt;p&gt;See `Logging` section for more information about log levels.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Read Until Regexp" deprecated="false">
+<kw name="Read Until Regexp" lineno="975">
 <arguments>
 <arg>*expected</arg>
 </arguments>
@@ -427,20 +409,16 @@
 &lt;td&gt;DEBUG&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Set Default Log Level" deprecated="false">
+<kw name="Set Default Log Level" lineno="663">
 <arguments>
 <arg>level</arg>
 </arguments>
 <doc>&lt;p&gt;Sets the default log level used for `logging` in the current connection.&lt;/p&gt;
 &lt;p&gt;The old default log level is returned and can be used to restore the log level later.&lt;/p&gt;
 &lt;p&gt;See `Configuration` section for more information about global and connection specific configuration.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Set Encoding" deprecated="false">
+<kw name="Set Encoding" lineno="604">
 <arguments>
 <arg>encoding=None</arg>
 <arg>errors=None</arg>
@@ -450,10 +428,8 @@
 &lt;p&gt;See `Configuration` section for more information about encoding and error handlers, as well as global and connection specific configuration in general.&lt;/p&gt;
 &lt;p&gt;The old values are returned and can be used to restore the encoding and the error handler later. See `Set Prompt` for a similar example.&lt;/p&gt;
 &lt;p&gt;If terminal emulation is used, the encoding can not be changed on an open connection.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Set Newline" deprecated="false">
+<kw name="Set Newline" lineno="542">
 <arguments>
 <arg>newline</arg>
 </arguments>
@@ -461,10 +437,8 @@
 &lt;p&gt;The old newline is returned and can be used to restore the newline later. See `Set Timeout` for a similar example.&lt;/p&gt;
 &lt;p&gt;If terminal emulation is used, the newline can not be changed on an open connection.&lt;/p&gt;
 &lt;p&gt;See `Configuration` section for more information about global and connection specific configuration.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Set Prompt" deprecated="false">
+<kw name="Set Prompt" lineno="565">
 <arguments>
 <arg>prompt</arg>
 <arg>prompt_is_regexp=False</arg>
@@ -495,19 +469,15 @@
 &lt;/table&gt;
 &lt;p&gt;See the documentation of &lt;a href="http://docs.python.org/library/re.html"&gt;Python re module&lt;/a&gt; for more information about the supported regular expression syntax. Notice that possible backslashes need to be escaped in Robot Framework test data.&lt;/p&gt;
 &lt;p&gt;See `Configuration` section for more information about global and connection specific configuration.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Set Telnetlib Log Level" deprecated="false">
+<kw name="Set Telnetlib Log Level" lineno="645">
 <arguments>
 <arg>level</arg>
 </arguments>
 <doc>&lt;p&gt;Sets the log level used for `logging` in the underlying &lt;code&gt;telnetlib&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Note that &lt;code&gt;telnetlib&lt;/code&gt; can be very noisy thus using the level &lt;code&gt;NONE&lt;/code&gt; can shutdown the messages generated by this library.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Set Timeout" deprecated="false">
+<kw name="Set Timeout" lineno="516">
 <arguments>
 <arg>timeout</arg>
 </arguments>
@@ -533,10 +503,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;See `Configuration` section for more information about global and connection specific configuration.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Switch Connection" deprecated="false">
+<kw name="Switch Connection" lineno="436">
 <arguments>
 <arg>index_or_alias</arg>
 </arguments>
@@ -636,10 +604,8 @@
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Write" deprecated="false">
+<kw name="Write" lineno="762">
 <arguments>
 <arg>text</arg>
 <arg>loglevel=None</arg>
@@ -649,19 +615,15 @@
 &lt;p&gt;This keyword consumes the written text, until the added newline, from the output and logs and returns it. The given text itself must not contain newlines. Use `Write Bare` instead if either of these features causes a problem.&lt;/p&gt;
 &lt;p&gt;&lt;b&gt;Note:&lt;/b&gt; This keyword does not return the possible output of the executed command. To get the output, one of the `Read ...` `keywords` must be used. See `Writing and reading` section for more details.&lt;/p&gt;
 &lt;p&gt;See `Logging` section for more information about log levels.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Write Bare" deprecated="false">
+<kw name="Write Bare" lineno="792">
 <arguments>
 <arg>text</arg>
 </arguments>
 <doc>&lt;p&gt;Writes the given text, and nothing else, into the connection.&lt;/p&gt;
 &lt;p&gt;This keyword does not append a newline nor consume the written text. Use `Write` if these features are needed.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Write Control Character" deprecated="false">
+<kw name="Write Control Character" lineno="838">
 <arguments>
 <arg>character</arg>
 </arguments>
@@ -681,10 +643,8 @@
 &lt;td&gt;# Send No operation command&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Write Until Expected Output" deprecated="false">
+<kw name="Write Until Expected Output" lineno="801">
 <arguments>
 <arg>text</arg>
 <arg>expected</arg>
@@ -710,7 +670,5 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;The above example writes command &lt;code&gt;ps -ef | grep myprocess\r\n&lt;/code&gt; until &lt;code&gt;myprocess&lt;/code&gt; appears in the output. The command is written every 0.5 seconds and the keyword fails if &lt;code&gt;myprocess&lt;/code&gt; does not appear in the output in 5 seconds.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
 </keywordspec>

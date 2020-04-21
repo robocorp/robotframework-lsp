@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<keywordspec name="String" type="library" format="HTML" generated="20200323 13:11:21">
-<version>3.2b3.dev1</version>
+<keywordspec name="String" type="LIBRARY" format="HTML" scope="GLOBAL" namedargs="true" generated="2020-04-14T18:21:03Z" specversion="2" source="X:\vscode-robot\robotframework\src\robot\libraries\String.py" lineno="31">
+<version>3.2rc2.dev1</version>
 <scope>global</scope>
 <namedargs>yes</namedargs>
 <doc>&lt;p&gt;A test library for string manipulation and verification.&lt;/p&gt;
@@ -19,7 +19,7 @@
 &lt;li&gt;`Convert To String`&lt;/li&gt;
 &lt;li&gt;`Convert To Bytes`&lt;/li&gt;
 &lt;/ul&gt;</doc>
-<kw name="Convert To Lower Case" deprecated="false">
+<kw name="Convert To Lower Case" lineno="55">
 <arguments>
 <arg>string</arg>
 </arguments>
@@ -48,10 +48,8 @@
 &lt;td&gt;1a2c3d&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Convert To Title Case" deprecated="false">
+<kw name="Convert To Title Case" lineno="87">
 <arguments>
 <arg>string</arg>
 <arg>exclude=None</arg>
@@ -107,10 +105,8 @@
 &lt;/table&gt;
 &lt;p&gt;The reason this keyword does not use Python's standard &lt;a href="https://docs.python.org/library/stdtypes.html#str.title"&gt;title()&lt;/a&gt; method is that it can yield undesired results, for example, if strings contain upper case letters or special characters like apostrophes. It would, for example, convert "it's an OK iPhone" to "It'S An Ok Iphone".&lt;/p&gt;
 &lt;p&gt;New in Robot Framework 3.2.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Convert To Upper Case" deprecated="false">
+<kw name="Convert To Upper Case" lineno="72">
 <arguments>
 <arg>string</arg>
 </arguments>
@@ -139,10 +135,8 @@
 &lt;td&gt;1A2C3D&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Decode Bytes To String" deprecated="false">
+<kw name="Decode Bytes To String" lineno="167">
 <arguments>
 <arg>bytes</arg>
 <arg>encoding</arg>
@@ -173,10 +167,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Use `Encode String To Bytes` if you need to convert Unicode strings to byte strings, and `Convert To String` in &lt;code&gt;BuiltIn&lt;/code&gt; if you need to convert arbitrary objects to Unicode strings.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Encode String To Bytes" deprecated="false">
+<kw name="Encode String To Bytes" lineno="144">
 <arguments>
 <arg>string</arg>
 <arg>encoding</arg>
@@ -207,10 +199,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Use `Convert To Bytes` in &lt;code&gt;BuiltIn&lt;/code&gt; if you want to create bytes based on character or integer sequences. Use `Decode Bytes To String` if you need to convert byte strings to Unicode strings and `Convert To String` in &lt;code&gt;BuiltIn&lt;/code&gt; if you need to convert arbitrary objects to Unicode.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Fetch From Left" deprecated="false">
+<kw name="Fetch From Left" lineno="555">
 <arguments>
 <arg>string</arg>
 <arg>marker</arg>
@@ -218,10 +208,8 @@
 <doc>&lt;p&gt;Returns contents of the &lt;code&gt;string&lt;/code&gt; before the first occurrence of &lt;code&gt;marker&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;If the &lt;code&gt;marker&lt;/code&gt; is not found, whole string is returned.&lt;/p&gt;
 &lt;p&gt;See also `Fetch From Right`, `Split String` and `Split String From Right`.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Fetch From Right" deprecated="false">
+<kw name="Fetch From Right" lineno="565">
 <arguments>
 <arg>string</arg>
 <arg>marker</arg>
@@ -229,10 +217,8 @@
 <doc>&lt;p&gt;Returns contents of the &lt;code&gt;string&lt;/code&gt; after the last occurrence of &lt;code&gt;marker&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;If the &lt;code&gt;marker&lt;/code&gt; is not found, whole string is returned.&lt;/p&gt;
 &lt;p&gt;See also `Fetch From Left`, `Split String` and `Split String From Right`.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Format String" deprecated="false">
+<kw name="Format String" lineno="191">
 <arguments>
 <arg>template</arg>
 <arg>*positional</arg>
@@ -293,10 +279,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;New in Robot Framework 3.1.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Generate Random String" deprecated="false">
+<kw name="Generate Random String" lineno="575">
 <arguments>
 <arg>length=8</arg>
 <arg>chars=[LETTERS][NUMBERS]</arg>
@@ -352,10 +336,8 @@
 &lt;td&gt;[NUMBERS]abcdef&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Line" deprecated="false">
+<kw name="Get Line" lineno="256">
 <arguments>
 <arg>string</arg>
 <arg>line_number</arg>
@@ -378,18 +360,14 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Use `Split To Lines` if all lines are needed.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Line Count" deprecated="false">
+<kw name="Get Line Count" lineno="223">
 <arguments>
 <arg>string</arg>
 </arguments>
 <doc>&lt;p&gt;Returns and logs the number of lines in the given string.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Lines Containing String" deprecated="false">
+<kw name="Get Lines Containing String" lineno="272">
 <arguments>
 <arg>string</arg>
 <arg>pattern</arg>
@@ -417,10 +395,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;See `Get Lines Matching Pattern` and `Get Lines Matching Regexp` if you need more complex pattern matching.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Lines Matching Pattern" deprecated="false">
+<kw name="Get Lines Matching Pattern" lineno="303">
 <arguments>
 <arg>string</arg>
 <arg>pattern</arg>
@@ -467,10 +443,8 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;See `Get Lines Matching Regexp` if you need more complex patterns and `Get Lines Containing String` if searching literal strings is enough.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Lines Matching Regexp" deprecated="false">
+<kw name="Get Lines Matching Regexp" lineno="339">
 <arguments>
 <arg>string</arg>
 <arg>pattern</arg>
@@ -508,10 +482,8 @@
 &lt;/table&gt;
 &lt;p&gt;See `Get Lines Matching Pattern` and `Get Lines Containing String` if you do not need full regular expression powers (and complexity).&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;partial_match&lt;/code&gt; argument is new in Robot Framework 2.9. In earlier versions exact match was always required.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Regexp Matches" deprecated="false">
+<kw name="Get Regexp Matches" lineno="385">
 <arguments>
 <arg>string</arg>
 <arg>pattern</arg>
@@ -572,10 +544,8 @@ ${named group} = ['he', 'ri']
 ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;/pre&gt;
 &lt;p&gt;New in Robot Framework 2.9.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Get Substring" deprecated="false">
+<kw name="Get Substring" lineno="606">
 <arguments>
 <arg>string</arg>
 <arg>start</arg>
@@ -621,10 +591,8 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Remove String" deprecated="false">
+<kw name="Remove String" lineno="469">
 <arguments>
 <arg>string</arg>
 <arg>*removables</arg>
@@ -664,20 +632,16 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Remove String Using Regexp" deprecated="false">
+<kw name="Remove String Using Regexp" lineno="493">
 <arguments>
 <arg>string</arg>
 <arg>*patterns</arg>
 </arguments>
 <doc>&lt;p&gt;Removes &lt;code&gt;patterns&lt;/code&gt; from the given &lt;code&gt;string&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;This keyword is otherwise identical to `Remove String`, but the &lt;code&gt;patterns&lt;/code&gt; to search for are considered to be a regular expression. See `Replace String Using Regexp` for more information about the regular expression syntax. That keyword can also be used if there is a need to remove only a certain number of occurrences.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Replace String" deprecated="false">
+<kw name="Replace String" lineno="424">
 <arguments>
 <arg>string</arg>
 <arg>search_for</arg>
@@ -723,10 +687,8 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Replace String Using Regexp" deprecated="false">
+<kw name="Replace String Using Regexp" lineno="448">
 <arguments>
 <arg>string</arg>
 <arg>pattern</arg>
@@ -755,10 +717,8 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;td&gt;count=1&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Should Be Byte String" deprecated="false">
+<kw name="Should Be Byte String" lineno="703">
 <arguments>
 <arg>item</arg>
 <arg>msg=None</arg>
@@ -766,10 +726,8 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 <doc>&lt;p&gt;Fails if the given &lt;code&gt;item&lt;/code&gt; is not a byte string.&lt;/p&gt;
 &lt;p&gt;Use `Should Be Unicode String` if you want to verify the &lt;code&gt;item&lt;/code&gt; is a Unicode string, or `Should Be String` if both Unicode and byte strings are fine. See `Should Be String` for more details about Unicode strings and byte strings.&lt;/p&gt;
 &lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Should Be Lowercase" deprecated="false">
+<kw name="Should Be Lowercase" lineno="717">
 <arguments>
 <arg>string</arg>
 <arg>msg=None</arg>
@@ -778,10 +736,8 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;p&gt;For example, &lt;code&gt;'string'&lt;/code&gt; and &lt;code&gt;'with specials!'&lt;/code&gt; would pass, and &lt;code&gt;'String'&lt;/code&gt;, &lt;code&gt;''&lt;/code&gt; and &lt;code&gt;' '&lt;/code&gt; would fail.&lt;/p&gt;
 &lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;
 &lt;p&gt;See also `Should Be Uppercase` and `Should Be Titlecase`.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Should Be String" deprecated="false">
+<kw name="Should Be String" lineno="656">
 <arguments>
 <arg>item</arg>
 <arg>msg=None</arg>
@@ -790,10 +746,8 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;p&gt;With Python 2, except with IronPython, this keyword passes regardless is the &lt;code&gt;item&lt;/code&gt; a Unicode string or a byte string. Use `Should Be Unicode String` or `Should Be Byte String` if you want to restrict the string type. Notice that with Python 2, except with IronPython, &lt;code&gt;'string'&lt;/code&gt; creates a byte string and &lt;code&gt;u'unicode'&lt;/code&gt; must be used to create a Unicode string.&lt;/p&gt;
 &lt;p&gt;With Python 3 and IronPython, this keyword passes if the string is a Unicode string but fails if it is bytes. Notice that with both Python 3 and IronPython, &lt;code&gt;'string'&lt;/code&gt; creates a Unicode string, and &lt;code&gt;b'bytes'&lt;/code&gt; must be used to create a byte string.&lt;/p&gt;
 &lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Should Be Titlecase" deprecated="false">
+<kw name="Should Be Titlecase" lineno="745">
 <arguments>
 <arg>string</arg>
 <arg>msg=None</arg>
@@ -803,10 +757,8 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;p&gt;For example, &lt;code&gt;'This Is Title'&lt;/code&gt; would pass, and &lt;code&gt;'Word In UPPER'&lt;/code&gt;, &lt;code&gt;'Word In lower'&lt;/code&gt;, &lt;code&gt;''&lt;/code&gt; and &lt;code&gt;' '&lt;/code&gt; would fail.&lt;/p&gt;
 &lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;
 &lt;p&gt;See also `Should Be Uppercase` and `Should Be Lowercase`.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Should Be Unicode String" deprecated="false">
+<kw name="Should Be Unicode String" lineno="689">
 <arguments>
 <arg>item</arg>
 <arg>msg=None</arg>
@@ -814,10 +766,8 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 <doc>&lt;p&gt;Fails if the given &lt;code&gt;item&lt;/code&gt; is not a Unicode string.&lt;/p&gt;
 &lt;p&gt;Use `Should Be Byte String` if you want to verify the &lt;code&gt;item&lt;/code&gt; is a byte string, or `Should Be String` if both Unicode and byte strings are fine. See `Should Be String` for more details about Unicode strings and byte strings.&lt;/p&gt;
 &lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Should Be Uppercase" deprecated="false">
+<kw name="Should Be Uppercase" lineno="731">
 <arguments>
 <arg>string</arg>
 <arg>msg=None</arg>
@@ -826,10 +776,8 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;p&gt;For example, &lt;code&gt;'STRING'&lt;/code&gt; and &lt;code&gt;'WITH SPECIALS!'&lt;/code&gt; would pass, and &lt;code&gt;'String'&lt;/code&gt;, &lt;code&gt;''&lt;/code&gt; and &lt;code&gt;' '&lt;/code&gt; would fail.&lt;/p&gt;
 &lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;
 &lt;p&gt;See also `Should Be Titlecase` and `Should Be Lowercase`.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Should Not Be String" deprecated="false">
+<kw name="Should Not Be String" lineno="677">
 <arguments>
 <arg>item</arg>
 <arg>msg=None</arg>
@@ -837,10 +785,8 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 <doc>&lt;p&gt;Fails if the given &lt;code&gt;item&lt;/code&gt; is a string.&lt;/p&gt;
 &lt;p&gt;See `Should Be String` for more details about Unicode strings and byte strings.&lt;/p&gt;
 &lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Split String" deprecated="false">
+<kw name="Split String" lineno="507">
 <arguments>
 <arg>string</arg>
 <arg>separator=None</arg>
@@ -877,10 +823,8 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;See `Split String From Right` if you want to start splitting from right, and `Fetch From Left` and `Fetch From Right` if you only want to get first/last part of the string.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Split String From Right" deprecated="false">
+<kw name="Split String From Right" lineno="532">
 <arguments>
 <arg>string</arg>
 <arg>separator=None</arg>
@@ -907,10 +851,8 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;td&gt;1&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Split String To Characters" deprecated="false">
+<kw name="Split String To Characters" lineno="547">
 <arguments>
 <arg>string</arg>
 </arguments>
@@ -923,10 +865,8 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;td&gt;${string}&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Split To Lines" deprecated="false">
+<kw name="Split To Lines" lineno="229">
 <arguments>
 <arg>string</arg>
 <arg>start=0</arg>
@@ -981,10 +921,8 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;Use `Get Line` if you only need to get a single line.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
-<kw name="Strip String" deprecated="false">
+<kw name="Strip String" lineno="624">
 <arguments>
 <arg>string</arg>
 <arg>mode=both</arg>
@@ -1033,7 +971,5 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;New in Robot Framework 3.0.&lt;/p&gt;</doc>
-<tags>
-</tags>
 </kw>
 </keywordspec>

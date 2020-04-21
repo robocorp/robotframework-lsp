@@ -1,4 +1,3 @@
-id: 1
 jsonrpc: '2.0'
 result:
 - deprecated: false
@@ -7,19 +6,6 @@ result:
   preselect: false
   textEdit:
     newText: '*** Setting ***'
-    range:
-      end:
-        character: 7
-        line: 0
-      start:
-        character: 0
-        line: 0
-- deprecated: false
-  kind: 7
-  label: '*** Settings ***'
-  preselect: false
-  textEdit:
-    newText: '*** Settings ***'
     range:
       end:
         character: 7

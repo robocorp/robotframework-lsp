@@ -5,7 +5,6 @@ import os
 import logging
 import sys
 from robotframework_ls.options import USE_TIMEOUTS, NO_TIMEOUT
-from robotframework_ls._utils import TimeoutError
 
 __file__ = os.path.abspath(__file__)  # @ReservedAssignment
 
@@ -93,24 +92,9 @@ LIBSPEC_2_A = """<?xml version="1.0" encoding="UTF-8"?>
 
 
 def wait_for_condition(condition, msg=None, timeout=TIMEOUT, sleep=1 / 20.0):
-    import time
+    from robotframework_ls._utils import wait_for_condition as w
 
-    curtime = time.time()
-
-    while True:
-        if condition():
-            break
-        if timeout is not None and (time.time() - curtime > timeout):
-            error_msg = "Condition not reached in %s seconds" % (timeout,)
-            if msg is not None:
-                error_msg += "\n"
-                if callable(msg):
-                    error_msg += msg()
-                else:
-                    error_msg += str(msg)
-
-            raise TimeoutError(error_msg)
-        time.sleep(sleep)
+    return w(condition, msg=msg, timeout=timeout, sleep=sleep)
 
 
 @pytest.fixture
@@ -226,9 +210,10 @@ def log_file(tmpdir):
 
 @pytest.fixture(autouse=True)
 def config_logger(tmpdir):
-    from robotframework_ls.__main__ import _configure_logger
 
-    _configure_logger(2)
+    from robotframework_ls.robotframework_log import configure_logger
+
+    configure_logger("test", 2)
 
 
 @pytest.fixture
@@ -316,9 +301,7 @@ def language_server(request):
 
 class _CasesFixture(object):
     def __init__(self):
-        self.resources_dir = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), "resources"
-        )
+        self.resources_dir = os.path.join(os.path.dirname(__file__), "_resources")
         assert os.path.exists(self.resources_dir)
 
     def get_path(self, resources_relative_path, must_exist=True):

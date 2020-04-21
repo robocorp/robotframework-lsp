@@ -1,5 +1,5 @@
 - deprecated: false
-  kind: 2
+  kind: 14
   label: Default Tags
   preselect: false
   textEdit:
@@ -12,7 +12,7 @@
         character: 0
         line: 3
 - deprecated: false
-  kind: 2
+  kind: 14
   label: Documentation
   preselect: false
   textEdit:
@@ -25,7 +25,7 @@
         character: 0
         line: 3
 - deprecated: false
-  kind: 2
+  kind: 14
   label: Force Tags
   preselect: false
   textEdit:
@@ -38,7 +38,7 @@
         character: 0
         line: 3
 - deprecated: false
-  kind: 2
+  kind: 14
   label: Library
   preselect: false
   textEdit:
@@ -51,7 +51,7 @@
         character: 0
         line: 3
 - deprecated: false
-  kind: 2
+  kind: 14
   label: Metadata
   preselect: false
   textEdit:
@@ -64,7 +64,7 @@
         character: 0
         line: 3
 - deprecated: false
-  kind: 2
+  kind: 14
   label: Resource
   preselect: false
   textEdit:
@@ -77,7 +77,7 @@
         character: 0
         line: 3
 - deprecated: false
-  kind: 2
+  kind: 14
   label: Suite Setup
   preselect: false
   textEdit:
@@ -90,7 +90,7 @@
         character: 0
         line: 3
 - deprecated: false
-  kind: 2
+  kind: 14
   label: Suite Teardown
   preselect: false
   textEdit:
@@ -103,7 +103,7 @@
         character: 0
         line: 3
 - deprecated: false
-  kind: 2
+  kind: 14
   label: Task Setup
   preselect: false
   textEdit:
@@ -116,7 +116,7 @@
         character: 0
         line: 3
 - deprecated: false
-  kind: 2
+  kind: 14
   label: Task Teardown
   preselect: false
   textEdit:
@@ -129,7 +129,7 @@
         character: 0
         line: 3
 - deprecated: false
-  kind: 2
+  kind: 14
   label: Task Template
   preselect: false
   textEdit:
@@ -142,7 +142,7 @@
         character: 0
         line: 3
 - deprecated: false
-  kind: 2
+  kind: 14
   label: Task Timeout
   preselect: false
   textEdit:
@@ -155,7 +155,7 @@
         character: 0
         line: 3
 - deprecated: false
-  kind: 2
+  kind: 14
   label: Test Setup
   preselect: false
   textEdit:
@@ -168,7 +168,7 @@
         character: 0
         line: 3
 - deprecated: false
-  kind: 2
+  kind: 14
   label: Test Teardown
   preselect: false
   textEdit:
@@ -181,7 +181,7 @@
         character: 0
         line: 3
 - deprecated: false
-  kind: 2
+  kind: 14
   label: Test Template
   preselect: false
   textEdit:
@@ -194,7 +194,7 @@
         character: 0
         line: 3
 - deprecated: false
-  kind: 2
+  kind: 14
   label: Test Timeout
   preselect: false
   textEdit:
@@ -207,7 +207,7 @@
         character: 0
         line: 3
 - deprecated: false
-  kind: 2
+  kind: 14
   label: Variables
   preselect: false
   textEdit:
