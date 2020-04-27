@@ -1,5 +1,8 @@
 - deprecated: false
-  documentation: ''
+  documentation: 'My Equal Redefined(${arg1}, ${arg2})
+
+
+    '
   documentationFormat: markdown
   insertTextFormat: 2
   kind: 3
@@ -15,7 +18,10 @@
         character: 4
         line: 9
 - deprecated: false
-  documentation: 'Yes, this is redefined.
+  documentation: 'Yet Another Equal Redefined(${arg1}, ${arg2})
+
+
+    Yes, this is redefined.
 
     2nd line.
 

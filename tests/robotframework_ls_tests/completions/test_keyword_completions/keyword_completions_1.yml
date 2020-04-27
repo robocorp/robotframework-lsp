@@ -1,5 +1,8 @@
 - deprecated: false
-  documentation: ''
+  documentation: 'Verify Another Model(model=10)
+
+
+    '
   documentationFormat: markdown
   insertTextFormat: 2
   kind: 2
@@ -15,7 +18,10 @@
         character: 4
         line: 7
 - deprecated: false
-  documentation: ':type model: int
+  documentation: 'Verify Model(model)
+
+
+    :type model: int
 
 
     '

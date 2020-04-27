@@ -43,7 +43,8 @@ class _KeywordFoundFromAst(object):
     def docs(self):
         from robotframework_ls.impl import ast_utils
 
-        return ast_utils.get_documentation(self._keyword_node)
+        docs = ast_utils.get_documentation(self._keyword_node)
+        return "%s(%s)\n\n%s" % (self.keyword_name, ", ".join(self.keyword_args), docs)
 
     @property
     @cache.instance_cache
@@ -135,7 +136,15 @@ class _KeywordFoundFromLibrary(object):
     def _docs_and_format(self):
         from robotframework_ls.impl.robot_specbuilder import docs_and_format
 
-        return docs_and_format(self._keyword_doc)
+        docs, docs_format = docs_and_format(self._keyword_doc)
+        if self.keyword_args:
+            docs = "%s(%s)\n\n%s" % (
+                self.keyword_name,
+                ", ".join(self.keyword_args),
+                docs,
+            )
+
+        return docs, docs_format
 
     @property
     @cache.instance_cache
