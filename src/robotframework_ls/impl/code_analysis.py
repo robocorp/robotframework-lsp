@@ -27,7 +27,6 @@ def collect_analysis_errors(completion_context):
     collect_keywords(completion_context, collector)
 
     ast = completion_context.get_ast()
-    ast_utils.print_ast(ast)
     for keyword_usage_info in ast_utils.iter_keyword_usage_tokens(ast):
         if (
             normalize_robot_name(keyword_usage_info.name)

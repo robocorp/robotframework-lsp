@@ -134,3 +134,73 @@ def test_keyword_completions_builtin_duplicated(workspace, cases, libspec_manage
     ]
 
     assert len(found) == 1
+
+
+def test_keyword_completions_fixture(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import keyword_completions
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case2.robot")
+    doc.source = doc.source + "\n    [Teardown]    my_Equal red"
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+
+    found = [
+        completion["label"]
+        for completion in completions
+        if completion["label"].lower() == "my equal redefined"
+    ]
+
+    assert len(found) == 1
+
+
+def test_keyword_completions_settings_fixture(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import keyword_completions
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case2.robot")
+    doc.source = doc.source + "\n*** Keywords ***\nTeardown    my_Equal red"
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+
+    found = [
+        completion["label"]
+        for completion in completions
+        if completion["label"].lower() == "my equal redefined"
+    ]
+
+    assert len(found) == 1
+
+
+def test_keyword_completions_template(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import keyword_completions
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+My Equal Redefined
+    [Arguments]         ${arg1}     ${arg2}
+    Should Be Equal     ${arg1}     ${arg2}
+
+*** Settings ***
+Test Template    my eq"""
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+
+    found = [
+        completion["label"]
+        for completion in completions
+        if completion["label"].lower() == "my equal redefined"
+    ]
+
+    assert len(found) == 1

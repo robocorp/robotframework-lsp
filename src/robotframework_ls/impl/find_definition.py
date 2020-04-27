@@ -58,16 +58,16 @@ def find_definition(completion_context):
         at this place (callers are responsible for validating entries).
     """
     from robotframework_ls.impl.collect_keywords import collect_keywords
+    from robotframework_ls.impl import ast_utils
 
     token_info = completion_context.get_current_token()
-    if token_info is not None:
+    if token_info is not None and ast_utils.is_keyword_name_location(
+        token_info.node, token_info.token
+    ):
         token = token_info.token
-        if token.type == token.KEYWORD:
-            # Find a keyword definition.
+        collector = _Collector(token.value)
+        collect_keywords(completion_context, collector)
 
-            collector = _Collector(token.value)
-            collect_keywords(completion_context, collector)
-
-            return collector.matches
+        return collector.matches
 
     return []

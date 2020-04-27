@@ -70,18 +70,18 @@ def complete(completion_context):
     """
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
     from robotframework_ls.impl.collect_keywords import collect_keywords
+    from robotframework_ls.impl import ast_utils
 
     token_info = completion_context.get_current_token()
-    if token_info is not None:
+    if token_info is not None and ast_utils.is_keyword_name_location(
+        token_info.node, token_info.token
+    ):
         token = token_info.token
-        if token.type == token.KEYWORD:
-            # We're in a context where we should complete keywords.
+        collector = _Collector(
+            completion_context.sel, token, RobotStringMatcher(token.value)
+        )
+        collect_keywords(completion_context, collector)
 
-            collector = _Collector(
-                completion_context.sel, token, RobotStringMatcher(token.value)
-            )
-            collect_keywords(completion_context, collector)
-
-            return collector.completion_items
+        return collector.completion_items
 
     return []

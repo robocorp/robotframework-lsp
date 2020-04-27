@@ -30,3 +30,58 @@ def test_find_definition_keyword(workspace, libspec_manager):
         definition = next(iter(definitions))
         assert definition.source.endswith("case2.robot")
         assert definition.lineno == 1
+
+
+def test_find_definition_keyword_fixture(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case2.robot")
+    doc.source = doc.source + "\n    [Teardown]    my_Equal redefined"
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 1
+
+
+def test_find_definition_keyword_settings_fixture(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case2.robot")
+    doc.source = doc.source + "\n*** Keywords ***\nTeardown    my_Equal redefined"
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 1
+
+
+def test_find_definition_keyword_test_template_fixture(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+My Equal Redefined
+    [Arguments]         ${arg1}     ${arg2}
+    Should Be Equal     ${arg1}     ${arg2}
+
+*** Settings ***
+Test Template    my equal_redefined"""
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 2

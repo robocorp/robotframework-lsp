@@ -247,28 +247,6 @@ def iter_keyword_arguments_as_str(node):
                 yield str(token)
 
 
-def iter_keyword_usage_tokens(node):
-    """
-    Iterates through all the places where a keyword name is being used, providing
-    the stack, node, token and name.
-    
-    :return: generator(_KeywordUsageInfo)
-    """
-    from robot.parsing.lexer.tokens import Token
-    from robot.parsing.model.statements import Fixture
-
-    for stack, node in _iter_nodes(node, recursive=True):
-        if node.__class__.__name__ == "KeywordCall":
-            token = node.get_token(Token.KEYWORD)
-            keyword_name = token.value
-            yield _KeywordUsageInfo(tuple(stack), node, token, keyword_name)
-
-        if isinstance(node, Fixture):
-            token = node.get_token(Token.NAME)
-            keyword_name = token.value
-            yield _KeywordUsageInfo(tuple(stack), node, token, keyword_name)
-
-
 def get_documentation(node):
     doc = []
     for _stack, node in _iter_nodes_filtered(node, accept_class="Documentation"):
@@ -276,3 +254,38 @@ def get_documentation(node):
             if token.type == token.ARGUMENT:
                 doc.append(str(token).strip())
     return "\n".join(doc)
+
+
+def iter_keyword_usage_tokens(node):
+    """
+    Iterates through all the places where a keyword name is being used, providing
+    the stack, node, token and name.
+    
+    :return: generator(_KeywordUsageInfo)
+    :note: this goes hand-in-hand with is_keyword_name_location.
+    """
+    from robot.parsing.lexer.tokens import Token
+    from robot.parsing.model import statements
+
+    for stack, node in _iter_nodes(node, recursive=True):
+        if node.__class__.__name__ == "KeywordCall":
+            token = node.get_token(Token.KEYWORD)
+            keyword_name = token.value
+            yield _KeywordUsageInfo(tuple(stack), node, token, keyword_name)
+
+        elif isinstance(node, (statements.Fixture, statements.TestTemplate)):
+            token = node.get_token(Token.NAME)
+            keyword_name = token.value
+            yield _KeywordUsageInfo(tuple(stack), node, token, keyword_name)
+
+
+def is_keyword_name_location(node, token):
+    """
+    :note: this goes hand-in-hand with iter_keyword_usage_tokens.
+    """
+    from robot.parsing.model import statements
+
+    return token.type == token.KEYWORD or (
+        token.type == token.NAME
+        and isinstance(node, (statements.Fixture, statements.TestTemplate))
+    )
