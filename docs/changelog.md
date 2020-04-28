@@ -1,4 +1,13 @@
 
+New in 0.0.10 (2020-04-28)
+-----------------------------
+
+- Code analysis: check if keywords are properly imported/defined (new in 0.0.10).
+- Properly consider that keywords may appear in fixtures and templates (code analysis, code completion and go to definition).
+- Add `args` placeholder to Robot launch configuration file (launching).
+- Arguments are now shown in keyword documentation (code completion).
+- Properly deal with path based library imports (code analysis, code completion and go to definition).
+
 New in 0.0.9 (2020-04-20)
 -----------------------------
 

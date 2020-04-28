@@ -9,7 +9,7 @@ README = open(_readme_filename, "r").read()
 
 setup(
     name="robotframework-lsp",
-    version="0.0.9",
+    version="0.0.10",
     description="Language Server Protocol implementation for Robot Framework",
     long_description=README,
     url="https://github.com/robocorp/robotframework-lsp",
