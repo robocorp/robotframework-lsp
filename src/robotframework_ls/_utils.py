@@ -473,3 +473,31 @@ def wait_for_condition(condition, msg=None, timeout=DEFAULT_TIMEOUT, sleep=1 / 2
 
             raise TimeoutError(error_msg)
         time.sleep(sleep)
+
+
+def isinstance_name(obj, classname, memo={}):
+    """
+    Checks if a given object is instance of a class with the given name.
+    """
+    if classname.__class__ in (list, tuple):
+        for c in classname:
+            if isinstance_name(obj, c):
+                return True
+        return False
+
+    cls = obj.__class__
+    key = (cls, classname)
+    try:
+        return memo[key]
+    except KeyError:
+        if cls.__name__ == classname:
+            memo[key] = True
+        else:
+            for check in obj.__class__.__mro__:
+                if check.__name__ == classname:
+                    memo[key] = True
+                    break
+            else:
+                memo[key] = False
+
+        return memo[key]

@@ -265,7 +265,7 @@ def iter_keyword_usage_tokens(node):
     :note: this goes hand-in-hand with is_keyword_name_location.
     """
     from robot.api import Token
-    from robot.parsing.model import statements
+    from robotframework_ls._utils import isinstance_name
 
     for stack, node in _iter_nodes(node, recursive=True):
         if node.__class__.__name__ == "KeywordCall":
@@ -273,7 +273,7 @@ def iter_keyword_usage_tokens(node):
             keyword_name = token.value
             yield _KeywordUsageInfo(tuple(stack), node, token, keyword_name)
 
-        elif isinstance(node, (statements.Fixture, statements.TestTemplate)):
+        elif isinstance_name(node, ("Fixture", "TestTemplate")):
             token = node.get_token(Token.NAME)
             keyword_name = token.value
             yield _KeywordUsageInfo(tuple(stack), node, token, keyword_name)
@@ -283,9 +283,8 @@ def is_keyword_name_location(node, token):
     """
     :note: this goes hand-in-hand with iter_keyword_usage_tokens.
     """
-    from robot.parsing.model import statements
+    from robotframework_ls._utils import isinstance_name
 
     return token.type == token.KEYWORD or (
-        token.type == token.NAME
-        and isinstance(node, (statements.Fixture, statements.TestTemplate))
+        token.type == token.NAME and isinstance_name(node, ("Fixture", "TestTemplate"))
     )
