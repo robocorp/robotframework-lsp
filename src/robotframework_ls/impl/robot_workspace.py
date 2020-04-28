@@ -72,7 +72,7 @@ class RobotDocument(Document):
             raise AssertionError(
                 "The AST can only be accessed in the RobotFrameworkServerApi, not in the RobotFrameworkLanguageServer."
             )
-        from robot.parsing import get_model, get_resource_model, get_init_model
+        from robot.api import get_model, get_resource_model, get_init_model
 
         source = self.source
 

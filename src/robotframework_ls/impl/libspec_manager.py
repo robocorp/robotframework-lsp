@@ -138,7 +138,7 @@ class LibspecManager(object):
         try:
             import robot
 
-            v = str(robot.version.VERSION)
+            v = str(robot.get_version())
         except:
             v = "unknown"
 

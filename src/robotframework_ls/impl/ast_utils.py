@@ -264,7 +264,7 @@ def iter_keyword_usage_tokens(node):
     :return: generator(_KeywordUsageInfo)
     :note: this goes hand-in-hand with is_keyword_name_location.
     """
-    from robot.parsing.lexer.tokens import Token
+    from robot.api import Token
     from robot.parsing.model import statements
 
     for stack, node in _iter_nodes(node, recursive=True):
