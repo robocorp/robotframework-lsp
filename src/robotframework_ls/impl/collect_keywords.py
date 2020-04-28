@@ -209,7 +209,9 @@ def _collect_libraries_keywords(completion_context, collector):
         if not completion_context.memo.complete_for_library(library_name):
             continue
 
-        library_doc = libspec_manager.get_library_info(library_name, create=True)
+        library_doc = libspec_manager.get_library_info(
+            library_name, create=True, current_doc_uri=completion_context.doc.uri
+        )
         if library_doc is not None:
             #: :type keyword: KeywordDoc
             for keyword in library_doc.keywords:

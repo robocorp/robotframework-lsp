@@ -117,29 +117,33 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         definitions = find_definition(completion_context)
         ret = []
         for definition in definitions:
-            if definition.source:
-                if not os.path.exists(definition.source):
-                    log.info(
-                        "Found definition: %s (but source does not exist).", definition
-                    )
-                    continue
-                lineno = definition.lineno
-                if lineno is None or lineno < 0:
-                    lineno = 0
+            if not definition.source:
+                log.info("Found definition with empty source (%s).", definition)
+                continue
 
-                end_lineno = definition.end_lineno
-                if end_lineno is None or end_lineno < 0:
-                    end_lineno = 0
-
-                col_offset = definition.col_offset
-                end_col_offset = definition.end_col_offset
-
-                ret.append(
-                    Location(
-                        uris.from_fs_path(definition.source),
-                        Range((lineno, col_offset), (end_lineno, end_col_offset)),
-                    ).to_dict()
+            if not os.path.exists(definition.source):
+                log.info(
+                    "Found definition: %s (but source does not exist).", definition
                 )
+                continue
+
+            lineno = definition.lineno
+            if lineno is None or lineno < 0:
+                lineno = 0
+
+            end_lineno = definition.end_lineno
+            if end_lineno is None or end_lineno < 0:
+                end_lineno = 0
+
+            col_offset = definition.col_offset
+            end_col_offset = definition.end_col_offset
+
+            ret.append(
+                Location(
+                    uris.from_fs_path(definition.source),
+                    Range((lineno, col_offset), (end_lineno, end_col_offset)),
+                ).to_dict()
+            )
         return ret
 
     def m_code_format(self, text_document, options):
@@ -173,15 +177,16 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         from robotframework_ls.impl.completion_context import CompletionContext
 
         if not self._check_min_version((3, 2)):
-            log.info("robotframework version too old for completions.")
+            log.info("robotframework version too old.")
             return None
         workspace = self.workspace
         if not workspace:
-            log.info("workspace still not initialized.")
+            log.info("Workspace still not initialized.")
             return None
 
         document = workspace.get_document(doc_uri, create=False)
         if document is None:
+            log.info("Unable to get document for uri: %s.", doc_uri)
             return None
         return CompletionContext(
             document, line, col, workspace=workspace, config=self.config

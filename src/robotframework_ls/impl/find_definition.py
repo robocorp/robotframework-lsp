@@ -31,6 +31,8 @@ class _Definition(object):
     def __str__(self):
         return "Definition[%s, %s:%s]" % (self.keyword_name, self.source, self.lineno)
 
+    __repr__ = __str__
+
 
 class _Collector(object):
     def __init__(self, match_name):

@@ -1,3 +1,6 @@
+import pytest
+
+
 def test_keyword_completions_builtin(workspace, libspec_manager):
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
@@ -20,19 +23,32 @@ def test_keyword_completions_builtin(workspace, libspec_manager):
     ]
 
 
+@pytest.mark.parametrize(
+    "library_import", ["case1_library", "case1_library.py", "__FULL_PATH__"]
+)
 def test_keyword_completions_user_library(
-    data_regression, workspace, tmpdir, cases, libspec_manager
+    data_regression, workspace, tmpdir, cases, libspec_manager, library_import
 ):
     import os.path
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls_tests.fixtures import LIBSPEC_1
+    from robotframework_ls import uris
 
     workspace_dir = str(tmpdir.join("workspace"))
     cases.copy_to("case1", workspace_dir)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
+
+    if library_import == "__FULL_PATH__":
+        case1_robot_path = uris.to_fs_path(doc.uri)
+        case1_py_path = os.path.join(
+            os.path.dirname(case1_robot_path), "case1_library.py"
+        )
+        library_import = case1_py_path
+
+    doc.source = doc.source.replace("case1_library", library_import)
     doc.source = doc.source + "\n    verify"
 
     completions = keyword_completions.complete(

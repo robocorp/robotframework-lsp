@@ -4,7 +4,7 @@ def test_keywords_manager(workspace, libspec_manager):
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
 
-    libspec_manager.create_libspec("case1_library")
+    libspec_manager._create_libspec("case1_library")
     libspec_file = os.path.join(
         libspec_manager.user_libspec_dir, "case1_library.libspec"
     )
