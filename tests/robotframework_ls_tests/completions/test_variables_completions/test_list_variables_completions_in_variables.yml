@@ -1,0 +1,35 @@
+- deprecated: false
+  documentation:
+  - Matti
+  - Teppo
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: '@{NAMES}'
+  preselect: false
+  textEdit:
+    newText: '@{NAMES}'
+    range:
+      end:
+        character: 18
+        line: 3
+      start:
+        character: 16
+        line: 3
+- deprecated: false
+  documentation:
+  - '@{'
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: '@{NAMES2}'
+  preselect: false
+  textEdit:
+    newText: '@{NAMES2}'
+    range:
+      end:
+        character: 18
+        line: 3
+      start:
+        character: 16
+        line: 3

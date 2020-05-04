@@ -88,6 +88,20 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             log.exception("Error collecting errors.")
             return []
 
+    def m_complete_all(self, doc_uri, line, col):
+        from robotframework_ls.impl import section_name_completions
+        from robotframework_ls.impl import keyword_completions
+        from robotframework_ls.impl import variable_completions
+
+        completion_context = self._create_completion_context(doc_uri, line, col)
+        if completion_context is None:
+            return []
+
+        ret = section_name_completions.complete(completion_context)
+        ret.extend(keyword_completions.complete(completion_context))
+        ret.extend(variable_completions.complete(completion_context))
+        return ret
+
     def m_section_name_complete(self, doc_uri, line, col):
         from robotframework_ls.impl import section_name_completions
 

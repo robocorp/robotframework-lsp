@@ -73,6 +73,34 @@ def test_section_completions_integrated(language_server, ws_root_path, data_regr
     check("completion_settings_plural")
 
 
+def test_variables_completions_integrated(
+    language_server_tcp, ws_root_path, data_regression
+):
+    from robotframework_ls.workspace import Document
+
+    language_server = language_server_tcp
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    language_server.open_doc(uri, 1)
+    contents = """
+*** Variables ***
+${NAME}         Robot Framework
+${VERSION}      2.0
+${ROBOT}        ${NAME} ${VERSION}
+
+*** Test Cases ***
+List Variable
+    Log    ${NAME}
+    Should Contain    ${"""
+    language_server.change_doc(uri, 2, contents)
+
+    doc = Document("", source=contents)
+    line, col = doc.get_last_line_col()
+    completions = language_server.get_completions(uri, line, col)
+    del completions["id"]
+    data_regression.check(completions, "variable_completions")
+
+
 def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regression):
     from robotframework_ls import _utils
     from robotframework_ls._utils import kill_process_and_subprocesses

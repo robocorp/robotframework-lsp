@@ -238,48 +238,9 @@ def _collect_resource_imports_keywords(completion_context, collector):
     """
     :param CompletionContext completion_context:
     """
-    from robotframework_ls import uris
-
-    # Get keywords from resources
-    resource_imports = completion_context.get_resource_imports()
-    for resource_import in resource_imports:
-        for token in resource_import.tokens:
-            if token.type == token.NAME:
-                parts = []
-                for v in token.tokenize_variables():
-                    if v.type == v.NAME:
-                        parts.append(str(v))
-
-                    elif v.type == v.VARIABLE:
-                        # Resolve variable from config
-                        v = str(v)
-                        if v.startswith("${") and v.endswith("}"):
-                            v = v[2:-1]
-                            parts.append(completion_context.convert_robot_variable(v))
-                        else:
-                            log.info("Cannot resolve variable: %s", v)
-
-                resource_path = "".join(parts)
-                if not os.path.isabs(resource_path):
-                    # It's a relative resource, resolve its location based on the
-                    # current file.
-                    resource_path = os.path.join(
-                        os.path.dirname(completion_context.doc.path), resource_path
-                    )
-
-                ws = completion_context.workspace
-                if not os.path.exists(resource_path):
-                    log.info("Resource not found: %s", resource_path)
-                    continue
-
-                doc_uri = uris.from_fs_path(resource_path)
-
-                resource_doc = ws.get_document(doc_uri, create=False)
-                if resource_doc is None:
-                    resource_doc = ws.create_untracked_document(doc_uri)
-
-                new_ctx = completion_context.create_copy(resource_doc)
-                _collect_following_imports(new_ctx, collector)
+    for resource_doc in completion_context.iter_imports_docs():
+        new_ctx = completion_context.create_copy(resource_doc)
+        _collect_following_imports(new_ctx, collector)
 
 
 def _collect_following_imports(completion_context, collector):

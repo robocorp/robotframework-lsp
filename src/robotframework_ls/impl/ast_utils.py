@@ -1,4 +1,4 @@
-import ast
+import ast as ast_module
 from robotframework_ls.lsp import Error
 import sys
 from collections import namedtuple
@@ -7,22 +7,22 @@ from robotframework_ls.robotframework_log import get_logger
 log = get_logger(__name__)
 
 
-class _NodesProviderVisitor(ast.NodeVisitor):
+class _NodesProviderVisitor(ast_module.NodeVisitor):
     def __init__(self, on_node=lambda node: None):
-        ast.NodeVisitor.__init__(self)
+        ast_module.NodeVisitor.__init__(self)
         self._stack = []
         self.on_node = on_node
 
     def generic_visit(self, node):
         self._stack.append(node)
         self.on_node(self._stack, node)
-        ast.NodeVisitor.generic_visit(self, node)
+        ast_module.NodeVisitor.generic_visit(self, node)
         self._stack.pop()
 
 
-class _PrinterVisitor(ast.NodeVisitor):
+class _PrinterVisitor(ast_module.NodeVisitor):
     def __init__(self, stream):
-        ast.NodeVisitor.__init__(self)
+        ast_module.NodeVisitor.__init__(self)
         self._level = 0
         self._stream = stream
 
@@ -80,7 +80,7 @@ class _PrinterVisitor(ast.NodeVisitor):
                     )
                 )
 
-            ret = ast.NodeVisitor.generic_visit(self, node)
+            ret = ast_module.NodeVisitor.generic_visit(self, node)
         finally:
             self._level -= 1
         return ret
@@ -151,17 +151,17 @@ def _iter_nodes(node, stack=None, recursive=True):
     if stack is None:
         stack = []
 
-    for _field, value in ast.iter_fields(node):
+    for _field, value in ast_module.iter_fields(node):
         if isinstance(value, list):
             for item in value:
-                if isinstance(item, ast.AST):
+                if isinstance(item, ast_module.AST):
                     yield stack, item
                     if recursive:
                         stack.append(item)
                         for o in _iter_nodes(item, stack, recursive=recursive):
                             yield o
                         stack.pop()
-        elif isinstance(value, ast.AST):
+        elif isinstance(value, ast_module.AST):
             if recursive:
                 yield stack, value
                 stack.append(value)
@@ -177,11 +177,11 @@ _TokenInfo = namedtuple("_TokenInfo", "stack, node, token")
 _KeywordUsageInfo = namedtuple("_KeywordUsageInfo", "stack, node, token, name")
 
 
-def find_token(node, line, col):
+def find_token(ast, line, col):
     """
     :rtype: robotframework_ls.impl.ast_utils._TokenInfo|NoneType
     """
-    for stack, node in _iter_nodes(node):
+    for stack, node in _iter_nodes(ast):
         try:
             tokens = node.tokens
         except AttributeError:
@@ -202,61 +202,69 @@ def find_token(node, line, col):
                     return _TokenInfo(tuple(stack), node, token)
 
 
-def _iter_nodes_filtered(node, accept_class, recursive=True):
+def _iter_nodes_filtered(ast, accept_class, recursive=True):
     """
-    :rtype: generator(tuple(list,ast.AST))
+    :rtype: generator(tuple(list,ast_module.AST))
     """
     if not isinstance(accept_class, (list, tuple, set)):
         accept_class = (accept_class,)
-    for stack, node in _iter_nodes(node, recursive=recursive):
+    for stack, node in _iter_nodes(ast, recursive=recursive):
         if node.__class__.__name__ in accept_class:
             yield stack, node
 
 
-def iter_library_imports(node):
+def iter_library_imports(ast):
     """
     :rtype: generator(_NodeInfo)
     """
-    for stack, node in _iter_nodes_filtered(node, accept_class="LibraryImport"):
+    for stack, node in _iter_nodes_filtered(ast, accept_class="LibraryImport"):
         yield _NodeInfo(tuple(stack), node)
 
 
-def iter_resource_imports(node):
+def iter_resource_imports(ast):
     """
     :rtype: generator(_NodeInfo)
     """
-    for stack, node in _iter_nodes_filtered(node, accept_class="ResourceImport"):
+    for stack, node in _iter_nodes_filtered(ast, accept_class="ResourceImport"):
         yield _NodeInfo(tuple(stack), node)
 
 
-def iter_keywords(node):
+def iter_keywords(ast):
     """
     :rtype: generator(_NodeInfo)
     """
-    for stack, node in _iter_nodes_filtered(node, accept_class="Keyword"):
+    for stack, node in _iter_nodes_filtered(ast, accept_class="Keyword"):
         yield _NodeInfo(tuple(stack), node)
 
 
-def iter_keyword_arguments_as_str(node):
+def iter_variables(ast):
+    """
+    :rtype: generator(_NodeInfo)
+    """
+    for stack, node in _iter_nodes_filtered(ast, accept_class="Variable"):
+        yield _NodeInfo(tuple(stack), node)
+
+
+def iter_keyword_arguments_as_str(ast):
     """
     :rtype: generator(str)
     """
-    for _stack, node in _iter_nodes_filtered(node, accept_class="Arguments"):
+    for _stack, node in _iter_nodes_filtered(ast, accept_class="Arguments"):
         for token in node.tokens:
             if token.type == token.ARGUMENT:
                 yield str(token)
 
 
-def get_documentation(node):
+def get_documentation(ast):
     doc = []
-    for _stack, node in _iter_nodes_filtered(node, accept_class="Documentation"):
+    for _stack, node in _iter_nodes_filtered(ast, accept_class="Documentation"):
         for token in node.tokens:
             if token.type == token.ARGUMENT:
                 doc.append(str(token).strip())
     return "\n".join(doc)
 
 
-def iter_keyword_usage_tokens(node):
+def iter_keyword_usage_tokens(ast):
     """
     Iterates through all the places where a keyword name is being used, providing
     the stack, node, token and name.
@@ -267,7 +275,7 @@ def iter_keyword_usage_tokens(node):
     from robot.api import Token
     from robotframework_ls._utils import isinstance_name
 
-    for stack, node in _iter_nodes(node, recursive=True):
+    for stack, node in _iter_nodes(ast, recursive=True):
         if node.__class__.__name__ == "KeywordCall":
             token = node.get_token(Token.KEYWORD)
             keyword_name = token.value
@@ -279,12 +287,12 @@ def iter_keyword_usage_tokens(node):
             yield _KeywordUsageInfo(tuple(stack), node, token, keyword_name)
 
 
-def is_keyword_name_location(node, token):
+def is_keyword_name_location(ast, token):
     """
     :note: this goes hand-in-hand with iter_keyword_usage_tokens.
     """
     from robotframework_ls._utils import isinstance_name
 
     return token.type == token.KEYWORD or (
-        token.type == token.NAME and isinstance_name(node, ("Fixture", "TestTemplate"))
+        token.type == token.NAME and isinstance_name(ast, ("Fixture", "TestTemplate"))
     )
