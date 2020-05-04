@@ -43,7 +43,7 @@ class _Collector(object):
         self._matcher = RobotStringMatcher(self.match_name)
 
     def accepts(self, keyword_name):
-        return self._matcher.is_same_robot_name(keyword_name)
+        return self._matcher.is_keyword_name_match(keyword_name)
 
     def on_keyword(self, keyword_found):
         definition = _Definition(keyword_found)

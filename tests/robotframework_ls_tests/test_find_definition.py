@@ -85,3 +85,26 @@ Test Template    my equal_redefined"""
     definition = next(iter(definitions))
     assert definition.source.endswith("case2.robot")
     assert definition.lineno == 2
+
+
+def test_find_definition_keyword_embedded_args(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+I check ${cmd}
+    Log    ${cmd}
+    
+*** Test Cases ***
+Test 1
+    I check ls"""
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 2

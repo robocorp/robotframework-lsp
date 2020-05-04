@@ -1,4 +1,7 @@
-from robotframework_ls.impl.text_utilities import normalize_robot_name
+from robotframework_ls.impl.text_utilities import (
+    normalize_robot_name,
+    matches_robot_keyword,
+)
 
 
 class RobotStringMatcher(object):
@@ -12,3 +15,13 @@ class RobotStringMatcher(object):
 
     def is_same_robot_name(self, word):
         return self.filter_text == normalize_robot_name(word)
+
+    def is_keyword_name_match(self, keyword_name):
+        normalized = normalize_robot_name(keyword_name)
+        if self.filter_text == normalized:
+            return True
+
+        if "{" in normalized:
+            return matches_robot_keyword(self.filter_text, normalized)
+
+        return False
