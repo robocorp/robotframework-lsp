@@ -1,7 +1,7 @@
 - message: Non-existing setting '"test"'.
   range:
     end:
-      character: 6
+      character: 7
       line: 7
     start:
       character: 0
@@ -13,7 +13,7 @@
     and ''Comments''.'
   range:
     end:
-      character: 31
+      character: 32
       line: 9
     start:
       character: 0

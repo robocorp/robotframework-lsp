@@ -1,4 +1,22 @@
 
+New in 0.1.0 (2020-05-05)
+-----------------------------
+
+- Preliminary code completion support for variables defined in [Variable Tables](https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#variable-table).
+- Support for keywords defined with a library prefix  [#58](https://github.com/robocorp/robotframework-lsp/issues/58).
+- Support for keywords with embededd arguments  [#59](https://github.com/robocorp/robotframework-lsp/issues/59).
+- Support for keywords with Gherkin syntax (i.e.: given, when, then, etc) [#59](https://github.com/robocorp/robotframework-lsp/issues/59).
+
+
+New in 0.0.10 (2020-04-28)
+-----------------------------
+
+- Code analysis: check if keywords are properly imported/defined (new in 0.0.10).
+- Properly consider that keywords may appear in fixtures and templates (code analysis, code completion and go to definition).
+- Add `args` placeholder to Robot launch configuration file (launching).
+- Arguments are now shown in keyword documentation (code completion).
+- Properly deal with path based library imports (code analysis, code completion and go to definition).
+
 New in 0.0.9 (2020-04-20)
 -----------------------------
 

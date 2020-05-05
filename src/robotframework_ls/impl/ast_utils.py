@@ -1,4 +1,4 @@
-import ast
+import ast as ast_module
 from robotframework_ls.lsp import Error
 import sys
 from collections import namedtuple
@@ -7,22 +7,22 @@ from robotframework_ls.robotframework_log import get_logger
 log = get_logger(__name__)
 
 
-class _NodesProviderVisitor(ast.NodeVisitor):
+class _NodesProviderVisitor(ast_module.NodeVisitor):
     def __init__(self, on_node=lambda node: None):
-        ast.NodeVisitor.__init__(self)
+        ast_module.NodeVisitor.__init__(self)
         self._stack = []
         self.on_node = on_node
 
     def generic_visit(self, node):
         self._stack.append(node)
         self.on_node(self._stack, node)
-        ast.NodeVisitor.generic_visit(self, node)
+        ast_module.NodeVisitor.generic_visit(self, node)
         self._stack.pop()
 
 
-class _PrinterVisitor(ast.NodeVisitor):
+class _PrinterVisitor(ast_module.NodeVisitor):
     def __init__(self, stream):
-        ast.NodeVisitor.__init__(self)
+        ast_module.NodeVisitor.__init__(self)
         self._level = 0
         self._stream = stream
 
@@ -80,7 +80,7 @@ class _PrinterVisitor(ast.NodeVisitor):
                     )
                 )
 
-            ret = ast.NodeVisitor.generic_visit(self, node)
+            ret = ast_module.NodeVisitor.generic_visit(self, node)
         finally:
             self._level -= 1
         return ret
@@ -88,30 +88,35 @@ class _PrinterVisitor(ast.NodeVisitor):
 
 def collect_errors(node):
     """
-    :return list(_Error)
+    :return list(Error)
     """
     errors = []
     for _stack, node in _iter_nodes_filtered(node, accept_class="Error"):
-        tokens = node.tokens
         msg = node.error
 
-        if not tokens:
-            log.log("No tokens found when visiting error.")
-            start = (0, 0)
-            end = (0, 0)
-        else:
-            # line is 1-based and col is 0-based (make both 0-based for the error).
-            start = (tokens[0].lineno - 1, tokens[0].col_offset)
-
-            # If we only have one token make the error cover the whole line.
-            end = (start[0] + 1, 0)
-
-            if len(tokens) > 1:
-                end = (tokens[-1].lineno - 1, tokens[-1].col_offset)
-
-        errors.append(Error(msg, start, end))
+        errors.append(create_error_from_node(node, msg))
 
     return errors
+
+
+def create_error_from_node(node, msg, tokens=None):
+    """
+    :return Error:
+    """
+    if tokens is None:
+        tokens = node.tokens
+
+    if not tokens:
+        log.log("No tokens found when visiting %s." % (node.__class__,))
+        start = (0, 0)
+        end = (0, 0)
+    else:
+        # line is 1-based and col is 0-based (make both 0-based for the error).
+        start = (tokens[0].lineno - 1, tokens[0].col_offset)
+        end = (tokens[-1].lineno - 1, tokens[-1].end_col_offset)
+
+    error = Error(msg, start, end)
+    return error
 
 
 def print_ast(node, stream=None):
@@ -146,17 +151,17 @@ def _iter_nodes(node, stack=None, recursive=True):
     if stack is None:
         stack = []
 
-    for _field, value in ast.iter_fields(node):
+    for _field, value in ast_module.iter_fields(node):
         if isinstance(value, list):
             for item in value:
-                if isinstance(item, ast.AST):
+                if isinstance(item, ast_module.AST):
                     yield stack, item
                     if recursive:
                         stack.append(item)
                         for o in _iter_nodes(item, stack, recursive=recursive):
                             yield o
                         stack.pop()
-        elif isinstance(value, ast.AST):
+        elif isinstance(value, ast_module.AST):
             if recursive:
                 yield stack, value
                 stack.append(value)
@@ -169,13 +174,14 @@ def _iter_nodes(node, stack=None, recursive=True):
 
 _NodeInfo = namedtuple("_NodeInfo", "stack, node")
 _TokenInfo = namedtuple("_TokenInfo", "stack, node, token")
+_KeywordUsageInfo = namedtuple("_KeywordUsageInfo", "stack, node, token, name")
 
 
-def find_token(node, line, col):
+def find_token(ast, line, col):
     """
     :rtype: robotframework_ls.impl.ast_utils._TokenInfo|NoneType
     """
-    for stack, node in _iter_nodes(node):
+    for stack, node in _iter_nodes(ast):
         try:
             tokens = node.tokens
         except AttributeError:
@@ -196,55 +202,154 @@ def find_token(node, line, col):
                     return _TokenInfo(tuple(stack), node, token)
 
 
-def _iter_nodes_filtered(node, accept_class, recursive=True):
+def _iter_nodes_filtered(ast, accept_class, recursive=True):
     """
-    :rtype: generator(tuple(list,ast.AST))
+    :rtype: generator(tuple(list,ast_module.AST))
     """
     if not isinstance(accept_class, (list, tuple, set)):
         accept_class = (accept_class,)
-    for stack, node in _iter_nodes(node, recursive=recursive):
+    for stack, node in _iter_nodes(ast, recursive=recursive):
         if node.__class__.__name__ in accept_class:
             yield stack, node
 
 
-def iter_library_imports(node):
+def iter_library_imports(ast):
     """
     :rtype: generator(_NodeInfo)
     """
-    for stack, node in _iter_nodes_filtered(node, accept_class="LibraryImport"):
+    for stack, node in _iter_nodes_filtered(ast, accept_class="LibraryImport"):
         yield _NodeInfo(tuple(stack), node)
 
 
-def iter_resource_imports(node):
+def iter_resource_imports(ast):
     """
     :rtype: generator(_NodeInfo)
     """
-    for stack, node in _iter_nodes_filtered(node, accept_class="ResourceImport"):
+    for stack, node in _iter_nodes_filtered(ast, accept_class="ResourceImport"):
         yield _NodeInfo(tuple(stack), node)
 
 
-def iter_keywords(node):
+def iter_keywords(ast):
     """
     :rtype: generator(_NodeInfo)
     """
-    for stack, node in _iter_nodes_filtered(node, accept_class="Keyword"):
+    for stack, node in _iter_nodes_filtered(ast, accept_class="Keyword"):
         yield _NodeInfo(tuple(stack), node)
 
 
-def iter_keyword_arguments_as_str(node):
+def iter_variables(ast):
+    """
+    :rtype: generator(_NodeInfo)
+    """
+    for stack, node in _iter_nodes_filtered(ast, accept_class="Variable"):
+        yield _NodeInfo(tuple(stack), node)
+
+
+def iter_keyword_arguments_as_str(ast):
     """
     :rtype: generator(str)
     """
-    for _stack, node in _iter_nodes_filtered(node, accept_class="Arguments"):
+    for _stack, node in _iter_nodes_filtered(ast, accept_class="Arguments"):
         for token in node.tokens:
             if token.type == token.ARGUMENT:
                 yield str(token)
 
 
-def get_documentation(node):
+def get_documentation(ast):
     doc = []
-    for _stack, node in _iter_nodes_filtered(node, accept_class="Documentation"):
+    for _stack, node in _iter_nodes_filtered(ast, accept_class="Documentation"):
         for token in node.tokens:
             if token.type == token.ARGUMENT:
                 doc.append(str(token).strip())
     return "\n".join(doc)
+
+
+def iter_keyword_usage_tokens(ast):
+    """
+    Iterates through all the places where a keyword name is being used, providing
+    the stack, node, token and name.
+    
+    :return: generator(_KeywordUsageInfo)
+    :note: this goes hand-in-hand with get_keyword_name_token.
+    """
+    from robot.api import Token
+    from robotframework_ls._utils import isinstance_name
+
+    for stack, node in _iter_nodes(ast, recursive=True):
+        if node.__class__.__name__ == "KeywordCall":
+            token = _strip_token_bdd_prefix(node.get_token(Token.KEYWORD))
+            node = _copy_of_node_replacing_token(node, token, Token.KEYWORD)
+            keyword_name = token.value
+            yield _KeywordUsageInfo(tuple(stack), node, token, keyword_name)
+
+        elif isinstance_name(node, ("Fixture", "TestTemplate")):
+            node, token = _strip_node_and_token_bdd_prefix(node, Token.NAME)
+            keyword_name = token.value
+            yield _KeywordUsageInfo(tuple(stack), node, token, keyword_name)
+
+
+def get_keyword_name_token(ast, token):
+    """
+    :note: this goes hand-in-hand with iter_keyword_usage_tokens.
+    """
+    from robotframework_ls._utils import isinstance_name
+
+    if token.type == token.KEYWORD or (
+        token.type == token.NAME and isinstance_name(ast, ("Fixture", "TestTemplate"))
+    ):
+        return _strip_token_bdd_prefix(token)
+    return None
+
+
+def _copy_of_node_replacing_token(node, token, token_type):
+    """
+    Workaround to create a new version of the same node but with the first
+    occurrence of a token of the given type changed to another token.
+    """
+    new_tokens = list(node.tokens)
+    for i, t in enumerate(new_tokens):
+        if t.type == token_type:
+            new_tokens[i] = token
+            break
+    return node.__class__(new_tokens)
+
+
+def _strip_node_and_token_bdd_prefix(node, token_type):
+    """
+    This is a workaround because the parsing does not separate a BDD prefix from
+    the keyword name. If the parsing is improved to do that separation in the future
+    we can stop doing this.
+    """
+    original_token = node.get_token(token_type)
+    token = _strip_token_bdd_prefix(original_token)
+    if token is original_token:
+        # i.e.: No change was done.
+        return node, token
+    return _copy_of_node_replacing_token(node, token, token_type), token
+
+
+def _strip_token_bdd_prefix(token):
+    """
+    This is a workaround because the parsing does not separate a BDD prefix from
+    the keyword name. If the parsing is improved to do that separation in the future
+    we can stop doing this.
+    
+    :return Token:
+        Returns a new token with the bdd prefix stripped or the original token passed.
+    """
+    from robotframework_ls.impl.robot_constants import BDD_PREFIXES
+    from robot.api import Token
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
+
+    text = normalize_robot_name(token.value)
+    for prefix in BDD_PREFIXES:
+        if text.startswith(prefix):
+            new_name = token.value[len(prefix) :]
+            return Token(
+                type=token.type,
+                value=new_name,
+                lineno=token.lineno,
+                col_offset=token.col_offset + len(prefix),
+                error=token.error,
+            )
+    return token

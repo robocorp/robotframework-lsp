@@ -1,0 +1,34 @@
+- deprecated: false
+  documentation:
+  - variable2
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${VAR2}
+  preselect: false
+  textEdit:
+    newText: \${VAR2}
+    range:
+      end:
+        character: 13
+        line: 8
+      start:
+        character: 11
+        line: 8
+- deprecated: false
+  documentation:
+  - variable1
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${VAR1}
+  preselect: false
+  textEdit:
+    newText: \${VAR1}
+    range:
+      end:
+        character: 13
+        line: 8
+      start:
+        character: 11
+        line: 8

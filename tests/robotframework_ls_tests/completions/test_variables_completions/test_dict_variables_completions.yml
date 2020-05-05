@@ -1,0 +1,19 @@
+- deprecated: false
+  documentation:
+  - name=Matti
+  - address=xxx
+  - phone=123
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: '&{USER 1}'
+  preselect: false
+  textEdit:
+    newText: '&{USER 1}'
+    range:
+      end:
+        character: 24
+        line: 6
+      start:
+        character: 22
+        line: 6

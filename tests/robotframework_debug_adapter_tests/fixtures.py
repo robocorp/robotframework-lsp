@@ -73,6 +73,7 @@ class _DebuggerAPI(object):
         self.writer = writer
         self.write_queue = write_queue
         self.read_queue = read_queue
+        self.all_messages_read = []
 
     def write(self, msg):
         """
@@ -89,10 +90,10 @@ class _DebuggerAPI(object):
 
         while True:
             msg = self.read_queue.get(timeout=5)
+            sys.stderr.write("Read: %s\n\n" % (msg.to_dict(),))
+            self.all_messages_read.append(msg)
             if expect_class is not None or accept_msg is not None:
-                if (expect_class is None or isinstance(msg, expect_class)) and (
-                    accept_msg is None or accept_msg(msg)
-                ):
+                if self._matches(msg, expect_class, accept_msg):
                     return msg
 
                 # Only skip OutputEvent. Other events must match.
@@ -106,6 +107,19 @@ class _DebuggerAPI(object):
                 return msg
 
         return msg
+
+    def assert_message_found(self, expect_class=None, accept_msg=None):
+        for msg in self.all_messages_read:
+            if self._matches(msg, expect_class, accept_msg):
+                return True
+        return False
+
+    def _matches(self, msg, expect_class=None, accept_msg=None):
+        if (expect_class is None or isinstance(msg, expect_class)) and (
+            accept_msg is None or accept_msg(msg)
+        ):
+            return True
+        return False
 
     def get_dap_case_file(self, filename, must_exist=True):
         import os.path

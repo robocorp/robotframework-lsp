@@ -1,0 +1,7 @@
+*** Settings ***
+
+Resource    case5resource2.robot
+Resource    case5resource2.robot
+
+Resource    case5resource3.robot
+Resource    case5resource3.robot

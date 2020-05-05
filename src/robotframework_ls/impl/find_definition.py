@@ -31,21 +31,36 @@ class _Definition(object):
     def __str__(self):
         return "Definition[%s, %s:%s]" % (self.keyword_name, self.source, self.lineno)
 
+    __repr__ = __str__
+
 
 class _Collector(object):
     def __init__(self, match_name):
         from robotframework_ls.impl.string_matcher import RobotStringMatcher
+        from robotframework_ls.impl.string_matcher import (
+            build_matchers_with_resource_or_library_scope,
+        )
 
         self.match_name = match_name
         self.matches = []
-        self._matcher = RobotStringMatcher(self.match_name)
+
+        self._matcher = RobotStringMatcher(match_name)
+        self._scope_matchers = build_matchers_with_resource_or_library_scope(match_name)
 
     def accepts(self, keyword_name):
-        return self._matcher.is_same_robot_name(keyword_name)
+        return True
 
     def on_keyword(self, keyword_found):
-        definition = _Definition(keyword_found)
-        self.matches.append(definition)
+        if self._matcher.is_keyword_name_match(keyword_found.keyword_name):
+            definition = _Definition(keyword_found)
+            self.matches.append(definition)
+            return
+
+        for matcher in self._scope_matchers:
+            if matcher.is_keyword_match(keyword_found):
+                definition = _Definition(keyword_found)
+                self.matches.append(definition)
+                return
 
 
 def find_definition(completion_context):
@@ -58,16 +73,15 @@ def find_definition(completion_context):
         at this place (callers are responsible for validating entries).
     """
     from robotframework_ls.impl.collect_keywords import collect_keywords
+    from robotframework_ls.impl import ast_utils
 
     token_info = completion_context.get_current_token()
     if token_info is not None:
-        token = token_info.token
-        if token.type == token.KEYWORD:
-            # Find a keyword definition.
-
+        token = ast_utils.get_keyword_name_token(token_info.node, token_info.token)
+        if token is not None:
             collector = _Collector(token.value)
             collect_keywords(completion_context, collector)
 
-            return collector.matches
+        return collector.matches
 
     return []

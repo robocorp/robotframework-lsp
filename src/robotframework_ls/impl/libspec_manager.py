@@ -138,7 +138,7 @@ class LibspecManager(object):
         try:
             import robot
 
-            v = str(robot.version.VERSION)
+            v = str(robot.get_version())
         except:
             v = "unknown"
 
@@ -274,7 +274,7 @@ class LibspecManager(object):
                 if library_info is None:
                     wait_for.append(
                         self._thread_pool.submit(
-                            self.create_libspec, libname, retry=False
+                            self._create_libspec, libname, retry=False
                         )
                     )
             for future in wait_for:
@@ -365,7 +365,15 @@ class LibspecManager(object):
     def get_library_names(self):
         return [library_doc.name for library_doc in self._iter_library_doc()]
 
-    def create_libspec(self, libname, env=None, retry=True, log_time=True):
+    def _create_libspec(
+        self,
+        libname,
+        env=None,
+        retry=True,
+        log_time=True,
+        cwd=None,
+        additional_path=None,
+    ):
         """
         :param str libname:
         :raise Exception: if unable to create the library.
@@ -379,9 +387,11 @@ class LibspecManager(object):
         curtime = time.time()
 
         try:
-            log.debug("Generating libspec for: %s", libname)
             call = [sys.executable]
             call.extend("-m robot.libdoc --format XML:HTML".split())
+            if additional_path:
+                call.extend(["-P", additional_path])
+
             call.append(libname)
             libspec_dir = self._user_libspec_dir
             if libname in robot_constants.STDLIBS:
@@ -396,11 +406,20 @@ class LibspecManager(object):
             except:
                 pass
 
+            log.debug(
+                "Generating libspec for: %s.\nCommand line:\n%s",
+                libname,
+                " ".join(call),
+            )
             try:
                 try:
                     # Note: stdout is always subprocess.PIPE in this call.
                     subprocess.check_output(
-                        call, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, env=env
+                        call,
+                        stderr=subprocess.STDOUT,
+                        stdin=subprocess.PIPE,
+                        env=env,
+                        cwd=cwd,
                     )
                 except OSError as e:
                     log.exception("Error calling: %s", call)
@@ -440,8 +459,13 @@ class LibspecManager(object):
                                     + os.pathsep
                                     + os.environ.get("PYTHONPATH", "")
                                 )
-                                return self.create_libspec(
-                                    libname, env=env_cp, retry=False, log_time=False
+                                return self._create_libspec(
+                                    libname,
+                                    env=env_cp,
+                                    retry=False,
+                                    log_time=False,
+                                    cwd=cwd,
+                                    additional_path=additional_path,
                                 )
 
                 log.exception(
@@ -458,19 +482,53 @@ class LibspecManager(object):
         self._observer.dispose()
         self._spec_changes_notifier.dispose()
 
-    def get_library_info(self, libname, create=True):
+    def get_library_info(self, libname, create=True, current_doc_uri=None):
         """
+        :param libname:
+            It may be a library name, a relative path to a .py file or an
+            absolute path to a .py file.
+
         :rtype: LibraryDoc
         """
+        from robotframework_ls import uris
+
         libname_lower = libname.lower()
+        if libname_lower.endswith((".py", ".class", ".java")):
+            libname_lower = os.path.splitext(libname)[0]
+
+        if "/" in libname_lower or "\\" in libname_lower:
+            libname_lower = os.path.basename(libname_lower)
+
         for library_doc in self._iter_library_doc():
             if library_doc.name and library_doc.name.lower() == libname_lower:
                 return library_doc
 
         if create:
-            if self.create_libspec(libname):
+            additional_path = None
+            abspath = None
+            cwd = None
+            if current_doc_uri is not None:
+                cwd = os.path.dirname(uris.to_fs_path(current_doc_uri))
+
+            if os.path.isabs(libname):
+                abspath = libname
+
+            elif current_doc_uri is not None:
+                # relative path: let's make it absolute
+                fs_path = os.path.dirname(uris.to_fs_path(current_doc_uri))
+                abspath = os.path.abspath(os.path.join(fs_path, libname))
+
+            if abspath:
+                additional_path = os.path.dirname(abspath)
+                libname = os.path.basename(libname)
+                if libname.lower().endswith((".py", ".class", ".java")):
+                    libname = os.path.splitext(libname)[0]
+
+            if self._create_libspec(libname, additional_path=additional_path, cwd=cwd):
                 self.synchronize_internal_libspec_folders()
-                return self.get_library_info(libname, create=False)
+                return self.get_library_info(
+                    libname, create=False, current_doc_uri=current_doc_uri
+                )
 
         log.debug("Unable to find library named: %s", libname)
         return None

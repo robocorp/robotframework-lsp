@@ -1,5 +1,8 @@
 - deprecated: false
-  documentation: ':type new_model: int'
+  documentation: 'New Verify Model(new model)
+
+
+    :type new_model: int'
   documentationFormat: plaintext
   insertTextFormat: 2
   kind: 2
@@ -15,7 +18,10 @@
         character: 4
         line: 7
 - deprecated: false
-  documentation: ''
+  documentation: 'new Verify Another Model(new model=10)
+
+
+    '
   documentationFormat: plaintext
   insertTextFormat: 2
   kind: 2

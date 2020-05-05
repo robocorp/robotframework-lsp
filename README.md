@@ -30,15 +30,17 @@ may be needed.
 See: [Config](docs/config.md) for details.
   
 
-Features (0.0.9)
+Features (0.1.0)
 -----------------
 
-- Launch .robot files
-- Code completion for keywords, section headers and section settings
-- Go to definition for keywords (new in 0.0.9)
-- Syntax highlighting
-- Syntax validation
-- Code Formatting
+- Preliminary code completion support for variables defined in [Variable Tables](https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#variable-table) (new in 0.1.0).
+- Code analysis: check if keywords are properly imported/defined.
+- Code completion for keywords, section headers and section settings.
+- Go to definition for keywords.
+- Launch `.robot` files.
+- Syntax highlighting.
+- Syntax validation.
+- Code Formatting (see: [Editor Settings](https://code.visualstudio.com/docs/getstarted/settings#_language-specific-editor-settings) for details on how to toggle code formatting just for `robotframework`).
 
 See: [Changelog](docs/changelog.md) for details.
 

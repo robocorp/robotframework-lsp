@@ -35,6 +35,17 @@ class _KeywordFoundFromAst(object):
         self.completion_item_kind = completion_item_kind
 
     @property
+    def library_name(self):
+        return None
+
+    @property
+    def resource_name(self):
+        from robotframework_ls import uris
+
+        uri = self.completion_context.doc.uri
+        return os.path.splitext(os.path.basename(uris.to_fs_path(uri)))[0]
+
+    @property
     def docs_format(self):
         return "markdown"
 
@@ -43,7 +54,8 @@ class _KeywordFoundFromAst(object):
     def docs(self):
         from robotframework_ls.impl import ast_utils
 
-        return ast_utils.get_documentation(self._keyword_node)
+        docs = ast_utils.get_documentation(self._keyword_node)
+        return "%s(%s)\n\n%s" % (self.keyword_name, ", ".join(self.keyword_args), docs)
 
     @property
     @cache.instance_cache
@@ -100,6 +112,14 @@ class _KeywordFoundFromLibrary(object):
         self.completion_item_kind = completion_item_kind
 
     @property
+    def library_name(self):
+        return self._library_doc.name
+
+    @property
+    def resource_name(self):
+        return None
+
+    @property
     @cache.instance_cache
     def source(self):
         source = self._keyword_doc.source or self._library_doc.source
@@ -135,7 +155,15 @@ class _KeywordFoundFromLibrary(object):
     def _docs_and_format(self):
         from robotframework_ls.impl.robot_specbuilder import docs_and_format
 
-        return docs_and_format(self._keyword_doc)
+        docs, docs_format = docs_and_format(self._keyword_doc)
+        if self.keyword_args:
+            docs = "%s(%s)\n\n%s" % (
+                self.keyword_name,
+                ", ".join(self.keyword_args),
+                docs,
+            )
+
+        return docs, docs_format
 
     @property
     @cache.instance_cache
@@ -200,7 +228,9 @@ def _collect_libraries_keywords(completion_context, collector):
         if not completion_context.memo.complete_for_library(library_name):
             continue
 
-        library_doc = libspec_manager.get_library_info(library_name, create=True)
+        library_doc = libspec_manager.get_library_info(
+            library_name, create=True, current_doc_uri=completion_context.doc.uri
+        )
         if library_doc is not None:
             #: :type keyword: KeywordDoc
             for keyword in library_doc.keywords:
@@ -227,48 +257,9 @@ def _collect_resource_imports_keywords(completion_context, collector):
     """
     :param CompletionContext completion_context:
     """
-    from robotframework_ls import uris
-
-    # Get keywords from resources
-    resource_imports = completion_context.get_resource_imports()
-    for resource_import in resource_imports:
-        for token in resource_import.tokens:
-            if token.type == token.NAME:
-                parts = []
-                for v in token.tokenize_variables():
-                    if v.type == v.NAME:
-                        parts.append(str(v))
-
-                    elif v.type == v.VARIABLE:
-                        # Resolve variable from config
-                        v = str(v)
-                        if v.startswith("${") and v.endswith("}"):
-                            v = v[2:-1]
-                            parts.append(completion_context.convert_robot_variable(v))
-                        else:
-                            log.info("Cannot resolve variable: %s", v)
-
-                resource_path = "".join(parts)
-                if not os.path.isabs(resource_path):
-                    # It's a relative resource, resolve its location based on the
-                    # current file.
-                    resource_path = os.path.join(
-                        os.path.dirname(completion_context.doc.path), resource_path
-                    )
-
-                ws = completion_context.workspace
-                if not os.path.exists(resource_path):
-                    log.info("Resource not found: %s", resource_path)
-                    continue
-
-                doc_uri = uris.from_fs_path(resource_path)
-
-                resource_doc = ws.get_document(doc_uri, create=False)
-                if resource_doc is None:
-                    resource_doc = ws.create_untracked_document(doc_uri)
-
-                new_ctx = completion_context.create_copy(resource_doc)
-                _collect_following_imports(new_ctx, collector)
+    for resource_doc in completion_context.iter_imports_docs():
+        new_ctx = completion_context.create_copy(resource_doc)
+        _collect_following_imports(new_ctx, collector)
 
 
 def _collect_following_imports(completion_context, collector):
@@ -310,6 +301,12 @@ class IKeywordFound(object):
     end_lineno = -1
     col_offset = -1
     end_col_offset = -1
+
+    # If it's a library, this is the name of the library.
+    library_name = None
+
+    # If it's a resource, this is the basename of the resource without the extension.
+    resource_name = None
 
 
 class ICollector(object):

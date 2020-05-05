@@ -61,7 +61,7 @@ def test_server(server_api_process_io, data_regression):
     import os
 
     server_api_process_io.initialize(process_id=os.getpid())
-    assert server_api_process_io.get_version() == "3.2"
+    assert server_api_process_io.get_version() >= "3.2"
 
     server_api_process_io.open("untitled", 1, "*** foo bar ***")
     data_regression.check(server_api_process_io.lint("untitled"), basename="errors")

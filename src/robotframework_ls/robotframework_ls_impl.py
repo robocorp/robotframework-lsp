@@ -252,6 +252,12 @@ class _ServerApi(object):
             if api is not None:
                 return api.request_keyword_complete(doc_uri, line, col)
 
+    def request_complete_all(self, doc_uri, line, col):
+        with self._server_lock:
+            api = self._get_server_api()
+            if api is not None:
+                return api.request_complete_all(doc_uri, line, col)
+
     def request_find_definition(self, doc_uri, line, col):
         with self._server_lock:
             api = self._get_server_api()
@@ -495,10 +501,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         # Asynchronous completion.
         message_matchers = []
-        message_matchers.append(
-            self._api.request_section_name_complete(doc_uri, line, col)
-        )
-        message_matchers.append(self._api.request_keyword_complete(doc_uri, line, col))
+        message_matchers.append(self._api.request_complete_all(doc_uri, line, col))
         completions.extend(section_completions.complete(ctx))
 
         accepted_message_matchers = self._wait_for_message_matchers(message_matchers)

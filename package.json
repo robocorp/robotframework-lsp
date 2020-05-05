@@ -1,5 +1,6 @@
 {
     "name": "robotframework-lsp",
+    "displayName": "Robot Framework Language Server",
     "description": "VSCode extension support for Robot Framework",
     "author": "Fabio Zadrozny",
     "homepage": "https://github.com/robocorp/robotframework-lsp/blob/master/README.md",
@@ -8,7 +9,7 @@
         "url": "https://github.com/robocorp/robotframework-lsp.git"
     },
     "license": "MIT",
-    "version": "0.0.9",
+    "version": "0.1.0",
     "icon": "images/icon.png",
     "publisher": "robocorptech",
     "engines": {
@@ -163,7 +164,8 @@
                             "cwd": "^\"\\${workspaceFolder}\"",
                             "target": "^\"\\${file}\"",
                             "terminal": "none",
-                            "env": {}
+                            "env": {},
+                            "args": []
                         }
                     }
                 ]

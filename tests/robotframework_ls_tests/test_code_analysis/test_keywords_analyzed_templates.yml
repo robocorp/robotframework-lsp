@@ -1,0 +1,10 @@
+- message: 'Undefined keyword: this is not there.'
+  range:
+    end:
+      character: 34
+      line: 1
+    start:
+      character: 17
+      line: 1
+  severity: 1
+  source: robotframework

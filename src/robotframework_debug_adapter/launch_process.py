@@ -212,33 +212,6 @@ def _read_stream(stream, on_line, category):
         log.exception("Error")
 
 
-def _notify_on_exited_popen(
-    process, on_exited, stdout_stream_thread, stderr_stream_thread
-):
-    import time
-
-    try:
-        log.debug("Waiting for Popen to finish (_notify_on_exited_popen).")
-        process.wait()
-
-        calls = 0
-        while True:
-            if (
-                not stdout_stream_thread.isAlive()
-                and not stderr_stream_thread.isAlive()
-            ):
-                break
-            calls += 1
-            if calls == 10:
-                break  # Don't wait anymore.
-            time.sleep(0.1)
-
-        log.debug("popen exited (_notify_on_exited_popen).")
-        on_exited()
-    except:
-        log.exception("Error")
-
-
 def _notify_on_exited_pid(on_exit, pid):
     try:
         from robotframework_ls._utils import is_process_alive
@@ -435,8 +408,6 @@ class LaunchProcess(object):
             # If the client doesn't support running in the terminal we fallback to using the debug console.
             terminal = TERMINAL_NONE
 
-        on_exited = self.notify_exit
-
         threads = []
         if terminal == TERMINAL_NONE:
             import subprocess
@@ -479,18 +450,6 @@ class LaunchProcess(object):
 
             threads.append(stdout_stream_thread)
             threads.append(stderr_stream_thread)
-            threads.append(
-                threading.Thread(
-                    target=_notify_on_exited_popen,
-                    args=(
-                        self._popen,
-                        on_exited,
-                        stdout_stream_thread,
-                        stderr_stream_thread,
-                    ),
-                    name="Notify on exit popen",
-                )
-            )
 
         elif terminal in (TERMINAL_INTEGRATED, TERMINAL_EXTERNAL):
             kind = terminal
@@ -539,13 +498,17 @@ class LaunchProcess(object):
         else:
             self._track_process_pid = self._debug_adapter_comm.get_pid()
 
-            t = threading.Thread(
-                target=_notify_on_exited_pid,
-                args=(on_exited, self._track_process_pid),
-                name="Track PID alive",
-            )
-            t.daemon = True
-            t.start()
+    def after_launch_response_sent(self):
+        if self._track_process_pid is None:
+            log.debug("Unable to track if pid is alive (pid unavailable).")
+            return
+        t = threading.Thread(
+            target=_notify_on_exited_pid,
+            args=(self.notify_exit, self._track_process_pid),
+            name="Track PID alive",
+        )
+        t.daemon = True
+        t.start()
 
     def disconnect(self, disconnect_request):
         from robotframework_ls._utils import kill_process_and_subprocesses

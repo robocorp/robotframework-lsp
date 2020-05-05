@@ -150,10 +150,10 @@ def test_simple_launch(debugger_api):
     target = debugger_api.get_dap_case_file("case_log.robot")
     launch(debugger_api, target, debug=False)
 
-    debugger_api.read(
+    debugger_api.read(TerminatedEvent)
+    debugger_api.assert_message_found(
         OutputEvent, lambda msg: "check that log works" in msg.body.output
     )
-    debugger_api.read(TerminatedEvent)
 
 
 def test_launch_in_external_terminal(debugger_api):

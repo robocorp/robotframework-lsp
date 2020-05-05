@@ -65,12 +65,20 @@ _NOT_SET = "NOT_SET"
 
 class _Memo(object):
     def __init__(self):
+        self._followed_imports_variables = {}
         self._followed_imports = {}
         self._completed_libraries = {}
 
     def follow_import(self, uri):
         if uri not in self._followed_imports:
             self._followed_imports[uri] = True
+            return True
+
+        return False
+
+    def follow_import_variables(self, uri):
+        if uri not in self._followed_imports_variables:
+            self._followed_imports_variables[uri] = True
             return True
 
         return False
@@ -279,6 +287,51 @@ class CompletionContext(object):
         for resource in ast_utils.iter_resource_imports(ast):
             ret.append(resource.node)
         return tuple(ret)
+
+    @instance_cache
+    def iter_imports_docs(self):
+        from robotframework_ls import uris
+        import os.path
+
+        ws = self._workspace
+
+        # Get keywords from resources
+        resource_imports = self.get_resource_imports()
+        for resource_import in resource_imports:
+            for token in resource_import.tokens:
+                if token.type == token.NAME:
+                    parts = []
+                    for v in token.tokenize_variables():
+                        if v.type == v.NAME:
+                            parts.append(str(v))
+
+                        elif v.type == v.VARIABLE:
+                            # Resolve variable from config
+                            v = str(v)
+                            if v.startswith("${") and v.endswith("}"):
+                                v = v[2:-1]
+                                parts.append(self.convert_robot_variable(v))
+                            else:
+                                log.info("Cannot resolve variable: %s", v)
+
+                    resource_path = "".join(parts)
+                    if not os.path.isabs(resource_path):
+                        # It's a relative resource, resolve its location based on the
+                        # current file.
+                        resource_path = os.path.join(
+                            os.path.dirname(self.doc.path), resource_path
+                        )
+
+                    if not os.path.exists(resource_path):
+                        log.info("Resource not found: %s", resource_path)
+                        continue
+
+                    doc_uri = uris.from_fs_path(resource_path)
+                    resource_doc = ws.get_document(doc_uri, create=False)
+                    if resource_doc is None:
+                        resource_doc = ws.create_untracked_document(doc_uri)
+
+                    yield resource_doc
 
     def convert_robot_variable(self, var_name):
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_VARIABLES
