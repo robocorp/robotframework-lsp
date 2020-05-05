@@ -34,10 +34,10 @@ class _KeywordsCollector(object):
 
 
 def collect_analysis_errors(completion_context):
-    from robotframework_ls.impl.collect_keywords import collect_keywords
     from robotframework_ls.impl import ast_utils
-    from robotframework_ls.impl.text_utilities import normalize_robot_name
     from robotframework_ls.impl.ast_utils import create_error_from_node
+    from robotframework_ls.impl.collect_keywords import collect_keywords
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
 
     errors = []
     collector = _KeywordsCollector()

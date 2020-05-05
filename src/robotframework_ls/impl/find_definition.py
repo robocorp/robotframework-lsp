@@ -63,12 +63,11 @@ def find_definition(completion_context):
     from robotframework_ls.impl import ast_utils
 
     token_info = completion_context.get_current_token()
-    if token_info is not None and ast_utils.is_keyword_name_location(
-        token_info.node, token_info.token
-    ):
-        token = token_info.token
-        collector = _Collector(token.value)
-        collect_keywords(completion_context, collector)
+    if token_info is not None:
+        token = ast_utils.get_keyword_name_token(token_info.node, token_info.token)
+        if token is not None:
+            collector = _Collector(token.value)
+            collect_keywords(completion_context, collector)
 
         return collector.matches
 

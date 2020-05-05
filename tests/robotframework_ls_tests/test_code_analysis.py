@@ -51,3 +51,25 @@ I execute "${cmd}" rara "${opts}"
     )
 
     _collect_errors(workspace, doc, data_regression)
+
+
+def test_keywords_with_prefix_no_error(workspace, libspec_manager, data_regression):
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    # Ignore bdd-related prefixes (see: robotframework_ls.impl.robot_constants.BDD_PREFIXES)
+    doc.source = (
+        doc.source
+        + """
+    given I check ls
+    then I execute
+
+*** Keywords ***
+I check ${cmd}
+    Log    ${cmd}
+
+I execute
+    Log    foo
+"""
+    )
+
+    _collect_errors(workspace, doc, data_regression)

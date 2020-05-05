@@ -13,6 +13,11 @@ class RobotStringMatcher(object):
             return True
         return self.filter_text in normalize_robot_name(word)
 
+    def accepts_keyword_name(self, word):
+        if not self.filter_text:
+            return True
+        return self.filter_text in normalize_robot_name(word)
+
     def is_same_robot_name(self, word):
         return self.filter_text == normalize_robot_name(word)
 

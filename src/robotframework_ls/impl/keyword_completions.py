@@ -11,7 +11,7 @@ class _Collector(object):
         self.token = token
 
     def accepts(self, keyword_name):
-        return self.matcher.accepts(keyword_name)
+        return self.matcher.accepts_keyword_name(keyword_name)
 
     def _create_completion_item_from_keyword(self, keyword_found, selection, token):
         """
@@ -73,15 +73,14 @@ def complete(completion_context):
     from robotframework_ls.impl import ast_utils
 
     token_info = completion_context.get_current_token()
-    if token_info is not None and ast_utils.is_keyword_name_location(
-        token_info.node, token_info.token
-    ):
-        token = token_info.token
-        collector = _Collector(
-            completion_context.sel, token, RobotStringMatcher(token.value)
-        )
-        collect_keywords(completion_context, collector)
+    if token_info is not None:
+        token = ast_utils.get_keyword_name_token(token_info.node, token_info.token)
+        if token is not None:
+            collector = _Collector(
+                completion_context.sel, token, RobotStringMatcher(token.value)
+            )
+            collect_keywords(completion_context, collector)
 
-        return collector.completion_items
+            return collector.completion_items
 
     return []

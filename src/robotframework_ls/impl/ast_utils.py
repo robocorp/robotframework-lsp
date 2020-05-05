@@ -270,29 +270,86 @@ def iter_keyword_usage_tokens(ast):
     the stack, node, token and name.
     
     :return: generator(_KeywordUsageInfo)
-    :note: this goes hand-in-hand with is_keyword_name_location.
+    :note: this goes hand-in-hand with get_keyword_name_token.
     """
     from robot.api import Token
     from robotframework_ls._utils import isinstance_name
 
     for stack, node in _iter_nodes(ast, recursive=True):
         if node.__class__.__name__ == "KeywordCall":
-            token = node.get_token(Token.KEYWORD)
+            token = _strip_token_bdd_prefix(node.get_token(Token.KEYWORD))
+            node = _copy_of_node_replacing_token(node, token, Token.KEYWORD)
             keyword_name = token.value
             yield _KeywordUsageInfo(tuple(stack), node, token, keyword_name)
 
         elif isinstance_name(node, ("Fixture", "TestTemplate")):
-            token = node.get_token(Token.NAME)
+            node, token = _strip_node_and_token_bdd_prefix(node, Token.NAME)
             keyword_name = token.value
             yield _KeywordUsageInfo(tuple(stack), node, token, keyword_name)
 
 
-def is_keyword_name_location(ast, token):
+def get_keyword_name_token(ast, token):
     """
     :note: this goes hand-in-hand with iter_keyword_usage_tokens.
     """
     from robotframework_ls._utils import isinstance_name
 
-    return token.type == token.KEYWORD or (
+    if token.type == token.KEYWORD or (
         token.type == token.NAME and isinstance_name(ast, ("Fixture", "TestTemplate"))
-    )
+    ):
+        return _strip_token_bdd_prefix(token)
+    return None
+
+
+def _copy_of_node_replacing_token(node, token, token_type):
+    """
+    Workaround to create a new version of the same node but with the first
+    occurrence of a token of the given type changed to another token.
+    """
+    new_tokens = list(node.tokens)
+    for i, t in enumerate(new_tokens):
+        if t.type == token_type:
+            new_tokens[i] = token
+            break
+    return node.__class__(new_tokens)
+
+
+def _strip_node_and_token_bdd_prefix(node, token_type):
+    """
+    This is a workaround because the parsing does not separate a BDD prefix from
+    the keyword name. If the parsing is improved to do that separation in the future
+    we can stop doing this.
+    """
+    original_token = node.get_token(token_type)
+    token = _strip_token_bdd_prefix(original_token)
+    if token is original_token:
+        # i.e.: No change was done.
+        return node, token
+    return _copy_of_node_replacing_token(node, token, token_type), token
+
+
+def _strip_token_bdd_prefix(token):
+    """
+    This is a workaround because the parsing does not separate a BDD prefix from
+    the keyword name. If the parsing is improved to do that separation in the future
+    we can stop doing this.
+    
+    :return Token:
+        Returns a new token with the bdd prefix stripped or the original token passed.
+    """
+    from robotframework_ls.impl.robot_constants import BDD_PREFIXES
+    from robot.api import Token
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
+
+    text = normalize_robot_name(token.value)
+    for prefix in BDD_PREFIXES:
+        if text.startswith(prefix):
+            new_name = token.value[len(prefix) :]
+            return Token(
+                type=token.type,
+                value=new_name,
+                lineno=token.lineno,
+                col_offset=token.col_offset + len(prefix),
+                error=token.error,
+            )
+    return token

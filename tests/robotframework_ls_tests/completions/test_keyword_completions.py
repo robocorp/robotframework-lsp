@@ -194,6 +194,26 @@ def test_keyword_completions_settings_fixture(workspace, libspec_manager):
     assert len(found) == 1
 
 
+def test_keyword_completions_bdd_prefix(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import keyword_completions
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case2.robot")
+    doc.source = doc.source + "\n*** Keywords ***\nTeardown    WHEN my_Equal red"
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+
+    found = [
+        completion
+        for completion in completions
+        if completion["label"].lower() == "my equal redefined"
+    ]
+    data_regression.check(found)
+
+
 def test_keyword_completions_template(workspace, libspec_manager):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import keyword_completions
