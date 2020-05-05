@@ -33,7 +33,7 @@ See: [Config](docs/config.md) for details.
 Features (0.1.0)
 -----------------
 
-- Code completion for variables defined in [Variable Tables](https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#variable-table) (new in 0.1.0).
+- Preliminary code completion support for variables defined in [Variable Tables](https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#variable-table) (new in 0.1.0).
 - Code analysis: check if keywords are properly imported/defined.
 - Code completion for keywords, section headers and section settings.
 - Go to definition for keywords.
