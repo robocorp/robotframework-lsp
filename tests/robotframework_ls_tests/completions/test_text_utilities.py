@@ -46,3 +46,18 @@ def test_matches_robot_keyword():
     assert matches_robot_keyword(
         normalize_robot_name("rara"), normalize_robot_name("rara")
     )
+
+
+def test_iter_dotted_names():
+    from robotframework_ls.impl.text_utilities import iter_dotted_names
+
+    assert list(iter_dotted_names("")) == []
+    assert list(iter_dotted_names("a")) == []
+    assert list(iter_dotted_names("a.b")) == [("a", "b")]
+    assert list(iter_dotted_names(".a.b.")) == [
+        ("", "a.b."),
+        (".a", "b."),
+        (".a.b", ""),
+    ]
+    assert list(iter_dotted_names("a.b.")) == [("a", "b."), ("a.b", "")]
+    assert list(iter_dotted_names("a.b.c")) == [("a", "b.c"), ("a.b", "c")]

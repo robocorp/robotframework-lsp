@@ -240,3 +240,59 @@ Test Template    my eq"""
     ]
 
     assert len(found) == 1
+
+
+def test_keyword_completions_library_prefix(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+
+    doc.source = """*** Settings ***
+Library    String
+Library    Collections
+Resource    case4resource.txt
+
+*** Test Cases ***
+Test
+    case4resource3."""
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+
+    data_regression.check(
+        completions, basename="test_keyword_completions_library_prefix_1"
+    )
+
+    doc.source = """*** Settings ***
+Library    String
+Library    Collections
+Resource    case4resource.txt
+
+*** Test Cases ***
+Test
+    case4resource3.Another"""
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+
+    data_regression.check(
+        completions, basename="test_keyword_completions_library_prefix_2"
+    )
+
+    doc.source = """*** Settings ***
+Library    Collections
+
+*** Test Cases ***
+Test
+    Collections.Append To Lis"""
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    assert [completion["label"] for completion in completions] == ["Append To List"]

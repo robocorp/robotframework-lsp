@@ -37,17 +37,30 @@ class _Definition(object):
 class _Collector(object):
     def __init__(self, match_name):
         from robotframework_ls.impl.string_matcher import RobotStringMatcher
+        from robotframework_ls.impl.string_matcher import (
+            build_matchers_with_resource_or_library_scope,
+        )
 
         self.match_name = match_name
         self.matches = []
-        self._matcher = RobotStringMatcher(self.match_name)
+
+        self._matcher = RobotStringMatcher(match_name)
+        self._scope_matchers = build_matchers_with_resource_or_library_scope(match_name)
 
     def accepts(self, keyword_name):
-        return self._matcher.is_keyword_name_match(keyword_name)
+        return True
 
     def on_keyword(self, keyword_found):
-        definition = _Definition(keyword_found)
-        self.matches.append(definition)
+        if self._matcher.is_keyword_name_match(keyword_found.keyword_name):
+            definition = _Definition(keyword_found)
+            self.matches.append(definition)
+            return
+
+        for matcher in self._scope_matchers:
+            if matcher.is_keyword_match(keyword_found):
+                definition = _Definition(keyword_found)
+                self.matches.append(definition)
+                return
 
 
 def find_definition(completion_context):

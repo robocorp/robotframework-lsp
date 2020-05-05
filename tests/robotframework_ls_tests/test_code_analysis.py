@@ -1,4 +1,4 @@
-def _collect_errors(workspace, doc, data_regression):
+def _collect_errors(workspace, doc, data_regression, basename=None):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.code_analysis import collect_analysis_errors
 
@@ -8,7 +8,7 @@ def _collect_errors(workspace, doc, data_regression):
         error.to_lsp_diagnostic()
         for error in collect_analysis_errors(completion_context)
     ]
-    data_regression.check(errors)
+    data_regression.check(errors, basename=basename)
 
 
 def test_keywords_analyzed(workspace, libspec_manager, data_regression):
@@ -72,4 +72,24 @@ I execute
 """
     )
 
-    _collect_errors(workspace, doc, data_regression)
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_keywords_prefixed_by_library(workspace, libspec_manager, data_regression):
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+
+    doc.source = """*** Settings ***
+Library    String
+Library    Collections
+Resource    case4resource.txt
+
+*** Test Cases ***
+Test
+    BuiltIn.Log    Logging
+    case4resource3.Yet Another Equal Redefined
+    String.Should Be Titlecase    Hello World
+    ${list}=    BuiltIn.Create List    1    2
+    Collections.Append To List    ${list}    3"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")

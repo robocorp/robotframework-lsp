@@ -35,6 +35,17 @@ class _KeywordFoundFromAst(object):
         self.completion_item_kind = completion_item_kind
 
     @property
+    def library_name(self):
+        return None
+
+    @property
+    def resource_name(self):
+        from robotframework_ls import uris
+
+        uri = self.completion_context.doc.uri
+        return os.path.splitext(os.path.basename(uris.to_fs_path(uri)))[0]
+
+    @property
     def docs_format(self):
         return "markdown"
 
@@ -99,6 +110,14 @@ class _KeywordFoundFromLibrary(object):
 
         self.completion_context = completion_context
         self.completion_item_kind = completion_item_kind
+
+    @property
+    def library_name(self):
+        return self._library_doc.name
+
+    @property
+    def resource_name(self):
+        return None
 
     @property
     @cache.instance_cache
@@ -282,6 +301,12 @@ class IKeywordFound(object):
     end_lineno = -1
     col_offset = -1
     end_col_offset = -1
+
+    # If it's a library, this is the name of the library.
+    library_name = None
+
+    # If it's a resource, this is the basename of the resource without the extension.
+    resource_name = None
 
 
 class ICollector(object):
