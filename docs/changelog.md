@@ -2,7 +2,7 @@
 New in 0.1.0 (2020-05-05)
 -----------------------------
 
-- Code completion for variables defined in [Variable Tables](https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#variable-table).
+- Preliminary code completion support for variables defined in [Variable Tables](https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#variable-table).
 - Support for keywords defined with a library prefix  [#58](https://github.com/robocorp/robotframework-lsp/issues/58).
 - Support for keywords with embededd arguments  [#59](https://github.com/robocorp/robotframework-lsp/issues/59).
 - Support for keywords with Gherkin syntax (i.e.: given, when, then, etc) [#59](https://github.com/robocorp/robotframework-lsp/issues/59).
