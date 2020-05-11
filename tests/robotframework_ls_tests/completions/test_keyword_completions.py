@@ -242,6 +242,42 @@ Test Template    my eq"""
     assert len(found) == 1
 
 
+def test_keyword_completions_resource_does_not_exist(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.config.config import Config
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+
+    doc.source = """*** Settings ***
+Library    DoesNotExist
+Library    .
+Library    ..
+Library    ../
+Resource    does_not_exist.txt
+Resource    ${foo}/does_not_exist.txt
+Resource    ../does_not_exist.txt
+Resource    .
+Resource    ..
+Resource    ../
+Resource    ../../does_not_exist.txt
+Resource    case4resource.txt
+
+*** Test Cases ***
+Test
+    case4resource3."""
+
+    config = Config(root_uri="", init_opts={}, process_id=-1, capabilities={})
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws, config=config)
+    )
+
+    data_regression.check(completions)
+
+
 def test_keyword_completions_library_prefix(
     workspace, libspec_manager, data_regression
 ):

@@ -49,7 +49,7 @@ class ConfigSource(object):
     def read_config_from_files(files):
         config = configparser.RawConfigParser()
         for filename in files:
-            if os.path.exists(filename) and not os.path.isdir(filename):
+            if os.path.isfile(filename):
                 config.read(filename)
 
         return config

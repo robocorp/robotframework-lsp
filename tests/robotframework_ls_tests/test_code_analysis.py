@@ -1,8 +1,8 @@
-def _collect_errors(workspace, doc, data_regression, basename=None):
+def _collect_errors(workspace, doc, data_regression, basename=None, config=None):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.code_analysis import collect_analysis_errors
 
-    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    completion_context = CompletionContext(doc, workspace=workspace.ws, config=config)
 
     errors = [
         error.to_lsp_diagnostic()
@@ -93,3 +93,32 @@ Test
     Collections.Append To List    ${list}    3"""
 
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_resource_does_not_exist(workspace, libspec_manager, data_regression):
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+
+    doc.source = """*** Settings ***
+Library    DoesNotExist
+Library    .
+Library    ..
+Library    ../
+Resource    does_not_exist.txt
+Resource    ${foo}/does_not_exist.txt
+Resource    ../does_not_exist.txt
+Resource    .
+Resource    ..
+Resource    ../
+Resource    ../../does_not_exist.txt
+Resource    case4resource.txt
+
+*** Test Cases ***
+Test
+    case4resource3.Yet Another Equal Redefined"""
+
+    from robotframework_ls.config.config import Config
+
+    config = Config(root_uri="", init_opts={}, process_id=-1, capabilities={})
+    # Note: we don't give errors if we can't resolve a resource.
+    _collect_errors(workspace, doc, data_regression, basename="no_error", config=config)

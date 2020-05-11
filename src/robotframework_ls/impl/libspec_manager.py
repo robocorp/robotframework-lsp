@@ -273,9 +273,7 @@ class LibspecManager(object):
                 library_info = self.get_library_info(libname, create=False)
                 if library_info is None:
                     wait_for.append(
-                        self._thread_pool.submit(
-                            self._create_libspec, libname, retry=False
-                        )
+                        self._thread_pool.submit(self._create_libspec, libname)
                     )
             for future in wait_for:
                 future.result()
@@ -366,23 +364,15 @@ class LibspecManager(object):
         return [library_doc.name for library_doc in self._iter_library_doc()]
 
     def _create_libspec(
-        self,
-        libname,
-        env=None,
-        retry=True,
-        log_time=True,
-        cwd=None,
-        additional_path=None,
+        self, libname, env=None, log_time=True, cwd=None, additional_path=None
     ):
         """
         :param str libname:
         :raise Exception: if unable to create the library.
         """
-        from robotframework_ls import uris
         import time
         from robotframework_ls.impl import robot_constants
         from robotframework_ls.subprocess_wrapper import subprocess
-        from robotframework_ls.constants import IS_PY2
 
         curtime = time.time()
 
@@ -431,43 +421,10 @@ class LibspecManager(object):
                     except:
                         pass
 
-                    if not retry:
-                        log.debug("Not retrying after OSError failure.")
-                        return False
-
-                    log.debug("Retrying after OSError failure.")
-                    raise subprocess.CalledProcessError(1, call, b"ImportError")
+                    log.debug("Not retrying after OSError failure.")
+                    return False
 
             except subprocess.CalledProcessError as e:
-                if b"ImportError" in e.output or b"ModuleNotFoundError" in e.output:
-                    if retry:
-                        as_path = libname.replace(".", "/")
-                        as_path += ".py"
-                        for folder_uri in self._workspace_folder_uri_to_folder_info:
-                            folder = uris.to_fs_path(folder_uri)
-                            if os.path.exists(os.path.join(folder, as_path)):
-                                # Let's see if we can find the module in the workspace (if we
-                                # can, fix the PYTHONPATH to include it).
-                                env_cp = os.environ.copy()
-                                if IS_PY2:
-                                    if not isinstance(folder, bytes):
-                                        folder = folder.encode(
-                                            sys.getfilesystemencoding()
-                                        )
-                                env_cp["PYTHONPATH"] = (
-                                    folder
-                                    + os.pathsep
-                                    + os.environ.get("PYTHONPATH", "")
-                                )
-                                return self._create_libspec(
-                                    libname,
-                                    env=env_cp,
-                                    retry=False,
-                                    log_time=False,
-                                    cwd=cwd,
-                                    additional_path=additional_path,
-                                )
-
                 log.exception(
                     "Error creating libspec: %s. Output:\n%s", libname, e.output
                 )

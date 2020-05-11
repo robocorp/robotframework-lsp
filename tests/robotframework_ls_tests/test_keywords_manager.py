@@ -3,8 +3,13 @@ def test_keywords_manager(workspace, libspec_manager):
     from robotframework_ls.impl import robot_constants
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
 
-    libspec_manager._create_libspec("case1_library")
+    def get_library_info(*args, **kwargs):
+        kwargs["current_doc_uri"] = doc.uri
+        return libspec_manager.get_library_info(*args, **kwargs)
+
+    assert get_library_info("case1_library") is not None
     libspec_file = os.path.join(
         libspec_manager.user_libspec_dir, "case1_library.libspec"
     )
@@ -14,9 +19,9 @@ def test_keywords_manager(workspace, libspec_manager):
         ["case1_library"] + list(robot_constants.STDLIBS)
     )
 
-    assert libspec_manager.get_library_info("invalid") is None
+    assert get_library_info("invalid") is None
 
-    library = libspec_manager.get_library_info("case1_library")
+    library = get_library_info("case1_library")
 
     assert tuple(kw.name for kw in library.keywords) == (
         "Verify Another Model",
@@ -29,5 +34,5 @@ def test_keywords_manager(workspace, libspec_manager):
         robot_constants.STDLIBS
     )
 
-    assert libspec_manager.get_library_info("case1_library", create=False) is None
-    assert libspec_manager.get_library_info("case1_library") is not None
+    assert get_library_info("case1_library", create=False) is None
+    assert get_library_info("case1_library") is not None

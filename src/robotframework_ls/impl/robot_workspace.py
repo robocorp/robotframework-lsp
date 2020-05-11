@@ -74,7 +74,11 @@ class RobotDocument(Document):
             )
         from robot.api import get_model, get_resource_model, get_init_model
 
-        source = self.source
+        try:
+            source = self.source
+        except:
+            log.exception("Error getting source for: %s" % (self.uri,))
+            source = ""
 
         t = self.get_type()
         if t == self.TYPE_TEST_CASE:

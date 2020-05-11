@@ -322,7 +322,7 @@ class CompletionContext(object):
                             os.path.dirname(self.doc.path), resource_path
                         )
 
-                    if not os.path.exists(resource_path):
+                    if not os.path.isfile(resource_path):
                         log.info("Resource not found: %s", resource_path)
                         continue
 
