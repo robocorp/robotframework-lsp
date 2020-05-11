@@ -1,3 +1,12 @@
+New in 0.1.1 (2020-05-11)
+-----------------------------
+
+- Variables code completion is provided for variables assigned to keyword return values. [#21](https://github.com/robocorp/robotframework-lsp/issues/21)
+- Variables properly tokenized when completing for variables. [#21](https://github.com/robocorp/robotframework-lsp/issues/21)
+- Show argument names in code completion. Fixes [#53](https://github.com/robocorp/robotframework-lsp/issues/53)
+- No longer giving error if specified resource points to a directory. Fixes [#63](https://github.com/robocorp/robotframework-lsp/issues/63)
+- `tab` now properly applies completions. [#52](https://github.com/robocorp/robotframework-lsp/issues/52)
+
 
 New in 0.1.0 (2020-05-05)
 -----------------------------
@@ -17,12 +26,14 @@ New in 0.0.10 (2020-04-28)
 - Arguments are now shown in keyword documentation (code completion).
 - Properly deal with path based library imports (code analysis, code completion and go to definition).
 
+
 New in 0.0.9 (2020-04-20)
 -----------------------------
 
 - Go to definition implemented for keywords.
 - Only environment variables set by the user when launching are passed when launching in integrated terminal.
 - `~` is properly expanded when it's specified in the logging file.
+
 
 New in 0.0.8 (2020-04-14)
 -----------------------------
@@ -31,6 +42,7 @@ New in 0.0.8 (2020-04-14)
   -- a debug run will do a regular launch). Fixes [#29](https://github.com/robocorp/robotframework-lsp/issues/29)
 - A setting to complete section headers only in the plural/singular form is now available (`robot.completions.section_headers.form`). Fixes [#42](https://github.com/robocorp/robotframework-lsp/issues/42)
 - Improvements in syntax highlighting
+
 
 New in 0.0.7 (2020-04-04)
 -----------------------------

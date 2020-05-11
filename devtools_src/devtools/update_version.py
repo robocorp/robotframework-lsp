@@ -56,12 +56,14 @@ def update_version(version, filepath):
 
 
 def fix_contents_version(contents, version):
-    contents = re.sub(r"(version\s*=\s*)\"\d\.\d\.\d", r'\1"%s' % (version,), contents)
     contents = re.sub(
-        r"(__version__\s*=\s*)\"\d\.\d\.\d", r'\1"%s' % (version,), contents
+        r"(version\s*=\s*)\"\d+\.\d+\.\d+", r'\1"%s' % (version,), contents
     )
     contents = re.sub(
-        r"(\"version\"\s*:\s*)\"\d\.\d\.\d", r'\1"%s' % (version,), contents
+        r"(__version__\s*=\s*)\"\d+\.\d+\.\d+", r'\1"%s' % (version,), contents
+    )
+    contents = re.sub(
+        r"(\"version\"\s*:\s*)\"\d+\.\d+\.\d+", r'\1"%s' % (version,), contents
     )
 
     return contents

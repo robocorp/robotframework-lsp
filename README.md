@@ -30,10 +30,10 @@ may be needed.
 See: [Config](docs/config.md) for details.
   
 
-Features (0.1.0)
+Features (0.1.1)
 -----------------
 
-- Preliminary code completion support for variables defined in [Variable Tables](https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#variable-table) (new in 0.1.0).
+- Preliminary code completion support for variables defined in [Variable Tables](https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#variable-table) and [Keyword Return Values](https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#return-values-from-keywords) (new in 0.1.1).
 - Code analysis: check if keywords are properly imported/defined.
 - Code completion for keywords, section headers and section settings.
 - Go to definition for keywords.
