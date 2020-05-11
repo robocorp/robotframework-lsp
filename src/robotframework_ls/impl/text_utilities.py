@@ -39,14 +39,16 @@ def matches_robot_keyword(keyword_name_call_text, keyword_name, _re_cache={}):
     :param keyword_name:
         The keyword (which has variables -- i.e.: '{').
     """
+
     try:
         compiled = _re_cache[keyword_name]
     except KeyError:
+        from robotframework_ls.impl import ast_utils
         from robot.api import Token
         import re
 
         regexp = []
-        for t in Token(Token.KEYWORD_NAME, keyword_name).tokenize_variables():
+        for t in ast_utils.tokenize_variables(Token(Token.KEYWORD_NAME, keyword_name)):
             if t.type == t.VARIABLE:
                 regexp.append("(.*)")
             else:

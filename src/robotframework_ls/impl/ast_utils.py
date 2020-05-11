@@ -207,7 +207,7 @@ def find_variable(ast, line, col):
     if token_info is not None:
         token = token_info.token
         if token.type == token.ARGUMENT and "{" in token.value:
-            for part in _tokenize_variables(token, col):
+            for part in _tokenize_variables_even_when_invalid(token, col):
                 if part.col_offset <= col <= part.end_col_offset:
                     if part.type == part.VARIABLE:
                         return _TokenInfo(token_info.stack, token_info.node, part)
@@ -218,7 +218,18 @@ def find_variable(ast, line, col):
     return None
 
 
-def _tokenize_variables(token, col):
+def tokenize_variables(token):
+    try:
+        return token.tokenize_variables()
+    except:  # If variables aren't correct, this may fail, so, return no variables.
+        return iter([])
+
+
+def _tokenize_variables_even_when_invalid(token, col):
+    """
+    If Token.tokenize_variables() fails, this can still provide the variable under
+    the given column by appliying some heuristics to find open variables.
+    """
     try:
         return token.tokenize_variables()
     except:
@@ -319,6 +330,27 @@ def get_documentation(ast):
             if token.type == token.ARGUMENT:
                 doc.append(str(token).strip())
     return "\n".join(doc)
+
+
+def iter_variable_assigns(ast):
+    from robot.api import Token
+
+    for stack, node in _iter_nodes(ast, recursive=False):
+        if node.__class__.__name__ == "KeywordCall":
+            for token in node.get_tokens(Token.ASSIGN):
+                value = token.value
+                i = value.rfind("}")
+                if i > 0:
+                    new_value = value[: i + 1]
+                    token = Token(
+                        type=token.type,
+                        value=new_value,
+                        lineno=token.lineno,
+                        col_offset=token.col_offset,
+                        error=token.error,
+                    )
+
+                yield _TokenInfo(tuple(stack), node, token)
 
 
 def iter_keyword_usage_tokens(ast):

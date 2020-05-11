@@ -1,0 +1,17 @@
+- deprecated: false
+  documentation: "     ${variable_x} =      ${variable_y}      @{variable_z}=    \
+    \  Get X      an argument \n"
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: '@{variable_z}'
+  preselect: false
+  textEdit:
+    newText: '@{variable_z}'
+    range:
+      end:
+        character: 28
+        line: 8
+      start:
+        character: 18
+        line: 8

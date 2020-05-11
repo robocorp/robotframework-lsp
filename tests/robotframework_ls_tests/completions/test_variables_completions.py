@@ -198,3 +198,78 @@ List Variable
         CompletionContext(doc, workspace=workspace.ws)
     )
     data_regression.check(completions)
+
+
+def test_variables_completions_assign_1(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import variable_completions
+
+    workspace.set_root("case5", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case5.robot")
+    doc.source += """
+*** Test Cases ***
+Returning
+    ${variable_x} =    ${variable_y}    @{variable_z}=    Get X    an argument
+    Log    We got ${variable"""
+
+    completions = variable_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    data_regression.check(completions)
+
+
+def test_variables_completions_assign_2(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import variable_completions
+
+    workspace.set_root("case5", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case5.robot")
+    doc.source += """
+*** Test Cases ***
+Returning
+    ${variable_x} =    ${variable_y}    @{variable_z}=    Get X    an argument
+    Log    We got @{variable"""
+
+    completions = variable_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    data_regression.check(completions)
+
+
+def test_variables_completions_assign_3(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import variable_completions
+
+    workspace.set_root("case5", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case5.robot")
+    doc.source += """
+*** Test Cases ***
+[SetUp]
+    ${variable_x} =    ${variable_y}    @{variable_z}=    Get X    an argument
+    Log    We got @{variable"""
+
+    completions = variable_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    data_regression.check(completions)
+
+
+def test_variables_completions_assign_4(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import variable_completions
+
+    workspace.set_root("case5", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case5.robot")
+    doc.source += """
+*** Test Cases ***
+[SetUp]
+    ${variable_x} =    ${variable_y}    @{variable_z}=    Get X    an argument
+    
+Test1
+    Log    We got @{variable"""
+
+    # Note: local variables aren't available from one test to another.
+    completions = variable_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    data_regression.check(completions, basename="no_variables")

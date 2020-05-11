@@ -257,6 +257,7 @@ class CompletionContext(object):
                     return section
         return None
 
+    @instance_cache
     def get_current_token(self):
         """
         :rtype: robotframework_ls.impl.ast_utils._TokenInfo|NoneType
@@ -268,13 +269,16 @@ class CompletionContext(object):
             return None
         return ast_utils.find_token(section, self.sel.line, self.sel.col)
 
-    def get_current_variable(self):
+    @instance_cache
+    def get_current_variable(self, section=None):
         """
         :rtype: robotframework_ls.impl.ast_utils._TokenInfo|NoneType
         """
         from robotframework_ls.impl import ast_utils
 
-        section = self.get_ast_current_section()
+        if section is None:
+            section = self.get_ast_current_section()
+
         if section is None:
             return None
         return ast_utils.find_variable(section, self.sel.line, self.sel.col)
@@ -303,6 +307,7 @@ class CompletionContext(object):
     def iter_imports_docs(self):
         from robotframework_ls import uris
         import os.path
+        from robotframework_ls.impl import ast_utils
 
         ws = self._workspace
 
@@ -312,7 +317,7 @@ class CompletionContext(object):
             for token in resource_import.tokens:
                 if token.type == token.NAME:
                     parts = []
-                    for v in token.tokenize_variables():
+                    for v in ast_utils.tokenize_variables(token):
                         if v.type == v.NAME:
                             parts.append(str(v))
 

@@ -25,10 +25,9 @@ class IVariableFound(object):
 
 
 class _VariableFound(object):
-    def __init__(self, variable_node_info):
-        self._variable_node = variable_node_info.node
-        self.variable_name = self._variable_node.name
-        self.variable_value = self._variable_node.value
+    def __init__(self, variable_name, variable_value):
+        self.variable_name = variable_name
+        self.variable_value = variable_value
 
     @property
     @cache.instance_cache
@@ -116,7 +115,8 @@ def _collect_completions_from_ast(ast, completion_context, collector):
     ast = completion_context.get_ast()
     for variable_node_info in ast_utils.iter_variables(ast):
         if collector.accepts(variable_node_info.node.name):
-            variable_found = _VariableFound(variable_node_info)
+            variable_node = variable_node_info.node
+            variable_found = _VariableFound(variable_node.name, variable_node.value)
             collector.on_variable(variable_found)
 
 
@@ -149,7 +149,20 @@ def _collect_following_imports(completion_context, collector):
 
 
 def _collect_variables(completion_context, collector):
+    from robotframework_ls.impl import ast_utils
+
     _collect_following_imports(completion_context, collector)
+    token_info = completion_context.get_current_token()
+    if token_info is not None:
+        if token_info.stack:
+            stack_node = token_info.stack[-1]
+        else:
+            stack_node = completion_context.get_ast_current_section()
+        for assign_node_info in ast_utils.iter_variable_assigns(stack_node):
+            if collector.accepts(assign_node_info.token.value):
+                rep = " ".join(tok.value for tok in assign_node_info.node.tokens)
+                variable_found = _VariableFound(assign_node_info.token.value, rep)
+                collector.on_variable(variable_found)
 
 
 def complete(completion_context):
