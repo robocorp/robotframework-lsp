@@ -202,6 +202,63 @@ def find_token(ast, line, col):
                     return _TokenInfo(tuple(stack), node, token)
 
 
+def find_variable(ast, line, col):
+    token_info = find_token(ast, line, col)
+    if token_info is not None:
+        token = token_info.token
+        if token.type == token.ARGUMENT and "{" in token.value:
+            for part in _tokenize_variables(token, col):
+                if part.col_offset <= col <= part.end_col_offset:
+                    if part.type == part.VARIABLE:
+                        return _TokenInfo(token_info.stack, token_info.node, part)
+                    else:
+                        return None
+            else:
+                return None
+    return None
+
+
+def _tokenize_variables(token, col):
+    try:
+        return token.tokenize_variables()
+    except:
+        pass
+
+    # If we got here, it means that we weren't able to tokenize the variables
+    # properly (probably some variable wasn't closed properly), so, let's do
+    # a custom implementation for this use case.
+
+    from robot.api import Token
+    from robotframework_ls.impl.robot_constants import VARIABLE_PREFIXES
+
+    diff = col - token.col_offset
+    up_to_cursor = token.value[:diff]
+    open_at = up_to_cursor.rfind("{")
+
+    if open_at >= 1:
+        if up_to_cursor[open_at - 1] in VARIABLE_PREFIXES:
+            varname = [up_to_cursor[open_at - 1 :]]
+            from_cursor = token.value[diff:]
+
+            for c in from_cursor:
+                if c in VARIABLE_PREFIXES or c.isspace() or c == "{":
+                    break
+                if c == "}":
+                    varname.append(c)
+                    break
+                varname.append(c)
+
+            return [
+                Token(
+                    type=token.VARIABLE,
+                    value="".join(varname),
+                    lineno=token.lineno,
+                    col_offset=token.col_offset + open_at - 1,
+                    error=token.error,
+                )
+            ]
+
+
 def _iter_nodes_filtered(ast, accept_class, recursive=True):
     """
     :rtype: generator(tuple(list,ast_module.AST))

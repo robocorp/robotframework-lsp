@@ -268,6 +268,17 @@ class CompletionContext(object):
             return None
         return ast_utils.find_token(section, self.sel.line, self.sel.col)
 
+    def get_current_variable(self):
+        """
+        :rtype: robotframework_ls.impl.ast_utils._TokenInfo|NoneType
+        """
+        from robotframework_ls.impl import ast_utils
+
+        section = self.get_ast_current_section()
+        if section is None:
+            return None
+        return ast_utils.find_variable(section, self.sel.line, self.sel.col)
+
     @instance_cache
     def get_imported_libraries(self):
         from robotframework_ls.impl import ast_utils

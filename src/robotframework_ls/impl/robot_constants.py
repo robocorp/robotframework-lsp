@@ -3,6 +3,7 @@ Constants that help in describing the accepted structure of a file.
 """
 
 BDD_PREFIXES = ["given ", "when ", "then ", "and ", "but "]
+VARIABLE_PREFIXES = ("@", "%", "$", "&")
 
 
 class Section(object):

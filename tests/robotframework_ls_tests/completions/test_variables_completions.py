@@ -1,4 +1,6 @@
-def test_string_variables_completions(workspace, libspec_manager, data_regression):
+def test_string_variables_completions_basic_1(
+    workspace, libspec_manager, data_regression
+):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import variable_completions
 
@@ -21,7 +23,84 @@ List Variable
     data_regression.check(completions)
 
 
-def test_list_variables_completions_basic(workspace, libspec_manager, data_regression):
+def test_string_variables_completions_basic_2(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import variable_completions
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """*** Variables ***
+${NAME}         Robot Framework
+${VERSION}      2.0
+${ROBOT}        ${n} ${VERSION}"""
+    line, col = doc.get_last_line_col()
+    completions = variable_completions.complete(
+        CompletionContext(
+            doc, workspace=workspace.ws, line=line, col=col - len("} ${VERSION}")
+        )
+    )
+    data_regression.check(completions)
+
+
+def test_string_variables_completions_unable_to_tokenize_1(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import variable_completions
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """
+*** Variables ***
+${NAME}         Robot Framework
+${VERSION}      2.0
+${ROBOT} =      ${NAME} ${VERSION}
+
+*** Test Cases ***
+List Variable
+    Log    ${NAME}
+    Should Contain    ${snth ${na}"""
+
+    line, col = doc.get_last_line_col()
+    completions = variable_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws, line=line, col=col - 2)
+    )
+    data_regression.check(completions)
+
+
+def test_string_variables_completions_unable_to_tokenize_2(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import variable_completions
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """
+*** Variables ***
+${NAME}         Robot Framework
+${VERSION}      2.0
+${ROBOT} =      ${NAME} ${VERSION}
+
+*** Test Cases ***
+List Variable
+    Log    ${NAME}
+    Should Contain    ${na ${na}"""
+
+    line, col = doc.get_last_line_col()
+    completions = variable_completions.complete(
+        CompletionContext(
+            doc, workspace=workspace.ws, line=line, col=col - len(" ${na}")
+        )
+    )
+    data_regression.check(completions)
+
+
+def test_list_variables_completions_basic_1(
+    workspace, libspec_manager, data_regression
+):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import variable_completions
 
@@ -39,6 +118,27 @@ List Variable
 
     completions = variable_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
+    )
+    data_regression.check(completions)
+
+
+def test_list_variables_completions_basic_2(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import variable_completions
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """*** Variables ***
+@{NAMES}        Matti       Teppo
+
+*** Test Cases ***
+List Variable
+    Should Contain    @{NA}"""
+    line, col = doc.get_last_line_col()
+    completions = variable_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws, line=line, col=col - 1)
     )
     data_regression.check(completions)
 

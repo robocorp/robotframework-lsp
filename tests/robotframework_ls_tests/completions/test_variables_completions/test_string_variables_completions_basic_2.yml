@@ -1,0 +1,17 @@
+- deprecated: false
+  documentation:
+  - Robot Framework
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${NAME}
+  preselect: false
+  textEdit:
+    newText: \${NAME}
+    range:
+      end:
+        character: 20
+        line: 3
+      start:
+        character: 16
+        line: 3

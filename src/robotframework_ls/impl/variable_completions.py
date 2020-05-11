@@ -158,13 +158,13 @@ def complete(completion_context):
     """
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
 
-    token_info = completion_context.get_current_token()
+    token_info = completion_context.get_current_variable()
     if token_info is not None:
         token = token_info.token
-        if token.type == token.ARGUMENT:
-            collector = _Collector(
-                completion_context.sel, token, RobotStringMatcher(token.value)
-            )
-            _collect_variables(completion_context, collector)
-            return collector.completion_items
+        value = token.value
+        if value.endswith("}"):
+            value = value[:-1]
+        collector = _Collector(completion_context.sel, token, RobotStringMatcher(value))
+        _collect_variables(completion_context, collector)
+        return collector.completion_items
     return []
