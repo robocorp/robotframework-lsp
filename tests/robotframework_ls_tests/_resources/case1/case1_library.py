@@ -14,3 +14,7 @@ def verify_model(model):
 
 def verify_another_model(model=10):
     print("verifying another model:", model)
+
+
+def check_with_multi_args(arg1, arg2=10, *args, **kwargs):
+    print("check with multi args:", arg1, arg2, args, kwargs)

@@ -24,6 +24,7 @@ def test_keywords_manager(workspace, libspec_manager):
     library = get_library_info("case1_library")
 
     assert tuple(kw.name for kw in library.keywords) == (
+        "Check With Multi Args",
         "Verify Another Model",
         "Verify Model",
     )

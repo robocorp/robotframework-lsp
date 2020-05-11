@@ -1,0 +1,60 @@
+- deprecated: false
+  documentation: 'Check With Multi Args(arg1, arg2=10, *args, **kwargs)
+
+
+    '
+  documentationFormat: markdown
+  insertTextFormat: 2
+  kind: 2
+  label: Check With Multi Args
+  preselect: false
+  textEdit:
+    newText: Check With Multi Args    ${1:arg1}    ${2:arg2=10}    ${3:@args}    ${4:&kwargs}
+    range:
+      end:
+        character: 18
+        line: 7
+      start:
+        character: 18
+        line: 7
+- deprecated: false
+  documentation: 'Verify Another Model(model=10)
+
+
+    '
+  documentationFormat: markdown
+  insertTextFormat: 2
+  kind: 2
+  label: Verify Another Model
+  preselect: false
+  textEdit:
+    newText: Verify Another Model    ${1:model=10}
+    range:
+      end:
+        character: 18
+        line: 7
+      start:
+        character: 18
+        line: 7
+- deprecated: false
+  documentation: 'Verify Model(model)
+
+
+    :type model: int
+
+
+    '
+  documentationFormat: markdown
+  insertTextFormat: 2
+  kind: 2
+  label: Verify Model
+  preselect: false
+  textEdit:
+    newText: Verify Model    ${1:model}
+    range:
+      end:
+        character: 18
+        line: 7
+      start:
+        character: 18
+        line: 7

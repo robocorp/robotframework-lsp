@@ -48,6 +48,13 @@ class _Collector(object):
         text = label
 
         for i, arg in enumerate(keyword_found.keyword_args):
+            arg = arg.replace("$", "\\$").replace("{", "").replace("}", "")
+            if arg.startswith("**"):
+                arg = "&" + arg[2:]
+
+            elif arg.startswith("*"):
+                arg = "@" + arg[1:]
+
             text += "    ${%s:%s}" % (i + 1, arg)
 
         text_edit = TextEdit(
