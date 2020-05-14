@@ -26,6 +26,9 @@
                     "include": "#documentation"
                 },
                 {
+                    "include": "#settings_table_tags"
+                },
+                {
                     "include": "#settings_table_setting"
                 },
                 {
@@ -38,7 +41,7 @@
             "name": "meta.table.settings.robot"
         },
         "settings_table_setting": {
-            "begin": "(?i)^(Force Tags|Default Tags|Test Timeout|Task Timeout)(?= {2}| ?\\t| ?$)",
+            "begin": "(?i)^(Test Timeout|Task Timeout)(?= {2}| ?\\t| ?$)",
             "beginCaptures": {
                 "1": {
                     "name": "storage.type.setting.robot"
@@ -61,6 +64,31 @@
                 }
             ],
             "name": "meta.setting.documentation.robot"
+        },
+        "settings_table_tags": {
+            "begin": "(?i)^(Force Tags|Default Tags)(?= {2}| ?\\t| ?$)",
+            "beginCaptures": {
+                "1": {
+                    "name": "storage.type.setting.robot"
+                }
+            },
+            "contentName": "entity.name.tag.robot",
+            "end": "^(?!\\s*\\.\\.\\.)",
+            "patterns": [
+                {
+                    "include": "#escape"
+                },
+                {
+                    "include": "#comment"
+                },
+                {
+                    "include": "#variables"
+                },
+                {
+                    "include": "#line_continuation"
+                }
+            ],
+            "name": "meta.setting.tags.robot"
         },
         "settings_table_setting_imports": {
             "begin": "(?i)^(Library|Resource|Variables|Metadata)(?: {2,}| ?\\t)+(.*?)(?= {2}| ?\\t| ?$)",
@@ -100,11 +128,11 @@
                     "name": "storage.type.setting.robot"
                 },
                 "2": {
-                    "name": "support.function.robot"
+                    "name": "meta.support.function.robot"
                 }
             },
             "end": "^(?!\\s*\\.\\.\\.)",
-            "contentName": "constant.other.robot",
+            "contentName": "string.quoted.single.robot",
             "patterns": [
                 {
                     "include": "#escape"
@@ -132,7 +160,7 @@
                     "name": "storage.type.method.robot"
                 }
             },
-            "contentName": "string.quoted.tripple.robot",
+            "contentName": "comment.block.documentation",
             "patterns": [
                 {
                     "include": "#escape"
@@ -235,9 +263,6 @@
                     "include": "#comment"
                 },
                 {
-                    "include": "#BDD_keyword_call"
-                },
-                {
                     "include": "#returning_keyword_call"
                 },
                 {
@@ -308,9 +333,6 @@
                 },
                 {
                     "include": "#returning_keyword_call"
-                },
-                {
-                    "include": "#BDD_keyword_call"
                 },
                 {
                     "include": "#ELSE_IF"
@@ -390,64 +412,18 @@
                     "name": "constant.numeric.robot"
                 },
                 "9": {
-                    "name": "variable.other.robot"
+                    "name": "meta.variable.as.key.robot",
+                    "patterns": [
+                        {
+                            "include": "#variables"
+                        }
+                    ]
                 },
                 "10": {
                     "name": "keyword.operator.robot"
                 }
             },
             "name": "meta.variables.robot"
-        },
-        "BDD_keyword_call": {
-            "begin": "(?i)^(?=(?: {2,}| ?\\t ?)+(?:given |when |then |and |but )[^\\s])(?:\\s)",
-            "contentName": "string.quoted.single.robot",
-            "end": "^(?!\\s*\\.\\.\\.)",
-            "patterns": [
-                {
-                    "include": "#BDD_keyword"
-                },
-                {
-                    "include": "#escape"
-                },
-                {
-                    "include": "#comment"
-                },
-                {
-                    "include": "#variables"
-                },
-                {
-                    "include": "#named_argument"
-                },
-                {
-                    "include": "#line_continuation"
-                }
-            ],
-            "name": "meta.bdd.keyword.robot"
-        },
-        "BDD_keyword": {
-            "begin": "(?i)(?<=^\\s)(?:\\s+)(?=(?:given|when|then|and|but))",
-            "contentName": "keyword.operator.robot",
-            "end": "(?: )(.*?)(?: {2,}| ?\\t+| ?$)",
-            "patterns": [
-                {
-                    "include": "#escape"
-                },
-                {
-                    "include": "#parameter"
-                },
-                {
-                    "include": "#line_continuation"
-                },
-                {
-                    "include": "#comment"
-                }
-            ],
-            "name": "meta.bdd.keyword.body.robot",
-            "endCaptures": {
-                "1": {
-                    "name": "support.function.robot"
-                }
-            }
         },
         "run_keyword_if": {
             "end": "(?:  | ?\\t| ?$)",
@@ -460,7 +436,7 @@
                     "name": "string.interpolated.robot"
                 },
                 "3": {
-                    "name": "support.function.robot"
+                    "name": "meta.support.function.robot"
                 }
             },
             "contentName": "string.quoted.single.robot",
@@ -500,7 +476,7 @@
                     "name": "keyword.operator.robot"
                 },
                 "6": {
-                    "name": "support.function.robot"
+                    "name": "meta.support.function.robot"
                 }
             },
             "contentName": "string.quoted.single.robot",
@@ -534,7 +510,7 @@
                     "name": "keyword.operator.robot"
                 },
                 "4": {
-                    "name": "support.function.robot"
+                    "name": "meta.support.function.robot"
                 }
             },
             "contentName": "string.quoted.single.robot",
@@ -555,9 +531,9 @@
             "name": "meta.else.robot"
         },
         "function_declaration": {
-            "end": "(?= {2}| ?\\t| ?$)",
-            "begin": "^(?=[^ \\t\\*\\n\\|#]+)",
+            "begin": "^(?=[^\\t\\*\\n\\|#])(?!  )",
             "contentName": "entity.name.function.robot",
+            "end": "(?= {2}| ?\\t| ?$)",
             "patterns": [
                 {
                     "include": "#escape"
@@ -585,7 +561,7 @@
                     "name": "keyword.operator.robot"
                 },
                 "4": {
-                    "name": "support.function.robot"
+                    "name": "meta.support.function.robot"
                 }
             },
             "patterns": [
@@ -637,7 +613,7 @@
                     "name": "keyword.operator.robot"
                 },
                 "4": {
-                    "name": "support.function.robot"
+                    "name": "meta.support.function.robot"
                 },
                 "1": {
                     "name": "keyword.operator.robot"
@@ -698,7 +674,6 @@
             "name": "meta.function.doc.timeout.robot"
         },
         "fuction_documentation": {
-            "end": "^(?!\\s*\\.\\.\\.)",
             "begin": "(?i)^(?: {2,}| ?\\t ?)+(\\[)(Documentation)(\\])(?= {2}| ?\\t| ?$)",
             "beginCaptures": {
                 "3": {
@@ -711,7 +686,8 @@
                     "name": "storage.type.method.robot"
                 }
             },
-            "contentName": "string.quoted.tripple.robot",
+            "contentName": "comment.block.documentation",
+            "end": "^(?!\\s*\\.\\.\\.)",
             "patterns": [
                 {
                     "include": "#escape"
@@ -739,7 +715,7 @@
                     "name": "keyword.operator.robot"
                 },
                 "4": {
-                    "name": "support.function.robot"
+                    "name": "meta.support.function.robot"
                 }
             },
             "contentName": "string.quoted.single.robot",
@@ -843,7 +819,7 @@
             "begin": "^(?: {2,}| ?\\t ?)+(FOR)",
             "beginCaptures": {
                 "1": {
-                    "name": "keyword.control.robot"
+                    "name": "keyword.control.flow.robot"
                 }
             },
             "contentName": "meta.keyword.control.robot",
@@ -874,7 +850,7 @@
                     "name": "keyword.control.robot"
                 }
             },
-            "contentName": "meta.keyword.control.robot",
+            "contentName": "string.quoted.single.robot",
             "end": "^(?!\\s*\\.\\.\\.)",
             "patterns": [
                 {
@@ -900,7 +876,7 @@
             "begin": "^(?!(?: {2,}| ?\\t ?)+(?:(?=[$\\[@&%]|\\.)))(?: {2,}| ?\\t ?)+(.*?)(?= {2,}| ?\\t ?| ?$)",
             "beginCaptures": {
                 "1": {
-                    "name": "support.function.robot"
+                    "name": "meta.support.function.robot"
                 }
             },
             "contentName": "string.quoted.single.robot",
@@ -924,7 +900,7 @@
             "name": "meta.keyword.call.robot"
         },
         "keyword_arguments": {
-            "end": "^(?!\\s*\\.\\.\\.)",
+            "name": "meta.keyword.arguments.robot",
             "begin": "^(?i)(?:\\s)+(\\[)(arguments)(\\])",
             "beginCaptures": {
                 "3": {
@@ -937,7 +913,8 @@
                     "name": "storage.type.method.robot"
                 }
             },
-            "contentName": "string.quoted.single.robot",
+            "contentName": "meta.keyword.arguments.robot",
+            "end": "^(?!\\s*\\.\\.\\.)",
             "patterns": [
                 {
                     "include": "#escape"
@@ -946,13 +923,15 @@
                     "include": "#comment"
                 },
                 {
+                    "include": "#named_argument"
+                },
+                {
                     "include": "#parameter"
                 },
                 {
                     "include": "#line_continuation"
                 }
-            ],
-            "name": "meta.function.doc.arguments.robot"
+            ]
         },
         "parameter": {
             "match": "(?:(?<!\\\\)|(?<=\\\\\\\\))([$@&]\\{)(?:(.+?}*))(\\})",
@@ -970,25 +949,66 @@
             "name": "meta.parameter.robot"
         },
         "named_argument": {
-            "match": "((?<=[\\s|])[^ |\\t=]*)((?<!\\\\)=)(?=[^\\s=])",
-            "captures": {
+            "name": "meta.named.argument.robot",
+            "begin": "(?<=[\\s|])(?!\\/\\/|css:|xpath:)(?:([$&@]{)([^ |\\t=]+)(})|([^ |\\t=]+))((?<!\\\\)=)(?=[^=])",
+            "beginCaptures": {
                 "1": {
-                    "name": "variable.parameter.robot"
+                    "name": "keyword.operator.robot"
                 },
                 "2": {
+                    "name": "variable.parameter.robot"
+                },
+                "3": {
+                    "name": "keyword.operator.robot"
+                },
+                "4": {
+                    "name": "variable.parameter.robot"
+                },
+                "5": {
                     "name": "keyword.operator.robot"
                 }
             },
-            "name": "meta.named.argument.robot"
-        },
-        "returning_keyword_call": {
-            "end": "^(?!\\s*\\.\\.\\.)",
-            "begin": "^(?=(?: {2,}| ?\\t ?)+(?:(?=[$@&])))(?:\\s)",
             "contentName": "string.quoted.single.robot",
+            "end": "(?= {2,}| ?\\t ?|$)",
             "patterns": [
                 {
-                    "include": "#variable_assignment_from_kw"
+                    "include": "#escape"
                 },
+                {
+                    "include": "#variables"
+                }
+            ]
+        },
+        "returning_keyword_call": {
+            "begin": "^(?=(?: {2,}| ?\\t ?)+(?:(?=[$@&])))(?:\\s)",
+            "contentName": "meta.returning.keyword.content.robot",
+            "end": "^(?!\\s*\\.\\.\\.)",
+            "patterns": [
+                {
+                    "include": "#returning_keyword"
+                }
+            ],
+            "name": "meta.returning.keyword.call.robot"
+        },
+        "returning_keyword": {
+            "name": "meta.returning.keyword.robot",
+            "begin": "(?<=\\s)(?=\\s*(?:(?=[$@&])))((?:\\s)*(?:[$&@]{(?:.*?)}(?:\\[.*?\\])?(?: ?=?\\s*))*)(.*?)(?: {2,}| ?\\t ?|$)",
+            "beginCaptures": {
+                "1":{
+                    "name": "variable.parameter.robot",
+                    "patterns": [
+                        {
+                            "include": "#variable_assignment_from_kw"
+                        }
+                    ]
+                },
+                "2": {
+                    "name": "meta.keyword.robot"
+                }
+            },
+            "contentName": "string.quoted.single.robot",
+            "end": "^(?!\\s*\\.\\.\\.)",
+            "patterns": [
                 {
                     "include": "#variables"
                 },
@@ -1004,20 +1024,17 @@
                 {
                     "include": "#comment"
                 }
-            ],
-            "name": "meta.returning.keyword.robot"
+            ]
+                
         },
         "variable_assignment_from_kw": {
             "name": "meta.variable.assignment.keyword.robot",
             "begin": "(?<=^\\s)(?:\\s*)(?=[$@&])",
-            "contentName": "support.function.robot",
-            "end": "( ?=)?(?: {2,}| ?\\t+ ?| ?$)(?!\\.\\.\\.)([^#$@& \\n\\r].*?)(?: {2,}| ?\\t+| ?$)",
+            "contentName": "meta.variable.assignment.keyword.content.robot",
+            "end": "(?:( ?=)|(?: {2,}| ?\\t+ ?| ?$)(?![#$@& \\n\\r]|\\.\\.\\.)|^(?=\\.\\.\\.)( {2,}| ?\\t+ ?| ?$)(?![#$@&]))",
             "endCaptures": {
                 "1": {
                     "name": "keyword.operator.robot"
-                },
-                "2": {
-                    "name": "support.function.robot"
                 }
             },
             "patterns": [
