@@ -170,6 +170,12 @@
                     }
                 ]
             }
+        ],
+        "snippets": [
+            {
+                "language": "robotframework",
+                "path": "./snippets/robotframework.json"
+            }
         ]
     },
     "main": "./vscode-client/out/extension",
