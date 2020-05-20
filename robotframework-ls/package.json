@@ -1,0 +1,192 @@
+{
+    "name": "robotframework-lsp",
+    "displayName": "Robot Framework Language Server",
+    "description": "VSCode extension support for Robot Framework",
+    "author": "Fabio Zadrozny",
+    "homepage": "https://github.com/robocorp/robotframework-lsp/blob/robotframework-lsp-0.1.1/robotframework-ls/README.md",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/robocorp/robotframework-lsp.git"
+    },
+    "license": "MIT",
+    "version": "0.1.1",
+    "icon": "images/icon.png",
+    "publisher": "robocorptech",
+    "engines": {
+        "vscode": "^1.40.0"
+    },
+    "categories": [
+        "Linters",
+        "Programming Languages"
+    ],
+    "activationEvents": [
+        "onLanguage:robotframework",
+        "onDebugInitialConfigurations",
+        "onDebugResolve:robotframework-lsp"
+    ],
+    "galleryBanner": {
+        "theme": "dark",
+        "color": "#000000"
+    },
+    "contributes": {
+        "configuration": {
+            "title": "Robot Framework Language Server Configuration",
+            "type": "object",
+            "properties": {
+                "robot.editor.4spacesTab": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Replaces the key stroke of tab with 4 spaces. Set to 'false' to active VSCode default."
+                },
+                "robot.completions.section_headers.form": {
+                    "type": "string",
+                    "default": "plural",
+                    "description": "Defines how completions should be shown for section headers (i.e.: *** Setting(s) ***).",
+                    "enum": ["plural", "singular", "both"]
+                },
+                "robot.language-server.tcp-port": {
+                    "type": "number",
+                    "default": 0,
+                    "description": "If the port is specified, connect to the language server previously started at the given port. Requires a VSCode restart to take effect."
+                },
+                "robot.language-server.args": {
+                    "type": "array",
+                    "default": [],
+                    "description": "Specifies the arguments to be passed to the robotframework language server (i.e.: [\"-vv\", \"--log-file=~/robotframework_ls.log\"]). Requires a VSCode restart to take effect."
+                },
+                "robot.language-server.python": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Specifies the path to the python executable to be used for the Robot Framework Language Server (the default is searching python on the PATH). Requires a VSCode restart to take effect."
+                },
+                "robot.python.executable": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Specifies the path to the python executable to be used to load `robotframework` code and dependent libraries (the default is using the same python used for the language server)."
+                },
+                "robot.python.env": {
+                    "type": "object",
+                    "default": {},
+                    "description": "Specifies the environment to be used when loading `robotframework` code and dependent libraries."
+                },
+                "robot.variables": {
+                    "type": "object",
+                    "default": {},
+                    "description": "Specifies custom variables which would usually be passed in the command line to `robotframework`. i.e.: {\"RESOURCES\": \"c:/temp/resources\"}"
+                }
+            }
+        },
+        "languages": [
+            {
+                "id": "robotframework",
+                "aliases": [
+                    "Robot Framework",
+                    "robotframework"
+                ],
+                "extensions": [
+                    ".robot",
+                    ".resource"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "robotframework",
+                "scopeName": "source.robot",
+                "path": "./syntaxes/robotframework.tmLanguage.json"
+            }
+        ],
+        "keybindings": [
+            {
+                "key": "tab",
+                "command": "type",
+                "args": {
+                    "text": "    "
+                },
+                "when": "editorTextFocus && editorLangId == robotframework && !editorHasSelection && !inSnippetMode && !suggestWidgetVisible && config.robot.editor.4spacesTab"
+            }
+        ],
+        "debuggers": [
+            {
+                "type": "robotframework-lsp",
+                "label": "RobotFramework",
+                "languages": [
+                    "robotframework"
+                ],
+                "configurationAttributes": {
+                    "launch": {
+                        "properties": {
+                            "target": {
+                                "type": "string",
+                                "description": "The .robot file or a folder containing .robot files to be launched.",
+                                "default": "${file}"
+                            },
+                            "args": {
+                                "type": "array",
+                                "description": "The command line arguments passed to the target."
+                            },
+                            "cwd": {
+                                "type": "string",
+                                "description": "The working directory for the launch.",
+                                "default": "${workspaceFolder}"
+                            },
+                            "env": {
+                                "type": "object",
+                                "description": "Environment variables to be added to the launch."
+                            },
+                            "terminal": {
+                                "type": "string",
+                                "enum": [
+                                    "none",
+                                    "integrated",
+                                    "external"
+                                ],
+                                "enumDescriptions": [
+                                    "No terminal (pipes the output to the client debug console).",
+                                    "Use terminal integrated in client.",
+                                    "External terminal (configured in user settings)."
+                                ],
+                                "description": "The terminal to launch the program.",
+                                "default": "none"
+                            }
+                        }
+                    }
+                },
+                "configurationSnippets": [
+                    {
+                        "label": "Robot: Launch .robot file",
+                        "description": "Add a new configuration for launching Robot Framework.",
+                        "body": {
+                            "type": "robotframework-lsp",
+                            "name": "Robot: Current File",
+                            "request": "launch",
+                            "cwd": "^\"\\${workspaceFolder}\"",
+                            "target": "^\"\\${file}\"",
+                            "terminal": "none",
+                            "env": {},
+                            "args": []
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    "main": "./vscode-client/out/extension",
+    "scripts": {
+        "vscode:prepublish": "cd vscode-client && npm run compile && cd ..",
+        "compile": "cd vscode-client && tsc -p ./ && cd ..",
+        "watch": "cd vscode-client && tsc -watch -p ./ && cd ..",
+        "postinstall": "node ./node_modules/vscode/bin/install"
+    },
+    "devDependencies": {
+        "typescript": "^3.6.4",
+        "vscode": "^1.1.4",
+        "@types/node": "^6.0.40",
+        "@types/mocha": "^2.2.32"
+    },
+    "dependencies": {
+        "vscode-languageclient": "^3.4.5",
+        "path-exists": "^3.0.0"
+    }
+}

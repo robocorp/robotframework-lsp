@@ -1,0 +1,56 @@
+on:
+  push:
+    branches:
+      - "release"
+    tags:
+      - "robotframework-lsp-*"
+name: Deploy - RobotFramework Larguage Server Extension
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./robotframework-ls
+    
+    strategy:
+      fail-fast: true
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Setup node
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12.x
+    - name: Yarn install
+      run: yarn install
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: Install deps
+      run: pip install --upgrade pip fire twine wheel setuptools
+    - name: Vendor robocode_ls_core
+      run: python -m dev vendor-robocode-ls-core
+    - name: Build wheel
+      working-directory: ./robotframework-ls/src
+      run: |
+        cp ../README.md ./README.md
+        python setup.py sdist bdist_wheel --universal
+    - run: npm install -g vsce
+    - run: vsce package -o robotframework-lsp.vsix
+    - uses: actions/upload-artifact@v1
+      with:
+        name: robotframework-lsp.vsix
+        path: ./robotframework-ls/robotframework-lsp.vsix
+    - name: Check tag version
+      run: python -m dev check-tag-version
+    - name: Upload to PyPI
+      working-directory: ./robotframework-ls/src
+      run: twine upload dist/*
+      env:
+        TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+    - name: Publish to vscode marketplace 
+      run: vsce publish -p $VSCE_TOKEN
+      env:
+        VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}

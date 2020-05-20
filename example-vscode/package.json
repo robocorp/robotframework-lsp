@@ -1,0 +1,54 @@
+{
+    "name": "example-vscode",
+    "displayName": "Example VSCode",
+    "description": "This is an example showing how to use example-vscode to bootstrap a new project",
+    "author": "Example Author",
+    "homepage": "https://github.com/robocorp/robotframework-lsp/blob/master/example-vscode/README.md",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/robocorp/robotframework-lsp.git"
+    },
+    "license": "MIT",
+    "version": "0.0.1",
+    "icon": "images/icon.png",
+    "publisher": "example-publisher",
+    "engines": {
+        "vscode": "^1.40.0"
+    },
+    "categories": [
+    ],
+    "activationEvents": [
+        "*"
+    ],
+    "contributes": {
+        "configuration": {
+            "title": "Example Configuration",
+            "type": "object",
+            "properties": {
+            }
+        },
+        "languages": [
+        ],
+        "grammars": [
+        ],
+        "debuggers": [
+        ]
+    },
+    "main": "./vscode-client/out/extension",
+    "scripts": {
+        "vscode:prepublish": "cd vscode-client && npm run compile && cd ..",
+        "compile": "cd vscode-client && tsc -p ./ && cd ..",
+        "watch": "cd vscode-client && tsc -watch -p ./ && cd ..",
+        "postinstall": "node ./node_modules/vscode/bin/install"
+    },
+    "devDependencies": {
+        "typescript": "^3.6.4",
+        "vscode": "^1.1.4",
+        "@types/node": "^6.0.40",
+        "@types/mocha": "^2.2.32"
+    },
+    "dependencies": {
+        "vscode-languageclient": "^3.4.5",
+        "path-exists": "^3.0.0"
+    }
+}

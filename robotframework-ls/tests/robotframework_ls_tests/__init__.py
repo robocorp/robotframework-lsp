@@ -1,0 +1,3 @@
+import robotframework_ls
+
+robotframework_ls.import_robocode_ls_core()
