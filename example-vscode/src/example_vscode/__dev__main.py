@@ -12,14 +12,14 @@ def dev_main():
     import os.path
 
     try:
-        import robotframework_ls
+        import example_vscode
     except ImportError:
         # Automatically add it to the path if __main__ is being executed.
         sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        import robotframework_ls  # @UnusedImport
-    robotframework_ls.import_robocode_ls_core()
+        import example_vscode  # @UnusedImport
+    example_vscode.import_robocode_ls_core()
 
-    from robotframework_ls.__main__ import main
+    from example_vscode.__main__ import main
 
     sys.argv = [
         sys.argv[0],

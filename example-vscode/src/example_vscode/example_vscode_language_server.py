@@ -6,7 +6,6 @@ log = get_logger(__name__)
 
 
 class ExampleVSCodeLanguageServer(PythonLanguageServer):
-
     def __init__(self, rx, tx):
         PythonLanguageServer.__init__(self, rx, tx)
 
@@ -27,7 +26,7 @@ class ExampleVSCodeLanguageServer(PythonLanguageServer):
             "documentRangeFormattingProvider": False,
             "documentSymbolProvider": False,
             "definitionProvider": True,
-            "executeCommandProvider": {"commands": []},
+            "executeCommandProvider": {"commands": ["extension.sayHello"]},
             "hoverProvider": False,
             "referencesProvider": False,
             "renameProvider": False,
@@ -44,3 +43,7 @@ class ExampleVSCodeLanguageServer(PythonLanguageServer):
         log.info("Server capabilities: %s", server_capabilities)
         return server_capabilities
 
+    def m_workspace__execute_command(self, command=None, arguments=()):
+        import sys
+
+        sys.stderr.write("Execute command: %s with args: %s\n" % (command, arguments))
