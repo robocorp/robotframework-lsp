@@ -1,4 +1,4 @@
-name: Tests - Python Language Server Core (robocode-python-ls-core)
+name: Tests - Robocode VSCode (robocode-vscode)
 
 on:
   push:
@@ -19,14 +19,10 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py27",
           "ubuntu-py38",
         ]
         
         include:
-          - name: "windows-py27"
-            python: "2.7"
-            os: windows-latest
           - name: "ubuntu-py38"
             python: "3.8"
             os: ubuntu-latest
@@ -39,25 +35,30 @@ jobs:
         python-version: ${{ matrix.python }}
     - name: Upgrade pip
       run: python -m pip install --upgrade pip
+    - name: Vendor robocode_ls_core
+      working-directory: ./robocode-vscode
+      run: |
+        pip install fire
+        python -m dev vendor-robocode-ls-core
     - name: setup.py install
-      working-directory: ./robocode-python-ls-core
+      working-directory: ./robocode-vscode
       run: |
         cd src
         python setup.py install
         cd ..
     - name: Install test deps
-      working-directory: ./robocode-python-ls-core
+      working-directory: ./robocode-vscode
       run: |
         cd tests
         pip install -r test_requirements.txt
         cd ..
     - name: Test
-      working-directory: ./robocode-python-ls-core/tests
+      working-directory: ./robocode-vscode/tests
       env:
         PYTHONPATH: .
-      run: python -u ./run_tests.py -otests_output -vv .
+      run: python -u ../../robocode-python-ls-core/tests/run_tests.py -otests_output -vv .
     - uses: actions/upload-artifact@v1
       with:
         name: tests_output.${{ matrix.name }}.txt
-        path: robocode-python-ls-core/tests/tests_output
+        path: robocode-vscode/tests/tests_output
 

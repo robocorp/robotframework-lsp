@@ -2,15 +2,16 @@ on:
   push:
     branches:
       - "release"
+      - "*"
     tags:
-      - "robotframework-lsp-*"
-name: Deploy - RobotFramework Language Server Extension
+      - "robocode-vscode-*"
+name: Deploy - Robocode VSCode Extension
 jobs:
   deploy:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./robotframework-ls
+        working-directory: ./robocode-vscode
     
     strategy:
       fail-fast: true
@@ -32,25 +33,25 @@ jobs:
     - name: Vendor robocode_ls_core
       run: python -m dev vendor-robocode-ls-core
     - name: Build wheel
-      working-directory: ./robotframework-ls/src
+      working-directory: ./robocode-vscode/src
       run: |
         cp ../README.md ./README.md
         python setup.py sdist bdist_wheel --universal
     - run: npm install -g vsce
-    - run: vsce package -o robotframework-lsp.vsix
+    - run: vsce package -o robocode-vscode.vsix
     - uses: actions/upload-artifact@v1
       with:
-        name: robotframework-lsp.vsix
-        path: ./robotframework-ls/robotframework-lsp.vsix
-    - name: Check tag version
-      run: python -m dev check-tag-version
-    - name: Upload to PyPI
-      working-directory: ./robotframework-ls/src
-      run: twine upload dist/*
-      env:
-        TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
-    - name: Publish to vscode marketplace 
-      run: vsce publish -p $VSCE_TOKEN
-      env:
-        VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+        name: robocode-vscode.vsix
+        path: ./robocode-vscode/robocode-vscode.vsix
+#     - name: Check tag version
+#       run: python -m dev check-tag-version
+#     - name: Upload to PyPI
+#       working-directory: ./robocode-vscode/src
+#       run: twine upload dist/*
+#       env:
+#         TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+#         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+#     - name: Publish to vscode marketplace 
+#       run: vsce publish -p $VSCE_TOKEN
+#       env:
+#         VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}

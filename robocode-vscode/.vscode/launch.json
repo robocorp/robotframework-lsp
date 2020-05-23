@@ -1,0 +1,25 @@
+// A launch configuration that compiles the extension and then opens it inside a new window
+{
+    "version": "0.1.0",
+    "configurations": [
+        {
+            "name": "Extension: Robocode VSCode",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceRoot}"
+            ],
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceRoot}/vscode-client/out/**/*.js"
+            ],
+            "preLaunchTask": "npm: compile",
+            "env": {
+                // "SERVER_PORT": "8787",
+                // "SERVER_HOME_EXPORTED": "C:/export/pydev_lsp/eclipse"
+            }
+        }
+    ]
+}

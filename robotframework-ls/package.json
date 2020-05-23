@@ -8,12 +8,12 @@
         "type": "git",
         "url": "https://github.com/robocorp/robotframework-lsp.git"
     },
-    "license": "MIT",
+    "license": "Apache 2.0",
     "version": "0.1.1",
     "icon": "images/icon.png",
     "publisher": "robocorptech",
     "engines": {
-        "vscode": "^1.40.0"
+        "vscode": "^1.43.0"
     },
     "categories": [
         "Linters",

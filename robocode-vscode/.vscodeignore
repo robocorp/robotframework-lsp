@@ -1,0 +1,17 @@
+.vscode/**
+tests/**
+.github
+.settings
+.pydevproject
+.project
+robocode_vscode.egg-info
+vscode-client/src
+**/.gitignore
+**/pytest.ini
+**/*.vsix
+**/.pytest_cache/**
+**/*.pyc
+**/__pycache__
+src/build/**
+src/dist/**
+src/robocode_vscode.egg-info/**

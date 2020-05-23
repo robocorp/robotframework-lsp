@@ -1,9 +1,9 @@
 {
-    "name": "example-vscode",
-    "displayName": "Example VSCode",
-    "description": "This is an example showing how to use example-vscode to bootstrap a new project",
-    "author": "Example Author",
-    "homepage": "https://github.com/robocorp/robotframework-lsp/blob/master/example-vscode/README.md",
+    "name": "robocode-vscode",
+    "displayName": "Robocode VSCode",
+    "description": "Extension for Robocode in VSCode",
+    "author": "Fabio Zadrozny",
+    "homepage": "https://github.com/robocorp/robotframework-lsp/blob/master/robocode-vscode/README.md",
     "repository": {
         "type": "git",
         "url": "https://github.com/robocorp/robotframework-lsp.git"
@@ -11,34 +11,34 @@
     "license": "Apache 2.0",
     "version": "0.0.1",
     "icon": "images/icon.png",
-    "publisher": "example-publisher",
+    "publisher": "robocorptech",
     "engines": {
-        "vscode": "^1.45.0"
+        "vscode": "^1.43.0"
     },
     "categories": [],
     "activationEvents": [
         "*",
-        "onCommand:extension.sayHello"
+        "onCommand:robocode.sayHello"
     ],
     "contributes": {
         "configuration": {
-            "title": "Example VSCode Language Server Configuration",
+            "title": "Robocode VSCode Language Server Configuration",
             "type": "object",
             "properties": {
-                "example.language-server.tcp-port": {
+                "robocode.language-server.tcp-port": {
                     "type": "number",
                     "default": 0,
                     "description": "If the port is specified, connect to the language server previously started at the given port. Requires a VSCode restart to take effect."
                 },
-                "example.language-server.args": {
+                "robocode.language-server.args": {
                     "type": "array",
                     "default": [],
-                    "description": "Specifies the arguments to be passed to the example language server (i.e.: [\"-vv\", \"--log-file=~/exampleframework_ls.log\"]). Requires a VSCode restart to take effect."
+                    "description": "Specifies the arguments to be passed to the Robocode language server (i.e.: [\"-vv\", \"--log-file=~/robocode_vscode.log\"]). Requires a VSCode restart to take effect."
                 },
-                "example.language-server.python": {
+                "robocode.language-server.python": {
                     "type": "string",
                     "default": "",
-                    "description": "Specifies the path to the python executable to be used for the example Language Server (the default is searching python on the PATH). Requires a VSCode restart to take effect."
+                    "description": "Specifies the path to the python executable to be used for the Robocode Language Server (the default is searching python on the PATH). Requires a VSCode restart to take effect."
                 }
             }
         },
@@ -47,7 +47,7 @@
         "debuggers": [],
         "commands": [
             {
-                "command": "extension.sayHello",
+                "command": "robocode.sayHello",
                 "title": "Hello World",
                 "category": "Hello"
             }
