@@ -3,6 +3,7 @@ import json
 import socket as socket_module
 import sys
 import threading
+from robocode_ls_core.constants import IS_PY2
 
 try:
     import queue
@@ -56,14 +57,27 @@ def connect(port):
         raise
 
 
-class _DAPCommandProcessor(threading.Thread):
-    def __init__(self, s):
+class _RobotTargetComm(threading.Thread):
+    def __init__(self, s, debugger_impl):
         threading.Thread.__init__(self)
+        self._debugger_impl = debugger_impl
         self.daemon = True
         self._socket = s
         self._write_queue = queue.Queue()
         self.configuration_done = threading.Event()
         self.terminated = threading.Event()
+
+        debugger_impl.busy_wait.before_wait.append(self._notify_stopped)
+
+    def _notify_stopped(self):
+        from robotframework_debug_adapter.dap.dap_schema import StoppedEvent
+        from robotframework_debug_adapter.dap.dap_schema import StoppedEventBody
+        from robotframework_debug_adapter.constants import MAIN_THREAD_ID
+
+        reason = self._debugger_impl.stop_reason
+        body = StoppedEventBody(reason, allThreadsStopped=True, threadId=MAIN_THREAD_ID)
+        msg = StoppedEvent(body)
+        self.write_message(msg)
 
     def start_communication_threads(self):
         from robotframework_debug_adapter.debug_adapter_threads import writer_thread
@@ -96,16 +110,15 @@ class _DAPCommandProcessor(threading.Thread):
         self._write_queue.put(msg)
 
     def process_message(self, protocol_message):
-        from robocode_ls_core.robotframework_log import get_logger
         from robotframework_debug_adapter.constants import DEBUG
         from robotframework_debug_adapter.debug_adapter_threads import (
             READER_THREAD_STOPPED,
         )
 
-        log = get_logger("robotframework_debug_adapter.run_robot__main__.py")
+        log = get_log()
         if protocol_message is READER_THREAD_STOPPED:
             if DEBUG:
-                log.debug("_DAPCommandProcessor: READER_THREAD_STOPPED.")
+                log.debug("%s: READER_THREAD_STOPPED." % (self.__class__.__name__,))
             return
 
         if DEBUG:
@@ -124,8 +137,8 @@ class _DAPCommandProcessor(threading.Thread):
             else:
                 if DEBUG:
                     log.debug(
-                        "Unable to decide how to deal with protocol type: %s in _DAPCommandProcessor.\n"
-                        % (protocol_message.type,)
+                        "Unable to decide how to deal with protocol type: %s in %s.\n"
+                        % (protocol_message.type, self.__class__.__name__)
                     )
                 return
 
@@ -135,8 +148,8 @@ class _DAPCommandProcessor(threading.Thread):
             else:
                 if DEBUG:
                     log.debug(
-                        "Unhandled: %s not available in CommandProcessor.\n"
-                        % (method_name,)
+                        "Unhandled: %s not available in %s.\n"
+                        % (method_name, self.__class__.__name__)
                     )
         except:
             log.exception("Error")
@@ -165,6 +178,82 @@ class _DAPCommandProcessor(threading.Thread):
         )
         self.write_message(InitializedEvent())
 
+    def on_setBreakpoints_request(self, request):
+        from robotframework_debug_adapter.dap.dap_schema import SourceBreakpoint
+        from robotframework_debug_adapter.dap.dap_schema import Breakpoint
+        from robotframework_debug_adapter.dap.dap_schema import (
+            SetBreakpointsResponseBody,
+        )
+        from robotframework_debug_adapter.dap import dap_base_schema
+        from robotframework_debug_adapter import file_utils
+        from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
+
+        # Just acknowledge that no breakpoints are valid.
+
+        breakpoints = []
+        robot_breakpoints = []
+        source = request.arguments.source
+        path = source.path
+        if IS_PY2:
+            path = path.encode(file_utils.file_system_encoding)
+        filename = file_utils.norm_file_to_server(path)
+
+        if request.arguments.breakpoints:
+
+            for bp in request.arguments.breakpoints:
+                source_breakpoint = SourceBreakpoint(**bp)
+                breakpoints.append(
+                    Breakpoint(
+                        verified=True, line=source_breakpoint.line, source=source
+                    ).to_dict()
+                )
+                robot_breakpoints.append(RobotBreakpoint(source_breakpoint.line))
+
+        self._debugger_impl.set_breakpoints(filename, robot_breakpoints)
+
+        self.write_message(
+            dap_base_schema.build_response(
+                request,
+                kwargs=dict(body=SetBreakpointsResponseBody(breakpoints=breakpoints)),
+            )
+        )
+
+    def on_continue_request(self, request):
+        from robotframework_debug_adapter.dap.dap_base_schema import build_response
+        from robotframework_debug_adapter.dap.dap_schema import ContinueResponseBody
+
+        response = build_response(
+            request, kwargs=dict(body=ContinueResponseBody(allThreadsContinued=True))
+        )
+
+        self._debugger_impl.step_continue()
+        self.write_message(response)
+
+    def on_stepIn_request(self, request):
+        from robotframework_debug_adapter.dap.dap_base_schema import build_response
+
+        response = build_response(request)
+
+        self._debugger_impl.step_in()
+        self.write_message(response)
+
+    def on_next_request(self, request):
+        from robotframework_debug_adapter.dap.dap_base_schema import build_response
+
+        response = build_response(request)
+
+        self._debugger_impl.step_next()
+        self.write_message(response)
+
+    def on_stackTrace_request(self, request):
+        from robotframework_debug_adapter.dap.dap_base_schema import build_response
+        from robotframework_debug_adapter.dap.dap_schema import StackTraceResponseBody
+
+        stack_list = self._debugger_impl.get_stack_list()
+        body = StackTraceResponseBody(stackFrames=stack_list.frames)
+        response = build_response(request, kwargs=dict(body=body))
+        self.write_message(response)
+
     def on_configurationDone_request(self, request):
         """
         :param ConfigurationDoneRequest request:
@@ -176,6 +265,12 @@ class _DAPCommandProcessor(threading.Thread):
         self.configuration_done.set()
 
 
+def get_log():
+    from robocode_ls_core.robotframework_log import get_logger
+
+    return get_logger("robotframework_debug_adapter.run_robot__main__.py")
+
+
 def main():
     src_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     try:
@@ -185,18 +280,18 @@ def main():
         assert os.path.exists(src_folder), "Expected: %s to exist" % (src_folder,)
         sys.path.append(src_folder)
         import robotframework_ls  # @UnusedImport
+    robotframework_ls.import_robocode_ls_core()
 
     from robocode_ls_core.robotframework_log import (
         configure_logger,
         log_args_and_python,
-        get_logger,
     )
 
     from robotframework_debug_adapter.constants import LOG_FILENAME
     from robotframework_debug_adapter.constants import LOG_LEVEL
 
     configure_logger("robot", LOG_LEVEL, LOG_FILENAME)
-    log = get_logger("robotframework_debug_adapter.run_robot__main__.py")
+    log = get_log()
     log_args_and_python(log, sys.argv, robotframework_ls.__version__)
 
     from robotframework_ls.options import DEFAULT_TIMEOUT
@@ -207,8 +302,16 @@ def main():
 
     robot_args = args[2:]
 
+    log.debug("Patching execution context...")
+
+    from robotframework_debug_adapter.debugger_impl import patch_execution_context
+
+    debugger_impl = patch_execution_context()
+
+    log.debug("Finished patching execution context.")
+
     s = connect(int(port))
-    processor = _DAPCommandProcessor(s)
+    processor = _RobotTargetComm(s, debugger_impl)
     processor.start_communication_threads()
     if not processor.configuration_done.wait(DEFAULT_TIMEOUT):
         sys.stderr.write(

@@ -22,7 +22,7 @@ from robocode_ls_core.robotframework_log import get_logger
 log = get_logger(__name__)
 
 
-class CommandProcessor(object):
+class DebugAdapterComm(object):
     """
     This is the class that actually processes commands.
 
@@ -34,9 +34,9 @@ class CommandProcessor(object):
     needed).
     """
 
-    def __init__(self, write_queue):
-        self.write_queue = write_queue
-        self._launched_process = None  # : :type self._launched_process: LaunchProcess
+    def __init__(self, write_to_client_queue):
+        self.write_to_client_queue = write_to_client_queue
+        self._launch_process = None  # : :type self._launch_process: LaunchProcess
         self._supports_run_in_terminal = False
         self._initialize_request_arguments = None
 
@@ -48,7 +48,7 @@ class CommandProcessor(object):
     def initialize_request_arguments(self):
         return self._initialize_request_arguments
 
-    def __call__(self, protocol_message):
+    def from_client(self, protocol_message):
 
         from robotframework_debug_adapter.debug_adapter_threads import (
             READER_THREAD_STOPPED,
@@ -56,7 +56,7 @@ class CommandProcessor(object):
 
         if protocol_message is READER_THREAD_STOPPED:
             if DEBUG:
-                log.debug("CommandProcessor: READER_THREAD_STOPPED.")
+                log.debug("%s: READER_THREAD_STOPPED." % (self.__class__.__name__,))
             return
 
         if DEBUG:
@@ -73,8 +73,8 @@ class CommandProcessor(object):
             else:
                 if DEBUG:
                     log.debug(
-                        "Unhandled: %s not available in CommandProcessor.\n"
-                        % (method_name,)
+                        "Unhandled: %s not available in %s.\n"
+                        % (method_name, self.__class__.__name__)
                     )
 
     def on_initialize_request(self, request):
@@ -82,7 +82,6 @@ class CommandProcessor(object):
         :param InitializeRequest request:
         """
         from robotframework_debug_adapter.dap.dap_base_schema import build_response
-        from robotframework_debug_adapter.dap.dap_schema import InitializedEvent
 
         # : :type initialize_response: InitializeResponse
         # : :type body: Capabilities
@@ -91,8 +90,7 @@ class CommandProcessor(object):
         self._supports_run_in_terminal = request.arguments.supportsRunInTerminalRequest
         body = initialize_response.body
         body.supportsConfigurationDoneRequest = True
-        self.write_message(initialize_response)
-        self.write_message(InitializedEvent())
+        self.write_to_client_message(initialize_response)
 
     def on_launch_request(self, request):
         """
@@ -100,25 +98,32 @@ class CommandProcessor(object):
         """
         from robotframework_debug_adapter.dap.dap_base_schema import build_response
         from robotframework_debug_adapter.launch_process import LaunchProcess
+        from robotframework_debug_adapter.dap.dap_schema import InitializedEvent
 
         # : :type launch_response: LaunchResponse
         launch_response = build_response(request)
         launch_process = None
         try:
 
-            self._launched_process = launch_process = LaunchProcess(
+            self._launch_process = launch_process = LaunchProcess(
                 request, launch_response, self
             )
+
             if launch_process.valid:
                 # If on debug mode the launch is only considered finished when the connection
                 # from the other side finishes properly.
                 launch_process.launch()
+
+                # Only write the initialized event after the process has been
+                # launched so that we can forward breakpoints directly to the
+                # target.
+                self.write_to_client_message(InitializedEvent())
         except Exception as e:
             log.exception("Error launching.")
             launch_response.success = False
             launch_response.message = str(e)
 
-        self.write_message(launch_response)  # acknowledge it
+        self.write_to_client_message(launch_response)  # acknowledge it
         if launch_process is not None:
             launch_process.after_launch_response_sent()
 
@@ -128,9 +133,27 @@ class CommandProcessor(object):
         """
         from robotframework_debug_adapter.dap.dap_base_schema import build_response
 
-        # : :type configuration_done_response: ConfigurationDoneResponse
         configuration_done_response = build_response(request)
-        self.write_message(configuration_done_response)  # acknowledge it
+        launch_process = self._launch_process
+        if launch_process is None:
+            configuration_done_response.success = False
+            configuration_done_response.message = (
+                "Launch is not done (configurationDone uncomplete)."
+            )
+            self.write_to_client_message(configuration_done_response)
+            return
+
+        if launch_process.send_and_wait_for_configuration_done_request():
+            # : :type configuration_done_response: ConfigurationDoneResponse
+            self.write_to_client_message(configuration_done_response)  # acknowledge it
+
+        else:
+            # timed out
+            configuration_done_response.success = False
+            configuration_done_response.message = (
+                "Timed out waiting for configurationDone event."
+            )
+            self.write_to_client_message(configuration_done_response)
 
     def on_threads_request(self, request):
         """
@@ -138,12 +161,13 @@ class CommandProcessor(object):
         """
         from robotframework_debug_adapter.dap.dap_schema import Thread
         from robotframework_debug_adapter.dap.dap_schema import ThreadsResponseBody
+        from robotframework_debug_adapter.constants import MAIN_THREAD_ID
 
-        threads = [Thread(0, "Main Thread").to_dict()]
+        threads = [Thread(MAIN_THREAD_ID, "Main Thread").to_dict()]
         kwargs = {"body": ThreadsResponseBody(threads)}
         # : :type threads_response: ThreadsResponse
         threads_response = base_schema.build_response(request, kwargs)
-        self.write_message(threads_response)
+        self.write_to_client_message(threads_response)
 
     def on_disconnect_request(self, request):
         """
@@ -152,10 +176,10 @@ class CommandProcessor(object):
         # : :type disconnect_response: DisconnectResponse
         disconnect_response = base_schema.build_response(request)
 
-        if self._launched_process is not None:
-            self._launched_process.disconnect(request)
+        if self._launch_process is not None:
+            self._launch_process.disconnect(request)
 
-        self.write_message(disconnect_response)
+        self.write_to_client_message(disconnect_response)
 
     def on_pause_request(self, request):
         """
@@ -163,24 +187,24 @@ class CommandProcessor(object):
         """
         # : :type pause_response: PauseResponse
         pause_response = base_schema.build_response(request)
-        self.write_message(pause_response)
+        self.write_to_client_message(pause_response)
 
     def on_evaluate_request(self, request):
         """
         :param EvaluateRequest request:
         """
-        if self._launched_process is not None:
+        if self._launch_process is not None:
             if request.arguments.context == "repl":
-                self._launched_process.send_to_stdin(request.arguments.expression)
+                self._launch_process.send_to_stdin(request.arguments.expression)
 
         evaluate_response = base_schema.build_response(
             request, kwargs={"body": {"result": "", "variablesReference": 0}}
         )
-        self.write_message(evaluate_response)
+        self.write_to_client_message(evaluate_response)
 
     def on_setExceptionBreakpoints_request(self, request):
         response = base_schema.build_response(request)
-        self.write_message(response)
+        self.write_to_client_message(response)
 
     def on_setBreakpoints_request(self, request):
         """
@@ -192,30 +216,47 @@ class CommandProcessor(object):
             SetBreakpointsResponseBody,
         )
 
-        # Just acknowledge that no breakpoints are valid.
+        if self._launch_process is None:
+            # Just acknowledge that no breakpoints are valid.
+            breakpoints = []
+            if request.arguments.breakpoints:
+                for bp in request.arguments.breakpoints:
+                    source_breakpoint = SourceBreakpoint(**bp)
+                    breakpoints.append(
+                        Breakpoint(
+                            verified=False,
+                            line=source_breakpoint.line,
+                            source=request.arguments.source,
+                        ).to_dict()
+                    )
 
-        breakpoints = []
-        if request.arguments.breakpoints:
-            for bp in request.arguments.breakpoints:
-                source_breakpoint = SourceBreakpoint(**bp)
-                breakpoints.append(
-                    Breakpoint(
-                        verified=False,
-                        line=source_breakpoint.line,
-                        source=request.arguments.source,
-                    ).to_dict()
+            self.write_to_client_message(
+                base_schema.build_response(
+                    request,
+                    kwargs=dict(
+                        body=SetBreakpointsResponseBody(breakpoints=breakpoints)
+                    ),
                 )
-
-        self.write_message(
-            base_schema.build_response(
-                request,
-                kwargs=dict(body=SetBreakpointsResponseBody(breakpoints=breakpoints)),
             )
-        )
+            return
 
-    def write_message(self, protocol_message):
+        self._launch_process.resend_request_to_robot(request)
+
+    def on_continue_request(self, request):
+        self._launch_process.resend_request_to_robot(request)
+
+    def on_stepIn_request(self, request):
+        self._launch_process.resend_request_to_robot(request)
+
+    def on_stackTrace_request(self, request):
+        self._launch_process.resend_request_to_robot(request)
+
+    def on_next_request(self, request):
+        self._launch_process.resend_request_to_robot(request)
+
+    def write_to_client_message(self, protocol_message):
         """
         :param BaseSchema protocol_message:
             Some instance of one of the messages in the debug_adapter.schema.
         """
-        self.write_queue.put(protocol_message)
+        self.write_to_client_queue.put(protocol_message)

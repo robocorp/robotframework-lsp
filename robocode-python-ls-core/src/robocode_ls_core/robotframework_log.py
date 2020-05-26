@@ -149,6 +149,10 @@ class _Logger(object):
         _log_config.report(self.name, show_stacktrace, levelname, message)
 
 
+def get_log_level():
+    return _log_config.log_level
+
+
 def get_logger(name):
     name = _as_str(name)
     try:

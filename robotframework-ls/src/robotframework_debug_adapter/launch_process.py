@@ -32,13 +32,22 @@ except ImportError:
 log = get_logger(__name__)
 
 
-class _DebugAdapterComm(threading.Thread):
+class _DebugAdapterRobotTargetComm(threading.Thread):
     """
-    This class is used so intermediate talking to the server (which should actually
-    be communicating using the debug adapter protocol).
+    This class is used so intermediate talking to the server.
+    
+    It's the middle ground between the `DebugAdapterComm` and `RobotTargetComm`.
+        - `DebugAdapterComm`:
+            It's used to talk with the client (in this process) and accessed
+            through the _weak_debug_adapter_comm attribute.
+             
+        - `RobotTargetComm`
+            It's actually in the target process. We communicate with it by 
+            calling the `write_to_robot_message` method and receive messages
+            from it in the `_from_robot` method in this class.
     """
 
-    def __init__(self, command_processor):
+    def __init__(self, debug_adapter_comm):
         threading.Thread.__init__(self)
         import weakref
 
@@ -51,8 +60,11 @@ class _DebugAdapterComm(threading.Thread):
         self._terminated_event_msg = None
         self._terminated_event = threading.Event()
 
-        self._write_queue = queue.Queue()
-        self._weak_command_processor = weakref.ref(command_processor)
+        self._write_to_robot_queue = queue.Queue()
+        self._weak_debug_adapter_comm = weakref.ref(debug_adapter_comm)
+
+        self._next_seq = partial(next, itertools.count(0))
+        self._msg_id_to_on_response = {}
 
     def start_listening(self):
         import socket
@@ -67,7 +79,9 @@ class _DebugAdapterComm(threading.Thread):
         return port
 
     def run(self):
-        from robotframework_debug_adapter.debug_adapter_threads import writer_thread
+        from robotframework_debug_adapter.debug_adapter_threads import (
+            writer_thread_no_auto_seq,
+        )
         from robotframework_debug_adapter.debug_adapter_threads import reader_thread
 
         try:
@@ -83,8 +97,8 @@ class _DebugAdapterComm(threading.Thread):
             write_to = socket.makefile("wb")
 
             writer = self._writer_thread = threading.Thread(
-                target=writer_thread,
-                args=(write_to, self._write_queue, "write to robot process"),
+                target=writer_thread_no_auto_seq,
+                args=(write_to, self._write_to_robot_queue, "write to robot process"),
                 name="Write to robot",
             )
             writer.daemon = True
@@ -93,8 +107,8 @@ class _DebugAdapterComm(threading.Thread):
                 target=reader_thread,
                 args=(
                     read_from,
-                    self._process_command,
-                    self._write_queue,
+                    self._from_robot,
+                    self._write_to_robot_queue,  # Used for errors
                     b"read from robot process",
                 ),
                 name="Read from robot",
@@ -108,7 +122,7 @@ class _DebugAdapterComm(threading.Thread):
         except:
             log.exception()
 
-    def _process_command(self, protocol_message):
+    def _from_robot(self, protocol_message):
         from robotframework_debug_adapter.debug_adapter_threads import (
             READER_THREAD_STOPPED,
         )
@@ -116,7 +130,8 @@ class _DebugAdapterComm(threading.Thread):
         if protocol_message is READER_THREAD_STOPPED:
             if DEBUG:
                 log.debug(
-                    "_DebugAdapterComm when reading from robot: READER_THREAD_STOPPED."
+                    "%s when reading from robot: READER_THREAD_STOPPED."
+                    % (self.__class__.__name__,)
                 )
             return
 
@@ -127,26 +142,38 @@ class _DebugAdapterComm(threading.Thread):
             )
 
         try:
+            on_response = None
             if protocol_message.type == "request":
                 method_name = "on_%s_request" % (protocol_message.command,)
             elif protocol_message.type == "event":
                 method_name = "on_%s_event" % (protocol_message.event,)
+            elif protocol_message.type == "response":
+                on_response = self._msg_id_to_on_response.pop(
+                    protocol_message.request_seq, None
+                )
+                method_name = "on_%s_response" % (protocol_message.command,)
             else:
                 if DEBUG:
                     log.debug(
-                        "Unable to decide how to deal with protocol type: %s (read from robot - _DebugAdapterComm).\n"
-                        % (protocol_message.type,)
+                        "Unable to decide how to deal with protocol type: %s (read from robot - %s).\n"
+                        % (protocol_message.type, self.__class__.__name__)
                     )
                 return
 
+            if on_response is not None:
+                on_response(protocol_message)
+
             on_request = getattr(self, method_name, None)
+
             if on_request is not None:
                 on_request(protocol_message)
+            elif on_response is not None:
+                pass
             else:
                 if DEBUG:
                     log.debug(
-                        "Unhandled: %s not available when reading from robot - _DebugAdapterComm.\n"
-                        % (method_name,)
+                        "Unhandled: %s not available when reading from robot - %s.\n"
+                        % (method_name, self.__class__.__name__)
                     )
         except:
             log.exception("Error")
@@ -159,20 +186,30 @@ class _DebugAdapterComm(threading.Thread):
         assert self._process_event.is_set()
         return self._process_event_msg.body.systemProcessId
 
+    def on_stopped_event(self, event):
+        debug_adapter_comm = self._weak_debug_adapter_comm()
+        if debug_adapter_comm is not None:
+            debug_adapter_comm.write_to_client_message(event)
+        else:
+            log.debug("Command processor collected in event: %s" % (event,))
+
     def on_terminated_event(self, event):
         from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
         from robotframework_debug_adapter.dap.dap_schema import TerminatedEventBody
 
         self._terminated_event_msg = event
         self._terminated_event.set()
-        self.write_message(TerminatedEvent(TerminatedEventBody()))
+        self.write_to_robot_message(TerminatedEvent(TerminatedEventBody()))
 
-    def write_message(self, protocol_message):
+    def write_to_robot_message(self, protocol_message, on_response=None):
         """
         :param BaseSchema protocol_message:
             Some instance of one of the messages in the debug_adapter.schema.
         """
-        self._write_queue.put(protocol_message)
+        seq = protocol_message.seq = self._next_seq()
+        if on_response is not None:
+            self._msg_id_to_on_response[seq] = on_response
+        self._write_to_robot_queue.put(protocol_message)
 
     def wait_for_connection(self):
         """
@@ -237,11 +274,11 @@ class LaunchProcess(object):
         "_cmdline",
         "_terminal",
         "_popen",
-        "_weak_command_processor",
+        "_weak_debug_adapter_comm",
         "__weakref__",
         "_cwd",
         "_run_in_debug_mode",
-        "_debug_adapter_comm",
+        "_debug_adapter_robot_target_comm",
         "_launch_response",
         "_next_seq",
         "_track_process_pid",
@@ -249,7 +286,7 @@ class LaunchProcess(object):
         "_env",
     ]
 
-    def __init__(self, request, launch_response, command_processor):
+    def __init__(self, request, launch_response, debug_adapter_comm):
         """
         :param LaunchRequest request:
         :param LaunchResponse launch_response:
@@ -258,10 +295,9 @@ class LaunchProcess(object):
         from robotframework_debug_adapter.constants import VALID_TERMINAL_OPTIONS
         from robotframework_debug_adapter.constants import TERMINAL_NONE
         from robocode_ls_core.basic import as_str
-        import robotframework_ls
         import robocode_ls_core
 
-        self._weak_command_processor = weakref.ref(command_processor)
+        self._weak_debug_adapter_comm = weakref.ref(debug_adapter_comm)
         self._valid = True
         self._cmdline = []
         self._popen = None
@@ -270,7 +306,9 @@ class LaunchProcess(object):
         self._track_process_pid = None
         self._sent_terminated = threading.Event()
 
-        self._debug_adapter_comm = _DebugAdapterComm(command_processor)
+        self._debug_adapter_robot_target_comm = _DebugAdapterRobotTargetComm(
+            debug_adapter_comm
+        )
 
         def mark_invalid(message):
             launch_response.success = False
@@ -340,7 +378,7 @@ class LaunchProcess(object):
         if DEBUG:
             log.debug("Run in debug mode: %s\n" % (self._run_in_debug_mode,))
 
-        port = self._debug_adapter_comm.start_listening()
+        port = self._debug_adapter_robot_target_comm.start_listening()
 
         try:
             run_robot_py = os.path.join(
@@ -380,13 +418,49 @@ class LaunchProcess(object):
         from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
         from robotframework_debug_adapter.dap.dap_schema import TerminatedEventBody
 
-        command_processor = self._weak_command_processor()
-        if command_processor is not None:
+        debug_adapter_comm = self._weak_debug_adapter_comm()
+        if debug_adapter_comm is not None:
             restart = False
             terminated_event = TerminatedEvent(
                 body=TerminatedEventBody(restart=restart)
             )
-            command_processor.write_message(terminated_event)
+            debug_adapter_comm.write_to_client_message(terminated_event)
+
+    def send_and_wait_for_configuration_done_request(self):
+        from robotframework_debug_adapter.dap.dap_schema import ConfigurationDoneRequest
+        from robotframework_debug_adapter.dap.dap_schema import (
+            ConfigurationDoneArguments,
+        )
+
+        event = threading.Event()
+        self._debug_adapter_robot_target_comm.write_to_robot_message(
+            ConfigurationDoneRequest(ConfigurationDoneArguments()),
+            on_response=lambda *args, **kwargs: event.set(),
+        )
+        log.debug(
+            "Wating for configuration_done response for %s seconds."
+            % (DEFAULT_TIMEOUT,)
+        )
+        ret = event.wait(DEFAULT_TIMEOUT)
+        log.debug("Received configuration_done response: %s" % (ret,))
+        return ret
+
+    def resend_request_to_robot(self, request):
+        request_seq = request.seq
+
+        def on_response(response_msg):
+            response_msg.request_seq = request_seq
+            debug_adapter_comm = self._weak_debug_adapter_comm()
+            if debug_adapter_comm is not None:
+                debug_adapter_comm.write_to_client_message(response_msg)
+            else:
+                log.debug(
+                    "Command processor collected in resend request: %s" % (request,)
+                )
+
+        self._debug_adapter_robot_target_comm.write_to_robot_message(
+            request, on_response
+        )
 
     def launch(self):
         from robotframework_debug_adapter.constants import TERMINAL_NONE
@@ -402,16 +476,12 @@ class LaunchProcess(object):
         from robotframework_debug_adapter.dap.dap_schema import (
             InitializeRequestArguments,
         )
-        from robotframework_debug_adapter.dap.dap_schema import ConfigurationDoneRequest
-        from robotframework_debug_adapter.dap.dap_schema import (
-            ConfigurationDoneArguments,
-        )
 
         # Note: using a weak-reference so that callbacks don't keep it alive
-        weak_command_processor = self._weak_command_processor
+        weak_debug_adapter_comm = self._weak_debug_adapter_comm
 
         terminal = self._terminal
-        if not weak_command_processor().supports_run_in_terminal:
+        if not weak_debug_adapter_comm().supports_run_in_terminal:
             # If the client doesn't support running in the terminal we fallback to using the debug console.
             terminal = TERMINAL_NONE
 
@@ -437,12 +507,12 @@ class LaunchProcess(object):
             )
 
             def on_output(output, category):
-                command_processor = weak_command_processor()
-                if command_processor is not None:
+                debug_adapter_comm = weak_debug_adapter_comm()
+                if debug_adapter_comm is not None:
                     output_event = OutputEvent(
                         OutputEventBody(output, category=category)
                     )
-                    command_processor.write_message(output_event)
+                    debug_adapter_comm.write_to_client_message(output_event)
 
             stdout_stream_thread = threading.Thread(
                 target=_read_stream,
@@ -464,9 +534,9 @@ class LaunchProcess(object):
             if DEBUG:
                 log.debug('Launching in "%s" terminal: %s' % (kind, self._cmdline))
 
-            command_processor = weak_command_processor()
-            if command_processor is not None:
-                command_processor.write_message(
+            debug_adapter_comm = weak_debug_adapter_comm()
+            if debug_adapter_comm is not None:
+                debug_adapter_comm.write_to_client_message(
                     RunInTerminalRequest(
                         RunInTerminalRequestArguments(
                             cwd=self._cwd, args=self._cmdline, kind=kind, env=self._env
@@ -477,25 +547,22 @@ class LaunchProcess(object):
         for t in threads:
             t.daemon = True
 
-        if not self._debug_adapter_comm.wait_for_connection():
+        if not self._debug_adapter_robot_target_comm.wait_for_connection():
             launch_response = self._launch_response
             launch_response.success = False
             launch_response.message = "Debug adapter timed out waiting for connection."
             self._valid = False
 
-        self._debug_adapter_comm.write_message(
+        self._debug_adapter_robot_target_comm.write_to_robot_message(
             InitializeRequest(
                 InitializeRequestArguments("robot-launch-process-adapter")
             )
-        )
-        self._debug_adapter_comm.write_message(
-            ConfigurationDoneRequest(ConfigurationDoneArguments())
         )
         # Note: only start listening stdout/stderr when connected.
         for t in threads:
             t.start()
 
-        if not self._debug_adapter_comm.wait_for_process_event():
+        if not self._debug_adapter_robot_target_comm.wait_for_process_event():
             launch_response = self._launch_response
             launch_response.success = False
             launch_response.message = (
@@ -503,7 +570,7 @@ class LaunchProcess(object):
             )
             self._valid = False
         else:
-            self._track_process_pid = self._debug_adapter_comm.get_pid()
+            self._track_process_pid = self._debug_adapter_robot_target_comm.get_pid()
 
     def after_launch_response_sent(self):
         if self._track_process_pid is None:

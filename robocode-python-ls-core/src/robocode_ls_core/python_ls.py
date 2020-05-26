@@ -273,7 +273,9 @@ class PythonLanguageServer(MethodDispatcher):
         pass
 
     def lint(self, doc_uri, is_saved):
-        raise NotImplementedError("Subclasses must override.")
+        raise NotImplementedError(
+            "Subclasses must override (current class: %s)." % (self.__class__,)
+        )
 
     def m_text_document__did_close(self, textDocument=None, **_kwargs):
         self.workspace.remove_document(textDocument["uri"])

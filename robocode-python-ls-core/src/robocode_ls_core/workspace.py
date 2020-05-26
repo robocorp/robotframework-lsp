@@ -27,6 +27,8 @@ log = get_logger(__name__)
 
 class Workspace(object):
     def __init__(self, root_uri, workspace_folders=None):
+        from robocode_ls_core.lsp import WorkspaceFolder
+
         self._root_uri = root_uri
         self._root_uri_scheme = uri_scheme(self._root_uri)
         self._root_path = to_fs_path(self._root_uri)
@@ -36,6 +38,10 @@ class Workspace(object):
         if workspace_folders is not None:
             for folder in workspace_folders:
                 self.add_folder(folder)
+
+        if root_uri and root_uri not in self.folders:
+            name = os.path.basename(uris.to_fs_path(root_uri))
+            self.add_folder(WorkspaceFolder(root_uri, name))
 
     def _create_document(self, doc_uri, source=None, version=None):
         return Document(doc_uri, source=source, version=version)

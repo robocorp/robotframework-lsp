@@ -2,14 +2,16 @@ name: Tests - RobotFramework Language Server (robotframework-ls)
 
 on:
   push:
-    branches:
-      - "*"
-    tags:
-      - "*"
+    paths:
+    - robotframework-ls/**
+    - robocode-python-ls-core/**
+    - .github/**
 
   pull_request:
-    branches:
-      - master
+    paths:
+    - robotframework-ls/**
+    - robocode-python-ls-core/**
+    - .github/**
       
 jobs:
   build:

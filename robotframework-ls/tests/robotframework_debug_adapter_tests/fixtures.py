@@ -14,6 +14,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from robocode_ls_core.unittest_tools.fixtures import TIMEOUT
+import subprocess
+from collections import namedtuple
+
 try:
     import Queue as queue
 except:
@@ -28,6 +32,8 @@ __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
     __file__ = __file__[:-1]
 
+_JsonHit = namedtuple("_JsonHit", "thread_id, frame_id, stack_trace_response")
+
 
 @pytest.fixture
 def dap_logs_dir(tmpdir):
@@ -36,9 +42,10 @@ def dap_logs_dir(tmpdir):
     yield logs_directory
 
     for name in os.listdir(str(logs_directory)):
-        print("\n--- %s contents:" % (name,))
+        sys.stderr.write("\n--- %s contents:\n" % (name,))
         with open(str(logs_directory.join(name)), "r") as stream:
-            print(stream.read())
+            sys.stderr.write(stream.read())
+            sys.stderr.write("\n\n")
 
 
 @pytest.fixture
@@ -55,11 +62,6 @@ def dap_process_stderr_file(dap_logs_dir):
     sys.stderr.write("Output subprocess stderr to: %s\n" % (filename,))
     with open(filename, "wb") as stream:
         yield stream
-
-    for name in os.listdir(str(dap_logs_dir)):
-        print("\n--- %s contents:" % (name,))
-        with open(str(dap_logs_dir.join(name)), "r") as stream:
-            print(stream.read())
 
 
 @pytest.fixture
@@ -92,6 +94,7 @@ class _DebuggerAPI(object):
         self.write_queue = write_queue
         self.read_queue = read_queue
         self.all_messages_read = []
+        self.target = None
 
     def write(self, msg):
         """
@@ -99,6 +102,7 @@ class _DebuggerAPI(object):
             The message to be written.
         """
         self.write_queue.put(msg)
+        return msg
 
     def read(self, expect_class=None, accept_msg=None):
         """
@@ -107,7 +111,7 @@ class _DebuggerAPI(object):
         from robotframework_debug_adapter.dap.dap_schema import OutputEvent
 
         while True:
-            msg = self.read_queue.get(timeout=5)
+            msg = self.read_queue.get(timeout=TIMEOUT)
             if hasattr(msg, "to_dict"):
                 sys.stderr.write("Read: %s\n\n" % (msg.to_dict(),))
             else:
@@ -150,6 +154,225 @@ class _DebuggerAPI(object):
             assert os.path.exists(ret), "%s does not exist." % (ret,)
 
         return ret
+
+    def initialize(self):
+        from robotframework_debug_adapter.dap.dap_schema import InitializeRequest
+        from robotframework_debug_adapter.dap.dap_schema import (
+            InitializeRequestArguments,
+        )
+        from robotframework_debug_adapter.dap.dap_schema import InitializeResponse
+
+        self.write(
+            InitializeRequest(
+                InitializeRequestArguments(
+                    adapterID="robotframework-lsp-adapter",
+                    clientID="Stub",
+                    clientName="stub",
+                    locale="en-us",
+                    linesStartAt1=True,
+                    columnsStartAt1=True,
+                    pathFormat="path",
+                    supportsVariableType=True,
+                    supportsVariablePaging=True,
+                    supportsRunInTerminalRequest=True,
+                )
+            )
+        )
+
+        initialize_response = self.read(InitializeResponse)
+        assert isinstance(initialize_response, InitializeResponse)
+        assert initialize_response.request_seq == 0
+        assert initialize_response.success
+        assert initialize_response.command == "initialize"
+
+    def configuration_done(self):
+        from robotframework_debug_adapter.dap.dap_schema import ConfigurationDoneRequest
+        from robotframework_debug_adapter.dap.dap_schema import (
+            ConfigurationDoneResponse,
+        )
+
+        self.write(ConfigurationDoneRequest())
+        self.read(ConfigurationDoneResponse)
+
+    def step_in(self, thread_id):
+        from robotframework_debug_adapter.dap.dap_schema import StepInRequest
+        from robotframework_debug_adapter.dap.dap_schema import StepInArguments
+        from robotframework_debug_adapter.dap.dap_schema import StepInResponse
+
+        arguments = StepInArguments(threadId=thread_id)
+        self.write(StepInRequest(arguments))
+        self.read(StepInResponse)
+
+    def step_next(self, thread_id):
+        from robotframework_debug_adapter.dap.dap_schema import NextRequest
+        from robotframework_debug_adapter.dap.dap_schema import NextArguments
+        from robotframework_debug_adapter.dap.dap_schema import NextResponse
+
+        arguments = NextArguments(threadId=thread_id)
+        self.write(NextRequest(arguments))
+        self.read(NextResponse)
+
+    def continue_event(self):
+        from robotframework_debug_adapter.dap.dap_schema import ContinueRequest
+        from robotframework_debug_adapter.dap.dap_schema import ContinueArguments
+        from robotframework_debug_adapter.dap.dap_schema import ContinueResponse
+
+        arguments = ContinueArguments(None)
+        self.write(ContinueRequest(arguments))
+        self.read(ContinueResponse)
+
+    def launch(self, target, debug=True, success=True, terminal="none"):
+        from robotframework_debug_adapter.dap.dap_schema import LaunchRequest
+        from robotframework_debug_adapter.dap.dap_schema import LaunchRequestArguments
+        from robotframework_debug_adapter.dap.dap_schema import LaunchResponse
+        from robotframework_debug_adapter.dap.dap_schema import RunInTerminalRequest
+        from robocode_ls_core.basic import as_str
+        from robotframework_debug_adapter.dap.dap_schema import InitializedEvent
+
+        self.write(
+            LaunchRequest(
+                LaunchRequestArguments(
+                    __sessionId="some_id",
+                    noDebug=not debug,
+                    target=target,
+                    terminal=terminal,
+                )
+            )
+        )
+
+        if terminal == "external":
+            run_in_terminal_request = self.read(RunInTerminalRequest)
+            env = os.environ.copy()
+            for key, val in run_in_terminal_request.arguments.env.to_dict().items():
+                env[as_str(key)] = as_str(val)
+            subprocess.Popen(
+                run_in_terminal_request.arguments.args,
+                cwd=run_in_terminal_request.arguments.cwd,
+                env=env,
+            )
+
+        if success:
+            # Initialized is sent just before the launch response (at which
+            # point it's possible to send breakpoints).
+            event = self.read(InitializedEvent)
+            assert isinstance(event, InitializedEvent)
+
+        launch_response = self.read(LaunchResponse)
+        assert launch_response.success == success
+
+    def set_breakpoints(self, target, lines):
+        import os.path
+        from robotframework_debug_adapter.dap.dap_schema import SetBreakpointsRequest
+        from robotframework_debug_adapter.dap.dap_schema import SetBreakpointsArguments
+        from robotframework_debug_adapter.dap.dap_schema import Source
+        from robotframework_debug_adapter.dap.dap_schema import SourceBreakpoint
+        from robotframework_debug_adapter.dap.dap_schema import SetBreakpointsResponse
+
+        if isinstance(lines, int):
+            lines = (lines,)
+        assert isinstance(lines, (list, tuple))
+
+        self.write(
+            SetBreakpointsRequest(
+                SetBreakpointsArguments(
+                    source=Source(name=os.path.basename(target), path=target),
+                    lines=lines,
+                    breakpoints=[
+                        SourceBreakpoint(line=line).to_dict() for line in lines
+                    ],
+                )
+            )
+        )
+        response = self.read(SetBreakpointsResponse)
+        assert len(response.body.breakpoints) == len(lines)
+
+    def wait_for_response(self, request, response_class=None):
+        from robotframework_debug_adapter.dap.dap_base_schema import get_response_class
+        from robotframework_debug_adapter.dap.dap_schema import Response
+
+        if response_class is None:
+            response_class = get_response_class(request)
+
+        def accept_message(response):
+            if isinstance(request, dict):
+                if response.request_seq == request["seq"]:
+                    return True
+            else:
+                if response.request_seq == request.seq:
+                    return True
+            return False
+
+        return self.read((response_class, Response), accept_message)
+
+    def get_stack_as_json_hit(self, thread_id):
+        from robotframework_debug_adapter.dap.dap_schema import StackTraceArguments
+        from robotframework_debug_adapter.dap.dap_schema import StackTraceRequest
+
+        stack_trace_request = self.write(
+            StackTraceRequest(StackTraceArguments(threadId=thread_id))
+        )
+
+        # : :type stack_trace_response: StackTraceResponse
+        # : :type stack_trace_response_body: StackTraceResponseBody
+        # : :type stack_frame: StackFrame
+        stack_trace_response = self.wait_for_response(stack_trace_request)
+        stack_trace_response_body = stack_trace_response.body
+        assert len(stack_trace_response_body.stackFrames) > 0
+
+        stack_frame = next(iter(stack_trace_response_body.stackFrames))
+
+        return _JsonHit(
+            thread_id=thread_id,
+            frame_id=stack_frame["id"],
+            stack_trace_response=stack_trace_response,
+        )
+
+    def wait_for_thread_stopped(
+        self, reason="breakpoint", line=None, file=None, name=None
+    ):
+        """
+        :param file:
+            utf-8 bytes encoded file or unicode
+        """
+        from robotframework_debug_adapter.dap.dap_schema import StoppedEvent
+        from robocode_ls_core.constants import IS_PY2
+
+        stopped_event = self.read(StoppedEvent)
+        assert stopped_event.body.reason == reason
+        json_hit = self.get_stack_as_json_hit(stopped_event.body.threadId)
+        if file is not None:
+            path = json_hit.stack_trace_response.body.stackFrames[0]["source"]["path"]
+            if IS_PY2:
+                if isinstance(file, bytes):
+                    file = file.decode("utf-8")
+                if isinstance(path, bytes):
+                    path = path.decode("utf-8")
+
+            if not path.endswith(file):
+                raise AssertionError("Expected path: %s to end with: %s" % (path, file))
+        if name is not None:
+            assert json_hit.stack_trace_response.body.stackFrames[0]["name"] == name
+        if line is not None:
+            found_line = json_hit.stack_trace_response.body.stackFrames[0]["line"]
+            if not isinstance(line, (tuple, list)):
+                line = [line]
+            assert found_line in line, "Expect to break at line: %s. Found: %s" % (
+                line,
+                found_line,
+            )
+        return json_hit
+
+    def get_line_index_with_content(self, line_content, filename=None):
+        """
+        :return the line index which has the given content (1-based).
+        """
+        if filename is None:
+            filename = self.target
+        with open(filename, "r") as stream:
+            for i_line, line in enumerate(stream):
+                if line_content in line:
+                    return i_line + 1
+        raise AssertionError("Did not find: %s in %s" % (line_content, self.TEST_FILE))
 
 
 @pytest.fixture

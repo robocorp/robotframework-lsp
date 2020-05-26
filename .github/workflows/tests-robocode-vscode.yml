@@ -2,14 +2,16 @@ name: Tests - Robocode VSCode (robocode-vscode)
 
 on:
   push:
-    branches:
-      - "*"
-    tags:
-      - "*"
+    paths:
+    - robocode-vscode/**
+    - robocode-python-ls-core/**
+    - .github/**
 
   pull_request:
-    branches:
-      - master
+    paths:
+    - robocode-vscode/**
+    - robocode-python-ls-core/**
+    - .github/**
       
 jobs:
   build:

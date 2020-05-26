@@ -81,7 +81,6 @@ def find_definition(completion_context):
         if token is not None:
             collector = _Collector(token.value)
             collect_keywords(completion_context, collector)
-
-        return collector.matches
+            return collector.matches
 
     return []

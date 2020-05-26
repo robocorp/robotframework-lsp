@@ -75,15 +75,15 @@ def main():
 
         from robotframework_debug_adapter.debug_adapter_threads import reader_thread
         from robotframework_debug_adapter.debug_adapter_threads import writer_thread
-        from robotframework_debug_adapter.command_processor import CommandProcessor
+        from robotframework_debug_adapter.debug_adapter_comm import DebugAdapterComm
 
         try:
             from queue import Queue
         except ImportError:
             from Queue import Queue
 
-        write_queue = Queue()
-        command_processor = CommandProcessor(write_queue)
+        to_client_queue = Queue()
+        comm = DebugAdapterComm(to_client_queue)
 
         write_to = sys.stdout
         read_from = sys.stdin
@@ -102,12 +102,12 @@ def main():
 
         writer = threading.Thread(
             target=writer_thread,
-            args=(write_to, write_queue, "write to client"),
+            args=(write_to, to_client_queue, "write to client"),
             name="Write to client",
         )
         reader = threading.Thread(
             target=reader_thread,
-            args=(read_from, command_processor, write_queue, b"read from client"),
+            args=(read_from, comm.from_client, to_client_queue, b"read from client"),
             name="Read from client",
         )
 
@@ -116,7 +116,7 @@ def main():
 
         reader.join()
         log.debug("Exited reader.\n")
-        write_queue.put(STOP_WRITER_THREAD)
+        to_client_queue.put(STOP_WRITER_THREAD)
         writer.join()
         log.debug("Exited writer.\n")
     except:

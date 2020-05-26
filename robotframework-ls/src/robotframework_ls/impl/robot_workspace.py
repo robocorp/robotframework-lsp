@@ -11,13 +11,10 @@ class RobotWorkspace(Workspace):
     def __init__(
         self, root_uri, workspace_folders=None, libspec_manager=NULL, generate_ast=True
     ):
+        self.libspec_manager = libspec_manager
+
         Workspace.__init__(self, root_uri, workspace_folders=workspace_folders)
         self._generate_ast = generate_ast
-        self.libspec_manager = libspec_manager
-        for folder in self.folders:
-            self.libspec_manager.add_workspace_folder(folder)
-        if root_uri not in self.folders:
-            self.libspec_manager.add_workspace_folder(root_uri)
 
     @overrides(Workspace.add_folder)
     def add_folder(self, folder):

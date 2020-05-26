@@ -142,7 +142,61 @@ def reader_thread(stream, process_command, write_queue, debug_prefix=b"read"):
         process_command(READER_THREAD_STOPPED)
 
 
+def writer_thread_no_auto_seq(stream, queue, debug_prefix="write"):
+    """
+    Same as writer_thread but does not set the message 'seq' automatically
+    (meant to be used when responses, which need the seq id set need to be handled). 
+    """
+    try:
+        while True:
+            to_write = queue.get()
+            if to_write is STOP_WRITER_THREAD:
+                log.debug("STOP_WRITER_THREAD")
+                stream.close()
+                break
+
+            if isinstance(to_write, dict):
+                assert "seq" in to_write
+                try:
+                    to_write = json.dumps(to_write)
+                except:
+                    log.exception("Error serializing %s to json.", to_write)
+                    continue
+
+            else:
+                to_json = getattr(to_write, "to_json", None)
+                if to_json is not None:
+                    # Some protocol message
+                    assert to_write.seq >= 0
+                    try:
+                        to_write = to_json()
+                    except:
+                        log.exception("Error serializing %s to json.", to_write)
+                        continue
+
+            if DEBUG:
+                log.debug(debug_prefix + ": %s\n", to_write)
+
+            if to_write.__class__ == bytes:
+                as_bytes = to_write
+            else:
+                as_bytes = to_write.encode("utf-8")
+
+            stream.write(
+                ("Content-Length: %s\r\n\r\n" % (len(as_bytes))).encode("ascii")
+            )
+            stream.write(as_bytes)
+            stream.flush()
+    except:
+        log.exception("Error writing message.")
+    finally:
+        log.debug("Exit reader thread.")
+
+
 def writer_thread(stream, queue, debug_prefix="write"):
+    """
+    Same as writer_thread_no_auto_seq but sets the message 'seq' automatically.
+    """
     _next_seq = partial(next, itertools.count())
 
     try:

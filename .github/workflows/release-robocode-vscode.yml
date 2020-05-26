@@ -1,8 +1,7 @@
 on:
   push:
     branches:
-      - "release"
-      - "*"
+      - "release-robocode-vscode"
     tags:
       - "robocode-vscode-*"
 name: Deploy - Robocode VSCode Extension

@@ -2,14 +2,15 @@ name: Tests - Python Language Server Core (robocode-python-ls-core)
 
 on:
   push:
-    branches:
-      - "*"
-    tags:
-      - "*"
+    paths:
+    - robocode-python-ls-core/**
+    - .github/**
+
 
   pull_request:
-    branches:
-      - master
+    paths:
+    - robocode-python-ls-core/**
+    - .github/**
       
 jobs:
   build:

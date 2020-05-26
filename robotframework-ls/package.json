@@ -8,6 +8,9 @@
         "type": "git",
         "url": "https://github.com/robocorp/robotframework-lsp.git"
     },
+    "bugs": {
+        "url": "https://github.com/robocorp/robotframework-lsp/issues"
+    },
     "license": "Apache 2.0",
     "version": "0.1.1",
     "icon": "images/icon.png",
@@ -17,7 +20,13 @@
     },
     "categories": [
         "Linters",
-        "Programming Languages"
+        "Programming Languages",
+        "Debuggers"
+    ],
+    "keywords": [
+        "Robot",
+        "Robot Framework",
+        "multi-root ready"
     ],
     "activationEvents": [
         "onLanguage:robotframework",
@@ -42,7 +51,11 @@
                     "type": "string",
                     "default": "plural",
                     "description": "Defines how completions should be shown for section headers (i.e.: *** Setting(s) ***).",
-                    "enum": ["plural", "singular", "both"]
+                    "enum": [
+                        "plural",
+                        "singular",
+                        "both"
+                    ]
                 },
                 "robot.language-server.tcp-port": {
                     "type": "number",
@@ -105,6 +118,11 @@
                     "text": "    "
                 },
                 "when": "editorTextFocus && editorLangId == robotframework && !editorHasSelection && !inSnippetMode && !suggestWidgetVisible && config.robot.editor.4spacesTab"
+            }
+        ],
+        "breakpoints": [
+            {
+                "language": "robotframework"
             }
         ],
         "debuggers": [
