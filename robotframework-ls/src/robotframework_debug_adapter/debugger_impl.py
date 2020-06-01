@@ -25,9 +25,12 @@ from os.path import os
 from robocode_ls_core.robotframework_log import get_logger
 from collections import namedtuple
 from robocode_ls_core.constants import IS_PY2
+import weakref
 
 
 log = get_logger(__name__)
+
+next_id = partial(next, itertools.count(1))
 
 
 class RobotBreakpoint(object):
@@ -54,66 +57,315 @@ class BusyWait(object):
         self._event.clear()
 
 
-class StackList(object):
-    def __init__(self, frames):
-        self.frames = frames
+class _BaseObjectToDAP(object):
+    """
+    Base class for classes which converts some object to the DAP.
+    """
+
+    def compute_as_dap(self):
+        return []
 
 
-_StepEntry = namedtuple("_StepEntry", "ctx, step")
+class _ArgsAsDAP(_BaseObjectToDAP):
+    """
+    Provides args as DAP variables.
+    """
+
+    def __init__(self, keyword_args):
+        self._keyword_args = keyword_args
+
+    def compute_as_dap(self):
+        from robotframework_debug_adapter.dap.dap_schema import Variable
+        from robotframework_debug_adapter.safe_repr import SafeRepr
+
+        lst = []
+        safe_repr = SafeRepr()
+        for i, arg in enumerate(self._keyword_args):
+            lst.append(Variable("Arg %s" % (i,), safe_repr(arg), variablesReference=0))
+        return lst
+
+
+class _VariablesAsDAP(_BaseObjectToDAP):
+    """
+    Provides variables as DAP variables.
+    """
+
+    def __init__(self, variables):
+        self._variables = variables
+
+    def compute_as_dap(self):
+        from robotframework_debug_adapter.dap.dap_schema import Variable
+        from robotframework_debug_adapter.safe_repr import SafeRepr
+
+        variables = self._variables
+        as_dct = variables.as_dict()
+        lst = []
+        safe_repr = SafeRepr()
+        for key, val in as_dct.items():
+            lst.append(Variable(safe_repr(key), safe_repr(val), variablesReference=0))
+        return lst
+
+
+class _BaseFrameInfo(object):
+    @property
+    def dap_frame(self):
+        raise NotImplementedError("Not implemented in: %s" % (self.__class__,))
+
+    def get_scopes(self):
+        raise NotImplementedError("Not implemented in: %s" % (self.__class__,))
+
+
+class _SuiteFrameInfo(_BaseFrameInfo):
+    def __init__(self, stack_list, dap_frame):
+        self._stack_list = weakref.ref(stack_list)
+        self._dap_frame = dap_frame
+
+    @property
+    def dap_frame(self):
+        return self._dap_frame
+
+    def get_scopes(self):
+        return []
+
+
+class _TestFrameInfo(_BaseFrameInfo):
+    def __init__(self, stack_list, dap_frame):
+        self._stack_list = weakref.ref(stack_list)
+        self._dap_frame = dap_frame
+
+    @property
+    def dap_frame(self):
+        return self._dap_frame
+
+    def get_scopes(self):
+        return []
+
+
+class _KeywordFrameInfo(_BaseFrameInfo):
+    def __init__(self, stack_list, dap_frame, keyword, variables):
+        self._stack_list = weakref.ref(stack_list)
+        self._dap_frame = dap_frame
+        self._keyword = keyword
+        self._scopes = None
+        self._variables = variables
+
+    @property
+    def dap_frame(self):
+        return self._dap_frame
+
+    def get_scopes(self):
+        if self._scopes is not None:
+            return self._scopes
+        stack_list = self._stack_list()
+        if stack_list is None:
+            return []
+
+        from robotframework_debug_adapter.dap.dap_schema import Scope
+
+        locals_variables_reference = next_id()
+        vars_variables_reference = next_id()
+        scopes = [
+            Scope("Variables", vars_variables_reference, expensive=False),
+            Scope(
+                "Arguments",
+                locals_variables_reference,
+                expensive=False,
+                presentationHint="locals",
+            ),
+        ]
+
+        try:
+            args = self._keyword.args
+        except:
+            log.debug("Unable to get arguments for keyword: %s", self._keyword)
+            args = []
+        stack_list.register_variables_reference(
+            locals_variables_reference, _ArgsAsDAP(args)
+        )
+        # ctx.namespace.get_library_instances()
+
+        stack_list.register_variables_reference(
+            vars_variables_reference, _VariablesAsDAP(self._variables)
+        )
+        self._scopes = scopes
+        return self._scopes
+
+
+class _StackInfo(object):
+    """
+    This is the information for the stacks available when we're stopped in a 
+    breakpoint.
+    """
+
+    def __init__(self):
+        self._frame_id_to_frame_info = {}
+        self._dap_frames = []
+        self._ref_id_to_children = {}
+
+    def iter_frame_ids(self):
+        return iter(self._frame_id_to_frame_info.keys())
+
+    def register_variables_reference(self, variables_reference, children):
+        self._ref_id_to_children[variables_reference] = children
+
+    def add_keyword_entry_stack(self, keyword, name, filename, variables):
+        from robotframework_debug_adapter.dap import dap_schema
+
+        frame_id = next_id()
+        dap_frame = dap_schema.StackFrame(
+            frame_id,
+            name=str(keyword),
+            line=keyword.lineno,
+            column=0,
+            source=dap_schema.Source(name=name, path=filename),
+        )
+        self._dap_frames.append(dap_frame)
+        self._frame_id_to_frame_info[frame_id] = _KeywordFrameInfo(
+            self, dap_frame, keyword, variables
+        )
+        return frame_id
+
+    def add_suite_entry_stack(self, name, filename):
+        from robotframework_debug_adapter.dap import dap_schema
+
+        frame_id = next_id()
+        dap_frame = dap_schema.StackFrame(
+            frame_id,
+            name=name,
+            line=1,
+            column=0,
+            source=dap_schema.Source(name=name, path=filename),
+        )
+        self._dap_frames.append(dap_frame)
+        self._frame_id_to_frame_info[frame_id] = _SuiteFrameInfo(self, dap_frame)
+        return frame_id
+
+    def add_test_entry_stack(self, name, filename, lineno):
+        from robotframework_debug_adapter.dap import dap_schema
+
+        frame_id = next_id()
+        dap_frame = dap_schema.StackFrame(
+            frame_id,
+            name=name,
+            line=lineno,
+            column=0,
+            source=dap_schema.Source(name=name, path=filename),
+        )
+        self._dap_frames.append(dap_frame)
+        self._frame_id_to_frame_info[frame_id] = _TestFrameInfo(self, dap_frame)
+        return frame_id
+
+    @property
+    def dap_frames(self):
+        return self._dap_frames
+
+    def get_scopes(self, frame_id):
+        frame_info = self._frame_id_to_frame_info.get(frame_id)
+        if frame_info is None:
+            return None
+        return frame_info.get_scopes()
+
+    def get_variables(self, variables_reference):
+        lst = self._ref_id_to_children.get(variables_reference)
+        if lst is not None:
+            if isinstance(lst, _BaseObjectToDAP):
+                lst = lst.compute_as_dap()
+        return lst
+
+
+_StepEntry = namedtuple("_StepEntry", "variables, keyword")
+_SuiteEntry = namedtuple("_SuiteEntry", "name, source")
+_TestEntry = namedtuple("_TestEntry", "name, source, lineno")
 
 
 class _RobotDebuggerImpl(object):
+    """
+    This class provides the main API to deal with debugging
+    Robot Framework.
+    """
+
     def __init__(self):
         from collections import deque
 
         self._filename_to_line_to_breakpoint = {}
         self.busy_wait = BusyWait()
 
-        self._stack_list = None
         self._run_state = STATE_RUNNING
         self._step_cmd = None
         self._reason = None
-        self._next_id = partial(next, itertools.count())
-        self._ctx_deque = deque()
+        self._next_id = next_id
+        self._stack_ctx_entries_deque = deque()
         self._step_next_stack_len = 0
+
+        self._tid_to_stack_list = {}
+        self._frame_id_to_tid = {}
 
     @property
     def stop_reason(self):
         return self._reason
 
-    def get_stack_list(self):
-        return self._stack_list
+    def _get_stack_info(self, thread_id):
+        return self._tid_to_stack_list.get(thread_id)
 
-    def _create_stack_list(self, ctx, keyword):
-        from robotframework_debug_adapter.dap import dap_schema
+    def get_frames(self, thread_id):
+        stack_info = self._get_stack_info(thread_id)
+        if not stack_info:
+            return None
+        return stack_info.dap_frames
 
-        ctx.namespace.get_library_instances()
+    def get_scopes(self, frame_id):
+        tid = self._frame_id_to_tid.get(frame_id)
+        if tid is None:
+            return None
 
-        filename, _changed = file_utils.norm_file_to_client(keyword.source)
-        name = os.path.basename(filename)
+        stack_info = self._get_stack_info(tid)
+        if not stack_info:
+            return None
+        return stack_info.get_scopes(frame_id)
 
-        frames = []
-        for step_entry in self._ctx_deque:
-            step = step_entry.step
-            frames.append(
-                dap_schema.StackFrame(
-                    self._next_id(),
-                    name=str(step),
-                    line=step.lineno,
-                    column=0,
-                    source=dap_schema.Source(name=name, path=filename),
+    def get_variables(self, variables_reference):
+        for stack_list in list(self._tid_to_stack_list.values()):
+            variables = stack_list.get_variables(variables_reference)
+            if variables is not None:
+                return variables
+
+    def _create_stack_info(self, thread_id):
+        stack_info = _StackInfo()
+        for entry in reversed(self._stack_ctx_entries_deque):
+            if entry.__class__ == _StepEntry:
+                keyword = entry.keyword
+                variables = entry.variables
+                filename, _changed = file_utils.norm_file_to_client(keyword.source)
+                name = os.path.basename(filename)
+                frame_id = stack_info.add_keyword_entry_stack(
+                    keyword, name, filename, variables
                 )
-            )
 
-        stack_list = StackList(list(reversed(frames)))
-        self._stack_list = stack_list
+            elif entry.__class__ == _SuiteEntry:
+                frame_id = stack_info.add_suite_entry_stack(
+                    "TestSuite: %s" % (entry.name,), entry.source
+                )
 
-    def _dispose_stack_list(self):
-        self._stack_list = None
+            elif entry.__class__ == _TestEntry:
+                frame_id = stack_info.add_test_entry_stack(
+                    "TestCase: %s" % (entry.name,), entry.source, entry.lineno
+                )
 
-    def wait_suspended(self, ctx, keyword, reason):
-        log.info("wait_suspended", keyword, reason)
-        self._create_stack_list(ctx, keyword)
+        for frame_id in stack_info.iter_frame_ids():
+            self._frame_id_to_tid[frame_id] = thread_id
+
+        self._tid_to_stack_list[thread_id] = stack_info
+
+    def _dispose_stack_info(self, thread_id):
+        stack_list = self._tid_to_stack_list.pop(thread_id)
+        for frame_id in stack_list.iter_frame_ids():
+            self._frame_id_to_tid.pop(frame_id)
+
+    def wait_suspended(self, reason):
+        from robotframework_debug_adapter.constants import MAIN_THREAD_ID
+
+        log.info("wait_suspended", reason)
+        self._create_stack_info(MAIN_THREAD_ID)
         try:
             self._run_state = STATE_PAUSED
             self._reason = reason
@@ -122,10 +374,10 @@ class _RobotDebuggerImpl(object):
                 self.busy_wait.wait()
 
             if self._step_cmd == STEP_NEXT:
-                self._step_next_stack_len = len(self._ctx_deque)
+                self._step_next_stack_len = len(self._stack_ctx_entries_deque)
 
         finally:
-            self._dispose_stack_list()
+            self._dispose_stack_info(MAIN_THREAD_ID)
 
     def step_continue(self):
         self._step_cmd = None
@@ -149,9 +401,11 @@ class _RobotDebuggerImpl(object):
             line_to_bp[bp.lineno] = bp
         self._filename_to_line_to_breakpoint[filename] = line_to_bp
 
+    # ------------------------------------------------- RobotFramework listeners
+
     def before_run_step(self, step_runner, step):
         ctx = step_runner._context
-        self._ctx_deque.append(_StepEntry(ctx, step))
+        self._stack_ctx_entries_deque.append(_StepEntry(ctx.variables.current, step))
 
         try:
             lineno = step.lineno
@@ -175,15 +429,28 @@ class _RobotDebuggerImpl(object):
                 stop_reason = REASON_STEP
 
             elif step_cmd == STEP_NEXT:
-                if len(self._ctx_deque) <= self._step_next_stack_len:
+                if len(self._stack_ctx_entries_deque) <= self._step_next_stack_len:
                     stop_reason = REASON_STEP
 
         if stop_reason is not None:
-            ctx = step_runner._context
-            self.wait_suspended(ctx, step, stop_reason)
+            self.wait_suspended(stop_reason)
 
     def after_run_step(self, step_runner, keyword):
-        self._ctx_deque.pop()
+        self._stack_ctx_entries_deque.pop()
+
+    def start_suite(self, data, result):
+        self._stack_ctx_entries_deque.append(_SuiteEntry(data.name, data.source))
+
+    def end_suite(self, data, result):
+        self._stack_ctx_entries_deque.pop()
+
+    def start_test(self, data, result):
+        self._stack_ctx_entries_deque.append(
+            _TestEntry(data.name, data.source, data.lineno)
+        )
+
+    def end_test(self, data, result):
+        self._stack_ctx_entries_deque.pop()
 
 
 def _patch(
@@ -205,14 +472,21 @@ def _patch(
 
 
 def patch_execution_context():
-    from robot.running.steprunner import StepRunner
-
     try:
         impl = patch_execution_context.impl
     except AttributeError:
         # Note: only patches once, afterwards, returns the same instance.
+        from robot.running.steprunner import StepRunner
+        from robotframework_debug_adapter.listeners import DebugListener
 
         impl = _RobotDebuggerImpl()
+
+        DebugListener.on_start_suite.register(impl.start_suite)
+        DebugListener.on_end_suite.register(impl.end_suite)
+
+        DebugListener.on_start_test.register(impl.start_test)
+        DebugListener.on_end_test.register(impl.end_test)
+
         _patch(StepRunner, impl, "run_step", impl.before_run_step, impl.after_run_step)
         patch_execution_context.impl = impl
 

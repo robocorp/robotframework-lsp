@@ -82,10 +82,14 @@ def test_simple_debug_launch(debugger_api):
     target = debugger_api.get_dap_case_file("case_log.robot")
 
     debugger_api.launch(target, debug=True)
+    threads_response = (
+        debugger_api.list_threads()
+    )  #: :type thread_response: ThreadsResponse
+    assert len(threads_response.body.threads) == 1
     debugger_api.set_breakpoints(target, 4)
     debugger_api.configuration_done()
 
-    json_hit = debugger_api.wait_for_thread_stopped()
+    debugger_api.wait_for_thread_stopped()
 
     debugger_api.continue_event()
 
@@ -136,6 +140,49 @@ def test_step_next(debugger_api):
     json_hit = debugger_api.wait_for_thread_stopped(
         "step", name="Yet Another Equal Redefined"
     )
+
+    debugger_api.continue_event()
+
+    debugger_api.read(TerminatedEvent)
+
+
+def test_variables(debugger_api):
+    """
+    :param _DebuggerAPI debugger_api:
+    """
+    from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
+
+    debugger_api.initialize()
+    target = debugger_api.get_dap_case_file("case4/case4.robot")
+    debugger_api.target = target
+
+    debugger_api.launch(target, debug=True)
+    debugger_api.set_breakpoints(
+        target, debugger_api.get_line_index_with_content("My Equal Redefined   2   2")
+    )
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(name="My Equal Redefined")
+
+    name_to_scope = debugger_api.get_name_to_scope(json_hit.frame_id)
+    assert sorted(name_to_scope.keys()) == ["Arguments", "Variables"]
+    name_to_var = debugger_api.get_arguments_name_to_var(json_hit.frame_id)
+    assert sorted(name_to_var.keys()) == ["Arg 0", "Arg 1"]
+    name_to_var = debugger_api.get_variables_name_to_var(json_hit.frame_id)
+    assert "'${TEST_NAME}'" in name_to_var or "u'${TEST_NAME}'" in name_to_var
+    assert "'${arg1}'" not in name_to_var and "u'${arg1}'" not in name_to_var
+
+    debugger_api.step_in(json_hit.thread_id)
+
+    # Check that the 'arg1' var is in the current namespace but not in the parent
+    # namespace.
+    json_hit = debugger_api.wait_for_thread_stopped("step", name="Should Be Equal")
+    name_to_var = debugger_api.get_variables_name_to_var(json_hit.frame_id)
+    assert "'${arg1}'" in name_to_var or "u'${arg1}'" in name_to_var
+    name_to_var = debugger_api.get_variables_name_to_var(
+        json_hit.stack_trace_response.body.stackFrames[1]["id"]
+    )
+    assert "'${arg1}'" not in name_to_var and "u'${arg1}'" not in name_to_var
 
     debugger_api.continue_event()
 

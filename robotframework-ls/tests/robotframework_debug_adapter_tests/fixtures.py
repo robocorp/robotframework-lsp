@@ -260,6 +260,11 @@ class _DebuggerAPI(object):
         launch_response = self.read(LaunchResponse)
         assert launch_response.success == success
 
+    def list_threads(self):
+        from robotframework_debug_adapter.dap.dap_schema import ThreadsRequest
+
+        return self.wait_for_response(self.write(ThreadsRequest()))
+
     def set_breakpoints(self, target, lines):
         import os.path
         from robotframework_debug_adapter.dap.dap_schema import SetBreakpointsRequest
@@ -373,6 +378,54 @@ class _DebuggerAPI(object):
                 if line_content in line:
                     return i_line + 1
         raise AssertionError("Did not find: %s in %s" % (line_content, self.TEST_FILE))
+
+    def get_name_to_scope(self, frame_id):
+        from robotframework_debug_adapter.dap.dap_schema import ScopesArguments
+        from robotframework_debug_adapter.dap.dap_schema import ScopesRequest
+        from robotframework_debug_adapter.dap.dap_schema import Scope
+
+        scopes_request = self.write(ScopesRequest(ScopesArguments(frame_id)))
+
+        scopes_response = self.wait_for_response(scopes_request)
+
+        scopes = scopes_response.body.scopes
+        name_to_scopes = dict((scope["name"], Scope(**scope)) for scope in scopes)
+
+        assert len(scopes) == 2
+        assert sorted(name_to_scopes.keys()) == ["Arguments", "Variables"]
+        assert name_to_scopes["Arguments"].presentationHint == "locals"
+
+        return name_to_scopes
+
+    def get_name_to_var(self, variables_reference):
+        from robotframework_debug_adapter.dap.dap_schema import Variable
+
+        variables_response = self.get_variables_response(variables_reference)
+        return dict(
+            (variable["name"], Variable(**variable))
+            for variable in variables_response.body.variables
+        )
+
+    def get_arguments_name_to_var(self, frame_id):
+        name_to_scope = self.get_name_to_scope(frame_id)
+
+        return self.get_name_to_var(name_to_scope["Arguments"].variablesReference)
+
+    def get_variables_name_to_var(self, frame_id):
+        name_to_scope = self.get_name_to_scope(frame_id)
+
+        return self.get_name_to_var(name_to_scope["Variables"].variablesReference)
+
+    def get_variables_response(self, variables_reference, fmt=None, success=True):
+        from robotframework_debug_adapter.dap.dap_schema import VariablesRequest
+        from robotframework_debug_adapter.dap.dap_schema import VariablesArguments
+
+        variables_request = self.write(
+            VariablesRequest(VariablesArguments(variables_reference, format=fmt))
+        )
+        variables_response = self.wait_for_response(variables_request)
+        assert variables_response.success == success
+        return variables_response
 
 
 @pytest.fixture

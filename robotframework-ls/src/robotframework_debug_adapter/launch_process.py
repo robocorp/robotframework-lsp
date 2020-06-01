@@ -345,9 +345,7 @@ class LaunchProcess(object):
 
         self._env = env
 
-        # TODO: Right now we can't debug, just run as usual.
-        # self._run_in_debug_mode = not request.arguments.noDebug
-        self._run_in_debug_mode = False
+        self._run_in_debug_mode = not request.arguments.noDebug
 
         if self._terminal not in VALID_TERMINAL_OPTIONS:
             return mark_invalid(
@@ -390,13 +388,17 @@ class LaunchProcess(object):
             log.exception("Error")
             return mark_invalid("Error checking if run_robot__main__.py exists.")
 
-        if self._run_in_debug_mode:
-            raise AssertionError("Running in debug mode is currently not supported.")
-
         else:
             # Note: target must be the last parameter.
             cmdline = (
-                [sys.executable, "-u", run_robot_py, "--port", str(port)]
+                [
+                    sys.executable,
+                    "-u",
+                    run_robot_py,
+                    "--port",
+                    str(port),
+                    "--debug" if self._run_in_debug_mode else "--no-debug",
+                ]
                 + args
                 + [target]
             )

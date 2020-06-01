@@ -155,20 +155,6 @@ class DebugAdapterComm(object):
             )
             self.write_to_client_message(configuration_done_response)
 
-    def on_threads_request(self, request):
-        """
-        :param ThreadsRequest request:
-        """
-        from robotframework_debug_adapter.dap.dap_schema import Thread
-        from robotframework_debug_adapter.dap.dap_schema import ThreadsResponseBody
-        from robotframework_debug_adapter.constants import MAIN_THREAD_ID
-
-        threads = [Thread(MAIN_THREAD_ID, "Main Thread").to_dict()]
-        kwargs = {"body": ThreadsResponseBody(threads)}
-        # : :type threads_response: ThreadsResponse
-        threads_response = base_schema.build_response(request, kwargs)
-        self.write_to_client_message(threads_response)
-
     def on_disconnect_request(self, request):
         """
         :param DisconnectRequest request:
@@ -252,6 +238,15 @@ class DebugAdapterComm(object):
         self._launch_process.resend_request_to_robot(request)
 
     def on_next_request(self, request):
+        self._launch_process.resend_request_to_robot(request)
+
+    def on_scopes_request(self, request):
+        self._launch_process.resend_request_to_robot(request)
+
+    def on_variables_request(self, request):
+        self._launch_process.resend_request_to_robot(request)
+
+    def on_threads_request(self, request):
         self._launch_process.resend_request_to_robot(request)
 
     def write_to_client_message(self, protocol_message):

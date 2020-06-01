@@ -58,16 +58,30 @@ def connect(port):
 
 
 class _RobotTargetComm(threading.Thread):
-    def __init__(self, s, debugger_impl):
+    def __init__(self, s, debug):
         threading.Thread.__init__(self)
-        self._debugger_impl = debugger_impl
         self.daemon = True
+        self._debug = debug
         self._socket = s
         self._write_queue = queue.Queue()
         self.configuration_done = threading.Event()
         self.terminated = threading.Event()
 
-        debugger_impl.busy_wait.before_wait.append(self._notify_stopped)
+        log = get_log()
+        if debug:
+            log.debug("Patching execution context...")
+
+            from robotframework_debug_adapter.debugger_impl import (
+                patch_execution_context,
+            )
+
+            debugger_impl = patch_execution_context()
+            debugger_impl.busy_wait.before_wait.append(self._notify_stopped)
+
+            log.debug("Finished patching execution context.")
+            self._debugger_impl = debugger_impl
+        else:
+            self._debugger_impl = None
 
     def _notify_stopped(self):
         from robotframework_debug_adapter.dap.dap_schema import StoppedEvent
@@ -209,7 +223,11 @@ class _RobotTargetComm(threading.Thread):
                 )
                 robot_breakpoints.append(RobotBreakpoint(source_breakpoint.line))
 
-        self._debugger_impl.set_breakpoints(filename, robot_breakpoints)
+        if self._debugger_impl:
+            self._debugger_impl.set_breakpoints(filename, robot_breakpoints)
+        else:
+            if robot_breakpoints:
+                get_log().info("Unable to set breakpoints (no debug mode).")
 
         self.write_message(
             dap_base_schema.build_response(
@@ -226,7 +244,11 @@ class _RobotTargetComm(threading.Thread):
             request, kwargs=dict(body=ContinueResponseBody(allThreadsContinued=True))
         )
 
-        self._debugger_impl.step_continue()
+        if self._debugger_impl:
+            self._debugger_impl.step_continue()
+        else:
+            get_log().info("Unable to continue (no debug mode).")
+
         self.write_message(response)
 
     def on_stepIn_request(self, request):
@@ -234,7 +256,10 @@ class _RobotTargetComm(threading.Thread):
 
         response = build_response(request)
 
-        self._debugger_impl.step_in()
+        if self._debugger_impl:
+            self._debugger_impl.step_in()
+        else:
+            get_log().info("Unable to step in (no debug mode).")
         self.write_message(response)
 
     def on_next_request(self, request):
@@ -242,15 +267,44 @@ class _RobotTargetComm(threading.Thread):
 
         response = build_response(request)
 
-        self._debugger_impl.step_next()
+        if self._debugger_impl:
+            self._debugger_impl.step_next()
+        else:
+            get_log().info("Unable to step next (no debug mode).")
+
         self.write_message(response)
 
+    def on_threads_request(self, request):
+        """
+        :param ThreadsRequest request:
+        """
+        from robotframework_debug_adapter.dap.dap_schema import Thread
+        from robotframework_debug_adapter.dap.dap_schema import ThreadsResponseBody
+        from robotframework_debug_adapter.constants import MAIN_THREAD_ID
+        from robotframework_debug_adapter.dap.dap_base_schema import build_response
+
+        threads = [Thread(MAIN_THREAD_ID, "Main Thread").to_dict()]
+        kwargs = {"body": ThreadsResponseBody(threads)}
+        # : :type threads_response: ThreadsResponse
+        threads_response = build_response(request, kwargs)
+        self.write_message(threads_response)
+
     def on_stackTrace_request(self, request):
+        """
+        :param StackTraceRequest request:
+        """
         from robotframework_debug_adapter.dap.dap_base_schema import build_response
         from robotframework_debug_adapter.dap.dap_schema import StackTraceResponseBody
 
-        stack_list = self._debugger_impl.get_stack_list()
-        body = StackTraceResponseBody(stackFrames=stack_list.frames)
+        thread_id = request.arguments.threadId
+
+        if self._debugger_impl:
+            frames = self._debugger_impl.get_frames(thread_id)
+        else:
+            frames = []
+            get_log().info("Unable to get stack trace (no debug mode).")
+
+        body = StackTraceResponseBody(stackFrames=frames if frames else [])
         response = build_response(request, kwargs=dict(body=body))
         self.write_message(response)
 
@@ -263,6 +317,44 @@ class _RobotTargetComm(threading.Thread):
         response = build_response(request)
         self.write_message(response)
         self.configuration_done.set()
+
+    def on_scopes_request(self, request):
+        """
+        :param ScopesRequest request:
+        """
+        from robotframework_debug_adapter.dap.dap_base_schema import build_response
+        from robotframework_debug_adapter.dap.dap_schema import ScopesResponseBody
+
+        frame_id = request.arguments.frameId
+
+        if self._debugger_impl:
+            scopes = self._debugger_impl.get_scopes(frame_id)
+        else:
+            scopes = []
+            get_log().info("Unable to step in (no debug mode).")
+
+        body = ScopesResponseBody(scopes if scopes else [])
+        response = build_response(request, kwargs=dict(body=body))
+        self.write_message(response)
+
+    def on_variables_request(self, request):
+        """
+        :param VariablesRequest request:
+        """
+        from robotframework_debug_adapter.dap.dap_base_schema import build_response
+        from robotframework_debug_adapter.dap.dap_schema import VariablesResponseBody
+
+        variables_reference = request.arguments.variablesReference
+
+        if self._debugger_impl:
+            variables = self._debugger_impl.get_variables(variables_reference)
+        else:
+            variables = []
+            get_log().info("Unable to step in (no debug mode).")
+
+        body = VariablesResponseBody(variables if variables else [])
+        response = build_response(request, kwargs=dict(body=body))
+        self.write_message(response)
 
 
 def get_log():
@@ -299,19 +391,16 @@ def main():
     args = sys.argv[1:]
     assert args[0] == "--port"
     port = args[1]
+    debug = True if args[2] == "--debug" else False
 
-    robot_args = args[2:]
-
-    log.debug("Patching execution context...")
-
-    from robotframework_debug_adapter.debugger_impl import patch_execution_context
-
-    debugger_impl = patch_execution_context()
-
-    log.debug("Finished patching execution context.")
+    robot_args = args[3:]
+    if debug:
+        robot_args = [
+            "--listener=robotframework_debug_adapter.listeners.DebugListener"
+        ] + robot_args
 
     s = connect(int(port))
-    processor = _RobotTargetComm(s, debugger_impl)
+    processor = _RobotTargetComm(s, debug=debug)
     processor.start_communication_threads()
     if not processor.configuration_done.wait(DEFAULT_TIMEOUT):
         sys.stderr.write(
