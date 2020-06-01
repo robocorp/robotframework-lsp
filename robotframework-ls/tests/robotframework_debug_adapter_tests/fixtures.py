@@ -37,14 +37,17 @@ _JsonHit = namedtuple("_JsonHit", "thread_id, frame_id, stack_trace_response")
 
 @pytest.fixture
 def dap_logs_dir(tmpdir):
+    import locale
+
     logs_directory = tmpdir.join("logs_adapter")
     logs_directory.mkdir()
     yield logs_directory
 
     for name in os.listdir(str(logs_directory)):
         sys.stderr.write("\n--- %s contents:\n" % (name,))
-        with open(str(logs_directory.join(name)), "r") as stream:
-            sys.stderr.write(stream.read())
+        with open(str(logs_directory.join(name)), "rb") as stream:
+            contents = stream.read().decode(locale.getpreferredencoding(), "replace")
+            sys.stderr.write(contents)
             sys.stderr.write("\n\n")
 
 
