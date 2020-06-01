@@ -53,3 +53,20 @@ class DocumentSelection(object):
         m_end = RE_END_WORD.findall(end)
 
         return m_start[0] + m_end[-1]
+
+    @property
+    def word_to_cursor(self):
+        """Get the word under the cursor returning the start and end positions."""
+        current_line = self.current_line
+        if not current_line:
+            return ""
+
+        col = self.col
+        # Split word in two
+        start = current_line[:col]
+
+        # Take end of start and start of end to find word
+        # These are guaranteed to match, even if they match the empty string
+        m_start = RE_START_WORD.findall(start)
+
+        return m_start[0]

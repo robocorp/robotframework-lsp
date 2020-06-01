@@ -481,6 +481,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def m_text_document__completion(self, **kwargs):
         from robotframework_ls.impl.completion_context import CompletionContext
         from robotframework_ls.impl import section_completions
+        from robotframework_ls.impl import snippets_completions
 
         doc_uri = kwargs["textDocument"]["uri"]
         # Note: 0-based
@@ -498,6 +499,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         message_matchers = []
         message_matchers.append(self._api.request_complete_all(doc_uri, line, col))
         completions.extend(section_completions.complete(ctx))
+        completions.extend(snippets_completions.complete(ctx))
 
         accepted_message_matchers = self._wait_for_message_matchers(message_matchers)
         for message_matcher in accepted_message_matchers:

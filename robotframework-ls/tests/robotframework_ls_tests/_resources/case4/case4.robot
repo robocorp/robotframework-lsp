@@ -7,5 +7,5 @@ Resource    case4resource.txt
 Can use resource keywords
     [Documentation]      Checks that we can have a resource
     ...                  including another resource.
-    My Equal Redefined   2   2
     Yet Another Equal Redefined     2   2
+    Run
