@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os.path
 
 
 def test_invalid_launch_1(debugger_api):
@@ -114,6 +115,50 @@ def test_step_in(debugger_api):
     debugger_api.step_in(json_hit.thread_id)
 
     json_hit = debugger_api.wait_for_thread_stopped("step", name="Should Be Equal")
+
+    debugger_api.continue_event()
+
+    debugger_api.read(TerminatedEvent)
+
+
+def format_stack_frames(stack_frames):
+    lst = []
+    for stack_frame in stack_frames:
+        dct = stack_frame.copy()
+        del dct["id"]
+        path = dct["source"]["path"]
+        dct["source"]["path"] = os.path.basename(path)
+        lst.append(dct)
+    return lst
+
+
+def test_debugger_for_workflow(debugger_api, data_regression):
+    from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
+
+    debugger_api.initialize()
+    target = debugger_api.get_dap_case_file(
+        "case_control_flow/case_control_flow_for.robot"
+    )
+    debugger_api.target = target
+
+    debugger_api.launch(target, debug=True)
+    debugger_api.set_breakpoints(
+        target, debugger_api.get_line_index_with_content("Break 1")
+    )
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped()
+    stack_frames = json_hit.stack_trace_response.body.stackFrames
+    data_regression.check(
+        format_stack_frames(stack_frames), basename="test_debugger_for_workflow_break"
+    )
+
+    debugger_api.step_in(json_hit.thread_id)
+    json_hit = debugger_api.wait_for_thread_stopped("step")
+    stack_frames = json_hit.stack_trace_response.body.stackFrames
+    data_regression.check(
+        format_stack_frames(stack_frames), basename="test_debugger_for_workflow_step_in"
+    )
 
     debugger_api.continue_event()
 

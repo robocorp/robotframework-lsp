@@ -3,9 +3,9 @@ Unfortunately right now Robotframework doesn't really provide the needed hooks
 for a debugger, so, we monkey-patch internal APIs to gather the needed info.
 
 More specifically:
- 
+
     robot.running.steprunner.StepRunner - def run_step
-    
+
     is patched so that we can stop when some line is about to be executed.
 """
 import functools
@@ -26,7 +26,6 @@ from robocode_ls_core.robotframework_log import get_logger
 from collections import namedtuple
 from robocode_ls_core.constants import IS_PY2
 import weakref
-
 
 log = get_logger(__name__)
 
@@ -193,7 +192,7 @@ class _KeywordFrameInfo(_BaseFrameInfo):
 
 class _StackInfo(object):
     """
-    This is the information for the stacks available when we're stopped in a 
+    This is the information for the stacks available when we're stopped in a
     breakpoint.
     """
 
@@ -208,16 +207,22 @@ class _StackInfo(object):
     def register_variables_reference(self, variables_reference, children):
         self._ref_id_to_children[variables_reference] = children
 
-    def add_keyword_entry_stack(self, keyword, name, filename, variables):
+    def add_keyword_entry_stack(self, keyword, filename, variables):
         from robotframework_debug_adapter.dap import dap_schema
 
         frame_id = next_id()
+        try:
+            name = str(keyword).strip()
+            if not name:
+                name = keyword.__class__.__name__
+        except:
+            name = "<Unable to get keyword name>"
         dap_frame = dap_schema.StackFrame(
             frame_id,
-            name=str(keyword),
-            line=keyword.lineno,
+            name=name,
+            line=keyword.lineno or 1,
             column=0,
-            source=dap_schema.Source(name=name, path=filename),
+            source=dap_schema.Source(name=os.path.basename(filename), path=filename),
         )
         self._dap_frames.append(dap_frame)
         self._frame_id_to_frame_info[frame_id] = _KeywordFrameInfo(
@@ -234,7 +239,7 @@ class _StackInfo(object):
             name=name,
             line=1,
             column=0,
-            source=dap_schema.Source(name=name, path=filename),
+            source=dap_schema.Source(name=os.path.basename(filename), path=filename),
         )
         self._dap_frames.append(dap_frame)
         self._frame_id_to_frame_info[frame_id] = _SuiteFrameInfo(self, dap_frame)
@@ -249,7 +254,7 @@ class _StackInfo(object):
             name=name,
             line=lineno,
             column=0,
-            source=dap_schema.Source(name=name, path=filename),
+            source=dap_schema.Source(name=os.path.basename(filename), path=filename),
         )
         self._dap_frames.append(dap_frame)
         self._frame_id_to_frame_info[frame_id] = _TestFrameInfo(self, dap_frame)
@@ -329,27 +334,46 @@ class _RobotDebuggerImpl(object):
             if variables is not None:
                 return variables
 
+    def _get_filename(self, obj, msg):
+        try:
+            source = obj.source
+            if source is None:
+                return "None"
+
+            filename, _changed = file_utils.norm_file_to_client(source)
+        except:
+            filename = "<Unable to get %s filename>" % (msg,)
+            log.exception(filename)
+
+        return filename
+
     def _create_stack_info(self, thread_id):
         stack_info = _StackInfo()
+
         for entry in reversed(self._stack_ctx_entries_deque):
-            if entry.__class__ == _StepEntry:
-                keyword = entry.keyword
-                variables = entry.variables
-                filename, _changed = file_utils.norm_file_to_client(keyword.source)
-                name = os.path.basename(filename)
-                frame_id = stack_info.add_keyword_entry_stack(
-                    keyword, name, filename, variables
-                )
-
-            elif entry.__class__ == _SuiteEntry:
-                frame_id = stack_info.add_suite_entry_stack(
-                    "TestSuite: %s" % (entry.name,), entry.source
-                )
-
-            elif entry.__class__ == _TestEntry:
-                frame_id = stack_info.add_test_entry_stack(
-                    "TestCase: %s" % (entry.name,), entry.source, entry.lineno
-                )
+            try:
+                if entry.__class__ == _StepEntry:
+                    keyword = entry.keyword
+                    variables = entry.variables
+                    filename = self._get_filename(keyword, "Keyword")
+    
+                    frame_id = stack_info.add_keyword_entry_stack(
+                        keyword, filename, variables
+                    )
+    
+                elif entry.__class__ == _SuiteEntry:
+                    name = "TestSuite: %s" % (entry.name,)
+                    filename = self._get_filename(keyword, "TestSuite")
+    
+                    frame_id = stack_info.add_suite_entry_stack(name, filename)
+    
+                elif entry.__class__ == _TestEntry:
+                    name = "TestCase: %s" % (entry.name,)
+                    filename = self._get_filename(keyword, "TestCase")
+    
+                    frame_id = stack_info.add_test_entry_stack(name, filename, entry.lineno)
+            except:
+                log.exception('Error creating stack trace.')
 
         for frame_id in stack_info.iter_frame_ids():
             self._frame_id_to_tid[frame_id] = thread_id
@@ -395,6 +419,10 @@ class _RobotDebuggerImpl(object):
         self.busy_wait.proceed()
 
     def set_breakpoints(self, filename, breakpoints):
+        """
+        :param str filename:
+        :param list(RobotBreakpoint) breakpoints:
+        """
         filename = file_utils.get_abs_path_real_path_and_base_from_file(filename)[0]
         line_to_bp = {}
         for bp in breakpoints:

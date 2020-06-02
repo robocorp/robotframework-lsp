@@ -1,0 +1,94 @@
+Stack 0:
+- column: 0
+  line: 19
+  name: Run Keyword If
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 13
+  name: 'TestCase: Can use resource keywords'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 1
+  name: 'TestSuite: Case Control Flow For'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+Stack 1:
+- column: 0
+  line: 1
+  name: My Equal Redefined
+  source:
+    name: None
+    path: None
+- column: 0
+  line: 19
+  name: Run Keyword If
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 13
+  name: 'TestCase: Can use resource keywords'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 1
+  name: 'TestSuite: Case Control Flow For'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+Stack 2:
+- column: 0
+  line: 5
+  name: Should Be Equal
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 1
+  name: My Equal Redefined
+  source:
+    name: None
+    path: None
+- column: 0
+  line: 19
+  name: Run Keyword If
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 13
+  name: 'TestCase: Can use resource keywords'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 1
+  name: 'TestSuite: Case Control Flow For'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+Stack 3:
+- column: 0
+  line: 21
+  name: Yet Another Equal Redefined
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 13
+  name: 'TestCase: Can use resource keywords'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 1
+  name: 'TestSuite: Case Control Flow For'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'

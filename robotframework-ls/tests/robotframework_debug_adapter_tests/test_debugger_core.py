@@ -1,4 +1,5 @@
 import pytest
+import os
 
 
 class DummyBusyWait(object):
@@ -55,6 +56,84 @@ def test_debugger_core(debugger_api, run_robot_cli):
     assert busy_wait.waited == 1
     assert busy_wait.proceeded == 1
     assert len(busy_wait.stack) == 1
+    assert code == 0
+
+
+def stack_frames_repr(busy_wait):
+    dct = {}
+
+    def to_dict(stack_frame):
+        dct = stack_frame.to_dict()
+        del dct["id"]
+        path = dct["source"]["path"]
+        if path != "None":
+            assert os.path.exists(path)
+            # i.e.: make the path machine-independent
+            dct["source"]["path"] = ".../" + os.path.basename(path)
+        return dct
+
+    for i, stack_lst in enumerate(busy_wait.stack):
+        dct["Stack %s" % (i,)] = [to_dict(x) for x in stack_lst.dap_frames]
+    return dct
+
+
+def test_debugger_core_for(debugger_api, run_robot_cli, data_regression):
+    from robotframework_debug_adapter.debugger_impl import patch_execution_context
+    from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
+
+    debugger_impl = patch_execution_context()
+    target = debugger_api.get_dap_case_file(
+        "case_control_flow/case_control_flow_for.robot"
+    )
+    line = debugger_api.get_line_index_with_content("Break 1", target)
+    debugger_impl.set_breakpoints(target, (RobotBreakpoint(line),))
+
+    busy_wait = DummyBusyWait(debugger_impl)
+    debugger_impl.busy_wait = busy_wait
+    busy_wait.on_wait = [
+        debugger_impl.step_in,
+        debugger_impl.step_in,
+        debugger_impl.step_in,
+        debugger_impl.step_continue,
+    ]
+
+    code = run_robot_cli(target)
+
+    assert busy_wait.waited == 4
+    assert busy_wait.proceeded == 4
+    assert len(busy_wait.stack) == 4
+
+    data_regression.check(stack_frames_repr(busy_wait))
+    assert code == 0
+
+
+def test_debugger_core_keyword_if(debugger_api, run_robot_cli, data_regression):
+    from robotframework_debug_adapter.debugger_impl import patch_execution_context
+    from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
+
+    debugger_impl = patch_execution_context()
+    target = debugger_api.get_dap_case_file(
+        "case_control_flow/case_control_flow_for.robot"
+    )
+    line = debugger_api.get_line_index_with_content("Break 2", target)
+    debugger_impl.set_breakpoints(target, (RobotBreakpoint(line),))
+
+    busy_wait = DummyBusyWait(debugger_impl)
+    debugger_impl.busy_wait = busy_wait
+    busy_wait.on_wait = [
+        debugger_impl.step_in,
+        debugger_impl.step_in,
+        debugger_impl.step_in,
+        debugger_impl.step_continue,
+    ]
+
+    code = run_robot_cli(target)
+
+    assert busy_wait.waited == 4
+    assert busy_wait.proceeded == 4
+    assert len(busy_wait.stack) == 4
+
+    data_regression.check(stack_frames_repr(busy_wait))
     assert code == 0
 
 

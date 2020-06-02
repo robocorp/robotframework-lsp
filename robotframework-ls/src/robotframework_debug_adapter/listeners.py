@@ -18,9 +18,6 @@ class DebugListener(object):
     on_start_test = _Callback()
     on_end_test = _Callback()
 
-    def __init__(self):
-        print("here")
-
     def start_suite(self, data, result):
         self.on_start_suite(data, result)
 

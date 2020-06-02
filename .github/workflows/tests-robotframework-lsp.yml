@@ -21,22 +21,26 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py27",
+          "windows-py27-master",
           
-          "ubuntu-py38",
-          "ubuntu-pypy3",
+          "ubuntu-py38-master",
+          "ubuntu-pypy3-master",
           
+          "ubuntu-py38-pip",
 #           "macos-py37",
         ]
         
         include:
-          - name: "windows-py27"
+          - name: "windows-py27-master"
             python: "2.7"
             os: windows-latest
-          - name: "ubuntu-py38"
+          - name: "ubuntu-py38-master"
             python: "3.8"
             os: ubuntu-latest
-          - name: "ubuntu-pypy3"
+          - name: "ubuntu-py38-pip"
+            python: "3.8"
+            os: ubuntu-latest
+          - name: "ubuntu-pypy3-master"
             python: "pypy3"
             os: ubuntu-latest
 # Github actions seems to be having issues with Mac (regardless of which is the last action it may not complete)
@@ -58,6 +62,10 @@ jobs:
       run: python -m pip install --upgrade pip
     - name: Install robotframework from master
       run: python -W ignore -m pip install https://github.com/robotframework/robotframework/archive/master.zip --no-warn-script-location --disable-pip-version-check
+      if: contains(matrix.name, '-master')
+    - name: Install robotframework from pip
+      run: python -W ignore -m pip install robotframework
+      if: contains(matrix.name, '-pip')
     - name: Vendor robocode_ls_core
       working-directory: ./robotframework-ls
       run: |
