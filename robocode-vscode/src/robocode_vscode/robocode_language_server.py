@@ -6,9 +6,6 @@ log = get_logger(__name__)
 
 
 class RobocodeLanguageServer(PythonLanguageServer):
-    def __init__(self, rx, tx):
-        PythonLanguageServer.__init__(self, rx, tx)
-
     @overrides(PythonLanguageServer.capabilities)
     def capabilities(self):
         from robocode_ls_core.lsp import TextDocumentSyncKind

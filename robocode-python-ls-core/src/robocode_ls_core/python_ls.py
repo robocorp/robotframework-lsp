@@ -187,7 +187,7 @@ class PythonLanguageServer(MethodDispatcher):
     Based on: https://github.com/palantir/python-language-server/blob/develop/pyls/python_ls.py
     """
 
-    def __init__(self, rx, tx, max_workers=MAX_WORKERS):
+    def __init__(self, read_stream, write_stream, max_workers=MAX_WORKERS):
         from robocode_ls_core.lsp import LSPMessages
 
         self.workspace = None
@@ -196,8 +196,8 @@ class PythonLanguageServer(MethodDispatcher):
         self.watching_thread = None
         self.uri_workspace_mapper = {}
 
-        self._jsonrpc_stream_reader = JsonRpcStreamReader(rx)
-        self._jsonrpc_stream_writer = JsonRpcStreamWriter(tx)
+        self._jsonrpc_stream_reader = JsonRpcStreamReader(read_stream)
+        self._jsonrpc_stream_writer = JsonRpcStreamWriter(write_stream)
         self._endpoint = Endpoint(
             self, self._jsonrpc_stream_writer.write, max_workers=max_workers
         )
@@ -293,11 +293,17 @@ class PythonLanguageServer(MethodDispatcher):
         from robocode_ls_core.lsp import TextDocumentContentChangeEvent
 
         if contentChanges:
+            text_document_item = TextDocumentItem(**textDocument)
             for change in contentChanges:
                 try:
+                    range = change.get("range", None)
+                    range_length = change.get("rangeLength", 0)
+                    text = change.get("text", "")
                     self.workspace.update_document(
-                        TextDocumentItem(**textDocument),
-                        TextDocumentContentChangeEvent(**change),
+                        text_document_item,
+                        TextDocumentContentChangeEvent(
+                            range=range, rangeLength=range_length, text=text
+                        ),
                     )
                 except:
                     log.exception(
