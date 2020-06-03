@@ -1,3 +1,19 @@
+New in 0.2.0 (2020-06-03)
+-----------------------------
+
+- Preliminary support for debugging. [#30](https://github.com/robocorp/robotframework-lsp/issues/30)
+    - Note: this is an initial release for the feature and should be considered beta (please test and report any issues found).
+    - The current functionalities include:
+        - Add line breakpoints
+        - Pause at breakpoints to inspect the stack and see variables
+        - Step in
+        - Step over
+        - Continue
+- Handling `text` only parameter in `textDocument/didChange`. [#78](https://github.com/robocorp/robotframework-lsp/issues/78)
+- Updated VSCode client dependency versions. [#65](https://github.com/robocorp/robotframework-lsp/issues/65)
+- Snippets code-completion for some constructs (`For In`, `Run Keyword If`). [#69](https://github.com/robocorp/robotframework-lsp/issues/69)
+
+
 New in 0.1.1 (2020-05-11)
 -----------------------------
 
