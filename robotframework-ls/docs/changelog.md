@@ -1,3 +1,9 @@
+New in 0.2.1 (2020-06-04)
+-----------------------------
+
+Critical bugfix to support the debugger with Setup/Teardown. [#85](https://github.com/robocorp/robotframework-lsp/issues/85)
+
+
 New in 0.2.0 (2020-06-03)
 -----------------------------
 
