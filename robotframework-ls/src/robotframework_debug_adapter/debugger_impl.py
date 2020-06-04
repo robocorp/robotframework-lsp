@@ -356,24 +356,26 @@ class _RobotDebuggerImpl(object):
                     keyword = entry.keyword
                     variables = entry.variables
                     filename = self._get_filename(keyword, "Keyword")
-    
+
                     frame_id = stack_info.add_keyword_entry_stack(
                         keyword, filename, variables
                     )
-    
+
                 elif entry.__class__ == _SuiteEntry:
                     name = "TestSuite: %s" % (entry.name,)
                     filename = self._get_filename(keyword, "TestSuite")
-    
+
                     frame_id = stack_info.add_suite_entry_stack(name, filename)
-    
+
                 elif entry.__class__ == _TestEntry:
                     name = "TestCase: %s" % (entry.name,)
                     filename = self._get_filename(keyword, "TestCase")
-    
-                    frame_id = stack_info.add_test_entry_stack(name, filename, entry.lineno)
+
+                    frame_id = stack_info.add_test_entry_stack(
+                        name, filename, entry.lineno
+                    )
             except:
-                log.exception('Error creating stack trace.')
+                log.exception("Error creating stack trace.")
 
         for frame_id in stack_info.iter_frame_ids():
             self._frame_id_to_tid[frame_id] = thread_id
@@ -431,7 +433,7 @@ class _RobotDebuggerImpl(object):
 
     # ------------------------------------------------- RobotFramework listeners
 
-    def before_run_step(self, step_runner, step):
+    def before_run_step(self, step_runner, step, name=None):
         ctx = step_runner._context
         self._stack_ctx_entries_deque.append(_StepEntry(ctx.variables.current, step))
 
@@ -463,7 +465,7 @@ class _RobotDebuggerImpl(object):
         if stop_reason is not None:
             self.wait_suspended(stop_reason)
 
-    def after_run_step(self, step_runner, keyword):
+    def after_run_step(self, step_runner, step, name=None):
         self._stack_ctx_entries_deque.pop()
 
     def start_suite(self, data, result):

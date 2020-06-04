@@ -196,3 +196,38 @@ def test_debugger_core_step_next(debugger_api, run_robot_cli):
         "TestSuite: Case4",
     ]
     assert code == 0
+
+
+def test_debugger_core_with_setup_teardown(
+    debugger_api, run_robot_cli, data_regression
+):
+    from robotframework_debug_adapter.debugger_impl import patch_execution_context
+    from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
+
+    debugger_impl = patch_execution_context()
+    target = debugger_api.get_dap_case_file("case_setup_teardown.robot")
+    debugger_impl.set_breakpoints(
+        target,
+        (
+            RobotBreakpoint(
+                debugger_api.get_line_index_with_content("Suite Setup", target)
+            ),
+            RobotBreakpoint(
+                debugger_api.get_line_index_with_content("Suite Teardown", target)
+            ),
+        ),
+    )
+
+    busy_wait = DummyBusyWait(debugger_impl)
+    debugger_impl.busy_wait = busy_wait
+    busy_wait.on_wait = [debugger_impl.step_continue, debugger_impl.step_continue]
+
+    code = run_robot_cli(target)
+
+    assert busy_wait.waited == 2
+    assert busy_wait.proceeded == 2
+    assert len(busy_wait.stack) == 2
+
+    data_regression.check(stack_frames_repr(busy_wait))
+
+    assert code == 0
