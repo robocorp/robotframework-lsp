@@ -1,6 +1,7 @@
 import os.path
 from robocode_ls_core.robotframework_log import get_logger
 from robocode_ls_core.cache import instance_cache
+from collections import namedtuple
 
 log = get_logger(__name__)
 
@@ -33,6 +34,10 @@ class _KeywordFoundFromAst(object):
         self.keyword_args = keyword_args
         self.completion_context = completion_context
         self.completion_item_kind = completion_item_kind
+
+    @property
+    def library_alias(self):
+        return None
 
     @property
     def library_name(self):
@@ -85,6 +90,7 @@ class _KeywordFoundFromLibrary(object):
 
     __slots__ = [
         "_library_doc",
+        "_library_alias",
         "_keyword_doc",
         "keyword_name",
         "keyword_args",
@@ -101,6 +107,7 @@ class _KeywordFoundFromLibrary(object):
         keyword_args,
         completion_context,
         completion_item_kind,
+        library_alias=None,
     ):
 
         self._library_doc = library_doc
@@ -110,6 +117,11 @@ class _KeywordFoundFromLibrary(object):
 
         self.completion_context = completion_context
         self.completion_item_kind = completion_item_kind
+        self._library_alias = library_alias
+
+    @property
+    def library_alias(self):
+        return self._library_alias
 
     @property
     def library_name(self):
@@ -211,6 +223,9 @@ def _collect_current_doc_keywords(completion_context, collector):
     _collect_completions_from_ast(ast, completion_context, collector)
 
 
+_LibInfo = namedtuple("_LibInfo", "name, alias")
+
+
 def _collect_libraries_keywords(completion_context, collector):
     """
     :param CompletionContext completion_context:
@@ -220,16 +235,16 @@ def _collect_libraries_keywords(completion_context, collector):
     from robocode_ls_core.lsp import CompletionItemKind
 
     libraries = completion_context.get_imported_libraries()
-    library_names = set(library.name for library in libraries)
-    library_names.add(BUILTIN_LIB)
+    library_infos = set(_LibInfo(library.name, library.alias) for library in libraries)
+    library_infos.add(_LibInfo(BUILTIN_LIB, None))
     libspec_manager = completion_context.workspace.libspec_manager
 
-    for library_name in library_names:
-        if not completion_context.memo.complete_for_library(library_name):
+    for library_info in library_infos:
+        if not completion_context.memo.complete_for_library(library_info.name):
             continue
 
         library_doc = libspec_manager.get_library_info(
-            library_name, create=True, current_doc_uri=completion_context.doc.uri
+            library_info.name, create=True, current_doc_uri=completion_context.doc.uri
         )
         if library_doc is not None:
             #: :type keyword: KeywordDoc
@@ -249,6 +264,7 @@ def _collect_libraries_keywords(completion_context, collector):
                             keyword_args,
                             completion_context,
                             CompletionItemKind.Method,
+                            library_alias=library_info.alias,
                         )
                     )
 

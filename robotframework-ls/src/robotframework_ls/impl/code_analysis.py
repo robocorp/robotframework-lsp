@@ -49,10 +49,14 @@ class _KeywordsCollector(object):
 
         self._keywords_container.add_keyword(keyword_found)
         library_name = keyword_found.library_name
+        library_alias = keyword_found.library_alias
         resource_name = keyword_found.resource_name
 
         if library_name:
-            name = normalize_robot_name(library_name)
+            if library_alias:
+                name = normalize_robot_name(library_alias)
+            else:
+                name = normalize_robot_name(library_name)
             dct = self._library_name_to_keywords_container
         elif resource_name:
             name = normalize_robot_name(resource_name)

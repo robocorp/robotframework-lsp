@@ -47,13 +47,19 @@ class MatcherWithResourceOrLibraryName(RobotStringMatcher):
         """
         :param IKeywordFound keyword_found:
         """
-        name = keyword_found.resource_name or keyword_found.library_name
+        name = keyword_found.library_alias
+        if name is None:
+            name = keyword_found.resource_name or keyword_found.library_name
+
         if name == self.resource_or_library_name:
             return self.accepts_keyword_name(keyword_found.keyword_name)
         return False
 
     def is_keyword_match(self, keyword_found):
-        name = keyword_found.resource_name or keyword_found.library_name
+        name = keyword_found.library_alias
+        if name is None:
+            name = keyword_found.resource_name or keyword_found.library_name
+
         if name == self.resource_or_library_name:
             return self.is_keyword_name_match(keyword_found.keyword_name)
         return False

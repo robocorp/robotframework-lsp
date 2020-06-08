@@ -170,3 +170,28 @@ def test_find_definition_library_prefix_builtin(workspace, libspec_manager):
     definition = next(iter(definitions))
     assert definition.source.endswith("BuiltIn.py")
     assert definition.lineno > 0
+
+
+def test_find_definition_library_prefix_with_name(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+    doc.source = """*** Settings ***
+Library    Collections    WITH NAME    Col1
+
+*** Test Cases ***
+Test
+    Col1.Append To List    ${list}    3"""
+
+    line, col = doc.get_last_line_col()
+    col -= len(" List    ${list}    3")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("Collections.py")
+    assert definition.lineno > 0

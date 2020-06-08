@@ -352,3 +352,23 @@ Test
         CompletionContext(doc, workspace=workspace.ws)
     )
     assert [completion["label"] for completion in completions] == ["Append To List"]
+
+
+def test_keyword_completions_with_stmt(workspace, libspec_manager):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+
+    doc.source = """*** Settings ***
+Library    Collections    WITH NAME    Col1
+
+*** Test Cases ***
+Test
+    Col1.Append To Lis"""
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    assert [completion["label"] for completion in completions] == ["Append To List"]
