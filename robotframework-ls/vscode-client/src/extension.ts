@@ -23,7 +23,7 @@ import * as net from 'net';
 import * as path from 'path';
 import * as fs from 'fs';
 
-import { workspace, Disposable, ExtensionContext, window, commands, Uri, ConfigurationTarget, debug, DebugAdapterExecutable } from 'vscode';
+import { workspace, Disposable, ExtensionContext, window, commands, Uri, ConfigurationTarget, debug, DebugAdapterExecutable, ProviderResult, DebugConfiguration, WorkspaceFolder, CancellationToken, DebugConfigurationProvider } from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, ErrorAction, ErrorHandler, CloseAction, TransportKind } from 'vscode-languageclient';
 import { print } from 'util';
 import { exec } from 'child_process';
@@ -106,10 +106,40 @@ function askPythonExe(context: ExtensionContext, askMessage: string) {
 }
 
 
+class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
+
+	resolveDebugConfiguration(folder: WorkspaceFolder | undefined, debugConfiguration: DebugConfiguration, token?: CancellationToken): ProviderResult<DebugConfiguration> {
+		// When we resolve a configuration we add the pythonpath and variables to the command line.
+		let args: Array<string> = debugConfiguration.args;
+		let config = workspace.getConfiguration("robot");
+		let pythonpath: Array<string> = config.get<Array<string>>("pythonpath");
+		let variables: object = config.get("variables");
+
+		let newArgs = [];
+		pythonpath.forEach(element => {
+			newArgs.push('--pythonpath');
+			newArgs.push(element);
+		});
+
+		for (let key in variables) {
+			if (variables.hasOwnProperty(key)) {
+				newArgs.push('--variable');
+				newArgs.push(key + ':' + variables[key]);
+			}
+		}
+		if (args) {
+			args = args.concat(newArgs);
+		} else {
+			args = newArgs;
+		}
+		debugConfiguration.args = args;
+		return debugConfiguration;
+	};
+}
+
 
 function afterStartLangServer(pythonExecutable: string) {
-	function createDebugAdapterExecutable(env: { [key: string]: string }): DebugAdapterExecutable{
-		let config = workspace.getConfiguration("robot");
+	function createDebugAdapterExecutable(env: { [key: string]: string }): DebugAdapterExecutable {
 		if (!pythonExecutable) {
 			let executableAndMessage = getDefaultLanguageServerPythonExecutable();
 			if (executableAndMessage.executable) {
@@ -125,10 +155,10 @@ function afterStartLangServer(pythonExecutable: string) {
 			window.showWarningMessage('Error. Expected: ' + targetFile + " to exist.");
 			return;
 		}
-		if(env){
-			return new DebugAdapterExecutable(pythonExecutable, ['-u', targetFile], {"env": env});
+		if (env) {
+			return new DebugAdapterExecutable(pythonExecutable, ['-u', targetFile], { "env": env });
 
-		}else{
+		} else {
 			return new DebugAdapterExecutable(pythonExecutable, ['-u', targetFile]);
 		}
 	};
@@ -140,6 +170,8 @@ function afterStartLangServer(pythonExecutable: string) {
 			return createDebugAdapterExecutable(env);
 		}
 	});
+
+	debug.registerDebugConfigurationProvider('robotframework-lsp', new RobotDebugConfigurationProvider());
 }
 
 function startLangServerIOWithPython(context: ExtensionContext, pythonExecutable: string) {

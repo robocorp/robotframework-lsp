@@ -139,3 +139,6 @@ class Config(object):
         self.cache_clear()
         self._settings = settings
         log.info("Updated settings to %s", self._settings)
+
+    def get_internal_settings(self):
+        return self._settings

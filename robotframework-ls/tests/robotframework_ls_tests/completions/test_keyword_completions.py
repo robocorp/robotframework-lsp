@@ -372,3 +372,39 @@ Test
         CompletionContext(doc, workspace=workspace.ws)
     )
     assert [completion["label"] for completion in completions] == ["Append To List"]
+
+
+def test_keyword_completions_respect_pythonpath(
+    workspace, cases, libspec_manager, data_regression
+):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robocode_ls_core.config import Config
+    from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
+
+    case4_path = cases.get_path("case4")
+
+    # Note how we are accessing case4resource.txt while the workspace is set for case3.
+
+    config = Config(root_uri="", init_opts={}, process_id=-1, capabilities={})
+    config.update({"robot": {"pythonpath": [case4_path]}})
+    assert config.get_setting(OPTION_ROBOT_PYTHONPATH, list, []) == [case4_path]
+    libspec_manager.config = config
+
+    workspace.set_root(cases.get_path("case3"), libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case3.robot")
+    doc.source = """*** Settings ***
+Resource    case4resource.txt
+
+*** Test Cases ***
+Can use resource keywords
+    [Documentation]      Checks that we can have a resource
+    ...                  including another resource.
+    My Equal Redefined   2   2
+    Yet Another Equ"""
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws, config=config)
+    )
+
+    data_regression.check(completions)

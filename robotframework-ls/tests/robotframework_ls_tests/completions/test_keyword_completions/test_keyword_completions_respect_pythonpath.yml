@@ -1,0 +1,23 @@
+- deprecated: false
+  documentation: 'Yet Another Equal Redefined(${arg1}, ${arg2})
+
+
+    Yes, this is redefined.
+
+    2nd line.
+
+    3rd line.'
+  documentationFormat: markdown
+  insertTextFormat: 2
+  kind: 3
+  label: Yet Another Equal Redefined
+  preselect: false
+  textEdit:
+    newText: Yet Another Equal Redefined    ${1:\$arg1}    ${2:\$arg2}
+    range:
+      end:
+        character: 19
+        line: 8
+      start:
+        character: 4
+        line: 8

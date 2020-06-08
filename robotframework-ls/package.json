@@ -85,7 +85,12 @@
                 "robot.variables": {
                     "type": "object",
                     "default": {},
-                    "description": "Specifies custom variables which would usually be passed in the command line to `robotframework`. i.e.: {\"RESOURCES\": \"c:/temp/resources\"}"
+                    "description": "Specifies custom variables to be considered by `robotframework` (used when resolving variables and automatically passed to the launch config as --variable entries). i.e.: {\"RESOURCES\": \"c:/temp/resources\"}"
+                },
+                "robot.pythonpath": {
+                    "type": "array",
+                    "default": [],
+                    "description": "Specifies the entries to be added to the PYTHONPATH (used when resolving resources and imports and automatically passed to the launch config as --pythonpath entries). i.e.: [\"</my/path_entry>\"]"
                 }
             }
         },

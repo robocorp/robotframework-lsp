@@ -7,6 +7,7 @@ OPTION_ROBOT_LANGUAGE_SERVER_TCP_PORT = "robot.language-server.tcp-port"
 OPTION_ROBOT_LANGUAGE_SERVER_ARGS = "robot.language-server.args"
 
 OPTION_ROBOT_VARIABLES = "robot.variables"
+OPTION_ROBOT_PYTHONPATH = "robot.pythonpath"
 
 OPTION_ROBOT_COMPLETION_SECTION_HEADERS_FORM = "robot.completions.section_headers.form"
 OPTION_ROBOT_COMPLETION_SECTION_HEADERS_FORM_PLURAL = "plural"

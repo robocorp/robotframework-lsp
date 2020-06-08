@@ -201,6 +201,7 @@ class LibspecManager(object):
 
         # Spec info found in the workspace
         self._workspace_folder_uri_to_folder_info = {}
+        self._additional_pythonpath_folder_to_folder_info = {}
 
         # Spec info found in the pythonpath
         pythonpath_folder_to_folder_info = {}
@@ -221,8 +222,34 @@ class LibspecManager(object):
             ),
         }
 
+        # Must be set from the outside world when needed.
+        self.config = None
+
         self._synchronize()
         self._gen_builtin_libraries()
+
+    @property
+    def config(self):
+        return self._config
+
+    @config.setter
+    def config(self, config):
+        from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
+
+        self._config = config
+        existing_entries = set(self._additional_pythonpath_folder_to_folder_info.keys())
+        if config is not None:
+            pythonpath_entries = set(
+                config.get_setting(OPTION_ROBOT_PYTHONPATH, list, [])
+            )
+            for new_pythonpath_entry in pythonpath_entries:
+                if new_pythonpath_entry not in existing_entries:
+                    self.add_additional_pythonpath_folder(new_pythonpath_entry)
+            for old_entry in existing_entries:
+                if old_entry not in pythonpath_entries:
+                    self.remove_additional_pythonpath_folder(old_entry)
+
+        self.synchronize_additional_pythonpath_folders()
 
     @property
     def user_libspec_dir(self):
@@ -257,6 +284,27 @@ class LibspecManager(object):
         else:
             log.debug("Workspace folder already removed: %s", folder_uri)
 
+    def add_additional_pythonpath_folder(self, folder_path):
+        if folder_path not in self._additional_pythonpath_folder_to_folder_info:
+            log.debug("Added additional pythonpath folder: %s", folder_path)
+            cp = self._additional_pythonpath_folder_to_folder_info.copy()
+            folder_info = cp[folder_path] = _FolderInfo(folder_path, recursive=True)
+            self._additional_pythonpath_folder_to_folder_info = cp
+            folder_info.start_watch(self._observer, self._spec_changes_notifier)
+            folder_info.synchronize()
+        else:
+            log.debug("Additional pythonpath folder already added: %s", folder_path)
+
+    def remove_additional_pythonpath_folder(self, folder_path):
+        if folder_path in self._additional_pythonpath_folder_to_folder_info:
+            log.debug("Removed additional pythonpath folder: %s", folder_path)
+            cp = self._additional_pythonpath_folder_to_folder_info.copy()
+            folder_info = cp.pop(folder_path, NULL)
+            folder_info.dispose()
+            self._additional_pythonpath_folder_to_folder_info = cp
+        else:
+            log.debug("Additional pythonpath folder already removed: %s", folder_path)
+
     def _gen_builtin_libraries(self):
         """
         Generates .lispec files for the libraries builtin (if needed).
@@ -288,17 +336,22 @@ class LibspecManager(object):
             log.exception("Error creating builtin libraries.")
 
     def synchronize_workspace_folders(self):
-        for _uri, folder_info in self._workspace_folder_uri_to_folder_info.items():
+        for folder_info in self._workspace_folder_uri_to_folder_info.values():
             folder_info.start_watch(self._observer, self._spec_changes_notifier)
             folder_info.synchronize()
 
     def synchronize_pythonpath_folders(self):
-        for _folder_path, folder_info in self._pythonpath_folder_to_folder_info.items():
+        for folder_info in self._pythonpath_folder_to_folder_info.values():
+            folder_info.start_watch(self._observer, self._spec_changes_notifier)
+            folder_info.synchronize()
+
+    def synchronize_additional_pythonpath_folders(self):
+        for folder_info in self._additional_pythonpath_folder_to_folder_info.values():
             folder_info.start_watch(self._observer, self._spec_changes_notifier)
             folder_info.synchronize()
 
     def synchronize_internal_libspec_folders(self):
-        for _folder_path, folder_info in self._internal_folder_to_folder_info.items():
+        for folder_info in self._internal_folder_to_folder_info.values():
             folder_info.start_watch(self._observer, self._spec_changes_notifier)
             folder_info.synchronize()
 
@@ -312,6 +365,7 @@ class LibspecManager(object):
         """
         self.synchronize_workspace_folders()
         self.synchronize_pythonpath_folders()
+        self.synchronize_additional_pythonpath_folders()
         self.synchronize_internal_libspec_folders()
 
     def _iter_library_doc(self):
@@ -327,6 +381,9 @@ class LibspecManager(object):
             iter_in.append(info.libspec_filename_to_info)
 
         for (_uri, info) in self._pythonpath_folder_to_folder_info.items():
+            iter_in.append(info.libspec_filename_to_info)
+
+        for (_uri, info) in self._additional_pythonpath_folder_to_folder_info.items():
             iter_in.append(info.libspec_filename_to_info)
 
         for (_uri, info) in self._internal_folder_to_folder_info.items():
@@ -380,7 +437,12 @@ class LibspecManager(object):
             call = [sys.executable]
             call.extend("-m robot.libdoc --format XML:HTML".split())
             if additional_path:
-                call.extend(["-P", additional_path])
+                if os.path.exists(additional_path):
+                    call.extend(["-P", additional_path])
+
+            for entry in list(self._additional_pythonpath_folder_to_folder_info.keys()):
+                if os.path.exists(entry):
+                    call.extend(["-P", entry])
 
             call.append(libname)
             libspec_dir = self._user_libspec_dir
@@ -466,6 +528,8 @@ class LibspecManager(object):
             cwd = None
             if current_doc_uri is not None:
                 cwd = os.path.dirname(uris.to_fs_path(current_doc_uri))
+                if not cwd or not os.path.isdir(cwd):
+                    cwd = None
 
             if os.path.isabs(libname):
                 abspath = libname

@@ -249,12 +249,14 @@ class CompletionContext(object):
         return tuple(ret)
 
     @instance_cache
-    def iter_imports_docs(self):
+    def get_resource_imports_as_docs(self):
         from robocode_ls_core import uris
         import os.path
         from robotframework_ls.impl import ast_utils
+        from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
 
         ws = self._workspace
+        ret = []
 
         # Get keywords from resources
         resource_imports = self.get_resource_imports()
@@ -275,24 +277,40 @@ class CompletionContext(object):
                             else:
                                 log.info("Cannot resolve variable: %s", v)
 
-                    resource_path = "".join(parts)
-                    if not os.path.isabs(resource_path):
+                    joined_parts = "".join(parts)
+                    if not os.path.isabs(joined_parts):
                         # It's a relative resource, resolve its location based on the
                         # current file.
-                        resource_path = os.path.join(
-                            os.path.dirname(self.doc.path), resource_path
-                        )
+                        check_paths = [
+                            os.path.join(os.path.dirname(self.doc.path), joined_parts)
+                        ]
+                        config = self.config
+                        if config is not None:
+                            for additional_pythonpath_entry in config.get_setting(
+                                OPTION_ROBOT_PYTHONPATH, list, []
+                            ):
+                                check_paths.append(
+                                    os.path.join(
+                                        additional_pythonpath_entry, joined_parts
+                                    )
+                                )
 
-                    if not os.path.isfile(resource_path):
-                        log.info("Resource not found: %s", resource_path)
-                        continue
+                    else:
+                        check_paths = [joined_parts]
 
-                    doc_uri = uris.from_fs_path(resource_path)
-                    resource_doc = ws.get_document(doc_uri, create=False)
-                    if resource_doc is None:
-                        resource_doc = ws.create_untracked_document(doc_uri)
+                    for resource_path in check_paths:
+                        if not os.path.isfile(resource_path):
+                            log.info("Resource not found: %s", resource_path)
+                            continue
 
-                    yield resource_doc
+                        doc_uri = uris.from_fs_path(resource_path)
+                        resource_doc = ws.get_document(doc_uri, create=False)
+                        if resource_doc is None:
+                            resource_doc = ws.create_untracked_document(doc_uri)
+                        ret.append(resource_doc)
+                        break
+
+        return tuple(ret)
 
     def convert_robot_variable(self, var_name):
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_VARIABLES

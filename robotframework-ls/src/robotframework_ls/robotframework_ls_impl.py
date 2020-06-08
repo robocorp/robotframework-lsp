@@ -177,6 +177,13 @@ class _ServerApi(object):
                         ),
                     )
 
+                    config = self._config
+                    if config is not None:
+                        api.forward(
+                            "workspace/didChangeConfiguration",
+                            {"settings": config.get_internal_settings()},
+                        )
+
                     # Open existing documents in the API.
                     for document in self._workspace.iter_documents():
                         api.forward(
@@ -310,7 +317,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     @config.setter
     def config(self, config):
         self._config = config
-        self._api.config = self.config
+        self._api.config = config
 
     @overrides(PythonLanguageServer._create_workspace)
     def _create_workspace(self, root_uri, workspace_folders):
@@ -360,6 +367,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def m_workspace__did_change_configuration(self, **kwargs):
         PythonLanguageServer.m_workspace__did_change_configuration(self, **kwargs)
         self._api.config = self.config
+        self._api.forward("workspace/didChangeConfiguration", kwargs)
 
     # --- Methods to forward to the api
 

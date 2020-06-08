@@ -73,6 +73,81 @@ def test_section_completions_integrated(language_server, ws_root_path, data_regr
     check("completion_settings_plural")
 
 
+def test_keyword_completions_integrated_pythonpath_resource(
+    language_server_tcp, ws_root_path, data_regression, cases
+):
+    from robocode_ls_core.workspace import Document
+
+    case4_path = cases.get_path("case4")
+
+    language_server = language_server_tcp
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    language_server.open_doc(uri, 1)
+    contents = """
+*** Settings ***
+Resource    case4resource.txt
+
+*** Test Cases ***
+Check It
+    Yet Another Equ"""
+    language_server.change_doc(uri, 2, contents)
+
+    language_server_tcp.settings({"settings": {"robot": {"pythonpath": [case4_path]}}})
+
+    def request_completion():
+        doc = Document("", source=contents)
+        line, col = doc.get_last_line_col()
+        completions = language_server.get_completions(uri, line, col)
+        del completions["id"]
+        return completions
+
+    data_regression.check(request_completion())
+
+    # Removing should no longer find it.
+    language_server_tcp.settings({"settings": {"robot": {"pythonpath": []}}})
+
+    data_regression.check(request_completion(), basename="no_entries")
+
+
+def test_keyword_completions_integrated_pythonpath_library(
+    language_server_tcp, ws_root_path, data_regression, cases
+):
+    from robocode_ls_core.workspace import Document
+
+    case1_path = cases.get_path("case1")
+
+    language_server = language_server_tcp
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    language_server.open_doc(uri, 1)
+    contents = """
+*** Settings ***
+Library    case1_library
+
+*** Test Cases ***
+Check It
+    Verify Mod"""
+    language_server.change_doc(uri, 2, contents)
+
+    language_server_tcp.settings({"settings": {"robot": {"pythonpath": [case1_path]}}})
+
+    def request_completion():
+        doc = Document("", source=contents)
+        line, col = doc.get_last_line_col()
+        completions = language_server.get_completions(uri, line, col)
+        del completions["id"]
+        return completions
+
+    data_regression.check(request_completion())
+
+    # Note: for libraries, if we found it, we keep it in memory (so, even though
+    # we removed the entry, it'll still be accessible).
+    language_server_tcp.settings({"settings": {"robot": {"pythonpath": []}}})
+
+    data_regression.check(request_completion())
+
+
 def test_variables_completions_integrated(
     language_server_tcp, ws_root_path, data_regression
 ):

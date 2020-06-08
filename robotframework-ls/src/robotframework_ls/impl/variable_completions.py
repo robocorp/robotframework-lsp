@@ -134,7 +134,7 @@ def _collect_resource_imports_variables(completion_context, collector):
     """
     :param CompletionContext completion_context:
     """
-    for resource_doc in completion_context.iter_imports_docs():
+    for resource_doc in completion_context.get_resource_imports_as_docs():
         new_ctx = completion_context.create_copy(resource_doc)
         _collect_following_imports(new_ctx, collector)
 

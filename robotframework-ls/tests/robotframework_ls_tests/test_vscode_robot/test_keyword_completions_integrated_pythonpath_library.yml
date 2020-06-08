@@ -1,0 +1,24 @@
+jsonrpc: '2.0'
+result:
+- deprecated: false
+  documentation: 'Verify Model(model)
+
+
+    :type model: int
+
+
+    '
+  documentationFormat: markdown
+  insertTextFormat: 2
+  kind: 2
+  label: Verify Model
+  preselect: false
+  textEdit:
+    newText: Verify Model    ${1:model}
+    range:
+      end:
+        character: 14
+        line: 6
+      start:
+        character: 4
+        line: 6
