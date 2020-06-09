@@ -83,6 +83,23 @@ LIBSPEC_2_A = """<?xml version="1.0" encoding="UTF-8"?>
 </keywordspec>
 """
 
+LIBSPEC_3 = """<?xml version="1.0" encoding="UTF-8"?>
+<keywordspec name="case3_library" type="library" format="ROBOT" generated="20200316 10:45:35">
+<version></version>
+<scope>global</scope>
+<namedargs>yes</namedargs>
+<doc>Documentation for library ``case3_library``.</doc>
+<kw name="Case Verify Typing">
+<arguments>
+<arg>new model:NoneType=10</arg>
+</arguments>
+<doc></doc>
+<tags>
+</tags>
+</kw>
+</keywordspec>
+"""
+
 
 @pytest.fixture
 def language_server_class():

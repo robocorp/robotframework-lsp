@@ -55,6 +55,11 @@ class _Collector(object):
             elif arg.startswith("*"):
                 arg = "@" + arg[1:]
 
+            colon_i = arg.rfind(":")
+            equals_i = arg.rfind("=")
+            if colon_i != -1 and equals_i != -1 and equals_i > colon_i:
+                arg = arg[:colon_i] + arg[equals_i:]
+
             text += "    ${%s:%s}" % (i + 1, arg)
 
         text_edit = TextEdit(

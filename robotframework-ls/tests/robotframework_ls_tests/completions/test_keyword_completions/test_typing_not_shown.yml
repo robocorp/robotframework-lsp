@@ -1,0 +1,19 @@
+- deprecated: false
+  documentation: 'Case Verify Typing(new model:NoneType=10)
+
+
+    '
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 2
+  label: Case Verify Typing
+  preselect: false
+  textEdit:
+    newText: Case Verify Typing    ${1:new model=10}
+    range:
+      end:
+        character: 15
+        line: 5
+      start:
+        character: 4
+        line: 5

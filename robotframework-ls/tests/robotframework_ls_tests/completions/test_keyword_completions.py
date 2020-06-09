@@ -408,3 +408,34 @@ Can use resource keywords
     )
 
     data_regression.check(completions)
+
+
+def test_typing_not_shown(libspec_manager, tmpdir, workspace, data_regression):
+    from robocode_ls_core import uris
+    from os.path import os
+    from robotframework_ls_tests.fixtures import LIBSPEC_3
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    ws_dir = str(tmpdir.join("workspace_dir_a"))
+    os.mkdir(ws_dir)
+    with open(os.path.join(ws_dir, "my.libspec"), "w") as stream:
+        stream.write(LIBSPEC_3)
+    libspec_manager.add_workspace_folder(uris.from_fs_path(ws_dir))
+    assert libspec_manager.get_library_info("case3_library", create=False) is not None
+
+    workspace.set_root(str(tmpdir), libspec_manager=libspec_manager)
+
+    doc = workspace.get_doc("temp_doc.robot")
+    doc.source = """*** Settings ***
+Library    case3_library
+
+*** Test Cases ***
+Can use resource keywords
+    Case Verify"""
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+
+    data_regression.check(completions)
