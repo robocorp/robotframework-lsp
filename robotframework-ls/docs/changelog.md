@@ -1,3 +1,15 @@
+New in 0.2.2 (2020-06-09)
+-----------------------------
+
+- `robot.pythonpath` setting automatically passed as `--pythonpath` argument when launching.
+- `robot.pythonpath` setting now used to locate resources and libraries for when resolving keywords. [#79](https://github.com/robocorp/robotframework-lsp/issues/79)
+- `robot.variables` setting automatically passed as `--variable` argument when launching. 
+- `robot.variables` setting is now used in code completion for variables. [#21](https://github.com/robocorp/robotframework-lsp/issues/21)
+- Arguments shown in code completion when creating a Keyword. [#21](https://github.com/robocorp/robotframework-lsp/issues/21)
+- Support for Library Import with `WITH NAME` syntax. [#64](https://github.com/robocorp/robotframework-lsp/issues/64)
+- Typing info removed when completing keywords. [#89](https://github.com/robocorp/robotframework-lsp/issues/89)
+
+
 New in 0.2.1 (2020-06-04)
 -----------------------------
 

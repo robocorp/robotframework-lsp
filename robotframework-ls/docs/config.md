@@ -10,9 +10,9 @@ Configuration settings
   
 - `robot.python.env` can be used to set the environment used by `robot.python.executable`.
 
-- `robot.variables` custom variables to be considered by **Robot Framework** (used when resolving variables and automatically passed to the launch config as `--variable` entries).
+- `robot.pythonpath` entries to be added to the PYTHONPATH for **Robot Framework** (used when resolving resources and libraries and automatically passed to the launch config as `--pythonpath` entries).
 
-- `robot.pythonpath` entries to be added to the PYTHONPATH for **Robot Framework** (used when resolving resources and imports and automatically passed to the launch config as `--pythonpath` entries).
+- `robot.variables` custom variables to be considered by **Robot Framework** (used when resolving variables and automatically passed to the launch config as `--variable` entries).
 
 - `robot.completions.section_headers.form`: can be used to determine if the completions should be presented in the plural or singular form.
 
