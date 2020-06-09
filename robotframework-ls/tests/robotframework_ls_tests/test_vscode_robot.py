@@ -175,6 +175,14 @@ List Variable
     del completions["id"]
     data_regression.check(completions, "variable_completions")
 
+    # Note: for libraries, if we found it, we keep it in memory (so, even though
+    # we removed the entry, it'll still be accessible).
+    language_server_tcp.settings({"settings": {"robot": {"variables": {"myvar1": 10}}}})
+
+    completions = language_server.get_completions(uri, line, col)
+    labels = [x["label"] for x in completions["result"]]
+    assert "${myvar1}" in labels
+
 
 def test_snippets_completions_integrated(
     language_server_tcp, ws_root_path, data_regression

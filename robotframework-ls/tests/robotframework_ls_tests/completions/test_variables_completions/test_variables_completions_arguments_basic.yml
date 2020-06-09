@@ -1,0 +1,32 @@
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${arg}
+  preselect: false
+  textEdit:
+    newText: \${arg}
+    range:
+      end:
+        character: 26
+        line: 4
+      start:
+        character: 22
+        line: 4
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${arg2}
+  preselect: false
+  textEdit:
+    newText: \${arg2}
+    range:
+      end:
+        character: 26
+        line: 4
+      start:
+        character: 22
+        line: 4

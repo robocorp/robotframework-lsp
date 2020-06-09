@@ -273,3 +273,23 @@ Test1
         CompletionContext(doc, workspace=workspace.ws)
     )
     data_regression.check(completions, basename="no_variables")
+
+
+def test_variables_completions_arguments_basic(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import variable_completions
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+    doc.source = """
+*** Keywords ***
+This is the Test
+    [Arguments]    ${arg}    ${arg2}
+    Log To Console    ${ar"""
+
+    completions = variable_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    data_regression.check(completions)
