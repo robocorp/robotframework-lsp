@@ -191,6 +191,32 @@ def test_step_next(debugger_api):
     debugger_api.read(TerminatedEvent)
 
 
+def test_step_out(debugger_api):
+    from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
+
+    debugger_api.initialize()
+    target = debugger_api.get_dap_case_file("case_step_out.robot")
+    debugger_api.target = target
+
+    debugger_api.launch(target, debug=True)
+    debugger_api.set_breakpoints(
+        target, debugger_api.get_line_index_with_content("Break 1")
+    )
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(name="Should Be Equal")
+
+    debugger_api.step_out(json_hit.thread_id)
+
+    json_hit = debugger_api.wait_for_thread_stopped(
+        "step", name="Yet Another Equal Redefined"
+    )
+
+    debugger_api.continue_event()
+
+    debugger_api.read(TerminatedEvent)
+
+
 def test_variables(debugger_api):
     """
     :param _DebuggerAPI debugger_api:

@@ -46,7 +46,9 @@ def test_debugger_core(debugger_api, run_robot_cli):
 
     debugger_impl = patch_execution_context()
     target = debugger_api.get_dap_case_file("case_log.robot")
-    debugger_impl.set_breakpoints(target, (RobotBreakpoint(4),))
+    debugger_api.target = target
+    line = debugger_api.get_line_index_with_content("check that log works")
+    debugger_impl.set_breakpoints(target, RobotBreakpoint(line))
 
     busy_wait = DummyBusyWait(debugger_impl)
     debugger_impl.busy_wait = busy_wait
@@ -86,7 +88,7 @@ def test_debugger_core_for(debugger_api, run_robot_cli, data_regression):
         "case_control_flow/case_control_flow_for.robot"
     )
     line = debugger_api.get_line_index_with_content("Break 1", target)
-    debugger_impl.set_breakpoints(target, (RobotBreakpoint(line),))
+    debugger_impl.set_breakpoints(target, RobotBreakpoint(line))
 
     busy_wait = DummyBusyWait(debugger_impl)
     debugger_impl.busy_wait = busy_wait
@@ -116,7 +118,7 @@ def test_debugger_core_keyword_if(debugger_api, run_robot_cli, data_regression):
         "case_control_flow/case_control_flow_for.robot"
     )
     line = debugger_api.get_line_index_with_content("Break 2", target)
-    debugger_impl.set_breakpoints(target, (RobotBreakpoint(line),))
+    debugger_impl.set_breakpoints(target, RobotBreakpoint(line))
 
     busy_wait = DummyBusyWait(debugger_impl)
     debugger_impl.busy_wait = busy_wait
@@ -143,7 +145,10 @@ def test_debugger_core_step_in(debugger_api, run_robot_cli):
 
     debugger_impl = patch_execution_context()
     target = debugger_api.get_dap_case_file("case4/case4.robot")
-    debugger_impl.set_breakpoints(target, (RobotBreakpoint(10),))
+    line = debugger_api.get_line_index_with_content(
+        "My Equal Redefined   2   2", target
+    )
+    debugger_impl.set_breakpoints(target, RobotBreakpoint(line))
 
     busy_wait = DummyBusyWait(debugger_impl)
     debugger_impl.busy_wait = busy_wait
@@ -174,7 +179,10 @@ def test_debugger_core_step_next(debugger_api, run_robot_cli):
 
     debugger_impl = patch_execution_context()
     target = debugger_api.get_dap_case_file("case4/case4.robot")
-    debugger_impl.set_breakpoints(target, (RobotBreakpoint(10),))
+    line = debugger_api.get_line_index_with_content(
+        "My Equal Redefined   2   2", target
+    )
+    debugger_impl.set_breakpoints(target, RobotBreakpoint(line))
 
     busy_wait = DummyBusyWait(debugger_impl)
     debugger_impl.busy_wait = busy_wait
@@ -194,6 +202,38 @@ def test_debugger_core_step_next(debugger_api, run_robot_cli):
         "Yet Another Equal Redefined",
         "TestCase: Can use resource keywords",
         "TestSuite: Case4",
+    ]
+    assert code == 0
+
+
+def test_debugger_core_step_out(debugger_api, run_robot_cli):
+    from robotframework_debug_adapter.debugger_impl import patch_execution_context
+    from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
+
+    debugger_impl = patch_execution_context()
+    target = debugger_api.get_dap_case_file("case_step_out.robot")
+    line = debugger_api.get_line_index_with_content("Break 1", target)
+    debugger_impl.set_breakpoints(target, RobotBreakpoint(line))
+
+    busy_wait = DummyBusyWait(debugger_impl)
+    debugger_impl.busy_wait = busy_wait
+    busy_wait.on_wait = [debugger_impl.step_out, debugger_impl.step_continue]
+
+    code = run_robot_cli(target)
+
+    assert busy_wait.waited == 2
+    assert busy_wait.proceeded == 2
+    assert len(busy_wait.stack) == 2
+    assert [x.name for x in busy_wait.stack[0].dap_frames] == [
+        "Should Be Equal",
+        "My Equal Redefined",
+        "TestCase: Can use resource keywords",
+        "TestSuite: Case Step Out",
+    ]
+    assert [x.name for x in busy_wait.stack[1].dap_frames] == [
+        "Yet Another Equal Redefined",
+        "TestCase: Can use resource keywords",
+        "TestSuite: Case Step Out",
     ]
     assert code == 0
 

@@ -234,6 +234,9 @@ class DebugAdapterComm(object):
     def on_stepIn_request(self, request):
         self._launch_process.resend_request_to_robot(request)
 
+    def on_stepOut_request(self, request):
+        self._launch_process.resend_request_to_robot(request)
+
     def on_stackTrace_request(self, request):
         self._launch_process.resend_request_to_robot(request)
 

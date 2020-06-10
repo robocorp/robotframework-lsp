@@ -220,6 +220,15 @@ class _DebuggerAPI(object):
         self.write(NextRequest(arguments))
         self.read(NextResponse)
 
+    def step_out(self, thread_id):
+        from robotframework_debug_adapter.dap.dap_schema import StepOutArguments
+        from robotframework_debug_adapter.dap.dap_schema import StepOutRequest
+        from robotframework_debug_adapter.dap.dap_schema import StepOutResponse
+
+        arguments = StepOutArguments(threadId=thread_id)
+        self.write(StepOutRequest(arguments))
+        self.read(StepOutResponse)
+
     def continue_event(self):
         from robotframework_debug_adapter.dap.dap_schema import ContinueRequest
         from robotframework_debug_adapter.dap.dap_schema import ContinueArguments

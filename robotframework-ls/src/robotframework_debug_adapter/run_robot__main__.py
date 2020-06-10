@@ -274,6 +274,18 @@ class _RobotTargetComm(threading.Thread):
 
         self.write_message(response)
 
+    def on_stepOut_request(self, request):
+        from robotframework_debug_adapter.dap.dap_base_schema import build_response
+
+        response = build_response(request)
+
+        if self._debugger_impl:
+            self._debugger_impl.step_out()
+        else:
+            get_log().info("Unable to step out (no debug mode).")
+
+        self.write_message(response)
+
     def on_threads_request(self, request):
         """
         :param ThreadsRequest request:

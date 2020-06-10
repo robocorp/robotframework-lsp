@@ -18,6 +18,7 @@ from robotframework_debug_adapter.constants import (
     STEP_IN,
     REASON_STEP,
     STEP_NEXT,
+    STEP_OUT,
 )
 import itertools
 from functools import partial
@@ -300,7 +301,7 @@ class _RobotDebuggerImpl(object):
         self._reason = None
         self._next_id = next_id
         self._stack_ctx_entries_deque = deque()
-        self._step_next_stack_len = 0
+        self._stop_on_stack_len = 0
 
         self._tid_to_stack_list = {}
         self._frame_id_to_tid = {}
@@ -400,7 +401,10 @@ class _RobotDebuggerImpl(object):
                 self.busy_wait.wait()
 
             if self._step_cmd == STEP_NEXT:
-                self._step_next_stack_len = len(self._stack_ctx_entries_deque)
+                self._stop_on_stack_len = len(self._stack_ctx_entries_deque)
+
+            elif self._step_cmd == STEP_OUT:
+                self._stop_on_stack_len = len(self._stack_ctx_entries_deque) - 1
 
         finally:
             self._dispose_stack_info(MAIN_THREAD_ID)
@@ -420,11 +424,18 @@ class _RobotDebuggerImpl(object):
         self._run_state = STATE_RUNNING
         self.busy_wait.proceed()
 
+    def step_out(self):
+        self._step_cmd = STEP_OUT
+        self._run_state = STATE_RUNNING
+        self.busy_wait.proceed()
+
     def set_breakpoints(self, filename, breakpoints):
         """
         :param str filename:
         :param list(RobotBreakpoint) breakpoints:
         """
+        if isinstance(breakpoints, RobotBreakpoint):
+            breakpoints = (breakpoints,)
         filename = file_utils.get_abs_path_real_path_and_base_from_file(filename)[0]
         line_to_bp = {}
         for bp in breakpoints:
@@ -458,8 +469,8 @@ class _RobotDebuggerImpl(object):
             if step_cmd == STEP_IN:
                 stop_reason = REASON_STEP
 
-            elif step_cmd == STEP_NEXT:
-                if len(self._stack_ctx_entries_deque) <= self._step_next_stack_len:
+            elif step_cmd in (STEP_NEXT, STEP_OUT):
+                if len(self._stack_ctx_entries_deque) <= self._stop_on_stack_len:
                     stop_reason = REASON_STEP
 
         if stop_reason is not None:

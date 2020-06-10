@@ -28,6 +28,7 @@ REASON_PAUSE = "pause"
 
 STEP_IN = "step_in"
 STEP_NEXT = "step_next"
+STEP_OUT = "step_out"
 
 
 MAIN_THREAD_ID = 1
