@@ -226,12 +226,18 @@ function getDefaultLanguageServerPythonExecutable() {
 
 	if (!executable || (executable.indexOf('/') == -1 && executable.indexOf('\\') == -1)) {
 		// Search python from the path.
-		if (!executable || executable == "python") {
+		if (!executable) {
 			if (process.platform == "win32") {
-				executable = "python.exe";
+				executable = findExecutableInPath("python.exe");
+			} else {
+				executable = findExecutableInPath("python3");
+				if (!fs.existsSync(executable)) {
+					executable = findExecutableInPath("python");
+				}
 			}
+		} else {
+			executable = findExecutableInPath(executable);
 		}
-		executable = findExecutableInPath(executable);
 		if (!fs.existsSync(executable)) {
 			return {
 				executable: undefined,
