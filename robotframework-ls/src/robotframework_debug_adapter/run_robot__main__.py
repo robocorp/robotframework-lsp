@@ -75,11 +75,20 @@ class _RobotTargetComm(threading.Thread):
                 patch_execution_context,
             )
 
-            debugger_impl = patch_execution_context()
-            debugger_impl.busy_wait.before_wait.append(self._notify_stopped)
+            try:
+                import robot
+            except ImportError:
+                # If unable to import robot, don't error here (proceed as if
+                # it was without debugging -- it should fail later on when
+                # about to run the code, at which point the actual DAP is
+                # in place).
+                self._debugger_impl = None
+            else:
+                debugger_impl = patch_execution_context()
+                debugger_impl.busy_wait.before_wait.append(self._notify_stopped)
 
-            log.debug("Finished patching execution context.")
-            self._debugger_impl = debugger_impl
+                log.debug("Finished patching execution context.")
+                self._debugger_impl = debugger_impl
         else:
             self._debugger_impl = None
 
@@ -421,6 +430,13 @@ def main():
         sys.exit(1)
 
     try:
+        try:
+            import robot
+        except ImportError:
+            sys.stderr.write("\nError importing robot.\n")
+            sys.stderr.write("Python executable: %s.\n\n" % (sys.executable,))
+            raise
+
         from robot import run_cli
 
         exitcode = run_cli(robot_args, exit=False)

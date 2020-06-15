@@ -140,14 +140,21 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
 
 function afterStartLangServer(pythonExecutable: string) {
 	function createDebugAdapterExecutable(env: { [key: string]: string }): DebugAdapterExecutable {
-		if (!pythonExecutable) {
-			let executableAndMessage = getDefaultLanguageServerPythonExecutable();
-			if (executableAndMessage.executable) {
-				pythonExecutable = executableAndMessage.executable;
-			} else {
-				window.showWarningMessage('Error getting language server python executable for creating a debug adapter.');
-				return;
+		let config = workspace.getConfiguration("robot");
+		let dapPythonExecutable: string = config.get<string>("python.executable");
+
+		if (!dapPythonExecutable) {
+			// If the dapPythonExecutable is not specified, use the default language server executable.
+			if (!pythonExecutable) {
+				let executableAndMessage = getDefaultLanguageServerPythonExecutable();
+				if (executableAndMessage.executable) {
+					pythonExecutable = executableAndMessage.executable;
+				} else {
+					window.showWarningMessage('Error getting language server python executable for creating a debug adapter.');
+					return;
+				}
 			}
+			dapPythonExecutable = pythonExecutable;
 		}
 
 		let targetFile: string = path.resolve(__dirname, '../../src/robotframework_debug_adapter/__main__.py');
@@ -155,11 +162,15 @@ function afterStartLangServer(pythonExecutable: string) {
 			window.showWarningMessage('Error. Expected: ' + targetFile + " to exist.");
 			return;
 		}
+		if (!fs.existsSync(dapPythonExecutable)) {
+			window.showWarningMessage('Error. Expected: ' + dapPythonExecutable + " to exist.");
+			return;
+		}
 		if (env) {
-			return new DebugAdapterExecutable(pythonExecutable, ['-u', targetFile], { "env": env });
+			return new DebugAdapterExecutable(dapPythonExecutable, ['-u', targetFile], { "env": env });
 
 		} else {
-			return new DebugAdapterExecutable(pythonExecutable, ['-u', targetFile]);
+			return new DebugAdapterExecutable(dapPythonExecutable, ['-u', targetFile]);
 		}
 	};
 
