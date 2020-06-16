@@ -135,15 +135,7 @@ class _KeywordFoundFromLibrary(object):
     @instance_cache
     def source(self):
         source = self._keyword_doc.source or self._library_doc.source
-        if source:
-            if not os.path.isabs(source):
-                source = self._make_absolute(source)
         return source
-
-    @instance_cache
-    def _make_absolute(self, source):
-        dirname = os.path.dirname(self._library_doc.filename)
-        return os.path.abspath(os.path.join(dirname, source))
 
     @property
     @instance_cache

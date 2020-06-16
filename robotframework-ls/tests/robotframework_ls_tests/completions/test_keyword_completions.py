@@ -23,6 +23,50 @@ def test_keyword_completions_builtin(workspace, libspec_manager):
     ]
 
 
+def test_keyword_completions_changes_user_library(
+    data_regression, workspace, tmpdir, cases, libspec_manager
+):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+    import time
+    from os.path import os
+
+    workspace_dir = str(tmpdir.join("workspace"))
+    cases.copy_to("case1", workspace_dir)
+
+    workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+
+    doc.source = doc.source + "\n    verify"
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    data_regression.check(completions, basename="keyword_completions_1")
+
+    time.sleep(1)  # Make sure that the mtime changes enough in the filesystem
+
+    library_py = os.path.join(workspace_dir, "case1_library.py")
+    with open(library_py, "r") as stream:
+        contents = stream.read()
+
+    contents += """
+def verify_changes(model=10):
+    pass
+"""
+    with open(library_py, "w") as stream:
+        stream.write(contents)
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+
+    assert sorted(completion["label"] for completion in completions) == [
+        "Verify Another Model",
+        "Verify Changes",
+        "Verify Model",
+    ]
+
+
 @pytest.mark.parametrize(
     "library_import", ["case1_library", "case1_library.py", "__FULL_PATH__"]
 )

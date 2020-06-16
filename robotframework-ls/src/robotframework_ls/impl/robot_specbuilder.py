@@ -17,6 +17,7 @@
 # limitations under the License.
 import os
 import weakref
+from robocode_ls_core.cache import instance_cache
 
 try:
     from xml.etree import cElementTree as ET
@@ -72,6 +73,7 @@ class LibraryDoc(object):
         source=None,
         lineno=-1,
     ):
+        assert filename
         self.filename = filename
         self.name = name
         self.doc = doc
@@ -80,10 +82,25 @@ class LibraryDoc(object):
         self.scope = scope
         self.named_args = named_args
         self.doc_format = doc_format or "ROBOT"
-        self.source = source
+        self._source = source
         self.lineno = lineno
         self.inits = []
         self.keywords = []
+
+    @property
+    @instance_cache
+    def source(self):
+        # When asked for, make sure that the path is absolute.
+        source = self._source
+        if source:
+            if not os.path.isabs(source):
+                source = self._make_absolute(source)
+        return source
+
+    @instance_cache
+    def _make_absolute(self, source):
+        dirname = os.path.dirname(self.filename)
+        return os.path.abspath(os.path.join(dirname, source))
 
     @property
     def doc_format(self):
@@ -126,12 +143,24 @@ class KeywordDoc(object):
         self.args = args
         self.doc = doc
         self.tags = Tags(tags)
-        self.source = source
+        self._source = source
         self.lineno = lineno
 
     @property
     def deprecated(self):
         return self.doc.startswith("*DEPRECATED") and "*" in self.doc[1:]
+
+    @property
+    @instance_cache
+    def source(self):
+        # When asked for, make sure that the path is absolute.
+        source = self._source
+        if source:
+            if not os.path.isabs(source):
+                libdoc = self._weak_libdoc()
+                if libdoc is not None:
+                    source = libdoc._make_absolute(source)
+        return source
 
     @property
     def libdoc(self):

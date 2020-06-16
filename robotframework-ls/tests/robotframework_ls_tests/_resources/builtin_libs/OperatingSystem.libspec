@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<keywordspec name="OperatingSystem" type="LIBRARY" format="HTML" scope="GLOBAL" namedargs="true" generated="2020-04-14T18:21:03Z" specversion="2" source="X:\vscode-robot\robotframework\src\robot\libraries\OperatingSystem.py" lineno="38">
-<version>3.2rc2.dev1</version>
+<keywordspec name="OperatingSystem" type="LIBRARY" format="HTML" scope="GLOBAL" namedargs="true" generated="2020-06-16T12:05:35Z" specversion="2" source="C:\bin\Miniconda\envs\vscode-robot\lib\site-packages\robot\libraries\OperatingSystem.py" lineno="38">
+<version>3.2.2.dev1</version>
 <scope>global</scope>
 <namedargs>yes</namedargs>
 <doc>&lt;p&gt;A test library providing keywords for OS related tasks.&lt;/p&gt;
