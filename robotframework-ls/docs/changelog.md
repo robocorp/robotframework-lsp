@@ -1,3 +1,13 @@
+New in 0.2.3 (2020-06-16)
+-----------------------------
+
+- Variables: Code-completion for builtin variables.
+- When a user library (.py) changes the related auto-generated spec is automatically updated.
+- If `robot.python.executable` is set, it's used to launch the debugger.
+- Debugger: step return implementation added.
+- Properly Search for python and python3 on the PATH on Linux and Mac.
+
+
 New in 0.2.2 (2020-06-09)
 -----------------------------
 

@@ -30,24 +30,24 @@ may be needed.
 See: [Config](docs/config.md) for details.
   
 
-Features (0.2.2)
+Features (0.2.3)
 -----------------
 
-- Code analysis: check if keywords are properly imported/defined.
-- Code completion for keywords, section headers and section settings.
+- Code analysis: checks if keywords are properly imported/defined.
+- Code completion for keywords, section headers, section settings and variables.
 - Go to definition for keywords.
-- Launch `.robot` files.
 - Syntax highlighting.
 - Syntax validation.
 - Code Formatting (see: [Editor Settings](https://code.visualstudio.com/docs/getstarted/settings#_language-specific-editor-settings) for details on how to toggle code formatting just for `robotframework`).
-- Preliminary code completion support for variables defined in [Variable Tables](https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#variable-table) and [Keyword Return Values](https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#return-values-from-keywords) (new in 0.1.1).
-- Preliminary support for debugging (new in 0.2.0).
+- Launch `.robot` files.
+- Preliminary support for debugging.
     - Note: this is an initial release for the feature and should be considered beta (please test and report any issues found).
     - The current functionalities include:
         - Add line breakpoints
         - Pause at breakpoints to inspect the stack and see variables
         - Step in
         - Step over
+        - Step return
         - Continue
 
 See: [Changelog](docs/changelog.md) for details.
