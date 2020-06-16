@@ -1,6 +1,310 @@
 jsonrpc: '2.0'
 result:
 - deprecated: false
+  documentation: abspath(tempfile.gettempdir())
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${TEMPDIR}
+  preselect: false
+  textEdit:
+    newText: \${TEMPDIR}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: abspath('.')
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${EXECDIR}
+  preselect: false
+  textEdit:
+    newText: \${EXECDIR}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: os.sep
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${/}
+  preselect: false
+  textEdit:
+    newText: \${/}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: os.pathsep
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${:}
+  preselect: false
+  textEdit:
+    newText: \${:}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: os.linesep
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${\n}
+  preselect: false
+  textEdit:
+    newText: \${\n}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: ' '
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${SPACE}
+  preselect: false
+  textEdit:
+    newText: \${SPACE}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: 'True'
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${True}
+  preselect: false
+  textEdit:
+    newText: \${True}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: 'False'
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${False}
+  preselect: false
+  textEdit:
+    newText: \${False}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: None
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${None}
+  preselect: false
+  textEdit:
+    newText: \${None}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: None
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${null}
+  preselect: false
+  textEdit:
+    newText: \${null}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: settings.output_directory
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${OUTPUT_DIR}
+  preselect: false
+  textEdit:
+    newText: \${OUTPUT_DIR}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: settings.output or 'NONE'
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${OUTPUT_FILE}
+  preselect: false
+  textEdit:
+    newText: \${OUTPUT_FILE}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: settings.report or 'NONE'
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${REPORT_FILE}
+  preselect: false
+  textEdit:
+    newText: \${REPORT_FILE}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: settings.log or 'NONE'
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${LOG_FILE}
+  preselect: false
+  textEdit:
+    newText: \${LOG_FILE}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: settings.debug_file or 'NONE'
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${DEBUG_FILE}
+  preselect: false
+  textEdit:
+    newText: \${DEBUG_FILE}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: settings.log_level
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${LOG_LEVEL}
+  preselect: false
+  textEdit:
+    newText: \${LOG_LEVEL}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${PREV_TEST_NAME}
+  preselect: false
+  textEdit:
+    newText: \${PREV_TEST_NAME}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${PREV_TEST_STATUS}
+  preselect: false
+  textEdit:
+    newText: \${PREV_TEST_STATUS}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${PREV_TEST_MESSAGE}
+  preselect: false
+  textEdit:
+    newText: \${PREV_TEST_MESSAGE}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
   documentation:
   - Robot Framework
   documentationFormat: plaintext

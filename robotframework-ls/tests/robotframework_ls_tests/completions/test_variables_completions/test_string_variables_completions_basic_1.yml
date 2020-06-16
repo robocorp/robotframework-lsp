@@ -1,4 +1,36 @@
 - deprecated: false
+  documentation: None
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${None}
+  preselect: false
+  textEdit:
+    newText: \${None}
+    range:
+      end:
+        character: 25
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: None
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${null}
+  preselect: false
+  textEdit:
+    newText: \${null}
+    range:
+      end:
+        character: 25
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
   documentation:
   - Robot Framework
   documentationFormat: plaintext
@@ -10,41 +42,7 @@
     newText: \${NAME}
     range:
       end:
-        character: 24
-        line: 9
-      start:
-        character: 22
-        line: 9
-- deprecated: false
-  documentation:
-  - '2.0'
-  documentationFormat: plaintext
-  insertTextFormat: 2
-  kind: 6
-  label: ${VERSION}
-  preselect: false
-  textEdit:
-    newText: \${VERSION}
-    range:
-      end:
-        character: 24
-        line: 9
-      start:
-        character: 22
-        line: 9
-- deprecated: false
-  documentation:
-  - ${NAME} ${VERSION}
-  documentationFormat: plaintext
-  insertTextFormat: 2
-  kind: 6
-  label: ${ROBOT}
-  preselect: false
-  textEdit:
-    newText: \${ROBOT}
-    range:
-      end:
-        character: 24
+        character: 25
         line: 9
       start:
         character: 22

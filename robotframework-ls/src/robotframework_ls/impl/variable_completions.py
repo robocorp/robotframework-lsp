@@ -55,9 +55,6 @@ class _VariableFound(object):
 
 class _VariableFoundFromSettings(object):
     def __init__(self, variable_name, variable_value):
-        if not variable_name.strip().endswith("}"):
-            variable_name = "${%s}" % (variable_name,)
-
         self.variable_name = variable_name
         self.variable_value = variable_value
 
@@ -148,8 +145,9 @@ def _collect_completions_from_ast(ast, completion_context, collector):
     for variable_node_info in ast_utils.iter_variables(ast):
         if collector.accepts(variable_node_info.node.name):
             variable_node = variable_node_info.node
-            variable_found = _VariableFound(variable_node.name, variable_node.value)
-            collector.on_variable(variable_found)
+            if collector.accepts(variable_node.name):
+                variable_found = _VariableFound(variable_node.name, variable_node.value)
+                collector.on_variable(variable_found)
 
 
 def _collect_current_doc_variables(completion_context, collector):
@@ -193,8 +191,15 @@ def _collect_arguments(completion_context, collector):
         if stack:
             last_in_stack = stack[-1]
             for arg in ast_utils.iter_keyword_arguments_as_str(last_in_stack):
-                variable_found = _VariableFound(arg, "")
-                collector.on_variable(variable_found)
+                if collector.accepts(arg):
+                    variable_found = _VariableFound(arg, "")
+                    collector.on_variable(variable_found)
+
+
+def _convert_name_to_var(variable_name):
+    if not variable_name.strip().endswith("}"):
+        variable_name = "${%s}" % (variable_name,)
+    return variable_name
 
 
 def _collect_from_settings(completion_context, collector):
@@ -208,12 +213,28 @@ def _collect_from_settings(completion_context, collector):
     if config is not None:
         robot_variables = config.get_setting(OPTION_ROBOT_VARIABLES, dict, {})
         for key, val in robot_variables.items():
+            key = _convert_name_to_var(key)
+            if collector.accepts(key):
+                collector.on_variable(_VariableFoundFromSettings(key, val))
+
+
+def _collect_from_builtins(completion_context, collector):
+    """
+    :param CompletionContext completion_context:
+    :param _Collector collector:
+    """
+    from robotframework_ls.impl.robot_constants import BUILTIN_VARIABLES
+
+    for key, val in BUILTIN_VARIABLES:
+        key = _convert_name_to_var(key)
+        if collector.accepts(key):
             collector.on_variable(_VariableFoundFromSettings(key, val))
 
 
 def _collect_variables(completion_context, collector):
     from robotframework_ls.impl import ast_utils
 
+    _collect_from_builtins(completion_context, collector)
     _collect_from_settings(completion_context, collector)
     _collect_arguments(completion_context, collector)
     _collect_following_imports(completion_context, collector)

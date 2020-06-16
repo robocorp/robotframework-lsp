@@ -15,7 +15,7 @@ ${ROBOT} =      ${NAME} ${VERSION}
 *** Test Cases ***
 List Variable
     Log    ${NAME}
-    Should Contain    ${"""
+    Should Contain    ${N"""
 
     completions = variable_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
@@ -192,7 +192,7 @@ def test_variables_completions_recursive(workspace, libspec_manager, data_regres
 
 *** Test Cases ***
 List Variable
-    Log    ${"""
+    Log    ${VAR"""
 
     completions = variable_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
@@ -288,6 +288,24 @@ def test_variables_completions_arguments_basic(
 This is the Test
     [Arguments]    ${arg}    ${arg2}
     Log To Console    ${ar"""
+
+    completions = variable_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    data_regression.check(completions)
+
+
+def test_variables_completions_builtins(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import variable_completions
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+    doc.source = """
+*** Keywords ***
+This is the Test
+    [Arguments]    ${arg}    ${arg2}
+    Log To Console    ${PREV_TEST_ST"""
 
     completions = variable_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)

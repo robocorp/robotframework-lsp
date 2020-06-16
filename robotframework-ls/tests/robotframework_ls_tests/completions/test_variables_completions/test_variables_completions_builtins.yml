@@ -1,0 +1,16 @@
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${PREV_TEST_STATUS}
+  preselect: false
+  textEdit:
+    newText: \${PREV_TEST_STATUS}
+    range:
+      end:
+        character: 36
+        line: 4
+      start:
+        character: 22
+        line: 4

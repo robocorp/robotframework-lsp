@@ -1,4 +1,36 @@
 - deprecated: false
+  documentation: None
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${None}
+  preselect: false
+  textEdit:
+    newText: \${None}
+    range:
+      end:
+        character: 20
+        line: 3
+      start:
+        character: 16
+        line: 3
+- deprecated: false
+  documentation: None
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${null}
+  preselect: false
+  textEdit:
+    newText: \${null}
+    range:
+      end:
+        character: 20
+        line: 3
+      start:
+        character: 16
+        line: 3
+- deprecated: false
   documentation:
   - Robot Framework
   documentationFormat: plaintext

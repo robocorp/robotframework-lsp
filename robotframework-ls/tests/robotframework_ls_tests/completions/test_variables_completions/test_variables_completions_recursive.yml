@@ -10,7 +10,7 @@
     newText: \${VAR2}
     range:
       end:
-        character: 13
+        character: 16
         line: 8
       start:
         character: 11
@@ -27,7 +27,7 @@
     newText: \${VAR1}
     range:
       end:
-        character: 13
+        character: 16
         line: 8
       start:
         character: 11
