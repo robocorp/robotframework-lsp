@@ -195,3 +195,36 @@ Test
     definition = next(iter(definitions))
     assert definition.source.endswith("Collections.py")
     assert definition.lineno > 0
+
+
+def test_find_definition_library_itself(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+    doc.source = """*** Settings ***
+Library    Collections"""
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("Collections.py")
+
+
+def test_find_definition_resource_itself(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+    doc.source = """*** Settings ***
+
+Resource    case4resource.txt"""
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("case4resource.txt")

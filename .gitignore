@@ -123,3 +123,4 @@ node_modules
 **/log.html
 **/output.xml
 **/report.html
+**/.mypy_cache

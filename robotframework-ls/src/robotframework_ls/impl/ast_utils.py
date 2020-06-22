@@ -379,6 +379,8 @@ def iter_keyword_usage_tokens(ast):
 
 def get_keyword_name_token(ast, token):
     """
+    If the given token is a keyword, return the token, otherwise return None.
+    
     :note: this goes hand-in-hand with iter_keyword_usage_tokens.
     """
     from robocode_ls_core.basic import isinstance_name
@@ -387,6 +389,38 @@ def get_keyword_name_token(ast, token):
         token.type == token.NAME and isinstance_name(ast, ("Fixture", "TestTemplate"))
     ):
         return _strip_token_bdd_prefix(token)
+    return None
+
+
+def get_library_import_name_token(ast, token):
+    """
+    If the given ast node is a library import and the token is its name, return
+    the name token, otherwise, return None.
+    """
+    from robocode_ls_core.basic import isinstance_name
+
+    if (
+        token.type == token.NAME
+        and isinstance_name(ast, "LibraryImport")
+        and ast.name == token.value  # I.e.: match the name, not the alias.
+    ):
+        return token
+    return None
+
+
+def get_resource_import_name_token(ast, token):
+    """
+    If the given ast node is a library import and the token is its name, return
+    the name token, otherwise, return None.
+    """
+    from robocode_ls_core.basic import isinstance_name
+
+    if (
+        token.type == token.NAME
+        and isinstance_name(ast, "ResourceImport")
+        and ast.name == token.value  # I.e.: match the name, not the alias.
+    ):
+        return token
     return None
 
 

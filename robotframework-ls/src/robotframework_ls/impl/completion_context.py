@@ -249,66 +249,71 @@ class CompletionContext(object):
         return tuple(ret)
 
     @instance_cache
-    def get_resource_imports_as_docs(self):
+    def get_resource_import_as_doc(self, resource_import):
         from robocode_ls_core import uris
         import os.path
         from robotframework_ls.impl import ast_utils
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
 
         ws = self._workspace
+
+        for token in resource_import.tokens:
+            if token.type == token.NAME:
+                parts = []
+                for v in ast_utils.tokenize_variables(token):
+                    if v.type == v.NAME:
+                        parts.append(str(v))
+
+                    elif v.type == v.VARIABLE:
+                        # Resolve variable from config
+                        v = str(v)
+                        if v.startswith("${") and v.endswith("}"):
+                            v = v[2:-1]
+                            parts.append(self.convert_robot_variable(v))
+                        else:
+                            log.info("Cannot resolve variable: %s", v)
+
+                joined_parts = "".join(parts)
+                if not os.path.isabs(joined_parts):
+                    # It's a relative resource, resolve its location based on the
+                    # current file.
+                    check_paths = [
+                        os.path.join(os.path.dirname(self.doc.path), joined_parts)
+                    ]
+                    config = self.config
+                    if config is not None:
+                        for additional_pythonpath_entry in config.get_setting(
+                            OPTION_ROBOT_PYTHONPATH, list, []
+                        ):
+                            check_paths.append(
+                                os.path.join(additional_pythonpath_entry, joined_parts)
+                            )
+
+                else:
+                    check_paths = [joined_parts]
+
+                for resource_path in check_paths:
+                    if not os.path.isfile(resource_path):
+                        log.info("Resource not found: %s", resource_path)
+                        continue
+
+                    doc_uri = uris.from_fs_path(resource_path)
+                    resource_doc = ws.get_document(doc_uri, create=False)
+                    if resource_doc is None:
+                        resource_doc = ws.create_untracked_document(doc_uri)
+                    return resource_doc
+        return None
+
+    @instance_cache
+    def get_resource_imports_as_docs(self):
         ret = []
 
         # Get keywords from resources
         resource_imports = self.get_resource_imports()
         for resource_import in resource_imports:
-            for token in resource_import.tokens:
-                if token.type == token.NAME:
-                    parts = []
-                    for v in ast_utils.tokenize_variables(token):
-                        if v.type == v.NAME:
-                            parts.append(str(v))
-
-                        elif v.type == v.VARIABLE:
-                            # Resolve variable from config
-                            v = str(v)
-                            if v.startswith("${") and v.endswith("}"):
-                                v = v[2:-1]
-                                parts.append(self.convert_robot_variable(v))
-                            else:
-                                log.info("Cannot resolve variable: %s", v)
-
-                    joined_parts = "".join(parts)
-                    if not os.path.isabs(joined_parts):
-                        # It's a relative resource, resolve its location based on the
-                        # current file.
-                        check_paths = [
-                            os.path.join(os.path.dirname(self.doc.path), joined_parts)
-                        ]
-                        config = self.config
-                        if config is not None:
-                            for additional_pythonpath_entry in config.get_setting(
-                                OPTION_ROBOT_PYTHONPATH, list, []
-                            ):
-                                check_paths.append(
-                                    os.path.join(
-                                        additional_pythonpath_entry, joined_parts
-                                    )
-                                )
-
-                    else:
-                        check_paths = [joined_parts]
-
-                    for resource_path in check_paths:
-                        if not os.path.isfile(resource_path):
-                            log.info("Resource not found: %s", resource_path)
-                            continue
-
-                        doc_uri = uris.from_fs_path(resource_path)
-                        resource_doc = ws.get_document(doc_uri, create=False)
-                        if resource_doc is None:
-                            resource_doc = ws.create_untracked_document(doc_uri)
-                        ret.append(resource_doc)
-                        break
+            resource_doc = self.get_resource_import_as_doc(resource_import)
+            if resource_doc is not None:
+                ret.append(resource_doc)
 
         return tuple(ret)
 
