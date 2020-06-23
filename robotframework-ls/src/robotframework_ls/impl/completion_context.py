@@ -7,6 +7,11 @@ log = get_logger(__name__)
 
 _NOT_SET = "NOT_SET"
 
+try:
+    str_types = (str, unicode)
+except NameError:
+    str_types = (str,)
+
 
 class _Memo(object):
     def __init__(self):
@@ -248,37 +253,54 @@ class CompletionContext(object):
             ret.append(resource.node)
         return tuple(ret)
 
+    def token_value_resolving_variables(self, token):
+        from robotframework_ls.impl import ast_utils
+
+        if isinstance(token, str_types):
+            token = ast_utils.create_token(token)
+
+        try:
+            tokenized_vars = ast_utils.tokenize_variables(token)
+        except:
+            return token.value  # Unable to tokenize
+        parts = []
+        for v in tokenized_vars:
+            if v.type == v.NAME:
+                parts.append(str(v))
+
+            elif v.type == v.VARIABLE:
+                # Resolve variable from config
+                initial_v = v = str(v)
+                if v.startswith("${") and v.endswith("}"):
+                    v = v[2:-1]
+                    parts.append(self.convert_robot_variable(v, initial_v))
+                else:
+                    log.info("Cannot resolve variable: %s", v)
+                    parts.append(v)  # Leave unresolved.
+
+        joined_parts = "".join(parts)
+        return joined_parts
+
     @instance_cache
     def get_resource_import_as_doc(self, resource_import):
         from robocode_ls_core import uris
         import os.path
-        from robotframework_ls.impl import ast_utils
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
 
         ws = self._workspace
 
         for token in resource_import.tokens:
             if token.type == token.NAME:
-                parts = []
-                for v in ast_utils.tokenize_variables(token):
-                    if v.type == v.NAME:
-                        parts.append(str(v))
 
-                    elif v.type == v.VARIABLE:
-                        # Resolve variable from config
-                        v = str(v)
-                        if v.startswith("${") and v.endswith("}"):
-                            v = v[2:-1]
-                            parts.append(self.convert_robot_variable(v))
-                        else:
-                            log.info("Cannot resolve variable: %s", v)
+                name_with_resolved_vars = self.token_value_resolving_variables(token)
 
-                joined_parts = "".join(parts)
-                if not os.path.isabs(joined_parts):
+                if not os.path.isabs(name_with_resolved_vars):
                     # It's a relative resource, resolve its location based on the
                     # current file.
                     check_paths = [
-                        os.path.join(os.path.dirname(self.doc.path), joined_parts)
+                        os.path.join(
+                            os.path.dirname(self.doc.path), name_with_resolved_vars
+                        )
                     ]
                     config = self.config
                     if config is not None:
@@ -286,11 +308,13 @@ class CompletionContext(object):
                             OPTION_ROBOT_PYTHONPATH, list, []
                         ):
                             check_paths.append(
-                                os.path.join(additional_pythonpath_entry, joined_parts)
+                                os.path.join(
+                                    additional_pythonpath_entry, name_with_resolved_vars
+                                )
                             )
 
                 else:
-                    check_paths = [joined_parts]
+                    check_paths = [name_with_resolved_vars]
 
                 for resource_path in check_paths:
                     if not os.path.isfile(resource_path):
@@ -317,12 +341,12 @@ class CompletionContext(object):
 
         return tuple(ret)
 
-    def convert_robot_variable(self, var_name):
+    def convert_robot_variable(self, var_name, value_if_not_found):
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_VARIABLES
 
         robot_variables = self.config.get_setting(OPTION_ROBOT_VARIABLES, dict, {})
         value = robot_variables.get(var_name)
         if value is None:
             log.info("Unable to find variable: %s", var_name)
-            value = ""
+            value = value_if_not_found
         return str(value)

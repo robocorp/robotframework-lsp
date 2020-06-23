@@ -1,0 +1,16 @@
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 9
+  label: case3resource_in_ext.resource
+  preselect: false
+  textEdit:
+    newText: case3resource_in_ext.resource
+    range:
+      end:
+        character: 33
+        line: 1
+      start:
+        character: 33
+        line: 1

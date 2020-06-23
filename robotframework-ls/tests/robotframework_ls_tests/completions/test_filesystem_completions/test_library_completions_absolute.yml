@@ -1,0 +1,18 @@
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 9
+  label: case1_library.py
+  preselect: false
+  textEdit:
+    newText: case1_library.py
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 9
+  label: dir1/
+  preselect: false
+  textEdit:
+    newText: dir1/

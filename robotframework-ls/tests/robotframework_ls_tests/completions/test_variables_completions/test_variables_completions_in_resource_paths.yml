@@ -1,0 +1,17 @@
+- deprecated: false
+  documentation:
+  - c:/foo/bar
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${SOME_DIR}
+  preselect: false
+  textEdit:
+    newText: \${SOME_DIR}
+    range:
+      end:
+        character: 27
+        line: 5
+      start:
+        character: 19
+        line: 5

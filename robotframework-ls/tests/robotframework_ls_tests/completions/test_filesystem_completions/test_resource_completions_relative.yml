@@ -1,0 +1,48 @@
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 9
+  label: case4resource.txt
+  preselect: false
+  textEdit:
+    newText: case4resource.txt
+    range:
+      end:
+        character: 23
+        line: 1
+      start:
+        character: 19
+        line: 1
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 9
+  label: case4resource2.robot
+  preselect: false
+  textEdit:
+    newText: case4resource2.robot
+    range:
+      end:
+        character: 23
+        line: 1
+      start:
+        character: 19
+        line: 1
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 9
+  label: case4resource3.robot
+  preselect: false
+  textEdit:
+    newText: case4resource3.robot
+    range:
+      end:
+        character: 23
+        line: 1
+      start:
+        character: 19
+        line: 1

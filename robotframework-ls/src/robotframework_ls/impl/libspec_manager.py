@@ -571,7 +571,16 @@ class LibspecManager(object):
                 # Note: we could end up yielding a library with the same name
                 # multiple times due to its scope. It's up to the caller to
                 # validate that.
-                if info is not None and info.library_doc is not None:
+
+                # Note: we also check if there are keywords available... in
+                # some cases we may create libraries for namespace packages
+                # (i.e.: empty folders) which don't really have anything -- in
+                # this case, this isn't a valid library.
+                if (
+                    info is not None
+                    and info.library_doc is not None
+                    and info.library_doc.keywords
+                ):
                     yield info
 
     def get_library_names(self):

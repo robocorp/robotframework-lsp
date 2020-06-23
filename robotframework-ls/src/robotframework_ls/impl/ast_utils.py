@@ -206,7 +206,7 @@ def find_variable(ast, line, col):
     token_info = find_token(ast, line, col)
     if token_info is not None:
         token = token_info.token
-        if token.type == token.ARGUMENT and "{" in token.value:
+        if "{" in token.value:
             for part in _tokenize_variables_even_when_invalid(token, col):
                 if part.col_offset <= col <= part.end_col_offset:
                     if part.type == part.VARIABLE:
@@ -218,11 +218,18 @@ def find_variable(ast, line, col):
     return None
 
 
+def create_token(name):
+    from robot.api import Token
+
+    return Token(Token.NAME, name)
+
+
+def tokenize_variables_from_name(name):
+    return tokenize_variables(create_token(name))  # May throw error if it's not OK.
+
+
 def tokenize_variables(token):
-    try:
-        return token.tokenize_variables()
-    except:  # If variables aren't correct, this may fail, so, return no variables.
-        return iter([])
+    return token.tokenize_variables()  # May throw error if it's not OK.
 
 
 def _tokenize_variables_even_when_invalid(token, col):

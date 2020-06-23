@@ -223,6 +223,9 @@ class Endpoint(object):
 
     def _handle_request(self, msg_id, method, params):
         """Handle a request from the client."""
+        import time
+
+        initial_time = time.time()
         try:
             handler = self._dispatcher[method]
         except KeyError:
@@ -240,7 +243,11 @@ class Endpoint(object):
             self._client_request_futures[msg_id] = handler_result
             handler_result.add_done_callback(self._request_callback(msg_id))
         else:
-            log.debug("Got result from synchronous request handler: %s", handler_result)
+            log.debug(
+                "Got result from synchronous request handler (in %.2fs): %s",
+                time.time() - initial_time,
+                handler_result,
+            )
             self._consumer(
                 {"jsonrpc": JSONRPC_VERSION, "id": msg_id, "result": handler_result}
             )

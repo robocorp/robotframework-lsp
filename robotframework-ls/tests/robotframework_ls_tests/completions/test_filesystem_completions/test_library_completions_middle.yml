@@ -1,0 +1,16 @@
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 9
+  label: Collections
+  preselect: false
+  textEdit:
+    newText: Collections
+    range:
+      end:
+        character: 27
+        line: 1
+      start:
+        character: 18
+        line: 1
