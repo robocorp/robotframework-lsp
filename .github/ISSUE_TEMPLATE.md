@@ -1,18 +1,5 @@
-<!--
-Thanks for submitting an issue!
+If this is a bug report (and not a feature request or documentation issue), please see:
 
-Here's a quick checklist for what to provide:
--->
+https://github.com/robocorp/robotframework-lsp/blob/master/robotframework-ls/docs/reporting_issue.md
 
-Detailed description of the bug or suggestion
-----------------------------------------------
-
-Extension logs (attach as a file)
-----------------------------------------------
-
-The logs may be obtained by adding the following to your user settings (and restarting robotframework-lsp afterwards):
-
-    "robot.language-server.args": ["-vv", "--log-file=~/robotframework_ls.log"]
-
-Minimal example (if possible)
-----------------------------------------------
+for details on how to collect the logs to be attached to this issue.

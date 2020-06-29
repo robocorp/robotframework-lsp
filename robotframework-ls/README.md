@@ -11,7 +11,7 @@ be installed in a separate python interpreter in case you need to run it with an
 Installing
 -----------
 
-`robotframework-lsp` can be installed from the [VisualStudio Marketplace](https://marketplace.visualstudio.com/items?itemName=robocorptech.robotframework-lsp) or as a `.vsix`.
+`Robot Framework Language Server` can be installed from the [VisualStudio Marketplace](https://marketplace.visualstudio.com/items?itemName=robocorptech.robotframework-lsp) or as a `.vsix`.
 
 To get a `.vsix`, download the latest `Deploy Extension` in [Robotframework-lsp Github Actions](https://github.com/robocorp/robotframework-lsp/actions?query=workflow%3A%22Deploy+Extension%22).
 
@@ -23,7 +23,7 @@ See: [Getting Started](https://hub.robocorp.com/development/best-practices/langu
 Configuration
 -------------
 
-After having `robotframework-lsp` installed, some configurations (such as specifying
+After having `Robot Framework Language Server` installed, some configurations (such as specifying
 the python executable used for launching the Language Server or Robot Framework)
 may be needed.
 
@@ -56,7 +56,12 @@ See: [Changelog](docs/changelog.md) for details.
 Developing
 ------------
 
-See: [Developing](docs/develop.md) for details on how to develop `robotframework-lsp` itself.
+See: [Developing](docs/develop.md) for details on how to develop `Robot Framework Language Server`.
+
+Reporting Issues
+-----------------
+
+See: [Reporting Issue](docs/reporting_issues.md) for details on how to report some issue in the `Robot Framework Language Server`.
 
 License: Apache 2.0
 -------------------
