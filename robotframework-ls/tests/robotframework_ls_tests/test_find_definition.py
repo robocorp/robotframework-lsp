@@ -228,3 +228,117 @@ Resource    case4resource.txt"""
     assert len(definitions) == 1
     definition = next(iter(definitions))
     assert definition.source.endswith("case4resource.txt")
+
+
+def _definitions_to_data_regression(definitions):
+    """
+    :param IDefinition definition:
+    """
+    from os.path import os
+
+    return [
+        {
+            "source": os.path.basename(definition.source),
+            "lineno": definition.lineno,
+            "end_lineno": definition.end_lineno,
+            "col_offset": definition.col_offset,
+            "end_col_offset": definition.end_col_offset,
+        }
+        for definition in definitions
+    ]
+
+
+def test_find_definition_variables_assign(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+    doc.source += """
+*** Test Cases ***
+Returning
+    ${variable_x} =    ${variable_y}    @{variable_z}=    Get X    an argument
+    Log    We got ${variable_x}"""
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    data_regression.check(
+        _definitions_to_data_regression(find_definition(completion_context))
+    )
+
+
+def test_find_definition_variables_in_section(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+    doc.source = """
+*** Variables ***
+${SOME_DIR}         c:/foo/bar
+    
+*** Settings ***
+Resource           ${some dir}"""
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    data_regression.check(
+        _definitions_to_data_regression(find_definition(completion_context))
+    )
+
+
+def test_find_definition_variables_builtins(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+    doc.source = """
+*** Keywords ***
+This is the Test
+    [Arguments]    ${arg}    ${arg2}
+    Log To Console    ${PREV_TEST_STATUS}"""
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    data_regression.check(
+        _definitions_to_data_regression(find_definition(completion_context))
+    )
+
+
+def test_find_definition_variables_arguments(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+    doc.source = """
+*** Keywords ***
+This is the Test
+    [Arguments]    ${arg}    ${arg2}
+    Log To Console    ${arg2}"""
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    data_regression.check(
+        _definitions_to_data_regression(find_definition(completion_context))
+    )
+
+
+def test_variables_completions_recursive(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case5", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case5.robot")
+    doc.source += """
+
+*** Test Cases ***
+List Variable
+    Log    ${VAR2}"""
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    data_regression.check(
+        _definitions_to_data_regression(find_definition(completion_context))
+    )

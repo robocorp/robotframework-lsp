@@ -18,14 +18,23 @@ class IVariableFound(object):
     variable_value = ""
     completion_context = None
     source = ""
+
+    # Note: line/offsets 0-based.
     lineno = -1
     end_lineno = -1
     col_offset = -1
     end_col_offset = -1
 
 
-class _VariableFound(object):
-    def __init__(self, variable_name, variable_value):
+class _VariableFoundFromToken(object):
+    def __init__(
+        self, completion_context, variable_token, variable_value, variable_name=None
+    ):
+        self.completion_context = completion_context
+        self.variable_token = variable_token
+
+        if variable_name is None:
+            variable_name = str(variable_token)
         self.variable_name = variable_name
         self.variable_value = variable_value
 
@@ -38,19 +47,19 @@ class _VariableFound(object):
 
     @property
     def lineno(self):
-        raise NotImplementedError()
+        return self.variable_token.lineno - 1  # Make 0-based
 
     @property
     def end_lineno(self):
-        raise NotImplementedError()
+        return self.variable_token.lineno - 1  # Make 0-based
 
     @property
     def col_offset(self):
-        raise NotImplementedError()
+        return self.variable_token.col_offset
 
     @property
     def end_col_offset(self):
-        raise NotImplementedError()
+        return self.variable_token.end_col_offset
 
 
 class _VariableFoundFromSettings(object):
@@ -61,25 +70,27 @@ class _VariableFoundFromSettings(object):
     @property
     @instance_cache
     def source(self):
-        from robocode_ls_core import uris
-
-        return uris.to_fs_path(self.completion_context.doc.uri)
+        return ""
 
     @property
     def lineno(self):
-        raise NotImplementedError()
+        return 0
 
     @property
     def end_lineno(self):
-        raise NotImplementedError()
+        return 0
 
     @property
     def col_offset(self):
-        raise NotImplementedError()
+        return 0
 
     @property
     def end_col_offset(self):
-        raise NotImplementedError()
+        return 0
+
+
+class _VariableFoundFromBuiltins(_VariableFoundFromSettings):
+    pass
 
 
 class _Collector(object):
@@ -140,14 +151,23 @@ class _Collector(object):
 
 def _collect_completions_from_ast(ast, completion_context, collector):
     from robotframework_ls.impl import ast_utils
+    from robot.api import Token
 
     ast = completion_context.get_ast()
     for variable_node_info in ast_utils.iter_variables(ast):
-        if collector.accepts(variable_node_info.node.name):
-            variable_node = variable_node_info.node
-            if collector.accepts(variable_node.name):
-                variable_found = _VariableFound(variable_node.name, variable_node.value)
-                collector.on_variable(variable_found)
+        variable_node = variable_node_info.node
+        token = variable_node.get_token(Token.VARIABLE)
+        if token is None:
+            continue
+        name = token.value
+        if name.endswith("="):
+            name = name[:-1].rstrip()
+
+        if collector.accepts(name):
+            variable_found = _VariableFoundFromToken(
+                completion_context, token, variable_node.value, variable_name=name
+            )
+            collector.on_variable(variable_found)
 
 
 def _collect_current_doc_variables(completion_context, collector):
@@ -190,9 +210,12 @@ def _collect_arguments(completion_context, collector):
         stack = current_token_info.stack
         if stack:
             last_in_stack = stack[-1]
-            for arg in ast_utils.iter_keyword_arguments_as_str(last_in_stack):
-                if collector.accepts(arg):
-                    variable_found = _VariableFound(arg, "")
+            for arg_token in ast_utils.iter_keyword_arguments_as_tokens(last_in_stack):
+                name = str(arg_token)
+                if collector.accepts(name):
+                    variable_found = _VariableFoundFromToken(
+                        completion_context, arg_token, "", variable_name=name
+                    )
                     collector.on_variable(variable_found)
 
 
@@ -228,16 +251,12 @@ def _collect_from_builtins(completion_context, collector):
     for key, val in BUILTIN_VARIABLES:
         key = _convert_name_to_var(key)
         if collector.accepts(key):
-            collector.on_variable(_VariableFoundFromSettings(key, val))
+            collector.on_variable(_VariableFoundFromBuiltins(key, val))
 
 
-def _collect_variables(completion_context, collector):
+def collect_variables(completion_context, collector):
     from robotframework_ls.impl import ast_utils
 
-    _collect_from_builtins(completion_context, collector)
-    _collect_from_settings(completion_context, collector)
-    _collect_arguments(completion_context, collector)
-    _collect_following_imports(completion_context, collector)
     token_info = completion_context.get_current_token()
     if token_info is not None:
         if token_info.stack:
@@ -247,8 +266,15 @@ def _collect_variables(completion_context, collector):
         for assign_node_info in ast_utils.iter_variable_assigns(stack_node):
             if collector.accepts(assign_node_info.token.value):
                 rep = " ".join(tok.value for tok in assign_node_info.node.tokens)
-                variable_found = _VariableFound(assign_node_info.token.value, rep)
+                variable_found = _VariableFoundFromToken(
+                    completion_context, assign_node_info.token, rep
+                )
                 collector.on_variable(variable_found)
+
+    _collect_arguments(completion_context, collector)
+    _collect_following_imports(completion_context, collector)
+    _collect_from_settings(completion_context, collector)
+    _collect_from_builtins(completion_context, collector)
 
 
 def complete(completion_context):
@@ -264,6 +290,6 @@ def complete(completion_context):
         if value.endswith("}"):
             value = value[:-1]
         collector = _Collector(completion_context.sel, token, RobotStringMatcher(value))
-        _collect_variables(completion_context, collector)
+        collect_variables(completion_context, collector)
         return collector.completion_items
     return []

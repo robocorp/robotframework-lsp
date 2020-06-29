@@ -344,9 +344,13 @@ class CompletionContext(object):
     def convert_robot_variable(self, var_name, value_if_not_found):
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_VARIABLES
 
-        robot_variables = self.config.get_setting(OPTION_ROBOT_VARIABLES, dict, {})
-        value = robot_variables.get(var_name)
-        if value is None:
-            log.info("Unable to find variable: %s", var_name)
+        if self.config is None:
+            log.info("Config not available while trying to convert variable: %s", var_name)
             value = value_if_not_found
+        else:
+            robot_variables = self.config.get_setting(OPTION_ROBOT_VARIABLES, dict, {})
+            value = robot_variables.get(var_name)
+            if value is None:
+                log.info("Unable to find variable: %s", var_name)
+                value = value_if_not_found
         return str(value)

@@ -78,6 +78,31 @@ class _DefinitionFromResource(object):
     __repr__ = __str__
 
 
+class _DefinitionFromVariable(object):
+    def __init__(self, variable_found):
+        """
+        :param IVariableFound variable_found:
+        """
+        self.variable_found = variable_found
+
+        self.keyword_name = ""
+        self.source = variable_found.source
+        self.lineno = variable_found.lineno
+        self.end_lineno = variable_found.end_lineno
+        self.col_offset = variable_found.col_offset
+        self.end_col_offset = variable_found.end_col_offset
+
+    def __str__(self):
+        return "_DefinitionFromVariable(%s[%s, %s:%s])" % (
+            self.variable_found.__class__.__name__,
+            self.variable_found.variable_name,
+            self.source,
+            self.lineno,
+        )
+
+    __repr__ = __str__
+
+
 class _FindDefinitionKeywordCollector(object):
     def __init__(self, match_name):
         from robotframework_ls.impl.string_matcher import RobotStringMatcher
@@ -107,6 +132,21 @@ class _FindDefinitionKeywordCollector(object):
                 return
 
 
+class _FindDefinitionVariablesCollector(object):
+    def __init__(self, sel, token, robot_string_matcher):
+        self.matches = []
+        self.sel = sel
+        self.token = token
+        self.matcher = robot_string_matcher
+
+    def accepts(self, variable_name):
+        return self.matcher.is_same_robot_name(variable_name)
+
+    def on_variable(self, variable_found):
+        definition = _DefinitionFromVariable(variable_found)
+        self.matches.append(definition)
+
+
 def find_definition(completion_context):
     """
     :param CompletionContext completion_context:
@@ -116,8 +156,10 @@ def find_definition(completion_context):
         Definitions may be found even if a given source file no longer exists
         at this place (callers are responsible for validating entries).
     """
-    from robotframework_ls.impl.collect_keywords import collect_keywords
     from robotframework_ls.impl import ast_utils
+    from robotframework_ls.impl.collect_keywords import collect_keywords
+    from robotframework_ls.impl.string_matcher import RobotStringMatcher
+    from robotframework_ls.impl.variable_completions import collect_variables
 
     token_info = completion_context.get_current_token()
     if token_info is not None:
@@ -148,5 +190,17 @@ def find_definition(completion_context):
             )
             if resource_import_as_doc is not None:
                 return [_DefinitionFromResource(resource_import_as_doc)]
+
+    token_info = completion_context.get_current_variable()
+    if token_info is not None:
+
+        token = token_info.token
+        value = token.value
+
+        collector = _FindDefinitionVariablesCollector(
+            completion_context.sel, token, RobotStringMatcher(value)
+        )
+        collect_variables(completion_context, collector)
+        return collector.matches
 
     return []

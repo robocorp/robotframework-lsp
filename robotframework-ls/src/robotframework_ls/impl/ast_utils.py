@@ -324,10 +324,18 @@ def iter_keyword_arguments_as_str(ast):
     """
     :rtype: generator(str)
     """
+    for token in iter_keyword_arguments_as_tokens(ast):
+        yield str(token)
+
+
+def iter_keyword_arguments_as_tokens(ast):
+    """
+    :rtype: generator(Token)
+    """
     for _stack, node in _iter_nodes_filtered(ast, accept_class="Arguments"):
         for token in node.tokens:
             if token.type == token.ARGUMENT:
-                yield str(token)
+                yield token
 
 
 def get_documentation(ast):

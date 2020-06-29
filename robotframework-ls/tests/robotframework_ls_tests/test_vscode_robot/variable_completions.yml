@@ -1,6 +1,57 @@
 jsonrpc: '2.0'
 result:
 - deprecated: false
+  documentation:
+  - Robot Framework
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${NAME}
+  preselect: false
+  textEdit:
+    newText: \${NAME}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation:
+  - '2.0'
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${VERSION}
+  preselect: false
+  textEdit:
+    newText: \${VERSION}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation:
+  - ${NAME} ${VERSION}
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${ROBOT}
+  preselect: false
+  textEdit:
+    newText: \${ROBOT}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
   documentation: abspath(tempfile.gettempdir())
   documentationFormat: plaintext
   insertTextFormat: 2
@@ -297,57 +348,6 @@ result:
   preselect: false
   textEdit:
     newText: \${PREV_TEST_MESSAGE}
-    range:
-      end:
-        character: 24
-        line: 9
-      start:
-        character: 22
-        line: 9
-- deprecated: false
-  documentation:
-  - Robot Framework
-  documentationFormat: plaintext
-  insertTextFormat: 2
-  kind: 6
-  label: ${NAME}
-  preselect: false
-  textEdit:
-    newText: \${NAME}
-    range:
-      end:
-        character: 24
-        line: 9
-      start:
-        character: 22
-        line: 9
-- deprecated: false
-  documentation:
-  - '2.0'
-  documentationFormat: plaintext
-  insertTextFormat: 2
-  kind: 6
-  label: ${VERSION}
-  preselect: false
-  textEdit:
-    newText: \${VERSION}
-    range:
-      end:
-        character: 24
-        line: 9
-      start:
-        character: 22
-        line: 9
-- deprecated: false
-  documentation:
-  - ${NAME} ${VERSION}
-  documentationFormat: plaintext
-  insertTextFormat: 2
-  kind: 6
-  label: ${ROBOT}
-  preselect: false
-  textEdit:
-    newText: \${ROBOT}
     range:
       end:
         character: 24
