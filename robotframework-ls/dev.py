@@ -69,11 +69,7 @@ class Dev(object):
             version, os.path.join(".", "src", "robotframework_ls", "__init__.py")
         )
 
-    def check_tag_version(self):
-        """
-        Checks if the current tag matches the latest version (exits with 1 if it
-        does not match and with 0 if it does match).
-        """
+    def get_tag(self):
         import subprocess
 
         # i.e.: Gets the last tagged version
@@ -84,9 +80,16 @@ class Dev(object):
         # Something as: b'robotframework-lsp-0.0.1'
         if sys.version_info[0] >= 3:
             stdout = stdout.decode("utf-8")
+        stdout = stdout.strip()
+        return stdout
 
-        version = stdout.strip()
-        version = version[version.rfind("-") + 1 :]
+    def check_tag_version(self):
+        """
+        Checks if the current tag matches the latest version (exits with 1 if it
+        does not match and with 0 if it does match).
+        """
+        tag = self.get_tag()
+        version = tag[tag.rfind("-") + 1 :]
 
         if robotframework_ls.__version__ == version:
             sys.stderr.write("Version matches (%s) (exit(0))\n" % (version,))
@@ -121,6 +124,25 @@ class Dev(object):
         print("Copying from: %s to %s" % (src_core, vendored_dir))
         shutil.copytree(src_core, vendored_dir)
         print("Finished vendoring.")
+
+    def fix_readme(self):
+        """
+        Updates the links in the README.md to match the current tagged version.
+        To be called during release.
+        """
+        import re
+
+        readme = os.path.join(os.path.dirname(__file__), "README.md")
+        with open(readme, "r") as f:
+            content = f.read()
+        new_content = re.sub(
+            r"\(docs/",
+            r"(https://github.com/robocorp/robotframework-lsp/tree/%s/robotframework-ls/docs/"
+            % (self.get_tag(),),
+            content,
+        )
+        with open(readme, "w") as f:
+            f.write(new_content)
 
 
 def test_lines():
