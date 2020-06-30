@@ -1,3 +1,4 @@
+# coding: utf-8
 # Original work Copyright Fabio Zadrozny (EPL 1.0)
 # See ThirdPartyNotices.txt in the project root for license information.
 # All modifications Copyright (c) Robocorp Technologies Inc.
@@ -17,6 +18,7 @@
 from robocode_ls_core.unittest_tools.fixtures import TIMEOUT
 import subprocess
 from collections import namedtuple
+from robocode_ls_core.constants import IS_PY2
 
 try:
     import Queue as queue
@@ -74,7 +76,6 @@ def dap_process_stderr_file(dap_logs_dir):
 
 @pytest.fixture
 def dap_process(dap_log_file, dap_process_stderr_file):
-    import subprocess
     from robotframework_debug_adapter import __main__
     from robocode_ls_core.basic import kill_process_and_subprocesses
 
@@ -96,13 +97,14 @@ def dap_process(dap_log_file, dap_process_stderr_file):
 
 
 class _DebuggerAPI(object):
-    def __init__(self, reader, writer, write_queue, read_queue):
+    def __init__(self, reader, writer, write_queue, read_queue, dap_resources_dir):
         self.reader = reader
         self.writer = writer
         self.write_queue = write_queue
         self.read_queue = read_queue
         self.all_messages_read = []
         self.target = None
+        self.dap_resources_dir = dap_resources_dir
 
     def write(self, msg):
         """
@@ -157,7 +159,7 @@ class _DebuggerAPI(object):
     def get_dap_case_file(self, filename, must_exist=True):
         import os.path
 
-        ret = os.path.join(os.path.dirname(__file__), "_dap_resources", filename)
+        ret = os.path.join(self.dap_resources_dir, filename)
         if must_exist:
             assert os.path.exists(ret), "%s does not exist." % (ret,)
 
@@ -262,11 +264,20 @@ class _DebuggerAPI(object):
             env = os.environ.copy()
             for key, val in run_in_terminal_request.arguments.env.to_dict().items():
                 env[as_str(key)] = as_str(val)
-            subprocess.Popen(
-                run_in_terminal_request.arguments.args,
-                cwd=run_in_terminal_request.arguments.cwd,
-                env=env,
-            )
+
+            cwd = run_in_terminal_request.arguments.cwd
+            args = run_in_terminal_request.arguments.args
+
+            if IS_PY2:
+                if isinstance(cwd, unicode):
+                    cwd = cwd.encode(sys.getfilesystemencoding())
+                args = [
+                    arg.encode(sys.getfilesystemencoding())
+                    if isinstance(arg, unicode)
+                    else arg
+                    for arg in args
+                ]
+            subprocess.Popen(args, cwd=cwd, env=env)
 
         if success:
             # Initialized is sent just before the launch response (at which
@@ -445,8 +456,31 @@ class _DebuggerAPI(object):
         return variables_response
 
 
+@pytest.fixture(scope="session")
+def dap_resources_dir(tmpdir_factory):
+    from robocode_ls_core.copytree import copytree_dst_exists
+
+    basename = u"dap áéíóú"
+    if IS_PY2:
+        basename = basename.encode(sys.getfilesystemencoding())
+    copy_to = str(tmpdir_factory.mktemp(basename))
+    if IS_PY2:
+        copy_to = copy_to.decode(sys.getfilesystemencoding())
+
+    f = __file__
+    if IS_PY2:
+        f = f.decode(sys.getfilesystemencoding())
+    original_resources_dir = os.path.join(os.path.dirname(f), u"_dap_resources")
+    assert os.path.exists(original_resources_dir)
+
+    copytree_dst_exists(original_resources_dir, copy_to)
+    resources_dir = copy_to
+    assert os.path.exists(resources_dir)
+    return resources_dir
+
+
 @pytest.fixture
-def debugger_api(dap_process):
+def debugger_api(dap_process, dap_resources_dir):
 
     from robotframework_debug_adapter.debug_adapter_threads import writer_thread
     from robotframework_debug_adapter.debug_adapter_threads import reader_thread
@@ -468,5 +502,9 @@ def debugger_api(dap_process):
     writer.start()
 
     return _DebuggerAPI(
-        reader=reader, writer=writer, write_queue=write_queue, read_queue=read_queue
+        reader=reader,
+        writer=writer,
+        write_queue=write_queue,
+        read_queue=read_queue,
+        dap_resources_dir=dap_resources_dir,
     )

@@ -1,4 +1,6 @@
 import pytest
+from robocode_ls_core.constants import IS_PY2
+import sys
 
 
 def test_keyword_completions_builtin(workspace, libspec_manager):
@@ -24,14 +26,13 @@ def test_keyword_completions_builtin(workspace, libspec_manager):
 
 
 def test_keyword_completions_changes_user_library(
-    data_regression, workspace, tmpdir, cases, libspec_manager
+    data_regression, workspace, cases, libspec_manager, workspace_dir
 ):
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
     import time
     from os.path import os
 
-    workspace_dir = str(tmpdir.join("workspace"))
     cases.copy_to("case1", workspace_dir)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
@@ -71,7 +72,7 @@ def verify_changes(model=10):
     "library_import", ["case1_library", "case1_library.py", "__FULL_PATH__"]
 )
 def test_keyword_completions_user_library(
-    data_regression, workspace, tmpdir, cases, libspec_manager, library_import
+    data_regression, workspace, cases, libspec_manager, library_import, workspace_dir
 ):
     import os.path
     from robotframework_ls.impl import keyword_completions
@@ -79,7 +80,6 @@ def test_keyword_completions_user_library(
     from robotframework_ls_tests.fixtures import LIBSPEC_1
     from robocode_ls_core import uris
 
-    workspace_dir = str(tmpdir.join("workspace"))
     cases.copy_to("case1", workspace_dir)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
@@ -92,8 +92,10 @@ def test_keyword_completions_user_library(
         )
         library_import = case1_py_path
 
-    doc.source = doc.source.replace("case1_library", library_import)
-    doc.source = doc.source + "\n    verify"
+    if IS_PY2 and isinstance(library_import, bytes):
+        library_import = library_import.decode(sys.getfilesystemencoding())
+    doc.source = doc.source.replace(u"case1_library", library_import)
+    doc.source = doc.source + u"\n    verify"
 
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
@@ -113,12 +115,11 @@ def test_keyword_completions_user_library(
 
 
 def test_keyword_completions_case1(
-    data_regression, workspace, tmpdir, cases, libspec_manager
+    data_regression, workspace, cases, libspec_manager, workspace_dir
 ):
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
 
-    workspace_dir = str(tmpdir.join("workspace"))
     cases.copy_to("case1", workspace_dir)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
@@ -454,21 +455,21 @@ Can use resource keywords
     data_regression.check(completions)
 
 
-def test_typing_not_shown(libspec_manager, tmpdir, workspace, data_regression):
+def test_typing_not_shown(libspec_manager, workspace, data_regression, workspace_dir):
     from robocode_ls_core import uris
     from os.path import os
     from robotframework_ls_tests.fixtures import LIBSPEC_3
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
 
-    ws_dir = str(tmpdir.join("workspace_dir_a"))
-    os.mkdir(ws_dir)
-    with open(os.path.join(ws_dir, "my.libspec"), "w") as stream:
+    workspace_dir_a = os.path.join(workspace_dir, "workspace_dir_a")
+    os.makedirs(workspace_dir_a)
+    with open(os.path.join(workspace_dir_a, "my.libspec"), "w") as stream:
         stream.write(LIBSPEC_3)
-    libspec_manager.add_workspace_folder(uris.from_fs_path(ws_dir))
+    libspec_manager.add_workspace_folder(uris.from_fs_path(workspace_dir_a))
     assert libspec_manager.get_library_info("case3_library", create=False) is not None
 
-    workspace.set_root(str(tmpdir), libspec_manager=libspec_manager)
+    workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
 
     doc = workspace.get_doc("temp_doc.robot")
     doc.source = """*** Settings ***

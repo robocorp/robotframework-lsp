@@ -1,5 +1,6 @@
 import pytest
 import os
+from robocode_ls_core.constants import IS_PY2
 
 
 class DummyBusyWait(object):
@@ -65,11 +66,17 @@ def stack_frames_repr(busy_wait):
     dct = {}
 
     def to_dict(stack_frame):
+        from robotframework_debug_adapter import file_utils
+
         dct = stack_frame.to_dict()
         del dct["id"]
         path = dct["source"]["path"]
         if path != "None":
-            assert os.path.exists(path)
+            if IS_PY2:
+                path = path.decode("utf-8")
+                path = path.encode(file_utils.file_system_encoding)
+            if not os.path.exists(path):
+                raise AssertionError("Expected: %r to exist." % (path,))
             # i.e.: make the path machine-independent
             dct["source"]["path"] = ".../" + os.path.basename(path)
         return dct

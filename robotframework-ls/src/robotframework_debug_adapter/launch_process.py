@@ -23,6 +23,8 @@ import itertools
 import json
 import os.path
 import threading
+from robocode_ls_core.constants import IS_PY2
+import sys
 
 try:
     import Queue as queue
@@ -403,6 +405,11 @@ class LaunchProcess(object):
                 + [target]
             )
 
+        if IS_PY2:
+            cmdline = [
+                c.encode(sys.getfilesystemencoding()) if isinstance(c, unicode) else c
+                for c in cmdline
+            ]
         self._cmdline = cmdline
 
     @property
@@ -537,11 +544,17 @@ class LaunchProcess(object):
                 log.debug('Launching in "%s" terminal: %s' % (kind, self._cmdline))
 
             debug_adapter_comm = weak_debug_adapter_comm()
+            cmdline = self._cmdline
+            if IS_PY2:
+                cmdline = [
+                    c.decode(sys.getfilesystemencoding()) if isinstance(c, bytes) else c
+                    for c in cmdline
+                ]
             if debug_adapter_comm is not None:
                 debug_adapter_comm.write_to_client_message(
                     RunInTerminalRequest(
                         RunInTerminalRequestArguments(
-                            cwd=self._cwd, args=self._cmdline, kind=kind, env=self._env
+                            cwd=self._cwd, args=cmdline, kind=kind, env=self._env
                         )
                     )
                 )

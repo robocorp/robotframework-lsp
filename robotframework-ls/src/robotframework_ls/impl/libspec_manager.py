@@ -2,6 +2,7 @@ import os
 import sys
 from robotframework_ls.constants import NULL
 from robocode_ls_core.robotframework_log import get_logger
+from robocode_ls_core.constants import IS_PY2
 
 log = get_logger(__name__)
 
@@ -52,6 +53,7 @@ def _create_updated_source_to_mtime(library_doc):
     source_to_mtime = {}
     for source in sources:
         try:
+            source = os.path.abspath(os.path.normpath(os.path.normcase(source)))
             source_to_mtime[source] = os.path.getmtime(source)
         except Exception:
             log.exception("Unable to load source for file: %s", source)
@@ -170,7 +172,12 @@ class _LibInfo(object):
                 # Nothing to validate...
                 return True
 
-            if source_to_mtime != _create_updated_source_to_mtime(self.library_doc):
+            updated_source_to_mtime = _create_updated_source_to_mtime(self.library_doc)
+            if source_to_mtime != updated_source_to_mtime:
+                log.info(
+                    "Library %s is invalid. Current source to mtime:\n%s\nChanged from:\n%s"
+                    % (self.library_doc.name, source_to_mtime, updated_source_to_mtime)
+                )
                 self._invalid = True
                 return False
 
@@ -206,8 +213,9 @@ class _FolderInfo(object):
             log.info("Tracking folder for changes: %s", self.folder_path)
             from robocode_ls_core.watchdog_wrapper import PathInfo
 
+            folder_path = self.folder_path
             self._watch = observer.notify_on_extensions_change(
-                [PathInfo(self.folder_path, recursive=self.recursive)],
+                [PathInfo(folder_path, recursive=self.recursive)],
                 ["libspec"],
                 notifier.on_change,
                 (self._on_change_spec,),
@@ -285,7 +293,7 @@ class LibspecManager(object):
 
     - PYTHONPATH folders                                  (not recursive)
     - Workspace folders                                   (recursive -- notifications from the LSP)
-    - ${user}robotframework_ls/libspec_v1/${python_hash}  (not recursive)
+    - ${user}.robotframework-ls/specs/${python_hash}      (not recursive)
 
     It searches for .libspec files in the folders tracked and provides the
     keywords that are available from those (properly caching data as needed).
@@ -314,7 +322,7 @@ class LibspecManager(object):
 
         # Note: _v1: information on the mtime of the libspec sources now available.
         return os.path.join(
-            user_home, "robotframework_ls", "libspec_v1", "%s_%s" % (digest, v)
+            user_home, ".robotframework-ls", "specs", "%s_%s" % (digest, v)
         )
 
     @classmethod
@@ -614,7 +622,10 @@ class LibspecManager(object):
                 if os.path.exists(additional_path):
                     call.extend(["-P", additional_path])
 
-            for entry in list(self._additional_pythonpath_folder_to_folder_info.keys()):
+            additional_pythonpath_entries = list(
+                self._additional_pythonpath_folder_to_folder_info.keys()
+            )
+            for entry in list(additional_pythonpath_entries):
                 if os.path.exists(entry):
                     call.extend(["-P", entry])
 
@@ -626,6 +637,14 @@ class LibspecManager(object):
             target = os.path.join(libspec_dir, libname + ".libspec")
             call.append(target)
 
+            if IS_PY2:
+                call = [
+                    c.encode(sys.getfilesystemencoding())
+                    if isinstance(c, unicode)
+                    else c
+                    for c in call
+                ]
+
             mtime = -1
             try:
                 mtime = os.path.getmtime(target)
@@ -633,8 +652,9 @@ class LibspecManager(object):
                 pass
 
             log.debug(
-                "Generating libspec for: %s.\nCommand line:\n%s",
+                "Generating libspec for: %s.\nCwd:%s\nCommand line:\n%s",
                 libname,
+                cwd,
                 " ".join(call),
             )
             try:
@@ -717,6 +737,8 @@ class LibspecManager(object):
 
         :rtype: LibraryDoc
         """
+        if IS_PY2 and isinstance(libname, unicode):
+            libname = libname.encode(sys.getfilesystemencoding())
         libname_lower = libname.lower()
         if libname_lower.endswith((".py", ".class", ".java")):
             libname_lower = os.path.splitext(libname)[0]

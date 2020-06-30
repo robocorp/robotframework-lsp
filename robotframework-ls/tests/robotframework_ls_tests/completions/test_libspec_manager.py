@@ -12,7 +12,7 @@ def test_libspec_info(libspec_manager, tmpdir):
         assert keyword.lineno > 0
 
 
-def test_libspec_manager_caches(libspec_manager, tmpdir):
+def test_libspec_manager_caches(libspec_manager, workspace_dir):
     from robocode_ls_core import uris
     from os.path import os
     from robotframework_ls_tests.fixtures import LIBSPEC_1
@@ -21,28 +21,28 @@ def test_libspec_manager_caches(libspec_manager, tmpdir):
     import time
     from robocode_ls_core.unittest_tools.fixtures import wait_for_test_condition
 
-    ws_dir = str(tmpdir.join("workspace_dir_a"))
-    os.mkdir(ws_dir)
-    with open(os.path.join(ws_dir, "my.libspec"), "w") as stream:
+    workspace_dir_a = os.path.join(workspace_dir, "workspace_dir_a")
+    os.makedirs(workspace_dir_a)
+    with open(os.path.join(workspace_dir_a, "my.libspec"), "w") as stream:
         stream.write(LIBSPEC_1)
-    libspec_manager.add_workspace_folder(uris.from_fs_path(ws_dir))
+    libspec_manager.add_workspace_folder(uris.from_fs_path(workspace_dir_a))
     assert libspec_manager.get_library_info("case1_library", create=False) is not None
 
-    libspec_manager.remove_workspace_folder(uris.from_fs_path(ws_dir))
+    libspec_manager.remove_workspace_folder(uris.from_fs_path(workspace_dir_a))
     library_info = libspec_manager.get_library_info("case1_library", create=False)
     if library_info is not None:
         raise AssertionError(
             "Expected: %s to be None after removing %s"
-            % (library_info, uris.from_fs_path(ws_dir))
+            % (library_info, uris.from_fs_path(workspace_dir_a))
         )
 
-    libspec_manager.add_workspace_folder(uris.from_fs_path(ws_dir))
+    libspec_manager.add_workspace_folder(uris.from_fs_path(workspace_dir_a))
     assert libspec_manager.get_library_info("case1_library", create=False) is not None
 
     # Give a timeout so that the next write will have at least 1 second
     # difference (1s is the minimum for poll to work).
     time.sleep(1.1)
-    with open(os.path.join(ws_dir, "my2.libspec"), "w") as stream:
+    with open(os.path.join(workspace_dir_a, "my2.libspec"), "w") as stream:
         stream.write(LIBSPEC_2)
 
     def check_spec_found():
@@ -60,7 +60,7 @@ def test_libspec_manager_caches(libspec_manager, tmpdir):
     # Give a timeout so that the next write will have at least 1 second
     # difference (1s is the minimum for poll to work).
     time.sleep(1)
-    with open(os.path.join(ws_dir, "my2.libspec"), "w") as stream:
+    with open(os.path.join(workspace_dir_a, "my2.libspec"), "w") as stream:
         stream.write(LIBSPEC_2_A)
 
     def check_spec_2_a():

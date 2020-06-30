@@ -1,10 +1,13 @@
+from robocode_ls_core.constants import IS_PY2
+import sys
+
+
 def test_library_completions_basic(
-    data_regression, workspace, tmpdir, cases, libspec_manager
+    data_regression, workspace, cases, libspec_manager, workspace_dir
 ):
     from robotframework_ls.impl import filesystem_section_completions
     from robotframework_ls.impl.completion_context import CompletionContext
 
-    workspace_dir = str(tmpdir.join("workspace"))
     cases.copy_to("case1", workspace_dir)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
@@ -20,12 +23,11 @@ Library           collec"""
 
 
 def test_library_completions_middle(
-    data_regression, workspace, tmpdir, cases, libspec_manager
+    data_regression, workspace, cases, libspec_manager, workspace_dir
 ):
     from robotframework_ls.impl import filesystem_section_completions
     from robotframework_ls.impl.completion_context import CompletionContext
 
-    workspace_dir = str(tmpdir.join("workspace"))
     cases.copy_to("case1", workspace_dir)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
@@ -42,12 +44,11 @@ Library           collecXXX"""
 
 
 def test_library_completions_local(
-    data_regression, workspace, tmpdir, cases, libspec_manager
+    data_regression, workspace, cases, libspec_manager, workspace_dir
 ):
     from robotframework_ls.impl import filesystem_section_completions
     from robotframework_ls.impl.completion_context import CompletionContext
 
-    workspace_dir = str(tmpdir.join("workspace"))
     cases.copy_to("case1", workspace_dir)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
@@ -64,13 +65,12 @@ Library           caseXXX"""
 
 
 def test_library_completions_in_dirs(
-    data_regression, workspace, tmpdir, cases, libspec_manager
+    data_regression, workspace, cases, libspec_manager, workspace_dir
 ):
     from robotframework_ls.impl import filesystem_section_completions
     from robotframework_ls.impl.completion_context import CompletionContext
     import os.path
 
-    workspace_dir = str(tmpdir.join("workspace"))
     cases.copy_to("case1", workspace_dir)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
@@ -94,23 +94,28 @@ Library           dir1/caseXXX"""
 
 
 def test_library_completions_absolute(
-    data_regression, workspace, tmpdir, cases, libspec_manager
+    data_regression, workspace, cases, libspec_manager, workspace_dir
 ):
     from robotframework_ls.impl import filesystem_section_completions
     from robotframework_ls.impl.completion_context import CompletionContext
     import os.path
 
-    workspace_dir = str(tmpdir.join("workspace"))
     cases.copy_to("case1", workspace_dir)
 
     dir1 = os.path.join(workspace_dir, "dir1")
     os.mkdir(dir1)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
+
+    directory = workspace_dir
+    if IS_PY2 and isinstance(directory, bytes):
+        directory = directory.decode(sys.getfilesystemencoding())
+    directory = directory.replace(u"\\", u"/")
+
     doc = workspace.get_doc("case1.robot")
-    doc.source = """*** Settings ***
+    doc.source = u"""*** Settings ***
 Library           %s/""" % (
-        workspace_dir.replace("\\", "/"),
+        directory,
     )
 
     completions = filesystem_section_completions.complete(
@@ -130,12 +135,11 @@ Library           %s/""" % (
 
 
 def test_resource_completions_relative(
-    data_regression, workspace, tmpdir, cases, libspec_manager
+    data_regression, workspace, cases, libspec_manager, workspace_dir
 ):
     from robotframework_ls.impl import filesystem_section_completions
     from robotframework_ls.impl.completion_context import CompletionContext
 
-    workspace_dir = str(tmpdir.join("workspace"))
     cases.copy_to("case4", workspace_dir)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
@@ -151,14 +155,13 @@ Resource           case"""
 
 
 def test_resource_completions_resolve_var(
-    data_regression, workspace, tmpdir, cases, libspec_manager
+    data_regression, workspace, cases, libspec_manager, workspace_dir
 ):
     from robotframework_ls.impl import filesystem_section_completions
     from robotframework_ls.impl.completion_context import CompletionContext
     from robocode_ls_core.config import Config
     from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_VARIABLES
 
-    workspace_dir = str(tmpdir.join("workspace"))
     cases.copy_to("case4", workspace_dir)
 
     config = Config(root_uri="", init_opts={}, process_id=-1, capabilities={})

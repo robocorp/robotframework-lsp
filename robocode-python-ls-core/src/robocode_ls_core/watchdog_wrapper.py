@@ -7,6 +7,7 @@ import sys
 import logging
 import threading
 import weakref
+from robocode_ls_core.constants import IS_PY2
 
 log = logging.getLogger(__name__)
 
@@ -17,7 +18,15 @@ class PathInfo(object):
     __slots__ = ["path", "recursive"]
 
     def __init__(self, path, recursive):
-        self.path = str(path)
+        if IS_PY2:
+            if not isinstance(path, unicode):
+                path = str(path)
+
+            if isinstance(path, bytes):
+                path = path.decode(sys.getfilesystemencoding())
+        else:
+            path = str(path)
+        self.path = path
         self.recursive = recursive
 
 

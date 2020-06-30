@@ -1,5 +1,7 @@
 import os.path
 from robocode_ls_core.robotframework_log import get_logger
+from robocode_ls_core.constants import IS_PY2
+import sys
 
 log = get_logger(__name__)
 
@@ -54,6 +56,11 @@ def _add_completions_from_dir(
         return os.path.normpath(os.path.normcase(path))
 
     curr_file = normfile(uris.to_fs_path(completion_context.doc.uri))
+    if IS_PY2:
+        if isinstance(curr_file, bytes):
+            curr_file = curr_file.decode(sys.getfilesystemencoding())
+        if isinstance(directory, bytes):
+            directory = directory.decode(sys.getfilesystemencoding())
 
     try:
         # This is ok if the directory doesn't exist.
@@ -72,10 +79,10 @@ def _add_completions_from_dir(
 
             use_path = filename
 
-        elif filename not in ("__pycache__", ".git") and os.path.isdir(
+        elif filename not in (u"__pycache__", u".git") and os.path.isdir(
             os.path.join(directory, filename)
         ):
-            use_path = filename + "/"
+            use_path = filename + u"/"
         else:
             continue
 
@@ -99,7 +106,7 @@ def _get_completions(completion_context, token, match_libs, extensions, skip_cur
     value_to_cursor = token.value
     if token.end_col_offset > sel.col:
         value_to_cursor = value_to_cursor[: -(token.end_col_offset - sel.col)]
-    if "{" in value_to_cursor:
+    if u"{" in value_to_cursor:
         value_to_cursor = completion_context.token_value_resolving_variables(
             value_to_cursor
         )
@@ -135,6 +142,8 @@ def _get_completions(completion_context, token, match_libs, extensions, skip_cur
         uri = completion_context.doc.uri
         path = uris.to_fs_path(uri)
         dirname = os.path.dirname(path)
+        if IS_PY2 and isinstance(dirname, bytes):
+            dirname = dirname.decode(sys.getfilesystemencoding())
 
         matcher = RobotStringMatcher(value_to_cursor_split[1])
         directory = os.path.join(dirname, value_to_cursor_split[0])
@@ -157,14 +166,14 @@ def _get_resource_completions(completion_context, token):
         completion_context,
         token,
         False,
-        (".resource", ".robot", ".txt"),
+        (u".resource", u".robot", u".txt"),
         skip_current=True,
     )
 
 
 def _get_library_completions(completion_context, token):
     return _get_completions(
-        completion_context, token, True, (".py",), skip_current=False
+        completion_context, token, True, (u".py",), skip_current=False
     )
 
 
@@ -190,7 +199,8 @@ def complete(completion_context):
                 token = ast_utils.get_resource_import_name_token(
                     token_info.node, token_info.token
                 )
-                ret = _get_resource_completions(completion_context, token)
+                if token is not None:
+                    ret = _get_resource_completions(completion_context, token)
 
     except:
         log.exception()

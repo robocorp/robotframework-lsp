@@ -1,6 +1,9 @@
+# coding: utf-8
 import pytest
 import os
 import logging
+from robocode_ls_core.constants import IS_PY2
+import sys
 
 __file__ = os.path.abspath(__file__)  # @ReservedAssignment
 
@@ -158,8 +161,17 @@ def libspec_manager(tmpdir):
 
 
 class _CasesFixture(object):
-    def __init__(self):
-        self.resources_dir = os.path.join(os.path.dirname(__file__), "_resources")
+    def __init__(self, copy_to_dir):
+        from robocode_ls_core.copytree import copytree_dst_exists
+
+        f = __file__
+        if IS_PY2:
+            f = f.decode(sys.getfilesystemencoding())
+        original_resources_dir = os.path.join(os.path.dirname(f), u"_resources")
+        assert os.path.exists(original_resources_dir)
+
+        copytree_dst_exists(original_resources_dir, copy_to_dir)
+        self.resources_dir = copy_to_dir
         assert os.path.exists(self.resources_dir)
 
     def get_path(self, resources_relative_path, must_exist=True):
@@ -171,12 +183,26 @@ class _CasesFixture(object):
     def copy_to(self, case, dest_dir):
         import shutil
 
-        shutil.copytree(self.get_path(case, must_exist=True), dest_dir)
+        src = self.get_path(case, must_exist=True)
+        if IS_PY2:
+            if isinstance(src, unicode):
+                src = src.encode(sys.getfilesystemencoding())
+            if isinstance(dest_dir, unicode):
+                dest_dir = dest_dir.encode(sys.getfilesystemencoding())
+
+        shutil.copytree(src, dest_dir)
 
 
 @pytest.fixture(scope="session")
-def cases():
-    return _CasesFixture()
+def cases(tmpdir_factory):
+    basename = u"res áéíóú"
+    if IS_PY2:
+        basename = basename.encode(sys.getfilesystemencoding())
+    copy_to = str(tmpdir_factory.mktemp(basename))
+    if IS_PY2:
+        copy_to = copy_to.decode(sys.getfilesystemencoding())
+
+    return _CasesFixture(copy_to)
 
 
 class _WorkspaceFixture(object):
@@ -210,3 +236,12 @@ class _WorkspaceFixture(object):
 @pytest.fixture
 def workspace(cases):
     return _WorkspaceFixture(cases)
+
+
+@pytest.fixture
+def workspace_dir(tmpdir):
+    parent = str(tmpdir)
+    basename = u"ws áéíóú"
+    if IS_PY2:
+        basename = basename.encode(sys.getfilesystemencoding())
+    return os.path.join(parent, basename)

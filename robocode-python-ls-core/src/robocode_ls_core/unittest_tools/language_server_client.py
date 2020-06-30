@@ -1,5 +1,7 @@
 import logging
 from robocode_ls_core.client_base import LanguageServerClientBase
+import sys
+from robocode_ls_core.constants import IS_PY2
 
 log = logging.getLogger(__name__)
 
@@ -25,6 +27,13 @@ class _LanguageServerClient(LanguageServerClientBase):
     def initialize(self, root_path, msg_id=None, process_id=None):
         from robocode_ls_core.uris import from_fs_path
 
+        root_uri = from_fs_path(root_path)
+        if IS_PY2:
+            if isinstance(root_path, bytes):
+                root_path = root_path.decode(sys.getfilesystemencoding())
+            if isinstance(root_uri, bytes):
+                root_uri = root_uri.decode(sys.getfilesystemencoding())
+
         msg_id = msg_id if msg_id is not None else self.next_id()
         msg = self.request(
             {
@@ -34,7 +43,7 @@ class _LanguageServerClient(LanguageServerClientBase):
                 "params": {
                     "processId": process_id,
                     "rootPath": root_path,
-                    "rootUri": from_fs_path(root_path),
+                    "rootUri": root_uri,
                     "capabilities": {
                         "workspace": {
                             "applyEdit": True,

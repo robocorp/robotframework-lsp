@@ -1,4 +1,6 @@
 from robocode_ls_core.client_base import LanguageServerClientBase
+from robocode_ls_core.constants import IS_PY2
+import sys
 
 
 class SubprocessDiedError(Exception):
@@ -24,9 +26,13 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         return True
 
     def initialize(
-        self, msg_id=None, process_id=None, root_uri="", workspace_folders=()
+        self, msg_id=None, process_id=None, root_uri=u"", workspace_folders=()
     ):
         from robocode_ls_core.options import NO_TIMEOUT, USE_TIMEOUTS
+
+        if IS_PY2:
+            if isinstance(root_uri, bytes):
+                root_uri = root_uri.decode(sys.getfilesystemencoding())
 
         self._check_process_alive()
         msg_id = msg_id if msg_id is not None else self.next_id()

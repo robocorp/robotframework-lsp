@@ -21,6 +21,8 @@ import os
 from robocode_ls_core import uris
 from robocode_ls_core.uris import uri_scheme, to_fs_path
 from robocode_ls_core.robotframework_log import get_logger
+from robocode_ls_core.constants import IS_PY2
+import sys
 
 log = get_logger(__name__)
 
@@ -40,7 +42,10 @@ class Workspace(object):
                 self.add_folder(folder)
 
         if root_uri and root_uri not in self.folders:
-            name = os.path.basename(uris.to_fs_path(root_uri))
+            as_fs_path = uris.to_fs_path(root_uri)
+            if IS_PY2 and isinstance(as_fs_path, bytes):
+                as_fs_path = as_fs_path.decode(sys.getfilesystemencoding())
+            name = os.path.basename(as_fs_path)
             self.add_folder(WorkspaceFolder(root_uri, name))
 
     def _create_document(self, doc_uri, source=None, version=None):

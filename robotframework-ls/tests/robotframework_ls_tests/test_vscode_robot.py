@@ -320,10 +320,9 @@ def test_code_format_integrated(language_server, ws_root_path, data_regression):
     assert ret["result"] == []
 
 
-def test_find_definition_integrated_library(language_server, cases, tmpdir):
+def test_find_definition_integrated_library(language_server, cases, workspace_dir):
     from robocode_ls_core import uris
 
-    workspace_dir = str(tmpdir.join("workspace"))
     cases.copy_to("case1", workspace_dir)
 
     language_server.initialize(workspace_dir, process_id=os.getpid())
@@ -343,10 +342,9 @@ def test_find_definition_integrated_library(language_server, cases, tmpdir):
     }
 
 
-def test_find_definition_keywords(language_server, cases, tmpdir):
+def test_find_definition_keywords(language_server, cases, workspace_dir):
     from robocode_ls_core import uris
 
-    workspace_dir = str(tmpdir.join("workspace"))
     cases.copy_to("case2", workspace_dir)
 
     language_server.initialize(workspace_dir, process_id=os.getpid())

@@ -27,6 +27,7 @@ from robocode_ls_core.robotframework_log import get_logger
 from collections import namedtuple
 from robocode_ls_core.constants import IS_PY2
 import weakref
+import sys
 
 log = get_logger(__name__)
 
@@ -339,11 +340,17 @@ class _RobotDebuggerImpl(object):
         try:
             source = obj.source
             if source is None:
-                return "None"
+                return u"None"
+
+            if IS_PY2 and isinstance(source, unicode):
+                source = source.encode(file_utils.file_system_encoding)
 
             filename, _changed = file_utils.norm_file_to_client(source)
+
+            if IS_PY2 and isinstance(filename, bytes):
+                source = source.decode(file_utils.file_system_encoding)
         except:
-            filename = "<Unable to get %s filename>" % (msg,)
+            filename = u"<Unable to get %s filename>" % (msg,)
             log.exception(filename)
 
         return filename
@@ -356,21 +363,21 @@ class _RobotDebuggerImpl(object):
                 if entry.__class__ == _StepEntry:
                     keyword = entry.keyword
                     variables = entry.variables
-                    filename = self._get_filename(keyword, "Keyword")
+                    filename = self._get_filename(keyword, u"Keyword")
 
                     frame_id = stack_info.add_keyword_entry_stack(
                         keyword, filename, variables
                     )
 
                 elif entry.__class__ == _SuiteEntry:
-                    name = "TestSuite: %s" % (entry.name,)
-                    filename = self._get_filename(keyword, "TestSuite")
+                    name = u"TestSuite: %s" % (entry.name,)
+                    filename = self._get_filename(keyword, u"TestSuite")
 
                     frame_id = stack_info.add_suite_entry_stack(name, filename)
 
                 elif entry.__class__ == _TestEntry:
-                    name = "TestCase: %s" % (entry.name,)
-                    filename = self._get_filename(keyword, "TestCase")
+                    name = u"TestCase: %s" % (entry.name,)
+                    filename = self._get_filename(keyword, u"TestCase")
 
                     frame_id = stack_info.add_test_entry_stack(
                         name, filename, entry.lineno
@@ -436,6 +443,9 @@ class _RobotDebuggerImpl(object):
         """
         if isinstance(breakpoints, RobotBreakpoint):
             breakpoints = (breakpoints,)
+        if IS_PY2:
+            if isinstance(filename, unicode):
+                filename = filename.encode(file_utils.file_system_encoding)
         filename = file_utils.get_abs_path_real_path_and_base_from_file(filename)[0]
         line_to_bp = {}
         for bp in breakpoints:
