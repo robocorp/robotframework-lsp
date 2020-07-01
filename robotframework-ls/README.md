@@ -30,12 +30,12 @@ may be needed.
 See: [Config](docs/config.md) for details.
   
 
-Features (0.2.3)
+Features (0.3.0)
 -----------------
 
 - Code analysis: checks if keywords are properly imported/defined.
-- Code completion for keywords, section headers, section settings and variables.
-- Go to definition for keywords.
+- Code completion for keywords, section headers, section settings, variables, resource imports and library imports.
+- Go to definition for keywords, variables, resource imports and library imports
 - Syntax highlighting.
 - Syntax validation.
 - Code Formatting (see: [Editor Settings](https://code.visualstudio.com/docs/getstarted/settings#_language-specific-editor-settings) for details on how to toggle code formatting just for `robotframework`).

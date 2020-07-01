@@ -1,3 +1,15 @@
+New in 0.3.0 (2020-07-01)
+-----------------------------
+
+ - Go to definition for variables.
+ - Code completion for `Resource Imports` and `Library Imports`.
+ - Go to definition support for `Resource Imports` and `Library Imports`.
+ - Do code analysis in a separate process (i.e.: code-completion should not wait for code analysis).
+ - Create cached document from filesystem (i.e.: ast is not recreated unless `.robot` file is changed).
+ - Check spaces and unicode characters on pythonpath/resources/imports.
+ - Config link in the vs code extension documentation is broken.
+
+
 New in 0.2.3 (2020-06-16)
 -----------------------------
 
