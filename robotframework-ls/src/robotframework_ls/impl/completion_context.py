@@ -325,14 +325,11 @@ class CompletionContext(object):
                     check_paths = [name_with_resolved_vars]
 
                 for resource_path in check_paths:
-                    if not os.path.isfile(resource_path):
+                    doc_uri = uris.from_fs_path(resource_path)
+                    resource_doc = ws.get_document(doc_uri, accept_from_file=True)
+                    if resource_doc is None:
                         log.info("Resource not found: %s", resource_path)
                         continue
-
-                    doc_uri = uris.from_fs_path(resource_path)
-                    resource_doc = ws.get_document(doc_uri, create=False)
-                    if resource_doc is None:
-                        resource_doc = ws.create_untracked_document(doc_uri)
                     return resource_doc
         return None
 

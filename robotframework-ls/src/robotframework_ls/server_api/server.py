@@ -214,7 +214,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             log.info("Workspace still not initialized.")
             return None
 
-        document = workspace.get_document(doc_uri, create=False)
+        document = workspace.get_document(doc_uri, accept_from_file=True)
         if document is None:
             log.info("Unable to get document for uri: %s.", doc_uri)
             return None

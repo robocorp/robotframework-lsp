@@ -502,9 +502,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         # Note: 0-based
         line, col = kwargs["position"]["line"], kwargs["position"]["character"]
 
-        document = self.workspace.get_document(doc_uri, create=False)
+        document = self.workspace.get_document(doc_uri, accept_from_file=True)
         if document is None:
-            msg = "Unable to find document (%s) for completions." % (doc_uri,)
+            msg = "Unable to find document (%s) for definition." % (doc_uri,)
             log.critical(msg)
             raise RuntimeError(msg)
 
@@ -529,7 +529,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         # Note: 0-based
         line, col = kwargs["position"]["line"], kwargs["position"]["character"]
 
-        document = self.workspace.get_document(doc_uri, create=False)
+        document = self.workspace.get_document(doc_uri, accept_from_file=True)
         if document is None:
             log.critical("Unable to find document (%s) for completions." % (doc_uri,))
             return []

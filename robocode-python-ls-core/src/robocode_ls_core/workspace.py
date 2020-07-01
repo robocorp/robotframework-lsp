@@ -35,7 +35,12 @@ class Workspace(object):
         self._root_uri_scheme = uri_scheme(self._root_uri)
         self._root_path = to_fs_path(self._root_uri)
         self._folders = {}
+
+        # Contains the docs with files considered open.
         self._docs = {}
+
+        # Contains the docs pointing to the filesystem.
+        self._filesystem_docs = {}
 
         if workspace_folders is not None:
             for folder in workspace_folders:
@@ -50,23 +55,6 @@ class Workspace(object):
 
     def _create_document(self, doc_uri, source=None, version=None):
         return Document(doc_uri, source=source, version=version)
-
-    def create_untracked_document(self, doc_uri):
-        """
-        Creates a document from an uri which points to the filesystem.
-        
-        The returned document is not referenced by the workspace and is
-        not kept in sync afterwards (it's meant to be used and thrown away).
-        
-        The use-case is code completion referencing existing files (because
-        right now if we get a document from the filesystem it's not kept in
-        sync if changes happen in the filesystem -- after this is done, this
-        API can be removed).
-        
-        :param str doc_uri:
-            The uri for the document.
-        """
-        return self._create_document(doc_uri)
 
     def add_folder(self, folder):
         """
@@ -84,17 +72,22 @@ class Workspace(object):
     def folders(self):
         return self._folders
 
-    def get_document(self, doc_uri, create=True):
+    def get_document(self, doc_uri, accept_from_file):
         """
-        Return a managed document if-present,
-        else create one pointing at disk.
-
-        See https://github.com/Microsoft/language-server-protocol/issues/177
+        Return a managed document if-present, otherwise, create one pointing at
+        the disk if accept_from_file == True (if the file exists, and we're able to
+        load it, otherwise, return None).
         """
         doc = self._docs.get(doc_uri)
         if doc is None:
-            if create:
-                doc = self._create_document(doc_uri)
+            if accept_from_file:
+                doc = self._filesystem_docs.get(doc_uri)
+                if doc is None:
+                    doc = self._create_document(doc_uri)
+                    self._filesystem_docs[doc_uri] = doc
+                if not doc.sync_source():
+                    self._filesystem_docs.pop(doc_uri, None)
+                    doc = None
 
         return doc
 
@@ -109,9 +102,11 @@ class Workspace(object):
         """
         doc_uri = text_document.uri
 
-        self._docs[doc_uri] = self._create_document(
+        doc = self._docs[doc_uri] = self._create_document(
             doc_uri, source=text_document.text, version=text_document.version
         )
+        self._filesystem_docs.pop(doc_uri, None)
+        return doc
 
     def remove_document(self, doc_uri):
         self._docs.pop(doc_uri, None)
@@ -148,6 +143,9 @@ class Document(object):
 
         self._source = source
         self.__line_start_offsets = None
+
+        # Only set when the source is read from disk.
+        self._source_mtime = -1
 
     def __str__(self):
         return str(self.uri)
@@ -228,11 +226,30 @@ class Document(object):
         line_start_offset = line_start_offset_to_info[i_line]
         return (i_line, offset - line_start_offset)
 
+    def _load_source(self, mtime=None):
+        if mtime is None:
+            mtime = os.path.getmtime(self.path)
+
+        self._source_mtime = mtime
+        with io.open(self.path, "r", encoding="utf-8") as f:
+            self._source = f.read()
+
+    def sync_source(self):
+        try:
+            mtime = os.path.getmtime(self.path)
+            if self._source_mtime != mtime:
+                self._load_source(mtime)
+
+            # Ok, we loaded the sources properly.
+            return True
+        except Exception:
+            log.info("Unable to load source for: %s", self.path)
+            return False
+
     @property
     def source(self):
         if self._source is None:
-            with io.open(self.path, "r", encoding="utf-8") as f:
-                self._source = f.read()
+            self._load_source()
         return self._source
 
     @source.setter

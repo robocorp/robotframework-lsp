@@ -17,7 +17,8 @@ def _get_libspec_mutex_name(libspec_filename):
 
     libspec_filename = _norm_filename(libspec_filename)
     basename = os.path.basename(libspec_filename)
-    return generate_mutex_name(libspec_filename, prefix="%s_" % basename)
+    name = os.path.splitext(basename)[0]
+    return generate_mutex_name(libspec_filename, prefix="%s_" % (name,))
 
 
 def _get_additional_info_filename(spec_filename):

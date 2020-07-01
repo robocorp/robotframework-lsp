@@ -462,6 +462,7 @@ def test_typing_not_shown(libspec_manager, workspace, data_regression, workspace
     from robotframework_ls_tests.fixtures import LIBSPEC_3
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
+    from robocode_ls_core.lsp import TextDocumentItem
 
     workspace_dir_a = os.path.join(workspace_dir, "workspace_dir_a")
     os.makedirs(workspace_dir_a)
@@ -472,7 +473,7 @@ def test_typing_not_shown(libspec_manager, workspace, data_regression, workspace
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
 
-    doc = workspace.get_doc("temp_doc.robot")
+    doc = workspace.ws.put_document(TextDocumentItem("temp_doc.robot", text=""))
     doc.source = """*** Settings ***
 Library    case3_library
 

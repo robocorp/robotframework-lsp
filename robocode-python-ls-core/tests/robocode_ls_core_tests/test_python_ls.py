@@ -298,7 +298,7 @@ def test_python_ls(capabilites_jupyter):
     ls.m_text_document__did_change(
         textDocument={"uri": uri}, contentChanges=[{"text": "Some text"}]
     )
-    doc = ls.workspace.get_document(uri, create=False)
+    doc = ls.workspace.get_document(uri, accept_from_file=False)
     assert doc.source == "Some text"
 
     ls.m_exit()

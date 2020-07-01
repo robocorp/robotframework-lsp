@@ -224,12 +224,12 @@ class _WorkspaceFixture(object):
         path = self._cases.get_path(relative_path)
         self._ws = RobotWorkspace(uris.from_fs_path(path), **kwargs)
 
-    def get_doc(self, root_relative_path, create=True):
+    def get_doc(self, root_relative_path, accept_from_file=True):
         from robocode_ls_core import uris
 
         path = os.path.join(self._ws.root_path, root_relative_path)
         uri = uris.from_fs_path(path)
-        return self.ws.get_document(uri, create=create)
+        return self.ws.get_document(uri, accept_from_file=accept_from_file)
 
 
 @pytest.fixture
