@@ -70,10 +70,12 @@ def _verify_prev_acquired_in_thread(mutex_name):
         if (
             system_mutex is not None
             and system_mutex.get_mutex_aquired()
+            and not system_mutex.disposed
             and system_mutex.thread_id == get_tid()
         ):
             raise RuntimeError(
-                "Error: this thread has already acquired a SystemMutex and it's not a reentrant mutex (so, this would never work)!"
+                "Error: this thread has already acquired a SystemMutex(%s) and it's not a reentrant mutex (so, this would never work)!"
+                % (mutex_name,)
             )
 
 
@@ -134,6 +136,17 @@ if sys.platform == "win32":
                 self._release_mutex = release_mutex
                 self._acquired = True
                 _mark_prev_acquired_in_thread(self)
+
+        @property
+        def disposed(self):
+            if not self._acquired:
+                return True
+            release_mutex = self._release_mutex
+            if release_mutex is NULL:
+                return True
+            if getattr(release_mutex, "called", False):
+                return True
+            return False
 
         def get_mutex_aquired(self):
             return self._acquired
@@ -196,6 +209,17 @@ else:  # Linux
                 self._release_mutex = release_mutex
                 self._acquired = True
                 _mark_prev_acquired_in_thread(self)
+
+        @property
+        def disposed(self):
+            if not self._acquired:
+                return True
+            release_mutex = self._release_mutex
+            if release_mutex is NULL:
+                return True
+            if getattr(release_mutex, "called", False):
+                return True
+            return False
 
         def get_mutex_aquired(self):
             return self._acquired

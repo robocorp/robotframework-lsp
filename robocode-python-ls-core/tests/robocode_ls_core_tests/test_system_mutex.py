@@ -28,9 +28,12 @@ def test_system_mutex():
     t.join()
     assert t.worked
 
+    assert not system_mutex.disposed
     system_mutex.release_mutex()
+    assert system_mutex.disposed
 
     mutex3 = SystemMutex(mutex_name)
+    assert not mutex3.disposed
     assert mutex3.get_mutex_aquired()
     mutex3 = weakref.ref(mutex3)  # Garbage-collected
 
