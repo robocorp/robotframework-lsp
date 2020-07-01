@@ -7,22 +7,46 @@ from robocode_ls_core.constants import IS_PY2
 log = get_logger(__name__)
 
 
+def _normfile(filename):
+    return os.path.abspath(os.path.normpath(os.path.normcase(filename)))
+
+
+def _get_libspec_mutex_name(libspec_filename):
+    from robocode_ls_core.system_mutex import generate_mutex_name
+
+    libspec_filename = _norm_filename(libspec_filename)
+    basename = os.path.basename(libspec_filename)
+    return generate_mutex_name(libspec_filename, prefix="%s_" % basename)
+
+
 def _get_additional_info_filename(spec_filename):
     additional_info_filename = os.path.join(spec_filename + ".m")
     return additional_info_filename
 
 
-def _load_library_doc_and_mtime(spec_filename):
+def _load_library_doc_and_mtime(spec_filename, obtain_mutex=True):
+    """
+    :param obtain_mutex:
+        Should be False if this is part of a bigger operation that already
+        has the spec_filename mutex.
+    """
     from robotframework_ls.impl import robot_specbuilder
+    from robocode_ls_core.system_mutex import timed_acquire_mutex
 
-    builder = robot_specbuilder.SpecDocBuilder()
-    try:
-        mtime = os.path.getmtime(spec_filename)
-        libdoc = builder.build(spec_filename)
-        return libdoc, mtime
-    except Exception:
-        log.exception("Error when loading spec info from: %s", spec_filename)
-        return None
+    if obtain_mutex:
+        ctx = timed_acquire_mutex(_get_libspec_mutex_name(spec_filename))
+    else:
+        ctx = NULL
+    with ctx:
+        # We must load it with a mutex to avoid conflicts between generating/reading.
+        builder = robot_specbuilder.SpecDocBuilder()
+        try:
+            mtime = os.path.getmtime(spec_filename)
+            libdoc = builder.build(spec_filename)
+            return libdoc, mtime
+        except Exception:
+            log.exception("Error when loading spec info from: %s", spec_filename)
+            return None
 
 
 def _load_lib_info(spec_filename, can_regenerate):
@@ -53,14 +77,14 @@ def _create_updated_source_to_mtime(library_doc):
     source_to_mtime = {}
     for source in sources:
         try:
-            source = os.path.abspath(os.path.normpath(os.path.normcase(source)))
+            source = _normfile(source)
             source_to_mtime[source] = os.path.getmtime(source)
         except Exception:
             log.exception("Unable to load source for file: %s", source)
     return source_to_mtime
 
 
-def _create_additional_info(spec_filename, is_builtin):
+def _create_additional_info(spec_filename, is_builtin, obtain_mutex=True):
     try:
         additional_info = {_IS_BUILTIN: is_builtin}
         if is_builtin:
@@ -68,7 +92,9 @@ def _create_additional_info(spec_filename, is_builtin):
             # (on a new version we update the folder).
             return additional_info
 
-        library_doc_and_mtime = _load_library_doc_and_mtime(spec_filename)
+        library_doc_and_mtime = _load_library_doc_and_mtime(
+            spec_filename, obtain_mutex=obtain_mutex
+        )
         if library_doc_and_mtime is None:
             additional_info[_UNABLE_TO_LOAD] = True
             return additional_info
@@ -102,14 +128,16 @@ def _load_spec_filename_additional_info(spec_filename):
         return {}
 
 
-def _dump_spec_filename_additional_info(spec_filename, is_builtin):
+def _dump_spec_filename_additional_info(spec_filename, is_builtin, obtain_mutex=True):
     """
     Creates a filename with additional information not directly available in the
     spec.
     """
     import json
 
-    source_to_mtime = _create_additional_info(spec_filename, is_builtin)
+    source_to_mtime = _create_additional_info(
+        spec_filename, is_builtin, obtain_mutex=obtain_mutex
+    )
     additional_info_filename = _get_additional_info_filename(spec_filename)
     with open(additional_info_filename, "w") as stream:
         json.dump(source_to_mtime, stream, indent=2, sort_keys=True)
@@ -492,20 +520,28 @@ class LibspecManager(object):
 
         try:
             from robotframework_ls.impl import robot_constants
+            from robocode_ls_core.system_mutex import timed_acquire_mutex
+            from robocode_ls_core.system_mutex import generate_mutex_name
 
             initial_time = time.time()
-
             wait_for = []
-            for libname in robot_constants.STDLIBS:
-                library_info = self.get_library_info(libname, create=False)
-                if library_info is None:
-                    wait_for.append(
-                        self._thread_pool.submit(
-                            self._create_libspec, libname, is_builtin=True
+
+            with timed_acquire_mutex(
+                generate_mutex_name(
+                    _norm_filename(self._builtins_libspec_dir), prefix="gen_builtins_"
+                ),
+                timeout=100,
+            ):
+                for libname in robot_constants.STDLIBS:
+                    library_info = self.get_library_info(libname, create=False)
+                    if library_info is None:
+                        wait_for.append(
+                            self._thread_pool.submit(
+                                self._create_libspec, libname, is_builtin=True
+                            )
                         )
-                    )
-            for future in wait_for:
-                future.result()
+                for future in wait_for:
+                    future.result()
 
             if wait_for:
                 log.debug(
@@ -612,84 +648,97 @@ class LibspecManager(object):
         import time
         from robotframework_ls.impl import robot_constants
         from robocode_ls_core.subprocess_wrapper import subprocess
+        from robocode_ls_core.system_mutex import timed_acquire_mutex
 
         curtime = time.time()
 
         try:
-            call = [sys.executable]
-            call.extend("-m robot.libdoc --format XML:HTML".split())
-            if additional_path:
-                if os.path.exists(additional_path):
-                    call.extend(["-P", additional_path])
-
-            additional_pythonpath_entries = list(
-                self._additional_pythonpath_folder_to_folder_info.keys()
-            )
-            for entry in list(additional_pythonpath_entries):
-                if os.path.exists(entry):
-                    call.extend(["-P", entry])
-
-            call.append(libname)
-            libspec_dir = self._user_libspec_dir
-            if libname in robot_constants.STDLIBS:
-                libspec_dir = self._builtins_libspec_dir
-
-            target = os.path.join(libspec_dir, libname + ".libspec")
-            call.append(target)
-
-            if IS_PY2:
-                call = [
-                    c.encode(sys.getfilesystemencoding())
-                    if isinstance(c, unicode)
-                    else c
-                    for c in call
-                ]
-
-            mtime = -1
             try:
-                mtime = os.path.getmtime(target)
-            except:
-                pass
+                call = [sys.executable]
+                call.extend("-m robot.libdoc --format XML:HTML".split())
+                if additional_path:
+                    if os.path.exists(additional_path):
+                        call.extend(["-P", additional_path])
 
-            log.debug(
-                "Generating libspec for: %s.\nCwd:%s\nCommand line:\n%s",
-                libname,
-                cwd,
-                " ".join(call),
-            )
-            try:
-                try:
-                    # Note: stdout is always subprocess.PIPE in this call.
-                    subprocess.check_output(
-                        call,
-                        stderr=subprocess.STDOUT,
-                        stdin=subprocess.PIPE,
-                        env=env,
-                        cwd=cwd,
-                    )
-                except OSError as e:
-                    log.exception("Error calling: %s", call)
-                    # We may have something as: Ignore OSError: [WinError 6] The handle is invalid,
-                    # give the result based on whether the file changed on disk.
+                additional_pythonpath_entries = list(
+                    self._additional_pythonpath_folder_to_folder_info.keys()
+                )
+                for entry in list(additional_pythonpath_entries):
+                    if os.path.exists(entry):
+                        call.extend(["-P", entry])
+
+                call.append(libname)
+                libspec_dir = self._user_libspec_dir
+                if libname in robot_constants.STDLIBS:
+                    libspec_dir = self._builtins_libspec_dir
+
+                libspec_filename = os.path.join(libspec_dir, libname + ".libspec")
+
+                with timed_acquire_mutex(
+                    _get_libspec_mutex_name(libspec_filename)
+                ):  # Could fail.
+                    call.append(libspec_filename)
+
+                    if IS_PY2:
+                        call = [
+                            c.encode(sys.getfilesystemencoding())
+                            if isinstance(c, unicode)
+                            else c
+                            for c in call
+                        ]
+
+                    mtime = -1
                     try:
-                        if mtime != os.path.getmtime(target):
-                            _dump_spec_filename_additional_info(
-                                target, is_builtin=is_builtin
-                            )
-                            return True
+                        mtime = os.path.getmtime(libspec_filename)
                     except:
                         pass
 
-                    log.debug("Not retrying after OSError failure.")
-                    return False
+                    log.debug(
+                        "Generating libspec for: %s.\nCwd:%s\nCommand line:\n%s",
+                        libname,
+                        cwd,
+                        " ".join(call),
+                    )
+                    try:
+                        try:
+                            # Note: stdout is always subprocess.PIPE in this call.
+                            subprocess.check_output(
+                                call,
+                                stderr=subprocess.STDOUT,
+                                stdin=subprocess.PIPE,
+                                env=env,
+                                cwd=cwd,
+                            )
+                        except OSError as e:
+                            log.exception("Error calling: %s", call)
+                            # We may have something as: Ignore OSError: [WinError 6] The handle is invalid,
+                            # give the result based on whether the file changed on disk.
+                            try:
+                                if mtime != os.path.getmtime(libspec_filename):
+                                    _dump_spec_filename_additional_info(
+                                        libspec_filename,
+                                        is_builtin=is_builtin,
+                                        obtain_mutex=False,
+                                    )
+                                    return True
+                            except:
+                                pass
 
-            except subprocess.CalledProcessError as e:
-                log.exception(
-                    "Error creating libspec: %s. Output:\n%s", libname, e.output
-                )
+                            log.debug("Not retrying after OSError failure.")
+                            return False
+
+                    except subprocess.CalledProcessError as e:
+                        log.exception(
+                            "Error creating libspec: %s. Output:\n%s", libname, e.output
+                        )
+                        return False
+                    _dump_spec_filename_additional_info(
+                        libspec_filename, is_builtin=is_builtin, obtain_mutex=False
+                    )
+                    return True
+            except Exception:
+                log.exception("Error creating libspec: %s", libname)
                 return False
-            _dump_spec_filename_additional_info(target, is_builtin=is_builtin)
-            return True
         finally:
             if log_time:
                 delta = time.time() - curtime

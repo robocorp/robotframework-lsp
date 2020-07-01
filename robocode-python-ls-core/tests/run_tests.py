@@ -83,7 +83,7 @@ def main():
                         write("Subprocess leaked: %s (%s)\n" % (s, cmdline))
                         pids.append(s.pid)
 
-                    from robotframework_ls._utils import kill_process_and_subprocesses
+                    from robocode_ls_core.basic import kill_process_and_subprocesses
 
                     kill_process_and_subprocesses(pid)
 
