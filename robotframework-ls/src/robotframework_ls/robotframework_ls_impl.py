@@ -24,7 +24,7 @@ _next_id = partial(next, itertools.count(0))
 
 
 class _ServerApi(object):
-    def __init__(self, robot_framework_language_server):
+    def __init__(self, robot_framework_language_server, log_extension):
         self._server_lock = threading.RLock()
 
         self._used_python_executable = None
@@ -36,6 +36,7 @@ class _ServerApi(object):
             robot_framework_language_server
         )
         self._initializing = False
+        self._log_extension = log_extension
 
     @property
     def robot_framework_language_server(self):
@@ -139,13 +140,17 @@ class _ServerApi(object):
                         # i.e.: use a log id in case we create more than one in the
                         # same session.
                         if log_id == 0:
-                            args.append("--log-file=" + Setup.options.log_file + ".api")
+                            args.append(
+                                "--log-file="
+                                + Setup.options.log_file
+                                + self._log_extension
+                            )
                         else:
                             args.append(
                                 "--log-file="
                                 + Setup.options.log_file
                                 + (".%s" % (log_id,))
-                                + ".api"
+                                + self._log_extension
                             )
 
                     python_exe = self._get_python_executable()
@@ -283,6 +288,13 @@ class _ServerApi(object):
                 api.forward(method_name, params)
 
     @log_and_silence_errors(log)
+    def forward_async(self, method_name, params):
+        with self._server_lock:
+            api = self._get_server_api()
+            if api is not None:
+                api.forward_async(method_name, params)
+
+    @log_and_silence_errors(log)
     def open(self, uri, version, source):
         with self._server_lock:
             api = self._get_server_api()
@@ -307,7 +319,8 @@ class _ServerApi(object):
 
 class RobotFrameworkLanguageServer(PythonLanguageServer):
     def __init__(self, rx, tx):
-        self._api = _ServerApi(self)
+        self._api = _ServerApi(self, ".api")
+        self._lint_api = _ServerApi(self, ".lint.api")
         PythonLanguageServer.__init__(self, rx, tx)
 
     @property
@@ -318,6 +331,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def config(self, config):
         self._config = config
         self._api.config = config
+        self._lint_api.config = config
 
     @overrides(PythonLanguageServer._create_workspace)
     def _create_workspace(self, root_uri, workspace_folders):
@@ -362,12 +376,23 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         log.info("Server capabilities: %s", server_capabilities)
         return server_capabilities
 
+    def _forward_api(self, target, method_name, params):
+        if "api" in target:
+            self._api.forward(method_name, params)
+
+        if "lint" in target:
+            # For the lint api, things should be asynchronous.
+            self._lint_api.forward_async(method_name, params)
+
     @overrides(PythonLanguageServer.m_workspace__did_change_configuration)
     @log_and_silence_errors(log)
     def m_workspace__did_change_configuration(self, **kwargs):
         PythonLanguageServer.m_workspace__did_change_configuration(self, **kwargs)
+
         self._api.config = self.config
-        self._api.forward("workspace/didChangeConfiguration", kwargs)
+        self._lint_api.config = self.config
+
+        self._forward_api(("api", "lint"), "workspace/didChangeConfiguration", kwargs)
 
     # --- Methods to forward to the api
 
@@ -375,12 +400,14 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     @log_and_silence_errors(log)
     def m_shutdown(self, **kwargs):
         self._api.shutdown()
+        self._lint_api.shutdown()
         PythonLanguageServer.m_shutdown(self, **kwargs)
 
     @overrides(PythonLanguageServer.m_exit)
     @log_and_silence_errors(log)
     def m_exit(self, **kwargs):
         self._api.exit()
+        self._lint_api.exit()
         PythonLanguageServer.m_exit(self, **kwargs)
 
     def m_text_document__formatting(self, textDocument=None, options=None):
@@ -412,14 +439,18 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
     @overrides(PythonLanguageServer.m_text_document__did_close)
     def m_text_document__did_close(self, textDocument=None, **_kwargs):
-        self._api.forward("textDocument/didClose", {"textDocument": textDocument})
+        self._forward_api(
+            ("api", "lint"), "textDocument/didClose", {"textDocument": textDocument}
+        )
         PythonLanguageServer.m_text_document__did_close(
             self, textDocument=textDocument, **_kwargs
         )
 
     @overrides(PythonLanguageServer.m_text_document__did_open)
     def m_text_document__did_open(self, textDocument=None, **_kwargs):
-        self._api.forward("textDocument/didOpen", {"textDocument": textDocument})
+        self._forward_api(
+            ("api", "lint"), "textDocument/didOpen", {"textDocument": textDocument}
+        )
         PythonLanguageServer.m_text_document__did_open(
             self, textDocument=textDocument, **_kwargs
         )
@@ -428,7 +459,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def m_text_document__did_change(
         self, contentChanges=None, textDocument=None, **_kwargs
     ):
-        self._api.forward(
+        self._forward_api(
+            ("api", "lint"),
             "textDocument/didChange",
             {"contentChanges": contentChanges, "textDocument": textDocument},
         )
@@ -440,8 +472,10 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def m_workspace__did_change_workspace_folders(
         self, added=None, removed=None, **_kwargs
     ):
-        self._api.forward(
-            "workspace/didChangeWorkspaceFolders", {"added": added, "removed": removed}
+        self._forward_api(
+            ("api", "lint"),
+            "workspace/didChangeWorkspaceFolders",
+            {"added": added, "removed": removed},
         )
         PythonLanguageServer.m_workspace__did_change_workspace_folders(
             self, added=added, removed=removed, **_kwargs
@@ -455,7 +489,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         # Since we're debounced, the document may no longer be open
         try:
             found = []
-            diagnostics_msg = self._api.lint(doc_uri)
+            diagnostics_msg = self._lint_api.lint(doc_uri)
             if diagnostics_msg:
                 found = diagnostics_msg.get("result", [])
             self._lsp_messages.publish_diagnostics(doc_uri, found)

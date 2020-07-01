@@ -88,6 +88,16 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             {"jsonrpc": "2.0", "id": msg_id, "method": method_name, "params": params}
         )
 
+    def forward_async(self, method_name, params):
+        """
+        :Note: async complete (returns _MessageMatcher).
+        """
+        self._check_process_alive()
+        msg_id = self.next_id()
+        return self.request_async(
+            {"jsonrpc": "2.0", "id": msg_id, "method": method_name, "params": params}
+        )
+
     def open(self, uri, version, source):
         self.forward(
             "textDocument/didOpen",
