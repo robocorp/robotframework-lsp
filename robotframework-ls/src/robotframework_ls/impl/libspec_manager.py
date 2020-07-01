@@ -3,6 +3,7 @@ import sys
 from robotframework_ls.constants import NULL
 from robocode_ls_core.robotframework_log import get_logger
 from robocode_ls_core.constants import IS_PY2
+from robocode_ls_core.basic import py2_filesystem_encode
 
 log = get_logger(__name__)
 
@@ -680,12 +681,7 @@ class LibspecManager(object):
                     call.append(libspec_filename)
 
                     if IS_PY2:
-                        call = [
-                            c.encode(sys.getfilesystemencoding())
-                            if isinstance(c, unicode)
-                            else c
-                            for c in call
-                        ]
+                        call = [py2_filesystem_encode(c) for c in call]
 
                     mtime = -1
                     try:
@@ -786,8 +782,8 @@ class LibspecManager(object):
 
         :rtype: LibraryDoc
         """
-        if IS_PY2 and isinstance(libname, unicode):
-            libname = libname.encode(sys.getfilesystemencoding())
+        if IS_PY2:
+            libname = py2_filesystem_encode(libname)
         libname_lower = libname.lower()
         if libname_lower.endswith((".py", ".class", ".java")):
             libname_lower = os.path.splitext(libname)[0]

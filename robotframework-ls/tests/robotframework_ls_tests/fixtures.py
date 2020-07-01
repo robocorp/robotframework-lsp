@@ -4,6 +4,7 @@ import os
 import logging
 from robocode_ls_core.constants import IS_PY2
 import sys
+from robocode_ls_core.basic import py2_filesystem_encode, py2_filesystem_decode
 
 __file__ = os.path.abspath(__file__)  # @ReservedAssignment
 
@@ -166,7 +167,7 @@ class _CasesFixture(object):
 
         f = __file__
         if IS_PY2:
-            f = f.decode(sys.getfilesystemencoding())
+            f = py2_filesystem_decode(f)
         original_resources_dir = os.path.join(os.path.dirname(f), u"_resources")
         assert os.path.exists(original_resources_dir)
 
@@ -185,10 +186,8 @@ class _CasesFixture(object):
 
         src = self.get_path(case, must_exist=True)
         if IS_PY2:
-            if isinstance(src, unicode):
-                src = src.encode(sys.getfilesystemencoding())
-            if isinstance(dest_dir, unicode):
-                dest_dir = dest_dir.encode(sys.getfilesystemencoding())
+            src = py2_filesystem_encode(src)
+            dest_dir = py2_filesystem_encode(dest_dir)
 
         shutil.copytree(src, dest_dir)
 
@@ -197,10 +196,10 @@ class _CasesFixture(object):
 def cases(tmpdir_factory):
     basename = u"res áéíóú"
     if IS_PY2:
-        basename = basename.encode(sys.getfilesystemencoding())
+        basename = py2_filesystem_encode(basename)
     copy_to = str(tmpdir_factory.mktemp(basename))
     if IS_PY2:
-        copy_to = copy_to.decode(sys.getfilesystemencoding())
+        copy_to = py2_filesystem_decode(copy_to)
 
     return _CasesFixture(copy_to)
 
@@ -243,5 +242,5 @@ def workspace_dir(tmpdir):
     parent = str(tmpdir)
     basename = u"ws áéíóú"
     if IS_PY2:
-        basename = basename.encode(sys.getfilesystemencoding())
+        basename = py2_filesystem_encode(basename)
     return os.path.join(parent, basename)

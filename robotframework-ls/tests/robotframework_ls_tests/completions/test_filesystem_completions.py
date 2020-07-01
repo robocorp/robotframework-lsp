@@ -1,5 +1,6 @@
 from robocode_ls_core.constants import IS_PY2
 import sys
+from robocode_ls_core.basic import py2_filesystem_decode
 
 
 def test_library_completions_basic(
@@ -108,8 +109,8 @@ def test_library_completions_absolute(
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
 
     directory = workspace_dir
-    if IS_PY2 and isinstance(directory, bytes):
-        directory = directory.decode(sys.getfilesystemencoding())
+    if IS_PY2:
+        directory = py2_filesystem_decode(directory)
     directory = directory.replace(u"\\", u"/")
 
     doc = workspace.get_doc("case1.robot")

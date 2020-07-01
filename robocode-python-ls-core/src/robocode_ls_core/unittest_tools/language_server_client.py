@@ -2,6 +2,7 @@ import logging
 from robocode_ls_core.client_base import LanguageServerClientBase
 import sys
 from robocode_ls_core.constants import IS_PY2
+from robocode_ls_core.basic import py2_filesystem_decode
 
 log = logging.getLogger(__name__)
 
@@ -29,10 +30,8 @@ class _LanguageServerClient(LanguageServerClientBase):
 
         root_uri = from_fs_path(root_path)
         if IS_PY2:
-            if isinstance(root_path, bytes):
-                root_path = root_path.decode(sys.getfilesystemencoding())
-            if isinstance(root_uri, bytes):
-                root_uri = root_uri.decode(sys.getfilesystemencoding())
+            root_path = py2_filesystem_decode(root_path)
+            root_uri = py2_filesystem_decode(root_uri)
 
         msg_id = msg_id if msg_id is not None else self.next_id()
         msg = self.request(

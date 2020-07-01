@@ -21,9 +21,9 @@ https://github.com/Microsoft/vscode-uri/blob/e59cab84f5df6265aed18ae5f43552d3eef
 """
 
 import re
-import sys
 
 from robocode_ls_core.constants import IS_PY2, IS_WIN
+from robocode_ls_core.basic import py2_filesystem_encode
 
 if IS_PY2:
     from urlparse import (
@@ -76,8 +76,8 @@ def _normalize_win_path(path):
 def from_fs_path(path):
     """Returns a URI for the given filesystem path."""
     try:
-        if IS_PY2 and isinstance(path, unicode):
-            path = path.encode(sys.getfilesystemencoding())
+        if IS_PY2:
+            path = py2_filesystem_encode(path)
         scheme = "file"
         params, query, fragment = "", "", ""
         path, netloc = _normalize_win_path(path)
@@ -95,8 +95,8 @@ def to_fs_path(uri):
     Will *not* look at the scheme of this URI.
     """
     try:
-        if IS_PY2 and isinstance(uri, unicode):
-            uri = uri.encode(sys.getfilesystemencoding())
+        if IS_PY2:
+            uri = py2_filesystem_encode(uri)
         # scheme://netloc/path;parameters?query#fragment
         scheme, netloc, path, _params, _query, _fragment = urlparse(uri)
 

@@ -2,6 +2,7 @@ import os.path
 from robocode_ls_core.robotframework_log import get_logger
 from robocode_ls_core.constants import IS_PY2
 import sys
+from robocode_ls_core.basic import py2_filesystem_decode
 
 log = get_logger(__name__)
 
@@ -57,10 +58,8 @@ def _add_completions_from_dir(
 
     curr_file = normfile(uris.to_fs_path(completion_context.doc.uri))
     if IS_PY2:
-        if isinstance(curr_file, bytes):
-            curr_file = curr_file.decode(sys.getfilesystemencoding())
-        if isinstance(directory, bytes):
-            directory = directory.decode(sys.getfilesystemencoding())
+        curr_file = py2_filesystem_decode(curr_file)
+        directory = py2_filesystem_decode(directory)
 
     try:
         # This is ok if the directory doesn't exist.
@@ -142,8 +141,8 @@ def _get_completions(completion_context, token, match_libs, extensions, skip_cur
         uri = completion_context.doc.uri
         path = uris.to_fs_path(uri)
         dirname = os.path.dirname(path)
-        if IS_PY2 and isinstance(dirname, bytes):
-            dirname = dirname.decode(sys.getfilesystemencoding())
+        if IS_PY2:
+            dirname = py2_filesystem_decode(dirname)
 
         matcher = RobotStringMatcher(value_to_cursor_split[1])
         directory = os.path.join(dirname, value_to_cursor_split[0])

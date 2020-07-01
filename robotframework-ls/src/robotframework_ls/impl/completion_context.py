@@ -3,6 +3,7 @@ from robocode_ls_core.cache import instance_cache
 from robocode_ls_core.robotframework_log import get_logger
 from robocode_ls_core.constants import IS_PY2
 import sys
+from robocode_ls_core.basic import py2_filesystem_encode
 
 log = get_logger(__name__)
 
@@ -362,8 +363,8 @@ class CompletionContext(object):
             if value is None:
                 log.info("Unable to find variable: %s", var_name)
                 value = value_if_not_found
-        if IS_PY2 and isinstance(value, unicode):
-            value = value.encode(sys.getfilesystemencoding())
+        if IS_PY2:
+            value = py2_filesystem_encode(value)
         else:
             value = str(value)
         return value

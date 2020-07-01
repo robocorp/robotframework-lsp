@@ -19,6 +19,7 @@ from robocode_ls_core.unittest_tools.fixtures import TIMEOUT
 import subprocess
 from collections import namedtuple
 from robocode_ls_core.constants import IS_PY2
+from robocode_ls_core.basic import py2_filesystem_encode, py2_filesystem_decode
 
 try:
     import Queue as queue
@@ -269,14 +270,8 @@ class _DebuggerAPI(object):
             args = run_in_terminal_request.arguments.args
 
             if IS_PY2:
-                if isinstance(cwd, unicode):
-                    cwd = cwd.encode(sys.getfilesystemencoding())
-                args = [
-                    arg.encode(sys.getfilesystemencoding())
-                    if isinstance(arg, unicode)
-                    else arg
-                    for arg in args
-                ]
+                cwd = py2_filesystem_encode(cwd)
+                args = [py2_filesystem_encode(arg) for arg in args]
             subprocess.Popen(args, cwd=cwd, env=env)
 
         if success:
@@ -462,14 +457,14 @@ def dap_resources_dir(tmpdir_factory):
 
     basename = u"dap áéíóú"
     if IS_PY2:
-        basename = basename.encode(sys.getfilesystemencoding())
+        basename = py2_filesystem_encode(basename)
     copy_to = str(tmpdir_factory.mktemp(basename))
     if IS_PY2:
-        copy_to = copy_to.decode(sys.getfilesystemencoding())
+        copy_to = py2_filesystem_decode(copy_to)
 
     f = __file__
     if IS_PY2:
-        f = f.decode(sys.getfilesystemencoding())
+        f = py2_filesystem_decode(f)
     original_resources_dir = os.path.join(os.path.dirname(f), u"_dap_resources")
     assert os.path.exists(original_resources_dir)
 

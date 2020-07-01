@@ -8,6 +8,7 @@ import logging
 import threading
 import weakref
 from robocode_ls_core.constants import IS_PY2
+from robocode_ls_core.basic import py2_filesystem_decode
 
 log = logging.getLogger(__name__)
 
@@ -22,8 +23,7 @@ class PathInfo(object):
             if not isinstance(path, unicode):
                 path = str(path)
 
-            if isinstance(path, bytes):
-                path = path.decode(sys.getfilesystemencoding())
+            path = py2_filesystem_decode(path)
         else:
             path = str(path)
         self.path = path

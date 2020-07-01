@@ -43,6 +43,16 @@ if IS_PY2:
             return s.encode("utf-8", "replace")
         return s
 
+    def py2_filesystem_encode(s):
+        if isinstance(s, unicode):
+            return s.encode(sys.getfilesystemencoding())
+        return s
+
+    def py2_filesystem_decode(s):
+        if isinstance(s, bytes):
+            return s.decode(sys.getfilesystemencoding())
+        return s
+
 
 else:
     import pathlib
@@ -51,6 +61,12 @@ else:
         if isinstance(s, bytes):
             return s.decode("utf-8", "replace")
         return s
+
+    def py2_filesystem_encode(s):
+        raise AssertionError("Should only be called for Python 2.")
+
+    def py2_filesystem_decode(s):
+        raise AssertionError("Should only be called for Python 2.")
 
 
 log = get_logger(__name__)
