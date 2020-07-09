@@ -23,11 +23,10 @@ from robotframework_debug_adapter.constants import (
 import itertools
 from functools import partial
 from os.path import os
-from robocode_ls_core.robotframework_log import get_logger
+from robocode_ls_core.robotframework_log import get_logger, get_log_level
 from collections import namedtuple
 from robocode_ls_core.constants import IS_PY2
 import weakref
-import sys
 
 log = get_logger(__name__)
 
@@ -45,17 +44,24 @@ class RobotBreakpoint(object):
 
 class BusyWait(object):
     def __init__(self):
-        self._event = threading.Event()
         self.before_wait = []
+        self.waited = 0
+        self.proceeded = 0
+        self._condition = threading.Condition()
 
-    def wait(self):
+    def pre_wait(self):
         for c in self.before_wait:
             c()
-        self._event.wait()
+
+    def wait(self):
+        self.waited += 1
+        with self._condition:
+            self._condition.wait()
 
     def proceed(self):
-        self._event.set()
-        self._event.clear()
+        self.proceeded += 1
+        with self._condition:
+            self._condition.notify_all()
 
 
 class _BaseObjectToDAP(object):
@@ -115,6 +121,9 @@ class _BaseFrameInfo(object):
     def get_scopes(self):
         raise NotImplementedError("Not implemented in: %s" % (self.__class__,))
 
+    def get_type_name(self):
+        raise NotImplementedError("Not implemented in: %s" % (self.__class__,))
+
 
 class _SuiteFrameInfo(_BaseFrameInfo):
     def __init__(self, stack_list, dap_frame):
@@ -127,6 +136,9 @@ class _SuiteFrameInfo(_BaseFrameInfo):
 
     def get_scopes(self):
         return []
+
+    def get_type_name(self):
+        return "Suite"
 
 
 class _TestFrameInfo(_BaseFrameInfo):
@@ -141,6 +153,9 @@ class _TestFrameInfo(_BaseFrameInfo):
     def get_scopes(self):
         return []
 
+    def get_type_name(self):
+        return "Test"
+
 
 class _KeywordFrameInfo(_BaseFrameInfo):
     def __init__(self, stack_list, dap_frame, keyword, variables):
@@ -151,8 +166,19 @@ class _KeywordFrameInfo(_BaseFrameInfo):
         self._variables = variables
 
     @property
+    def keyword(self):
+        return self._keyword
+
+    @property
+    def variables(self):
+        return self._variables
+
+    @property
     def dap_frame(self):
         return self._dap_frame
+
+    def get_type_name(self):
+        return "Keyword"
 
     def get_scopes(self):
         if self._scopes is not None:
@@ -204,7 +230,11 @@ class _StackInfo(object):
         self._ref_id_to_children = {}
 
     def iter_frame_ids(self):
-        return iter(self._frame_id_to_frame_info.keys())
+        """
+        Access to list(int) where iter_frame_ids[0] is the current frame
+        where we're stopped (topmost frame).
+        """
+        return (x.id for x in self._dap_frames)
 
     def register_variables_reference(self, variables_reference, children):
         self._ref_id_to_children[variables_reference] = children
@@ -264,6 +294,10 @@ class _StackInfo(object):
 
     @property
     def dap_frames(self):
+        """
+        Access to list(StackFrame) where dap_frames[0] is the current frame
+        where we're stopped (topmost frame).
+        """
         return self._dap_frames
 
     def get_scopes(self, frame_id):
@@ -285,6 +319,131 @@ _SuiteEntry = namedtuple("_SuiteEntry", "name, source")
 _TestEntry = namedtuple("_TestEntry", "name, source, lineno")
 
 
+class InvalidFrameIdError(Exception):
+    pass
+
+
+class InvalidFrameTypeError(Exception):
+    pass
+
+
+class UnableToEvaluateError(Exception):
+    pass
+
+
+class EvaluationResult(Exception):
+    def __init__(self, result):
+        self.result = result
+
+
+class _EvaluationInfo(object):
+    def __init__(self, frame_id, expression):
+        self.frame_id = frame_id
+        self.expression = expression
+        try:
+            from concurrent import futures
+        except ImportError:
+            from robocode_ls_core.libs_py2.concurrent import futures
+        self.future = futures.Future()
+
+    def _do_eval(self, debugger_impl):
+        frame_id = self.frame_id
+        stack_info = debugger_impl._get_stack_info_from_frame_id(frame_id)
+
+        if stack_info is None:
+            raise InvalidFrameIdError(
+                "Unable to find frame id for evaluation: %s" % (frame_id,)
+            )
+
+        info = stack_info._frame_id_to_frame_info.get(frame_id)
+        if info is None:
+            raise InvalidFrameIdError(
+                "Unable to find frame info for evaluation: %s" % (frame_id,)
+            )
+
+        if not isinstance(info, _KeywordFrameInfo):
+            raise InvalidFrameTypeError(
+                "Can only evaluate at a Keyword context (current context: %s)"
+                % (info.get_type_name(),)
+            )
+        log.info("Doing evaluation in the Keyword context: %s", info.keyword)
+
+        from robotframework_ls.impl.text_utilities import is_variable_text
+
+        from robot.libraries.BuiltIn import BuiltIn
+        from robot.api import get_model
+        from robotframework_ls.impl import ast_utils
+
+        # We can't really use
+        # BuiltIn().evaluate(expression, modules, namespace)
+        # because we can't set the variable_store used with it
+        # (it always uses the latest).
+
+        variable_store = info.variables.store
+
+        if is_variable_text(self.expression):
+            try:
+                value = variable_store[self.expression[2:-1]]
+            except Exception:
+                pass
+            else:
+                return EvaluationResult(value)
+
+        # Do we want this?
+        # from robot.variables.evaluation import evaluate_expression
+        # try:
+        #     result = evaluate_expression(self.expression, variable_store)
+        # except Exception:
+        #     log.exception()
+        # else:
+        #     return EvaluationResult(result)
+
+        # Try to check if it's a KeywordCall.
+        s = (
+            """
+*** Test Cases ***
+Evaluation
+    %s
+"""
+            % self.expression
+        )
+        model = get_model(s)
+        usage_info = list(ast_utils.iter_keyword_usage_tokens(model))
+        if len(usage_info) == 1:
+            _stack, node, _token, name = next(iter(usage_info))
+
+            dap_frames = stack_info.dap_frames
+            if dap_frames:
+                top_frame_id = dap_frames[0].id
+                if top_frame_id != frame_id:
+                    if get_log_level() >= 2:
+                        log.debug(
+                            "Unable to evaluate.\nFrame id for evaluation: %r\nTop frame id: %r.\nDAP frames:\n%s",
+                            frame_id,
+                            top_frame_id,
+                            "\n".join(x.to_json() for x in dap_frames),
+                        )
+
+                    raise UnableToEvaluateError(
+                        "Keyword calls may only be evaluated at the topmost frame."
+                    )
+
+                return EvaluationResult(BuiltIn().run_keyword(name, *node.args))
+
+        raise UnableToEvaluateError("Unable to evaluate: %s" % (self.expression,))
+
+    def evaluate(self, debugger_impl):
+        """
+        :param _RobotDebuggerImpl debugger_impl:
+        """
+        try:
+            r = self._do_eval(debugger_impl)
+            self.future.set_result(r.result)
+        except Exception as e:
+            log.exception("Error evaluating: %s", self.expression)
+            self.future.set_exception(e)
+
+
 class _RobotDebuggerImpl(object):
     """
     This class provides the main API to deal with debugging
@@ -292,6 +451,9 @@ class _RobotDebuggerImpl(object):
     """
 
     def __init__(self):
+        self.reset()
+
+    def reset(self):
         from collections import deque
 
         self._filename_to_line_to_breakpoint = {}
@@ -306,12 +468,22 @@ class _RobotDebuggerImpl(object):
 
         self._tid_to_stack_list = {}
         self._frame_id_to_tid = {}
+        self._evaluations = []
+        self._skip_breakpoints = 0
 
     @property
     def stop_reason(self):
         return self._reason
 
+    def _get_stack_info_from_frame_id(self, frame_id):
+        thread_id = self._frame_id_to_tid.get(frame_id)
+        if thread_id is not None:
+            return self._get_stack_info(thread_id)
+
     def _get_stack_info(self, thread_id):
+        """
+        :return _StackInfo
+        """
         return self._tid_to_stack_list.get(thread_id)
 
     def get_frames(self, thread_id):
@@ -404,8 +576,20 @@ class _RobotDebuggerImpl(object):
             self._run_state = STATE_PAUSED
             self._reason = reason
 
+            self.busy_wait.pre_wait()
+
             while self._run_state == STATE_PAUSED:
                 self.busy_wait.wait()
+
+                evaluations = self._evaluations
+                self._evaluations = []
+
+                for evaluation in evaluations:  #: :type evaluation: _EvaluationInfo
+                    self._skip_breakpoints += 1
+                    try:
+                        evaluation.evaluate(self)
+                    finally:
+                        self._skip_breakpoints -= 1
 
             if self._step_cmd == STEP_NEXT:
                 self._stop_on_stack_len = len(self._stack_ctx_entries_deque)
@@ -415,6 +599,22 @@ class _RobotDebuggerImpl(object):
 
         finally:
             self._dispose_stack_info(MAIN_THREAD_ID)
+
+    def evaluate(self, frame_id, expression):
+        """
+        Asks something to be evaluated.
+        
+        This is an asynchronous operation and returns an _EvaluationInfo (to get
+        the result, access _EvaluationInfo.future.result())
+        
+        :param frame_id:
+        :param expression:
+        :return _EvaluationInfo:
+        """
+        evaluation_info = _EvaluationInfo(frame_id, expression)
+        self._evaluations.append(evaluation_info)
+        self.busy_wait.proceed()
+        return evaluation_info
 
     def step_continue(self):
         self._step_cmd = None
@@ -446,9 +646,10 @@ class _RobotDebuggerImpl(object):
         if IS_PY2:
             if isinstance(filename, unicode):
                 filename = filename.encode(file_utils.file_system_encoding)
-        filename = file_utils.get_abs_path_real_path_and_base_from_file(filename)[0]
+        filename = file_utils.get_abs_path_real_path_and_base_from_file(filename)[1]
         line_to_bp = {}
         for bp in breakpoints:
+            log.info("Set breakpoint in %s: %s", filename, bp.lineno)
             line_to_bp[bp.lineno] = bp
         self._filename_to_line_to_breakpoint[filename] = line_to_bp
 
@@ -457,6 +658,8 @@ class _RobotDebuggerImpl(object):
     def before_run_step(self, step_runner, step, name=None):
         ctx = step_runner._context
         self._stack_ctx_entries_deque.append(_StepEntry(ctx.variables.current, step))
+        if self._skip_breakpoints:
+            return
 
         try:
             lineno = step.lineno
@@ -466,8 +669,10 @@ class _RobotDebuggerImpl(object):
         except AttributeError:
             return
 
-        log.debug("run_step %s, %s - step: %s\n", step, lineno, self._step_cmd)
-        source = file_utils.get_abs_path_real_path_and_base_from_file(source)[0]
+        source = file_utils.get_abs_path_real_path_and_base_from_file(source)[1]
+        log.debug(
+            "run_step %s, %s - step: %s - %s\n", step, lineno, self._step_cmd, source
+        )
         lines = self._filename_to_line_to_breakpoint.get(source)
 
         stop_reason = None
@@ -522,7 +727,7 @@ def _patch(
     setattr(execution_context_cls, method_name, new_method)
 
 
-def patch_execution_context():
+def patch_execution_context(new_session=True):
     try:
         impl = patch_execution_context.impl
     except AttributeError:
@@ -540,5 +745,8 @@ def patch_execution_context():
 
         _patch(StepRunner, impl, "run_step", impl.before_run_step, impl.after_run_step)
         patch_execution_context.impl = impl
+    else:
+        if new_session:
+            impl.reset()
 
     return patch_execution_context.impl

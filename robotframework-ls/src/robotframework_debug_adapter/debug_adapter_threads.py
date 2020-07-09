@@ -115,6 +115,7 @@ def reader_thread(stream, process_command, write_queue, debug_prefix=b"read"):
     from robotframework_debug_adapter.dap import (
         dap_schema,  # @UnusedImport -- register classes
     )
+    from robotframework_debug_adapter.dap.dap_schema import Response
 
     try:
         while True:
@@ -122,7 +123,13 @@ def reader_thread(stream, process_command, write_queue, debug_prefix=b"read"):
             if data is None:
                 break
             try:
-                protocol_message = dap_base_schema.from_dict(data)
+
+                # A response with success == False doesn't need to be translated
+                # as the original response (to avoid the validation).
+                if not data.get("success", True) and data.get("type") == "response":
+                    protocol_message = dap_base_schema.from_dict(data, cls=Response)
+                else:
+                    protocol_message = dap_base_schema.from_dict(data)
                 process_command(protocol_message)
             except Exception as e:
                 log.exception("Error processing message.")

@@ -21,7 +21,7 @@ def test_invalid_launch_1(debugger_api):
     """
     from robotframework_debug_adapter.dap.dap_schema import LaunchRequest
     from robotframework_debug_adapter.dap.dap_schema import LaunchRequestArguments
-    from robotframework_debug_adapter.dap.dap_schema import LaunchResponse
+    from robotframework_debug_adapter.dap.dap_schema import Response
 
     debugger_api.initialize()
 
@@ -37,7 +37,7 @@ def test_invalid_launch_1(debugger_api):
         )
     )
 
-    launch_response = debugger_api.read(LaunchResponse)
+    launch_response = debugger_api.read(Response)
     assert launch_response.success == False
 
 
@@ -49,6 +49,41 @@ def test_invalid_launch_2(debugger_api):
     debugger_api.initialize()
 
     debugger_api.launch("invalid_file.robot", debug=False, success=False)
+
+
+def test_error_handling(debugger_api):
+    """
+    This is an integrated test of the debug adapter. It communicates with it as if it was
+    VSCode.
+    
+    :param _DebuggerAPI debugger_api:
+    """
+    from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
+    from robotframework_debug_adapter.dap.dap_schema import Response
+    from robotframework_debug_adapter.dap.dap_schema import Request
+
+    debugger_api.initialize()
+    target = debugger_api.get_dap_case_file("case_log.robot")
+
+    debugger_api.launch(target, debug=True)
+
+    # Let's write some invalid messages...
+    debugger_api.write({})
+    response = debugger_api.read(Response)
+    assert not response.success
+
+    debugger_api.write(Request("invalid_command"))
+    response = debugger_api.read(Response)
+    assert not response.success
+
+    debugger_api.set_breakpoints(target, 4)
+    debugger_api.configuration_done()
+
+    debugger_api.wait_for_thread_stopped()
+
+    debugger_api.continue_event()
+
+    debugger_api.read(TerminatedEvent)
 
 
 def test_simple_launch(debugger_api):
@@ -274,4 +309,70 @@ def test_launch_in_external_terminal(debugger_api):
     target = debugger_api.get_dap_case_file("case_log.robot")
     debugger_api.launch(target, debug=False, terminal="external")
     debugger_api.configuration_done()
+    debugger_api.read(TerminatedEvent)
+
+
+def test_evaluate(debugger_api):
+    """
+    :param _DebuggerAPI debugger_api:
+    """
+    from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
+
+    debugger_api.initialize()
+    target = debugger_api.get_dap_case_file("case_evaluate.robot")
+    debugger_api.target = target
+
+    debugger_api.launch(target, debug=True)
+    debugger_api.set_breakpoints(
+        target, debugger_api.get_line_index_with_content("Break 1")
+    )
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(name="Should Be Equal")
+
+    response = debugger_api.evaluate(
+        "${arg1}", frameId=json_hit.frame_id, context="watch"
+    )
+    assert response.body.result == "2"
+
+    response = debugger_api.evaluate(
+        "My Equal Redefined     2   2", frameId=json_hit.frame_id, context="repl"
+    )
+    assert response.body.result == "None"
+
+    assert json_hit.stack_trace_response.body.stackFrames[0]["id"] == json_hit.frame_id
+
+    response = debugger_api.evaluate(
+        "My Equal Redefined     2   1",
+        frameId=json_hit.frame_id,
+        context="repl",
+        success=False,
+    )
+    assert "UserKeywordExecutionFailed: 2 != 1" in response.message
+
+    # We can't evaluate keywords that are not in the top level.
+    parent_frame_id = json_hit.stack_trace_response.body.stackFrames[1]["id"]
+    response = debugger_api.evaluate(
+        "My Equal Redefined     2   2",
+        frameId=parent_frame_id,
+        context="repl",
+        success=False,
+    )
+    assert (
+        "Keyword calls may only be evaluated at the topmost frame" in response.message
+    )
+
+    debugger_api.set_breakpoints(
+        target, debugger_api.get_line_index_with_content("Break 2")
+    )
+
+    debugger_api.continue_event()
+
+    json_hit = debugger_api.wait_for_thread_stopped(name="Should Be Equal")
+    response = debugger_api.evaluate(
+        "${arg1}", frameId=json_hit.frame_id, context="watch"
+    )
+    assert response.body.result in ("['2', '2']", "[u'2', u'2']")
+    debugger_api.continue_event()
+
     debugger_api.read(TerminatedEvent)

@@ -103,12 +103,12 @@ def main():
         writer = threading.Thread(
             target=writer_thread,
             args=(write_to, to_client_queue, "write to client"),
-            name="Write to client",
+            name="Write to client (dap __main__)",
         )
         reader = threading.Thread(
             target=reader_thread,
             args=(read_from, comm.from_client, to_client_queue, b"read from client"),
-            name="Read from client",
+            name="Read from client (dap __main__)",
         )
 
         reader.start()

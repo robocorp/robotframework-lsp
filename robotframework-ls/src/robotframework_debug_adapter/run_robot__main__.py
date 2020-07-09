@@ -4,6 +4,7 @@ import socket as socket_module
 import sys
 import threading
 from robocode_ls_core.constants import IS_PY2
+import traceback
 
 try:
     import queue
@@ -110,13 +111,16 @@ class _RobotTargetComm(threading.Thread):
         write_to = self._socket.makefile("wb")
 
         writer = self._writer_thread = threading.Thread(
-            target=writer_thread, args=(write_to, self._write_queue, "write to dap")
+            target=writer_thread,
+            args=(write_to, self._write_queue, "write to dap"),
+            name="Write from robot to dap (_RobotTargetComm)",
         )
         writer.setDaemon(True)
 
         reader = self._reader_thread = threading.Thread(
             target=reader_thread,
             args=(read_from, self.process_message, self._write_queue, b"read from dap"),
+            name="Read from dap to robot (_RobotTargetComm)",
         )
         reader.setDaemon(True)
 
@@ -150,32 +154,32 @@ class _RobotTargetComm(threading.Thread):
                 % (json.dumps(protocol_message.to_dict(), indent=4, sort_keys=True),)
             )
 
-        try:
-            if protocol_message.type == "request":
-                method_name = "on_%s_request" % (protocol_message.command,)
+        if protocol_message.type == "request":
+            method_name = "on_%s_request" % (protocol_message.command,)
 
-            elif protocol_message.type == "event":
-                method_name = "on_%s_event" % (protocol_message.event,)
+        elif protocol_message.type == "event":
+            method_name = "on_%s_event" % (protocol_message.event,)
 
-            else:
-                if DEBUG:
-                    log.debug(
-                        "Unable to decide how to deal with protocol type: %s in %s.\n"
-                        % (protocol_message.type, self.__class__.__name__)
-                    )
-                return
+        else:
+            if DEBUG:
+                log.debug(
+                    "Unable to decide how to deal with protocol type: %s in %s.\n"
+                    % (protocol_message.type, self.__class__.__name__)
+                )
+            return
 
-            on_request = getattr(self, method_name, None)
-            if on_request is not None:
-                on_request(protocol_message)
-            else:
-                if DEBUG:
-                    log.debug(
-                        "Unhandled: %s not available in %s.\n"
-                        % (method_name, self.__class__.__name__)
-                    )
-        except:
-            log.exception("Error")
+        on_request = getattr(self, method_name, None)
+        if on_request is not None:
+            on_request(protocol_message)
+        else:
+            if DEBUG:
+                log.debug(
+                    "Unhandled: %s not available in %s.\n"
+                    % (method_name, self.__class__.__name__)
+                )
+
+        # Note: if there's some exception, let it be processed in the caller
+        # as the reader_thread does handle it properly.
 
     def on_terminated_event(self, event):
         self.terminated.set()
@@ -210,6 +214,9 @@ class _RobotTargetComm(threading.Thread):
         from robotframework_debug_adapter.dap import dap_base_schema
         from robotframework_debug_adapter import file_utils
         from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
+        from robocode_ls_core.robotframework_log import get_logger
+
+        log = get_logger("robotframework_debug_adapter.run_robot__main__.py")
 
         # Just acknowledge that no breakpoints are valid.
 
@@ -220,6 +227,7 @@ class _RobotTargetComm(threading.Thread):
         if IS_PY2:
             path = path.encode(file_utils.file_system_encoding)
         filename = file_utils.norm_file_to_server(path)
+        log.info("Normalized %s to %s", path, filename)
 
         if request.arguments.breakpoints:
 
@@ -375,6 +383,38 @@ class _RobotTargetComm(threading.Thread):
 
         body = VariablesResponseBody(variables if variables else [])
         response = build_response(request, kwargs=dict(body=body))
+        self.write_message(response)
+
+    def _evaluate_response(self, request, result, error_message=""):
+        from robotframework_debug_adapter.dap.dap_schema import EvaluateResponseBody
+        from robotframework_debug_adapter.dap.dap_base_schema import build_response
+
+        body = EvaluateResponseBody(result=result, variablesReference=0)
+        if not error_message:
+            return build_response(request, kwargs={"body": body})
+        else:
+            response = build_response(
+                request,
+                kwargs={"body": body, "success": False, "message": error_message},
+            )
+            return response
+
+    def on_evaluate_request(self, request):
+        frame_id = request.arguments.frameId
+        expression = request.arguments.expression
+        if self._debugger_impl:
+            eval_info = self._debugger_impl.evaluate(frame_id, expression)
+            try:
+                result = eval_info.future.result()
+            except Exception as e:
+                err = "".join(traceback.format_exception_only(type(e), e))
+                response = self._evaluate_response(request, err, error_message=err)
+            else:
+                response = self._evaluate_response(request, str(result))
+        else:
+            get_log().info("Unable to evaluate (no debug mode).")
+            response = self._evaluate_response(request, "")
+
         self.write_message(response)
 
 

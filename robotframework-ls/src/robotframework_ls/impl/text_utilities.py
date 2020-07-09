@@ -26,6 +26,15 @@ def normalize_robot_name(text):
     return text.lower().replace("_", " ")
 
 
+def is_variable_text(text):
+    from robotframework_ls.impl import robot_constants
+
+    for p in robot_constants.VARIABLE_PREFIXES:
+        if text.startswith(p + "{") and text.endswith("}"):
+            return True
+    return False
+
+
 def matches_robot_keyword(keyword_name_call_text, keyword_name, _re_cache={}):
     """
     Checks if a given text matches a given keyword. 

@@ -98,7 +98,14 @@ def dap_process(dap_log_file, dap_process_stderr_file):
 
 
 class _DebuggerAPI(object):
-    def __init__(self, reader, writer, write_queue, read_queue, dap_resources_dir):
+    def __init__(
+        self,
+        reader=None,
+        writer=None,
+        write_queue=None,
+        read_queue=None,
+        dap_resources_dir=None,
+    ):
         self.reader = reader
         self.writer = writer
         self.write_queue = write_queue
@@ -248,6 +255,7 @@ class _DebuggerAPI(object):
         from robotframework_debug_adapter.dap.dap_schema import RunInTerminalRequest
         from robocode_ls_core.basic import as_str
         from robotframework_debug_adapter.dap.dap_schema import InitializedEvent
+        from robotframework_debug_adapter.dap.dap_schema import Response
 
         self.write(
             LaunchRequest(
@@ -280,7 +288,10 @@ class _DebuggerAPI(object):
             event = self.read(InitializedEvent)
             assert isinstance(event, InitializedEvent)
 
-        launch_response = self.read(LaunchResponse)
+        if success:
+            launch_response = self.read(LaunchResponse)
+        else:
+            launch_response = self.read(Response)
         assert launch_response.success == success
 
     def list_threads(self):
@@ -400,7 +411,7 @@ class _DebuggerAPI(object):
             for i_line, line in enumerate(stream):
                 if line_content in line:
                     return i_line + 1
-        raise AssertionError("Did not find: %s in %s" % (line_content, self.TEST_FILE))
+        raise AssertionError("Did not find: %s in %s" % (line_content, filename))
 
     def get_name_to_scope(self, frame_id):
         from robotframework_debug_adapter.dap.dap_schema import ScopesArguments
@@ -450,6 +461,24 @@ class _DebuggerAPI(object):
         assert variables_response.success == success
         return variables_response
 
+    def evaluate(self, expression, frameId=None, context=None, fmt=None, success=True):
+        from robotframework_debug_adapter.dap.dap_schema import EvaluateRequest
+        from robotframework_debug_adapter.dap.dap_schema import EvaluateArguments
+
+        eval_request = self.write(
+            EvaluateRequest(
+                EvaluateArguments(
+                    expression, frameId=frameId, context=context, format=fmt
+                )
+            )
+        )
+        eval_response = self.wait_for_response(eval_request)
+        assert eval_response.success == success, (
+            "Expected success to be: %s (found: %s).\nMessage:\n%s"
+            % (success, eval_response.success, eval_response.to_dict())
+        )
+        return eval_response
+
 
 @pytest.fixture(scope="session")
 def dap_resources_dir(tmpdir_factory):
@@ -475,6 +504,11 @@ def dap_resources_dir(tmpdir_factory):
 
 
 @pytest.fixture
+def debugger_api_core(dap_resources_dir):
+    return _DebuggerAPI(dap_resources_dir=dap_resources_dir)
+
+
+@pytest.fixture
 def debugger_api(dap_process, dap_resources_dir):
 
     from robotframework_debug_adapter.debug_adapter_threads import writer_thread
@@ -486,10 +520,14 @@ def debugger_api(dap_process, dap_resources_dir):
     write_queue = queue.Queue()
     read_queue = queue.Queue()
 
-    writer = threading.Thread(target=writer_thread, args=(write_to, write_queue))
+    writer = threading.Thread(
+        target=writer_thread, args=(write_to, write_queue), name="Debugger API writer"
+    )
     writer.daemon = True
     reader = threading.Thread(
-        target=reader_thread, args=(read_from, read_queue.put, write_queue)
+        target=reader_thread,
+        args=(read_from, read_queue.put, read_queue),
+        name="Debugger API reader",
     )
     reader.daemon = True
 

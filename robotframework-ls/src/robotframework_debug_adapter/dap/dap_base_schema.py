@@ -99,24 +99,26 @@ def register_event(event):
     return do_register
 
 
-def from_dict(dct, update_ids_from_dap=False):
+def from_dict(dct, update_ids_from_dap=False, cls=None):
     msg_type = dct.get("type")
     if msg_type is None:
         raise ValueError("Unable to make sense of message: %s" % (dct,))
 
-    if msg_type == "request":
-        to_type = _requests_to_types
-        use = dct["command"]
+    if cls is None:
+        if msg_type == "request":
+            to_type = _requests_to_types
+            use = dct["command"]
 
-    elif msg_type == "response":
-        to_type = _responses_to_types
-        use = dct["command"]
+        elif msg_type == "response":
+            to_type = _responses_to_types
+            use = dct["command"]
 
-    else:
-        to_type = _event_to_types
-        use = dct["event"]
+        else:
+            to_type = _event_to_types
+            use = dct["event"]
 
-    cls = to_type.get(use)
+        cls = to_type.get(use)
+
     if cls is None:
         raise ValueError(
             "Unable to create message from dict: %s. %s not in %s"

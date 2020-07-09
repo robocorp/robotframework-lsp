@@ -98,10 +98,11 @@ class _DebugAdapterRobotTargetComm(threading.Thread):
             read_from = socket.makefile("rb")
             write_to = socket.makefile("wb")
 
+            debug_adapter_comm = self._weak_debug_adapter_comm()
             writer = self._writer_thread = threading.Thread(
                 target=writer_thread_no_auto_seq,
                 args=(write_to, self._write_to_robot_queue, "write to robot process"),
-                name="Write to robot",
+                name="Write to robot (_DebugAdapterRobotTargetComm)",
             )
             writer.daemon = True
 
@@ -110,10 +111,10 @@ class _DebugAdapterRobotTargetComm(threading.Thread):
                 args=(
                     read_from,
                     self._from_robot,
-                    self._write_to_robot_queue,  # Used for errors
+                    debug_adapter_comm.write_to_client_queue,  # Used for errors
                     b"read from robot process",
                 ),
-                name="Read from robot",
+                name="Read from robot (_DebugAdapterRobotTargetComm)",
             )
             reader.daemon = True
 

@@ -382,9 +382,10 @@ def iter_keyword_usage_tokens(ast):
     for stack, node in _iter_nodes(ast, recursive=True):
         if node.__class__.__name__ == "KeywordCall":
             token = _strip_token_bdd_prefix(node.get_token(Token.KEYWORD))
-            node = _copy_of_node_replacing_token(node, token, Token.KEYWORD)
-            keyword_name = token.value
-            yield _KeywordUsageInfo(tuple(stack), node, token, keyword_name)
+            if token is not None:
+                node = _copy_of_node_replacing_token(node, token, Token.KEYWORD)
+                keyword_name = token.value
+                yield _KeywordUsageInfo(tuple(stack), node, token, keyword_name)
 
         elif isinstance_name(node, ("Fixture", "TestTemplate")):
             node, token = _strip_node_and_token_bdd_prefix(node, Token.NAME)
@@ -478,6 +479,9 @@ def _strip_token_bdd_prefix(token):
     from robotframework_ls.impl.robot_constants import BDD_PREFIXES
     from robot.api import Token
     from robotframework_ls.impl.text_utilities import normalize_robot_name
+
+    if token is None:
+        return token
 
     text = normalize_robot_name(token.value)
     for prefix in BDD_PREFIXES:

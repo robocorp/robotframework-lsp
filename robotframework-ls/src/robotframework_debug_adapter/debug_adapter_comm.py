@@ -181,12 +181,10 @@ class DebugAdapterComm(object):
         """
         if self._launch_process is not None:
             if request.arguments.context == "repl":
-                self._launch_process.send_to_stdin(request.arguments.expression)
-
-        evaluate_response = base_schema.build_response(
-            request, kwargs={"body": {"result": "", "variablesReference": 0}}
-        )
-        self.write_to_client_message(evaluate_response)
+                pass
+                # i.e.: if not stopped anywhere we could send to the stdin...
+                # self._launch_process.send_to_stdin(request.arguments.expression)
+        self._launch_process.resend_request_to_robot(request)
 
     def on_setExceptionBreakpoints_request(self, request):
         response = base_schema.build_response(request)
