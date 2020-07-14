@@ -25,8 +25,6 @@ import * as fs from 'fs';
 
 import { workspace, Disposable, ExtensionContext, window, commands, Uri, ConfigurationTarget, debug, DebugAdapterExecutable, ProviderResult, DebugConfiguration, WorkspaceFolder, CancellationToken, DebugConfigurationProvider } from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, ErrorAction, ErrorHandler, CloseAction, TransportKind } from 'vscode-languageclient';
-import { print } from 'util';
-import { exec } from 'child_process';
 
 function startLangServerIO(command: string, args: string[], documentSelector: string[]): LanguageClient {
 	const serverOptions: ServerOptions = {
@@ -79,31 +77,6 @@ function findExecutableInPath(executable: string) {
 	return undefined;
 }
 
-function askPythonExe(context: ExtensionContext, askMessage: string) {
-	let saveInUser: string = 'Yes (save in user settings)';
-	let saveInWorkspace: string = 'Yes (save in workspace settings)';
-
-	window.showWarningMessage(askMessage, ...[saveInUser, saveInWorkspace, 'No']).then((selection) => {
-		// robot.language-server.python
-		if (selection == saveInUser || selection == saveInWorkspace) {
-			window.showOpenDialog({
-				'canSelectMany': false,
-				'openLabel': 'Select python exe'
-			}).then(onfulfilled => {
-				if (onfulfilled && onfulfilled.length > 0) {
-					let configurationTarget: ConfigurationTarget = ConfigurationTarget.Workspace;
-					if (selection == saveInUser) {
-						configurationTarget = ConfigurationTarget.Global;
-					}
-					let config = workspace.getConfiguration("robot");
-					ignoreNextConfigurationChange = true;
-					config.update("language-server.python", onfulfilled[0].fsPath, configurationTarget);
-					startLangServerIOWithPython(context, onfulfilled[0].fsPath);
-				}
-			});
-		}
-	});
-}
 
 
 class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
@@ -138,23 +111,18 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
 }
 
 
-function afterStartLangServer(pythonExecutable: string) {
+function registerDebugger(languageServerExecutable: string) {
 	function createDebugAdapterExecutable(env: { [key: string]: string }): DebugAdapterExecutable {
 		let config = workspace.getConfiguration("robot");
 		let dapPythonExecutable: string = config.get<string>("python.executable");
 
 		if (!dapPythonExecutable) {
 			// If the dapPythonExecutable is not specified, use the default language server executable.
-			if (!pythonExecutable) {
-				let executableAndMessage = getDefaultLanguageServerPythonExecutable();
-				if (executableAndMessage.executable) {
-					pythonExecutable = executableAndMessage.executable;
-				} else {
-					window.showWarningMessage('Error getting language server python executable for creating a debug adapter.');
-					return;
-				}
+			if (!languageServerExecutable) {
+				window.showWarningMessage('Error getting language server python executable for creating a debug adapter.');
+				return;
 			}
-			dapPythonExecutable = pythonExecutable;
+			dapPythonExecutable = languageServerExecutable;
 		}
 
 		let targetFile: string = path.resolve(__dirname, '../../src/robotframework_debug_adapter/__main__.py');
@@ -185,52 +153,15 @@ function afterStartLangServer(pythonExecutable: string) {
 	debug.registerDebugConfigurationProvider('robotframework-lsp', new RobotDebugConfigurationProvider());
 }
 
-function startLangServerIOWithPython(context: ExtensionContext, pythonExecutable: string) {
-	let targetFile: string = path.resolve(__dirname, '../../src/robotframework_ls/__main__.py');
-	if (!fs.existsSync(targetFile)) {
-		window.showWarningMessage('Error. Expected: ' + targetFile + " to exist.");
-		return;
-	}
 
-	let args: Array<string> = ["-u", targetFile];
-	let config = workspace.getConfiguration("robot");
-	let lsArgs = config.get<Array<string>>("language-server.args");
-	if (lsArgs) {
-		args = args.concat(lsArgs);
-	}
 
-	let langServer: LanguageClient = startLangServerIO(pythonExecutable, args, ["robotframework"]);
-	let disposable: Disposable = langServer.start();
-	afterStartLangServer(pythonExecutable);
-	context.subscriptions.push(disposable);
-
+interface ExecutableAndMessage {
+	executable: string;
+	message: string;
 }
 
 
-// i.e.: we can ignore changes when we know we'll be doing them prior to starting the language server.
-let ignoreNextConfigurationChange: boolean = false;
-
-function startListeningConfigurationChanges() {
-
-	workspace.onDidChangeConfiguration(event => {
-		if (ignoreNextConfigurationChange) {
-			ignoreNextConfigurationChange = false;
-			return;
-		}
-		for (let s of ["robot.language-server.python", "robot.language-server.tcp-port", "robot.language-server.args"]) {
-			if (event.affectsConfiguration(s)) {
-				window.showWarningMessage('Please use the "Reload Window" action for changes in ' + s + ' to take effect.', ...["Reload Window"]).then((selection) => {
-					if (selection === "Reload Window") {
-						commands.executeCommand("workbench.action.reloadWindow");
-					}
-				});
-				return;
-			}
-		}
-	});
-}
-
-function getDefaultLanguageServerPythonExecutable() {
+function getDefaultLanguageServerPythonExecutable(): ExecutableAndMessage {
 	let config = workspace.getConfiguration("robot");
 	let languageServerPython: string = config.get<string>("language-server.python");
 	let executable: string = languageServerPython;
@@ -274,31 +205,79 @@ function getDefaultLanguageServerPythonExecutable() {
 	}
 }
 
-export function activate(context: ExtensionContext) {
-	let config = workspace.getConfiguration("robot");
 
 
+export async function activate(context: ExtensionContext) {
 	try {
+		// The first thing we need is the python executable.
+		let executableAndMessage = getDefaultLanguageServerPythonExecutable();
+		if (executableAndMessage.message) {
+			let saveInUser: string = 'Yes (save in user settings)';
+			let saveInWorkspace: string = 'Yes (save in workspace settings)';
+
+			let selection = await window.showWarningMessage(executableAndMessage.message, ...[saveInUser, saveInWorkspace, 'No']);
+			// robot.language-server.python
+			if (selection == saveInUser || selection == saveInWorkspace) {
+				let onfulfilled = await window.showOpenDialog({
+					'canSelectMany': false,
+					'openLabel': 'Select python exe'
+				});
+				if (!onfulfilled && onfulfilled.length > 0) {
+					let configurationTarget: ConfigurationTarget = ConfigurationTarget.Workspace;
+					if (selection == saveInUser) {
+						configurationTarget = ConfigurationTarget.Global;
+					}
+					let config = workspace.getConfiguration("robot");
+					config.update("language-server.python", onfulfilled[0].fsPath, configurationTarget);
+					executableAndMessage = { 'executable': onfulfilled[0].fsPath, message: undefined };
+				}
+			} else {
+				// There's not much we can do (besides start listening to changes to the related variables
+				// on the finally block so that we start listening and ask for a reload if a related configuration changes).
+				return;
+			}
+		}
+
+		let config = workspace.getConfiguration("robot");
 		let port: number = config.get<number>("language-server.tcp-port");
+		let langServer: LanguageClient;
 		if (port) {
 			// For TCP server needs to be started seperately
-			let langServer = startLangServerTCP(port, ["robotframework"]);
-			let disposable: Disposable = langServer.start();
-			afterStartLangServer(undefined);
-			context.subscriptions.push(disposable);
+			langServer = startLangServerTCP(port, ["robotframework"]);
 
 		} else {
-			let executableAndMessage = getDefaultLanguageServerPythonExecutable();
-			if (executableAndMessage.message) {
-				askPythonExe(context, executableAndMessage.message);
+			let targetFile: string = path.resolve(__dirname, '../../src/robotframework_ls/__main__.py');
+			if (!fs.existsSync(targetFile)) {
+				window.showWarningMessage('Error. Expected: ' + targetFile + " to exist.");
 				return;
 			}
 
-			startLangServerIOWithPython(context, executableAndMessage.executable);
+			let args: Array<string> = ["-u", targetFile];
+			let config = workspace.getConfiguration("robot");
+			let lsArgs = config.get<Array<string>>("language-server.args");
+			if (lsArgs) {
+				args = args.concat(lsArgs);
+			}
+			langServer = startLangServerIO(executableAndMessage.executable, args, ["robotframework"]);
 		}
-	} finally {
-		startListeningConfigurationChanges();
-	}
+		let disposable: Disposable = langServer.start();
+		registerDebugger(executableAndMessage.executable);
+		context.subscriptions.push(disposable);
 
+	} finally {
+		workspace.onDidChangeConfiguration(event => {
+			for (let s of ["robot.language-server.python", "robot.language-server.tcp-port", "robot.language-server.args"]) {
+				if (event.affectsConfiguration(s)) {
+					window.showWarningMessage('Please use the "Reload Window" action for changes in ' + s + ' to take effect.', ...["Reload Window"]).then((selection) => {
+						if (selection === "Reload Window") {
+							commands.executeCommand("workbench.action.reloadWindow");
+						}
+					});
+					return;
+				}
+			}
+		});
+	}
 }
+
 
