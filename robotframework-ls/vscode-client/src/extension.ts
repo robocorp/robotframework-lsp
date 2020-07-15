@@ -161,12 +161,27 @@ interface ExecutableAndMessage {
 }
 
 
-function getDefaultLanguageServerPythonExecutable(): ExecutableAndMessage {
+async function getDefaultLanguageServerPythonExecutable(): Promise<ExecutableAndMessage> {
 	let config = workspace.getConfiguration("robot");
 	let languageServerPython: string = config.get<string>("language-server.python");
 	let executable: string = languageServerPython;
 
 	if (!executable || (executable.indexOf('/') == -1 && executable.indexOf('\\') == -1)) {
+		// Try to use the robocode extension to provide one for us (if it's installed and
+		// available).
+		try {
+			let languageServerPython: string = await commands.executeCommand<string>(
+				"robocode.getLanguageServerPython");
+			if (languageServerPython) {
+				return {
+					executable: languageServerPython,
+					'message': undefined
+				};
+			}
+		} catch (error) {
+			// The command may not be available (in this case, go forward and try to find it in the filesystem).
+		}
+
 		// Search python from the path.
 		if (!executable) {
 			if (process.platform == "win32") {
@@ -210,12 +225,16 @@ function getDefaultLanguageServerPythonExecutable(): ExecutableAndMessage {
 export async function activate(context: ExtensionContext) {
 	try {
 		// The first thing we need is the python executable.
-		let executableAndMessage = getDefaultLanguageServerPythonExecutable();
+		let executableAndMessage = await getDefaultLanguageServerPythonExecutable();
 		if (executableAndMessage.message) {
 			let saveInUser: string = 'Yes (save in user settings)';
 			let saveInWorkspace: string = 'Yes (save in workspace settings)';
 
 			let selection = await window.showWarningMessage(executableAndMessage.message, ...[saveInUser, saveInWorkspace, 'No']);
+			// Try to use the robocode extension to provide one for us (if it's installed and
+			// available). Since it can manage conda envs, if one is available it should be
+
+
 			// robot.language-server.python
 			if (selection == saveInUser || selection == saveInWorkspace) {
 				let onfulfilled = await window.showOpenDialog({

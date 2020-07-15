@@ -23,202 +23,114 @@ import * as net from 'net';
 import * as path from 'path';
 import * as fs from 'fs';
 
-import { workspace, Disposable, ExtensionContext, window, commands, Uri, ConfigurationTarget, debug, DebugAdapterExecutable } from 'vscode';
+import { workspace, Disposable, ExtensionContext, window, commands, Uri, ConfigurationTarget, debug, DebugAdapterExecutable, ProviderResult, DebugConfiguration, WorkspaceFolder, CancellationToken, DebugConfigurationProvider } from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, ErrorAction, ErrorHandler, CloseAction, TransportKind } from 'vscode-languageclient';
-import { print } from 'util';
-import { exec } from 'child_process';
+import * as roboConfig from './robocodeSettings';
+import * as roboCommands from './robocodeCommands';
 
 function startLangServerIO(command: string, args: string[], documentSelector: string[]): LanguageClient {
-	const serverOptions: ServerOptions = {
-		command,
-		args,
-	};
-	const clientOptions: LanguageClientOptions = {
-		documentSelector: documentSelector,
-		synchronize: {
-			configurationSection: "robocode"
-		}
-	}
-	// See: https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
-	return new LanguageClient(command, serverOptions, clientOptions);
+    const serverOptions: ServerOptions = {
+        command,
+        args,
+    };
+    const clientOptions: LanguageClientOptions = {
+        documentSelector: documentSelector,
+        synchronize: {
+            configurationSection: "robocode"
+        }
+    }
+    // See: https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
+    return new LanguageClient(command, serverOptions, clientOptions);
 }
 
 function startLangServerTCP(addr: number, documentSelector: string[]): LanguageClient {
-	const serverOptions: ServerOptions = function () {
-		return new Promise((resolve, reject) => {
-			var client = new net.Socket();
-			client.connect(addr, "127.0.0.1", function () {
-				resolve({
-					reader: client,
-					writer: client
-				});
-			});
-		});
-	}
+    const serverOptions: ServerOptions = function () {
+        return new Promise((resolve, reject) => {
+            var client = new net.Socket();
+            client.connect(addr, "127.0.0.1", function () {
+                resolve({
+                    reader: client,
+                    writer: client
+                });
+            });
+        });
+    }
 
-	const clientOptions: LanguageClientOptions = {
-		documentSelector: documentSelector,
-		synchronize: {
-			configurationSection: "robocode"
-		}
-	}
-	return new LanguageClient(`tcp lang server (port ${addr})`, serverOptions, clientOptions);
-}
-
-function findExecutableInPath(executable: string) {
-	const IS_WINDOWS = process.platform == "win32";
-	const sep = IS_WINDOWS ? ";" : ":";
-	const PATH = process.env["PATH"];
-	const split = PATH.split(sep);
-	for (let i = 0; i < split.length; i++) {
-		const s = path.join(split[i], executable);
-		if (fs.existsSync(s)) {
-			return s;
-		}
-	}
-	return undefined;
-}
-
-function askPythonExe(context: ExtensionContext, askMessage: string) {
-	let saveInUser: string = 'Yes (save in user settings)';
-	let saveInWorkspace: string = 'Yes (save in workspace settings)';
-
-	window.showWarningMessage(askMessage, ...[saveInUser, saveInWorkspace, 'No']).then((selection) => {
-		// robocode.language-server.python
-		if (selection == saveInUser || selection == saveInWorkspace) {
-			window.showOpenDialog({
-				'canSelectMany': false,
-				'openLabel': 'Select python exe'
-			}).then(onfulfilled => {
-				if (onfulfilled && onfulfilled.length > 0) {
-					let configurationTarget: ConfigurationTarget = ConfigurationTarget.Workspace;
-					if (selection == saveInUser) {
-						configurationTarget = ConfigurationTarget.Global;
-					}
-					let config = workspace.getConfiguration("robocode");
-					ignoreNextConfigurationChange = true;
-					config.update("language-server.python", onfulfilled[0].fsPath, configurationTarget);
-					startLangServerIOWithPython(context, onfulfilled[0].fsPath);
-				}
-			});
-		}
-	});
+    const clientOptions: LanguageClientOptions = {
+        documentSelector: documentSelector,
+        synchronize: {
+            configurationSection: "robocode"
+        }
+    }
+    return new LanguageClient(`tcp lang server (port ${addr})`, serverOptions, clientOptions);
 }
 
 
-
-function afterStartLangServer(pythonExecutable: string) {
-    // Register additional things (for instance, debugger).
+function registerDebugger(languageServerExecutable: string) {
+    // TODO: Actually launch an activity.
 }
 
-function startLangServerIOWithPython(context: ExtensionContext, pythonExecutable: string) {
-	let targetFile: string = path.resolve(__dirname, '../../src/robocode_vscode/__main__.py');
-	if (!fs.existsSync(targetFile)) {
-		window.showWarningMessage('Error. Expected: ' + targetFile + " to exist.");
-		return;
-	}
+let langServer: LanguageClient;
 
-	let args: Array<string> = ["-u", targetFile];
-	let config = workspace.getConfiguration("robocode");
-	let lsArgs = config.get<Array<string>>("language-server.args");
-	if (lsArgs) {
-		args = args.concat(lsArgs);
-	}
+export async function activate(context: ExtensionContext) {
+    try {
+        // The first thing we need is the python executable.
+        let executableAndMessage = { 'executable': "C:/bin/Python37-32/python.exe", "message": undefined };
 
-	let langServer: LanguageClient = startLangServerIO(pythonExecutable, args, ["robotframework"]);
-	let disposable: Disposable = langServer.start();
-	afterStartLangServer(pythonExecutable);
-	context.subscriptions.push(disposable);
+        let port: number = roboConfig.getLanguageServerTcpPort();
+        let documentSelector: string[] = [];
+        if (port) {
+            // For TCP server needs to be started seperately
+            langServer = startLangServerTCP(port, documentSelector);
 
+        } else {
+            let targetFile: string = path.resolve(__dirname, '../../src/robocode_vscode/__main__.py');
+            if (!fs.existsSync(targetFile)) {
+                window.showWarningMessage('Error. Expected: ' + targetFile + " to exist.");
+                return;
+            }
+
+            let args: Array<string> = ["-u", targetFile];
+            let lsArgs = roboConfig.getLanguageServerArgs();
+            if (lsArgs) {
+                args = args.concat(lsArgs);
+            }
+            langServer = startLangServerIO(executableAndMessage.executable, args, documentSelector);
+        }
+
+        let disposable: Disposable = langServer.start();
+        commands.registerCommand(roboCommands.ROBOCODE_GET_LANGUAGE_SERVER_PYTHON, () => getLanguageServerPython());
+        registerDebugger(executableAndMessage.executable);
+        context.subscriptions.push(disposable);
+
+        // i.e.: if we return before it's ready, the language server commands
+        // may not be available.
+        await langServer.onReady();
+
+
+    } finally {
+        workspace.onDidChangeConfiguration(event => {
+            for (let s of [roboConfig.ROBOCODE_LANGUAGE_SERVER_ARGS, roboConfig.ROBOCODE_LANGUAGE_SERVER_PYTHON, roboConfig.ROBOCODE_LANGUAGE_SERVER_TCP_PORT]) {
+                if (event.affectsConfiguration(s)) {
+                    window.showWarningMessage('Please use the "Reload Window" action for changes in ' + s + ' to take effect.', ...["Reload Window"]).then((selection) => {
+                        if (selection === "Reload Window") {
+                            commands.executeCommand("workbench.action.reloadWindow");
+                        }
+                    });
+                    return;
+                }
+            }
+        });
+    }
 }
 
-
-// i.e.: we can ignore changes when we know we'll be doing them prior to starting the language server.
-let ignoreNextConfigurationChange: boolean = false;
-
-function startListeningConfigurationChanges() {
-
-	workspace.onDidChangeConfiguration(event => {
-		if (ignoreNextConfigurationChange) {
-			ignoreNextConfigurationChange = false;
-			return;
-		}
-		for (let s of ["robocode.language-server.python", "robocode.language-server.tcp-port", "robocode.language-server.args"]) {
-			if (event.affectsConfiguration(s)) {
-				window.showWarningMessage('Please use the "Reload Window" action for changes in ' + s + ' to take effect.', ...["Reload Window"]).then((selection) => {
-					if (selection === "Reload Window") {
-						commands.executeCommand("workbench.action.reloadWindow");
-					}
-				});
-				return;
-			}
-		}
-	});
+export function deactivate(): Thenable<void> | undefined {
+    if (!langServer) {
+        return undefined;
+    }
+    return langServer.stop();
 }
 
-function getDefaultLanguageServerPythonExecutable() {
-	let config = workspace.getConfiguration("robocode");
-	let languageServerPython: string = config.get<string>("language-server.python");
-	let executable: string = languageServerPython;
-
-	if (!executable || (executable.indexOf('/') == -1 && executable.indexOf('\\') == -1)) {
-		// Search python from the path.
-		if (!executable || executable == "python") {
-			if (process.platform == "win32") {
-				executable = "python.exe";
-			}
-		}
-		executable = findExecutableInPath(executable);
-		if (!fs.existsSync(executable)) {
-			return {
-				executable: undefined,
-				'message': 'Unable to start robocode_vscode because: python could not be found on the PATH. Do you want to select a python executable to start robocode_vscode?'
-			};
-		}
-		return {
-			executable: executable,
-			'message': undefined
-		};
-
-	} else {
-		if (!fs.existsSync(executable)) {
-			return {
-				executable: undefined,
-				'message': 'Unable to start robocode_vscode because: ' + executable + ' does not exist. Do you want to select a new python executable to start robocode_vscode?'
-			};
-		}
-		return {
-			executable: executable,
-			'message': undefined
-		};
-	}
+async function getLanguageServerPython() {
+    return "C:/bin/Python37-32/python.exe";
 }
-
-export function activate(context: ExtensionContext) {
-	let config = workspace.getConfiguration("robocode");
-
-
-	try {
-		let port: number = config.get<number>("language-server.tcp-port");
-		if (port) {
-			// For TCP server needs to be started seperately
-			let langServer = startLangServerTCP(port, ["robotframework"]);
-			let disposable: Disposable = langServer.start();
-			afterStartLangServer(undefined);
-			context.subscriptions.push(disposable);
-
-		} else {
-			let executableAndMessage = getDefaultLanguageServerPythonExecutable();
-			if (executableAndMessage.message) {
-				askPythonExe(context, executableAndMessage.message);
-				return;
-			}
-
-			startLangServerIOWithPython(context, executableAndMessage.executable);
-		}
-	} finally {
-		startListeningConfigurationChanges();
-	}
-
-}
-

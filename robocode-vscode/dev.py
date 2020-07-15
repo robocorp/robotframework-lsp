@@ -46,7 +46,6 @@ def _fix_contents_version(contents, version):
 
 
 class Dev(object):
-
     def set_version(self, version):
         """
         Sets a new version for robotframework-lsp in all the needed files.
@@ -119,6 +118,15 @@ class Dev(object):
         print("Copying from: %s to %s" % (src_core, vendored_dir))
         shutil.copytree(src_core, vendored_dir)
         print("Finished vendoring.")
+
+    def codegen(self):
+        try:
+            import codegen_package
+        except ImportError:
+            # I.e.: add relative path (the cwd must be the directory containing this file).
+            sys.path.append("codegen")
+            import codegen_package
+        codegen_package.main()
 
 
 def test_lines():

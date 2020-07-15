@@ -17,7 +17,7 @@
     },
     "categories": [],
     "activationEvents": [
-        "*",
+        "onCommand:robocode.getLanguageServerPython",
         "onCommand:robocode.sayHello"
     ],
     "contributes": {
@@ -45,11 +45,12 @@
         "languages": [],
         "grammars": [],
         "debuggers": [],
+        "keybindings": [],
         "commands": [
             {
                 "command": "robocode.sayHello",
                 "title": "Hello World",
-                "category": "Hello"
+                "category": "Robocode"
             }
         ]
     },
