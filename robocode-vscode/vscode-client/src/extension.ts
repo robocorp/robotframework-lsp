@@ -28,22 +28,28 @@ import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, E
 import * as roboConfig from './robocodeSettings';
 import * as roboCommands from './robocodeCommands';
 
-function startLangServerIO(command: string, args: string[], documentSelector: string[]): LanguageClient {
+const OUTPUT_CHANNEL_NAME = "Robocode";
+const OUTPUT_CHANNEL = window.createOutputChannel(OUTPUT_CHANNEL_NAME);
+
+const clientOptions: LanguageClientOptions = {
+    documentSelector: [],
+    synchronize: {
+        configurationSection: "robocode"
+    },
+    outputChannel: OUTPUT_CHANNEL,
+}
+
+
+function startLangServerIO(command: string, args: string[]): LanguageClient {
     const serverOptions: ServerOptions = {
         command,
         args,
     };
-    const clientOptions: LanguageClientOptions = {
-        documentSelector: documentSelector,
-        synchronize: {
-            configurationSection: "robocode"
-        }
-    }
     // See: https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
     return new LanguageClient(command, serverOptions, clientOptions);
 }
 
-function startLangServerTCP(addr: number, documentSelector: string[]): LanguageClient {
+function startLangServerTCP(addr: number): LanguageClient {
     const serverOptions: ServerOptions = function () {
         return new Promise((resolve, reject) => {
             var client = new net.Socket();
@@ -56,12 +62,7 @@ function startLangServerTCP(addr: number, documentSelector: string[]): LanguageC
         });
     }
 
-    const clientOptions: LanguageClientOptions = {
-        documentSelector: documentSelector,
-        synchronize: {
-            configurationSection: "robocode"
-        }
-    }
+
     return new LanguageClient(`tcp lang server (port ${addr})`, serverOptions, clientOptions);
 }
 
@@ -75,13 +76,18 @@ let langServer: LanguageClient;
 export async function activate(context: ExtensionContext) {
     try {
         // The first thing we need is the python executable.
-        let executableAndMessage = { 'executable': "C:/bin/Python37-32/python.exe", "message": undefined };
+        OUTPUT_CHANNEL.appendLine("Activating Robocode extension.");
+        let executable = await getLanguageServerPython();
+        if(!executable){
+            OUTPUT_CHANNEL.appendLine("Unable to activate Robocode extension (unable to get python executable).");
+            return;
+        }
+        OUTPUT_CHANNEL.appendLine("Using python executable: " + executable);
 
         let port: number = roboConfig.getLanguageServerTcpPort();
-        let documentSelector: string[] = [];
         if (port) {
             // For TCP server needs to be started seperately
-            langServer = startLangServerTCP(port, documentSelector);
+            langServer = startLangServerTCP(port);
 
         } else {
             let targetFile: string = path.resolve(__dirname, '../../src/robocode_vscode/__main__.py');
@@ -95,17 +101,19 @@ export async function activate(context: ExtensionContext) {
             if (lsArgs) {
                 args = args.concat(lsArgs);
             }
-            langServer = startLangServerIO(executableAndMessage.executable, args, documentSelector);
+            langServer = startLangServerIO(executable, args);
         }
 
         let disposable: Disposable = langServer.start();
         commands.registerCommand(roboCommands.ROBOCODE_GET_LANGUAGE_SERVER_PYTHON, () => getLanguageServerPython());
-        registerDebugger(executableAndMessage.executable);
+        registerDebugger(executable);
         context.subscriptions.push(disposable);
 
         // i.e.: if we return before it's ready, the language server commands
         // may not be available.
+        OUTPUT_CHANNEL.appendLine("Waiting for Robocode (python) language server to finish activating...");
         await langServer.onReady();
+        OUTPUT_CHANNEL.appendLine("Robocode extension ready.");
 
 
     } finally {

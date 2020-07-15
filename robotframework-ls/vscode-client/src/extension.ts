@@ -23,25 +23,30 @@ import * as net from 'net';
 import * as path from 'path';
 import * as fs from 'fs';
 
-import { workspace, Disposable, ExtensionContext, window, commands, Uri, ConfigurationTarget, debug, DebugAdapterExecutable, ProviderResult, DebugConfiguration, WorkspaceFolder, CancellationToken, DebugConfigurationProvider } from 'vscode';
-import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, ErrorAction, ErrorHandler, CloseAction, TransportKind } from 'vscode-languageclient';
+import { workspace, Disposable, ExtensionContext, window, commands, ConfigurationTarget, debug, DebugAdapterExecutable, ProviderResult, DebugConfiguration, WorkspaceFolder, CancellationToken, DebugConfigurationProvider } from 'vscode';
+import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
 
-function startLangServerIO(command: string, args: string[], documentSelector: string[]): LanguageClient {
+const OUTPUT_CHANNEL_NAME = "Robot Framework";
+const OUTPUT_CHANNEL = window.createOutputChannel(OUTPUT_CHANNEL_NAME);
+
+const clientOptions: LanguageClientOptions = {
+	documentSelector: ["robotframework"],
+	synchronize: {
+		configurationSection: "robot"
+	},
+	outputChannel: OUTPUT_CHANNEL,
+}
+
+function startLangServerIO(command: string, args: string[]): LanguageClient {
 	const serverOptions: ServerOptions = {
 		command,
 		args,
 	};
-	const clientOptions: LanguageClientOptions = {
-		documentSelector: documentSelector,
-		synchronize: {
-			configurationSection: "robot"
-		}
-	}
 	// See: https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
 	return new LanguageClient(command, serverOptions, clientOptions);
 }
 
-function startLangServerTCP(addr: number, documentSelector: string[]): LanguageClient {
+function startLangServerTCP(addr: number): LanguageClient {
 	const serverOptions: ServerOptions = function () {
 		return new Promise((resolve, reject) => {
 			var client = new net.Socket();
@@ -52,13 +57,6 @@ function startLangServerTCP(addr: number, documentSelector: string[]): LanguageC
 				});
 			});
 		});
-	}
-
-	const clientOptions: LanguageClientOptions = {
-		documentSelector: documentSelector,
-		synchronize: {
-			configurationSection: "robot"
-		}
 	}
 	return new LanguageClient(`tcp lang server (port ${addr})`, serverOptions, clientOptions);
 }
@@ -76,8 +74,6 @@ function findExecutableInPath(executable: string) {
 	}
 	return undefined;
 }
-
-
 
 class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
 
@@ -154,7 +150,6 @@ function registerDebugger(languageServerExecutable: string) {
 }
 
 
-
 interface ExecutableAndMessage {
 	executable: string;
 	message: string;
@@ -162,6 +157,7 @@ interface ExecutableAndMessage {
 
 
 async function getDefaultLanguageServerPythonExecutable(): Promise<ExecutableAndMessage> {
+	OUTPUT_CHANNEL.appendLine("Getting language server Python executable.");
 	let config = workspace.getConfiguration("robot");
 	let languageServerPython: string = config.get<string>("language-server.python");
 	let executable: string = languageServerPython;
@@ -173,6 +169,7 @@ async function getDefaultLanguageServerPythonExecutable(): Promise<ExecutableAnd
 			let languageServerPython: string = await commands.executeCommand<string>(
 				"robocode.getLanguageServerPython");
 			if (languageServerPython) {
+				OUTPUT_CHANNEL.appendLine("Language server Python executable gotten from robocode.getLanguageServerPython.");
 				return {
 					executable: languageServerPython,
 					'message': undefined
@@ -184,6 +181,7 @@ async function getDefaultLanguageServerPythonExecutable(): Promise<ExecutableAnd
 
 		// Search python from the path.
 		if (!executable) {
+			OUTPUT_CHANNEL.appendLine("Language server Python executable. Searching in PATH.");
 			if (process.platform == "win32") {
 				executable = findExecutableInPath("python.exe");
 			} else {
@@ -193,7 +191,9 @@ async function getDefaultLanguageServerPythonExecutable(): Promise<ExecutableAnd
 				}
 			}
 		} else {
+			OUTPUT_CHANNEL.appendLine("Language server Python executable. Searching " + executable + " from the PATH.");
 			executable = findExecutableInPath(executable);
+			OUTPUT_CHANNEL.appendLine("Language server Python executable. Found: " + executable);
 		}
 		if (!fs.existsSync(executable)) {
 			return {
@@ -220,13 +220,13 @@ async function getDefaultLanguageServerPythonExecutable(): Promise<ExecutableAnd
 	}
 }
 
-
-
 export async function activate(context: ExtensionContext) {
 	try {
 		// The first thing we need is the python executable.
 		let executableAndMessage = await getDefaultLanguageServerPythonExecutable();
 		if (executableAndMessage.message) {
+			OUTPUT_CHANNEL.appendLine(executableAndMessage.message);
+
 			let saveInUser: string = 'Yes (save in user settings)';
 			let saveInWorkspace: string = 'Yes (save in workspace settings)';
 
@@ -253,6 +253,7 @@ export async function activate(context: ExtensionContext) {
 			} else {
 				// There's not much we can do (besides start listening to changes to the related variables
 				// on the finally block so that we start listening and ask for a reload if a related configuration changes).
+				OUTPUT_CHANNEL.appendLine("Unable to start (no python executable specified).");
 				return;
 			}
 		}
@@ -262,7 +263,8 @@ export async function activate(context: ExtensionContext) {
 		let langServer: LanguageClient;
 		if (port) {
 			// For TCP server needs to be started seperately
-			langServer = startLangServerTCP(port, ["robotframework"]);
+			OUTPUT_CHANNEL.appendLine("Connecting to port: " + port);
+			langServer = startLangServerTCP(port);
 
 		} else {
 			let targetFile: string = path.resolve(__dirname, '../../src/robotframework_ls/__main__.py');
@@ -277,11 +279,19 @@ export async function activate(context: ExtensionContext) {
 			if (lsArgs) {
 				args = args.concat(lsArgs);
 			}
-			langServer = startLangServerIO(executableAndMessage.executable, args, ["robotframework"]);
+			OUTPUT_CHANNEL.appendLine("Starting RobotFramework Language Server with args: " + executableAndMessage.executable + "," + args);
+			langServer = startLangServerIO(executableAndMessage.executable, args);
 		}
 		let disposable: Disposable = langServer.start();
 		registerDebugger(executableAndMessage.executable);
 		context.subscriptions.push(disposable);
+
+		// i.e.: if we return before it's ready, the language server commands
+		// may not be available.
+		OUTPUT_CHANNEL.appendLine("Waiting for RobotFramework (python) Language Server to finish activating...");
+		await langServer.onReady();
+		OUTPUT_CHANNEL.appendLine("RobotFramework Language Server ready.");
+
 
 	} finally {
 		workspace.onDidChangeConfiguration(event => {
