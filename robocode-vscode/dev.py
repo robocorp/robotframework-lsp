@@ -120,6 +120,12 @@ class Dev(object):
         print("Finished vendoring.")
 
     def codegen(self):
+        """
+        Generates code (to add actions, settings, etc).
+        In particular, generates the package.json and auxiliary files with
+        constants in the code.
+        """
+
         try:
             import codegen_package
         except ImportError:

@@ -1,0 +1,10 @@
+activities:
+  entrypoint:
+    output: output
+    activityRoot: .
+    action:
+      command:
+        - python
+        - get_env_info.py
+
+condaConfig: conda.yaml

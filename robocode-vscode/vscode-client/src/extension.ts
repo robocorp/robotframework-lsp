@@ -27,6 +27,7 @@ import { workspace, Disposable, ExtensionContext, window, commands, Uri, Configu
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, ErrorAction, ErrorHandler, CloseAction, TransportKind } from 'vscode-languageclient';
 import * as roboConfig from './robocodeSettings';
 import * as roboCommands from './robocodeCommands';
+import * as childProcess from 'child_process';
 
 const OUTPUT_CHANNEL_NAME = "Robocode";
 const OUTPUT_CHANNEL = window.createOutputChannel(OUTPUT_CHANNEL_NAME);
@@ -37,6 +38,24 @@ const clientOptions: LanguageClientOptions = {
         configurationSection: "robocode"
     },
     outputChannel: OUTPUT_CHANNEL,
+}
+
+function verifyFileExists(targetFile: string): boolean {
+    if (!fs.existsSync(targetFile)) {
+        let msg = 'Error. Expected: ' + targetFile + " to exist.";
+        window.showWarningMessage(msg);
+        OUTPUT_CHANNEL.appendLine(msg);
+        return false;
+    }
+    return true;
+}
+
+function getExtensionRelativeFile(relativeLocation: string): string | undefined {
+    let targetFile: string = path.resolve(__dirname, relativeLocation);
+    if (!verifyFileExists(targetFile)) {
+        return undefined;
+    }
+    return targetFile;
 }
 
 
@@ -68,7 +87,7 @@ function startLangServerTCP(addr: number): LanguageClient {
 
 
 function registerDebugger(languageServerExecutable: string) {
-    // TODO: Actually launch an activity.
+    // TODO: Actually provide support to launch an activity.
 }
 
 let langServer: LanguageClient;
@@ -78,7 +97,7 @@ export async function activate(context: ExtensionContext) {
         // The first thing we need is the python executable.
         OUTPUT_CHANNEL.appendLine("Activating Robocode extension.");
         let executable = await getLanguageServerPython();
-        if(!executable){
+        if (!executable) {
             OUTPUT_CHANNEL.appendLine("Unable to activate Robocode extension (unable to get python executable).");
             return;
         }
@@ -90,9 +109,8 @@ export async function activate(context: ExtensionContext) {
             langServer = startLangServerTCP(port);
 
         } else {
-            let targetFile: string = path.resolve(__dirname, '../../src/robocode_vscode/__main__.py');
-            if (!fs.existsSync(targetFile)) {
-                window.showWarningMessage('Error. Expected: ' + targetFile + " to exist.");
+            let targetFile: string = getExtensionRelativeFile('../../src/robocode_vscode/__main__.py');
+            if (!targetFile) {
                 return;
             }
 
@@ -139,6 +157,85 @@ export function deactivate(): Thenable<void> | undefined {
     return langServer.stop();
 }
 
-async function getLanguageServerPython() {
-    return "C:/bin/Python37-32/python.exe";
+// We can't really ship rcc per-platform right now (so, we need to either
+// download it or ship it along).
+// See: https://github.com/microsoft/vscode/issues/6929
+// See: https://github.com/microsoft/vscode/issues/23251
+// In particular, if we download things, we should use:
+// https://www.npmjs.com/package/request-light according to:
+// https://github.com/microsoft/vscode/issues/6929#issuecomment-222153748
+
+function getRccLocation(): string | undefined {
+    // TODO: Support other platforms
+    return getExtensionRelativeFile('../../bin/rcc.exe');
+}
+
+
+interface ExecFileReturn {
+    stdout: string;
+    stderr: string;
+};
+
+function execFilePromise(command: string, args: string[]): Promise<ExecFileReturn> {
+    return new Promise<ExecFileReturn>(function (resolve, reject) {
+        OUTPUT_CHANNEL.appendLine('Executing: ' + command + ',' + args);
+        childProcess.execFile(command, args, (error, stdout, stderr) => {
+            if (error) {
+                OUTPUT_CHANNEL.appendLine('Error executing: ' + command + ',' + args);
+                OUTPUT_CHANNEL.appendLine('Error: ' + error);
+                OUTPUT_CHANNEL.appendLine('Stderr: ' + stderr);
+                OUTPUT_CHANNEL.appendLine('Stdout: ' + stdout);
+                reject(error);
+                return;
+            }
+
+            resolve({ 'stdout': stdout.trim(), 'stderr': stderr.trim() });
+        });
+    });
+}
+
+let cachedPythonExe: string;
+
+async function getLanguageServerPython(): Promise<string> {
+    if (cachedPythonExe) {
+        return cachedPythonExe;
+    }
+    let pythonExe = await getLanguageServerPythonUncached();
+    if (!pythonExe) {
+        return undefined; // Unable to get it.
+    }
+    // Ok, we got it (cache that info).
+    cachedPythonExe = pythonExe;
+    return cachedPythonExe;
+}
+
+async function getLanguageServerPythonUncached(): Promise<string> {
+    let rccLocation = getRccLocation();
+    if (!rccLocation) {
+        return;
+    }
+
+    let packageYaml = getExtensionRelativeFile('../../bin/create_env/package.yaml');
+    if (!packageYaml) {
+        return;
+    }
+
+    // Make sure that conda is installed.
+    await execFilePromise(rccLocation, ['conda', 'check', '-i']);
+
+    // Get information on a base package with our basic dependencies (this can take a while...).
+    let result = await execFilePromise(rccLocation, ['activity', 'run', '-p', packageYaml]);
+
+    let contents: object;
+    try {
+        contents = JSON.parse(result.stderr);
+        let pythonExe = contents['python_executable'];
+        if (verifyFileExists) {
+            return pythonExe;
+        }
+    } catch (error) {
+        OUTPUT_CHANNEL.appendLine('Unable to get python to launch language server. Error parsing json: ' + result.stderr);
+        return;
+    }
+    return undefined;
 }
