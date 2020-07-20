@@ -18,8 +18,6 @@
 from robocode_ls_core.unittest_tools.fixtures import TIMEOUT
 import subprocess
 from collections import namedtuple
-from robocode_ls_core.constants import IS_PY2
-from robocode_ls_core.basic import py2_filesystem_encode, py2_filesystem_decode
 
 try:
     import Queue as queue
@@ -277,9 +275,6 @@ class _DebuggerAPI(object):
             cwd = run_in_terminal_request.arguments.cwd
             args = run_in_terminal_request.arguments.args
 
-            if IS_PY2:
-                cwd = py2_filesystem_encode(cwd)
-                args = [py2_filesystem_encode(arg) for arg in args]
             subprocess.Popen(args, cwd=cwd, env=env)
 
         if success:
@@ -374,18 +369,12 @@ class _DebuggerAPI(object):
             utf-8 bytes encoded file or unicode
         """
         from robotframework_debug_adapter.dap.dap_schema import StoppedEvent
-        from robocode_ls_core.constants import IS_PY2
 
         stopped_event = self.read(StoppedEvent)
         assert stopped_event.body.reason == reason
         json_hit = self.get_stack_as_json_hit(stopped_event.body.threadId)
         if file is not None:
             path = json_hit.stack_trace_response.body.stackFrames[0]["source"]["path"]
-            if IS_PY2:
-                if isinstance(file, bytes):
-                    file = file.decode("utf-8")
-                if isinstance(path, bytes):
-                    path = path.decode("utf-8")
 
             if not path.endswith(file):
                 raise AssertionError("Expected path: %s to end with: %s" % (path, file))
@@ -485,15 +474,9 @@ def dap_resources_dir(tmpdir_factory):
     from robocode_ls_core.copytree import copytree_dst_exists
 
     basename = u"dap áéíóú"
-    if IS_PY2:
-        basename = py2_filesystem_encode(basename)
     copy_to = str(tmpdir_factory.mktemp(basename))
-    if IS_PY2:
-        copy_to = py2_filesystem_decode(copy_to)
 
     f = __file__
-    if IS_PY2:
-        f = py2_filesystem_decode(f)
     original_resources_dir = os.path.join(os.path.dirname(f), u"_dap_resources")
     assert os.path.exists(original_resources_dir)
 

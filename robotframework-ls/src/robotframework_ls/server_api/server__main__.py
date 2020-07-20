@@ -12,7 +12,6 @@ _critical_error_log_file = os.path.join(
 
 
 def _stderr_reader(stream):
-    from robotframework_ls.constants import IS_PY2
     from robocode_ls_core.robotframework_log import get_logger
 
     log = get_logger(__name__)
@@ -20,10 +19,7 @@ def _stderr_reader(stream):
     try:
         while True:
             line = stream.readline()
-            if IS_PY2:
-                sys.stderr.write(line)
-            else:
-                sys.stderr.buffer.write(line)
+            sys.stderr.buffer.write(line)
             if not line:
                 break
     except:

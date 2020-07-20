@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py27-master",
+          "windows-py36-master",
           
           "ubuntu-py38-master",
           "ubuntu-pypy3-master",
@@ -31,8 +31,8 @@ jobs:
         ]
         
         include:
-          - name: "windows-py27-master"
-            python: "2.7"
+          - name: "windows-py36-master"
+            python: "3.6"
             os: windows-latest
           - name: "ubuntu-py38-master"
             python: "3.8"

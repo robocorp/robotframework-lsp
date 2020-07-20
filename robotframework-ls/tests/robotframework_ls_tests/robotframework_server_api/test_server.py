@@ -129,13 +129,9 @@ def test_check_version():
 
 def check_no_robotframework():
     from robocode_ls_core.basic import before
-    from robotframework_ls.constants import IS_PY2
     import sys
 
-    if IS_PY2:
-        import __builtin__ as builtins
-    else:
-        import builtins
+    import builtins
 
     def fail_robot_import(name, *args, **kwargs):
         if name == "robot" or name.startswith("robot."):

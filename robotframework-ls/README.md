@@ -4,8 +4,7 @@
 Requirements
 -------------
 
-Python 3.7+ and [Robot Framework](https://robotframework.org/) 3.2+ (note that [Robot Framework](https://robotframework.org/) may
-be installed in a separate python interpreter in case you need to run it with an older version of Python).
+Python 3.7+ and [Robot Framework](https://robotframework.org/) 3.2+.
 
 
 Installing

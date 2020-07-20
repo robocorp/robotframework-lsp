@@ -1,7 +1,4 @@
 import pytest
-from robocode_ls_core.constants import IS_PY2
-import sys
-from robocode_ls_core.basic import py2_filesystem_decode
 
 
 def test_keyword_completions_builtin(workspace, libspec_manager):
@@ -93,8 +90,6 @@ def test_keyword_completions_user_library(
         )
         library_import = case1_py_path
 
-    if IS_PY2:
-        library_import = py2_filesystem_decode(library_import)
     doc.source = doc.source.replace(u"case1_library", library_import)
     doc.source = doc.source + u"\n    verify"
 

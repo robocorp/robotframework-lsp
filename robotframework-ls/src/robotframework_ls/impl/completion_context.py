@@ -1,9 +1,7 @@
 from robotframework_ls.impl.robot_workspace import RobotDocument
 from robocode_ls_core.cache import instance_cache
 from robocode_ls_core.robotframework_log import get_logger
-from robocode_ls_core.constants import IS_PY2
 import sys
-from robocode_ls_core.basic import py2_filesystem_encode
 
 log = get_logger(__name__)
 
@@ -297,11 +295,6 @@ class CompletionContext(object):
 
                 name_with_resolved_vars = self.token_value_resolving_variables(token)
 
-                if IS_PY2 and isinstance(name_with_resolved_vars, unicode):
-                    name_with_resolved_vars = name_with_resolved_vars.encode(
-                        sys.getfilesystemencoding()
-                    )
-
                 if not os.path.isabs(name_with_resolved_vars):
                     # It's a relative resource, resolve its location based on the
                     # current file.
@@ -360,8 +353,5 @@ class CompletionContext(object):
             if value is None:
                 log.info("Unable to find variable: %s", var_name)
                 value = value_if_not_found
-        if IS_PY2:
-            value = py2_filesystem_encode(value)
-        else:
-            value = str(value)
+        value = str(value)
         return value

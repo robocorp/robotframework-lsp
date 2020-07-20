@@ -23,8 +23,6 @@ import itertools
 import json
 import os.path
 import threading
-from robocode_ls_core.constants import IS_PY2
-from robocode_ls_core.basic import py2_filesystem_encode, py2_filesystem_decode
 
 try:
     import Queue as queue
@@ -406,8 +404,6 @@ class LaunchProcess(object):
                 + [target]
             )
 
-        if IS_PY2:
-            cmdline = [py2_filesystem_encode(c) for c in cmdline]
         self._cmdline = cmdline
 
     @property
@@ -543,8 +539,6 @@ class LaunchProcess(object):
 
             debug_adapter_comm = weak_debug_adapter_comm()
             cmdline = self._cmdline
-            if IS_PY2:
-                cmdline = [py2_filesystem_decode(c) for c in cmdline]
             if debug_adapter_comm is not None:
                 debug_adapter_comm.write_to_client_message(
                     RunInTerminalRequest(

@@ -21,8 +21,6 @@ import os
 from robocode_ls_core import uris
 from robocode_ls_core.uris import uri_scheme, to_fs_path
 from robocode_ls_core.robotframework_log import get_logger
-from robocode_ls_core.constants import IS_PY2
-from robocode_ls_core.basic import py2_filesystem_decode
 
 log = get_logger(__name__)
 
@@ -48,8 +46,6 @@ class Workspace(object):
 
         if root_uri and root_uri not in self.folders:
             as_fs_path = uris.to_fs_path(root_uri)
-            if IS_PY2:
-                as_fs_path = py2_filesystem_decode(as_fs_path)
             name = os.path.basename(as_fs_path)
             self.add_folder(WorkspaceFolder(root_uri, name))
 

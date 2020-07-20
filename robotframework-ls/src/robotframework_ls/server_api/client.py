@@ -1,6 +1,4 @@
 from robocode_ls_core.client_base import LanguageServerClientBase
-from robocode_ls_core.constants import IS_PY2
-from robocode_ls_core.basic import py2_filesystem_decode
 
 
 class SubprocessDiedError(Exception):
@@ -29,9 +27,6 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         self, msg_id=None, process_id=None, root_uri=u"", workspace_folders=()
     ):
         from robocode_ls_core.options import NO_TIMEOUT, USE_TIMEOUTS
-
-        if IS_PY2:
-            root_uri = py2_filesystem_decode(root_uri)
 
         self._check_process_alive()
         msg_id = msg_id if msg_id is not None else self.next_id()

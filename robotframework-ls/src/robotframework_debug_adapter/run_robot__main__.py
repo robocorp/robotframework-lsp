@@ -3,7 +3,6 @@ import json
 import socket as socket_module
 import sys
 import threading
-from robocode_ls_core.constants import IS_PY2
 import traceback
 
 try:
@@ -224,8 +223,6 @@ class _RobotTargetComm(threading.Thread):
         robot_breakpoints = []
         source = request.arguments.source
         path = source.path
-        if IS_PY2:
-            path = path.encode(file_utils.file_system_encoding)
         filename = file_utils.norm_file_to_server(path)
         log.info("Normalized %s to %s", path, filename)
 

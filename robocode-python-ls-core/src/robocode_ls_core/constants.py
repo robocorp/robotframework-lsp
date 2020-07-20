@@ -5,7 +5,6 @@ IS_LINUX = sys.platform in ("linux", "linux2")
 IS_MAC = sys.platform == "darwin"
 
 IS_JYTHON = sys.platform.startswith("java")
-IS_PY2 = sys.version_info.major == 2
 IS_PY37_ONWARDS = sys.version_info[:2] >= (3, 7)
 
 

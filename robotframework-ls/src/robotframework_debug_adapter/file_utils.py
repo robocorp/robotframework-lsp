@@ -64,7 +64,7 @@ import os.path
 import sys
 import itertools
 import ntpath
-from robocode_ls_core.constants import IS_PY2, IS_WINDOWS, IS_JYTHON
+from robocode_ls_core.constants import IS_WINDOWS, IS_JYTHON
 from robocode_ls_core.robotframework_log import get_logger, get_log_level
 from functools import partial
 
@@ -208,27 +208,19 @@ if sys.platform == "win32":
         def _convert_to_long_pathname(filename):
             buf = ctypes.create_unicode_buffer(MAX_PATH)
 
-            if IS_PY2 and isinstance(filename, str):
-                filename = filename.decode(getfilesystemencoding())
             rv = GetLongPathName(filename, buf, MAX_PATH)
             if rv != 0 and rv <= MAX_PATH:
                 filename = buf.value
 
-            if IS_PY2:
-                filename = filename.encode(getfilesystemencoding())
             return filename
 
         def _convert_to_short_pathname(filename):
             buf = ctypes.create_unicode_buffer(MAX_PATH)
 
-            if IS_PY2 and isinstance(filename, str):
-                filename = filename.decode(getfilesystemencoding())
             rv = GetShortPathName(filename, buf, MAX_PATH)
             if rv != 0 and rv <= MAX_PATH:
                 filename = buf.value
 
-            if IS_PY2:
-                filename = filename.encode(getfilesystemencoding())
             return filename
 
         # Note that we have a cache for previous list dirs... the only case where this may be an
@@ -270,9 +262,6 @@ if sys.platform == "win32":
             # but this is no longer done because we can't rely on getting the shortname
             # consistently (there are settings to disable it on Windows).
             # So, using approach which resolves by listing the dir.
-
-            if IS_PY2 and isinstance(filename, unicode):  # noqa
-                filename = filename.encode(getfilesystemencoding())
 
             if "~" in filename:
                 filename = convert_to_long_pathname(filename)
@@ -327,8 +316,6 @@ elif IS_JYTHON and IS_WINDOWS:
 
         f = File(filename)
         ret = f.getCanonicalPath()
-        if IS_PY2 and not isinstance(ret, str):
-            return ret.encode(getfilesystemencoding())
         return ret
 
 
@@ -575,18 +562,8 @@ def exists(file):
 
 
 def _path_to_expected_str(filename):
-    if IS_PY2:
-        if not filesystem_encoding_is_utf8 and hasattr(filename, "decode"):
-            # filename_in_utf8 is a byte string encoded using the file system encoding
-            # convert it to utf8
-            filename = filename.decode(file_system_encoding)
-
-        if not isinstance(filename, bytes):
-            filename = filename.encode("utf-8")
-
-    else:  # py3
-        if isinstance(filename, bytes):
-            filename = filename.decode(file_system_encoding)
+    if isinstance(filename, bytes):
+        filename = filename.decode(file_system_encoding)
 
     return filename
 
@@ -678,12 +655,6 @@ def setup_client_server_paths(paths):
     # Apply normcase to the existing paths to follow the os preferences.
 
     for i, (path0, path1) in enumerate(paths_from_IDE_to_python[:]):
-        if IS_PY2:
-            if isinstance(path0, unicode):  # noqa
-                path0 = path0.encode(sys.getfilesystemencoding())
-            if isinstance(path1, unicode):  # noqa
-                path1 = path1.encode(sys.getfilesystemencoding())
-
         path0 = _fix_path(path0, eclipse_sep)
         path1 = _fix_path(path1, python_sep)
         initial_paths[i] = (path0, path1)

@@ -25,7 +25,6 @@ from functools import partial
 from os.path import os
 from robocode_ls_core.robotframework_log import get_logger, get_log_level
 from collections import namedtuple
-from robocode_ls_core.constants import IS_PY2
 import weakref
 
 log = get_logger(__name__)
@@ -514,13 +513,7 @@ class _RobotDebuggerImpl(object):
             if source is None:
                 return u"None"
 
-            if IS_PY2 and isinstance(source, unicode):
-                source = source.encode(file_utils.file_system_encoding)
-
             filename, _changed = file_utils.norm_file_to_client(source)
-
-            if IS_PY2 and isinstance(filename, bytes):
-                source = source.decode(file_utils.file_system_encoding)
         except:
             filename = u"<Unable to get %s filename>" % (msg,)
             log.exception(filename)
@@ -636,16 +629,13 @@ class _RobotDebuggerImpl(object):
         self._run_state = STATE_RUNNING
         self.busy_wait.proceed()
 
-    def set_breakpoints(self, filename, breakpoints):
+    def set_breakpoints(self, filename: str, breakpoints):
         """
         :param str filename:
         :param list(RobotBreakpoint) breakpoints:
         """
         if isinstance(breakpoints, RobotBreakpoint):
             breakpoints = (breakpoints,)
-        if IS_PY2:
-            if isinstance(filename, unicode):
-                filename = filename.encode(file_utils.file_system_encoding)
         filename = file_utils.get_abs_path_real_path_and_base_from_file(filename)[1]
         line_to_bp = {}
         for bp in breakpoints:
@@ -664,8 +654,6 @@ class _RobotDebuggerImpl(object):
         try:
             lineno = step.lineno
             source = step.source
-            if IS_PY2 and isinstance(source, unicode):
-                source = source.encode(file_utils.file_system_encoding)
         except AttributeError:
             return
 

@@ -19,7 +19,6 @@ import inspect
 import os
 import sys
 import threading
-from robocode_ls_core.constants import IS_PY2
 
 from contextlib import contextmanager
 from robocode_ls_core.robotframework_log import get_logger
@@ -35,38 +34,11 @@ except NameError:
 
 PARENT_PROCESS_WATCH_INTERVAL = 3  # 3 s
 
-if IS_PY2:
-    import pathlib2 as pathlib
 
-    def as_str(s):
-        if isinstance(s, unicode):
-            return s.encode("utf-8", "replace")
-        return s
-
-    def py2_filesystem_encode(s):
-        if isinstance(s, unicode):
-            return s.encode(sys.getfilesystemencoding())
-        return s
-
-    def py2_filesystem_decode(s):
-        if isinstance(s, bytes):
-            return s.decode(sys.getfilesystemencoding())
-        return s
-
-
-else:
-    import pathlib
-
-    def as_str(s):
-        if isinstance(s, bytes):
-            return s.decode("utf-8", "replace")
-        return s
-
-    def py2_filesystem_encode(s):
-        raise AssertionError("Should only be called for Python 2.")
-
-    def py2_filesystem_decode(s):
-        raise AssertionError("Should only be called for Python 2.")
+def as_str(s):
+    if isinstance(s, bytes):
+        return s.decode("utf-8", "replace")
+    return s
 
 
 log = get_logger(__name__)

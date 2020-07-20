@@ -1,6 +1,5 @@
 import pytest
 import os
-from robocode_ls_core.constants import IS_PY2
 import threading
 from robocode_ls_core.options import DEFAULT_TIMEOUT
 import sys
@@ -99,9 +98,6 @@ def stack_frames_repr(stack_lst):
         del dct["id"]
         path = dct["source"]["path"]
         if path != "None":
-            if IS_PY2:
-                path = path.decode("utf-8")
-                path = path.encode(file_utils.file_system_encoding)
             if not os.path.exists(path):
                 raise AssertionError("Expected: %r to exist." % (path,))
             # i.e.: make the path machine-independent

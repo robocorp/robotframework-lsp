@@ -30,7 +30,7 @@ import time
 import traceback
 import weakref
 
-from robocode_ls_core.constants import NULL, IS_PY2
+from robocode_ls_core.constants import NULL
 from robocode_ls_core.robotframework_log import get_logger
 import threading
 
@@ -53,10 +53,7 @@ _lock = threading.Lock()
 
 
 def get_tid():
-    if IS_PY2:
-        return threading._get_ident()  # @UndefinedVariable
-    else:
-        return threading.get_ident()  # @UndefinedVariable
+    return threading.get_ident()  # @UndefinedVariable
 
 
 def _mark_prev_acquired_in_thread(system_mutex):
