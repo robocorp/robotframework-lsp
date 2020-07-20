@@ -27,7 +27,8 @@ import { workspace, Disposable, ExtensionContext, window, commands, Uri, Configu
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, ErrorAction, ErrorHandler, CloseAction, TransportKind } from 'vscode-languageclient';
 import * as roboConfig from './robocodeSettings';
 import * as roboCommands from './robocodeCommands';
-import * as childProcess from 'child_process';
+import * as util from 'util';
+import { XHRResponse, configure as configureXHR, xhr } from './requestLight';
 
 const OUTPUT_CHANNEL_NAME = "Robocode";
 const OUTPUT_CHANNEL = window.createOutputChannel(OUTPUT_CHANNEL_NAME);
@@ -50,10 +51,17 @@ function verifyFileExists(targetFile: string): boolean {
     return true;
 }
 
-function getExtensionRelativeFile(relativeLocation: string): string | undefined {
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * @param mustExist if true, if the returned file does NOT exist, returns undefined.
+ */
+function getExtensionRelativeFile(relativeLocation: string, mustExist: boolean = true): string | undefined {
     let targetFile: string = path.resolve(__dirname, relativeLocation);
-    if (!verifyFileExists(targetFile)) {
-        return undefined;
+    if (mustExist) {
+        if (!verifyFileExists(targetFile)) {
+            return undefined;
+        }
     }
     return targetFile;
 }
@@ -165,33 +173,123 @@ export function deactivate(): Thenable<void> | undefined {
 // https://www.npmjs.com/package/request-light according to:
 // https://github.com/microsoft/vscode/issues/6929#issuecomment-222153748
 
-function getRccLocation(): string | undefined {
-    // TODO: Support other platforms
-    return getExtensionRelativeFile('../../bin/rcc.exe');
-}
+async function getRccLocation(): Promise<string | undefined> {
+    let location: string;
+    if (process.platform == 'win32') {
+        location = getExtensionRelativeFile('../../bin/rcc.exe', false);
+    } else {
+        location = getExtensionRelativeFile('../../bin/rcc', false);
+    }
+    if (!fs.existsSync(location)) {
+        let url: string;
+        if (process.platform == 'win32') {
+            if (process.arch === 'x64' || process.env.hasOwnProperty('PROCESSOR_ARCHITEW6432')) {
+                // Check if node is a 64 bit process or if it's a 32 bit process running in a 64 bit processor.
+                url = 'https://downloads.code.robocorp.com/rcc/windows64/rcc.exe';
+            } else {
+                // Do we even have a way to test a 32 bit build?
+                url = 'https://downloads.code.robocorp.com/rcc/windows32/rcc.exe';
 
+            }
+        } else if (process.platform == 'darwin') {
+            url = 'https://downloads.code.robocorp.com/rcc/macos64/rcc';
+
+        } else {
+            // Linux
+            if (process.arch === 'x64') {
+                url = 'https://downloads.code.robocorp.com/rcc/linux64/rcc';
+            } else {
+                url = 'https://downloads.code.robocorp.com/rcc/linux32/rcc';
+            }
+        }
+
+        // Configure library with http settings.
+        // i.e.: https://code.visualstudio.com/docs/setup/network
+        let httpSettings = workspace.getConfiguration('http');
+        configureXHR(httpSettings.get<string>('proxy'), httpSettings.get<boolean>('proxyStrictSSL'));
+
+        // Downloads can go wrong (so, retry a few times before giving up).
+        const maxTries = 3;
+        let initialTime = new Date().getTime();
+        let lastReportTime = initialTime;
+
+        function onProgress(currLen: number, totalLen: number) {
+            let currTime = new Date().getTime();
+            if (currTime - lastReportTime > 300) {
+                let progress = currLen / totalLen * 100;
+                OUTPUT_CHANNEL.appendLine('Downloaded: ' + currLen + " of " + totalLen + " (" + progress.toFixed(1) + '%)');
+                lastReportTime = currTime;
+            }
+        }
+
+        OUTPUT_CHANNEL.appendLine('Downloading rcc from: ' + url);
+        for (let index = 0; index < maxTries; index++) {
+            try {
+                let response: XHRResponse = await xhr({
+                    'url': url,
+                    'onProgress': onProgress,
+                });
+                if (response.status == 200) {
+                    // Ok, we've been able to get it.
+                    OUTPUT_CHANNEL.appendLine('Finished downloading in: ' + ((new Date().getTime() - initialTime) / 1000).toFixed(2) + 's');
+                    OUTPUT_CHANNEL.appendLine('Writing to: ' + location);
+                    let s = fs.createWriteStream(location, { 'encoding': 'binary', 'mode': 0o744 });
+                    try {
+                        response.responseData.forEach(element => {
+                            s.write(element);
+                        });
+                    } finally {
+                        s.close();
+                    }
+
+                    return location;
+                } else {
+                    throw Error('Unable to download from ' + url + '. Response status: ' + response.status + 'Response message: ' + response.responseText);
+                }
+            } catch (error) {
+                OUTPUT_CHANNEL.appendLine('Error downloading (' + index + ' of ' + maxTries + '). Error: ' + error);
+                if (index == maxTries - 1) {
+                    return undefined;
+                }
+            }
+        }
+    }
+    return location;
+
+}
 
 interface ExecFileReturn {
     stdout: string;
     stderr: string;
 };
 
-function execFilePromise(command: string, args: string[]): Promise<ExecFileReturn> {
-    return new Promise<ExecFileReturn>(function (resolve, reject) {
-        OUTPUT_CHANNEL.appendLine('Executing: ' + command + ',' + args);
-        childProcess.execFile(command, args, (error, stdout, stderr) => {
-            if (error) {
-                OUTPUT_CHANNEL.appendLine('Error executing: ' + command + ',' + args);
-                OUTPUT_CHANNEL.appendLine('Error: ' + error);
-                OUTPUT_CHANNEL.appendLine('Stderr: ' + stderr);
-                OUTPUT_CHANNEL.appendLine('Stdout: ' + stdout);
-                reject(error);
-                return;
-            }
+const execFile = util.promisify(require('child_process').execFile);
 
-            resolve({ 'stdout': stdout.trim(), 'stderr': stderr.trim() });
-        });
-    });
+async function execFilePromise(command: string, args: string[]): Promise<ExecFileReturn> {
+    const maxTries = 5;
+    for (let index = 0; index < maxTries; index++) {
+        OUTPUT_CHANNEL.appendLine('Executing: ' + command + ',' + args);
+        try {
+            return await execFile(command, args);
+        } catch (error) {
+            OUTPUT_CHANNEL.appendLine('Error executing: ' + command + ',' + args);
+            OUTPUT_CHANNEL.appendLine('Error: ' + error);
+            if (error.code == 'EBUSY') {
+                // After downloading a resource (such as rcc), on Windows, sometimes
+                // it can take a while for the file to be really available to be used
+                // (because ntfs is async or some antivirus is running) -- in this case,
+                // we auto-retry a few times before giving up.
+                if (index == maxTries - 1) {
+                    OUTPUT_CHANNEL.appendLine('No more retries left (throwing error).');
+                    throw error;
+                }
+                OUTPUT_CHANNEL.appendLine('Will retry shortly...');
+                await sleep(200);
+            } else {
+                throw error;
+            }
+        }
+    }
 }
 
 let cachedPythonExe: string;
@@ -210,7 +308,7 @@ async function getLanguageServerPython(): Promise<string> {
 }
 
 async function getLanguageServerPythonUncached(): Promise<string> {
-    let rccLocation = getRccLocation();
+    let rccLocation = await getRccLocation();
     if (!rccLocation) {
         return;
     }
