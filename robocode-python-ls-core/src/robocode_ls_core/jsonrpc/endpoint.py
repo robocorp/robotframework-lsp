@@ -27,10 +27,7 @@ from .exceptions import (
 )
 
 
-try:
-    from concurrent import futures
-except ImportError:
-    from robocode_ls_core.libs_py2.concurrent import futures
+from concurrent import futures
 
 log = get_logger(__name__)
 JSONRPC_VERSION = "2.0"

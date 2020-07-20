@@ -366,10 +366,7 @@ class LibspecManager(object):
         """
         from robocode_ls_core import watchdog_wrapper
 
-        try:
-            from concurrent import futures
-        except ImportError:
-            from robocode_ls_core.libs_py2.concurrent import futures
+        from concurrent import futures
 
         from multiprocessing import cpu_count
 

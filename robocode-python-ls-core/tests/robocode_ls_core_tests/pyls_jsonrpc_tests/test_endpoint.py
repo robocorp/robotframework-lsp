@@ -24,10 +24,7 @@ from robocode_ls_core.jsonrpc.endpoint import Endpoint
 
 
 # pylint: disable=redefined-outer-name
-try:
-    from concurrent import futures
-except ImportError:
-    from robocode_ls_core.libs_py2.concurrent import futures
+from concurrent import futures
 
 
 MSG_ID = "id"

@@ -337,12 +337,10 @@ class EvaluationResult(Exception):
 
 class _EvaluationInfo(object):
     def __init__(self, frame_id, expression):
+        from concurrent import futures
+
         self.frame_id = frame_id
         self.expression = expression
-        try:
-            from concurrent import futures
-        except ImportError:
-            from robocode_ls_core.libs_py2.concurrent import futures
         self.future = futures.Future()
 
     def _do_eval(self, debugger_impl):
