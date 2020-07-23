@@ -1,8 +1,14 @@
 import itertools
 from functools import partial
 import threading
-from robocode_ls_core.basic import TimeoutError
+from robocode_ls_core.basic import implements
 from robocode_ls_core.robotframework_log import get_logger
+from robocode_ls_core.protocols import (
+    ILanguageServerClientBase,
+    Sentinel,
+    COMMUNICATION_DROPPED,
+)
+from typing import Any, Union
 
 log = get_logger(__name__)
 
@@ -141,13 +147,6 @@ class _ReaderThread(threading.Thread):
             return message_matcher
 
 
-class CommunicationDropped(object):
-    pass
-
-
-COMMUNICATION_DROPPED = CommunicationDropped()
-
-
 class LanguageServerClientBase(object):
     """
     A base implementation for talking with a process that implements the language
@@ -171,24 +170,8 @@ class LanguageServerClientBase(object):
         self.require_exit_messages = True
         self.next_id = partial(next, itertools.count())
 
-    _USE_DEFAULT_TIMEOUT = []
-
-    def request_async(self, contents):
-        """
-        API which allows to wait for the message to complete.
-        
-        To use:
-            message_matcher = client.request_async(contents)
-            if message_matcher is not None:
-                if message_matcher.event.wait(5):
-                    ...
-                    msg = message_matcher.msg
-                else:
-                    # Timed out
-            
-        :param contents:
-        :return _MessageMatcher:
-        """
+    @implements(ILanguageServerClientBase.request_async)
+    def request_async(self, contents: dict):
         message_id = contents["id"]
         message_matcher = self._reader_thread.obtain_id_message_matcher(message_id)
         if message_matcher is None:
@@ -199,8 +182,12 @@ class LanguageServerClientBase(object):
 
         return message_matcher
 
+    @implements(ILanguageServerClientBase.request)
     def request(
-        self, contents, timeout=_USE_DEFAULT_TIMEOUT, default=COMMUNICATION_DROPPED
+        self,
+        contents,
+        timeout: Union[int, Sentinel, None] = Sentinel.USE_DEFAULT_TIMEOUT,
+        default: Any = COMMUNICATION_DROPPED,
     ):
         """
         :param contents:
@@ -213,7 +200,7 @@ class LanguageServerClientBase(object):
             TimeoutError if the timeout was given and no answer was given at the available time
             (including if the communication was dropped).
         """
-        if timeout is self._USE_DEFAULT_TIMEOUT:
+        if timeout is Sentinel.USE_DEFAULT_TIMEOUT:
             timeout = self.DEFAULT_TIMEOUT
 
         message_id = contents["id"]
@@ -238,17 +225,22 @@ class LanguageServerClientBase(object):
 
         return message_matcher.msg
 
+    @implements(ILanguageServerClientBase.obtain_pattern_message_matcher)
     def obtain_pattern_message_matcher(self, message_pattern):
         return self._reader_thread.obtain_pattern_message_matcher(message_pattern)
 
+    @implements(ILanguageServerClientBase.obtain_id_message_matcher)
     def obtain_id_message_matcher(self, message_id):
         return self._reader_thread.obtain_id_message_matcher(message_id)
 
+    @implements(ILanguageServerClientBase.write)
     def write(self, contents):
         return self.writer.write(contents)
 
+    @implements(ILanguageServerClientBase.shutdown)
     def shutdown(self):
         self.write({"jsonrpc": "2.0", "id": self.next_id(), "method": "shutdown"})
 
+    @implements(ILanguageServerClientBase.exit)
     def exit(self):
         self.write({"jsonrpc": "2.0", "id": self.next_id(), "method": "exit"})

@@ -20,6 +20,9 @@ https://github.com/microsoft/language-server-protocol/tree/gh-pages/_specificati
 https://microsoft.github.io/language-server-protocol/specification
 """
 
+from robocode_ls_core.protocols import IEndPoint, IFuture
+import typing
+
 
 class CompletionItemKind(object):
     Text = 1
@@ -321,8 +324,9 @@ class LSPMessages(object):
     M_PUBLISH_DIAGNOSTICS = "textDocument/publishDiagnostics"
     M_APPLY_EDIT = "workspace/applyEdit"
     M_SHOW_MESSAGE = "window/showMessage"
+    M_SHOW_MESSAGE_REQUEST = "window/showMessageRequest"
 
-    def __init__(self, endpoint):
+    def __init__(self, endpoint: IEndPoint):
         self._endpoint = endpoint
 
     def apply_edit(self, edit):
@@ -337,6 +341,27 @@ class LSPMessages(object):
     def show_message(self, message, msg_type=MessageType.Info):
         self._endpoint.notify(
             self.M_SHOW_MESSAGE, params={"type": msg_type, "message": message}
+        )
+
+    def show_message_request(
+        self,
+        message: str,
+        actions: typing.List[typing.Dict[str, str]],
+        msg_type=MessageType.Info,
+    ) -> IFuture[typing.Optional[typing.Dict[str, str]]]:
+        """
+        :param message:
+            The message to be shown.
+        :param actions:
+            A list of dicts where the key is 'title'.
+        :param msg_type:
+            The type of the message.
+        :returns:
+            One of the selected dicts in actions or None.
+        """
+        return self._endpoint.request(
+            self.M_SHOW_MESSAGE_REQUEST,
+            params={"type": msg_type, "message": message, "actions": actions},
         )
 
 

@@ -12,6 +12,7 @@ export function get<T>(key: string): T | undefined {
 export const ROBOCODE_LANGUAGE_SERVER_TCP_PORT = "robocode.language-server.tcp-port";
 export const ROBOCODE_LANGUAGE_SERVER_ARGS = "robocode.language-server.args";
 export const ROBOCODE_LANGUAGE_SERVER_PYTHON = "robocode.language-server.python";
+export const ROBOCODE_RCC_LOCATION = "robocode.rcc.location";
 
 export function getLanguageServerTcpPort(): number {
     let key = ROBOCODE_LANGUAGE_SERVER_TCP_PORT;
@@ -27,5 +28,11 @@ export function getLanguageServerArgs(): string[] {
 
 export function getLanguageServerPython(): string {
     let key = ROBOCODE_LANGUAGE_SERVER_PYTHON;
+    return get<string>(key);
+}
+
+
+export function getRccLocation(): string {
+    let key = ROBOCODE_RCC_LOCATION;
     return get<string>(key);
 }

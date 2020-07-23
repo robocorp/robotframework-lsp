@@ -21,6 +21,9 @@ import os
 from robocode_ls_core import uris
 from robocode_ls_core.uris import uri_scheme, to_fs_path
 from robocode_ls_core.robotframework_log import get_logger
+from robocode_ls_core.basic import implements
+from robocode_ls_core.protocols import IWorkspace, IDocument
+from typing import Optional
 
 log = get_logger(__name__)
 
@@ -68,12 +71,8 @@ class Workspace(object):
     def folders(self):
         return self._folders
 
-    def get_document(self, doc_uri, accept_from_file):
-        """
-        Return a managed document if-present, otherwise, create one pointing at
-        the disk if accept_from_file == True (if the file exists, and we're able to
-        load it, otherwise, return None).
-        """
+    @implements(IWorkspace.get_document)
+    def get_document(self, doc_uri: str, accept_from_file: bool) -> Optional[IDocument]:
         doc = self._docs.get(doc_uri)
         if doc is None:
             if accept_from_file:
@@ -252,7 +251,8 @@ class Document(object):
     def source(self, source):
         self._source = source
 
-    def get_line(self, line):
+    @implements(IDocument.get_line)
+    def get_line(self, line: int) -> str:
         try:
             return self._lines[line].rstrip("\r\n")
         except IndexError:

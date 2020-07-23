@@ -122,7 +122,7 @@ def start_language_server_tcp(log_file, main_method, language_server_class):
 def create_language_server_process(log_file, __main__module):
     from robocode_ls_core.basic import kill_process_and_subprocesses
 
-    import subprocess
+    from robocode_ls_core.subprocess_wrapper import subprocess
 
     language_server_process = subprocess.Popen(
         [

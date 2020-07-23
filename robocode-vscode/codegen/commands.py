@@ -1,13 +1,19 @@
 class Command(object):
-    def __init__(self, name, title, add_to_package_json=True, keybinding=""):
+    def __init__(
+        self, name, title, add_to_package_json=True, keybinding="", server_handled=True
+    ):
         """
         :param add_to_package_json:
             If a command should not appear to the user, add_to_package_json should be False.
+        :param server_handled:
+            If True this is a command handled in the server (and not in the client) and
+            thus will be registered as such.
         """
         self.name = name
         self.title = title
         self.add_to_package_json = add_to_package_json
         self.keybinding = keybinding
+        self.server_handled = server_handled
 
 
 COMMANDS = [
@@ -15,8 +21,28 @@ COMMANDS = [
         "robocode.getLanguageServerPython",
         "Get a python executable suitable to start the language server.",
         add_to_package_json=False,
+        server_handled=False,
     ),
-    Command("robocode.sayHello", "Hello World", add_to_package_json=True),
+    # Note: this command is started from the client (due to needing window.showQuickPick)
+    # and the proceeds to ask for the server for the actual implementation.
+    Command(
+        "robocode.createActivity",
+        "Create a Robocode Activity Package.",
+        server_handled=False,
+    ),
+    # Internal commands for robocode.createActivity.
+    Command(
+        "robocode.listActivityTemplates.internal",
+        "Provides a list with the available activity templates.",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
+    Command(
+        "robocode.createActivity.internal",
+        "Actually calls rcc to create the activity.",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
 ]
 
 

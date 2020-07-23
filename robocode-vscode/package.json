@@ -18,7 +18,9 @@
     "categories": [],
     "activationEvents": [
         "onCommand:robocode.getLanguageServerPython",
-        "onCommand:robocode.sayHello"
+        "onCommand:robocode.createActivity",
+        "onCommand:robocode.listActivityTemplates.internal",
+        "onCommand:robocode.createActivity.internal"
     ],
     "contributes": {
         "configuration": {
@@ -39,6 +41,11 @@
                     "type": "string",
                     "default": "",
                     "description": "Specifies the path to the python executable to be used for the Robocode Language Server (the default is searching python on the PATH). Requires a VSCode restart to take effect."
+                },
+                "robocode.rcc.location": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Specifies the location of the rcc tool."
                 }
             }
         },
@@ -48,8 +55,8 @@
         "keybindings": [],
         "commands": [
             {
-                "command": "robocode.sayHello",
-                "title": "Hello World",
+                "command": "robocode.createActivity",
+                "title": "Create a Robocode Activity Package.",
                 "category": "Robocode"
             }
         ]

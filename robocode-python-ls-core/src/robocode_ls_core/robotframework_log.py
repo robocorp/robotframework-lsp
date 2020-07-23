@@ -25,23 +25,16 @@ import traceback
 import threading
 import sys
 from datetime import datetime
+from robocode_ls_core.protocols import ILog
+from typing import Dict
 
-name_to_logger = {}
-
-if sys.version_info[0] <= 2:
-
-    def _as_str(s):
-        if isinstance(s, unicode):
-            return s.encode("utf-8", "replace")
-        return s
+name_to_logger: Dict[str, ILog] = {}
 
 
-else:
-
-    def _as_str(s):
-        if isinstance(s, bytes):
-            return s.decode("utf-8", "replace")
-        return s
+def _as_str(s):
+    if isinstance(s, bytes):
+        return s.decode("utf-8", "replace")
+    return s
 
 
 class _LogConfig(object):
@@ -153,7 +146,11 @@ def get_log_level():
     return _log_config.log_level
 
 
-def get_logger(name):
+def get_logger(name: str) -> ILog:
+    """
+    Use as:
+        log = get_logger(__name__)
+    """
     name = _as_str(name)
     try:
         return name_to_logger[name]

@@ -17,6 +17,9 @@
 from robocode_ls_core import uris, basic
 from robocode_ls_core.cache import instance_cache
 from robocode_ls_core.robotframework_log import get_logger
+from robocode_ls_core.basic import implements
+from robocode_ls_core.protocols import IConfig, Sentinel
+from typing import Any
 
 
 log = get_logger(__name__)
@@ -91,22 +94,8 @@ class Config(object):
 
         return settings
 
-    SENTINEL = []
-
-    def get_setting(self, key, expected_type, default=SENTINEL):
-        """
-        :param key:
-            The setting to be gotten (i.e.: my.setting.to.get)
-            
-        :param expected_type:
-            The type which we're expecting.
-            
-        :param default:
-            If given, return this value instead of throwing a KeyError.
-            
-        :raises:
-            KeyError if the setting could not be found and default was not provided.
-        """
+    @implements(IConfig.get_setting)
+    def get_setting(self, key, expected_type, default=Sentinel.SENTINEL) -> Any:
         try:
             s = self.settings()
             for part in key.split("."):
@@ -122,7 +111,7 @@ class Config(object):
                         % (key, expected_type, type(s))
                     )
         except KeyError:
-            if default is not self.SENTINEL:
+            if default is not Sentinel.SENTINEL:
                 return default
             raise
         return s
@@ -134,8 +123,8 @@ class Config(object):
         root_path = uris.to_fs_path(self._root_uri)
         return basic.find_parents(root_path, path, names)
 
+    @implements(IConfig.update)
     def update(self, settings):
-        """Recursively merge the given settings into the current settings."""
         self.cache_clear()
         self._settings = settings
         log.info("Updated settings to %s", self._settings)

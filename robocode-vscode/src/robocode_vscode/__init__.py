@@ -1,5 +1,7 @@
 __version__ = "0.0.1"
-version_info = [int(x) for x in __version__.split(".")]
+from typing import Union, List
+
+version_info: List[int] = [int(x) for x in __version__.split(".")]
 
 import os.path
 import sys
@@ -9,7 +11,23 @@ if __file__.endswith((".pyc", ".pyo")):
     __file__ = __file__[:-1]
 
 
-def import_robocode_ls_core():
+def get_extension_relative_path(*path: str) -> str:
+    root_folder = os.path.dirname(get_src_folder())
+    # i.e.: src_folder would be root_folder / src
+    return os.path.join(root_folder, *path)
+
+
+def get_src_folder() -> str:
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def get_bin_folder() -> str:
+    # Note: if we're installed in the site-packages, this could return
+    # site-packages/bin.
+    return get_extension_relative_path("bin")
+
+
+def import_robocode_ls_core() -> None:
     """
     Helper function to make sure that robocode_ls_core is imported properly
     (either in dev or in release mode).
@@ -21,7 +39,7 @@ def import_robocode_ls_core():
         log_contents = []
         use_folder = None
         try:
-            src_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            src_folder = get_src_folder()
             log_contents.append("Source folder: %s" % (src_folder,))
             src_core_folder = os.path.abspath(
                 os.path.join(src_folder, "..", "..", "robocode-python-ls-core", "src")
@@ -32,7 +50,9 @@ def import_robocode_ls_core():
                 use_folder = src_core_folder
 
             else:
-                vendored_folder = os.path.join(src_folder, "robocode_vscode", "vendored")
+                vendored_folder = os.path.join(
+                    src_folder, "robocode_vscode", "vendored"
+                )
                 log_contents.append(
                     "Using vendored mode. Found: %s" % (vendored_folder,)
                 )

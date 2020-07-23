@@ -1,7 +1,7 @@
 def test_system_mutex():
     from robocode_ls_core.system_mutex import SystemMutex
     from robocode_ls_core.system_mutex import timed_acquire_mutex
-    import subprocess
+    from robocode_ls_core.subprocess_wrapper import subprocess
     import sys
     import pytest
     import time

@@ -48,6 +48,12 @@ SETTINGS = [
         "Specifies the path to the python executable to be used for the Robocode Language Server (the default is searching python on the PATH). Requires a VSCode restart to take effect.",
         setting_type="string",
     ),
+    Setting(
+        "robocode.rcc.location",
+        "",
+        "Specifies the location of the rcc tool.",
+        setting_type="string",
+    ),
 ]
 
 

@@ -19,7 +19,7 @@
 
 import os
 import signal
-import subprocess
+from robocode_ls_core.subprocess_wrapper import subprocess
 import time
 
 from watchdog.utils import echo, has_attribute

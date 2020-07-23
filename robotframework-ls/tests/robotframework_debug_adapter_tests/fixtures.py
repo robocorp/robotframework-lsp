@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from robocode_ls_core.unittest_tools.fixtures import TIMEOUT
-import subprocess
+from robocode_ls_core.subprocess_wrapper import subprocess
 from collections import namedtuple
 
 try:

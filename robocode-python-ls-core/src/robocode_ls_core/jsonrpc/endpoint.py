@@ -28,6 +28,8 @@ from .exceptions import (
 
 
 from concurrent import futures
+from robocode_ls_core.basic import implements
+from robocode_ls_core.protocols import IEndPoint, IFuture
 
 log = get_logger(__name__)
 JSONRPC_VERSION = "2.0"
@@ -64,13 +66,8 @@ class Endpoint(object):
     def shutdown(self):
         self._executor_service.shutdown()
 
-    def notify(self, method, params=None):
-        """Send a JSON RPC notification to the client.
-
-         Args:
-             method (str): The method name of the notification to send
-             params (any): The payload of the notification
-         """
+    @implements(IEndPoint.notify)
+    def notify(self, method: str, params=None):
         log.debug("Sending notification: %s %s", method, params)
 
         message = {"jsonrpc": JSONRPC_VERSION, "method": method}
@@ -79,16 +76,8 @@ class Endpoint(object):
 
         self._consumer(message)
 
-    def request(self, method, params=None):
-        """Send a JSON RPC request to the client.
-
-        Args:
-            method (str): The method name of the message to send
-            params (any): The payload of the message
-
-        Returns:
-            Future that will resolve once a response has been received
-        """
+    @implements(IEndPoint.request)
+    def request(self, method: str, params=None) -> IFuture:
         msg_id = self._id_generator()
         log.debug("Sending request with id %s: %s %s", msg_id, method, params)
 
@@ -96,7 +85,7 @@ class Endpoint(object):
         if params is not None:
             message["params"] = params
 
-        request_future = futures.Future()
+        request_future: IFuture = futures.Future()
         request_future.add_done_callback(self._cancel_callback(msg_id))
 
         self._server_request_futures[msg_id] = request_future
@@ -119,12 +108,8 @@ class Endpoint(object):
 
         return callback
 
+    @implements(IEndPoint.consume)
     def consume(self, message):
-        """Consume a JSON RPC message from the client.
-
-        Args:
-            message (dict): The JSON RPC message sent by the client
-        """
         if "jsonrpc" not in message or message["jsonrpc"] != JSONRPC_VERSION:
             log.warning("Unknown message type %s", message)
             return

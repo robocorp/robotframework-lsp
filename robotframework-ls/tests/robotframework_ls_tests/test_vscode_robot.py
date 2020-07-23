@@ -1,5 +1,6 @@
 import logging
 import os
+from robocode_ls_core.protocols import ILanguageServerClient
 
 
 log = logging.getLogger(__name__)
@@ -111,7 +112,7 @@ Check It
 
 
 def test_keyword_completions_integrated_pythonpath_library(
-    language_server_tcp, ws_root_path, data_regression, cases
+    language_server_tcp: ILanguageServerClient, ws_root_path, data_regression, cases
 ):
     from robocode_ls_core.workspace import Document
 
@@ -284,7 +285,7 @@ def test_exit_with_parent_process_died(
     """
     :note: Only check with the language_server_io (because that's in another process).
     """
-    import subprocess
+    from robocode_ls_core.subprocess_wrapper import subprocess
     import sys
     from robocode_ls_core.basic import is_process_alive
     from robocode_ls_core.basic import kill_process_and_subprocesses
@@ -320,7 +321,9 @@ def test_code_format_integrated(language_server, ws_root_path, data_regression):
     assert ret["result"] == []
 
 
-def test_find_definition_integrated_library(language_server, cases, workspace_dir):
+def test_find_definition_integrated_library(
+    language_server: ILanguageServerClient, cases, workspace_dir
+):
     from robocode_ls_core import uris
 
     cases.copy_to("case1", workspace_dir)
@@ -342,7 +345,9 @@ def test_find_definition_integrated_library(language_server, cases, workspace_di
     }
 
 
-def test_find_definition_keywords(language_server, cases, workspace_dir):
+def test_find_definition_keywords(
+    language_server: ILanguageServerClient, cases, workspace_dir
+):
     from robocode_ls_core import uris
 
     cases.copy_to("case2", workspace_dir)

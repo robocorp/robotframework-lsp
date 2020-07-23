@@ -24,21 +24,14 @@ from contextlib import contextmanager
 from robocode_ls_core.robotframework_log import get_logger
 from robocode_ls_core.options import DEFAULT_TIMEOUT
 
-try:
-    TimeoutError = TimeoutError  # @ReservedAssignment
-except NameError:
-
-    class TimeoutError(RuntimeError):  # @ReservedAssignment
-        pass
-
 
 PARENT_PROCESS_WATCH_INTERVAL = 3  # 3 s
 
 
-def as_str(s):
+def as_str(s) -> str:
     if isinstance(s, bytes):
         return s.decode("utf-8", "replace")
-    return s
+    return str(s)
 
 
 log = get_logger(__name__)
@@ -465,3 +458,22 @@ def isinstance_name(obj, classname, memo={}):
                 memo[key] = False
 
         return memo[key]
+
+
+def build_subprocess_kwargs(cwd, env, **kwargs) -> dict:
+    from robocode_ls_core.subprocess_wrapper import subprocess
+
+    startupinfo = None
+    if sys.platform == "win32":
+        # We don't want to show the shell on windows!
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = subprocess.SW_HIDE
+        startupinfo = startupinfo
+
+    if cwd:
+        kwargs["cwd"] = cwd
+    if env:
+        kwargs["env"] = env
+    kwargs["startupinfo"] = startupinfo
+    return kwargs

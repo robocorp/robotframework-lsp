@@ -81,7 +81,7 @@ def _build_launch_env():
 
 
 def _check_in_separate_process(method_name, module_name="test_server", update_env={}):
-    import subprocess
+    from robocode_ls_core.subprocess_wrapper import subprocess
     import sys
 
     cwd, environ = _build_launch_env()

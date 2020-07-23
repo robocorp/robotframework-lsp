@@ -17,6 +17,8 @@
 import os
 import sys
 from robocode_ls_core.robotframework_log import get_logger
+from robocode_ls_core.protocols import IConfig, IWorkspace
+from typing import Optional
 
 try:
     import socketserver
@@ -187,11 +189,13 @@ class PythonLanguageServer(MethodDispatcher):
     Based on: https://github.com/palantir/python-language-server/blob/develop/pyls/python_ls.py
     """
 
+    config: Optional[IConfig]
+
     def __init__(self, read_stream, write_stream, max_workers=MAX_WORKERS):
         from robocode_ls_core.lsp import LSPMessages
 
-        self.workspace = None
-        self.config = None
+        self.workspace: Optional[IWorkspace] = None
+        self.config: Optional[IConfig] = None
         self.root_uri = None
         self.watching_thread = None
         self.uri_workspace_mapper = {}
@@ -264,7 +268,7 @@ class PythonLanguageServer(MethodDispatcher):
         # Get our capabilities
         return {"capabilities": self.capabilities()}
 
-    def _create_workspace(self, root_uri, workspace_folders):
+    def _create_workspace(self, root_uri, workspace_folders) -> IWorkspace:
         from robocode_ls_core.workspace import Workspace
 
         return Workspace(root_uri, workspace_folders)

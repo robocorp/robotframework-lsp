@@ -25,7 +25,7 @@ def dev_main():
         sys.argv[0],
         "-vv",
         "--tcp",
-        "--port=1456",
+        "--port=1457",
         # "--log-file=c:/temp/robotlog.log",
     ]
 

@@ -23,11 +23,7 @@ import itertools
 import json
 import os.path
 import threading
-
-try:
-    import Queue as queue
-except ImportError:
-    import queue
+import queue
 
 log = get_logger(__name__)
 

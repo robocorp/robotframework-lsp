@@ -1,5 +1,7 @@
 import logging
 from robocode_ls_core.client_base import LanguageServerClientBase
+from robocode_ls_core.basic import implements
+from robocode_ls_core.protocols import ILanguageServerClient
 
 log = logging.getLogger(__name__)
 
@@ -12,6 +14,7 @@ class _LanguageServerClient(LanguageServerClientBase):
 
         self.DEFAULT_TIMEOUT = TIMEOUT
 
+    @implements(ILanguageServerClient.settings)
     def settings(self, settings):
         self.request(
             {
@@ -22,6 +25,7 @@ class _LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    @implements(ILanguageServerClient.initialize)
     def initialize(self, root_path, msg_id=None, process_id=None):
         from robocode_ls_core.uris import from_fs_path
 
@@ -82,11 +86,8 @@ class _LanguageServerClient(LanguageServerClientBase):
         assert "capabilities" in msg["result"]
         return msg
 
+    @implements(ILanguageServerClient.open_doc)
     def open_doc(self, uri, version=1, text=""):
-        """
-        :param text:
-            If None, the contents will be loaded from the disk.
-        """
         self.write(
             {
                 "jsonrpc": "2.0",
@@ -102,6 +103,7 @@ class _LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    @implements(ILanguageServerClient.change_doc)
     def change_doc(self, uri, version, text):
         self.write(
             {
@@ -114,6 +116,7 @@ class _LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    @implements(ILanguageServerClient.get_completions)
     def get_completions(self, uri, line, col):
         return self.request(
             {
@@ -127,6 +130,7 @@ class _LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    @implements(ILanguageServerClient.request_source_format)
     def request_source_format(self, uri):
         return self.request(
             {
@@ -137,6 +141,7 @@ class _LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    @implements(ILanguageServerClient.find_definitions)
     def find_definitions(self, uri, line, col):
         return self.request(
             {
@@ -147,5 +152,16 @@ class _LanguageServerClient(LanguageServerClientBase):
                     "textDocument": {"uri": uri},
                     "position": {"line": line, "character": col},
                 },
+            }
+        )
+
+    @implements(ILanguageServerClient.execute_command)
+    def execute_command(self, command, arguments):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "workspace/executeCommand",
+                "params": {"command": command, "arguments": arguments},
             }
         )
