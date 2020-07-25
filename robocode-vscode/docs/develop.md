@@ -19,6 +19,35 @@ Building a VSIX locally
 To build a VSIX, follow the steps in https://code.visualstudio.com/api/working-with-extensions/publishing-extension
 (if everything is setup, `vsce package` from the root directory should do it).
 
+
+Adding a new command
+---------------------
+
+To add a new command, add it at the `COMMANDS` in `/robocode-vscode/codegen/commands.py` and then execute
+(in a shell in the `/robocode-vscode` directory) `python -m dev codegen`.
+
+This should add the command to the `package.json` as well as the files related to the constants.
+
+Then, you may handle the command either in `/robocode-vscode/vscode-client/src/extension.ts` if the
+command requires some VSCode-only API or in the language server (which is ideal as less work would
+be required when porting the extension to a different client).
+
+Note: that it's also possible to have one command call another command, so, if needed the command could start
+on the client and then call parts of it on the server.
+
+Note: the code in the extension side (in TypeScript) should be kept to a minimum (as it needs to be
+redone if porting to a different client).
+
+Note: at least one integration test for each action must be added in 
+`/robocode-vscode/tests/robocode_vscode_tests/test_vscode_integration.py`
+
+
+Adding a new setting
+---------------------
+
+To add a new setting, add it at the `SETTINGS` in `/robocode-vscode/codegen/settings.py` and then execute
+(in a shell in the `/robocode-vscode` directory) `python -m dev codegen`.
+
 New version release
 --------------------
 

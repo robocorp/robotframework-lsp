@@ -71,12 +71,18 @@ def get_json_contents():
             "postinstall": "node ./node_modules/vscode/bin/install",
         },
         "devDependencies": {
-            "typescript": "^3.6.4",
+            "typescript": "^3.8.2",
             "vscode": "1.1.37",
-            "@types/node": "^6.0.40",
+            "@types/node": "^10.0.0",
             "@types/mocha": "^2.2.32",
         },
-        "dependencies": {"vscode-languageclient": "^6.1.3", "path-exists": "^4.0.0"},
+        "dependencies": {
+            "vscode-languageclient": "^6.1.3",
+            "path-exists": "^4.0.0",
+            "http-proxy-agent": "^2.1.0",
+            "https-proxy-agent": "^2.2.4",
+            "vscode-nls": "^4.1.2",
+        },
     }
     return base_package_contents
 
