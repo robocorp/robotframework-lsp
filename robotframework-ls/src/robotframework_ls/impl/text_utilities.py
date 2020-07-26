@@ -23,7 +23,7 @@ class TextUtilities(object):
 
 
 def normalize_robot_name(text):
-    return text.lower().replace("_", " ")
+    return text.lower().replace("_", "").replace(" ", "")
 
 
 def is_variable_text(text):
@@ -92,10 +92,7 @@ def iter_dotted_names(text):
     splitted = text.split(".")
     splitted_len = len(splitted)
     if splitted_len > 1:
-        try:
-            import StringIO as io
-        except ImportError:
-            import io
+        import io
 
         buf = io.StringIO()
 

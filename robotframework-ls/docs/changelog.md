@@ -1,3 +1,11 @@
+New in 0.3.1 (2020-XX-XX)
+-----------------------------
+
+Support for evaluate request in debugger. Fixes [#82](https://github.com/robocorp/robotframework-lsp/issues/82)
+Python 2 support dropped (Python 3.7+ is now required). Fixes [#119](https://github.com/robocorp/robotframework-lsp/issues/119)
+Fixed issue normalizing a name according to Robot Framework rules. Fixes [#121](https://github.com/robocorp/robotframework-lsp/issues/121)
+
+
 New in 0.3.0 (2020-07-01)
 -----------------------------
 

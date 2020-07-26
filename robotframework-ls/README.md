@@ -42,6 +42,7 @@ Features (0.3.0)
 - Preliminary support for debugging.
     - Note: this is an initial release for the feature and should be considered beta (please test and report any issues found).
     - The current functionalities include:
+        - Evaluate keywords in debug console/hover/watch
         - Add line breakpoints
         - Pause at breakpoints to inspect the stack and see variables
         - Step in

@@ -478,12 +478,11 @@ def _strip_token_bdd_prefix(token):
     """
     from robotframework_ls.impl.robot_constants import BDD_PREFIXES
     from robot.api import Token
-    from robotframework_ls.impl.text_utilities import normalize_robot_name
 
     if token is None:
         return token
 
-    text = normalize_robot_name(token.value)
+    text = token.value.lower()
     for prefix in BDD_PREFIXES:
         if text.startswith(prefix):
             new_name = token.value[len(prefix) :]

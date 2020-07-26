@@ -109,6 +109,20 @@ Test
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
+def test_keywords_name_matches(workspace, libspec_manager, data_regression):
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+
+    doc.source = """*** Settings ***
+Library    Collections
+
+*** Test Cases ***
+Test
+    AppendToList    ${list}    3"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
 def test_resource_does_not_exist(workspace, libspec_manager, data_regression):
     workspace.set_root("case4", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case4.robot")
