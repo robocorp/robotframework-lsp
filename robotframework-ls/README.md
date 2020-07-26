@@ -6,6 +6,7 @@ Requirements
 
 Python 3.7+ and [Robot Framework](https://robotframework.org/) 3.2+.
 
+Note: if using the [Robot Framework Selenium Library](https://github.com/robotframework/SeleniumLibrary), version 4.4+ is required.
 
 Installing
 -----------
