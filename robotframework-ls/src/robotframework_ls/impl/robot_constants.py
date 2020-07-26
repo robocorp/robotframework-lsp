@@ -1,6 +1,7 @@
 """
 Constants that help in describing the accepted structure of a file.
 """
+from typing import Tuple, Dict
 
 BDD_PREFIXES = ["given ", "when ", "then ", "and ", "but "]
 VARIABLE_PREFIXES = ("@", "%", "$", "&")
@@ -28,25 +29,33 @@ BUILTIN_VARIABLES = [
     ("${PREV_TEST_NAME}", ""),
     ("${PREV_TEST_STATUS}", ""),
     ("${PREV_TEST_MESSAGE}", ""),
+    # Also available during runtime (but not in docs?!).
+    ("${SUITE_DOCUMENTATION}", ""),
+    ("${SUITE_NAME}", ""),
+    ("${SUITE_SOURCE}", ""),
+    ("${TEST_DOCUMENTATION}", ""),
+    ("${TEST_NAME}", ""),
+    ("&{SUITE_METADATA}", ""),
+    ("@{TEST_TAGS}", ""),
 ]
 
 
 class Section(object):
 
     # Header to the section (i.e.: *** Setting ***)
-    markers = ()
+    markers: Tuple[str, ...] = ()
 
     # Names that can appear under the section.
-    names = ()
+    names: Tuple[str, ...] = ()
 
     # Aliases for names (so, it's possible to use either an alias or the
     # name itself).
-    aliases = {}
+    aliases: Dict[str, str] = {}
 
     # The names that can appear multiple times.
-    multi_use = ("Metadata", "Library", "Resource", "Variables")
+    multi_use: Tuple[str, ...] = ("Metadata", "Library", "Resource", "Variables")
 
-    names_in_brackets = True
+    names_in_brackets: bool = True
 
 
 class TestCaseFileSettingsSection(Section):

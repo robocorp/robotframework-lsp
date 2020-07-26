@@ -19,15 +19,13 @@ from robocode_ls_core.unittest_tools.fixtures import TIMEOUT
 from robocode_ls_core.subprocess_wrapper import subprocess
 from collections import namedtuple
 
-try:
-    import Queue as queue
-except:
-    import queue
+import queue
 import threading
 
-import pytest
+import pytest  # type: ignore
 import sys
 import os
+from typing import Dict, Optional, List, Sequence, Iterable
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
@@ -246,7 +244,20 @@ class _DebuggerAPI(object):
         self.write(ContinueRequest(arguments))
         self.read(ContinueResponse)
 
-    def launch(self, target, debug=True, success=True, terminal="none"):
+    def launch(
+        self,
+        target,
+        debug=True,
+        success=True,
+        terminal="none",
+        args: Optional[Iterable[str]] = None,
+    ):
+        """
+        :param args:
+            The arguments to the launch (for instance:
+                ["--variable", "my_var:22"]
+            )
+        """
         from robotframework_debug_adapter.dap.dap_schema import LaunchRequest
         from robotframework_debug_adapter.dap.dap_schema import LaunchRequestArguments
         from robotframework_debug_adapter.dap.dap_schema import LaunchResponse
@@ -255,16 +266,12 @@ class _DebuggerAPI(object):
         from robotframework_debug_adapter.dap.dap_schema import InitializedEvent
         from robotframework_debug_adapter.dap.dap_schema import Response
 
-        self.write(
-            LaunchRequest(
-                LaunchRequestArguments(
-                    __sessionId="some_id",
-                    noDebug=not debug,
-                    target=target,
-                    terminal=terminal,
-                )
-            )
+        launch_args = LaunchRequestArguments(
+            __sessionId="some_id", noDebug=not debug, target=target, terminal=terminal
         )
+        if args:
+            launch_args.kwargs["args"] = args
+        self.write(LaunchRequest(launch_args))
 
         if terminal == "external":
             run_in_terminal_request = self.read(RunInTerminalRequest)
@@ -273,9 +280,9 @@ class _DebuggerAPI(object):
                 env[as_str(key)] = as_str(val)
 
             cwd = run_in_terminal_request.arguments.cwd
-            args = run_in_terminal_request.arguments.args
+            popen_args = run_in_terminal_request.arguments.args
 
-            subprocess.Popen(args, cwd=cwd, env=env)
+            subprocess.Popen(popen_args, cwd=cwd, env=env)
 
         if success:
             # Initialized is sent just before the launch response (at which
@@ -414,8 +421,8 @@ class _DebuggerAPI(object):
         scopes = scopes_response.body.scopes
         name_to_scopes = dict((scope["name"], Scope(**scope)) for scope in scopes)
 
-        assert len(scopes) == 2
-        assert sorted(name_to_scopes.keys()) == ["Arguments", "Variables"]
+        assert len(scopes) == 3
+        assert sorted(name_to_scopes.keys()) == ["Arguments", "Builtins", "Variables"]
         assert name_to_scopes["Arguments"].presentationHint == "locals"
 
         return name_to_scopes
@@ -429,15 +436,20 @@ class _DebuggerAPI(object):
             for variable in variables_response.body.variables
         )
 
-    def get_arguments_name_to_var(self, frame_id):
+    def get_arguments_name_to_var(self, frame_id: int) -> Dict[str, str]:
         name_to_scope = self.get_name_to_scope(frame_id)
 
         return self.get_name_to_var(name_to_scope["Arguments"].variablesReference)
 
-    def get_variables_name_to_var(self, frame_id):
+    def get_variables_name_to_var(self, frame_id: int) -> Dict[str, str]:
         name_to_scope = self.get_name_to_scope(frame_id)
 
         return self.get_name_to_var(name_to_scope["Variables"].variablesReference)
+
+    def get_builtins_name_to_var(self, frame_id: int) -> Dict[str, str]:
+        name_to_scope = self.get_name_to_scope(frame_id)
+
+        return self.get_name_to_var(name_to_scope["Builtins"].variablesReference)
 
     def get_variables_response(self, variables_reference, fmt=None, success=True):
         from robotframework_debug_adapter.dap.dap_schema import VariablesRequest

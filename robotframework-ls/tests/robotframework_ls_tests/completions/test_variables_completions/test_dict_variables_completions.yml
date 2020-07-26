@@ -17,3 +17,19 @@
       start:
         character: 22
         line: 6
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: '&{SUITE_METADATA}'
+  preselect: false
+  textEdit:
+    newText: '&{SUITE_METADATA}'
+    range:
+      end:
+        character: 24
+        line: 6
+      start:
+        character: 22
+        line: 6

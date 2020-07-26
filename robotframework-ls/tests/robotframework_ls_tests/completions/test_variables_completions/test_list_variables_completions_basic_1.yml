@@ -34,3 +34,19 @@
       start:
         character: 22
         line: 8
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: '@{TEST_TAGS}'
+  preselect: false
+  textEdit:
+    newText: '@{TEST_TAGS}'
+    range:
+      end:
+        character: 24
+        line: 8
+      start:
+        character: 22
+        line: 8

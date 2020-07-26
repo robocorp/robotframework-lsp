@@ -4,7 +4,7 @@ import threading
 from robocode_ls_core.options import DEFAULT_TIMEOUT
 import sys
 from robotframework_debug_adapter.dap.dap_schema import StackFrame
-from typing import List, Optional, Dict, Callable
+from typing import List, Optional, Dict, Callable, Iterable
 from robotframework_debug_adapter.protocols import IBusyWait, IRobotDebugger
 from robocode_ls_core.basic import implements
 
@@ -104,7 +104,7 @@ def run_robot_cli(dap_logs_dir):
 
 
 def stack_frames_repr(
-    stack_lst: List[Optional[List[StackFrame]]]
+    stack_lst: Iterable[Optional[List[StackFrame]]]
 ) -> Dict[str, List[str]]:
     dct = {}
 
@@ -382,9 +382,7 @@ def test_debugger_core_with_setup_teardown(
     assert busy_wait.proceeded == 2
     assert len(busy_wait.stack) == 2
 
-    data_regression.check(
-        stack_frames_repr(busy_wait.stack)
-    )  # type:ignore -- https://github.com/python/mypy/issues/9210
+    data_regression.check(stack_frames_repr(busy_wait.stack))
 
     assert code == 0
 

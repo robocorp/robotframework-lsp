@@ -13,12 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os.path
+from robotframework_debug_adapter_tests.fixtures import _DebuggerAPI
 
 
-def test_invalid_launch_1(debugger_api):
-    """
-    :param _DebuggerAPI debugger_api:
-    """
+def test_invalid_launch_1(debugger_api: _DebuggerAPI):
     from robotframework_debug_adapter.dap.dap_schema import LaunchRequest
     from robotframework_debug_adapter.dap.dap_schema import LaunchRequestArguments
     from robotframework_debug_adapter.dap.dap_schema import Response
@@ -41,22 +39,17 @@ def test_invalid_launch_1(debugger_api):
     assert launch_response.success == False
 
 
-def test_invalid_launch_2(debugger_api):
-    """
-    :param _DebuggerAPI debugger_api:
-    """
+def test_invalid_launch_2(debugger_api: _DebuggerAPI):
 
     debugger_api.initialize()
 
     debugger_api.launch("invalid_file.robot", debug=False, success=False)
 
 
-def test_error_handling(debugger_api):
+def test_error_handling(debugger_api: _DebuggerAPI):
     """
     This is an integrated test of the debug adapter. It communicates with it as if it was
     VSCode.
-    
-    :param _DebuggerAPI debugger_api:
     """
     from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
     from robotframework_debug_adapter.dap.dap_schema import Response
@@ -86,12 +79,10 @@ def test_error_handling(debugger_api):
     debugger_api.read(TerminatedEvent)
 
 
-def test_simple_launch(debugger_api):
+def test_simple_launch(debugger_api: _DebuggerAPI):
     """
     This is an integrated test of the debug adapter. It communicates with it as if it was
     VSCode.
-    
-    :param _DebuggerAPI debugger_api:
     """
     from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
     from robotframework_debug_adapter.dap.dap_schema import OutputEvent
@@ -108,10 +99,7 @@ def test_simple_launch(debugger_api):
     )
 
 
-def test_simple_debug_launch(debugger_api):
-    """
-    :param _DebuggerAPI debugger_api:
-    """
+def test_simple_debug_launch(debugger_api: _DebuggerAPI):
     from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
 
     debugger_api.initialize()
@@ -132,7 +120,7 @@ def test_simple_debug_launch(debugger_api):
     debugger_api.read(TerminatedEvent)
 
 
-def test_step_in(debugger_api):
+def test_step_in(debugger_api: _DebuggerAPI):
     from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
 
     debugger_api.initialize()
@@ -200,7 +188,7 @@ def test_debugger_for_workflow(debugger_api, data_regression):
     debugger_api.read(TerminatedEvent)
 
 
-def test_step_next(debugger_api):
+def test_step_next(debugger_api: _DebuggerAPI):
     from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
 
     debugger_api.initialize()
@@ -226,7 +214,7 @@ def test_step_next(debugger_api):
     debugger_api.read(TerminatedEvent)
 
 
-def test_step_out(debugger_api):
+def test_step_out(debugger_api: _DebuggerAPI):
     from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
 
     debugger_api.initialize()
@@ -252,17 +240,14 @@ def test_step_out(debugger_api):
     debugger_api.read(TerminatedEvent)
 
 
-def test_variables(debugger_api):
-    """
-    :param _DebuggerAPI debugger_api:
-    """
+def test_variables(debugger_api: _DebuggerAPI):
     from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
 
     debugger_api.initialize()
     target = debugger_api.get_dap_case_file("case4/case4.robot")
     debugger_api.target = target
 
-    debugger_api.launch(target, debug=True)
+    debugger_api.launch(target, debug=True, args=["--variable", "my_var:22"])
     debugger_api.set_breakpoints(
         target, debugger_api.get_line_index_with_content("My Equal Redefined   2   2")
     )
@@ -271,12 +256,18 @@ def test_variables(debugger_api):
     json_hit = debugger_api.wait_for_thread_stopped(name="My Equal Redefined")
 
     name_to_scope = debugger_api.get_name_to_scope(json_hit.frame_id)
-    assert sorted(name_to_scope.keys()) == ["Arguments", "Variables"]
+    assert sorted(name_to_scope.keys()) == ["Arguments", "Builtins", "Variables"]
     name_to_var = debugger_api.get_arguments_name_to_var(json_hit.frame_id)
     assert sorted(name_to_var.keys()) == ["Arg 0", "Arg 1"]
     name_to_var = debugger_api.get_variables_name_to_var(json_hit.frame_id)
-    assert "'${TEST_NAME}'" in name_to_var or "u'${TEST_NAME}'" in name_to_var
-    assert "'${arg1}'" not in name_to_var and "u'${arg1}'" not in name_to_var
+    assert "'${TEST_NAME}'" not in name_to_var
+    assert "'${arg1}'" not in name_to_var
+    assert "'${my_var}'" in name_to_var
+
+    name_to_var = debugger_api.get_builtins_name_to_var(json_hit.frame_id)
+    assert "'${TEST_NAME}'" in name_to_var
+    assert "'${arg1}'" not in name_to_var
+    assert "'${my_var}'" not in name_to_var
 
     debugger_api.step_in(json_hit.thread_id)
 
@@ -295,12 +286,10 @@ def test_variables(debugger_api):
     debugger_api.read(TerminatedEvent)
 
 
-def test_launch_in_external_terminal(debugger_api):
+def test_launch_in_external_terminal(debugger_api: _DebuggerAPI):
     """
     This is an integrated test of the debug adapter. It communicates with it as if it was
     VSCode.
-    
-    :param _DebuggerAPI debugger_api:
     """
     from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
 
@@ -312,10 +301,7 @@ def test_launch_in_external_terminal(debugger_api):
     debugger_api.read(TerminatedEvent)
 
 
-def test_evaluate(debugger_api):
-    """
-    :param _DebuggerAPI debugger_api:
-    """
+def test_evaluate(debugger_api: _DebuggerAPI):
     from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
 
     debugger_api.initialize()

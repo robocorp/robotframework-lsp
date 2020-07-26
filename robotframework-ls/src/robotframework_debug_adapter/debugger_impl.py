@@ -18,7 +18,7 @@ from robotframework_debug_adapter.constants import (
     StepEnum,
 )
 import itertools
-from functools import partial
+from functools import partial, lru_cache
 import os.path
 from robocode_ls_core.robotframework_log import get_logger, get_log_level
 from collections import namedtuple
@@ -30,9 +30,27 @@ from robotframework_debug_adapter.protocols import (
     IBusyWait,
     IEvaluationInfo,
 )
-from typing import Optional, List, Iterable, Union, Any, Dict
+from typing import Optional, List, Iterable, Union, Any, Dict, FrozenSet
 from robocode_ls_core.basic import implements
-from robotframework_debug_adapter.dap.dap_schema import StackFrame, Scope, Source
+from robotframework_debug_adapter.dap.dap_schema import (
+    StackFrame,
+    Scope,
+    Source,
+    Variable,
+)
+
+from robotframework_ls.impl.robot_constants import BUILTIN_VARIABLES
+
+
+@lru_cache(None)
+def get_builtin_normalized_names() -> FrozenSet[str]:
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
+
+    normalized = list()
+    for k, _ in BUILTIN_VARIABLES:
+        normalized.append(normalize_robot_name(k))
+    return frozenset(normalized)
+
 
 log = get_logger(__name__)
 
@@ -78,7 +96,7 @@ class _BaseObjectToDAP(object):
     Base class for classes which converts some object to the DAP.
     """
 
-    def compute_as_dap(self):
+    def compute_as_dap(self) -> List[Variable]:
         return []
 
 
@@ -90,8 +108,7 @@ class _ArgsAsDAP(_BaseObjectToDAP):
     def __init__(self, keyword_args):
         self._keyword_args = keyword_args
 
-    def compute_as_dap(self):
-        from robotframework_debug_adapter.dap.dap_schema import Variable
+    def compute_as_dap(self) -> List[Variable]:
         from robotframework_debug_adapter.safe_repr import SafeRepr
 
         lst = []
@@ -101,25 +118,46 @@ class _ArgsAsDAP(_BaseObjectToDAP):
         return lst
 
 
-class _VariablesAsDAP(_BaseObjectToDAP):
+class _NonBuiltinVariablesAsDAP(_BaseObjectToDAP):
     """
     Provides variables as DAP variables.
     """
 
     def __init__(self, variables):
         self._variables = variables
+        self._builtins = get_builtin_normalized_names()
 
-    def compute_as_dap(self):
-        from robotframework_debug_adapter.dap.dap_schema import Variable
+    def compute_as_dap(self) -> List[Variable]:
         from robotframework_debug_adapter.safe_repr import SafeRepr
 
         variables = self._variables
         as_dct = variables.as_dict()
         lst = []
         safe_repr = SafeRepr()
+
         for key, val in as_dct.items():
-            lst.append(Variable(safe_repr(key), safe_repr(val), variablesReference=0))
+            if self._accept(key):
+                lst.append(
+                    Variable(safe_repr(key), safe_repr(val), variablesReference=0)
+                )
         return lst
+
+    def _accept(self, k: str) -> bool:
+        from robotframework_ls.impl.text_utilities import normalize_robot_name
+
+        if normalize_robot_name(k) in self._builtins:
+            return False
+        else:
+            return True
+
+
+class _BuiltinsAsDAP(_NonBuiltinVariablesAsDAP):
+    """
+    Provides variables as DAP variables.
+    """
+
+    def _accept(self, k: str) -> bool:
+        return not _NonBuiltinVariablesAsDAP._accept(self, k)
 
 
 class _BaseFrameInfo(object):
@@ -198,6 +236,7 @@ class _KeywordFrameInfo(_BaseFrameInfo):
 
         locals_variables_reference: int = next_id()
         vars_variables_reference: int = next_id()
+        builtions_variables_reference: int = next_id()
         scopes = [
             Scope("Variables", vars_variables_reference, expensive=False),
             Scope(
@@ -206,6 +245,7 @@ class _KeywordFrameInfo(_BaseFrameInfo):
                 expensive=False,
                 presentationHint="locals",
             ),
+            Scope("Builtins", builtions_variables_reference, expensive=False),
         ]
 
         try:
@@ -219,7 +259,10 @@ class _KeywordFrameInfo(_BaseFrameInfo):
         # ctx.namespace.get_library_instances()
 
         stack_list.register_variables_reference(
-            vars_variables_reference, _VariablesAsDAP(self._variables)
+            vars_variables_reference, _NonBuiltinVariablesAsDAP(self._variables)
+        )
+        stack_list.register_variables_reference(
+            builtions_variables_reference, _BuiltinsAsDAP(self._variables)
         )
         self._scopes = scopes
         return self._scopes

@@ -355,3 +355,83 @@ result:
       start:
         character: 22
         line: 9
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${SUITE_DOCUMENTATION}
+  preselect: false
+  textEdit:
+    newText: \${SUITE_DOCUMENTATION}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${SUITE_NAME}
+  preselect: false
+  textEdit:
+    newText: \${SUITE_NAME}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${SUITE_SOURCE}
+  preselect: false
+  textEdit:
+    newText: \${SUITE_SOURCE}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${TEST_DOCUMENTATION}
+  preselect: false
+  textEdit:
+    newText: \${TEST_DOCUMENTATION}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 2
+  kind: 6
+  label: ${TEST_NAME}
+  preselect: false
+  textEdit:
+    newText: \${TEST_NAME}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
