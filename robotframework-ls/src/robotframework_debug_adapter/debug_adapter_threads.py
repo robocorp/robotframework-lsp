@@ -28,6 +28,7 @@ import itertools
 from robocode_ls_core.robotframework_log import get_logger
 import json
 from robotframework_debug_adapter.constants import DEBUG
+from typing import Optional, Dict
 
 
 log = get_logger(__name__)
@@ -39,7 +40,7 @@ STOP_WRITER_THREAD = "STOP_WRITER_THREAD"
 READER_THREAD_STOPPED = "READER_THREAD_STOPPED"
 
 
-def read(stream, debug_prefix=b"read"):
+def read(stream, debug_prefix=b"read") -> Optional[Dict]:
     """
     Reads one message from the stream and returns the related dict (or None if EOF was reached).
 
@@ -87,7 +88,7 @@ def read(stream, debug_prefix=b"read"):
     return json.loads(body.decode("utf-8"))
 
 
-def _read_len(stream, content_length):
+def _read_len(stream, content_length) -> bytes:
     buf = b""
     if not content_length:
         return buf

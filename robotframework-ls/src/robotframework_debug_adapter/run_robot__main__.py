@@ -72,7 +72,7 @@ class _RobotTargetComm(threading.Thread):
             log.debug("Patching execution context...")
 
             from robotframework_debug_adapter.debugger_impl import (
-                patch_execution_context,
+                install_robot_debugger,
             )
 
             try:
@@ -84,7 +84,7 @@ class _RobotTargetComm(threading.Thread):
                 # in place).
                 self._debugger_impl = None
             else:
-                debugger_impl = patch_execution_context()
+                debugger_impl = install_robot_debugger()
                 debugger_impl.busy_wait.before_wait.append(self._notify_stopped)
 
                 log.debug("Finished patching execution context.")
@@ -98,7 +98,9 @@ class _RobotTargetComm(threading.Thread):
         from robotframework_debug_adapter.constants import MAIN_THREAD_ID
 
         reason = self._debugger_impl.stop_reason
-        body = StoppedEventBody(reason, allThreadsStopped=True, threadId=MAIN_THREAD_ID)
+        body = StoppedEventBody(
+            reason.value, allThreadsStopped=True, threadId=MAIN_THREAD_ID
+        )
         msg = StoppedEvent(body)
         self.write_message(msg)
 

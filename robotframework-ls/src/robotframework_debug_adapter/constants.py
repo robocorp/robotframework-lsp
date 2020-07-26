@@ -1,11 +1,12 @@
 import os
+import enum
+from typing import Optional
 
-LOG_LEVEL = os.getenv("ROBOTFRAMEWORK_DAP_LOG_LEVEL", "0")
-LOG_FILENAME = os.getenv("ROBOTFRAMEWORK_DAP_LOG_FILENAME", None)
+LOG_FILENAME: Optional[str] = os.getenv("ROBOTFRAMEWORK_DAP_LOG_FILENAME", None)
 
 # Make sure that the log level is an int.
 try:
-    LOG_LEVEL = int(LOG_LEVEL)
+    LOG_LEVEL = int(os.getenv("ROBOTFRAMEWORK_DAP_LOG_LEVEL", "0"))
 except:
     LOG_LEVEL = 3
 
@@ -22,13 +23,20 @@ STATE_RUNNING = "running"
 STATE_PAUSED = "paused"
 
 # See: StoppedEvent
-REASON_BREAKPOINT = "breakpoint"
-REASON_STEP = "step"
-REASON_PAUSE = "pause"
 
-STEP_IN = "step_in"
-STEP_NEXT = "step_next"
-STEP_OUT = "step_out"
+
+class ReasonEnum(enum.Enum):
+    REASON_NOT_STOPPED = "not_stopped"
+    REASON_BREAKPOINT = "breakpoint"
+    REASON_STEP = "step"
+    REASON_PAUSE = "pause"
+
+
+class StepEnum(enum.Enum):
+    STEP_NONE = 0
+    STEP_IN = 1
+    STEP_NEXT = 2
+    STEP_OUT = 3
 
 
 MAIN_THREAD_ID = 1

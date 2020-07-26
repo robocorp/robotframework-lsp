@@ -14,26 +14,33 @@ import threading
 from robotframework_debug_adapter.constants import (
     STATE_RUNNING,
     STATE_PAUSED,
-    REASON_BREAKPOINT,
-    STEP_IN,
-    REASON_STEP,
-    STEP_NEXT,
-    STEP_OUT,
+    ReasonEnum,
+    StepEnum,
 )
 import itertools
 from functools import partial
-from os.path import os
+import os.path
 from robocode_ls_core.robotframework_log import get_logger, get_log_level
 from collections import namedtuple
 import weakref
+from robotframework_debug_adapter.protocols import (
+    IRobotDebugger,
+    INextId,
+    IRobotBreakpoint,
+    IBusyWait,
+    IEvaluationInfo,
+)
+from typing import Optional, List, Iterable, Union, Any, Dict
+from robocode_ls_core.basic import implements
+from robotframework_debug_adapter.dap.dap_schema import StackFrame, Scope, Source
 
 log = get_logger(__name__)
 
-next_id = partial(next, itertools.count(1))
+next_id: INextId = partial(next, itertools.count(1))
 
 
 class RobotBreakpoint(object):
-    def __init__(self, lineno):
+    def __init__(self, lineno: int):
         """
         :param int lineno:
             1-based line for the breakpoint.
@@ -48,15 +55,18 @@ class BusyWait(object):
         self.proceeded = 0
         self._condition = threading.Condition()
 
+    @implements(IBusyWait.pre_wait)
     def pre_wait(self):
         for c in self.before_wait:
             c()
 
+    @implements(IBusyWait.wait)
     def wait(self):
         self.waited += 1
         with self._condition:
             self._condition.wait()
 
+    @implements(IBusyWait.proceed)
     def proceed(self):
         self.proceeded += 1
         with self._condition:
@@ -117,7 +127,7 @@ class _BaseFrameInfo(object):
     def dap_frame(self):
         raise NotImplementedError("Not implemented in: %s" % (self.__class__,))
 
-    def get_scopes(self):
+    def get_scopes(self) -> List[Scope]:
         raise NotImplementedError("Not implemented in: %s" % (self.__class__,))
 
     def get_type_name(self):
@@ -133,7 +143,7 @@ class _SuiteFrameInfo(_BaseFrameInfo):
     def dap_frame(self):
         return self._dap_frame
 
-    def get_scopes(self):
+    def get_scopes(self) -> List[Scope]:
         return []
 
     def get_type_name(self):
@@ -149,7 +159,7 @@ class _TestFrameInfo(_BaseFrameInfo):
     def dap_frame(self):
         return self._dap_frame
 
-    def get_scopes(self):
+    def get_scopes(self) -> List[Scope]:
         return []
 
     def get_type_name(self):
@@ -179,17 +189,15 @@ class _KeywordFrameInfo(_BaseFrameInfo):
     def get_type_name(self):
         return "Keyword"
 
-    def get_scopes(self):
+    def get_scopes(self) -> List[Scope]:
         if self._scopes is not None:
             return self._scopes
         stack_list = self._stack_list()
         if stack_list is None:
             return []
 
-        from robotframework_debug_adapter.dap.dap_schema import Scope
-
-        locals_variables_reference = next_id()
-        vars_variables_reference = next_id()
+        locals_variables_reference: int = next_id()
+        vars_variables_reference: int = next_id()
         scopes = [
             Scope("Variables", vars_variables_reference, expensive=False),
             Scope(
@@ -224,11 +232,11 @@ class _StackInfo(object):
     """
 
     def __init__(self):
-        self._frame_id_to_frame_info = {}
+        self._frame_id_to_frame_info: Dict[int, _BaseFrameInfo] = {}
         self._dap_frames = []
         self._ref_id_to_children = {}
 
-    def iter_frame_ids(self):
+    def iter_frame_ids(self) -> Iterable[int]:
         """
         Access to list(int) where iter_frame_ids[0] is the current frame
         where we're stopped (topmost frame).
@@ -238,22 +246,20 @@ class _StackInfo(object):
     def register_variables_reference(self, variables_reference, children):
         self._ref_id_to_children[variables_reference] = children
 
-    def add_keyword_entry_stack(self, keyword, filename, variables):
-        from robotframework_debug_adapter.dap import dap_schema
-
-        frame_id = next_id()
+    def add_keyword_entry_stack(self, keyword, filename: str, variables) -> int:
+        frame_id: int = next_id()
         try:
             name = str(keyword).strip()
             if not name:
                 name = keyword.__class__.__name__
         except:
             name = "<Unable to get keyword name>"
-        dap_frame = dap_schema.StackFrame(
+        dap_frame = StackFrame(
             frame_id,
             name=name,
             line=keyword.lineno or 1,
             column=0,
-            source=dap_schema.Source(name=os.path.basename(filename), path=filename),
+            source=Source(name=os.path.basename(filename), path=filename),
         )
         self._dap_frames.append(dap_frame)
         self._frame_id_to_frame_info[frame_id] = _KeywordFrameInfo(
@@ -261,25 +267,23 @@ class _StackInfo(object):
         )
         return frame_id
 
-    def add_suite_entry_stack(self, name, filename):
-        from robotframework_debug_adapter.dap import dap_schema
-
-        frame_id = next_id()
-        dap_frame = dap_schema.StackFrame(
+    def add_suite_entry_stack(self, name: str, filename: str) -> int:
+        frame_id: int = next_id()
+        dap_frame = StackFrame(
             frame_id,
             name=name,
             line=1,
             column=0,
-            source=dap_schema.Source(name=os.path.basename(filename), path=filename),
+            source=Source(name=os.path.basename(filename), path=filename),
         )
         self._dap_frames.append(dap_frame)
         self._frame_id_to_frame_info[frame_id] = _SuiteFrameInfo(self, dap_frame)
         return frame_id
 
-    def add_test_entry_stack(self, name, filename, lineno):
+    def add_test_entry_stack(self, name: str, filename: str, lineno: int) -> int:
         from robotframework_debug_adapter.dap import dap_schema
 
-        frame_id = next_id()
+        frame_id: int = next_id()
         dap_frame = dap_schema.StackFrame(
             frame_id,
             name=name,
@@ -292,7 +296,7 @@ class _StackInfo(object):
         return frame_id
 
     @property
-    def dap_frames(self):
+    def dap_frames(self) -> List[StackFrame]:
         """
         Access to list(StackFrame) where dap_frames[0] is the current frame
         where we're stopped (topmost frame).
@@ -367,8 +371,8 @@ class _EvaluationInfo(object):
 
         from robotframework_ls.impl.text_utilities import is_variable_text
 
-        from robot.libraries.BuiltIn import BuiltIn
-        from robot.api import get_model
+        from robot.libraries.BuiltIn import BuiltIn  # type: ignore
+        from robot.api import get_model  # type: ignore
         from robotframework_ls.impl import ast_utils
 
         # We can't really use
@@ -396,13 +400,12 @@ class _EvaluationInfo(object):
         #     return EvaluationResult(result)
 
         # Try to check if it's a KeywordCall.
-        s = (
-            """
+        s = """
 *** Test Cases ***
 Evaluation
     %s
-"""
-            % self.expression
+""" % (
+            self.expression,
         )
         model = get_model(s)
         usage_info = list(ast_utils.iter_keyword_usage_tokens(model))
@@ -437,7 +440,8 @@ Evaluation
             r = self._do_eval(debugger_impl)
             self.future.set_result(r.result)
         except Exception as e:
-            log.exception("Error evaluating: %s", self.expression)
+            if get_log_level() >= 2:
+                log.exception("Error evaluating: %s", (self.expression,))
             self.future.set_exception(e)
 
 
@@ -450,6 +454,7 @@ class _RobotDebuggerImpl(object):
     def __init__(self):
         self.reset()
 
+    @implements(IRobotDebugger.reset)
     def reset(self):
         from collections import deque
 
@@ -457,39 +462,43 @@ class _RobotDebuggerImpl(object):
         self.busy_wait = BusyWait()
 
         self._run_state = STATE_RUNNING
-        self._step_cmd = None
-        self._reason = None
+        self._step_cmd: StepEnum = StepEnum.STEP_NONE
+        self._reason: ReasonEnum = ReasonEnum.REASON_NOT_STOPPED
         self._next_id = next_id
         self._stack_ctx_entries_deque = deque()
         self._stop_on_stack_len = 0
 
-        self._tid_to_stack_list = {}
+        self._tid_to_stack_info: Dict[int, _StackInfo] = {}
         self._frame_id_to_tid = {}
         self._evaluations = []
         self._skip_breakpoints = 0
 
     @property
-    def stop_reason(self):
+    def stop_reason(self) -> ReasonEnum:
         return self._reason
 
-    def _get_stack_info_from_frame_id(self, frame_id):
+    def _get_stack_info_from_frame_id(self, frame_id) -> Optional[_StackInfo]:
         thread_id = self._frame_id_to_tid.get(frame_id)
         if thread_id is not None:
             return self._get_stack_info(thread_id)
+        return None
 
-    def _get_stack_info(self, thread_id):
-        """
-        :return _StackInfo
-        """
-        return self._tid_to_stack_list.get(thread_id)
+    def _get_stack_info(self, thread_id) -> Optional[_StackInfo]:
+        return self._tid_to_stack_info.get(thread_id)
 
-    def get_frames(self, thread_id):
+    def get_frames(self, thread_id) -> Optional[List[StackFrame]]:
         stack_info = self._get_stack_info(thread_id)
         if not stack_info:
             return None
         return stack_info.dap_frames
 
-    def get_scopes(self, frame_id):
+    def iter_frame_ids(self, thread_id) -> Iterable[int]:
+        stack_info = self._get_stack_info(thread_id)
+        if not stack_info:
+            return ()
+        return stack_info.iter_frame_ids()
+
+    def get_scopes(self, frame_id) -> Optional[List[Scope]]:
         tid = self._frame_id_to_tid.get(frame_id)
         if tid is None:
             return None
@@ -500,12 +509,13 @@ class _RobotDebuggerImpl(object):
         return stack_info.get_scopes(frame_id)
 
     def get_variables(self, variables_reference):
-        for stack_list in list(self._tid_to_stack_list.values()):
+        for stack_list in list(self._tid_to_stack_info.values()):
             variables = stack_list.get_variables(variables_reference)
             if variables is not None:
                 return variables
+        return None
 
-    def _get_filename(self, obj, msg):
+    def _get_filename(self, obj, msg) -> str:
         try:
             source = obj.source
             if source is None:
@@ -518,7 +528,7 @@ class _RobotDebuggerImpl(object):
 
         return filename
 
-    def _create_stack_info(self, thread_id):
+    def _create_stack_info(self, thread_id: int):
         stack_info = _StackInfo()
 
         for entry in reversed(self._stack_ctx_entries_deque):
@@ -551,14 +561,14 @@ class _RobotDebuggerImpl(object):
         for frame_id in stack_info.iter_frame_ids():
             self._frame_id_to_tid[frame_id] = thread_id
 
-        self._tid_to_stack_list[thread_id] = stack_info
+        self._tid_to_stack_info[thread_id] = stack_info
 
     def _dispose_stack_info(self, thread_id):
-        stack_list = self._tid_to_stack_list.pop(thread_id)
+        stack_list = self._tid_to_stack_info.pop(thread_id)
         for frame_id in stack_list.iter_frame_ids():
             self._frame_id_to_tid.pop(frame_id)
 
-    def wait_suspended(self, reason):
+    def wait_suspended(self, reason: ReasonEnum) -> None:
         from robotframework_debug_adapter.constants import MAIN_THREAD_ID
 
         log.info("wait_suspended", reason)
@@ -582,16 +592,18 @@ class _RobotDebuggerImpl(object):
                     finally:
                         self._skip_breakpoints -= 1
 
-            if self._step_cmd == STEP_NEXT:
+            if self._step_cmd == StepEnum.STEP_NEXT:
                 self._stop_on_stack_len = len(self._stack_ctx_entries_deque)
 
-            elif self._step_cmd == STEP_OUT:
+            elif self._step_cmd == StepEnum.STEP_OUT:
                 self._stop_on_stack_len = len(self._stack_ctx_entries_deque) - 1
 
         finally:
+            self._reason = ReasonEnum.REASON_NOT_STOPPED
             self._dispose_stack_info(MAIN_THREAD_ID)
 
-    def evaluate(self, frame_id, expression):
+    @implements(IRobotDebugger.evaluate)
+    def evaluate(self, frame_id, expression) -> IEvaluationInfo:
         """
         Asks something to be evaluated.
         
@@ -607,36 +619,45 @@ class _RobotDebuggerImpl(object):
         self.busy_wait.proceed()
         return evaluation_info
 
-    def step_continue(self):
-        self._step_cmd = None
+    @implements(IRobotDebugger.step_continue)
+    def step_continue(self) -> None:
+        self._step_cmd = StepEnum.STEP_NONE
         self._run_state = STATE_RUNNING
         self.busy_wait.proceed()
 
-    def step_in(self):
-        self._step_cmd = STEP_IN
+    @implements(IRobotDebugger.step_in)
+    def step_in(self) -> None:
+        self._step_cmd = StepEnum.STEP_IN
         self._run_state = STATE_RUNNING
         self.busy_wait.proceed()
 
-    def step_next(self):
-        self._step_cmd = STEP_NEXT
+    @implements(IRobotDebugger.step_next)
+    def step_next(self) -> None:
+        self._step_cmd = StepEnum.STEP_NEXT
         self._run_state = STATE_RUNNING
         self.busy_wait.proceed()
 
-    def step_out(self):
-        self._step_cmd = STEP_OUT
+    @implements(IRobotDebugger.step_out)
+    def step_out(self) -> None:
+        self._step_cmd = StepEnum.STEP_OUT
         self._run_state = STATE_RUNNING
         self.busy_wait.proceed()
 
-    def set_breakpoints(self, filename: str, breakpoints):
-        """
-        :param str filename:
-        :param list(RobotBreakpoint) breakpoints:
-        """
-        if isinstance(breakpoints, RobotBreakpoint):
-            breakpoints = (breakpoints,)
+    @implements(IRobotDebugger.set_breakpoints)
+    def set_breakpoints(
+        self,
+        filename: str,
+        breakpoints: Union[IRobotBreakpoint, Iterable[IRobotBreakpoint]],
+    ) -> None:
+        iter_in: Any
+        if isinstance(breakpoints, (list, tuple, set)):
+            iter_in = breakpoints
+        else:
+            iter_in = [breakpoints]
         filename = file_utils.get_abs_path_real_path_and_base_from_file(filename)[1]
         line_to_bp = {}
-        for bp in breakpoints:
+
+        for bp in iter_in:
             log.info("Set breakpoint in %s: %s", filename, bp.lineno)
             line_to_bp[bp.lineno] = bp
         self._filename_to_line_to_breakpoint[filename] = line_to_bp
@@ -661,18 +682,18 @@ class _RobotDebuggerImpl(object):
         )
         lines = self._filename_to_line_to_breakpoint.get(source)
 
-        stop_reason = None
+        stop_reason: Optional[ReasonEnum] = None
         step_cmd = self._step_cmd
         if lines and step.lineno in lines:
-            stop_reason = REASON_BREAKPOINT
+            stop_reason = ReasonEnum.REASON_BREAKPOINT
 
         elif step_cmd is not None:
-            if step_cmd == STEP_IN:
-                stop_reason = REASON_STEP
+            if step_cmd == StepEnum.STEP_IN:
+                stop_reason = ReasonEnum.REASON_STEP
 
-            elif step_cmd in (STEP_NEXT, STEP_OUT):
+            elif step_cmd in (StepEnum.STEP_NEXT, StepEnum.STEP_OUT):
                 if len(self._stack_ctx_entries_deque) <= self._stop_on_stack_len:
-                    stop_reason = REASON_STEP
+                    stop_reason = ReasonEnum.REASON_STEP
 
         if stop_reason is not None:
             self.wait_suspended(stop_reason)
@@ -713,12 +734,30 @@ def _patch(
     setattr(execution_context_cls, method_name, new_method)
 
 
-def patch_execution_context(new_session=True):
-    try:
-        impl = patch_execution_context.impl
-    except AttributeError:
+class _DebuggerHolder(object):
+    _dbg: Optional[IRobotDebugger] = None
+
+
+def set_global_robot_debugger(dbg: IRobotDebugger):
+    _DebuggerHolder._dbg = dbg
+
+
+def get_global_robot_debugger() -> Optional[IRobotDebugger]:
+    return _DebuggerHolder._dbg
+
+
+def install_robot_debugger() -> IRobotDebugger:
+    """
+    Installs the robot debugger and registers it where needed. If a debugger
+    is currently installed, resets it (in this case, any existing session,
+    stack trace, breakpoints, etc. are reset).
+    """
+
+    impl = get_global_robot_debugger()
+
+    if impl is None:
         # Note: only patches once, afterwards, returns the same instance.
-        from robot.running.steprunner import StepRunner
+        from robot.running.steprunner import StepRunner  # type: ignore
         from robotframework_debug_adapter.listeners import DebugListener
 
         impl = _RobotDebuggerImpl()
@@ -730,9 +769,8 @@ def patch_execution_context(new_session=True):
         DebugListener.on_end_test.register(impl.end_test)
 
         _patch(StepRunner, impl, "run_step", impl.before_run_step, impl.after_run_step)
-        patch_execution_context.impl = impl
+        set_global_robot_debugger(impl)
     else:
-        if new_session:
-            impl.reset()
+        impl.reset()
 
-    return patch_execution_context.impl
+    return impl
