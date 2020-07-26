@@ -26,7 +26,7 @@ To release a new version:
 
 - Create release branch (`git branch -D release-robotframework-lsp&git checkout -b release-robotframework-lsp`)
 
-- Update version (`python -m dev set-version 0.3.0`).
+- Update version (`python -m dev set-version 0.3.1`).
 
 - Update README.md to add notes on features/fixes.
 
@@ -34,11 +34,11 @@ To release a new version:
 
 - Push contents, get the build in https://github.com/robocorp/robotframework-lsp/actions and install locally to test.
 
-- Create a tag (`git tag robotframework-lsp-0.3.0`) and push it.
+- Create a tag (`git tag robotframework-lsp-0.3.1`) and push it.
 
 - Send release msg. i.e.:
 
-`Robot Framework Language Server 0.3.0` is now available (both from `pip install robotframework-lsp` or through the `VSCode marketplace`).
+`Robot Framework Language Server 0.3.1` is now available (both from `pip install robotframework-lsp` or through the `VSCode marketplace`).
 
 The main changes are:
 
