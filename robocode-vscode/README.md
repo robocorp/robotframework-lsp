@@ -14,11 +14,9 @@ Installing
 
 `Robocode VSCode Extension` as a `.vsix`.
 
-To get a `.vsix`, download the latest `Deploy - Robocode VSCode Extension` in [Robotframework-lsp Github Actions](https://github.com/robocorp/robotframework-lsp/actions?query=workflow%3A%22Deploy+-+Robocode+VSCode+Extension%22).
+To get a `.vsix`, download the latest `Deploy - Robocode VSCode Extension` from [Robotframework-lsp Github Actions](https://github.com/robocorp/robotframework-lsp/actions?query=workflow%3A%22Deploy+-+Robocode+VSCode+Extension%22).
 
 See: [Install from a vsix](https://code.visualstudio.com/docs/editor/extension-gallery#_install-from-a-vsix) for details installing a `.vsix` into VSCode.
-
-See: [Getting Started](https://hub.robocorp.com/development/best-practices/language-server-protocol-for-robot-framework/) for a tutorial with some screenshots.
 
 
 Configuration
@@ -40,12 +38,12 @@ Features (0.0.1)
 Developing
 ------------
 
-See: [Developing](docs/develop.md) for details on how to develop `Robot Framework Language Server`.
+See: [Developing](docs/develop.md) for details on how to develop the `Robocode VScode Extension`.
 
 Reporting Issues
 -----------------
 
-See: [Reporting Issue](docs/reporting_issues.md) for details on how to report some issue in the `Robot Framework Language Server`.
+See: Issues may be reported at: [https://github.com/robocorp/robotframework-lsp/issues/new/choose](https://github.com/robocorp/robotframework-lsp/issues/new/choose).
 
 License: Apache 2.0
 -------------------
