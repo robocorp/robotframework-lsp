@@ -21,7 +21,7 @@ limitations under the License.
 
 import * as net from 'net';
 
-import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder } from 'vscode';
+import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder, ProgressLocation, Progress } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
 import * as roboConfig from './robocodeSettings';
 import * as roboCommands from './robocodeCommands';
@@ -171,11 +171,22 @@ async function getLanguageServerPythonUncached(): Promise<string> {
         return;
     }
 
-    // Make sure that conda is installed.
-    await execFilePromise(rccLocation, ['conda', 'check', '-i']);
+    async function createDefaultEnv(progress: Progress<{ message?: string; increment?: number }>) {
+        // Make sure that conda is installed.
+        progress.report({ message: 'Verifying/installing conda.' });
+        await execFilePromise(rccLocation, ['conda', 'check', '-i']);
+        
+        progress.report({ message: 'Updating/creating env (this may take a while).' });
+        // Get information on a base package with our basic dependencies (this can take a while...).
+        let result = await execFilePromise(rccLocation, ['activity', 'run', '-p', packageYaml]);
+        return result;
+    }
 
-    // Get information on a base package with our basic dependencies (this can take a while...).
-    let result = await execFilePromise(rccLocation, ['activity', 'run', '-p', packageYaml]);
+    let result = await window.withProgress({
+        location: ProgressLocation.Notification,
+        title: "Obtain python env: ",
+        cancellable: false
+    }, createDefaultEnv);
 
     let contents: object;
     try {

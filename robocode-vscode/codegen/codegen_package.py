@@ -72,7 +72,7 @@ def get_json_contents():
         },
         "devDependencies": {
             "typescript": "^3.8.2",
-            "vscode": "1.1.37",
+            "vscode": "^1.1.37",
             "@types/node": "^10.0.0",
             "@types/mocha": "^2.2.32",
         },
