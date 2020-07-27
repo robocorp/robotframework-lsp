@@ -17,7 +17,6 @@ __file__ = os.path.abspath(__file__)
 if not os.path.exists(os.path.join(os.path.abspath("."), "dev.py")):
     raise RuntimeError('Please execute commands from the directory containing "dev.py"')
 
-import fire
 
 try:
     import robocode_vscode
@@ -66,6 +65,19 @@ class Dev(object):
             version, os.path.join(".", "src", "robocode_vscode", "__init__.py")
         )
 
+    def get_tag(self):
+        import subprocess
+
+        # i.e.: Gets the last tagged version
+        cmd = "git describe --tags --abbrev=0 --match robocode*".split()
+        popen = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        stdout, stderr = popen.communicate()
+
+        # Something as: b'robocode-vscode-0.0.1'
+        stdout = stdout.decode("utf-8")
+        stdout = stdout.strip()
+        return stdout
+
     def check_tag_version(self):
         """
         Checks if the current tag matches the latest version (exits with 1 if it
@@ -73,16 +85,7 @@ class Dev(object):
         """
         import subprocess
 
-        # i.e.: Gets the last tagged version
-        cmd = "git describe --tags --abbrev=0".split()
-        popen = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        stdout, stderr = popen.communicate()
-
-        # Something as: b'robotframework-lsp-0.0.1'
-        if sys.version_info[0] >= 3:
-            stdout = stdout.decode("utf-8")
-
-        version = stdout.strip()
+        version = self.get_tag()
         version = version[version.rfind("-") + 1 :]
 
         if robocode_vscode.__version__ == version:
@@ -134,6 +137,25 @@ class Dev(object):
             import codegen_package
         codegen_package.main()
 
+    def fix_readme(self):
+        """
+        Updates the links in the README.md to match the current tagged version.
+        To be called during release.
+        """
+        import re
+
+        readme = os.path.join(os.path.dirname(__file__), "README.md")
+        with open(readme, "r") as f:
+            content = f.read()
+        new_content = re.sub(
+            r"\(docs/",
+            r"(https://github.com/robocorp/robotframework-lsp/tree/%s/robocode-vscode/docs/"
+            % (self.get_tag(),),
+            content,
+        )
+        with open(readme, "w") as f:
+            f.write(new_content)
+
 
 def test_lines():
     """
@@ -177,14 +199,21 @@ if __name__ == "__main__":
         test_lines()
     else:
 
-        # Workaround so that fire always prints the output.
-        # See: https://github.com/google/python-fire/issues/188
-        def Display(lines, out):
-            text = "\n".join(lines) + "\n"
-            out.write(text)
+        try:
+            import fire
+        except ImportError:
+            sys.stderr.write(
+                '\nError. "fire" library not found.\nPlease install with "pip install fire" (or activate the proper env).\n'
+            )
+        else:
+            # Workaround so that fire always prints the output.
+            # See: https://github.com/google/python-fire/issues/188
+            def Display(lines, out):
+                text = "\n".join(lines) + "\n"
+                out.write(text)
 
-        from fire import core
+            from fire import core
 
-        core.Display = Display
+            core.Display = Display
 
-        fire.Fire(Dev())
+            fire.Fire(Dev())

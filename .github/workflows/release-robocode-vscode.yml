@@ -31,6 +31,8 @@ jobs:
       run: pip install --upgrade pip fire twine wheel setuptools
     - name: Vendor robocode_ls_core
       run: python -m dev vendor-robocode-ls-core
+    - name: Fix README references
+      run: python -m dev fix-readme
     - name: Build wheel
       working-directory: ./robocode-vscode/src
       run: |

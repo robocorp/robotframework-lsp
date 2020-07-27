@@ -34,6 +34,8 @@ def convert_case_to_camel(name):
 
 
 def get_json_contents():
+    from robocode_vscode import __version__
+
     base_package_contents = {
         "name": "robocode-vscode",
         "displayName": "Robocode VSCode",
@@ -45,7 +47,7 @@ def get_json_contents():
             "url": "https://github.com/robocorp/robotframework-lsp.git",
         },
         "license": "Apache 2.0",
-        "version": "0.0.1",
+        "version": __version__,
         "icon": "images/icon.png",
         "publisher": "robocorptech",
         "engines": {"vscode": "^1.43.0"},
