@@ -1,34 +1,54 @@
-from setuptools import find_packages, setup
-import os
+import shutil
+import re
+from pathlib import Path
 
-_dirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_readme_filename = os.path.join(_dirname, "README.md")
-if not os.path.exists(_readme_filename):
-    raise AssertionError("Expected: %s to exist." % (_readme_filename,))
-README = open(_readme_filename, "r").read()
+from setuptools import find_packages, setup
+
+_here = Path(__file__).parent.resolve()
+_parent = _here.parent
+_root = _parent.parent
+
+_readme = _here / "README.md"
+_thirdparty = _here / "ThirdPartyNotices.txt"
+_license = _here / "LICENSE"
+_copyright = _here / "COPYRIGHT"
+
+if not _readme.exists():
+    shutil.copy2(_parent / _readme.name, _readme)
+
+for path in [_thirdparty, _license, _copyright]:
+    if not path.exists():
+        shutil.copy2(_root / path.name, path)
+
 
 setup(
     name="robotframework-lsp",
     version="0.3.1",
     description="Language Server Protocol implementation for Robot Framework",
-    long_description=README,
+    long_description=_readme.read_text(),
     url="https://github.com/robocorp/robotframework-lsp",
     author="Fabio Zadrozny",
-    license="Apache License, Version 2.0",
+    license="Apache-2.0",
     copyright="Robocorp Technologies, Inc.",
     packages=find_packages(),
     zip_safe=False,
     long_description_content_type="text/markdown",
+    python_requires=">=3.7",
     # List run-time dependencies here. These will be installed by pip when
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=[],
+    install_requires=[
+        "robotframework >=3.2"
+    ],
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
     # for example:
     # $ pip install -e .[test]
     extras_require={
+        "selenium": [
+            "robotframework-seleniumlibrary >=4.4"
+        ],
         "test": [
             "mock",
             "pytest",
