@@ -46,7 +46,7 @@ COMMANDS = [
     # Started from the client due to needing UI actions.
     Command(
         "robocode.uploadActivityToCloud",
-        "Uploads a given activity to the cloud.",
+        "Upload activity package to the cloud.",
         add_to_package_json=True,
         server_handled=False,
     ),

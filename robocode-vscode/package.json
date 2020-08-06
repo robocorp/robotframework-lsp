@@ -9,7 +9,7 @@
         "url": "https://github.com/robocorp/robotframework-lsp.git"
     },
     "license": "Apache 2.0",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "icon": "images/icon.png",
     "publisher": "robocorptech",
     "engines": {
@@ -78,7 +78,7 @@
             },
             {
                 "command": "robocode.uploadActivityToCloud",
-                "title": "Uploads a given activity to the cloud.",
+                "title": "Upload activity package to the cloud.",
                 "category": "Robocode"
             }
         ]

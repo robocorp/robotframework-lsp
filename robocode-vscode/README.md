@@ -26,7 +26,7 @@ After having the extension installed, the first time that the extension is activ
 it will download additional dependencies (such as a conda manager) to bootstrap
 the actual language server.
 
-Features (0.0.1)
+Features (0.0.2)
 -----------------
 
 - Automatic bootstrap of Python environment for the language server.
@@ -34,6 +34,8 @@ Features (0.0.1)
   also use the same environment by default.
   
 - Create a template activity with the `Robocode: Create a Robocode Activity Package.` action.
+
+- Submit an activity package to the cloud with the `Robocode: Upload activity package to the cloud.` action.
 
 Developing
 ------------
