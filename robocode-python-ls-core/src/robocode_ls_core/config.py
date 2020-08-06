@@ -14,28 +14,31 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from robocode_ls_core import uris, basic
-from robocode_ls_core.cache import instance_cache
+from robocode_ls_core import uris
 from robocode_ls_core.robotframework_log import get_logger
 from robocode_ls_core.basic import implements
 from robocode_ls_core.protocols import IConfig, Sentinel
-from typing import Any
+from typing import Any, Dict, Optional
 
 
 log = get_logger(__name__)
 
 
 class Config(object):
-    def __init__(self, root_uri, init_opts, process_id, capabilities):
+    def __init__(
+        self,
+        root_uri: str,
+        init_opts: Optional[Dict] = None,
+        process_id: Optional[int] = None,
+        capabilities: Optional[Dict] = None,
+    ):
         self._root_path = uris.to_fs_path(root_uri)
         self._root_uri = root_uri
         self._init_opts = init_opts
         self._process_id = process_id
         self._capabilities = capabilities
 
-        self._settings = {}
-
-        self._config_sources = {}
+        self._settings: Dict = {}
 
     @property
     def init_opts(self):
@@ -53,51 +56,10 @@ class Config(object):
     def capabilities(self):
         return self._capabilities
 
-    @instance_cache
-    def settings(self, document_path=None):
-        """Settings are constructed from a few sources:
-
-            1. User settings, found in user's home directory
-            2. LSP settings, given to us from didChangeConfiguration
-            3. Project settings, found in config files in the current project.
-
-        Since this function is nondeterministic, it is important to call
-        settings.cache_clear() when the config is updated
-        """
-        settings = {}
-        sources = self._settings.get("configurationSources", [])
-
-        for source_name in reversed(sources):
-            source = self._config_sources.get(source_name)
-            if not source:
-                continue
-            source_conf = source.user_config()
-            log.debug(
-                "Got user config from %s: %s", source.__class__.__name__, source_conf
-            )
-            settings = basic.merge_dicts(settings, source_conf)
-        log.debug("With user configuration: %s", settings)
-
-        settings = basic.merge_dicts(settings, self._settings)
-        log.debug("With lsp configuration: %s", settings)
-
-        for source_name in reversed(sources):
-            source = self._config_sources.get(source_name)
-            if not source:
-                continue
-            source_conf = source.project_config(document_path or self._root_path)
-            log.debug(
-                "Got project config from %s: %s", source.__class__.__name__, source_conf
-            )
-            settings = basic.merge_dicts(settings, source_conf)
-        log.debug("With project configuration: %s", settings)
-
-        return settings
-
     @implements(IConfig.get_setting)
     def get_setting(self, key, expected_type, default=Sentinel.SENTINEL) -> Any:
         try:
-            s = self.settings()
+            s = self._settings
             for part in key.split("."):
                 s = s[part]
 
@@ -116,16 +78,8 @@ class Config(object):
             raise
         return s
 
-    def cache_clear(self):
-        self.settings.cache_clear(self)
-
-    def find_parents(self, path, names):
-        root_path = uris.to_fs_path(self._root_uri)
-        return basic.find_parents(root_path, path, names)
-
     @implements(IConfig.update)
     def update(self, settings):
-        self.cache_clear()
         self._settings = settings
         log.info("Updated settings to %s", self._settings)
 

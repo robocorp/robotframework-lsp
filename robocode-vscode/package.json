@@ -20,7 +20,14 @@
         "onCommand:robocode.getLanguageServerPython",
         "onCommand:robocode.createActivity",
         "onCommand:robocode.listActivityTemplates.internal",
-        "onCommand:robocode.createActivity.internal"
+        "onCommand:robocode.createActivity.internal",
+        "onCommand:robocode.uploadActivityToCloud",
+        "onCommand:robocode.localListActivities.internal",
+        "onCommand:robocode.isLoginNeeded.internal",
+        "onCommand:robocode.cloudLogin.internal",
+        "onCommand:robocode.cloudListWorkspaces.internal",
+        "onCommand:robocode.uploadToNewActivity.internal",
+        "onCommand:robocode.uploadToExistingActivity.internal"
     ],
     "contributes": {
         "configuration": {
@@ -46,6 +53,16 @@
                     "type": "string",
                     "default": "",
                     "description": "Specifies the location of the rcc tool."
+                },
+                "robocode.rcc.endpoint": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Can be used to specify a different endpoint for rcc."
+                },
+                "robocode.rcc.config_location": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Specifies the config location used by rcc."
                 }
             }
         },
@@ -57,6 +74,11 @@
             {
                 "command": "robocode.createActivity",
                 "title": "Create a Robocode Activity Package.",
+                "category": "Robocode"
+            },
+            {
+                "command": "robocode.uploadActivityToCloud",
+                "title": "Uploads a given activity to the cloud.",
                 "category": "Robocode"
             }
         ]

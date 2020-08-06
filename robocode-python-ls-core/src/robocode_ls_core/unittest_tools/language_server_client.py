@@ -1,7 +1,10 @@
 import logging
-from robocode_ls_core.client_base import LanguageServerClientBase
+from typing import Mapping, Any, List
+
 from robocode_ls_core.basic import implements
-from robocode_ls_core.protocols import ILanguageServerClient
+from robocode_ls_core.client_base import LanguageServerClientBase
+from robocode_ls_core.protocols import ILanguageServerClient, IMessageMatcher
+
 
 log = logging.getLogger(__name__)
 
@@ -86,6 +89,34 @@ class _LanguageServerClient(LanguageServerClientBase):
         assert "capabilities" in msg["result"]
         return msg
 
+    @implements(ILanguageServerClient.change_workspace_folders)
+    def change_workspace_folders(
+        self, added_folders: List[str], removed_folders: List[str]
+    ) -> None:
+        from robocode_ls_core import uris
+        import os.path
+
+        added_folders_uri_name = [
+            {"uri": uris.from_fs_path(s), "name": os.path.basename(s)}
+            for s in added_folders
+        ]
+        removed_folders_uri_name = [
+            {"uri": uris.from_fs_path(s), "name": os.path.basename(s)}
+            for s in removed_folders
+        ]
+        self.write(
+            {
+                "jsonrpc": "2.0",
+                "method": "workspace/didChangeWorkspaceFolders",
+                "params": {
+                    "event": {
+                        "added": added_folders_uri_name,
+                        "removed": removed_folders_uri_name,
+                    }
+                },
+            }
+        )
+
     @implements(ILanguageServerClient.open_doc)
     def open_doc(self, uri, version=1, text=""):
         self.write(
@@ -156,8 +187,19 @@ class _LanguageServerClient(LanguageServerClientBase):
         )
 
     @implements(ILanguageServerClient.execute_command)
-    def execute_command(self, command, arguments):
+    def execute_command(self, command: str, arguments: list) -> Mapping[str, Any]:
         return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "workspace/executeCommand",
+                "params": {"command": command, "arguments": arguments},
+            }
+        )
+
+    @implements(ILanguageServerClient.execute_command_async)
+    def execute_command_async(self, command: str, arguments: list) -> IMessageMatcher:
+        return self.request_async(
             {
                 "jsonrpc": "2.0",
                 "id": self.next_id(),

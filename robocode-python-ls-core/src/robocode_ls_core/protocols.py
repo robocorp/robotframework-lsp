@@ -1,8 +1,11 @@
-from enum import Enum
-from typing import Dict, Union, Any, Generic, Callable, Mapping, Optional
+import sys
+import threading
+from typing import Dict, Union, Any, Generic, Callable, Mapping, Optional, List, Type
 from typing import TypeVar
 import typing
-import sys
+
+from enum import Enum
+
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -13,9 +16,6 @@ if sys.version_info[:2] < (3, 8):
 
 else:
     from typing import Protocol
-
-
-import threading
 
 
 T = TypeVar("T")
@@ -138,8 +138,16 @@ class ILanguageServerClientBase(Protocol):
             (including if the communication was dropped).
         """
 
-    def obtain_pattern_message_matcher(self, message_pattern) -> IMessageMatcher:
-        pass
+    def obtain_pattern_message_matcher(
+        self, message_pattern: Dict[str, str]
+    ) -> IMessageMatcher:
+        """
+        Can be used as:
+        
+        message_matcher = language_server.obtain_pattern_message_matcher(
+            {"method": "textDocument/publishDiagnostics"}
+        )
+        """
 
     def obtain_id_message_matcher(self, message_id) -> IMessageMatcher:
         pass
@@ -157,6 +165,8 @@ class ILanguageServerClientBase(Protocol):
 class ILanguageServerClient(ILanguageServerClientBase, Protocol):
     pid: int
 
+    DEFAULT_TIMEOUT: Optional[int] = None
+
     def settings(self, settings: Dict):
         """
         :param settings:
@@ -165,6 +175,11 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
         """
 
     def initialize(self, root_path: str, msg_id=None, process_id=None):
+        pass
+
+    def change_workspace_folders(
+        self, added_folders: List[str], removed_folders: List[str]
+    ) -> None:
         pass
 
     def open_doc(self, uri: str, version: int = 1, text: str = ""):
@@ -203,6 +218,9 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
         """
 
     def execute_command(self, command: str, arguments: list) -> Mapping[str, Any]:
+        pass
+
+    def execute_command_async(self, command: str, arguments: list) -> IMessageMatcher:
         pass
 
 
@@ -251,19 +269,46 @@ class ILog(Protocol):
         pass  # same as exception
 
 
-class ILanguageServer(Protocol):
+class IConfigProvider(Protocol):
     config: Optional[IConfig]
+
+
+class ILanguageServer(IConfigProvider):
+    pass
 
 
 class IDocument(Protocol):
     def get_line(self, line: int) -> str:
         pass
 
+    def sync_source(self):
+        """
+        If the document is backed up by a file, makes sure that it's contents
+        are synchronized with the filesystem.
+        """
+
 
 class IWorkspace(Protocol):
+    def remove_document(self, uri: str) -> None:
+        pass
+
+    def put_document(
+        self, text_document: "robocode_ls_core.lsp.TextDocumentItem"
+    ) -> IDocument:
+        pass
+
     def get_document(self, doc_uri: str, accept_from_file: bool) -> Optional[IDocument]:
         """
         Return a managed document if-present, otherwise, create one pointing at
         the disk if accept_from_file == True (if the file exists, and we're able to
         load it, otherwise, return None).
         """
+
+    def get_folder_paths(self) -> List[str]:
+        """
+        Retuns the folders which are set as workspace folders.
+        """
+
+
+def typecheck_iworkspace(ws: Type[IWorkspace]):
+    return ws

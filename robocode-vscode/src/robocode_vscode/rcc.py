@@ -1,10 +1,27 @@
+from subprocess import CalledProcessError
 import sys
-from robocode_ls_core.robotframework_log import get_logger
-from robocode_ls_core.protocols import IConfig, ILanguageServer
-from typing import Optional, List
+from typing import Optional, List, Any
 import weakref
 
+from robocode_ls_core.basic import implements, as_str
+from robocode_ls_core.constants import NULL
+from robocode_ls_core.protocols import IConfig, IConfigProvider
+from robocode_ls_core.robotframework_log import get_logger
+from robocode_vscode.protocols import (
+    IRcc,
+    IRccWorkspace,
+    IRccActivity,
+    ActionResult,
+    typecheck_ircc,
+    typecheck_ircc_workspace,
+    typecheck_ircc_activity,
+)
+
+
 log = get_logger(__name__)
+
+RCC_CLOUD_ACTIVITY_MUTEX_NAME = "rcc_cloud_activity"
+RCC_CREDENTIALS_MUTEX_NAME = "rcc_credentials"
 
 
 def download_rcc(location: str, force: bool = False) -> None:
@@ -83,23 +100,79 @@ def get_default_rcc_location() -> str:
     return location
 
 
-class Rcc(object):
-    def __init__(self, language_server):
-        self._language_server = weakref.ref(language_server)
+@typecheck_ircc_activity
+class RccActivity(object):
+    def __init__(self, activity_id: str, activity_name: str):
+        self._activity_id = activity_id
+        self._activity_name = activity_name
 
+    @property
+    def activity_id(self) -> str:
+        return self._activity_id
+
+    @property
+    def activity_name(self) -> str:
+        return self._activity_name
+
+
+@typecheck_ircc_workspace
+class RccWorkspace(object):
+    def __init__(self, workspace_id: str, workspace_name: str):
+        self._workspace_id = workspace_id
+        self._workspace_name = workspace_name
+
+    @property
+    def workspace_id(self) -> str:
+        return self._workspace_id
+
+    @property
+    def workspace_name(self) -> str:
+        return self._workspace_name
+
+
+@typecheck_ircc
+class Rcc(object):
+    def __init__(self, config_provider: IConfigProvider) -> None:
+        self._config_provider = weakref.ref(config_provider)
+
+        self.credentials: Optional[str] = None
+
+    def _get_str_optional_setting(self, setting_name) -> Any:
+        config_provider = self._config_provider()
+        config: Optional[IConfig] = None
+        if config_provider is not None:
+            config = config_provider.config
+
+        if config:
+            return config.get_setting(setting_name, str, None)
+        return None
+
+    @property
+    def config_location(self) -> Optional[str]:
+        """
+        @implements(IRcc.config_location)
+        """
+        # Can be set in tests to provide a different config location.
+        from robocode_vscode import settings
+
+        return self._get_str_optional_setting(settings.ROBOCODE_RCC_CONFIG_LOCATION)
+
+    @property
+    def endpoint(self) -> Optional[str]:
+        """
+        @implements(IRcc.endpoint)
+        """
+        # Can be set in tests to provide a different endpoint.
+        from robocode_vscode import settings
+
+        return self._get_str_optional_setting(settings.ROBOCODE_RCC_ENDPOINT)
+
+    @implements(IRcc.get_rcc_location)
     def get_rcc_location(self) -> str:
         from robocode_vscode import settings
         import os.path
 
-        language_server: ILanguageServer = self._language_server()
-        config: Optional[IConfig] = None
-        if language_server is not None:
-            config = language_server.config
-
-        rcc_location: str = ""
-        if config:
-            rcc_location = config.get_setting(settings.ROBOCODE_RCC_LOCATION, str)
-
+        rcc_location = self._get_str_optional_setting(settings.ROBOCODE_RCC_LOCATION)
         if not rcc_location:
             rcc_location = get_default_rcc_location()
 
@@ -107,11 +180,17 @@ class Rcc(object):
             download_rcc(rcc_location)
         return rcc_location
 
-    def run(self, args: List[str], timeout: float = 30) -> str:
+    def _run_rcc(
+        self,
+        args: List[str],
+        timeout: float = 30,
+        expect_ok=True,
+        error_msg: str = "",
+        mutex_name=None,
+    ) -> ActionResult[str]:
         from robocode_ls_core.basic import build_subprocess_kwargs
         from subprocess import check_output
         from robocode_ls_core.subprocess_wrapper import subprocess
-        from subprocess import CalledProcessError
 
         rcc_location = self.get_rcc_location()
 
@@ -119,16 +198,223 @@ class Rcc(object):
         env = None
         kwargs: dict = build_subprocess_kwargs(cwd, env, stderr=subprocess.PIPE)
         args = [rcc_location] + args
+        cmdline = " ".join([str(x) for x in args])
+
         try:
-            boutput: bytes = check_output(args, timeout=timeout, **kwargs)
+            if mutex_name:
+                from robocode_ls_core.system_mutex import timed_acquire_mutex
+            else:
+                timed_acquire_mutex = NULL
+            with timed_acquire_mutex(mutex_name, timeout=15):
+                boutput: bytes = check_output(args, timeout=timeout, **kwargs)
+
         except CalledProcessError as e:
-            log.exception("Error running: %s", args)
-            log.critical("stderr: \n%s", e.stderr)
-            raise
+            stdout = as_str(e.stdout)
+            stderr = as_str(e.stderr)
+            msg = f"Error running: {cmdline}.\nStdout: {stdout}\nStderr: {stderr}"
+            log.exception(msg)
+            if not error_msg:
+                return ActionResult(success=False, message=msg)
+            else:
+                additional_info = [error_msg]
+                if stdout or stderr:
+                    if stdout and stderr:
+                        additional_info.append("\nDetails: ")
+                        additional_info.append("\nStdout")
+                        additional_info.append(stdout)
+                        additional_info.append("\nStderr")
+                        additional_info.append(stderr)
+
+                    elif stdout:
+                        additional_info.append("\nDetails: ")
+                        additional_info.append(stdout)
+
+                    elif stderr:
+                        additional_info.append("\nDetails: ")
+                        additional_info.append(stderr)
+
+                return ActionResult(success=False, message="".join(additional_info))
+
         except Exception:
-            log.exception("Error running: %s", args)
-            raise
+            msg = f"Error running: {args}"
+            log.exception(msg)
+            return ActionResult(success=False, message=msg)
+
         output = boutput.decode("utf-8", "replace")
 
-        log.info(f"Output from: {args}:\n{output}")
-        return output
+        log.debug(f"Output from: {cmdline}:\n{output}")
+        if expect_ok:
+            if "OK." in output:
+                return ActionResult(success=True, message=None, result=output)
+        else:
+            return ActionResult(success=True, message=None, result=output)
+
+        return ActionResult(
+            success=False, message="OK. not found in message", result=output
+        )
+
+    @implements(IRcc.get_template_names)
+    def get_template_names(self) -> ActionResult[List[str]]:
+        result = self._run_rcc("activity initialize -l".split())
+        if not result.success:
+            return ActionResult(success=False, message=result.message)
+
+        output = result.result
+        if output is None:
+            return ActionResult(success=False, message="Output not available")
+        templates = []
+        for line in output.splitlines():
+            if line.startswith("- "):
+                template_name = line[2:].strip()
+                templates.append(template_name)
+
+        return ActionResult(success=True, message=None, result=sorted(templates))
+
+    def _add_config_to_args(self, args: List[str]) -> List[str]:
+        config_location = self.config_location
+        if config_location:
+            args.append("--config")
+            args.append(config_location)
+        return args
+
+    @implements(IRcc.create_activity)
+    def create_activity(self, template: str, directory: str) -> ActionResult:
+        args = ["activity", "initialize", "-t", template, "-d", directory]
+        args = self._add_config_to_args(args)
+        return self._run_rcc(args, error_msg="Error creating activity.")
+
+    @implements(IRcc.add_credentials)
+    def add_credentials(self, credential: str) -> ActionResult:
+        args = ["config", "credentials"]
+        endpoint = self.endpoint
+        if endpoint:
+            args.append("--endpoint")
+            args.append(endpoint)
+
+        args = self._add_config_to_args(args)
+
+        args.append(credential)
+
+        return self._run_rcc(args, mutex_name=RCC_CREDENTIALS_MUTEX_NAME)
+
+    @implements(IRcc.credentials_valid)
+    def credentials_valid(self) -> bool:
+        import json
+
+        args = ["config", "credentials", "-j", "--verified"]
+        endpoint = self.endpoint
+        if endpoint:
+            args.append("--endpoint")
+            args.append(endpoint)
+
+        args = self._add_config_to_args(args)
+
+        result = self._run_rcc(
+            args, expect_ok=False, mutex_name=RCC_CREDENTIALS_MUTEX_NAME
+        )
+        if not result.success:
+            msg = f"Error checking credentials: {result.message}"
+            log.critical(msg)
+            return False
+
+        output = result.result
+        if not output:
+            msg = f"Error. Expected to get info on credentials (found no output)."
+            log.critical(msg)
+            return False
+
+        for credential in json.loads(output):
+            timestamp = credential.get("verified")
+            if timestamp and int(timestamp):
+                return True
+        # Found no valid credential
+        return False
+
+    @implements(IRcc.cloud_list_workspaces)
+    def cloud_list_workspaces(self) -> ActionResult[List[IRccWorkspace]]:
+        import json
+
+        ret: List[IRccWorkspace] = []
+        args = ["cloud", "workspace"]
+        args = self._add_config_to_args(args)
+
+        result = self._run_rcc(
+            args, expect_ok=False, mutex_name=RCC_CLOUD_ACTIVITY_MUTEX_NAME
+        )
+
+        if not result.success:
+            return ActionResult(False, result.message)
+
+        output = result.result
+        if not output:
+            return ActionResult(
+                False, "Error listing cloud workspaces (output not available)."
+            )
+
+        for workspace_info in json.loads(output):
+            ret.append(
+                RccWorkspace(
+                    workspace_id=workspace_info["id"],
+                    workspace_name=workspace_info["name"],
+                )
+            )
+        return ActionResult(True, None, ret)
+
+    @implements(IRcc.cloud_list_workspace_activities)
+    def cloud_list_workspace_activities(
+        self, workspace_id: str
+    ) -> ActionResult[List[IRccActivity]]:
+        import json
+
+        ret: List[IRccActivity] = []
+        args = ["cloud", "workspace"]
+        args.extend(("--workspace", workspace_id))
+        args = self._add_config_to_args(args)
+        result = self._run_rcc(
+            args, expect_ok=False, mutex_name=RCC_CLOUD_ACTIVITY_MUTEX_NAME
+        )
+        if not result.success:
+            return ActionResult(False, result.message)
+
+        output = result.result
+        if not output:
+            return ActionResult(
+                False,
+                "Error listing cloud workspace activities (output not available).",
+            )
+
+        workspace_info = json.loads(output)
+        for activity_info in workspace_info["activities"]:
+            ret.append(
+                RccActivity(
+                    activity_id=activity_info["id"], activity_name=activity_info["name"]
+                )
+            )
+        return ActionResult(True, None, ret)
+
+    @implements(IRcc.cloud_set_activity_contents)
+    def cloud_set_activity_contents(
+        self, directory: str, workspace_id: str, package_id: str
+    ) -> ActionResult:
+        import os.path
+
+        assert os.path.isdir(
+            directory
+        ), f"Expected: {directory} to exist and be a directory."
+
+        args = ["cloud", "push"]
+        args.extend(["--directory", directory])
+        args.extend(["--workspace", workspace_id])
+        args.extend(["--package", package_id])
+
+        args = self._add_config_to_args(args)
+        return self._run_rcc(args, mutex_name=RCC_CLOUD_ACTIVITY_MUTEX_NAME)
+
+    @implements(IRcc.cloud_create_activity)
+    def cloud_create_activity(self, workspace_id: str, package_id: str) -> ActionResult:
+        args = ["cloud", "new"]
+        args.extend(["--workspace", workspace_id])
+        args.extend(["--package", package_id])
+
+        args = self._add_config_to_args(args)
+        return self._run_rcc(args, mutex_name=RCC_CLOUD_ACTIVITY_MUTEX_NAME)

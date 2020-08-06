@@ -19,6 +19,7 @@ export async function execFilePromise(command: string, args: string[]): Promise<
             return await execFile(command, args);
         } catch (error) {
             OUTPUT_CHANNEL.appendLine('Error executing: ' + command + ',' + args);
+            OUTPUT_CHANNEL.appendLine('Error code: ' + error.code);
             OUTPUT_CHANNEL.appendLine('Error: ' + error);
             if (error.code == 'EBUSY') {
                 // After downloading a resource (such as rcc), on Windows, sometimes

@@ -17,31 +17,33 @@
 # limitations under the License.
 import io
 import os
+from typing import Optional, Dict, List
 
 from robocode_ls_core import uris
-from robocode_ls_core.uris import uri_scheme, to_fs_path
-from robocode_ls_core.robotframework_log import get_logger
 from robocode_ls_core.basic import implements
-from robocode_ls_core.protocols import IWorkspace, IDocument
-from typing import Optional
+from robocode_ls_core.protocols import IWorkspace, IDocument, typecheck_iworkspace
+from robocode_ls_core.robotframework_log import get_logger
+from robocode_ls_core.uris import uri_scheme, to_fs_path
+
 
 log = get_logger(__name__)
 
 
+@typecheck_iworkspace
 class Workspace(object):
-    def __init__(self, root_uri, workspace_folders=None):
+    def __init__(self, root_uri, workspace_folders=None) -> None:
         from robocode_ls_core.lsp import WorkspaceFolder
 
         self._root_uri = root_uri
         self._root_uri_scheme = uri_scheme(self._root_uri)
         self._root_path = to_fs_path(self._root_uri)
-        self._folders = {}
+        self._folders: Dict[str, WorkspaceFolder] = {}
 
         # Contains the docs with files considered open.
-        self._docs = {}
+        self._docs: Dict[str, IDocument] = {}
 
         # Contains the docs pointing to the filesystem.
-        self._filesystem_docs = {}
+        self._filesystem_docs: Dict[str, IDocument] = {}
 
         if workspace_folders is not None:
             for folder in workspace_folders:
@@ -71,6 +73,11 @@ class Workspace(object):
     def folders(self):
         return self._folders
 
+    @implements(IWorkspace.get_folder_paths)
+    def get_folder_paths(self) -> List[str]:
+        folders = self._folders
+        return [uris.to_fs_path(ws_folder.uri) for ws_folder in folders.values()]
+
     @implements(IWorkspace.get_document)
     def get_document(self, doc_uri: str, accept_from_file: bool) -> Optional[IDocument]:
         doc = self._docs.get(doc_uri)
@@ -91,10 +98,10 @@ class Workspace(object):
             self._root_uri_scheme == "" or self._root_uri_scheme == "file"
         ) and os.path.exists(self._root_path)
 
-    def put_document(self, text_document):
-        """
-        :param TextDocumentItem text_document:
-        """
+    @implements(IWorkspace.put_document)
+    def put_document(
+        self, text_document: "robocode_ls_core.lsp.TextDocumentItem"
+    ) -> IDocument:
         doc_uri = text_document.uri
 
         doc = self._docs[doc_uri] = self._create_document(
@@ -103,8 +110,9 @@ class Workspace(object):
         self._filesystem_docs.pop(doc_uri, None)
         return doc
 
-    def remove_document(self, doc_uri):
-        self._docs.pop(doc_uri, None)
+    @implements(IWorkspace.remove_document)
+    def remove_document(self, uri: str) -> None:
+        self._docs.pop(uri, None)
 
     @property
     def root_path(self):
@@ -229,6 +237,7 @@ class Document(object):
         with io.open(self.path, "r", encoding="utf-8") as f:
             self._source = f.read()
 
+    @implements(IDocument.sync_source)
     def sync_source(self):
         try:
             mtime = os.path.getmtime(self.path)

@@ -20,10 +20,7 @@ from robocode_ls_core.robotframework_log import get_logger
 from robocode_ls_core.protocols import IConfig, IWorkspace
 from typing import Optional
 
-try:
-    import socketserver
-except ImportError:
-    import SocketServer as socketserver
+import socketserver
 import threading
 
 from robocode_ls_core.jsonrpc.dispatchers import MethodDispatcher
@@ -281,13 +278,17 @@ class PythonLanguageServer(MethodDispatcher):
             "Subclasses must override (current class: %s)." % (self.__class__,)
         )
 
-    def m_text_document__did_close(self, textDocument=None, **_kwargs):
-        self.workspace.remove_document(textDocument["uri"])
+    def m_text_document__did_close(self, textDocument=None, **_kwargs) -> None:
+        ws = self.workspace
+        if ws is not None:
+            ws.remove_document(textDocument["uri"])
 
-    def m_text_document__did_open(self, textDocument=None, **_kwargs):
+    def m_text_document__did_open(self, textDocument=None, **_kwargs) -> None:
         from robocode_ls_core.lsp import TextDocumentItem
 
-        self.workspace.put_document(TextDocumentItem(**textDocument))
+        ws = self.workspace
+        if ws is not None:
+            ws.put_document(TextDocumentItem(**textDocument))
         self.lint(textDocument["uri"], is_saved=True)
 
     def m_text_document__did_change(
@@ -319,8 +320,10 @@ class PythonLanguageServer(MethodDispatcher):
     def m_text_document__did_save(self, textDocument=None, **_kwargs):
         self.lint(textDocument["uri"], is_saved=True)
 
-    def m_workspace__did_change_configuration(self, settings=None):
-        self.config.update(settings or {})
+    def m_workspace__did_change_configuration(self, settings=None) -> None:
+        config = self.config
+        if config:
+            config.update(settings or {})
 
     def m_workspace__did_change_workspace_folders(self, event):
         """Adds/Removes folders from the workspace."""

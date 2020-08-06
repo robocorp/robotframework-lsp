@@ -58,6 +58,8 @@ jobs:
       working-directory: ./robocode-vscode/tests
       env:
         PYTHONPATH: .
+        CI_CREDENTIALS: ${{ secrets.CI_CREDENTIALS }}
+        CI_ENDPOINT: ${{ secrets.CI_ENDPOINT }}
       run: python -u ../../robocode-python-ls-core/tests/run_tests.py -otests_output -vv .
     - uses: actions/upload-artifact@v1
       with:

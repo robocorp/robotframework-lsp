@@ -7,6 +7,7 @@ class Setting(object):
         setting_type=["string", "null"],
         enum=None,
         js_type=None,
+        add_to_json=True,
     ):
         """
         :param name:
@@ -26,6 +27,7 @@ class Setting(object):
         self.setting_type = setting_type
         self.enum = enum
         self.js_type = js_type
+        self.add_to_json = add_to_json
 
 
 SETTINGS = [
@@ -54,12 +56,26 @@ SETTINGS = [
         "Specifies the location of the rcc tool.",
         setting_type="string",
     ),
+    Setting(
+        "robocode.rcc.endpoint",
+        "",
+        "Can be used to specify a different endpoint for rcc.",
+        setting_type="string",
+    ),
+    Setting(
+        "robocode.rcc.config_location",
+        "",
+        "Specifies the config location used by rcc.",
+        setting_type="string",
+    ),
 ]
 
 
 def get_settings_for_json():
     settings_contributed = {}
     for setting in SETTINGS:
+        if not setting.add_to_json:
+            continue
         dct = {
             "type": setting.setting_type,
             "default": setting.default,

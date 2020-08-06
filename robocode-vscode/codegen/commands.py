@@ -43,6 +43,49 @@ COMMANDS = [
         add_to_package_json=False,
         server_handled=True,
     ),
+    # Started from the client due to needing UI actions.
+    Command(
+        "robocode.uploadActivityToCloud",
+        "Uploads a given activity to the cloud.",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
+    Command(
+        "robocode.localListActivities.internal",
+        "Lists the activities currently available in the workspace.",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
+    Command(
+        "robocode.isLoginNeeded.internal",
+        "Checks if the user is already logged in.",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
+    Command(
+        "robocode.cloudLogin.internal",
+        "Logs into Robocloud.",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
+    Command(
+        "robocode.cloudListWorkspaces.internal",
+        "Lists the workspaces available for the user (in the cloud).",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
+    Command(
+        "robocode.uploadToNewActivity.internal",
+        "Uploads an activity package as a new activity package in the cloud.",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
+    Command(
+        "robocode.uploadToExistingActivity.internal",
+        "Uploads an activity package as an existing activity package in the cloud.",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
 ]
 
 

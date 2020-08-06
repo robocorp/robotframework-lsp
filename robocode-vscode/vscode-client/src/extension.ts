@@ -30,7 +30,7 @@ import { getExtensionRelativeFile, verifyFileExists } from './files';
 import { getRccLocation } from './rcc';
 import { Timing } from './time';
 import { execFilePromise } from './subprocess';
-import { createActivity } from './activities';
+import { createActivity, uploadActivity } from './activities';
 
 
 
@@ -76,6 +76,7 @@ function registerDebugger(languageServerExecutable: string) {
 
 let langServer: LanguageClient;
 
+
 export async function activate(context: ExtensionContext) {
     try {
         let timing = new Timing();
@@ -110,6 +111,7 @@ export async function activate(context: ExtensionContext) {
         let disposable: Disposable = langServer.start();
         commands.registerCommand(roboCommands.ROBOCODE_GET_LANGUAGE_SERVER_PYTHON, () => getLanguageServerPython());
         commands.registerCommand(roboCommands.ROBOCODE_CREATE_ACTIVITY, () => createActivity());
+        commands.registerCommand(roboCommands.ROBOCODE_UPLOAD_ACTIVITY_TO_CLOUD, () => uploadActivity());
         registerDebugger(executable);
         context.subscriptions.push(disposable);
 
