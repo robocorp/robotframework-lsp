@@ -29,9 +29,9 @@ import { OUTPUT_CHANNEL } from './channel';
 import { getExtensionRelativeFile, verifyFileExists } from './files';
 import { getRccLocation } from './rcc';
 import { Timing } from './time';
-import { execFilePromise } from './subprocess';
+import { execFilePromise, ExecFileReturn } from './subprocess';
 import { createActivity, uploadActivity } from './activities';
-
+import { sleep } from './time';
 
 
 const clientOptions: LanguageClientOptions = {
@@ -173,32 +173,67 @@ async function getLanguageServerPythonUncached(): Promise<string> {
         return;
     }
 
-    async function createDefaultEnv(progress: Progress<{ message?: string; increment?: number }>) {
+    async function createDefaultEnv(progress: Progress<{ message?: string; increment?: number }>): Promise<ExecFileReturn> {
         // Make sure that conda is installed.
+        const maxTries = 5;
         progress.report({ message: 'Verifying/installing conda.' });
-        await execFilePromise(rccLocation, ['conda', 'check', '-i']);
-        
+        for (let index = 0; index < maxTries; index++) {
+            try {
+                let condaCheckResult: ExecFileReturn = await execFilePromise(rccLocation, ['conda', 'check', '-i']);
+                if (condaCheckResult.stdout.indexOf('OK.') != -1) {
+                    break;
+                }
+                // Note: checking if conda is there is the first thing and sometimes
+                // it seems that right after downloading RCC, trying to run it right away doesn't work.
+                // So, try to retry if it doesn't work out.
+                OUTPUT_CHANNEL.appendLine('Expected OK. to be in the stdout. Found:\nStdout: ' + condaCheckResult.stdout + '\nStderr:' + condaCheckResult.stderr);
+
+                // We couldn't find OK. Let's retry.
+                if (index == maxTries - 1) {
+                    throw Error("Unable to install conda with RCC. Extension won't be usable (see Debug Console output for details).");
+                } else {
+                    OUTPUT_CHANNEL.appendLine('Will retry shortly...');
+                }
+            } catch (err) {
+                // Some error happened. Let's retry.
+                if (index == maxTries - 1) {
+                    throw Error("Unable to install conda with RCC. Extension won't be usable (see Debug Console output for details).");
+                } else {
+                    OUTPUT_CHANNEL.appendLine('Will retry shortly...');
+                }
+            }
+            await sleep(250);
+        }
+
         progress.report({ message: 'Updating/creating env (this may take a while).' });
         // Get information on a base package with our basic dependencies (this can take a while...).
-        let result = await execFilePromise(rccLocation, ['activity', 'run', '-p', packageYaml]);
+        let result: ExecFileReturn = await execFilePromise(rccLocation, ['activity', 'run', '-p', packageYaml]);
         return result;
     }
 
-    let result = await window.withProgress({
+    let result: ExecFileReturn = await window.withProgress({
         location: ProgressLocation.Notification,
         title: "Obtain python env: ",
         cancellable: false
     }, createDefaultEnv);
 
-    let contents: object;
     try {
-        contents = JSON.parse(result.stderr);
+        let jsonContents = result.stderr;
+        let start: number = jsonContents.indexOf('JSON START>>')
+        let end: number = jsonContents.indexOf('<<JSON END')
+        if (start == -1 || end == -1) {
+            throw Error("Unable to find JSON START>> or <<JSON END");
+        }
+        start += 'JSON START>>'.length;
+        jsonContents = jsonContents.substr(start, end - start);
+        OUTPUT_CHANNEL.appendLine('Parsing json contents: ' + jsonContents);
+        let contents: object = JSON.parse(jsonContents);
         let pythonExe = contents['python_executable'];
         if (verifyFileExists(pythonExe)) {
             return pythonExe;
         }
     } catch (error) {
-        OUTPUT_CHANNEL.appendLine('Unable to get python to launch language server. Error parsing json: ' + result.stderr);
+        OUTPUT_CHANNEL.appendLine('Unable to get python to launch language server.\nStderr: ' + result.stderr + '\nStdout (json contents): ' + result.stdout);
         return;
     }
     return undefined;

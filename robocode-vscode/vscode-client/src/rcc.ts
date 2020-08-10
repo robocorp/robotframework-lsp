@@ -77,6 +77,10 @@ async function downloadRcc(progress: Progress<{ message?: string; increment?: nu
                     s.close();
                 }
 
+                // If we don't sleep after downloading, the first activation seems to fail on Windows and Mac 
+                // (EBUSY on Windows, undefined on Mac).
+                await sleep(200);
+
                 return location;
             } else {
                 throw Error('Unable to download from ' + url + '. Response status: ' + response.status + 'Response message: ' + response.responseText);
