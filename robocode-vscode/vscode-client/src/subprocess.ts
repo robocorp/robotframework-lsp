@@ -4,13 +4,13 @@ import { sleep } from './time';
 import { OUTPUT_CHANNEL } from './channel';
 import { execFile, ExecException } from 'child_process';
 
-interface ExecFileError {
+export interface ExecFileError {
     error: ExecException;
     stdout: string;
     stderr: string;
 };
 
-interface ExecFileReturn {
+export interface ExecFileReturn {
     stdout: string;
     stderr: string;
 };

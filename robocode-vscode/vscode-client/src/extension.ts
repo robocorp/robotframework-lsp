@@ -29,7 +29,7 @@ import { OUTPUT_CHANNEL } from './channel';
 import { getExtensionRelativeFile, verifyFileExists } from './files';
 import { getRccLocation } from './rcc';
 import { Timing } from './time';
-import { execFilePromise } from './subprocess';
+import { execFilePromise, ExecFileReturn } from './subprocess';
 import { createActivity, uploadActivity } from './activities';
 import { sleep } from './time';
 
@@ -173,13 +173,13 @@ async function getLanguageServerPythonUncached(): Promise<string> {
         return;
     }
 
-    async function createDefaultEnv(progress: Progress<{ message?: string; increment?: number }>) {
+    async function createDefaultEnv(progress: Progress<{ message?: string; increment?: number }>): Promise<ExecFileReturn> {
         // Make sure that conda is installed.
         const maxTries = 5;
         progress.report({ message: 'Verifying/installing conda.' });
         for (let index = 0; index < maxTries; index++) {
             try {
-                let condaCheckResult = await execFilePromise(rccLocation, ['conda', 'check', '-i']);
+                let condaCheckResult: ExecFileReturn = await execFilePromise(rccLocation, ['conda', 'check', '-i']);
                 if (condaCheckResult.stdout.indexOf('OK.') != -1) {
                     break;
                 }
@@ -204,11 +204,11 @@ async function getLanguageServerPythonUncached(): Promise<string> {
 
         progress.report({ message: 'Updating/creating env (this may take a while).' });
         // Get information on a base package with our basic dependencies (this can take a while...).
-        let result = await execFilePromise(rccLocation, ['activity', 'run', '-p', packageYaml]);
+        let result: ExecFileReturn = await execFilePromise(rccLocation, ['activity', 'run', '-p', packageYaml]);
         return result;
     }
 
-    let result = await window.withProgress({
+    let result: ExecFileReturn = await window.withProgress({
         location: ProgressLocation.Notification,
         title: "Obtain python env: ",
         cancellable: false
@@ -216,13 +216,13 @@ async function getLanguageServerPythonUncached(): Promise<string> {
 
     let contents: object;
     try {
-        contents = JSON.parse(result.stderr);
+        contents = JSON.parse(result.stdout);
         let pythonExe = contents['python_executable'];
         if (verifyFileExists(pythonExe)) {
             return pythonExe;
         }
     } catch (error) {
-        OUTPUT_CHANNEL.appendLine('Unable to get python to launch language server. Error parsing json: ' + result.stderr);
+        OUTPUT_CHANNEL.appendLine('Unable to get python to launch language server.\nStderr: ' + result.stderr + '\nStdout (json contents): ' + result.stdout);
         return;
     }
     return undefined;
