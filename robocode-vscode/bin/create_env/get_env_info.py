@@ -14,5 +14,8 @@ if __name__ == "__main__":
         "python_version": tuple(sys.version_info),
         "robot_version": robot_version,
     }
-    sys.stdout.write(json.dumps(info, indent=4))
-    sys.stdout.flush()
+    json_contents = json.dumps(info, indent=4)
+    sys.stderr.write('JSON START>>')
+    sys.stderr.write(json_contents)
+    sys.stderr.write('<<JSON END')
+    sys.stderr.flush()

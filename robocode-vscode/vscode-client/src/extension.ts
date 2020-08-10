@@ -214,9 +214,17 @@ async function getLanguageServerPythonUncached(): Promise<string> {
         cancellable: false
     }, createDefaultEnv);
 
-    let contents: object;
     try {
-        contents = JSON.parse(result.stdout);
+        let jsonContents = result.stderr;
+        let start: number = jsonContents.indexOf('JSON START>>')
+        let end: number = jsonContents.indexOf('<<JSON END')
+        if (start == -1 || end == -1) {
+            throw Error("Unable to find JSON START>> or <<JSON END");
+        }
+        start += 'JSON START>>'.length;
+        jsonContents = jsonContents.substr(start, end - start);
+        OUTPUT_CHANNEL.appendLine('Parsing json contents: ' + jsonContents);
+        let contents: object = JSON.parse(jsonContents);
         let pythonExe = contents['python_executable'];
         if (verifyFileExists(pythonExe)) {
             return pythonExe;
