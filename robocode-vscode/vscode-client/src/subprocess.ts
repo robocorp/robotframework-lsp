@@ -20,7 +20,17 @@ export async function execFilePromise(command: string, args: string[]): Promise<
         } catch (error) {
             OUTPUT_CHANNEL.appendLine('Error executing: ' + command + ',' + args);
             OUTPUT_CHANNEL.appendLine('Error code: ' + error.code);
+            OUTPUT_CHANNEL.appendLine('Error errno: ' + error.errno);
             OUTPUT_CHANNEL.appendLine('Error: ' + error);
+            if(error.name){
+                OUTPUT_CHANNEL.appendLine('Error name: ' + error.name);
+            }
+            if(error.stderr){
+                OUTPUT_CHANNEL.appendLine('Stderr: ' + error.stderr);
+            }
+            if(error.stdout){
+                OUTPUT_CHANNEL.appendLine('Stdout: ' + error.stdout);
+            }
             if (error.code == 'EBUSY') {
                 // After downloading a resource (such as rcc), on Windows, sometimes
                 // it can take a while for the file to be really available to be used
