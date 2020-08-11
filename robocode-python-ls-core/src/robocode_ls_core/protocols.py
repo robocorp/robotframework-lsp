@@ -180,7 +180,7 @@ class ILanguageServerClientBase(Protocol):
 
 
 class ILanguageServerClient(ILanguageServerClientBase, Protocol):
-    pid: int
+    pid: Optional[int]
 
     DEFAULT_TIMEOUT: Optional[int] = None
 

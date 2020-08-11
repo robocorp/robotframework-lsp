@@ -103,6 +103,15 @@ LIBSPEC_3 = """<?xml version="1.0" encoding="UTF-8"?>
 
 
 @pytest.fixture
+def language_server_client_class():
+    from robocode_ls_core.unittest_tools.language_server_client import (
+        LanguageServerClient,
+    )
+
+    return LanguageServerClient
+
+
+@pytest.fixture
 def language_server_class():
     from robotframework_ls.robotframework_ls_impl import RobotFrameworkLanguageServer
 

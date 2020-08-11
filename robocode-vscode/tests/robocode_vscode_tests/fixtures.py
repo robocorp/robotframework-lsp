@@ -9,6 +9,15 @@ log = get_logger(__name__)
 
 
 @pytest.fixture
+def language_server_client_class():
+    from robocode_vscode_tests.robocode_language_server_client import (
+        RobocodeLanguageServerClient,
+    )
+
+    return RobocodeLanguageServerClient
+
+
+@pytest.fixture
 def language_server_class():
     from robocode_vscode.robocode_language_server import RobocodeLanguageServer
 
