@@ -188,6 +188,9 @@ class Rcc(object):
         error_msg: str = "",
         mutex_name=None,
     ) -> ActionResult[str]:
+        """
+        Returns an ActionResult where the result is the stdout of the executed command.
+        """
         from robocode_ls_core.basic import build_subprocess_kwargs
         from subprocess import check_output
         from robocode_ls_core.subprocess_wrapper import subprocess
@@ -351,7 +354,15 @@ class Rcc(object):
                 False, "Error listing cloud workspaces (output not available)."
             )
 
-        for workspace_info in json.loads(output):
+        try:
+            lst = json.loads(output)
+        except Exception as e:
+            log.exception(f"Error parsing json: {output}")
+            return ActionResult(
+                False,
+                f"Error loading json obtained while listing cloud workspaces.\n{e}",
+            )
+        for workspace_info in lst:
             ret.append(
                 RccWorkspace(
                     workspace_id=workspace_info["id"],
@@ -383,8 +394,21 @@ class Rcc(object):
                 "Error listing cloud workspace activities (output not available).",
             )
 
-        workspace_info = json.loads(output)
-        for activity_info in workspace_info["activities"]:
+        try:
+            workspace_info = json.loads(output)
+        except Exception as e:
+            log.exception(f"Error parsing json: {output}")
+            return ActionResult(
+                False,
+                f"Error loading json obtained while listing cloud workspaces activities.\n{e}",
+            )
+
+        if not isinstance(workspace_info, dict):
+            log.critical(f"Expected dict as top-level from json: {output}")
+            msg = f"Unexpected type of cloud workspace activity json (expected dict, found: {type(workspace_info)}"
+            return ActionResult(False, msg)
+
+        for activity_info in workspace_info.get("activities", []):
             ret.append(
                 RccActivity(
                     activity_id=activity_info["id"], activity_name=activity_info["name"]
@@ -411,10 +435,49 @@ class Rcc(object):
         return self._run_rcc(args, mutex_name=RCC_CLOUD_ACTIVITY_MUTEX_NAME)
 
     @implements(IRcc.cloud_create_activity)
-    def cloud_create_activity(self, workspace_id: str, package_id: str) -> ActionResult:
+    def cloud_create_activity(
+        self, workspace_id: str, package_name: str
+    ) -> ActionResult[str]:
         args = ["cloud", "new"]
         args.extend(["--workspace", workspace_id])
-        args.extend(["--package", package_id])
+        args.extend(["--package", package_name])
 
         args = self._add_config_to_args(args)
-        return self._run_rcc(args, mutex_name=RCC_CLOUD_ACTIVITY_MUTEX_NAME)
+        ret = self._run_rcc(
+            args, mutex_name=RCC_CLOUD_ACTIVITY_MUTEX_NAME, expect_ok=False
+        )
+        if not ret.success:
+            return ret
+
+        try:
+            # Note: result is the package id.
+            stdout = ret.result
+            if not stdout:
+                return ActionResult(
+                    False, f"No process stdout when creating new cloud package."
+                )
+            stdout = stdout.strip()
+
+            # stdout is something as:
+            # Created new activity package named 'New package' with identity 1414.
+            if not stdout.lower().startswith("created new"):
+                return ActionResult(
+                    False,
+                    f'Expected output to start with "Created new". Found: {stdout}',
+                )
+
+            if stdout.endswith("."):
+                stdout = stdout[:-1]
+
+            package_id = stdout.split(" ")[-1]
+            if not package_id:
+                return ActionResult(
+                    False, f"Unable to extract package id from: {stdout}"
+                )
+        except Exception as e:
+            log.exception("Error creating new activity package.")
+            return ActionResult(
+                False, f"Unable to extract package id from: {stdout}. Error: {e}"
+            )
+
+        return ActionResult(ret.success, None, package_id)

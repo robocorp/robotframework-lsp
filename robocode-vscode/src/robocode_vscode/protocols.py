@@ -56,6 +56,11 @@ class ActionResult(Generic[T]):
     def as_dict(self):
         return {"success": self.success, "message": self.message, "result": self.result}
 
+    def __str__(self):
+        return f"ActionResult(success={self.success!r}, message={self.message!r}, result={self.result!r})"
+
+    __repr__ = __str__
+
 
 class ActionResultDict(TypedDict):
     success: bool
@@ -65,8 +70,21 @@ class ActionResultDict(TypedDict):
     result: Any
 
 
+class ListWorkspacesActionResultDict(TypedDict):
+    success: bool
+    message: Optional[
+        str
+    ]  # if success == False, this can be some message to show to the user
+    result: Optional[List[WorkspaceInfoDict]]
+
+
 class CloudLoginParamsDict(TypedDict):
     credentials: str
+
+
+class CloudListWorkspaceDict(TypedDict):
+    refresh: bool  # False means we can use the last cached results and True means it should be updated.
+    packages: bool  # Whether we should also provide the packages for the workspace.
 
 
 class CreateActivityParamsDict(TypedDict):
@@ -78,6 +96,12 @@ class CreateActivityParamsDict(TypedDict):
 class UploadActivityParamsDict(TypedDict):
     workspaceId: str
     packageId: str
+    directory: str
+
+
+class UploadNewActivityParamsDict(TypedDict):
+    workspaceId: str
+    packageName: str
     directory: str
 
 
@@ -163,9 +187,13 @@ class IRcc(Protocol):
         Note: needs connection to the cloud.
         """
 
-    def cloud_create_activity(self, workspace_id: str, package_id: str) -> ActionResult:
+    def cloud_create_activity(
+        self, workspace_id: str, package_name: str
+    ) -> ActionResult[str]:
         """
         Note: needs connection to the cloud.
+        
+        :returns an action result with the package id created.
         """
 
 

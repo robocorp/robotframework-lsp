@@ -22,6 +22,6 @@ export class Timing {
     }
     
     getTotalElapsedAsStr() {
-        return ((timeInMillis() - this.initialTime) / 1000).toFixed(2) + 's';
+        return ((timeInMillis() - this.initialTime) / 1000).toFixed(1) + 's';
     }
 }

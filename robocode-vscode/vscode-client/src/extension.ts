@@ -32,6 +32,7 @@ import { Timing } from './time';
 import { execFilePromise, ExecFileReturn } from './subprocess';
 import { createActivity, uploadActivity } from './activities';
 import { sleep } from './time';
+import { handleProgressMessage, ProgressReport } from './progress';
 
 
 const clientOptions: LanguageClientOptions = {
@@ -120,7 +121,11 @@ export async function activate(context: ExtensionContext) {
         OUTPUT_CHANNEL.appendLine("Waiting for Robocode (python) language server to finish activating...");
         await langServer.onReady();
         OUTPUT_CHANNEL.appendLine("Robocode extension ready. Took: " + timing.getTotalElapsedAsStr());
-
+        
+        langServer.onNotification("$/customProgress", (args: ProgressReport) => {
+            // OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
+            handleProgressMessage(args)
+        });
 
     } finally {
         workspace.onDidChangeConfiguration(event => {
@@ -162,6 +167,7 @@ async function getLanguageServerPython(): Promise<string> {
     return cachedPythonExe;
 }
 
+
 async function getLanguageServerPythonUncached(): Promise<string> {
     let rccLocation = await getRccLocation();
     if (!rccLocation) {
@@ -176,7 +182,8 @@ async function getLanguageServerPythonUncached(): Promise<string> {
     async function createDefaultEnv(progress: Progress<{ message?: string; increment?: number }>): Promise<ExecFileReturn> {
         // Make sure that conda is installed.
         const maxTries = 5;
-        progress.report({ message: 'Verifying/installing conda.' });
+        progress.report({ message: 'Get conda (may take a few minutes).' });
+        let timing = new Timing();
         for (let index = 0; index < maxTries; index++) {
             try {
                 let condaCheckResult: ExecFileReturn = await execFilePromise(rccLocation, ['conda', 'check', '-i']);
@@ -205,15 +212,37 @@ async function getLanguageServerPythonUncached(): Promise<string> {
             await sleep(250);
         }
 
-        progress.report({ message: 'Updating/creating env (this may take a while).' });
+        OUTPUT_CHANNEL.appendLine('Took ' + timing.getTotalElapsedAsStr() + ' to get conda.')
+
+        progress.report({ message: 'Update env (may take a few minutes).' });
         // Get information on a base package with our basic dependencies (this can take a while...).
-        let result: ExecFileReturn = await execFilePromise(rccLocation, ['activity', 'run', '-p', packageYaml]);
+        let resultPromise: Promise<ExecFileReturn> = execFilePromise(rccLocation, ['activity', 'run', '-p', packageYaml]);
+        timing = new Timing();
+
+        let finishedCondaRun = false;
+        let onFinish = function () {
+            finishedCondaRun = true;
+        }
+        resultPromise.then(onFinish, onFinish);
+
+        // Busy async loop so that we can show the elapsed time.
+        while (true) {
+            await sleep(93); // Strange sleep so it's not always a .0 when showing ;)
+            if (finishedCondaRun) {
+                break;
+            }
+            if (timing.elapsedFromLastMeasurement(5000)) {
+                progress.report({ message: 'Update env (may take a few minutes). ' + timing.getTotalElapsedAsStr() + ' elapsed.' });
+            }
+        }
+        let result = await resultPromise;
+        OUTPUT_CHANNEL.appendLine('Took ' + timing.getTotalElapsedAsStr() + ' to update conda env.')
         return result;
     }
 
     let result: ExecFileReturn = await window.withProgress({
         location: ProgressLocation.Notification,
-        title: "Obtain python env: ",
+        title: "Robocode",
         cancellable: false
     }, createDefaultEnv);
 

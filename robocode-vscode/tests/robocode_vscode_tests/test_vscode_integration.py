@@ -3,8 +3,13 @@ from robocode_ls_core.protocols import ILanguageServerClient
 import os.path
 import sys
 import pytest
-from robocode_vscode.protocols import ActivityInfoDict, UploadActivityParamsDict
+from robocode_vscode.protocols import (
+    ActivityInfoDict,
+    UploadActivityParamsDict,
+    UploadNewActivityParamsDict,
+)
 from typing import List
+import time
 
 log = logging.getLogger(__name__)
 
@@ -140,14 +145,134 @@ def test_list_rcc_activity_templates(
     assert set([x["name"] for x in folder_info_lst]) == {"example", "example2"}
 
 
+def test_cloud_list_workspaces(
+    language_server_initialized: ILanguageServerClient, monkeypatch
+):
+    from robocode_vscode.rcc import Rcc
+    from robocode_vscode import commands
+
+    language_server = language_server_initialized
+
+    def mock_run_rcc(self, args, *sargs, **kwargs):
+        from robocode_vscode.protocols import ActionResult
+        import json
+
+        if args[:4] == ["cloud", "workspace", "--workspace", "workspace_id_2"]:
+            return ActionResult(success=True, message=None, result=json.dumps({}))
+
+        if args[:4] == ["cloud", "workspace", "--workspace", "workspace_id_1"]:
+            act_info = {
+                "activities": [
+                    {
+                        "id": "452",
+                        "name": "Package Name 1",
+                        "package": {
+                            "fileName": "",
+                            "fileSize": -1,
+                            "lastModified": {
+                                "email": "",
+                                "firstName": "",
+                                "id": "",
+                                "lastName": "",
+                                "timestamp": "",
+                            },
+                            "sha256": "",
+                        },
+                    },
+                    {
+                        "id": "453",
+                        "name": "Package Name 2",
+                        "package": {
+                            "fileName": "",
+                            "fileSize": -1,
+                            "lastModified": {
+                                "email": "",
+                                "firstName": "",
+                                "id": "",
+                                "lastName": "",
+                                "timestamp": "",
+                            },
+                            "sha256": "",
+                        },
+                    },
+                ]
+            }
+            return ActionResult(success=True, message=None, result=json.dumps(act_info))
+
+        if args[:3] == ["cloud", "workspace", "--config"]:
+            workspace_info = [
+                {
+                    "id": "workspace_id_1",
+                    "name": "CI workspace",
+                    "orgId": "affd282c8f9fe",
+                    "orgName": "My Org Name",
+                    "orgShortName": "654321",
+                    "shortName": "123456",  # Can be some generated number or something provided by the user.
+                    "state": "active",
+                    "url": "http://url1",
+                },
+                {
+                    "id": "workspace_id_2",
+                    "name": "My Other workspace",
+                    "orgId": "affd282c8f9fe",
+                    "orgName": "My Org Name",
+                    "orgShortName": "1234567",
+                    "shortName": "7654321",
+                    "state": "active",
+                    "url": "http://url2",
+                },
+            ]
+            return ActionResult(
+                success=True, message=None, result=json.dumps(workspace_info)
+            )
+
+        raise AssertionError(f"Unexpected args: {args}")
+
+    # Note: it should work without the monkeypatch as is, but it'd create a dummy
+    # package and we don't have an API to remove it.
+    monkeypatch.setattr(Rcc, "_run_rcc", mock_run_rcc)
+
+    result1 = language_server.execute_command(
+        commands.ROBOCODE_CLOUD_LIST_WORKSPACES_INTERNAL,
+        [{"refresh": False, "packages": True}],
+    )["result"]
+    assert result1["success"]
+
+    monkeypatch.undo()
+
+    def mock_run_rcc_should_not_be_called(self, args, *sargs, **kwargs):
+        raise AssertionError(
+            "This should not be called at this time (data should be cached)."
+        )
+
+    monkeypatch.setattr(Rcc, "_run_rcc", mock_run_rcc_should_not_be_called)
+    result2 = language_server.execute_command(
+        commands.ROBOCODE_CLOUD_LIST_WORKSPACES_INTERNAL,
+        [{"refresh": False, "packages": True}],
+    )["result"]
+    assert result2["success"]
+    assert result1["result"] == result2["result"]
+
+    result3 = language_server.execute_command(
+        commands.ROBOCODE_CLOUD_LIST_WORKSPACES_INTERNAL,
+        [{"refresh": True, "packages": True}],
+    )["result"]
+
+    # Didn't work out because the mock forbids it (as expected).
+    assert not result3["success"]
+    assert "This should not be called at this time" in result3["message"]
+
+
 def test_upload_to_cloud(
     language_server_initialized: ILanguageServerClient,
     ci_credentials: str,
     ws_root_path: str,
+    monkeypatch,
 ):
     from robocode_vscode import commands
     from robocode_vscode.protocols import WorkspaceInfoDict
     from robocode_vscode.protocols import PackageInfoDict
+    from robocode_vscode.rcc import Rcc
 
     language_server = language_server_initialized
 
@@ -156,7 +281,7 @@ def test_upload_to_cloud(
     result = language_server.execute_command(
         commands.ROBOCODE_IS_LOGIN_NEEDED_INTERNAL, []
     )["result"]
-    assert result, "Expected login to be needed."
+    assert result["result"], "Expected login to be needed."
 
     result = language_server.execute_command(
         commands.ROBOCODE_CLOUD_LOGIN_INTERNAL, [{"credentials": "invalid"}]
@@ -200,5 +325,33 @@ def test_upload_to_cloud(
     }
     result = language_server.execute_command(
         commands.ROBOCODE_UPLOAD_TO_EXISTING_ACTIVITY_INTERNAL, [params]
+    )["result"]
+    assert result["success"]
+
+    def mock_run_rcc(self, args, *sargs, **kwargs):
+        from robocode_vscode.protocols import ActionResult
+
+        if args[:3] == ["cloud", "new", "--workspace"]:
+            return ActionResult(
+                success=True,
+                message=None,
+                result="Created new activity package named 'New package 1597082853.2224553' with identity 453.\n",
+            )
+        if args[:3] == ["cloud", "push", "--directory"]:
+            return ActionResult(success=True, message=None, result="OK.\n")
+
+        raise AssertionError(f"Unexpected args: {args}")
+
+    # Note: it should work without the monkeypatch as is, but it'd create a dummy
+    # package and we don't have an API to remove it.
+    monkeypatch.setattr(Rcc, "_run_rcc", mock_run_rcc)
+
+    paramsNew: UploadNewActivityParamsDict = {
+        "workspaceId": found_package["workspaceId"],
+        "packageName": f"New package {time.time()}",
+        "directory": directory,
+    }
+    result = language_server.execute_command(
+        commands.ROBOCODE_UPLOAD_TO_NEW_ACTIVITY_INTERNAL, [paramsNew]
     )["result"]
     assert result["success"]

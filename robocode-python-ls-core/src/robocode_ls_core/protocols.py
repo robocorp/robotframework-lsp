@@ -27,6 +27,23 @@ class Sentinel(Enum):
     USE_DEFAULT_TIMEOUT = 1
 
 
+def check_implements(x: T) -> T:
+    """
+    Helper to check if a class implements some protocol. 
+
+    :important: It must be the last method in a class due to
+                https://github.com/python/mypy/issues/9266
+
+	Example:
+
+    def __typecheckself__(self) -> None:
+        _: IExpectedProtocol = check_implements(self)
+
+    Mypy should complain if `self` is not implementing the IExpectedProtocol.
+    """
+    return x
+
+
 class IFuture(Generic[Y], Protocol):
     def result(self, timeout: typing.Optional[int] = None) -> Y:
         """Return the result of the call that the future represents.
@@ -275,6 +292,33 @@ class IConfigProvider(Protocol):
 
 class ILanguageServer(IConfigProvider):
     pass
+
+
+class IDirCache(Protocol):
+    def store(self, key: Any, value: Any) -> None:
+        """
+        Persists the given key and value.
+
+        :param key:
+            The key to be persisted. It's repr(key) is used to calculate
+            the key filename on the disk. 
+            
+        :note that the values do a round-trip with json (so, caveats
+        such as saving a tuple and loading a list apply).
+        """
+
+    def load(self, key: Any, expected_class: Type) -> Any:
+        """
+        Loads a previously persisted value.
+        
+        If it doesn't exist, there's some error loading or the expected 
+        class doesn't match the loaded value a KeyError is thrown. 
+        """
+
+    def discard(self, key: Any) -> None:
+        """
+        Removes some key from the cache.
+        """
 
 
 class IDocument(Protocol):

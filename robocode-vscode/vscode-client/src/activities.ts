@@ -27,9 +27,20 @@ interface ActionResult {
     result: any;
 };
 
+interface ListWorkspacesActionResult {
+    success: boolean;
+    message: string;
+    result: WorkspaceInfo[];
+};
 
 
 export async function uploadActivity() {
+
+    // Start this in parallel while we ask the user for info.
+    let isLoginNeededPromise: Thenable<ActionResult> = commands.executeCommand(
+        roboCommands.ROBOCODE_IS_LOGIN_NEEDED_INTERNAL,
+    );
+
     let currentUri: Uri;
     if (window.activeTextEditor && window.activeTextEditor.document) {
         currentUri = window.activeTextEditor.document.uri;
@@ -44,21 +55,24 @@ export async function uploadActivity() {
     }
     let activitiesInfo: ActivityInfo[] = actionResult.result;
 
-    if (!activitiesInfo) {
+    if (!activitiesInfo || activitiesInfo.length == 0) {
         window.showInformationMessage('Unable to submit activity package to the cloud (no activity detected in the workspace).');
         return;
     }
+    
+    let isLoginNeeded: ActionResult = await isLoginNeededPromise;
+    if(!isLoginNeeded){
+        window.showInformationMessage('Error getting if login is needed.');
+        return;
+    }
 
-    let isLoginNeeded: boolean = await commands.executeCommand(
-        roboCommands.ROBOCODE_IS_LOGIN_NEEDED_INTERNAL,
-    );
-
-    if (isLoginNeeded) {
+    if (isLoginNeeded.result) {
         let loggedIn: boolean;
         do {
             let credentials: string = await window.showInputBox({
                 'password': true,
-                'prompt': 'Please provide the access credentials from: https://cloud.robocorp.com/settings/access-credentials'
+                'prompt': 'Please provide the access credentials from: https://cloud.robocorp.com/settings/access-credentials',
+                'ignoreFocusOut': true,
             });
             if (!credentials) {
                 return;
@@ -67,7 +81,7 @@ export async function uploadActivity() {
                 roboCommands.ROBOCODE_CLOUD_LOGIN_INTERNAL, { 'credentials': credentials }
             );
             if (!loggedIn) {
-                let retry = "Enter new credentials?";
+                let retry = "Retry with new credentials";
                 let selection = await window.showWarningMessage('Unable to log in with the provided credentials.', { 'modal': true }, retry);
                 if (!selection) {
                     return;
@@ -89,7 +103,11 @@ export async function uploadActivity() {
         }
         let selection: string = await window.showQuickPick(
             captions,
-            { "canPickMany": false, 'placeHolder': 'Please select the activity package to upload to the cloud.' }
+            {
+                "canPickMany": false,
+                'placeHolder': 'Please select the activity package to upload to the cloud.',
+                'ignoreFocusOut': true,
+            }
         );
         if (!selection) {
             return;
@@ -104,7 +122,7 @@ export async function uploadActivity() {
         // We ask for the information on the existing workspaces information.
         // Note that this may be cached from the last time it was asked, 
         // so, we have an option to refresh it (and ask again).
-        let actionResult: ActionResult = await commands.executeCommand(
+        let actionResult: ListWorkspacesActionResult = await commands.executeCommand(
             roboCommands.ROBOCODE_CLOUD_LIST_WORKSPACES_INTERNAL, { 'refresh': refresh, 'packages': true }
         );
 
@@ -112,10 +130,18 @@ export async function uploadActivity() {
             window.showErrorMessage('Error listing cloud workspaces: ' + actionResult.message);
             return;
         }
-
+        
         let workspaceInfo: WorkspaceInfo[] = actionResult.result;
+        if(!workspaceInfo || workspaceInfo.length == 0){
+            window.showErrorMessage('A cloud workspace must be created to submit an activity to the cloud.');
+            return;
+        }
 
         let captionToAction: Map<string, Object> = new Map();
+
+        // --------------------------------------------------------
+        // Select activity package/new package/refresh
+        // -------------------------------------------------------
 
         let captions: string[] = new Array();
         for (let i = 0; i < workspaceInfo.length; i++) {
@@ -131,10 +157,9 @@ export async function uploadActivity() {
                 captionToAction[caption] = { 'existingActivityPackage': packageInfo };
             }
 
-            // TODO: Submit to new activity
-            // let caption: string = 'New activity package at workspace: ' + wsInfo.workspaceName;
-            // captions.push(caption);
-            // captionToAction[caption] = { 'newActivityPackageAtWorkspace': wsInfo };
+            let caption: string = 'New activity package at workspace: ' + wsInfo.workspaceName;
+            captions.push(caption);
+            captionToAction[caption] = { 'newActivityPackageAtWorkspace': wsInfo };
         }
         let caption: string = 'Refresh list (expected workspace or package is not appearing)';
         captions.push(caption);
@@ -142,7 +167,11 @@ export async function uploadActivity() {
 
         let selection: string = await window.showQuickPick(
             captions,
-            { "canPickMany": false, 'placeHolder': 'Please select the activity package to upload to the cloud.' }
+            {
+                "canPickMany": false,
+                'placeHolder': 'Please select the activity package to upload to the cloud.',
+                'ignoreFocusOut': true,
+            }
         );
         if (!selection) {
             return;
@@ -150,15 +179,29 @@ export async function uploadActivity() {
         let action = captionToAction[selection];
         if (action.refresh) {
             refresh = true;
-            continue;
-        }
-        // TODO: Submit to new activity
-        // if (action.newActivityPackageAtWorkspace) {
-        //     await commands.executeCommand(
-        //         roboCommands.ROBOCODE_UPLOAD_TO_NEW_ACTIVITY_INTERNAL, { 'workspace': refresh }
-        //     );
-        // }
-        if (action.existingActivityPackage) {
+
+        } else if (action.newActivityPackageAtWorkspace) {
+            let wsInfo: WorkspaceInfo = action.newActivityPackageAtWorkspace;
+
+            let packageName: string = await window.showInputBox({
+                'prompt': 'Please provide the name for the new package.',
+                'ignoreFocusOut': true,
+            });
+            if (!packageName) {
+                return;
+            }
+
+            let actionResult: ActionResult = await commands.executeCommand(
+                roboCommands.ROBOCODE_UPLOAD_TO_NEW_ACTIVITY_INTERNAL,
+                { 'workspaceId': wsInfo.workspaceId, 'directory': activityToUpload.directory, 'packageName': packageName }
+            );
+            if (!actionResult.success) {
+                window.showErrorMessage('Error uploading to existing activity package: ' + actionResult.message);
+            }
+            window.showInformationMessage('Successfully submited activity package to the cloud.')
+            return;
+
+        } else if (action.existingActivityPackage) {
             let packageInfo: PackageInfo = action.existingActivityPackage;
             let actionResult: ActionResult = await commands.executeCommand(
                 roboCommands.ROBOCODE_UPLOAD_TO_EXISTING_ACTIVITY_INTERNAL,
@@ -168,6 +211,7 @@ export async function uploadActivity() {
             if (!actionResult.success) {
                 window.showErrorMessage('Error uploading to existing activity package: ' + actionResult.message);
             }
+            window.showInformationMessage('Successfully submited activity package to the cloud.')
             return;
         }
 
@@ -194,7 +238,11 @@ export async function createActivity() {
 
         let selection = await window.showQuickPick(
             availableTemplates,
-            { "canPickMany": false, 'placeHolder': 'Please select the template for the activity package.' }
+            {
+                "canPickMany": false,
+                'placeHolder': 'Please select the template for the activity package.',
+                'ignoreFocusOut': true,
+            }
         );
 
         OUTPUT_CHANNEL.appendLine('Selected: ' + selection);
@@ -206,14 +254,21 @@ export async function createActivity() {
         if (wsFolders.length == 1) {
             ws = wsFolders[0];
         } else {
-            ws = await window.showWorkspaceFolderPick({ 'placeHolder': 'Please select the folder to create the activity package.' });
+            ws = await window.showWorkspaceFolderPick({
+                'placeHolder': 'Please select the folder to create the activity package.',
+                'ignoreFocusOut': true,
+            });
         }
         if (!ws) {
             // Operation cancelled.
             return;
         }
 
-        let name: string = await window.showInputBox({ 'value': 'Example', 'prompt': 'Please provide the name for the activity folder name.' })
+        let name: string = await window.showInputBox({
+            'value': 'Example',
+            'prompt': 'Please provide the name for the activity folder name.',
+            'ignoreFocusOut': true,
+        })
         if (!name) {
             // Operation cancelled.
             return;
