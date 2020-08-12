@@ -1,20 +1,17 @@
 import logging
-from robocode_ls_core.protocols import ILanguageServerClient
 import os.path
 import sys
 import pytest
-from robocode_vscode.protocols import (
-    ActivityInfoDict,
-    UploadActivityParamsDict,
-    UploadNewActivityParamsDict,
-)
+from robocode_vscode.protocols import ActivityInfoDict, WorkspaceInfoDict, ActionResult
 from typing import List
 import time
+from robocode_vscode_tests.protocols import IRobocodeLanguageServerClient
+import py
 
 log = logging.getLogger(__name__)
 
 
-def test_missing_message(language_server: ILanguageServerClient, ws_root_path):
+def test_missing_message(language_server: IRobocodeLanguageServerClient, ws_root_path):
     language_server.initialize(ws_root_path)
 
     # Just ignore this one (it's not a request because it has no id).
@@ -40,7 +37,9 @@ def test_missing_message(language_server: ILanguageServerClient, ws_root_path):
 
 
 def test_exit_with_parent_process_died(
-    language_server_process: ILanguageServerClient, language_server_io, ws_root_path
+    language_server_process: IRobocodeLanguageServerClient,
+    language_server_io,
+    ws_root_path,
 ):
     """
     :note: Only check with the language_server_io (because that's in another process).
@@ -69,7 +68,7 @@ def test_exit_with_parent_process_died(
 
 @pytest.fixture
 def language_server_initialized(
-    language_server_tcp: ILanguageServerClient,
+    language_server_tcp: IRobocodeLanguageServerClient,
     ws_root_path: str,
     rcc_location: str,
     ci_endpoint: str,
@@ -94,7 +93,7 @@ def language_server_initialized(
 
 
 def test_list_rcc_activity_templates(
-    language_server_initialized: ILanguageServerClient,
+    language_server_initialized: IRobocodeLanguageServerClient,
     ws_root_path: str,
     rcc_location: str,
     tmpdir,
@@ -145,158 +144,236 @@ def test_list_rcc_activity_templates(
     assert set([x["name"] for x in folder_info_lst]) == {"example", "example2"}
 
 
-def test_cloud_list_workspaces(
-    language_server_initialized: ILanguageServerClient, monkeypatch
-):
-    from robocode_vscode.rcc import Rcc
-    from robocode_vscode import commands
+_WS_INFO = (
+    {
+        "id": "workspace_id_1",
+        "name": "CI workspace",
+        "orgId": "affd282c8f9fe",
+        "orgName": "My Org Name",
+        "orgShortName": "654321",
+        "shortName": "123456",  # Can be some generated number or something provided by the user.
+        "state": "active",
+        "url": "http://url1",
+    },
+    {
+        "id": "workspace_id_2",
+        "name": "My Other workspace",
+        "orgId": "affd282c8f9fe",
+        "orgName": "My Org Name",
+        "orgShortName": "1234567",
+        "shortName": "7654321",
+        "state": "active",
+        "url": "http://url2",
+    },
+)
 
-    language_server = language_server_initialized
+_PACKAGE_INFO_WS_2: dict = {}
 
-    def mock_run_rcc(self, args, *sargs, **kwargs):
-        from robocode_vscode.protocols import ActionResult
+_PACKAGE_INFO_WS_1: dict = {
+    "activities": [
+        {"id": "452", "name": "Package Name 1"},
+        {"id": "453", "name": "Package Name 2"},
+    ]
+}
+
+
+def get_workspace_from_name(
+    workspace_list: List[WorkspaceInfoDict], workspace_name: str
+) -> WorkspaceInfoDict:
+    for ws in workspace_list:
+        if ws["workspaceName"] == workspace_name:
+            return ws
+    raise AssertionError(f"Did not find workspace: {workspace_name}")
+
+
+class RccPatch(object):
+    def __init__(self, monkeypatch):
+        from robocode_vscode.rcc import Rcc
+
+        self.monkeypatch = monkeypatch
+        self._current_mock = self.mock_run_rcc_default
+        self._original = Rcc._run_rcc
+        self._package_info_ws_1 = _PACKAGE_INFO_WS_1
+
+    def mock_run_rcc(self, args, *starargs, **kwargs) -> ActionResult:
+        return self._current_mock(args, *starargs, **kwargs)
+
+    def mock_run_rcc_default(self, args, *sargs, **kwargs) -> ActionResult:
         import json
-
-        if args[:4] == ["cloud", "workspace", "--workspace", "workspace_id_2"]:
-            return ActionResult(success=True, message=None, result=json.dumps({}))
+        import copy
 
         if args[:4] == ["cloud", "workspace", "--workspace", "workspace_id_1"]:
-            act_info = {
-                "activities": [
-                    {
-                        "id": "452",
-                        "name": "Package Name 1",
-                        "package": {
-                            "fileName": "",
-                            "fileSize": -1,
-                            "lastModified": {
-                                "email": "",
-                                "firstName": "",
-                                "id": "",
-                                "lastName": "",
-                                "timestamp": "",
-                            },
-                            "sha256": "",
-                        },
-                    },
-                    {
-                        "id": "453",
-                        "name": "Package Name 2",
-                        "package": {
-                            "fileName": "",
-                            "fileSize": -1,
-                            "lastModified": {
-                                "email": "",
-                                "firstName": "",
-                                "id": "",
-                                "lastName": "",
-                                "timestamp": "",
-                            },
-                            "sha256": "",
-                        },
-                    },
-                ]
-            }
-            return ActionResult(success=True, message=None, result=json.dumps(act_info))
+            # List packages for workspace 1
+            return ActionResult(
+                success=True, message=None, result=json.dumps(self._package_info_ws_1)
+            )
+
+        if args[:4] == ["cloud", "workspace", "--workspace", "workspace_id_2"]:
+            # List packages for workspace 2
+            return ActionResult(
+                success=True, message=None, result=json.dumps(_PACKAGE_INFO_WS_2)
+            )
 
         if args[:3] == ["cloud", "workspace", "--config"]:
-            workspace_info = [
-                {
-                    "id": "workspace_id_1",
-                    "name": "CI workspace",
-                    "orgId": "affd282c8f9fe",
-                    "orgName": "My Org Name",
-                    "orgShortName": "654321",
-                    "shortName": "123456",  # Can be some generated number or something provided by the user.
-                    "state": "active",
-                    "url": "http://url1",
-                },
-                {
-                    "id": "workspace_id_2",
-                    "name": "My Other workspace",
-                    "orgId": "affd282c8f9fe",
-                    "orgName": "My Org Name",
-                    "orgShortName": "1234567",
-                    "shortName": "7654321",
-                    "state": "active",
-                    "url": "http://url2",
-                },
-            ]
+            # List workspaces
+            workspace_info = _WS_INFO
             return ActionResult(
                 success=True, message=None, result=json.dumps(workspace_info)
             )
 
+        if args[:3] == ["cloud", "push", "--directory"]:
+            if args[4:8] == ["--workspace", "workspace_id_1", "--package", "2323"]:
+                return ActionResult(success=True)
+            if args[4:8] == ["--workspace", "workspace_id_1", "--package", "453"]:
+                return ActionResult(success=True)
+
+        if args[:5] == ["cloud", "new", "--workspace", "workspace_id_1", "--package"]:
+            # Submit a new package to ws 1
+            cp = copy.deepcopy(self._package_info_ws_1)
+            cp["activities"].append({"id": "2323", "name": args[5]})
+            self._package_info_ws_1 = cp
+
+            return ActionResult(
+                success=True,
+                message=None,
+                result="Created new activity package named {args[5]} with identity 2323.",
+            )
+
         raise AssertionError(f"Unexpected args: {args}")
-
-    # Note: it should work without the monkeypatch as is, but it'd create a dummy
-    # package and we don't have an API to remove it.
-    monkeypatch.setattr(Rcc, "_run_rcc", mock_run_rcc)
-
-    result1 = language_server.execute_command(
-        commands.ROBOCODE_CLOUD_LIST_WORKSPACES_INTERNAL,
-        [{"refresh": False, "packages": True}],
-    )["result"]
-    assert result1["success"]
-
-    monkeypatch.undo()
 
     def mock_run_rcc_should_not_be_called(self, args, *sargs, **kwargs):
         raise AssertionError(
             "This should not be called at this time (data should be cached)."
         )
 
-    monkeypatch.setattr(Rcc, "_run_rcc", mock_run_rcc_should_not_be_called)
-    result2 = language_server.execute_command(
-        commands.ROBOCODE_CLOUD_LIST_WORKSPACES_INTERNAL,
-        [{"refresh": False, "packages": True}],
-    )["result"]
+    def apply(self) -> None:
+        from robocode_vscode.rcc import Rcc
+
+        self.monkeypatch.setattr(Rcc, "_run_rcc", self.mock_run_rcc)
+
+    def disallow_calls(self) -> None:
+        self._current_mock = self.mock_run_rcc_should_not_be_called
+
+
+@pytest.fixture
+def rcc_patch(monkeypatch):
+    return RccPatch(monkeypatch)
+
+
+def _get_as_name_to_sort_key_and_package_id(lst: List[WorkspaceInfoDict]):
+    name_to_sort_key = {}
+    for workspace_info in lst:
+        for package_info in workspace_info["packages"]:
+            name_to_sort_key[package_info["name"]] = (
+                package_info["sortKey"],
+                package_info["id"],
+            )
+    return name_to_sort_key
+
+
+def test_cloud_list_workspaces_sorting(
+    language_server_initialized: IRobocodeLanguageServerClient,
+    rcc_patch: RccPatch,
+    tmpdir: py.path.local,
+):
+    client = language_server_initialized
+    root_dir = str(tmpdir.join("root").mkdir())
+
+    rcc_patch.apply()
+
+    result = client.cloud_list_workspaces()
+    assert result["success"]
+    ws_info = result["result"]
+    assert ws_info
+
+    ci_workspace_info = get_workspace_from_name(ws_info, "CI workspace")
+
+    result = client.upload_to_new_activity(
+        ci_workspace_info["workspaceId"],
+        f"New package {time.time()}",
+        "<dir not there>",
+    )
+    assert not result["success"]
+    msg = result["message"]
+    assert msg and "to exist" in msg
+
+    result = client.upload_to_new_activity(
+        ci_workspace_info["workspaceId"], "New package", root_dir
+    )
+    assert result["success"]
+
+    result = client.cloud_list_workspaces()
+    assert result["success"]
+
+    res = result["result"]
+    assert res
+    assert _get_as_name_to_sort_key_and_package_id(res) == {
+        "Package Name 1": ("00010package name 1", "452"),
+        "Package Name 2": ("00010package name 2", "453"),
+        "New package": ("00000new package", "2323"),
+    }
+
+    result = client.upload_to_existing_activity(
+        ci_workspace_info["workspaceId"], "453", root_dir
+    )
+    assert result["success"]
+
+
+def test_cloud_list_workspaces_basic(
+    language_server_initialized: IRobocodeLanguageServerClient, rcc_patch: RccPatch
+):
+
+    client = language_server_initialized
+
+    rcc_patch.apply()
+
+    result1 = client.cloud_list_workspaces()
+    assert result1["success"]
+
+    rcc_patch.disallow_calls()
+    result2 = client.cloud_list_workspaces()
     assert result2["success"]
     assert result1["result"] == result2["result"]
 
-    result3 = language_server.execute_command(
-        commands.ROBOCODE_CLOUD_LIST_WORKSPACES_INTERNAL,
-        [{"refresh": True, "packages": True}],
-    )["result"]
+    result3 = client.cloud_list_workspaces(refresh=True)
+    assert "message" in result3
 
     # Didn't work out because the mock forbids it (as expected).
     assert not result3["success"]
-    assert "This should not be called at this time" in result3["message"]
+    msg = result3["message"]
+    assert msg and "This should not be called at this time" in msg
 
 
 def test_upload_to_cloud(
-    language_server_initialized: ILanguageServerClient,
+    language_server_initialized: IRobocodeLanguageServerClient,
     ci_credentials: str,
     ws_root_path: str,
     monkeypatch,
 ):
     from robocode_vscode import commands
-    from robocode_vscode.protocols import WorkspaceInfoDict
     from robocode_vscode.protocols import PackageInfoDict
     from robocode_vscode.rcc import Rcc
 
-    language_server = language_server_initialized
+    client = language_server_initialized
 
-    language_server.DEFAULT_TIMEOUT = 10  # The cloud may be slow.
+    client.DEFAULT_TIMEOUT = 10  # The cloud may be slow.
 
-    result = language_server.execute_command(
-        commands.ROBOCODE_IS_LOGIN_NEEDED_INTERNAL, []
-    )["result"]
+    result = client.execute_command(commands.ROBOCODE_IS_LOGIN_NEEDED_INTERNAL, [])[
+        "result"
+    ]
     assert result["result"], "Expected login to be needed."
 
-    result = language_server.execute_command(
+    result = client.execute_command(
         commands.ROBOCODE_CLOUD_LOGIN_INTERNAL, [{"credentials": "invalid"}]
     )["result"]
     assert not result["success"], "Expected login to be unsuccessful."
 
-    result = language_server.execute_command(
+    result = client.execute_command(
         commands.ROBOCODE_CLOUD_LOGIN_INTERNAL, [{"credentials": ci_credentials}]
     )["result"]
     assert result["success"], "Expected login to be successful."
 
-    result = language_server.execute_command(
-        commands.ROBOCODE_CLOUD_LIST_WORKSPACES_INTERNAL,
-        [{"refresh": False, "packages": True}],
-    )["result"]
+    result = client.cloud_list_workspaces()
     assert result["success"]
     result_workspaces: List[WorkspaceInfoDict] = result["result"]
     assert result_workspaces, "Expected to have the available workspaces and packages."
@@ -311,26 +388,19 @@ def test_upload_to_cloud(
     ), f'Expected to find "CI activity". Found: {result_workspaces}'
 
     found_package: PackageInfoDict = found_packages[0]
-    result = language_server.execute_command(
+    result = client.execute_command(
         commands.ROBOCODE_CREATE_ACTIVITY_INTERNAL,
         [{"directory": ws_root_path, "name": "example", "template": "minimal"}],
     )["result"]
     assert result["success"]
 
     directory = os.path.join(ws_root_path, "example")
-    params: UploadActivityParamsDict = {
-        "workspaceId": found_package["workspaceId"],
-        "packageId": found_package["id"],
-        "directory": directory,
-    }
-    result = language_server.execute_command(
-        commands.ROBOCODE_UPLOAD_TO_EXISTING_ACTIVITY_INTERNAL, [params]
-    )["result"]
+    result = client.upload_to_existing_activity(
+        found_package["workspaceId"], found_package["id"], directory
+    )
     assert result["success"]
 
     def mock_run_rcc(self, args, *sargs, **kwargs):
-        from robocode_vscode.protocols import ActionResult
-
         if args[:3] == ["cloud", "new", "--workspace"]:
             return ActionResult(
                 success=True,
@@ -346,12 +416,7 @@ def test_upload_to_cloud(
     # package and we don't have an API to remove it.
     monkeypatch.setattr(Rcc, "_run_rcc", mock_run_rcc)
 
-    paramsNew: UploadNewActivityParamsDict = {
-        "workspaceId": found_package["workspaceId"],
-        "packageName": f"New package {time.time()}",
-        "directory": directory,
-    }
-    result = language_server.execute_command(
-        commands.ROBOCODE_UPLOAD_TO_NEW_ACTIVITY_INTERNAL, [paramsNew]
-    )["result"]
+    result = client.upload_to_new_activity(
+        found_package["workspaceId"], f"New package {time.time()}", directory
+    )
     assert result["success"]

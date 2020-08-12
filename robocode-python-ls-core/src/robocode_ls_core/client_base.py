@@ -8,7 +8,7 @@ from robocode_ls_core.protocols import (
     Sentinel,
     COMMUNICATION_DROPPED,
 )
-from typing import Any, Union
+from typing import Any, Union, Optional
 
 log = get_logger(__name__)
 
@@ -153,7 +153,9 @@ class LanguageServerClientBase(object):
     server.
     """
 
-    DEFAULT_TIMEOUT = None  # The default if not redefined is not having a timeout.
+    DEFAULT_TIMEOUT: Optional[
+        int
+    ] = None  # The default if not redefined is not having a timeout.
 
     def __init__(self, writer, reader):
         """

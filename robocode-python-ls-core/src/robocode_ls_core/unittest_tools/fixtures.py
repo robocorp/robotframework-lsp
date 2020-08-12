@@ -6,7 +6,6 @@ from robocode_ls_core.options import USE_TIMEOUTS, NO_TIMEOUT
 import pytest
 from typing import Optional
 
-
 TIMEOUT: Optional[int] = int(os.getenv("PYTEST_TIMEOUT", 7))
 if not USE_TIMEOUTS:
     TIMEOUT = NO_TIMEOUT  # i.e.: None
@@ -23,6 +22,12 @@ def ws_root_path(tmpdir):
     return str(tmpdir.join("root"))
 
 
+@pytest.fixture(scope="function", autouse=True)
+def fix_dircache_directory(tmpdir, monkeypatch):
+    #: :type monkeypatch: _pytest.monkeypatch.MonkeyPatch
+    monkeypatch.setenv("ROBOCODE_VSCODE_USER_HOME", str(tmpdir))
+
+
 @pytest.fixture(autouse=True)
 def config_logger(tmpdir):
     from robocode_ls_core.robotframework_log import configure_logger
@@ -36,10 +41,10 @@ def communicate_lang_server(
 ):
     if language_server_client_class is None:
         from robocode_ls_core.unittest_tools.language_server_client import (
-            _LanguageServerClient,
+            LanguageServerClient,
         )
 
-        language_server_client_class = _LanguageServerClient
+        language_server_client_class = LanguageServerClient
 
     from robocode_ls_core.jsonrpc.streams import JsonRpcStreamWriter
     from robocode_ls_core.jsonrpc.streams import JsonRpcStreamReader
@@ -57,7 +62,9 @@ def communicate_lang_server(
 
 
 @contextmanager
-def start_language_server_tcp(log_file, main_method, language_server_class):
+def start_language_server_tcp(
+    log_file, main_method, language_server_class, language_server_client_class
+):
     """
     Starts a language server in the same process and communicates through tcp.
     
@@ -107,7 +114,9 @@ def start_language_server_tcp(log_file, main_method, language_server_class):
     s.connect(config.address)
     write_to = s.makefile("wb")
     read_from = s.makefile("rb")
-    with communicate_lang_server(write_to, read_from) as lang_server_client:
+    with communicate_lang_server(
+        write_to, read_from, language_server_client_class=language_server_client_class
+    ) as lang_server_client:
         wait_for_test_condition(lambda: len(language_server_instance_final) == 1)
         lang_server_client.language_server_instance = language_server_instance_final[0]
         yield lang_server_client
@@ -163,13 +172,15 @@ def log_file(tmpdir):
 
 
 @pytest.fixture
-def language_server_tcp(log_file, main_module, language_server_class):
+def language_server_tcp(
+    log_file, main_module, language_server_class, language_server_client_class
+):
     """
     Starts a language server in the same process and communicates through tcp.
     """
 
     with start_language_server_tcp(
-        log_file, main_module.main, language_server_class
+        log_file, main_module.main, language_server_class, language_server_client_class
     ) as lang_server_client:
         yield lang_server_client
 

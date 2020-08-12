@@ -25,8 +25,15 @@ class ActivityInfoDict(TypedDict):
 class PackageInfoDict(TypedDict):
     name: str
     id: str
-    lastSelected: bool
+    sortKey: str
     workspaceId: str
+
+
+class PackageInfoInLRUDict(TypedDict):
+    workspace_id: str
+    package_id: str
+    directory: str
+    time: float
 
 
 class WorkspaceInfoDict(TypedDict):

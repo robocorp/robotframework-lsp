@@ -72,7 +72,7 @@ class DirCache(object):
     """
     To be used as:
     
-    dir_cache = DirCache(".robotframework-ls", "ROBOTFRAMEWORK_LS_USER_HOME")
+    dir_cache = DirCache(cache_directory)
     dir_cache.store("some_key", 1)
     value = dir_cache.load("some_key", int) # Ok
     
@@ -85,16 +85,10 @@ class DirCache(object):
         dir_cache.load("key does not exist", dict)
     except KeyError:
         ... error, key does not exist
-    
-    # Note: users should check that the cache value is what's expected when it's gotten
-    # (as the data may become corrupted on disk or may change across versions).
     """
 
-    def __init__(self, folder_name_in_user_home, user_home_env_var):
-        user_home = os.getenv(user_home_env_var, None)
-        if user_home is None:
-            user_home = os.path.expanduser("~")
-        self._cache_dir = os.path.join(user_home, folder_name_in_user_home)
+    def __init__(self, cache_directory: str) -> None:
+        self._cache_dir = cache_directory
         os.makedirs(self._cache_dir, exist_ok=True)
 
     def _encode_key(self, key: Any) -> str:

@@ -5,7 +5,7 @@ import weakref
 
 from robocode_ls_core.basic import implements, as_str
 from robocode_ls_core.constants import NULL
-from robocode_ls_core.protocols import IConfig, IConfigProvider
+from robocode_ls_core.protocols import IConfig, IConfigProvider, IDirCache
 from robocode_ls_core.robotframework_log import get_logger
 from robocode_vscode.protocols import (
     IRcc,
@@ -422,9 +422,15 @@ class Rcc(object):
     ) -> ActionResult:
         import os.path
 
-        assert os.path.isdir(
-            directory
-        ), f"Expected: {directory} to exist and be a directory."
+        if not os.path.exists(directory):
+            return ActionResult(
+                False, f"Expected: {directory} to exist to upload to the cloud."
+            )
+        if not os.path.isdir(directory):
+            return ActionResult(
+                False,
+                f"Expected: {directory} to be a directory to upload to the cloud.",
+            )
 
         args = ["cloud", "push"]
         args.extend(["--directory", directory])
@@ -432,7 +438,8 @@ class Rcc(object):
         args.extend(["--package", package_id])
 
         args = self._add_config_to_args(args)
-        return self._run_rcc(args, mutex_name=RCC_CLOUD_ACTIVITY_MUTEX_NAME)
+        ret = self._run_rcc(args, mutex_name=RCC_CLOUD_ACTIVITY_MUTEX_NAME)
+        return ret
 
     @implements(IRcc.cloud_create_activity)
     def cloud_create_activity(

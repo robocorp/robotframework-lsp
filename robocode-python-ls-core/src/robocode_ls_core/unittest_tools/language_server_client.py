@@ -1,5 +1,5 @@
 import logging
-from typing import Mapping, Any, List
+from typing import Mapping, Any, List, Optional, Dict
 
 from robocode_ls_core.basic import implements
 from robocode_ls_core.client_base import LanguageServerClientBase
@@ -9,7 +9,11 @@ from robocode_ls_core.protocols import ILanguageServerClient, IMessageMatcher
 log = logging.getLogger(__name__)
 
 
-class _LanguageServerClient(LanguageServerClientBase):
+class LanguageServerClient(LanguageServerClientBase):
+    pid: Optional[int] = None
+
+    DEFAULT_TIMEOUT: Optional[int] = None
+
     def __init__(self, *args, **kwargs):
         from robocode_ls_core.unittest_tools.fixtures import TIMEOUT
 
@@ -18,7 +22,7 @@ class _LanguageServerClient(LanguageServerClientBase):
         self.DEFAULT_TIMEOUT = TIMEOUT
 
     @implements(ILanguageServerClient.settings)
-    def settings(self, settings):
+    def settings(self, settings: Dict):
         self.request(
             {
                 "jsonrpc": "2.0",
@@ -29,7 +33,7 @@ class _LanguageServerClient(LanguageServerClientBase):
         )
 
     @implements(ILanguageServerClient.initialize)
-    def initialize(self, root_path, msg_id=None, process_id=None):
+    def initialize(self, root_path: str, msg_id=None, process_id=None):
         from robocode_ls_core.uris import from_fs_path
 
         root_uri = from_fs_path(root_path)
@@ -118,7 +122,7 @@ class _LanguageServerClient(LanguageServerClientBase):
         )
 
     @implements(ILanguageServerClient.open_doc)
-    def open_doc(self, uri, version=1, text=""):
+    def open_doc(self, uri: str, version: int = 1, text: str = ""):
         self.write(
             {
                 "jsonrpc": "2.0",
@@ -135,7 +139,7 @@ class _LanguageServerClient(LanguageServerClientBase):
         )
 
     @implements(ILanguageServerClient.change_doc)
-    def change_doc(self, uri, version, text):
+    def change_doc(self, uri: str, version: int, text: str):
         self.write(
             {
                 "jsonrpc": "2.0",
@@ -148,7 +152,7 @@ class _LanguageServerClient(LanguageServerClientBase):
         )
 
     @implements(ILanguageServerClient.get_completions)
-    def get_completions(self, uri, line, col):
+    def get_completions(self, uri: str, line: int, col: int):
         return self.request(
             {
                 "jsonrpc": "2.0",
@@ -162,7 +166,7 @@ class _LanguageServerClient(LanguageServerClientBase):
         )
 
     @implements(ILanguageServerClient.request_source_format)
-    def request_source_format(self, uri):
+    def request_source_format(self, uri: str):
         return self.request(
             {
                 "jsonrpc": "2.0",
@@ -173,7 +177,7 @@ class _LanguageServerClient(LanguageServerClientBase):
         )
 
     @implements(ILanguageServerClient.find_definitions)
-    def find_definitions(self, uri, line, col):
+    def find_definitions(self, uri, line: int, col: int):
         return self.request(
             {
                 "jsonrpc": "2.0",
@@ -207,3 +211,8 @@ class _LanguageServerClient(LanguageServerClientBase):
                 "params": {"command": command, "arguments": arguments},
             }
         )
+
+    def __typecheckself__(self) -> None:
+        from robocode_ls_core.protocols import check_implements
+
+        _: ILanguageServerClient = check_implements(self)
