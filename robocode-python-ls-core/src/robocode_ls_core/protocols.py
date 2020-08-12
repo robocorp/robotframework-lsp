@@ -295,6 +295,9 @@ class ILanguageServer(IConfigProvider):
 
 
 class IDirCache(Protocol):
+    """
+    """
+
     def store(self, key: Any, value: Any) -> None:
         """
         Persists the given key and value.
@@ -313,6 +316,10 @@ class IDirCache(Protocol):
         
         If it doesn't exist, there's some error loading or the expected 
         class doesn't match the loaded value a KeyError is thrown. 
+        
+        :note: users should check that the cache value is what's expected when it's
+           gotten (as the data may become corrupted on disk or may change across
+           versions).
         """
 
     def discard(self, key: Any) -> None:

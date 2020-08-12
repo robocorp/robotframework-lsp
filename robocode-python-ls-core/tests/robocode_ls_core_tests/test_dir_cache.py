@@ -2,11 +2,10 @@ import pytest
 import os
 
 
-def test_dir_cache(monkeypatch, tmpdir):
+def test_dir_cache(tmpdir):
     from robocode_ls_core.cache import DirCache
 
-    monkeypatch.setenv("ROBO_HOME_ENV_VAR", str(tmpdir))
-    dir_cache = DirCache(".test", "ROBO_HOME_ENV_VAR")
+    dir_cache = DirCache(str(tmpdir))
     dir_cache.store("key", 10)
 
     assert dir_cache.load("key", int) == 10

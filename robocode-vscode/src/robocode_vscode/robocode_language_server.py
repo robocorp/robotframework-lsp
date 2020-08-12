@@ -1,7 +1,7 @@
 from robocode_ls_core.basic import overrides
 from robocode_ls_core.python_ls import PythonLanguageServer, MAX_WORKERS
 from robocode_ls_core.robotframework_log import get_logger
-from typing import List, Any
+from typing import List, Any, Optional, Dict
 from robocode_vscode import commands
 from robocode_vscode.protocols import (
     IRccWorkspace,
@@ -16,7 +16,9 @@ from robocode_vscode.protocols import (
     CloudListWorkspaceDict,
     CloudLoginParamsDict,
     ListWorkspacesActionResultDict,
+    PackageInfoInLRUDict,
 )
+import os
 
 
 log = get_logger(__name__)
@@ -55,13 +57,21 @@ command_dispatcher = _CommandDispatcher()
 class RobocodeLanguageServer(PythonLanguageServer):
 
     CLOUD_LIST_WORKSPACE_CACHE_KEY = "CLOUD_LIST_WORKSPACE_CACHE"
+    PACKAGE_ACCESS_LRU_CACHE_KEY = "PACKAGE_ACCESS_LRU_CACHE"
 
     def __init__(self, read_stream, write_stream, max_workers=MAX_WORKERS):
         from robocode_vscode.rcc import Rcc
         from robocode_ls_core.cache import DirCache
 
+        user_home = os.getenv("ROBOCODE_VSCODE_USER_HOME", None)
+        if user_home is None:
+            user_home = os.path.expanduser("~")
+        cache_dir = os.path.join(user_home, ".robocode-vscode")
+
+        log.debug(f"Cache dir: {cache_dir}")
+
+        self._dir_cache = DirCache(cache_dir)
         self._rcc = Rcc(self)
-        self._dir_cache = DirCache(".robocode-vscode", "ROBOCODE_VSCODE_USER_HOME")
         PythonLanguageServer.__init__(
             self, read_stream, write_stream, max_workers=max_workers
         )
@@ -132,19 +142,66 @@ class RobocodeLanguageServer(PythonLanguageServer):
             result = self._rcc.credentials_valid()
         return {"success": result, "message": None, "result": result}
 
+    def _get_sort_key_info(self):
+        try:
+            cache_lru_list: List[PackageInfoInLRUDict] = self._dir_cache.load(
+                self.PACKAGE_ACCESS_LRU_CACHE_KEY, list
+            )
+        except KeyError:
+            cache_lru_list = []
+        DEFAULT_SORT_KEY = 10
+        ws_id_and_pack_id_to_lru_index: Dict = {}
+        for i, entry in enumerate(cache_lru_list):
+
+            if i >= DEFAULT_SORT_KEY:
+                break
+
+            if isinstance(entry, dict):
+                ws_id = entry.get("workspace_id")
+                pack_id = entry.get("package_id")
+                if ws_id is not None and pack_id is not None:
+                    key = (ws_id, pack_id)
+                    ws_id_and_pack_id_to_lru_index[key] = i
+        return ws_id_and_pack_id_to_lru_index
+
     @command_dispatcher(commands.ROBOCODE_CLOUD_LIST_WORKSPACES_INTERNAL)
     def _cloud_list_workspaces(
         self, params: CloudListWorkspaceDict
     ) -> ListWorkspacesActionResultDict:
         from robocode_ls_core.progress_report import progress_context
 
+        DEFAULT_SORT_KEY = 10
+        package_info: PackageInfoDict
+        ws_dict: WorkspaceInfoDict
+
+        ws_id_and_pack_id_to_lru_index = self._get_sort_key_info()
+
         if not params.get("refresh", True):
             try:
-                cached = self._dir_cache.load(self.CLOUD_LIST_WORKSPACE_CACHE_KEY, list)
+                cached: List[WorkspaceInfoDict] = self._dir_cache.load(
+                    self.CLOUD_LIST_WORKSPACE_CACHE_KEY, list
+                )
             except KeyError:
                 pass
             else:
-                return {"success": True, "message": None, "result": cached}
+                # We need to update the sort key when it's gotten from the cache.
+                try:
+                    for ws_dict in cached:
+                        for package_info in ws_dict["packages"]:
+                            key = (package_info["workspaceId"], package_info["id"])
+                            sort_key = "%05d%s" % (
+                                ws_id_and_pack_id_to_lru_index.get(
+                                    key, DEFAULT_SORT_KEY
+                                ),
+                                package_info["name"].lower(),
+                            )
+
+                            package_info["sortKey"] = sort_key
+                    return {"success": True, "message": None, "result": cached}
+                except:
+                    log.exception(
+                        "Error computing new keys. Refreshing and proceeding."
+                    )
 
         with progress_context(
             self._endpoint, "Listing cloud workspaces", self._dir_cache
@@ -168,15 +225,22 @@ class RobocodeLanguageServer(PythonLanguageServer):
 
                 workspace_activities = activities_result.result
                 for activity_package in workspace_activities:
-                    package_info: PackageInfoDict = {
+
+                    key = (ws.workspace_id, activity_package.activity_id)
+                    sort_key = "%05d%s" % (
+                        ws_id_and_pack_id_to_lru_index.get(key, DEFAULT_SORT_KEY),
+                        activity_package.activity_name.lower(),
+                    )
+
+                    package_info = {
                         "name": activity_package.activity_name,
                         "id": activity_package.activity_id,
-                        "lastSelected": False,
+                        "sortKey": sort_key,
                         "workspaceId": ws.workspace_id,
                     }
                     packages.append(package_info)
 
-                ws_dict: WorkspaceInfoDict = {
+                ws_dict = {
                     "workspaceName": ws.workspace_name,
                     "workspaceId": ws.workspace_id,
                     "packages": packages,
@@ -229,6 +293,46 @@ class RobocodeLanguageServer(PythonLanguageServer):
             return dict(success=False, message=str(e), result=None)
         return dict(success=True, message=None, result=ret)
 
+    def _validate_directory(self, directory) -> Optional[str]:
+        if not os.path.exists(directory):
+            return f"Expected: {directory} to exist."
+
+        if not os.path.isdir(directory):
+            return f"Expected: {directory} to be a directory."
+        return None
+
+    def _add_package_info_to_access_lru(self, workspace_id, package_id, directory):
+        import time
+
+        try:
+            lst: List[PackageInfoInLRUDict] = self._dir_cache.load(
+                self.PACKAGE_ACCESS_LRU_CACHE_KEY, list
+            )
+        except KeyError:
+            lst = []
+
+        new_lst: List[PackageInfoInLRUDict] = [
+            {
+                "workspace_id": workspace_id,
+                "package_id": package_id,
+                "directory": directory,
+                "time": time.time(),
+            }
+        ]
+        for i, entry in enumerate(lst):
+            if isinstance(entry, dict):
+                if (
+                    entry.get("package_id") == package_id
+                    and entry.get("workspace_id") == workspace_id
+                ):
+                    continue  # Skip this one (we moved it to the start of the LRU).
+                new_lst.append(entry)
+
+            if i == 5:
+                break  # Max number of items in the LRU reached.
+
+        self._dir_cache.store(self.PACKAGE_ACCESS_LRU_CACHE_KEY, new_lst)
+
     @command_dispatcher(commands.ROBOCODE_UPLOAD_TO_EXISTING_ACTIVITY_INTERNAL)
     def _upload_to_existing_activity(
         self, params: UploadActivityParamsDict
@@ -236,6 +340,10 @@ class RobocodeLanguageServer(PythonLanguageServer):
         from robocode_ls_core.progress_report import progress_context
 
         directory = params["directory"]
+        error_msg = self._validate_directory(directory)
+        if error_msg:
+            return {"success": False, "message": error_msg, "result": None}
+
         workspace_id = params["workspaceId"]
         package_id = params["packageId"]
         with progress_context(
@@ -245,6 +353,8 @@ class RobocodeLanguageServer(PythonLanguageServer):
             result = self._rcc.cloud_set_activity_contents(
                 directory, workspace_id, package_id
             )
+            self._add_package_info_to_access_lru(workspace_id, package_id, directory)
+
         return result.as_dict()
 
     @command_dispatcher(commands.ROBOCODE_UPLOAD_TO_NEW_ACTIVITY_INTERNAL)
@@ -253,14 +363,19 @@ class RobocodeLanguageServer(PythonLanguageServer):
     ) -> ActionResultDict:
         from robocode_ls_core.progress_report import progress_context
 
+        directory = params["directory"]
+        error_msg = self._validate_directory(directory)
+        if error_msg:
+            return {"success": False, "message": error_msg, "result": None}
+
+        workspace_id = params["workspaceId"]
+        package_name = params["packageName"]
+
         # When we upload to a new activity, clear the existing cache key.
         self._dir_cache.discard(self.CLOUD_LIST_WORKSPACE_CACHE_KEY)
         with progress_context(
             self._endpoint, "Uploading to new activity package", self._dir_cache
         ):
-            directory = params["directory"]
-            workspace_id = params["workspaceId"]
-            package_name = params["packageName"]
             new_activity_result = self._rcc.cloud_create_activity(
                 workspace_id, package_name
             )
@@ -278,4 +393,5 @@ class RobocodeLanguageServer(PythonLanguageServer):
             result = self._rcc.cloud_set_activity_contents(
                 directory, workspace_id, package_id
             )
+            self._add_package_info_to_access_lru(workspace_id, package_id, directory)
         return result.as_dict()

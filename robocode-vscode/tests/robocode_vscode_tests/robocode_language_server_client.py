@@ -10,8 +10,8 @@ from robocode_vscode_tests.protocols import IRobocodeLanguageServerClient
 
 
 class RobocodeLanguageServerClient(LanguageServerClient):
-    @implements(IRobocodeLanguageServerClient.list_workspaces)
-    def list_workspaces(
+    @implements(IRobocodeLanguageServerClient.cloud_list_workspaces)
+    def cloud_list_workspaces(
         self, refresh=False, packages=True
     ) -> ListWorkspacesActionResultDict:
         from robocode_vscode import commands

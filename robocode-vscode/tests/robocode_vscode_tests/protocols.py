@@ -4,7 +4,7 @@ from robocode_ls_core.protocols import ILanguageServerClient
 
 
 class IRobocodeLanguageServerClient(ILanguageServerClient, Protocol):
-    def list_workspaces(
+    def cloud_list_workspaces(
         self, refresh=False, packages=True
     ) -> ListWorkspacesActionResultDict:
         pass

@@ -6,7 +6,6 @@ from robocode_ls_core.options import USE_TIMEOUTS, NO_TIMEOUT
 import pytest
 from typing import Optional
 
-
 TIMEOUT: Optional[int] = int(os.getenv("PYTEST_TIMEOUT", 7))
 if not USE_TIMEOUTS:
     TIMEOUT = NO_TIMEOUT  # i.e.: None
@@ -21,6 +20,12 @@ def wait_for_test_condition(condition, msg=None, timeout=TIMEOUT, sleep=1 / 20.0
 @pytest.fixture
 def ws_root_path(tmpdir):
     return str(tmpdir.join("root"))
+
+
+@pytest.fixture(scope="function", autouse=True)
+def fix_dircache_directory(tmpdir, monkeypatch):
+    #: :type monkeypatch: _pytest.monkeypatch.MonkeyPatch
+    monkeypatch.setenv("ROBOCODE_VSCODE_USER_HOME", str(tmpdir))
 
 
 @pytest.fixture(autouse=True)

@@ -2,15 +2,11 @@ import logging
 import os.path
 import sys
 import pytest
-from robocode_vscode.protocols import (
-    ActivityInfoDict,
-    UploadActivityParamsDict,
-    UploadNewActivityParamsDict,
-    WorkspaceInfoDict,
-)
+from robocode_vscode.protocols import ActivityInfoDict, WorkspaceInfoDict, ActionResult
 from typing import List
 import time
 from robocode_vscode_tests.protocols import IRobocodeLanguageServerClient
+import py
 
 log = logging.getLogger(__name__)
 
@@ -174,40 +170,10 @@ _WS_INFO = (
 _PACKAGE_INFO_WS_2: dict = {}
 
 _PACKAGE_INFO_WS_1: dict = {
-    "activities": (
-        {
-            "id": "452",
-            "name": "Package Name 1",
-            "package": {
-                "fileName": "",
-                "fileSize": -1,
-                "lastModified": {
-                    "email": "",
-                    "firstName": "",
-                    "id": "",
-                    "lastName": "",
-                    "timestamp": "",
-                },
-                "sha256": "",
-            },
-        },
-        {
-            "id": "453",
-            "name": "Package Name 2",
-            "package": {
-                "fileName": "",
-                "fileSize": -1,
-                "lastModified": {
-                    "email": "",
-                    "firstName": "",
-                    "id": "",
-                    "lastName": "",
-                    "timestamp": "",
-                },
-                "sha256": "",
-            },
-        },
-    )
+    "activities": [
+        {"id": "452", "name": "Package Name 1"},
+        {"id": "453", "name": "Package Name 2"},
+    ]
 }
 
 
@@ -220,102 +186,156 @@ def get_workspace_from_name(
     raise AssertionError(f"Did not find workspace: {workspace_name}")
 
 
-def test_cloud_list_workspaces_sorting(
-    language_server_initialized: IRobocodeLanguageServerClient, monkeypatch
-):
-    from robocode_vscode.rcc import Rcc
+class RccPatch(object):
+    def __init__(self, monkeypatch):
+        from robocode_vscode.rcc import Rcc
 
-    client = language_server_initialized
+        self.monkeypatch = monkeypatch
+        self._current_mock = self.mock_run_rcc_default
+        self._original = Rcc._run_rcc
+        self._package_info_ws_1 = _PACKAGE_INFO_WS_1
 
-    def mock_run_rcc(self, args, *sargs, **kwargs):
-        from robocode_vscode.protocols import ActionResult
+    def mock_run_rcc(self, args, *starargs, **kwargs) -> ActionResult:
+        return self._current_mock(args, *starargs, **kwargs)
+
+    def mock_run_rcc_default(self, args, *sargs, **kwargs) -> ActionResult:
         import json
+        import copy
 
         if args[:4] == ["cloud", "workspace", "--workspace", "workspace_id_1"]:
+            # List packages for workspace 1
             return ActionResult(
-                success=True, message=None, result=json.dumps(_PACKAGE_INFO_WS_1)
+                success=True, message=None, result=json.dumps(self._package_info_ws_1)
             )
 
         if args[:4] == ["cloud", "workspace", "--workspace", "workspace_id_2"]:
+            # List packages for workspace 2
             return ActionResult(
                 success=True, message=None, result=json.dumps(_PACKAGE_INFO_WS_2)
             )
 
         if args[:3] == ["cloud", "workspace", "--config"]:
+            # List workspaces
             workspace_info = _WS_INFO
             return ActionResult(
                 success=True, message=None, result=json.dumps(workspace_info)
             )
 
-        raise AssertionError(f"Unexpected args: {args}")
+        if args[:3] == ["cloud", "push", "--directory"]:
+            if args[4:8] == ["--workspace", "workspace_id_1", "--package", "2323"]:
+                return ActionResult(success=True)
+            if args[4:8] == ["--workspace", "workspace_id_1", "--package", "453"]:
+                return ActionResult(success=True)
 
-    # Note: it should work without the monkeypatch as is, but it'd create a dummy
-    # package and we don't have an API to remove it.
-    monkeypatch.setattr(Rcc, "_run_rcc", mock_run_rcc)
+        if args[:5] == ["cloud", "new", "--workspace", "workspace_id_1", "--package"]:
+            # Submit a new package to ws 1
+            cp = copy.deepcopy(self._package_info_ws_1)
+            cp["activities"].append({"id": "2323", "name": args[5]})
+            self._package_info_ws_1 = cp
 
-    result = client.list_workspaces()
-    assert result["success"]
-    ws_info = result["result"]
-    assert ws_info
-
-    ci_workspace_info = get_workspace_from_name(ws_info, "CI workspace")
-
-
-#     result = client.upload_to_new_activity(
-#         ci_workspace_info["workspaceId"], f"New package {time.time()}", "dir1"
-#     )
-#     assert result["success"]
-
-
-def test_cloud_list_workspaces_basic(
-    language_server_initialized: IRobocodeLanguageServerClient, monkeypatch
-):
-    from robocode_vscode.rcc import Rcc
-
-    client = language_server_initialized
-
-    def mock_run_rcc(self, args, *sargs, **kwargs):
-        from robocode_vscode.protocols import ActionResult
-        import json
-
-        if args[:4] == ["cloud", "workspace", "--workspace", "workspace_id_2"]:
             return ActionResult(
-                success=True, message=None, result=json.dumps(_PACKAGE_INFO_WS_2)
-            )
-
-        if args[:4] == ["cloud", "workspace", "--workspace", "workspace_id_1"]:
-            return ActionResult(
-                success=True, message=None, result=json.dumps(_PACKAGE_INFO_WS_1)
-            )
-
-        if args[:3] == ["cloud", "workspace", "--config"]:
-            workspace_info = _WS_INFO
-            return ActionResult(
-                success=True, message=None, result=json.dumps(workspace_info)
+                success=True,
+                message=None,
+                result="Created new activity package named {args[5]} with identity 2323.",
             )
 
         raise AssertionError(f"Unexpected args: {args}")
-
-    # Note: it should work without the monkeypatch as is, but it'd create a dummy
-    # package and we don't have an API to remove it.
-    monkeypatch.setattr(Rcc, "_run_rcc", mock_run_rcc)
-
-    result1 = client.list_workspaces()
-    assert result1["success"]
-
-    monkeypatch.undo()
 
     def mock_run_rcc_should_not_be_called(self, args, *sargs, **kwargs):
         raise AssertionError(
             "This should not be called at this time (data should be cached)."
         )
 
-    monkeypatch.setattr(Rcc, "_run_rcc", mock_run_rcc_should_not_be_called)
-    result2 = client.list_workspaces()
+    def apply(self) -> None:
+        from robocode_vscode.rcc import Rcc
+
+        self.monkeypatch.setattr(Rcc, "_run_rcc", self.mock_run_rcc)
+
+    def disallow_calls(self) -> None:
+        self._current_mock = self.mock_run_rcc_should_not_be_called
+
+
+@pytest.fixture
+def rcc_patch(monkeypatch):
+    return RccPatch(monkeypatch)
+
+
+def _get_as_name_to_sort_key_and_package_id(lst: List[WorkspaceInfoDict]):
+    name_to_sort_key = {}
+    for workspace_info in lst:
+        for package_info in workspace_info["packages"]:
+            name_to_sort_key[package_info["name"]] = (
+                package_info["sortKey"],
+                package_info["id"],
+            )
+    return name_to_sort_key
+
+
+def test_cloud_list_workspaces_sorting(
+    language_server_initialized: IRobocodeLanguageServerClient,
+    rcc_patch: RccPatch,
+    tmpdir: py.path.local,
+):
+    client = language_server_initialized
+    root_dir = str(tmpdir.join("root").mkdir())
+
+    rcc_patch.apply()
+
+    result = client.cloud_list_workspaces()
+    assert result["success"]
+    ws_info = result["result"]
+    assert ws_info
+
+    ci_workspace_info = get_workspace_from_name(ws_info, "CI workspace")
+
+    result = client.upload_to_new_activity(
+        ci_workspace_info["workspaceId"],
+        f"New package {time.time()}",
+        "<dir not there>",
+    )
+    assert not result["success"]
+    msg = result["message"]
+    assert msg and "to exist" in msg
+
+    result = client.upload_to_new_activity(
+        ci_workspace_info["workspaceId"], "New package", root_dir
+    )
+    assert result["success"]
+
+    result = client.cloud_list_workspaces()
+    assert result["success"]
+
+    res = result["result"]
+    assert res
+    assert _get_as_name_to_sort_key_and_package_id(res) == {
+        "Package Name 1": ("00010package name 1", "452"),
+        "Package Name 2": ("00010package name 2", "453"),
+        "New package": ("00000new package", "2323"),
+    }
+
+    result = client.upload_to_existing_activity(
+        ci_workspace_info["workspaceId"], "453", root_dir
+    )
+    assert result["success"]
+
+
+def test_cloud_list_workspaces_basic(
+    language_server_initialized: IRobocodeLanguageServerClient, rcc_patch: RccPatch
+):
+
+    client = language_server_initialized
+
+    rcc_patch.apply()
+
+    result1 = client.cloud_list_workspaces()
+    assert result1["success"]
+
+    rcc_patch.disallow_calls()
+    result2 = client.cloud_list_workspaces()
     assert result2["success"]
     assert result1["result"] == result2["result"]
 
-    result3 = client.list_workspaces()
+    result3 = client.cloud_list_workspaces(refresh=True)
     assert "message" in result3
 
     # Didn't work out because the mock forbids it (as expected).
@@ -331,7 +351,6 @@ def test_upload_to_cloud(
     monkeypatch,
 ):
     from robocode_vscode import commands
-    from robocode_vscode.protocols import WorkspaceInfoDict
     from robocode_vscode.protocols import PackageInfoDict
     from robocode_vscode.rcc import Rcc
 
@@ -354,7 +373,7 @@ def test_upload_to_cloud(
     )["result"]
     assert result["success"], "Expected login to be successful."
 
-    result = client.list_workspaces()
+    result = client.cloud_list_workspaces()
     assert result["success"]
     result_workspaces: List[WorkspaceInfoDict] = result["result"]
     assert result_workspaces, "Expected to have the available workspaces and packages."
@@ -382,8 +401,6 @@ def test_upload_to_cloud(
     assert result["success"]
 
     def mock_run_rcc(self, args, *sargs, **kwargs):
-        from robocode_vscode.protocols import ActionResult
-
         if args[:3] == ["cloud", "new", "--workspace"]:
             return ActionResult(
                 success=True,

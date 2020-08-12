@@ -1,4 +1,4 @@
-import { commands, window, WorkspaceFolder, workspace, Uri } from "vscode";
+import { commands, window, WorkspaceFolder, workspace, Uri, QuickPickItem } from "vscode";
 import { join } from 'path';
 import { OUTPUT_CHANNEL } from './channel';
 import * as roboCommands from './robocodeCommands';
@@ -18,7 +18,7 @@ interface PackageInfo {
     workspaceId: string;
     id: string;
     name: string;
-    lastSelected: boolean;
+    sortKey: string;
 };
 
 interface ActionResult {
@@ -32,6 +32,11 @@ interface ListWorkspacesActionResult {
     message: string;
     result: WorkspaceInfo[];
 };
+
+interface QuickPickItemWithAction extends QuickPickItem {
+    action: any;
+    sortKey?: string;
+}
 
 
 export async function uploadActivity() {
@@ -59,9 +64,9 @@ export async function uploadActivity() {
         window.showInformationMessage('Unable to submit activity package to the cloud (no activity detected in the workspace).');
         return;
     }
-    
+
     let isLoginNeeded: ActionResult = await isLoginNeededPromise;
-    if(!isLoginNeeded){
+    if (!isLoginNeeded) {
         window.showInformationMessage('Error getting if login is needed.');
         return;
     }
@@ -93,15 +98,18 @@ export async function uploadActivity() {
     let activityToUpload: ActivityInfo;
     if (activitiesInfo.length > 1) {
         let captionToActivity: Map<string, ActivityInfo> = new Map();
-        let captions: string[] = new Array();
+        let captions: QuickPickItemWithAction[] = new Array();
 
         for (let i = 0; i < activitiesInfo.length; i++) {
             const element: ActivityInfo = activitiesInfo[i];
-            let caption = element.name + '\t(' + element.directory + ')';
+            let caption: QuickPickItemWithAction = {
+                'label': element.name,
+                'description': element.directory,
+                'action': element
+            };
             captions.push(caption);
-            captionToActivity[caption] = element;
         }
-        let selection: string = await window.showQuickPick(
+        let selection: QuickPickItemWithAction = await window.showQuickPick(
             captions,
             {
                 "canPickMany": false,
@@ -112,7 +120,7 @@ export async function uploadActivity() {
         if (!selection) {
             return;
         }
-        activityToUpload = captionToActivity[selection];
+        activityToUpload = selection.action;
     } else {
         activityToUpload = activitiesInfo[0];
     }
@@ -130,53 +138,77 @@ export async function uploadActivity() {
             window.showErrorMessage('Error listing cloud workspaces: ' + actionResult.message);
             return;
         }
-        
+
         let workspaceInfo: WorkspaceInfo[] = actionResult.result;
-        if(!workspaceInfo || workspaceInfo.length == 0){
+        if (!workspaceInfo || workspaceInfo.length == 0) {
             window.showErrorMessage('A cloud workspace must be created to submit an activity to the cloud.');
             return;
         }
-
-        let captionToAction: Map<string, Object> = new Map();
 
         // --------------------------------------------------------
         // Select activity package/new package/refresh
         // -------------------------------------------------------
 
-        let captions: string[] = new Array();
+        let captions: QuickPickItemWithAction[] = new Array();
         for (let i = 0; i < workspaceInfo.length; i++) {
             const wsInfo: WorkspaceInfo = workspaceInfo[i];
             for (let j = 0; j < wsInfo.packages.length; j++) {
                 const packageInfo = wsInfo.packages[j];
-                let caption = packageInfo.name + '\t(Workspace: ' + wsInfo.workspaceName + ')';
-                if (packageInfo.lastSelected) {
-                    captions.splice(0, 0, caption);
-                } else {
-                    captions.push(caption);
-                }
-                captionToAction[caption] = { 'existingActivityPackage': packageInfo };
+                let caption: QuickPickItemWithAction = {
+                    'label': '$(file) ' + packageInfo.name,
+                    'description': '(Workspace: ' + wsInfo.workspaceName + ')',
+                    'sortKey': packageInfo.sortKey,
+                    'action': { 'existingActivityPackage': packageInfo }    
+                };
+                captions.push(caption);
             }
 
-            let caption: string = 'New activity package at workspace: ' + wsInfo.workspaceName;
+            let caption: QuickPickItemWithAction = {
+                'label': '$(new-folder) New activity package',
+                'description': '(Workspace: ' + wsInfo.workspaceName + ')',
+                'sortKey': '09998', // right before last item.
+                'action': { 'newActivityPackageAtWorkspace': wsInfo }
+            };
             captions.push(caption);
-            captionToAction[caption] = { 'newActivityPackageAtWorkspace': wsInfo };
         }
-        let caption: string = 'Refresh list (expected workspace or package is not appearing)';
+        let caption: QuickPickItemWithAction = {
+            'label': '$(refresh) Refresh list',
+            'description': 'Expected workspace or package is not appearing.',
+            'sortKey': '09999', // last item
+            'action': { 'refresh': true }
+        };
         captions.push(caption);
-        captionToAction[caption] = { 'refresh': true };
 
-        let selection: string = await window.showQuickPick(
+        captions.sort(function (a, b) {
+            if (a.sortKey < b.sortKey) {
+                return -1;
+            }
+            if (a.sortKey > b.sortKey) {
+                return 1;
+            }
+
+            if(a.label < b.label){
+                return -1;
+            }
+            if(a.label > b.label){
+                return 1;
+            }
+
+            return 0;
+        });
+
+        let selection: QuickPickItemWithAction = await window.showQuickPick(
             captions,
             {
                 "canPickMany": false,
-                'placeHolder': 'Please select the activity package to upload to the cloud.',
+                'placeHolder': 'Please select target activity package to upload: ' + activityToUpload.name + ' (' + activityToUpload.directory + ').',
                 'ignoreFocusOut': true,
             }
         );
         if (!selection) {
             return;
         }
-        let action = captionToAction[selection];
+        let action = selection.action;
         if (action.refresh) {
             refresh = true;
 
@@ -196,9 +228,12 @@ export async function uploadActivity() {
                 { 'workspaceId': wsInfo.workspaceId, 'directory': activityToUpload.directory, 'packageName': packageName }
             );
             if (!actionResult.success) {
-                window.showErrorMessage('Error uploading to existing activity package: ' + actionResult.message);
+                let msg:string = 'Error uploading to new activity package: ' + actionResult.message;
+                OUTPUT_CHANNEL.appendLine(msg);
+                window.showErrorMessage(msg);
+            }else{
+                window.showInformationMessage('Successfully submited activity package to the cloud.')
             }
-            window.showInformationMessage('Successfully submited activity package to the cloud.')
             return;
 
         } else if (action.existingActivityPackage) {
@@ -209,9 +244,12 @@ export async function uploadActivity() {
             );
 
             if (!actionResult.success) {
-                window.showErrorMessage('Error uploading to existing activity package: ' + actionResult.message);
+                let msg: string = 'Error uploading to existing activity package: ' + actionResult.message;
+                OUTPUT_CHANNEL.appendLine(msg);
+                window.showErrorMessage(msg);
+            }else{
+                window.showInformationMessage('Successfully submited activity package to the cloud.')
             }
-            window.showInformationMessage('Successfully submited activity package to the cloud.')
             return;
         }
 
