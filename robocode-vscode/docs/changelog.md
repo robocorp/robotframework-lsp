@@ -1,3 +1,9 @@
+New in 0.0.3 (2020-08-12)
+-----------------------------
+
+- Polishments submiting activity package to the cloud.
+- Fixed issue starting RCC after download on Mac.
+
 New in 0.0.2 (2020-08-06)
 -----------------------------
 

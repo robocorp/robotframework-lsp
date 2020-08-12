@@ -26,7 +26,7 @@ After having the extension installed, the first time that the extension is activ
 it will download additional dependencies (such as a conda manager) to bootstrap
 the actual language server.
 
-Features (0.0.2)
+Features (0.0.3)
 -----------------
 
 - Automatic bootstrap of Python environment for the language server.

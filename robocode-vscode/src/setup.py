@@ -9,7 +9,7 @@ README = open(_readme_filename, "r").read()
 
 setup(
     name="robocode_vscode",
-    version="0.0.2",
+    version="0.0.3",
     description="VSCode extension for Robocode",
     long_description=README,
     url="https://github.com/robocorp/robotframework-lsp",
