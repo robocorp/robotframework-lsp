@@ -230,7 +230,7 @@ class PythonLanguageServer(MethodDispatcher):
         rootPath=None,
         initializationOptions=None,
         workspaceFolders=None,
-        **_kwargs
+        **_kwargs,
     ):
         from robocode_ls_core.basic import exit_when_pid_exists
         from robocode_ls_core.lsp import WorkspaceFolder
@@ -325,14 +325,17 @@ class PythonLanguageServer(MethodDispatcher):
         if config:
             config.update(settings or {})
 
-    def m_workspace__did_change_workspace_folders(self, event):
+    def m_workspace__did_change_workspace_folders(self, event=None):
         """Adds/Removes folders from the workspace."""
         from robocode_ls_core.lsp import WorkspaceFolder
 
-        log.info("Workspace folders changed: {}".format(event))
+        log.info(f"Workspace folders changed: {event}")
 
-        added_folders = event["added"] or []
-        removed_folders = event["removed"] or []
+        added_folders = []
+        removed_folders = []
+        if event:
+            added_folders = event.get("added", [])
+            removed_folders = event.get("removed", [])
 
         for f_add in added_folders:
             self.workspace.add_folder(WorkspaceFolder(**f_add))

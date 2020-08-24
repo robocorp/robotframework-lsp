@@ -229,14 +229,14 @@ class _MutexHandle(object):
     def __init__(self, system_mutex, mutex_name):
         self._system_mutex = system_mutex
         self._mutex_name = mutex_name
-        log.info("Obtained mutex: %s", mutex_name)
+        # log.info("Obtained mutex: %s", mutex_name)
 
     def __enter__(self, *args, **kwargs):
         return self
 
     def __exit__(self, *args, **kwargs):
         self._system_mutex.release_mutex()
-        log.info("Released mutex: %s", self._mutex_name)
+        # log.info("Released mutex: %s", self._mutex_name)
 
 
 def timed_acquire_mutex(mutex_name, timeout=10, sleep_time=0.15, check_reentrant=True):

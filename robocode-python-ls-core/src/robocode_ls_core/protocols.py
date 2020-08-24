@@ -199,7 +199,7 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
     ) -> None:
         pass
 
-    def open_doc(self, uri: str, version: int = 1, text: str = ""):
+    def open_doc(self, uri: str, version: int = 1, text: Optional[str] = ""):
         """
         :param text:
             If None, the contents will be loaded from the disk.

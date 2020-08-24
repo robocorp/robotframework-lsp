@@ -15,13 +15,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """A collection of URI utilities with logic built on the VSCode URI library.
 
 https://github.com/Microsoft/vscode-uri/blob/e59cab84f5df6265aed18ae5f43552d3eef13bb9/lib/index.ts
 """
 
 import re
-
 from robocode_ls_core.constants import IS_WIN
 
 from urllib.parse import (
@@ -65,18 +65,15 @@ def _normalize_win_path(path):
     return path, netloc
 
 
-def from_fs_path(path):
+def from_fs_path(path: str) -> str:
     """Returns a URI for the given filesystem path."""
-    try:
-        scheme = "file"
-        params, query, fragment = "", "", ""
-        path, netloc = _normalize_win_path(path)
-        return urlunparse((scheme, netloc, path, params, query, fragment))
-    except (AttributeError, TypeError):
-        return None
+    scheme = "file"
+    params, query, fragment = "", "", ""
+    path, netloc = _normalize_win_path(path)
+    return urlunparse((scheme, netloc, path, params, query, fragment))
 
 
-def to_fs_path(uri):
+def to_fs_path(uri: str) -> str:
     """Returns the filesystem path of the given URI.
 
     Will handle UNC paths and normalize windows drive letters to lower-case.
@@ -84,28 +81,25 @@ def to_fs_path(uri):
     path for invalid characters and semantics.
     Will *not* look at the scheme of this URI.
     """
-    try:
-        # scheme://netloc/path;parameters?query#fragment
-        scheme, netloc, path, _params, _query, _fragment = urlparse(uri)
+    # scheme://netloc/path;parameters?query#fragment
+    scheme, netloc, path, _params, _query, _fragment = urlparse(uri)
 
-        if netloc and path and scheme == "file":
-            # unc path: file://shares/c$/far/boo
-            value = "//{}{}".format(netloc, path)
+    if netloc and path and scheme == "file":
+        # unc path: file://shares/c$/far/boo
+        value = "//{}{}".format(netloc, path)
 
-        elif RE_DRIVE_LETTER_PATH.match(path):
-            # windows drive letter: file:///C:/far/boo
-            value = path[1].lower() + path[2:]
+    elif RE_DRIVE_LETTER_PATH.match(path):
+        # windows drive letter: file:///C:/far/boo
+        value = path[1].lower() + path[2:]
 
-        else:
-            # Other path
-            value = path
+    else:
+        # Other path
+        value = path
 
-        if IS_WIN:
-            value = value.replace("/", "\\")
+    if IS_WIN:
+        value = value.replace("/", "\\")
 
-        return value
-    except TypeError:
-        return None
+    return value
 
 
 def uri_scheme(uri):
