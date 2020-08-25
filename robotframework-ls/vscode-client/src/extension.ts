@@ -292,6 +292,17 @@ export async function activate(context: ExtensionContext) {
 		await langServer.onReady();
 		OUTPUT_CHANNEL.appendLine("RobotFramework Language Server ready.");
 
+		try {
+			let pluginsDir: string = await commands.executeCommand<string>("robocode.getPluginsDir");
+			if (pluginsDir && pluginsDir.length > 0) {
+				OUTPUT_CHANNEL.appendLine("Add plugins dir: " + pluginsDir + ".");
+				let result = await commands.executeCommand<string>("robot.addPluginsDir", pluginsDir);
+				OUTPUT_CHANNEL.appendLine("Added plugins dir result: " + result);
+			}
+		} catch (error) {
+			// The command may not be available.
+		}
+
 
 	} finally {
 		workspace.onDidChangeConfiguration(event => {

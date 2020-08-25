@@ -175,7 +175,7 @@ DEBUG_MEMORY_INFO = False
 _global_collect_info = False
 
 
-@pytest.yield_fixture(autouse=True)
+@pytest.yield_fixture(autouse=False)
 def before_after_each_function(request):
     global _global_collect_info
 

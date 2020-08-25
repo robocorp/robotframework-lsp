@@ -153,12 +153,12 @@ def test_resource_completions_resolve_var(
 ):
     from robotframework_ls.impl import filesystem_section_completions
     from robotframework_ls.impl.completion_context import CompletionContext
-    from robocode_ls_core.config import Config
     from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_VARIABLES
+    from robotframework_ls.robot_config import RobotConfig
 
     cases.copy_to("case4", workspace_dir)
 
-    config = Config(root_uri="", init_opts={}, process_id=-1, capabilities={})
+    config = RobotConfig()
     config.update({"robot": {"variables": {"ext_folder": cases.get_path("ext")}}})
     assert config.get_setting(OPTION_ROBOT_VARIABLES, dict, {}) == {
         "ext_folder": cases.get_path("ext")

@@ -23,6 +23,12 @@ COMMANDS = [
         add_to_package_json=False,
         server_handled=False,
     ),
+    Command(
+        "robocode.getPluginsDir",
+        "Get the directory for plugins.",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
     # Note: this command is started from the client (due to needing window.showQuickPick)
     # and the proceeds to ask for the server for the actual implementation.
     Command(

@@ -1,6 +1,8 @@
 from robocode_ls_core.python_ls import PythonLanguageServer
 from robocode_ls_core.basic import overrides
 from robocode_ls_core.robotframework_log import get_logger
+from typing import Optional
+from robocode_ls_core.protocols import IConfig
 
 
 log = get_logger(__name__)
@@ -23,11 +25,17 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         PythonLanguageServer.__init__(self, read_from, write_to, max_workers=1)
         self._version = None
 
+    @overrides(PythonLanguageServer._create_config)
+    def _create_config(self) -> IConfig:
+        from robotframework_ls.robot_config import RobotConfig
+
+        return RobotConfig()
+
     def m_version(self):
         if self._version is not None:
             return self._version
         try:
-            import robot  # @UnusedImport
+            import robot  # noqa
         except:
             log.exception("Unable to import 'robot'.")
             version = "NO_ROBOT"
@@ -135,7 +143,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return []
         return keyword_completions.complete(completion_context)
 
-    def m_find_definition(self, doc_uri, line, col):
+    def m_find_definition(self, doc_uri, line, col) -> Optional[list]:
         from robotframework_ls.impl.find_definition import find_definition
         import os.path
         from robocode_ls_core.lsp import Location, Range

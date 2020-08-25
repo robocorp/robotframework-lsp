@@ -2,9 +2,9 @@ def test_section_completions(data_regression):
     from robotframework_ls.impl import section_completions
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.robot_workspace import RobotDocument
-    from robocode_ls_core.config import Config
+    from robotframework_ls.robot_config import RobotConfig
 
-    config = Config(root_uri="", init_opts={}, process_id=-1, capabilities={})
+    config = RobotConfig()
     config.update({"robot": {"completions": {"section_headers": {"form": "both"}}}})
 
     doc = RobotDocument("unused", source="""**""")

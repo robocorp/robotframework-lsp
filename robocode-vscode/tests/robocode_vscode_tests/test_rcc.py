@@ -13,10 +13,9 @@ class _ConfigProvider(object):
 def config_provider(
     ws_root_path: str, rcc_location: str, ci_endpoint: str, rcc_config_location: str
 ):
-    from robocode_ls_core.config import Config
-    from robocode_ls_core import uris
+    from robocode_vscode.robocode_config import RobocodeConfig
 
-    config = Config(uris.from_fs_path(ws_root_path))
+    config = RobocodeConfig()
 
     config.update(
         {

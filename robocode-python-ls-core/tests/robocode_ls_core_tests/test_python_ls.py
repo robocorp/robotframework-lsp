@@ -2,6 +2,7 @@ from io import BytesIO
 from robocode_ls_core import uris
 import os.path
 import pytest
+from robocode_ls_core.protocols import IConfig
 
 
 @pytest.fixture
@@ -284,6 +285,11 @@ from robocode_ls_core.python_ls import PythonLanguageServer
 class _DummyLanguageServer(PythonLanguageServer):
     def lint(self, doc_uri, is_saved):
         pass
+
+    def _create_config(self) -> IConfig:
+        from robocode_ls_core.config import Config
+
+        return Config(all_options=frozenset())
 
 
 def test_python_ls(capabilites_jupyter):

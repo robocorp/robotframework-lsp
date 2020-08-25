@@ -153,9 +153,9 @@ def test_keyword_completions_from_resource_files(
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_VARIABLES
-    from robocode_ls_core.config import Config
+    from robotframework_ls.robot_config import RobotConfig
 
-    config = Config(root_uri="", init_opts={}, process_id=-1, capabilities={})
+    config = RobotConfig()
     config.update({"robot": {"variables": {"ext_folder": cases.get_path("ext")}}})
     assert config.get_setting(OPTION_ROBOT_VARIABLES, dict, {}) == {
         "ext_folder": cases.get_path("ext")
@@ -306,7 +306,7 @@ Test Template    my eq"""
 def test_keyword_completions_resource_does_not_exist(
     workspace, libspec_manager, data_regression
 ):
-    from robocode_ls_core.config import Config
+    from robotframework_ls.robot_config import RobotConfig
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
 
@@ -331,7 +331,7 @@ Resource    case4resource.txt
 Test
     case4resource3."""
 
-    config = Config(root_uri="", init_opts={}, process_id=-1, capabilities={})
+    config = RobotConfig()
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws, config=config)
     )
@@ -420,14 +420,14 @@ def test_keyword_completions_respect_pythonpath(
 ):
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
-    from robocode_ls_core.config import Config
+    from robotframework_ls.robot_config import RobotConfig
     from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
 
     case4_path = cases.get_path("case4")
 
     # Note how we are accessing case4resource.txt while the workspace is set for case3.
 
-    config = Config(root_uri="", init_opts={}, process_id=-1, capabilities={})
+    config = RobotConfig()
     config.update({"robot": {"pythonpath": [case4_path]}})
     assert config.get_setting(OPTION_ROBOT_PYTHONPATH, list, []) == [case4_path]
     libspec_manager.config = config

@@ -6,7 +6,6 @@ import typing
 
 from enum import Enum
 
-
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
 
@@ -199,10 +198,10 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
     ) -> None:
         pass
 
-    def open_doc(self, uri: str, version: int = 1, text: Optional[str] = ""):
+    def open_doc(self, uri: str, version: int = 1, text: Optional[str] = None):
         """
         :param text:
-            If None, the contents will be loaded from the disk.
+            If None (default), the contents will be loaded from the disk.
         """
 
     def change_doc(self, uri: str, version: int, text: str):
@@ -259,8 +258,14 @@ class IConfig(Protocol):
             KeyError if the setting could not be found and default was not provided.
         """
 
-    def update(self, settings: Dict) -> None:
+    def update(self, settings: dict) -> None:
         """Recursively merge the given settings into the current settings."""
+
+    def get_full_settings(self) -> dict:
+        pass
+
+    def set_override_settings(self, override_settings: dict):
+        pass
 
 
 class ILog(Protocol):
@@ -344,7 +349,7 @@ class IWorkspace(Protocol):
         pass
 
     def put_document(
-        self, text_document: "robocode_ls_core.lsp.TextDocumentItem"
+        self, text_document: "robocode_ls_core.lsp.TextDocumentItem"  # type: ignore
     ) -> IDocument:
         pass
 

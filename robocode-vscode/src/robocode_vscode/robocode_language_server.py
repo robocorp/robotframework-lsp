@@ -19,9 +19,14 @@ from robocode_vscode.protocols import (
     PackageInfoInLRUDict,
 )
 import os
+from robocode_ls_core.protocols import IConfig
 
 
 log = get_logger(__name__)
+
+__file__ = os.path.abspath(__file__)
+if __file__.endswith((".pyc", ".pyo")):
+    __file__ = __file__[:-1]
 
 
 class _CommandDispatcher(object):
@@ -75,6 +80,12 @@ class RobocodeLanguageServer(PythonLanguageServer):
         PythonLanguageServer.__init__(
             self, read_stream, write_stream, max_workers=max_workers
         )
+
+    @overrides(PythonLanguageServer._create_config)
+    def _create_config(self) -> IConfig:
+        from robocode_vscode.robocode_config import RobocodeConfig
+
+        return RobocodeConfig()
 
     @overrides(PythonLanguageServer.capabilities)
     def capabilities(self):
@@ -198,7 +209,7 @@ class RobocodeLanguageServer(PythonLanguageServer):
 
                             package_info["sortKey"] = sort_key
                     return {"success": True, "message": None, "result": cached}
-                except:
+                except Exception as e:
                     log.exception(
                         "Error computing new sort keys for cached entry. Refreshing and proceeding."
                     )
@@ -253,8 +264,6 @@ class RobocodeLanguageServer(PythonLanguageServer):
 
     @command_dispatcher(commands.ROBOCODE_CREATE_ACTIVITY_INTERNAL)
     def _create_activity(self, params: CreateActivityParamsDict) -> ActionResultDict:
-        import os.path
-
         directory = params["directory"]
         template = params["template"]
         name = params["name"]
@@ -395,3 +404,9 @@ class RobocodeLanguageServer(PythonLanguageServer):
             )
             self._add_package_info_to_access_lru(workspace_id, package_id, directory)
         return result.as_dict()
+
+    @command_dispatcher(commands.ROBOCODE_GET_PLUGINS_DIR)
+    def _get_plugins_dir(self, params=None) -> str:
+        from pathlib import Path
+
+        return str(Path(__file__).parent / "plugins")

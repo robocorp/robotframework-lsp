@@ -167,7 +167,7 @@ def libspec_manager(tmpdir):
     libspec_manager.dispose()
 
 
-class _CasesFixture(object):
+class CasesFixture(object):
     def __init__(self, copy_to_dir):
         from robocode_ls_core.copytree import copytree_dst_exists
 
@@ -198,7 +198,7 @@ def cases(tmpdir_factory):
     basename = u"res áéíóú"
     copy_to = str(tmpdir_factory.mktemp(basename))
 
-    return _CasesFixture(copy_to)
+    return CasesFixture(copy_to)
 
 
 class _WorkspaceFixture(object):

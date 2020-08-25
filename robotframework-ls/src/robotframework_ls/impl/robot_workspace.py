@@ -90,3 +90,17 @@ class RobotDocument(Document):
         else:
             log.critical("Unrecognized section: %s", t)
             return get_model(source)
+
+    def find_line_with_contents(self, contents: str) -> int:
+        """
+        :param contents:
+            The contents to be found.
+            
+        :return:
+            The 0-based index of the contents.
+        """
+        for i, line in enumerate(self.iter_lines()):
+            if contents in line:
+                return i
+        else:
+            raise AssertionError(f"Did not find >>{contents}<< in doc.")

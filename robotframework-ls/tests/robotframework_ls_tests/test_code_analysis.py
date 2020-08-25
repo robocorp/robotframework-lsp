@@ -145,8 +145,8 @@ Resource    case4resource.txt
 Test
     case4resource3.Yet Another Equal Redefined"""
 
-    from robocode_ls_core.config import Config
+    from robotframework_ls.robot_config import RobotConfig
 
-    config = Config(root_uri="", init_opts={}, process_id=-1, capabilities={})
+    config = RobotConfig()
     # Note: we don't give errors if we can't resolve a resource.
     _collect_errors(workspace, doc, data_regression, basename="no_error", config=config)

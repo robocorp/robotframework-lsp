@@ -18,6 +18,7 @@
     "categories": [],
     "activationEvents": [
         "onCommand:robocode.getLanguageServerPython",
+        "onCommand:robocode.getPluginsDir",
         "onCommand:robocode.createActivity",
         "onCommand:robocode.listActivityTemplates.internal",
         "onCommand:robocode.createActivity.internal",

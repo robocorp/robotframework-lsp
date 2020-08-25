@@ -231,10 +231,9 @@ class PythonLanguageServer(MethodDispatcher):
         initializationOptions=None,
         workspaceFolders=None,
         **_kwargs,
-    ):
+    ) -> dict:
         from robocode_ls_core.basic import exit_when_pid_exists
         from robocode_ls_core.lsp import WorkspaceFolder
-        from robocode_ls_core.config import Config
 
         log.debug(
             "Language server initialized with:\n    processId: %s\n    rootUri: %s\n    rootPath: %s\n    initializationOptions: %s\n    workspaceFolders: %s",
@@ -248,12 +247,7 @@ class PythonLanguageServer(MethodDispatcher):
             rootUri = uris.from_fs_path(rootPath) if rootPath is not None else ""
 
         self.root_uri = rootUri
-        self.config = Config(
-            rootUri,
-            initializationOptions or {},
-            processId,
-            _kwargs.get("capabilities", {}),
-        )
+        self.config = self._create_config()
         if workspaceFolders:
             workspaceFolders = [WorkspaceFolder(**w) for w in workspaceFolders]
 
@@ -264,6 +258,9 @@ class PythonLanguageServer(MethodDispatcher):
 
         # Get our capabilities
         return {"capabilities": self.capabilities()}
+
+    def _create_config(self) -> IConfig:
+        raise NotImplementedError(f"Not implemented in: {self.__class__}")
 
     def _create_workspace(self, root_uri, workspace_folders) -> IWorkspace:
         from robocode_ls_core.workspace import Workspace

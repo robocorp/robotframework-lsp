@@ -122,7 +122,7 @@ class LanguageServerClient(LanguageServerClientBase):
         )
 
     @implements(ILanguageServerClient.open_doc)
-    def open_doc(self, uri: str, version: int = 1, text: Optional[str] = ""):
+    def open_doc(self, uri: str, version: int = 1, text: Optional[str] = None):
         self.write(
             {
                 "jsonrpc": "2.0",

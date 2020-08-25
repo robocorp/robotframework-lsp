@@ -173,6 +173,22 @@ def write_py_settings():
             % (convert_case_to_constant(setting.name), setting.name)
         )
 
+    settings_template.append(
+        """
+ALL_ROBOCODE_OPTIONS = frozenset(
+    ("""
+    )
+
+    for setting in SETTINGS:
+        # : :type setting: Setting
+        settings_template.append(f"        {convert_case_to_constant(setting.name)},")
+
+    settings_template.append(
+        """    )
+)
+"""
+    )
+
     with open(settings_py_file, "w") as stream:
         stream.write("\n".join(settings_template))
 

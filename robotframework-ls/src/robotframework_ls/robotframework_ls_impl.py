@@ -1,337 +1,53 @@
 from robocode_ls_core.python_ls import PythonLanguageServer
-import threading
-from robocode_ls_core.basic import (
-    overrides,
-    log_and_silence_errors,
-    kill_process_and_subprocesses,
-    is_process_alive,
-)
-import sys
-import weakref
+from robocode_ls_core.basic import overrides, log_and_silence_errors
 import os
-from functools import partial
-import itertools
 import time
 from robotframework_ls.constants import DEFAULT_COMPLETIONS_TIMEOUT
 from robocode_ls_core.robotframework_log import get_logger
 from robocode_ls_core import basic
+from typing import Any, Optional
+from robocode_ls_core.protocols import IMessageMatcher, IConfig
+from pathlib import Path
 
 
 log = get_logger(__name__)
 
 LINT_DEBOUNCE_S = 0.5  # 500 ms
-_next_id = partial(next, itertools.count(0))
-
-
-class _ServerApi(object):
-    def __init__(self, robot_framework_language_server, log_extension):
-        self._server_lock = threading.RLock()
-
-        self._used_python_executable = None
-        self._used_environ = None
-        self._server_process = None
-        self._server_api = None  # :type self._server_api: RobotFrameworkApiClient
-        self.config = None
-        self._robot_framework_language_server = weakref.ref(
-            robot_framework_language_server
-        )
-        self._initializing = False
-        self._log_extension = log_extension
-
-    @property
-    def robot_framework_language_server(self):
-        return self._robot_framework_language_server()
-
-    @property
-    def _workspace(self):
-        ls = self._robot_framework_language_server()
-        if ls is None:
-            return None
-
-        return ls.workspace
-
-    @property
-    def config(self):
-        return self._config
-
-    @config.setter
-    def config(self, config):
-        self._config = config
-        with self._server_lock:
-            # If the python executable changes, restart the server API.
-            if self._used_python_executable is not None:
-                python_executable = self._get_python_executable()
-                if python_executable != self._used_python_executable:
-                    # It'll be reinitialized when needed.
-                    self._dispose_server_process()
-                    return
-            if self._used_environ is not None:
-                environ = self._get_environ()
-                if environ != self._used_environ:
-                    # It'll be reinitialized when needed.
-                    self._dispose_server_process()
-                    return
-
-    def _get_python_executable(self):
-        from robotframework_ls.impl.robot_lsp_constants import (
-            OPTION_ROBOT_PYTHON_EXECUTABLE,
-        )
-
-        config = self._config
-        python_exe = sys.executable
-        if config is not None:
-            python_exe = config.get_setting(
-                OPTION_ROBOT_PYTHON_EXECUTABLE, str, default=python_exe
-            )
-        else:
-            log.warning("self._config not set in %s" % (self.__class__,))
-        return python_exe
-
-    def _get_environ(self):
-        from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHON_ENV
-
-        config = self._config
-        env = os.environ.copy()
-
-        env.pop("PYTHONPATH", "")
-        env.pop("PYTHONHOME", "")
-        env.pop("VIRTUAL_ENV", "")
-
-        if config is not None:
-            env_in_settings = config.get_setting(
-                OPTION_ROBOT_PYTHON_ENV, dict, default={}
-            )
-            for key, val in env_in_settings.items():
-                env[str(key)] = str(val)
-        else:
-            log.warning("self._config not set in %s" % (self.__class__,))
-        return env
-
-    def _get_server_api(self):
-        with self._server_lock:
-            server_process = self._server_process
-
-            if server_process is not None:
-                # If someone killed it, dispose of internal references
-                # and create a new process.
-                if not is_process_alive(server_process.pid):
-                    server_process = None
-                    self._dispose_server_process()
-
-            if server_process is None:
-                try:
-                    from robotframework_ls.options import Setup
-                    from robotframework_ls.server_api.client import (
-                        RobotFrameworkApiClient,
-                    )
-                    from robotframework_ls.server_api.server__main__ import (
-                        start_server_process,
-                    )
-                    from robocode_ls_core.jsonrpc.streams import (
-                        JsonRpcStreamWriter,
-                        JsonRpcStreamReader,
-                    )
-
-                    args = []
-                    if Setup.options.verbose:
-                        args.append("-" + "v" * int(Setup.options.verbose))
-                    if Setup.options.log_file:
-                        log_id = _next_id()
-                        # i.e.: use a log id in case we create more than one in the
-                        # same session.
-                        if log_id == 0:
-                            args.append(
-                                "--log-file="
-                                + Setup.options.log_file
-                                + self._log_extension
-                            )
-                        else:
-                            args.append(
-                                "--log-file="
-                                + Setup.options.log_file
-                                + (".%s" % (log_id,))
-                                + self._log_extension
-                            )
-
-                    python_exe = self._get_python_executable()
-                    environ = self._get_environ()
-
-                    self._used_python_executable = python_exe
-                    self._used_environ = environ
-
-                    server_process = start_server_process(
-                        args=args, python_exe=python_exe, env=environ
-                    )
-
-                    self._server_process = server_process
-
-                    write_to = server_process.stdin
-                    read_from = server_process.stdout
-                    w = JsonRpcStreamWriter(write_to, sort_keys=True)
-                    r = JsonRpcStreamReader(read_from)
-
-                    api = self._server_api = RobotFrameworkApiClient(
-                        w, r, server_process
-                    )
-                    api.initialize(
-                        process_id=os.getpid(),
-                        root_uri=self._workspace.root_uri,
-                        workspace_folders=list(
-                            {"uri": folder.uri, "name": folder.name}
-                            for folder in list(self._workspace.folders.values())
-                        ),
-                    )
-
-                    config = self._config
-                    if config is not None:
-                        api.forward(
-                            "workspace/didChangeConfiguration",
-                            {"settings": config.get_internal_settings()},
-                        )
-
-                    # Open existing documents in the API.
-                    for document in self._workspace.iter_documents():
-                        api.forward(
-                            "textDocument/didOpen",
-                            {
-                                "textDocument": {
-                                    "uri": document.uri,
-                                    "version": document.version,
-                                    "text": document.source,
-                                }
-                            },
-                        )
-
-                except Exception as e:
-                    if server_process is None:
-                        log.exception(
-                            "Error starting robotframework server api (server_process=None)."
-                        )
-                    else:
-                        exitcode = server_process.poll()
-                        if exitcode is not None:
-                            # Note: only read() if the process exited.
-                            log.exception(
-                                "Error starting robotframework server api. Exit code: %s Base exception: %s. Stderr: %s"
-                                % (exitcode, e, server_process.stderr.read())
-                            )
-                        else:
-                            log.exception(
-                                "Error (%s) starting robotframework server api (still running). Base exception: %s."
-                                % (exitcode, e)
-                            )
-                    self._dispose_server_process()
-                finally:
-                    if server_process is not None:
-                        log.debug(
-                            "Server api (%s) created pid: %s"
-                            % (self, server_process.pid)
-                        )
-
-        return self._server_api
-
-    @log_and_silence_errors(log)
-    def _dispose_server_process(self):
-        with self._server_lock:
-            try:
-                log.debug("Dispose server process.")
-                if self._server_process is not None:
-                    if is_process_alive(self._server_process.pid):
-                        kill_process_and_subprocesses(self._server_process.pid)
-            finally:
-                self._server_process = None
-                self._server_api = None
-                self._used_environ = None
-                self._used_python_executable = None
-
-    def lint(self, doc_uri):
-        with self._server_lock:
-            api = self._get_server_api()
-            if api is not None:
-                return api.lint(doc_uri)
-
-    def request_section_name_complete(self, doc_uri, line, col):
-        with self._server_lock:
-            api = self._get_server_api()
-            if api is not None:
-                return api.request_section_name_complete(doc_uri, line, col)
-
-    def request_keyword_complete(self, doc_uri, line, col):
-        with self._server_lock:
-            api = self._get_server_api()
-            if api is not None:
-                return api.request_keyword_complete(doc_uri, line, col)
-
-    def request_complete_all(self, doc_uri, line, col):
-        with self._server_lock:
-            api = self._get_server_api()
-            if api is not None:
-                return api.request_complete_all(doc_uri, line, col)
-
-    def request_find_definition(self, doc_uri, line, col):
-        with self._server_lock:
-            api = self._get_server_api()
-            if api is not None:
-                return api.request_find_definition(doc_uri, line, col)
-
-    def request_source_format(self, text_document, options):
-        with self._server_lock:
-            api = self._get_server_api()
-            if api is not None:
-                return api.request_source_format(text_document, options)
-
-    @log_and_silence_errors(log)
-    def forward(self, method_name, params):
-        with self._server_lock:
-            api = self._get_server_api()
-            if api is not None:
-                api.forward(method_name, params)
-
-    @log_and_silence_errors(log)
-    def forward_async(self, method_name, params):
-        with self._server_lock:
-            api = self._get_server_api()
-            if api is not None:
-                api.forward_async(method_name, params)
-
-    @log_and_silence_errors(log)
-    def open(self, uri, version, source):
-        with self._server_lock:
-            api = self._get_server_api()
-            if api is not None:
-                api.open(uri, version, source)
-
-    @log_and_silence_errors(log)
-    def exit(self):
-        with self._server_lock:
-            if self._server_api is not None:
-                # i.e.: only exit if it was started in the first place.
-                self._server_api.exit()
-            self._dispose_server_process()
-
-    @log_and_silence_errors(log)
-    def shutdown(self):
-        with self._server_lock:
-            if self._server_api is not None:
-                # i.e.: only shutdown if it was started in the first place.
-                self._server_api.shutdown()
 
 
 class RobotFrameworkLanguageServer(PythonLanguageServer):
     def __init__(self, rx, tx):
-        self._api = _ServerApi(self, ".api")
-        self._lint_api = _ServerApi(self, ".lint.api")
+        from robocode_ls_core.pluginmanager import PluginManager
+        from robotframework_ls.server_manager import ServerManager
+
+        self._pm = PluginManager()
+        self._server_manager = ServerManager(self._pm, language_server=self)
+
         PythonLanguageServer.__init__(self, rx, tx)
+
+    @overrides(PythonLanguageServer._create_config)
+    def _create_config(self) -> IConfig:
+        from robotframework_ls.robot_config import RobotConfig
+
+        return RobotConfig()
 
     @property
     def config(self):
         return self._config
 
     @config.setter
-    def config(self, config):
+    def config(self, config) -> None:
         self._config = config
-        self._api.config = config
-        self._lint_api.config = config
+        self._server_manager.set_config(config)
+
+    @property
+    def workspace(self):
+        return self._workspace
+
+    @workspace.setter
+    def workspace(self, workspace) -> None:
+        self._workspace = workspace
+        self._server_manager.set_workspace(workspace)
 
     @overrides(PythonLanguageServer._create_workspace)
     def _create_workspace(self, root_uri, workspace_folders):
@@ -376,42 +92,40 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         log.info("Server capabilities: %s", server_capabilities)
         return server_capabilities
 
-    def _forward_api(self, target, method_name, params):
-        if "api" in target:
-            self._api.forward(method_name, params)
-
-        if "lint" in target:
-            # For the lint api, things should be asynchronous.
-            self._lint_api.forward_async(method_name, params)
+    def m_workspace__execute_command(self, command=None, arguments=()) -> Any:
+        if command == "robot.addPluginsDir":
+            directory: str = arguments[0]
+            assert os.path.isdir(directory), f"Expected: {directory} to be a directory."
+            self._pm.load_plugins_from(Path(directory))
+            return True
 
     @overrides(PythonLanguageServer.m_workspace__did_change_configuration)
     @log_and_silence_errors(log)
     def m_workspace__did_change_configuration(self, **kwargs):
         PythonLanguageServer.m_workspace__did_change_configuration(self, **kwargs)
-
-        self._api.config = self.config
-        self._lint_api.config = self.config
-
-        self._forward_api(("api", "lint"), "workspace/didChangeConfiguration", kwargs)
+        self._server_manager.set_config(self.config)
 
     # --- Methods to forward to the api
 
     @overrides(PythonLanguageServer.m_shutdown)
     @log_and_silence_errors(log)
     def m_shutdown(self, **kwargs):
-        self._api.shutdown()
-        self._lint_api.shutdown()
+        self._server_manager.shutdown()
+
         PythonLanguageServer.m_shutdown(self, **kwargs)
 
     @overrides(PythonLanguageServer.m_exit)
     @log_and_silence_errors(log)
     def m_exit(self, **kwargs):
-        self._api.exit()
-        self._lint_api.exit()
+        self._server_manager.exit()
+
         PythonLanguageServer.m_exit(self, **kwargs)
 
-    def m_text_document__formatting(self, textDocument=None, options=None):
-        message_matcher = self._api.request_source_format(
+    def m_text_document__formatting(
+        self, textDocument=None, options=None
+    ) -> Optional[list]:
+        source_format_api = self._server_manager.get_source_format_api()
+        message_matcher = source_format_api.request_source_format(
             text_document=textDocument, options=options
         )
         if message_matcher is None:
@@ -439,7 +153,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
     @overrides(PythonLanguageServer.m_text_document__did_close)
     def m_text_document__did_close(self, textDocument=None, **_kwargs):
-        self._forward_api(
+        self._server_manager.forward(
             ("api", "lint"), "textDocument/didClose", {"textDocument": textDocument}
         )
         PythonLanguageServer.m_text_document__did_close(
@@ -448,7 +162,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
     @overrides(PythonLanguageServer.m_text_document__did_open)
     def m_text_document__did_open(self, textDocument=None, **_kwargs):
-        self._forward_api(
+        self._server_manager.forward(
             ("api", "lint"), "textDocument/didOpen", {"textDocument": textDocument}
         )
         PythonLanguageServer.m_text_document__did_open(
@@ -459,7 +173,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def m_text_document__did_change(
         self, contentChanges=None, textDocument=None, **_kwargs
     ):
-        self._forward_api(
+        self._server_manager.forward(
             ("api", "lint"),
             "textDocument/didChange",
             {"contentChanges": contentChanges, "textDocument": textDocument},
@@ -469,27 +183,24 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         )
 
     @overrides(PythonLanguageServer.m_workspace__did_change_workspace_folders)
-    def m_workspace__did_change_workspace_folders(
-        self, added=None, removed=None, **_kwargs
-    ):
-        self._forward_api(
-            ("api", "lint"),
-            "workspace/didChangeWorkspaceFolders",
-            {"added": added, "removed": removed},
+    def m_workspace__did_change_workspace_folders(self, event=None, **_kwargs):
+        self._server_manager.forward(
+            ("api", "lint"), "workspace/didChangeWorkspaceFolders", event
         )
         PythonLanguageServer.m_workspace__did_change_workspace_folders(
-            self, added=added, removed=removed, **_kwargs
+            self, event=event, **_kwargs
         )
 
     # --- Customized implementation
 
     @overrides(PythonLanguageServer.lint)
     @basic.debounce(LINT_DEBOUNCE_S, keyed_by="doc_uri")
-    def lint(self, doc_uri, is_saved):
+    def lint(self, doc_uri, is_saved) -> None:
         # Since we're debounced, the document may no longer be open
         try:
+            lint_api = self._server_manager.get_lint_api(doc_uri)
             found = []
-            diagnostics_msg = self._lint_api.lint(doc_uri)
+            diagnostics_msg = lint_api.lint(doc_uri)
             if diagnostics_msg:
                 found = diagnostics_msg.get("result", [])
             self._lsp_messages.publish_diagnostics(doc_uri, found)
@@ -497,19 +208,28 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             # Because it's debounced, we can't use the log_and_silence_errors decorator.
             log.exception("Error linting.")
 
-    def m_text_document__definition(self, **kwargs):
+    def m_text_document__definition(self, **kwargs) -> Optional[list]:
         doc_uri = kwargs["textDocument"]["uri"]
         # Note: 0-based
         line, col = kwargs["position"]["line"], kwargs["position"]["character"]
 
-        document = self.workspace.get_document(doc_uri, accept_from_file=True)
-        if document is None:
-            msg = "Unable to find document (%s) for definition." % (doc_uri,)
-            log.critical(msg)
-            raise RuntimeError(msg)
+        workspace = self.workspace
+        if not workspace:
+            error_msg = "Workspace is closed."
+            log.critical(error_msg)
+            raise RuntimeError(error_msg)
 
-        message_matchers = [self._api.request_find_definition(doc_uri, line, col)]
+        document = workspace.get_document(doc_uri, accept_from_file=True)
+        if document is None:
+            error_msg = "Unable to find document (%s) for definition." % (doc_uri,)
+            log.critical(error_msg)
+            raise RuntimeError(error_msg)
+
+        api = self._server_manager.get_regular_api(doc_uri)
+
+        message_matchers = [api.request_find_definition(doc_uri, line, col)]
         accepted_message_matchers = self._wait_for_message_matchers(message_matchers)
+        message_matcher: IMessageMatcher
         for message_matcher in accepted_message_matchers:
             msg = message_matcher.msg
             if msg is not None:
@@ -534,12 +254,16 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             log.critical("Unable to find document (%s) for completions." % (doc_uri,))
             return []
 
+        api = self._server_manager.get_regular_api(doc_uri)
+
         ctx = CompletionContext(document, line, col, config=self.config)
         completions = []
 
         # Asynchronous completion.
         message_matchers = []
-        message_matchers.append(self._api.request_complete_all(doc_uri, line, col))
+        message_matchers.append(api.request_complete_all(doc_uri, line, col))
+
+        # These run locally (no need to get from the server).
         completions.extend(section_completions.complete(ctx))
         completions.extend(snippets_completions.complete(ctx))
 

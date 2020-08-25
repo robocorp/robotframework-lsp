@@ -150,7 +150,7 @@ Check It
 
 
 def test_variables_completions_integrated(
-    language_server_tcp, ws_root_path, data_regression
+    language_server_tcp: ILanguageServerClient, ws_root_path, data_regression
 ):
     from robocode_ls_core.workspace import Document
 
@@ -210,9 +210,10 @@ List Variable
 def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regression):
     from robocode_ls_core.basic import kill_process_and_subprocesses
     from robocode_ls_core import basic
+    from robotframework_ls.server_manager import _ServerApi
+    import time
 
     # Check just with language_server_tcp as it's easier to kill the subprocess.
-    from robotframework_ls.robotframework_ls_impl import _ServerApi
 
     server_apis = set()
     server_processes = set()
@@ -222,7 +223,6 @@ def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regressio
             server_api.robot_framework_language_server
             is language_server_tcp.language_server_instance
         ):
-            # do something else
             server_apis.add(server_api)
             server_processes.add(server_api._server_process.pid)
 
@@ -245,9 +245,12 @@ def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regressio
         assert len(server_apis) == 2
         assert len(server_processes) == 2
 
-        log.debug("Killing server api process.")
+        log.info("Killing server api process.")
         for pid in server_processes:
             kill_process_and_subprocesses(pid)
+
+        # Just make sure the connection is properly dropped before re-requesting.
+        time.sleep(0.2)
 
         check_diagnostics(language_server_tcp, data_regression)
         assert len(server_processes) == 4

@@ -6,3 +6,14 @@ ROBOCODE_LANGUAGE_SERVER_PYTHON = "robocode.language-server.python"
 ROBOCODE_RCC_LOCATION = "robocode.rcc.location"
 ROBOCODE_RCC_ENDPOINT = "robocode.rcc.endpoint"
 ROBOCODE_RCC_CONFIG_LOCATION = "robocode.rcc.config_location"
+
+ALL_ROBOCODE_OPTIONS = frozenset(
+    (
+        ROBOCODE_LANGUAGE_SERVER_TCP_PORT,
+        ROBOCODE_LANGUAGE_SERVER_ARGS,
+        ROBOCODE_LANGUAGE_SERVER_PYTHON,
+        ROBOCODE_RCC_LOCATION,
+        ROBOCODE_RCC_ENDPOINT,
+        ROBOCODE_RCC_CONFIG_LOCATION,
+    )
+)
