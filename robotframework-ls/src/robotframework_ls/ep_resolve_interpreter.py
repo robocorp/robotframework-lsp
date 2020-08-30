@@ -36,7 +36,7 @@ Note: to add an extension, one needs to add it through a plugin using the
 """
 
 from robotframework_debug_adapter.protocols import Protocol
-from typing import Optional, List, Mapping, Dict
+from typing import Optional, List, Dict
 
 
 class IInterpreterInfo(Protocol):
@@ -84,7 +84,7 @@ class DefaultInterpreterInfo(object):
         interpreter_id: str,
         python_exe: str,
         environ: Optional[Dict[str, str]],
-        additional_pythonpath_entries,
+        additional_pythonpath_entries: List[str],
     ) -> None:
         self.interpreter_id = interpreter_id
         self.python_exe = python_exe
@@ -102,6 +102,9 @@ class DefaultInterpreterInfo(object):
 
     def get_additional_pythonpath_entries(self) -> List[str]:
         return self.additional_pythonpath_entries
+
+    def __str__(self):
+        return f"DefaultInterpreterInfo({self.interpreter_id}, {self.python_exe})"
 
     def __typecheckself__(self) -> None:
         from robocode_ls_core.protocols import check_implements

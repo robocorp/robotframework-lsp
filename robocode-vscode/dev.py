@@ -119,6 +119,13 @@ class Dev(object):
             "robocode_ls_core",
         )
         print("Copying from: %s to %s" % (src_core, vendored_dir))
+        try:
+            shutil.rmtree(vendored_dir)
+        except:
+            pass
+        import time
+
+        time.sleep(0.2)
         shutil.copytree(src_core, vendored_dir)
         print("Finished vendoring.")
 
@@ -155,6 +162,47 @@ class Dev(object):
         )
         with open(readme, "w") as f:
             f.write(new_content)
+
+    def local_install(self):
+        """
+        Packages both Robotframework Language Server and Robocode and installs
+        them in Visual Studio Code.
+        """
+        import subprocess
+
+        print("Making local install")
+        from pathlib import Path
+
+        root = Path(__file__).parent.parent
+
+        def run(args, shell=False):
+            print("---", " ".join(args))
+            return subprocess.check_call(args, cwd=curdir, shell=shell)
+
+        def get_version():
+            import json
+
+            p = Path(curdir / "package.json")
+            contents = json.loads(p.read_text())
+            return contents["version"]
+
+        print("--- installing RobotFramework Language Server")
+        curdir = root / "robotframework-ls"
+        run("python -m dev vendor_robocode_ls_core".split())
+        run("vsce package".split(), shell=True)
+        run(
+            f"code --install-extension robotframework-lsp-{get_version()}.vsix".split(),
+            shell=True,
+        )
+
+        print("\n--- installing Robocode")
+        curdir = root / "robocode-vscode"
+        run("python -m dev vendor_robocode_ls_core".split())
+        run("vsce package".split(), shell=True)
+        run(
+            f"code --install-extension robocode-vscode-{get_version()}.vsix".split(),
+            shell=True,
+        )
 
 
 def test_lines():

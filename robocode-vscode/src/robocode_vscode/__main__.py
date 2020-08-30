@@ -18,6 +18,7 @@
 import argparse
 import sys
 import os
+import traceback
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
@@ -36,16 +37,26 @@ def _critical_msg(msg):
 
 
 def add_arguments(parser):
-    from robocode_vscode.options import Options
+
+    # Not using this import to be able to use this function before the pythonpath
+    # is setup.
+    # from robocode_vscode.options import Options as DefaultOptions
+
+    class DefaultOptions(object):
+        host = "127.0.0.1"
+        port = 1456
+        verbose = 0
 
     parser.description = "Python Language Server"
 
     parser.add_argument(
         "--tcp", action="store_true", help="Use TCP server instead of stdio"
     )
-    parser.add_argument("--host", default=Options.host, help="Bind to this address")
     parser.add_argument(
-        "--port", type=int, default=Options.port, help="Bind to this port"
+        "--host", default=DefaultOptions.host, help="Bind to this address"
+    )
+    parser.add_argument(
+        "--port", type=int, default=DefaultOptions.port, help="Bind to this port"
     )
 
     parser.add_argument(
@@ -58,7 +69,7 @@ def add_arguments(parser):
         "-v",
         "--verbose",
         action="count",
-        default=Options.verbose,
+        default=DefaultOptions.verbose,
         help="Increase verbosity of log output, overrides log config file",
     )
 
@@ -66,51 +77,78 @@ def add_arguments(parser):
 def main(args=None, after_bind=lambda server: None, language_server_class=None):
     original_args = args if args is not None else sys.argv[1:]
 
-    try:
-        import robocode_vscode
-    except ImportError:
-        # Automatically add it to the path if __main__ is being executed.
-        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        import robocode_vscode  # @UnusedImport
-    robocode_vscode.import_robocode_ls_core()
-
-    from robocode_vscode.options import Setup, Options
-    from robocode_ls_core.robotframework_log import (
-        configure_logger,
-        log_args_and_python,
-        get_logger,
-    )
-
-    from robocode_ls_core.python_ls import (
-        start_io_lang_server,
-        start_tcp_lang_server,
-        binary_stdio,
-    )
-
-    if language_server_class is None:
-        from robocode_vscode.robocode_language_server import RobocodeLanguageServer
-
-        language_server_class = RobocodeLanguageServer
-
     parser = argparse.ArgumentParser()
     add_arguments(parser)
 
     args = parser.parse_args(args=original_args)
-    Setup.options = Options(args)
     verbose = args.verbose
     log_file = args.log_file or ""
+
+    try:
+        try:
+            import robocode_vscode
+        except ImportError:
+            # Automatically add it to the path if __main__ is being executed.
+            sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            import robocode_vscode  # @UnusedImport
+        robocode_vscode.import_robocode_ls_core()
+
+        from robocode_ls_core.robotframework_log import (
+            configure_logger,
+            log_args_and_python,
+            get_logger,
+        )
+    except:
+        # Failed before having setup the logger (but after reading args).
+        log_file = os.path.expanduser(log_file)
+        log_file = os.path.realpath(os.path.abspath(log_file))
+        dirname = os.path.dirname(log_file)
+        basename = os.path.basename(log_file)
+        try:
+            os.makedirs(dirname)
+        except:
+            pass  # Ignore error if it already exists.
+
+        name, ext = os.path.splitext(basename)
+        postfix = "lsp.init"
+        log_file = os.path.join(
+            dirname, name + "." + postfix + "." + str(os.getpid()) + ext
+        )
+        with open(log_file, "a+") as stream:
+            traceback.print_exc(file=stream)
+
+        raise
 
     configure_logger("lsp", verbose, log_file)
     log = get_logger("robocode_vscode.__main__")
     log_args_and_python(log, original_args, robocode_vscode.__version__)
 
-    if args.tcp:
-        start_tcp_lang_server(
-            args.host, args.port, language_server_class, after_bind=after_bind
+    try:
+        from robocode_vscode.options import Setup, Options
+
+        Setup.options = Options(args)
+
+        from robocode_ls_core.python_ls import (
+            start_io_lang_server,
+            start_tcp_lang_server,
+            binary_stdio,
         )
-    else:
-        stdin, stdout = binary_stdio()
-        start_io_lang_server(stdin, stdout, language_server_class)
+
+        if language_server_class is None:
+            from robocode_vscode.robocode_language_server import RobocodeLanguageServer
+
+            language_server_class = RobocodeLanguageServer
+
+        if args.tcp:
+            start_tcp_lang_server(
+                args.host, args.port, language_server_class, after_bind=after_bind
+            )
+        else:
+            stdin, stdout = binary_stdio()
+            start_io_lang_server(stdin, stdout, language_server_class)
+    except:
+        log.exception("Error initializing")
+        raise
 
 
 if __name__ == "__main__":
@@ -118,8 +156,6 @@ if __name__ == "__main__":
         main()
     except:
         # Critical error (the logging may not be set up properly).
-        import traceback
-
         # Print to file and stderr.
         with open(_critical_error_log_file, "a+") as stream:
             traceback.print_exc(file=stream)

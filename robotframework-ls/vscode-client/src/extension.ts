@@ -25,6 +25,7 @@ import * as fs from 'fs';
 
 import { workspace, Disposable, ExtensionContext, window, commands, ConfigurationTarget, debug, DebugAdapterExecutable, ProviderResult, DebugConfiguration, WorkspaceFolder, CancellationToken, DebugConfigurationProvider } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
+import { ProgressReport, handleProgressMessage } from './progress';
 
 const OUTPUT_CHANNEL_NAME = "Robot Framework";
 const OUTPUT_CHANNEL = window.createOutputChannel(OUTPUT_CHANNEL_NAME);
@@ -77,12 +78,19 @@ function findExecutableInPath(executable: string) {
 
 class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
 
-	resolveDebugConfiguration(folder: WorkspaceFolder | undefined, debugConfiguration: DebugConfiguration, token?: CancellationToken): ProviderResult<DebugConfiguration> {
+	async resolveDebugConfigurationWithSubstitutedVariables(folder: WorkspaceFolder | undefined, debugConfiguration: DebugConfiguration, token?: CancellationToken): Promise<DebugConfiguration> {
 		// When we resolve a configuration we add the pythonpath and variables to the command line.
 		let args: Array<string> = debugConfiguration.args;
 		let config = workspace.getConfiguration("robot");
 		let pythonpath: Array<string> = config.get<Array<string>>("pythonpath");
 		let variables: object = config.get("variables");
+		let targetRobot: object = debugConfiguration.target;
+
+		// If it's not specified in the language, let's check if some plugin wants to provide an implementation.
+		let interpreter: InterpreterInfo = await commands.executeCommand('robot.resolveInterpreter', targetRobot);
+		if (interpreter) {
+			pythonpath = pythonpath.concat(interpreter.additionalPythonpathEntries);
+		}
 
 		let newArgs = [];
 		pythonpath.forEach(element => {
@@ -106,11 +114,25 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
 	};
 }
 
+interface InterpreterInfo {
+	pythonExe: string;
+	environ?: object;
+	additionalPythonpathEntries: string[];
+}
+
 
 function registerDebugger(languageServerExecutable: string) {
-	function createDebugAdapterExecutable(env: { [key: string]: string }): DebugAdapterExecutable {
+	async function createDebugAdapterExecutable(env: { [key: string]: string }, targetRobot: string): Promise<DebugAdapterExecutable> {
 		let config = workspace.getConfiguration("robot");
 		let dapPythonExecutable: string = config.get<string>("python.executable");
+
+		if (!dapPythonExecutable) {
+			// If it's not specified in the language, let's check if some plugin wants to provide an implementation.
+			let interpreter: InterpreterInfo = await commands.executeCommand('robot.resolveInterpreter', targetRobot);
+			if (interpreter) {
+				dapPythonExecutable = interpreter.pythonExe;
+			}
+		}
 
 		if (!dapPythonExecutable) {
 			// If the dapPythonExecutable is not specified, use the default language server executable.
@@ -121,9 +143,9 @@ function registerDebugger(languageServerExecutable: string) {
 			dapPythonExecutable = languageServerExecutable;
 		}
 
-		let targetFile: string = path.resolve(__dirname, '../../src/robotframework_debug_adapter/__main__.py');
-		if (!fs.existsSync(targetFile)) {
-			window.showWarningMessage('Error. Expected: ' + targetFile + " to exist.");
+		let targetMain: string = path.resolve(__dirname, '../../src/robotframework_debug_adapter/__main__.py');
+		if (!fs.existsSync(targetMain)) {
+			window.showWarningMessage('Error. Expected: ' + targetMain + " to exist.");
 			return;
 		}
 		if (!fs.existsSync(dapPythonExecutable)) {
@@ -131,10 +153,10 @@ function registerDebugger(languageServerExecutable: string) {
 			return;
 		}
 		if (env) {
-			return new DebugAdapterExecutable(dapPythonExecutable, ['-u', targetFile], { "env": env });
+			return new DebugAdapterExecutable(dapPythonExecutable, ['-u', targetMain], { "env": env });
 
 		} else {
-			return new DebugAdapterExecutable(dapPythonExecutable, ['-u', targetFile]);
+			return new DebugAdapterExecutable(dapPythonExecutable, ['-u', targetMain]);
 		}
 	};
 
@@ -142,7 +164,8 @@ function registerDebugger(languageServerExecutable: string) {
 	debug.registerDebugAdapterDescriptorFactory('robotframework-lsp', {
 		createDebugAdapterDescriptor: session => {
 			let env = session.configuration.env;
-			return createDebugAdapterExecutable(env);
+			let target = session.configuration.target;
+			return createDebugAdapterExecutable(env, target);
 		}
 	});
 
@@ -154,6 +177,7 @@ interface ExecutableAndMessage {
 	executable: string;
 	message: string;
 }
+
 
 
 async function getDefaultLanguageServerPythonExecutable(): Promise<ExecutableAndMessage> {
@@ -267,13 +291,13 @@ export async function activate(context: ExtensionContext) {
 			langServer = startLangServerTCP(port);
 
 		} else {
-			let targetFile: string = path.resolve(__dirname, '../../src/robotframework_ls/__main__.py');
-			if (!fs.existsSync(targetFile)) {
-				window.showWarningMessage('Error. Expected: ' + targetFile + " to exist.");
+			let targetMain: string = path.resolve(__dirname, '../../src/robotframework_ls/__main__.py');
+			if (!fs.existsSync(targetMain)) {
+				window.showWarningMessage('Error. Expected: ' + targetMain + " to exist.");
 				return;
 			}
 
-			let args: Array<string> = ["-u", targetFile];
+			let args: Array<string> = ["-u", targetMain];
 			let config = workspace.getConfiguration("robot");
 			let lsArgs = config.get<Array<string>>("language-server.args");
 			if (lsArgs) {
@@ -292,17 +316,26 @@ export async function activate(context: ExtensionContext) {
 		await langServer.onReady();
 		OUTPUT_CHANNEL.appendLine("RobotFramework Language Server ready.");
 
+		langServer.onNotification("$/customProgress", (args: ProgressReport) => {
+			// OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
+			handleProgressMessage(args)
+		});
+
+		let pluginsDir: string;
 		try {
-			let pluginsDir: string = await commands.executeCommand<string>("robocode.getPluginsDir");
+			pluginsDir = await commands.executeCommand<string>("robocode.getPluginsDir");
+		} catch (error) {
+			// The command may not be available.
+		}
+		try {
 			if (pluginsDir && pluginsDir.length > 0) {
 				OUTPUT_CHANNEL.appendLine("Add plugins dir: " + pluginsDir + ".");
 				let result = await commands.executeCommand<string>("robot.addPluginsDir", pluginsDir);
 				OUTPUT_CHANNEL.appendLine("Added plugins dir result: " + result);
 			}
 		} catch (error) {
-			// The command may not be available.
+			OUTPUT_CHANNEL.appendLine(error);
 		}
-
 
 	} finally {
 		workspace.onDidChangeConfiguration(event => {

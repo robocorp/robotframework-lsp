@@ -2,6 +2,7 @@
 import pytest
 import os
 import logging
+from robocode_ls_core.unittest_tools.cases_fixture import CasesFixture
 
 __file__ = os.path.abspath(__file__)  # @ReservedAssignment
 
@@ -167,38 +168,16 @@ def libspec_manager(tmpdir):
     libspec_manager.dispose()
 
 
-class CasesFixture(object):
-    def __init__(self, copy_to_dir):
-        from robocode_ls_core.copytree import copytree_dst_exists
-
-        f = __file__
-        original_resources_dir = os.path.join(os.path.dirname(f), u"_resources")
-        assert os.path.exists(original_resources_dir)
-
-        copytree_dst_exists(original_resources_dir, copy_to_dir)
-        self.resources_dir = copy_to_dir
-        assert os.path.exists(self.resources_dir)
-
-    def get_path(self, resources_relative_path, must_exist=True):
-        path = os.path.join(self.resources_dir, resources_relative_path)
-        if must_exist:
-            assert os.path.exists(path), "%s does not exist." % (path,)
-        return path
-
-    def copy_to(self, case, dest_dir):
-        import shutil
-
-        src = self.get_path(case, must_exist=True)
-
-        shutil.copytree(src, dest_dir)
-
-
 @pytest.fixture(scope="session")
-def cases(tmpdir_factory):
-    basename = u"res áéíóú"
+def cases(tmpdir_factory) -> CasesFixture:
+    basename = "res áéíóú"
     copy_to = str(tmpdir_factory.mktemp(basename))
 
-    return CasesFixture(copy_to)
+    f = __file__
+    original_resources_dir = os.path.join(os.path.dirname(f), "_resources")
+    assert os.path.exists(original_resources_dir)
+
+    return CasesFixture(copy_to, original_resources_dir)
 
 
 class _WorkspaceFixture(object):
@@ -237,5 +216,5 @@ def workspace(cases):
 @pytest.fixture
 def workspace_dir(tmpdir):
     parent = str(tmpdir)
-    basename = u"ws áéíóú"
+    basename = "ws áéíóú"
     return os.path.join(parent, basename)

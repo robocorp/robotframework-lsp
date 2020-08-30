@@ -122,6 +122,13 @@ class Dev(object):
             "robocode_ls_core",
         )
         print("Copying from: %s to %s" % (src_core, vendored_dir))
+        try:
+            shutil.rmtree(vendored_dir)
+        except:
+            pass
+        import time
+
+        time.sleep(0.2)
         shutil.copytree(src_core, vendored_dir)
         print("Finished vendoring.")
 

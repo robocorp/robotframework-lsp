@@ -19,9 +19,10 @@ import io
 import os
 from typing import Optional, Dict, List
 
+import robocode_ls_core  # noqa -- for typing.
 from robocode_ls_core import uris
 from robocode_ls_core.basic import implements
-from robocode_ls_core.protocols import IWorkspace, IDocument, typecheck_iworkspace
+from robocode_ls_core.protocols import IWorkspace, IDocument
 from robocode_ls_core.robotframework_log import get_logger
 from robocode_ls_core.uris import uri_scheme, to_fs_path
 
@@ -29,7 +30,6 @@ from robocode_ls_core.uris import uri_scheme, to_fs_path
 log = get_logger(__name__)
 
 
-@typecheck_iworkspace
 class Workspace(object):
     def __init__(self, root_uri, workspace_folders=None) -> None:
         from robocode_ls_core.lsp import WorkspaceFolder
@@ -131,6 +131,11 @@ class Workspace(object):
         doc = self._docs[doc_uri]
         doc.apply_change(change)
         doc.version = text_doc["version"]
+
+    def __typecheckself__(self) -> None:
+        from robocode_ls_core.protocols import check_implements
+
+        _: IWorkspace = check_implements(self)
 
 
 class _LineInfo(object):

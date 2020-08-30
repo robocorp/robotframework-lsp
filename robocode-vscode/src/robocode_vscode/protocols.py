@@ -203,6 +203,54 @@ class IRcc(Protocol):
         :returns an action result with the package id created.
         """
 
+    def run_python_code_package_yaml(
+        self,
+        python_code: str,
+        conda_yaml_str_contents: Optional[str],
+        silent: bool = True,
+        timeout=None,
+    ) -> ActionResult[str]:
+        """
+        Runs the given code based on an existing package yaml.
+        
+        The expected package_yaml_dict_contents is something as:
+        {
+            'activities': {
+                'Web scraper': {
+                    'output': 'output',
+                    'activityRoot': '.',
+                    'environment': {
+                        'pythonPath': ['variables', 'libraries', 'resources']
+                    },
+                    'action': {
+                        'command': [
+                            'python',
+                            '-m',
+                            'robot',
+                            '-d',
+                            'output',
+                            '--logtitle',
+                            'Task log',
+                            './tasks/*.robot'
+                        ]
+                    }
+                }
+            },
+            'condaConfig': 'config/conda.yaml'
+        }
+        
+        IMPORTANT: this can be a really slow operation on the first activation to 
+        create the env.
+        """
+
+    def check_conda_installed(self, timeout=None) -> ActionResult[str]:
+        """
+        Makes sure that conda is installed (i.e.: rcc conda check -i).
+        
+        Note: this can be a really slow operation on the first activation to 
+        download conda.
+        """
+
 
 def typecheck_ircc(rcc: Type[IRcc]):
     return rcc

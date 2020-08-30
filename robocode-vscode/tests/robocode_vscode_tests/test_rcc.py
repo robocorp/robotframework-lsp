@@ -1,42 +1,5 @@
-from robocode_ls_core.protocols import IConfigProvider
-import pytest
 from robocode_vscode.protocols import IRcc, IRccActivity
 import py.path
-
-
-class _ConfigProvider(object):
-    def __init__(self, config):
-        self.config = config
-
-
-@pytest.fixture
-def config_provider(
-    ws_root_path: str, rcc_location: str, ci_endpoint: str, rcc_config_location: str
-):
-    from robocode_vscode.robocode_config import RobocodeConfig
-
-    config = RobocodeConfig()
-
-    config.update(
-        {
-            "robocode": {
-                "rcc": {
-                    "location": rcc_location,
-                    "endpoint": ci_endpoint,
-                    "config_location": rcc_config_location,
-                }
-            }
-        }
-    )
-    return _ConfigProvider(config)
-
-
-@pytest.fixture
-def rcc(config_provider: IConfigProvider) -> IRcc:
-    from robocode_vscode.rcc import Rcc
-
-    rcc = Rcc(config_provider)
-    return rcc
 
 
 def test_rcc_template_names(rcc: IRcc):
@@ -91,3 +54,63 @@ def test_rcc_cloud(rcc: IRcc, ci_credentials: str, tmpdir: py.path.local):
     assert result.success
     result = rcc.cloud_set_activity_contents(wsdir, ws.workspace_id, act.activity_id)
     assert result.success
+
+
+def test_rcc_run_with_package_yaml(rcc: IRcc, rcc_conda_installed):
+    python_code = """
+import sys
+sys.stdout.write('It worked')
+"""
+
+    conda_yaml_str_contents = """
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.7.5
+"""
+
+    result = rcc.run_python_code_package_yaml(python_code, conda_yaml_str_contents)
+    assert result.success
+    assert result.result
+    # Note: even in silent mode we may have additional output!
+    assert "It worked" in result.result
+
+
+def test_numbered_dir(tmpdir):
+    from robocode_vscode.rcc import make_numbered_in_temp
+    from pathlib import Path
+    import time
+
+    registered = []
+    from functools import partial
+
+    def register(func, *args, **kwargs):
+        registered.append(partial(func, *args, **kwargs))
+
+    n = make_numbered_in_temp(
+        keep=2, lock_timeout=0.01, tmpdir=Path(tmpdir), register=register
+    )
+
+    # Sleep so that it'll be scheduled for removal at the next creation.
+    time.sleep(0.02)
+    assert n.name.endswith("-0")
+    assert n.is_dir()
+
+    n = make_numbered_in_temp(
+        keep=2, lock_timeout=0.01, tmpdir=Path(tmpdir), register=register
+    )
+    assert n.name.endswith("-1")
+    assert n.is_dir()
+
+    n = make_numbered_in_temp(
+        keep=2, lock_timeout=0.01, tmpdir=Path(tmpdir), register=register
+    )
+    assert n.name.endswith("-2")
+    assert n.is_dir()
+
+    # Removed dir 0.
+    assert len(list(n.parent.iterdir())) == 3
+    for r in registered:
+        r()
+    assert len(list(n.parent.iterdir())) == 2

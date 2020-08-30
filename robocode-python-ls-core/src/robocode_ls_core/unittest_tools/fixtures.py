@@ -128,6 +128,14 @@ def start_language_server_tcp(
         )
 
 
+def _stderr_reader(stderr, buf):
+    while True:
+        c = stderr.readline()
+        if not c:
+            break
+        buf.append(c)
+
+
 @contextmanager
 def create_language_server_process(log_file, __main__module):
     from robocode_ls_core.basic import kill_process_and_subprocesses
@@ -146,11 +154,21 @@ def create_language_server_process(log_file, __main__module):
         stderr=subprocess.PIPE,
         stdin=subprocess.PIPE,
     )
+    stderr = language_server_process.stderr
+    buf = []
+    t = threading.Thread(target=_stderr_reader, args=(stderr, buf))
+    t.name = "Stderr reader"
+    t.start()
+
     returncode = language_server_process.poll()
     assert returncode is None
     try:
         yield language_server_process
     finally:
+        t.join(1)
+        stderr_contents = b"".join(buf).decode("utf-8")
+        if stderr_contents:
+            sys.stderr.write(f"Found stderr contents: >>\n{stderr_contents}\n<<")
         returncode = language_server_process.poll()
         if returncode is None:
             kill_process_and_subprocesses(language_server_process.pid)

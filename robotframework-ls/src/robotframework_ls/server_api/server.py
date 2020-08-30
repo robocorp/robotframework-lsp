@@ -56,19 +56,10 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         version = self.m_version()
         return check_min_version(version, min_version)
 
-    @property
-    def config(self):
-        return self._config
-
-    @config.setter
-    def config(self, config):
-        self._config = config
-        self.libspec_manager.config = config
-
     @overrides(PythonLanguageServer.m_workspace__did_change_configuration)
     def m_workspace__did_change_configuration(self, **kwargs):
         PythonLanguageServer.m_workspace__did_change_configuration(self, **kwargs)
-        self.config = self.config  # i.e.: trigger update of settings where needed.
+        self.libspec_manager.config = self.config
 
     @overrides(PythonLanguageServer.lint)
     def lint(self, *args, **kwargs):
@@ -231,11 +222,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         )
 
     def m_shutdown(self, **_kwargs):
-        ret = PythonLanguageServer.m_shutdown(self, **_kwargs)
+        PythonLanguageServer.m_shutdown(self, **_kwargs)
         self.libspec_manager.dispose()
-        return ret
 
     def m_exit(self, **_kwargs):
-        ret = PythonLanguageServer.m_exit(self, **_kwargs)
+        PythonLanguageServer.m_exit(self, **_kwargs)
         self.libspec_manager.dispose()
-        return ret

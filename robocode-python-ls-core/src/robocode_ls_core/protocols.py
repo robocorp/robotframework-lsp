@@ -292,7 +292,9 @@ class ILog(Protocol):
 
 
 class IConfigProvider(Protocol):
-    config: Optional[IConfig]
+    @property
+    def config(self) -> IConfig:
+        pass
 
 
 class ILanguageServer(IConfigProvider):
@@ -366,5 +368,6 @@ class IWorkspace(Protocol):
         """
 
 
-def typecheck_iworkspace(ws: Type[IWorkspace]):
-    return ws
+class ITimeoutHandle(Protocol):
+    def exec_on_timeout(self):
+        pass

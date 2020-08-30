@@ -4,6 +4,7 @@ import threading
 
 from robocode_ls_core.protocols import IEndPoint, IDirCache
 from contextlib import contextmanager
+from typing import Optional
 
 
 next_id = partial(next, itertools.count(1))
@@ -13,7 +14,13 @@ class _ProgressReporter(object):
 
     _MIN_TIME = 0.25
 
-    def __init__(self, endpoint: IEndPoint, title: str, dir_cache: IDirCache) -> None:
+    def __init__(
+        self,
+        endpoint: IEndPoint,
+        title: str,
+        dir_cache: Optional[IDirCache],
+        elapsed_time_key=None,
+    ) -> None:
         from robocode_ls_core.timeouts import TimeoutTracker
         import time
 
@@ -30,11 +37,16 @@ class _ProgressReporter(object):
         self._initial_time = time.time()
 
         self._dir_cache = dir_cache
-        self._last_elapsed_time_key = ("operation_time", title)
+        self._last_elapsed_time_key = (
+            elapsed_time_key
+            if elapsed_time_key is not None
+            else ("operation_time", title)
+        )
         try:
-            expected_time = dir_cache.load(self._last_elapsed_time_key, float)
-            # Leave some gap on the expected.
-            self._expected_time = expected_time * 1.2
+            if dir_cache:
+                expected_time = dir_cache.load(self._last_elapsed_time_key, float)
+                # Leave some gap on the expected.
+                self._expected_time = expected_time * 1.2
         except KeyError:
             pass
 
@@ -94,21 +106,36 @@ class _ProgressReporter(object):
                 )
                 total_elapsed_time = time.time() - self._initial_time
                 if total_elapsed_time > self._MIN_TIME:
-                    self._dir_cache.store(
-                        self._last_elapsed_time_key, total_elapsed_time
-                    )
+                    dir_cache = self._dir_cache
+                    if dir_cache:
+                        dir_cache.store(self._last_elapsed_time_key, total_elapsed_time)
 
 
 @contextmanager
-def progress_context(endpoint: IEndPoint, title: str, dir_cache: IDirCache):
+def progress_context(
+    endpoint: IEndPoint,
+    title: str,
+    dir_cache: Optional[IDirCache],
+    elapsed_time_key=None,
+):
     """
     Creates a progress context which submits $/customProgress notifications to the
     client.
     
     Automatically updates the progress based on a previous invocation for some
     action with the same title (stores the elapsed time at the dir_cache).
+    
+    :param dir_cache:
+        If None, an estimate for the task is not loaded/saved.
+        
+    :param elapsed_time_key:
+        If None, the default is using the title as an entry in the dir cache,
+        otherwise, the given key is used to load/save the time taken in the
+        cache dir.
     """
-    progress_reporter = _ProgressReporter(endpoint, title, dir_cache)
+    progress_reporter = _ProgressReporter(
+        endpoint, title, dir_cache, elapsed_time_key=elapsed_time_key
+    )
     try:
         yield
     finally:

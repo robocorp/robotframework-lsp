@@ -5,7 +5,7 @@ import weakref
 
 from robocode_ls_core.basic import implements, as_str
 from robocode_ls_core.constants import NULL
-from robocode_ls_core.protocols import IConfig, IConfigProvider, IDirCache
+from robocode_ls_core.protocols import IConfig, IConfigProvider
 from robocode_ls_core.robotframework_log import get_logger
 from robocode_vscode.protocols import (
     IRcc,
@@ -16,6 +16,8 @@ from robocode_vscode.protocols import (
     typecheck_ircc_workspace,
     typecheck_ircc_activity,
 )
+from pathlib import Path
+import os.path
 
 
 log = get_logger(__name__)
@@ -35,7 +37,6 @@ def download_rcc(location: str, force: bool = False) -> None:
         Whether we should overwrite an existing installation.
     """
     from robocode_ls_core.system_mutex import timed_acquire_mutex
-    import os.path
 
     if not os.path.exists(location) or force:
         with timed_acquire_mutex("robocode_get_rcc", timeout=120):
@@ -170,7 +171,6 @@ class Rcc(object):
     @implements(IRcc.get_rcc_location)
     def get_rcc_location(self) -> str:
         from robocode_vscode import settings
-        import os.path
 
         rcc_location = self._get_str_optional_setting(settings.ROBOCODE_RCC_LOCATION)
         if not rcc_location:
@@ -187,6 +187,7 @@ class Rcc(object):
         expect_ok=True,
         error_msg: str = "",
         mutex_name=None,
+        cwd: Optional[str] = None,
     ) -> ActionResult[str]:
         """
         Returns an ActionResult where the result is the stdout of the executed command.
@@ -197,8 +198,13 @@ class Rcc(object):
 
         rcc_location = self.get_rcc_location()
 
-        cwd = None
-        env = None
+        env = os.environ.copy()
+        env.pop("PYTHONPATH", "")
+        env.pop("PYTHONHOME", "")
+        env.pop("VIRTUAL_ENV", "")
+        env["PYTHONIOENCODING"] = "utf-8"
+        env["PYTHONUNBUFFERED"] = "1"
+
         kwargs: dict = build_subprocess_kwargs(cwd, env, stderr=subprocess.PIPE)
         args = [rcc_location] + args
         cmdline = " ".join([str(x) for x in args])
@@ -420,7 +426,6 @@ class Rcc(object):
     def cloud_set_activity_contents(
         self, directory: str, workspace_id: str, package_id: str
     ) -> ActionResult:
-        import os.path
 
         if not os.path.exists(directory):
             return ActionResult(
@@ -488,3 +493,101 @@ class Rcc(object):
             )
 
         return ActionResult(ret.success, None, package_id)
+
+    def iter_package_yaml_activities(self, package_yaml_dict_contents: dict):
+        activities = package_yaml_dict_contents.get("activities")
+        if activities and isinstance(activities, dict):
+            for activity_name, activity in activities.items():
+                if isinstance(activity, dict):
+                    yield activity_name, activity
+
+    @implements(IRcc.run_python_code_package_yaml)
+    def run_python_code_package_yaml(
+        self,
+        python_code: str,
+        conda_yaml_str_contents: Optional[str],
+        silent: bool = True,
+        timeout=None,
+    ) -> ActionResult[str]:
+        from robocode_ls_core import yaml_wrapper
+
+        # The idea is obtaining a temporary directory, creating the needed
+        # python file, package.yaml and conda file and then executing an activity
+        # that'll execute the python file.
+        directory = make_numbered_in_temp(lock_timeout=60 * 60)
+
+        python_file: Path = directory / "code_to_exec.py"
+        python_file.write_text(python_code, encoding="utf-8")
+
+        # Note that the environ is not set (because the activityRoot cannot be
+        # set to a non-relative directory copying the existing environ leads to
+        # wrong results).
+        package_yaml: Path = directory / "package.yaml"
+        p: dict = {
+            "activities": {
+                "activity": {
+                    "activityRoot": ".",
+                    "output": ".",
+                    "action": {"command": ["python", str(python_file)]},
+                }
+            }
+        }
+        if conda_yaml_str_contents:
+            p["condaConfig"] = "conda.yaml"
+            conda_file: Path = directory / "conda.yaml"
+            conda_file.write_text(conda_yaml_str_contents, encoding="utf-8")
+
+        package_yaml.write_text(yaml_wrapper.dumps(p), encoding="utf-8")
+
+        args = ["activity", "run", "-p", str(package_yaml)]
+        if silent:
+            args.append("--silent")
+        ret = self._run_rcc(
+            args,
+            mutex_name=RCC_CLOUD_ACTIVITY_MUTEX_NAME,
+            expect_ok=False,
+            cwd=str(directory),
+            timeout=timeout,  # Creating the env may be really slow!
+        )
+        return ret
+
+    @implements(IRcc.check_conda_installed)
+    def check_conda_installed(self, timeout=None) -> ActionResult[str]:
+        return self._run_rcc(
+            ["conda", "check", "-i"],
+            mutex_name=RCC_CLOUD_ACTIVITY_MUTEX_NAME,
+            timeout=timeout,  # Creating the env may be really slow!
+        )
+
+    def __typecheckself__(self) -> None:
+        from robocode_ls_core.protocols import check_implements
+
+        _: IRcc = check_implements(self)
+
+
+def make_numbered_in_temp(
+    keep: int = 10,
+    lock_timeout: float = -1,
+    tmpdir: Optional[Path] = None,
+    register=None,
+) -> Path:
+    """
+    Helper to create a numbered directory in the temp dir with automatic disposal
+    of old contents.
+    """
+    import tempfile
+    from robocode_vscode.path_operations import get_user
+    from robocode_vscode.path_operations import make_numbered_dir_with_cleanup
+    from robocode_vscode.path_operations import LOCK_TIMEOUT
+
+    user = get_user() or "unknown"
+    temproot = tmpdir if tmpdir else Path(tempfile.gettempdir())
+    rootdir = temproot / f"robocorp-code-{user}"
+    rootdir.mkdir(exist_ok=True)
+    return make_numbered_dir_with_cleanup(
+        prefix="rcc-",
+        root=rootdir,
+        keep=keep,
+        lock_timeout=lock_timeout if lock_timeout > 0 else LOCK_TIMEOUT,
+        register=register,
+    )

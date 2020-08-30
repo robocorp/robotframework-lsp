@@ -271,6 +271,15 @@ def _get_as_name_to_sort_key_and_package_id(lst: List[WorkspaceInfoDict]):
     return name_to_sort_key
 
 
+def test_get_plugins_dir(language_server_initialized: IRobocodeLanguageServerClient,):
+    client = language_server_initialized
+    result = client.get_plugins_dir()
+
+    assert result
+    assert result.endswith("plugins")
+    assert os.path.exists(result)
+
+
 def test_cloud_list_workspaces_sorting(
     language_server_initialized: IRobocodeLanguageServerClient,
     rcc_patch: RccPatch,

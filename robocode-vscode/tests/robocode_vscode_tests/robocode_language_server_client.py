@@ -54,6 +54,12 @@ class RobocodeLanguageServerClient(LanguageServerClient):
         )["result"]
         return result
 
+    def get_plugins_dir(self) -> str:
+        from robocode_vscode import commands
+
+        result = self.execute_command(commands.ROBOCODE_GET_PLUGINS_DIR, [])["result"]
+        return result
+
     def __typecheckself__(self) -> None:
         from robocode_ls_core.protocols import check_implements
 

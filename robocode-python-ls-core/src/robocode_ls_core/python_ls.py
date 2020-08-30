@@ -42,7 +42,7 @@ class _StreamHandlerWrapper(socketserver.StreamRequestHandler, object):
 
     def setup(self):
         super(_StreamHandlerWrapper, self).setup()
-        self.delegate = self.DELEGATE_CLASS(self.rfile, self.wfile)
+        self.delegate = self.DELEGATE_CLASS(self.rfile, self.wfile)  # noqa
 
     def handle(self):
         try:
@@ -54,7 +54,7 @@ class _StreamHandlerWrapper(socketserver.StreamRequestHandler, object):
                 if isinstance(e, WindowsError) and e.winerror == 10054:
                     pass
 
-        self.SHUTDOWN_CALL()
+        self.SHUTDOWN_CALL()  # noqa
 
 
 class _DummyStdin(object):
@@ -186,13 +186,11 @@ class PythonLanguageServer(MethodDispatcher):
     Based on: https://github.com/palantir/python-language-server/blob/develop/pyls/python_ls.py
     """
 
-    config: Optional[IConfig]
-
     def __init__(self, read_stream, write_stream, max_workers=MAX_WORKERS):
         from robocode_ls_core.lsp import LSPMessages
 
-        self.workspace: Optional[IWorkspace] = None
-        self.config: Optional[IConfig] = None
+        self._config: IConfig = self._create_config()
+        self._workspace: Optional[IWorkspace] = None
         self.root_uri = None
         self.watching_thread = None
         self.uri_workspace_mapper = {}
@@ -206,13 +204,28 @@ class PythonLanguageServer(MethodDispatcher):
 
         self._shutdown = False
 
+    @property
+    def workspace(self) -> Optional[IWorkspace]:
+        return self._workspace
+
+    @workspace.setter
+    def workspace(self, workspace: IWorkspace) -> None:
+        self._workspace = workspace
+        self._on_workspace_set(workspace)
+
+    def _on_workspace_set(self, workspace: IWorkspace):
+        pass
+
+    @property  # i.e.: read-only
+    def config(self) -> IConfig:
+        return self._config
+
     def start(self):
         """Entry point for the server."""
         self._jsonrpc_stream_reader.listen(self._endpoint.consume)
 
     def m_shutdown(self, **_kwargs):
         self._shutdown = True
-        return None
 
     def m_exit(self, **_kwargs):
         self._endpoint.shutdown()
@@ -247,7 +260,6 @@ class PythonLanguageServer(MethodDispatcher):
             rootUri = uris.from_fs_path(rootPath) if rootPath is not None else ""
 
         self.root_uri = rootUri
-        self.config = self._create_config()
         if workspaceFolders:
             workspaceFolders = [WorkspaceFolder(**w) for w in workspaceFolders]
 
@@ -318,9 +330,7 @@ class PythonLanguageServer(MethodDispatcher):
         self.lint(textDocument["uri"], is_saved=True)
 
     def m_workspace__did_change_configuration(self, settings=None) -> None:
-        config = self.config
-        if config:
-            config.update(settings or {})
+        self.config.update(settings or {})
 
     def m_workspace__did_change_workspace_folders(self, event=None):
         """Adds/Removes folders from the workspace."""

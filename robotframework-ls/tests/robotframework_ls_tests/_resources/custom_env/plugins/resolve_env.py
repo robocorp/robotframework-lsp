@@ -16,7 +16,7 @@ class ResolveInterpreterInTests(object):
     def get_interpreter_info_for_doc_uri(self, doc_uri) -> Optional[IInterpreterInfo]:
         as_path = Path(uris.to_fs_path(doc_uri))
 
-        environ = dict((key, val) for key, val in os.environ.items())
+        environ = dict(os.environ)
 
         if as_path.parent.name == "env1":
             return DefaultInterpreterInfo(

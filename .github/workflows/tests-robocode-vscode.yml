@@ -5,12 +5,14 @@ on:
     paths:
     - robocode-vscode/**
     - robocode-python-ls-core/**
+    - robotframework-ls/**
     - .github/**
 
   pull_request:
     paths:
     - robocode-vscode/**
     - robocode-python-ls-core/**
+    - robotframework-ls/**
     - .github/**
       
 jobs:
@@ -42,6 +44,12 @@ jobs:
       run: |
         pip install fire
         python -m dev vendor-robocode-ls-core
+    - name: setup.py install robotframework-ls
+      working-directory: ./robotframework-ls
+      run: |
+        cd src
+        python setup.py install
+        cd ..
     - name: setup.py install
       working-directory: ./robocode-vscode
       run: |

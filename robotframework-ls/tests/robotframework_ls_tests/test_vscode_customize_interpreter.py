@@ -1,5 +1,5 @@
 from robocode_ls_core.protocols import ILanguageServerClient
-from robotframework_ls_tests.fixtures import CasesFixture
+from robocode_ls_core.unittest_tools.cases_fixture import CasesFixture
 
 
 def test_customize_interpreter(

@@ -6,8 +6,13 @@ from robotframework_ls.constants import DEFAULT_COMPLETIONS_TIMEOUT
 from robocode_ls_core.robotframework_log import get_logger
 from robocode_ls_core import basic
 from typing import Any, Optional
-from robocode_ls_core.protocols import IMessageMatcher, IConfig
+from robocode_ls_core.protocols import IMessageMatcher, IConfig, IWorkspace
 from pathlib import Path
+from robotframework_ls.ep_providers import (
+    EPConfigurationProvider,
+    EPDirCacheProvider,
+    EPEndPointProvider,
+)
 
 
 log = get_logger(__name__)
@@ -19,11 +24,33 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def __init__(self, rx, tx):
         from robocode_ls_core.pluginmanager import PluginManager
         from robotframework_ls.server_manager import ServerManager
-
-        self._pm = PluginManager()
-        self._server_manager = ServerManager(self._pm, language_server=self)
+        from robotframework_ls.ep_providers import DefaultConfigurationProvider
+        from robotframework_ls.ep_providers import DefaultEndPointProvider
+        from robotframework_ls.ep_providers import DefaultDirCacheProvider
 
         PythonLanguageServer.__init__(self, rx, tx)
+
+        from robocode_ls_core.cache import DirCache
+
+        from robotframework_ls import robot_config
+
+        home = robot_config.get_robotframework_ls_home()
+        cache_dir = os.path.join(home, ".cache")
+
+        log.debug(f"Cache dir: {cache_dir}")
+
+        self._dir_cache = DirCache(cache_dir)
+
+        self._pm = PluginManager()
+        self._config_provider = DefaultConfigurationProvider(self.config)
+        self._pm.set_instance(EPConfigurationProvider, self._config_provider)
+        self._pm.set_instance(
+            EPDirCacheProvider, DefaultDirCacheProvider(self._dir_cache)
+        )
+        self._pm.set_instance(
+            EPEndPointProvider, DefaultEndPointProvider(self._endpoint)
+        )
+        self._server_manager = ServerManager(self._pm, language_server=self)
 
     @overrides(PythonLanguageServer._create_config)
     def _create_config(self) -> IConfig:
@@ -31,22 +58,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         return RobotConfig()
 
-    @property
-    def config(self):
-        return self._config
-
-    @config.setter
-    def config(self, config) -> None:
-        self._config = config
-        self._server_manager.set_config(config)
-
-    @property
-    def workspace(self):
-        return self._workspace
-
-    @workspace.setter
-    def workspace(self, workspace) -> None:
-        self._workspace = workspace
+    @overrides(PythonLanguageServer._on_workspace_set)
+    def _on_workspace_set(self, workspace: IWorkspace):
+        PythonLanguageServer._on_workspace_set(self, workspace)
         self._server_manager.set_workspace(workspace)
 
     @overrides(PythonLanguageServer._create_workspace)
@@ -72,7 +86,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             "documentRangeFormattingProvider": False,
             "documentSymbolProvider": False,
             "definitionProvider": True,
-            "executeCommandProvider": {"commands": []},
+            "executeCommandProvider": {
+                "commands": ["robot.addPluginsDir", "robot.resolveInterpreter"]
+            },
             "hoverProvider": False,
             "referencesProvider": False,
             "renameProvider": False,
@@ -98,6 +114,29 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             assert os.path.isdir(directory), f"Expected: {directory} to be a directory."
             self._pm.load_plugins_from(Path(directory))
             return True
+
+        elif command == "robot.resolveInterpreter":
+            try:
+                from robocode_ls_core import uris
+                from robotframework_ls.ep_resolve_interpreter import (
+                    EPResolveInterpreter,
+                )
+                from robotframework_ls.ep_resolve_interpreter import IInterpreterInfo
+
+                target_robot: str = arguments[0]
+
+                for ep in self._pm.get_implementations(EPResolveInterpreter):
+                    interpreter_info: IInterpreterInfo = ep.get_interpreter_info_for_doc_uri(
+                        uris.from_fs_path(target_robot)
+                    )
+                    if interpreter_info is not None:
+                        return {
+                            "pythonExe": interpreter_info.get_python_exe(),
+                            "environ": interpreter_info.get_environ(),
+                            "additionalPythonpathEntries": interpreter_info.get_additional_pythonpath_entries(),
+                        }
+            except:
+                log.exception(f"Error resolving interpreter. Args: {arguments}")
 
     @overrides(PythonLanguageServer.m_workspace__did_change_configuration)
     @log_and_silence_errors(log)

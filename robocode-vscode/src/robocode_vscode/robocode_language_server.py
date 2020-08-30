@@ -29,27 +29,49 @@ if __file__.endswith((".pyc", ".pyo")):
     __file__ = __file__[:-1]
 
 
+class _RegisteredCommand(object):
+    def __init__(self, command_name, expected_return_cls):
+        self.command_name = command_name
+        self.expected_return_type = expected_return_cls
+        self.func = None
+
+
 class _CommandDispatcher(object):
     def __init__(self):
-        self._command_name_to_func = {}
+        self._command_name_to_registered_command = {}
 
-    def __call__(self, command_name):
+    def __call__(self, command_name, expected_return_cls=None):
+        """
+        :param expected_return_type:
+            If None, the default expected is the ActionResultDict!
+        """
         if isinstance(command_name, str):
-            self._curr_command_name = command_name
+            self._curr_registered_command = _RegisteredCommand(
+                command_name, expected_return_cls
+            )
             return self
         else:
-            func = command_name
-            self._command_name_to_func[self._curr_command_name] = func
-            return func
+            self._curr_registered_command.func = command_name
+            self._command_name_to_registered_command[
+                self._curr_registered_command.command_name
+            ] = self._curr_registered_command
+            return self._curr_registered_command.func
 
     def dispatch(self, language_server, command_name, arguments) -> ActionResultDict:
         try:
-            ret: ActionResultDict = self._command_name_to_func[command_name](
-                language_server, *arguments
-            )
-            assert isinstance(ret, dict)
-            assert "success" in ret
-            return ret
+            registered_command = self._command_name_to_registered_command[command_name]
+            func = registered_command.func
+
+            if registered_command.expected_return_type is None:
+                ret: ActionResultDict = func(language_server, *arguments)
+                assert isinstance(ret, dict)
+                assert "success" in ret
+                return ret
+            else:
+                ret = func(language_server, *arguments)
+                assert isinstance(ret, registered_command.expected_return_type)
+                return ret
+
         except Exception as e:
             error_msg = f"Error in command: {command_name} with args: {arguments}.\n{e}"
             log.exception(error_msg)
@@ -71,7 +93,7 @@ class RobocodeLanguageServer(PythonLanguageServer):
         user_home = os.getenv("ROBOCODE_VSCODE_USER_HOME", None)
         if user_home is None:
             user_home = os.path.expanduser("~")
-        cache_dir = os.path.join(user_home, ".robocode-vscode")
+        cache_dir = os.path.join(user_home, ".robocode-vscode", ".cache")
 
         log.debug(f"Cache dir: {cache_dir}")
 
@@ -209,7 +231,7 @@ class RobocodeLanguageServer(PythonLanguageServer):
 
                             package_info["sortKey"] = sort_key
                     return {"success": True, "message": None, "result": cached}
-                except Exception as e:
+                except Exception:
                     log.exception(
                         "Error computing new sort keys for cached entry. Refreshing and proceeding."
                     )
@@ -405,7 +427,7 @@ class RobocodeLanguageServer(PythonLanguageServer):
             self._add_package_info_to_access_lru(workspace_id, package_id, directory)
         return result.as_dict()
 
-    @command_dispatcher(commands.ROBOCODE_GET_PLUGINS_DIR)
+    @command_dispatcher(commands.ROBOCODE_GET_PLUGINS_DIR, str)
     def _get_plugins_dir(self, params=None) -> str:
         from pathlib import Path
 

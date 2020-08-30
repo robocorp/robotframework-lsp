@@ -92,10 +92,10 @@ class PluginManager(object):
 
     def load_plugins_from(self, directory: Path) -> int:
         found_files_with_plugins = 0
-        namespace: dict = {}
         filepath: Path
         for filepath in directory.iterdir():
             if filepath.is_file() and filepath.name.endswith(".py"):
+                namespace: dict = {"__file__": str(filepath)}
                 execfile(str(filepath), glob=namespace, loc=namespace)
                 register_plugins = namespace.get("register_plugins")
                 if register_plugins is not None:

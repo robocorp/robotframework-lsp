@@ -1,8 +1,10 @@
+import threading
 import time
 import weakref
-import threading
-from robocode_ls_core.robotframework_log import get_logger
+
 from robocode_ls_core.constants import NULL
+from robocode_ls_core.protocols import ITimeoutHandle
+from robocode_ls_core.robotframework_log import get_logger
 
 
 _DEBUG = False  # Default should be False as this can be very verbose.
@@ -128,44 +130,42 @@ class _OnTimeoutHandle(object):
             kwargs = {}
         self.kwargs = kwargs
         self.disposed = False
+        self._lock = threading.Lock()
 
     def exec_on_timeout(self):
-        # Note: lock should already be obtained when executing this function.
-        kwargs = self.kwargs
-        on_timeout = self.on_timeout
+        with self._lock:
+            kwargs = self.kwargs
+            on_timeout = self.on_timeout
+            if self.disposed:
+                return
 
-        if not self.disposed:
             self.disposed = True
             self.kwargs = None
             self.on_timeout = None
+            self._lock = NULL  # We don't need it anymore
 
-            try:
-                if _DEBUG:
-                    log.critical(
-                        "timeouts: Calling on timeout: %s with kwargs: %s",
-                        on_timeout,
-                        kwargs,
-                    )
+        # The actual call doesn't need the lock anymore.
+        try:
+            if _DEBUG:
+                log.critical(
+                    "timeouts: Calling on timeout: %s with kwargs: %s",
+                    on_timeout,
+                    kwargs,
+                )
 
-                on_timeout(**kwargs)
-            except Exception:
-                log.exception("timeouts: Exception on callback timeout.")
+            on_timeout(**kwargs)
+        except Exception:
+            log.exception("timeouts: Exception on callback timeout.")
 
     def __enter__(self):
         pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        tracker = self._tracker()
-
-        if tracker is None:
-            lock = NULL
-        else:
-            lock = tracker._tracker_lock
-
-        with lock:
+        with self._lock:
             self.disposed = True
             self.kwargs = None
             self.on_timeout = None
+            self._lock = NULL  # We don't need it anymore
 
     def __str__(self):
         return self._str
@@ -182,7 +182,7 @@ class TimeoutTracker(object):
     _instance = None
 
     @classmethod
-    def get_singleton(cls):
+    def get_singleton(cls) -> "TimeoutTracker":
         instance = cls._instance
         if instance is None:
             with cls._instance_lock:
@@ -195,7 +195,7 @@ class TimeoutTracker(object):
         self._thread = None
         self._tracker_lock = threading.Lock()
 
-    def call_on_timeout(self, timeout, on_timeout, kwargs=None):
+    def call_on_timeout(self, timeout, on_timeout, kwargs=None) -> ITimeoutHandle:
         """
         This can be called regularly to always execute the given function after a given timeout:
 

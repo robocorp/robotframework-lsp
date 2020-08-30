@@ -329,9 +329,9 @@ class LibspecManager(object):
 
     @classmethod
     def get_internal_libspec_dir(cls):
-        user_home = os.getenv("ROBOTFRAMEWORK_LS_USER_HOME", None)
-        if user_home is None:
-            user_home = os.path.expanduser("~")
+        from robotframework_ls import robot_config
+
+        home = robot_config.get_robotframework_ls_home()
 
         pyexe = sys.executable
         if not isinstance(pyexe, bytes):
@@ -349,9 +349,7 @@ class LibspecManager(object):
             v = "unknown"
 
         # Note: _v1: information on the mtime of the libspec sources now available.
-        return os.path.join(
-            user_home, ".robotframework-ls", "specs", "%s_%s" % (digest, v)
-        )
+        return os.path.join(home, "specs", "%s_%s" % (digest, v))
 
     @classmethod
     def get_internal_builtins_libspec_dir(cls, internal_libspec_dir=None):
