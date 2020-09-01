@@ -3,7 +3,7 @@ def complete(completion_context):
     :param CompletionContext completion_context:
     """
     import itertools
-    from robocode_ls_core.lsp import (
+    from robocorp_ls_core.lsp import (
         TextEdit,
         Range,
         Position,

@@ -76,7 +76,7 @@ def test_keyword_completions_user_library(
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls_tests.fixtures import LIBSPEC_1
-    from robocode_ls_core import uris
+    from robocorp_ls_core import uris
 
     cases.copy_to("case1", workspace_dir)
 
@@ -452,12 +452,12 @@ Can use resource keywords
 
 
 def test_typing_not_shown(libspec_manager, workspace, data_regression, workspace_dir):
-    from robocode_ls_core import uris
+    from robocorp_ls_core import uris
     from os.path import os
     from robotframework_ls_tests.fixtures import LIBSPEC_3
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
-    from robocode_ls_core.lsp import TextDocumentItem
+    from robocorp_ls_core.lsp import TextDocumentItem
 
     workspace_dir_a = os.path.join(workspace_dir, "workspace_dir_a")
     os.makedirs(workspace_dir_a)

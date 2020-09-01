@@ -2,9 +2,9 @@ on:
   push:
     branches:
       - "release-robotframework-lsp"
-      - "release-robocode-vscode"
+      - "release-robocorp-code"
     tags:
-      - "robocode-vscode-*"
+      - "robocorp-code-*"
       - "robotframework-lsp-*"
 name: Deploy - RobotFramework Language Server Extension
 jobs:
@@ -31,8 +31,8 @@ jobs:
         python-version: 3.7
     - name: Install deps
       run: pip install --upgrade pip fire twine wheel setuptools
-    - name: Vendor robocode_ls_core
-      run: python -m dev vendor-robocode-ls-core
+    - name: Vendor robocorp_ls_core
+      run: python -m dev vendor-robocorp-ls-core
     - name: Fix README references
       run: python -m dev fix-readme
     - name: Build wheel

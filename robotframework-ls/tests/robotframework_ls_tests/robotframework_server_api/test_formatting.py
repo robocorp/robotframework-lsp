@@ -3,7 +3,7 @@ def test_formatting_basic(data_regression):
         robot_source_format,
         create_text_edit_from_diff,
     )
-    from robocode_ls_core.workspace import Document
+    from robocorp_ls_core.workspace import Document
 
     contents = u"""
 ***Settings***

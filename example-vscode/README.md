@@ -1,5 +1,5 @@
 This project contains a bare-bones project which should be used as a base
-to startup a new project based on `robocode-python-ls-core`.
+to startup a new project based on `robocorp-python-ls-core`.
 
 To create a new project, copy this project and then:
 

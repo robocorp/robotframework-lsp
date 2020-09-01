@@ -3,7 +3,7 @@
 	<name>example-vscode</name>
 	<comment></comment>
 	<projects>
-		<project>robocode-python-ls-core</project>
+		<project>robocorp-python-ls-core</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

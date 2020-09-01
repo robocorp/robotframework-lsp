@@ -2,7 +2,7 @@
 import pytest
 import os
 import logging
-from robocode_ls_core.unittest_tools.cases_fixture import CasesFixture
+from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 
 __file__ = os.path.abspath(__file__)  # @ReservedAssignment
 
@@ -105,7 +105,7 @@ LIBSPEC_3 = """<?xml version="1.0" encoding="UTF-8"?>
 
 @pytest.fixture
 def language_server_client_class():
-    from robocode_ls_core.unittest_tools.language_server_client import (
+    from robocorp_ls_core.unittest_tools.language_server_client import (
         LanguageServerClient,
     )
 
@@ -194,14 +194,14 @@ class _WorkspaceFixture(object):
         return self._ws
 
     def set_root(self, relative_path, **kwargs):
-        from robocode_ls_core import uris
+        from robocorp_ls_core import uris
         from robotframework_ls.impl.robot_workspace import RobotWorkspace
 
         path = self._cases.get_path(relative_path)
         self._ws = RobotWorkspace(uris.from_fs_path(path), **kwargs)
 
     def get_doc(self, root_relative_path, accept_from_file=True):
-        from robocode_ls_core import uris
+        from robocorp_ls_core import uris
 
         path = os.path.join(self._ws.root_path, root_relative_path)
         uri = uris.from_fs_path(path)

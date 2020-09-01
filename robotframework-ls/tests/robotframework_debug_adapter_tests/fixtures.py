@@ -15,8 +15,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from robocode_ls_core.unittest_tools.fixtures import TIMEOUT
-from robocode_ls_core.subprocess_wrapper import subprocess
+from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
+from robocorp_ls_core.subprocess_wrapper import subprocess
 from collections import namedtuple
 
 import queue
@@ -74,7 +74,7 @@ def dap_process_stderr_file(dap_logs_dir):
 @pytest.fixture
 def dap_process(dap_log_file, dap_process_stderr_file):
     from robotframework_debug_adapter import __main__
-    from robocode_ls_core.basic import kill_process_and_subprocesses
+    from robocorp_ls_core.basic import kill_process_and_subprocesses
 
     env = os.environ.copy()
     env["ROBOTFRAMEWORK_DAP_LOG_LEVEL"] = "3"
@@ -262,7 +262,7 @@ class _DebuggerAPI(object):
         from robotframework_debug_adapter.dap.dap_schema import LaunchRequestArguments
         from robotframework_debug_adapter.dap.dap_schema import LaunchResponse
         from robotframework_debug_adapter.dap.dap_schema import RunInTerminalRequest
-        from robocode_ls_core.basic import as_str
+        from robocorp_ls_core.basic import as_str
         from robotframework_debug_adapter.dap.dap_schema import InitializedEvent
         from robotframework_debug_adapter.dap.dap_schema import Response
 
@@ -483,7 +483,7 @@ class _DebuggerAPI(object):
 
 @pytest.fixture(scope="session")
 def dap_resources_dir(tmpdir_factory):
-    from robocode_ls_core.copytree import copytree_dst_exists
+    from robocorp_ls_core.copytree import copytree_dst_exists
 
     basename = u"dap áéíóú"
     copy_to = str(tmpdir_factory.mktemp(basename))

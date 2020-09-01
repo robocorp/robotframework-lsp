@@ -2,11 +2,11 @@ def complete(completion_context):
     """
     :param CompletionContext completion_context:
     """
-    from robocode_ls_core.lsp import CompletionItemKind
-    from robocode_ls_core.lsp import CompletionItem
-    from robocode_ls_core.lsp import TextEdit
-    from robocode_ls_core.lsp import Range
-    from robocode_ls_core.lsp import Position
+    from robocorp_ls_core.lsp import CompletionItemKind
+    from robocorp_ls_core.lsp import CompletionItem
+    from robocorp_ls_core.lsp import TextEdit
+    from robocorp_ls_core.lsp import Range
+    from robocorp_ls_core.lsp import Position
     from robotframework_ls.impl import text_utilities
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
     from robotframework_ls.impl.robot_lsp_constants import (

@@ -1,3 +1,3 @@
 import robotframework_ls
 
-robotframework_ls.import_robocode_ls_core()
+robotframework_ls.import_robocorp_ls_core()

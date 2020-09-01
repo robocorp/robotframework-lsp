@@ -70,15 +70,15 @@ def _create_completion_item_from_snippet(label, snippet, selection, line_to_col)
     """
     :param selection: DocumentSelection
     """
-    from robocode_ls_core.lsp import (
+    from robocorp_ls_core.lsp import (
         CompletionItem,
         InsertTextFormat,
         Position,
         Range,
         TextEdit,
     )
-    from robocode_ls_core.lsp import MarkupKind
-    from robocode_ls_core.lsp import CompletionItemKind
+    from robocorp_ls_core.lsp import MarkupKind
+    from robocorp_ls_core.lsp import CompletionItemKind
 
     current_col = selection.col
 

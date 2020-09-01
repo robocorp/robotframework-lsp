@@ -17,7 +17,7 @@
 # limitations under the License.
 import os
 import weakref
-from robocode_ls_core.cache import instance_cache
+from robocorp_ls_core.cache import instance_cache
 
 try:
     from xml.etree import cElementTree as ET

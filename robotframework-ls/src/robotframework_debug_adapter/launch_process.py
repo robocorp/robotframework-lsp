@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from functools import partial
-from robocode_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_debug_adapter.constants import DEBUG
 from robotframework_ls.options import DEFAULT_TIMEOUT
 import itertools
@@ -248,7 +248,7 @@ def _read_stream(stream, on_line, category):
 
 def _notify_on_exited_pid(on_exit, pid):
     try:
-        from robocode_ls_core.basic import is_process_alive
+        from robocorp_ls_core.basic import is_process_alive
         import time
 
         log.debug("Waiting for pid to exit (_notify_on_exited_pid).")
@@ -291,8 +291,8 @@ class LaunchProcess(object):
         import weakref
         from robotframework_debug_adapter.constants import VALID_TERMINAL_OPTIONS
         from robotframework_debug_adapter.constants import TERMINAL_NONE
-        from robocode_ls_core.basic import as_str
-        import robocode_ls_core
+        from robocorp_ls_core.basic import as_str
+        import robocorp_ls_core
 
         self._weak_debug_adapter_comm = weakref.ref(debug_adapter_comm)
         self._valid = True
@@ -330,7 +330,7 @@ class LaunchProcess(object):
             os.pathsep
             + os.path.dirname(os.path.dirname(__file__))
             + os.pathsep
-            + os.path.dirname(os.path.dirname(robocode_ls_core.__file__))
+            + os.path.dirname(os.path.dirname(robocorp_ls_core.__file__))
         )
         env["PYTHONPATH"] = pythonpath
 
@@ -585,7 +585,7 @@ class LaunchProcess(object):
         t.start()
 
     def disconnect(self, disconnect_request):
-        from robocode_ls_core.basic import kill_process_and_subprocesses
+        from robocorp_ls_core.basic import kill_process_and_subprocesses
 
         if self._popen is not None:
             if self._popen.returncode is None:

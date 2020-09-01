@@ -2,7 +2,7 @@
 import sys
 from typing import TypeVar, List, Union, Any, Optional, Iterable
 from robotframework_debug_adapter.dap.dap_schema import StackFrame
-from robocode_ls_core.protocols import IFuture
+from robocorp_ls_core.protocols import IFuture
 
 if sys.version_info[:2] < (3, 8):
 

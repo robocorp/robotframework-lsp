@@ -1,8 +1,8 @@
 import ast as ast_module
-from robocode_ls_core.lsp import Error
+from robocorp_ls_core.lsp import Error
 import sys
 from collections import namedtuple
-from robocode_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.robotframework_log import get_logger
 
 log = get_logger(__name__)
 
@@ -377,7 +377,7 @@ def iter_keyword_usage_tokens(ast):
     :note: this goes hand-in-hand with get_keyword_name_token.
     """
     from robot.api import Token
-    from robocode_ls_core.basic import isinstance_name
+    from robocorp_ls_core.basic import isinstance_name
 
     for stack, node in _iter_nodes(ast, recursive=True):
         if node.__class__.__name__ == "KeywordCall":
@@ -399,7 +399,7 @@ def get_keyword_name_token(ast, token):
     
     :note: this goes hand-in-hand with iter_keyword_usage_tokens.
     """
-    from robocode_ls_core.basic import isinstance_name
+    from robocorp_ls_core.basic import isinstance_name
 
     if token.type == token.KEYWORD or (
         token.type == token.NAME and isinstance_name(ast, ("Fixture", "TestTemplate"))
@@ -413,7 +413,7 @@ def get_library_import_name_token(ast, token):
     If the given ast node is a library import and the token is its name, return
     the name token, otherwise, return None.
     """
-    from robocode_ls_core.basic import isinstance_name
+    from robocorp_ls_core.basic import isinstance_name
 
     if (
         token.type == token.NAME
@@ -429,7 +429,7 @@ def get_resource_import_name_token(ast, token):
     If the given ast node is a library import and the token is its name, return
     the name token, otherwise, return None.
     """
-    from robocode_ls_core.basic import isinstance_name
+    from robocorp_ls_core.basic import isinstance_name
 
     if (
         token.type == token.NAME

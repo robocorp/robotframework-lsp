@@ -2,7 +2,7 @@ from typing import Optional
 
 import pytest
 
-from robocode_ls_core.basic import implements
+from robocorp_ls_core.basic import implements
 from robotframework_ls.ep_resolve_interpreter import (
     EPResolveInterpreter,
     IInterpreterInfo,
@@ -18,7 +18,7 @@ class ResolveInterpreterInTest(object):
         return None
 
     def __typecheckself__(self) -> None:
-        from robocode_ls_core.protocols import check_implements
+        from robocorp_ls_core.protocols import check_implements
 
         _: EPResolveInterpreter = check_implements(self)
 
@@ -32,7 +32,7 @@ def config():
 
 @pytest.fixture
 def pm():
-    from robocode_ls_core.pluginmanager import PluginManager
+    from robocorp_ls_core.pluginmanager import PluginManager
 
     p = PluginManager()
     p.register(EPResolveInterpreter, ResolveInterpreterInTest)

@@ -4,7 +4,7 @@
 			"path": ".."
 		},
 		{
-			"path": "..\\..\\robocode-python-ls-core"
+			"path": "..\\..\\robocorp-python-ls-core"
 		}
 	],
 	"settings": {}

@@ -1,4 +1,4 @@
-from robocode_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.robotframework_log import get_logger
 
 log = get_logger(__name__)
 
@@ -35,14 +35,14 @@ class _Collector(object):
         :param selection:
         :param token:
         """
-        from robocode_ls_core.lsp import (
+        from robocorp_ls_core.lsp import (
             CompletionItem,
             InsertTextFormat,
             Position,
             Range,
             TextEdit,
         )
-        from robocode_ls_core.lsp import MarkupKind
+        from robocorp_ls_core.lsp import MarkupKind
 
         label = keyword_found.keyword_name
         text = label

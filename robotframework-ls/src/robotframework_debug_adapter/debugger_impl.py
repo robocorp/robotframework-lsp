@@ -20,7 +20,7 @@ from robotframework_debug_adapter.constants import (
 import itertools
 from functools import partial, lru_cache
 import os.path
-from robocode_ls_core.robotframework_log import get_logger, get_log_level
+from robocorp_ls_core.robotframework_log import get_logger, get_log_level
 from collections import namedtuple
 import weakref
 from robotframework_debug_adapter.protocols import (
@@ -31,7 +31,7 @@ from robotframework_debug_adapter.protocols import (
     IEvaluationInfo,
 )
 from typing import Optional, List, Iterable, Union, Any, Dict, FrozenSet
-from robocode_ls_core.basic import implements
+from robocorp_ls_core.basic import implements
 from robotframework_debug_adapter.dap.dap_schema import (
     StackFrame,
     Scope,

@@ -21,15 +21,15 @@ def robot_source_format(source, space_count=4):
 
 
 def _create_range(d, offset1, offset2):
-    from robocode_ls_core.lsp import Range
+    from robocorp_ls_core.lsp import Range
 
     return Range(d.offset_to_line_col(offset1), d.offset_to_line_col(offset2))
 
 
 def create_text_edit_from_diff(contents, new_contents):
     from difflib import SequenceMatcher
-    from robocode_ls_core.lsp import TextEdit
-    from robocode_ls_core.workspace import Document
+    from robocorp_ls_core.lsp import TextEdit
+    from robocorp_ls_core.workspace import Document
 
     d = Document("", contents)
 

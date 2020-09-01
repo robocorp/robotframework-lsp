@@ -3,7 +3,7 @@ import pytest
 
 @pytest.fixture
 def language_server_client_class():
-    from robocode_ls_core.unittest_tools.language_server_client import (
+    from robocorp_ls_core.unittest_tools.language_server_client import (
         LanguageServerClient,
     )
 

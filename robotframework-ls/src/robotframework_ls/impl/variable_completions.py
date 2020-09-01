@@ -1,4 +1,4 @@
-from robocode_ls_core.cache import instance_cache
+from robocorp_ls_core.cache import instance_cache
 
 
 class IVariableFound(object):
@@ -41,7 +41,7 @@ class _VariableFoundFromToken(object):
     @property
     @instance_cache
     def source(self):
-        from robocode_ls_core import uris
+        from robocorp_ls_core import uris
 
         return uris.to_fs_path(self.completion_context.doc.uri)
 
@@ -106,15 +106,15 @@ class _Collector(object):
         :param selection:
         :param token:
         """
-        from robocode_ls_core.lsp import (
+        from robocorp_ls_core.lsp import (
             CompletionItem,
             InsertTextFormat,
             Position,
             Range,
             TextEdit,
         )
-        from robocode_ls_core.lsp import MarkupKind
-        from robocode_ls_core.lsp import CompletionItemKind
+        from robocorp_ls_core.lsp import MarkupKind
+        from robocorp_ls_core.lsp import CompletionItemKind
 
         label = variable_found.variable_name
         text = label

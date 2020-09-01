@@ -36,9 +36,9 @@ def test_exit_with_parent_process_died(
     """
     import subprocess
     import sys
-    from robocode_ls_core.basic import is_process_alive
-    from robocode_ls_core.basic import kill_process_and_subprocesses
-    from robocode_ls_core.unittest_tools.fixtures import wait_for_test_condition
+    from robocorp_ls_core.basic import is_process_alive
+    from robocorp_ls_core.basic import kill_process_and_subprocesses
+    from robocorp_ls_core.unittest_tools.fixtures import wait_for_test_condition
 
     language_server = language_server_io
     dummy_process = subprocess.Popen(

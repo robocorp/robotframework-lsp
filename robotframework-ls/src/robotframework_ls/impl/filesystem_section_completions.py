@@ -1,20 +1,20 @@
 import os.path
-from robocode_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.robotframework_log import get_logger
 import sys
 
 log = get_logger(__name__)
 
 
 def _create_completion_item(library_name, selection, token, start_col_offset=None):
-    from robocode_ls_core.lsp import (
+    from robocorp_ls_core.lsp import (
         CompletionItem,
         InsertTextFormat,
         Position,
         Range,
         TextEdit,
     )
-    from robocode_ls_core.lsp import MarkupKind
-    from robocode_ls_core.lsp import CompletionItemKind
+    from robocorp_ls_core.lsp import MarkupKind
+    from robocorp_ls_core.lsp import CompletionItemKind
 
     text_edit = TextEdit(
         Range(
@@ -49,7 +49,7 @@ def _add_completions_from_dir(
     extensions,
     skip_current,
 ):
-    from robocode_ls_core import uris
+    from robocorp_ls_core import uris
 
     def normfile(path):
         return os.path.normpath(os.path.normcase(path))
@@ -91,7 +91,7 @@ def _add_completions_from_dir(
 
 def _get_completions(completion_context, token, match_libs, extensions, skip_current):
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
-    from robocode_ls_core import uris
+    from robocorp_ls_core import uris
     from robotframework_ls.impl.robot_constants import BUILTIN_LIB
 
     ret = []

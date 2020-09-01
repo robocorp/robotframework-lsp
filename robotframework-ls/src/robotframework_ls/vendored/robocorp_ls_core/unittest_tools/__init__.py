@@ -1,0 +1,4 @@
+from _pytest.assertion import register_assert_rewrite
+
+register_assert_rewrite("robocorp_ls_core.unittest_tools.fixtures")
+register_assert_rewrite("robocorp_ls_core.unittest_tools.language_server_client")

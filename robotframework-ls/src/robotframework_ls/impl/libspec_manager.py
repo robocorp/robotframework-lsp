@@ -1,7 +1,7 @@
 import os
 import sys
 from robotframework_ls.constants import NULL
-from robocode_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.robotframework_log import get_logger
 
 log = get_logger(__name__)
 
@@ -11,7 +11,7 @@ def _normfile(filename):
 
 
 def _get_libspec_mutex_name(libspec_filename):
-    from robocode_ls_core.system_mutex import generate_mutex_name
+    from robocorp_ls_core.system_mutex import generate_mutex_name
 
     libspec_filename = _norm_filename(libspec_filename)
     basename = os.path.basename(libspec_filename)
@@ -31,7 +31,7 @@ def _load_library_doc_and_mtime(spec_filename, obtain_mutex=True):
         has the spec_filename mutex.
     """
     from robotframework_ls.impl import robot_specbuilder
-    from robocode_ls_core.system_mutex import timed_acquire_mutex
+    from robocorp_ls_core.system_mutex import timed_acquire_mutex
 
     if obtain_mutex:
         ctx = timed_acquire_mutex(_get_libspec_mutex_name(spec_filename))
@@ -239,7 +239,7 @@ class _FolderInfo(object):
                 return
 
             log.info("Tracking folder for changes: %s", self.folder_path)
-            from robocode_ls_core.watchdog_wrapper import PathInfo
+            from robocorp_ls_core.watchdog_wrapper import PathInfo
 
             folder_path = self.folder_path
             self._watch = observer.notify_on_extensions_change(
@@ -362,7 +362,7 @@ class LibspecManager(object):
         :param __internal_libspec_dir__:
             Only to be used in tests (to regenerate the builtins)!
         """
-        from robocode_ls_core import watchdog_wrapper
+        from robocorp_ls_core import watchdog_wrapper
 
         from concurrent import futures
 
@@ -462,7 +462,7 @@ class LibspecManager(object):
         target(spec_file)
 
     def add_workspace_folder(self, folder_uri):
-        from robocode_ls_core import uris
+        from robocorp_ls_core import uris
 
         if folder_uri not in self._workspace_folder_uri_to_folder_info:
             log.debug("Added workspace folder: %s", folder_uri)
@@ -515,8 +515,8 @@ class LibspecManager(object):
 
         try:
             from robotframework_ls.impl import robot_constants
-            from robocode_ls_core.system_mutex import timed_acquire_mutex
-            from robocode_ls_core.system_mutex import generate_mutex_name
+            from robocorp_ls_core.system_mutex import timed_acquire_mutex
+            from robocorp_ls_core.system_mutex import generate_mutex_name
 
             initial_time = time.time()
             wait_for = []
@@ -642,8 +642,8 @@ class LibspecManager(object):
         """
         import time
         from robotframework_ls.impl import robot_constants
-        from robocode_ls_core.subprocess_wrapper import subprocess
-        from robocode_ls_core.system_mutex import timed_acquire_mutex
+        from robocorp_ls_core.subprocess_wrapper import subprocess
+        from robocorp_ls_core.system_mutex import timed_acquire_mutex
 
         curtime = time.time()
 
@@ -736,7 +736,7 @@ class LibspecManager(object):
         self._spec_changes_notifier.dispose()
 
     def _do_create_libspec_on_get(self, libname, current_doc_uri):
-        from robocode_ls_core import uris
+        from robocorp_ls_core import uris
 
         additional_path = None
         abspath = None

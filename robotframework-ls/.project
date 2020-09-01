@@ -3,7 +3,7 @@
 	<name>robotframework-ls</name>
 	<comment></comment>
 	<projects>
-		<project>robocode-python-ls-core</project>
+		<project>robocorp-python-ls-core</project>
 		<project>robotframework-ls</project>
 	</projects>
 	<buildSpec>

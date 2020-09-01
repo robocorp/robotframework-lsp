@@ -19,7 +19,7 @@ import sys
 
 import pytest
 import logging
-from robocode_ls_core.unittest_tools.monitor import dump_threads
+from robocorp_ls_core.unittest_tools.monitor import dump_threads
 
 log = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ def pytest_unconfigure():
 @pytest.hookimpl
 def pytest_configure(config):
     import os
-    from robocode_ls_core.options import USE_TIMEOUTS
+    from robocorp_ls_core.options import USE_TIMEOUTS
 
     if not USE_TIMEOUTS:
         os.environ["PYTEST_TIMEOUT"] = "999999"

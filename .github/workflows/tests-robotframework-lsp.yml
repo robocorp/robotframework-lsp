@@ -4,13 +4,13 @@ on:
   push:
     paths:
     - robotframework-ls/**
-    - robocode-python-ls-core/**
+    - robocorp-python-ls-core/**
     - .github/**
 
   pull_request:
     paths:
     - robotframework-ls/**
-    - robocode-python-ls-core/**
+    - robocorp-python-ls-core/**
     - .github/**
       
 jobs:
@@ -66,11 +66,11 @@ jobs:
     - name: Install robotframework from pip
       run: python -W ignore -m pip install robotframework
       if: contains(matrix.name, '-pip')
-    - name: Vendor robocode_ls_core
+    - name: Vendor robocorp_ls_core
       working-directory: ./robotframework-ls
       run: |
         pip install fire
-        python -m dev vendor-robocode-ls-core
+        python -m dev vendor-robocorp-ls-core
     - name: setup.py install
       working-directory: ./robotframework-ls
       run: |
@@ -87,7 +87,8 @@ jobs:
       working-directory: ./robotframework-ls/tests
       env:
         PYTHONPATH: .
-      run: python -u ../../robocode-python-ls-core/tests/run_tests.py -otests_output -vv .
+        RUN_TESTS_TIMEOUT: 120
+      run: python -u ../../robocorp-python-ls-core/tests/run_tests.py -otests_output -vv .
     - uses: actions/upload-artifact@v1
       with:
         name: tests_output.${{ matrix.name }}.txt

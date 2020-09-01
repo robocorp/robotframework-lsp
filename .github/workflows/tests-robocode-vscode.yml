@@ -1,17 +1,17 @@
-name: Tests - Robocode VSCode (robocode-vscode)
+name: Tests - Robocorp Code (robocorp-code)
 
 on:
   push:
     paths:
-    - robocode-vscode/**
-    - robocode-python-ls-core/**
+    - robocorp-code/**
+    - robocorp-python-ls-core/**
     - robotframework-ls/**
     - .github/**
 
   pull_request:
     paths:
-    - robocode-vscode/**
-    - robocode-python-ls-core/**
+    - robocorp-code/**
+    - robocorp-python-ls-core/**
     - robotframework-ls/**
     - .github/**
       
@@ -39,11 +39,11 @@ jobs:
         python-version: ${{ matrix.python }}
     - name: Upgrade pip
       run: python -m pip install --upgrade pip
-    - name: Vendor robocode_ls_core
-      working-directory: ./robocode-vscode
+    - name: Vendor robocorp_ls_core
+      working-directory: ./robocorp-code
       run: |
         pip install fire
-        python -m dev vendor-robocode-ls-core
+        python -m dev vendor-robocorp-ls-core
     - name: setup.py install robotframework-ls
       working-directory: ./robotframework-ls
       run: |
@@ -51,26 +51,27 @@ jobs:
         python setup.py install
         cd ..
     - name: setup.py install
-      working-directory: ./robocode-vscode
+      working-directory: ./robocorp-code
       run: |
         cd src
         python setup.py install
         cd ..
     - name: Install test deps
-      working-directory: ./robocode-vscode
+      working-directory: ./robocorp-code
       run: |
         cd tests
         pip install -r test_requirements.txt
         cd ..
     - name: Test
-      working-directory: ./robocode-vscode/tests
+      working-directory: ./robocorp-code/tests
       env:
         PYTHONPATH: .
         CI_CREDENTIALS: ${{ secrets.CI_CREDENTIALS }}
         CI_ENDPOINT: ${{ secrets.CI_ENDPOINT }}
-      run: python -u ../../robocode-python-ls-core/tests/run_tests.py -otests_output -vv .
+        RUN_TESTS_TIMEOUT: 300
+      run: python -u ../../robocorp-python-ls-core/tests/run_tests.py -otests_output -vv .
     - uses: actions/upload-artifact@v1
       with:
         name: tests_output.${{ matrix.name }}.txt
-        path: robocode-vscode/tests/tests_output
+        path: robocorp-code/tests/tests_output
 

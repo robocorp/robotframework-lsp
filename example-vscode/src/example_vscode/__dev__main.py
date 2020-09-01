@@ -17,7 +17,7 @@ def dev_main():
         # Automatically add it to the path if __main__ is being executed.
         sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         import example_vscode  # @UnusedImport
-    example_vscode.import_robocode_ls_core()
+    example_vscode.import_robocorp_ls_core()
 
     from example_vscode.__main__ import main
 

@@ -12,8 +12,8 @@ def test_get_ast():
 
 def test_document_from_file(workspace, workspace_dir, cases):
     from os.path import os
-    from robocode_ls_core import uris
-    from robocode_ls_core.lsp import TextDocumentItem
+    from robocorp_ls_core import uris
+    from robocorp_ls_core.lsp import TextDocumentItem
 
     cases.copy_to("case1", workspace_dir)
     workspace.set_root(workspace_dir)

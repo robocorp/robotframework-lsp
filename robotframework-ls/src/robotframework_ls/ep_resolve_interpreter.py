@@ -107,6 +107,6 @@ class DefaultInterpreterInfo(object):
         return f"DefaultInterpreterInfo({self.interpreter_id}, {self.python_exe})"
 
     def __typecheckself__(self) -> None:
-        from robocode_ls_core.protocols import check_implements
+        from robocorp_ls_core.protocols import check_implements
 
         _: IInterpreterInfo = check_implements(self)

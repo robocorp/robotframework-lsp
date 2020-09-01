@@ -9,14 +9,14 @@ if __file__.endswith((".pyc", ".pyo")):
     __file__ = __file__[:-1]
 
 
-def import_robocode_ls_core():
+def import_robocorp_ls_core():
     """
-    Helper function to make sure that robocode_ls_core is imported properly
+    Helper function to make sure that robocorp_ls_core is imported properly
     (either in dev or in release mode).
     """
 
     try:
-        import robocode_ls_core
+        import robocorp_ls_core
     except ImportError:
         log_contents = []
         use_folder = None
@@ -24,7 +24,7 @@ def import_robocode_ls_core():
             src_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             log_contents.append("Source folder: %s" % (src_folder,))
             src_core_folder = os.path.abspath(
-                os.path.join(src_folder, "..", "..", "robocode-python-ls-core", "src")
+                os.path.join(src_folder, "..", "..", "robocorp-python-ls-core", "src")
             )
 
             if os.path.isdir(src_core_folder):
@@ -42,7 +42,7 @@ def import_robocode_ls_core():
                 ), "Expected: %s to exist and be a directory." % (use_folder,)
 
             sys.path.append(use_folder)
-            import robocode_ls_core
+            import robocorp_ls_core
         except:
             try:
                 if use_folder:
@@ -52,5 +52,5 @@ def import_robocode_ls_core():
             except:
                 log_contents.append("Error in os.listdir('%s')." % (use_folder,))
             raise ImportError(
-                "Error importing robocode_ls_core. Log: %s" % "\n".join(log_contents)
+                "Error importing robocorp_ls_core. Log: %s" % "\n".join(log_contents)
             )

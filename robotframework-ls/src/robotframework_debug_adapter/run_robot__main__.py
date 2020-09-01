@@ -20,7 +20,7 @@ LOG_FORMAT = "ROBOT: %(asctime)s UTC pid: %(process)d - %(threadName)s - %(level
 def connect(port):
     from robotframework_ls.options import DEFAULT_TIMEOUT
     from robotframework_ls.impl.robot_lsp_constants import ENV_OPTION_ROBOT_DAP_TIMEOUT
-    from robocode_ls_core.robotframework_log import get_logger
+    from robocorp_ls_core.robotframework_log import get_logger
 
     log = get_logger("robotframework_debug_adapter.run_robot__main__.py")
 
@@ -215,7 +215,7 @@ class _RobotTargetComm(threading.Thread):
         from robotframework_debug_adapter.dap import dap_base_schema
         from robotframework_debug_adapter import file_utils
         from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
-        from robocode_ls_core.robotframework_log import get_logger
+        from robocorp_ls_core.robotframework_log import get_logger
 
         log = get_logger("robotframework_debug_adapter.run_robot__main__.py")
 
@@ -418,7 +418,7 @@ class _RobotTargetComm(threading.Thread):
 
 
 def get_log():
-    from robocode_ls_core.robotframework_log import get_logger
+    from robocorp_ls_core.robotframework_log import get_logger
 
     return get_logger("robotframework_debug_adapter.run_robot__main__.py")
 
@@ -432,9 +432,9 @@ def main():
         assert os.path.exists(src_folder), "Expected: %s to exist" % (src_folder,)
         sys.path.append(src_folder)
         import robotframework_ls  # @UnusedImport
-    robotframework_ls.import_robocode_ls_core()
+    robotframework_ls.import_robocorp_ls_core()
 
-    from robocode_ls_core.robotframework_log import (
+    from robocorp_ls_core.robotframework_log import (
         configure_logger,
         log_args_and_python,
     )

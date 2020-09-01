@@ -1,8 +1,8 @@
-from robocode_ls_core.python_ls import PythonLanguageServer
-from robocode_ls_core.basic import overrides
-from robocode_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.python_ls import PythonLanguageServer
+from robocorp_ls_core.basic import overrides
+from robocorp_ls_core.robotframework_log import get_logger
 from typing import Optional
-from robocode_ls_core.protocols import IConfig
+from robocorp_ls_core.protocols import IConfig
 
 
 log = get_logger(__name__)
@@ -51,7 +51,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         return self._version
 
     def _check_min_version(self, min_version):
-        from robocode_ls_core.basic import check_min_version
+        from robocorp_ls_core.basic import check_min_version
 
         version = self.m_version()
         return check_min_version(version, min_version)
@@ -75,7 +75,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
     def m_lint(self, doc_uri):
         if not self._check_min_version((3, 2)):
-            from robocode_ls_core.lsp import Error
+            from robocorp_ls_core.lsp import Error
 
             msg = (
                 "robotframework version (%s) too old for linting.\n"
@@ -137,8 +137,8 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     def m_find_definition(self, doc_uri, line, col) -> Optional[list]:
         from robotframework_ls.impl.find_definition import find_definition
         import os.path
-        from robocode_ls_core.lsp import Location, Range
-        from robocode_ls_core import uris
+        from robocorp_ls_core.lsp import Location, Range
+        from robocorp_ls_core import uris
 
         completion_context = self._create_completion_context(doc_uri, line, col)
         if completion_context is None:
@@ -178,7 +178,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     def m_code_format(self, text_document, options):
         from robotframework_ls.impl.formatting import robot_source_format
         from robotframework_ls.impl.formatting import create_text_edit_from_diff
-        from robocode_ls_core.lsp import TextDocumentItem
+        from robocorp_ls_core.lsp import TextDocumentItem
 
         text_document_item = TextDocumentItem(**text_document)
         text = text_document_item.text

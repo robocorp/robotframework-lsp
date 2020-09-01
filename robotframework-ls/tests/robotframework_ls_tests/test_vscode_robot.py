@@ -1,13 +1,13 @@
 import logging
 import os
-from robocode_ls_core.protocols import ILanguageServerClient
+from robocorp_ls_core.protocols import ILanguageServerClient
 
 
 log = logging.getLogger(__name__)
 
 
 def check_diagnostics(language_server, data_regression):
-    from robocode_ls_core.unittest_tools.fixtures import TIMEOUT
+    from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
 
     uri = "untitled:Untitled-1"
     message_matcher = language_server.obtain_pattern_message_matcher(
@@ -77,7 +77,7 @@ def test_section_completions_integrated(language_server, ws_root_path, data_regr
 def test_keyword_completions_integrated_pythonpath_resource(
     language_server_tcp, ws_root_path, data_regression, cases
 ):
-    from robocode_ls_core.workspace import Document
+    from robocorp_ls_core.workspace import Document
 
     case4_path = cases.get_path("case4")
 
@@ -114,7 +114,7 @@ Check It
 def test_keyword_completions_integrated_pythonpath_library(
     language_server_tcp: ILanguageServerClient, ws_root_path, data_regression, cases
 ):
-    from robocode_ls_core.workspace import Document
+    from robocorp_ls_core.workspace import Document
 
     case1_path = cases.get_path("case1")
 
@@ -152,7 +152,7 @@ Check It
 def test_variables_completions_integrated(
     language_server_tcp: ILanguageServerClient, ws_root_path, data_regression
 ):
-    from robocode_ls_core.workspace import Document
+    from robocorp_ls_core.workspace import Document
 
     language_server = language_server_tcp
     language_server.initialize(ws_root_path, process_id=os.getpid())
@@ -188,7 +188,7 @@ List Variable
 def test_snippets_completions_integrated(
     language_server_tcp, ws_root_path, data_regression
 ):
-    from robocode_ls_core.workspace import Document
+    from robocorp_ls_core.workspace import Document
 
     language_server = language_server_tcp
     language_server.initialize(ws_root_path, process_id=os.getpid())
@@ -208,8 +208,8 @@ List Variable
 
 
 def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regression):
-    from robocode_ls_core.basic import kill_process_and_subprocesses
-    from robocode_ls_core import basic
+    from robocorp_ls_core.basic import kill_process_and_subprocesses
+    from robocorp_ls_core import basic
     from robotframework_ls.server_manager import _ServerApi
     import time
 
@@ -288,11 +288,11 @@ def test_exit_with_parent_process_died(
     """
     :note: Only check with the language_server_io (because that's in another process).
     """
-    from robocode_ls_core.subprocess_wrapper import subprocess
+    from robocorp_ls_core.subprocess_wrapper import subprocess
     import sys
-    from robocode_ls_core.basic import is_process_alive
-    from robocode_ls_core.basic import kill_process_and_subprocesses
-    from robocode_ls_core.unittest_tools.fixtures import wait_for_test_condition
+    from robocorp_ls_core.basic import is_process_alive
+    from robocorp_ls_core.basic import kill_process_and_subprocesses
+    from robocorp_ls_core.unittest_tools.fixtures import wait_for_test_condition
 
     language_server = language_server_io
     dummy_process = subprocess.Popen(
@@ -327,7 +327,7 @@ def test_code_format_integrated(language_server, ws_root_path, data_regression):
 def test_find_definition_integrated_library(
     language_server: ILanguageServerClient, cases, workspace_dir
 ):
-    from robocode_ls_core import uris
+    from robocorp_ls_core import uris
 
     cases.copy_to("case1", workspace_dir)
 
@@ -351,7 +351,7 @@ def test_find_definition_integrated_library(
 def test_find_definition_keywords(
     language_server: ILanguageServerClient, cases, workspace_dir
 ):
-    from robocode_ls_core import uris
+    from robocorp_ls_core import uris
 
     cases.copy_to("case2", workspace_dir)
 

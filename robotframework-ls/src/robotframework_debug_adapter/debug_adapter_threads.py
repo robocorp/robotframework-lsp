@@ -25,7 +25,7 @@ writer_thread just keeps on sending any message posted to the queue it receives.
 
 from functools import partial
 import itertools
-from robocode_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.robotframework_log import get_logger
 import json
 from robotframework_debug_adapter.constants import DEBUG
 from typing import Optional, Dict

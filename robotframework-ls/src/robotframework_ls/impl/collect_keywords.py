@@ -1,6 +1,6 @@
 import os.path
-from robocode_ls_core.robotframework_log import get_logger
-from robocode_ls_core.cache import instance_cache
+from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.cache import instance_cache
 from collections import namedtuple
 
 log = get_logger(__name__)
@@ -45,7 +45,7 @@ class _KeywordFoundFromAst(object):
 
     @property
     def resource_name(self):
-        from robocode_ls_core import uris
+        from robocorp_ls_core import uris
 
         uri = self.completion_context.doc.uri
         return os.path.splitext(os.path.basename(uris.to_fs_path(uri)))[0]
@@ -65,7 +65,7 @@ class _KeywordFoundFromAst(object):
     @property
     @instance_cache
     def source(self):
-        from robocode_ls_core import uris
+        from robocorp_ls_core import uris
 
         return uris.to_fs_path(self.completion_context.doc.uri)
 
@@ -184,7 +184,7 @@ class _KeywordFoundFromLibrary(object):
 
 def _collect_completions_from_ast(ast, completion_context, collector):
     from robotframework_ls.impl import ast_utils
-    from robocode_ls_core.lsp import CompletionItemKind
+    from robocorp_ls_core.lsp import CompletionItemKind
 
     for keyword in ast_utils.iter_keywords(ast):
         keyword_name = keyword.node.name
@@ -224,7 +224,7 @@ def _collect_libraries_keywords(completion_context, collector):
     """
     # Get keywords from libraries
     from robotframework_ls.impl.robot_constants import BUILTIN_LIB
-    from robocode_ls_core.lsp import CompletionItemKind
+    from robocorp_ls_core.lsp import CompletionItemKind
 
     libraries = completion_context.get_imported_libraries()
     library_infos = set(_LibInfo(library.name, library.alias) for library in libraries)

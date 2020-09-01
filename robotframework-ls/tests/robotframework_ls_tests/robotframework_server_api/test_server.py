@@ -8,7 +8,7 @@ if __file__.endswith((".pyc", ".pyo")):
 
 @pytest.fixture
 def server_process(tmpdir):
-    from robocode_ls_core.basic import kill_process_and_subprocesses
+    from robocorp_ls_core.basic import kill_process_and_subprocesses
     from robotframework_ls.server_api.server__main__ import start_server_process
 
     log_file = str(tmpdir.join("robotframework_api_tests.log"))
@@ -41,7 +41,7 @@ def server_api_process_io(server_process):
     Starts a language server in a new process and communicates through stdin/stdout streams.
     """
     from robotframework_ls.server_api.client import RobotFrameworkApiClient
-    from robocode_ls_core.unittest_tools.fixtures import communicate_lang_server
+    from robocorp_ls_core.unittest_tools.fixtures import communicate_lang_server
 
     write_to = server_process.stdin
     read_from = server_process.stdout
@@ -81,7 +81,7 @@ def _build_launch_env():
 
 
 def _check_in_separate_process(method_name, module_name="test_server", update_env={}):
-    from robocode_ls_core.subprocess_wrapper import subprocess
+    from robocorp_ls_core.subprocess_wrapper import subprocess
     import sys
 
     cwd, environ = _build_launch_env()
@@ -128,7 +128,7 @@ def test_check_version():
 
 
 def check_no_robotframework():
-    from robocode_ls_core.basic import before
+    from robocorp_ls_core.basic import before
     import sys
 
     import builtins

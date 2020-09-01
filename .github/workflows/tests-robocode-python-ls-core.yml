@@ -1,15 +1,15 @@
-name: Tests - Python Language Server Core (robocode-python-ls-core)
+name: Tests - Python Language Server Core (robocorp-python-ls-core)
 
 on:
   push:
     paths:
-    - robocode-python-ls-core/**
+    - robocorp-python-ls-core/**
     - .github/**
 
 
   pull_request:
     paths:
-    - robocode-python-ls-core/**
+    - robocorp-python-ls-core/**
     - .github/**
       
 jobs:
@@ -41,24 +41,24 @@ jobs:
     - name: Upgrade pip
       run: python -m pip install --upgrade pip
     - name: setup.py install
-      working-directory: ./robocode-python-ls-core
+      working-directory: ./robocorp-python-ls-core
       run: |
         cd src
         python setup.py install
         cd ..
     - name: Install test deps
-      working-directory: ./robocode-python-ls-core
+      working-directory: ./robocorp-python-ls-core
       run: |
         cd tests
         pip install -r test_requirements.txt
         cd ..
     - name: Test
-      working-directory: ./robocode-python-ls-core/tests
+      working-directory: ./robocorp-python-ls-core/tests
       env:
         PYTHONPATH: .
       run: python -u ./run_tests.py -otests_output -vv .
     - uses: actions/upload-artifact@v1
       with:
         name: tests_output.${{ matrix.name }}.txt
-        path: robocode-python-ls-core/tests/tests_output
+        path: robocorp-python-ls-core/tests/tests_output
 

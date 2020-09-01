@@ -64,8 +64,8 @@ import os.path
 import sys
 import itertools
 import ntpath
-from robocode_ls_core.constants import IS_WINDOWS, IS_JYTHON
-from robocode_ls_core.robotframework_log import get_logger, get_log_level
+from robocorp_ls_core.constants import IS_WINDOWS, IS_JYTHON
+from robocorp_ls_core.robotframework_log import get_logger, get_log_level
 from functools import partial
 
 

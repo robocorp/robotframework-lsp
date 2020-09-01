@@ -1,12 +1,12 @@
 import pytest  # type: ignore
 import os
 import threading
-from robocode_ls_core.options import DEFAULT_TIMEOUT
+from robocorp_ls_core.options import DEFAULT_TIMEOUT
 import sys
 from robotframework_debug_adapter.dap.dap_schema import StackFrame
 from typing import List, Optional, Dict, Callable, Iterable
 from robotframework_debug_adapter.protocols import IBusyWait, IRobotDebugger
-from robocode_ls_core.basic import implements
+from robocorp_ls_core.basic import implements
 
 
 class DummyBusyWait(object):
@@ -129,7 +129,7 @@ def stack_frames_repr(
 
 
 def dbg_wait_for(condition, msg=None, timeout=DEFAULT_TIMEOUT, sleep=1 / 20.0):
-    from robocode_ls_core.basic import wait_for_condition
+    from robocorp_ls_core.basic import wait_for_condition
 
     if "pydevd" in sys.modules:
         timeout = sys.maxsize

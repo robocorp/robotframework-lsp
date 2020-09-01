@@ -62,7 +62,7 @@ class _DefinitionFromResource(object):
         """
         :param RobotDocument resource_doc:
         """
-        from robocode_ls_core import uris
+        from robocorp_ls_core import uris
 
         self.keyword_name = ""
         self.resource_doc = resource_doc

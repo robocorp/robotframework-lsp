@@ -1,6 +1,6 @@
-from robocode_ls_core.pluginmanager import PluginManager
+from robocorp_ls_core.pluginmanager import PluginManager
 import threading
-from robocode_ls_core.basic import (
+from robocorp_ls_core.basic import (
     log_and_silence_errors,
     kill_process_and_subprocesses,
     is_process_alive,
@@ -8,13 +8,13 @@ from robocode_ls_core.basic import (
 import sys
 import weakref
 import os
-from robocode_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.robotframework_log import get_logger
 from typing import Any, Dict, Optional, Tuple
 from robotframework_ls.ep_resolve_interpreter import (
     EPResolveInterpreter,
     IInterpreterInfo,
 )
-from robocode_ls_core.protocols import IConfig, IMessageMatcher, IWorkspace
+from robocorp_ls_core.protocols import IConfig, IMessageMatcher, IWorkspace
 import itertools
 from functools import partial
 
@@ -190,7 +190,7 @@ class _ServerApi(object):
                     from robotframework_ls.server_api.server__main__ import (
                         start_server_process,
                     )
-                    from robocode_ls_core.jsonrpc.streams import (
+                    from robocorp_ls_core.jsonrpc.streams import (
                         JsonRpcStreamWriter,
                         JsonRpcStreamReader,
                     )

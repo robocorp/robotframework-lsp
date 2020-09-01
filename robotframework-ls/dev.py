@@ -7,7 +7,7 @@ Some example commands:
 
     python -m dev set-version 0.0.2
     python -m dev check-tag-version
-    python -m dev vendor-robocode-ls-core
+    python -m dev vendor-robocorp-ls-core
 """
 import sys
 import os
@@ -26,7 +26,7 @@ except ImportError:
     sys.path.append("src")
     import robotframework_ls
 
-robotframework_ls.import_robocode_ls_core()
+robotframework_ls.import_robocorp_ls_core()
 
 
 def _fix_contents_version(contents, version):
@@ -101,25 +101,25 @@ class Dev(object):
             )
             sys.exit(1)
 
-    def vendor_robocode_ls_core(self):
+    def vendor_robocorp_ls_core(self):
         """
-        Vendors robocode_ls_core into robotframework_ls/vendored.
+        Vendors robocorp_ls_core into robotframework_ls/vendored.
         """
         import shutil
 
         src_core = os.path.join(
             os.path.dirname(__file__),
             "..",
-            "robocode-python-ls-core",
+            "robocorp-python-ls-core",
             "src",
-            "robocode_ls_core",
+            "robocorp_ls_core",
         )
         vendored_dir = os.path.join(
             os.path.dirname(__file__),
             "src",
             "robotframework_ls",
             "vendored",
-            "robocode_ls_core",
+            "robocorp_ls_core",
         )
         print("Copying from: %s to %s" % (src_core, vendored_dir))
         try:
@@ -163,7 +163,7 @@ def test_lines():
         __version__ = "0.0.1"
         https://github.com/robocorp/robotframework-lsp/blob/robotframework-lsp-0.1.1/robotframework-ls/README.md
     """
-    from robocode_ls_core.unittest_tools.compare import compare_lines
+    from robocorp_ls_core.unittest_tools.compare import compare_lines
 
     contents = _fix_contents_version(
         """

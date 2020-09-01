@@ -36,7 +36,7 @@ def test_config():
 
 
 def test_config_flatten_01():
-    from robocode_ls_core import config
+    from robocorp_ls_core import config
     from robotframework_ls.impl.robot_lsp_constants import ALL_ROBOT_OPTIONS
 
     settings = {
@@ -60,7 +60,7 @@ def test_config_flatten_01():
 
 
 def test_config_flatten_02():
-    from robocode_ls_core import config
+    from robocorp_ls_core import config
     from robotframework_ls.impl.robot_lsp_constants import ALL_ROBOT_OPTIONS
 
     settings = {

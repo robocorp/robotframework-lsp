@@ -1,12 +1,12 @@
 from typing import Optional
 
-from robocode_ls_core.pluginmanager import PluginManager
+from robocorp_ls_core.pluginmanager import PluginManager
 from robotframework_ls.ep_resolve_interpreter import (
     EPResolveInterpreter,
     IInterpreterInfo,
     DefaultInterpreterInfo,
 )
-from robocode_ls_core import uris
+from robocorp_ls_core import uris
 from pathlib import Path
 import sys
 import os
@@ -31,7 +31,7 @@ class ResolveInterpreterInTests(object):
         return None
 
     def __typecheckself__(self) -> None:
-        from robocode_ls_core.protocols import check_implements
+        from robocorp_ls_core.protocols import check_implements
 
         _: EPResolveInterpreter = check_implements(self)
 

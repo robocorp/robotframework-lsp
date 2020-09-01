@@ -187,13 +187,13 @@ async function getDefaultLanguageServerPythonExecutable(): Promise<ExecutableAnd
 	let executable: string = languageServerPython;
 
 	if (!executable || (executable.indexOf('/') == -1 && executable.indexOf('\\') == -1)) {
-		// Try to use the robocode extension to provide one for us (if it's installed and
+		// Try to use the Robocorp Code extension to provide one for us (if it's installed and
 		// available).
 		try {
 			let languageServerPython: string = await commands.executeCommand<string>(
-				"robocode.getLanguageServerPython");
+				"robocorp.getLanguageServerPython");
 			if (languageServerPython) {
-				OUTPUT_CHANNEL.appendLine("Language server Python executable gotten from robocode.getLanguageServerPython.");
+				OUTPUT_CHANNEL.appendLine("Language server Python executable gotten from robocorp.getLanguageServerPython.");
 				return {
 					executable: languageServerPython,
 					'message': undefined
@@ -255,7 +255,7 @@ export async function activate(context: ExtensionContext) {
 			let saveInWorkspace: string = 'Yes (save in workspace settings)';
 
 			let selection = await window.showWarningMessage(executableAndMessage.message, ...[saveInUser, saveInWorkspace, 'No']);
-			// Try to use the robocode extension to provide one for us (if it's installed and
+			// Try to use the Robocorp Code extension to provide one for us (if it's installed and
 			// available). Since it can manage conda envs, if one is available it should be
 
 
@@ -323,7 +323,7 @@ export async function activate(context: ExtensionContext) {
 
 		let pluginsDir: string;
 		try {
-			pluginsDir = await commands.executeCommand<string>("robocode.getPluginsDir");
+			pluginsDir = await commands.executeCommand<string>("robocorp.getPluginsDir");
 		} catch (error) {
 			// The command may not be available.
 		}

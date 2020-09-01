@@ -1,12 +1,12 @@
-from robocode_ls_core.python_ls import PythonLanguageServer
-from robocode_ls_core.basic import overrides, log_and_silence_errors
+from robocorp_ls_core.python_ls import PythonLanguageServer
+from robocorp_ls_core.basic import overrides, log_and_silence_errors
 import os
 import time
 from robotframework_ls.constants import DEFAULT_COMPLETIONS_TIMEOUT
-from robocode_ls_core.robotframework_log import get_logger
-from robocode_ls_core import basic
+from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core import basic
 from typing import Any, Optional
-from robocode_ls_core.protocols import IMessageMatcher, IConfig, IWorkspace
+from robocorp_ls_core.protocols import IMessageMatcher, IConfig, IWorkspace
 from pathlib import Path
 from robotframework_ls.ep_providers import (
     EPConfigurationProvider,
@@ -22,7 +22,7 @@ LINT_DEBOUNCE_S = 0.5  # 500 ms
 
 class RobotFrameworkLanguageServer(PythonLanguageServer):
     def __init__(self, rx, tx):
-        from robocode_ls_core.pluginmanager import PluginManager
+        from robocorp_ls_core.pluginmanager import PluginManager
         from robotframework_ls.server_manager import ServerManager
         from robotframework_ls.ep_providers import DefaultConfigurationProvider
         from robotframework_ls.ep_providers import DefaultEndPointProvider
@@ -30,7 +30,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         PythonLanguageServer.__init__(self, rx, tx)
 
-        from robocode_ls_core.cache import DirCache
+        from robocorp_ls_core.cache import DirCache
 
         from robotframework_ls import robot_config
 
@@ -71,7 +71,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
     @overrides(PythonLanguageServer.capabilities)
     def capabilities(self):
-        from robocode_ls_core.lsp import TextDocumentSyncKind
+        from robocorp_ls_core.lsp import TextDocumentSyncKind
 
         server_capabilities = {
             "codeActionProvider": False,
@@ -117,7 +117,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         elif command == "robot.resolveInterpreter":
             try:
-                from robocode_ls_core import uris
+                from robocorp_ls_core import uris
                 from robotframework_ls.ep_resolve_interpreter import (
                     EPResolveInterpreter,
                 )

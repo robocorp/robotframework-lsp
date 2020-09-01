@@ -1,8 +1,8 @@
 ---
-name: Robocode Bug report
+name: Robocorp Code Bug report
 about: Create a report to help us improve
 title: ''
-labels: bug, robocode
+labels: bug, robocorp-code
 assignees: ''
 
 ---

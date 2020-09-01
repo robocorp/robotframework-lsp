@@ -1,6 +1,6 @@
 from robotframework_ls.impl.robot_workspace import RobotDocument
-from robocode_ls_core.cache import instance_cache
-from robocode_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.cache import instance_cache
+from robocorp_ls_core.robotframework_log import get_logger
 import sys
 
 log = get_logger(__name__)
@@ -52,11 +52,11 @@ class CompletionContext(object):
         self, doc, line=_NOT_SET, col=_NOT_SET, workspace=None, config=None, memo=None
     ):
         """
-        :param robocode_ls_core.workspace.Document doc:
+        :param robocorp_ls_core.workspace.Document doc:
         :param int line:
         :param int col:
         :param RobotWorkspace workspace:
-        :param robocode_ls_core.config.Config config:
+        :param robocorp_ls_core.config.Config config:
         :param _Memo memo:
         """
 
@@ -284,7 +284,7 @@ class CompletionContext(object):
 
     @instance_cache
     def get_resource_import_as_doc(self, resource_import):
-        from robocode_ls_core import uris
+        from robocorp_ls_core import uris
         import os.path
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
 

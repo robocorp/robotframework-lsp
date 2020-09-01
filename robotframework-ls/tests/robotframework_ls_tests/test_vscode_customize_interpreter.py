@@ -1,11 +1,11 @@
-from robocode_ls_core.protocols import ILanguageServerClient
-from robocode_ls_core.unittest_tools.cases_fixture import CasesFixture
+from robocorp_ls_core.protocols import ILanguageServerClient
+from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 
 
 def test_customize_interpreter(
     language_server_io: ILanguageServerClient, workspace_dir: str, cases: CasesFixture
 ):
-    from robocode_ls_core import uris
+    from robocorp_ls_core import uris
     import os
     from pathlib import Path
     from robotframework_ls.impl.robot_workspace import RobotDocument

@@ -13,13 +13,13 @@ def test_libspec_info(libspec_manager, tmpdir):
 
 
 def test_libspec_manager_caches(libspec_manager, workspace_dir):
-    from robocode_ls_core import uris
+    from robocorp_ls_core import uris
     from os.path import os
     from robotframework_ls_tests.fixtures import LIBSPEC_1
     from robotframework_ls_tests.fixtures import LIBSPEC_2
     from robotframework_ls_tests.fixtures import LIBSPEC_2_A
     import time
-    from robocode_ls_core.unittest_tools.fixtures import wait_for_test_condition
+    from robocorp_ls_core.unittest_tools.fixtures import wait_for_test_condition
 
     workspace_dir_a = os.path.join(workspace_dir, "workspace_dir_a")
     os.makedirs(workspace_dir_a)

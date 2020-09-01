@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../robocorp-python-ls-core"
+		},
+		{
+			"path": "../../robotframework-ls"
+		}
+	],
+	"settings": {
+		"python.pydev.pythonPath": ["src", "../robotframework-ls/src", "../robocorp-python-ls-core/src"]
+	}
+}

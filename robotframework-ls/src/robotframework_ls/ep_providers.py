@@ -1,6 +1,6 @@
 import sys
 
-from robocode_ls_core.protocols import IConfig, IDirCache, IEndPoint
+from robocorp_ls_core.protocols import IConfig, IDirCache, IEndPoint
 
 if sys.version_info[:2] < (3, 8):
 

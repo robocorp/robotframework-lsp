@@ -73,16 +73,16 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
         # Automatically add it to the path if __main__ is being executed.
         sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         import robotframework_ls  # @UnusedImport
-    robotframework_ls.import_robocode_ls_core()
+    robotframework_ls.import_robocorp_ls_core()
 
     from robotframework_ls.options import Setup, Options
-    from robocode_ls_core.robotframework_log import (
+    from robocorp_ls_core.robotframework_log import (
         configure_logger,
         log_args_and_python,
         get_logger,
     )
 
-    from robocode_ls_core.python_ls import (
+    from robocorp_ls_core.python_ls import (
         start_io_lang_server,
         start_tcp_lang_server,
         binary_stdio,
