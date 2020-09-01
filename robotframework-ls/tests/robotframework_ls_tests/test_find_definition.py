@@ -1,3 +1,6 @@
+from typing import Tuple
+
+
 def test_find_definition_builtin(workspace, libspec_manager):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.find_definition import find_definition
@@ -365,3 +368,74 @@ List Variable
     data_regression.check(
         _definitions_to_data_regression(find_definition(completion_context))
     )
+
+
+def create_case_as_link(cases, tmpdir, case_name) -> Tuple[str, str]:
+    target_original = cases.get_path(case_name)
+    import os
+
+    target_link = str(tmpdir.join(case_name))
+    os.symlink(target_original, target_link, target_is_directory=True)
+    return target_original, target_link
+
+
+def check_using_link_version(
+    found_at_source: str, target_link: str, target_original: str
+):
+    from pathlib import Path
+
+    path = Path(found_at_source)
+    found_parent = str(path.parent).lower()
+    symlinked_version = target_link.lower()
+    non_symlinked_version = str(target_original).lower()
+
+    assert symlinked_version != non_symlinked_version
+    assert found_parent != non_symlinked_version
+    assert found_parent == symlinked_version
+
+
+def test_find_definition_should_not_resolve_link_in_curr_file(
+    workspace, libspec_manager, tmpdir, cases
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    target_original, target_link = create_case_as_link(cases, tmpdir, "case2")
+    workspace.set_absolute_path_root(target_link, libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case2.robot")
+
+    col = 4
+    completion_context = CompletionContext(doc, workspace=workspace.ws, line=7, col=4)
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1, "Failed to find definitions for col: %s" % (col,)
+    definition = next(iter(definitions))
+    assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 1
+    check_using_link_version(definition.source, target_link, target_original)
+
+
+def test_find_definition_should_not_resolve_link_in_resource(
+    workspace, libspec_manager, cases, tmpdir
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    target_original, target_link = create_case_as_link(cases, tmpdir, "case4")
+    workspace.set_absolute_path_root(target_link, libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+    doc.source = """*** Settings ***
+Library    String
+Library    Collections
+Resource    case4resource.txt
+
+*** Test Cases ***
+Test
+    case4resource3.Yet Another Equal Redefined"""
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("case4resource3.robot")
+    assert definition.lineno == 1
+    check_using_link_version(definition.source, target_link, target_original)
