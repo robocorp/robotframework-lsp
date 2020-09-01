@@ -14,7 +14,7 @@ class ResolveInterpreterInTest(object):
     @implements(EPResolveInterpreter.get_interpreter_info_for_doc_uri)
     def get_interpreter_info_for_doc_uri(self, doc_uri) -> Optional[IInterpreterInfo]:
         if doc_uri == "doc_uri_1":
-            return DefaultInterpreterInfo("doc1", "python_exe_doc1", None, None)
+            return DefaultInterpreterInfo("doc1", "python_exe_doc1", None, [])
         return None
 
     def __typecheckself__(self) -> None:

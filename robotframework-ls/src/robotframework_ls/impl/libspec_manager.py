@@ -49,12 +49,12 @@ def _load_library_doc_and_mtime(spec_filename, obtain_mutex=True):
             return None
 
 
-def _load_lib_info(spec_filename, can_regenerate):
-    libdoc_and_mtime = _load_library_doc_and_mtime(spec_filename)
+def _load_lib_info(canonical_spec_filename, can_regenerate):
+    libdoc_and_mtime = _load_library_doc_and_mtime(canonical_spec_filename)
     if libdoc_and_mtime is None:
         return None
     libdoc, mtime = libdoc_and_mtime
-    return _LibInfo(libdoc, mtime, spec_filename, can_regenerate)
+    return _LibInfo(libdoc, mtime, canonical_spec_filename, can_regenerate)
 
 
 _IS_BUILTIN = "is_builtin"
@@ -77,8 +77,12 @@ def _create_updated_source_to_mtime(library_doc):
     source_to_mtime = {}
     for source in sources:
         try:
+            # i.e.: get it before normalizing (but leave the cache key normalized).
+            # This is because even on windows the file-system may end up being
+            # case-dependent on some cases.
+            mtime = os.path.getmtime(source)
             source = _normfile(source)
-            source_to_mtime[source] = os.path.getmtime(source)
+            source_to_mtime[source] = mtime
         except Exception:
             log.exception("Unable to load source for file: %s", source)
     return source_to_mtime
@@ -147,7 +151,7 @@ class _LibInfo(object):
     __slots__ = [
         "library_doc",
         "mtime",
-        "_spec_filename",
+        "_canonical_spec_filename",
         "_additional_info",
         "_invalid",
         "_can_regenerate",
@@ -171,7 +175,7 @@ class _LibInfo(object):
         self.mtime = mtime
 
         self._can_regenerate = can_regenerate
-        self._spec_filename = spec_filename
+        self._canonical_spec_filename = spec_filename
         self._additional_info = None
         self._invalid = False
 
@@ -191,7 +195,9 @@ class _LibInfo(object):
 
         additional_info = self._additional_info
         if additional_info is None:
-            additional_info = _load_spec_filename_additional_info(self._spec_filename)
+            additional_info = _load_spec_filename_additional_info(
+                self._canonical_spec_filename
+            )
             if additional_info.get(_IS_BUILTIN, False):
                 return True
 
@@ -220,7 +226,7 @@ class _FolderInfo(object):
     def __init__(self, folder_path, recursive):
         self.folder_path = folder_path
         self.recursive = recursive
-        self.libspec_filename_to_info = {}
+        self.libspec_canonical_filename_to_info = {}
         self._watch = NULL
 
     def start_watch(self, observer, notifier):
@@ -250,21 +256,23 @@ class _FolderInfo(object):
             )
 
     def _on_change_spec(self, spec_file):
-        spec_file = _norm_filename(spec_file)
+        spec_file_key = _norm_filename(spec_file)
         # Just add/remove that specific spec file from the tracked list.
-        libspec_filename_to_info = self.libspec_filename_to_info.copy()
+        libspec_canonical_filename_to_info = (
+            self.libspec_canonical_filename_to_info.copy()
+        )
         if os.path.exists(spec_file):
-            libspec_filename_to_info[spec_file] = None
+            libspec_canonical_filename_to_info[spec_file_key] = None
         else:
-            libspec_filename_to_info.pop(spec_file, None)
+            libspec_canonical_filename_to_info.pop(spec_file_key, None)
 
-        self.libspec_filename_to_info = libspec_filename_to_info
+        self.libspec_canonical_filename_to_info = libspec_canonical_filename_to_info
 
     def synchronize(self):
         try:
-            self.libspec_filename_to_info = self._collect_libspec_info(
+            self.libspec_canonical_filename_to_info = self._collect_libspec_info(
                 [self.folder_path],
-                self.libspec_filename_to_info,
+                self.libspec_canonical_filename_to_info,
                 recursive=self.recursive,
             )
         except Exception:
@@ -274,7 +282,7 @@ class _FolderInfo(object):
         watch = self._watch
         self._watch = NULL
         watch.stop_tracking()
-        self.libspec_filename_to_info = {}
+        self.libspec_canonical_filename_to_info = {}
 
     def _collect_libspec_info(self, folders, old_libspec_filename_to_info, recursive):
         seen_libspec_files = set()
@@ -588,24 +596,26 @@ class LibspecManager(object):
         # and have higher priority).
         iter_in = []
         for (_uri, info) in self._workspace_folder_uri_to_folder_info.items():
-            iter_in.append((info.libspec_filename_to_info, False))
+            iter_in.append((info.libspec_canonical_filename_to_info, False))
 
         for (_uri, info) in self._pythonpath_folder_to_folder_info.items():
-            iter_in.append((info.libspec_filename_to_info, False))
+            iter_in.append((info.libspec_canonical_filename_to_info, False))
 
         for (_uri, info) in self._additional_pythonpath_folder_to_folder_info.items():
-            iter_in.append((info.libspec_filename_to_info, False))
+            iter_in.append((info.libspec_canonical_filename_to_info, False))
 
         for (_uri, info) in self._internal_folder_to_folder_info.items():
-            iter_in.append((info.libspec_filename_to_info, True))
+            iter_in.append((info.libspec_canonical_filename_to_info, True))
 
-        for filename_to_info, can_regenerate in iter_in:
-            for spec_filename, info in list(filename_to_info.items()):
+        for canonical_filename_to_info, can_regenerate in iter_in:
+            for canonical_spec_filename, info in list(
+                canonical_filename_to_info.items()
+            ):
 
                 if info is None:
-                    info = filename_to_info[spec_filename] = _load_lib_info(
-                        spec_filename, can_regenerate
-                    )
+                    info = canonical_filename_to_info[
+                        canonical_spec_filename
+                    ] = _load_lib_info(canonical_spec_filename, can_regenerate)
 
                 # Note: we could end up yielding a library with the same name
                 # multiple times due to its scope. It's up to the caller to

@@ -194,10 +194,13 @@ class _WorkspaceFixture(object):
         return self._ws
 
     def set_root(self, relative_path, **kwargs):
+        path = self._cases.get_path(relative_path)
+        self.set_absolute_path_root(path, **kwargs)
+
+    def set_absolute_path_root(self, path, **kwargs):
         from robocorp_ls_core import uris
         from robotframework_ls.impl.robot_workspace import RobotWorkspace
 
-        path = self._cases.get_path(relative_path)
         self._ws = RobotWorkspace(uris.from_fs_path(path), **kwargs)
 
     def get_doc(self, root_relative_path, accept_from_file=True):
