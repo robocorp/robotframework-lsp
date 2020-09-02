@@ -47,22 +47,26 @@ def add_arguments(parser):
         port = 1456
         verbose = 0
 
-    parser.description = "Python Language Server"
+    parser.description = "Robocorp Code"
 
     parser.add_argument(
-        "--tcp", action="store_true", help="Use TCP server instead of stdio"
+        "--tcp", action="store_true", help="Use TCP server instead of stdio."
     )
     parser.add_argument(
-        "--host", default=DefaultOptions.host, help="Bind to this address"
+        "--host",
+        default=DefaultOptions.host,
+        help="Bind to this IP address (i.e.: 127.0.0.01).",
     )
     parser.add_argument(
-        "--port", type=int, default=DefaultOptions.port, help="Bind to this port"
+        "--port",
+        type=int,
+        default=DefaultOptions.port,
+        help="Bind to this port (i.e.: 1456).",
     )
 
     parser.add_argument(
         "--log-file",
-        help="Redirect logs to the given file instead of writing to stderr."
-        "Has no effect if used with --log-config.",
+        help="Redirect logs to the given file instead of writing to stderr (i.e.: c:/temp/my_log.log).",
     )
 
     parser.add_argument(
@@ -70,7 +74,13 @@ def add_arguments(parser):
         "--verbose",
         action="count",
         default=DefaultOptions.verbose,
-        help="Increase verbosity of log output, overrides log config file",
+        help="Increase verbosity of log output (i.e.: -vv).",
+    )
+
+    parser.add_argument(
+        "--version",
+        action="store_true",
+        help="If passed, just prints the version to the standard output and exits.",
     )
 
 
@@ -119,6 +129,11 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
 
         raise
 
+    if args.version:
+        sys.stdout.write(robocorp_code.__version__)
+        sys.stdout.flush()
+        return
+
     configure_logger("lsp", verbose, log_file)
     log = get_logger("robocorp_code.__main__")
     log_args_and_python(log, original_args, robocorp_code.__version__)
@@ -154,6 +169,8 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
 if __name__ == "__main__":
     try:
         main()
+    except (SystemExit, KeyboardInterrupt):
+        pass
     except:
         # Critical error (the logging may not be set up properly).
         # Print to file and stderr.
