@@ -1,3 +1,11 @@
+New in 0.3.2 (2020-09-02)
+-----------------------------
+
+- Support for plugins to allow other extensions to hook different python interpreters for different files.
+- Provided --version option to command line to just print the version and exit. [#131](https://github.com/robocorp/robotframework-lsp/issues/131)
+- Fix handling changes in folders tracked in a workspace.
+
+
 New in 0.3.1 (2020-07-27)
 -----------------------------
 

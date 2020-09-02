@@ -30,7 +30,7 @@ may be needed.
 See: [Config](docs/config.md) for details.
   
 
-Features (0.3.1)
+Features (0.3.2)
 -----------------
 
 - Code analysis: checks if keywords are properly imported/defined.
@@ -40,9 +40,8 @@ Features (0.3.1)
 - Syntax validation.
 - Code Formatting (see: [Editor Settings](https://code.visualstudio.com/docs/getstarted/settings#_language-specific-editor-settings) for details on how to toggle code formatting just for `robotframework`).
 - Launch `.robot` files.
-- Preliminary support for debugging.
-    - Note: this is an initial release for the feature and should be considered beta (please test and report any issues found).
-    - The current functionalities include:
+- Debug `.robot` files.
+    - Debugger features:
         - Evaluate keywords in debug console/hover/watch
         - Add line breakpoints
         - Pause at breakpoints to inspect the stack and see variables
