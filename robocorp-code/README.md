@@ -26,8 +26,10 @@ After having the extension installed, the first time that the extension is activ
 it will download additional dependencies (such as a conda manager) to bootstrap
 the actual language server.
 
-Features (0.0.3)
+Features (0.0.4)
 -----------------
+
+Note: If upgrading from 0.0.3, please remove the previous version manually as the name of the extension changed.
 
 - Automatic bootstrap of Python environment for the language server.
   Note that when the `Robocorp Code Extension` is installed, the `Robot Framework Language Server` will
@@ -36,6 +38,9 @@ Features (0.0.3)
 - Create a template activity with the `Robocorp: Create Activity Package.` action.
 
 - Submit an activity package to the cloud with the `Robocorp: Upload Activity Package to the cloud.` action.
+
+- When a package.yaml is found, it's used to provide a different python environment when running/debugging `.robot` files using the RobotFramework Language Server.
+  Note: this only works if no manual customizations were done to the `robot.python.executable` or `robot.pythonpath` settings.
 
 Developing
 ------------

@@ -2,9 +2,7 @@ on:
   push:
     branches:
       - "release-robotframework-lsp"
-      - "release-robocorp-code"
     tags:
-      - "robocorp-code-*"
       - "robotframework-lsp-*"
 name: Deploy - RobotFramework Language Server Extension
 jobs:

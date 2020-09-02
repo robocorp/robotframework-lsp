@@ -1,3 +1,11 @@
+New in 0.0.4 (2020-09-02)
+-----------------------------
+
+- The extension name changed to Robocorp Code (so, if upgrading from 0.0.3, please 
+  remove the previous version manually).
+- When a package.yaml is found, it's used to provide a different python environment
+  when running/debugging `.robot` files using the RobotFramework Language Server.
+
 New in 0.0.3 (2020-08-12)
 -----------------------------
 
