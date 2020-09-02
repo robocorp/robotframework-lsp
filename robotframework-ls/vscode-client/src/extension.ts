@@ -26,6 +26,7 @@ import * as fs from 'fs';
 import { workspace, Disposable, ExtensionContext, window, commands, ConfigurationTarget, debug, DebugAdapterExecutable, ProviderResult, DebugConfiguration, WorkspaceFolder, CancellationToken, DebugConfigurationProvider } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
 import { ProgressReport, handleProgressMessage } from './progress';
+import { Timing } from './time';
 
 const OUTPUT_CHANNEL_NAME = "Robot Framework";
 const OUTPUT_CHANNEL = window.createOutputChannel(OUTPUT_CHANNEL_NAME);
@@ -247,6 +248,7 @@ async function getDefaultLanguageServerPythonExecutable(): Promise<ExecutableAnd
 export async function activate(context: ExtensionContext) {
 	try {
 		// The first thing we need is the python executable.
+		let timing = new Timing();
 		let executableAndMessage = await getDefaultLanguageServerPythonExecutable();
 		if (executableAndMessage.message) {
 			OUTPUT_CHANNEL.appendLine(executableAndMessage.message);
@@ -256,7 +258,7 @@ export async function activate(context: ExtensionContext) {
 
 			let selection = await window.showWarningMessage(executableAndMessage.message, ...[saveInUser, saveInWorkspace, 'No']);
 			// Try to use the Robocorp Code extension to provide one for us (if it's installed and
-			// available). Since it can manage conda envs, if one is available it should be
+			// available).
 
 
 			// robot.language-server.python
@@ -314,7 +316,6 @@ export async function activate(context: ExtensionContext) {
 		// may not be available.
 		OUTPUT_CHANNEL.appendLine("Waiting for RobotFramework (python) Language Server to finish activating...");
 		await langServer.onReady();
-		OUTPUT_CHANNEL.appendLine("RobotFramework Language Server ready.");
 
 		langServer.onNotification("$/customProgress", (args: ProgressReport) => {
 			// OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
@@ -336,6 +337,8 @@ export async function activate(context: ExtensionContext) {
 		} catch (error) {
 			OUTPUT_CHANNEL.appendLine(error);
 		}
+
+		OUTPUT_CHANNEL.appendLine("RobotFramework Language Server ready. Took: " + timing.getTotalElapsedAsStr());
 
 	} finally {
 		workspace.onDidChangeConfiguration(event => {
