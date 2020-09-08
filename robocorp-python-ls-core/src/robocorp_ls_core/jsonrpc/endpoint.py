@@ -30,20 +30,24 @@ from .exceptions import (
 from concurrent import futures
 from robocorp_ls_core.basic import implements
 from robocorp_ls_core.protocols import IEndPoint, IFuture
+from robocorp_ls_core.jsonrpc.monitor import Monitor
+from typing import Optional
 
 log = get_logger(__name__)
 JSONRPC_VERSION = "2.0"
 CANCEL_METHOD = "$/cancelRequest"
 
 
+def require_monitor(func):
+    """
+    To be used as a decorator.
+    """
+    func.__require_monitor__ = True
+    return func
+
+
 class Endpoint(object):
-    def __init__(
-        self,
-        dispatcher,
-        consumer,
-        id_generator=lambda: str(uuid.uuid4()),
-        max_workers=5,
-    ):
+    def __init__(self, dispatcher, consumer, id_generator=lambda: str(uuid.uuid4())):
         """A JSON RPC endpoint for managing messages sent to/from the client.
 
         Args:
@@ -61,10 +65,17 @@ class Endpoint(object):
 
         self._client_request_futures = {}
         self._server_request_futures = {}
-        self._executor_service = futures.ThreadPoolExecutor(max_workers=max_workers)
+
+    @property
+    def _executor_service(self):
+        from robocorp_ls_core.jsonrpc.thread_pool import obtain_thread_pool
+
+        return obtain_thread_pool()
 
     def shutdown(self):
-        self._executor_service.shutdown()
+        from robocorp_ls_core.jsonrpc.thread_pool import dispose_thread_pool
+
+        dispose_thread_pool()
 
     @implements(IEndPoint.notify)
     def notify(self, method: str, params=None):
@@ -200,6 +211,9 @@ class Endpoint(object):
             return
 
         # Will only work if the request hasn't started executing
+        monitor: Optional[Monitor] = getattr(request_future, "__monitor__", None)
+        if monitor is not None:
+            monitor.cancel()
         if request_future.cancel():
             log.debug("Cancelled request with id %s", msg_id)
 
@@ -216,8 +230,15 @@ class Endpoint(object):
         handler_result = handler(params)
 
         if callable(handler_result):
+            kwargs = {}
+            monitor = None
+            if getattr(handler_result, "__require_monitor__", False):
+                monitor = Monitor()
+                kwargs["monitor"] = monitor
             log.debug("Executing async request handler %s", handler_result)
-            request_future = self._executor_service.submit(handler_result)
+            request_future = self._executor_service.submit(handler_result, **kwargs)
+            if monitor is not None:
+                request_future.__monitor__ = monitor
             self._client_request_futures[msg_id] = request_future
             request_future.add_done_callback(self._request_callback(msg_id))
         elif isinstance(handler_result, futures.Future):
@@ -242,10 +263,11 @@ class Endpoint(object):
             self._client_request_futures.pop(request_id, None)
 
             try:
+                message = {"jsonrpc": JSONRPC_VERSION, "id": request_id}
+
                 if future.cancelled():
                     raise JsonRpcRequestCancelled()
 
-                message = {"jsonrpc": JSONRPC_VERSION, "id": request_id}
                 message["result"] = future.result()
             except JsonRpcException as e:
                 log.exception("Failed to handle request %s", request_id)

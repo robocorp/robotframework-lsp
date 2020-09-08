@@ -19,9 +19,10 @@
 https://github.com/microsoft/language-server-protocol/tree/gh-pages/_specifications
 https://microsoft.github.io/language-server-protocol/specification
 """
+from typing import List, Union
+import typing
 
 from robocorp_ls_core.protocols import IEndPoint, IFuture
-import typing
 
 
 class CompletionItemKind(object):
@@ -117,6 +118,8 @@ class _Base(object):
         for key, value in self.__dict__.items():
             if hasattr(value, "to_dict"):
                 value = value.to_dict()
+            if value.__class__ in (list, tuple):
+                value = [v.to_dict() if hasattr(v, "to_dict") else v for v in value]
             if value is not None:
                 new_dict[key] = value
         return new_dict
@@ -197,6 +200,42 @@ class CompletionItem(_Base):
         self.command = command
         self.data = data
         self.documentationFormat = documentationFormat
+
+
+class MarkupContent(_Base):
+    def __init__(self, kind: "MarkupKind", value: str):
+        self.kind = kind
+        self.value = value
+
+
+class ParameterInformation(_Base):
+    def __init__(self, label: str, documentation: Union[str, MarkupContent] = None):
+        self.label = label
+        self.documentation = documentation
+
+
+class SignatureInformation(_Base):
+    def __init__(
+        self,
+        label: str,
+        documentation: Union[str, MarkupContent] = None,
+        parameters: List[ParameterInformation] = None,
+    ):
+        self.label = label
+        self.documentation = documentation
+        self.parameters = parameters
+
+
+class SignatureHelp(_Base):
+    def __init__(
+        self,
+        signatures: List[SignatureInformation],
+        active_signature: int = 0,
+        active_parameter: int = 0,
+    ):
+        self.signatures = signatures
+        self.activeSignature = active_signature
+        self.activeParameter = active_parameter
 
 
 class Position(_Base):

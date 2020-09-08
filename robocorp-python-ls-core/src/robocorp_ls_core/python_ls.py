@@ -32,9 +32,6 @@ from robocorp_ls_core import uris
 log = get_logger(__name__)
 
 
-MAX_WORKERS = 64
-
-
 class _StreamHandlerWrapper(socketserver.StreamRequestHandler, object):
     """A wrapper class that is used to construct a custom handler class."""
 
@@ -186,7 +183,7 @@ class PythonLanguageServer(MethodDispatcher):
     Based on: https://github.com/palantir/python-language-server/blob/develop/pyls/python_ls.py
     """
 
-    def __init__(self, read_stream, write_stream, max_workers=MAX_WORKERS):
+    def __init__(self, read_stream, write_stream):
         from robocorp_ls_core.lsp import LSPMessages
 
         self._config: IConfig = self._create_config()
@@ -197,9 +194,7 @@ class PythonLanguageServer(MethodDispatcher):
 
         self._jsonrpc_stream_reader = JsonRpcStreamReader(read_stream)
         self._jsonrpc_stream_writer = JsonRpcStreamWriter(write_stream)
-        self._endpoint = Endpoint(
-            self, self._jsonrpc_stream_writer.write, max_workers=max_workers
-        )
+        self._endpoint = Endpoint(self, self._jsonrpc_stream_writer.write)
         self._lsp_messages = LSPMessages(self._endpoint)
 
         self._shutdown = False

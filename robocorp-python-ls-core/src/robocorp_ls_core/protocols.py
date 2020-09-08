@@ -1,10 +1,22 @@
 import sys
 import threading
-from typing import Dict, Union, Any, Generic, Callable, Mapping, Optional, List, Type
+from typing import (
+    Dict,
+    Union,
+    Any,
+    Generic,
+    Callable,
+    Mapping,
+    Optional,
+    List,
+    Type,
+    Iterator,
+)
 from typing import TypeVar
 import typing
 
 from enum import Enum
+from contextlib import contextmanager
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -178,6 +190,45 @@ class ILanguageServerClientBase(Protocol):
         pass
 
 
+class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
+    def forward(self, method_name, params):
+        pass
+
+    def forward_async(self, method_name, params):
+        """
+        :Note: async complete (returns _MessageMatcher).
+        """
+
+    def open(self, uri, version, source):
+        pass
+
+    def request_section_name_complete(self, doc_uri, line, col):
+        """
+        :Note: async complete (returns _MessageMatcher).
+        """
+
+    def request_keyword_complete(self, doc_uri, line, col):
+        """
+        :Note: async complete (returns _MessageMatcher).
+        """
+
+    def request_complete_all(self, doc_uri, line, col):
+        """
+        Completes: sectionName, keyword, variables
+        :Note: async complete (returns _MessageMatcher).
+        """
+
+    def request_find_definition(self, doc_uri, line, col):
+        """
+        :Note: async complete (returns _MessageMatcher).
+        """
+
+    def request_source_format(self, text_document, options):
+        """
+        :Note: async complete (returns _MessageMatcher).
+        """
+
+
 class ILanguageServerClient(ILanguageServerClientBase, Protocol):
     pid: Optional[int]
 
@@ -336,6 +387,17 @@ class IDirCache(Protocol):
 
 
 class IDocument(Protocol):
+    uri: str
+    version: Optional[str]
+
+    @property
+    def source(self) -> str:
+        pass
+
+    @source.setter
+    def source(self, source: str) -> None:
+        pass
+
     def get_line(self, line: int) -> str:
         pass
 
@@ -346,7 +408,34 @@ class IDocument(Protocol):
         """
 
 
+class IWorkspaceFolder(Protocol):
+    uri: str
+    name: str
+
+
 class IWorkspace(Protocol):
+    @contextmanager
+    def lock(self):
+        pass
+
+    @property
+    def root_path(self):
+        pass
+
+    @property
+    def root_uri(self):
+        pass
+
+    def iter_documents(self) -> Iterator[IDocument]:
+        """
+        Note: the lock must be obtained when iterating documents.
+        """
+
+    def iter_folders(self) -> Iterator[IWorkspaceFolder]:
+        """
+        Note: the lock must be obtained when iterating folders.
+        """
+
     def remove_document(self, uri: str) -> None:
         pass
 

@@ -5,6 +5,8 @@
 <pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
 <path>/${PROJECT_DIR_NAME}/src</path>
 <path>/${PROJECT_DIR_NAME}/tests</path>
+<path>/${PROJECT_DIR_NAME}/src/robocorp_ls_core/libs/watchdog_lib</path>
+<path>/${PROJECT_DIR_NAME}/src/robocorp_ls_core/libs/yaml_lib</path>
 </pydev_pathproperty>
 <pydev_property name="org.python.pydev.PYTHON_ADDITIONAL_GRAMMAR_VALIDATION">3.6</pydev_property>
 </pydev_project>

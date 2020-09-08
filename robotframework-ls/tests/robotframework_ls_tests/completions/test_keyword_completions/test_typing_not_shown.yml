@@ -9,7 +9,7 @@
   label: Case Verify Typing
   preselect: false
   textEdit:
-    newText: Case Verify Typing    ${1:new model=10}
+    newText: Case Verify Typing
     range:
       end:
         character: 15

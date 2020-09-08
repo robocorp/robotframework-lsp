@@ -9,7 +9,7 @@
   label: Check With Multi Args
   preselect: false
   textEdit:
-    newText: Check With Multi Args    ${1:arg1}    ${2:arg2=10}    ${3:@args}    ${4:&kwargs}
+    newText: Check With Multi Args    ${1:arg1}
     range:
       end:
         character: 18
@@ -28,7 +28,7 @@
   label: Verify Another Model
   preselect: false
   textEdit:
-    newText: Verify Another Model    ${1:model=10}
+    newText: Verify Another Model
     range:
       end:
         character: 18

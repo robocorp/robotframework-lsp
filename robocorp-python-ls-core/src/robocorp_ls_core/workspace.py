@@ -25,6 +25,8 @@ from robocorp_ls_core.basic import implements
 from robocorp_ls_core.protocols import IWorkspace, IDocument
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.uris import uri_scheme, to_fs_path
+import threading
+from contextlib import contextmanager
 
 
 log = get_logger(__name__)
@@ -33,6 +35,9 @@ log = get_logger(__name__)
 class Workspace(object):
     def __init__(self, root_uri, workspace_folders=None) -> None:
         from robocorp_ls_core.lsp import WorkspaceFolder
+
+        self._lock = threading.RLock()
+        self._obtained_lock = 0
 
         self._root_uri = root_uri
         self._root_uri_scheme = uri_scheme(self._root_uri)
@@ -49,7 +54,7 @@ class Workspace(object):
             for folder in workspace_folders:
                 self.add_folder(folder)
 
-        if root_uri and root_uri not in self.folders:
+        if root_uri and root_uri not in self._folders:
             as_fs_path = uris.to_fs_path(root_uri)
             name = os.path.basename(as_fs_path)
             self.add_folder(WorkspaceFolder(root_uri, name))
@@ -57,36 +62,64 @@ class Workspace(object):
     def _create_document(self, doc_uri, source=None, version=None):
         return Document(doc_uri, source=source, version=version)
 
+    @contextmanager
+    def lock(self):
+        with self._lock:
+            self._obtained_lock += 1
+            try:
+                yield
+            finally:
+                self._obtained_lock -= 1
+
     def add_folder(self, folder):
         """
         :param WorkspaceFolder folder:
         """
-        self._folders[folder.uri] = folder
+        with self._lock:
+            self._folders[folder.uri] = folder
 
     def remove_folder(self, folder_uri):
-        self._folders.pop(folder_uri, None)
+        with self._lock:
+            self._folders.pop(folder_uri, None)
 
+    @implements(IWorkspace.iter_documents)
     def iter_documents(self):
-        return self._docs.values()
+        assert self._obtained_lock, "The lock must be obtained when iterating docs."
+        for doc in self._docs.values():
+            yield doc
+        assert self._obtained_lock, "The lock must be obtained when iterating docs."
 
-    @property
-    def folders(self):
-        return self._folders
+    @implements(IWorkspace.iter_folders)
+    def iter_folders(self):
+        assert self._obtained_lock, "The lock must be obtained when iterating folders."
+        for folder in self._folders.values():
+            yield folder
+        assert self._obtained_lock, "The lock must be obtained when iterating folders."
 
     @implements(IWorkspace.get_folder_paths)
     def get_folder_paths(self) -> List[str]:
-        folders = self._folders
-        return [uris.to_fs_path(ws_folder.uri) for ws_folder in folders.values()]
+        with self._lock:
+            folders = self._folders
+            return [uris.to_fs_path(ws_folder.uri) for ws_folder in folders.values()]
 
     @implements(IWorkspace.get_document)
     def get_document(self, doc_uri: str, accept_from_file: bool) -> Optional[IDocument]:
         doc = self._docs.get(doc_uri)
-        if doc is None:
+        if doc is not None:
+            return doc
+
+        with self._lock:
+            doc = self._docs.get(doc_uri)
+            if doc is not None:
+                return doc
+
             if accept_from_file:
                 doc = self._filesystem_docs.get(doc_uri)
+
                 if doc is None:
                     doc = self._create_document(doc_uri)
                     self._filesystem_docs[doc_uri] = doc
+
                 if not doc.sync_source():
                     self._filesystem_docs.pop(doc_uri, None)
                     doc = None
@@ -103,16 +136,17 @@ class Workspace(object):
         self, text_document: "robocorp_ls_core.lsp.TextDocumentItem"
     ) -> IDocument:
         doc_uri = text_document.uri
-
-        doc = self._docs[doc_uri] = self._create_document(
-            doc_uri, source=text_document.text, version=text_document.version
-        )
-        self._filesystem_docs.pop(doc_uri, None)
+        with self._lock:
+            doc = self._docs[doc_uri] = self._create_document(
+                doc_uri, source=text_document.text, version=text_document.version
+            )
+            self._filesystem_docs.pop(doc_uri, None)
         return doc
 
     @implements(IWorkspace.remove_document)
     def remove_document(self, uri: str) -> None:
-        self._docs.pop(uri, None)
+        with self._lock:
+            self._docs.pop(uri, None)
 
     @property
     def root_path(self):
@@ -127,10 +161,11 @@ class Workspace(object):
         :param TextDocumentItem text_doc:
         :param TextDocumentContentChangeEvent change:
         """
-        doc_uri = text_doc["uri"]
-        doc = self._docs[doc_uri]
-        doc.apply_change(change)
-        doc.version = text_doc["version"]
+        with self._lock:
+            doc_uri = text_doc["uri"]
+            doc = self._docs[doc_uri]
+            doc.apply_change(change)
+            doc.version = text_doc["version"]
 
     def __typecheckself__(self) -> None:
         from robocorp_ls_core.protocols import check_implements
@@ -144,7 +179,7 @@ class _LineInfo(object):
 
 
 class Document(object):
-    def __init__(self, uri, source=None, version=None):
+    def __init__(self, uri: str, source=None, version: Optional[str] = None):
         self.uri = uri
         self.version = version
         self.path = uris.to_fs_path(uri)  # Note: may be None.
@@ -172,11 +207,11 @@ class Document(object):
         return DocumentSelection(self, line, col)
 
     @property
-    def _source(self):
+    def _source(self) -> str:
         return self.__source
 
     @_source.setter
-    def _source(self, source):
+    def _source(self, source: str) -> None:
         # i.e.: when the source is set, reset the lines.
         self.__source = source
         self._clear_caches()
@@ -345,3 +380,8 @@ class Document(object):
     def apply_text_edits(self, text_edits):
         for text_edit in reversed(text_edits):
             self._apply_change(text_edit["range"], text_edit["newText"])
+
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
+
+        _: IDocument = check_implements(self)

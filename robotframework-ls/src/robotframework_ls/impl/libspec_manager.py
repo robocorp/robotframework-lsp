@@ -371,14 +371,9 @@ class LibspecManager(object):
             Only to be used in tests (to regenerate the builtins)!
         """
         from robocorp_ls_core import watchdog_wrapper
+        from robocorp_ls_core.jsonrpc.thread_pool import obtain_thread_pool
 
-        from concurrent import futures
-
-        from multiprocessing import cpu_count
-
-        self._thread_pool = futures.ThreadPoolExecutor(
-            max_workers=(cpu_count() * 1.2) + 1
-        )
+        self._thread_pool = obtain_thread_pool()
 
         self._observer = watchdog_wrapper.create_observer()
 

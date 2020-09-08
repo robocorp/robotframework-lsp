@@ -20,11 +20,12 @@ import mock
 import pytest
 
 from robocorp_ls_core.jsonrpc import exceptions
-from robocorp_ls_core.jsonrpc.endpoint import Endpoint
+from robocorp_ls_core.jsonrpc.endpoint import Endpoint, require_monitor
 
 
 # pylint: disable=redefined-outer-name
 from concurrent import futures
+from robocorp_ls_core.jsonrpc.monitor import Monitor
 
 
 MSG_ID = "id"
@@ -302,9 +303,10 @@ def test_consume_request_error(exc_type, error, endpoint, consumer, dispatcher):
     await_assertion(lambda: assert_consumer_error(consumer, error))
 
 
-def test_consume_request_cancel(endpoint, dispatcher):
+def test_consume_request_cancel(endpoint, dispatcher, consumer):
     def async_handler():
-        time.sleep(3)
+        time.sleep(1)
+        return 1234
 
     handler = mock.Mock(return_value=async_handler)
     dispatcher["methodName"] = handler
@@ -323,12 +325,63 @@ def test_consume_request_cancel(endpoint, dispatcher):
         {"jsonrpc": "2.0", "method": "$/cancelRequest", "params": {"id": MSG_ID}}
     )
 
-    # Because Python's Future cannot be cancelled once it's started, the request is never actually cancelled
-    # consumer.assert_called_once_with({
-    #     'jsonrpc': '2.0',
-    #     'id': MSG_ID,
-    #     'error': exceptions.JsonRpcRequestCancelled().to_dict()
-    # })
+    # Because Python's Future cannot be cancelled once it's started, the request
+    # may not actually be cancelled (to have a monitor that can be cancelled
+    # afterwards, it's possible to set __require_monitor__ in the callable. see:
+    # test_consume_request_cancel_monitor).
+    def check_result_or_cancelled():
+        try:
+            consumer.assert_called_once_with(
+                {"jsonrpc": "2.0", "id": MSG_ID, "result": 1234}
+            )
+        except AssertionError:
+            consumer.assert_called_once_with(
+                {
+                    "jsonrpc": "2.0",
+                    "id": MSG_ID,
+                    "error": exceptions.JsonRpcRequestCancelled().to_dict(),
+                }
+            )
+
+    await_assertion(check_result_or_cancelled, timeout=5)
+
+
+def test_consume_request_cancel_monitor(endpoint, dispatcher, consumer):
+
+    # i.e.: cancel after the request already started.
+    @require_monitor
+    def async_handler(monitor: Monitor):
+        for _ in range(10):
+            time.sleep(0.1)
+            monitor.check_cancelled()
+
+    handler = mock.Mock(return_value=async_handler)
+    dispatcher["methodName"] = handler
+
+    endpoint.consume(
+        {
+            "jsonrpc": "2.0",
+            "id": MSG_ID,
+            "method": "methodName",
+            "params": {"key": "value"},
+        }
+    )
+    handler.assert_called_once_with({"key": "value"})
+
+    endpoint.consume(
+        {"jsonrpc": "2.0", "method": "$/cancelRequest", "params": {"id": MSG_ID}}
+    )
+
+    def wait_for_monitor_check_cancelled():
+        consumer.assert_called_once_with(
+            {
+                "jsonrpc": "2.0",
+                "id": MSG_ID,
+                "error": exceptions.JsonRpcRequestCancelled().to_dict(),
+            }
+        )
+
+    await_assertion(wait_for_monitor_check_cancelled)
 
 
 def test_consume_request_cancel_unknown(endpoint):
@@ -353,15 +406,15 @@ def assert_consumer_error(consumer_mock, exception):
     assert args[0]["error"]["code"] == exception.code
 
 
-def await_assertion(condition, timeout=3.0, interval=0.1, exc=None):
-    if timeout <= 0:
-        raise exc if exc else AssertionError(
-            "Failed to wait for condition %s" % condition
-        )
-    try:
-        condition()
-    except AssertionError as e:
-        time.sleep(interval)
-        await_assertion(
-            condition, timeout=(timeout - interval), interval=interval, exc=e
-        )
+def await_assertion(condition, timeout=3.0, interval=0.1):
+    maxtime = time.time() + timeout
+    while True:
+        try:
+            condition()
+        except AssertionError as e:
+            if time.time() <= maxtime:
+                time.sleep(interval)
+            else:
+                raise e
+        else:
+            return

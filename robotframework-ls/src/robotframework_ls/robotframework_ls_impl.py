@@ -5,7 +5,7 @@ import time
 from robotframework_ls.constants import DEFAULT_COMPLETIONS_TIMEOUT
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core import basic
-from typing import Any, Optional
+from typing import Any, Optional, List
 from robocorp_ls_core.protocols import IMessageMatcher, IConfig, IWorkspace
 from pathlib import Path
 from robotframework_ls.ep_providers import (
@@ -13,6 +13,9 @@ from robotframework_ls.ep_providers import (
     EPDirCacheProvider,
     EPEndPointProvider,
 )
+from robocorp_ls_core.jsonrpc.endpoint import require_monitor
+from robocorp_ls_core.jsonrpc.monitor import Monitor
+from functools import partial
 
 
 log = get_logger(__name__)
@@ -93,9 +96,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             "referencesProvider": False,
             "renameProvider": False,
             "foldingRangeProvider": False,
-            # "signatureHelpProvider": {
-            #     'triggerCharacters': ['(', ',', '=']
-            # },
+            "signatureHelpProvider": {"triggerCharacters": [" "]},
             "textDocumentSync": {
                 "change": TextDocumentSyncKind.INCREMENTAL,
                 "save": {"includeText": False},
@@ -267,7 +268,10 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         api = self._server_manager.get_regular_api(doc_uri)
 
         message_matchers = [api.request_find_definition(doc_uri, line, col)]
-        accepted_message_matchers = self._wait_for_message_matchers(message_matchers)
+        monitor = None
+        accepted_message_matchers = self._wait_for_message_matchers(
+            message_matchers, monitor
+        )
         message_matcher: IMessageMatcher
         for message_matcher in accepted_message_matchers:
             msg = message_matcher.msg
@@ -278,17 +282,28 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         return None
 
-    @log_and_silence_errors(log, return_on_error=[])
     def m_text_document__completion(self, **kwargs):
+        func = partial(self._document_completion, **kwargs)
+        func = require_monitor(func)
+        return func
+
+    @log_and_silence_errors(log, return_on_error=[])
+    def _document_completion(self, **kwargs) -> list:
         from robotframework_ls.impl.completion_context import CompletionContext
         from robotframework_ls.impl import section_completions
         from robotframework_ls.impl import snippets_completions
 
+        monitor: Monitor = kwargs["monitor"]
         doc_uri = kwargs["textDocument"]["uri"]
         # Note: 0-based
         line, col = kwargs["position"]["line"], kwargs["position"]["character"]
 
-        document = self.workspace.get_document(doc_uri, accept_from_file=True)
+        ws = self.workspace
+        if not ws:
+            log.critical("Workspace must be set before returning completions.")
+            return []
+
+        document = ws.get_document(doc_uri, accept_from_file=True)
         if document is None:
             log.critical("Unable to find document (%s) for completions." % (doc_uri,))
             return []
@@ -306,7 +321,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         completions.extend(section_completions.complete(ctx))
         completions.extend(snippets_completions.complete(ctx))
 
-        accepted_message_matchers = self._wait_for_message_matchers(message_matchers)
+        accepted_message_matchers = self._wait_for_message_matchers(
+            message_matchers, monitor
+        )
         for message_matcher in accepted_message_matchers:
             msg = message_matcher.msg
             if msg is not None:
@@ -316,7 +333,78 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         return completions
 
-    def _wait_for_message_matchers(self, message_matchers):
+    def m_text_document__signature_help(self, **kwargs):
+        func = partial(self._signature_help, **kwargs)
+        func = require_monitor(func)
+        return func
+
+    @log_and_silence_errors(log)
+    def _signature_help(self, monitor: Monitor, **kwargs) -> Optional[dict]:
+        """
+        "params": {
+            "textDocument": {
+                "uri": "file:///x%3A/vscode-robot/local_test/Basic/resources/keywords.robot"
+            },
+            "position": {"line": 7, "character": 22},
+            "context": {
+                "isRetrigger": False,
+                "triggerCharacter": " ",
+                "triggerKind": 2,
+            },
+        },
+        """
+        return None  # work in progress.
+        # monitor.check_cancelled()
+        # from robocorp_ls_core.lsp import SignatureHelp
+        # from robocorp_ls_core.lsp import SignatureInformation
+        # from robocorp_ls_core.lsp import ParameterInformation
+        #
+        # label = "(param1, param2)"
+        # documentation = "Documentation for the keyword"
+        # parameters: List[ParameterInformation] = [
+        #     # Note: the label here is to highlight a part of the main signature label!
+        #     # ParameterInformation("param1", None),
+        # ]
+        # signatures: List[SignatureInformation] = [
+        #     SignatureInformation(label, documentation, parameters)
+        # ]
+        # return SignatureHelp(
+        #     signatures, active_signature=0, active_parameter=0
+        # ).to_dict()
+
+    def _wait_for_message_matcher(
+        self,
+        message_matcher: IMessageMatcher,
+        timeout: float,
+        monitor: Optional[Monitor],
+    ):
+        if monitor is None:
+            if message_matcher.event.wait(timeout):
+                return True
+        else:
+            maxtime = time.time() + timeout
+            # We need to periodically check for the monitor, so, set up a busy loop that does that.
+
+            # Check at least 20 times / second.
+            delta = min(1 / 20.0, timeout)
+
+            # Always do at least 1 check regardless of the time.
+            if message_matcher.event.wait(delta):
+                return True
+
+            monitor.check_cancelled()
+
+            while time.time() < maxtime:
+                if message_matcher.event.wait(delta):
+                    return True
+
+                monitor.check_cancelled()
+
+        return False
+
+    def _wait_for_message_matchers(
+        self, message_matchers: List[IMessageMatcher], monitor: Optional[Monitor]
+    ):
         accepted_message_matchers = []
         curtime = time.time()
         maxtime = curtime + DEFAULT_COMPLETIONS_TIMEOUT
@@ -327,7 +415,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                 if available_time <= 0:
                     available_time = 0.0001  # Wait at least a bit for each.
 
-                if message_matcher.event.wait(available_time):
+                if self._wait_for_message_matcher(
+                    message_matcher, available_time, monitor
+                ):
                     accepted_message_matchers.append(message_matcher)
 
         return accepted_message_matchers

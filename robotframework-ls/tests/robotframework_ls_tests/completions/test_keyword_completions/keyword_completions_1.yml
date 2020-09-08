@@ -9,7 +9,7 @@
   label: Verify Another Model
   preselect: false
   textEdit:
-    newText: Verify Another Model    ${1:model=10}
+    newText: Verify Another Model
     range:
       end:
         character: 10

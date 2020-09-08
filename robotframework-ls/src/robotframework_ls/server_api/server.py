@@ -3,6 +3,9 @@ from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.robotframework_log import get_logger
 from typing import Optional
 from robocorp_ls_core.protocols import IConfig
+from functools import partial
+from robocorp_ls_core.jsonrpc.endpoint import require_monitor
+from robocorp_ls_core.jsonrpc.monitor import Monitor
 
 
 log = get_logger(__name__)
@@ -22,7 +25,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             libspec_manager = LibspecManager()
 
         self.libspec_manager = libspec_manager
-        PythonLanguageServer.__init__(self, read_from, write_to, max_workers=1)
+        PythonLanguageServer.__init__(self, read_from, write_to)
         self._version = None
 
     @overrides(PythonLanguageServer._create_config)
@@ -102,6 +105,11 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return []
 
     def m_complete_all(self, doc_uri, line, col):
+        func = partial(self._complete_all, doc_uri, line, col)
+        func = require_monitor(func)
+        return func
+
+    def _complete_all(self, doc_uri, line, col, monitor: Monitor):
         from robotframework_ls.impl import section_name_completions
         from robotframework_ls.impl import keyword_completions
         from robotframework_ls.impl import variable_completions

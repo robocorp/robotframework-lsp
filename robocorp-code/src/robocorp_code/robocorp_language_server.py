@@ -1,5 +1,5 @@
 from robocorp_ls_core.basic import overrides
-from robocorp_ls_core.python_ls import PythonLanguageServer, MAX_WORKERS
+from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
 from typing import List, Any, Optional, Dict
 from robocorp_code import commands
@@ -86,7 +86,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
     CLOUD_LIST_WORKSPACE_CACHE_KEY = "CLOUD_LIST_WORKSPACE_CACHE"
     PACKAGE_ACCESS_LRU_CACHE_KEY = "PACKAGE_ACCESS_LRU_CACHE"
 
-    def __init__(self, read_stream, write_stream, max_workers=MAX_WORKERS):
+    def __init__(self, read_stream, write_stream):
         from robocorp_code.rcc import Rcc
         from robocorp_ls_core.cache import DirCache
 
@@ -99,9 +99,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
         self._dir_cache = DirCache(cache_dir)
         self._rcc = Rcc(self)
-        PythonLanguageServer.__init__(
-            self, read_stream, write_stream, max_workers=max_workers
-        )
+        PythonLanguageServer.__init__(self, read_stream, write_stream)
 
     @overrides(PythonLanguageServer._create_config)
     def _create_config(self) -> IConfig:

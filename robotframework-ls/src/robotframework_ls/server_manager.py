@@ -14,7 +14,12 @@ from robotframework_ls.ep_resolve_interpreter import (
     EPResolveInterpreter,
     IInterpreterInfo,
 )
-from robocorp_ls_core.protocols import IConfig, IMessageMatcher, IWorkspace
+from robocorp_ls_core.protocols import (
+    IConfig,
+    IMessageMatcher,
+    IWorkspace,
+    IRobotFrameworkApiClient,
+)
 import itertools
 from functools import partial
 
@@ -170,8 +175,13 @@ class _ServerApi(object):
             log.warning("self._config not set in %s" % (self.__class__,))
         return env
 
-    def _get_server_api(self):
+    def _get_server_api(self) -> Optional[IRobotFrameworkApiClient]:
         with self._server_lock:
+            workspace = self.workspace
+            assert (
+                workspace
+            ), "The workspace must be already set when getting the server api."
+
             server_process = self._server_process
 
             if server_process is not None:
@@ -236,39 +246,42 @@ class _ServerApi(object):
                     api = self._server_api = RobotFrameworkApiClient(
                         w, r, server_process
                     )
-                    api.initialize(
-                        process_id=os.getpid(),
-                        root_uri=self.workspace.root_uri,
-                        workspace_folders=list(
-                            {"uri": folder.uri, "name": folder.name}
-                            for folder in list(self.workspace.folders.values())
-                        ),
-                    )
 
-                    config = self._config
-                    if config is not None:
-                        api.forward(
-                            "workspace/didChangeConfiguration",
-                            {"settings": config.get_full_settings()},
+                    with workspace.lock():
+                        api.initialize(
+                            process_id=os.getpid(),
+                            root_uri=workspace.root_uri,
+                            workspace_folders=list(
+                                {"uri": folder.uri, "name": folder.name}
+                                for folder in workspace.iter_folders()
+                            ),
                         )
 
-                    # Open existing documents in the API.
-                    for document in self.workspace.iter_documents():
-                        try:
-                            source = document.source
-                        except Exception:
-                            source = None
+                        config = self._config
+                        if config is not None:
+                            api.forward(
+                                "workspace/didChangeConfiguration",
+                                {"settings": config.get_full_settings()},
+                            )
 
-                        api.forward(
-                            "textDocument/didOpen",
-                            {
-                                "textDocument": {
-                                    "uri": document.uri,
-                                    "version": document.version,
-                                    "text": source,
-                                }
-                            },
-                        )
+                        # Open existing documents in the API.
+                        source: Optional[str]
+                        for document in workspace.iter_documents():
+                            try:
+                                source = document.source
+                            except Exception:
+                                source = None
+
+                            api.forward(
+                                "textDocument/didOpen",
+                                {
+                                    "textDocument": {
+                                        "uri": document.uri,
+                                        "version": document.version,
+                                        "text": source,
+                                    }
+                                },
+                            )
 
                 except Exception as e:
                     if server_process is None:

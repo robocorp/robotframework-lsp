@@ -24,6 +24,7 @@ from contextlib import contextmanager
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.options import DEFAULT_TIMEOUT
 from typing import TypeVar, Any, Callable
+from robocorp_ls_core.jsonrpc.exceptions import JsonRpcRequestCancelled
 
 
 PARENT_PROCESS_WATCH_INTERVAL = 3  # 3 s
@@ -290,6 +291,9 @@ def log_and_silence_errors(logger, return_on_error=None):
         def new_func(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
+            except JsonRpcRequestCancelled:
+                logger.info("Cancelled handling: %s", func)
+                raise  # Don't silence cancelled exceptions
             except:
                 logger.exception("Error calling: %s", func)
                 return return_on_error

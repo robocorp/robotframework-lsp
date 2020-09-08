@@ -28,7 +28,7 @@
   label: new Verify Another Model
   preselect: false
   textEdit:
-    newText: new Verify Another Model    ${1:new model=10}
+    newText: new Verify Another Model
     range:
       end:
         character: 10

@@ -49,16 +49,21 @@ class _Collector(object):
 
         for i, arg in enumerate(keyword_found.keyword_args):
             arg = arg.replace("$", "\\$").replace("{", "").replace("}", "")
+
             if arg.startswith("**"):
-                arg = "&" + arg[2:]
+                break  # Don't show optionals
+                # arg = "&" + arg[2:]
 
             elif arg.startswith("*"):
-                arg = "@" + arg[1:]
+                break  # Don't show optionals
+                # arg = "@" + arg[1:]
+
+            if "=" in arg:
+                break  # Don't show optionals
 
             colon_i = arg.rfind(":")
-            equals_i = arg.rfind("=")
-            if colon_i != -1 and equals_i != -1 and equals_i > colon_i:
-                arg = arg[:colon_i] + arg[equals_i:]
+            if colon_i != -1:
+                arg = arg[:colon_i]
 
             text += "    ${%s:%s}" % (i + 1, arg)
 

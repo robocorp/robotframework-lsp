@@ -144,3 +144,9 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         return self.request_async(
             self._build_msg("codeFormat", text_document=text_document, options=options)
         )
+
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
+        from robocorp_ls_core.protocols import IRobotFrameworkApiClient
+
+        _: IRobotFrameworkApiClient = check_implements(self)
