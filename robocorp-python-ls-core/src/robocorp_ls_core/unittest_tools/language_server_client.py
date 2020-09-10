@@ -3,7 +3,11 @@ from typing import Mapping, Any, List, Optional, Dict
 
 from robocorp_ls_core.basic import implements
 from robocorp_ls_core.client_base import LanguageServerClientBase
-from robocorp_ls_core.protocols import ILanguageServerClient, IMessageMatcher
+from robocorp_ls_core.protocols import (
+    ILanguageServerClient,
+    IMessageMatcher,
+    IIdMessageMatcher,
+)
 
 
 log = logging.getLogger(__name__)
@@ -202,7 +206,9 @@ class LanguageServerClient(LanguageServerClientBase):
         )
 
     @implements(ILanguageServerClient.execute_command_async)
-    def execute_command_async(self, command: str, arguments: list) -> IMessageMatcher:
+    def execute_command_async(
+        self, command: str, arguments: list
+    ) -> Optional[IIdMessageMatcher]:
         return self.request_async(
             {
                 "jsonrpc": "2.0",

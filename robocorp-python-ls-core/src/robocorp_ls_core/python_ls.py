@@ -282,10 +282,17 @@ class PythonLanguageServer(MethodDispatcher):
             "Subclasses must override (current class: %s)." % (self.__class__,)
         )
 
+    def cancel_lint(self, doc_uri):
+        raise NotImplementedError(
+            "Subclasses must override (current class: %s)." % (self.__class__,)
+        )
+
     def m_text_document__did_close(self, textDocument=None, **_kwargs) -> None:
         ws = self.workspace
+        doc_uri = textDocument["uri"]
         if ws is not None:
-            ws.remove_document(textDocument["uri"])
+            ws.remove_document(doc_uri)
+        self.cancel_lint(doc_uri)
 
     def m_text_document__did_open(self, textDocument=None, **_kwargs) -> None:
         from robocorp_ls_core.lsp import TextDocumentItem

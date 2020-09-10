@@ -26,18 +26,21 @@ from robocorp_ls_core.protocols import IWorkspace, IDocument
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.uris import uri_scheme, to_fs_path
 import threading
-from contextlib import contextmanager
 
 
 log = get_logger(__name__)
 
 
 class Workspace(object):
+    """
+    Note: only a single thread can mutate the workspace, but multiple threads
+    may read from it.
+    """
+
     def __init__(self, root_uri, workspace_folders=None) -> None:
         from robocorp_ls_core.lsp import WorkspaceFolder
 
-        self._lock = threading.RLock()
-        self._obtained_lock = 0
+        self._main_thread = threading.current_thread()
 
         self._root_uri = root_uri
         self._root_uri_scheme = uri_scheme(self._root_uri)
@@ -59,74 +62,78 @@ class Workspace(object):
             name = os.path.basename(as_fs_path)
             self.add_folder(WorkspaceFolder(root_uri, name))
 
+    def _check_in_mutate_thread(self):
+        curr_thread = threading.current_thread()
+        if self._main_thread is not curr_thread:
+            raise AssertionError(
+                f"Mutating the workspace can only be done at the thread: {self._main_thread}. Current thread: {curr_thread}"
+            )
+
     def _create_document(self, doc_uri, source=None, version=None):
         return Document(doc_uri, source=source, version=version)
-
-    @contextmanager
-    def lock(self):
-        with self._lock:
-            self._obtained_lock += 1
-            try:
-                yield
-            finally:
-                self._obtained_lock -= 1
 
     def add_folder(self, folder):
         """
         :param WorkspaceFolder folder:
         """
-        with self._lock:
-            self._folders[folder.uri] = folder
+        self._check_in_mutate_thread()
+        folders = self._folders.copy()
+        folders[folder.uri] = folder
+        self._folders = folders
 
     def remove_folder(self, folder_uri):
-        with self._lock:
-            self._folders.pop(folder_uri, None)
+        self._check_in_mutate_thread()
+        folders = self._folders.copy()
+        folders.pop(folder_uri, None)
+        self._folders = folders
 
     @implements(IWorkspace.iter_documents)
     def iter_documents(self):
-        assert self._obtained_lock, "The lock must be obtained when iterating docs."
-        for doc in self._docs.values():
-            yield doc
-        assert self._obtained_lock, "The lock must be obtained when iterating docs."
+        self._check_in_mutate_thread()  # i.e.: we don't really mutate here, but this is not thread safe.
+        return self._docs.values()
 
     @implements(IWorkspace.iter_folders)
     def iter_folders(self):
-        assert self._obtained_lock, "The lock must be obtained when iterating folders."
-        for folder in self._folders.values():
-            yield folder
-        assert self._obtained_lock, "The lock must be obtained when iterating folders."
+        return (
+            self._folders.values()
+        )  # Ok, thread-safe (folders are always set as a whole)
 
     @implements(IWorkspace.get_folder_paths)
     def get_folder_paths(self) -> List[str]:
-        with self._lock:
-            folders = self._folders
-            return [uris.to_fs_path(ws_folder.uri) for ws_folder in folders.values()]
+        folders = self._folders  # Ok, thread-safe (folders are always set as a whole)
+        return [uris.to_fs_path(ws_folder.uri) for ws_folder in folders.values()]
 
     @implements(IWorkspace.get_document)
     def get_document(self, doc_uri: str, accept_from_file: bool) -> Optional[IDocument]:
+        # Ok, thread-safe (does not mutate the _docs dict -- contents in the _filesystem_docs
+        # may end up stale or we may have multiple loads when we wouldn't need,
+        # but that should be ok).
         doc = self._docs.get(doc_uri)
         if doc is not None:
             return doc
 
-        with self._lock:
-            doc = self._docs.get(doc_uri)
+        if accept_from_file:
+            doc = self._filesystem_docs.get(doc_uri)
+
             if doc is not None:
-                return doc
-
-            if accept_from_file:
-                doc = self._filesystem_docs.get(doc_uri)
-
-                if doc is None:
-                    doc = self._create_document(doc_uri)
-                    self._filesystem_docs[doc_uri] = doc
-
-                if not doc.sync_source():
+                if not doc.is_source_in_sync():
                     self._filesystem_docs.pop(doc_uri, None)
                     doc = None
+
+            if doc is None:
+                doc = self._create_document(doc_uri)
+                try:
+                    _source = doc.source  # Force loading current contents
+                except:
+                    # Unable to load contents: file does not exist.
+                    doc = None
+                else:
+                    self._filesystem_docs[doc_uri] = doc
 
         return doc
 
     def is_local(self):
+        # Thread-safe (only accesses immutable data).
         return (
             self._root_uri_scheme == "" or self._root_uri_scheme == "file"
         ) and os.path.exists(self._root_path)
@@ -135,25 +142,33 @@ class Workspace(object):
     def put_document(
         self, text_document: "robocorp_ls_core.lsp.TextDocumentItem"
     ) -> IDocument:
+        self._check_in_mutate_thread()
         doc_uri = text_document.uri
-        with self._lock:
-            doc = self._docs[doc_uri] = self._create_document(
-                doc_uri, source=text_document.text, version=text_document.version
-            )
-            self._filesystem_docs.pop(doc_uri, None)
+        doc = self._docs[doc_uri] = self._create_document(
+            doc_uri, source=text_document.text, version=text_document.version
+        )
+        try:
+            # In case the initial text wasn't passed, try to load it from source.
+            # If it doesn't work, set the initial source as empty.
+            _source = doc.source
+        except:
+            doc.source = ""
+        self._filesystem_docs.pop(doc_uri, None)
         return doc
 
     @implements(IWorkspace.remove_document)
     def remove_document(self, uri: str) -> None:
-        with self._lock:
-            self._docs.pop(uri, None)
+        self._check_in_mutate_thread()
+        self._docs.pop(uri, None)
 
     @property
     def root_path(self):
+        # Thread-safe (only accesses immutable data).
         return self._root_path
 
     @property
     def root_uri(self):
+        # Thread-safe (only accesses immutable data).
         return self._root_uri
 
     def update_document(self, text_doc, change):
@@ -161,11 +176,15 @@ class Workspace(object):
         :param TextDocumentItem text_doc:
         :param TextDocumentContentChangeEvent change:
         """
-        with self._lock:
-            doc_uri = text_doc["uri"]
-            doc = self._docs[doc_uri]
-            doc.apply_change(change)
-            doc.version = text_doc["version"]
+        self._check_in_mutate_thread()
+        doc_uri = text_doc["uri"]
+        doc = self._docs[doc_uri]
+
+        # Note: don't mutate an existing doc, always create a new one based on it
+        # (so, existing references won't have racing conditions).
+        new_doc = self._create_document(doc_uri, doc.source, text_doc["version"])
+        new_doc.apply_change(change)
+        self._docs[doc_uri] = new_doc
 
     def __typecheckself__(self) -> None:
         from robocorp_ls_core.protocols import check_implements
@@ -173,13 +192,19 @@ class Workspace(object):
         _: IWorkspace = check_implements(self)
 
 
-class _LineInfo(object):
-    def __init__(self):
-        pass
-
-
 class Document(object):
+    """
+    Note: the doc isn't inherently thread-safe, so, the workspace should create
+    a new document instead of mutating the source.
+    
+    Everything else (apart from changing the source) should be thread-safe
+    (even without locks -- sometimes we may end up calculating things more than
+    once, but that should not corrupt internal structures).
+    """
+
     def __init__(self, uri: str, source=None, version: Optional[str] = None):
+        self._main_thread = threading.current_thread()
+
         self.uri = uri
         self.version = version
         self.path = uris.to_fs_path(uri)  # Note: may be None.
@@ -189,6 +214,13 @@ class Document(object):
 
         # Only set when the source is read from disk.
         self._source_mtime = -1
+
+    def _check_in_mutate_thread(self):
+        curr_thread = threading.current_thread()
+        if self._main_thread is not curr_thread:
+            raise AssertionError(
+                f"Mutating the document can only be done at the thread: {self._main_thread}. Current thread: {curr_thread}"
+            )
 
     def __str__(self):
         return str(self.uri)
@@ -213,18 +245,21 @@ class Document(object):
     @_source.setter
     def _source(self, source: str) -> None:
         # i.e.: when the source is set, reset the lines.
+        self._check_in_mutate_thread()
         self.__source = source
         self._clear_caches()
 
     def _clear_caches(self):
+        self._check_in_mutate_thread()
         self.__lines = None
         self.__line_start_offsets = None
 
     @property
     def _lines(self):
-        if self.__lines is None:
-            self.__lines = tuple(self.source.splitlines(True))
-        return self.__lines
+        lines = self.__lines
+        if lines is None:
+            lines = self.__lines = tuple(self.source.splitlines(True))
+        return lines
 
     def get_internal_lines(self):
         return self._lines
@@ -251,6 +286,7 @@ class Document(object):
                 line_start_offset_to_info.append(offset)
                 offset += len(line)
 
+        self.__line_start_offsets = line_start_offset_to_info
         return line_start_offset_to_info
 
     def offset_to_line_col(self, offset):
@@ -270,6 +306,7 @@ class Document(object):
         return (i_line, offset - line_start_offset)
 
     def _load_source(self, mtime=None):
+        self._check_in_mutate_thread()
         if mtime is None:
             mtime = os.path.getmtime(self.path)
 
@@ -277,17 +314,13 @@ class Document(object):
         with io.open(self.path, "r", encoding="utf-8") as f:
             self._source = f.read()
 
-    @implements(IDocument.sync_source)
-    def sync_source(self):
+    @implements(IDocument.is_source_in_sync)
+    def is_source_in_sync(self):
         try:
             mtime = os.path.getmtime(self.path)
-            if self._source_mtime != mtime:
-                self._load_source(mtime)
-
-            # Ok, we loaded the sources properly.
-            return True
+            return self._source_mtime == mtime
         except Exception:
-            log.info("Unable to load source for: %s", self.path)
+            log.info("Unable to get mtime for: %s", self.path)
             return False
 
     @property
@@ -332,11 +365,13 @@ class Document(object):
 
     def apply_change(self, change):
         """Apply a change to the document."""
+        self._check_in_mutate_thread()
         text = change["text"]
         change_range = change.get("range")
         self._apply_change(change_range, text)
 
     def _apply_change(self, change_range, text):
+        self._check_in_mutate_thread()
         if not change_range:
             # The whole file has changed
 
@@ -378,6 +413,7 @@ class Document(object):
         self._source = new.getvalue()
 
     def apply_text_edits(self, text_edits):
+        self._check_in_mutate_thread()
         for text_edit in reversed(text_edits):
             self._apply_change(text_edit["range"], text_edit["newText"])
 

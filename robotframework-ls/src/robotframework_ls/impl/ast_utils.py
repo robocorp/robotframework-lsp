@@ -86,6 +86,9 @@ class _PrinterVisitor(ast_module.NodeVisitor):
         return ret
 
 
+MAX_ERRORS = 100
+
+
 def collect_errors(node):
     """
     :return list(Error)
@@ -94,6 +97,8 @@ def collect_errors(node):
     for _stack, node in _iter_nodes_filtered(node, accept_class="Error"):
         msg = node.error
 
+        if len(errors) >= MAX_ERRORS:
+            break
         errors.append(create_error_from_node(node, msg))
 
     return errors

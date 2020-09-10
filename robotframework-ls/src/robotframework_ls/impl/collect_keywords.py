@@ -187,6 +187,7 @@ def _collect_completions_from_ast(ast, completion_context, collector):
     from robocorp_ls_core.lsp import CompletionItemKind
 
     for keyword in ast_utils.iter_keywords(ast):
+        completion_context.check_cancelled()
         keyword_name = keyword.node.name
         if collector.accepts(keyword_name):
             keyword_args = []
@@ -232,6 +233,7 @@ def _collect_libraries_keywords(completion_context, collector):
     libspec_manager = completion_context.workspace.libspec_manager
 
     for library_info in library_infos:
+        completion_context.check_cancelled()
         if not completion_context.memo.complete_for_library(library_info.name):
             continue
 
@@ -271,6 +273,7 @@ def _collect_resource_imports_keywords(completion_context, collector):
 
 
 def _collect_following_imports(completion_context, collector):
+    completion_context.check_cancelled()
     if completion_context.memo.follow_import(completion_context.doc.uri):
         # i.e.: prevent collecting keywords for the same doc more than once.
 

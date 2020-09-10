@@ -1,4 +1,5 @@
 from robocorp_ls_core.jsonrpc.exceptions import JsonRpcRequestCancelled
+from robocorp_ls_core.protocols import IMonitor
 
 
 class Monitor(object):
@@ -11,3 +12,8 @@ class Monitor(object):
     def check_cancelled(self) -> None:
         if self._cancelled:
             raise JsonRpcRequestCancelled()
+
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
+
+        _: IMonitor = check_implements(self)

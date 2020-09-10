@@ -16,7 +16,6 @@ from typing import TypeVar
 import typing
 
 from enum import Enum
-from contextlib import contextmanager
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -124,11 +123,23 @@ class IMessageMatcher(Generic[T], Protocol):
     msg: T
 
 
+class IIdMessageMatcher(IMessageMatcher, Protocol):
+
+    message_id: str
+
+
 COMMUNICATION_DROPPED = CommunicationDropped()
 
 
-class ILanguageServerClientBase(Protocol):
-    def request_async(self, contents: Dict) -> IMessageMatcher:
+class IRequestCancellable(Protocol):
+    def request_cancel(self, message_id) -> None:
+        """
+        Requests that some processing is cancelled.
+        """
+
+
+class ILanguageServerClientBase(IRequestCancellable, Protocol):
+    def request_async(self, contents: Dict) -> Optional[IIdMessageMatcher]:
         """
         API which allows to wait for the message to complete.
         
@@ -191,41 +202,63 @@ class ILanguageServerClientBase(Protocol):
 
 
 class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
+    def initialize(
+        self, msg_id=None, process_id=None, root_uri="", workspace_folders=()
+    ):
+        pass
+
+    def get_version(self):
+        pass
+
+    def lint(self, doc_uri: str) -> list:
+        pass
+
+    def request_lint(self, doc_uri: str) -> Optional[IIdMessageMatcher]:
+        pass
+
     def forward(self, method_name, params):
         pass
 
-    def forward_async(self, method_name, params):
+    def forward_async(self, method_name, params) -> Optional[IIdMessageMatcher]:
         """
-        :Note: async complete (returns _MessageMatcher).
+        :Note: async complete.
         """
 
     def open(self, uri, version, source):
         pass
 
-    def request_section_name_complete(self, doc_uri, line, col):
+    def request_section_name_complete(
+        self, doc_uri, line, col
+    ) -> Optional[IIdMessageMatcher]:
         """
-        :Note: async complete (returns _MessageMatcher).
-        """
-
-    def request_keyword_complete(self, doc_uri, line, col):
-        """
-        :Note: async complete (returns _MessageMatcher).
+        :Note: async complete.
         """
 
-    def request_complete_all(self, doc_uri, line, col):
+    def request_keyword_complete(
+        self, doc_uri, line, col
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+
+    def request_complete_all(self, doc_uri, line, col) -> Optional[IIdMessageMatcher]:
         """
         Completes: sectionName, keyword, variables
-        :Note: async complete (returns _MessageMatcher).
+        :Note: async complete.
         """
 
-    def request_find_definition(self, doc_uri, line, col):
+    def request_find_definition(
+        self, doc_uri, line, col
+    ) -> Optional[IIdMessageMatcher]:
         """
-        :Note: async complete (returns _MessageMatcher).
+        :Note: async complete.
         """
 
-    def request_source_format(self, text_document, options):
+    def request_source_format(
+        self, text_document, options
+    ) -> Optional[IIdMessageMatcher]:
         """
-        :Note: async complete (returns _MessageMatcher).
+        :Note: async complete.
         """
 
 
@@ -287,7 +320,9 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
     def execute_command(self, command: str, arguments: list) -> Mapping[str, Any]:
         pass
 
-    def execute_command_async(self, command: str, arguments: list) -> IMessageMatcher:
+    def execute_command_async(
+        self, command: str, arguments: list
+    ) -> Optional[IIdMessageMatcher]:
         pass
 
 
@@ -401,10 +436,10 @@ class IDocument(Protocol):
     def get_line(self, line: int) -> str:
         pass
 
-    def sync_source(self):
+    def is_source_in_sync(self) -> bool:
         """
-        If the document is backed up by a file, makes sure that it's contents
-        are synchronized with the filesystem.
+        If the document is backed up by a file, returns true if the sources are
+        in sync.
         """
 
 
@@ -414,10 +449,6 @@ class IWorkspaceFolder(Protocol):
 
 
 class IWorkspace(Protocol):
-    @contextmanager
-    def lock(self):
-        pass
-
     @property
     def root_path(self):
         pass
@@ -460,3 +491,13 @@ class IWorkspace(Protocol):
 class ITimeoutHandle(Protocol):
     def exec_on_timeout(self):
         pass
+
+
+class IMonitor(Protocol):
+    def cancel(self) -> None:
+        pass
+
+    def check_cancelled(self) -> None:
+        """
+        raises JsonRpcRequestCancelled if cancelled.
+        """

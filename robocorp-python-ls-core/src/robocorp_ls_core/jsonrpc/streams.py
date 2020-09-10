@@ -26,7 +26,6 @@ log = get_logger(__name__)
 
 
 class JsonRpcStreamReader(object):
-
     def __init__(self, rfile):
         self._rfile = rfile
 
@@ -85,7 +84,10 @@ class JsonRpcStreamReader(object):
         # Grab the body
         buf = b""
         while True:
-            data = self._rfile.read(content_length - len(buf))
+            diff_len = content_length - len(buf)
+            data = self._rfile.read(diff_len)
+            if not data:
+                return None
             if not buf and len(data) == content_length:
                 # Common case
                 return data
@@ -114,7 +116,6 @@ class JsonRpcStreamReader(object):
 
 
 class JsonRpcStreamWriter(object):
-
     def __init__(self, wfile, **json_dumps_args):
         assert wfile is not None
         self._wfile = wfile

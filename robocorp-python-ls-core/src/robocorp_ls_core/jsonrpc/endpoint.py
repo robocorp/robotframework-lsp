@@ -37,6 +37,13 @@ log = get_logger(__name__)
 JSONRPC_VERSION = "2.0"
 CANCEL_METHOD = "$/cancelRequest"
 
+# This is almost ready, but we need to check the LibspecManager.
+# In particular, as there is now concurrence among the processes, initializing
+# the APIs to generate the libspec files can timeout during tests (probably
+# due to running in slow machines, so, we may need to revise the timeouts
+# or pre-generate the builtin libraries -- which is probably ideal anyways).
+FORCE_NON_THREADED_VERSION = True
+
 
 def require_monitor(func):
     """
@@ -59,6 +66,8 @@ class Endpoint(object):
                 Defaults to the string value of :func:`uuid.uuid4`.
             max_workers (int, optional): The number of workers in the asynchronous executor pool.
         """
+        import os
+
         self._dispatcher = dispatcher
         self._consumer = consumer
         self._id_generator = id_generator
@@ -66,16 +75,11 @@ class Endpoint(object):
         self._client_request_futures = {}
         self._server_request_futures = {}
 
-    @property
-    def _executor_service(self):
-        from robocorp_ls_core.jsonrpc.thread_pool import obtain_thread_pool
-
-        return obtain_thread_pool()
+        max_workers = min(20, (os.cpu_count() or 1) + 4)
+        self._executor_service = futures.ThreadPoolExecutor(max_workers=max_workers)
 
     def shutdown(self):
-        from robocorp_ls_core.jsonrpc.thread_pool import dispose_thread_pool
-
-        dispose_thread_pool()
+        self._executor_service.shutdown(wait=False)
 
     @implements(IEndPoint.notify)
     def notify(self, method: str, params=None):
@@ -236,11 +240,25 @@ class Endpoint(object):
                 monitor = Monitor()
                 kwargs["monitor"] = monitor
             log.debug("Executing async request handler %s", handler_result)
-            request_future = self._executor_service.submit(handler_result, **kwargs)
-            if monitor is not None:
-                request_future.__monitor__ = monitor
-            self._client_request_futures[msg_id] = request_future
-            request_future.add_done_callback(self._request_callback(msg_id))
+
+            if FORCE_NON_THREADED_VERSION:
+                # I.e.: non-threaded version without breaking api.
+                handler_result = handler_result(**kwargs)
+                log.debug(
+                    "Got result from synchronous request handler (in %.2fs): %s",
+                    time.time() - initial_time,
+                    handler_result,
+                )
+                self._consumer(
+                    {"jsonrpc": JSONRPC_VERSION, "id": msg_id, "result": handler_result}
+                )
+
+            else:
+                request_future = self._executor_service.submit(handler_result, **kwargs)
+                if monitor is not None:
+                    request_future.__monitor__ = monitor
+                self._client_request_futures[msg_id] = request_future
+                request_future.add_done_callback(self._request_callback(msg_id))
         elif isinstance(handler_result, futures.Future):
             log.debug("Request handler is already a future %s", handler_result)
             self._client_request_futures[msg_id] = handler_result

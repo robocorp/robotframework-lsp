@@ -2,10 +2,9 @@ from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.robotframework_log import get_logger
 from typing import Optional
-from robocorp_ls_core.protocols import IConfig
+from robocorp_ls_core.protocols import IConfig, IMonitor
 from functools import partial
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
-from robocorp_ls_core.jsonrpc.monitor import Monitor
 
 
 log = get_logger(__name__)
@@ -22,7 +21,11 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         from robotframework_ls.impl.libspec_manager import LibspecManager
 
         if libspec_manager is None:
-            libspec_manager = LibspecManager()
+            try:
+                libspec_manager = LibspecManager()
+            except:
+                log.exception("Unable to properly initialize the LibspecManager.")
+                raise
 
         self.libspec_manager = libspec_manager
         PythonLanguageServer.__init__(self, read_from, write_to)
@@ -68,6 +71,10 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     def lint(self, *args, **kwargs):
         pass  # No-op for this server.
 
+    @overrides(PythonLanguageServer.cancel_lint)
+    def cancel_lint(self, *args, **kwargs):
+        pass  # No-op for this server.
+
     @overrides(PythonLanguageServer._create_workspace)
     def _create_workspace(self, root_uri, workspace_folders):
         from robotframework_ls.impl.robot_workspace import RobotWorkspace
@@ -88,34 +95,47 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             log.info(msg)
             return [Error(msg, (0, 0), (1, 0)).to_lsp_diagnostic()]
 
+        func = partial(self._threaded_lint, doc_uri)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_lint(self, doc_uri, monitor: IMonitor):
+        from robocorp_ls_core.jsonrpc.exceptions import JsonRpcRequestCancelled
+
         try:
             from robotframework_ls.impl.ast_utils import collect_errors
             from robotframework_ls.impl import code_analysis
 
-            completion_context = self._create_completion_context(doc_uri, 0, 0)
+            completion_context = self._create_completion_context(doc_uri, 0, 0, monitor)
             if completion_context is None:
                 return []
 
             ast = completion_context.get_ast()
+            monitor.check_cancelled()
             errors = collect_errors(ast)
+            monitor.check_cancelled()
             errors.extend(code_analysis.collect_analysis_errors(completion_context))
             return [error.to_lsp_diagnostic() for error in errors]
+        except JsonRpcRequestCancelled:
+            raise JsonRpcRequestCancelled("Lint cancelled (inside lint)")
         except:
             log.exception("Error collecting errors.")
             return []
 
     def m_complete_all(self, doc_uri, line, col):
-        func = partial(self._complete_all, doc_uri, line, col)
+        func = partial(self._threaded_complete_all, doc_uri, line, col)
         func = require_monitor(func)
         return func
 
-    def _complete_all(self, doc_uri, line, col, monitor: Monitor):
+    def _threaded_complete_all(self, doc_uri, line, col, monitor: IMonitor):
         from robotframework_ls.impl import section_name_completions
         from robotframework_ls.impl import keyword_completions
         from robotframework_ls.impl import variable_completions
         from robotframework_ls.impl import filesystem_section_completions
 
-        completion_context = self._create_completion_context(doc_uri, line, col)
+        completion_context = self._create_completion_context(
+            doc_uri, line, col, monitor
+        )
         if completion_context is None:
             return []
 
@@ -128,7 +148,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     def m_section_name_complete(self, doc_uri, line, col):
         from robotframework_ls.impl import section_name_completions
 
-        completion_context = self._create_completion_context(doc_uri, line, col)
+        completion_context = self._create_completion_context(doc_uri, line, col, None)
         if completion_context is None:
             return []
 
@@ -137,18 +157,25 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     def m_keyword_complete(self, doc_uri, line, col):
         from robotframework_ls.impl import keyword_completions
 
-        completion_context = self._create_completion_context(doc_uri, line, col)
+        completion_context = self._create_completion_context(doc_uri, line, col, None)
         if completion_context is None:
             return []
         return keyword_completions.complete(completion_context)
 
-    def m_find_definition(self, doc_uri, line, col) -> Optional[list]:
+    def m_find_definition(self, doc_uri, line, col):
+        func = partial(self._threaded_find_definition, doc_uri, line, col)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_find_definition(self, doc_uri, line, col, monitor) -> Optional[list]:
         from robotframework_ls.impl.find_definition import find_definition
         import os.path
         from robocorp_ls_core.lsp import Location, Range
         from robocorp_ls_core import uris
 
-        completion_context = self._create_completion_context(doc_uri, line, col)
+        completion_context = self._create_completion_context(
+            doc_uri, line, col, monitor
+        )
         if completion_context is None:
             return None
         definitions = find_definition(completion_context)
@@ -184,6 +211,11 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         return ret
 
     def m_code_format(self, text_document, options):
+        func = partial(self._threaded_code_format, text_document, options)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_code_format(self, text_document, options, monitor: IMonitor):
         from robotframework_ls.impl.formatting import robot_source_format
         from robotframework_ls.impl.formatting import create_text_edit_from_diff
         from robocorp_ls_core.lsp import TextDocumentItem
@@ -192,7 +224,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         text = text_document_item.text
         if not text:
             completion_context = self._create_completion_context(
-                text_document_item.uri, 0, 0
+                text_document_item.uri, 0, 0, monitor
             )
             if completion_context is None:
                 return []
@@ -210,7 +242,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return []
         return [x.to_dict() for x in create_text_edit_from_diff(text, new_contents)]
 
-    def _create_completion_context(self, doc_uri, line, col):
+    def _create_completion_context(self, doc_uri, line, col, monitor: IMonitor):
         from robotframework_ls.impl.completion_context import CompletionContext
 
         if not self._check_min_version((3, 2)):
@@ -226,7 +258,12 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             log.info("Unable to get document for uri: %s.", doc_uri)
             return None
         return CompletionContext(
-            document, line, col, workspace=workspace, config=self.config
+            document,
+            line,
+            col,
+            workspace=workspace,
+            config=self.config,
+            monitor=monitor,
         )
 
     def m_shutdown(self, **_kwargs):

@@ -46,7 +46,7 @@ class Null:
     def __len__(self):
         return 0
 
-    def __getitem__(self):
+    def __getitem__(self, *args, **kwargs):
         return self
 
     def __setitem__(self, *args, **kwargs):

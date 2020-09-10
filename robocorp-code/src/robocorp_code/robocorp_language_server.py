@@ -101,6 +101,14 @@ class RobocorpLanguageServer(PythonLanguageServer):
         self._rcc = Rcc(self)
         PythonLanguageServer.__init__(self, read_stream, write_stream)
 
+    @overrides(PythonLanguageServer.cancel_lint)
+    def cancel_lint(self, doc_uri):
+        pass  # no-op
+
+    @overrides(PythonLanguageServer.lint)
+    def lint(self, doc_uri, is_saved):
+        pass  # no-op
+
     @overrides(PythonLanguageServer._create_config)
     def _create_config(self) -> IConfig:
         from robocorp_code.robocorp_config import RobocorpConfig

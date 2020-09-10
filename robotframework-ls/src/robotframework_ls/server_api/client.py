@@ -1,4 +1,7 @@
+from typing import Optional
+
 from robocorp_ls_core.client_base import LanguageServerClientBase
+from robocorp_ls_core.protocols import IIdMessageMatcher
 
 
 class SubprocessDiedError(Exception):
@@ -41,7 +44,7 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
                     "workspaceFolders": workspace_folders,
                 },
             },
-            timeout=15 if USE_TIMEOUTS else NO_TIMEOUT,
+            timeout=30 if USE_TIMEOUTS else NO_TIMEOUT,
         )
 
     def get_version(self):
@@ -63,7 +66,7 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
 
         return self._version
 
-    def lint(self, doc_uri):
+    def lint(self, doc_uri) -> list:
         self._check_process_alive()
         msg_id = self.next_id()
         return self.request(
@@ -76,6 +79,12 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             default=[],
         )
 
+    def request_lint(self, doc_uri: str) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(self._build_msg("lint", doc_uri=doc_uri))
+
     def forward(self, method_name, params):
         self._check_process_alive()
         msg_id = self.next_id()
@@ -83,9 +92,9 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             {"jsonrpc": "2.0", "id": msg_id, "method": method_name, "params": params}
         )
 
-    def forward_async(self, method_name, params):
+    def forward_async(self, method_name, params) -> Optional[IIdMessageMatcher]:
         """
-        :Note: async complete (returns _MessageMatcher).
+        :Note: async complete.
         """
         self._check_process_alive()
         msg_id = self.next_id()
@@ -104,45 +113,63 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         msg_id = self.next_id()
         return {"jsonrpc": "2.0", "id": msg_id, "method": method_name, "params": params}
 
-    def request_section_name_complete(self, doc_uri, line, col):
+    def request_section_name_complete(
+        self, doc_uri, line, col
+    ) -> Optional[IIdMessageMatcher]:
         """
-        :Note: async complete (returns _MessageMatcher).
+        :Note: async complete.
         """
         return self.request_async(
             self._build_msg("sectionNameComplete", doc_uri=doc_uri, line=line, col=col)
         )
 
-    def request_keyword_complete(self, doc_uri, line, col):
+    def request_keyword_complete(
+        self, doc_uri, line, col
+    ) -> Optional[IIdMessageMatcher]:
         """
-        :Note: async complete (returns _MessageMatcher).
+        :Note: async complete.
         """
         return self.request_async(
             self._build_msg("keywordComplete", doc_uri=doc_uri, line=line, col=col)
         )
 
-    def request_complete_all(self, doc_uri, line, col):
+    def request_complete_all(self, doc_uri, line, col) -> Optional[IIdMessageMatcher]:
         """
         Completes: sectionName, keyword, variables
-        :Note: async complete (returns _MessageMatcher).
+        :Note: async complete.
         """
         return self.request_async(
             self._build_msg("completeAll", doc_uri=doc_uri, line=line, col=col)
         )
 
-    def request_find_definition(self, doc_uri, line, col):
+    def request_find_definition(
+        self, doc_uri, line, col
+    ) -> Optional[IIdMessageMatcher]:
         """
-        :Note: async complete (returns _MessageMatcher).
+        :Note: async complete.
         """
         return self.request_async(
             self._build_msg("findDefinition", doc_uri=doc_uri, line=line, col=col)
         )
 
-    def request_source_format(self, text_document, options):
+    def request_source_format(
+        self, text_document, options
+    ) -> Optional[IIdMessageMatcher]:
         """
-        :Note: async complete (returns _MessageMatcher).
+        :Note: async complete.
         """
         return self.request_async(
             self._build_msg("codeFormat", text_document=text_document, options=options)
+        )
+
+    def request_cancel(self, message_id):
+        self._check_process_alive()
+        self.write(
+            {
+                "jsonrpc": "2.0",
+                "method": "$/cancelRequest",
+                "params": dict(id=message_id),
+            }
         )
 
     def __typecheckself__(self) -> None:

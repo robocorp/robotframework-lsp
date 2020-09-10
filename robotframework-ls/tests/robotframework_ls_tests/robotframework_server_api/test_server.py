@@ -1,5 +1,6 @@
 import pytest
 import os.path
+from robocorp_ls_core.protocols import IRobotFrameworkApiClient
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
@@ -55,12 +56,40 @@ def server_api_process_io(server_process):
         yield lang_server_client
 
 
-def test_server(server_api_process_io, data_regression):
+def test_server(server_api_process_io: IRobotFrameworkApiClient, data_regression):
     server_api_process_io.initialize(process_id=os.getpid())
     assert server_api_process_io.get_version() >= "3.2"
 
     server_api_process_io.open("untitled", 1, "*** foo bar ***")
     data_regression.check(server_api_process_io.lint("untitled"), basename="errors")
+
+
+def test_server_cancel(
+    server_api_process_io: IRobotFrameworkApiClient, data_regression
+):
+    from robocorp_ls_core.jsonrpc.endpoint import FORCE_NON_THREADED_VERSION
+
+    if FORCE_NON_THREADED_VERSION:
+        pytest.skip(
+            "Can only test server cancelling when the threaded version is enabled."
+        )
+    import time
+
+    server_api_process_io.initialize(process_id=os.getpid())
+
+    big_contents = "*** foo bar ***\n" * 100000
+
+    server_api_process_io.open("untitled", 1, big_contents)
+    message_matcher = server_api_process_io.request_lint("untitled")
+    assert message_matcher
+    time.sleep(0.5)  # Wait a bit to make sure it's inside the lint.
+    server_api_process_io.request_cancel(message_matcher.message_id)
+    message_matcher.event.wait(10)
+    assert message_matcher.msg == {
+        "jsonrpc": "2.0",
+        "id": message_matcher.message_id,
+        "error": {"code": -32800, "message": "Lint cancelled (inside lint)"},
+    }
 
 
 def _build_launch_env():

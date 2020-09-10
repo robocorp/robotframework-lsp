@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
-import inspect
 import os
 import sys
 import threading
@@ -37,37 +36,6 @@ def as_str(s) -> str:
 
 
 log = get_logger(__name__)
-
-
-def debounce(interval_s, keyed_by=None):
-    """Debounce calls to this function until interval_s seconds have passed."""
-
-    def wrapper(func):
-        timers = {}
-        lock = threading.Lock()
-
-        @functools.wraps(func)
-        def debounced(*args, **kwargs):
-            call_args = inspect.getcallargs(func, *args, **kwargs)
-            key = call_args[keyed_by] if keyed_by else None
-
-            def run():
-                with lock:
-                    del timers[key]
-                return func(*args, **kwargs)
-
-            with lock:
-                old_timer = timers.get(key)
-                if old_timer:
-                    old_timer.cancel()
-
-                timer = threading.Timer(interval_s, run)
-                timers[key] = timer
-                timer.start()
-
-        return debounced
-
-    return wrapper
 
 
 def list_to_string(value):

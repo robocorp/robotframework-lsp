@@ -1,17 +1,14 @@
-from robotframework_ls.impl.robot_workspace import RobotDocument
 from robocorp_ls_core.cache import instance_cache
+from robocorp_ls_core.constants import NULL
+from robocorp_ls_core.protocols import IMonitor
 from robocorp_ls_core.robotframework_log import get_logger
-import sys
+from robotframework_ls.impl.robot_workspace import RobotDocument
+
 
 log = get_logger(__name__)
 
 
 _NOT_SET = "NOT_SET"
-
-try:
-    str_types = (str, unicode)
-except NameError:
-    str_types = (str,)
 
 
 class _Memo(object):
@@ -49,8 +46,15 @@ class CompletionContext(object):
     TYPE_RESOURCE = RobotDocument.TYPE_RESOURCE
 
     def __init__(
-        self, doc, line=_NOT_SET, col=_NOT_SET, workspace=None, config=None, memo=None
-    ):
+        self,
+        doc,
+        line=_NOT_SET,
+        col=_NOT_SET,
+        workspace=None,
+        config=None,
+        memo=None,
+        monitor: IMonitor = NULL,
+    ) -> None:
         """
         :param robocorp_ls_core.workspace.Document doc:
         :param int line:
@@ -83,6 +87,14 @@ class CompletionContext(object):
         self._config = config
         self._memo = memo
         self._original_ctx = None
+        self._monitor = monitor or NULL
+
+    @property
+    def monitor(self) -> IMonitor:
+        return self._monitor
+
+    def check_cancelled(self):
+        self._monitor.check_cancelled()
 
     def create_copy(self, doc):
         ctx = CompletionContext(
@@ -257,7 +269,7 @@ class CompletionContext(object):
     def token_value_resolving_variables(self, token):
         from robotframework_ls.impl import ast_utils
 
-        if isinstance(token, str_types):
+        if isinstance(token, str):
             token = ast_utils.create_token(token)
 
         try:
