@@ -38,13 +38,14 @@ class RobotDocument(Document):
 
     def __init__(self, uri, source=None, version=None, generate_ast=True):
         Document.__init__(self, uri, source=source, version=version)
+
         self._generate_ast = generate_ast
         self._ast = None
 
     @overrides(Document._clear_caches)
     def _clear_caches(self):
         Document._clear_caches(self)
-        self.get_ast.cache_clear(self)
+        self.get_ast.cache_clear(self)  # noqa (clear the instance_cache).
 
     def get_type(self):
         path = self.path
@@ -69,7 +70,7 @@ class RobotDocument(Document):
             raise AssertionError(
                 "The AST can only be accessed in the RobotFrameworkServerApi, not in the RobotFrameworkLanguageServer."
             )
-        from robot.api import get_model, get_resource_model, get_init_model
+        from robot.api import get_model, get_resource_model, get_init_model  # noqa
 
         try:
             source = self.source

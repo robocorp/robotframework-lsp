@@ -7,8 +7,11 @@ from robocorp_ls_core.protocols import (
     ILanguageServerClientBase,
     Sentinel,
     COMMUNICATION_DROPPED,
+    IIdMessageMatcher,
+    IMonitor,
+    IRequestCancellable,
 )
-from typing import Any, Union, Optional
+from typing import Any, Union, Optional, List, Callable
 
 log = get_logger(__name__)
 
@@ -35,6 +38,11 @@ class _IdMessageMatcher(_MessageMatcher):
 
     __repr__ = __str__
 
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
+
+        _: IIdMessageMatcher = check_implements(self)
+
 
 class _PatternMessageMatcher(_MessageMatcher):
     def __init__(self, message_pattern):
@@ -51,6 +59,106 @@ class _PatternMessageMatcher(_MessageMatcher):
         return "PatternMatcher(%s)" % (self.message_pattern,)
 
     __repr__ = __str__
+
+
+def wait_for_message_matcher(
+    message_matcher: IIdMessageMatcher,
+    request_cancel: Callable[[Any], None],
+    timeout: float,
+    monitor: Optional[IMonitor],
+) -> bool:
+    """
+    Note: in the case where the monitor is cancelled the cancel is automatically
+    passed to the api too.
+    
+    :raises JsonRpcRequestCancelled:
+        If the monitor is cancelled.
+        
+    :return True if the message completed in the available time and False otherwise.
+    """
+    import time
+
+    if monitor is None:
+        if message_matcher.event.wait(timeout):
+            return True
+    else:
+        from robocorp_ls_core.jsonrpc.exceptions import JsonRpcRequestCancelled
+
+        try:
+            maxtime = time.time() + timeout
+            # We need to periodically check for the monitor, so, set up a busy loop that does that.
+
+            # Check at least 20 times / second.
+            delta = min(1 / 20.0, timeout)
+
+            # Always do at least 1 check regardless of the time.
+            if message_matcher.event.wait(delta):
+                return True
+
+            monitor.check_cancelled()
+
+            while time.time() < maxtime:
+                if message_matcher.event.wait(delta):
+                    return True
+
+                monitor.check_cancelled()
+
+        except JsonRpcRequestCancelled:
+            request_cancel(message_matcher.message_id)
+            raise
+
+    # If we got here, it timed out, so, we should cancel the request itself
+    # (even if it the monitor wasn't cancelled).
+    request_cancel(message_matcher.message_id)
+    return False
+
+
+def wait_for_message_matchers(
+    message_matchers: List[Optional[IIdMessageMatcher]],
+    monitor: Optional[IMonitor],
+    request_cancel: Callable[[Any], None],
+    timeout: float,
+) -> List[IIdMessageMatcher]:
+    """
+    Note: in the case where the monitor is cancelled the cancel is automatically
+    passed to the api too.
+    
+    :raises JsonRpcRequestCancelled:
+        If the monitor is cancelled.
+    """
+    import time
+    from robocorp_ls_core.jsonrpc.exceptions import JsonRpcRequestCancelled
+
+    accepted_message_matchers = []
+    curtime = time.time()
+    maxtime = curtime + timeout
+
+    # Create a copy as we'll mutate it.
+    message_matchers = message_matchers[:]
+
+    while message_matchers:
+        message_matcher = message_matchers.pop(0)
+
+        if message_matcher is not None:
+            # i.e.: wait X seconds and bail out if we can't get it.
+            available_time = maxtime - time.time()
+            if available_time <= 0:
+                available_time = 0.0001  # Wait at least a bit for each.
+
+            try:
+                if wait_for_message_matcher(
+                    message_matcher, request_cancel, available_time, monitor
+                ):
+                    accepted_message_matchers.append(message_matcher)
+            except JsonRpcRequestCancelled:
+                # If we got here, the monitor was cancelled... the current one was
+                # already cancelled, so, go on and cancel the others too.
+                for message_matcher in message_matchers:
+                    if message_matcher is not None:
+                        request_cancel(message_matcher.message_id)
+                raise
+
+    return accepted_message_matchers
 
 
 class _ReaderThread(threading.Thread):
@@ -130,7 +238,7 @@ class _ReaderThread(threading.Thread):
             self._pattern_message_matchers[id(message_matcher)] = message_matcher
             return message_matcher
 
-    def obtain_id_message_matcher(self, message_id):
+    def obtain_id_message_matcher(self, message_id) -> Optional[IIdMessageMatcher]:
         """
         :param message_id:
             Obtains a matcher which will be notified when the given message id is
@@ -173,7 +281,7 @@ class LanguageServerClientBase(object):
         self.next_id = partial(next, itertools.count())
 
     @implements(ILanguageServerClientBase.request_async)
-    def request_async(self, contents: dict):
+    def request_async(self, contents: dict) -> Optional[IIdMessageMatcher]:
         message_id = contents["id"]
         message_matcher = self._reader_thread.obtain_id_message_matcher(message_id)
         if message_matcher is None:

@@ -239,7 +239,7 @@ class _MutexHandle(object):
         # log.info("Released mutex: %s", self._mutex_name)
 
 
-def timed_acquire_mutex(mutex_name, timeout=10, sleep_time=0.15, check_reentrant=True):
+def timed_acquire_mutex(mutex_name, timeout=20, sleep_time=0.15, check_reentrant=True):
     """
     Acquires the mutex given its name, a number of attempts and a time to sleep between each attempt.
 

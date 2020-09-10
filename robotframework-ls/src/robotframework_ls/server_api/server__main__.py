@@ -85,7 +85,8 @@ def start_server_process(args=(), python_exe=None, env=None):
     return language_server_process
 
 
-if __name__ == "__main__":
+def main():
+    log = None
     try:
         src_folder = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -111,10 +112,18 @@ if __name__ == "__main__":
 
         __main__.main(language_server_class=RobotFrameworkServerApi)
     except:
-        # Critical error (the logging may not be set up properly).
+        try:
+            if log is not None:
+                log.exception("Error initializing RobotFrameworkServerApi.")
+        finally:
+            # Critical error (the logging may not be set up properly).
 
-        # Print to file and stderr.
-        with open(_critical_error_log_file, "a+") as stream:
-            traceback.print_exc(file=stream)
+            # Print to file and stderr.
+            with open(_critical_error_log_file, "a+") as stream:
+                traceback.print_exc(file=stream)
 
-        traceback.print_exc()
+            traceback.print_exc()
+
+
+if __name__ == "__main__":
+    main()

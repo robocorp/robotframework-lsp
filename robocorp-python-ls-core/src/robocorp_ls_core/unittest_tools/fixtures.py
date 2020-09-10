@@ -6,7 +6,7 @@ from robocorp_ls_core.options import USE_TIMEOUTS, NO_TIMEOUT
 import pytest
 from typing import Optional
 
-TIMEOUT: Optional[int] = int(os.getenv("PYTEST_TIMEOUT", 7))
+TIMEOUT: Optional[int] = int(os.getenv("PYTEST_TIMEOUT", 20))
 if not USE_TIMEOUTS:
     TIMEOUT = NO_TIMEOUT  # i.e.: None
 

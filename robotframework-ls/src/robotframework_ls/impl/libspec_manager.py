@@ -371,9 +371,6 @@ class LibspecManager(object):
             Only to be used in tests (to regenerate the builtins)!
         """
         from robocorp_ls_core import watchdog_wrapper
-        from robocorp_ls_core.jsonrpc.thread_pool import obtain_thread_pool
-
-        self._thread_pool = obtain_thread_pool()
 
         self._observer = watchdog_wrapper.create_observer()
 
@@ -430,8 +427,11 @@ class LibspecManager(object):
         # Must be set from the outside world when needed.
         self.config = None
 
+        log.debug("Synchronizing internal caches.")
         self._synchronize()
+        log.debug("Generating builtin libraries.")
         self._gen_builtin_libraries()
+        log.debug("Finished initializing LibspecManager.")
 
     @property
     def config(self):
@@ -514,9 +514,10 @@ class LibspecManager(object):
         """
         Generates .libspec files for the libraries builtin (if needed).
         """
-        import time
 
         try:
+            import time
+            from concurrent import futures
             from robotframework_ls.impl import robot_constants
             from robocorp_ls_core.system_mutex import timed_acquire_mutex
             from robocorp_ls_core.system_mutex import generate_mutex_name
@@ -524,31 +525,42 @@ class LibspecManager(object):
             initial_time = time.time()
             wait_for = []
 
-            with timed_acquire_mutex(
-                generate_mutex_name(
-                    _norm_filename(self._builtins_libspec_dir), prefix="gen_builtins_"
-                ),
-                timeout=100,
-            ):
-                for libname in robot_constants.STDLIBS:
-                    library_info = self.get_library_info(libname, create=False)
-                    if library_info is None:
-                        wait_for.append(
-                            self._thread_pool.submit(
-                                self._create_libspec, libname, is_builtin=True
-                            )
-                        )
-                for future in wait_for:
-                    future.result()
+            max_workers = min(10, (os.cpu_count() or 1) + 4)
+            thread_pool = futures.ThreadPoolExecutor(max_workers=max_workers)
 
-            if wait_for:
-                log.debug(
-                    "Total time to generate builtins: %.2fs"
-                    % (time.time() - initial_time)
-                )
-                self.synchronize_internal_libspec_folders()
+            try:
+                log.debug("Waiting for mutex to generate builtins.")
+                with timed_acquire_mutex(
+                    generate_mutex_name(
+                        _norm_filename(self._builtins_libspec_dir),
+                        prefix="gen_builtins_",
+                    ),
+                    timeout=100,
+                ):
+                    log.debug("Obtained mutex to generate builtins.")
+                    for libname in robot_constants.STDLIBS:
+                        library_info = self.get_library_info(libname, create=False)
+                        if library_info is None:
+                            wait_for.append(
+                                thread_pool.submit(
+                                    self._create_libspec, libname, is_builtin=True
+                                )
+                            )
+                    for future in wait_for:
+                        future.result()
+
+                if wait_for:
+                    log.debug(
+                        "Total time to generate builtins: %.2fs"
+                        % (time.time() - initial_time)
+                    )
+                    self.synchronize_internal_libspec_folders()
+            finally:
+                thread_pool.shutdown(wait=False)
         except:
             log.exception("Error creating builtin libraries.")
+        finally:
+            log.info("Finished creating builtin libraries.")
 
     def synchronize_workspace_folders(self):
         for folder_info in self._workspace_folder_uri_to_folder_info.values():
@@ -674,9 +686,13 @@ class LibspecManager(object):
 
                 libspec_filename = os.path.join(libspec_dir, libname + ".libspec")
 
+                log.debug(f"Obtaining mutex to generate libpsec: {libspec_filename}.")
                 with timed_acquire_mutex(
                     _get_libspec_mutex_name(libspec_filename)
                 ):  # Could fail.
+                    log.debug(
+                        f"Obtained mutex to generate libpsec: {libspec_filename}."
+                    )
                     call.append(libspec_filename)
 
                     mtime = -1

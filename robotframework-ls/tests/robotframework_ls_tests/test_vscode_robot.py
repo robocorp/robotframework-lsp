@@ -218,7 +218,7 @@ def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regressio
     server_apis = set()
     server_processes = set()
 
-    def on_get_server_api(server_api):
+    def on_get_robotframework_api_client(server_api):
         if (
             server_api.robot_framework_language_server
             is language_server_tcp.language_server_instance
@@ -226,7 +226,9 @@ def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regressio
             server_apis.add(server_api)
             server_processes.add(server_api._server_process.pid)
 
-    with basic.after(_ServerApi, "_get_server_api", on_get_server_api):
+    with basic.after(
+        _ServerApi, "get_robotframework_api_client", on_get_robotframework_api_client
+    ):
         language_server_tcp.initialize(ws_root_path, process_id=os.getpid())
         import robot
 

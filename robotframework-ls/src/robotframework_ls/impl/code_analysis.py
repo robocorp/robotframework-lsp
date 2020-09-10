@@ -1,4 +1,5 @@
 from robocorp_ls_core.robotframework_log import get_logger
+from robotframework_ls.impl.ast_utils import MAX_ERRORS
 
 log = get_logger(__name__)
 
@@ -112,6 +113,7 @@ def collect_analysis_errors(completion_context):
 
     ast = completion_context.get_ast()
     for keyword_usage_info in ast_utils.iter_keyword_usage_tokens(ast):
+        completion_context.check_cancelled()
         normalized_name = normalize_robot_name(keyword_usage_info.name)
         if not collector.contains_keyword(normalized_name):
 
@@ -125,4 +127,7 @@ def collect_analysis_errors(completion_context):
                 tokens=[keyword_usage_info.token],
             )
             errors.append(error)
+            if len(errors) >= MAX_ERRORS:
+                # i.e.: Collect at most 100 errors
+                break
     return errors

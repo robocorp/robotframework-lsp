@@ -4,6 +4,7 @@ from robocorp_ls_core.robotframework_log import get_logger
 from typing import Any
 from robocorp_ls_core.protocols import IDirCache, check_implements
 from robocorp_ls_core.basic import implements
+from robocorp_ls_core.constants import NULL
 
 log = get_logger(__name__)
 
@@ -22,39 +23,59 @@ def instance_cache(func):
     
     instance = MyClass()
     instance.cache_this()
-    instance.cache_clear(instance)
+    instance.cache_this.cache_clear(instance)
+    
+    # set_lock(intance, lock) can be used to make the cache thread-safe.
+    # i.e.:
+    instance.cache_this.set_lock(instance, lock) 
 
     """
     cache_key = "__cache__%s" % (func.__name__,)
+    cache_key_lock = "__cache__%s_lock" % (func.__name__,)
 
     @functools.wraps(func)
     def new_func(self, *args, **kwargs):
+        from robocorp_ls_core.protocols import Sentinel
+
         try:
             cache = getattr(self, "__instance_cache__")
         except:
             cache = {}
             setattr(self, "__instance_cache__", cache)
 
-        try:
-            func_cache = cache[cache_key]
-        except KeyError:
-            func_cache = cache[cache_key] = {}
+        lock = cache.get(cache_key_lock, NULL)
+        with lock:
+            try:
+                func_cache = cache[cache_key]
+            except KeyError:
+                func_cache = cache[cache_key] = {}
 
-        args_cache_key = None
-        if args:
-            args_cache_key = (args_cache_key, tuple(args))
-        if kwargs:
-            # We don't do that because if the caller uses args and then
-            # later kwargs, we'd have to match the parameter to the position,
-            # so, simplify for now and don't accept kwargs.
-            raise AssertionError("Cannot currently deal with kwargs.")
+            args_cache_key = None
+            if args:
+                args_cache_key = (args_cache_key, tuple(args))
+            if kwargs:
+                # We don't do that because if the caller uses args and then
+                # later kwargs, we'd have to match the parameter to the position,
+                # so, simplify for now and don't accept kwargs.
+                raise AssertionError("Cannot currently deal with kwargs.")
 
-        try:
-            return func_cache[args_cache_key]
-        except KeyError:
-            ret = func(self, *args, **kwargs)
-            func_cache[args_cache_key] = ret
+            ret = func_cache.get(args_cache_key, Sentinel)
+            if ret is Sentinel:
+                ret = func(self, *args, **kwargs)
+                func_cache[args_cache_key] = ret
             return ret
+
+    def set_lock(self, lock):
+        # Note that this will make sure we'll pre-create the lock so that
+        # the __instance_cache__ is always there (so, there should be
+        # no race condition for it).
+        try:
+            cache = getattr(self, "__instance_cache__")
+        except:
+            cache = {}
+            setattr(self, "__instance_cache__", cache)
+
+        cache[cache_key_lock] = lock
 
     def cache_clear(self):
         try:
@@ -62,9 +83,12 @@ def instance_cache(func):
         except:
             pass
         else:
-            cache.pop(cache_key, None)
+            lock = cache.get(cache_key_lock, NULL)
+            with lock:
+                cache.pop(cache_key, None)
 
     new_func.cache_clear = cache_clear
+    new_func.set_lock = set_lock
     return new_func
 
 

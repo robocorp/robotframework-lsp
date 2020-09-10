@@ -78,6 +78,10 @@ class _LogConfig(object):
         return stream
 
     def report(self, logger_name, show_stacktrace, levelname, message):
+        msg_len = len(message)
+        if msg_len > 1000:
+            message = f"{message[:800]} ... <trimmed {msg_len}> ... {message[-200:]}"
+
         log_format = (
             self.prefix
             + ": %(asctime)s UTC pid: %(process)d - %(threadname)s - %(levelname)s - %(name)s\n%(message)s\n\n"

@@ -348,40 +348,48 @@ def test_consume_request_cancel(endpoint, dispatcher, consumer):
 
 def test_consume_request_cancel_monitor(endpoint, dispatcher, consumer):
 
-    # i.e.: cancel after the request already started.
-    @require_monitor
-    def async_handler(monitor: Monitor):
-        for _ in range(10):
-            time.sleep(0.1)
-            monitor.check_cancelled()
+    from robocorp_ls_core.jsonrpc import endpoint as endpoint_module
 
-    handler = mock.Mock(return_value=async_handler)
-    dispatcher["methodName"] = handler
+    original_FORCE_NON_THREADED_VERSION = endpoint_module.FORCE_NON_THREADED_VERSION
 
-    endpoint.consume(
-        {
-            "jsonrpc": "2.0",
-            "id": MSG_ID,
-            "method": "methodName",
-            "params": {"key": "value"},
-        }
-    )
-    handler.assert_called_once_with({"key": "value"})
+    try:
+        endpoint_module.FORCE_NON_THREADED_VERSION = False
+        # i.e.: cancel after the request already started.
+        @require_monitor
+        def async_handler(monitor: Monitor):
+            for _ in range(10):
+                time.sleep(0.1)
+                monitor.check_cancelled()
 
-    endpoint.consume(
-        {"jsonrpc": "2.0", "method": "$/cancelRequest", "params": {"id": MSG_ID}}
-    )
+        handler = mock.Mock(return_value=async_handler)
+        dispatcher["methodName"] = handler
 
-    def wait_for_monitor_check_cancelled():
-        consumer.assert_called_once_with(
+        endpoint.consume(
             {
                 "jsonrpc": "2.0",
                 "id": MSG_ID,
-                "error": exceptions.JsonRpcRequestCancelled().to_dict(),
+                "method": "methodName",
+                "params": {"key": "value"},
             }
         )
+        handler.assert_called_once_with({"key": "value"})
 
-    await_assertion(wait_for_monitor_check_cancelled)
+        endpoint.consume(
+            {"jsonrpc": "2.0", "method": "$/cancelRequest", "params": {"id": MSG_ID}}
+        )
+
+        def wait_for_monitor_check_cancelled():
+            consumer.assert_called_once_with(
+                {
+                    "jsonrpc": "2.0",
+                    "id": MSG_ID,
+                    "error": exceptions.JsonRpcRequestCancelled().to_dict(),
+                }
+            )
+
+        await_assertion(wait_for_monitor_check_cancelled)
+    finally:
+        endpoint_module.FORCE_NON_THREADED_VERSION = original_FORCE_NON_THREADED_VERSION
 
 
 def test_consume_request_cancel_unknown(endpoint):

@@ -36,8 +36,11 @@ def test_document_from_file(workspace, workspace_dir, cases):
 
     # When we get it again it verifies the filesystem.
     cached_doc2 = ws.get_document(case1_doc_uri, accept_from_file=True)
-    assert cached_doc is cached_doc2
-    assert cached_doc.source == "new contents"
+    assert cached_doc is not cached_doc2
+
+    # i.e.: Unchanged initial version in memory
+    assert "*** Settings ***" in cached_doc.source
+    assert cached_doc2.source == "new contents"
 
     # Still None if we can't accept cached.
     resource_doc = ws.get_document(case1_doc_uri, accept_from_file=False)

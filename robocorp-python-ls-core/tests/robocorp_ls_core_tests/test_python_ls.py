@@ -286,6 +286,9 @@ class _DummyLanguageServer(PythonLanguageServer):
     def lint(self, doc_uri, is_saved):
         pass
 
+    def cancel_lint(self, doc_uri):
+        pass
+
     def _create_config(self) -> IConfig:
         from robocorp_ls_core.config import Config
 
