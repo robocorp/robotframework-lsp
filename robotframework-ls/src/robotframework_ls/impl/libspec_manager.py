@@ -2,6 +2,7 @@ import os
 import sys
 from robotframework_ls.constants import NULL
 from robocorp_ls_core.robotframework_log import get_logger
+import threading
 
 log = get_logger(__name__)
 
@@ -228,61 +229,66 @@ class _FolderInfo(object):
         self.recursive = recursive
         self.libspec_canonical_filename_to_info = {}
         self._watch = NULL
+        self._lock = threading.Lock()
 
     def start_watch(self, observer, notifier):
-        if self._watch is NULL:
-            if not os.path.isdir(self.folder_path):
-                if not os.path.exists(self.folder_path):
-                    log.info(
-                        "Trying to track changes in path which does not exist: %s",
-                        self.folder_path,
-                    )
-                else:
-                    log.info(
-                        "Trying to track changes in path which is not a folder: %s",
-                        self.folder_path,
-                    )
-                return
+        with self._lock:
+            if self._watch is NULL:
+                if not os.path.isdir(self.folder_path):
+                    if not os.path.exists(self.folder_path):
+                        log.info(
+                            "Trying to track changes in path which does not exist: %s",
+                            self.folder_path,
+                        )
+                    else:
+                        log.info(
+                            "Trying to track changes in path which is not a folder: %s",
+                            self.folder_path,
+                        )
+                    return
 
-            log.info("Tracking folder for changes: %s", self.folder_path)
-            from robocorp_ls_core.watchdog_wrapper import PathInfo
+                log.info("Tracking folder for changes: %s", self.folder_path)
+                from robocorp_ls_core.watchdog_wrapper import PathInfo
 
-            folder_path = self.folder_path
-            self._watch = observer.notify_on_extensions_change(
-                [PathInfo(folder_path, recursive=self.recursive)],
-                ["libspec"],
-                notifier.on_change,
-                (self._on_change_spec,),
-            )
+                folder_path = self.folder_path
+                self._watch = observer.notify_on_extensions_change(
+                    [PathInfo(folder_path, recursive=self.recursive)],
+                    ["libspec"],
+                    notifier.on_change,
+                    (self._on_change_spec,),
+                )
 
     def _on_change_spec(self, spec_file):
-        spec_file_key = _norm_filename(spec_file)
-        # Just add/remove that specific spec file from the tracked list.
-        libspec_canonical_filename_to_info = (
-            self.libspec_canonical_filename_to_info.copy()
-        )
-        if os.path.exists(spec_file):
-            libspec_canonical_filename_to_info[spec_file_key] = None
-        else:
-            libspec_canonical_filename_to_info.pop(spec_file_key, None)
+        with self._lock:
+            spec_file_key = _norm_filename(spec_file)
+            # Just add/remove that specific spec file from the tracked list.
+            libspec_canonical_filename_to_info = (
+                self.libspec_canonical_filename_to_info.copy()
+            )
+            if os.path.exists(spec_file):
+                libspec_canonical_filename_to_info[spec_file_key] = None
+            else:
+                libspec_canonical_filename_to_info.pop(spec_file_key, None)
 
-        self.libspec_canonical_filename_to_info = libspec_canonical_filename_to_info
+            self.libspec_canonical_filename_to_info = libspec_canonical_filename_to_info
 
     def synchronize(self):
-        try:
-            self.libspec_canonical_filename_to_info = self._collect_libspec_info(
-                [self.folder_path],
-                self.libspec_canonical_filename_to_info,
-                recursive=self.recursive,
-            )
-        except Exception:
-            log.exception("Error when synchronizing: %s", self.folder_path)
+        with self._lock:
+            try:
+                self.libspec_canonical_filename_to_info = self._collect_libspec_info(
+                    [self.folder_path],
+                    self.libspec_canonical_filename_to_info,
+                    recursive=self.recursive,
+                )
+            except Exception:
+                log.exception("Error when synchronizing: %s", self.folder_path)
 
     def dispose(self):
-        watch = self._watch
-        self._watch = NULL
-        watch.stop_tracking()
-        self.libspec_canonical_filename_to_info = {}
+        with self._lock:
+            watch = self._watch
+            self._watch = NULL
+            watch.stop_tracking()
+            self.libspec_canonical_filename_to_info = {}
 
     def _collect_libspec_info(self, folders, old_libspec_filename_to_info, recursive):
         seen_libspec_files = set()
@@ -372,6 +378,8 @@ class LibspecManager(object):
         """
         from robocorp_ls_core import watchdog_wrapper
 
+        self._main_thread = threading.current_thread()
+
         self._observer = watchdog_wrapper.create_observer()
 
         self._spec_changes_notifier = watchdog_wrapper.create_notifier(
@@ -427,11 +435,18 @@ class LibspecManager(object):
         # Must be set from the outside world when needed.
         self.config = None
 
-        log.debug("Synchronizing internal caches.")
-        self._synchronize()
         log.debug("Generating builtin libraries.")
         self._gen_builtin_libraries()
+        log.debug("Synchronizing internal caches.")
+        self._synchronize()
         log.debug("Finished initializing LibspecManager.")
+
+    def _check_in_main_thread(self):
+        curr_thread = threading.current_thread()
+        if self._main_thread is not curr_thread:
+            raise AssertionError(
+                f"This may only be called at the thread: {self._main_thread}. Current thread: {curr_thread}"
+            )
 
     @property
     def config(self):
@@ -439,6 +454,7 @@ class LibspecManager(object):
 
     @config.setter
     def config(self, config):
+        self._check_in_main_thread()
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
 
         self._config = config
@@ -465,6 +481,7 @@ class LibspecManager(object):
         target(spec_file)
 
     def add_workspace_folder(self, folder_uri):
+        self._check_in_main_thread()
         from robocorp_ls_core import uris
 
         if folder_uri not in self._workspace_folder_uri_to_folder_info:
@@ -480,6 +497,7 @@ class LibspecManager(object):
             log.debug("Workspace folder already added: %s", folder_uri)
 
     def remove_workspace_folder(self, folder_uri):
+        self._check_in_main_thread()
         if folder_uri in self._workspace_folder_uri_to_folder_info:
             log.debug("Removed workspace folder: %s", folder_uri)
             cp = self._workspace_folder_uri_to_folder_info.copy()
@@ -490,6 +508,7 @@ class LibspecManager(object):
             log.debug("Workspace folder already removed: %s", folder_uri)
 
     def add_additional_pythonpath_folder(self, folder_path):
+        self._check_in_main_thread()
         if folder_path not in self._additional_pythonpath_folder_to_folder_info:
             log.debug("Added additional pythonpath folder: %s", folder_path)
             cp = self._additional_pythonpath_folder_to_folder_info.copy()
@@ -501,6 +520,7 @@ class LibspecManager(object):
             log.debug("Additional pythonpath folder already added: %s", folder_path)
 
     def remove_additional_pythonpath_folder(self, folder_path):
+        self._check_in_main_thread()
         if folder_path in self._additional_pythonpath_folder_to_folder_info:
             log.debug("Removed additional pythonpath folder: %s", folder_path)
             cp = self._additional_pythonpath_folder_to_folder_info.copy()
@@ -539,8 +559,10 @@ class LibspecManager(object):
                 ):
                     log.debug("Obtained mutex to generate builtins.")
                     for libname in robot_constants.STDLIBS:
-                        library_info = self.get_library_info(libname, create=False)
-                        if library_info is None:
+                        builtins_libspec_dir = self._builtins_libspec_dir
+                        if not os.path.exists(
+                            os.path.join(builtins_libspec_dir, f"{libname}.libspec")
+                        ):
                             wait_for.append(
                                 thread_pool.submit(
                                     self._create_libspec, libname, is_builtin=True
