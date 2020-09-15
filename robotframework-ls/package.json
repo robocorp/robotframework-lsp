@@ -14,7 +14,7 @@
     "license": "Apache 2.0",
     "version": "0.3.2",
     "icon": "images/icon.png",
-    "publisher": "robocorptech",
+    "publisher": "robocorp",
     "engines": {
         "vscode": "^1.43.0"
     },

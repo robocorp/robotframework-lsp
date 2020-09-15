@@ -11,7 +11,7 @@ Note: if using the [Robot Framework Selenium Library](https://github.com/robotfr
 Installing
 -----------
 
-`Robot Framework Language Server` can be installed from the [VisualStudio Marketplace](https://marketplace.visualstudio.com/items?itemName=robocorptech.robotframework-lsp) or as a `.vsix`.
+`Robot Framework Language Server` can be installed from the [VisualStudio Marketplace](https://marketplace.visualstudio.com/items?itemName=robocorp.robotframework-lsp) or as a `.vsix`.
 
 To get a `.vsix`, download the latest `Deploy - RobotFramework Language Server Extension` in [Robotframework-lsp Github Actions](https://github.com/robocorp/robotframework-lsp/actions?query=workflow%3A%22Deploy+-+RobotFramework+Language+Server+Extension%22).
 
