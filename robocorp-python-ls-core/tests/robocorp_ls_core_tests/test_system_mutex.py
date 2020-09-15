@@ -86,3 +86,36 @@ def test_gen_mutex_name_from_path():
     mutex_name = "my/snth\\nsth"
     mutex_name = generate_mutex_name(mutex_name, prefix="my_")
     assert mutex_name == "my_f9c932bf450ef164"
+    
+def test_system_mutex_locked_on_subprocess():
+    import sys
+    from robocorp_ls_core.subprocess_wrapper import subprocess
+    from robocorp_ls_core.basic import kill_process_and_subprocesses
+    from robocorp_ls_core.system_mutex import SystemMutex
+    from robocorp_ls_core.basic import wait_for_condition
+
+    code = '''
+import sys
+import time
+print('initialized')
+from robocorp_ls_core.system_mutex import SystemMutex
+mutex = SystemMutex('test_system_mutex_locked_on_subprocess')
+assert mutex.get_mutex_aquired()
+print('acquired mutex')
+sys.stdout.flush()
+time.sleep(30)
+'''
+    p = subprocess.Popen([sys.executable, '-c', code], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+    wait_for_condition(lambda: p.stdout.readline().strip() == b'acquired mutex')
+    mutex = SystemMutex('test_system_mutex_locked_on_subprocess')
+    assert not mutex.get_mutex_aquired()
+    
+    # i.e.: check that we can acquire the mutex if the related process dies.
+    kill_process_and_subprocesses(p.pid)
+    
+    def acquire_mutex():
+        mutex = SystemMutex('test_system_mutex_locked_on_subprocess')
+        return mutex.get_mutex_aquired()
+    wait_for_condition(acquire_mutex, timeout=5)
+    
+    

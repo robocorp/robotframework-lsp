@@ -144,35 +144,81 @@ else:
         return False
 
 
+def _popen(cmdline, **kwargs):
+    import subprocess
+
+    try:
+        return subprocess.Popen(cmdline, **kwargs)
+    except:
+        log.exception("Error running: %s", (" ".join(cmdline)))
+        return None
+
+
+def _call(cmdline, **kwargs):
+    import subprocess
+
+    try:
+        subprocess.check_call(cmdline, **kwargs)
+    except:
+        log.exception("Error running: %s", (" ".join(cmdline)))
+        return None
+
+
 def _kill_process_and_subprocess_linux(pid):
-    from robocorp_ls_core.subprocess_wrapper import subprocess
+    import subprocess
 
-    # Ask to stop forking
-    subprocess.call(
-        ["kill", "-stop", str(pid)],
+    initial_pid = pid
+
+    def list_children_and_stop_forking(ppid):
+        children_pids = []
+        _call(
+            ["kill", "-STOP", str(ppid)], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+
+        list_popen = _popen(
+            ["pgrep", "-P", str(ppid)], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+
+        if list_popen is not None:
+            stdout, _ = list_popen.communicate()
+            for line in stdout.splitlines():
+                line = line.decode("ascii").strip()
+                if line:
+                    pid = str(line)
+                    children_pids.append(pid)
+                    # Recursively get children.
+                    children_pids.extend(list_children_and_stop_forking(pid))
+        return children_pids
+
+    previously_found = set()
+
+    for _ in range(50):  # Try this at most 50 times before giving up.
+        children_pids = list_children_and_stop_forking(initial_pid)
+        found_new = False
+
+        for pid in children_pids:
+            if pid not in previously_found:
+                found_new = True
+                previously_found.add(pid)
+                _call(
+                    ["kill", "-KILL", str(pid)],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+
+        if not found_new:
+            break
+
+    # Now, finish the initial one.
+    _call(
+        ["kill", "-KILL", str(initial_pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        stdin=subprocess.PIPE,
-    )
-
-    process = subprocess.Popen(
-        ["pgrep", "-P", str(pid)],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        stdin=subprocess.PIPE,
-    )
-    for pid in process.communicate()[0].splitlines():
-        _kill_process_and_subprocess_linux(pid.strip())
-
-    subprocess.call(
-        ["kill", "-KILL", str(pid)],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        stdin=subprocess.PIPE,
     )
 
 
 def kill_process_and_subprocesses(pid):
+    log.info("Killing process and subprocesses of: %s", pid)
     from subprocess import CalledProcessError
 
     if sys.platform == "win32":

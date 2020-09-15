@@ -5,7 +5,7 @@ disrupts the existing loggers).
 
 Usage:
 
-configure_logger('LSP', log_level, log_filename)
+configure_logger('LSP', log_level, log_file)
 log = get_logger(__name__)
 
 ...
@@ -39,7 +39,7 @@ def _as_str(s):
 
 class _LogConfig(object):
 
-    __slots__ = ["_lock", "__stream", "prefix", "log_level", "_log_filename", "pid"]
+    __slots__ = ["_lock", "__stream", "prefix", "log_level", "_log_file", "pid"]
 
     def __init__(self):
         self._lock = threading.Lock()
@@ -47,18 +47,28 @@ class _LogConfig(object):
 
         self.prefix = ""
         self.log_level = 0
-        self.log_filename = None
+        self.log_file = None
         self.pid = os.getpid()
 
     @property
-    def log_filename(self):
-        return self._log_filename
+    def log_file(self):
+        return self._log_file
 
-    @log_filename.setter
-    def log_filename(self, log_filename):
+    @log_file.setter
+    def log_file(self, log_file):
         with self._lock:
-            self._log_filename = log_filename
-            self.__stream = None
+            if log_file is None:
+                self._log_file = None
+                self.__stream = None
+
+            elif isinstance(log_file, str):
+                self._log_file = log_file
+                self.__stream = None
+
+            else:
+                assert hasattr(log_file, "write")
+                self._log_file = None
+                self.__stream = log_file
 
     @property
     def _stream(self):
@@ -67,20 +77,21 @@ class _LogConfig(object):
 
             # open it on demand
             with self._lock:
-                log_filename = self._log_filename
+                log_file = self._log_file
                 if self.__stream is None:
                     stream = sys.stderr
-                    if log_filename:
-                        stream = open(log_filename, "w")
+                    if log_file:
+                        stream = open(log_file, "w")
                     self.__stream = stream
                     return stream
 
         return stream
 
-    def report(self, logger_name, show_stacktrace, levelname, message):
-        msg_len = len(message)
-        if msg_len > 1000:
-            message = f"{message[:800]} ... <trimmed {msg_len}> ... {message[-200:]}"
+    def report(self, logger_name, show_stacktrace, levelname, message, trim):
+        if trim:
+            msg_len = len(message)
+            if msg_len > 1000:
+                message = f"{message[:800]} ... <trimmed {msg_len} to 1000> ... {message[-200:]}"
 
         log_format = (
             self.prefix
@@ -115,24 +126,24 @@ class _Logger(object):
 
     def critical(self, msg="", *args):
         if _log_config.log_level >= 0:
-            self._report("CRITICAL", False, msg, *args)
+            self._report("CRITICAL", False, False, msg, *args)
 
     def exception(self, msg="", *args):
         if _log_config.log_level >= 0:
-            self._report("EXCEPTION", True, msg, *args)
+            self._report("EXCEPTION", True, False, msg, *args)
 
     def info(self, msg="", *args):
         if _log_config.log_level >= 1:
-            self._report("INFO", False, msg, *args)
+            self._report("INFO", False, True, msg, *args)
 
     def debug(self, msg="", *args):
         if _log_config.log_level >= 2:
-            self._report("DEBUG", False, msg, *args)
+            self._report("DEBUG", False, True, msg, *args)
 
     warn = warning = info
     error = exception
 
-    def _report(self, levelname, show_stacktrace, msg="", *args):
+    def _report(self, levelname, show_stacktrace, trim, msg="", *args):
         msg = _as_str(msg)
         if args:
             args = tuple(_as_str(arg) for arg in args)
@@ -143,7 +154,7 @@ class _Logger(object):
         else:
             message = msg
 
-        _log_config.report(self.name, show_stacktrace, levelname, message)
+        _log_config.report(self.name, show_stacktrace, levelname, message, trim)
 
 
 def get_log_level():
@@ -166,7 +177,22 @@ def get_logger(name: str) -> ILog:
 def _configure_logger(prefix, log_level, log_file):
     _log_config.prefix = prefix
     _log_config.log_level = log_level
-    _log_config.log_filename = log_file
+    _log_config.log_file = log_file
+
+
+def _current_config():
+    return _log_config.prefix, _log_config.log_level, _log_config.log_file
+
+
+class _RestoreCtxManager(object):
+    def __init__(self, config_to_restore):
+        self._config_to_restore = config_to_restore
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        _configure_logger(*self._config_to_restore)
 
 
 def configure_logger(postfix, log_level, log_file):
@@ -174,29 +200,36 @@ def configure_logger(postfix, log_level, log_file):
     :param log_file:
         - If None, get target file from env var.
         - If empty string log to stderr.
+        
+    :note: If used as a context manager it'll revert to the previous 
+           configuration on `__exit__`.
     """
 
-    if log_file:
-        try:
-            log_file = os.path.expanduser(log_file)
-            log_file = os.path.realpath(os.path.abspath(log_file))
-            dirname = os.path.dirname(log_file)
-            basename = os.path.basename(log_file)
-            try:
-                os.makedirs(dirname)
-            except:
-                pass  # Ignore error if it already exists.
+    prev_config = _current_config()
 
-            name, ext = os.path.splitext(basename)
-            log_file = os.path.join(
-                dirname, name + "." + postfix + "." + str(os.getpid()) + ext
-            )
-        except:
-            log_file = None
-            # Don't fail when trying to setup logging, just show the exception.
-            traceback.print_exc()
+    if log_file:
+        if isinstance(log_file, str):
+            try:
+                log_file = os.path.expanduser(log_file)
+                log_file = os.path.realpath(os.path.abspath(log_file))
+                dirname = os.path.dirname(log_file)
+                basename = os.path.basename(log_file)
+                try:
+                    os.makedirs(dirname)
+                except:
+                    pass  # Ignore error if it already exists.
+
+                name, ext = os.path.splitext(basename)
+                log_file = os.path.join(
+                    dirname, name + "." + postfix + "." + str(os.getpid()) + ext
+                )
+            except:
+                log_file = None
+                # Don't fail when trying to setup logging, just show the exception.
+                traceback.print_exc()
 
     _configure_logger(postfix, log_level, log_file)
+    return _RestoreCtxManager(prev_config)
 
 
 def log_args_and_python(log, argv, version):

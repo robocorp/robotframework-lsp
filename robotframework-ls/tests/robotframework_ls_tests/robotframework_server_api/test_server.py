@@ -8,7 +8,7 @@ if __file__.endswith((".pyc", ".pyo")):
 
 
 @pytest.fixture
-def server_process(tmpdir):
+def server_process(tmpdir, on_timeout):
     from robocorp_ls_core.basic import kill_process_and_subprocesses
     from robotframework_ls.server_api.server__main__ import start_server_process
 
@@ -25,15 +25,29 @@ def server_process(tmpdir):
     )
     returncode = language_server_api_process.poll()
     assert returncode is None
+
+    def write_on_finish():
+        import sys
+
+        dirname = os.path.dirname(log_file)
+        for f in os.listdir(dirname):
+            if f.startswith("robotframework_api_tests") and f.endswith(".log"):
+                full = os.path.join(dirname, f)
+                sys.stderr.write("\n--- %s contents:\n" % (full,))
+                with open(full, "r") as stream:
+                    sys.stderr.write(stream.read())
+
+    on_timeout.add(write_on_finish)
+
     yield language_server_api_process
+
+    on_timeout.remove(write_on_finish)
+
     returncode = language_server_api_process.poll()
     if returncode is None:
         kill_process_and_subprocesses(language_server_api_process.pid)
 
-    if os.path.exists(log_file):
-        print("--- %s contents:" % (log_file,))
-        with open(log_file, "r") as stream:
-            print(stream.read())
+    write_on_finish()
 
 
 @pytest.fixture

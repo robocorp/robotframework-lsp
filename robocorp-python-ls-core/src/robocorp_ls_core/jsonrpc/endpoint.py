@@ -37,12 +37,7 @@ log = get_logger(__name__)
 JSONRPC_VERSION = "2.0"
 CANCEL_METHOD = "$/cancelRequest"
 
-# This is almost ready, but we need to check the LibspecManager.
-# In particular, as there is now concurrence among the processes, initializing
-# the APIs to generate the libspec files can timeout during tests (probably
-# due to running in slow machines, so, we may need to revise the timeouts
-# or pre-generate the builtin libraries -- which is probably ideal anyways).
-FORCE_NON_THREADED_VERSION = True
+FORCE_NON_THREADED_VERSION = False
 
 
 def require_monitor(func):
@@ -54,6 +49,9 @@ def require_monitor(func):
 
 
 class Endpoint(object):
+
+    SHOW_THREAD_DUMP_AFTER_TIMEOUT = 5
+
     def __init__(self, dispatcher, consumer, id_generator=lambda: str(uuid.uuid4())):
         """A JSON RPC endpoint for managing messages sent to/from the client.
 
@@ -75,7 +73,8 @@ class Endpoint(object):
         self._client_request_futures = {}
         self._server_request_futures = {}
 
-        max_workers = min(20, (os.cpu_count() or 1) + 4)
+        # i.e.: 5 to 15 workers.
+        max_workers = min(15, (os.cpu_count() or 1) + 4)
         self._executor_service = futures.ThreadPoolExecutor(max_workers=max_workers)
 
     def shutdown(self):
@@ -221,6 +220,51 @@ class Endpoint(object):
         if request_future.cancel():
             log.debug("Cancelled request with id %s", msg_id)
 
+    def _call_checking_time(self, func, **kwargs):
+        from robocorp_ls_core import timeouts
+        import threading
+        import traceback
+
+        timeout_tracker = timeouts.TimeoutTracker.get_singleton()
+        curr_thread = threading.current_thread()
+        timeout = self.SHOW_THREAD_DUMP_AFTER_TIMEOUT
+
+        def on_timeout(*args, **kwargs):
+            stack_trace = [
+                "===============================================================================",
+                f"Slow request (already took: {timeout}s). Showing thread dump.",
+                "================================= Thread Dump =================================",
+            ]
+
+            for thread_id, stack in sys._current_frames().items():
+                if thread_id != curr_thread.ident:
+                    continue
+                stack_trace.append(
+                    "\n-------------------------------------------------------------------------------"
+                )
+                stack_trace.append(f" Thread {curr_thread}")
+                stack_trace.append("")
+
+                if "self" in stack.f_locals:
+                    stack_trace.append(f"self: {stack.f_locals['self']}\n")
+
+                for filename, lineno, name, line in traceback.extract_stack(stack):
+                    stack_trace.append(
+                        ' File "%s", line %d, in %s' % (filename, lineno, name)
+                    )
+                    if line:
+                        stack_trace.append("   %s" % (line.strip()))
+            stack_trace.append(
+                "\n=============================== END Thread Dump ==============================="
+            )
+            log.critical("\n".join(stack_trace))
+
+        if timeout > 0:
+            with timeout_tracker.call_on_timeout(timeout, on_timeout, kwargs):
+                return func(**kwargs)
+        else:
+            return func(**kwargs)
+
     def _handle_request(self, msg_id, method, params):
         """Handle a request from the client."""
         import time
@@ -254,7 +298,9 @@ class Endpoint(object):
                 )
 
             else:
-                request_future = self._executor_service.submit(handler_result, **kwargs)
+                request_future = self._executor_service.submit(
+                    self._call_checking_time, handler_result, **kwargs
+                )
                 if monitor is not None:
                     request_future.__monitor__ = monitor
                 self._client_request_futures[msg_id] = request_future
@@ -287,6 +333,9 @@ class Endpoint(object):
                     raise JsonRpcRequestCancelled()
 
                 message["result"] = future.result()
+            except JsonRpcRequestCancelled as e:
+                log.debug("Cancelled request: %s", request_id)
+                message["error"] = e.to_dict()
             except JsonRpcException as e:
                 log.exception("Failed to handle request %s", request_id)
                 message["error"] = e.to_dict()

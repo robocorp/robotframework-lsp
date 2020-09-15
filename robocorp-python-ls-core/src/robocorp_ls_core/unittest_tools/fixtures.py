@@ -6,7 +6,12 @@ from robocorp_ls_core.options import USE_TIMEOUTS, NO_TIMEOUT
 import pytest
 from typing import Optional
 
-TIMEOUT: Optional[int] = int(os.getenv("PYTEST_TIMEOUT", 20))
+TIMEOUT: Optional[float]
+_curr_pytest_timeout = os.getenv("PYTEST_TIMEOUT")
+if _curr_pytest_timeout:
+    TIMEOUT = float(_curr_pytest_timeout) / 3.0
+else:
+    TIMEOUT = 20
 if not USE_TIMEOUTS:
     TIMEOUT = NO_TIMEOUT  # i.e.: None
 
@@ -174,19 +179,55 @@ def create_language_server_process(log_file, __main__module):
             kill_process_and_subprocesses(language_server_process.pid)
 
 
+class _OnTimeout(object):
+    def __init__(self):
+        import pytest_timeout
+
+        self._original_dump_stacks = pytest_timeout.dump_stacks
+        pytest_timeout.dump_stacks = self.new_dump_stacks
+        self._callbacks = {}  # Note: actually used as an ordered set.
+
+    def new_dump_stacks(self, *args, **kwargs):
+        sys.stderr.write("========== CUSTOMIZED TIMEOUT OUTPUT ============\n")
+        for c in self._callbacks.copy():
+            c()
+        sys.stderr.write("======== END CUSTOMIZED TIMEOUT OUTPUT ==========\n")
+        return self._original_dump_stacks(*args, **kwargs)
+
+    def add(self, callback):
+        self._callbacks[callback] = 1
+
+    def remove(self, callback):
+        self._callbacks.pop(callback, None)
+
+
+_on_timeout = _OnTimeout()
+
+
 @pytest.fixture
-def log_file(tmpdir):
+def on_timeout():
+    return _on_timeout
+
+
+@pytest.fixture
+def log_file(tmpdir, on_timeout):
     logs_dir = tmpdir.join("logs")
     logs_dir.mkdir()
     filename = str(logs_dir.join("log_test.log"))
     sys.stderr.write("Logging subprocess to: %s" % (filename,))
 
+    def write_on_finish():
+        for name in os.listdir(str(logs_dir)):
+            sys.stderr.write("\n--- %s contents:\n" % (name,))
+            with open(str(logs_dir.join(name)), "r") as stream:
+                sys.stderr.write(stream.read())
+                sys.stderr.write("\n")
+
+    on_timeout.add(write_on_finish)
     yield filename
 
-    for name in os.listdir(str(logs_dir)):
-        print("\n--- %s contents:" % (name,))
-        with open(str(logs_dir.join(name)), "r") as stream:
-            print(stream.read())
+    on_timeout.remove(write_on_finish)
+    write_on_finish()
 
 
 @pytest.fixture

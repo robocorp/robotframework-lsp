@@ -16,13 +16,68 @@
 # limitations under the License.
 import threading
 from robocorp_ls_core.robotframework_log import get_logger
-
-try:
-    import ujson as json
-except Exception:  # pylint: disable=broad-except
-    import json
+from typing import Optional
+import json
 
 log = get_logger(__name__)
+
+
+def read(stream) -> Optional[str]:
+    """
+    Reads one message from the stream and returns the message (or None if EOF was reached).
+
+    :param stream:
+        The stream we should be reading from.
+
+    :return str|NoneType:
+        The message or None if the stream was closed.
+    """
+    headers = {}
+    while True:
+        # Interpret the http protocol headers
+        line = stream.readline()  # The trailing \r\n should be there.
+
+        if not line:  # EOF
+            return None
+        line = line.strip().decode("ascii")
+        if not line:  # Read just a new line without any contents
+            break
+        try:
+            name, value = line.split(": ", 1)
+        except ValueError:
+            raise RuntimeError("Invalid header line: {}.".format(line))
+        headers[name.strip()] = value.strip()
+
+    if not headers:
+        raise RuntimeError("Got message without headers.")
+
+    content_length = int(headers["Content-Length"])
+
+    # Get the actual json
+    body = _read_len(stream, content_length)
+    return body.decode("utf-8")
+
+
+def _read_len(stream, content_length) -> bytes:
+    buf = b""
+    if not content_length:
+        return buf
+
+    # Grab the body
+    while True:
+        data = stream.read(content_length - len(buf))
+        if not buf and len(data) == content_length:
+            # Common case
+            return data
+        buf += data
+        if len(buf) == content_length:
+            return buf
+        if len(buf) > content_length:
+            raise AssertionError(
+                "Expected to read message up to len == %s (already read: %s). Found:\n%s"
+                % (content_length, len(buf), buf.decode("utf-8", "replace"))
+            )
+        # len(buf) < content_length (just keep on going).
 
 
 class JsonRpcStreamReader(object):
@@ -40,79 +95,25 @@ class JsonRpcStreamReader(object):
         """
         try:
             while not self._rfile.closed:
-                try:
-                    request_str = self._read_message()
-                    log.debug("Read: %s", request_str)
-                except ValueError:
-                    if self._rfile.closed:
-                        return
-                    else:
-                        log.exception("Failed to read from rfile")
-
-                if request_str is None:
-                    break
+                data = read(self._rfile)
+                log.debug("Read: %s", data)
+                if data is None:
+                    return
 
                 try:
-                    message_consumer(json.loads(request_str.decode("utf-8")))
-                except ValueError:
-                    log.exception("Failed to parse JSON message %s", request_str)
+                    msg = json.loads(data)
+                except:
+                    log.exception("Failed to parse JSON message %s", data)
                     continue
+                try:
+                    message_consumer(msg)
+                except:
+                    log.exception("Error processing JSON message %s", data)
+                    continue
+        except:
+            log.exception("Error in JsonRpcStreamReader.")
         finally:
             log.debug("Exited JsonRpcStreamReader.")
-
-    def _read_message(self):
-        """Reads the contents of a message.
-
-        Returns:
-            body of message if parsable else None
-        """
-
-        content_length = None
-        line = "<ignore>"
-
-        # Blindly consume all header lines (until \r\n) except for the content-len.
-        while line and line.strip():
-            line = self._rfile.readline()
-            if not line:
-                return None
-            if content_length is None:
-                content_length = self._content_length(line)
-
-        if not content_length:
-            raise AssertionError("Error in protocol: did not find 'Content-Length:'.")
-
-        # Grab the body
-        buf = b""
-        while True:
-            diff_len = content_length - len(buf)
-            data = self._rfile.read(diff_len)
-            if not data:
-                return None
-            if not buf and len(data) == content_length:
-                # Common case
-                return data
-            buf += data
-            if len(buf) == content_length:
-                return buf
-            if len(buf) > content_length:
-                raise AssertionError(
-                    "Expected to read message up to len == %s (already read: %s). Found:\n%s"
-                    % (content_length, len(buf), buf.decode("utf-8", "replace"))
-                )
-            # len(buf) < content_length (just keep on going).
-
-    @staticmethod
-    def _content_length(line):
-        """Extract the content length from an input line."""
-        if line.startswith(b"Content-Length: "):
-            _, value = line.split(b"Content-Length: ")
-            value = value.strip()
-            try:
-                return int(value)
-            except ValueError:
-                raise ValueError("Invalid Content-Length header: {}".format(value))
-
-        return None
 
 
 class JsonRpcStreamWriter(object):
@@ -136,19 +137,13 @@ class JsonRpcStreamWriter(object):
                 log.debug("Writing: %s", message)
                 body = json.dumps(message, **self._json_dumps_args)
 
-                # Ensure we get the byte length, not the character length
-                content_length = (
-                    len(body) if isinstance(body, bytes) else len(body.encode("utf-8"))
+                as_bytes = body.encode("utf-8")
+                stream = self._wfile
+                stream.write(
+                    ("Content-Length: %s\r\n\r\n" % len(as_bytes)).encode("ascii")
                 )
-
-                response = (
-                    "Content-Length: {}\r\n"
-                    "Content-Type: application/vscode-jsonrpc; charset=utf8\r\n\r\n"
-                    "{}".format(content_length, body)
-                )
-
-                self._wfile.write(response.encode("utf-8"))
-                self._wfile.flush()
+                stream.write(as_bytes)
+                stream.flush()
                 return True
             except Exception:  # pylint: disable=broad-except
                 log.exception("Failed to write message to output file %s", message)

@@ -26,6 +26,7 @@ from robocorp_ls_core.jsonrpc.endpoint import Endpoint, require_monitor
 # pylint: disable=redefined-outer-name
 from concurrent import futures
 from robocorp_ls_core.jsonrpc.monitor import Monitor
+import io
 
 
 MSG_ID = "id"
@@ -346,22 +347,20 @@ def test_consume_request_cancel(endpoint, dispatcher, consumer):
     await_assertion(check_result_or_cancelled, timeout=5)
 
 
-def test_consume_request_cancel_monitor(endpoint, dispatcher, consumer):
+def test_log_slow_calls(endpoint, dispatcher, consumer, monkeypatch):
+    from robocorp_ls_core.robotframework_log import configure_logger
 
-    from robocorp_ls_core.jsonrpc import endpoint as endpoint_module
+    monkeypatch.setattr(endpoint, "SHOW_THREAD_DUMP_AFTER_TIMEOUT", 0.5)
 
-    original_FORCE_NON_THREADED_VERSION = endpoint_module.FORCE_NON_THREADED_VERSION
+    def async_slow_handler():
+        time.sleep(1)
+        return 1234
 
-    try:
-        endpoint_module.FORCE_NON_THREADED_VERSION = False
-        # i.e.: cancel after the request already started.
-        @require_monitor
-        def async_handler(monitor: Monitor):
-            for _ in range(10):
-                time.sleep(0.1)
-                monitor.check_cancelled()
+    s = io.StringIO()
+    log_level = 2
+    with configure_logger("", log_level, s):
 
-        handler = mock.Mock(return_value=async_handler)
+        handler = mock.Mock(return_value=async_slow_handler)
         dispatcher["methodName"] = handler
 
         endpoint.consume(
@@ -374,22 +373,58 @@ def test_consume_request_cancel_monitor(endpoint, dispatcher, consumer):
         )
         handler.assert_called_once_with({"key": "value"})
 
-        endpoint.consume(
-            {"jsonrpc": "2.0", "method": "$/cancelRequest", "params": {"id": MSG_ID}}
-        )
-
-        def wait_for_monitor_check_cancelled():
+        def check_result():
             consumer.assert_called_once_with(
-                {
-                    "jsonrpc": "2.0",
-                    "id": MSG_ID,
-                    "error": exceptions.JsonRpcRequestCancelled().to_dict(),
-                }
+                {"jsonrpc": "2.0", "id": MSG_ID, "result": 1234}
             )
 
-        await_assertion(wait_for_monitor_check_cancelled)
-    finally:
-        endpoint_module.FORCE_NON_THREADED_VERSION = original_FORCE_NON_THREADED_VERSION
+        await_assertion(check_result, timeout=3)
+
+    assert "time.sleep(1)" in s.getvalue()
+    assert "in async_slow_handler" in s.getvalue()
+
+
+def test_consume_request_cancel_monitor(endpoint, dispatcher, consumer, monkeypatch):
+
+    from robocorp_ls_core.jsonrpc import endpoint as endpoint_module
+
+    monkeypatch.setattr(endpoint_module, "FORCE_NON_THREADED_VERSION", False)
+
+    endpoint_module.FORCE_NON_THREADED_VERSION = False
+    # i.e.: cancel after the request already started.
+    @require_monitor
+    def async_handler(monitor: Monitor):
+        for _ in range(10):
+            time.sleep(0.1)
+            monitor.check_cancelled()
+
+    handler = mock.Mock(return_value=async_handler)
+    dispatcher["methodName"] = handler
+
+    endpoint.consume(
+        {
+            "jsonrpc": "2.0",
+            "id": MSG_ID,
+            "method": "methodName",
+            "params": {"key": "value"},
+        }
+    )
+    handler.assert_called_once_with({"key": "value"})
+
+    endpoint.consume(
+        {"jsonrpc": "2.0", "method": "$/cancelRequest", "params": {"id": MSG_ID}}
+    )
+
+    def wait_for_monitor_check_cancelled():
+        consumer.assert_called_once_with(
+            {
+                "jsonrpc": "2.0",
+                "id": MSG_ID,
+                "error": exceptions.JsonRpcRequestCancelled().to_dict(),
+            }
+        )
+
+    await_assertion(wait_for_monitor_check_cancelled)
 
 
 def test_consume_request_cancel_unknown(endpoint):
