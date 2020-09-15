@@ -106,6 +106,8 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             from robotframework_ls.impl.ast_utils import collect_errors
             from robotframework_ls.impl import code_analysis
 
+            log.debug("Lint: starting (in thread).")
+
             completion_context = self._create_completion_context(doc_uri, 0, 0, monitor)
             if completion_context is None:
                 return []
@@ -113,8 +115,11 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             ast = completion_context.get_ast()
             monitor.check_cancelled()
             errors = collect_errors(ast)
+            log.debug("Collected AST errors (in thread): %s", len(errors))
             monitor.check_cancelled()
-            errors.extend(code_analysis.collect_analysis_errors(completion_context))
+            analysis_errors = code_analysis.collect_analysis_errors(completion_context)
+            log.debug("Collected analysis errors (in thread): %s", len(analysis_errors))
+            errors.extend(analysis_errors)
             return [error.to_lsp_diagnostic() for error in errors]
         except JsonRpcRequestCancelled:
             raise JsonRpcRequestCancelled("Lint cancelled (inside lint)")

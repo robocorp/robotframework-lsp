@@ -4,6 +4,7 @@ import os
 def test_log(tmpdir):
     from robocorp_ls_core.robotframework_log import get_logger, configure_logger
     from robocorp_ls_core.unittest_tools.fixtures import wait_for_test_condition
+    import io
 
     somedir = str(tmpdir.join("somedir"))
     configure_logger("test", 2, os.path.join(somedir, "foo.log"))
@@ -33,3 +34,17 @@ def test_log(tmpdir):
         assert "something" in contents
         assert "rara" in contents
         assert "rara: str1 - str2" in contents
+
+    log_file = io.StringIO()
+    with configure_logger("", 2, log_file):
+        log.info("in_context")
+
+    log.info("out_of_context")
+
+    with open(os.path.join(somedir, log_files[0]), "r") as stream:
+        contents = stream.read()
+    assert "out_of_context" in contents
+    assert "in_context" not in contents
+
+    assert "out_of_context" not in log_file.getvalue()
+    assert "in_context" in log_file.getvalue()

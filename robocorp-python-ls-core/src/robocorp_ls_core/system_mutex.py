@@ -81,7 +81,7 @@ if sys.platform == "win32":
     import os
 
     class SystemMutex(object):
-        def __init__(self, mutex_name, check_reentrant=True):
+        def __init__(self, mutex_name, check_reentrant=True, log_info=False):
             """
             :param check_reentrant:
                 Should only be False if this mutex is expected to be released in
@@ -157,19 +157,22 @@ else:  # Linux
     import fcntl  # @UnresolvedImport
 
     class SystemMutex(object):
-        def __init__(self, mutex_name, check_reentrant=True):
+        def __init__(self, mutex_name, check_reentrant=True, log_info=False):
             """
             :param check_reentrant:
                 Should only be False if this mutex is expected to be released in
                 a different thread.
             """
+
             check_valid_mutex_name(mutex_name)
             self.mutex_name = mutex_name
             self.thread_id = get_tid()
             filename = os.path.join(tempfile.gettempdir(), mutex_name)
             try:
-                handle = open(filename, "w")
+                handle = open(filename, "a+")
                 fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                handle.write(str(os.getpid()) + "\n")
+                handle.flush()
             except Exception:
                 self._release_mutex = NULL
                 self._acquired = False
@@ -179,6 +182,35 @@ else:  # Linux
                     handle.close()
                 except Exception:
                     pass
+
+                # It was unable to get the lock
+                if log_info:
+                    try:
+                        try:
+                            with open(filename, "r") as stream:
+                                curr_pid = stream.read().strip().split("\n")[-1]
+                        except:
+                            log.exception("Unable to get locking pid.")
+                            curr_pid = "<unable to get locking pid>"
+
+                        try:
+                            from robocorp_ls_core.basic import is_process_alive
+
+                            is_alive = is_process_alive(int(curr_pid))
+                        except:
+                            is_alive = "<unknown>"
+                        log.info(
+                            "Current pid holding lock: %s. Alive: %s. This pid: %s Filename: %s",
+                            curr_pid,
+                            is_alive,
+                            os.getpid(),
+                            filename,
+                        )
+                    except:
+                        from robocorp_ls_core.robotframework_log import get_log_level
+
+                        if get_log_level() >= 2:
+                            log.exception("Error getting lock info on failure.")
             else:
 
                 def release_mutex(*args, **kwargs):
@@ -229,14 +261,14 @@ class _MutexHandle(object):
     def __init__(self, system_mutex, mutex_name):
         self._system_mutex = system_mutex
         self._mutex_name = mutex_name
-        # log.info("Obtained mutex: %s", mutex_name)
+        # log.info("Obtained mutex: %s in pid: %s", mutex_name, os.getpid())
 
     def __enter__(self, *args, **kwargs):
         return self
 
     def __exit__(self, *args, **kwargs):
         self._system_mutex.release_mutex()
-        # log.info("Released mutex: %s", self._mutex_name)
+        # log.info("Released mutex: %s in pid: %s", self._mutex_name, os.getpid())
 
 
 def timed_acquire_mutex(mutex_name, timeout=20, sleep_time=0.15, check_reentrant=True):
@@ -258,9 +290,12 @@ def timed_acquire_mutex(mutex_name, timeout=20, sleep_time=0.15, check_reentrant
     """
     finish_at = time.time() + timeout
     while True:
-        mutex = SystemMutex(mutex_name, check_reentrant=check_reentrant)
+        last_attempt = time.time() >= finish_at
+        mutex = SystemMutex(
+            mutex_name, check_reentrant=check_reentrant, log_info=last_attempt
+        )
         if not mutex.get_mutex_aquired():
-            if time.time() > finish_at:
+            if last_attempt:
                 log.info("Unable to obtain mutex: %s", mutex_name)
                 raise RuntimeError(
                     "Could not get mutex: %s after: %s secs." % (mutex_name, timeout)

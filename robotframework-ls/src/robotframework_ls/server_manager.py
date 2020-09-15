@@ -264,7 +264,11 @@ class _ServerApi(object):
                     w, r, server_process
                 )
 
-                log.debug("Initializing api...")
+                log.debug(
+                    "Initializing api... (this pid: %s, api pid: %s).",
+                    os.getpid(),
+                    server_process.pid,
+                )
                 api.initialize(
                     process_id=os.getpid(),
                     root_uri=workspace.root_uri,
@@ -285,7 +289,7 @@ class _ServerApi(object):
                 # Open existing documents in the API.
                 source: Optional[str]
                 for document in workspace.iter_documents():
-                    log.debug(f"Forwarding doc: {document.uri} to api...")
+                    log.debug("Forwarding doc: %s to api...", document.uri)
                     try:
                         source = document.source
                     except Exception:
@@ -312,19 +316,22 @@ class _ServerApi(object):
                     if exitcode is not None:
                         # Note: only read() if the process exited.
                         log.exception(
-                            "Error starting robotframework server api. Exit code: %s Base exception: %s. Stderr: %s"
-                            % (exitcode, e, server_process.stderr.read())
+                            "Error starting robotframework server api. Exit code: %s Base exception: %s. Stderr: %s",
+                            exitcode,
+                            e,
+                            server_process.stderr.read(),
                         )
                     else:
                         log.exception(
-                            "Error (%s) starting robotframework server api (still running). Base exception: %s."
-                            % (exitcode, e)
+                            "Error (%s) starting robotframework server api (still running). Base exception: %s.",
+                            exitcode,
+                            e,
                         )
                 self._dispose_server_process()
             finally:
                 if server_process is not None:
                     log.debug(
-                        "Server api (%s) created pid: %s" % (self, server_process.pid)
+                        "Server api (%s) created pid: %s", self, server_process.pid
                     )
                 else:
                     log.debug(
