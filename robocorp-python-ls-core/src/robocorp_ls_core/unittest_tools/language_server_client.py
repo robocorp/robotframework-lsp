@@ -180,6 +180,20 @@ class LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    @implements(ILanguageServerClient.request_signature_help)
+    def request_signature_help(self, uri, line, col):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "textDocument/signatureHelp",
+                "params": {
+                    "textDocument": {"uri": uri},
+                    "position": {"line": line, "character": col},
+                },
+            }
+        )
+
     @implements(ILanguageServerClient.find_definitions)
     def find_definitions(self, uri, line: int, col: int):
         return self.request(

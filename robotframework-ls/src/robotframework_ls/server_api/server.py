@@ -271,6 +271,24 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             monitor=monitor,
         )
 
+    def m_signature_help(self, doc_uri: str, line: int, col: int):
+        func = partial(self._threaded_signature_help, doc_uri, line, col)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_signature_help(
+        self, doc_uri: str, line: int, col: int, monitor: IMonitor
+    ) -> Optional[dict]:
+        from robotframework_ls.impl.signature_help import signature_help
+
+        completion_context = self._create_completion_context(
+            doc_uri, line, col, monitor
+        )
+        if completion_context is None:
+            return None
+
+        return signature_help(completion_context)
+
     def m_shutdown(self, **_kwargs):
         PythonLanguageServer.m_shutdown(self, **_kwargs)
         self.libspec_manager.dispose()

@@ -195,7 +195,10 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             "referencesProvider": False,
             "renameProvider": False,
             "foldingRangeProvider": False,
-            "signatureHelpProvider": {"triggerCharacters": [" "]},
+            # Note that there are no auto-trigger characters (there's no good
+            # character as there's no `(` for parameters and putting it as a
+            # space becomes a bit too much).
+            "signatureHelpProvider": {"triggerCharacters": []},
             "textDocumentSync": {
                 "change": TextDocumentSyncKind.INCREMENTAL,
                 "save": {"includeText": False},
@@ -472,12 +475,6 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         return completions
 
     def m_text_document__signature_help(self, **kwargs):
-        func = partial(self._signature_help, **kwargs)
-        func = require_monitor(func)
-        return func
-
-    @log_and_silence_errors(log)
-    def _signature_help(self, monitor: Monitor, **kwargs) -> Optional[dict]:
         """
         "params": {
             "textDocument": {
@@ -491,21 +488,58 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             },
         },
         """
-        return None  # work in progress.
-        # monitor.check_cancelled()
-        # from robocorp_ls_core.lsp import SignatureHelp
-        # from robocorp_ls_core.lsp import SignatureInformation
-        # from robocorp_ls_core.lsp import ParameterInformation
-        #
-        # label = "(param1, param2)"
-        # documentation = "Documentation for the keyword"
-        # parameters: List[ParameterInformation] = [
-        #     # Note: the label here is to highlight a part of the main signature label!
-        #     # ParameterInformation("param1", None),
-        # ]
-        # signatures: List[SignatureInformation] = [
-        #     SignatureInformation(label, documentation, parameters)
-        # ]
-        # return SignatureHelp(
-        #     signatures, active_signature=0, active_parameter=0
-        # ).to_dict()
+        doc_uri = kwargs["textDocument"]["uri"]
+        # Note: 0-based
+        line, col = kwargs["position"]["line"], kwargs["position"]["character"]
+
+        rf_api_client = self._server_manager.get_regular_rf_api_client(doc_uri)
+        if rf_api_client is not None:
+            func = partial(self._signature_help, rf_api_client, doc_uri, line, col)
+            func = require_monitor(func)
+            return func
+
+        log.info("Unable to get signature (no api available).")
+        return []
+
+    @log_and_silence_errors(log)
+    def _signature_help(
+        self,
+        rf_api_client: IRobotFrameworkApiClient,
+        doc_uri: str,
+        line: int,
+        col: int,
+        monitor: Monitor,
+    ) -> Optional[dict]:
+        from robocorp_ls_core.client_base import wait_for_message_matcher
+
+        ws = self.workspace
+        if not ws:
+            log.critical("Workspace must be set before getting signature help.")
+            return None
+
+        document = ws.get_document(doc_uri, accept_from_file=True)
+        if document is None:
+            log.critical("Unable to find document (%s) for completions." % (doc_uri,))
+            return None
+
+        # Asynchronous completion.
+        message_matcher: Optional[
+            IIdMessageMatcher
+        ] = rf_api_client.request_signature_help(doc_uri, line, col)
+        if message_matcher is None:
+            log.debug("Message matcher for signature returned None.")
+            return None
+
+        if wait_for_message_matcher(
+            message_matcher,
+            rf_api_client.request_cancel,
+            DEFAULT_COMPLETIONS_TIMEOUT,
+            monitor,
+        ):
+            msg = message_matcher.msg
+            if msg is not None:
+                result = msg.get("result")
+                if result:
+                    return result
+
+        return None

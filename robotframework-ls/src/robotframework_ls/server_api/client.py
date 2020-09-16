@@ -162,6 +162,14 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             self._build_msg("codeFormat", text_document=text_document, options=options)
         )
 
+    def request_signature_help(self, doc_uri, line, col) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(
+            self._build_msg("signatureHelp", doc_uri=doc_uri, line=line, col=col)
+        )
+
     def request_cancel(self, message_id):
         self._check_process_alive()
         self.write(

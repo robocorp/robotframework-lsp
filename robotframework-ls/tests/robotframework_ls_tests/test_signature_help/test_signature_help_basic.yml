@@ -1,0 +1,5 @@
+activeParameter: 0
+activeSignature: 0
+signatures:
+- label: Log(message, level=INFO, html=False, console=False, repr=False, formatter=str)
+  parameters: []

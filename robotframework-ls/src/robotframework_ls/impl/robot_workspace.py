@@ -3,6 +3,8 @@ from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.cache import instance_cache
 from robotframework_ls.constants import NULL
 from robocorp_ls_core.robotframework_log import get_logger
+from robotframework_ls.impl.protocols import IRobotWorkspace, IRobotDocument
+from robocorp_ls_core.protocols import check_implements
 
 log = get_logger(__name__)
 
@@ -28,6 +30,9 @@ class RobotWorkspace(Workspace):
 
     def _create_document(self, doc_uri, source=None, version=None):
         return RobotDocument(doc_uri, source, version, generate_ast=self._generate_ast)
+
+    def __typecheckself__(self) -> None:
+        _: IRobotWorkspace = check_implements(self)
 
 
 class RobotDocument(Document):
@@ -105,3 +110,6 @@ class RobotDocument(Document):
                 return i
         else:
             raise AssertionError(f"Did not find >>{contents}<< in doc.")
+
+    def __typecheckself__(self) -> None:
+        _: IRobotDocument = check_implements(self)

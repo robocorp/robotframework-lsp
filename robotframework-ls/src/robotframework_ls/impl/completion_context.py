@@ -1,14 +1,18 @@
 from robocorp_ls_core.cache import instance_cache
 from robocorp_ls_core.constants import NULL
-from robocorp_ls_core.protocols import IMonitor
+from robocorp_ls_core.protocols import IMonitor, Sentinel, IConfig
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.robot_workspace import RobotDocument
+from typing import Optional, Any, List
+from robotframework_ls.impl.protocols import (
+    IRobotDocument,
+    ICompletionContext,
+    TokenInfo,
+    IRobotWorkspace,
+)
 
 
 log = get_logger(__name__)
-
-
-_NOT_SET = "NOT_SET"
 
 
 class _Memo(object):
@@ -48,8 +52,8 @@ class CompletionContext(object):
     def __init__(
         self,
         doc,
-        line=_NOT_SET,
-        col=_NOT_SET,
+        line=Sentinel.SENTINEL,
+        col=Sentinel.SENTINEL,
         workspace=None,
         config=None,
         memo=None,
@@ -64,12 +68,12 @@ class CompletionContext(object):
         :param _Memo memo:
         """
 
-        if col is _NOT_SET or line is _NOT_SET:
-            assert col is _NOT_SET, (
+        if col is Sentinel.SENTINEL or line is Sentinel.SENTINEL:
+            assert col is Sentinel.SENTINEL, (
                 "Either line and col are not set, or both are set. Found: (%s, %s)"
                 % (line, col)
             )
-            assert line is _NOT_SET, (
+            assert line is Sentinel.SENTINEL, (
                 "Either line and col are not set, or both are set. Found: (%s, %s)"
                 % (line, col)
             )
@@ -86,17 +90,30 @@ class CompletionContext(object):
         self._workspace = workspace
         self._config = config
         self._memo = memo
-        self._original_ctx = None
+        self._original_ctx: Optional[CompletionContext] = None
         self._monitor = monitor or NULL
 
     @property
     def monitor(self) -> IMonitor:
         return self._monitor
 
-    def check_cancelled(self):
+    def check_cancelled(self) -> None:
         self._monitor.check_cancelled()
 
-    def create_copy(self, doc):
+    def create_copy_with_selection(self, line: int, col: int) -> ICompletionContext:
+        doc = self._doc
+        ctx = CompletionContext(
+            doc,
+            line=line,
+            col=col,
+            workspace=self._workspace,
+            config=self._config,
+            memo=self._memo,
+        )
+        ctx._original_ctx = self
+        return ctx
+
+    def create_copy(self, doc: IRobotDocument) -> ICompletionContext:
         ctx = CompletionContext(
             doc,
             line=0,
@@ -109,47 +126,47 @@ class CompletionContext(object):
         return ctx
 
     @property
-    def original_doc(self):
+    def original_doc(self) -> IRobotDocument:
         if self._original_ctx is None:
             return self._doc
         return self._original_ctx.original_doc
 
     @property
-    def original_sel(self):
+    def original_sel(self) -> Any:
         if self._original_ctx is None:
             return self._sel
         return self._original_ctx.original_sel
 
     @property
-    def doc(self):
+    def doc(self) -> IRobotDocument:
         return self._doc
 
     @property
-    def sel(self):
+    def sel(self) -> Any:
         return self._sel
 
     @property
-    def memo(self):
+    def memo(self) -> Any:
         return self._memo
 
     @property
-    def config(self):
+    def config(self) -> Optional[IConfig]:
         return self._config
 
     @property
-    def workspace(self):
+    def workspace(self) -> IRobotWorkspace:
         return self._workspace
 
     @instance_cache
-    def get_type(self):
+    def get_type(self) -> Any:
         return self.doc.get_type()
 
     @instance_cache
-    def get_ast(self):
+    def get_ast(self) -> Any:
         return self.doc.get_ast()
 
     @instance_cache
-    def get_ast_current_section(self):
+    def get_ast_current_section(self) -> Any:
         """
         :rtype: robot.parsing.model.blocks.Section|NoneType
         """
@@ -159,7 +176,7 @@ class CompletionContext(object):
         section = ast_utils.find_section(ast, self.sel.line)
         return section
 
-    def get_accepted_section_header_words(self):
+    def get_accepted_section_header_words(self) -> List[str]:
         """
         :rtype: list(str)
         """
@@ -171,7 +188,7 @@ class CompletionContext(object):
         ret.sort()
         return ret
 
-    def get_current_section_name(self):
+    def get_current_section_name(self) -> Optional[str]:
         """
         :rtype: str|NoneType
         """
@@ -187,7 +204,7 @@ class CompletionContext(object):
 
         return section_name
 
-    def _get_accepted_sections(self):
+    def _get_accepted_sections(self) -> list:
         """
         :rtype: list(robot_constants.Section)
         """
@@ -207,7 +224,7 @@ class CompletionContext(object):
             log.critical("Unrecognized section: %s", t)
             return robot_constants.TEST_CASE_FILE_SECTIONS
 
-    def get_section(self, section_name):
+    def get_section(self, section_name) -> Any:
         """
         :rtype: robot_constants.Section
         """
@@ -221,10 +238,7 @@ class CompletionContext(object):
         return None
 
     @instance_cache
-    def get_current_token(self):
-        """
-        :rtype: robotframework_ls.impl.ast_utils._TokenInfo|NoneType
-        """
+    def get_current_token(self) -> Optional[TokenInfo]:
         from robotframework_ls.impl import ast_utils
 
         section = self.get_ast_current_section()
@@ -233,10 +247,7 @@ class CompletionContext(object):
         return ast_utils.find_token(section, self.sel.line, self.sel.col)
 
     @instance_cache
-    def get_current_variable(self, section=None):
-        """
-        :rtype: robotframework_ls.impl.ast_utils._TokenInfo|NoneType
-        """
+    def get_current_variable(self, section=None) -> Optional[TokenInfo]:
         from robotframework_ls.impl import ast_utils
 
         if section is None:
@@ -295,7 +306,7 @@ class CompletionContext(object):
         return joined_parts
 
     @instance_cache
-    def get_resource_import_as_doc(self, resource_import):
+    def get_resource_import_as_doc(self, resource_import) -> Optional[IRobotDocument]:
         from robocorp_ls_core import uris
         import os.path
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
@@ -367,3 +378,8 @@ class CompletionContext(object):
                 value = value_if_not_found
         value = str(value)
         return value
+
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
+
+        _: ICompletionContext = check_implements(self)

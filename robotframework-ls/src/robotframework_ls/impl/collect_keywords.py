@@ -1,7 +1,15 @@
-import os.path
-from robocorp_ls_core.robotframework_log import get_logger
-from robocorp_ls_core.cache import instance_cache
 from collections import namedtuple
+import os.path
+
+from robocorp_ls_core.cache import instance_cache
+from robocorp_ls_core.protocols import check_implements
+from robocorp_ls_core.robotframework_log import get_logger
+from robotframework_ls.impl.protocols import (
+    IKeywordFound,
+    ICompletionContext,
+    IKeywordCollector,
+)
+
 
 log = get_logger(__name__)
 
@@ -11,8 +19,8 @@ class _KeywordFoundFromAst(object):
     __slots__ = [
         "_module_ast",
         "_keyword_node",
-        "keyword_name",
-        "keyword_args",
+        "_keyword_name",
+        "_keyword_args",
         "completion_context",
         "completion_item_kind",
         "__instance_cache__",
@@ -30,10 +38,18 @@ class _KeywordFoundFromAst(object):
         self._module_ast = module_ast
         self._keyword_node = keyword_node
 
-        self.keyword_name = keyword_name
-        self.keyword_args = keyword_args
+        self._keyword_name = keyword_name
+        self._keyword_args = keyword_args
         self.completion_context = completion_context
         self.completion_item_kind = completion_item_kind
+
+    @property
+    def keyword_name(self):
+        return self._keyword_name
+
+    @property
+    def keyword_args(self):
+        return self._keyword_args
 
     @property
     def library_alias(self):
@@ -85,6 +101,9 @@ class _KeywordFoundFromAst(object):
     def end_col_offset(self):
         return self._keyword_node.end_col_offset
 
+    def __typecheckself__(self) -> None:
+        _: IKeywordFound = check_implements(self)
+
 
 class _KeywordFoundFromLibrary(object):
 
@@ -92,8 +111,8 @@ class _KeywordFoundFromLibrary(object):
         "_library_doc",
         "_library_alias",
         "_keyword_doc",
-        "keyword_name",
-        "keyword_args",
+        "_keyword_name",
+        "_keyword_args",
         "completion_context",
         "completion_item_kind",
         "__instance_cache__",
@@ -112,12 +131,20 @@ class _KeywordFoundFromLibrary(object):
 
         self._library_doc = library_doc
         self._keyword_doc = keyword_doc
-        self.keyword_name = keyword_name
-        self.keyword_args = keyword_args
+        self._keyword_name = keyword_name
+        self._keyword_args = keyword_args
 
         self.completion_context = completion_context
         self.completion_item_kind = completion_item_kind
         self._library_alias = library_alias
+
+    @property
+    def keyword_name(self):
+        return self._keyword_name
+
+    @property
+    def keyword_args(self):
+        return self._keyword_args
 
     @property
     def library_alias(self):
@@ -180,6 +207,9 @@ class _KeywordFoundFromLibrary(object):
     def docs_format(self):
         _docs, docs_format = self._docs_and_format
         return docs_format
+
+    def __typecheckself__(self) -> None:
+        _: IKeywordFound = check_implements(self)
 
 
 def _collect_completions_from_ast(ast, completion_context, collector):
@@ -284,63 +314,10 @@ def _collect_following_imports(completion_context, collector):
         _collect_libraries_keywords(completion_context, collector)
 
 
-class IKeywordFound(object):
-    """
-    :ivar keyword_name:
-    :ivar keyword_args:
-    :ivar docs:
-    :ivar docs_format:
-    :ivar completion_context:
-        This may be a new completion context, created when a new document is
-        being analyzed (the keyword was created for that completion context).
-        For libraries the initial completion context is passed.
-    :ivar completion_item_kind:
-    :ivar source:
-        Source where the keyword was found.
-    :ivar lineno:
-        Line where it was found (0-based). 
-    """
-
-    keyword_name = ""
-    keyword_args = []
-    docs = ""
-    docs_format = ""
-    completion_context = None
-    completion_item_kind = -1
-    source = ""
-    lineno = -1
-    end_lineno = -1
-    col_offset = -1
-    end_col_offset = -1
-
-    # If it's a library, this is the name of the library.
-    library_name = None
-
-    # If it's a resource, this is the basename of the resource without the extension.
-    resource_name = None
-
-
-class ICollector(object):
-    def accepts(self, keyword_name):
-        """
-        :param keyword_name:
-            The name of the keyword to be accepted or not.
-        :return bool:
-            If the return is True, on_keyword(...) is called (otherwise it's not
-            called).
-        """
-
-    def on_keyword(self, keyword_found):
-        """
-        :param IKeywordFound keyword_found:
-        """
-
-
-def collect_keywords(completion_context, collector):
+def collect_keywords(
+    completion_context: ICompletionContext, collector: IKeywordCollector
+):
     """
     Collects all the keywords that are available to the given completion_context.
-    
-    :param CompletionContext completion_context:
-    :param ICollector collector:
     """
     _collect_following_imports(completion_context, collector)

@@ -372,3 +372,32 @@ def test_find_definition_keywords(
         "start": {"line": 1, "character": 0},
         "end": {"line": 4, "character": 5},
     }
+
+
+def test_signature_help_integrated(
+    language_server_io: ILanguageServerClient, ws_root_path, data_regression
+):
+    from robocorp_ls_core.workspace import Document
+
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    txt = """
+*** Test Cases ***
+Log It
+    Log    """
+    doc = Document("", txt)
+    language_server.open_doc(uri, 1, txt)
+    line, col = doc.get_last_line_col()
+
+    ret = language_server.request_signature_help(uri, line, col)
+    result = ret["result"]
+    signatures = result["signatures"]
+
+    # Don't check the signature documentation in the data regression so that the
+    # test doesn't become brittle.
+    docs = signatures[0].pop("documentation")
+    assert "Log" in docs
+
+    data_regression.check(result)

@@ -261,6 +261,13 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
         :Note: async complete.
         """
 
+    def request_signature_help(
+        self, doc_uri: str, line: int, col: int
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+
 
 class ILanguageServerClient(ILanguageServerClientBase, Protocol):
     pid: Optional[int]
@@ -323,6 +330,9 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
     def execute_command_async(
         self, command: str, arguments: list
     ) -> Optional[IIdMessageMatcher]:
+        pass
+
+    def request_signature_help(self, uri: str, line: int, col: int):
         pass
 
 
@@ -424,6 +434,7 @@ class IDirCache(Protocol):
 class IDocument(Protocol):
     uri: str
     version: Optional[str]
+    path: str
 
     @property
     def source(self) -> str:

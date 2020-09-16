@@ -1,19 +1,11 @@
-class IDefinition(object):
-
-    keyword_name = ""  # Can be empty if it's not found as a keyword.
-
-    # Note: Could be None (i.e.: we found it in a library spec file which doesn't have the source).
-    source = ""
-
-    # Note: Could be None (i.e.: we found it in a library spec file which doesn't have the lineno).
-    lineno = -1
-
-    # Note: Could be None (i.e.: we found it in a library spec file which doesn't have the lineno).
-    end_lineno = -1
-
-    col_offset = -1
-
-    end_col_offset = -1
+from robotframework_ls.impl.protocols import (
+    ICompletionContext,
+    IDefinition,
+    TokenInfo,
+    IKeywordDefinition,
+)
+from robocorp_ls_core.protocols import check_implements
+from typing import Optional, Sequence
 
 
 class _DefinitionFromKeyword(object):
@@ -21,6 +13,7 @@ class _DefinitionFromKeyword(object):
         """
         :param IKeywordFound keyword_found:
         """
+        self.keyword_found = keyword_found
         self.keyword_name = keyword_found.keyword_name
         self.source = keyword_found.source
         self.lineno = keyword_found.lineno
@@ -36,6 +29,9 @@ class _DefinitionFromKeyword(object):
         )
 
     __repr__ = __str__
+
+    def __typecheckself__(self) -> None:
+        _: IKeywordDefinition = check_implements(self)
 
 
 class _DefinitionFromLibrary(object):
@@ -55,6 +51,9 @@ class _DefinitionFromLibrary(object):
         return "DefinitionFromLibrary[%s]" % (self.source,)
 
     __repr__ = __str__
+
+    def __typecheckself__(self) -> None:
+        _: IDefinition = check_implements(self)
 
 
 class _DefinitionFromResource(object):
@@ -76,6 +75,9 @@ class _DefinitionFromResource(object):
         return "DefinitionFromResource[%s]" % (self.source,)
 
     __repr__ = __str__
+
+    def __typecheckself__(self) -> None:
+        _: IDefinition = check_implements(self)
 
 
 class _DefinitionFromVariable(object):
@@ -102,8 +104,19 @@ class _DefinitionFromVariable(object):
 
     __repr__ = __str__
 
+    def __typecheckself__(self) -> None:
+        _: IDefinition = check_implements(self)
 
-class _FindDefinitionKeywordCollector(object):
+
+class IDefinitionsCollector(object):
+    def accepts(self, keyword_name):
+        pass
+
+    def on_keyword(self, keyword_found):
+        pass
+
+
+class _FindDefinitionKeywordCollector(IDefinitionsCollector):
     def __init__(self, match_name):
         from robotframework_ls.impl.string_matcher import RobotStringMatcher
         from robotframework_ls.impl.string_matcher import (
@@ -132,7 +145,7 @@ class _FindDefinitionKeywordCollector(object):
                 return
 
 
-class _FindDefinitionVariablesCollector(object):
+class _FindDefinitionVariablesCollector(IDefinitionsCollector):
     def __init__(self, sel, token, robot_string_matcher):
         self.matches = []
         self.sel = sel
@@ -147,33 +160,49 @@ class _FindDefinitionVariablesCollector(object):
         self.matches.append(definition)
 
 
-def find_definition(completion_context):
+def find_keyword_definition(
+    completion_context: ICompletionContext, token_info: TokenInfo
+) -> Optional[Sequence[IKeywordDefinition]]:
     """
-    :param CompletionContext completion_context:
-    :rtype: list(IDefinition)
+    Find a definition only considering Keywords.
     
+    The token info must be already computed and must match the completion
+    context location.
+    """
+    from robotframework_ls.impl.collect_keywords import collect_keywords
+    from robotframework_ls.impl import ast_utils
+
+    token = ast_utils.get_keyword_name_token(token_info.node, token_info.token)
+    if token is not None:
+        collector = _FindDefinitionKeywordCollector(token.value)
+        collect_keywords(completion_context, collector)
+        return collector.matches
+    return None
+
+
+def find_definition(completion_context: ICompletionContext) -> Sequence[IDefinition]:
+    """
     :note:
         Definitions may be found even if a given source file no longer exists
         at this place (callers are responsible for validating entries).
     """
     from robotframework_ls.impl import ast_utils
-    from robotframework_ls.impl.collect_keywords import collect_keywords
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
     from robotframework_ls.impl.variable_completions import collect_variables
 
     token_info = completion_context.get_current_token()
+
     if token_info is not None:
-        token = ast_utils.get_keyword_name_token(token_info.node, token_info.token)
-        if token is not None:
-            collector = _FindDefinitionKeywordCollector(token.value)
-            collect_keywords(completion_context, collector)
-            return collector.matches
+        matches = find_keyword_definition(completion_context, token_info)
+        if matches is not None:
+            return matches
 
         token = ast_utils.get_library_import_name_token(
             token_info.node, token_info.token
         )
         if token is not None:
             libspec_manager = completion_context.workspace.libspec_manager
+            completion_context.check_cancelled()
             library_doc = libspec_manager.get_library_info(
                 token.value, create=True, current_doc_uri=completion_context.doc.uri
             )
@@ -185,6 +214,7 @@ def find_definition(completion_context):
             token_info.node, token_info.token
         )
         if token is not None:
+            completion_context.check_cancelled()
             resource_import_as_doc = completion_context.get_resource_import_as_doc(
                 token_info.node
             )

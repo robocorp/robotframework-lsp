@@ -38,6 +38,7 @@ Features (0.3.2)
 - Go to definition for keywords, variables, resource imports and library imports
 - Syntax highlighting.
 - Syntax validation.
+- Signature Help (activated through `Ctrl + Shift + Space`).
 - Code Formatting (see: [Editor Settings](https://code.visualstudio.com/docs/getstarted/settings#_language-specific-editor-settings) for details on how to toggle code formatting just for `robotframework`).
 - Launch `.robot` files.
 - Debug `.robot` files.

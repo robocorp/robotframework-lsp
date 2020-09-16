@@ -1,8 +1,11 @@
+import sys
+from typing import Iterator, Optional
+
 import ast as ast_module
 from robocorp_ls_core.lsp import Error
-import sys
-from collections import namedtuple
 from robocorp_ls_core.robotframework_log import get_logger
+from robotframework_ls.impl.protocols import TokenInfo, NodeInfo, KeywordUsageInfo
+
 
 log = get_logger(__name__)
 
@@ -131,7 +134,7 @@ def print_ast(node, stream=None):
     errors_visitor.visit(node)
 
 
-def find_section(node, line):
+def find_section(node, line: int):
     """
     :param line:
         0-based
@@ -177,15 +180,7 @@ def _iter_nodes(node, stack=None, recursive=True):
                 stack.pop()
 
 
-_NodeInfo = namedtuple("_NodeInfo", "stack, node")
-_TokenInfo = namedtuple("_TokenInfo", "stack, node, token")
-_KeywordUsageInfo = namedtuple("_KeywordUsageInfo", "stack, node, token, name")
-
-
-def find_token(ast, line, col):
-    """
-    :rtype: robotframework_ls.impl.ast_utils._TokenInfo|NoneType
-    """
+def find_token(ast, line, col) -> Optional[TokenInfo]:
     for stack, node in _iter_nodes(ast):
         try:
             tokens = node.tokens
@@ -201,13 +196,15 @@ def find_token(ast, line, col):
                 # i.e.: if it's in the boundary for a word, we want the word,
                 # not the separator.
                 if token.col_offset < col < token.end_col_offset:
-                    return _TokenInfo(tuple(stack), node, token)
+                    return TokenInfo(tuple(stack), node, token)
             else:
                 if token.col_offset <= col <= token.end_col_offset:
-                    return _TokenInfo(tuple(stack), node, token)
+                    return TokenInfo(tuple(stack), node, token)
+
+    return None
 
 
-def find_variable(ast, line, col):
+def find_variable(ast, line, col) -> Optional[TokenInfo]:
     token_info = find_token(ast, line, col)
     if token_info is not None:
         token = token_info.token
@@ -215,7 +212,7 @@ def find_variable(ast, line, col):
             for part in _tokenize_variables_even_when_invalid(token, col):
                 if part.col_offset <= col <= part.end_col_offset:
                     if part.type == part.VARIABLE:
-                        return _TokenInfo(token_info.stack, token_info.node, part)
+                        return TokenInfo(token_info.stack, token_info.node, part)
                     else:
                         return None
             else:
@@ -293,47 +290,32 @@ def _iter_nodes_filtered(ast, accept_class, recursive=True):
             yield stack, node
 
 
-def iter_library_imports(ast):
-    """
-    :rtype: generator(_NodeInfo)
-    """
+def iter_library_imports(ast) -> Iterator[NodeInfo]:
     for stack, node in _iter_nodes_filtered(ast, accept_class="LibraryImport"):
-        yield _NodeInfo(tuple(stack), node)
+        yield NodeInfo(tuple(stack), node)
 
 
-def iter_resource_imports(ast):
-    """
-    :rtype: generator(_NodeInfo)
-    """
+def iter_resource_imports(ast) -> Iterator[NodeInfo]:
     for stack, node in _iter_nodes_filtered(ast, accept_class="ResourceImport"):
-        yield _NodeInfo(tuple(stack), node)
+        yield NodeInfo(tuple(stack), node)
 
 
-def iter_keywords(ast):
-    """
-    :rtype: generator(_NodeInfo)
-    """
+def iter_keywords(ast) -> Iterator[NodeInfo]:
     for stack, node in _iter_nodes_filtered(ast, accept_class="Keyword"):
-        yield _NodeInfo(tuple(stack), node)
+        yield NodeInfo(tuple(stack), node)
 
 
-def iter_variables(ast):
-    """
-    :rtype: generator(_NodeInfo)
-    """
+def iter_variables(ast) -> Iterator[NodeInfo]:
     for stack, node in _iter_nodes_filtered(ast, accept_class="Variable"):
-        yield _NodeInfo(tuple(stack), node)
+        yield NodeInfo(tuple(stack), node)
 
 
-def iter_keyword_arguments_as_str(ast):
-    """
-    :rtype: generator(str)
-    """
+def iter_keyword_arguments_as_str(ast) -> Iterator[str]:
     for token in iter_keyword_arguments_as_tokens(ast):
         yield str(token)
 
 
-def iter_keyword_arguments_as_tokens(ast):
+def iter_keyword_arguments_as_tokens(ast) -> Iterator:
     """
     :rtype: generator(Token)
     """
@@ -343,7 +325,7 @@ def iter_keyword_arguments_as_tokens(ast):
                 yield token
 
 
-def get_documentation(ast):
+def get_documentation(ast) -> str:
     doc = []
     for _stack, node in _iter_nodes_filtered(ast, accept_class="Documentation"):
         for token in node.tokens:
@@ -352,7 +334,7 @@ def get_documentation(ast):
     return "\n".join(doc)
 
 
-def iter_variable_assigns(ast):
+def iter_variable_assigns(ast) -> Iterator:
     from robot.api import Token
 
     for stack, node in _iter_nodes(ast, recursive=False):
@@ -370,35 +352,47 @@ def iter_variable_assigns(ast):
                         error=token.error,
                     )
 
-                yield _TokenInfo(tuple(stack), node, token)
+                yield TokenInfo(tuple(stack), node, token)
 
 
-def iter_keyword_usage_tokens(ast):
+def iter_keyword_usage_tokens(ast) -> Iterator[KeywordUsageInfo]:
     """
     Iterates through all the places where a keyword name is being used, providing
     the stack, node, token and name.
+    """
+
+    for stack, node in _iter_nodes(ast, recursive=True):
+        usage_info = create_keyword_usage_info(stack, node)
+        if usage_info is not None:
+            yield usage_info
+
+
+def create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
+    """
+    If this is a keyword usage node, return information on it, otherwise, 
+    returns None.
     
-    :return: generator(_KeywordUsageInfo)
     :note: this goes hand-in-hand with get_keyword_name_token.
     """
     from robot.api import Token
     from robocorp_ls_core.basic import isinstance_name
 
-    for stack, node in _iter_nodes(ast, recursive=True):
-        if node.__class__.__name__ == "KeywordCall":
-            token = _strip_token_bdd_prefix(node.get_token(Token.KEYWORD))
-            if token is not None:
-                node = _copy_of_node_replacing_token(node, token, Token.KEYWORD)
-                keyword_name = token.value
-                yield _KeywordUsageInfo(tuple(stack), node, token, keyword_name)
-
-        elif isinstance_name(node, ("Fixture", "TestTemplate")):
-            node, token = _strip_node_and_token_bdd_prefix(node, Token.NAME)
+    if node.__class__.__name__ == "KeywordCall":
+        token = _strip_token_bdd_prefix(node.get_token(Token.KEYWORD))
+        if token is not None:
+            node = _copy_of_node_replacing_token(node, token, Token.KEYWORD)
             keyword_name = token.value
-            yield _KeywordUsageInfo(tuple(stack), node, token, keyword_name)
+            return KeywordUsageInfo(tuple(stack), node, token, keyword_name)
+
+    elif isinstance_name(node, ("Fixture", "TestTemplate")):
+        node, token = _strip_node_and_token_bdd_prefix(node, Token.NAME)
+        keyword_name = token.value
+        return KeywordUsageInfo(tuple(stack), node, token, keyword_name)
+
+    return None
 
 
-def get_keyword_name_token(ast, token):
+def get_keyword_name_token(ast, token) -> Optional[str]:
     """
     If the given token is a keyword, return the token, otherwise return None.
     

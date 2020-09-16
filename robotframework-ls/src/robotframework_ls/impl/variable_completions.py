@@ -1,4 +1,5 @@
 from robocorp_ls_core.cache import instance_cache
+from robotframework_ls.impl.protocols import ICompletionContext
 
 
 class IVariableFound(object):
@@ -149,7 +150,10 @@ class _Collector(object):
         )
 
 
-def _collect_completions_from_ast(ast, completion_context, collector):
+def _collect_completions_from_ast(
+    ast, completion_context: ICompletionContext, collector
+):
+    completion_context.check_cancelled()
     from robotframework_ls.impl import ast_utils
     from robot.api import Token
 
@@ -190,6 +194,7 @@ def _collect_resource_imports_variables(completion_context, collector):
 
 
 def _collect_following_imports(completion_context, collector):
+    completion_context.check_cancelled()
     if completion_context.memo.follow_import_variables(completion_context.doc.uri):
         # i.e.: prevent collecting variables for the same doc more than once.
 
