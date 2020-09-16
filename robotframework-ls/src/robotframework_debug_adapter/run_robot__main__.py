@@ -58,11 +58,16 @@ def connect(port):
 
 
 class _RobotTargetComm(threading.Thread):
-    def __init__(self, s, debug):
+    def __init__(self, socket, debug: bool):
+        """
+        :param socket:
+        :param debug:
+            True means that we should run in debug mode and False means that the
+            --nodebug flag was passed.
+        """
         threading.Thread.__init__(self)
         self.daemon = True
-        self._debug = debug
-        self._socket = s
+        self._socket = socket
         self._write_queue = queue.Queue()
         self.configuration_done = threading.Event()
         self.terminated = threading.Event()
@@ -78,6 +83,7 @@ class _RobotTargetComm(threading.Thread):
             try:
                 import robot
             except ImportError:
+                log.info("Unable to import Robot (debug will not be available).")
                 # If unable to import robot, don't error here (proceed as if
                 # it was without debugging -- it should fail later on when
                 # about to run the code, at which point the actual DAP is
@@ -127,6 +133,7 @@ class _RobotTargetComm(threading.Thread):
 
         reader.start()
         writer.start()
+        return reader, writer
 
     def terminate(self):
         from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent

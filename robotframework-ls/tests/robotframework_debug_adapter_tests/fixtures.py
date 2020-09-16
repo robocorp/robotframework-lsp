@@ -25,7 +25,9 @@ import threading
 import pytest  # type: ignore
 import sys
 import os
-from typing import Dict, Optional, List, Sequence, Iterable
+from typing import Dict, Optional, Iterable
+from robocorp_ls_core.options import DEFAULT_TIMEOUT
+
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
@@ -536,3 +538,51 @@ def debugger_api(dap_process, dap_resources_dir):
         read_queue=read_queue,
         dap_resources_dir=dap_resources_dir,
     )
+
+
+class RunRobotThread(threading.Thread):
+    def __init__(self, dap_logs_dir):
+        threading.Thread.__init__(self)
+        self.target = None
+        self.dap_logs_dir = dap_logs_dir
+        self.result_code = None
+        self.result_event = threading.Event()
+
+    def run(self):
+        import robot  # type: ignore
+
+        code = robot.run_cli(
+            [
+                "--outputdir=%s" % (self.dap_logs_dir,),
+                "--listener=robotframework_debug_adapter.listeners.DebugListener",
+                self.target,
+            ],
+            exit=False,
+        )
+        self.result_code = code
+
+    def run_target(self, target):
+        self.target = target
+        self.start()
+
+
+@pytest.fixture
+def robot_thread(dap_logs_dir):
+    """
+    Fixture for interacting with the debugger api through a thread.
+    """
+    t = RunRobotThread(dap_logs_dir)
+    yield t
+    dbg_wait_for(
+        lambda: t.result_code is not None,
+        msg="Robot execution did not finish properly.",
+    )
+
+
+def dbg_wait_for(condition, msg=None, timeout=DEFAULT_TIMEOUT, sleep=1 / 20.0):
+    from robocorp_ls_core.basic import wait_for_condition
+
+    if "pydevd" in sys.modules:
+        timeout = sys.maxsize
+
+    wait_for_condition(condition, msg, timeout, sleep)

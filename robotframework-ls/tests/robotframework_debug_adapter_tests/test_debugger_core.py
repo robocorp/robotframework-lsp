@@ -1,12 +1,12 @@
-import pytest  # type: ignore
 import os
-import threading
-from robocorp_ls_core.options import DEFAULT_TIMEOUT
-import sys
-from robotframework_debug_adapter.dap.dap_schema import StackFrame
 from typing import List, Optional, Dict, Callable, Iterable
-from robotframework_debug_adapter.protocols import IBusyWait, IRobotDebugger
+
+import pytest  # type: ignore
+
 from robocorp_ls_core.basic import implements
+from robotframework_debug_adapter.dap.dap_schema import StackFrame
+from robotframework_debug_adapter.protocols import IBusyWait, IRobotDebugger
+from robotframework_debug_adapter_tests.fixtures import dbg_wait_for
 
 
 class DummyBusyWait(object):
@@ -40,45 +40,6 @@ class DummyBusyWait(object):
     @implements(IBusyWait.proceed)
     def proceed(self):
         self.proceeded += 1
-
-
-class RunRobotThread(threading.Thread):
-    def __init__(self, dap_logs_dir):
-        threading.Thread.__init__(self)
-        self.target = None
-        self.dap_logs_dir = dap_logs_dir
-        self.result_code = None
-        self.result_event = threading.Event()
-
-    def run(self):
-        import robot  # type: ignore
-
-        code = robot.run_cli(
-            [
-                "--outputdir=%s" % (self.dap_logs_dir,),
-                "--listener=robotframework_debug_adapter.listeners.DebugListener",
-                self.target,
-            ],
-            exit=False,
-        )
-        self.result_code = code
-
-    def run_target(self, target):
-        self.target = target
-        self.start()
-
-
-@pytest.fixture
-def robot_thread(dap_logs_dir):
-    """
-    Fixture for interacting with the debugger api through a thread.
-    """
-    t = RunRobotThread(dap_logs_dir)
-    yield t
-    dbg_wait_for(
-        lambda: t.result_code is not None,
-        msg="Robot execution did not finish properly.",
-    )
 
 
 @pytest.fixture
@@ -126,15 +87,6 @@ def stack_frames_repr(
         else:
             dct["Stack %s" % (i,)] = [to_dict(x) for x in dap_frames]
     return dct
-
-
-def dbg_wait_for(condition, msg=None, timeout=DEFAULT_TIMEOUT, sleep=1 / 20.0):
-    from robocorp_ls_core.basic import wait_for_condition
-
-    if "pydevd" in sys.modules:
-        timeout = sys.maxsize
-
-    wait_for_condition(condition, msg, timeout, sleep)
 
 
 def test_debugger_core(debugger_api_core, robot_thread) -> None:
