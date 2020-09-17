@@ -213,6 +213,12 @@ class _RobotTargetComm(threading.Thread):
         )
         self.write_message(InitializedEvent())
 
+    def on_attach_request(self, request):
+        from robotframework_debug_adapter.dap.dap_base_schema import build_response
+        from robotframework_debug_adapter.dap.dap_schema import AttachResponse
+        attach_response = build_response(request)
+        self.write_message(attach_response)
+
     def on_setBreakpoints_request(self, request):
         from robotframework_debug_adapter.dap.dap_schema import SourceBreakpoint
         from robotframework_debug_adapter.dap.dap_schema import Breakpoint
