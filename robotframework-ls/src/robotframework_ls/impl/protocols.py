@@ -6,6 +6,7 @@ from robocorp_ls_core.protocols import (
     IDocument,
     IWorkspace,
     IConfig,
+    IDocumentSelection,
 )
 from robocorp_ls_core.constants import NULL
 from collections import namedtuple
@@ -192,7 +193,7 @@ class ICompletionContext(Protocol):
         pass
 
     @property
-    def sel(self) -> Any:
+    def sel(self) -> IDocumentSelection:
         pass
 
     @property
@@ -231,4 +232,7 @@ class ICompletionContext(Protocol):
         pass
 
     def get_resource_import_as_doc(self, resource_import) -> Optional[IRobotDocument]:
+        pass
+
+    def get_current_keyword_definition(self) -> Optional[IKeywordDefinition]:
         pass

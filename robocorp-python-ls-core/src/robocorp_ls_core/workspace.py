@@ -22,7 +22,7 @@ from typing import Optional, Dict, List
 import robocorp_ls_core  # noqa -- for typing.
 from robocorp_ls_core import uris
 from robocorp_ls_core.basic import implements
-from robocorp_ls_core.protocols import IWorkspace, IDocument
+from robocorp_ls_core.protocols import IWorkspace, IDocument, IDocumentSelection
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.uris import uri_scheme, to_fs_path
 import threading
@@ -233,7 +233,7 @@ class Document(object):
 
     __nonzero__ = __bool__
 
-    def selection(self, line, col):
+    def selection(self, line, col) -> IDocumentSelection:
         from robocorp_ls_core.document_selection import DocumentSelection
 
         return DocumentSelection(self, line, col)

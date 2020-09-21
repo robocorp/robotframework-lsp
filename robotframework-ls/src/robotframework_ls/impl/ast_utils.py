@@ -392,7 +392,7 @@ def create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
     return None
 
 
-def get_keyword_name_token(ast, token) -> Optional[str]:
+def get_keyword_name_token(ast, token):
     """
     If the given token is a keyword, return the token, otherwise return None.
     

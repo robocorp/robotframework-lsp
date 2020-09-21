@@ -137,6 +137,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         from robotframework_ls.impl import keyword_completions
         from robotframework_ls.impl import variable_completions
         from robotframework_ls.impl import filesystem_section_completions
+        from robotframework_ls.impl import keyword_parameter_completions
 
         completion_context = self._create_completion_context(
             doc_uri, line, col, monitor
@@ -145,9 +146,18 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return []
 
         ret = section_name_completions.complete(completion_context)
-        ret.extend(filesystem_section_completions.complete(completion_context))
-        ret.extend(keyword_completions.complete(completion_context))
-        ret.extend(variable_completions.complete(completion_context))
+        if not ret:
+            ret.extend(filesystem_section_completions.complete(completion_context))
+
+        if not ret:
+            ret.extend(keyword_completions.complete(completion_context))
+
+        if not ret:
+            ret.extend(variable_completions.complete(completion_context))
+
+        if not ret:
+            ret.extend(keyword_parameter_completions.complete(completion_context))
+
         return ret
 
     def m_section_name_complete(self, doc_uri, line, col):

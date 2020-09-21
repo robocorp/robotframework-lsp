@@ -1,4 +1,6 @@
 from robocorp_ls_core.robotframework_log import get_logger
+from robotframework_ls.impl.protocols import ICompletionContext
+from typing import List
 
 log = get_logger(__name__)
 
@@ -107,10 +109,7 @@ class _Collector(object):
         self.completion_items.append(item)
 
 
-def complete(completion_context):
-    """
-    :param CompletionContext completion_context:
-    """
+def complete(completion_context: ICompletionContext) -> List[dict]:
     from robotframework_ls.impl.collect_keywords import collect_keywords
     from robotframework_ls.impl import ast_utils
 

@@ -1,6 +1,6 @@
 from robocorp_ls_core.cache import instance_cache
 from robocorp_ls_core.constants import NULL
-from robocorp_ls_core.protocols import IMonitor, Sentinel, IConfig
+from robocorp_ls_core.protocols import IMonitor, Sentinel, IConfig, IDocumentSelection
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.robot_workspace import RobotDocument
 from typing import Optional, Any, List
@@ -9,6 +9,7 @@ from robotframework_ls.impl.protocols import (
     ICompletionContext,
     TokenInfo,
     IRobotWorkspace,
+    IKeywordDefinition,
 )
 
 
@@ -132,7 +133,7 @@ class CompletionContext(object):
         return self._original_ctx.original_doc
 
     @property
-    def original_sel(self) -> Any:
+    def original_sel(self) -> IDocumentSelection:
         if self._original_ctx is None:
             return self._sel
         return self._original_ctx.original_sel
@@ -142,7 +143,7 @@ class CompletionContext(object):
         return self._doc
 
     @property
-    def sel(self) -> Any:
+    def sel(self) -> IDocumentSelection:
         return self._sel
 
     @property
@@ -378,6 +379,44 @@ class CompletionContext(object):
                 value = value_if_not_found
         value = str(value)
         return value
+
+    @instance_cache
+    def get_current_keyword_definition(self) -> Optional[IKeywordDefinition]:
+        """
+        Provides the current keyword even if we're in its arguments and not actually
+        on the keyword itself.
+        """
+        from robotframework_ls.impl.find_definition import find_keyword_definition
+        from robotframework_ls.impl import ast_utils
+
+        token_info = self.get_current_token()
+        if token_info is not None:
+            cp: ICompletionContext = self
+            while token_info.token.type == token_info.token.EOL:
+                sel = cp.sel
+                if sel.col > 0:
+                    cp = cp.create_copy_with_selection(sel.line, sel.col - 1)
+                    token_info = cp.get_current_token()
+                else:
+                    break
+
+            usage_info = ast_utils.create_keyword_usage_info(
+                token_info.stack, token_info.node
+            )
+            if usage_info is not None:
+                token = usage_info.token
+
+                # token line is 1-based and col is 0-based (make both 0-based here).
+                line = token.lineno - 1
+                col = token.col_offset
+                cp = cp.create_copy_with_selection(line, col)
+                definitions = find_keyword_definition(
+                    cp, TokenInfo(usage_info.stack, usage_info.node, usage_info.token)
+                )
+                if definitions and len(definitions) >= 1:
+                    definition: IKeywordDefinition = next(iter(definitions))
+                    return definition
+        return None
 
     def __typecheckself__(self) -> None:
         from robocorp_ls_core.protocols import check_implements
