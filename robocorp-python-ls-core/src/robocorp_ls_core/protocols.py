@@ -431,10 +431,45 @@ class IDirCache(Protocol):
         """
 
 
+class IDocumentSelection(Protocol):
+
+    doc: "IDocument"
+    line: int
+    col: int
+
+    @property
+    def offset_at_position(self):
+        """Return the byte-offset pointed at by the given position."""
+        pass
+
+    @property
+    def current_line(self) -> str:
+        pass
+
+    @property
+    def line_to_column(self):
+        pass
+
+    @property
+    def word_at_column(self) -> str:
+        pass
+
+    @property
+    def word_to_column(self) -> str:
+        pass
+
+    @property
+    def word_from_column(self) -> str:
+        pass
+
+
 class IDocument(Protocol):
     uri: str
     version: Optional[str]
     path: str
+
+    def selection(self, line: int, col: int) -> IDocumentSelection:
+        pass
 
     @property
     def source(self) -> str:

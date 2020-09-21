@@ -1,0 +1,32 @@
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 1
+  kind: 5
+  label: arg1=
+  preselect: false
+  textEdit:
+    newText: g1=
+    range:
+      end:
+        character: 28
+        line: 8
+      start:
+        character: 28
+        line: 8
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertTextFormat: 1
+  kind: 5
+  label: arg2=
+  preselect: false
+  textEdit:
+    newText: g2=
+    range:
+      end:
+        character: 28
+        line: 8
+      start:
+        character: 28
+        line: 8

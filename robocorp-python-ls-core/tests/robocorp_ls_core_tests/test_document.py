@@ -103,11 +103,53 @@ def test_word_at_position(doc):
     """
     Return the position under the cursor (or last in line if past the end)
     """
-    assert doc.selection(0, 8).word_at_position == "document"
-    assert doc.selection(0, 1000).word_at_position == "document"
-    assert doc.selection(1, 5).word_at_position == "for"
-    assert doc.selection(2, 0).word_at_position == "testing"
-    assert doc.selection(4, 0).word_at_position == ""
+    assert doc.selection(0, 8).word_at_column == "document"
+    assert doc.selection(0, 1000).word_at_column == "document"
+    assert doc.selection(1, 5).word_at_column == "for"
+    assert doc.selection(2, 0).word_at_column == "testing"
+    assert doc.selection(4, 0).word_at_column == ""
+
+
+def test_word_to_cursor():
+    """
+    Return the position under the cursor (or last in line if past the end)
+    """
+    doc = Document("uri", "doc1 doc2")
+    assert doc.selection(0, 0).word_to_column == ""
+    assert doc.selection(0, 1).word_to_column == "d"
+    assert doc.selection(0, 2).word_to_column == "do"
+    assert doc.selection(0, 3).word_to_column == "doc"
+    assert doc.selection(0, 4).word_to_column == "doc1"
+
+    assert doc.selection(0, 5).word_to_column == ""
+    assert doc.selection(0, 6).word_to_column == "d"
+    assert doc.selection(0, 7).word_to_column == "do"
+    assert doc.selection(0, 8).word_to_column == "doc"
+    assert doc.selection(0, 9).word_to_column == "doc2"
+
+    assert doc.selection(0, 10).word_to_column == "doc2"
+    assert doc.selection(0, 11).word_to_column == "doc2"
+
+
+def test_word_from_cursor():
+    """
+    Return the position under the cursor (or last in line if past the end)
+    """
+    doc = Document("uri", "doc1 doc2")
+    assert doc.selection(0, 0).word_from_column == "doc1"
+    assert doc.selection(0, 1).word_from_column == "oc1"
+    assert doc.selection(0, 2).word_from_column == "c1"
+    assert doc.selection(0, 3).word_from_column == "1"
+    assert doc.selection(0, 4).word_from_column == ""
+
+    assert doc.selection(0, 5).word_from_column == "doc2"
+    assert doc.selection(0, 6).word_from_column == "oc2"
+    assert doc.selection(0, 7).word_from_column == "c2"
+    assert doc.selection(0, 8).word_from_column == "2"
+    assert doc.selection(0, 9).word_from_column == ""
+
+    assert doc.selection(0, 10).word_from_column == ""
+    assert doc.selection(0, 11).word_from_column == ""
 
 
 def test_get_line():
