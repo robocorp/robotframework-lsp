@@ -818,7 +818,7 @@ class LibspecManager(object):
         """
         libname_lower = libname.lower()
         if libname_lower.endswith((".py", ".class", ".java")):
-            libname_lower = os.path.splitext(libname)[0]
+            libname_lower = os.path.splitext(libname_lower)[0]
 
         if "/" in libname_lower or "\\" in libname_lower:
             libname_lower = os.path.basename(libname_lower)

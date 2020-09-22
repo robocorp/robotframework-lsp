@@ -150,3 +150,38 @@ Test
     config = RobotConfig()
     # Note: we don't give errors if we can't resolve a resource.
     _collect_errors(workspace, doc, data_regression, basename="no_error", config=config)
+
+
+def test_casing_on_filename(workspace, libspec_manager, data_regression):
+    from robocorp_ls_core.protocols import IDocument
+    from pathlib import Path
+
+    # i.e.: Importing a python library with capital letters fails #143
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc: IDocument = workspace.get_doc("case4.robot")
+    p = Path(doc.path)
+    (p.parent / "myPythonKeywords.py").write_text(
+        """
+class myPythonKeywords(object):
+    ROBOT_LIBRARY_VERSION = 1.0
+    def __init__(self):
+        pass
+
+    def Uppercase_Keyword (self):
+        return "Uppercase does not work"
+"""
+    )
+
+    doc.source = """*** Settings ***
+Library    myPythonKeywords.py
+
+*** Test Cases ***
+Test
+    Uppercase Keyword"""
+
+    from robotframework_ls.robot_config import RobotConfig
+
+    config = RobotConfig()
+    # Note: we don't give errors if we can't resolve a resource.
+    _collect_errors(workspace, doc, data_regression, basename="no_error", config=config)
