@@ -30,11 +30,11 @@ may be needed.
 See: [Config](docs/config.md) for details.
   
 
-Features (0.3.2)
+Features (0.4.0)
 -----------------
 
 - Code analysis: checks if keywords are properly imported/defined.
-- Code completion for keywords, section headers, section settings, variables, resource imports and library imports.
+- Code completion for keywords, keyword parameters, section headers, section settings, variables, resource imports and library imports.
 - Go to definition for keywords, variables, resource imports and library imports
 - Syntax highlighting.
 - Syntax validation.
