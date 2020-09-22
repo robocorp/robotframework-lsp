@@ -9,6 +9,8 @@ from robotframework_ls.impl.protocols import (
     ICompletionContext,
     IKeywordCollector,
 )
+from robotframework_ls.impl.robot_specbuilder import KeywordArg
+from typing import Tuple, Sequence
 
 
 log = get_logger(__name__)
@@ -31,7 +33,7 @@ class _KeywordFoundFromAst(object):
         module_ast,
         keyword_node,
         keyword_name,
-        keyword_args,
+        keyword_args: Sequence[KeywordArg],
         completion_context,
         completion_item_kind,
     ):
@@ -48,7 +50,7 @@ class _KeywordFoundFromAst(object):
         return self._keyword_name
 
     @property
-    def keyword_args(self):
+    def keyword_args(self) -> Sequence[KeywordArg]:
         return self._keyword_args
 
     @property
@@ -72,11 +74,12 @@ class _KeywordFoundFromAst(object):
 
     @property
     @instance_cache
-    def docs(self):
+    def docs(self) -> str:
         from robotframework_ls.impl import ast_utils
 
         docs = ast_utils.get_documentation(self._keyword_node)
-        return "%s(%s)\n\n%s" % (self.keyword_name, ", ".join(self.keyword_args), docs)
+        args = [x.original_arg for x in self.keyword_args]
+        return "%s(%s)\n\n%s" % (self.keyword_name, ", ".join(args), docs)
 
     @property
     @instance_cache
@@ -123,7 +126,7 @@ class _KeywordFoundFromLibrary(object):
         library_doc,
         keyword_doc,
         keyword_name,
-        keyword_args,
+        keyword_args: Sequence[KeywordArg],
         completion_context,
         completion_item_kind,
         library_alias=None,
@@ -143,7 +146,7 @@ class _KeywordFoundFromLibrary(object):
         return self._keyword_name
 
     @property
-    def keyword_args(self):
+    def keyword_args(self) -> Sequence[KeywordArg]:
         return self._keyword_args
 
     @property
@@ -183,16 +186,13 @@ class _KeywordFoundFromLibrary(object):
 
     @property
     @instance_cache
-    def _docs_and_format(self):
+    def _docs_and_format(self) -> Tuple[str, str]:
         from robotframework_ls.impl.robot_specbuilder import docs_and_format
 
         docs, docs_format = docs_and_format(self._keyword_doc)
         if self.keyword_args:
-            docs = "%s(%s)\n\n%s" % (
-                self.keyword_name,
-                ", ".join(self.keyword_args),
-                docs,
-            )
+            args = [x.original_arg for x in self.keyword_args]
+            docs = "%s(%s)\n\n%s" % (self.keyword_name, ", ".join(args), docs)
 
         return docs, docs_format
 
@@ -212,7 +212,9 @@ class _KeywordFoundFromLibrary(object):
         _: IKeywordFound = check_implements(self)
 
 
-def _collect_completions_from_ast(ast, completion_context, collector):
+def _collect_completions_from_ast(
+    ast, completion_context: ICompletionContext, collector
+):
     from robotframework_ls.impl import ast_utils
     from robocorp_ls_core.lsp import CompletionItemKind
 
@@ -222,7 +224,7 @@ def _collect_completions_from_ast(ast, completion_context, collector):
         if collector.accepts(keyword_name):
             keyword_args = []
             for arg in ast_utils.iter_keyword_arguments_as_str(keyword.node):
-                keyword_args.append(arg)
+                keyword_args.append(KeywordArg(arg))
 
             collector.on_keyword(
                 _KeywordFoundFromAst(

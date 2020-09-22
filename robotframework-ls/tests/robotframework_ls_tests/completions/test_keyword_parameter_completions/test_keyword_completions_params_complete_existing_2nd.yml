@@ -6,13 +6,13 @@
   label: arg1=
   preselect: false
   textEdit:
-    newText: arg1=
+    newText: g1=
     range:
       end:
-        character: 26
+        character: 39
         line: 8
       start:
-        character: 26
+        character: 39
         line: 8
 - deprecated: false
   documentation: ${arg2}
@@ -22,11 +22,11 @@
   label: arg2=
   preselect: false
   textEdit:
-    newText: arg2=
+    newText: g2=
     range:
       end:
-        character: 26
+        character: 39
         line: 8
       start:
-        character: 26
+        character: 39
         line: 8

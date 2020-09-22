@@ -13,7 +13,9 @@ def signature_help(completion_context: ICompletionContext) -> Optional[dict]:
         keyword_found: IKeywordFound = keyword_definition.keyword_found
 
         keyword_args = keyword_found.keyword_args
-        label = "%s(%s)" % (keyword_found.keyword_name, ", ".join(keyword_args))
+        lst = [arg.original_arg for arg in keyword_args]
+
+        label = "%s(%s)" % (keyword_found.keyword_name, ", ".join(lst))
         documentation = keyword_found.docs
         parameters: List[ParameterInformation] = [
             # Note: the label here is to highlight a part of the main signature label!

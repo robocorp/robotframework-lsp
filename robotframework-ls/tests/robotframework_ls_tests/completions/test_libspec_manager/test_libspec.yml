@@ -1,0 +1,96 @@
+- args:
+  - arg_name: a
+    arg_type: int
+    default_value: '10'
+    is_keyword_arg: false
+    is_star_arg: false
+  doc: '<p>:param a: This is the parameter a.</p>'
+  docs_and_format:
+  - ':param a: This is the parameter a.
+
+
+    '
+  - markdown
+  lineno: 2
+  name: Method
+  tags: []
+- args:
+  - arg_name: a
+    arg_type: int
+    default_value: null
+    is_keyword_arg: false
+    is_star_arg: false
+  doc: ''
+  docs_and_format:
+  - ''
+  - markdown
+  lineno: 7
+  name: Method 2
+  tags: []
+- args:
+  - arg_name: a
+    arg_type: null
+    default_value: '10'
+    is_keyword_arg: false
+    is_star_arg: false
+  doc: ''
+  docs_and_format:
+  - ''
+  - markdown
+  lineno: 10
+  name: Method 3
+  tags: []
+- args:
+  - arg_name: a
+    arg_type: null
+    default_value: '10'
+    is_keyword_arg: false
+    is_star_arg: false
+  - arg_name: '@args'
+    arg_type: null
+    default_value: null
+    is_keyword_arg: false
+    is_star_arg: true
+  - arg_name: '&kwargs'
+    arg_type: null
+    default_value: null
+    is_keyword_arg: true
+    is_star_arg: false
+  doc: ''
+  docs_and_format:
+  - ''
+  - markdown
+  lineno: 13
+  name: Method 4
+  tags: []
+- args:
+  - arg_name: a
+    arg_type: null
+    default_value: null
+    is_keyword_arg: false
+    is_star_arg: false
+  - arg_name: '@args'
+    arg_type: null
+    default_value: null
+    is_keyword_arg: false
+    is_star_arg: true
+  - arg_name: '&kwargs'
+    arg_type: null
+    default_value: null
+    is_keyword_arg: true
+    is_star_arg: false
+  doc: ''
+  docs_and_format:
+  - ''
+  - markdown
+  lineno: 16
+  name: Method 5
+  tags: []
+- args: []
+  doc: ''
+  docs_and_format:
+  - ''
+  - markdown
+  lineno: 19
+  name: Method 6
+  tags: []

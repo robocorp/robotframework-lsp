@@ -40,8 +40,12 @@ def test_keyword_completions_params_basic(check):
     check(CASE_TEMPLATE + "    ")
 
 
-def test_keyword_completions_params_complete_existing(check):
+def test_keyword_completions_params_complete_existing_simple(check):
     check(CASE_TEMPLATE + "    ar")
+
+
+def test_keyword_completions_params_complete_existing_2nd(check):
+    check(CASE_TEMPLATE + "    arg2=10    ar")
 
 
 def test_keyword_completions_params_dont_complete(check):

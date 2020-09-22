@@ -1,5 +1,5 @@
 from robocorp_ls_core.robotframework_log import get_logger
-from robotframework_ls.impl.protocols import ICompletionContext
+from robotframework_ls.impl.protocols import ICompletionContext, IKeywordFound
 from typing import List
 
 log = get_logger(__name__)
@@ -30,13 +30,8 @@ class _Collector(object):
         return False
 
     def _create_completion_item_from_keyword(
-        self, keyword_found, selection, token, col_delta=0
+        self, keyword_found: IKeywordFound, selection, token, col_delta=0
     ):
-        """
-        :param IKeywordFound keyword_found:
-        :param selection:
-        :param token:
-        """
         from robocorp_ls_core.lsp import (
             CompletionItem,
             InsertTextFormat,
@@ -45,29 +40,20 @@ class _Collector(object):
             TextEdit,
         )
         from robocorp_ls_core.lsp import MarkupKind
+        from robotframework_ls.impl.robot_specbuilder import KeywordArg
 
         label = keyword_found.keyword_name
         text = label
 
+        arg: KeywordArg
         for i, arg in enumerate(keyword_found.keyword_args):
-            arg = arg.replace("$", "\\$").replace("{", "").replace("}", "")
+            if arg.is_keyword_arg or arg.is_star_arg or arg.default_value is not None:
+                continue
 
-            if arg.startswith("**"):
-                break  # Don't show optionals
-                # arg = "&" + arg[2:]
+            arg_name = arg.arg_name
+            arg_name = arg_name.replace("$", "\\$").replace("{", "").replace("}", "")
 
-            elif arg.startswith("*"):
-                break  # Don't show optionals
-                # arg = "@" + arg[1:]
-
-            if "=" in arg:
-                break  # Don't show optionals
-
-            colon_i = arg.rfind(":")
-            if colon_i != -1:
-                arg = arg[:colon_i]
-
-            text += "    ${%s:%s}" % (i + 1, arg)
+            text += "    ${%s:%s}" % (i + 1, arg_name)
 
         text_edit = TextEdit(
             Range(

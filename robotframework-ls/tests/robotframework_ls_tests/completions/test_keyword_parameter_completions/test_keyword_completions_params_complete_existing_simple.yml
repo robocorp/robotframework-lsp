@@ -1,5 +1,5 @@
 - deprecated: false
-  documentation: ''
+  documentation: ${arg1}
   documentationFormat: plaintext
   insertTextFormat: 1
   kind: 5
@@ -15,7 +15,7 @@
         character: 28
         line: 8
 - deprecated: false
-  documentation: ''
+  documentation: ${arg2}
   documentationFormat: plaintext
   insertTextFormat: 1
   kind: 5

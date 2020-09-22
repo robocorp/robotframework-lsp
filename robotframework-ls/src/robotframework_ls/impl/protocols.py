@@ -1,5 +1,5 @@
 import sys
-from typing import TypeVar, Any, Optional, List
+from typing import TypeVar, Any, Optional, List, Sequence
 from robocorp_ls_core.protocols import (
     Sentinel,
     IMonitor,
@@ -10,6 +10,7 @@ from robocorp_ls_core.protocols import (
 )
 from robocorp_ls_core.constants import NULL
 from collections import namedtuple
+from robotframework_ls.impl.robot_specbuilder import KeywordArg
 
 if sys.version_info[:2] < (3, 8):
 
@@ -42,15 +43,10 @@ class IRobotWorkspace(IWorkspace, Protocol):
 
 class IKeywordFound(Protocol):
     """
-    :ivar keyword_name:
-    :ivar keyword_args:
-    :ivar docs:
-    :ivar docs_format:
     :ivar completion_context:
         This may be a new completion context, created when a new document is
         being analyzed (the keyword was created for that completion context).
         For libraries the initial completion context is passed.
-    :ivar completion_item_kind:
     :ivar source:
         Source where the keyword was found.
     :ivar lineno:
@@ -62,7 +58,7 @@ class IKeywordFound(Protocol):
         pass
 
     @property
-    def keyword_args(self) -> list:
+    def keyword_args(self) -> Sequence[KeywordArg]:
         pass
 
     @property

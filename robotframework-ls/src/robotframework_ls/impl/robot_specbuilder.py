@@ -18,16 +18,7 @@
 import os
 import weakref
 from robocorp_ls_core.cache import instance_cache
-
-try:
-    from xml.etree import cElementTree as ET
-except ImportError:
-    from xml.etree import ElementTree as ET
-
-
-class Tags(object):
-    def __init__(self, tags=None):
-        self.tags = tags
+from typing import Optional
 
 
 def markdown_doc(obj):
@@ -65,7 +56,10 @@ class LibraryDoc(object):
         filename,
         name="",
         doc="",
+        # This is the RobotFramework version.
         version="",
+        # This is the version of the spec.
+        specversion="",
         type="library",
         scope="",
         named_args=True,
@@ -78,6 +72,7 @@ class LibraryDoc(object):
         self.name = name
         self.doc = doc
         self.version = version
+        self.specversion = specversion
         self.type = type
         self.scope = scope
         self.named_args = named_args
@@ -122,7 +117,7 @@ class LibraryDoc(object):
     def all_tags(self):
         from itertools import chain
 
-        return Tags(chain.from_iterable(kw.tags for kw in self.keywords))
+        return tuple(chain.from_iterable(kw.tags for kw in self.keywords))
 
     def __repr__(self):
         return "LibraryDoc(%s, %s, keywords:%s)" % (
@@ -134,21 +129,76 @@ class LibraryDoc(object):
     __str__ = __repr__
 
 
+class KeywordArg(object):
+
+    _is_keyword_arg = False
+    _is_star_arg = False
+    _default_value = None
+    _arg_type = None
+
+    def __init__(self, arg: str):
+        self.original_arg = arg
+        if arg.startswith("**"):
+            self._is_keyword_arg = True
+            arg = "&" + arg[2:]
+
+        elif arg.startswith("*"):
+            self._is_star_arg = True
+            arg = "@" + arg[1:]
+
+        else:
+            eq_i = arg.rfind("=")
+            if eq_i != -1:
+                self._default_value = arg[eq_i + 1 :].strip()
+                arg = arg[:eq_i]
+
+            colon_i = arg.rfind(":")
+            if colon_i != -1:
+                self._arg_type = arg[colon_i + 1 :].strip()
+                arg = arg[:colon_i]
+        self._arg_name = arg
+
+    @property
+    def arg_name(self) -> str:
+        return self._arg_name
+
+    @property
+    def is_keyword_arg(self) -> bool:
+        return self._is_keyword_arg
+
+    @property
+    def is_star_arg(self) -> bool:
+        return self._is_star_arg
+
+    @property
+    def arg_type(self) -> Optional[str]:
+        return self._arg_type
+
+    @property
+    def default_value(self) -> Optional[str]:
+        return self._default_value
+
+
 class KeywordDoc(object):
     def __init__(
         self, weak_libdoc, name="", args=(), doc="", tags=(), source=None, lineno=-1
     ):
         self._weak_libdoc = weak_libdoc
         self.name = name
-        self.args = args
+        self._args = args
         self.doc = doc
-        self.tags = Tags(tags)
+        self.tags = tags
         self._source = source
         self.lineno = lineno
 
     @property
     def deprecated(self):
         return self.doc.startswith("*DEPRECATED") and "*" in self.doc[1:]
+
+    @property
+    @instance_cache
+    def args(self):
+        return tuple(KeywordArg(arg) for arg in self._args)
 
     @property
     @instance_cache
@@ -174,11 +224,16 @@ class KeywordDoc(object):
 class SpecDocBuilder(object):
     def build(self, path):
         spec = self._parse_spec(path)
+
+        version = spec.find("version")
+        specversion = spec.get("specversion")
+
         libdoc = LibraryDoc(
             path,
             name=spec.get("name"),
             type=spec.get("type"),
-            version=spec.find("version").text or "",
+            version=version.text if version is not None else "",
+            specversion=specversion if specversion is not None else "",
             doc=spec.find("doc").text or "",
             scope=self._get_scope(spec),
             named_args=self._get_named_args(spec),
@@ -204,6 +259,11 @@ class SpecDocBuilder(object):
         }[scope]
 
     def _parse_spec(self, path):
+        try:
+            from xml.etree import cElementTree as ET
+        except ImportError:
+            from xml.etree import ElementTree as ET
+
         if not os.path.isfile(path):
             raise IOError("Spec file '%s' does not exist." % path)
         root = ET.parse(path).getroot()
@@ -222,9 +282,9 @@ class SpecDocBuilder(object):
             KeywordDoc(
                 weak_libdoc,
                 name=elem.get("name", ""),
-                args=[a.text for a in elem.findall("arguments/arg")],
+                args=tuple(a.text for a in elem.findall("arguments/arg")),
                 doc=elem.find("doc").text or "",
-                tags=[t.text for t in elem.findall("tags/tag")],
+                tags=tuple(t.text for t in elem.findall("tags/tag")),
                 source=elem.get("source"),
                 lineno=int(elem.get("lineno", -1)),
             )

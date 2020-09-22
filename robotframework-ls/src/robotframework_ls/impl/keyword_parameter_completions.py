@@ -5,7 +5,12 @@ from robocorp_ls_core.protocols import IDocumentSelection
 
 
 def _create_completion_item(
-    label, new_text, selection: IDocumentSelection, col_start, col_end
+    label: str,
+    new_text: str,
+    selection: IDocumentSelection,
+    col_start: int,
+    col_end: int,
+    documentation: str,
 ) -> dict:
     from robocorp_ls_core.lsp import (
         CompletionItem,
@@ -29,7 +34,7 @@ def _create_completion_item(
         label,
         kind=CompletionItemKind.Field,
         text_edit=text_edit,
-        documentation="",
+        documentation=documentation,
         insertTextFormat=InsertTextFormat.PlainText,
         documentationFormat=MarkupKind.PlainText,
     ).to_dict()
@@ -37,6 +42,7 @@ def _create_completion_item(
 
 def complete(completion_context: ICompletionContext) -> List[dict]:
     from robotframework_ls.impl.protocols import IKeywordFound
+    from robotframework_ls.impl.robot_specbuilder import KeywordArg
 
     ret: List[dict] = []
     sel = completion_context.sel
@@ -45,56 +51,57 @@ def complete(completion_context: ICompletionContext) -> List[dict]:
         # let's simplify for now).
         return ret
 
+    token_info = completion_context.get_current_token()
+    if token_info and token_info.token:
+        token = token_info.token
+
+        if token.type not in (token.ARGUMENT, token.EOL):
+            return []
+
     current_keyword_definition = completion_context.get_current_keyword_definition()
     if current_keyword_definition is not None:
+
         keyword_found: IKeywordFound = current_keyword_definition.keyword_found
         keyword_args = keyword_found.keyword_args
         if keyword_args:
-            word_to_column = sel.word_to_column
-            contents_without_word = sel.line_to_column
-            if word_to_column:
-                contents_without_word = contents_without_word[: -len(word_to_column)]
+            curr_token_value = token.value
 
-            for c in reversed(contents_without_word):
-                # If we have something as `Some keyword    param=xxx|`
-                # we don't want completions.
-                if c in (" ", "\t"):
-                    continue
-                if c == "=":
-                    return ret
+            if "=" in curr_token_value:
+                return ret
 
+            if token.end_col_offset > sel.col:
+                return []
+
+            word_to_column = curr_token_value.strip()
+
+            arg: KeywordArg
             for arg in keyword_args:
-                if arg.startswith("${") and arg.endswith("}"):
-                    arg = arg[2:-1]
-
-                if arg.startswith("**"):
+                if arg.is_keyword_arg or arg.is_star_arg:
                     continue
 
-                elif arg.startswith("*"):
-                    continue
+                arg_name = arg.arg_name
 
-                eq_i = arg.rfind("=")
-                if eq_i != -1:
-                    arg = arg[:eq_i]
+                if arg_name.startswith("${") and arg_name.endswith("}"):
+                    arg_name = arg_name[2:-1]
 
-                colon_i = arg.rfind(":")
-                if colon_i != -1:
-                    arg = arg[:colon_i]
-
-                arg = arg.strip()
-                if arg:
-                    arg += "="
+                arg_name = arg_name.strip()
+                if arg_name:
+                    arg_name += "="
 
                 col_start = sel.col
                 col_end = sel.col
-                new_text = arg
+                new_text = arg_name
                 if word_to_column:
-                    if not arg.startswith(word_to_column):
+                    if not arg_name.startswith(word_to_column):
                         continue
-                    new_text = arg[len(word_to_column) :]
+                    new_text = arg_name[len(word_to_column) :]
+
+                documentation = arg.original_arg
 
                 ret.append(
-                    _create_completion_item(arg, new_text, sel, col_start, col_end)
+                    _create_completion_item(
+                        arg_name, new_text, sel, col_start, col_end, documentation
+                    )
                 )
 
     return ret
