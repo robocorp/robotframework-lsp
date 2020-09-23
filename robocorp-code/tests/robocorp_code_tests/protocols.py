@@ -26,7 +26,7 @@ class IRobocorpLanguageServerClient(ILanguageServerClient, Protocol):
     ) -> ActionResultDict:
         pass
 
-    def upload_to_new_activity(
+    def upload_to_new_robot(
         self, workspace_id: str, package_name: str, directory: str
     ) -> ActionResultDict:
         pass

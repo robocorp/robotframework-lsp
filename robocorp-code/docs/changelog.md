@@ -1,3 +1,10 @@
+New in 0.0.5 (2020-XX-XX)
+-----------------------------
+
+- Working with [robot.yaml](https://robocorp.com/docs/setup/robot-yaml-format) instead of the deprecated `package.yaml`.
+- New action to log in Robocloud.
+- Terminology update (`Activity Package` is now `Robot`).
+
 New in 0.0.4 (2020-09-02)
 -----------------------------
 

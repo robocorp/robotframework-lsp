@@ -31,31 +31,29 @@ COMMANDS = [
     ),
     # Note: this command is started from the client (due to needing window.showQuickPick)
     # and the proceeds to ask for the server for the actual implementation.
+    Command("robocorp.createRobot", "Create Robot.", server_handled=False),
+    # Internal commands for robocorp.createRobot.
     Command(
-        "robocorp.createActivity", "Create Activity Package.", server_handled=False
-    ),
-    # Internal commands for robocorp.createActivity.
-    Command(
-        "robocorp.listActivityTemplates.internal",
-        "Provides a list with the available activity templates.",
+        "robocorp.listRobotTemplates.internal",
+        "Provides a list with the available robot templates.",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
-        "robocorp.createActivity.internal",
-        "Actually calls rcc to create the activity.",
+        "robocorp.createRobot.internal",
+        "Actually calls rcc to create the robot.",
         add_to_package_json=False,
         server_handled=True,
     ),
     # Started from the client due to needing UI actions.
     Command(
-        "robocorp.uploadActivityToCloud",
-        "Upload Activity Package to the cloud.",
+        "robocorp.uploadRobotToCloud",
+        "Upload Robot to the cloud.",
         add_to_package_json=True,
         server_handled=False,
     ),
     Command(
-        "robocorp.localListActivities.internal",
+        "robocorp.localListRobots.internal",
         "Lists the activities currently available in the workspace.",
         add_to_package_json=False,
         server_handled=True,
@@ -67,8 +65,14 @@ COMMANDS = [
         server_handled=True,
     ),
     Command(
+        "robocorp.cloudLogin",
+        "Log in Robocloud.",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
+    Command(
         "robocorp.cloudLogin.internal",
-        "Logs into Robocloud.",
+        "Log in Robocloud (receives credentials).",
         add_to_package_json=False,
         server_handled=True,
     ),
@@ -79,14 +83,14 @@ COMMANDS = [
         server_handled=True,
     ),
     Command(
-        "robocorp.uploadToNewActivity.internal",
-        "Uploads an Activity Package as a new Activity Package in the cloud.",
+        "robocorp.uploadToNewRobot.internal",
+        "Uploads an Robot as a new Robot in the cloud.",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
-        "robocorp.uploadToExistingActivity.internal",
-        "Uploads an Activity Package as an existing Activity Package in the cloud.",
+        "robocorp.uploadToExistingRobot.internal",
+        "Uploads an Robot as an existing Robot in the cloud.",
         add_to_package_json=False,
         server_handled=True,
     ),

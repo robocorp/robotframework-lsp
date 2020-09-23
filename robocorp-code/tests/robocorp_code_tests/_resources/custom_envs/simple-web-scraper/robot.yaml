@@ -1,0 +1,19 @@
+tasks:
+  Web scraper:
+    command:
+      - python
+      - -m
+      - robot
+      - -d
+      - output
+      - --logtitle
+      - Task log
+      - ./tasks/*.robot
+condaConfigFile: config/conda.yaml
+
+PYTHONPATH:
+  - variables
+  - libraries
+  - resources
+  
+artifactsDir: output

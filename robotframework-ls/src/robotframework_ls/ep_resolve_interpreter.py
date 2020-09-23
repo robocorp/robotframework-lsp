@@ -7,14 +7,14 @@ i.e.:
 Given some structure as:
 
 /env1
-    /package.yaml <- specifies libraries needed and additional pythonpath entries.
+    /robot.yaml <- specifies libraries needed and additional pythonpath entries.
     /robot1.robot
 /env2
-    /package.yaml
+    /robot.yaml
     /robot2.robot
     
-We want to use the info on package.yaml in env1 to say that a given set of
-libraries is needed, whereas the package.yaml in env2 has another set of 
+We want to use the info on robot.yaml in env1 to say that a given set of
+libraries is needed, whereas the robot.yaml in env2 has another set of 
 libraries (and each will have a different virtual environment managing it).
 
 Note that this implementation logic is not really builtin, rather, an external
@@ -44,10 +44,10 @@ class IInterpreterInfo(Protocol):
         """
         This is an identification and should relate to the place which allows
         to identify this info (it should usually be given by some location --
-        for instance, it could be identified by the package.yaml location).
+        for instance, it could be identified by the robot.yaml location).
         
         Note that different interpreter ids can point to the same python
-        executable (if they'd have the same package.yaml contents).
+        executable (if they'd have the same robot.yaml contents).
         """
 
     def get_python_exe(self) -> str:

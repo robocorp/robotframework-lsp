@@ -2,7 +2,7 @@ import logging
 import os.path
 import sys
 import pytest
-from robocorp_code.protocols import ActivityInfoDict, WorkspaceInfoDict, ActionResult
+from robocorp_code.protocols import RobotInfoDict, WorkspaceInfoDict, ActionResult
 from typing import List
 import time
 from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
@@ -92,7 +92,7 @@ def language_server_initialized(
     return language_server
 
 
-def test_list_rcc_activity_templates(
+def test_list_rcc_robot_templates(
     language_server_initialized: IRobocorpLanguageServerClient,
     ws_root_path: str,
     rcc_location: str,
@@ -104,16 +104,16 @@ def test_list_rcc_activity_templates(
     language_server = language_server_initialized
 
     result = language_server.execute_command(
-        commands.ROBOCORP_LIST_ACTIVITY_TEMPLATES_INTERNAL, []
+        commands.ROBOCORP_LIST_ROBOT_TEMPLATES_INTERNAL, []
     )["result"]
     assert result["success"]
-    assert result["result"] == ["basic", "minimal"]
+    assert result["result"] == ["minimal", "standard"]
 
     target = str(tmpdir.join("dest"))
     language_server.change_workspace_folders(added_folders=[target], removed_folders=[])
 
     result = language_server.execute_command(
-        commands.ROBOCORP_CREATE_ACTIVITY_INTERNAL,
+        commands.ROBOCORP_CREATE_ROBOT_INTERNAL,
         [{"directory": target, "name": "example", "template": "minimal"}],
     )["result"]
     assert result["success"]
@@ -121,25 +121,25 @@ def test_list_rcc_activity_templates(
 
     # Error
     result = language_server.execute_command(
-        commands.ROBOCORP_CREATE_ACTIVITY_INTERNAL,
+        commands.ROBOCORP_CREATE_ROBOT_INTERNAL,
         [{"directory": target, "name": "example", "template": "minimal"}],
     )["result"]
     assert not result["success"]
-    assert "Error creating activity" in result["message"]
+    assert "Error creating robot" in result["message"]
     assert "not empty" in result["message"]
     assert "b'" not in result["message"]
 
     result = language_server.execute_command(
-        commands.ROBOCORP_CREATE_ACTIVITY_INTERNAL,
+        commands.ROBOCORP_CREATE_ROBOT_INTERNAL,
         [{"directory": ws_root_path, "name": "example2", "template": "minimal"}],
     )["result"]
     assert result["success"]
 
     result = language_server.execute_command(
-        commands.ROBOCORP_LOCAL_LIST_ACTIVITIES_INTERNAL, []
+        commands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL, []
     )["result"]
     assert result["success"]
-    folder_info_lst: List[ActivityInfoDict] = result["result"]
+    folder_info_lst: List[RobotInfoDict] = result["result"]
     assert len(folder_info_lst) == 2
     assert set([x["name"] for x in folder_info_lst]) == {"example", "example2"}
 
@@ -222,12 +222,12 @@ class RccPatch(object):
             )
 
         if args[:3] == ["cloud", "push", "--directory"]:
-            if args[4:8] == ["--workspace", "workspace_id_1", "--package", "2323"]:
+            if args[4:8] == ["--workspace", "workspace_id_1", "--robot", "2323"]:
                 return ActionResult(success=True)
-            if args[4:8] == ["--workspace", "workspace_id_1", "--package", "453"]:
+            if args[4:8] == ["--workspace", "workspace_id_1", "--robot", "453"]:
                 return ActionResult(success=True)
 
-        if args[:5] == ["cloud", "new", "--workspace", "workspace_id_1", "--package"]:
+        if args[:5] == ["cloud", "new", "--workspace", "workspace_id_1", "--robot"]:
             # Submit a new package to ws 1
             cp = copy.deepcopy(self._package_info_ws_1)
             cp["activities"].append({"id": "2323", "name": args[5]})
@@ -236,7 +236,7 @@ class RccPatch(object):
             return ActionResult(
                 success=True,
                 message=None,
-                result="Created new activity package named {args[5]} with identity 2323.",
+                result="Created new robot named {args[5]} with identity 2323.",
             )
 
         raise AssertionError(f"Unexpected args: {args}")
@@ -297,7 +297,7 @@ def test_cloud_list_workspaces_sorting(
 
     ci_workspace_info = get_workspace_from_name(ws_info, "CI workspace")
 
-    result = client.upload_to_new_activity(
+    result = client.upload_to_new_robot(
         ci_workspace_info["workspaceId"],
         f"New package {time.time()}",
         "<dir not there>",
@@ -306,7 +306,7 @@ def test_cloud_list_workspaces_sorting(
     msg = result["message"]
     assert msg and "to exist" in msg
 
-    result = client.upload_to_new_activity(
+    result = client.upload_to_new_robot(
         ci_workspace_info["workspaceId"], "New package", root_dir
     )
     assert result["success"]
@@ -398,7 +398,7 @@ def test_upload_to_cloud(
 
     found_package: PackageInfoDict = found_packages[0]
     result = client.execute_command(
-        commands.ROBOCORP_CREATE_ACTIVITY_INTERNAL,
+        commands.ROBOCORP_CREATE_ROBOT_INTERNAL,
         [{"directory": ws_root_path, "name": "example", "template": "minimal"}],
     )["result"]
     assert result["success"]
@@ -414,7 +414,7 @@ def test_upload_to_cloud(
             return ActionResult(
                 success=True,
                 message=None,
-                result="Created new activity package named 'New package 1597082853.2224553' with identity 453.\n",
+                result="Created new robot named 'New package 1597082853.2224553' with identity 453.\n",
             )
         if args[:3] == ["cloud", "push", "--directory"]:
             return ActionResult(success=True, message=None, result="OK.\n")
@@ -425,7 +425,7 @@ def test_upload_to_cloud(
     # package and we don't have an API to remove it.
     monkeypatch.setattr(Rcc, "_run_rcc", mock_run_rcc)
 
-    result = client.upload_to_new_activity(
+    result = client.upload_to_new_robot(
         found_package["workspaceId"], f"New package {time.time()}", directory
     )
     assert result["success"]

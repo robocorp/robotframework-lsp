@@ -30,7 +30,7 @@ import { getExtensionRelativeFile, verifyFileExists } from './files';
 import { getRccLocation } from './rcc';
 import { Timing } from './time';
 import { execFilePromise, ExecFileReturn } from './subprocess';
-import { createActivity, uploadActivity } from './activities';
+import { createRobot, uploadRobot, cloudLogin } from './activities';
 import { sleep } from './time';
 import { handleProgressMessage, ProgressReport } from './progress';
 
@@ -72,7 +72,7 @@ function startLangServerTCP(addr: number): LanguageClient {
 
 
 function registerDebugger(languageServerExecutable: string) {
-    // TODO: Actually provide support to launch an activity.
+    // TODO: Actually provide support to launch a robot.
 }
 
 let langServer: LanguageClient;
@@ -111,8 +111,15 @@ export async function activate(context: ExtensionContext) {
 
         let disposable: Disposable = langServer.start();
         commands.registerCommand(roboCommands.ROBOCORP_GET_LANGUAGE_SERVER_PYTHON, () => getLanguageServerPython());
-        commands.registerCommand(roboCommands.ROBOCORP_CREATE_ACTIVITY, () => createActivity());
-        commands.registerCommand(roboCommands.ROBOCORP_UPLOAD_ACTIVITY_TO_CLOUD, () => uploadActivity());
+        commands.registerCommand(roboCommands.ROBOCORP_CREATE_ROBOT, () => createRobot());
+        commands.registerCommand(roboCommands.ROBOCORP_UPLOAD_ROBOT_TO_CLOUD, () => uploadRobot());
+        async function cloudLoginShowConfirmation(){
+            let loggedIn = await cloudLogin();
+            if(loggedIn){
+                window.showInformationMessage("Successfully logged in Robocloud.")
+            }
+        }
+        commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGIN, () => cloudLoginShowConfirmation());
         registerDebugger(executable);
         context.subscriptions.push(disposable);
 
@@ -174,8 +181,8 @@ async function getLanguageServerPythonUncached(): Promise<string> {
         return;
     }
 
-    let packageYaml = getExtensionRelativeFile('../../bin/create_env/package.yaml');
-    if (!packageYaml) {
+    let robotYaml = getExtensionRelativeFile('../../bin/create_env/robot.yaml');
+    if (!robotYaml) {
         return;
     }
 
@@ -216,7 +223,7 @@ async function getLanguageServerPythonUncached(): Promise<string> {
 
         progress.report({ message: 'Update env (may take a few minutes).' });
         // Get information on a base package with our basic dependencies (this can take a while...).
-        let resultPromise: Promise<ExecFileReturn> = execFilePromise(rccLocation, ['activity', 'run', '-p', packageYaml]);
+        let resultPromise: Promise<ExecFileReturn> = execFilePromise(rccLocation, ['task', 'run', '--robot', robotYaml]);
         timing = new Timing();
 
         let finishedCondaRun = false;

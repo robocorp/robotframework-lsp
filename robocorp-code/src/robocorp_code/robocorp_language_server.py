@@ -5,14 +5,14 @@ from typing import List, Any, Optional, Dict
 from robocorp_code import commands
 from robocorp_code.protocols import (
     IRccWorkspace,
-    IRccActivity,
-    ActivityInfoDict,
+    IRccRobot,
+    RobotInfoDict,
     WorkspaceInfoDict,
     PackageInfoDict,
     ActionResultDict,
-    UploadActivityParamsDict,
-    UploadNewActivityParamsDict,
-    CreateActivityParamsDict,
+    UploadRobotParamsDict,
+    UploadNewRobotParamsDict,
+    CreateRobotParamsDict,
     CloudListWorkspaceDict,
     CloudLoginParamsDict,
     ListWorkspacesActionResultDict,
@@ -255,8 +255,8 @@ class RobocorpLanguageServer(PythonLanguageServer):
             for ws in workspaces:
                 packages: List[PackageInfoDict] = []
 
-                activity_package: IRccActivity
-                activities_result = self._rcc.cloud_list_workspace_activities(
+                activity_package: IRccRobot
+                activities_result = self._rcc.cloud_list_workspace_robots(
                     ws.workspace_id
                 )
                 if not activities_result.success:
@@ -265,15 +265,15 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 workspace_activities = activities_result.result
                 for activity_package in workspace_activities:
 
-                    key = (ws.workspace_id, activity_package.activity_id)
+                    key = (ws.workspace_id, activity_package.robot_id)
                     sort_key = "%05d%s" % (
                         ws_id_and_pack_id_to_lru_index.get(key, DEFAULT_SORT_KEY),
-                        activity_package.activity_name.lower(),
+                        activity_package.robot_name.lower(),
                     )
 
                     package_info = {
-                        "name": activity_package.activity_name,
-                        "id": activity_package.activity_id,
+                        "name": activity_package.robot_name,
+                        "id": activity_package.robot_id,
                         "sortKey": sort_key,
                         "workspaceId": ws.workspace_id,
                     }
@@ -290,26 +290,24 @@ class RobocorpLanguageServer(PythonLanguageServer):
             self._dir_cache.store(self.CLOUD_LIST_WORKSPACE_CACHE_KEY, ret)
         return {"success": True, "message": None, "result": ret}
 
-    @command_dispatcher(commands.ROBOCORP_CREATE_ACTIVITY_INTERNAL)
-    def _create_activity(self, params: CreateActivityParamsDict) -> ActionResultDict:
+    @command_dispatcher(commands.ROBOCORP_CREATE_ROBOT_INTERNAL)
+    def _create_robot(self, params: CreateRobotParamsDict) -> ActionResultDict:
         directory = params["directory"]
         template = params["template"]
         name = params["name"]
 
-        return self._rcc.create_activity(
-            template, os.path.join(directory, name)
-        ).as_dict()
+        return self._rcc.create_robot(template, os.path.join(directory, name)).as_dict()
 
-    @command_dispatcher(commands.ROBOCORP_LIST_ACTIVITY_TEMPLATES_INTERNAL)
+    @command_dispatcher(commands.ROBOCORP_LIST_ROBOT_TEMPLATES_INTERNAL)
     def _list_activity_templates(self, params=None) -> ActionResultDict:
         result = self._rcc.get_template_names()
         return result.as_dict()
 
-    @command_dispatcher(commands.ROBOCORP_LOCAL_LIST_ACTIVITIES_INTERNAL)
-    def _local_list_activities(self, params=None) -> ActionResultDict:
+    @command_dispatcher(commands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL)
+    def _local_list_robots(self, params=None) -> ActionResultDict:
         from pathlib import Path
 
-        ret: List[ActivityInfoDict] = []
+        ret: List[RobotInfoDict] = []
         try:
             ws = self.workspace
             if ws:
@@ -317,16 +315,16 @@ class RobocorpLanguageServer(PythonLanguageServer):
                     p = Path(folder_path)
                     if p.is_dir():
                         for sub in p.iterdir():
-                            package_yaml = sub / "package.yaml"
-                            if package_yaml.exists():
-                                folder_info: ActivityInfoDict = {
+                            robot_yaml = sub / "robot.yaml"
+                            if robot_yaml.exists():
+                                folder_info: RobotInfoDict = {
                                     "directory": str(sub),
                                     "name": sub.name,
                                 }
                                 ret.append(folder_info)
             ret.sort(key=lambda dct: dct["name"])
         except Exception as e:
-            log.exception("Error listing activities.")
+            log.exception("Error listing robots.")
             return dict(success=False, message=str(e), result=None)
         return dict(success=True, message=None, result=ret)
 
@@ -370,9 +368,9 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
         self._dir_cache.store(self.PACKAGE_ACCESS_LRU_CACHE_KEY, new_lst)
 
-    @command_dispatcher(commands.ROBOCORP_UPLOAD_TO_EXISTING_ACTIVITY_INTERNAL)
+    @command_dispatcher(commands.ROBOCORP_UPLOAD_TO_EXISTING_ROBOT_INTERNAL)
     def _upload_to_existing_activity(
-        self, params: UploadActivityParamsDict
+        self, params: UploadRobotParamsDict
     ) -> ActionResultDict:
         from robocorp_ls_core.progress_report import progress_context
 
@@ -382,21 +380,21 @@ class RobocorpLanguageServer(PythonLanguageServer):
             return {"success": False, "message": error_msg, "result": None}
 
         workspace_id = params["workspaceId"]
-        package_id = params["packageId"]
+        robot_id = params["robotId"]
         with progress_context(
-            self._endpoint, "Uploading to existing activity package", self._dir_cache
+            self._endpoint, "Uploading to existing robot", self._dir_cache
         ):
 
-            result = self._rcc.cloud_set_activity_contents(
-                directory, workspace_id, package_id
+            result = self._rcc.cloud_set_robot_contents(
+                directory, workspace_id, robot_id
             )
-            self._add_package_info_to_access_lru(workspace_id, package_id, directory)
+            self._add_package_info_to_access_lru(workspace_id, robot_id, directory)
 
         return result.as_dict()
 
-    @command_dispatcher(commands.ROBOCORP_UPLOAD_TO_NEW_ACTIVITY_INTERNAL)
-    def _upload_to_new_activity(
-        self, params: UploadNewActivityParamsDict
+    @command_dispatcher(commands.ROBOCORP_UPLOAD_TO_NEW_ROBOT_INTERNAL)
+    def _upload_to_new_robot(
+        self, params: UploadNewRobotParamsDict
     ) -> ActionResultDict:
         from robocorp_ls_core.progress_report import progress_context
 
@@ -411,26 +409,24 @@ class RobocorpLanguageServer(PythonLanguageServer):
         # When we upload to a new activity, clear the existing cache key.
         self._dir_cache.discard(self.CLOUD_LIST_WORKSPACE_CACHE_KEY)
         with progress_context(
-            self._endpoint, "Uploading to new activity package", self._dir_cache
+            self._endpoint, "Uploading to new robot", self._dir_cache
         ):
-            new_activity_result = self._rcc.cloud_create_activity(
-                workspace_id, package_name
-            )
-            if not new_activity_result.success:
-                return new_activity_result.as_dict()
+            new_robot_result = self._rcc.cloud_create_robot(workspace_id, package_name)
+            if not new_robot_result.success:
+                return new_robot_result.as_dict()
 
-            package_id = new_activity_result.result
-            if not package_id:
+            robot_id = new_robot_result.result
+            if not robot_id:
                 return dict(
                     success=False,
                     message="Expected to have package id from creating new activity.",
                     result=None,
                 )
 
-            result = self._rcc.cloud_set_activity_contents(
-                directory, workspace_id, package_id
+            result = self._rcc.cloud_set_robot_contents(
+                directory, workspace_id, robot_id
             )
-            self._add_package_info_to_access_lru(workspace_id, package_id, directory)
+            self._add_package_info_to_access_lru(workspace_id, robot_id, directory)
         return result.as_dict()
 
     @command_dispatcher(commands.ROBOCORP_GET_PLUGINS_DIR, str)

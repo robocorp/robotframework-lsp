@@ -76,7 +76,7 @@ class _CachedFileInfo(object):
 class _CachedInterpreterInfo(object):
     def __init__(
         self,
-        package_yaml_file_info: _CachedFileInfo,
+        robot_yaml_file_info: _CachedFileInfo,
         conda_config_file_info: Optional[_CachedFileInfo],
         pm: PluginManager,
     ):
@@ -85,13 +85,13 @@ class _CachedInterpreterInfo(object):
         import json
 
         self._mtime: _CachedInterpreterMTime = self._obtain_mtime(
-            package_yaml_file_info, conda_config_file_info
+            robot_yaml_file_info, conda_config_file_info
         )
 
         configuration_provider: EPConfigurationProvider = pm[EPConfigurationProvider]
         rcc = Rcc(configuration_provider)
-        interpreter_id = str(package_yaml_file_info.file_path)
-        result = rcc.run_python_code_package_yaml(
+        interpreter_id = str(robot_yaml_file_info.file_path)
+        result = rcc.run_python_code_robot_yaml(
             """
 if __name__ == "__main__":
     import sys
@@ -135,34 +135,13 @@ if __name__ == "__main__":
         except:
             raise RuntimeError(f"Error loading json: {json_contents}.")
 
-        root = str(package_yaml_file_info.file_path.parent)
-        environment: dict = {}
+        root = str(robot_yaml_file_info.file_path.parent)
 
-        for _activity_name, activity in rcc.iter_package_yaml_activities(
-            package_yaml_file_info.yaml_contents
-        ):
-            activity_root = activity.get("activityRoot")
-            if activity_root:
-                if os.path.isabs(activity_root):
-                    root = activity_root
-                else:
-                    # relative path: let's make it absolute
-                    parent = str(package_yaml_file_info.file_path.parent)
-                    root = os.path.abspath(os.path.join(parent, activity_root))
-
-            environment = activity.get("environment")
-
-            # i.e.: Use just the first activity (is there a better way to do this?)
-            break
-
+        pythonpath_lst = robot_yaml_file_info.yaml_contents.get("PYTHONPATH", [])
         additional_pythonpath_entries: List[str] = []
-        for key, value in environment.items():
-            if key.lower() == "pythonpath":
-                # Note: we currently deal only with pythonpath entries, so, this
-                # may not be ideal when really running an activity.
-                if isinstance(value, list):
-                    for v in value:
-                        additional_pythonpath_entries.append(os.path.join(root, str(v)))
+        if isinstance(pythonpath_lst, list):
+            for v in pythonpath_lst:
+                additional_pythonpath_entries.append(os.path.join(root, str(v)))
 
         self.info: IInterpreterInfo = DefaultInterpreterInfo(
             interpreter_id,
@@ -173,21 +152,21 @@ if __name__ == "__main__":
 
     def _obtain_mtime(
         self,
-        package_yaml_file_info: _CachedFileInfo,
+        robot_yaml_file_info: _CachedFileInfo,
         conda_config_file_info: Optional[_CachedFileInfo],
     ) -> _CachedInterpreterMTime:
         return (
-            package_yaml_file_info.mtime_info,
+            robot_yaml_file_info.mtime_info,
             conda_config_file_info.mtime_info if conda_config_file_info else None,
         )
 
     def is_cache_valid(
         self,
-        package_yaml_file_info: _CachedFileInfo,
+        robot_yaml_file_info: _CachedFileInfo,
         conda_config_file_info: Optional[_CachedFileInfo],
     ) -> bool:
         return self._mtime == self._obtain_mtime(
-            package_yaml_file_info, conda_config_file_info
+            robot_yaml_file_info, conda_config_file_info
         )
 
 
@@ -217,15 +196,15 @@ class _CacheInfo(object):
     @classmethod
     def get_interpreter_info(
         cls,
-        package_yaml_file_info: _CachedFileInfo,
+        robot_yaml_file_info: _CachedFileInfo,
         conda_config_file_info: Optional[_CachedFileInfo],
         pm: PluginManager,
     ) -> IInterpreterInfo:
         interpreter_info = cls._cached_interpreter_info.get(
-            package_yaml_file_info.file_path
+            robot_yaml_file_info.file_path
         )
         if interpreter_info is not None and interpreter_info.is_cache_valid(
-            package_yaml_file_info, conda_config_file_info
+            robot_yaml_file_info, conda_config_file_info
         ):
             _CacheInfo._cache_hit_interpreter += 1
             return interpreter_info.info
@@ -235,47 +214,19 @@ class _CacheInfo(object):
 
         endpoint = pm[EPEndPointProvider].endpoint
 
-        with progress_context(endpoint, "Obtain env for package.yaml", dir_cache=None):
+        with progress_context(endpoint, "Obtain env for robot.yaml", dir_cache=None):
             # If it got here, it's not cached or the cache doesn't match.
             # This may take a while...
             interpreter_info = cls._cached_interpreter_info[
-                package_yaml_file_info.file_path
-            ] = _CachedInterpreterInfo(
-                package_yaml_file_info, conda_config_file_info, pm
-            )
+                robot_yaml_file_info.file_path
+            ] = _CachedInterpreterInfo(robot_yaml_file_info, conda_config_file_info, pm)
 
             return interpreter_info.info
 
 
 class RobocorpResolveInterpreter(object):
     """
-    Resolves the interpreter based on the package.yaml found.
-    
-    The expected structure is something as:
-    {
-        'activities': {
-            'Web scraper': {
-                'output': 'output',
-                'activityRoot': '.',
-                'environment': {
-                    'pythonPath': ['variables', 'libraries', 'resources']
-                },
-                'action': {
-                    'command': [
-                        'python',
-                        '-m',
-                        'robot',
-                        '-d',
-                        'output',
-                        '--logtitle',
-                        'Task log',
-                        './tasks/*.robot'
-                    ]
-                }
-            }
-        },
-        'condaConfig': 'config/conda.yaml'
-    }
+    Resolves the interpreter based on the robot.yaml found.
     """
 
     def __init__(self, weak_pm: "weakref.ReferenceType[PluginManager]"):
@@ -300,31 +251,31 @@ class RobocorpResolveInterpreter(object):
 
             fs_path = Path(uris.to_fs_path(doc_uri))
             for path in fs_path.parents:
-                package_yaml: Path = path / "package.yaml"
-                if package_yaml.exists():
+                robot_yaml: Path = path / "robot.yaml"
+                if robot_yaml.exists():
                     break
             else:
-                # i.e.: Could not find any package.yaml in the structure.
-                log.debug("Could not find package yaml for: %s", fs_path)
+                # i.e.: Could not find any robot.yaml in the structure.
+                log.debug("Could not find robot.yaml for: %s", fs_path)
                 return None
 
-            # Ok, we have the package_yaml, so, we should be able to run RCC with it.
-            package_yaml_file_info = _CacheInfo.get_file_info(package_yaml)
-            yaml_contents = package_yaml_file_info.yaml_contents
+            # Ok, we have the robot_yaml, so, we should be able to run RCC with it.
+            robot_yaml_file_info = _CacheInfo.get_file_info(robot_yaml)
+            yaml_contents = robot_yaml_file_info.yaml_contents
             if not isinstance(yaml_contents, dict):
-                raise AssertionError(f"Expected dict as root in: {package_yaml}")
+                raise AssertionError(f"Expected dict as root in: {robot_yaml}")
 
-            conda_config = yaml_contents.get("condaConfig")
+            conda_config = yaml_contents.get("condaConfigFile")
             conda_config_file_info = None
 
             if conda_config:
-                parent: Path = package_yaml.parent
+                parent: Path = robot_yaml.parent
                 conda_config_path = parent.joinpath(conda_config)
                 if conda_config_path.exists():
                     conda_config_file_info = _CacheInfo.get_file_info(conda_config_path)
 
             return _CacheInfo.get_interpreter_info(
-                package_yaml_file_info, conda_config_file_info, pm
+                robot_yaml_file_info, conda_config_file_info, pm
             )
 
         except:

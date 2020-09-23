@@ -19,16 +19,17 @@
     "activationEvents": [
         "onCommand:robocorp.getLanguageServerPython",
         "onCommand:robocorp.getPluginsDir",
-        "onCommand:robocorp.createActivity",
-        "onCommand:robocorp.listActivityTemplates.internal",
-        "onCommand:robocorp.createActivity.internal",
-        "onCommand:robocorp.uploadActivityToCloud",
-        "onCommand:robocorp.localListActivities.internal",
+        "onCommand:robocorp.createRobot",
+        "onCommand:robocorp.listRobotTemplates.internal",
+        "onCommand:robocorp.createRobot.internal",
+        "onCommand:robocorp.uploadRobotToCloud",
+        "onCommand:robocorp.localListRobots.internal",
         "onCommand:robocorp.isLoginNeeded.internal",
+        "onCommand:robocorp.cloudLogin",
         "onCommand:robocorp.cloudLogin.internal",
         "onCommand:robocorp.cloudListWorkspaces.internal",
-        "onCommand:robocorp.uploadToNewActivity.internal",
-        "onCommand:robocorp.uploadToExistingActivity.internal"
+        "onCommand:robocorp.uploadToNewRobot.internal",
+        "onCommand:robocorp.uploadToExistingRobot.internal"
     ],
     "contributes": {
         "configuration": {
@@ -73,13 +74,18 @@
         "keybindings": [],
         "commands": [
             {
-                "command": "robocorp.createActivity",
-                "title": "Create Activity Package.",
+                "command": "robocorp.createRobot",
+                "title": "Create Robot.",
                 "category": "Robocorp"
             },
             {
-                "command": "robocorp.uploadActivityToCloud",
-                "title": "Upload Activity Package to the cloud.",
+                "command": "robocorp.uploadRobotToCloud",
+                "title": "Upload Robot to the cloud.",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.cloudLogin",
+                "title": "Log in Robocloud.",
                 "category": "Robocorp"
             }
         ]

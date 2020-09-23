@@ -17,7 +17,7 @@ else:
     from typing import TypedDict
 
 
-class ActivityInfoDict(TypedDict):
+class RobotInfoDict(TypedDict):
     directory: str
     name: str
 
@@ -94,19 +94,19 @@ class CloudListWorkspaceDict(TypedDict):
     packages: bool  # Whether we should also provide the packages for the workspace.
 
 
-class CreateActivityParamsDict(TypedDict):
+class CreateRobotParamsDict(TypedDict):
     directory: str
     template: str
     name: str
 
 
-class UploadActivityParamsDict(TypedDict):
+class UploadRobotParamsDict(TypedDict):
     workspaceId: str
-    packageId: str
+    robotId: str
     directory: str
 
 
-class UploadNewActivityParamsDict(TypedDict):
+class UploadNewRobotParamsDict(TypedDict):
     workspaceId: str
     packageName: str
     directory: str
@@ -122,22 +122,14 @@ class IRccWorkspace(Protocol):
         pass
 
 
-def typecheck_ircc_workspace(rcc_workspace: Type[IRccWorkspace]):
-    return rcc_workspace
-
-
-class IRccActivity(Protocol):
+class IRccRobot(Protocol):
     @property
-    def activity_id(self) -> str:
+    def robot_id(self) -> str:
         pass
 
     @property
-    def activity_name(self) -> str:
+    def robot_name(self) -> str:
         pass
-
-
-def typecheck_ircc_activity(rcc_activity: Type[IRccActivity]) -> Type[IRccActivity]:
-    return rcc_activity
 
 
 class IRcc(Protocol):
@@ -159,16 +151,16 @@ class IRcc(Protocol):
     def get_template_names(self) -> ActionResult[List[str]]:
         pass
 
-    def create_activity(self, template: str, directory: str) -> ActionResult:
+    def create_robot(self, template: str, directory: str) -> ActionResult:
         """
         :param template:
             The template to create.
         :param directory:
-            The directory where the activity should be created.
+            The directory where the robot should be created.
         """
 
-    def cloud_set_activity_contents(
-        self, directory: str, workspace_id: str, package_id: str
+    def cloud_set_robot_contents(
+        self, directory: str, workspace_id: str, robot_id: str
     ) -> ActionResult:
         """
         Note: needs connection to the cloud.
@@ -187,23 +179,23 @@ class IRcc(Protocol):
         Note: needs connection to the cloud.
         """
 
-    def cloud_list_workspace_activities(
+    def cloud_list_workspace_robots(
         self, workspace_id: str
-    ) -> ActionResult[List[IRccActivity]]:
+    ) -> ActionResult[List[IRccRobot]]:
         """
         Note: needs connection to the cloud.
         """
 
-    def cloud_create_activity(
+    def cloud_create_robot(
         self, workspace_id: str, package_name: str
     ) -> ActionResult[str]:
         """
         Note: needs connection to the cloud.
         
-        :returns an action result with the package id created.
+        :returns an action result with the robot id created.
         """
 
-    def run_python_code_package_yaml(
+    def run_python_code_robot_yaml(
         self,
         python_code: str,
         conda_yaml_str_contents: Optional[str],
@@ -211,33 +203,7 @@ class IRcc(Protocol):
         timeout=None,
     ) -> ActionResult[str]:
         """
-        Runs the given code based on an existing package yaml.
-        
-        The expected package_yaml_dict_contents is something as:
-        {
-            'activities': {
-                'Web scraper': {
-                    'output': 'output',
-                    'activityRoot': '.',
-                    'environment': {
-                        'pythonPath': ['variables', 'libraries', 'resources']
-                    },
-                    'action': {
-                        'command': [
-                            'python',
-                            '-m',
-                            'robot',
-                            '-d',
-                            'output',
-                            '--logtitle',
-                            'Task log',
-                            './tasks/*.robot'
-                        ]
-                    }
-                }
-            },
-            'condaConfig': 'config/conda.yaml'
-        }
+        Runs the given code based on an existing robot yaml.
         
         IMPORTANT: this can be a really slow operation on the first activation to 
         create the env.
@@ -250,7 +216,3 @@ class IRcc(Protocol):
         Note: this can be a really slow operation on the first activation to 
         download conda.
         """
-
-
-def typecheck_ircc(rcc: Type[IRcc]):
-    return rcc

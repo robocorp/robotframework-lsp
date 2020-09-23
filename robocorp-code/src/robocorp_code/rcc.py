@@ -7,22 +7,15 @@ from robocorp_ls_core.basic import implements, as_str
 from robocorp_ls_core.constants import NULL
 from robocorp_ls_core.protocols import IConfig, IConfigProvider
 from robocorp_ls_core.robotframework_log import get_logger
-from robocorp_code.protocols import (
-    IRcc,
-    IRccWorkspace,
-    IRccActivity,
-    ActionResult,
-    typecheck_ircc,
-    typecheck_ircc_workspace,
-    typecheck_ircc_activity,
-)
+from robocorp_code.protocols import IRcc, IRccWorkspace, IRccRobot, ActionResult
 from pathlib import Path
 import os.path
+from robocorp_ls_core.protocols import check_implements
 
 
 log = get_logger(__name__)
 
-RCC_CLOUD_ACTIVITY_MUTEX_NAME = "rcc_cloud_activity"
+RCC_CLOUD_ROBOT_MUTEX_NAME = "rcc_cloud_activity"
 RCC_CREDENTIALS_MUTEX_NAME = "rcc_credentials"
 
 
@@ -49,22 +42,18 @@ def download_rcc(location: str, force: bool = False) -> None:
 
                 if sys.platform == "win32":
                     if is_64:
-                        url = (
-                            "https://downloads.code.robocorp.com/rcc/windows64/rcc.exe"
-                        )
+                        url = "https://downloads.code.robocorp.com/rcc/v2/windows64/rcc.exe"
                     else:
-                        url = (
-                            "https://downloads.code.robocorp.com/rcc/windows32/rcc.exe"
-                        )
+                        url = "https://downloads.code.robocorp.com/rcc/v2/windows32/rcc.exe"
 
                 elif sys.platform == "darwin":
-                    url = "https://downloads.code.robocorp.com/rcc/macos64/rcc"
+                    url = "https://downloads.code.robocorp.com/rcc/v2/macos64/rcc"
 
                 else:
                     if is_64:
-                        url = "https://downloads.code.robocorp.com/rcc/linux64/rcc"
+                        url = "https://downloads.code.robocorp.com/rcc/v2/linux64/rcc"
                     else:
-                        url = "https://downloads.code.robocorp.com/rcc/linux32/rcc"
+                        url = "https://downloads.code.robocorp.com/rcc/v2/linux32/rcc"
 
                 log.info(f"Downloading rcc from: {url} to: {location}.")
                 response = urllib.request.urlopen(url)
@@ -101,22 +90,23 @@ def get_default_rcc_location() -> str:
     return location
 
 
-@typecheck_ircc_activity
-class RccActivity(object):
-    def __init__(self, activity_id: str, activity_name: str):
-        self._activity_id = activity_id
-        self._activity_name = activity_name
+class RccRobot(object):
+    def __init__(self, robot_id: str, robot_name: str):
+        self._robot_id = robot_id
+        self._robot_name = robot_name
 
     @property
-    def activity_id(self) -> str:
-        return self._activity_id
+    def robot_id(self) -> str:
+        return self._robot_id
 
     @property
-    def activity_name(self) -> str:
-        return self._activity_name
+    def robot_name(self) -> str:
+        return self._robot_name
+
+    def __typecheckself__(self) -> None:
+        _: IRccRobot = check_implements(self)
 
 
-@typecheck_ircc_workspace
 class RccWorkspace(object):
     def __init__(self, workspace_id: str, workspace_name: str):
         self._workspace_id = workspace_id
@@ -130,8 +120,10 @@ class RccWorkspace(object):
     def workspace_name(self) -> str:
         return self._workspace_name
 
+    def __typecheckself__(self) -> None:
+        _: IRccWorkspace = check_implements(self)
 
-@typecheck_ircc
+
 class Rcc(object):
     def __init__(self, config_provider: IConfigProvider) -> None:
         self._config_provider = weakref.ref(config_provider)
@@ -264,7 +256,7 @@ class Rcc(object):
 
     @implements(IRcc.get_template_names)
     def get_template_names(self) -> ActionResult[List[str]]:
-        result = self._run_rcc("activity initialize -l".split())
+        result = self._run_rcc("robot initialize -l".split())
         if not result.success:
             return ActionResult(success=False, message=result.message)
 
@@ -286,11 +278,11 @@ class Rcc(object):
             args.append(config_location)
         return args
 
-    @implements(IRcc.create_activity)
-    def create_activity(self, template: str, directory: str) -> ActionResult:
-        args = ["activity", "initialize", "-t", template, "-d", directory]
+    @implements(IRcc.create_robot)
+    def create_robot(self, template: str, directory: str) -> ActionResult:
+        args = ["robot", "initialize", "-t", template, "-d", directory]
         args = self._add_config_to_args(args)
-        return self._run_rcc(args, error_msg="Error creating activity.")
+        return self._run_rcc(args, error_msg="Error creating robot.")
 
     @implements(IRcc.add_credentials)
     def add_credentials(self, credential: str) -> ActionResult:
@@ -348,7 +340,7 @@ class Rcc(object):
         args = self._add_config_to_args(args)
 
         result = self._run_rcc(
-            args, expect_ok=False, mutex_name=RCC_CLOUD_ACTIVITY_MUTEX_NAME
+            args, expect_ok=False, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME
         )
 
         if not result.success:
@@ -377,18 +369,18 @@ class Rcc(object):
             )
         return ActionResult(True, None, ret)
 
-    @implements(IRcc.cloud_list_workspace_activities)
-    def cloud_list_workspace_activities(
+    @implements(IRcc.cloud_list_workspace_robots)
+    def cloud_list_workspace_robots(
         self, workspace_id: str
-    ) -> ActionResult[List[IRccActivity]]:
+    ) -> ActionResult[List[IRccRobot]]:
         import json
 
-        ret: List[IRccActivity] = []
+        ret: List[IRccRobot] = []
         args = ["cloud", "workspace"]
         args.extend(("--workspace", workspace_id))
         args = self._add_config_to_args(args)
         result = self._run_rcc(
-            args, expect_ok=False, mutex_name=RCC_CLOUD_ACTIVITY_MUTEX_NAME
+            args, expect_ok=False, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME
         )
         if not result.success:
             return ActionResult(False, result.message)
@@ -396,8 +388,7 @@ class Rcc(object):
         output = result.result
         if not output:
             return ActionResult(
-                False,
-                "Error listing cloud workspace activities (output not available).",
+                False, "Error listing cloud workspace robots (output not available)."
             )
 
         try:
@@ -416,15 +407,13 @@ class Rcc(object):
 
         for activity_info in workspace_info.get("activities", []):
             ret.append(
-                RccActivity(
-                    activity_id=activity_info["id"], activity_name=activity_info["name"]
-                )
+                RccRobot(robot_id=activity_info["id"], robot_name=activity_info["name"])
             )
         return ActionResult(True, None, ret)
 
-    @implements(IRcc.cloud_set_activity_contents)
-    def cloud_set_activity_contents(
-        self, directory: str, workspace_id: str, package_id: str
+    @implements(IRcc.cloud_set_robot_contents)
+    def cloud_set_robot_contents(
+        self, directory: str, workspace_id: str, robot_id: str
     ) -> ActionResult:
 
         if not os.path.exists(directory):
@@ -440,23 +429,23 @@ class Rcc(object):
         args = ["cloud", "push"]
         args.extend(["--directory", directory])
         args.extend(["--workspace", workspace_id])
-        args.extend(["--package", package_id])
+        args.extend(["--robot", robot_id])
 
         args = self._add_config_to_args(args)
-        ret = self._run_rcc(args, mutex_name=RCC_CLOUD_ACTIVITY_MUTEX_NAME)
+        ret = self._run_rcc(args, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME)
         return ret
 
-    @implements(IRcc.cloud_create_activity)
-    def cloud_create_activity(
+    @implements(IRcc.cloud_create_robot)
+    def cloud_create_robot(
         self, workspace_id: str, package_name: str
     ) -> ActionResult[str]:
         args = ["cloud", "new"]
         args.extend(["--workspace", workspace_id])
-        args.extend(["--package", package_name])
+        args.extend(["--robot", package_name])
 
         args = self._add_config_to_args(args)
         ret = self._run_rcc(
-            args, mutex_name=RCC_CLOUD_ACTIVITY_MUTEX_NAME, expect_ok=False
+            args, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME, expect_ok=False
         )
         if not ret.success:
             return ret
@@ -471,7 +460,7 @@ class Rcc(object):
             stdout = stdout.strip()
 
             # stdout is something as:
-            # Created new activity package named 'New package' with identity 1414.
+            # Created new robot named 'New package' with identity 1414.
             if not stdout.lower().startswith("created new"):
                 return ActionResult(
                     False,
@@ -487,22 +476,15 @@ class Rcc(object):
                     False, f"Unable to extract package id from: {stdout}"
                 )
         except Exception as e:
-            log.exception("Error creating new activity package.")
+            log.exception("Error creating new robot.")
             return ActionResult(
-                False, f"Unable to extract package id from: {stdout}. Error: {e}"
+                False, f"Unable to extract robot id from: {stdout}. Error: {e}"
             )
 
         return ActionResult(ret.success, None, package_id)
 
-    def iter_package_yaml_activities(self, package_yaml_dict_contents: dict):
-        activities = package_yaml_dict_contents.get("activities")
-        if activities and isinstance(activities, dict):
-            for activity_name, activity in activities.items():
-                if isinstance(activity, dict):
-                    yield activity_name, activity
-
-    @implements(IRcc.run_python_code_package_yaml)
-    def run_python_code_package_yaml(
+    @implements(IRcc.run_python_code_robot_yaml)
+    def run_python_code_robot_yaml(
         self,
         python_code: str,
         conda_yaml_str_contents: Optional[str],
@@ -512,7 +494,7 @@ class Rcc(object):
         from robocorp_ls_core import yaml_wrapper
 
         # The idea is obtaining a temporary directory, creating the needed
-        # python file, package.yaml and conda file and then executing an activity
+        # python file, robot.yaml and conda file and then executing an activity
         # that'll execute the python file.
         directory = make_numbered_in_temp(lock_timeout=60 * 60)
 
@@ -522,29 +504,24 @@ class Rcc(object):
         # Note that the environ is not set (because the activityRoot cannot be
         # set to a non-relative directory copying the existing environ leads to
         # wrong results).
-        package_yaml: Path = directory / "package.yaml"
+        robot_yaml: Path = directory / "robot.yaml"
         p: dict = {
-            "activities": {
-                "activity": {
-                    "activityRoot": ".",
-                    "output": ".",
-                    "action": {"command": ["python", str(python_file)]},
-                }
-            }
+            "tasks": {"Run Python Command": {"command": ["python", str(python_file)]}},
+            "artifactsDir": "output",
         }
         if conda_yaml_str_contents:
-            p["condaConfig"] = "conda.yaml"
+            p["condaConfigFile"] = "conda.yaml"
             conda_file: Path = directory / "conda.yaml"
             conda_file.write_text(conda_yaml_str_contents, encoding="utf-8")
 
-        package_yaml.write_text(yaml_wrapper.dumps(p), encoding="utf-8")
+        robot_yaml.write_text(yaml_wrapper.dumps(p), encoding="utf-8")
 
-        args = ["activity", "run", "-p", str(package_yaml)]
+        args = ["task", "run", "-r", str(robot_yaml)]
         if silent:
             args.append("--silent")
         ret = self._run_rcc(
             args,
-            mutex_name=RCC_CLOUD_ACTIVITY_MUTEX_NAME,
+            mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME,
             expect_ok=False,
             cwd=str(directory),
             timeout=timeout,  # Creating the env may be really slow!
@@ -555,13 +532,11 @@ class Rcc(object):
     def check_conda_installed(self, timeout=None) -> ActionResult[str]:
         return self._run_rcc(
             ["conda", "check", "-i"],
-            mutex_name=RCC_CLOUD_ACTIVITY_MUTEX_NAME,
+            mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME,
             timeout=timeout,  # Creating the env may be really slow!
         )
 
     def __typecheckself__(self) -> None:
-        from robocorp_ls_core.protocols import check_implements
-
         _: IRcc = check_implements(self)
 
 

@@ -1,8 +1,8 @@
 from robocorp_ls_core.unittest_tools.language_server_client import LanguageServerClient
 from robocorp_code.protocols import (
     ListWorkspacesActionResultDict,
-    UploadNewActivityParamsDict,
-    UploadActivityParamsDict,
+    UploadNewRobotParamsDict,
+    UploadRobotParamsDict,
     ActionResultDict,
 )
 from robocorp_ls_core.basic import implements
@@ -28,29 +28,29 @@ class RobocorpLanguageServerClient(LanguageServerClient):
     ) -> ActionResultDict:
         from robocorp_code import commands
 
-        params: UploadActivityParamsDict = {
+        params: UploadRobotParamsDict = {
             "workspaceId": workspace_id,
-            "packageId": package_id,
+            "robotId": package_id,
             "directory": directory,
         }
         result = self.execute_command(
-            commands.ROBOCORP_UPLOAD_TO_EXISTING_ACTIVITY_INTERNAL, [params]
+            commands.ROBOCORP_UPLOAD_TO_EXISTING_ROBOT_INTERNAL, [params]
         )["result"]
         return result
 
-    @implements(IRobocorpLanguageServerClient.upload_to_new_activity)
-    def upload_to_new_activity(
+    @implements(IRobocorpLanguageServerClient.upload_to_new_robot)
+    def upload_to_new_robot(
         self, workspace_id: str, package_name: str, directory: str
     ) -> ActionResultDict:
         from robocorp_code import commands
 
-        paramsNew: UploadNewActivityParamsDict = {
+        paramsNew: UploadNewRobotParamsDict = {
             "workspaceId": workspace_id,
             "packageName": package_name,
             "directory": directory,
         }
         result = self.execute_command(
-            commands.ROBOCORP_UPLOAD_TO_NEW_ACTIVITY_INTERNAL, [paramsNew]
+            commands.ROBOCORP_UPLOAD_TO_NEW_ROBOT_INTERNAL, [paramsNew]
         )["result"]
         return result
 

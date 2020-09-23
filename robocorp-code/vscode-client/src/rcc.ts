@@ -16,21 +16,21 @@ async function downloadRcc(progress: Progress<{ message?: string; increment?: nu
     if (process.platform == 'win32') {
         if (process.arch === 'x64' || process.env.hasOwnProperty('PROCESSOR_ARCHITEW6432')) {
             // Check if node is a 64 bit process or if it's a 32 bit process running in a 64 bit processor.
-            url = 'https://downloads.code.robocorp.com/rcc/windows64/rcc.exe';
+            url = 'https://downloads.code.robocorp.com/rcc/v2/windows64/rcc.exe';
         } else {
             // Do we even have a way to test a 32 bit build?
-            url = 'https://downloads.code.robocorp.com/rcc/windows32/rcc.exe';
+            url = 'https://downloads.code.robocorp.com/rcc/v2/windows32/rcc.exe';
 
         }
     } else if (process.platform == 'darwin') {
-        url = 'https://downloads.code.robocorp.com/rcc/macos64/rcc';
+        url = 'https://downloads.code.robocorp.com/rcc/v2/macos64/rcc';
 
     } else {
         // Linux
         if (process.arch === 'x64') {
-            url = 'https://downloads.code.robocorp.com/rcc/linux64/rcc';
+            url = 'https://downloads.code.robocorp.com/rcc/v2/linux64/rcc';
         } else {
-            url = 'https://downloads.code.robocorp.com/rcc/linux32/rcc';
+            url = 'https://downloads.code.robocorp.com/rcc/v2/linux32/rcc';
         }
     }
 

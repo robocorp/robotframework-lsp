@@ -1,0 +1,9 @@
+tasks:
+  Obtain environment information:
+    command: 
+      - python
+      - get_env_info.py
+
+artifactsDir: output
+
+condaConfigFile: conda.yaml

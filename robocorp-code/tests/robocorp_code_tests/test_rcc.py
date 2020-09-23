@@ -1,4 +1,4 @@
-from robocorp_code.protocols import IRcc, IRccActivity
+from robocorp_code.protocols import IRcc, IRccRobot
 import py.path
 
 
@@ -26,37 +26,37 @@ def test_rcc_cloud(rcc: IRcc, ci_credentials: str, tmpdir: py.path.local):
         raise AssertionError("Expected to have CI Workspace available.")
 
     ws = workspaces[0]
-    result = rcc.cloud_list_workspace_activities(ws.workspace_id)
+    result = rcc.cloud_list_workspace_robots(ws.workspace_id)
     assert result.success
     lst = result.result
     if lst is None:
         raise AssertionError("Found no workspace")
 
-    acts = [act for act in lst if act.activity_name == "CI activity"]
+    acts = [act for act in lst if act.robot_name == "CI activity"]
     if not acts:
-        result = rcc.cloud_create_activity(ws.workspace_id, "CI activity")
+        result = rcc.cloud_create_robot(ws.workspace_id, "CI activity")
         assert result.success
-        result = rcc.cloud_list_workspace_activities(ws.workspace_id)
+        result = rcc.cloud_list_workspace_robots(ws.workspace_id)
         assert result.success
         lst = result.result
         if lst is None:
             raise AssertionError("Found no activity")
-        acts = [act for act in lst if act.activity_name == "CI activity"]
+        acts = [act for act in lst if act.robot_name == "CI activity"]
     if not acts:
         raise AssertionError(
             "Expected to be able to create CI activity (or have it there already)."
         )
-    act: IRccActivity = acts[0]
+    act: IRccRobot = acts[0]
 
     wsdir = str(tmpdir.join("ws"))
 
-    result = rcc.create_activity("minimal", wsdir)
+    result = rcc.create_robot("minimal", wsdir)
     assert result.success
-    result = rcc.cloud_set_activity_contents(wsdir, ws.workspace_id, act.activity_id)
+    result = rcc.cloud_set_robot_contents(wsdir, ws.workspace_id, act.robot_id)
     assert result.success
 
 
-def test_rcc_run_with_package_yaml(rcc: IRcc, rcc_conda_installed):
+def test_rcc_run_with_conda_yaml(rcc: IRcc, rcc_conda_installed):
     python_code = """
 import sys
 sys.stdout.write('It worked')
@@ -70,7 +70,7 @@ dependencies:
   - python=3.7.5
 """
 
-    result = rcc.run_python_code_package_yaml(python_code, conda_yaml_str_contents)
+    result = rcc.run_python_code_robot_yaml(python_code, conda_yaml_str_contents)
     assert result.success
     assert result.result
     # Note: even in silent mode we may have additional output!

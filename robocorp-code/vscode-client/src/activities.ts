@@ -3,7 +3,7 @@ import { join } from 'path';
 import { OUTPUT_CHANNEL } from './channel';
 import * as roboCommands from './robocorpCommands';
 
-interface ActivityInfo {
+interface RobotInfo {
     name: string;
     directory: string;
 };
@@ -39,7 +39,32 @@ interface QuickPickItemWithAction extends QuickPickItem {
 }
 
 
-export async function uploadActivity() {
+export async function cloudLogin() : Promise<boolean> {
+    let loggedIn: boolean;
+    do {
+        let credentials: string = await window.showInputBox({
+            'password': true,
+            'prompt': 'Please provide the access credentials from: https://cloud.robocorp.com/settings/access-credentials',
+            'ignoreFocusOut': true,
+        });
+        if (!credentials) {
+            return false;
+        }
+        loggedIn = await commands.executeCommand(
+            roboCommands.ROBOCORP_CLOUD_LOGIN_INTERNAL, { 'credentials': credentials }
+        );
+        if (!loggedIn) {
+            let retry = "Retry with new credentials";
+            let selection = await window.showWarningMessage('Unable to log in with the provided credentials.', { 'modal': true }, retry);
+            if (!selection) {
+                return false;
+            }
+        }
+    } while (!loggedIn);
+    return true;
+}
+
+export async function uploadRobot() {
 
     // Start this in parallel while we ask the user for info.
     let isLoginNeededPromise: Thenable<ActionResult> = commands.executeCommand(
@@ -51,17 +76,17 @@ export async function uploadActivity() {
         currentUri = window.activeTextEditor.document.uri;
     }
     let actionResult: ActionResult = await commands.executeCommand(
-        roboCommands.ROBOCORP_LOCAL_LIST_ACTIVITIES_INTERNAL,
+        roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL,
         { 'currentUri': currentUri }
     );
     if (!actionResult.success) {
-        window.showInformationMessage('Error submitting activity package to the cloud: ' + actionResult.message);
+        window.showInformationMessage('Error submitting robot to the cloud: ' + actionResult.message);
         return;
     }
-    let activitiesInfo: ActivityInfo[] = actionResult.result;
+    let activitiesInfo: RobotInfo[] = actionResult.result;
 
     if (!activitiesInfo || activitiesInfo.length == 0) {
-        window.showInformationMessage('Unable to submit activity package to the cloud (no activity detected in the workspace).');
+        window.showInformationMessage('Unable to submit robot to the cloud (no robot detected in the workspace).');
         return;
     }
 
@@ -72,36 +97,19 @@ export async function uploadActivity() {
     }
 
     if (isLoginNeeded.result) {
-        let loggedIn: boolean;
-        do {
-            let credentials: string = await window.showInputBox({
-                'password': true,
-                'prompt': 'Please provide the access credentials from: https://cloud.robocorp.com/settings/access-credentials',
-                'ignoreFocusOut': true,
-            });
-            if (!credentials) {
-                return;
-            }
-            loggedIn = await commands.executeCommand(
-                roboCommands.ROBOCORP_CLOUD_LOGIN_INTERNAL, { 'credentials': credentials }
-            );
-            if (!loggedIn) {
-                let retry = "Retry with new credentials";
-                let selection = await window.showWarningMessage('Unable to log in with the provided credentials.', { 'modal': true }, retry);
-                if (!selection) {
-                    return;
-                }
-            }
-        } while (!loggedIn);
+        let loggedIn: boolean = await cloudLogin();
+        if(!loggedIn){
+            return;
+        }
     }
 
-    let activityToUpload: ActivityInfo;
+    let activityToUpload: RobotInfo;
     if (activitiesInfo.length > 1) {
-        let captionToActivity: Map<string, ActivityInfo> = new Map();
+        let captionToRobot: Map<string, RobotInfo> = new Map();
         let captions: QuickPickItemWithAction[] = new Array();
 
         for (let i = 0; i < activitiesInfo.length; i++) {
-            const element: ActivityInfo = activitiesInfo[i];
+            const element: RobotInfo = activitiesInfo[i];
             let caption: QuickPickItemWithAction = {
                 'label': element.name,
                 'description': element.directory,
@@ -113,7 +121,7 @@ export async function uploadActivity() {
             captions,
             {
                 "canPickMany": false,
-                'placeHolder': 'Please select the activity package to upload to the cloud.',
+                'placeHolder': 'Please select the robot to upload to the cloud.',
                 'ignoreFocusOut': true,
             }
         );
@@ -141,33 +149,33 @@ export async function uploadActivity() {
 
         let workspaceInfo: WorkspaceInfo[] = actionResult.result;
         if (!workspaceInfo || workspaceInfo.length == 0) {
-            window.showErrorMessage('A cloud workspace must be created to submit an activity to the cloud.');
+            window.showErrorMessage('A cloud workspace must be created to submit a robot to the cloud.');
             return;
         }
 
         // --------------------------------------------------------
-        // Select activity package/new package/refresh
+        // Select robot/new package/refresh
         // -------------------------------------------------------
 
         let captions: QuickPickItemWithAction[] = new Array();
         for (let i = 0; i < workspaceInfo.length; i++) {
             const wsInfo: WorkspaceInfo = workspaceInfo[i];
             for (let j = 0; j < wsInfo.packages.length; j++) {
-                const packageInfo = wsInfo.packages[j];
+                const robotInfo = wsInfo.packages[j];
                 let caption: QuickPickItemWithAction = {
-                    'label': '$(file) ' + packageInfo.name,
+                    'label': '$(file) ' + robotInfo.name,
                     'description': '(Workspace: ' + wsInfo.workspaceName + ')',
-                    'sortKey': packageInfo.sortKey,
-                    'action': { 'existingActivityPackage': packageInfo }    
+                    'sortKey': robotInfo.sortKey,
+                    'action': { 'existingRobotPackage': robotInfo }    
                 };
                 captions.push(caption);
             }
 
             let caption: QuickPickItemWithAction = {
-                'label': '$(new-folder) New activity package',
+                'label': '$(new-folder) New robot',
                 'description': '(Workspace: ' + wsInfo.workspaceName + ')',
                 'sortKey': '09998', // right before last item.
-                'action': { 'newActivityPackageAtWorkspace': wsInfo }
+                'action': { 'newRobotPackageAtWorkspace': wsInfo }
             };
             captions.push(caption);
         }
@@ -201,7 +209,7 @@ export async function uploadActivity() {
             captions,
             {
                 "canPickMany": false,
-                'placeHolder': 'Please select target activity package to upload: ' + activityToUpload.name + ' (' + activityToUpload.directory + ').',
+                'placeHolder': 'Please select target robot to upload: ' + activityToUpload.name + ' (' + activityToUpload.directory + ').',
                 'ignoreFocusOut': true,
             }
         );
@@ -212,8 +220,8 @@ export async function uploadActivity() {
         if (action.refresh) {
             refresh = true;
 
-        } else if (action.newActivityPackageAtWorkspace) {
-            let wsInfo: WorkspaceInfo = action.newActivityPackageAtWorkspace;
+        } else if (action.newRobotPackageAtWorkspace) {
+            let wsInfo: WorkspaceInfo = action.newRobotPackageAtWorkspace;
 
             let packageName: string = await window.showInputBox({
                 'prompt': 'Please provide the name for the new package.',
@@ -224,31 +232,31 @@ export async function uploadActivity() {
             }
 
             let actionResult: ActionResult = await commands.executeCommand(
-                roboCommands.ROBOCORP_UPLOAD_TO_NEW_ACTIVITY_INTERNAL,
+                roboCommands.ROBOCORP_UPLOAD_TO_NEW_ROBOT_INTERNAL,
                 { 'workspaceId': wsInfo.workspaceId, 'directory': activityToUpload.directory, 'packageName': packageName }
             );
             if (!actionResult.success) {
-                let msg:string = 'Error uploading to new activity package: ' + actionResult.message;
+                let msg:string = 'Error uploading to new robot: ' + actionResult.message;
                 OUTPUT_CHANNEL.appendLine(msg);
                 window.showErrorMessage(msg);
             }else{
-                window.showInformationMessage('Successfully submited activity package to the cloud.')
+                window.showInformationMessage('Successfully submited robot to the cloud.')
             }
             return;
 
-        } else if (action.existingActivityPackage) {
-            let packageInfo: PackageInfo = action.existingActivityPackage;
+        } else if (action.existingRobotPackage) {
+            let robotInfo: PackageInfo = action.existingRobotPackage;
             let actionResult: ActionResult = await commands.executeCommand(
-                roboCommands.ROBOCORP_UPLOAD_TO_EXISTING_ACTIVITY_INTERNAL,
-                { 'workspaceId': packageInfo.workspaceId, 'packageId': packageInfo.id, 'directory': activityToUpload.directory }
+                roboCommands.ROBOCORP_UPLOAD_TO_EXISTING_ROBOT_INTERNAL,
+                { 'workspaceId': robotInfo.workspaceId, 'robotId': robotInfo.id, 'directory': activityToUpload.directory }
             );
 
             if (!actionResult.success) {
-                let msg: string = 'Error uploading to existing activity package: ' + actionResult.message;
+                let msg: string = 'Error uploading to existing robot: ' + actionResult.message;
                 OUTPUT_CHANNEL.appendLine(msg);
                 window.showErrorMessage(msg);
             }else{
-                window.showInformationMessage('Successfully submited activity package to the cloud.')
+                window.showInformationMessage('Successfully submited robot to the cloud.')
             }
             return;
         }
@@ -258,19 +266,19 @@ export async function uploadActivity() {
 
 }
 
-export async function createActivity() {
+export async function createRobot() {
     // Unfortunately vscode does not have a good way to request multiple inputs at once,
     // so, for now we're asking each at a separate step.
-    let actionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_LIST_ACTIVITY_TEMPLATES_INTERNAL);
+    let actionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_LIST_ROBOT_TEMPLATES_INTERNAL);
     if (!actionResult.success) {
-        window.showErrorMessage('Unable to list activity templates: ' + actionResult.message);
+        window.showErrorMessage('Unable to list robot templates: ' + actionResult.message);
         return;
     }
     let availableTemplates: string[] = actionResult.result;
     if (availableTemplates) {
         let wsFolders: ReadonlyArray<WorkspaceFolder> = workspace.workspaceFolders;
         if (!wsFolders) {
-            window.showErrorMessage('Unable to create Activity Package (no workspace folder is currently opened).');
+            window.showErrorMessage('Unable to create Robot (no workspace folder is currently opened).');
             return;
         }
 
@@ -278,7 +286,7 @@ export async function createActivity() {
             availableTemplates,
             {
                 "canPickMany": false,
-                'placeHolder': 'Please select the template for the activity package.',
+                'placeHolder': 'Please select the template for the robot.',
                 'ignoreFocusOut': true,
             }
         );
@@ -293,7 +301,7 @@ export async function createActivity() {
             ws = wsFolders[0];
         } else {
             ws = await window.showWorkspaceFolderPick({
-                'placeHolder': 'Please select the folder to create the activity package.',
+                'placeHolder': 'Please select the folder to create the robot.',
                 'ignoreFocusOut': true,
             });
         }
@@ -304,7 +312,7 @@ export async function createActivity() {
 
         let name: string = await window.showInputBox({
             'value': 'Example',
-            'prompt': 'Please provide the name for the activity folder name.',
+            'prompt': 'Please provide the name for the robot folder name.',
             'ignoreFocusOut': true,
         })
         if (!name) {
@@ -312,17 +320,17 @@ export async function createActivity() {
             return;
         }
 
-        OUTPUT_CHANNEL.appendLine('Creating activity at: ' + ws.uri.fsPath);
-        let createActivityResult: ActionResult = await commands.executeCommand(
-            roboCommands.ROBOCORP_CREATE_ACTIVITY_INTERNAL,
+        OUTPUT_CHANNEL.appendLine('Creating robot at: ' + ws.uri.fsPath);
+        let createRobotResult: ActionResult = await commands.executeCommand(
+            roboCommands.ROBOCORP_CREATE_ROBOT_INTERNAL,
             { 'directory': ws.uri.fsPath, 'template': selection, 'name': name }
         );
 
-        if (createActivityResult.success) {
-            window.showInformationMessage('Activity package successfuly created in:\n' + join(ws.uri.fsPath, name));
+        if (createRobotResult.success) {
+            window.showInformationMessage('Robot successfully created in:\n' + join(ws.uri.fsPath, name));
         } else {
-            OUTPUT_CHANNEL.appendLine('Error creating activity at: ' + + ws.uri.fsPath);
-            window.showErrorMessage(createActivityResult.message);
+            OUTPUT_CHANNEL.appendLine('Error creating robot at: ' + + ws.uri.fsPath);
+            window.showErrorMessage(createRobotResult.message);
         }
     }
 }
