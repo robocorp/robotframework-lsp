@@ -51,7 +51,6 @@ def get_json_contents():
         "icon": "images/icon.png",
         "publisher": "robocorp",
         "engines": {"vscode": "^1.43.0"},
-        "extensionDependencies": ["robocorp.robotframework-lsp"],
         "categories": [],
         "activationEvents": get_activation_events_for_json(),
         "contributes": {
