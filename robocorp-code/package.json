@@ -15,6 +15,9 @@
     "engines": {
         "vscode": "^1.43.0"
     },
+    "extensionDependencies": [
+        "robocorp.robotframework-lsp"
+    ],
     "categories": [],
     "activationEvents": [
         "onCommand:robocorp.getLanguageServerPython",
