@@ -134,7 +134,7 @@ async function askAndCreateNewRobotAtWorkspace(wsInfo: WorkspaceInfo, directory:
         OUTPUT_CHANNEL.appendLine(msg);
         window.showErrorMessage(msg);
     } else {
-        window.showInformationMessage('Successfully submited Robot to the cloud.')
+        window.showInformationMessage('Successfully submited new Robot ' + robotName + ' to the cloud.')
     }
 
 }
@@ -209,53 +209,43 @@ export async function uploadRobot() {
         let workspaceIdFilter: string = undefined;
 
         if (workspaceInfo.length > 1) {
-            let totalRobots: number = 0;
+            // Ok, there are many workspaces, let's provide a pre-filter for it.
+            let captions: QuickPickItemWithAction[] = new Array();
             for (let i = 0; i < workspaceInfo.length; i++) {
                 const wsInfo: WorkspaceInfo = workspaceInfo[i];
-                for (let j = 0; j < wsInfo.packages.length; j++) {
-                    totalRobots += 1;
-                }
-            }
-
-            if (totalRobots > 8 || workspaceInfo.length > 2) {
-                // Ok, there are many items or many workspaces, let's provide a pre-filter for it.
-                let captions: QuickPickItemWithAction[] = new Array();
-                for (let i = 0; i < workspaceInfo.length; i++) {
-                    const wsInfo: WorkspaceInfo = workspaceInfo[i];
-                    let caption: QuickPickItemWithAction = {
-                        'label': '$(folder) ' + wsInfo.workspaceName,
-                        'action': { 'filterWorkspaceId': wsInfo.workspaceId },
-                    };
-                    captions.push(caption);
-                }
-
-                sortCaptions(captions);
-
                 let caption: QuickPickItemWithAction = {
-                    'label': '$(refresh) Refresh list',
-                    'description': 'Expected Workspace is not appearing.',
-                    'sortKey': '09999', // last item
-                    'action': { 'refresh': true }
+                    'label': '$(folder) ' + wsInfo.workspaceName,
+                    'action': { 'filterWorkspaceId': wsInfo.workspaceId },
                 };
                 captions.push(caption);
+            }
 
-                let selection: QuickPickItemWithAction = await window.showQuickPick(
-                    captions,
-                    {
-                        "canPickMany": false,
-                        'placeHolder': 'Please select Workspace to upload: ' + robotToUpload.name + ' (' + robotToUpload.directory + ')' + '.',
-                        'ignoreFocusOut': true,
-                    }
-                );
-                if (!selection) {
-                    return;
+            sortCaptions(captions);
+
+            let caption: QuickPickItemWithAction = {
+                'label': '$(refresh) * Refresh list',
+                'description': 'Expected Workspace is not appearing.',
+                'sortKey': '09999', // last item
+                'action': { 'refresh': true }
+            };
+            captions.push(caption);
+
+            let selection: QuickPickItemWithAction = await window.showQuickPick(
+                captions,
+                {
+                    "canPickMany": false,
+                    'placeHolder': 'Please select Workspace to upload: ' + robotToUpload.name + ' (' + robotToUpload.directory + ')' + '.',
+                    'ignoreFocusOut': true,
                 }
-                if (selection.action.refresh) {
-                    refresh = true;
-                    continue SELECT_OR_REFRESH;
-                } else {
-                    workspaceIdFilter = selection.action.filterWorkspaceId;
-                }
+            );
+            if (!selection) {
+                return;
+            }
+            if (selection.action.refresh) {
+                refresh = true;
+                continue SELECT_OR_REFRESH;
+            } else {
+                workspaceIdFilter = selection.action.filterWorkspaceId;
             }
         }
 
@@ -275,27 +265,33 @@ export async function uploadRobot() {
 
             for (let j = 0; j < wsInfo.packages.length; j++) {
                 const robotInfo = wsInfo.packages[j];
+
+                // i.e.: Show the Robots with the same name with more priority in the list.
+                let sortKey = 'b' + robotInfo.name;
+                if (robotInfo.name == robotToUpload.name) {
+                    sortKey = 'a' + robotInfo.name;
+                }
                 let caption: QuickPickItemWithAction = {
                     'label': '$(file) ' + robotInfo.name,
                     'description': '(Workspace: ' + wsInfo.workspaceName + ')',
-                    'sortKey': robotInfo.sortKey,
+                    'sortKey': sortKey,
                     'action': { 'existingRobotPackage': robotInfo }
                 };
                 captions.push(caption);
             }
 
             let caption: QuickPickItemWithAction = {
-                'label': '$(new-folder) Create new Robot',
+                'label': '$(new-folder) + Create new Robot',
                 'description': '(Workspace: ' + wsInfo.workspaceName + ')',
-                'sortKey': '09998', // right before last item.
+                'sortKey': 'c' + wsInfo.workspaceName, // right before last item.
                 'action': { 'newRobotPackageAtWorkspace': wsInfo }
             };
             captions.push(caption);
         }
         let caption: QuickPickItemWithAction = {
-            'label': '$(refresh) Refresh list',
+            'label': '$(refresh) * Refresh list',
             'description': 'Expected Workspace or Robot is not appearing.',
-            'sortKey': '09999', // last item
+            'sortKey': 'd', // last item
             'action': { 'refresh': true }
         };
         captions.push(caption);
@@ -320,6 +316,7 @@ export async function uploadRobot() {
         }
 
         if (action.newRobotPackageAtWorkspace) {
+            // No confirmation in this case
             let wsInfo: WorkspaceInfo = action.newRobotPackageAtWorkspace;
             await askAndCreateNewRobotAtWorkspace(wsInfo, robotToUpload.directory);
             return;
@@ -353,7 +350,7 @@ export async function uploadRobot() {
                 OUTPUT_CHANNEL.appendLine(msg);
                 window.showErrorMessage(msg);
             } else {
-                window.showInformationMessage('Successfully submited Robot to the cloud.')
+                window.showInformationMessage('Successfully submited Robot ' + robotToUpload.name + ' to the cloud.')
             }
             return;
         }
