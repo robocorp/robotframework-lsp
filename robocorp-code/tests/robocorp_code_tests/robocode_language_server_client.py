@@ -11,14 +11,11 @@ from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
 
 class RobocorpLanguageServerClient(LanguageServerClient):
     @implements(IRobocorpLanguageServerClient.cloud_list_workspaces)
-    def cloud_list_workspaces(
-        self, refresh=False, packages=True
-    ) -> ListWorkspacesActionResultDict:
+    def cloud_list_workspaces(self, refresh=False) -> ListWorkspacesActionResultDict:
         from robocorp_code import commands
 
         result = self.execute_command(
-            commands.ROBOCORP_CLOUD_LIST_WORKSPACES_INTERNAL,
-            [{"refresh": refresh, "packages": packages}],
+            commands.ROBOCORP_CLOUD_LIST_WORKSPACES_INTERNAL, [{"refresh": refresh}]
         )["result"]
         return result
 
@@ -40,13 +37,13 @@ class RobocorpLanguageServerClient(LanguageServerClient):
 
     @implements(IRobocorpLanguageServerClient.upload_to_new_robot)
     def upload_to_new_robot(
-        self, workspace_id: str, package_name: str, directory: str
+        self, workspace_id: str, robot_name: str, directory: str
     ) -> ActionResultDict:
         from robocorp_code import commands
 
         paramsNew: UploadNewRobotParamsDict = {
             "workspaceId": workspace_id,
-            "packageName": package_name,
+            "robotName": robot_name,
             "directory": directory,
         }
         result = self.execute_command(
@@ -59,6 +56,12 @@ class RobocorpLanguageServerClient(LanguageServerClient):
 
         result = self.execute_command(commands.ROBOCORP_GET_PLUGINS_DIR, [])["result"]
         return result
+
+    def request_cancel(self, message_id) -> None:
+        """
+        Requests that some processing is cancelled.
+        """
+        raise AssertionError("Not implemented")
 
     def __typecheckself__(self) -> None:
         from robocorp_ls_core.protocols import check_implements

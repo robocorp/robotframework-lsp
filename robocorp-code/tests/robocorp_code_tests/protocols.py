@@ -16,9 +16,7 @@ else:
 
 
 class IRobocorpLanguageServerClient(ILanguageServerClient, Protocol):
-    def cloud_list_workspaces(
-        self, refresh=False, packages=True
-    ) -> ListWorkspacesActionResultDict:
+    def cloud_list_workspaces(self, refresh=False) -> ListWorkspacesActionResultDict:
         pass
 
     def upload_to_existing_activity(
@@ -27,7 +25,7 @@ class IRobocorpLanguageServerClient(ILanguageServerClient, Protocol):
         pass
 
     def upload_to_new_robot(
-        self, workspace_id: str, package_name: str, directory: str
+        self, workspace_id: str, robot_name: str, directory: str
     ) -> ActionResultDict:
         pass
 

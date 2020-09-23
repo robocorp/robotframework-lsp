@@ -1,5 +1,5 @@
 import sys
-from typing import Optional, List, Any, Generic, TypeVar, Type
+from typing import Optional, List, Any, Generic, TypeVar
 
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
@@ -17,7 +17,7 @@ else:
     from typing import TypedDict
 
 
-class RobotInfoDict(TypedDict):
+class LocalRobotMetadataInfoDict(TypedDict):
     directory: str
     name: str
 
@@ -27,6 +27,7 @@ class PackageInfoDict(TypedDict):
     id: str
     sortKey: str
     workspaceId: str
+    workspaceName: str
 
 
 class PackageInfoInLRUDict(TypedDict):
@@ -91,7 +92,6 @@ class CloudLoginParamsDict(TypedDict):
 
 class CloudListWorkspaceDict(TypedDict):
     refresh: bool  # False means we can use the last cached results and True means it should be updated.
-    packages: bool  # Whether we should also provide the packages for the workspace.
 
 
 class CreateRobotParamsDict(TypedDict):
@@ -108,7 +108,7 @@ class UploadRobotParamsDict(TypedDict):
 
 class UploadNewRobotParamsDict(TypedDict):
     workspaceId: str
-    packageName: str
+    robotName: str
     directory: str
 
 
@@ -122,7 +122,7 @@ class IRccWorkspace(Protocol):
         pass
 
 
-class IRccRobot(Protocol):
+class IRccRobotMetadata(Protocol):
     @property
     def robot_id(self) -> str:
         pass
@@ -181,13 +181,13 @@ class IRcc(Protocol):
 
     def cloud_list_workspace_robots(
         self, workspace_id: str
-    ) -> ActionResult[List[IRccRobot]]:
+    ) -> ActionResult[List[IRccRobotMetadata]]:
         """
         Note: needs connection to the cloud.
         """
 
     def cloud_create_robot(
-        self, workspace_id: str, package_name: str
+        self, workspace_id: str, robot_name: str
     ) -> ActionResult[str]:
         """
         Note: needs connection to the cloud.

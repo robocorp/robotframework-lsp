@@ -5,8 +5,8 @@ from typing import List, Any, Optional, Dict
 from robocorp_code import commands
 from robocorp_code.protocols import (
     IRccWorkspace,
-    IRccRobot,
-    RobotInfoDict,
+    IRccRobotMetadata,
+    LocalRobotMetadataInfoDict,
     WorkspaceInfoDict,
     PackageInfoDict,
     ActionResultDict,
@@ -20,6 +20,7 @@ from robocorp_code.protocols import (
 )
 import os
 from robocorp_ls_core.protocols import IConfig
+from pathlib import Path
 
 
 log = get_logger(__name__)
@@ -255,7 +256,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
             for ws in workspaces:
                 packages: List[PackageInfoDict] = []
 
-                activity_package: IRccRobot
+                activity_package: IRccRobotMetadata
                 activities_result = self._rcc.cloud_list_workspace_robots(
                     ws.workspace_id
                 )
@@ -276,6 +277,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
                         "id": activity_package.robot_id,
                         "sortKey": sort_key,
                         "workspaceId": ws.workspace_id,
+                        "workspaceName": ws.workspace_name,
                     }
                     packages.append(package_info)
 
@@ -303,25 +305,47 @@ class RobocorpLanguageServer(PythonLanguageServer):
         result = self._rcc.get_template_names()
         return result.as_dict()
 
+    def _get_robot_metadata(self, sub: Path) -> Optional[LocalRobotMetadataInfoDict]:
+        robot_yaml = sub / "robot.yaml"
+
+        if robot_yaml.exists():
+            # Let's try to get the name from the yaml, if it's
+            # not there, use the folder name.
+            name = sub.name
+            from robocorp_ls_core import yaml_wrapper
+
+            try:
+                with robot_yaml.open("r", encoding="utf-8") as stream:
+                    yaml_contents = yaml_wrapper.load(stream)
+                    name = yaml_contents.get("name", name)
+            except:
+                log.exception("Unable to get Robot name for: %s", robot_yaml)
+
+            folder_info: LocalRobotMetadataInfoDict = {
+                "directory": str(sub),
+                "name": name,
+            }
+            return folder_info
+        return None
+
     @command_dispatcher(commands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL)
     def _local_list_robots(self, params=None) -> ActionResultDict:
-        from pathlib import Path
-
-        ret: List[RobotInfoDict] = []
+        ret: List[LocalRobotMetadataInfoDict] = []
         try:
             ws = self.workspace
             if ws:
                 for folder_path in ws.get_folder_paths():
+                    # Check the root directory itself for the robot.yaml.
                     p = Path(folder_path)
-                    if p.is_dir():
+                    robot_metadata = self._get_robot_metadata(p)
+                    if robot_metadata is not None:
+                        ret.append(robot_metadata)
+                    elif p.is_dir():
                         for sub in p.iterdir():
-                            robot_yaml = sub / "robot.yaml"
-                            if robot_yaml.exists():
-                                folder_info: RobotInfoDict = {
-                                    "directory": str(sub),
-                                    "name": sub.name,
-                                }
-                                ret.append(folder_info)
+                            robot_metadata = self._get_robot_metadata(sub)
+                            if robot_metadata is not None:
+                                ret.append(robot_metadata)
+
             ret.sort(key=lambda dct: dct["name"])
         except Exception as e:
             log.exception("Error listing robots.")
@@ -404,14 +428,14 @@ class RobocorpLanguageServer(PythonLanguageServer):
             return {"success": False, "message": error_msg, "result": None}
 
         workspace_id = params["workspaceId"]
-        package_name = params["packageName"]
+        robot_name = params["robotName"]
 
         # When we upload to a new activity, clear the existing cache key.
         self._dir_cache.discard(self.CLOUD_LIST_WORKSPACE_CACHE_KEY)
         with progress_context(
             self._endpoint, "Uploading to new robot", self._dir_cache
         ):
-            new_robot_result = self._rcc.cloud_create_robot(workspace_id, package_name)
+            new_robot_result = self._rcc.cloud_create_robot(workspace_id, robot_name)
             if not new_robot_result.success:
                 return new_robot_result.as_dict()
 
@@ -431,6 +455,4 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
     @command_dispatcher(commands.ROBOCORP_GET_PLUGINS_DIR, str)
     def _get_plugins_dir(self, params=None) -> str:
-        from pathlib import Path
-
         return str(Path(__file__).parent / "plugins")

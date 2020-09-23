@@ -16,6 +16,7 @@ interface WorkspaceInfo {
 
 interface PackageInfo {
     workspaceId: string;
+    workspaceName: string;
     id: string;
     name: string;
     sortKey: string;
@@ -38,8 +39,27 @@ interface QuickPickItemWithAction extends QuickPickItem {
     sortKey?: string;
 }
 
+function sortCaptions(captions: QuickPickItemWithAction[]) {
+    captions.sort(function (a, b) {
+        if (a.sortKey < b.sortKey) {
+            return -1;
+        }
+        if (a.sortKey > b.sortKey) {
+            return 1;
+        }
 
-export async function cloudLogin() : Promise<boolean> {
+        if (a.label < b.label) {
+            return -1;
+        }
+        if (a.label > b.label) {
+            return 1;
+        }
+
+        return 0;
+    });
+}
+
+export async function cloudLogin(): Promise<boolean> {
     let loggedIn: boolean;
     do {
         let credentials: string = await window.showInputBox({
@@ -64,6 +84,61 @@ export async function cloudLogin() : Promise<boolean> {
     return true;
 }
 
+async function askRobotToUpload(robotsInfo: RobotInfo[]): Promise<RobotInfo> {
+    let robotToUpload: RobotInfo;
+    if (robotsInfo.length > 1) {
+        let captions: QuickPickItemWithAction[] = new Array();
+
+        for (let i = 0; i < robotsInfo.length; i++) {
+            const element: RobotInfo = robotsInfo[i];
+            let caption: QuickPickItemWithAction = {
+                'label': element.name,
+                'description': element.directory,
+                'action': element
+            };
+            captions.push(caption);
+        }
+        let selection: QuickPickItemWithAction = await window.showQuickPick(
+            captions,
+            {
+                "canPickMany": false,
+                'placeHolder': 'Please select the Robot to upload to the Cloud.',
+                'ignoreFocusOut': true,
+            }
+        );
+        if (!selection) {
+            return;
+        }
+        robotToUpload = selection.action;
+    } else {
+        robotToUpload = robotsInfo[0];
+    }
+    return robotToUpload;
+}
+
+async function askAndCreateNewRobotAtWorkspace(wsInfo: WorkspaceInfo, directory: string) {
+    let robotName: string = await window.showInputBox({
+        'prompt': 'Please provide the name for the new Robot.',
+        'ignoreFocusOut': true,
+    });
+    if (!robotName) {
+        return;
+    }
+
+    let actionResult: ActionResult = await commands.executeCommand(
+        roboCommands.ROBOCORP_UPLOAD_TO_NEW_ROBOT_INTERNAL,
+        { 'workspaceId': wsInfo.workspaceId, 'directory': directory, 'robotName': robotName }
+    );
+    if (!actionResult.success) {
+        let msg: string = 'Error uploading to new Robot: ' + actionResult.message;
+        OUTPUT_CHANNEL.appendLine(msg);
+        window.showErrorMessage(msg);
+    } else {
+        window.showInformationMessage('Successfully submited Robot to the cloud.')
+    }
+
+}
+
 export async function uploadRobot() {
 
     // Start this in parallel while we ask the user for info.
@@ -80,13 +155,13 @@ export async function uploadRobot() {
         { 'currentUri': currentUri }
     );
     if (!actionResult.success) {
-        window.showInformationMessage('Error submitting robot to the cloud: ' + actionResult.message);
+        window.showInformationMessage('Error submitting Robot to the cloud: ' + actionResult.message);
         return;
     }
-    let activitiesInfo: RobotInfo[] = actionResult.result;
+    let robotsInfo: RobotInfo[] = actionResult.result;
 
-    if (!activitiesInfo || activitiesInfo.length == 0) {
-        window.showInformationMessage('Unable to submit robot to the cloud (no robot detected in the workspace).');
+    if (!robotsInfo || robotsInfo.length == 0) {
+        window.showInformationMessage('Unable to submit Robot to the cloud (no Robot detected in the Workspace).');
         return;
     }
 
@@ -98,48 +173,24 @@ export async function uploadRobot() {
 
     if (isLoginNeeded.result) {
         let loggedIn: boolean = await cloudLogin();
-        if(!loggedIn){
+        if (!loggedIn) {
             return;
         }
     }
 
-    let activityToUpload: RobotInfo;
-    if (activitiesInfo.length > 1) {
-        let captionToRobot: Map<string, RobotInfo> = new Map();
-        let captions: QuickPickItemWithAction[] = new Array();
-
-        for (let i = 0; i < activitiesInfo.length; i++) {
-            const element: RobotInfo = activitiesInfo[i];
-            let caption: QuickPickItemWithAction = {
-                'label': element.name,
-                'description': element.directory,
-                'action': element
-            };
-            captions.push(caption);
-        }
-        let selection: QuickPickItemWithAction = await window.showQuickPick(
-            captions,
-            {
-                "canPickMany": false,
-                'placeHolder': 'Please select the robot to upload to the cloud.',
-                'ignoreFocusOut': true,
-            }
-        );
-        if (!selection) {
-            return;
-        }
-        activityToUpload = selection.action;
-    } else {
-        activityToUpload = activitiesInfo[0];
+    let robotToUpload: RobotInfo = await askRobotToUpload(robotsInfo);
+    if (!robotToUpload) {
+        return;
     }
 
     let refresh = false;
+    SELECT_OR_REFRESH:
     do {
         // We ask for the information on the existing workspaces information.
         // Note that this may be cached from the last time it was asked, 
         // so, we have an option to refresh it (and ask again).
         let actionResult: ListWorkspacesActionResult = await commands.executeCommand(
-            roboCommands.ROBOCORP_CLOUD_LIST_WORKSPACES_INTERNAL, { 'refresh': refresh, 'packages': true }
+            roboCommands.ROBOCORP_CLOUD_LIST_WORKSPACES_INTERNAL, { 'refresh': refresh }
         );
 
         if (!actionResult.success) {
@@ -149,30 +200,92 @@ export async function uploadRobot() {
 
         let workspaceInfo: WorkspaceInfo[] = actionResult.result;
         if (!workspaceInfo || workspaceInfo.length == 0) {
-            window.showErrorMessage('A cloud workspace must be created to submit a robot to the cloud.');
+            window.showErrorMessage('A Cloud Workspace must be created to submit a Robot to the cloud.');
             return;
         }
 
-        // --------------------------------------------------------
-        // Select robot/new package/refresh
+        // Now, if there are only a few items or a single workspace,
+        // just show it all, otherwise do a pre-selection with the workspace.
+        let workspaceIdFilter: string = undefined;
+
+        if (workspaceInfo.length > 1) {
+            let totalRobots: number = 0;
+            for (let i = 0; i < workspaceInfo.length; i++) {
+                const wsInfo: WorkspaceInfo = workspaceInfo[i];
+                for (let j = 0; j < wsInfo.packages.length; j++) {
+                    totalRobots += 1;
+                }
+            }
+
+            if (totalRobots > 8 || workspaceInfo.length > 2) {
+                // Ok, there are many items or many workspaces, let's provide a pre-filter for it.
+                let captions: QuickPickItemWithAction[] = new Array();
+                for (let i = 0; i < workspaceInfo.length; i++) {
+                    const wsInfo: WorkspaceInfo = workspaceInfo[i];
+                    let caption: QuickPickItemWithAction = {
+                        'label': '$(folder) ' + wsInfo.workspaceName,
+                        'action': { 'filterWorkspaceId': wsInfo.workspaceId },
+                    };
+                    captions.push(caption);
+                }
+
+                sortCaptions(captions);
+
+                let caption: QuickPickItemWithAction = {
+                    'label': '$(refresh) Refresh list',
+                    'description': 'Expected Workspace is not appearing.',
+                    'sortKey': '09999', // last item
+                    'action': { 'refresh': true }
+                };
+                captions.push(caption);
+
+                let selection: QuickPickItemWithAction = await window.showQuickPick(
+                    captions,
+                    {
+                        "canPickMany": false,
+                        'placeHolder': 'Please select Workspace to upload: ' + robotToUpload.name + ' (' + robotToUpload.directory + ')' + '.',
+                        'ignoreFocusOut': true,
+                    }
+                );
+                if (!selection) {
+                    return;
+                }
+                if (selection.action.refresh) {
+                    refresh = true;
+                    continue SELECT_OR_REFRESH;
+                } else {
+                    workspaceIdFilter = selection.action.filterWorkspaceId;
+                }
+            }
+        }
+
+        // -------------------------------------------------------
+        // Select Robot/New Robot/Refresh
         // -------------------------------------------------------
 
         let captions: QuickPickItemWithAction[] = new Array();
         for (let i = 0; i < workspaceInfo.length; i++) {
             const wsInfo: WorkspaceInfo = workspaceInfo[i];
+
+            if (workspaceIdFilter) {
+                if (workspaceIdFilter != wsInfo.workspaceId) {
+                    continue;
+                }
+            }
+
             for (let j = 0; j < wsInfo.packages.length; j++) {
                 const robotInfo = wsInfo.packages[j];
                 let caption: QuickPickItemWithAction = {
                     'label': '$(file) ' + robotInfo.name,
                     'description': '(Workspace: ' + wsInfo.workspaceName + ')',
                     'sortKey': robotInfo.sortKey,
-                    'action': { 'existingRobotPackage': robotInfo }    
+                    'action': { 'existingRobotPackage': robotInfo }
                 };
                 captions.push(caption);
             }
 
             let caption: QuickPickItemWithAction = {
-                'label': '$(new-folder) New robot',
+                'label': '$(new-folder) Create new Robot',
                 'description': '(Workspace: ' + wsInfo.workspaceName + ')',
                 'sortKey': '09998', // right before last item.
                 'action': { 'newRobotPackageAtWorkspace': wsInfo }
@@ -181,35 +294,19 @@ export async function uploadRobot() {
         }
         let caption: QuickPickItemWithAction = {
             'label': '$(refresh) Refresh list',
-            'description': 'Expected workspace or package is not appearing.',
+            'description': 'Expected Workspace or Robot is not appearing.',
             'sortKey': '09999', // last item
             'action': { 'refresh': true }
         };
         captions.push(caption);
 
-        captions.sort(function (a, b) {
-            if (a.sortKey < b.sortKey) {
-                return -1;
-            }
-            if (a.sortKey > b.sortKey) {
-                return 1;
-            }
-
-            if(a.label < b.label){
-                return -1;
-            }
-            if(a.label > b.label){
-                return 1;
-            }
-
-            return 0;
-        });
+        sortCaptions(captions);
 
         let selection: QuickPickItemWithAction = await window.showQuickPick(
             captions,
             {
                 "canPickMany": false,
-                'placeHolder': 'Please select target robot to upload: ' + activityToUpload.name + ' (' + activityToUpload.directory + ').',
+                'placeHolder': 'Please select target Robot to upload: ' + robotToUpload.name + ' (' + robotToUpload.directory + ').',
                 'ignoreFocusOut': true,
             }
         );
@@ -219,51 +316,49 @@ export async function uploadRobot() {
         let action = selection.action;
         if (action.refresh) {
             refresh = true;
+            continue SELECT_OR_REFRESH;
+        }
 
-        } else if (action.newRobotPackageAtWorkspace) {
+        if (action.newRobotPackageAtWorkspace) {
             let wsInfo: WorkspaceInfo = action.newRobotPackageAtWorkspace;
+            await askAndCreateNewRobotAtWorkspace(wsInfo, robotToUpload.directory);
+            return;
+        }
 
-            let packageName: string = await window.showInputBox({
-                'prompt': 'Please provide the name for the new package.',
-                'ignoreFocusOut': true,
-            });
-            if (!packageName) {
+        if (action.existingRobotPackage) {
+            let yesOverride: string = 'Yes (override existing Robot)';
+            let noChooseDifferentTarget: string = 'No (choose different target)';
+            let cancel: string = 'Cancel';
+            let robotInfo: PackageInfo = action.existingRobotPackage;
+
+            let selection = await window.showWarningMessage(
+                "Upload of the contents of " + robotToUpload.directory + " to: " + robotInfo.name + " (" + robotInfo.workspaceName + ")", ...[yesOverride, noChooseDifferentTarget, cancel]);
+
+            // robot.language-server.python
+            if (selection == noChooseDifferentTarget) {
+                refresh = false;
+                continue SELECT_OR_REFRESH;
+            }
+            if (selection == cancel) {
                 return;
             }
-
-            let actionResult: ActionResult = await commands.executeCommand(
-                roboCommands.ROBOCORP_UPLOAD_TO_NEW_ROBOT_INTERNAL,
-                { 'workspaceId': wsInfo.workspaceId, 'directory': activityToUpload.directory, 'packageName': packageName }
-            );
-            if (!actionResult.success) {
-                let msg:string = 'Error uploading to new robot: ' + actionResult.message;
-                OUTPUT_CHANNEL.appendLine(msg);
-                window.showErrorMessage(msg);
-            }else{
-                window.showInformationMessage('Successfully submited robot to the cloud.')
-            }
-            return;
-
-        } else if (action.existingRobotPackage) {
-            let robotInfo: PackageInfo = action.existingRobotPackage;
+            // selection == yesOverride.
             let actionResult: ActionResult = await commands.executeCommand(
                 roboCommands.ROBOCORP_UPLOAD_TO_EXISTING_ROBOT_INTERNAL,
-                { 'workspaceId': robotInfo.workspaceId, 'robotId': robotInfo.id, 'directory': activityToUpload.directory }
+                { 'workspaceId': robotInfo.workspaceId, 'robotId': robotInfo.id, 'directory': robotToUpload.directory }
             );
 
             if (!actionResult.success) {
-                let msg: string = 'Error uploading to existing robot: ' + actionResult.message;
+                let msg: string = 'Error uploading to existing Robot: ' + actionResult.message;
                 OUTPUT_CHANNEL.appendLine(msg);
                 window.showErrorMessage(msg);
-            }else{
-                window.showInformationMessage('Successfully submited robot to the cloud.')
+            } else {
+                window.showInformationMessage('Successfully submited Robot to the cloud.')
             }
             return;
         }
 
     } while (true);
-
-
 }
 
 export async function createRobot() {
@@ -271,7 +366,7 @@ export async function createRobot() {
     // so, for now we're asking each at a separate step.
     let actionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_LIST_ROBOT_TEMPLATES_INTERNAL);
     if (!actionResult.success) {
-        window.showErrorMessage('Unable to list robot templates: ' + actionResult.message);
+        window.showErrorMessage('Unable to list Robot templates: ' + actionResult.message);
         return;
     }
     let availableTemplates: string[] = actionResult.result;
@@ -286,7 +381,7 @@ export async function createRobot() {
             availableTemplates,
             {
                 "canPickMany": false,
-                'placeHolder': 'Please select the template for the robot.',
+                'placeHolder': 'Please select the template for the Robot.',
                 'ignoreFocusOut': true,
             }
         );
@@ -301,7 +396,7 @@ export async function createRobot() {
             ws = wsFolders[0];
         } else {
             ws = await window.showWorkspaceFolderPick({
-                'placeHolder': 'Please select the folder to create the robot.',
+                'placeHolder': 'Please select the folder to create the Robot.',
                 'ignoreFocusOut': true,
             });
         }
@@ -312,7 +407,7 @@ export async function createRobot() {
 
         let name: string = await window.showInputBox({
             'value': 'Example',
-            'prompt': 'Please provide the name for the robot folder name.',
+            'prompt': 'Please provide the name for the Robot folder name.',
             'ignoreFocusOut': true,
         })
         if (!name) {
@@ -320,7 +415,7 @@ export async function createRobot() {
             return;
         }
 
-        OUTPUT_CHANNEL.appendLine('Creating robot at: ' + ws.uri.fsPath);
+        OUTPUT_CHANNEL.appendLine('Creating Robot at: ' + ws.uri.fsPath);
         let createRobotResult: ActionResult = await commands.executeCommand(
             roboCommands.ROBOCORP_CREATE_ROBOT_INTERNAL,
             { 'directory': ws.uri.fsPath, 'template': selection, 'name': name }
@@ -329,7 +424,7 @@ export async function createRobot() {
         if (createRobotResult.success) {
             window.showInformationMessage('Robot successfully created in:\n' + join(ws.uri.fsPath, name));
         } else {
-            OUTPUT_CHANNEL.appendLine('Error creating robot at: ' + + ws.uri.fsPath);
+            OUTPUT_CHANNEL.appendLine('Error creating Robot at: ' + + ws.uri.fsPath);
             window.showErrorMessage(createRobotResult.message);
         }
     }

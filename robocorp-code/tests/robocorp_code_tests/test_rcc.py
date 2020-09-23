@@ -1,4 +1,4 @@
-from robocorp_code.protocols import IRcc, IRccRobot
+from robocorp_code.protocols import IRcc, IRccRobotMetadata
 import py.path
 
 
@@ -46,7 +46,7 @@ def test_rcc_cloud(rcc: IRcc, ci_credentials: str, tmpdir: py.path.local):
         raise AssertionError(
             "Expected to be able to create CI activity (or have it there already)."
         )
-    act: IRccRobot = acts[0]
+    act: IRccRobotMetadata = acts[0]
 
     wsdir = str(tmpdir.join("ws"))
 

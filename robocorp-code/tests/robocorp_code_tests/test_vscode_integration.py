@@ -2,7 +2,7 @@ import logging
 import os.path
 import sys
 import pytest
-from robocorp_code.protocols import RobotInfoDict, WorkspaceInfoDict, ActionResult
+from robocorp_code.protocols import LocalRobotMetadataInfoDict, WorkspaceInfoDict, ActionResult
 from typing import List
 import time
 from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
@@ -139,7 +139,7 @@ def test_list_rcc_robot_templates(
         commands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL, []
     )["result"]
     assert result["success"]
-    folder_info_lst: List[RobotInfoDict] = result["result"]
+    folder_info_lst: List[LocalRobotMetadataInfoDict] = result["result"]
     assert len(folder_info_lst) == 2
     assert set([x["name"] for x in folder_info_lst]) == {"example", "example2"}
 

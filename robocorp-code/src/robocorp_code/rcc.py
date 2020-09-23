@@ -7,7 +7,7 @@ from robocorp_ls_core.basic import implements, as_str
 from robocorp_ls_core.constants import NULL
 from robocorp_ls_core.protocols import IConfig, IConfigProvider
 from robocorp_ls_core.robotframework_log import get_logger
-from robocorp_code.protocols import IRcc, IRccWorkspace, IRccRobot, ActionResult
+from robocorp_code.protocols import IRcc, IRccWorkspace, IRccRobotMetadata, ActionResult
 from pathlib import Path
 import os.path
 from robocorp_ls_core.protocols import check_implements
@@ -90,7 +90,7 @@ def get_default_rcc_location() -> str:
     return location
 
 
-class RccRobot(object):
+class RccRobotMetadata(object):
     def __init__(self, robot_id: str, robot_name: str):
         self._robot_id = robot_id
         self._robot_name = robot_name
@@ -104,7 +104,7 @@ class RccRobot(object):
         return self._robot_name
 
     def __typecheckself__(self) -> None:
-        _: IRccRobot = check_implements(self)
+        _: IRccRobotMetadata = check_implements(self)
 
 
 class RccWorkspace(object):
@@ -372,10 +372,10 @@ class Rcc(object):
     @implements(IRcc.cloud_list_workspace_robots)
     def cloud_list_workspace_robots(
         self, workspace_id: str
-    ) -> ActionResult[List[IRccRobot]]:
+    ) -> ActionResult[List[IRccRobotMetadata]]:
         import json
 
-        ret: List[IRccRobot] = []
+        ret: List[IRccRobotMetadata] = []
         args = ["cloud", "workspace"]
         args.extend(("--workspace", workspace_id))
         args = self._add_config_to_args(args)
@@ -407,7 +407,7 @@ class Rcc(object):
 
         for activity_info in workspace_info.get("activities", []):
             ret.append(
-                RccRobot(robot_id=activity_info["id"], robot_name=activity_info["name"])
+                RccRobotMetadata(robot_id=activity_info["id"], robot_name=activity_info["name"])
             )
         return ActionResult(True, None, ret)
 
@@ -437,11 +437,11 @@ class Rcc(object):
 
     @implements(IRcc.cloud_create_robot)
     def cloud_create_robot(
-        self, workspace_id: str, package_name: str
+        self, workspace_id: str, robot_name: str
     ) -> ActionResult[str]:
         args = ["cloud", "new"]
         args.extend(["--workspace", workspace_id])
-        args.extend(["--robot", package_name])
+        args.extend(["--robot", robot_name])
 
         args = self._add_config_to_args(args)
         ret = self._run_rcc(
