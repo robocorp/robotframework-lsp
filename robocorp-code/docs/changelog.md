@@ -1,9 +1,11 @@
-New in 0.0.5 (2020-XX-XX)
+New in 0.0.5 (2020-09-23)
 -----------------------------
 
 - Working with [robot.yaml](https://robocorp.com/docs/setup/robot-yaml-format) instead of the deprecated `package.yaml`.
 - New action to log in Robocloud.
 - Terminology update (`Activity Package` is now `Robot`).
+- Improvements uploading Robot to cloud.
+- Detecting if a robot.yaml is in a workspace root folder and not only in a subfolder.
 
 New in 0.0.4 (2020-09-02)
 -----------------------------
