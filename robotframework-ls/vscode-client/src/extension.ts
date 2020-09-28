@@ -8,7 +8,7 @@ Licensed under the Apache License, Version 2.0 (the "License")
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http: // www.apache.org/licenses/LICENSE-2.0
+	http: // www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,24 +31,28 @@ import { Timing } from './time';
 const OUTPUT_CHANNEL_NAME = "Robot Framework";
 const OUTPUT_CHANNEL = window.createOutputChannel(OUTPUT_CHANNEL_NAME);
 
-const clientOptions: LanguageClientOptions = {
-	documentSelector: ["robotframework"],
-	synchronize: {
-		configurationSection: "robot"
-	},
-	outputChannel: OUTPUT_CHANNEL,
+function createClientOptions(initializationOptions: object): LanguageClientOptions {
+	const clientOptions: LanguageClientOptions = {
+		documentSelector: ["robotframework"],
+		synchronize: {
+			configurationSection: "robot"
+		},
+		outputChannel: OUTPUT_CHANNEL,
+		initializationOptions: initializationOptions,
+	}
+	return clientOptions;
 }
 
-function startLangServerIO(command: string, args: string[]): LanguageClient {
+function startLangServerIO(command: string, args: string[], initializationOptions: object): LanguageClient {
 	const serverOptions: ServerOptions = {
 		command,
 		args,
 	};
 	// See: https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
-	return new LanguageClient(command, serverOptions, clientOptions);
+	return new LanguageClient(command, serverOptions, createClientOptions(initializationOptions));
 }
 
-function startLangServerTCP(addr: number): LanguageClient {
+function startLangServerTCP(addr: number, initializationOptions: object): LanguageClient {
 	const serverOptions: ServerOptions = function () {
 		return new Promise((resolve, reject) => {
 			var client = new net.Socket();
@@ -60,7 +64,7 @@ function startLangServerTCP(addr: number): LanguageClient {
 			});
 		});
 	}
-	return new LanguageClient(`tcp lang server (port ${addr})`, serverOptions, clientOptions);
+	return new LanguageClient(`tcp lang server (port ${addr})`, serverOptions, createClientOptions(initializationOptions));
 }
 
 function findExecutableInPath(executable: string) {
@@ -180,7 +184,6 @@ interface ExecutableAndMessage {
 }
 
 
-
 async function getDefaultLanguageServerPythonExecutable(): Promise<ExecutableAndMessage> {
 	OUTPUT_CHANNEL.appendLine("Getting language server Python executable.");
 	let config = workspace.getConfiguration("robot");
@@ -287,10 +290,26 @@ export async function activate(context: ExtensionContext) {
 		let config = workspace.getConfiguration("robot");
 		let port: number = config.get<number>("language-server.tcp-port");
 		let langServer: LanguageClient;
+
+		let initializationOptions: object = {};
+		try {
+			let pluginsDir: string = await commands.executeCommand<string>("robocorp.getPluginsDir");
+			try {
+				if (pluginsDir && pluginsDir.length > 0) {
+					OUTPUT_CHANNEL.appendLine("Plugins dir: " + pluginsDir + ".");
+					initializationOptions['pluginsDir'] = pluginsDir;
+				}
+			} catch (error) {
+				OUTPUT_CHANNEL.appendLine(error);
+			}
+		} catch (error) {
+			// The command may not be available.
+		}
+
 		if (port) {
 			// For TCP server needs to be started seperately
 			OUTPUT_CHANNEL.appendLine("Connecting to port: " + port);
-			langServer = startLangServerTCP(port);
+			langServer = startLangServerTCP(port, initializationOptions);
 
 		} else {
 			let targetMain: string = path.resolve(__dirname, '../../src/robotframework_ls/__main__.py');
@@ -306,7 +325,7 @@ export async function activate(context: ExtensionContext) {
 				args = args.concat(lsArgs);
 			}
 			OUTPUT_CHANNEL.appendLine("Starting RobotFramework Language Server with args: " + executableAndMessage.executable + "," + args);
-			langServer = startLangServerIO(executableAndMessage.executable, args);
+			langServer = startLangServerIO(executableAndMessage.executable, args, initializationOptions);
 		}
 		let disposable: Disposable = langServer.start();
 		registerDebugger(executableAndMessage.executable);
@@ -321,22 +340,6 @@ export async function activate(context: ExtensionContext) {
 			// OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
 			handleProgressMessage(args)
 		});
-
-		let pluginsDir: string;
-		try {
-			pluginsDir = await commands.executeCommand<string>("robocorp.getPluginsDir");
-		} catch (error) {
-			// The command may not be available.
-		}
-		try {
-			if (pluginsDir && pluginsDir.length > 0) {
-				OUTPUT_CHANNEL.appendLine("Add plugins dir: " + pluginsDir + ".");
-				let result = await commands.executeCommand<string>("robot.addPluginsDir", pluginsDir);
-				OUTPUT_CHANNEL.appendLine("Added plugins dir result: " + result);
-			}
-		} catch (error) {
-			OUTPUT_CHANNEL.appendLine(error);
-		}
 
 		OUTPUT_CHANNEL.appendLine("RobotFramework Language Server ready. Took: " + timing.getTotalElapsedAsStr());
 

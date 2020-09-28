@@ -37,7 +37,9 @@ class LanguageServerClient(LanguageServerClientBase):
         )
 
     @implements(ILanguageServerClient.initialize)
-    def initialize(self, root_path: str, msg_id=None, process_id=None):
+    def initialize(
+        self, root_path: str, msg_id=None, process_id=None, initialization_options=None
+    ):
         from robocorp_ls_core.uris import from_fs_path
 
         root_uri = from_fs_path(root_path)
@@ -52,6 +54,7 @@ class LanguageServerClient(LanguageServerClientBase):
                     "processId": process_id,
                     "rootPath": root_path,
                     "rootUri": root_uri,
+                    "initializationOptions": initialization_options,
                     "capabilities": {
                         "workspace": {
                             "applyEdit": True,

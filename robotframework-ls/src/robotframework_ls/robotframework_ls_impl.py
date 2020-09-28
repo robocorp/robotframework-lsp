@@ -171,6 +171,36 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         return RobotWorkspace(root_uri, workspace_folders, generate_ast=False)
 
+    def m_initialize(
+        self,
+        processId=None,
+        rootUri=None,
+        rootPath=None,
+        initializationOptions=None,
+        workspaceFolders=None,
+        **_kwargs,
+    ) -> dict:
+        ret = PythonLanguageServer.m_initialize(
+            self,
+            processId=processId,
+            rootUri=rootUri,
+            rootPath=rootPath,
+            initializationOptions=initializationOptions,
+            workspaceFolders=workspaceFolders,
+            **_kwargs,
+        )
+
+        initialization_options = initializationOptions
+        if initialization_options:
+            plugins_dir = initialization_options.get("pluginsDir")
+            if isinstance(plugins_dir, str):
+                if not os.path.isdir(plugins_dir):
+                    log.critical(f"Expected: {plugins_dir} to be a directory.")
+                else:
+                    self._pm.load_plugins_from(Path(plugins_dir))
+
+        return ret
+
     @overrides(PythonLanguageServer.capabilities)
     def capabilities(self):
         from robocorp_ls_core.lsp import TextDocumentSyncKind

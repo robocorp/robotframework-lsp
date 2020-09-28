@@ -281,7 +281,9 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
             {"settings": {"robot": {"pythonpath": [case4_path]}}}
         """
 
-    def initialize(self, root_path: str, msg_id=None, process_id=None):
+    def initialize(
+        self, root_path: str, msg_id=None, process_id=None, initialization_options=None
+    ):
         pass
 
     def change_workspace_folders(
