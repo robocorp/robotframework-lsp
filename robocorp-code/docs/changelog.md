@@ -1,3 +1,9 @@
+New in 0.1.0 (2020-09-28)
+-----------------------------
+
+- Updated logo
+- First version to be published to the VSCode marketplace.
+
 New in 0.0.5 (2020-09-23)
 -----------------------------
 
