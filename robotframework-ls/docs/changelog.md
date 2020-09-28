@@ -1,3 +1,9 @@
+New in 0.4.1 (2020-09-28)
+-----------------------------
+
+- Fixed startup concurrency issue setting up plugin dir contributed by other extensions. [#155](https://github.com/robocorp/robotframework-lsp/issues/155)
+
+
 New in 0.4.0 (2020-09-22)
 -----------------------------
 
@@ -9,6 +15,7 @@ New in 0.4.0 (2020-09-22)
 - Renamed from robocorptech to robocorp as the publisher on the VSCode Marketplace. [#137](https://github.com/robocorp/robotframework-lsp/issues/137)
 - All requests (except document-change related requests) are now asynchronous. [#141](https://github.com/robocorp/robotframework-lsp/issues/141)
 - It's now possible to cancel a request in the language server. [#140](https://github.com/robocorp/robotframework-lsp/issues/140)
+
 
 New in 0.3.2 (2020-09-02)
 -----------------------------
