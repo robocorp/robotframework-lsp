@@ -68,6 +68,7 @@ class _Collector(object):
             keyword_found.keyword_name,
             kind=keyword_found.completion_item_kind,
             text_edit=text_edit,
+            insertText=text_edit.newText,
             documentation=keyword_found.docs,
             insertTextFormat=InsertTextFormat.Snippet,
             documentationFormat=(

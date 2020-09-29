@@ -34,6 +34,7 @@ def _create_completion_item(
         label,
         kind=CompletionItemKind.Field,
         text_edit=text_edit,
+        insertText=text_edit.newText,
         documentation=documentation,
         insertTextFormat=InsertTextFormat.PlainText,
         documentationFormat=MarkupKind.PlainText,
