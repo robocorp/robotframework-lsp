@@ -3,6 +3,7 @@
   - Matti
   - Teppo
   documentationFormat: plaintext
+  insertText: '@{NAMES}'
   insertTextFormat: 2
   kind: 6
   label: '@{NAMES}'

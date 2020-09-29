@@ -4,6 +4,7 @@
 
     :type new_model: int'
   documentationFormat: plaintext
+  insertText: New Verify Model    ${1:new model}
   insertTextFormat: 2
   kind: 2
   label: New Verify Model
@@ -23,6 +24,7 @@
 
     '
   documentationFormat: plaintext
+  insertText: new Verify Another Model
   insertTextFormat: 2
   kind: 2
   label: new Verify Another Model

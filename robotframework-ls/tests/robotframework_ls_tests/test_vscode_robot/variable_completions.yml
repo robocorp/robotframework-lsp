@@ -4,6 +4,7 @@ result:
   documentation:
   - Robot Framework
   documentationFormat: plaintext
+  insertText: ${NAME}
   insertTextFormat: 2
   kind: 6
   label: ${NAME}
@@ -21,6 +22,7 @@ result:
   documentation:
   - '2.0'
   documentationFormat: plaintext
+  insertText: ${VERSION}
   insertTextFormat: 2
   kind: 6
   label: ${VERSION}
@@ -38,6 +40,7 @@ result:
   documentation:
   - ${NAME} ${VERSION}
   documentationFormat: plaintext
+  insertText: ${ROBOT}
   insertTextFormat: 2
   kind: 6
   label: ${ROBOT}
@@ -54,6 +57,7 @@ result:
 - deprecated: false
   documentation: abspath(tempfile.gettempdir())
   documentationFormat: plaintext
+  insertText: ${TEMPDIR}
   insertTextFormat: 2
   kind: 6
   label: ${TEMPDIR}
@@ -70,6 +74,7 @@ result:
 - deprecated: false
   documentation: abspath('.')
   documentationFormat: plaintext
+  insertText: ${EXECDIR}
   insertTextFormat: 2
   kind: 6
   label: ${EXECDIR}
@@ -86,6 +91,7 @@ result:
 - deprecated: false
   documentation: os.sep
   documentationFormat: plaintext
+  insertText: ${/}
   insertTextFormat: 2
   kind: 6
   label: ${/}
@@ -102,6 +108,7 @@ result:
 - deprecated: false
   documentation: os.pathsep
   documentationFormat: plaintext
+  insertText: ${:}
   insertTextFormat: 2
   kind: 6
   label: ${:}
@@ -118,6 +125,7 @@ result:
 - deprecated: false
   documentation: os.linesep
   documentationFormat: plaintext
+  insertText: ${\n}
   insertTextFormat: 2
   kind: 6
   label: ${\n}
@@ -134,6 +142,7 @@ result:
 - deprecated: false
   documentation: ' '
   documentationFormat: plaintext
+  insertText: ${SPACE}
   insertTextFormat: 2
   kind: 6
   label: ${SPACE}
@@ -150,6 +159,7 @@ result:
 - deprecated: false
   documentation: 'True'
   documentationFormat: plaintext
+  insertText: ${True}
   insertTextFormat: 2
   kind: 6
   label: ${True}
@@ -166,6 +176,7 @@ result:
 - deprecated: false
   documentation: 'False'
   documentationFormat: plaintext
+  insertText: ${False}
   insertTextFormat: 2
   kind: 6
   label: ${False}
@@ -182,6 +193,7 @@ result:
 - deprecated: false
   documentation: None
   documentationFormat: plaintext
+  insertText: ${None}
   insertTextFormat: 2
   kind: 6
   label: ${None}
@@ -198,6 +210,7 @@ result:
 - deprecated: false
   documentation: None
   documentationFormat: plaintext
+  insertText: ${null}
   insertTextFormat: 2
   kind: 6
   label: ${null}
@@ -214,6 +227,7 @@ result:
 - deprecated: false
   documentation: settings.output_directory
   documentationFormat: plaintext
+  insertText: ${OUTPUT_DIR}
   insertTextFormat: 2
   kind: 6
   label: ${OUTPUT_DIR}
@@ -230,6 +244,7 @@ result:
 - deprecated: false
   documentation: settings.output or 'NONE'
   documentationFormat: plaintext
+  insertText: ${OUTPUT_FILE}
   insertTextFormat: 2
   kind: 6
   label: ${OUTPUT_FILE}
@@ -246,6 +261,7 @@ result:
 - deprecated: false
   documentation: settings.report or 'NONE'
   documentationFormat: plaintext
+  insertText: ${REPORT_FILE}
   insertTextFormat: 2
   kind: 6
   label: ${REPORT_FILE}
@@ -262,6 +278,7 @@ result:
 - deprecated: false
   documentation: settings.log or 'NONE'
   documentationFormat: plaintext
+  insertText: ${LOG_FILE}
   insertTextFormat: 2
   kind: 6
   label: ${LOG_FILE}
@@ -278,6 +295,7 @@ result:
 - deprecated: false
   documentation: settings.debug_file or 'NONE'
   documentationFormat: plaintext
+  insertText: ${DEBUG_FILE}
   insertTextFormat: 2
   kind: 6
   label: ${DEBUG_FILE}
@@ -294,6 +312,7 @@ result:
 - deprecated: false
   documentation: settings.log_level
   documentationFormat: plaintext
+  insertText: ${LOG_LEVEL}
   insertTextFormat: 2
   kind: 6
   label: ${LOG_LEVEL}
@@ -310,6 +329,7 @@ result:
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: ${PREV_TEST_NAME}
   insertTextFormat: 2
   kind: 6
   label: ${PREV_TEST_NAME}
@@ -326,6 +346,7 @@ result:
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: ${PREV_TEST_STATUS}
   insertTextFormat: 2
   kind: 6
   label: ${PREV_TEST_STATUS}
@@ -342,6 +363,7 @@ result:
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: ${PREV_TEST_MESSAGE}
   insertTextFormat: 2
   kind: 6
   label: ${PREV_TEST_MESSAGE}
@@ -358,6 +380,7 @@ result:
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: ${SUITE_DOCUMENTATION}
   insertTextFormat: 2
   kind: 6
   label: ${SUITE_DOCUMENTATION}
@@ -374,6 +397,7 @@ result:
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: ${SUITE_NAME}
   insertTextFormat: 2
   kind: 6
   label: ${SUITE_NAME}
@@ -390,6 +414,7 @@ result:
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: ${SUITE_SOURCE}
   insertTextFormat: 2
   kind: 6
   label: ${SUITE_SOURCE}
@@ -406,6 +431,7 @@ result:
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: ${TEST_DOCUMENTATION}
   insertTextFormat: 2
   kind: 6
   label: ${TEST_DOCUMENTATION}
@@ -422,6 +448,7 @@ result:
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: ${TEST_NAME}
   insertTextFormat: 2
   kind: 6
   label: ${TEST_NAME}

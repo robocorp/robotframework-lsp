@@ -4,6 +4,7 @@
 
     '
   documentationFormat: markdown
+  insertText: Verify Another Model
   insertTextFormat: 2
   kind: 2
   label: Verify Another Model
@@ -26,6 +27,7 @@
 
     '
   documentationFormat: markdown
+  insertText: Verify Model    ${1:model}
   insertTextFormat: 2
   kind: 2
   label: Verify Model

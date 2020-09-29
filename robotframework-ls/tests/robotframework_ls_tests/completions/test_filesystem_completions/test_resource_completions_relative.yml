@@ -1,6 +1,7 @@
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: case4resource.txt
   insertTextFormat: 2
   kind: 9
   label: case4resource.txt
@@ -17,6 +18,7 @@
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: case4resource2.robot
   insertTextFormat: 2
   kind: 9
   label: case4resource2.robot
@@ -33,6 +35,7 @@
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: case4resource3.robot
   insertTextFormat: 2
   kind: 9
   label: case4resource3.robot

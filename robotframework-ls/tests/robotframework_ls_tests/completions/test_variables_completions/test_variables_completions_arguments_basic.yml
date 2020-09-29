@@ -1,6 +1,7 @@
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: ${arg}
   insertTextFormat: 2
   kind: 6
   label: ${arg}
@@ -17,6 +18,7 @@
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: ${arg2}
   insertTextFormat: 2
   kind: 6
   label: ${arg2}

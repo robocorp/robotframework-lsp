@@ -1,4 +1,5 @@
 - deprecated: false
+  insertText: '*** Setting ***'
   kind: 7
   label: '*** Setting ***'
   preselect: false
@@ -12,6 +13,7 @@
         character: 0
         line: 0
 - deprecated: false
+  insertText: '*** Settings ***'
   kind: 7
   label: '*** Settings ***'
   preselect: false

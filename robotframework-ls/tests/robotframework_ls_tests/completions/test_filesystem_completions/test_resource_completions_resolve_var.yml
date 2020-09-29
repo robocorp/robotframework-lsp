@@ -1,6 +1,7 @@
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: case3resource_in_ext.resource
   insertTextFormat: 2
   kind: 9
   label: case3resource_in_ext.resource

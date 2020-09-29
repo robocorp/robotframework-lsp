@@ -2,6 +2,7 @@
   documentation:
   - variable2
   documentationFormat: plaintext
+  insertText: ${VAR2}
   insertTextFormat: 2
   kind: 6
   label: ${VAR2}
@@ -19,6 +20,7 @@
   documentation:
   - variable1
   documentationFormat: plaintext
+  insertText: ${VAR1}
   insertTextFormat: 2
   kind: 6
   label: ${VAR1}

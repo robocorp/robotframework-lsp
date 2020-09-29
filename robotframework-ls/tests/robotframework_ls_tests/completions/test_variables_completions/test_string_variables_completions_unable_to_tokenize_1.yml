@@ -2,6 +2,7 @@
   documentation:
   - Robot Framework
   documentationFormat: plaintext
+  insertText: ${NAME}
   insertTextFormat: 2
   kind: 6
   label: ${NAME}

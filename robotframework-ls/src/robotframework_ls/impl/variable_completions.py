@@ -134,6 +134,7 @@ class _Collector(object):
             variable_found.variable_name,
             kind=CompletionItemKind.Variable,
             text_edit=text_edit,
+            insertText=label,
             documentation=variable_found.variable_value,
             insertTextFormat=InsertTextFormat.Snippet,
             documentationFormat=MarkupKind.PlainText,

@@ -3,6 +3,7 @@
   - Matti
   - Teppo
   documentationFormat: plaintext
+  insertText: '@{NAMES}'
   insertTextFormat: 2
   kind: 6
   label: '@{NAMES}'
@@ -20,6 +21,7 @@
   documentation:
   - '@{'
   documentationFormat: plaintext
+  insertText: '@{NAMES2}'
   insertTextFormat: 2
   kind: 6
   label: '@{NAMES2}'
@@ -36,6 +38,7 @@
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: '@{TEST_TAGS}'
   insertTextFormat: 2
   kind: 6
   label: '@{TEST_TAGS}'

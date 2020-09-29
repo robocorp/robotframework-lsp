@@ -2,6 +2,7 @@
   documentation:
   - c:/foo/bar
   documentationFormat: plaintext
+  insertText: ${SOME_DIR}
   insertTextFormat: 2
   kind: 6
   label: ${SOME_DIR}

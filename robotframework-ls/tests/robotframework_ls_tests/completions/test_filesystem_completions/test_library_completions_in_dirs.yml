@@ -1,6 +1,7 @@
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: mycase.py
   insertTextFormat: 2
   kind: 9
   label: mycase.py

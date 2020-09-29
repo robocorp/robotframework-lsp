@@ -4,6 +4,7 @@
   - address=xxx
   - phone=123
   documentationFormat: plaintext
+  insertText: '&{USER 1}'
   insertTextFormat: 2
   kind: 6
   label: '&{USER 1}'
@@ -20,6 +21,7 @@
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: '&{SUITE_METADATA}'
   insertTextFormat: 2
   kind: 6
   label: '&{SUITE_METADATA}'

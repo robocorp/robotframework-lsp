@@ -32,6 +32,7 @@ def _create_completion_item(library_name, selection, token, start_col_offset=Non
         library_name,
         kind=CompletionItemKind.Module,
         text_edit=text_edit,
+        insertText=text_edit.newText,
         documentation="",
         insertTextFormat=InsertTextFormat.Snippet,
         documentationFormat=MarkupKind.PlainText,

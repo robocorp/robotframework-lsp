@@ -1,4 +1,5 @@
 - deprecated: false
+  insertText: '*** Comment ***'
   kind: 7
   label: '*** Comment ***'
   preselect: false
@@ -12,6 +13,7 @@
         character: 0
         line: 0
 - deprecated: false
+  insertText: '*** Comments ***'
   kind: 7
   label: '*** Comments ***'
   preselect: false
@@ -25,6 +27,7 @@
         character: 0
         line: 0
 - deprecated: false
+  insertText: '*** Keyword ***'
   kind: 7
   label: '*** Keyword ***'
   preselect: false
@@ -38,6 +41,7 @@
         character: 0
         line: 0
 - deprecated: false
+  insertText: '*** Keywords ***'
   kind: 7
   label: '*** Keywords ***'
   preselect: false
@@ -51,6 +55,7 @@
         character: 0
         line: 0
 - deprecated: false
+  insertText: '*** Setting ***'
   kind: 7
   label: '*** Setting ***'
   preselect: false
@@ -64,6 +69,7 @@
         character: 0
         line: 0
 - deprecated: false
+  insertText: '*** Settings ***'
   kind: 7
   label: '*** Settings ***'
   preselect: false
@@ -77,6 +83,7 @@
         character: 0
         line: 0
 - deprecated: false
+  insertText: '*** Task ***'
   kind: 7
   label: '*** Task ***'
   preselect: false
@@ -90,6 +97,7 @@
         character: 0
         line: 0
 - deprecated: false
+  insertText: '*** Tasks ***'
   kind: 7
   label: '*** Tasks ***'
   preselect: false
@@ -103,6 +111,7 @@
         character: 0
         line: 0
 - deprecated: false
+  insertText: '*** Test Case ***'
   kind: 7
   label: '*** Test Case ***'
   preselect: false
@@ -116,6 +125,7 @@
         character: 0
         line: 0
 - deprecated: false
+  insertText: '*** Test Cases ***'
   kind: 7
   label: '*** Test Cases ***'
   preselect: false
@@ -129,6 +139,7 @@
         character: 0
         line: 0
 - deprecated: false
+  insertText: '*** Variable ***'
   kind: 7
   label: '*** Variable ***'
   preselect: false
@@ -142,6 +153,7 @@
         character: 0
         line: 0
 - deprecated: false
+  insertText: '*** Variables ***'
   kind: 7
   label: '*** Variables ***'
   preselect: false

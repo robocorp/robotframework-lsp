@@ -2,6 +2,7 @@
   documentation: "     ${variable_x} =      ${variable_y}      @{variable_z}=    \
     \  Get X      an argument \n"
   documentationFormat: plaintext
+  insertText: '@{variable_z}'
   insertTextFormat: 2
   kind: 6
   label: '@{variable_z}'

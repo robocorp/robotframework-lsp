@@ -1,6 +1,7 @@
 jsonrpc: '2.0'
 result:
 - deprecated: false
+  insertText: '*** Setting ***'
   kind: 7
   label: '*** Setting ***'
   preselect: false
@@ -14,6 +15,7 @@ result:
         character: 0
         line: 0
 - deprecated: false
+  insertText: '*** Settings ***'
   kind: 7
   label: '*** Settings ***'
   preselect: false

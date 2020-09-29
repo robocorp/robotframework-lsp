@@ -4,6 +4,7 @@
 
     '
   documentationFormat: markdown
+  insertText: My Equal Redefined    ${1:\$arg1}    ${2:\$arg2}
   insertTextFormat: 2
   kind: 3
   label: My Equal Redefined

@@ -2,6 +2,7 @@
   documentation:
   - Robot Framework
   documentationFormat: plaintext
+  insertText: ${NAME}
   insertTextFormat: 2
   kind: 6
   label: ${NAME}
@@ -18,6 +19,7 @@
 - deprecated: false
   documentation: None
   documentationFormat: plaintext
+  insertText: ${None}
   insertTextFormat: 2
   kind: 6
   label: ${None}
@@ -34,6 +36,7 @@
 - deprecated: false
   documentation: None
   documentationFormat: plaintext
+  insertText: ${null}
   insertTextFormat: 2
   kind: 6
   label: ${null}

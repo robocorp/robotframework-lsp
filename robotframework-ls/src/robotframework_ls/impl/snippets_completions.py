@@ -96,6 +96,7 @@ def _create_completion_item_from_snippet(label, snippet, selection, line_to_col)
         label,
         kind=CompletionItemKind.Snippet,
         text_edit=text_edit,
+        insertText=text_edit.newText,
         documentation=snippet["description"] + "\n".join(["", ""] + snippet["body"]),
         insertTextFormat=InsertTextFormat.Snippet,
         documentationFormat=MarkupKind.Markdown,

@@ -1,6 +1,7 @@
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: case1_library.py
   insertTextFormat: 2
   kind: 9
   label: case1_library.py
@@ -10,6 +11,7 @@
 - deprecated: false
   documentation: ''
   documentationFormat: plaintext
+  insertText: dir1/
   insertTextFormat: 2
   kind: 9
   label: dir1/
