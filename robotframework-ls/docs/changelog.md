@@ -1,3 +1,10 @@
+New in 0.4.2 (2020-09-29)
+-----------------------------
+
+- insertText attribute value is now also assigned for CompletionItem. [#158](https://github.com/robocorp/robotframework-lsp/issues/158)
+- The environment for an interpreter contributed by some extension is properly used. [#159](https://github.com/robocorp/robotframework-lsp/issues/159)
+
+
 New in 0.4.1 (2020-09-28)
 -----------------------------
 
