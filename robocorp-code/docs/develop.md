@@ -53,9 +53,11 @@ New version release
 
 To release a new version:
 
+- Open a shell at the proper place (something as `X:\vscode-robot\robotframework-lsp\robocorp-code`)
+
 - Create release branch (`git branch -D release-robocorp-code&git checkout -b release-robocorp-code`)
 
-- Update version (`python -m dev set-version 0.1.0`).
+- Update version (`python -m dev set-version 0.1.1`).
 
 - Update README.md to add notes on features/fixes.
 
@@ -63,4 +65,4 @@ To release a new version:
 
 - Push contents to release branch, get the build in https://github.com/robocorp/robotframework-lsp/actions and install locally to test.
 
-- Create a tag (`git tag robocorp-code-0.1.0`) and push it.
+- Create a tag (`git tag robocorp-code-0.1.1`) and push it.
