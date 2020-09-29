@@ -1,5 +1,6 @@
 import sys
 from typing import Optional, List, Any, Generic, TypeVar
+from pathlib import Path
 
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
@@ -193,6 +194,12 @@ class IRcc(Protocol):
         Note: needs connection to the cloud.
         
         :returns an action result with the robot id created.
+        """
+
+    def get_robot_yaml_environ(
+        self, robot_yaml_path: Path, env_json_path: Optional[Path], timeout=None
+    ) -> ActionResult[str]:
+        """
         """
 
     def run_python_code_robot_yaml(

@@ -1,6 +1,6 @@
 from subprocess import CalledProcessError
 import sys
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Dict
 import weakref
 
 from robocorp_ls_core.basic import implements, as_str
@@ -407,7 +407,9 @@ class Rcc(object):
 
         for activity_info in workspace_info.get("activities", []):
             ret.append(
-                RccRobotMetadata(robot_id=activity_info["id"], robot_name=activity_info["name"])
+                RccRobotMetadata(
+                    robot_id=activity_info["id"], robot_name=activity_info["name"]
+                )
             )
         return ActionResult(True, None, ret)
 
@@ -482,6 +484,23 @@ class Rcc(object):
             )
 
         return ActionResult(ret.success, None, package_id)
+
+    @implements(IRcc.get_robot_yaml_environ)
+    def get_robot_yaml_environ(
+        self, robot_yaml_path: Path, env_json_path: Optional[Path], timeout=None
+    ) -> ActionResult[str]:
+        args = ["env", "variables", "-r", str(robot_yaml_path)]
+        if env_json_path:
+            args.append("-e")
+            args.append(str(env_json_path))
+        ret = self._run_rcc(
+            args,
+            mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME,
+            expect_ok=False,
+            cwd=str(robot_yaml_path.parent),
+            timeout=timeout,  # Creating the env may be really slow!
+        )
+        return ret
 
     @implements(IRcc.run_python_code_robot_yaml)
     def run_python_code_robot_yaml(

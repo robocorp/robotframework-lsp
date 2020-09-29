@@ -40,7 +40,9 @@ log = get_logger(__name__)
 
 _CachedFileMTimeInfo = namedtuple("_CachedFileMTimeInfo", "st_mtime, st_size, path")
 
-_CachedInterpreterMTime = Tuple[_CachedFileMTimeInfo, Optional[_CachedFileMTimeInfo]]
+_CachedInterpreterMTime = Tuple[
+    _CachedFileMTimeInfo, Optional[_CachedFileMTimeInfo], Optional[_CachedFileMTimeInfo]
+]
 
 
 def _get_mtime_cache_info(file_path: Path) -> _CachedFileMTimeInfo:
@@ -78,40 +80,24 @@ class _CachedInterpreterInfo(object):
         self,
         robot_yaml_file_info: _CachedFileInfo,
         conda_config_file_info: Optional[_CachedFileInfo],
+        env_json_path_file_info: Optional[_CachedFileInfo],
         pm: PluginManager,
     ):
         from robotframework_ls.ep_resolve_interpreter import DefaultInterpreterInfo
         from robotframework_ls.ep_providers import EPConfigurationProvider
-        import json
 
         self._mtime: _CachedInterpreterMTime = self._obtain_mtime(
-            robot_yaml_file_info, conda_config_file_info
+            robot_yaml_file_info, conda_config_file_info, env_json_path_file_info
         )
 
         configuration_provider: EPConfigurationProvider = pm[EPConfigurationProvider]
         rcc = Rcc(configuration_provider)
         interpreter_id = str(robot_yaml_file_info.file_path)
-        result = rcc.run_python_code_robot_yaml(
-            """
-if __name__ == "__main__":
-    import sys
-    import json
-    import os
-    import time
 
-    info = {
-        "python_executable": sys.executable,
-        "python_environ": dict(os.environ),
-    }
-    json_contents = json.dumps(info, indent=4)
-    sys.stdout.write('JSON START>>')
-    sys.stdout.write(json_contents)
-    sys.stdout.write('<<JSON END')
-    sys.stdout.flush()
-    time.sleep(.5)
-""",
-            conda_config_file_info.contents
-            if conda_config_file_info is not None
+        result = rcc.get_robot_yaml_environ(
+            robot_yaml_file_info.file_path,
+            env_json_path_file_info.file_path
+            if env_json_path_file_info is not None
             else None,
         )
         if not result.success:
@@ -121,21 +107,13 @@ if __name__ == "__main__":
         if not json_contents:
             raise RuntimeError(f"Unable to get output when getting environment.")
 
-        start = json_contents.find("JSON START>>")
-        end = json_contents.find("<<JSON END")
-        if start == -1 or end == -1:
-            raise RuntimeError(
-                f"Unable to find JSON START>> or <<JSON END in: {json_contents}."
-            )
-
-        start += len("JSON START>>")
-        json_contents = json_contents[start:end]
-        try:
-            json_dict: dict = json.loads(json_contents)
-        except:
-            raise RuntimeError(f"Error loading json: {json_contents}.")
-
         root = str(robot_yaml_file_info.file_path.parent)
+
+        environ = {}
+        for line in json_contents.splitlines(keepends=False):
+            parts = line.split("=", 1)
+            if len(parts) == 2:
+                environ[parts[0]] = parts[1]
 
         pythonpath_lst = robot_yaml_file_info.yaml_contents.get("PYTHONPATH", [])
         additional_pythonpath_entries: List[str] = []
@@ -145,8 +123,8 @@ if __name__ == "__main__":
 
         self.info: IInterpreterInfo = DefaultInterpreterInfo(
             interpreter_id,
-            json_dict["python_executable"],
-            json_dict["python_environ"],
+            environ["PYTHON_EXE"],
+            environ,
             additional_pythonpath_entries,
         )
 
@@ -154,19 +132,22 @@ if __name__ == "__main__":
         self,
         robot_yaml_file_info: _CachedFileInfo,
         conda_config_file_info: Optional[_CachedFileInfo],
+        env_json_path_file_info: Optional[_CachedFileInfo],
     ) -> _CachedInterpreterMTime:
         return (
             robot_yaml_file_info.mtime_info,
             conda_config_file_info.mtime_info if conda_config_file_info else None,
+            env_json_path_file_info.mtime_info if env_json_path_file_info else None,
         )
 
     def is_cache_valid(
         self,
         robot_yaml_file_info: _CachedFileInfo,
         conda_config_file_info: Optional[_CachedFileInfo],
+        env_json_path_file_info: Optional[_CachedFileInfo],
     ) -> bool:
         return self._mtime == self._obtain_mtime(
-            robot_yaml_file_info, conda_config_file_info
+            robot_yaml_file_info, conda_config_file_info, env_json_path_file_info
         )
 
 
@@ -198,13 +179,14 @@ class _CacheInfo(object):
         cls,
         robot_yaml_file_info: _CachedFileInfo,
         conda_config_file_info: Optional[_CachedFileInfo],
+        env_json_path_file_info: Optional[_CachedFileInfo],
         pm: PluginManager,
     ) -> IInterpreterInfo:
         interpreter_info = cls._cached_interpreter_info.get(
             robot_yaml_file_info.file_path
         )
         if interpreter_info is not None and interpreter_info.is_cache_valid(
-            robot_yaml_file_info, conda_config_file_info
+            robot_yaml_file_info, conda_config_file_info, env_json_path_file_info
         ):
             _CacheInfo._cache_hit_interpreter += 1
             return interpreter_info.info
@@ -219,7 +201,12 @@ class _CacheInfo(object):
             # This may take a while...
             interpreter_info = cls._cached_interpreter_info[
                 robot_yaml_file_info.file_path
-            ] = _CachedInterpreterInfo(robot_yaml_file_info, conda_config_file_info, pm)
+            ] = _CachedInterpreterInfo(
+                robot_yaml_file_info,
+                conda_config_file_info,
+                env_json_path_file_info,
+                pm,
+            )
 
             return interpreter_info.info
 
@@ -267,15 +254,23 @@ class RobocorpResolveInterpreter(object):
 
             conda_config = yaml_contents.get("condaConfigFile")
             conda_config_file_info = None
+            env_json_path_file_info = None
 
             if conda_config:
                 parent: Path = robot_yaml.parent
-                conda_config_path = parent.joinpath(conda_config)
+                conda_config_path = parent / conda_config
                 if conda_config_path.exists():
                     conda_config_file_info = _CacheInfo.get_file_info(conda_config_path)
 
+                env_json_path = parent / "devdata" / "env.json"
+                if env_json_path.exists():
+                    env_json_path_file_info = _CacheInfo.get_file_info(env_json_path)
+
             return _CacheInfo.get_interpreter_info(
-                robot_yaml_file_info, conda_config_file_info, pm
+                robot_yaml_file_info,
+                conda_config_file_info,
+                env_json_path_file_info,
+                pm,
             )
 
         except:

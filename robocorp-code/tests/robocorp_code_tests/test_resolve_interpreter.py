@@ -31,7 +31,10 @@ def test_resolve_interpreter(
     )
     assert interpreter_info
     assert os.path.exists(interpreter_info.get_python_exe())
-    assert interpreter_info.get_environ()
+    environ = interpreter_info.get_environ()
+    assert environ
+    assert environ["RPA_SECRET_MANAGER"] == "RPA.Robocloud.Secrets.FileSecrets"
+    assert environ["RPA_SECRET_FILE"] == "/Users/<your-username-here>/vault.json"
     additional_pythonpath_entries = interpreter_info.get_additional_pythonpath_entries()
     assert len(additional_pythonpath_entries) == 3
     found = set()
@@ -47,5 +50,5 @@ def test_resolve_interpreter(
     interpreter_info = resolve_interpreter.get_interpreter_info_for_doc_uri(
         uris.from_fs_path(path)
     )
-    assert _CacheInfo._cache_hit_files == 2
+    assert _CacheInfo._cache_hit_files == 3
     assert _CacheInfo._cache_hit_interpreter == 1
