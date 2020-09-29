@@ -95,6 +95,16 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
 		let interpreter: InterpreterInfo = await commands.executeCommand('robot.resolveInterpreter', targetRobot);
 		if (interpreter) {
 			pythonpath = pythonpath.concat(interpreter.additionalPythonpathEntries);
+
+			if (interpreter.environ) {
+				if (!debugConfiguration.env) {
+					debugConfiguration.env = interpreter.environ;
+				} else {
+					for (let key of Object.keys(interpreter.environ)) {
+						debugConfiguration.env[key] = interpreter.environ[key];
+					}
+				}
+			}
 		}
 
 		let newArgs = [];
@@ -121,7 +131,7 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
 
 interface InterpreterInfo {
 	pythonExe: string;
-	environ?: object;
+	environ?: { [key: string]: string };
 	additionalPythonpathEntries: string[];
 }
 
@@ -131,11 +141,18 @@ function registerDebugger(languageServerExecutable: string) {
 		let config = workspace.getConfiguration("robot");
 		let dapPythonExecutable: string = config.get<string>("python.executable");
 
-		if (!dapPythonExecutable) {
-			// If it's not specified in the language, let's check if some plugin wants to provide an implementation.
-			let interpreter: InterpreterInfo = await commands.executeCommand('robot.resolveInterpreter', targetRobot);
-			if (interpreter) {
-				dapPythonExecutable = interpreter.pythonExe;
+		// If it's not specified in the language, let's check if some plugin wants to provide an implementation.
+		let interpreter: InterpreterInfo = await commands.executeCommand('robot.resolveInterpreter', targetRobot);
+		if (interpreter) {
+			dapPythonExecutable = interpreter.pythonExe;
+			if (interpreter.environ) {
+				if (!env) {
+					env = interpreter.environ;
+				} else {
+					for (let key of Object.keys(interpreter.environ)) {
+						env[key] = interpreter.environ[key];
+					}
+				}
 			}
 		}
 
