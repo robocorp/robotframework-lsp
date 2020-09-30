@@ -27,3 +27,107 @@ Development/debug settings
   
 - `robot.language-server.args`: Specifies the arguments to be passed to the robotframework language server (i.e.: `["-vv", "--log-file=~/robotframework_ls.log"]`). **Note:**
   after changing this setting, the editor needs to be restarted.
+
+Vscode example configs
+---------------------------
+
+Below you can find example run configs for your launch.json file inside of the .vscode folder
+
+```
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "robotframework-lsp",
+            "name": "Robot with arg file",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "target": "${file}",
+            "terminal": "none",
+            "args": [
+                "-A${workspaceFolder}/my_arg_file"
+            ]
+        },
+        {
+            "type": "robotframework-lsp",
+            "name": "Robot with arg file and choice of browser",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "target": "${file}",
+            "terminal": "none",
+            "args": [
+                "-A${workspaceFolder}/my_arg_file",
+                "${input:BrowserType}"
+            ]
+        },
+        {
+            "type": "robotframework-lsp",
+            "name": "Robot codecheck",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "target": "${file}",
+            "terminal": "none",
+            "preLaunchTask": "Robot_code_check"
+        },
+        {
+            "type": "robotframework-lsp",
+            "name": "Robot with custom variables",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "target": "${file}",
+            "terminal": "none",
+            "env": {
+                "PATH": "${env:PATH}:/home/${env:USER}/.robotFrameworkTools",
+                "MYVARIABLE": "myvalue"
+            }
+        }
+    ],
+    // This is an input which asks the user which browser to use, robot files should use ${BROWSER} variable.
+    "inputs": [
+        {
+            "type": "pickString",
+            "id": "BrowserType",
+            "description": "Which browser du you want to use?",
+            "options": [
+                "-v BROWSER:headlesschrome",
+                "-v BROWSER:chrome"
+            ],
+            "default": "-v BROWSER:headlesschrome"
+        }
+    ]
+}
+```
+
+Below is an example of a tasks.json file which will go inside the .vscode folder. This task will do a code inspection through a robot --dryrun command
+
+```
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Robot_code_check",
+            "type": "process",
+            "isBackground": false,
+            "command": "robot",
+            "args": [
+                "--dryrun",
+                "--quiet",
+                "${file}"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            }
+        }
+    ]
+}
+```
