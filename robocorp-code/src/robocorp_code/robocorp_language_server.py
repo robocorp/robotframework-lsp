@@ -243,6 +243,8 @@ class RobocorpLanguageServer(PythonLanguageServer):
                         "Error computing new sort keys for cached entry. Refreshing and proceeding."
                     )
 
+        last_error_result = None
+
         with progress_context(
             self._endpoint, "Listing cloud workspaces", self._dir_cache
         ):
@@ -261,7 +263,11 @@ class RobocorpLanguageServer(PythonLanguageServer):
                     ws.workspace_id
                 )
                 if not activities_result.success:
-                    return activities_result.as_dict()
+                    # If we can't list the robots of a specific workspace, just skip it
+                    # (the log should still show it but we can proceed to list the
+                    # contents of other workspaces).
+                    last_error_result = activities_result
+                    continue
 
                 workspace_activities = activities_result.result
                 for activity_package in workspace_activities:
@@ -287,6 +293,9 @@ class RobocorpLanguageServer(PythonLanguageServer):
                     "packages": packages,
                 }
                 ret.append(ws_dict)
+
+        if not ret and last_error_result is not None:
+            return last_error_result.as_dict()
 
         if ret:  # Only store if we got something.
             self._dir_cache.store(self.CLOUD_LIST_WORKSPACE_CACHE_KEY, ret)

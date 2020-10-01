@@ -2,7 +2,11 @@ import logging
 import os.path
 import sys
 import pytest
-from robocorp_code.protocols import LocalRobotMetadataInfoDict, WorkspaceInfoDict, ActionResult
+from robocorp_code.protocols import (
+    LocalRobotMetadataInfoDict,
+    WorkspaceInfoDict,
+    ActionResult,
+)
 from typing import List
 import time
 from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
@@ -194,6 +198,7 @@ class RccPatch(object):
         self._current_mock = self.mock_run_rcc_default
         self._original = Rcc._run_rcc
         self._package_info_ws_1 = _PACKAGE_INFO_WS_1
+        self.custom_handler = None
 
     def mock_run_rcc(self, args, *starargs, **kwargs) -> ActionResult:
         return self._current_mock(args, *starargs, **kwargs)
@@ -201,6 +206,11 @@ class RccPatch(object):
     def mock_run_rcc_default(self, args, *sargs, **kwargs) -> ActionResult:
         import json
         import copy
+
+        if self.custom_handler is not None:
+            ret = self.custom_handler(args, *sargs, **kwargs)
+            if ret is not None:
+                return ret
 
         if args[:4] == ["cloud", "workspace", "--workspace", "workspace_id_1"]:
             # List packages for workspace 1
@@ -329,7 +339,9 @@ def test_cloud_list_workspaces_sorting(
 
 
 def test_cloud_list_workspaces_basic(
-    language_server_initialized: IRobocorpLanguageServerClient, rcc_patch: RccPatch
+    language_server_initialized: IRobocorpLanguageServerClient,
+    rcc_patch: RccPatch,
+    data_regression,
 ):
 
     client = language_server_initialized
@@ -338,6 +350,8 @@ def test_cloud_list_workspaces_basic(
 
     result1 = client.cloud_list_workspaces()
     assert result1["success"]
+
+    data_regression.check(result1)
 
     rcc_patch.disallow_calls()
     result2 = client.cloud_list_workspaces()
@@ -351,6 +365,63 @@ def test_cloud_list_workspaces_basic(
     assert not result3["success"]
     msg = result3["message"]
     assert msg and "This should not be called at this time" in msg
+
+
+def test_cloud_list_workspaces_errors_single_ws_not_available(
+    language_server_initialized: IRobocorpLanguageServerClient,
+    rcc_patch: RccPatch,
+    data_regression,
+):
+
+    client = language_server_initialized
+
+    def custom_handler(args, *sargs, **kwargs):
+        if args[:4] == ["cloud", "workspace", "--workspace", "workspace_id_1"]:
+            # List packages for workspace 1
+            return ActionResult(
+                success=False,
+                message="""{"error":{"code":"WORKSPACE_TREE_NOT_FOUND","subCode":"","message":"workspace tree not found"}""",
+                result=None,
+            )
+
+    rcc_patch.custom_handler = custom_handler
+    rcc_patch.apply()
+
+    result1 = client.cloud_list_workspaces()
+
+    # i.e.: Should show only workspace 2 as workspace 1 errored.
+    data_regression.check(result1)
+
+    rcc_patch.custom_handler = None
+
+    result2 = client.cloud_list_workspaces()
+    assert result1["result"] == result2["result"]  # Use cached
+
+    result3 = client.cloud_list_workspaces(refresh=True)
+    data_regression.check(result3, basename="test_cloud_list_workspaces_basic")
+
+
+def test_cloud_list_workspaces_errors_no_ws_available(
+    language_server_initialized: IRobocorpLanguageServerClient, rcc_patch: RccPatch
+):
+
+    client = language_server_initialized
+
+    def custom_handler(args, *sargs, **kwargs):
+        if args[:3] == ["cloud", "workspace", "--workspace"]:
+            # List packages for workspace 1
+            return ActionResult(
+                success=False,
+                message="""{"error":{"code":"WORKSPACE_TREE_NOT_FOUND","subCode":"","message":"workspace tree not found"}""",
+                result=None,
+            )
+
+    rcc_patch.custom_handler = custom_handler
+    rcc_patch.apply()
+
+    result1 = client.cloud_list_workspaces()
+
+    assert not result1["success"]
 
 
 def test_upload_to_cloud(

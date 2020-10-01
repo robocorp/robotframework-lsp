@@ -1,0 +1,19 @@
+message: null
+result:
+- packages:
+  - id: '452'
+    name: Package Name 1
+    sortKey: 00010package name 1
+    workspaceId: workspace_id_1
+    workspaceName: CI workspace
+  - id: '453'
+    name: Package Name 2
+    sortKey: 00010package name 2
+    workspaceId: workspace_id_1
+    workspaceName: CI workspace
+  workspaceId: workspace_id_1
+  workspaceName: CI workspace
+- packages: []
+  workspaceId: workspace_id_2
+  workspaceName: My Other workspace
+success: true
