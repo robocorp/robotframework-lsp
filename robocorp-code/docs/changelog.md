@@ -1,3 +1,15 @@
+New in 0.1.2 (2020-10-01)
+-----------------------------
+
+- If a workspace cannot be loaded, other (valid) workspaces should still be loaded. #164
+
+
+New in 0.1.1 (2020-09-29)
+-----------------------------
+
+- Make sure that we use rcc env variables from robot.yaml in the launch too. #159
+
+
 New in 0.1.0 (2020-09-29)
 -----------------------------
 
