@@ -1,49 +1,51 @@
-`Robocorp Code Extension`
+`Robocorp Code`
 
-Robocorp Code Extension is a Visual Studio Code Extension for Software Robot Development by [https://robocorp.com/](https://robocorp.com/).
+Robocorp Code is a Visual Studio Code extension for Software Robot Development created and maintained by [https://robocorp.com/](https://robocorp.com/).
+
+With the Robocorp Code extension, you can create new software robots, run them locally, and publish them to Robocorp Cloud all from within Visual Studio Code.
+
+Find the full instructions at [https://robocorp.com/docs/setup/robocorp-code](https://robocorp.com/docs/setup/robocorp-code).
 
 
 Requirements
 -------------
 
-Windows, Linux or Mac OS.
+[Robot Framework Language Server](https://marketplace.visualstudio.com/items?itemName=robocorp.robotframework-lsp) extension provides extra Robot Framework related capabilities, including code completion and formatting, as well as syntax validation and highlighting. It is recommended to install it  alongside this Robocorp Code extension.
+
+Supported operating systems:
+Windows 10, Linux or Mac OS.
 
 
-Installing
+Installation
 -----------
 
-`Robocorp Code Extension` as a `.vsix`.
-
-To get a `.vsix`, download the latest `Deploy - Robocorp Code Extension` from [Robotframework-lsp Github Actions](https://github.com/robocorp/robotframework-lsp/actions?query=workflow%3A%22Deploy+-+Robocorp+Code+Extension%22).
-
-See: [Install from a vsix](https://code.visualstudio.com/docs/editor/extension-gallery#_install-from-a-vsix) for details installing a `.vsix` into VSCode.
+Find the full installation instructions at [https://robocorp.com/docs/setup/robocorp-code](https://robocorp.com/docs/setup/robocorp-code).
 
 
 Configuration
 -------------
 
-After having the extension installed, the first time that the extension is activated
-it will download additional dependencies (such as a conda manager) to bootstrap
-the actual language server.
+After installing the extension, the first time the extension is activated
+it will download additional dependencies (such as a conda manager) that are required to bootstrap the extension.
 
 Features (0.1.2)
 -----------------
 
-- Automatic bootstrap of Python environment for the `Robot Framework Language Server`.
-  
-- Create a Robot from a template with the `Robocorp: Create Robot.` action.
+- Automatic bootstrapping of Python environment for the `Robot Framework Language Server`.
 
-- Submit a Robot to the cloud with the `Robocorp: Upload Robot to the cloud.` action.
+- Create a Robot from a pre-configured template using the `Robocorp: Create Robot` action.
+
+- Upload a Robot to the cloud with the `Robocorp: Upload Robot to the cloud.` action.
 
 - Log in to the cloud with the `Robocorp: Log in Robocloud.` action.
 
-- When a [robot.yaml](https://robocorp.com/docs/setup/robot-yaml-format) is found, it's used to provide a different python environment when running/debugging `.robot` files using the RobotFramework Language Server.
-  Note: this only works if no manual customizations were done to the `robot.python.executable` or `robot.pythonpath` settings.
+- When a [robot.yaml](https://robocorp.com/docs/setup/robot-yaml-format) is found, it can utilise a different Python environment when running/debugging `.robot` files using the RobotFramework Language Server.
+  Note: this only works if no manual customizations were made to the `robot.python.executable` or `robot.pythonpath` settings.
 
 Developing
 ------------
 
-See: [Developing](docs/develop.md) for details on how to develop the `Robocorp Code Extension`.
+See: [Developing](docs/develop.md) for details on how to develop the `Robocorp Code` extension.
 
 Reporting Issues
 -----------------
