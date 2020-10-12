@@ -160,8 +160,32 @@ class Dev(object):
             % (self.get_tag(),),
             content,
         )
+
+        new_content = new_content.replace(
+            "Apache 2.0",
+            "[Robocorp License Agreement (pdf)](https://cdn.robocorp.com/legal/Robocorp-EULA-v1.0.pdf)",
+        )
+
+        assert "apache" not in new_content.lower()
         with open(readme, "w") as f:
             f.write(new_content)
+
+    def generate_license_file(self):
+        import tempfile
+        import subprocess
+        import time
+        from robocorp_code.rcc import download_rcc
+
+        rcc_location = os.path.join(tempfile.mkdtemp(), "rcc.exe")
+        download_rcc(rcc_location)
+        time.sleep(0.2)
+        print(f"Downloaded rcc to: {rcc_location}")
+        assert os.path.exists(rcc_location)
+
+        readme = os.path.join(os.path.dirname(__file__), "LICENSE.txt")
+        with open(readme, "w") as f:
+            output = subprocess.check_output([rcc_location, "man", "eula"])
+            f.write(output.decode("utf-8"))
 
     def local_install(self):
         """

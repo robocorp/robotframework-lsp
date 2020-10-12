@@ -46,7 +46,7 @@ def get_json_contents():
             "type": "git",
             "url": "https://github.com/robocorp/robotframework-lsp.git",
         },
-        "license": "Apache 2.0",
+        "license": "SEE LICENSE IN LICENSE.txt",
         "version": __version__,
         "icon": "images/icon.png",
         "publisher": "robocorp",

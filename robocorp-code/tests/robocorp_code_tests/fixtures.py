@@ -107,6 +107,9 @@ def rcc(config_provider: IConfigProvider, rcc_location: str) -> IRcc:
     from robocorp_code.rcc import Rcc
 
     rcc = Rcc(config_provider)
+    # We don't want to track tests.
+    result = rcc._run_rcc("feedback identity --do-not-track".split(), expect_ok=False)
+    assert result.success
     return rcc
 
 

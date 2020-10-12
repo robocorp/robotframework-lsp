@@ -101,6 +101,10 @@ class CreateRobotParamsDict(TypedDict):
     name: str
 
 
+class RunInRccParamsDict(TypedDict):
+    args: List[str]
+
+
 class UploadRobotParamsDict(TypedDict):
     workspaceId: str
     robotId: str
@@ -222,4 +226,10 @@ class IRcc(Protocol):
         
         Note: this can be a really slow operation on the first activation to 
         download conda.
+        """
+
+    def feedack_metric(self, name, value="+1"):
+        """
+        i.e.: Something as:
+        rcc feedback metric -t vscode -n vscode.cloud.upload.existing -v +1
         """

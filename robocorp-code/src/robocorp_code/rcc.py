@@ -180,9 +180,14 @@ class Rcc(object):
         error_msg: str = "",
         mutex_name=None,
         cwd: Optional[str] = None,
+        log_errors=True,
     ) -> ActionResult[str]:
         """
         Returns an ActionResult where the result is the stdout of the executed command.
+        
+        :param log_errors:
+            If false, errors won't be logged (i.e.: should be false when errors
+            are expected).
         """
         from robocorp_ls_core.basic import build_subprocess_kwargs
         from subprocess import check_output
@@ -213,7 +218,8 @@ class Rcc(object):
             stdout = as_str(e.stdout)
             stderr = as_str(e.stderr)
             msg = f"Error running: {cmdline}.\nStdout: {stdout}\nStderr: {stderr}"
-            log.exception(msg)
+            if log_errors:
+                log.exception(msg)
             if not error_msg:
                 return ActionResult(success=False, message=msg)
             else:
@@ -553,6 +559,14 @@ class Rcc(object):
             ["conda", "check", "-i"],
             mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME,
             timeout=timeout,  # Creating the env may be really slow!
+        )
+
+    @implements(IRcc.feedack_metric)
+    def feedack_metric(self, name, value="+1") -> ActionResult[str]:
+        return self._run_rcc(
+            ["feedback", "metric", "-t", "vscode", "-n", name, "-v", value],
+            mutex_name=None,
+            log_errors=False,
         )
 
     def __typecheckself__(self) -> None:

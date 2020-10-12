@@ -33,6 +33,8 @@ jobs:
       run: python -m dev vendor-robocorp-ls-core
     - name: Fix README references
       run: python -m dev fix-readme
+    - name: Generate LICENSE.md
+      run: python -m dev generate-license-file
     - name: Build wheel
       working-directory: ./robocorp-code/src
       run: |

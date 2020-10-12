@@ -15,8 +15,17 @@ import py
 log = logging.getLogger(__name__)
 
 
-def test_missing_message(language_server: IRobocorpLanguageServerClient, ws_root_path):
-    language_server.initialize(ws_root_path)
+@pytest.fixture
+def initialization_options():
+    return {"do-not-track": True}
+
+
+def test_missing_message(
+    language_server: IRobocorpLanguageServerClient, ws_root_path, initialization_options
+):
+    language_server.initialize(
+        ws_root_path, initialization_options=initialization_options
+    )
 
     # Just ignore this one (it's not a request because it has no id).
     language_server.write(
@@ -44,6 +53,7 @@ def test_exit_with_parent_process_died(
     language_server_process: IRobocorpLanguageServerClient,
     language_server_io,
     ws_root_path,
+    initialization_options,
 ):
     """
     :note: Only check with the language_server_io (because that's in another process).
@@ -58,7 +68,11 @@ def test_exit_with_parent_process_died(
         [sys.executable, "-c", "import time;time.sleep(10000)"]
     )
 
-    language_server.initialize(ws_root_path, process_id=dummy_process.pid)
+    language_server.initialize(
+        ws_root_path,
+        process_id=dummy_process.pid,
+        initialization_options=initialization_options,
+    )
 
     assert is_process_alive(dummy_process.pid)
     assert is_process_alive(language_server_process.pid)
@@ -77,9 +91,14 @@ def language_server_initialized(
     rcc_location: str,
     ci_endpoint: str,
     rcc_config_location: str,
+    initialization_options,
 ):
+    from robocorp_code.commands import ROBOCORP_RUN_IN_RCC_INTERNAL
+
     language_server = language_server_tcp
-    language_server.initialize(ws_root_path)
+    language_server.initialize(
+        ws_root_path, initialization_options=initialization_options
+    )
     language_server.settings(
         {
             "settings": {
@@ -93,6 +112,11 @@ def language_server_initialized(
             }
         }
     )
+    result = language_server.execute_command(
+        ROBOCORP_RUN_IN_RCC_INTERNAL,
+        [{"args": "feedback identity --do-not-track".split()}],
+    )
+    assert result["result"]["success"]
     return language_server
 
 

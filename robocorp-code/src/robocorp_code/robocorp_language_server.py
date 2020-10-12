@@ -17,10 +17,12 @@ from robocorp_code.protocols import (
     CloudLoginParamsDict,
     ListWorkspacesActionResultDict,
     PackageInfoInLRUDict,
+    RunInRccParamsDict,
 )
 import os
 from robocorp_ls_core.protocols import IConfig
 from pathlib import Path
+from functools import partial
 
 
 log = get_logger(__name__)
@@ -100,7 +102,46 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
         self._dir_cache = DirCache(cache_dir)
         self._rcc = Rcc(self)
+        self._track = True
         PythonLanguageServer.__init__(self, read_stream, write_stream)
+
+    @overrides(PythonLanguageServer.m_initialize)
+    def m_initialize(
+        self,
+        processId=None,
+        rootUri=None,
+        rootPath=None,
+        initializationOptions=None,
+        workspaceFolders=None,
+        **_kwargs,
+    ) -> dict:
+        ret = PythonLanguageServer.m_initialize(
+            self,
+            processId=processId,
+            rootUri=rootUri,
+            rootPath=rootPath,
+            initializationOptions=initializationOptions,
+            workspaceFolders=workspaceFolders,
+        )
+
+        if initializationOptions and isinstance(initializationOptions, dict):
+            self._track = not initializationOptions.get("do-not-track", False)
+
+        from robocorp_code import __version__
+
+        self._feedback_metric("vscode.started", __version__)
+        return ret
+
+    def _feedback_metric(self, name, value="+1"):
+        if not self._track:
+            return
+
+        from robocorp_ls_core.timeouts import TimeoutTracker
+
+        timeout_tracker = TimeoutTracker.get_singleton()
+        timeout_tracker.call_on_timeout(
+            0.1, partial(self._rcc.feedack_metric, name, value)
+        )
 
     @overrides(PythonLanguageServer.cancel_lint)
     def cancel_lint(self, doc_uri):
@@ -167,6 +208,8 @@ class RobocorpLanguageServer(PythonLanguageServer):
     @command_dispatcher(commands.ROBOCORP_CLOUD_LOGIN_INTERNAL)
     def _cloud_login(self, params: CloudLoginParamsDict) -> ActionResultDict:
         from robocorp_ls_core.progress_report import progress_context
+
+        self._feedback_metric("vscode.cloud.login")
 
         # When new credentials are added we need to remove existing caches.
         self._dir_cache.discard(self.CLOUD_LIST_WORKSPACE_CACHE_KEY)
@@ -303,6 +346,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
     @command_dispatcher(commands.ROBOCORP_CREATE_ROBOT_INTERNAL)
     def _create_robot(self, params: CreateRobotParamsDict) -> ActionResultDict:
+        self._feedback_metric("vscode.create.robot")
         directory = params["directory"]
         template = params["template"]
         name = params["name"]
@@ -336,6 +380,16 @@ class RobocorpLanguageServer(PythonLanguageServer):
             }
             return folder_info
         return None
+
+    @command_dispatcher(commands.ROBOCORP_RUN_IN_RCC_INTERNAL)
+    def _run_in_rcc_internal(self, params=RunInRccParamsDict) -> ActionResultDict:
+        try:
+            args = params["args"]
+            ret = self._rcc._run_rcc(args, expect_ok=False)
+        except Exception as e:
+            log.exception(f"Error running in RCC: {params}.")
+            return dict(success=False, message=str(e), result=None)
+        return ret.as_dict()
 
     @command_dispatcher(commands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL)
     def _local_list_robots(self, params=None) -> ActionResultDict:
@@ -407,6 +461,8 @@ class RobocorpLanguageServer(PythonLanguageServer):
     ) -> ActionResultDict:
         from robocorp_ls_core.progress_report import progress_context
 
+        self._feedback_metric("vscode.cloud.upload.existing")
+
         directory = params["directory"]
         error_msg = self._validate_directory(directory)
         if error_msg:
@@ -430,6 +486,8 @@ class RobocorpLanguageServer(PythonLanguageServer):
         self, params: UploadNewRobotParamsDict
     ) -> ActionResultDict:
         from robocorp_ls_core.progress_report import progress_context
+
+        self._feedback_metric("vscode.cloud.upload.new")
 
         directory = params["directory"]
         error_msg = self._validate_directory(directory)
