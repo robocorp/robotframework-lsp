@@ -13,3 +13,4 @@ export const ROBOCORP_CLOUD_LOGIN_INTERNAL = "robocorp.cloudLogin.internal";  //
 export const ROBOCORP_CLOUD_LIST_WORKSPACES_INTERNAL = "robocorp.cloudListWorkspaces.internal";  // Lists the workspaces available for the user (in the cloud).
 export const ROBOCORP_UPLOAD_TO_NEW_ROBOT_INTERNAL = "robocorp.uploadToNewRobot.internal";  // Uploads an Robot as a new Robot in the cloud.
 export const ROBOCORP_UPLOAD_TO_EXISTING_ROBOT_INTERNAL = "robocorp.uploadToExistingRobot.internal";  // Uploads an Robot as an existing Robot in the cloud.
+export const ROBOCORP_RUN_IN_RCC_INTERNAL = "robocorp.runInRcc.internal";  // Runs a custom command in RCC.

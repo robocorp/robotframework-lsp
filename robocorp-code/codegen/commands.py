@@ -94,6 +94,12 @@ COMMANDS = [
         add_to_package_json=False,
         server_handled=True,
     ),
+    Command(
+        "robocorp.runInRcc.internal",
+        "Runs a custom command in RCC.",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
 ]
 
 

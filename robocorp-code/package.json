@@ -8,7 +8,7 @@
         "type": "git",
         "url": "https://github.com/robocorp/robotframework-lsp.git"
     },
-    "license": "Apache 2.0",
+    "license": "SEE LICENSE IN LICENSE.txt",
     "version": "0.1.2",
     "icon": "images/icon.png",
     "publisher": "robocorp",
@@ -29,7 +29,8 @@
         "onCommand:robocorp.cloudLogin.internal",
         "onCommand:robocorp.cloudListWorkspaces.internal",
         "onCommand:robocorp.uploadToNewRobot.internal",
-        "onCommand:robocorp.uploadToExistingRobot.internal"
+        "onCommand:robocorp.uploadToExistingRobot.internal",
+        "onCommand:robocorp.runInRcc.internal"
     ],
     "contributes": {
         "configuration": {

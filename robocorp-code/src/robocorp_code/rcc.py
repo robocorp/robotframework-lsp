@@ -555,6 +555,14 @@ class Rcc(object):
             timeout=timeout,  # Creating the env may be really slow!
         )
 
+    @implements(IRcc.feedack_metric)
+    def feedack_metric(self, name, value="+1") -> ActionResult[str]:
+        return self._run_rcc(
+            ["feedback", "metric", "-t", "vscode", "-n", name, "-v", value],
+            mutex_name=None,
+            expect_ok=False,
+        )
+
     def __typecheckself__(self) -> None:
         _: IRcc = check_implements(self)
 
