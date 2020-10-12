@@ -28,7 +28,7 @@ Configuration
 After installing the extension, the first time the extension is activated
 it will download additional dependencies (such as a conda manager) that are required to bootstrap the extension.
 
-Features (0.1.2)
+Features (0.1.3)
 -----------------
 
 - Automatic bootstrapping of Python environment for the `Robot Framework Language Server`.
