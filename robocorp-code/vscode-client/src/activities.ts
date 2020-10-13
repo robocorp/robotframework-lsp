@@ -134,7 +134,7 @@ async function askAndCreateNewRobotAtWorkspace(wsInfo: WorkspaceInfo, directory:
         OUTPUT_CHANNEL.appendLine(msg);
         window.showErrorMessage(msg);
     } else {
-        window.showInformationMessage('Successfully submited new Robot ' + robotName + ' to the cloud.')
+        window.showInformationMessage('Successfully submitted new Robot ' + robotName + ' to the cloud.')
     }
 
 }
@@ -350,7 +350,7 @@ export async function uploadRobot() {
                 OUTPUT_CHANNEL.appendLine(msg);
                 window.showErrorMessage(msg);
             } else {
-                window.showInformationMessage('Successfully submited Robot ' + robotToUpload.name + ' to the cloud.')
+                window.showInformationMessage('Successfully submitted Robot ' + robotToUpload.name + ' to the cloud.')
             }
             return;
         }
