@@ -14,4 +14,6 @@ export const ROBOCORP_CLOUD_LIST_WORKSPACES_INTERNAL = "robocorp.cloudListWorksp
 export const ROBOCORP_UPLOAD_TO_NEW_ROBOT_INTERNAL = "robocorp.uploadToNewRobot.internal";  // Uploads an Robot as a new Robot in the cloud
 export const ROBOCORP_UPLOAD_TO_EXISTING_ROBOT_INTERNAL = "robocorp.uploadToExistingRobot.internal";  // Uploads an Robot as an existing Robot in the cloud
 export const ROBOCORP_RUN_IN_RCC_INTERNAL = "robocorp.runInRcc.internal";  // Runs a custom command in RCC
-export const ROBOCORP_RUN_ROBOT_RCC = "robocorp.runRobotRcc";  // Run Robot using RCC
+export const ROBOCORP_RUN_ROBOT_RCC = "robocorp.runRobotRcc";  // Run Robot
+export const ROBOCORP_SAVE_IN_DISK_LRU = "robocorp.saveInDiskLRU";  // Saves some data in an LRU in the disk
+export const ROBOCORP_LOAD_FROM_DISK_LRU = "robocorp.loadFromDiskLRU";  // Loads some LRU data from the disk

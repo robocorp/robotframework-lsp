@@ -231,6 +231,42 @@ class RobocorpLanguageServer(PythonLanguageServer):
             result = self._rcc.credentials_valid()
         return {"success": result, "message": None, "result": result}
 
+    @command_dispatcher(commands.ROBOCORP_SAVE_IN_DISK_LRU)
+    def _save_in_disk_lru(self, params: dict) -> ActionResultDict:
+        name = params["name"]
+        entry = params["entry"]
+        lru_size = params["lru_size"]
+        try:
+            cache_lru_list = self._dir_cache.load(name, list)
+        except:
+            cache_lru_list = []
+
+        try:
+            if cache_lru_list[0] == entry:
+                # Nothing to do as it already matches.
+                return {"success": True, "message": "", "result": entry}
+
+            cache_lru_list.remove(entry)
+        except:
+            pass  # If empty or if entry is not there, just proceed.
+
+        if len(cache_lru_list) >= lru_size:
+            cache_lru_list = cache_lru_list[:-1]
+
+        cache_lru_list.insert(0, entry)
+        self._dir_cache.store(name, cache_lru_list)
+        return {"success": True, "message": "", "result": entry}
+
+    @command_dispatcher(commands.ROBOCORP_LOAD_FROM_DISK_LRU, list)
+    def _load_from_disk_lru(self, params: dict) -> ActionResultDict:
+        try:
+            name = params["name"]
+            cache_lru_list = self._dir_cache.load(name, list)
+        except:
+            cache_lru_list = []
+
+        return cache_lru_list
+
     def _get_sort_key_info(self):
         try:
             cache_lru_list: List[PackageInfoInLRUDict] = self._dir_cache.load(

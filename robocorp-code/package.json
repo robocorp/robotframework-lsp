@@ -32,6 +32,8 @@
         "onCommand:robocorp.uploadToExistingRobot.internal",
         "onCommand:robocorp.runInRcc.internal",
         "onCommand:robocorp.runRobotRcc",
+        "onCommand:robocorp.saveInDiskLRU",
+        "onCommand:robocorp.loadFromDiskLRU",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code"
     ],
@@ -136,7 +138,7 @@
             },
             {
                 "command": "robocorp.runRobotRcc",
-                "title": "Run Robot using RCC",
+                "title": "Run Robot",
                 "category": "Robocorp"
             }
         ]

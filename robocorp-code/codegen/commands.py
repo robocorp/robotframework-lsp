@@ -102,9 +102,21 @@ COMMANDS = [
     ),
     Command(
         "robocorp.runRobotRcc",
-        "Run Robot using RCC",
+        "Run Robot",
         add_to_package_json=True,
         server_handled=False,
+    ),
+    Command(
+        "robocorp.saveInDiskLRU",
+        "Saves some data in an LRU in the disk",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
+    Command(
+        "robocorp.loadFromDiskLRU",
+        "Loads some LRU data from the disk",
+        add_to_package_json=False,
+        server_handled=True,
     ),
 ]
 

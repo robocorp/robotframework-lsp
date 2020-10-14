@@ -1,4 +1,4 @@
-import { commands, window, WorkspaceFolder, workspace, Uri, QuickPickItem, TextEdit } from "vscode";
+import { commands, window, WorkspaceFolder, workspace, Uri, QuickPickItem, TextEdit, debug, DebugConfiguration, DebugSessionOptions } from "vscode";
 import { join } from 'path';
 import { OUTPUT_CHANNEL } from './channel';
 import * as roboCommands from './robocorpCommands';
@@ -41,6 +41,12 @@ interface QuickPickItemWithAction extends QuickPickItem {
     sortKey?: string;
 }
 
+interface QuickPickItemRobotTask extends QuickPickItem {
+    robotYaml: string;
+    taskName: string;
+    keyInLRU: string;
+}
+
 function sortCaptions(captions: QuickPickItemWithAction[]) {
     captions.sort(function (a, b) {
         if (a.sortKey < b.sortKey) {
@@ -77,8 +83,8 @@ export async function cloudLogin(): Promise<boolean> {
         );
         if (!loggedIn) {
             let retry = "Retry with new credentials";
-            let selection = await window.showWarningMessage('Unable to log in with the provided credentials.', { 'modal': true }, retry);
-            if (!selection) {
+            let selectedItem = await window.showWarningMessage('Unable to log in with the provided credentials.', { 'modal': true }, retry);
+            if (!selectedItem) {
                 return false;
             }
         }
@@ -100,7 +106,7 @@ async function askRobotToUpload(robotsInfo: LocalRobotMetadataInfo[]): Promise<L
             };
             captions.push(caption);
         }
-        let selection: QuickPickItemWithAction = await window.showQuickPick(
+        let selectedItem: QuickPickItemWithAction = await window.showQuickPick(
             captions,
             {
                 "canPickMany": false,
@@ -108,10 +114,10 @@ async function askRobotToUpload(robotsInfo: LocalRobotMetadataInfo[]): Promise<L
                 'ignoreFocusOut': true,
             }
         );
-        if (!selection) {
+        if (!selectedItem) {
             return;
         }
-        robotToUpload = selection.action;
+        robotToUpload = selectedItem.action;
     } else {
         robotToUpload = robotsInfo[0];
     }
@@ -206,7 +212,7 @@ export async function uploadRobot() {
         }
 
         // Now, if there are only a few items or a single workspace,
-        // just show it all, otherwise do a pre-selection with the workspace.
+        // just show it all, otherwise do a pre-selectedItem with the workspace.
         let workspaceIdFilter: string = undefined;
 
         if (workspaceInfo.length > 1) {
@@ -231,7 +237,7 @@ export async function uploadRobot() {
             };
             captions.push(caption);
 
-            let selection: QuickPickItemWithAction = await window.showQuickPick(
+            let selectedItem: QuickPickItemWithAction = await window.showQuickPick(
                 captions,
                 {
                     "canPickMany": false,
@@ -239,14 +245,14 @@ export async function uploadRobot() {
                     'ignoreFocusOut': true,
                 }
             );
-            if (!selection) {
+            if (!selectedItem) {
                 return;
             }
-            if (selection.action.refresh) {
+            if (selectedItem.action.refresh) {
                 refresh = true;
                 continue SELECT_OR_REFRESH;
             } else {
-                workspaceIdFilter = selection.action.filterWorkspaceId;
+                workspaceIdFilter = selectedItem.action.filterWorkspaceId;
             }
         }
 
@@ -299,7 +305,7 @@ export async function uploadRobot() {
 
         sortCaptions(captions);
 
-        let selection: QuickPickItemWithAction = await window.showQuickPick(
+        let selectedItem: QuickPickItemWithAction = await window.showQuickPick(
             captions,
             {
                 "canPickMany": false,
@@ -307,10 +313,10 @@ export async function uploadRobot() {
                 'ignoreFocusOut': true,
             }
         );
-        if (!selection) {
+        if (!selectedItem) {
             return;
         }
-        let action = selection.action;
+        let action = selectedItem.action;
         if (action.refresh) {
             refresh = true;
             continue SELECT_OR_REFRESH;
@@ -329,18 +335,18 @@ export async function uploadRobot() {
             let cancel: string = 'Cancel';
             let robotInfo: PackageInfo = action.existingRobotPackage;
 
-            let selection = await window.showWarningMessage(
+            let selectedItem = await window.showWarningMessage(
                 "Upload of the contents of " + robotToUpload.directory + " to: " + robotInfo.name + " (" + robotInfo.workspaceName + ")", ...[yesOverride, noChooseDifferentTarget, cancel]);
 
             // robot.language-server.python
-            if (selection == noChooseDifferentTarget) {
+            if (selectedItem == noChooseDifferentTarget) {
                 refresh = false;
                 continue SELECT_OR_REFRESH;
             }
-            if (selection == cancel) {
+            if (selectedItem == cancel) {
                 return;
             }
-            // selection == yesOverride.
+            // selectedItem == yesOverride.
             let actionResult: ActionResult = await commands.executeCommand(
                 roboCommands.ROBOCORP_UPLOAD_TO_EXISTING_ROBOT_INTERNAL,
                 { 'workspaceId': robotInfo.workspaceId, 'robotId': robotInfo.id, 'directory': robotToUpload.directory }
@@ -367,6 +373,9 @@ export async function runRobotRCC() {
         fileName = textEditor.document.fileName;
     }
 
+    const RUN_IN_RCC_LRU_CACHE_NAME = 'RUN_IN_RCC_LRU_CACHE';
+    let runLRU: string[] = await commands.executeCommand(roboCommands.ROBOCORP_LOAD_FROM_DISK_LRU, { 'name': RUN_IN_RCC_LRU_CACHE_NAME });
+
     let actionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL);
     if (!actionResult.success) {
         window.showErrorMessage('Error listing Robots: ' + actionResult.message);
@@ -378,18 +387,67 @@ export async function runRobotRCC() {
         window.showInformationMessage('Unable to run Robot (no Robot detected in the Workspace).');
         return;
     }
+
+    let items: QuickPickItemRobotTask[] = new Array();
+
     for (let robotInfo of robotsInfo) {
         let yamlContents = robotInfo.yamlContents
         let tasks = yamlContents['tasks'];
         if (tasks) {
             let taskNames: string[] = Object.keys(tasks);
             for (let taskName of taskNames) {
-                // TODO: Show options to user and create the related launch configuration
-                // and launch it.
+                let keyInLRU: string = robotInfo.name + ' - ' + taskName + ' - ' + robotInfo.filePath;
+                let item: QuickPickItemRobotTask = {
+                    'label': 'Run robot: ' + robotInfo.name + '    Task: ' + taskName,
+                    'description': robotInfo.filePath,
+                    'robotYaml': robotInfo.filePath,
+                    'taskName': taskName,
+                    'keyInLRU': keyInLRU,
+                };
+                if (runLRU && runLRU.length > 0 && keyInLRU == runLRU[0]) {
+                    // Note that although we have an LRU we just consider the last one for now.
+                    items.splice(0, 0, item);
+                } else {
+                    items.push(item);
+                }
             }
         }
     }
 
+    if (!items) {
+        window.showInformationMessage('Unable to run Robot (no Robot detected in the Workspace).');
+        return;
+    }
+
+    let selectedItem = await window.showQuickPick(
+        items,
+        {
+            "canPickMany": false,
+            'placeHolder': 'Please select the Robot and Task to run.',
+            'ignoreFocusOut': true,
+        }
+    );
+
+    if (!selectedItem) {
+        return;
+    }
+
+    await commands.executeCommand(
+        roboCommands.ROBOCORP_SAVE_IN_DISK_LRU,
+        { 'name': RUN_IN_RCC_LRU_CACHE_NAME, 'entry': selectedItem.keyInLRU, 'lru_size': 3 }
+    );
+
+    let debugConfiguration: DebugConfiguration = {
+        'name': 'Config',
+        'type': 'robocorp-code',
+        'request': 'launch',
+        'robot': selectedItem.robotYaml,
+        'task': selectedItem.taskName,
+        'args': [],
+        'noDebug': true,
+    };
+    let debugSessionOptions: DebugSessionOptions = {};
+    debug.startDebugging(undefined, debugConfiguration, debugSessionOptions)
 }
 
 export async function createRobot() {
@@ -408,7 +466,7 @@ export async function createRobot() {
             return;
         }
 
-        let selection = await window.showQuickPick(
+        let selectedItem = await window.showQuickPick(
             availableTemplates,
             {
                 "canPickMany": false,
@@ -417,9 +475,9 @@ export async function createRobot() {
             }
         );
 
-        OUTPUT_CHANNEL.appendLine('Selected: ' + selection);
+        OUTPUT_CHANNEL.appendLine('Selected: ' + selectedItem);
         let ws: WorkspaceFolder;
-        if (!selection) {
+        if (!selectedItem) {
             // Operation cancelled.
             return;
         }
@@ -449,7 +507,7 @@ export async function createRobot() {
         OUTPUT_CHANNEL.appendLine('Creating Robot at: ' + ws.uri.fsPath);
         let createRobotResult: ActionResult = await commands.executeCommand(
             roboCommands.ROBOCORP_CREATE_ROBOT_INTERNAL,
-            { 'directory': ws.uri.fsPath, 'template': selection, 'name': name }
+            { 'directory': ws.uri.fsPath, 'template': selectedItem, 'name': name }
         );
 
         if (createRobotResult.success) {

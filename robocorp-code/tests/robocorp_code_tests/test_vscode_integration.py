@@ -125,9 +125,9 @@ def language_server_initialized(
             ],
         )
         assert result["result"]["success"]
-        if "disabled" in result["result"]["result"]:
-            continue
         if "enabled" in result["result"]["result"]:
+            continue
+        if "disabled" in result["result"]["result"]:
             break
         raise AssertionError(f"Unexpected result: {result}")
     else:
@@ -540,3 +540,37 @@ def test_upload_to_cloud(
         found_package["workspaceId"], f"New package {time.time()}", directory
     )
     assert result["success"]
+
+
+def test_lru_disk_commands(language_server_initialized: IRobocorpLanguageServerClient,):
+    from robocorp_code import commands
+
+    client = language_server_initialized
+
+    def save_to_lru(name: str, entry: str, lru_size: int):
+        result = client.execute_command(
+            commands.ROBOCORP_SAVE_IN_DISK_LRU,
+            [{"name": name, "entry": entry, "lru_size": lru_size}],
+        )["result"]
+
+        assert result["success"]
+
+    def get_from_lru(name: str) -> list:
+        result = client.execute_command(
+            commands.ROBOCORP_LOAD_FROM_DISK_LRU, [{"name": name}]
+        )
+        return result["result"]
+
+    assert get_from_lru("my_lru") == []
+
+    save_to_lru("my_lru", "entry1", lru_size=2)
+    assert get_from_lru("my_lru") == ["entry1"]
+
+    save_to_lru("my_lru", "entry2", lru_size=2)
+    assert get_from_lru("my_lru") == ["entry2", "entry1"]
+
+    save_to_lru("my_lru", "entry1", lru_size=2)
+    assert get_from_lru("my_lru") == ["entry1", "entry2"]
+
+    save_to_lru("my_lru", "entry3", lru_size=2)
+    assert get_from_lru("my_lru") == ["entry3", "entry1"]

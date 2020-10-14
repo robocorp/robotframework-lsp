@@ -6,7 +6,6 @@ from robocorp_ls_core.robotframework_log import get_logger
 from collections import namedtuple
 from pathlib import Path
 from typing import Any, Generic, Callable
-from typing import Optional, Tuple
 import functools
 import os
 

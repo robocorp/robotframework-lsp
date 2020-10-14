@@ -14,7 +14,9 @@ ROBOCORP_CLOUD_LIST_WORKSPACES_INTERNAL = "robocorp.cloudListWorkspaces.internal
 ROBOCORP_UPLOAD_TO_NEW_ROBOT_INTERNAL = "robocorp.uploadToNewRobot.internal"  # Uploads an Robot as a new Robot in the cloud
 ROBOCORP_UPLOAD_TO_EXISTING_ROBOT_INTERNAL = "robocorp.uploadToExistingRobot.internal"  # Uploads an Robot as an existing Robot in the cloud
 ROBOCORP_RUN_IN_RCC_INTERNAL = "robocorp.runInRcc.internal"  # Runs a custom command in RCC
-ROBOCORP_RUN_ROBOT_RCC = "robocorp.runRobotRcc"  # Run Robot using RCC
+ROBOCORP_RUN_ROBOT_RCC = "robocorp.runRobotRcc"  # Run Robot
+ROBOCORP_SAVE_IN_DISK_LRU = "robocorp.saveInDiskLRU"  # Saves some data in an LRU in the disk
+ROBOCORP_LOAD_FROM_DISK_LRU = "robocorp.loadFromDiskLRU"  # Loads some LRU data from the disk
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,
@@ -27,4 +29,6 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_UPLOAD_TO_NEW_ROBOT_INTERNAL,
     ROBOCORP_UPLOAD_TO_EXISTING_ROBOT_INTERNAL,
     ROBOCORP_RUN_IN_RCC_INTERNAL,
+    ROBOCORP_SAVE_IN_DISK_LRU,
+    ROBOCORP_LOAD_FROM_DISK_LRU,
 ]
