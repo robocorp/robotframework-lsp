@@ -19,86 +19,92 @@ class Command(object):
 COMMANDS = [
     Command(
         "robocorp.getLanguageServerPython",
-        "Get a python executable suitable to start the language server.",
+        "Get a python executable suitable to start the language server",
         add_to_package_json=False,
         server_handled=False,
     ),
     Command(
         "robocorp.getPluginsDir",
-        "Get the directory for plugins.",
+        "Get the directory for plugins",
         add_to_package_json=False,
         server_handled=True,
     ),
     # Note: this command is started from the client (due to needing window.showQuickPick)
     # and the proceeds to ask for the server for the actual implementation.
-    Command("robocorp.createRobot", "Create Robot.", server_handled=False),
+    Command("robocorp.createRobot", "Create Robot", server_handled=False),
     # Internal commands for robocorp.createRobot.
     Command(
         "robocorp.listRobotTemplates.internal",
-        "Provides a list with the available robot templates.",
+        "Provides a list with the available robot templates",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
         "robocorp.createRobot.internal",
-        "Actually calls rcc to create the robot.",
+        "Actually calls rcc to create the robot",
         add_to_package_json=False,
         server_handled=True,
     ),
     # Started from the client due to needing UI actions.
     Command(
         "robocorp.uploadRobotToCloud",
-        "Upload Robot to the cloud.",
+        "Upload Robot to the cloud",
         add_to_package_json=True,
         server_handled=False,
     ),
     Command(
         "robocorp.localListRobots.internal",
-        "Lists the activities currently available in the workspace.",
+        "Lists the activities currently available in the workspace",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
         "robocorp.isLoginNeeded.internal",
-        "Checks if the user is already logged in.",
+        "Checks if the user is already logged in",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
         "robocorp.cloudLogin",
-        "Log in Robocloud.",
+        "Log in Robocloud",
         add_to_package_json=True,
         server_handled=False,
     ),
     Command(
         "robocorp.cloudLogin.internal",
-        "Log in Robocloud (receives credentials).",
+        "Log in Robocloud (receives credentials)",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
         "robocorp.cloudListWorkspaces.internal",
-        "Lists the workspaces available for the user (in the cloud).",
+        "Lists the workspaces available for the user (in the cloud)",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
         "robocorp.uploadToNewRobot.internal",
-        "Uploads an Robot as a new Robot in the cloud.",
+        "Uploads an Robot as a new Robot in the cloud",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
         "robocorp.uploadToExistingRobot.internal",
-        "Uploads an Robot as an existing Robot in the cloud.",
+        "Uploads an Robot as an existing Robot in the cloud",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
         "robocorp.runInRcc.internal",
-        "Runs a custom command in RCC.",
+        "Runs a custom command in RCC",
         add_to_package_json=False,
         server_handled=True,
+    ),
+    Command(
+        "robocorp.runRobotRcc",
+        "Run Robot using RCC",
+        add_to_package_json=True,
+        server_handled=False,
     ),
 ]
 
@@ -137,4 +143,8 @@ def get_activation_events_for_json():
     activation_events = []
     for command in COMMANDS:
         activation_events.append("onCommand:" + command.name)
+
+    activation_events.append("onDebugInitialConfigurations")
+    activation_events.append("onDebugResolve:robocorp-code")
+
     return activation_events

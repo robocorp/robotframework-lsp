@@ -1,11 +1,13 @@
-import { commands, window, WorkspaceFolder, workspace, Uri, QuickPickItem } from "vscode";
+import { commands, window, WorkspaceFolder, workspace, Uri, QuickPickItem, TextEdit } from "vscode";
 import { join } from 'path';
 import { OUTPUT_CHANNEL } from './channel';
 import * as roboCommands from './robocorpCommands';
 
-interface RobotInfo {
+interface LocalRobotMetadataInfo {
     name: string;
     directory: string;
+    filePath: string;
+    yamlContents: object;
 };
 
 interface WorkspaceInfo {
@@ -84,13 +86,13 @@ export async function cloudLogin(): Promise<boolean> {
     return true;
 }
 
-async function askRobotToUpload(robotsInfo: RobotInfo[]): Promise<RobotInfo> {
-    let robotToUpload: RobotInfo;
+async function askRobotToUpload(robotsInfo: LocalRobotMetadataInfo[]): Promise<LocalRobotMetadataInfo> {
+    let robotToUpload: LocalRobotMetadataInfo;
     if (robotsInfo.length > 1) {
         let captions: QuickPickItemWithAction[] = new Array();
 
         for (let i = 0; i < robotsInfo.length; i++) {
-            const element: RobotInfo = robotsInfo[i];
+            const element: LocalRobotMetadataInfo = robotsInfo[i];
             let caption: QuickPickItemWithAction = {
                 'label': element.name,
                 'description': element.directory,
@@ -151,14 +153,13 @@ export async function uploadRobot() {
         currentUri = window.activeTextEditor.document.uri;
     }
     let actionResult: ActionResult = await commands.executeCommand(
-        roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL,
-        { 'currentUri': currentUri }
+        roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL
     );
     if (!actionResult.success) {
         window.showInformationMessage('Error submitting Robot to the cloud: ' + actionResult.message);
         return;
     }
-    let robotsInfo: RobotInfo[] = actionResult.result;
+    let robotsInfo: LocalRobotMetadataInfo[] = actionResult.result;
 
     if (!robotsInfo || robotsInfo.length == 0) {
         window.showInformationMessage('Unable to submit Robot to the cloud (no Robot detected in the Workspace).');
@@ -178,7 +179,7 @@ export async function uploadRobot() {
         }
     }
 
-    let robotToUpload: RobotInfo = await askRobotToUpload(robotsInfo);
+    let robotToUpload: LocalRobotMetadataInfo = await askRobotToUpload(robotsInfo);
     if (!robotToUpload) {
         return;
     }
@@ -356,6 +357,39 @@ export async function uploadRobot() {
         }
 
     } while (true);
+}
+
+export async function runRobotRCC() {
+    let textEditor = window.activeTextEditor;
+    let fileName: string | undefined = undefined;
+
+    if (textEditor) {
+        fileName = textEditor.document.fileName;
+    }
+
+    let actionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL);
+    if (!actionResult.success) {
+        window.showErrorMessage('Error listing Robots: ' + actionResult.message);
+        return;
+    }
+    let robotsInfo: LocalRobotMetadataInfo[] = actionResult.result;
+
+    if (!robotsInfo || robotsInfo.length == 0) {
+        window.showInformationMessage('Unable to run Robot (no Robot detected in the Workspace).');
+        return;
+    }
+    for (let robotInfo of robotsInfo) {
+        let yamlContents = robotInfo.yamlContents
+        let tasks = yamlContents['tasks'];
+        if (tasks) {
+            let taskNames: string[] = Object.keys(tasks);
+            for (let taskName of taskNames) {
+                // TODO: Show options to user and create the related launch configuration
+                // and launch it.
+            }
+        }
+    }
+
 }
 
 export async function createRobot() {

@@ -16,8 +16,8 @@
 # limitations under the License.
 
 def test_schema():
-    from robotframework_debug_adapter.dap import dap_base_schema
-    from robotframework_debug_adapter.dap.dap_schema import (
+    from robocorp_ls_core.debug_adapter_core.dap import dap_base_schema
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
         InitializeRequest,
         InitializeRequestArguments,
         InitializeResponse,

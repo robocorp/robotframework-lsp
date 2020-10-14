@@ -1,0 +1,39 @@
+tasks:
+  task1:
+    command:
+      - python
+      - -m
+      - robot
+      - --report
+      - NONE
+      - --outputdir
+      - output
+      - --logtitle
+      - Task log
+      - --task
+      - task1
+      - tasks.robot
+      
+  task2:
+    command:
+      - python
+      - -m
+      - robot
+      - --report
+      - NONE
+      - --outputdir
+      - output
+      - --logtitle
+      - Task log
+      - --task
+      - task2
+      - tasks.robot
+
+condaConfigFile: conda.yaml
+artifactsDir: output
+PATH:
+  - .
+PYTHONPATH:
+  - .
+ignoreFiles:
+    - .gitignore

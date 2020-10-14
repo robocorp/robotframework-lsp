@@ -61,7 +61,63 @@ def get_json_contents():
             },
             "languages": [],
             "grammars": [],
-            "debuggers": [],
+            "debuggers": [
+                {
+                    "type": "robocorp-code",
+                    "label": "Run Robot",
+                    "languages": [],
+                    "configurationAttributes": {
+                        "launch": {
+                            "properties": {
+                                "robot": {
+                                    "type": "string",
+                                    "description": "The robot.yaml file with the task to be launched.",
+                                    "default": "${file}",
+                                },
+                                "task": {
+                                    "type": "string",
+                                    "description": "The task name from the robot to be run.",
+                                },
+                                "args": {
+                                    "type": "array",
+                                    "description": "Additional command line arguments for running the robot.",
+                                },
+                                "env": {
+                                    "type": "object",
+                                    "description": "Environment variables to be added to the launch.",
+                                },
+                                # We may want to add it in the future, but for now this is unsupported,
+                                # as we only support using the debug console.
+                                # "terminal": {
+                                #     "type": "string",
+                                #     "enum": ["none", "integrated", "external"],
+                                #     "enumDescriptions": [
+                                #         "No terminal (pipes the output to the client debug console).",
+                                #         "Use terminal integrated in client.",
+                                #         "External terminal (configured in user settings).",
+                                #     ],
+                                #     "description": "The terminal to launch the program.",
+                                #     "default": "none",
+                                # },
+                            }
+                        }
+                    },
+                    "configurationSnippets": [
+                        {
+                            "label": "Launch Robot task (robot.yaml)",
+                            "description": "Add a new configuration for launching tasks from a Robot (robot.yaml).",
+                            "body": {
+                                "type": "robocorp-code",
+                                "name": "Robocorp Code: Launch task from current robot.yaml",
+                                "request": "launch",
+                                # "terminal": "none",
+                                "robot": '^"\\${file}"',
+                                "task": "",
+                            },
+                        }
+                    ],
+                }
+            ],
             "keybindings": get_keybindings_for_json(),
             "commands": get_commands_for_json(),
         },

@@ -28,7 +28,7 @@ if __file__.endswith((".pyc", ".pyo")):
 
 
 _critical_error_log_file = os.path.join(
-    os.path.expanduser("~"), "robotframework_dap_critical.log"
+    os.path.expanduser("~"), "robocorp_code_dap_critical.log"
 )
 
 
@@ -41,21 +41,20 @@ def main():
     read a message, convert it to an instance of the message in the schema and then forward it to
     the command processor which will interpret and act on it, posting the results to the writer queue.
     """
-
     log = None
     try:
         import sys
 
         try:
-            import robotframework_debug_adapter
-            import robotframework_ls
+            import robocorp_code_debug_adapter
+            import robocorp_code
         except ImportError:
             # Automatically add it to the path if __main__ is being executed.
             sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            import robotframework_debug_adapter  # @UnusedImport
-            import robotframework_ls
+            import robocorp_code_debug_adapter  # @UnusedImport
+            import robocorp_code
 
-        robotframework_ls.import_robocorp_ls_core()
+        robocorp_code.import_robocorp_ls_core()
 
         from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
             STOP_WRITER_THREAD,
@@ -66,21 +65,22 @@ def main():
             log_args_and_python,
         )
 
-        from robotframework_debug_adapter.constants import LOG_FILENAME
-        from robotframework_debug_adapter.constants import LOG_LEVEL
+        from robocorp_code_debug_adapter.constants import LOG_FILENAME
+        from robocorp_code_debug_adapter.constants import LOG_LEVEL
 
         configure_logger("dap", LOG_LEVEL, LOG_FILENAME)
-        log = get_logger("robotframework_debug_adapter.__main__")
-        log_args_and_python(log, sys.argv, robotframework_ls.__version__)
+        log = get_logger("robocorp_code_debug_adapter.__main__")
+        log_args_and_python(log, sys.argv, robocorp_code.__version__)
 
-        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import reader_thread
-        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import writer_thread
-        from robotframework_debug_adapter.debug_adapter_comm import DebugAdapterComm
+        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
+            reader_thread,
+        )
+        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
+            writer_thread,
+        )
 
-        try:
-            from queue import Queue
-        except ImportError:
-            from Queue import Queue
+        from queue import Queue
+        from robocorp_code_debug_adapter.debug_adapter_comm import DebugAdapterComm
 
         to_client_queue = Queue()
         comm = DebugAdapterComm(to_client_queue)

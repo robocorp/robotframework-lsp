@@ -15,9 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
-from robotframework_debug_adapter.constants import DEBUG
 from robocorp_ls_core.debug_adapter_core.dap import dap_base_schema as base_schema
-from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.robotframework_log import get_logger, get_log_level
+from typing import Optional
 
 log = get_logger(__name__)
 
@@ -39,6 +39,7 @@ class DebugAdapterComm(object):
         self._launch_process = None  # : :type self._launch_process: LaunchProcess
         self._supports_run_in_terminal = False
         self._initialize_request_arguments = None
+        self._rcc_config_location: Optional[str] = None
 
     @property
     def supports_run_in_terminal(self):
@@ -55,11 +56,11 @@ class DebugAdapterComm(object):
         )
 
         if protocol_message is READER_THREAD_STOPPED:
-            if DEBUG:
+            if get_log_level() > 1:
                 log.debug("%s: READER_THREAD_STOPPED." % (self.__class__.__name__,))
             return
 
-        if DEBUG:
+        if get_log_level() > 1:
             log.debug(
                 "Process json: %s\n"
                 % (json.dumps(protocol_message.to_dict(), indent=4, sort_keys=True),)
@@ -71,7 +72,7 @@ class DebugAdapterComm(object):
             if on_request is not None:
                 on_request(protocol_message)
             else:
-                if DEBUG:
+                if get_log_level() > 1:
                     log.debug(
                         "Unhandled: %s not available in %s.\n"
                         % (method_name, self.__class__.__name__)
@@ -81,13 +82,16 @@ class DebugAdapterComm(object):
         """
         :param InitializeRequest request:
         """
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
 
         # : :type initialize_response: InitializeResponse
         # : :type body: Capabilities
         self._initialize_request_arguments = request.arguments
         initialize_response = build_response(request)
         self._supports_run_in_terminal = request.arguments.supportsRunInTerminalRequest
+        self._rcc_config_location = request.arguments.kwargs.get("rccConfigLocation")
         body = initialize_response.body
         body.supportsConfigurationDoneRequest = True
         self.write_to_client_message(initialize_response)
@@ -96,9 +100,11 @@ class DebugAdapterComm(object):
         """
         :param LaunchRequest request:
         """
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
-        from robotframework_debug_adapter.launch_process import LaunchProcess
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import InitializedEvent
+        from robocorp_code_debug_adapter.launch_process import LaunchProcess
 
         # : :type launch_response: LaunchResponse
         launch_response = build_response(request)
@@ -106,32 +112,28 @@ class DebugAdapterComm(object):
         try:
 
             self._launch_process = launch_process = LaunchProcess(
-                request, launch_response, self
+                request, launch_response, self, self._rcc_config_location
             )
 
             if launch_process.valid:
-                # If on debug mode the launch is only considered finished when the connection
-                # from the other side finishes properly.
-                launch_process.launch()
-
-                # Only write the initialized event after the process has been
-                # launched so that we can forward breakpoints directly to the
-                # target.
                 self.write_to_client_message(InitializedEvent())
+
         except Exception as e:
             log.exception("Error launching.")
             launch_response.success = False
             launch_response.message = str(e)
 
         self.write_to_client_message(launch_response)  # acknowledge it
-        if launch_process is not None:
-            launch_process.after_launch_response_sent()
 
     def on_configurationDone_request(self, request):
         """
+        Actually run when the configuration is finished.
+        
         :param ConfigurationDoneRequest request:
         """
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
 
         configuration_done_response = build_response(request)
         launch_process = self._launch_process
@@ -143,17 +145,9 @@ class DebugAdapterComm(object):
             self.write_to_client_message(configuration_done_response)
             return
 
-        if launch_process.send_and_wait_for_configuration_done_request():
-            # : :type configuration_done_response: ConfigurationDoneResponse
-            self.write_to_client_message(configuration_done_response)  # acknowledge it
-
-        else:
-            # timed out
-            configuration_done_response.success = False
-            configuration_done_response.message = (
-                "Timed out waiting for configurationDone event."
-            )
-            self.write_to_client_message(configuration_done_response)
+        self.write_to_client_message(configuration_done_response)  # acknowledge it
+        # Actually launch when the configuration is done.
+        launch_process.launch()
 
     def on_disconnect_request(self, request):
         """
@@ -175,17 +169,6 @@ class DebugAdapterComm(object):
         pause_response = base_schema.build_response(request)
         self.write_to_client_message(pause_response)
 
-    def on_evaluate_request(self, request):
-        """
-        :param EvaluateRequest request:
-        """
-        if self._launch_process is not None:
-            if request.arguments.context == "repl":
-                pass
-                # i.e.: if not stopped anywhere we could send to the stdin...
-                # self._launch_process.send_to_stdin(request.arguments.expression)
-        self._launch_process.resend_request_to_robot(request)
-
     def on_setExceptionBreakpoints_request(self, request):
         response = base_schema.build_response(request)
         self.write_to_client_message(response)
@@ -200,55 +183,38 @@ class DebugAdapterComm(object):
             SetBreakpointsResponseBody,
         )
 
-        if self._launch_process is None:
-            # Just acknowledge that no breakpoints are valid.
-            breakpoints = []
-            if request.arguments.breakpoints:
-                for bp in request.arguments.breakpoints:
-                    source_breakpoint = SourceBreakpoint(**bp)
-                    breakpoints.append(
-                        Breakpoint(
-                            verified=False,
-                            line=source_breakpoint.line,
-                            source=request.arguments.source,
-                        ).to_dict()
-                    )
-
-            self.write_to_client_message(
-                base_schema.build_response(
-                    request,
-                    kwargs=dict(
-                        body=SetBreakpointsResponseBody(breakpoints=breakpoints)
-                    ),
+        # Just acknowledge that no breakpoints are valid (we don't really debug,
+        # we just run).
+        breakpoints = []
+        if request.arguments.breakpoints:
+            for bp in request.arguments.breakpoints:
+                source_breakpoint = SourceBreakpoint(**bp)
+                breakpoints.append(
+                    Breakpoint(
+                        verified=False,
+                        line=source_breakpoint.line,
+                        source=request.arguments.source,
+                    ).to_dict()
                 )
+
+        self.write_to_client_message(
+            base_schema.build_response(
+                request,
+                kwargs=dict(body=SetBreakpointsResponseBody(breakpoints=breakpoints)),
             )
-            return
-
-        self._launch_process.resend_request_to_robot(request)
-
-    def on_continue_request(self, request):
-        self._launch_process.resend_request_to_robot(request)
-
-    def on_stepIn_request(self, request):
-        self._launch_process.resend_request_to_robot(request)
-
-    def on_stepOut_request(self, request):
-        self._launch_process.resend_request_to_robot(request)
-
-    def on_stackTrace_request(self, request):
-        self._launch_process.resend_request_to_robot(request)
-
-    def on_next_request(self, request):
-        self._launch_process.resend_request_to_robot(request)
-
-    def on_scopes_request(self, request):
-        self._launch_process.resend_request_to_robot(request)
-
-    def on_variables_request(self, request):
-        self._launch_process.resend_request_to_robot(request)
+        )
 
     def on_threads_request(self, request):
-        self._launch_process.resend_request_to_robot(request)
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Thread
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            ThreadsResponseBody,
+        )
+
+        threads = [Thread(0, "Main Thread").to_dict()]
+        kwargs = {"body": ThreadsResponseBody(threads)}
+        # : :type threads_response: ThreadsResponse
+        threads_response = base_schema.build_response(request, kwargs)
+        self.write_to_client_message(threads_response)
 
     def write_to_client_message(self, protocol_message):
         """

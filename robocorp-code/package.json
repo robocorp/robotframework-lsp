@@ -30,7 +30,10 @@
         "onCommand:robocorp.cloudListWorkspaces.internal",
         "onCommand:robocorp.uploadToNewRobot.internal",
         "onCommand:robocorp.uploadToExistingRobot.internal",
-        "onCommand:robocorp.runInRcc.internal"
+        "onCommand:robocorp.runInRcc.internal",
+        "onCommand:robocorp.runRobotRcc",
+        "onDebugInitialConfigurations",
+        "onDebugResolve:robocorp-code"
     ],
     "contributes": {
         "configuration": {
@@ -71,22 +74,69 @@
         },
         "languages": [],
         "grammars": [],
-        "debuggers": [],
+        "debuggers": [
+            {
+                "type": "robocorp-code",
+                "label": "Run Robot",
+                "languages": [],
+                "configurationAttributes": {
+                    "launch": {
+                        "properties": {
+                            "robot": {
+                                "type": "string",
+                                "description": "The robot.yaml file with the task to be launched.",
+                                "default": "${file}"
+                            },
+                            "task": {
+                                "type": "string",
+                                "description": "The task name from the robot to be run."
+                            },
+                            "args": {
+                                "type": "array",
+                                "description": "Additional command line arguments for running the robot."
+                            },
+                            "env": {
+                                "type": "object",
+                                "description": "Environment variables to be added to the launch."
+                            }
+                        }
+                    }
+                },
+                "configurationSnippets": [
+                    {
+                        "label": "Launch Robot task (robot.yaml)",
+                        "description": "Add a new configuration for launching tasks from a Robot (robot.yaml).",
+                        "body": {
+                            "type": "robocorp-code",
+                            "name": "Robocorp Code: Launch task from current robot.yaml",
+                            "request": "launch",
+                            "robot": "^\"\\${file}\"",
+                            "task": ""
+                        }
+                    }
+                ]
+            }
+        ],
         "keybindings": [],
         "commands": [
             {
                 "command": "robocorp.createRobot",
-                "title": "Create Robot.",
+                "title": "Create Robot",
                 "category": "Robocorp"
             },
             {
                 "command": "robocorp.uploadRobotToCloud",
-                "title": "Upload Robot to the cloud.",
+                "title": "Upload Robot to the cloud",
                 "category": "Robocorp"
             },
             {
                 "command": "robocorp.cloudLogin",
-                "title": "Log in Robocloud.",
+                "title": "Log in Robocloud",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.runRobotRcc",
+                "title": "Run Robot using RCC",
                 "category": "Robocorp"
             }
         ]

@@ -1,7 +1,8 @@
-from robocorp_ls_core.basic import overrides
-from robocorp_ls_core.python_ls import PythonLanguageServer
-from robocorp_ls_core.robotframework_log import get_logger
+from functools import partial
+import os
+from pathlib import Path
 from typing import List, Any, Optional, Dict
+
 from robocorp_code import commands
 from robocorp_code.protocols import (
     IRccWorkspace,
@@ -18,11 +19,13 @@ from robocorp_code.protocols import (
     ListWorkspacesActionResultDict,
     PackageInfoInLRUDict,
     RunInRccParamsDict,
+    ActionResultDictLocalRobotMetadata,
 )
-import os
+from robocorp_ls_core.basic import overrides
+from robocorp_ls_core.cache import CachedFileInfo
 from robocorp_ls_core.protocols import IConfig
-from pathlib import Path
-from functools import partial
+from robocorp_ls_core.python_ls import PythonLanguageServer
+from robocorp_ls_core.robotframework_log import get_logger
 
 
 log = get_logger(__name__)
@@ -103,6 +106,9 @@ class RobocorpLanguageServer(PythonLanguageServer):
         self._dir_cache = DirCache(cache_dir)
         self._rcc = Rcc(self)
         self._track = True
+        self._local_list_robots_cache: Dict[
+            Path, CachedFileInfo[LocalRobotMetadataInfoDict]
+        ] = {}
         PythonLanguageServer.__init__(self, read_stream, write_stream)
 
     @overrides(PythonLanguageServer.m_initialize)
@@ -358,27 +364,55 @@ class RobocorpLanguageServer(PythonLanguageServer):
         result = self._rcc.get_template_names()
         return result.as_dict()
 
-    def _get_robot_metadata(self, sub: Path) -> Optional[LocalRobotMetadataInfoDict]:
+    def _get_robot_metadata(
+        self,
+        sub: Path,
+        curr_cache: Dict[Path, CachedFileInfo[LocalRobotMetadataInfoDict]],
+        new_cache: Dict[Path, CachedFileInfo[LocalRobotMetadataInfoDict]],
+    ) -> Optional[LocalRobotMetadataInfoDict]:
+        """
+        Note that we get the value from the current cache and then put it in
+        the new cache if it's still valid (that way we don't have to mutate
+        the old cache to remove stale values... all that's valid is put in
+        the new cache).
+        """
         robot_yaml = sub / "robot.yaml"
 
+        cached_file_info: Optional[
+            CachedFileInfo[LocalRobotMetadataInfoDict]
+        ] = curr_cache.get(sub)
+        if cached_file_info is not None:
+            if cached_file_info.is_cache_valid():
+                new_cache[sub] = cached_file_info
+                return cached_file_info.value
+
         if robot_yaml.exists():
-            # Let's try to get the name from the yaml, if it's
-            # not there, use the folder name.
-            name = sub.name
             from robocorp_ls_core import yaml_wrapper
 
             try:
-                with robot_yaml.open("r", encoding="utf-8") as stream:
-                    yaml_contents = yaml_wrapper.load(stream)
-                    name = yaml_contents.get("name", name)
-            except:
-                log.exception("Unable to get Robot name for: %s", robot_yaml)
 
-            folder_info: LocalRobotMetadataInfoDict = {
-                "directory": str(sub),
-                "name": name,
-            }
-            return folder_info
+                def get_robot_metadata(robot_yaml: Path):
+                    name = robot_yaml.parent.name
+                    with robot_yaml.open("r", encoding="utf-8") as stream:
+                        yaml_contents = yaml_wrapper.load(stream)
+                        name = yaml_contents.get("name", name)
+
+                    robot_metadata: LocalRobotMetadataInfoDict = {
+                        "directory": str(sub),
+                        "filePath": str(robot_yaml),
+                        "name": name,
+                        "yamlContents": yaml_contents,
+                    }
+                    return robot_metadata
+
+                cached_file_info = new_cache[sub] = CachedFileInfo(
+                    robot_yaml, get_robot_metadata
+                )
+                return cached_file_info.value
+
+            except:
+                log.exception(f"Unable to get load robot metadata for: {robot_yaml}")
+
         return None
 
     @command_dispatcher(commands.ROBOCORP_RUN_IN_RCC_INTERNAL)
@@ -392,7 +426,10 @@ class RobocorpLanguageServer(PythonLanguageServer):
         return ret.as_dict()
 
     @command_dispatcher(commands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL)
-    def _local_list_robots(self, params=None) -> ActionResultDict:
+    def _local_list_robots(self, params=None) -> ActionResultDictLocalRobotMetadata:
+        curr_cache = self._local_list_robots_cache
+        new_cache: Dict[Path, CachedFileInfo[LocalRobotMetadataInfoDict]] = {}
+
         ret: List[LocalRobotMetadataInfoDict] = []
         try:
             ws = self.workspace
@@ -400,12 +437,14 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 for folder_path in ws.get_folder_paths():
                     # Check the root directory itself for the robot.yaml.
                     p = Path(folder_path)
-                    robot_metadata = self._get_robot_metadata(p)
+                    robot_metadata = self._get_robot_metadata(p, curr_cache, new_cache)
                     if robot_metadata is not None:
                         ret.append(robot_metadata)
                     elif p.is_dir():
                         for sub in p.iterdir():
-                            robot_metadata = self._get_robot_metadata(sub)
+                            robot_metadata = self._get_robot_metadata(
+                                sub, curr_cache, new_cache
+                            )
                             if robot_metadata is not None:
                                 ret.append(robot_metadata)
 
@@ -413,6 +452,10 @@ class RobocorpLanguageServer(PythonLanguageServer):
         except Exception as e:
             log.exception("Error listing robots.")
             return dict(success=False, message=str(e), result=None)
+        finally:
+            # Set the new cache after we finished computing all entries.
+            self._local_list_robots_cache = new_cache
+
         return dict(success=True, message=None, result=ret)
 
     def _validate_directory(self, directory) -> Optional[str]:

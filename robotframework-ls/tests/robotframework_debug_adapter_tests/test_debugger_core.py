@@ -4,7 +4,7 @@ from typing import List, Optional, Dict, Callable, Iterable
 import pytest  # type: ignore
 
 from robocorp_ls_core.basic import implements
-from robotframework_debug_adapter.dap.dap_schema import StackFrame
+from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StackFrame
 from robotframework_debug_adapter.protocols import IBusyWait, IRobotDebugger
 from robotframework_debug_adapter_tests.fixtures import dbg_wait_for
 

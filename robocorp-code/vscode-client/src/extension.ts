@@ -20,8 +20,10 @@ limitations under the License.
 'use strict';
 
 import * as net from 'net';
+import * as fs from 'fs';
+import * as path from 'path';
 
-import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder, ProgressLocation, Progress } from 'vscode';
+import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder, ProgressLocation, Progress, DebugAdapterExecutable, debug } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
 import * as roboConfig from './robocorpSettings';
 import * as roboCommands from './robocorpCommands';
@@ -30,7 +32,7 @@ import { getExtensionRelativeFile, verifyFileExists } from './files';
 import { getRccLocation } from './rcc';
 import { Timing } from './time';
 import { execFilePromise, ExecFileReturn } from './subprocess';
-import { createRobot, uploadRobot, cloudLogin } from './activities';
+import { createRobot, uploadRobot, cloudLogin, runRobotRCC } from './activities';
 import { sleep } from './time';
 import { handleProgressMessage, ProgressReport } from './progress';
 
@@ -71,9 +73,36 @@ function startLangServerTCP(addr: number): LanguageClient {
 }
 
 
-function registerDebugger(languageServerExecutable: string) {
-    // TODO: Actually provide support to launch a robot.
+function registerDebugger(pythonExecutable: string) {
+    async function createDebugAdapterExecutable(env: { [key: string]: string }, targetRobot: string): Promise<DebugAdapterExecutable> {
+
+        let targetMain: string = path.resolve(__dirname, '../../src/robocorp_code_debug_adapter/__main__.py');
+        if (!fs.existsSync(targetMain)) {
+            window.showWarningMessage('Error. Expected: ' + targetMain + " to exist.");
+            return;
+        }
+        if (!fs.existsSync(pythonExecutable)) {
+            window.showWarningMessage('Error. Expected: ' + pythonExecutable + " to exist.");
+            return;
+        }
+        if (env) {
+            return new DebugAdapterExecutable(pythonExecutable, ['-u', targetMain], { "env": env });
+
+        } else {
+            return new DebugAdapterExecutable(pythonExecutable, ['-u', targetMain]);
+        }
+    };
+
+
+    debug.registerDebugAdapterDescriptorFactory('robocorp-code', {
+        createDebugAdapterDescriptor: session => {
+            let env = session.configuration.env;
+            let target = session.configuration.target;
+            return createDebugAdapterExecutable(env, target);
+        }
+    });
 }
+
 
 let langServer: LanguageClient;
 
@@ -113,9 +142,10 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_GET_LANGUAGE_SERVER_PYTHON, () => getLanguageServerPython());
         commands.registerCommand(roboCommands.ROBOCORP_CREATE_ROBOT, () => createRobot());
         commands.registerCommand(roboCommands.ROBOCORP_UPLOAD_ROBOT_TO_CLOUD, () => uploadRobot());
-        async function cloudLoginShowConfirmation(){
+        commands.registerCommand(roboCommands.ROBOCORP_RUN_ROBOT_RCC, () => runRobotRCC());
+        async function cloudLoginShowConfirmation() {
             let loggedIn = await cloudLogin();
-            if(loggedIn){
+            if (loggedIn) {
                 window.showInformationMessage("Successfully logged in Robocloud.")
             }
         }
@@ -128,7 +158,7 @@ export async function activate(context: ExtensionContext) {
         OUTPUT_CHANNEL.appendLine("Waiting for Robocorp Code (python) language server to finish activating...");
         await langServer.onReady();
         OUTPUT_CHANNEL.appendLine("Robocorp Code extension ready. Took: " + timing.getTotalElapsedAsStr());
-        
+
         langServer.onNotification("$/customProgress", (args: ProgressReport) => {
             // OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
             handleProgressMessage(args)

@@ -103,13 +103,28 @@ def config_provider(
 
 
 @pytest.fixture
-def rcc(config_provider: IConfigProvider, rcc_location: str) -> IRcc:
+def rcc(config_provider: IConfigProvider, rcc_config_location: str) -> IRcc:
     from robocorp_code.rcc import Rcc
 
     rcc = Rcc(config_provider)
     # We don't want to track tests.
-    result = rcc._run_rcc("feedback identity --do-not-track".split(), expect_ok=False)
-    assert result.success
+    for _i in range(2):
+        # There's a bug in which the --do-not-track doesn't work the first time.
+        result = rcc._run_rcc(
+            "feedback identity --do-not-track --config".split() + [rcc_config_location],
+            expect_ok=False,
+        )
+        assert result.success
+        result_msg = result.result
+        assert result_msg
+        if "enabled" in result_msg:
+            continue
+        if "disabled" in result_msg:
+            break
+        raise AssertionError(f"Did not expect {result_msg}")
+    else:
+        raise AssertionError(f"Did not expect {result_msg}")
+
     return rcc
 
 

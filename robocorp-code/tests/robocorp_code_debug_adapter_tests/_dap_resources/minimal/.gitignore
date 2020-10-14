@@ -1,0 +1,13 @@
+testrun/
+output/
+venv/
+temp/
+.rpa/
+.idea/
+.ipynb_checkpoints/
+.virtual_documents/
+*/.ipynb_checkpoints/*
+.vscode
+.DS_Store
+*.pyc
+*.zip

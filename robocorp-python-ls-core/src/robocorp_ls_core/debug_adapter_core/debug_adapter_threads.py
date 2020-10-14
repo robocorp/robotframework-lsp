@@ -25,9 +25,8 @@ writer_thread just keeps on sending any message posted to the queue it receives.
 
 from functools import partial
 import itertools
-from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.robotframework_log import get_logger, get_log_level
 import json
-from robotframework_debug_adapter.constants import DEBUG
 from typing import Optional, Dict
 
 
@@ -55,7 +54,7 @@ def read(stream, debug_prefix=b"read") -> Optional[Dict]:
         # Interpret the http protocol headers
         line = stream.readline()  # The trailing \r\n should be there.
 
-        if DEBUG:
+        if get_log_level() > 1:
             log.debug(
                 (
                     debug_prefix
@@ -82,7 +81,7 @@ def read(stream, debug_prefix=b"read") -> Optional[Dict]:
 
     # Get the actual json
     body = _read_len(stream, content_length)
-    if DEBUG:
+    if get_log_level() > 1:
         log.debug((debug_prefix + b": %s" % (body,)).decode("utf-8", "replace"))
 
     return json.loads(body.decode("utf-8"))
@@ -111,12 +110,12 @@ def _read_len(stream, content_length) -> bytes:
 
 
 def reader_thread(stream, process_command, write_queue, debug_prefix=b"read"):
-    from robotframework_debug_adapter.dap import dap_base_schema
+    from robocorp_ls_core.debug_adapter_core.dap import dap_base_schema
 
-    from robotframework_debug_adapter.dap import (
+    from robocorp_ls_core.debug_adapter_core.dap import (
         dap_schema,  # @UnusedImport -- register classes
     )
-    from robotframework_debug_adapter.dap.dap_schema import Response
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Response
 
     try:
         while True:
@@ -182,7 +181,7 @@ def writer_thread_no_auto_seq(stream, queue, debug_prefix="write"):
                         log.exception("Error serializing %s to json.", to_write)
                         continue
 
-            if DEBUG:
+            if get_log_level() > 1:
                 log.debug(debug_prefix + ": %s\n", to_write)
 
             if to_write.__class__ == bytes:
@@ -234,7 +233,7 @@ def writer_thread(stream, queue, debug_prefix="write"):
                         log.exception("Error serializing %s to json.", to_write)
                         continue
 
-            if DEBUG:
+            if get_log_level() > 1:
                 log.debug(debug_prefix + ": %s\n", to_write)
 
             if to_write.__class__ == bytes:

@@ -19,8 +19,10 @@ else:
 
 
 class LocalRobotMetadataInfoDict(TypedDict):
-    directory: str
-    name: str
+    directory: str  # The directory that contains the robot.yaml
+    filePath: str  # The path to the robot.yaml
+    name: str  # The name of the robot
+    yamlContents: dict  # The contents of the robot.yaml
 
 
 class PackageInfoDict(TypedDict):
@@ -77,6 +79,14 @@ class ActionResultDict(TypedDict):
         str
     ]  # if success == False, this can be some message to show to the user
     result: Any
+
+
+class ActionResultDictLocalRobotMetadata(TypedDict):
+    success: bool
+    message: Optional[
+        str
+    ]  # if success == False, this can be some message to show to the user
+    result: Optional[List[LocalRobotMetadataInfoDict]]
 
 
 class ListWorkspacesActionResultDict(TypedDict):

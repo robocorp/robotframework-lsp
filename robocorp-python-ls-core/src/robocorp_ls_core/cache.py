@@ -1,10 +1,15 @@
-import functools
-import os
-from robocorp_ls_core.robotframework_log import get_logger
-from typing import Any
-from robocorp_ls_core.protocols import IDirCache, check_implements
 from robocorp_ls_core.basic import implements
 from robocorp_ls_core.constants import NULL
+from robocorp_ls_core.protocols import IDirCache, check_implements, T
+from robocorp_ls_core.robotframework_log import get_logger
+
+from collections import namedtuple
+from pathlib import Path
+from typing import Any, Generic, Callable
+from typing import Optional, Tuple
+import functools
+import os
+
 
 log = get_logger(__name__)
 
@@ -165,3 +170,34 @@ class DirCache(object):
 
     def __typecheckself__(self) -> None:
         _: IDirCache = check_implements(self)
+
+
+CachedFileMTimeInfo = namedtuple("CachedFileMTimeInfo", "st_mtime, st_size, path")
+
+
+class CachedFileInfo(Generic[T]):
+    def __init__(self, file_path: Path, compute_value: Callable[[Path], T]):
+        self._file_path = file_path
+        self._mtime_info: CachedFileMTimeInfo = self._get_mtime_cache_info(file_path)
+        # Note that we only get the value after getting the mtime (so, the
+        # constructor receives a callable and not the value so that the cache
+        # has no risk of having stale values).
+        self._value = compute_value(file_path)
+
+    @property
+    def value(self) -> T:
+        return self._value
+
+    @property
+    def file_path(self) -> Path:
+        return self._file_path
+
+    def _get_mtime_cache_info(self, file_path: Path) -> CachedFileMTimeInfo:
+        """
+        Cache based on the time/size of a given path.
+        """
+        stat = file_path.stat()
+        return CachedFileMTimeInfo(stat.st_mtime, stat.st_size, str(file_path))
+
+    def is_cache_valid(self) -> bool:
+        return self._mtime_info == self._get_mtime_cache_info(self.file_path)

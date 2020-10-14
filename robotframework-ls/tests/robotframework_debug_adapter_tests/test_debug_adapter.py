@@ -17,9 +17,9 @@ from robotframework_debug_adapter_tests.fixtures import _DebuggerAPI
 
 
 def test_invalid_launch_1(debugger_api: _DebuggerAPI):
-    from robotframework_debug_adapter.dap.dap_schema import LaunchRequest
-    from robotframework_debug_adapter.dap.dap_schema import LaunchRequestArguments
-    from robotframework_debug_adapter.dap.dap_schema import Response
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import LaunchRequest
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import LaunchRequestArguments
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Response
 
     debugger_api.initialize()
 
@@ -51,9 +51,9 @@ def test_error_handling(debugger_api: _DebuggerAPI):
     This is an integrated test of the debug adapter. It communicates with it as if it was
     VSCode.
     """
-    from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
-    from robotframework_debug_adapter.dap.dap_schema import Response
-    from robotframework_debug_adapter.dap.dap_schema import Request
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Response
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Request
 
     debugger_api.initialize()
     target = debugger_api.get_dap_case_file("case_log.robot")
@@ -84,8 +84,8 @@ def test_simple_launch(debugger_api: _DebuggerAPI):
     This is an integrated test of the debug adapter. It communicates with it as if it was
     VSCode.
     """
-    from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
-    from robotframework_debug_adapter.dap.dap_schema import OutputEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEvent
 
     debugger_api.initialize()
 
@@ -100,7 +100,7 @@ def test_simple_launch(debugger_api: _DebuggerAPI):
 
 
 def test_simple_debug_launch(debugger_api: _DebuggerAPI):
-    from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
 
     debugger_api.initialize()
     target = debugger_api.get_dap_case_file("case_log.robot")
@@ -121,7 +121,7 @@ def test_simple_debug_launch(debugger_api: _DebuggerAPI):
 
 
 def test_step_in(debugger_api: _DebuggerAPI):
-    from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
 
     debugger_api.initialize()
     target = debugger_api.get_dap_case_file("case4/case4.robot")
@@ -156,7 +156,7 @@ def format_stack_frames(stack_frames):
 
 
 def test_debugger_for_workflow(debugger_api, data_regression):
-    from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
 
     debugger_api.initialize()
     target = debugger_api.get_dap_case_file(
@@ -189,7 +189,7 @@ def test_debugger_for_workflow(debugger_api, data_regression):
 
 
 def test_step_next(debugger_api: _DebuggerAPI):
-    from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
 
     debugger_api.initialize()
     target = debugger_api.get_dap_case_file("case4/case4.robot")
@@ -215,7 +215,7 @@ def test_step_next(debugger_api: _DebuggerAPI):
 
 
 def test_step_out(debugger_api: _DebuggerAPI):
-    from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
 
     debugger_api.initialize()
     target = debugger_api.get_dap_case_file("case_step_out.robot")
@@ -241,7 +241,7 @@ def test_step_out(debugger_api: _DebuggerAPI):
 
 
 def test_variables(debugger_api: _DebuggerAPI):
-    from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
 
     debugger_api.initialize()
     target = debugger_api.get_dap_case_file("case4/case4.robot")
@@ -291,7 +291,7 @@ def test_launch_in_external_terminal(debugger_api: _DebuggerAPI):
     This is an integrated test of the debug adapter. It communicates with it as if it was
     VSCode.
     """
-    from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
 
     debugger_api.initialize()
 
@@ -302,7 +302,7 @@ def test_launch_in_external_terminal(debugger_api: _DebuggerAPI):
 
 
 def test_evaluate(debugger_api: _DebuggerAPI):
-    from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
 
     debugger_api.initialize()
     target = debugger_api.get_dap_case_file("case_evaluate.robot")

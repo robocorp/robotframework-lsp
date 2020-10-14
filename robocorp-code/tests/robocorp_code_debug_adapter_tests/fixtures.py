@@ -17,7 +17,6 @@
 # limitations under the License.
 from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
 from robocorp_ls_core.subprocess_wrapper import subprocess
-from collections import namedtuple
 
 import queue
 import threading
@@ -25,15 +24,13 @@ import threading
 import pytest  # type: ignore
 import sys
 import os
-from typing import Dict, Optional, Iterable
+from typing import Optional, Iterable
 from robocorp_ls_core.options import DEFAULT_TIMEOUT
 
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
     __file__ = __file__[:-1]
-
-_JsonHit = namedtuple("_JsonHit", "thread_id, frame_id, stack_trace_response")
 
 
 @pytest.fixture
@@ -59,7 +56,7 @@ def dap_logs_dir(tmpdir):
 
 @pytest.fixture
 def dap_log_file(dap_logs_dir):
-    filename = str(dap_logs_dir.join("robotframework_dap_tests.log"))
+    filename = str(dap_logs_dir.join("robocorp_code_dap_tests.log"))
     sys.stderr.write("Logging subprocess to: %s\n" % (filename,))
 
     yield filename
@@ -67,7 +64,7 @@ def dap_log_file(dap_logs_dir):
 
 @pytest.fixture
 def dap_process_stderr_file(dap_logs_dir):
-    filename = str(dap_logs_dir.join("robotframework_dap_tests_stderr.log"))
+    filename = str(dap_logs_dir.join("robocorp_code_dap_tests_stderr.log"))
     sys.stderr.write("Output subprocess stderr to: %s\n" % (filename,))
     with open(filename, "wb") as stream:
         yield stream
@@ -75,12 +72,12 @@ def dap_process_stderr_file(dap_logs_dir):
 
 @pytest.fixture
 def dap_process(dap_log_file, dap_process_stderr_file):
-    from robotframework_debug_adapter import __main__
+    from robocorp_code_debug_adapter import __main__
     from robocorp_ls_core.basic import kill_process_and_subprocesses
 
     env = os.environ.copy()
-    env["ROBOTFRAMEWORK_DAP_LOG_LEVEL"] = "3"
-    env["ROBOTFRAMEWORK_DAP_LOG_FILENAME"] = dap_log_file
+    env["ROBOCORP_CODE_DAP_LOG_LEVEL"] = "3"
+    env["ROBOCORP_CODE_DAP_LOG_FILENAME"] = dap_log_file
 
     dap_process = subprocess.Popen(
         [sys.executable, "-u", __main__.__file__],
@@ -120,14 +117,14 @@ class _DebuggerAPI(object):
         self.write_queue.put(msg)
         return msg
 
-    def read(self, expect_class=None, accept_msg=None):
+    def read(self, expect_class=None, accept_msg=None, timeout=TIMEOUT):
         """
         Waits for a message and returns it (may throw error if there's a timeout waiting for the message).
         """
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEvent
 
         while True:
-            msg = self.read_queue.get(timeout=TIMEOUT)
+            msg = self.read_queue.get(timeout=timeout)
             if hasattr(msg, "to_dict"):
                 sys.stderr.write("Read: %s\n\n" % (msg.to_dict(),))
             else:
@@ -171,7 +168,7 @@ class _DebuggerAPI(object):
 
         return ret
 
-    def initialize(self):
+    def initialize(self, rcc_config_location):
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import InitializeRequest
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             InitializeRequestArguments,
@@ -183,7 +180,7 @@ class _DebuggerAPI(object):
         self.write(
             InitializeRequest(
                 InitializeRequestArguments(
-                    adapterID="robotframework-lsp-adapter",
+                    adapterID="robocorp-code-adapter",
                     clientID="Stub",
                     clientName="stub",
                     locale="en-us",
@@ -193,6 +190,7 @@ class _DebuggerAPI(object):
                     supportsVariableType=True,
                     supportsVariablePaging=True,
                     supportsRunInTerminalRequest=True,
+                    rccConfigLocation=rcc_config_location,
                 )
             )
         )
@@ -214,46 +212,11 @@ class _DebuggerAPI(object):
         self.write(ConfigurationDoneRequest())
         self.read(ConfigurationDoneResponse)
 
-    def step_in(self, thread_id):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StepInRequest
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StepInArguments
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StepInResponse
-
-        arguments = StepInArguments(threadId=thread_id)
-        self.write(StepInRequest(arguments))
-        self.read(StepInResponse)
-
-    def step_next(self, thread_id):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import NextRequest
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import NextArguments
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import NextResponse
-
-        arguments = NextArguments(threadId=thread_id)
-        self.write(NextRequest(arguments))
-        self.read(NextResponse)
-
-    def step_out(self, thread_id):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StepOutArguments
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StepOutRequest
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StepOutResponse
-
-        arguments = StepOutArguments(threadId=thread_id)
-        self.write(StepOutRequest(arguments))
-        self.read(StepOutResponse)
-
-    def continue_event(self):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ContinueRequest
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ContinueArguments
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ContinueResponse
-
-        arguments = ContinueArguments(None)
-        self.write(ContinueRequest(arguments))
-        self.read(ContinueResponse)
-
     def launch(
         self,
-        target,
-        debug=True,
+        robot,
+        task,
+        debug=False,
         success=True,
         terminal="none",
         args: Optional[Iterable[str]] = None,
@@ -269,30 +232,19 @@ class _DebuggerAPI(object):
             LaunchRequestArguments,
         )
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import LaunchResponse
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
-            RunInTerminalRequest,
-        )
-        from robocorp_ls_core.basic import as_str
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import InitializedEvent
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Response
 
         launch_args = LaunchRequestArguments(
-            __sessionId="some_id", noDebug=not debug, target=target, terminal=terminal
+            __sessionId="some_id",
+            noDebug=not debug,
+            robot=robot,
+            task=task,
+            terminal=terminal,
         )
         if args:
             launch_args.kwargs["args"] = args
         self.write(LaunchRequest(launch_args))
-
-        if terminal == "external":
-            run_in_terminal_request = self.read(RunInTerminalRequest)
-            env = os.environ.copy()
-            for key, val in run_in_terminal_request.arguments.env.to_dict().items():
-                env[as_str(key)] = as_str(val)
-
-            cwd = run_in_terminal_request.arguments.cwd
-            popen_args = run_in_terminal_request.arguments.args
-
-            subprocess.Popen(popen_args, cwd=cwd, env=env)
 
         if success:
             # Initialized is sent just before the launch response (at which
@@ -363,145 +315,6 @@ class _DebuggerAPI(object):
 
         return self.read((response_class, Response), accept_message)
 
-    def get_stack_as_json_hit(self, thread_id):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
-            StackTraceArguments,
-        )
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StackTraceRequest
-
-        stack_trace_request = self.write(
-            StackTraceRequest(StackTraceArguments(threadId=thread_id))
-        )
-
-        # : :type stack_trace_response: StackTraceResponse
-        # : :type stack_trace_response_body: StackTraceResponseBody
-        # : :type stack_frame: StackFrame
-        stack_trace_response = self.wait_for_response(stack_trace_request)
-        stack_trace_response_body = stack_trace_response.body
-        assert len(stack_trace_response_body.stackFrames) > 0
-
-        stack_frame = next(iter(stack_trace_response_body.stackFrames))
-
-        return _JsonHit(
-            thread_id=thread_id,
-            frame_id=stack_frame["id"],
-            stack_trace_response=stack_trace_response,
-        )
-
-    def wait_for_thread_stopped(
-        self, reason="breakpoint", line=None, file=None, name=None
-    ):
-        """
-        :param file:
-            utf-8 bytes encoded file or unicode
-        """
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StoppedEvent
-
-        stopped_event = self.read(StoppedEvent)
-        assert stopped_event.body.reason == reason
-        json_hit = self.get_stack_as_json_hit(stopped_event.body.threadId)
-        if file is not None:
-            path = json_hit.stack_trace_response.body.stackFrames[0]["source"]["path"]
-
-            if not path.endswith(file):
-                raise AssertionError("Expected path: %s to end with: %s" % (path, file))
-        if name is not None:
-            assert json_hit.stack_trace_response.body.stackFrames[0]["name"] == name
-        if line is not None:
-            found_line = json_hit.stack_trace_response.body.stackFrames[0]["line"]
-            if not isinstance(line, (tuple, list)):
-                line = [line]
-            assert found_line in line, "Expect to break at line: %s. Found: %s" % (
-                line,
-                found_line,
-            )
-        return json_hit
-
-    def get_line_index_with_content(self, line_content, filename=None):
-        """
-        :return the line index which has the given content (1-based).
-        """
-        if filename is None:
-            filename = self.target
-        with open(filename, "r") as stream:
-            for i_line, line in enumerate(stream):
-                if line_content in line:
-                    return i_line + 1
-        raise AssertionError("Did not find: %s in %s" % (line_content, filename))
-
-    def get_name_to_scope(self, frame_id):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ScopesArguments
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ScopesRequest
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Scope
-
-        scopes_request = self.write(ScopesRequest(ScopesArguments(frame_id)))
-
-        scopes_response = self.wait_for_response(scopes_request)
-
-        scopes = scopes_response.body.scopes
-        name_to_scopes = dict((scope["name"], Scope(**scope)) for scope in scopes)
-
-        assert len(scopes) == 3
-        assert sorted(name_to_scopes.keys()) == ["Arguments", "Builtins", "Variables"]
-        assert name_to_scopes["Arguments"].presentationHint == "locals"
-
-        return name_to_scopes
-
-    def get_name_to_var(self, variables_reference):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Variable
-
-        variables_response = self.get_variables_response(variables_reference)
-        return dict(
-            (variable["name"], Variable(**variable))
-            for variable in variables_response.body.variables
-        )
-
-    def get_arguments_name_to_var(self, frame_id: int) -> Dict[str, str]:
-        name_to_scope = self.get_name_to_scope(frame_id)
-
-        return self.get_name_to_var(name_to_scope["Arguments"].variablesReference)
-
-    def get_variables_name_to_var(self, frame_id: int) -> Dict[str, str]:
-        name_to_scope = self.get_name_to_scope(frame_id)
-
-        return self.get_name_to_var(name_to_scope["Variables"].variablesReference)
-
-    def get_builtins_name_to_var(self, frame_id: int) -> Dict[str, str]:
-        name_to_scope = self.get_name_to_scope(frame_id)
-
-        return self.get_name_to_var(name_to_scope["Builtins"].variablesReference)
-
-    def get_variables_response(self, variables_reference, fmt=None, success=True):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import VariablesRequest
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
-            VariablesArguments,
-        )
-
-        variables_request = self.write(
-            VariablesRequest(VariablesArguments(variables_reference, format=fmt))
-        )
-        variables_response = self.wait_for_response(variables_request)
-        assert variables_response.success == success
-        return variables_response
-
-    def evaluate(self, expression, frameId=None, context=None, fmt=None, success=True):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import EvaluateRequest
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import EvaluateArguments
-
-        eval_request = self.write(
-            EvaluateRequest(
-                EvaluateArguments(
-                    expression, frameId=frameId, context=context, format=fmt
-                )
-            )
-        )
-        eval_response = self.wait_for_response(eval_request)
-        assert eval_response.success == success, (
-            "Expected success to be: %s (found: %s).\nMessage:\n%s"
-            % (success, eval_response.success, eval_response.to_dict())
-        )
-        return eval_response
-
 
 @pytest.fixture(scope="session")
 def dap_resources_dir(tmpdir_factory):
@@ -557,45 +370,6 @@ def debugger_api(dap_process, dap_resources_dir):
         write_queue=write_queue,
         read_queue=read_queue,
         dap_resources_dir=dap_resources_dir,
-    )
-
-
-class RunRobotThread(threading.Thread):
-    def __init__(self, dap_logs_dir):
-        threading.Thread.__init__(self)
-        self.target = None
-        self.dap_logs_dir = dap_logs_dir
-        self.result_code = None
-        self.result_event = threading.Event()
-
-    def run(self):
-        import robot  # type: ignore
-
-        code = robot.run_cli(
-            [
-                "--outputdir=%s" % (self.dap_logs_dir,),
-                "--listener=robotframework_debug_adapter.listeners.DebugListener",
-                self.target,
-            ],
-            exit=False,
-        )
-        self.result_code = code
-
-    def run_target(self, target):
-        self.target = target
-        self.start()
-
-
-@pytest.fixture
-def robot_thread(dap_logs_dir):
-    """
-    Fixture for interacting with the debugger api through a thread.
-    """
-    t = RunRobotThread(dap_logs_dir)
-    yield t
-    dbg_wait_for(
-        lambda: t.result_code is not None,
-        msg="Robot execution did not finish properly.",
     )
 
 

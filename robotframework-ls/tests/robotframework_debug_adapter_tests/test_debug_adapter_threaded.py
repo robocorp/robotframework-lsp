@@ -56,15 +56,15 @@ class _ClientThread(threading.Thread):
         self.debugger_api: Optional[_DebuggerAPI] = None
 
     def run(self) -> None:
-        from robotframework_debug_adapter.debug_adapter_threads import (
+        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
             STOP_WRITER_THREAD,
         )
 
         socket, _addr = self._server_socket.accept()
         self._server_socket.close()
 
-        from robotframework_debug_adapter.debug_adapter_threads import writer_thread
-        from robotframework_debug_adapter.debug_adapter_threads import reader_thread
+        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import writer_thread
+        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import reader_thread
         import queue
         from robotframework_debug_adapter_tests.fixtures import _DebuggerAPI
 
@@ -127,7 +127,7 @@ def test_debug_adapter_threaded(
     """
     import robotframework_ls
     from robotframework_debug_adapter_tests.fixtures import dbg_wait_for
-    from robotframework_debug_adapter.debug_adapter_threads import STOP_WRITER_THREAD
+    from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import STOP_WRITER_THREAD
 
     robotframework_ls.import_robocorp_ls_core()
 

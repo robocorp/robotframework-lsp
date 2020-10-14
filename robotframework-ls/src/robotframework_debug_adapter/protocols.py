@@ -1,7 +1,7 @@
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 import sys
 from typing import TypeVar, List, Union, Any, Optional, Iterable
-from robotframework_debug_adapter.dap.dap_schema import StackFrame
+from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StackFrame
 from robocorp_ls_core.protocols import IFuture
 
 if sys.version_info[:2] < (3, 8):

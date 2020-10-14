@@ -75,10 +75,10 @@ class _DebugAdapterRobotTargetComm(threading.Thread):
         return port
 
     def run(self):
-        from robotframework_debug_adapter.debug_adapter_threads import (
+        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
             writer_thread_no_auto_seq,
         )
-        from robotframework_debug_adapter.debug_adapter_threads import reader_thread
+        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import reader_thread
 
         try:
             assert (
@@ -120,7 +120,7 @@ class _DebugAdapterRobotTargetComm(threading.Thread):
             log.exception()
 
     def _from_robot(self, protocol_message):
-        from robotframework_debug_adapter.debug_adapter_threads import (
+        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
             READER_THREAD_STOPPED,
         )
 
@@ -191,8 +191,8 @@ class _DebugAdapterRobotTargetComm(threading.Thread):
             log.debug("Command processor collected in event: %s" % (event,))
 
     def on_terminated_event(self, event):
-        from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
-        from robotframework_debug_adapter.dap.dap_schema import TerminatedEventBody
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEventBody
 
         self._terminated_event_msg = event
         self._terminated_event.set()
@@ -414,8 +414,8 @@ class LaunchProcess(object):
         if self._sent_terminated.is_set():
             return
         self._sent_terminated.set()
-        from robotframework_debug_adapter.dap.dap_schema import TerminatedEvent
-        from robotframework_debug_adapter.dap.dap_schema import TerminatedEventBody
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEventBody
 
         debug_adapter_comm = self._weak_debug_adapter_comm()
         if debug_adapter_comm is not None:
@@ -426,8 +426,8 @@ class LaunchProcess(object):
             debug_adapter_comm.write_to_client_message(terminated_event)
 
     def send_and_wait_for_configuration_done_request(self):
-        from robotframework_debug_adapter.dap.dap_schema import ConfigurationDoneRequest
-        from robotframework_debug_adapter.dap.dap_schema import (
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ConfigurationDoneRequest
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             ConfigurationDoneArguments,
         )
 
@@ -465,14 +465,14 @@ class LaunchProcess(object):
         from robotframework_debug_adapter.constants import TERMINAL_NONE
         from robotframework_debug_adapter.constants import TERMINAL_EXTERNAL
         from robotframework_debug_adapter.constants import TERMINAL_INTEGRATED
-        from robotframework_debug_adapter.dap.dap_schema import RunInTerminalRequest
-        from robotframework_debug_adapter.dap.dap_schema import (
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import RunInTerminalRequest
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             RunInTerminalRequestArguments,
         )
-        from robotframework_debug_adapter.dap.dap_schema import OutputEvent
-        from robotframework_debug_adapter.dap.dap_schema import OutputEventBody
-        from robotframework_debug_adapter.dap.dap_schema import InitializeRequest
-        from robotframework_debug_adapter.dap.dap_schema import (
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEvent
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEventBody
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import InitializeRequest
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             InitializeRequestArguments,
         )
 

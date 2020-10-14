@@ -32,7 +32,7 @@ from robotframework_debug_adapter.protocols import (
 )
 from typing import Optional, List, Iterable, Union, Any, Dict, FrozenSet
 from robocorp_ls_core.basic import implements
-from robotframework_debug_adapter.dap.dap_schema import (
+from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
     StackFrame,
     Scope,
     Source,
@@ -324,7 +324,7 @@ class _StackInfo(object):
         return frame_id
 
     def add_test_entry_stack(self, name: str, filename: str, lineno: int) -> int:
-        from robotframework_debug_adapter.dap import dap_schema
+        from robocorp_ls_core.debug_adapter_core.dap import dap_schema
 
         frame_id: int = next_id()
         dap_frame = dap_schema.StackFrame(
