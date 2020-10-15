@@ -1,3 +1,9 @@
+New in 0.2.0 (2020-10-15)
+-----------------------------
+
+- Launching Robot Tasks from `robot.yaml` is now available.
+
+
 New in 0.1.3 (2020-10-12)
 -----------------------------
 
