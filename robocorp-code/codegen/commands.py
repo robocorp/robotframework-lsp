@@ -107,6 +107,12 @@ COMMANDS = [
         server_handled=False,
     ),
     Command(
+        "robocorp.debugRobotRcc",
+        "Debug Robot",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
+    Command(
         "robocorp.saveInDiskLRU",
         "Saves some data in an LRU in the disk",
         add_to_package_json=False,
@@ -115,6 +121,12 @@ COMMANDS = [
     Command(
         "robocorp.loadFromDiskLRU",
         "Loads some LRU data from the disk",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
+    Command(
+        "robocorp.computeRobotLaunchFromRobocorpCodeLaunch",
+        "Computes a robot launch debug configuration based on the robocorp code launch debug configuration",
         add_to_package_json=False,
         server_handled=True,
     ),

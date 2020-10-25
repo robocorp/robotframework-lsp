@@ -15,5 +15,7 @@ export const ROBOCORP_UPLOAD_TO_NEW_ROBOT_INTERNAL = "robocorp.uploadToNewRobot.
 export const ROBOCORP_UPLOAD_TO_EXISTING_ROBOT_INTERNAL = "robocorp.uploadToExistingRobot.internal";  // Uploads an Robot as an existing Robot in the cloud
 export const ROBOCORP_RUN_IN_RCC_INTERNAL = "robocorp.runInRcc.internal";  // Runs a custom command in RCC
 export const ROBOCORP_RUN_ROBOT_RCC = "robocorp.runRobotRcc";  // Run Robot
+export const ROBOCORP_DEBUG_ROBOT_RCC = "robocorp.debugRobotRcc";  // Debug Robot
 export const ROBOCORP_SAVE_IN_DISK_LRU = "robocorp.saveInDiskLRU";  // Saves some data in an LRU in the disk
 export const ROBOCORP_LOAD_FROM_DISK_LRU = "robocorp.loadFromDiskLRU";  // Loads some LRU data from the disk
+export const ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH = "robocorp.computeRobotLaunchFromRobocorpCodeLaunch";  // Computes a robot launch debug configuration based on the robocorp code launch debug configuration

@@ -23,7 +23,7 @@ import * as net from 'net';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder, ProgressLocation, Progress, DebugAdapterExecutable, debug } from 'vscode';
+import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder, ProgressLocation, Progress, DebugAdapterExecutable, debug, DebugConfiguration, DebugConfigurationProvider, CancellationToken, ProviderResult } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
 import * as roboConfig from './robocorpSettings';
 import * as roboCommands from './robocorpCommands';
@@ -72,10 +72,106 @@ function startLangServerTCP(addr: number): LanguageClient {
     return new LanguageClient(`tcp lang server (port ${addr})`, serverOptions, clientOptions);
 }
 
+interface InterpreterInfo {
+    pythonExe: string;
+    environ?: { [key: string]: string };
+    additionalPythonpathEntries: string[];
+}
+
+interface ActionResult {
+    success: boolean;
+    message: string;
+    result: any;
+}
+
+interface ResolvedConfig {
+    target: string;
+    args: string[];
+    cwd: string;
+}
+
+class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvider {
+
+    async resolveDebugConfigurationWithSubstitutedVariables(folder: WorkspaceFolder | undefined, debugConfiguration: DebugConfiguration, token?: CancellationToken): Promise<DebugConfiguration> {
+        if (debugConfiguration.noDebug) {
+            // Not running with debug: just use rcc to launch.
+            return debugConfiguration;
+        }
+        // If it's a debug run, we need to get the input contents -- something as:
+        // "type": "robocorp-code",
+        // "name": "Robocorp Code: Launch task from current robot.yaml",
+        // "request": "launch",
+        // "robot": "c:/robot.yaml",
+        // "task": "entrypoint",
+        //
+        // and convert it to the contents expected by robotframework-lsp:
+        //
+        // "type": "robotframework-lsp",
+        // "name": "Robot: Current File",
+        // "request": "launch",
+        // "cwd": "${workspaceFolder}",
+        // "target": "c:/task.robot",
+        //
+        // (making sure that we can actually do this and it's a robot launch for the task)
+
+        if (!fs.existsSync(debugConfiguration.robot)) {
+            window.showWarningMessage('Error. Expected: specified "robot": ' + debugConfiguration.robot + " to exist.");
+            return;
+        }
+
+        // Note: this will also activate robotframework-lsp if it's still not activated.
+        let interpreter: InterpreterInfo = undefined;
+        try {
+            interpreter = await commands.executeCommand('robot.resolveInterpreter', debugConfiguration.robot);
+        } catch (error) {
+            window.showWarningMessage('Error resolving interpreter info: ' + error);
+            return;
+        }
+
+        if (!interpreter) {
+            window.showErrorMessage("Unable to resolve robot.yaml based on: " + debugConfiguration.robot)
+            return;
+        }
+
+        let actionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH, {
+            'robot': debugConfiguration.robot,
+            'task': debugConfiguration.task,
+        });
+
+        if (!actionResult.success) {
+            window.showErrorMessage(actionResult.message)
+            return;
+        }
+
+        let newConfig: ResolvedConfig = actionResult.result;
+        let args: string[] = newConfig.args;
+        let env = interpreter.environ;
+
+        if (interpreter.additionalPythonpathEntries) {
+            interpreter.additionalPythonpathEntries.forEach(element => {
+                args.push('--pythonpath');
+                args.push(element);
+            });
+        }
+
+        return {
+            'type': 'robotframework-lsp',
+            'name': debugConfiguration.name,
+            'request': debugConfiguration.request,
+            'cwd': newConfig.cwd,
+            'target': newConfig.target,
+            'args': args,
+            'env': env,
+            'terminal': 'none',
+        }
+    };
+}
+
+
 
 function registerDebugger(pythonExecutable: string) {
-    async function createDebugAdapterExecutable(env: { [key: string]: string }, targetRobot: string): Promise<DebugAdapterExecutable> {
-
+    async function createDebugAdapterExecutable(config: DebugConfiguration): Promise<DebugAdapterExecutable> {
+        let env = config.env;
         let targetMain: string = path.resolve(__dirname, '../../src/robocorp_code_debug_adapter/__main__.py');
         if (!fs.existsSync(targetMain)) {
             window.showWarningMessage('Error. Expected: ' + targetMain + " to exist.");
@@ -96,11 +192,12 @@ function registerDebugger(pythonExecutable: string) {
 
     debug.registerDebugAdapterDescriptorFactory('robocorp-code', {
         createDebugAdapterDescriptor: session => {
-            let env = session.configuration.env;
-            let target = session.configuration.target;
-            return createDebugAdapterExecutable(env, target);
+            const config: DebugConfiguration = session.configuration;
+            return createDebugAdapterExecutable(config);
         }
     });
+
+    debug.registerDebugConfigurationProvider('robocorp-code', new RobocorpCodeDebugConfigurationProvider());
 }
 
 
@@ -142,7 +239,8 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_GET_LANGUAGE_SERVER_PYTHON, () => getLanguageServerPython());
         commands.registerCommand(roboCommands.ROBOCORP_CREATE_ROBOT, () => createRobot());
         commands.registerCommand(roboCommands.ROBOCORP_UPLOAD_ROBOT_TO_CLOUD, () => uploadRobot());
-        commands.registerCommand(roboCommands.ROBOCORP_RUN_ROBOT_RCC, () => runRobotRCC());
+        commands.registerCommand(roboCommands.ROBOCORP_RUN_ROBOT_RCC, () => runRobotRCC(true));
+        commands.registerCommand(roboCommands.ROBOCORP_DEBUG_ROBOT_RCC, () => runRobotRCC(false));
         async function cloudLoginShowConfirmation() {
             let loggedIn = await cloudLogin();
             if (loggedIn) {

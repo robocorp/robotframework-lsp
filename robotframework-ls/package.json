@@ -31,7 +31,8 @@
     "activationEvents": [
         "onLanguage:robotframework",
         "onDebugInitialConfigurations",
-        "onDebugResolve:robotframework-lsp"
+        "onDebugResolve:robotframework-lsp",
+        "onCommand:robot.resolveInterpreter"
     ],
     "galleryBanner": {
         "theme": "dark",

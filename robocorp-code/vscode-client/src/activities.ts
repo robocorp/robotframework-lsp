@@ -365,7 +365,7 @@ export async function uploadRobot() {
     } while (true);
 }
 
-export async function runRobotRCC() {
+export async function runRobotRCC(noDebug: boolean) {
     let textEditor = window.activeTextEditor;
     let fileName: string | undefined = undefined;
 
@@ -444,7 +444,7 @@ export async function runRobotRCC() {
         'robot': selectedItem.robotYaml,
         'task': selectedItem.taskName,
         'args': [],
-        'noDebug': true,
+        'noDebug': noDebug,
     };
     let debugSessionOptions: DebugSessionOptions = {};
     debug.startDebugging(undefined, debugConfiguration, debugSessionOptions)

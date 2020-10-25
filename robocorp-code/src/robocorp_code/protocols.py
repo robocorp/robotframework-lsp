@@ -81,6 +81,20 @@ class ActionResultDict(TypedDict):
     result: Any
 
 
+class RobotLaunchDict(TypedDict):
+    target: str
+    cwd: str
+    args: List[str]
+
+
+class ActionResultDictRobotLaunch(TypedDict):
+    success: bool
+    message: Optional[
+        str
+    ]  # if success == False, this can be some message to show to the user
+    result: Optional[RobotLaunchDict]
+
+
 class ActionResultDictLocalRobotMetadata(TypedDict):
     success: bool
     message: Optional[

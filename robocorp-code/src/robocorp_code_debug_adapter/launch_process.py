@@ -100,6 +100,7 @@ class LaunchProcess(object):
         from robocorp_ls_core.robotframework_log import get_log_level
         from robocorp_code.rcc import Rcc
         from robocorp_ls_core.config import Config
+        from pathlib import Path
 
         self._weak_debug_adapter_comm = weakref.ref(debug_adapter_comm)
         self._valid = True
@@ -198,6 +199,11 @@ class LaunchProcess(object):
             if self._rcc_config_location:
                 cmdline.append("--config")
                 cmdline.append(self._rcc_config_location)
+
+            env_json_path = Path(robot_yaml).parent / "devdata" / "env.json"
+            if env_json_path.exists():
+                cmdline.append("-e")
+                cmdline.append(str(env_json_path))
 
         self._cmdline = cmdline
 
