@@ -30,7 +30,7 @@ may be needed.
 See: [Config](docs/config.md) for details.
   
 
-Features (0.4.3)
+Features (0.5.0)
 -----------------
 
 - Code analysis: checks if keywords are properly imported/defined.

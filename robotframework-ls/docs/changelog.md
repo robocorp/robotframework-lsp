@@ -1,3 +1,8 @@
+New in 0.5.0 (2020-10-26)
+-----------------------------
+
+- Support new libdoc format (from Robot Framework 4.0)
+
 New in 0.4.3 (2020-10-12)
 -----------------------------
 
