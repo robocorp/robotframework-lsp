@@ -1,3 +1,10 @@
+New in 0.3.0 (2020-10-26)
+-----------------------------
+
+- Debugging Robot Tasks from `robot.yaml` is now available
+  (as long as they start with `python -m robot` and finish with the folder/filename to be run).
+
+
 New in 0.2.0 (2020-10-15)
 -----------------------------
 
