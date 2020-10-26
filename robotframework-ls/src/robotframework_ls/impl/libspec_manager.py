@@ -342,6 +342,30 @@ class LibspecManager(object):
     """
 
     @classmethod
+    def get_robot_version(cls):
+        try:
+            import robot
+
+            v = str(robot.get_version())
+        except:
+            log.exception("Unable to get robot version.")
+            v = "unknown"
+        return v
+
+    @classmethod
+    def get_robot_major_version(cls):
+        robot_version = cls.get_robot_version()
+
+        major_version = 3
+        try:
+            if "." in robot_version:
+                major_version = int(robot_version.split(".")[0])
+        except:
+            log.exception("Unable to get robot major version.")
+
+        return major_version
+
+    @classmethod
     def get_internal_libspec_dir(cls):
         from robotframework_ls import robot_config
 
@@ -355,12 +379,7 @@ class LibspecManager(object):
 
         digest = hashlib.sha256(pyexe).hexdigest()[:8]
 
-        try:
-            import robot
-
-            v = str(robot.get_version())
-        except:
-            v = "unknown"
+        v = cls.get_robot_version()
 
         # Note: _v1: information on the mtime of the libspec sources now available.
         return os.path.join(home, "specs", "%s_%s" % (digest, v))
@@ -689,7 +708,13 @@ class LibspecManager(object):
         try:
             try:
                 call = [sys.executable]
-                call.extend("-m robot.libdoc --format XML:HTML".split())
+                major_version = self.get_robot_major_version()
+                if major_version < 4:
+                    call.extend("-m robot.libdoc --format XML:HTML".split())
+                else:
+                    # Use default values for libspec (--format XML:HTML is deprecated).
+                    call.extend("-m robot.libdoc".split())
+
                 if additional_path:
                     if os.path.exists(additional_path):
                         call.extend(["-P", additional_path])

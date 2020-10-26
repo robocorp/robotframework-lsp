@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<keywordspec name="case_argspec" type="LIBRARY" format="HTML" scope="GLOBAL" namedargs="true" generated="2020-10-26T12:44:46Z" specversion="2" source="case_argspec.py" lineno="1">
+<version></version>
+<scope>global</scope>
+<namedargs>yes</namedargs>
+<doc>&lt;p&gt;Documentation for library &lt;code&gt;case_argspec&lt;/code&gt;.&lt;/p&gt;</doc>
+<kw name="Arg String Default" lineno="42">
+<arguments>
+<arg>arg1=my:,my:something,*foo,**foo,&lt;rara&gt;</arg>
+</arguments>
+<doc></doc>
+</kw>
+<kw name="Arg With Enum Type" lineno="26">
+<arguments>
+<arg>model: SomeEnum { v1 | v2 }</arg>
+</arguments>
+<doc></doc>
+</kw>
+<kw name="Arg With Enum Type And Default" lineno="30">
+<arguments>
+<arg>model: SomeEnum { v1 | v2 } = SomeEnum.v2</arg>
+</arguments>
+<doc></doc>
+</kw>
+<kw name="Arg With Positional" lineno="38">
+<arguments>
+<arg>arg1</arg>
+<arg>*</arg>
+<arg>arg2</arg>
+</arguments>
+<doc></doc>
+</kw>
+<kw name="Arg With Starargs" lineno="34">
+<arguments>
+<arg>arg1</arg>
+<arg>arg2=10</arg>
+<arg>*arg3</arg>
+<arg>**arg4</arg>
+</arguments>
+<doc></doc>
+</kw>
+<kw name="Arg With Type" lineno="20">
+<arguments>
+<arg>model: int</arg>
+</arguments>
+<doc>&lt;p&gt;Some doc in arg_with_type.&lt;/p&gt;</doc>
+</kw>
+<kw name="Simple Arg" lineno="14">
+<arguments>
+<arg>model</arg>
+</arguments>
+<doc>&lt;p&gt;Some doc in simple_arg.&lt;/p&gt;</doc>
+</kw>
+</keywordspec>

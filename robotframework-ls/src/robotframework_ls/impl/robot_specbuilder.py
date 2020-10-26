@@ -19,6 +19,8 @@ import os
 import weakref
 from robocorp_ls_core.cache import instance_cache
 from typing import Optional
+import sys
+from robocorp_ls_core.protocols import Sentinel
 
 
 def markdown_doc(obj):
@@ -136,7 +138,14 @@ class KeywordArg(object):
     _default_value = None
     _arg_type = None
 
-    def __init__(self, arg: str):
+    def __init__(
+        self, arg: str, name=Sentinel, arg_type=Sentinel, default_value=Sentinel
+    ):
+        """
+        If arg_type and default_value are given, the arg name == arg, otherwise,
+        the arg is expected to be something as 'arg:int=10' and thus the arg_type
+        and default_value are computed.
+        """
         self.original_arg = arg
         if arg.startswith("**"):
             self._is_keyword_arg = True
@@ -147,16 +156,26 @@ class KeywordArg(object):
             arg = "@" + arg[1:]
 
         else:
-            eq_i = arg.rfind("=")
-            if eq_i != -1:
-                self._default_value = arg[eq_i + 1 :].strip()
-                arg = arg[:eq_i]
+            if default_value is not Sentinel:
+                self._default_value = default_value
+            else:
+                eq_i = arg.rfind("=")
+                if eq_i != -1:
+                    self._default_value = arg[eq_i + 1 :].strip()
+                    arg = arg[:eq_i]
 
-            colon_i = arg.rfind(":")
-            if colon_i != -1:
-                self._arg_type = arg[colon_i + 1 :].strip()
-                arg = arg[:colon_i]
-        self._arg_name = arg
+            if arg_type is not Sentinel:
+                self._arg_type = arg_type
+            else:
+                colon_i = arg.rfind(":")
+                if colon_i != -1:
+                    self._arg_type = arg[colon_i + 1 :].strip()
+                    arg = arg[:colon_i]
+
+        if name is not Sentinel:
+            self._arg_name = name
+        else:
+            self._arg_name = arg
 
     @property
     def arg_name(self) -> str:
@@ -198,6 +217,10 @@ class KeywordDoc(object):
     @property
     @instance_cache
     def args(self):
+        if self._args:
+            if isinstance(self._args[0], KeywordArg):
+                return self._args
+
         return tuple(KeywordArg(arg) for arg in self._args)
 
     @property
@@ -241,8 +264,16 @@ class SpecDocBuilder(object):
             source=spec.get("source"),
             lineno=int(spec.get("lineno", -1)),
         )
-        libdoc.inits = self._create_keywords(weakref.ref(libdoc), spec, "init")
-        libdoc.keywords = self._create_keywords(weakref.ref(libdoc), spec, "kw")
+        if specversion == "3":
+            libdoc.inits = self._create_keywords_v3(
+                weakref.ref(libdoc), spec, "inits/init"
+            )
+            libdoc.keywords = self._create_keywords_v3(
+                weakref.ref(libdoc), spec, "keywords/kw"
+            )
+        else:
+            libdoc.inits = self._create_keywords_v2(weakref.ref(libdoc), spec, "init")
+            libdoc.keywords = self._create_keywords_v2(weakref.ref(libdoc), spec, "kw")
         return libdoc
 
     def _get_scope(self, spec):
@@ -277,16 +308,76 @@ class SpecDocBuilder(object):
             return False  # Backwards compatiblity with RF < 2.6.2
         return elem.text == "yes"
 
-    def _create_keywords(self, weak_libdoc, spec, path):
-        return [
-            KeywordDoc(
-                weak_libdoc,
-                name=elem.get("name", ""),
-                args=tuple(a.text for a in elem.findall("arguments/arg")),
-                doc=elem.find("doc").text or "",
-                tags=tuple(t.text for t in elem.findall("tags/tag")),
-                source=elem.get("source"),
-                lineno=int(elem.get("lineno", -1)),
+    # ===========================================================================
+    # V2 handling
+    # ===========================================================================
+    def _create_keywords_v2(self, weak_libdoc, spec, path):
+        ret = []
+        for elem in spec.findall(path):
+            args = []
+            for a in elem.findall("arguments/arg"):
+                if a.text == "*":
+                    continue
+                args.append(a.text)
+            ret.append(
+                KeywordDoc(
+                    weak_libdoc,
+                    name=elem.get("name", ""),
+                    args=tuple(args),
+                    doc=elem.find("doc").text or "",
+                    tags=tuple(t.text for t in elem.findall("tags/tag")),
+                    source=elem.get("source"),
+                    lineno=int(elem.get("lineno", -1)),
+                )
             )
-            for elem in spec.findall(path)
-        ]
+        return ret
+
+    # ===========================================================================
+    # V3 handling
+    # ===========================================================================
+    def _create_arguments_v3(self, elem):
+        ret = []
+        for arg in elem.findall("arguments/arg"):
+            name = arg.find("name")
+            if name is None:
+                continue
+            name = name.text
+
+            arg_repr = arg.get("repr")
+            if not arg_repr:
+                arg_repr = name
+
+            kind = arg.get("kind")
+            if not kind or kind in ("VAR_POSITIONAL", "VAR_NAMED"):
+                # Default handling for *args and **kwargs converts to &args / @args
+                ret.append(KeywordArg(arg_repr))
+                continue
+
+            arg_type = arg.find("type")
+            arg_default = arg.find("default")
+            ret.append(
+                KeywordArg(
+                    arg_repr,
+                    name,
+                    arg_type.text if arg_type is not None else None,
+                    arg_default.text if arg_default is not None else None,
+                )
+            )
+
+        return ret
+
+    def _create_keywords_v3(self, weak_libdoc, spec, path):
+        ret = []
+        for elem in spec.findall(path):
+            ret.append(
+                KeywordDoc(
+                    weak_libdoc,
+                    name=elem.get("name", ""),
+                    args=tuple(self._create_arguments_v3(elem)),
+                    doc=elem.find("doc").text or "",
+                    tags=[t.text for t in elem.findall("tags/tag")],
+                    source=elem.get("source"),
+                    lineno=int(elem.get("lineno", -1)),
+                )
+            )
+        return ret
