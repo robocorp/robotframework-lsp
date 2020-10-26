@@ -11,6 +11,7 @@ Some example commands:
 """
 import sys
 import os
+import traceback
 
 __file__ = os.path.abspath(__file__)
 
@@ -101,6 +102,26 @@ class Dev(object):
             )
             sys.exit(1)
 
+    def remove_vendor_robocorp_ls_core(self):
+        import time
+        import shutil
+
+        vendored_dir = os.path.join(
+            os.path.dirname(__file__),
+            "src",
+            "robotframework_ls",
+            "vendored",
+            "robocorp_ls_core",
+        )
+        try:
+            shutil.rmtree(vendored_dir)
+            time.sleep(0.5)
+        except:
+            if os.path.exists(vendored_dir):
+                traceback.print_exc()
+
+        return vendored_dir
+
     def vendor_robocorp_ls_core(self):
         """
         Vendors robocorp_ls_core into robotframework_ls/vendored.
@@ -114,21 +135,9 @@ class Dev(object):
             "src",
             "robocorp_ls_core",
         )
-        vendored_dir = os.path.join(
-            os.path.dirname(__file__),
-            "src",
-            "robotframework_ls",
-            "vendored",
-            "robocorp_ls_core",
-        )
+        vendored_dir = self.remove_vendor_robocorp_ls_core()
         print("Copying from: %s to %s" % (src_core, vendored_dir))
-        try:
-            shutil.rmtree(vendored_dir)
-        except:
-            pass
-        import time
 
-        time.sleep(0.2)
         shutil.copytree(src_core, vendored_dir)
         print("Finished vendoring.")
 
