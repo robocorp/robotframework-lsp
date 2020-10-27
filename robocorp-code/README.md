@@ -4,7 +4,7 @@ Robocorp Code is a Visual Studio Code extension for Software Robot Development c
 
 With the Robocorp Code extension, you can create new software robots, run them locally, and publish them to Robocorp Cloud all from within Visual Studio Code.
 
-Find the full instructions at [https://robocorp.com/docs/setup/robocorp-code](https://robocorp.com/docs/setup/robocorp-code).
+Find the full instructions at [https://robocorp.com/docs/product-manuals/robocorp-code](https://robocorp.com/docs/product-manuals/robocorp-code).
 
 
 Requirements
@@ -19,7 +19,7 @@ Windows 10, Linux or Mac OS.
 Installation
 -----------
 
-Find the full installation instructions at [https://robocorp.com/docs/setup/robocorp-code](https://robocorp.com/docs/setup/robocorp-code).
+Find the full installation instructions at [https://robocorp.com/docs/product-manuals/robocorp-code](https://robocorp.com/docs/product-manuals/robocorp-code).
 
 
 Configuration
