@@ -42,18 +42,18 @@ def download_rcc(location: str, force: bool = False) -> None:
 
                 if sys.platform == "win32":
                     if is_64:
-                        url = "https://downloads.code.robocorp.com/rcc/v2/windows64/rcc.exe"
+                        url = "https://downloads.code.robocorp.com/rcc/v4/windows64/rcc.exe"
                     else:
-                        url = "https://downloads.code.robocorp.com/rcc/v2/windows32/rcc.exe"
+                        url = "https://downloads.code.robocorp.com/rcc/v4/windows32/rcc.exe"
 
                 elif sys.platform == "darwin":
-                    url = "https://downloads.code.robocorp.com/rcc/v2/macos64/rcc"
+                    url = "https://downloads.code.robocorp.com/rcc/v4/macos64/rcc"
 
                 else:
                     if is_64:
-                        url = "https://downloads.code.robocorp.com/rcc/v2/linux64/rcc"
+                        url = "https://downloads.code.robocorp.com/rcc/v4/linux64/rcc"
                     else:
-                        url = "https://downloads.code.robocorp.com/rcc/v2/linux32/rcc"
+                        url = "https://downloads.code.robocorp.com/rcc/v4/linux32/rcc"
 
                 log.info(f"Downloading rcc from: {url} to: {location}.")
                 response = urllib.request.urlopen(url)

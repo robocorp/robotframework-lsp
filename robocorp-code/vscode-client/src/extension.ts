@@ -321,7 +321,7 @@ async function getLanguageServerPythonUncached(): Promise<string> {
         let timing = new Timing();
         for (let index = 0; index < maxTries; index++) {
             try {
-                let condaCheckResult: ExecFileReturn = await execFilePromise(rccLocation, ['conda', 'check', '-i']);
+                let condaCheckResult: ExecFileReturn = await execFilePromise(rccLocation, ['conda', 'check', '-i', '--controller', 'RobocorpCode']);
                 if (condaCheckResult.stdout.indexOf('OK.') != -1) {
                     break;
                 }
@@ -351,7 +351,7 @@ async function getLanguageServerPythonUncached(): Promise<string> {
 
         progress.report({ message: 'Update env (may take a few minutes).' });
         // Get information on a base package with our basic dependencies (this can take a while...).
-        let resultPromise: Promise<ExecFileReturn> = execFilePromise(rccLocation, ['task', 'run', '--robot', robotYaml]);
+        let resultPromise: Promise<ExecFileReturn> = execFilePromise(rccLocation, ['task', 'run', '--robot', robotYaml, '--controller', 'RobocorpCode']);
         timing = new Timing();
 
         let finishedCondaRun = false;
