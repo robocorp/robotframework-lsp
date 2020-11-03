@@ -1,6 +1,6 @@
 from subprocess import CalledProcessError
 import sys
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any
 import weakref
 
 from robocorp_ls_core.basic import implements, as_str
@@ -203,7 +203,7 @@ class Rcc(object):
         env["PYTHONUNBUFFERED"] = "1"
 
         kwargs: dict = build_subprocess_kwargs(cwd, env, stderr=subprocess.PIPE)
-        args = [rcc_location] + args
+        args = [rcc_location] + args + ["--controller", "RobocorpCode"]
         cmdline = " ".join([str(x) for x in args])
 
         try:
