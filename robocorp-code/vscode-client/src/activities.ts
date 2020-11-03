@@ -1,4 +1,4 @@
-import { commands, window, WorkspaceFolder, workspace, Uri, QuickPickItem, TextEdit, debug, DebugConfiguration, DebugSessionOptions } from "vscode";
+import { commands, window, WorkspaceFolder, workspace, Uri, QuickPickItem, TextEdit, debug, DebugConfiguration, DebugSessionOptions, env } from "vscode";
 import { join } from 'path';
 import { OUTPUT_CHANNEL } from './channel';
 import * as roboCommands from './robocorpCommands';
@@ -72,11 +72,15 @@ export async function cloudLogin(): Promise<boolean> {
     do {
         let credentials: string = await window.showInputBox({
             'password': true,
-            'prompt': 'Please provide the access credentials from: https://cloud.robocorp.com/settings/access-credentials',
+            'prompt': 'Please provide the access credentials - Confirm without entering any text to open https://cloud.robocorp.com/settings/access-credentials where credentials may be obtained - ',
             'ignoreFocusOut': true,
         });
-        if (!credentials) {
+        if(credentials == undefined){
             return false;
+        }
+        if (!credentials) {
+            env.openExternal(Uri.parse('https://cloud.robocorp.com/settings/access-credentials'));
+            continue;
         }
         loggedIn = await commands.executeCommand(
             roboCommands.ROBOCORP_CLOUD_LOGIN_INTERNAL, { 'credentials': credentials }
