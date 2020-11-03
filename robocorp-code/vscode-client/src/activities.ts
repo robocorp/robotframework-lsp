@@ -75,7 +75,7 @@ export async function cloudLogin(): Promise<boolean> {
             'prompt': 'Please provide the access credentials - Confirm without entering any text to open https://cloud.robocorp.com/settings/access-credentials where credentials may be obtained - ',
             'ignoreFocusOut': true,
         });
-        if(credentials == undefined){
+        if (credentials == undefined) {
             return false;
         }
         if (!credentials) {
@@ -423,14 +423,19 @@ export async function runRobotRCC(noDebug: boolean) {
         return;
     }
 
-    let selectedItem = await window.showQuickPick(
-        items,
-        {
-            "canPickMany": false,
-            'placeHolder': 'Please select the Robot and Task to run.',
-            'ignoreFocusOut': true,
-        }
-    );
+    let selectedItem: QuickPickItemRobotTask;
+    if (items.length == 1) {
+        selectedItem = items[0];
+    } else {
+        selectedItem = await window.showQuickPick(
+            items,
+            {
+                "canPickMany": false,
+                'placeHolder': 'Please select the Robot and Task to run.',
+                'ignoreFocusOut': true,
+            }
+        );
+    }
 
     if (!selectedItem) {
         return;
