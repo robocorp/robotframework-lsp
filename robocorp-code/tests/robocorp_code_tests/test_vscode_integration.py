@@ -11,6 +11,7 @@ from typing import List
 import time
 from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
 import py
+from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 
 log = logging.getLogger(__name__)
 
@@ -542,7 +543,7 @@ def test_upload_to_cloud(
     assert result["success"]
 
 
-def test_lru_disk_commands(language_server_initialized: IRobocorpLanguageServerClient,):
+def test_lru_disk_commands(language_server_initialized: IRobocorpLanguageServerClient):
     from robocorp_code import commands
 
     client = language_server_initialized
@@ -574,3 +575,33 @@ def test_lru_disk_commands(language_server_initialized: IRobocorpLanguageServerC
 
     save_to_lru("my_lru", "entry3", lru_size=2)
     assert get_from_lru("my_lru") == ["entry3", "entry1"]
+
+
+def test_compute_robot_launch_from_robocorp_code_launch(
+    language_server_initialized: IRobocorpLanguageServerClient, cases: CasesFixture
+):
+    client = language_server_initialized
+
+    def compute_robot_launch_from_robocorp_code_launch(task: str, robot: str):
+        from robocorp_code import commands
+
+        result = client.execute_command(
+            commands.ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH,
+            [{"robot": robot, "task": task}],
+        )["result"]
+        return result
+
+    robot = cases.get_path("custom_envs/simple-web-scraper/robot.yaml")
+    result = compute_robot_launch_from_robocorp_code_launch("Web scraper", robot)
+    assert result["success"]
+
+    assert os.path.samefile(
+        result["result"]["target"],
+        cases.get_path("custom_envs/simple-web-scraper/tasks"),
+    )
+
+    assert os.path.samefile(
+        result["result"]["cwd"], cases.get_path("custom_envs/simple-web-scraper")
+    )
+
+    assert result["result"]["args"] == ["-d", "output", "--logtitle", "Task log"]

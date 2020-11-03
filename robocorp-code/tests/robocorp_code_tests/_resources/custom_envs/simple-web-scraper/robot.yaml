@@ -8,7 +8,7 @@ tasks:
       - output
       - --logtitle
       - Task log
-      - ./tasks/*.robot
+      - ./tasks/
 condaConfigFile: config/conda.yaml
 
 PYTHONPATH:
