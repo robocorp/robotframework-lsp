@@ -35,13 +35,13 @@ Features (0.3.0)
 
 - Create a Robot from a pre-configured template using the `Robocorp: Create Robot` action.
 
-- Upload a Robot to the cloud with the `Robocorp: Upload Robot to the cloud` action.
+- Upload a Robot to the cloud with the `Robocorp: Upload Robot to the Robocorp Cloud` action.
 
-- Log in to the cloud with the `Robocorp: Log in Robocloud` action.
+- Log in to the cloud with the `Robocorp: Log in Robocorp Cloud` action.
 
 - Run a Robot with the `Robocorp: Run Robot` action.
 
-- Debug a Robot with the `Robocorp: Debug Robot` action (as long as they start with `python -m robot` and finish with the folder/filename to be run).
+- Debug a Robot with the `Robocorp: Debug Robot` action (note: Robot task must start with `python -m robot` and finish with the folder/filename to be run).
 
 - When a [robot.yaml](https://robocorp.com/docs/setup/robot-yaml-format) is found, it utilises the related Python environment when running/debugging `.robot` files using the RobotFramework Language Server.
 

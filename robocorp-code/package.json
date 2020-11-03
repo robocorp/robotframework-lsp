@@ -130,12 +130,12 @@
             },
             {
                 "command": "robocorp.uploadRobotToCloud",
-                "title": "Upload Robot to the cloud",
+                "title": "Upload Robot to the Robocorp Cloud",
                 "category": "Robocorp"
             },
             {
                 "command": "robocorp.cloudLogin",
-                "title": "Log in Robocloud",
+                "title": "Log in Robocorp Cloud",
                 "category": "Robocorp"
             },
             {

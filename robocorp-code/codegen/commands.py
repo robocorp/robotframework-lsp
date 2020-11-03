@@ -48,7 +48,7 @@ COMMANDS = [
     # Started from the client due to needing UI actions.
     Command(
         "robocorp.uploadRobotToCloud",
-        "Upload Robot to the cloud",
+        "Upload Robot to the Robocorp Cloud",
         add_to_package_json=True,
         server_handled=False,
     ),
@@ -66,31 +66,31 @@ COMMANDS = [
     ),
     Command(
         "robocorp.cloudLogin",
-        "Log in Robocloud",
+        "Log in Robocorp Cloud",
         add_to_package_json=True,
         server_handled=False,
     ),
     Command(
         "robocorp.cloudLogin.internal",
-        "Log in Robocloud (receives credentials)",
+        "Log in Robocorp Cloud (receives credentials)",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
         "robocorp.cloudListWorkspaces.internal",
-        "Lists the workspaces available for the user (in the cloud)",
+        "Lists the workspaces available for the user (in the Robocorp Cloud)",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
         "robocorp.uploadToNewRobot.internal",
-        "Uploads an Robot as a new Robot in the cloud",
+        "Uploads a Robot as a new Robot in the Robocorp Cloud",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
         "robocorp.uploadToExistingRobot.internal",
-        "Uploads an Robot as an existing Robot in the cloud",
+        "Uploads a Robot as an existing Robot in the Robocorp Cloud",
         add_to_package_json=False,
         server_handled=True,
     ),

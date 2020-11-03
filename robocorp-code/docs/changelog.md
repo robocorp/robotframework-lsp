@@ -47,9 +47,9 @@ New in 0.0.5 (2020-09-23)
 -----------------------------
 
 - Working with [robot.yaml](https://robocorp.com/docs/setup/robot-yaml-format) instead of the deprecated `package.yaml`.
-- New action to log in Robocloud.
+- New action to log in Robocorp Cloud.
 - Terminology update (`Activity Package` is now `Robot`).
-- Improvements uploading Robot to cloud.
+- Improvements uploading Robot to Robocorp Cloud.
 - Detecting if a robot.yaml is in a workspace root folder and not only in a subfolder.
 
 
@@ -65,14 +65,14 @@ New in 0.0.4 (2020-09-02)
 New in 0.0.3 (2020-08-12)
 -----------------------------
 
-- Polishments submiting activity package to the cloud.
+- Polishments submiting activity package to the Robocorp Cloud.
 - Fixed issue starting RCC after download on Mac.
 
 
 New in 0.0.2 (2020-08-06)
 -----------------------------
 
-- Submit activity package to the cloud (preliminary version)
+- Submit activity package to the Robocorp Cloud (preliminary version)
 
 
 New in 0.0.1 (2020-07-27)
