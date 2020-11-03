@@ -1,6 +1,6 @@
 from subprocess import CalledProcessError
 import sys
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any
 import weakref
 
 from robocorp_ls_core.basic import implements, as_str
@@ -42,18 +42,18 @@ def download_rcc(location: str, force: bool = False) -> None:
 
                 if sys.platform == "win32":
                     if is_64:
-                        url = "https://downloads.code.robocorp.com/rcc/v2/windows64/rcc.exe"
+                        url = "https://downloads.code.robocorp.com/rcc/v4/windows64/rcc.exe"
                     else:
-                        url = "https://downloads.code.robocorp.com/rcc/v2/windows32/rcc.exe"
+                        url = "https://downloads.code.robocorp.com/rcc/v4/windows32/rcc.exe"
 
                 elif sys.platform == "darwin":
-                    url = "https://downloads.code.robocorp.com/rcc/v2/macos64/rcc"
+                    url = "https://downloads.code.robocorp.com/rcc/v4/macos64/rcc"
 
                 else:
                     if is_64:
-                        url = "https://downloads.code.robocorp.com/rcc/v2/linux64/rcc"
+                        url = "https://downloads.code.robocorp.com/rcc/v4/linux64/rcc"
                     else:
-                        url = "https://downloads.code.robocorp.com/rcc/v2/linux32/rcc"
+                        url = "https://downloads.code.robocorp.com/rcc/v4/linux32/rcc"
 
                 log.info(f"Downloading rcc from: {url} to: {location}.")
                 response = urllib.request.urlopen(url)
@@ -203,7 +203,7 @@ class Rcc(object):
         env["PYTHONUNBUFFERED"] = "1"
 
         kwargs: dict = build_subprocess_kwargs(cwd, env, stderr=subprocess.PIPE)
-        args = [rcc_location] + args
+        args = [rcc_location] + args + ["--controller", "RobocorpCode"]
         cmdline = " ".join([str(x) for x in args])
 
         try:

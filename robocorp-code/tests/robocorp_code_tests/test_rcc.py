@@ -6,7 +6,7 @@ def test_rcc_template_names(rcc: IRcc):
     result = rcc.get_template_names()
     assert result.success
     assert result.result
-    assert "minimal" in result.result
+    assert "standard" in result.result
 
 
 def test_rcc_cloud(rcc: IRcc, ci_credentials: str, tmpdir: py.path.local):
@@ -50,7 +50,7 @@ def test_rcc_cloud(rcc: IRcc, ci_credentials: str, tmpdir: py.path.local):
 
     wsdir = str(tmpdir.join("ws"))
 
-    result = rcc.create_robot("minimal", wsdir)
+    result = rcc.create_robot("standard", wsdir)
     assert result.success
     result = rcc.cloud_set_robot_contents(wsdir, ws.workspace_id, act.robot_id)
     assert result.success
