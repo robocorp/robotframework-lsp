@@ -577,31 +577,67 @@ def test_lru_disk_commands(language_server_initialized: IRobocorpLanguageServerC
     assert get_from_lru("my_lru") == ["entry3", "entry1"]
 
 
+def _compute_robot_launch_from_robocorp_code_launch(
+    client: IRobocorpLanguageServerClient, task: str, robot: str
+):
+    from robocorp_code import commands
+
+    result = client.execute_command(
+        commands.ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH,
+        [{"robot": robot, "task": task, "name": "Launch Name", "request": "launch"}],
+    )["result"]
+    return result
+
+
 def test_compute_robot_launch_from_robocorp_code_launch(
     language_server_initialized: IRobocorpLanguageServerClient, cases: CasesFixture
 ):
     client = language_server_initialized
 
-    def compute_robot_launch_from_robocorp_code_launch(task: str, robot: str):
-        from robocorp_code import commands
-
-        result = client.execute_command(
-            commands.ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH,
-            [{"robot": robot, "task": task}],
-        )["result"]
-        return result
-
     robot = cases.get_path("custom_envs/simple-web-scraper/robot.yaml")
-    result = compute_robot_launch_from_robocorp_code_launch("Web scraper", robot)
+    result = _compute_robot_launch_from_robocorp_code_launch(
+        client, "Web scraper", robot
+    )
     assert result["success"]
+    r = result["result"]
 
     assert os.path.samefile(
-        result["result"]["target"],
-        cases.get_path("custom_envs/simple-web-scraper/tasks"),
+        r["target"], cases.get_path("custom_envs/simple-web-scraper/tasks")
     )
+    assert os.path.samefile(r["cwd"], cases.get_path("custom_envs/simple-web-scraper"))
+    del r["target"]
+    del r["cwd"]
+
+    assert r == {
+        "type": "robotframework-lsp",
+        "name": "Launch Name",
+        "request": "launch",
+        "args": ["-d", "output", "--logtitle", "Task log"],
+        "terminal": "none",
+    }
+
+
+def test_compute_python_launch_from_robocorp_code_launch(
+    language_server_initialized: IRobocorpLanguageServerClient, cases: CasesFixture
+):
+    client = language_server_initialized
+
+    robot = cases.get_path("custom_envs/pysample/robot.yaml")
+    result = _compute_robot_launch_from_robocorp_code_launch(client, "Default", robot)
+    assert result["success"]
+    r = result["result"]
 
     assert os.path.samefile(
-        result["result"]["cwd"], cases.get_path("custom_envs/simple-web-scraper")
+        r["program"], cases.get_path("custom_envs/pysample/task.py")
     )
+    assert os.path.samefile(r["cwd"], cases.get_path("custom_envs/pysample"))
+    del r["program"]
+    del r["cwd"]
 
-    assert result["result"]["args"] == ["-d", "output", "--logtitle", "Task log"]
+    assert r == {
+        "type": "python",
+        "name": "Launch Name",
+        "request": "launch",
+        "args": [],
+        "console": "internalConsole",
+    }

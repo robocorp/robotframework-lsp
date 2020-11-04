@@ -1,5 +1,5 @@
 import sys
-from typing import Optional, List, Any, Generic, TypeVar
+from typing import Optional, List, Any, Generic, TypeVar, Dict
 from pathlib import Path
 
 
@@ -81,18 +81,12 @@ class ActionResultDict(TypedDict):
     result: Any
 
 
-class RobotLaunchDict(TypedDict):
-    target: str
-    cwd: str
-    args: List[str]
-
-
 class ActionResultDictRobotLaunch(TypedDict):
     success: bool
     message: Optional[
         str
     ]  # if success == False, this can be some message to show to the user
-    result: Optional[RobotLaunchDict]
+    result: Optional[dict]
 
 
 class ActionResultDictLocalRobotMetadata(TypedDict):

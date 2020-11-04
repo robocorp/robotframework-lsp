@@ -84,11 +84,6 @@ interface ActionResult {
     result: any;
 }
 
-interface ResolvedConfig {
-    target: string;
-    args: string[];
-    cwd: string;
-}
 
 class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvider {
 
@@ -134,8 +129,12 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
         }
 
         let actionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH, {
+            'name': debugConfiguration.name,
+            'request': debugConfiguration.request,
             'robot': debugConfiguration.robot,
             'task': debugConfiguration.task,
+            'additionalPythonpathEntries': interpreter.additionalPythonpathEntries,
+            'env': interpreter.environ,
         });
 
         if (!actionResult.success) {
@@ -143,27 +142,7 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
             return;
         }
 
-        let newConfig: ResolvedConfig = actionResult.result;
-        let args: string[] = newConfig.args;
-        let env = interpreter.environ;
-
-        if (interpreter.additionalPythonpathEntries) {
-            interpreter.additionalPythonpathEntries.forEach(element => {
-                args.push('--pythonpath');
-                args.push(element);
-            });
-        }
-
-        return {
-            'type': 'robotframework-lsp',
-            'name': debugConfiguration.name,
-            'request': debugConfiguration.request,
-            'cwd': newConfig.cwd,
-            'target': newConfig.target,
-            'args': args,
-            'env': env,
-            'terminal': 'none',
-        }
+        return actionResult.result;
     };
 }
 
