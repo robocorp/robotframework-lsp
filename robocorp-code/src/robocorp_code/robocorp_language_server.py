@@ -21,7 +21,6 @@ from robocorp_code.protocols import (
     RunInRccParamsDict,
     ActionResultDictLocalRobotMetadata,
     ActionResultDictRobotLaunch,
-    RobotLaunchDict,
 )
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.cache import CachedFileInfo
@@ -611,119 +610,18 @@ class RobocorpLanguageServer(PythonLanguageServer):
     def _compute_robot_launch_from_robocorp_code_launch(
         self, params: dict
     ) -> ActionResultDictRobotLaunch:
+        from robocorp_code import compute_launch
+
+        name: Optional[str] = params.get("name")
+        request: Optional[str] = params.get("request")
         task: Optional[str] = params.get("task")
         robot: Optional[str] = params.get("robot")
+        additional_pythonpath_entries: Optional[List[str]] = params.get(
+            "additionalPythonpathEntries"
+        )
+        env: Optional[Dict[str, str]] = params.get("env")
+        python_exe: Optional[str] = params.get("pythonExe")
 
-        if not task:
-            return {
-                "success": False,
-                "message": "'task' must be specified to make launch.",
-                "result": None,
-            }
-        if not robot:
-            return {
-                "success": False,
-                "message": "'robot' must be specified to make launch.",
-                "result": None,
-            }
-
-        if not os.path.isfile(robot):
-            return {
-                "success": False,
-                "message": f"The specified robot.yaml does not exist or is not a file ({robot}).",
-                "result": None,
-            }
-
-        try:
-
-            from robocorp_ls_core import yaml_wrapper
-
-            with open(robot, "r") as stream:
-                yaml_contents = yaml_wrapper.load(stream)
-
-            if not yaml_contents:
-                raise RuntimeError("Empty yaml contents.")
-            if not isinstance(yaml_contents, dict):
-                raise RuntimeError("Expected yaml contents root to be a dict.")
-        except:
-            log.exception("Error loading contents from: %s", robot)
-            return {
-                "success": False,
-                "message": f"Unable to load robot.yaml contents from: ({robot}).",
-                "result": None,
-            }
-
-        tasks = yaml_contents.get("tasks")
-        if not tasks:
-            return {
-                "success": False,
-                "message": "Expected the robot.yaml to have the 'tasks' defined.",
-                "result": None,
-            }
-
-        if not isinstance(tasks, dict):
-            return {
-                "success": False,
-                "message": f"Expected the robot.yaml 'tasks' to be a dict of tasks. Found: {type(tasks)}.",
-                "result": None,
-            }
-
-        task_info = tasks.get(task)
-        if not task_info:
-            return {
-                "success": False,
-                "message": f"Unable to find task: {task} in the robot: {robot}.",
-                "result": None,
-            }
-        if not isinstance(task_info, dict):
-            return {
-                "success": False,
-                "message": f"Expected the task: {task} to be a dict. Found: {type(task_info)}.",
-                "result": None,
-            }
-
-        command = task_info.get("command")
-        if not command:
-            return {
-                "success": False,
-                "message": f"Expected the task: {task} to have the command defined.",
-                "result": None,
-            }
-
-        if not isinstance(command, list):
-            return {
-                "success": False,
-                "message": f"Expected the task: {task} to have a list(str) as the command. Found: {type(command)}.",
-                "result": None,
-            }
-
-        command = [str(c) for c in command]
-
-        if command[:3] != ["python", "-m", "robot"]:
-            return {
-                "success": False,
-                "message": (
-                    f"Currently it's only possible to debug robot tasks "
-                    f"(i.e.: the task must start with 'python -m robot'). Task command: {command}"
-                ),
-                "result": None,
-            }
-
-        target = command[-1]
-        if not os.path.isabs(target):
-            target = os.path.abspath(os.path.join(os.path.dirname(robot), target))
-
-        if not os.path.exists(target):
-            return {
-                "success": False,
-                "message": (
-                    f"Expected the last argument to be the robot file/directory to be executed. Found: {target}"
-                ),
-                "result": None,
-            }
-
-        cwd = os.path.dirname(target)
-        args: List[str] = command[3:-1]  # i.e.: Remove python -m robot ... target
-
-        result: RobotLaunchDict = {"target": target, "cwd": cwd, "args": args}
-        return {"success": True, "message": None, "result": result}
+        return compute_launch.compute_robot_launch_from_robocorp_code_launch(
+            name, request, task, robot, additional_pythonpath_entries, env, python_exe
+        )
