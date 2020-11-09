@@ -578,13 +578,14 @@ def test_lru_disk_commands(language_server_initialized: IRobocorpLanguageServerC
 
 
 def _compute_robot_launch_from_robocorp_code_launch(
-    client: IRobocorpLanguageServerClient, task: str, robot: str
+    client: IRobocorpLanguageServerClient, task: str, robot: str, **kwargs
 ):
     from robocorp_code import commands
 
+    args = {"robot": robot, "task": task, "name": "Launch Name", "request": "launch"}
+    args.update(kwargs)
     result = client.execute_command(
-        commands.ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH,
-        [{"robot": robot, "task": task, "name": "Launch Name", "request": "launch"}],
+        commands.ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH, [args]
     )["result"]
     return result
 
@@ -623,7 +624,9 @@ def test_compute_python_launch_from_robocorp_code_launch(
     client = language_server_initialized
 
     robot = cases.get_path("custom_envs/pysample/robot.yaml")
-    result = _compute_robot_launch_from_robocorp_code_launch(client, "Default", robot)
+    result = _compute_robot_launch_from_robocorp_code_launch(
+        client, "Default", robot, pythonExe="c:/temp/py.exe"
+    )
     assert result["success"]
     r = result["result"]
 
@@ -638,6 +641,8 @@ def test_compute_python_launch_from_robocorp_code_launch(
         "type": "python",
         "name": "Launch Name",
         "request": "launch",
+        "pythonArgs": [],
         "args": [],
+        "pythonPath": "c:/temp/py.exe",
         "console": "internalConsole",
     }

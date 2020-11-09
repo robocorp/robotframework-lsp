@@ -135,6 +135,7 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
             'task': debugConfiguration.task,
             'additionalPythonpathEntries': interpreter.additionalPythonpathEntries,
             'env': interpreter.environ,
+            'pythonExe': interpreter.pythonExe,
         });
 
         if (!actionResult.success) {
