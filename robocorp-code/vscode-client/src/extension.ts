@@ -23,7 +23,7 @@ import * as net from 'net';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder, ProgressLocation, Progress, DebugAdapterExecutable, debug, DebugConfiguration, DebugConfigurationProvider, CancellationToken, ProviderResult } from 'vscode';
+import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder, ProgressLocation, Progress, DebugAdapterExecutable, debug, DebugConfiguration, DebugConfigurationProvider, CancellationToken, ProviderResult, extensions } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
 import * as roboConfig from './robocorpSettings';
 import * as roboCommands from './robocorpCommands';
@@ -142,8 +142,20 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
             window.showErrorMessage(actionResult.message)
             return;
         }
+        let result = actionResult.result
+        if(result && result.type && result.type == 'python'){
+            let extension = extensions.getExtension('ms-python.python');
+            if(extension){
+                if(!extension.isActive){
+                    // i.e.: Auto-activate python extension for the launch as the extension
+                    // is only activated for debug on the resolution, whereas in this case
+                    // the launch is already resolved.
+                    await extension.activate();
+                }
+            }
+        }
 
-        return actionResult.result;
+        return result;
     };
 }
 

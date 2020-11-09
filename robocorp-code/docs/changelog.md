@@ -1,3 +1,15 @@
+New in 0.4.0 (2020-11-08)
+-----------------------------
+
+- Plain python Robot Tasks from `robot.yaml` can now also be debugged (note:
+  the Python plugin must also be installed). #179
+- In the login action, pressing enter without any information will open the 
+  proper url to obtain the credentials. #177
+- If there's only one task to run in the workspace, use it in the Debug/Run Robot
+  action. #175
+- Upgraded to use RCC v4.
+
+  
 New in 0.3.0 (2020-10-26)
 -----------------------------
 
