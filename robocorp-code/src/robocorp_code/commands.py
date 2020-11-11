@@ -19,6 +19,8 @@ ROBOCORP_DEBUG_ROBOT_RCC = "robocorp.debugRobotRcc"  # Debug Robot
 ROBOCORP_SAVE_IN_DISK_LRU = "robocorp.saveInDiskLRU"  # Saves some data in an LRU in the disk
 ROBOCORP_LOAD_FROM_DISK_LRU = "robocorp.loadFromDiskLRU"  # Loads some LRU data from the disk
 ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH = "robocorp.computeRobotLaunchFromRobocorpCodeLaunch"  # Computes a robot launch debug configuration based on the robocorp code launch debug configuration
+ROBOCORP_SET_PYTHON_INTERPRETER = "robocorp.setPythonInterpreter"  # Set the Python extension pythonPath based on the robot.yaml
+ROBOCORP_RESOLVE_INTERPRETER = "robocorp.resolveInterpreter"  # Resolves the interpreter to be used given a path.
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,
@@ -34,4 +36,5 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_SAVE_IN_DISK_LRU,
     ROBOCORP_LOAD_FROM_DISK_LRU,
     ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH,
+    ROBOCORP_RESOLVE_INTERPRETER,
 ]

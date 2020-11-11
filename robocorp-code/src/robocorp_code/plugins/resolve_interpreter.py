@@ -26,10 +26,18 @@ from typing import Optional, Dict, List, Tuple
 
 from robocorp_ls_core.basic import implements
 from robocorp_ls_core.pluginmanager import PluginManager
-from robotframework_ls.ep_resolve_interpreter import (
-    EPResolveInterpreter,
-    IInterpreterInfo,
-)
+
+try:
+    # Kept for backward compatibility
+    from robotframework_ls.ep_resolve_interpreter import (
+        EPResolveInterpreter,
+        IInterpreterInfo,
+    )
+except ImportError:
+    from robocorp_ls_core.ep_resolve_interpreter import (
+        EPResolveInterpreter,
+        IInterpreterInfo,
+    )
 from robocorp_ls_core import uris
 from robocorp_ls_core.robotframework_log import get_logger
 from pathlib import Path
@@ -83,8 +91,13 @@ class _CachedInterpreterInfo(object):
         env_json_path_file_info: Optional[_CachedFileInfo],
         pm: PluginManager,
     ):
-        from robotframework_ls.ep_resolve_interpreter import DefaultInterpreterInfo
-        from robotframework_ls.ep_providers import EPConfigurationProvider
+        try:
+            # Kept for backward compatibility
+            from robotframework_ls.ep_resolve_interpreter import DefaultInterpreterInfo
+            from robotframework_ls.ep_providers import EPConfigurationProvider
+        except ImportError:
+            from robocorp_ls_core.ep_resolve_interpreter import DefaultInterpreterInfo
+            from robocorp_ls_core.ep_providers import EPConfigurationProvider
 
         self._mtime: _CachedInterpreterMTime = self._obtain_mtime(
             robot_yaml_file_info, conda_config_file_info, env_json_path_file_info
@@ -192,7 +205,12 @@ class _CacheInfo(object):
             return interpreter_info.info
 
         from robocorp_ls_core.progress_report import progress_context
-        from robotframework_ls.ep_providers import EPEndPointProvider
+
+        try:
+            # Kept for backward compatibility
+            from robotframework_ls.ep_providers import EPEndPointProvider
+        except ImportError:
+            from robocorp_ls_core.ep_providers import EPEndPointProvider
 
         endpoint = pm[EPEndPointProvider].endpoint
 
@@ -227,10 +245,17 @@ class RobocorpResolveInterpreter(object):
                 log.critical("Did not expect PluginManager to be None at this point.")
                 return None
 
-            from robotframework_ls.ep_providers import (
-                EPConfigurationProvider,
-                EPEndPointProvider,
-            )
+            try:
+                # Kept for backward compatibility
+                from robotframework_ls.ep_providers import (
+                    EPConfigurationProvider,
+                    EPEndPointProvider,
+                )
+            except ImportError:
+                from robocorp_ls_core.ep_providers import (
+                    EPConfigurationProvider,
+                    EPEndPointProvider,
+                )
 
             # Check that our requirements are there.
             pm[EPConfigurationProvider]

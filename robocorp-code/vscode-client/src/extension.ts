@@ -23,7 +23,7 @@ import * as net from 'net';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder, ProgressLocation, Progress, DebugAdapterExecutable, debug, DebugConfiguration, DebugConfigurationProvider, CancellationToken, ProviderResult, extensions } from 'vscode';
+import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder, ProgressLocation, Progress, DebugAdapterExecutable, debug, DebugConfiguration, DebugConfigurationProvider, CancellationToken, ProviderResult, extensions, ConfigurationTarget } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
 import * as roboConfig from './robocorpSettings';
 import * as roboCommands from './robocorpCommands';
@@ -32,7 +32,7 @@ import { getExtensionRelativeFile, verifyFileExists } from './files';
 import { getRccLocation } from './rcc';
 import { Timing } from './time';
 import { execFilePromise, ExecFileReturn } from './subprocess';
-import { createRobot, uploadRobot, cloudLogin, runRobotRCC } from './activities';
+import { createRobot, uploadRobot, cloudLogin, runRobotRCC, setPythonInterpreterFromRobotYaml } from './activities';
 import { sleep } from './time';
 import { handleProgressMessage, ProgressReport } from './progress';
 
@@ -143,10 +143,10 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
             return;
         }
         let result = actionResult.result
-        if(result && result.type && result.type == 'python'){
+        if (result && result.type && result.type == 'python') {
             let extension = extensions.getExtension('ms-python.python');
-            if(extension){
-                if(!extension.isActive){
+            if (extension) {
+                if (!extension.isActive) {
                     // i.e.: Auto-activate python extension for the launch as the extension
                     // is only activated for debug on the resolution, whereas in this case
                     // the launch is already resolved.
@@ -233,6 +233,7 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_UPLOAD_ROBOT_TO_CLOUD, () => uploadRobot());
         commands.registerCommand(roboCommands.ROBOCORP_RUN_ROBOT_RCC, () => runRobotRCC(true));
         commands.registerCommand(roboCommands.ROBOCORP_DEBUG_ROBOT_RCC, () => runRobotRCC(false));
+        commands.registerCommand(roboCommands.ROBOCORP_SET_PYTHON_INTERPRETER, () => setPythonInterpreterFromRobotYaml());
         async function cloudLoginShowConfirmation() {
             let loggedIn = await cloudLogin();
             if (loggedIn) {

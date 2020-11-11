@@ -1,4 +1,4 @@
-import { commands, window, WorkspaceFolder, workspace, Uri, QuickPickItem, TextEdit, debug, DebugConfiguration, DebugSessionOptions, env } from "vscode";
+import { commands, window, WorkspaceFolder, workspace, Uri, QuickPickItem, TextEdit, debug, DebugConfiguration, DebugSessionOptions, env, ConfigurationTarget } from "vscode";
 import { join } from 'path';
 import { OUTPUT_CHANNEL } from './channel';
 import * as roboCommands from './robocorpCommands';
@@ -29,6 +29,12 @@ interface ActionResult {
     message: string;
     result: any;
 };
+
+interface InterpreterInfo {
+    pythonExe: string;
+    environ?: { [key: string]: string };
+    additionalPythonpathEntries: string[];
+}
 
 interface ListWorkspacesActionResult {
     success: boolean;
@@ -96,8 +102,8 @@ export async function cloudLogin(): Promise<boolean> {
     return true;
 }
 
-async function askRobotToUpload(robotsInfo: LocalRobotMetadataInfo[]): Promise<LocalRobotMetadataInfo> {
-    let robotToUpload: LocalRobotMetadataInfo;
+async function askRobotSelection(robotsInfo: LocalRobotMetadataInfo[], message: string): Promise<LocalRobotMetadataInfo> {
+    let robot: LocalRobotMetadataInfo;
     if (robotsInfo.length > 1) {
         let captions: QuickPickItemWithAction[] = new Array();
 
@@ -114,18 +120,18 @@ async function askRobotToUpload(robotsInfo: LocalRobotMetadataInfo[]): Promise<L
             captions,
             {
                 "canPickMany": false,
-                'placeHolder': 'Please select the Robot to upload to the Cloud.',
+                'placeHolder': message,
                 'ignoreFocusOut': true,
             }
         );
         if (!selectedItem) {
             return;
         }
-        robotToUpload = selectedItem.action;
+        robot = selectedItem.action;
     } else {
-        robotToUpload = robotsInfo[0];
+        robot = robotsInfo[0];
     }
-    return robotToUpload;
+    return robot;
 }
 
 async function askAndCreateNewRobotAtWorkspace(wsInfo: WorkspaceInfo, directory: string) {
@@ -150,6 +156,73 @@ async function askAndCreateNewRobotAtWorkspace(wsInfo: WorkspaceInfo, directory:
     }
 
 }
+
+export async function setPythonInterpreterFromRobotYaml() {
+    let actionResult: ActionResult = await commands.executeCommand(
+        roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL
+    );
+    if (!actionResult.success) {
+        window.showInformationMessage('Error listing existing robots: ' + actionResult.message);
+        return;
+    }
+    let robotsInfo: LocalRobotMetadataInfo[] = actionResult.result;
+
+    if (!robotsInfo || robotsInfo.length == 0) {
+        window.showInformationMessage('Unable to set Python extension interpreter (no Robot detected in the Workspace).');
+        return;
+    }
+
+    let robot: LocalRobotMetadataInfo = await askRobotSelection(robotsInfo, 'Please select the Robot from which the python executable should be used.');
+    if (!robot) {
+        return;
+    }
+
+    try {
+        let result: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_RESOLVE_INTERPRETER, { 'target_robot': robot.filePath });
+        if (!result.success) {
+            window.showWarningMessage('Error resolving interpreter info: ' + result.message);
+            return;
+        }
+        let interpreter: InterpreterInfo = result.result;
+        if (!interpreter || !interpreter.pythonExe) {
+            window.showWarningMessage('Unable to obtain interpreter information from: ' + robot.filePath);
+            return;
+        }
+
+        // Note: if we got here we have a robot in the workspace.
+        let selectedItem = await window.showQuickPick(
+            ['Workspace Settings', 'Global Settings'],
+            {
+                "canPickMany": false,
+                'placeHolder': 'Please select where the python.pythonPath configuration should be set.',
+                'ignoreFocusOut': true,
+            }
+        );
+
+        if (!selectedItem) {
+            return;
+        }
+
+        let configurationTarget: ConfigurationTarget = undefined;
+        if (selectedItem == 'Global Settings') {
+            configurationTarget = ConfigurationTarget.Global;
+        } else if (selectedItem == 'Workspace Settings') {
+            configurationTarget = ConfigurationTarget.Workspace;
+        } else {
+            window.showWarningMessage('Invalid configuration target: ' + selectedItem);
+            return;
+        }
+
+        let config = workspace.getConfiguration('python');
+        await config.update('pythonPath', interpreter.pythonExe, configurationTarget);
+        window.showInformationMessage('Successfully set python.pythonPath set in: ' + selectedItem);
+    } catch (error) {
+        window.showWarningMessage('Error setting python.pythonPath configuration: ' + error);
+        return;
+    }
+
+}
+
 
 export async function uploadRobot() {
 
@@ -189,8 +262,8 @@ export async function uploadRobot() {
         }
     }
 
-    let robotToUpload: LocalRobotMetadataInfo = await askRobotToUpload(robotsInfo);
-    if (!robotToUpload) {
+    let robot: LocalRobotMetadataInfo = await askRobotSelection(robotsInfo, 'Please select the Robot to upload to the Cloud.');
+    if (!robot) {
         return;
     }
 
@@ -245,7 +318,7 @@ export async function uploadRobot() {
                 captions,
                 {
                     "canPickMany": false,
-                    'placeHolder': 'Please select Workspace to upload: ' + robotToUpload.name + ' (' + robotToUpload.directory + ')' + '.',
+                    'placeHolder': 'Please select Workspace to upload: ' + robot.name + ' (' + robot.directory + ')' + '.',
                     'ignoreFocusOut': true,
                 }
             );
@@ -279,7 +352,7 @@ export async function uploadRobot() {
 
                 // i.e.: Show the Robots with the same name with more priority in the list.
                 let sortKey = 'b' + robotInfo.name;
-                if (robotInfo.name == robotToUpload.name) {
+                if (robotInfo.name == robot.name) {
                     sortKey = 'a' + robotInfo.name;
                 }
                 let caption: QuickPickItemWithAction = {
@@ -313,7 +386,7 @@ export async function uploadRobot() {
             captions,
             {
                 "canPickMany": false,
-                'placeHolder': 'Please select target Robot to upload: ' + robotToUpload.name + ' (' + robotToUpload.directory + ').',
+                'placeHolder': 'Please select target Robot to upload: ' + robot.name + ' (' + robot.directory + ').',
                 'ignoreFocusOut': true,
             }
         );
@@ -329,7 +402,7 @@ export async function uploadRobot() {
         if (action.newRobotPackageAtWorkspace) {
             // No confirmation in this case
             let wsInfo: WorkspaceInfo = action.newRobotPackageAtWorkspace;
-            await askAndCreateNewRobotAtWorkspace(wsInfo, robotToUpload.directory);
+            await askAndCreateNewRobotAtWorkspace(wsInfo, robot.directory);
             return;
         }
 
@@ -340,7 +413,7 @@ export async function uploadRobot() {
             let robotInfo: PackageInfo = action.existingRobotPackage;
 
             let selectedItem = await window.showWarningMessage(
-                "Upload of the contents of " + robotToUpload.directory + " to: " + robotInfo.name + " (" + robotInfo.workspaceName + ")", ...[yesOverride, noChooseDifferentTarget, cancel]);
+                "Upload of the contents of " + robot.directory + " to: " + robotInfo.name + " (" + robotInfo.workspaceName + ")", ...[yesOverride, noChooseDifferentTarget, cancel]);
 
             // robot.language-server.python
             if (selectedItem == noChooseDifferentTarget) {
@@ -353,7 +426,7 @@ export async function uploadRobot() {
             // selectedItem == yesOverride.
             let actionResult: ActionResult = await commands.executeCommand(
                 roboCommands.ROBOCORP_UPLOAD_TO_EXISTING_ROBOT_INTERNAL,
-                { 'workspaceId': robotInfo.workspaceId, 'robotId': robotInfo.id, 'directory': robotToUpload.directory }
+                { 'workspaceId': robotInfo.workspaceId, 'robotId': robotInfo.id, 'directory': robot.directory }
             );
 
             if (!actionResult.success) {
@@ -361,7 +434,7 @@ export async function uploadRobot() {
                 OUTPUT_CHANNEL.appendLine(msg);
                 window.showErrorMessage(msg);
             } else {
-                window.showInformationMessage('Successfully submitted Robot ' + robotToUpload.name + ' to the cloud.')
+                window.showInformationMessage('Successfully submitted Robot ' + robot.name + ' to the cloud.')
             }
             return;
         }

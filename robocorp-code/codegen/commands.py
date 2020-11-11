@@ -130,6 +130,18 @@ COMMANDS = [
         add_to_package_json=False,
         server_handled=True,
     ),
+    Command(
+        "robocorp.setPythonInterpreter",
+        "Set the python.pythonPath configuration (used by the Python extension) based on robot.yaml",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
+    Command(
+        "robocorp.resolveInterpreter",
+        "Resolves the interpreter to be used given a path.",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
 ]
 
 
