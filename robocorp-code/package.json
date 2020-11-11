@@ -36,6 +36,8 @@
         "onCommand:robocorp.saveInDiskLRU",
         "onCommand:robocorp.loadFromDiskLRU",
         "onCommand:robocorp.computeRobotLaunchFromRobocorpCodeLaunch",
+        "onCommand:robocorp.setPythonInterpreter",
+        "onCommand:robocorp.resolveInterpreter",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code"
     ],
@@ -146,6 +148,11 @@
             {
                 "command": "robocorp.debugRobotRcc",
                 "title": "Debug Robot",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.setPythonInterpreter",
+                "title": "Set python.pythonPath configuration (used by the Python extension) based on robot.yaml",
                 "category": "Robocorp"
             }
         ]

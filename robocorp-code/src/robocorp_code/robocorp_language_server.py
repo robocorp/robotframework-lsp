@@ -96,6 +96,13 @@ class RobocorpLanguageServer(PythonLanguageServer):
     def __init__(self, read_stream, write_stream):
         from robocorp_code.rcc import Rcc
         from robocorp_ls_core.cache import DirCache
+        from robocorp_ls_core.pluginmanager import PluginManager
+        from robocorp_ls_core.ep_providers import DefaultConfigurationProvider
+        from robocorp_ls_core.ep_providers import EPConfigurationProvider
+        from robocorp_ls_core.ep_providers import DefaultDirCacheProvider
+        from robocorp_ls_core.ep_providers import EPDirCacheProvider
+        from robocorp_ls_core.ep_providers import DefaultEndPointProvider
+        from robocorp_ls_core.ep_providers import EPEndPointProvider
 
         user_home = os.getenv("ROBOCORP_CODE_USER_HOME", None)
         if user_home is None:
@@ -111,6 +118,19 @@ class RobocorpLanguageServer(PythonLanguageServer):
             Path, CachedFileInfo[LocalRobotMetadataInfoDict]
         ] = {}
         PythonLanguageServer.__init__(self, read_stream, write_stream)
+
+        self._pm = PluginManager()
+        self._config_provider = DefaultConfigurationProvider(self.config)
+        self._pm.set_instance(EPConfigurationProvider, self._config_provider)
+        self._pm.set_instance(
+            EPDirCacheProvider, DefaultDirCacheProvider(self._dir_cache)
+        )
+        self._pm.set_instance(
+            EPEndPointProvider, DefaultEndPointProvider(self._endpoint)
+        )
+        from robocorp_code.plugins.resolve_interpreter import register_plugins
+
+        register_plugins(self._pm)
 
     @overrides(PythonLanguageServer.m_initialize)
     def m_initialize(
@@ -625,3 +645,34 @@ class RobocorpLanguageServer(PythonLanguageServer):
         return compute_launch.compute_robot_launch_from_robocorp_code_launch(
             name, request, task, robot, additional_pythonpath_entries, env, python_exe
         )
+
+    @command_dispatcher(commands.ROBOCORP_RESOLVE_INTERPRETER, dict)
+    def _resolve_interpreter(self, params=None) -> ActionResultDict:
+        from robocorp_ls_core.ep_resolve_interpreter import EPResolveInterpreter
+        from robocorp_ls_core.ep_resolve_interpreter import IInterpreterInfo
+
+        try:
+            from robocorp_ls_core import uris
+
+            target_robot: str = params.get("target_robot")
+
+            for ep in self._pm.get_implementations(EPResolveInterpreter):
+                interpreter_info: IInterpreterInfo = ep.get_interpreter_info_for_doc_uri(
+                    uris.from_fs_path(target_robot)
+                )
+                if interpreter_info is not None:
+                    return {
+                        "success": True,
+                        "message": None,
+                        "result": {
+                            "pythonExe": interpreter_info.get_python_exe(),
+                            "environ": interpreter_info.get_environ(),
+                            "additionalPythonpathEntries": interpreter_info.get_additional_pythonpath_entries(),
+                        },
+                    }
+        except Exception as e:
+            log.exception(f"Error resolving interpreter. Args: {params}")
+            return {"success": False, "message": str(e), "result": None}
+
+        # i.e.: no error but we couldn't find an interpreter.
+        return {"success": True, "message": "", "result": None}
