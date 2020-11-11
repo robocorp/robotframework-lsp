@@ -30,12 +30,6 @@ def compute_robot_launch_from_robocorp_code_launch(
             "message": "'request' must be specified to make launch.",
             "result": None,
         }
-    if not task:
-        return {
-            "success": False,
-            "message": "'task' must be specified to make launch.",
-            "result": None,
-        }
     if not robot:
         return {
             "success": False,
@@ -84,11 +78,21 @@ def compute_robot_launch_from_robocorp_code_launch(
             "result": None,
         }
 
+    if not task:
+        if len(tasks) == 1:
+            task = next(iter(tasks))
+        else:
+            return {
+                "success": False,
+                "message": f"'task' must be specified in launch when Robot contains more than 1 task. Available tasks: {', '.join(list(tasks))}.",
+                "result": None,
+            }
+
     task_info = tasks.get(task)
     if not task_info:
         return {
             "success": False,
-            "message": f"Unable to find task: {task} in the robot: {robot}.",
+            "message": f"Unable to find task: {task} in the Robot: {robot}.",
             "result": None,
         }
     if not isinstance(task_info, dict):

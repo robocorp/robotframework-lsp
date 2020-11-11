@@ -201,3 +201,60 @@ ignoreFiles:
             "pythonPath": "python_executable.exe",
         },
     }
+
+
+def test_compute_launch_05(tmpdir):
+    import os
+    from robocorp_code import compute_launch
+
+    robot_yaml = tmpdir.join("robot.yaml")
+    tmpdir.join("task.py").write("foo")
+    robot_yaml.write(
+        """
+tasks:
+  Default:
+    command:
+      - python
+      - -u
+      - -m
+      - module_name
+      - arg1
+
+condaConfigFile: conda.yaml
+artifactsDir: output
+PATH:
+  - .
+PYTHONPATH:
+  - .
+ignoreFiles:
+    - .gitignore
+"""
+    )
+
+    additional_pythonpath_entries = []
+    launch = compute_launch.compute_robot_launch_from_robocorp_code_launch(
+        "Launch name",
+        "launch",
+        "",  # Don't provide task name: should be ok if only 1 task is there.
+        str(robot_yaml),
+        additional_pythonpath_entries,
+        None,
+        "python_executable.exe",
+    )
+
+    cwd = str(tmpdir)
+    assert launch == {
+        "success": True,
+        "message": None,
+        "result": {
+            "type": "python",
+            "name": "Launch name",
+            "request": "launch",
+            "cwd": cwd,
+            "args": ["arg1"],
+            "pythonArgs": ["-u"],
+            "console": "internalConsole",
+            "module": "module_name",
+            "pythonPath": "python_executable.exe",
+        },
+    }
