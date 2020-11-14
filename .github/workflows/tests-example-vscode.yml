@@ -59,7 +59,7 @@ jobs:
       working-directory: ./example-vscode/tests
       env:
         PYTHONPATH: .
-      run: python -u ../../robocorp-python-ls-core/tests/run_tests.py -otests_output -vv .
+      run: python -u ../../robocorp-python-ls-core/tests/run_tests.py -rfE -otests_output -vv .
     - uses: actions/upload-artifact@v1
       with:
         name: tests_output.${{ matrix.name }}.txt
