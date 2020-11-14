@@ -593,6 +593,11 @@ export async function createRobot() {
         );
 
         if (createRobotResult.success) {
+            try {
+                commands.executeCommand('workbench.files.action.refreshFilesExplorer');
+            } catch (error) {
+                OUTPUT_CHANNEL.appendLine('Error refreshing file explorer.');
+            }
             window.showInformationMessage('Robot successfully created in:\n' + join(ws.uri.fsPath, name));
         } else {
             OUTPUT_CHANNEL.appendLine('Error creating Robot at: ' + + ws.uri.fsPath);

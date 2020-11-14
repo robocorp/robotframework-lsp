@@ -84,7 +84,7 @@ def config_provider(
     ws_root_path: str, rcc_location: str, ci_endpoint: str, rcc_config_location: str
 ):
     from robocorp_code.robocorp_config import RobocorpConfig
-    from robotframework_ls.ep_providers import DefaultConfigurationProvider
+    from robocorp_ls_core.ep_providers import DefaultConfigurationProvider
 
     config = RobocorpConfig()
 

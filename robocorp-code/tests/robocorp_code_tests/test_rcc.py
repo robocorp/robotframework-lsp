@@ -6,7 +6,7 @@ def test_rcc_template_names(rcc: IRcc):
     result = rcc.get_template_names()
     assert result.success
     assert result.result
-    assert "standard" in result.result
+    assert "Standard - Robot Framework Robot." in result.result
 
 
 def test_rcc_cloud(rcc: IRcc, ci_credentials: str, tmpdir: py.path.local):

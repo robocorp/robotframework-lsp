@@ -260,6 +260,12 @@ class Rcc(object):
             success=False, message="OK. not found in message", result=output
         )
 
+    _TEMPLATES = {
+        "standard": "Standard - Robot Framework Robot.",
+        "python": "Python - Python Robot.",
+        "extended": "Extended - Robot Framework Robot with additional scaffolding.",
+    }
+
     @implements(IRcc.get_template_names)
     def get_template_names(self) -> ActionResult[List[str]]:
         result = self._run_rcc("robot initialize -l".split())
@@ -269,13 +275,18 @@ class Rcc(object):
         output = result.result
         if output is None:
             return ActionResult(success=False, message="Output not available")
-        templates = []
+        templates = set()
         for line in output.splitlines():
             if line.startswith("- "):
                 template_name = line[2:].strip()
-                templates.append(template_name)
+                templates.add(template_name)
 
-        return ActionResult(success=True, message=None, result=sorted(templates))
+        ret: List[str] = []
+        for key, description in self._TEMPLATES.items():
+            if key in templates:
+                ret.append(description)
+
+        return ActionResult(success=True, message=None, result=ret)
 
     def _add_config_to_args(self, args: List[str]) -> List[str]:
         config_location = self.config_location
@@ -286,6 +297,13 @@ class Rcc(object):
 
     @implements(IRcc.create_robot)
     def create_robot(self, template: str, directory: str) -> ActionResult:
+        if template not in self._TEMPLATES:
+            # Check if we can translate from the description
+            for key, description in self._TEMPLATES.items():
+                if description == template:
+                    template = key
+                    break
+
         args = ["robot", "initialize", "-t", template, "-d", directory]
         args = self._add_config_to_args(args)
         return self._run_rcc(args, error_msg="Error creating robot.")

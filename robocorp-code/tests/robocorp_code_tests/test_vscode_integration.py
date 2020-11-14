@@ -152,14 +152,24 @@ def test_list_rcc_robot_templates(
         commands.ROBOCORP_LIST_ROBOT_TEMPLATES_INTERNAL, []
     )["result"]
     assert result["success"]
-    assert result["result"] == ["extended", "python", "standard"]
+    assert result["result"] == [
+        "Standard - Robot Framework Robot.",
+        "Python - Python Robot.",
+        "Extended - Robot Framework Robot with additional scaffolding.",
+    ]
 
     target = str(tmpdir.join("dest"))
     language_server.change_workspace_folders(added_folders=[target], removed_folders=[])
 
     result = language_server.execute_command(
         commands.ROBOCORP_CREATE_ROBOT_INTERNAL,
-        [{"directory": target, "name": "example", "template": "standard"}],
+        [
+            {
+                "directory": target,
+                "name": "example",
+                "template": "Standard - Robot Framework Robot.",
+            }
+        ],
     )["result"]
     assert result["success"]
     assert not result["message"]

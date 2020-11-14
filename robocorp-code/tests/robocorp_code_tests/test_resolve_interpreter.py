@@ -11,10 +11,10 @@ def test_resolve_interpreter(
     from robocorp_code.plugins.resolve_interpreter import RobocorpResolveInterpreter
     from robocorp_ls_core import uris
     from robocorp_ls_core.pluginmanager import PluginManager
-    from robotframework_ls.ep_providers import EPConfigurationProvider
-    from robotframework_ls.ep_providers import EPEndPointProvider
     from pathlib import Path
     from robocorp_code.plugins.resolve_interpreter import _CacheInfo
+    from robocorp_ls_core.ep_providers import EPConfigurationProvider
+    from robocorp_ls_core.ep_providers import EPEndPointProvider
 
     _CacheInfo._cache_hit_files = 0
 
