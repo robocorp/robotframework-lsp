@@ -87,6 +87,18 @@ interface ActionResult {
 
 class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvider {
 
+    provideDebugConfigurations?(folder: WorkspaceFolder | undefined, token?: CancellationToken): DebugConfiguration[] {
+        let configurations: DebugConfiguration[] = [];
+        configurations.push({
+            "type": "robocorp-code",
+            "name": "Robocorp Code: Launch task from robot.yaml",
+            "request": "launch",
+            "robot": '^"\\${file}"',
+            "task": "",
+        });
+        return configurations;
+    };
+
     async resolveDebugConfigurationWithSubstitutedVariables(folder: WorkspaceFolder | undefined, debugConfiguration: DebugConfiguration, token?: CancellationToken): Promise<DebugConfiguration> {
         if (debugConfiguration.noDebug) {
             // Not running with debug: just use rcc to launch.

@@ -134,7 +134,7 @@
         "debuggers": [
             {
                 "type": "robotframework-lsp",
-                "label": "RobotFramework",
+                "label": "Robot Framework",
                 "languages": [
                     "robotframework"
                 ],
@@ -179,11 +179,11 @@
                 },
                 "configurationSnippets": [
                     {
-                        "label": "Robot: Launch .robot file",
+                        "label": "Robot Framework: Launch .robot file",
                         "description": "Add a new configuration for launching Robot Framework.",
                         "body": {
                             "type": "robotframework-lsp",
-                            "name": "Robot: Current File",
+                            "name": "Robot Framework: Launch .robot file",
                             "request": "launch",
                             "cwd": "^\"\\${workspaceFolder}\"",
                             "target": "^\"\\${file}\"",

@@ -51,7 +51,7 @@ def get_json_contents():
         "icon": "images/icon.png",
         "publisher": "robocorp",
         "engines": {"vscode": "^1.43.0"},
-        "categories": [],
+        "categories": ["Debuggers"],
         "activationEvents": get_activation_events_for_json(),
         "contributes": {
             "configuration": {
@@ -64,7 +64,7 @@ def get_json_contents():
             "debuggers": [
                 {
                     "type": "robocorp-code",
-                    "label": "Run Robot",
+                    "label": "Robocorp Code",
                     "languages": [],
                     "configurationAttributes": {
                         "launch": {
@@ -104,11 +104,11 @@ def get_json_contents():
                     },
                     "configurationSnippets": [
                         {
-                            "label": "Launch Robot task (robot.yaml)",
-                            "description": "Add a new configuration for launching tasks from a Robot (robot.yaml).",
+                            "label": "Robocorp Code: Launch task from robot.yaml",
+                            "description": "Add a new configuration for launching tasks from a robot.yaml.",
                             "body": {
                                 "type": "robocorp-code",
-                                "name": "Robocorp Code: Launch task from current robot.yaml",
+                                "name": "Robocorp Code: Launch task from robot.yaml",
                                 "request": "launch",
                                 # "terminal": "none",
                                 "robot": '^"\\${file}"',

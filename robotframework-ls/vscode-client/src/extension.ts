@@ -83,6 +83,21 @@ function findExecutableInPath(executable: string) {
 
 class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
 
+	provideDebugConfigurations?(folder: WorkspaceFolder | undefined, token?: CancellationToken): DebugConfiguration[] {
+		let configurations: DebugConfiguration[] = [];
+		configurations.push({
+			"type": "robotframework-lsp",
+			"name": "Robot Framework: Launch .robot file",
+			"request": "launch",
+			"cwd": "^\"\\${workspaceFolder}\"",
+			"target": "^\"\\${file}\"",
+			"terminal": "none",
+			"env": {},
+			"args": []
+		});
+		return configurations;
+	};
+
 	async resolveDebugConfigurationWithSubstitutedVariables(folder: WorkspaceFolder | undefined, debugConfiguration: DebugConfiguration, token?: CancellationToken): Promise<DebugConfiguration> {
 		// When we resolve a configuration we add the pythonpath and variables to the command line.
 		let args: Array<string> = debugConfiguration.args;
