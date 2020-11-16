@@ -300,6 +300,23 @@ class RccPatch(object):
                 result="Created new robot named {args[5]} with identity 2323.",
             )
 
+        if args[:4] == ["config", "credentials", "-j", "--verified"]:
+            return ActionResult(
+                success=True,
+                message=None,
+                result=json.dumps(
+                    [
+                        {
+                            "account": "robocorp-code",
+                            "identifier": "001",
+                            "endpoint": "https://endpoint.foo.bar",
+                            "secret": "123...",
+                            "verified": 1605525807,
+                        }
+                    ]
+                ),
+            )
+
         raise AssertionError(f"Unexpected args: {args}")
 
     def mock_run_rcc_should_not_be_called(self, args, *sargs, **kwargs):

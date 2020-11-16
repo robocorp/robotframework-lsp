@@ -128,7 +128,7 @@ class Rcc(object):
     def __init__(self, config_provider: IConfigProvider) -> None:
         self._config_provider = weakref.ref(config_provider)
 
-        self.credentials: Optional[str] = None
+        self._last_verified_account: Optional[str] = None
 
     def _get_str_optional_setting(self, setting_name) -> Any:
         config_provider = self._config_provider()
@@ -295,6 +295,22 @@ class Rcc(object):
             args.append(config_location)
         return args
 
+    def _add_account_to_args(self, args: List[str]) -> Optional[ActionResult]:
+        """
+        Adds the account to the args.
+        
+        Returns an error ActionResult if unable to get a valid account.
+        """
+        account = self._last_verified_account
+        if account is None:
+            account = self._get_valid_account()
+            if account is None:
+                return ActionResult(False, "Unable to get valid account for action.")
+
+        args.append("--account")
+        args.append(account)
+        return None
+
     @implements(IRcc.create_robot)
     def create_robot(self, template: str, directory: str) -> ActionResult:
         if template not in self._TEMPLATES:
@@ -317,6 +333,8 @@ class Rcc(object):
             args.append(endpoint)
 
         args = self._add_config_to_args(args)
+        args.append("--account")
+        args.append("--robocorp-code")
 
         args.append(credential)
 
@@ -324,8 +342,13 @@ class Rcc(object):
 
     @implements(IRcc.credentials_valid)
     def credentials_valid(self) -> bool:
+        account = self._get_valid_account()
+        return account is not None
+
+    def _get_valid_account(self) -> Optional[str]:
         import json
 
+        self._last_verified_account = None
         args = ["config", "credentials", "-j", "--verified"]
         endpoint = self.endpoint
         if endpoint:
@@ -340,20 +363,39 @@ class Rcc(object):
         if not result.success:
             msg = f"Error checking credentials: {result.message}"
             log.critical(msg)
-            return False
+            return None
 
         output = result.result
         if not output:
             msg = f"Error. Expected to get info on credentials (found no output)."
             log.critical(msg)
-            return False
+            return None
 
-        for credential in json.loads(output):
+        credentials = json.loads(output)
+
+        def key(credential):
+            account = credential.get("account", "").lower()
+            # Make sure that we check the robocorp-code account (which is the one
+            # we add through VSCode) first and then the default account (which
+            # would be the one configured if we added it in a previous version
+            # of Robocorp Code). Otherwise, if those aren't found, accept one
+            # that came from Robocorp Lab.
+            if account == "robocorp-code":
+                return 0
+            if account == "default account":
+                return 1
+
+            return 2
+
+        credentials = sorted(credentials, key=key)
+
+        for credential in credentials:
             timestamp = credential.get("verified")
             if timestamp and int(timestamp):
-                return True
+                account = self._last_verified_account = credential["account"]
+                return account
         # Found no valid credential
-        return False
+        return None
 
     @implements(IRcc.cloud_list_workspaces)
     def cloud_list_workspaces(self) -> ActionResult[List[IRccWorkspace]]:
@@ -362,6 +404,9 @@ class Rcc(object):
         ret: List[IRccWorkspace] = []
         args = ["cloud", "workspace"]
         args = self._add_config_to_args(args)
+        error_action_result = self._add_account_to_args(args)
+        if error_action_result is not None:
+            return error_action_result
 
         result = self._run_rcc(
             args, expect_ok=False, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME
@@ -402,7 +447,12 @@ class Rcc(object):
         ret: List[IRccRobotMetadata] = []
         args = ["cloud", "workspace"]
         args.extend(("--workspace", workspace_id))
+
         args = self._add_config_to_args(args)
+        error_action_result = self._add_account_to_args(args)
+        if error_action_result is not None:
+            return error_action_result
+
         result = self._run_rcc(
             args, expect_ok=False, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME
         )
@@ -458,6 +508,10 @@ class Rcc(object):
         args.extend(["--robot", robot_id])
 
         args = self._add_config_to_args(args)
+        error_action_result = self._add_account_to_args(args)
+        if error_action_result is not None:
+            return error_action_result
+
         ret = self._run_rcc(args, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME)
         return ret
 
@@ -470,6 +524,10 @@ class Rcc(object):
         args.extend(["--robot", robot_name])
 
         args = self._add_config_to_args(args)
+        error_action_result = self._add_account_to_args(args)
+        if error_action_result is not None:
+            return error_action_result
+
         ret = self._run_rcc(
             args, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME, expect_ok=False
         )
