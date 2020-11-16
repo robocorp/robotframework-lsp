@@ -12,6 +12,7 @@ import time
 from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
 import py
 from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
+from robocorp_code_tests.fixtures import RccPatch
 
 log = logging.getLogger(__name__)
 
@@ -199,39 +200,6 @@ def test_list_rcc_robot_templates(
     assert set([x["name"] for x in folder_info_lst]) == {"example", "example2"}
 
 
-_WS_INFO = (
-    {
-        "id": "workspace_id_1",
-        "name": "CI workspace",
-        "orgId": "affd282c8f9fe",
-        "orgName": "My Org Name",
-        "orgShortName": "654321",
-        "shortName": "123456",  # Can be some generated number or something provided by the user.
-        "state": "active",
-        "url": "http://url1",
-    },
-    {
-        "id": "workspace_id_2",
-        "name": "My Other workspace",
-        "orgId": "affd282c8f9fe",
-        "orgName": "My Org Name",
-        "orgShortName": "1234567",
-        "shortName": "7654321",
-        "state": "active",
-        "url": "http://url2",
-    },
-)
-
-_PACKAGE_INFO_WS_2: dict = {}
-
-_PACKAGE_INFO_WS_1: dict = {
-    "activities": [
-        {"id": "452", "name": "Package Name 1"},
-        {"id": "453", "name": "Package Name 2"},
-    ]
-}
-
-
 def get_workspace_from_name(
     workspace_list: List[WorkspaceInfoDict], workspace_name: str
 ) -> WorkspaceInfoDict:
@@ -239,103 +207,6 @@ def get_workspace_from_name(
         if ws["workspaceName"] == workspace_name:
             return ws
     raise AssertionError(f"Did not find workspace: {workspace_name}")
-
-
-class RccPatch(object):
-    def __init__(self, monkeypatch):
-        from robocorp_code.rcc import Rcc
-
-        self.monkeypatch = monkeypatch
-        self._current_mock = self.mock_run_rcc_default
-        self._original = Rcc._run_rcc
-        self._package_info_ws_1 = _PACKAGE_INFO_WS_1
-        self.custom_handler = None
-
-    def mock_run_rcc(self, args, *starargs, **kwargs) -> ActionResult:
-        return self._current_mock(args, *starargs, **kwargs)
-
-    def mock_run_rcc_default(self, args, *sargs, **kwargs) -> ActionResult:
-        import json
-        import copy
-
-        if self.custom_handler is not None:
-            ret = self.custom_handler(args, *sargs, **kwargs)
-            if ret is not None:
-                return ret
-
-        if args[:4] == ["cloud", "workspace", "--workspace", "workspace_id_1"]:
-            # List packages for workspace 1
-            return ActionResult(
-                success=True, message=None, result=json.dumps(self._package_info_ws_1)
-            )
-
-        if args[:4] == ["cloud", "workspace", "--workspace", "workspace_id_2"]:
-            # List packages for workspace 2
-            return ActionResult(
-                success=True, message=None, result=json.dumps(_PACKAGE_INFO_WS_2)
-            )
-
-        if args[:3] == ["cloud", "workspace", "--config"]:
-            # List workspaces
-            workspace_info = _WS_INFO
-            return ActionResult(
-                success=True, message=None, result=json.dumps(workspace_info)
-            )
-
-        if args[:3] == ["cloud", "push", "--directory"]:
-            if args[4:8] == ["--workspace", "workspace_id_1", "--robot", "2323"]:
-                return ActionResult(success=True)
-            if args[4:8] == ["--workspace", "workspace_id_1", "--robot", "453"]:
-                return ActionResult(success=True)
-
-        if args[:5] == ["cloud", "new", "--workspace", "workspace_id_1", "--robot"]:
-            # Submit a new package to ws 1
-            cp = copy.deepcopy(self._package_info_ws_1)
-            cp["activities"].append({"id": "2323", "name": args[5]})
-            self._package_info_ws_1 = cp
-
-            return ActionResult(
-                success=True,
-                message=None,
-                result="Created new robot named {args[5]} with identity 2323.",
-            )
-
-        if args[:4] == ["config", "credentials", "-j", "--verified"]:
-            return ActionResult(
-                success=True,
-                message=None,
-                result=json.dumps(
-                    [
-                        {
-                            "account": "robocorp-code",
-                            "identifier": "001",
-                            "endpoint": "https://endpoint.foo.bar",
-                            "secret": "123...",
-                            "verified": 1605525807,
-                        }
-                    ]
-                ),
-            )
-
-        raise AssertionError(f"Unexpected args: {args}")
-
-    def mock_run_rcc_should_not_be_called(self, args, *sargs, **kwargs):
-        raise AssertionError(
-            "This should not be called at this time (data should be cached)."
-        )
-
-    def apply(self) -> None:
-        from robocorp_code.rcc import Rcc
-
-        self.monkeypatch.setattr(Rcc, "_run_rcc", self.mock_run_rcc)
-
-    def disallow_calls(self) -> None:
-        self._current_mock = self.mock_run_rcc_should_not_be_called
-
-
-@pytest.fixture
-def rcc_patch(monkeypatch):
-    return RccPatch(monkeypatch)
 
 
 def _get_as_name_to_sort_key_and_package_id(lst: List[WorkspaceInfoDict]):

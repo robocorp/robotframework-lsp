@@ -21,6 +21,7 @@ from robocorp_code.protocols import (
     RunInRccParamsDict,
     ActionResultDictLocalRobotMetadata,
     ActionResultDictRobotLaunch,
+    TypedDict,
 )
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.cache import CachedFileInfo
@@ -88,9 +89,15 @@ class _CommandDispatcher(object):
 command_dispatcher = _CommandDispatcher()
 
 
+class ListWorkspaceCachedInfoDict(TypedDict):
+    ws_info: List[WorkspaceInfoDict]
+    account_cache_key: tuple
+
+
 class RobocorpLanguageServer(PythonLanguageServer):
 
-    CLOUD_LIST_WORKSPACE_CACHE_KEY = "CLOUD_LIST_WORKSPACE_CACHE"
+    # V2: save the account info along to validate user.
+    CLOUD_LIST_WORKSPACE_CACHE_KEY = "CLOUD_LIST_WORKSPACE_CACHE_V2"
     PACKAGE_ACCESS_LRU_CACHE_KEY = "PACKAGE_ACCESS_LRU_CACHE"
 
     def __init__(self, read_stream, write_stream):
@@ -321,29 +328,45 @@ class RobocorpLanguageServer(PythonLanguageServer):
         ws_dict: WorkspaceInfoDict
 
         ws_id_and_pack_id_to_lru_index = self._get_sort_key_info()
+        curr_account_info = self._rcc.last_verified_account_info
+        if curr_account_info is None:
+            curr_account_info = self._rcc.get_valid_account_info()
+            if curr_account_info is None:
+                return {
+                    "success": False,
+                    "message": "Unable to get workspace info (no user is logged in).",
+                    "result": None,
+                }
+
+        account_cache_key = (curr_account_info.account, curr_account_info.identifier)
 
         if not params.get("refresh", True):
             try:
-                cached: List[WorkspaceInfoDict] = self._dir_cache.load(
-                    self.CLOUD_LIST_WORKSPACE_CACHE_KEY, list
+                cached: ListWorkspaceCachedInfoDict = self._dir_cache.load(
+                    self.CLOUD_LIST_WORKSPACE_CACHE_KEY, dict
                 )
             except KeyError:
                 pass
             else:
                 # We need to update the sort key when it's gotten from the cache.
                 try:
-                    for ws_dict in cached:
-                        for package_info in ws_dict["packages"]:
-                            key = (package_info["workspaceId"], package_info["id"])
-                            sort_key = "%05d%s" % (
-                                ws_id_and_pack_id_to_lru_index.get(
-                                    key, DEFAULT_SORT_KEY
-                                ),
-                                package_info["name"].lower(),
-                            )
+                    if account_cache_key == tuple(cached.get("account_cache_key", ())):
+                        for ws_dict in cached["ws_info"]:
+                            for package_info in ws_dict["packages"]:
+                                key = (package_info["workspaceId"], package_info["id"])
+                                sort_key = "%05d%s" % (
+                                    ws_id_and_pack_id_to_lru_index.get(
+                                        key, DEFAULT_SORT_KEY
+                                    ),
+                                    package_info["name"].lower(),
+                                )
 
-                            package_info["sortKey"] = sort_key
-                    return {"success": True, "message": None, "result": cached}
+                                package_info["sortKey"] = sort_key
+                        return {
+                            "success": True,
+                            "message": None,
+                            "result": cached["ws_info"],
+                        }
                 except Exception:
                     log.exception(
                         "Error computing new sort keys for cached entry. Refreshing and proceeding."
@@ -404,7 +427,11 @@ class RobocorpLanguageServer(PythonLanguageServer):
             return last_error_result.as_dict()
 
         if ret:  # Only store if we got something.
-            self._dir_cache.store(self.CLOUD_LIST_WORKSPACE_CACHE_KEY, ret)
+            store: ListWorkspaceCachedInfoDict = {
+                "ws_info": ret,
+                "account_cache_key": account_cache_key,
+            }
+            self._dir_cache.store(self.CLOUD_LIST_WORKSPACE_CACHE_KEY, store)
         return {"success": True, "message": None, "result": ret}
 
     @command_dispatcher(commands.ROBOCORP_CREATE_ROBOT_INTERNAL)

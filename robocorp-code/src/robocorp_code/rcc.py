@@ -11,6 +11,7 @@ from robocorp_code.protocols import IRcc, IRccWorkspace, IRccRobotMetadata, Acti
 from pathlib import Path
 import os.path
 from robocorp_ls_core.protocols import check_implements
+from dataclasses import dataclass
 
 
 log = get_logger(__name__)
@@ -124,11 +125,21 @@ class RccWorkspace(object):
         _: IRccWorkspace = check_implements(self)
 
 
+@dataclass
+class AccountInfo:
+    account: str
+    identifier: str
+
+
 class Rcc(object):
     def __init__(self, config_provider: IConfigProvider) -> None:
         self._config_provider = weakref.ref(config_provider)
 
-        self._last_verified_account: Optional[str] = None
+        self._last_verified_account_info: Optional[AccountInfo] = None
+
+    @property
+    def last_verified_account_info(self) -> Optional[AccountInfo]:
+        return self._last_verified_account_info
 
     def _get_str_optional_setting(self, setting_name) -> Any:
         config_provider = self._config_provider()
@@ -301,14 +312,14 @@ class Rcc(object):
         
         Returns an error ActionResult if unable to get a valid account.
         """
-        account = self._last_verified_account
-        if account is None:
-            account = self._get_valid_account()
-            if account is None:
+        account_info = self._last_verified_account_info
+        if account_info is None:
+            account_info = self.get_valid_account_info()
+            if account_info is None:
                 return ActionResult(False, "Unable to get valid account for action.")
 
         args.append("--account")
-        args.append(account)
+        args.append(account_info.account)
         return None
 
     @implements(IRcc.create_robot)
@@ -326,6 +337,7 @@ class Rcc(object):
 
     @implements(IRcc.add_credentials)
     def add_credentials(self, credential: str) -> ActionResult:
+        self._last_verified_account_info = None
         args = ["config", "credentials"]
         endpoint = self.endpoint
         if endpoint:
@@ -342,13 +354,13 @@ class Rcc(object):
 
     @implements(IRcc.credentials_valid)
     def credentials_valid(self) -> bool:
-        account = self._get_valid_account()
+        account = self.get_valid_account_info()
         return account is not None
 
-    def _get_valid_account(self) -> Optional[str]:
+    def get_valid_account_info(self) -> Optional[AccountInfo]:
         import json
 
-        self._last_verified_account = None
+        self._last_verified_account_info = None
         args = ["config", "credentials", "-j", "--verified"]
         endpoint = self.endpoint
         if endpoint:
@@ -392,7 +404,9 @@ class Rcc(object):
         for credential in credentials:
             timestamp = credential.get("verified")
             if timestamp and int(timestamp):
-                account = self._last_verified_account = credential["account"]
+                account = self._last_verified_account_info = AccountInfo(
+                    credential["account"], credential["identifier"]
+                )
                 return account
         # Found no valid credential
         return None
