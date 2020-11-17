@@ -41,7 +41,8 @@
         "onCommand:robocorp.setPythonInterpreter",
         "onCommand:robocorp.resolveInterpreter",
         "onDebugInitialConfigurations",
-        "onDebugResolve:robocorp-code"
+        "onDebugResolve:robocorp-code",
+        "onView:robocorp-robots-tree"
     ],
     "contributes": {
         "configuration": {
@@ -79,6 +80,24 @@
                     "description": "Specifies the config location used by rcc."
                 }
             }
+        },
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "robocorp-robots",
+                    "title": "Robocorp Code",
+                    "icon": "images/robocorp-outline.svg"
+                }
+            ]
+        },
+        "views": {
+            "robocorp-robots": [
+                {
+                    "id": "robocorp-robots-tree",
+                    "name": "Robots",
+                    "contextualTitle": "Robots"
+                }
+            ]
         },
         "languages": [],
         "grammars": [],

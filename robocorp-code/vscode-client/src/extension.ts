@@ -25,6 +25,7 @@ import * as path from 'path';
 
 import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder, ProgressLocation, Progress, DebugAdapterExecutable, debug, DebugConfiguration, DebugConfigurationProvider, CancellationToken, ProviderResult, extensions, ConfigurationTarget } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
+import * as views from './views';
 import * as roboConfig from './robocorpSettings';
 import * as roboCommands from './robocorpCommands';
 import { OUTPUT_CHANNEL } from './channel';
@@ -253,6 +254,7 @@ export async function activate(context: ExtensionContext) {
             }
         }
         commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGIN, () => cloudLoginShowConfirmation());
+        views.registerViews(context);
         registerDebugger(executable);
         context.subscriptions.push(disposable);
 
