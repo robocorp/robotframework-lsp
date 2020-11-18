@@ -2,6 +2,7 @@ import { TREE_VIEW_ROBOCORP_ROBOTS_TREE } from './robocorpViews';
 import * as vscode from 'vscode';
 import * as roboCommands from './robocorpCommands';
 import { ExtensionContext } from 'vscode';
+import { OUTPUT_CHANNEL } from './channel';
 
 
 interface RobotEntry {
@@ -35,55 +36,40 @@ function getRobotLabel(robotInfo: LocalRobotMetadataInfo): string {
 
 export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntry> {
 
-    private _onDidChangeFile: vscode.EventEmitter<vscode.FileChangeEvent[]>;
+    private _onDidChangeTreeData: vscode.EventEmitter<RobotEntry | null> = new vscode.EventEmitter<RobotEntry | null>();
+    readonly onDidChangeTreeData: vscode.Event<RobotEntry | null> = this._onDidChangeTreeData.event;
 
-    constructor() {
-        this._onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
+
+    fireRootChange() {
+        this._onDidChangeTreeData.fire(null);
     }
 
-    get onDidChangeFile(): vscode.Event<vscode.FileChangeEvent[]> {
-        return this._onDidChangeFile.event;
-    }
-
-    // watch(uri: vscode.Uri, options: { recursive: boolean; excludes: string[]; }): vscode.Disposable {
-    //     const watcher = fs.watch(uri.fsPath, { recursive: options.recursive }, async (event: string, filename: string | Buffer) => {
-    //         const filepath = path.join(uri.fsPath, _.normalizeNFC(filename.toString()));
-
-    //         // TODO support excludes (using minimatch library?)
-
-    //         this._onDidChangeFile.fire([{
-    //             type: event === 'change' ? vscode.FileChangeType.Changed : await _.exists(filepath) ? vscode.FileChangeType.Created : vscode.FileChangeType.Deleted,
-    //             uri: uri.with({ path: filepath })
-    //         } as vscode.FileChangeEvent]);
-    //     });
-
-    //     return { dispose: () => watcher.close() };
-    // }
-
-    // tree data provider
 
     async getChildren(element?: RobotEntry): Promise<RobotEntry[]> {
         if (element) {
+            // Get child elements.
             if (element.taskName) {
                 return [];
             }
             let yamlContents = element.robot.yamlContents;
-            if (yamlContents) {
-                let tasks: object[] = yamlContents['tasks'];
-                if (!tasks) {
-                    return [];
-                }
-                const robotInfo = element.robot;
-                return Object.keys(tasks).map((task: string) => (
-                    {
-                        'label': task,
-                        'uri': vscode.Uri.file(robotInfo.filePath),
-                        'robot': robotInfo,
-                        'taskName': task,
-                        'iconPath': 'symbol-misc',
-                    }
-                ));
+            if (!yamlContents) {
+                return [];
             }
+
+            let tasks: object[] = yamlContents['tasks'];
+            if (!tasks) {
+                return [];
+            }
+            const robotInfo = element.robot;
+            return Object.keys(tasks).map((task: string) => (
+                {
+                    'label': task,
+                    'uri': vscode.Uri.file(robotInfo.filePath),
+                    'robot': robotInfo,
+                    'taskName': task,
+                    'iconPath': 'symbol-misc',
+                }
+            ));
         }
 
         // Get root elements.
@@ -91,6 +77,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
             roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL
         );
         if (!actionResult.success) {
+            OUTPUT_CHANNEL.appendLine(actionResult.message);
             return [];
         }
         let robotsInfo: LocalRobotMetadataInfo[] = actionResult.result;
@@ -116,9 +103,51 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
     }
 }
 
+let treeViewIdToTreeView: Map<string, vscode.TreeView<any>> = new Map();
+let treeViewIdToTreeDataProvider: Map<string, vscode.TreeDataProvider<any>> = new Map();
+
+export function refreshTreeView(treeViewId: string) {
+    let dataProvider: RobotsTreeDataProvider = <RobotsTreeDataProvider>treeViewIdToTreeDataProvider.get(treeViewId);
+    if (dataProvider) {
+        dataProvider.fireRootChange();
+    }
+}
+
+
+const debounce = (func, wait) => {
+    let timeout;
+
+    return function wrapper(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+};
 
 export function registerViews(context: ExtensionContext) {
-    context.subscriptions.push(vscode.window.createTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE, {
-        treeDataProvider: new RobotsTreeDataProvider()
-    }));
+    let treeDataProvider = new RobotsTreeDataProvider();
+    let tree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE, { 'treeDataProvider': treeDataProvider });
+
+    treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_ROBOTS_TREE, tree);
+    treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_ROBOTS_TREE, treeDataProvider);
+
+    let watcher: vscode.FileSystemWatcher = vscode.workspace.createFileSystemWatcher("**/*robot.yaml");
+
+    let onChange = debounce(() => {
+        // Note: this doesn't currently work if the parent folder is renamed or removed.
+        // (https://github.com/microsoft/vscode/pull/110858)
+        OUTPUT_CHANNEL.appendLine("Found change.");
+        refreshTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
+    }, 300);
+
+    watcher.onDidChange(onChange);
+    watcher.onDidCreate(onChange);
+    watcher.onDidDelete(onChange);
+
+    context.subscriptions.push(tree);
+    context.subscriptions.push(watcher);
 }
