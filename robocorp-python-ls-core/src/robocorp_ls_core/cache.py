@@ -5,7 +5,7 @@ from robocorp_ls_core.robotframework_log import get_logger
 
 from collections import namedtuple
 from pathlib import Path
-from typing import Any, Generic, Callable
+from typing import Any, Generic, Callable, Optional
 import functools
 import os
 
@@ -177,7 +177,9 @@ CachedFileMTimeInfo = namedtuple("CachedFileMTimeInfo", "st_mtime, st_size, path
 class CachedFileInfo(Generic[T]):
     def __init__(self, file_path: Path, compute_value: Callable[[Path], T]):
         self._file_path = file_path
-        self._mtime_info: CachedFileMTimeInfo = self._get_mtime_cache_info(file_path)
+        self._mtime_info: Optional[CachedFileMTimeInfo] = self._get_mtime_cache_info(
+            file_path
+        )
         # Note that we only get the value after getting the mtime (so, the
         # constructor receives a callable and not the value so that the cache
         # has no risk of having stale values).
@@ -191,12 +193,17 @@ class CachedFileInfo(Generic[T]):
     def file_path(self) -> Path:
         return self._file_path
 
-    def _get_mtime_cache_info(self, file_path: Path) -> CachedFileMTimeInfo:
+    def _get_mtime_cache_info(self, file_path: Path) -> Optional[CachedFileMTimeInfo]:
         """
         Cache based on the time/size of a given path.
         """
-        stat = file_path.stat()
-        return CachedFileMTimeInfo(stat.st_mtime, stat.st_size, str(file_path))
+        try:
+            stat = file_path.stat()
+            return CachedFileMTimeInfo(stat.st_mtime, stat.st_size, str(file_path))
+        except:
+            # Probably removed in the meanwhile.
+            log.exception(f"Unable to get mtime for: {file_path}")
+            return None
 
     def is_cache_valid(self) -> bool:
         return self._mtime_info == self._get_mtime_cache_info(self.file_path)

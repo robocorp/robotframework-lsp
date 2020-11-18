@@ -53,18 +53,25 @@ _CachedInterpreterMTime = Tuple[
 ]
 
 
-def _get_mtime_cache_info(file_path: Path) -> _CachedFileMTimeInfo:
+def _get_mtime_cache_info(file_path: Path) -> Optional[_CachedFileMTimeInfo]:
     """
     Cache based on the time/size of a given path.
     """
-    stat = file_path.stat()
-    return _CachedFileMTimeInfo(stat.st_mtime, stat.st_size, str(file_path))
+    try:
+        stat = file_path.stat()
+        return _CachedFileMTimeInfo(stat.st_mtime, stat.st_size, str(file_path))
+    except:
+        # It could be removed in the meanwhile.
+        log.exception(f"Unable to get mtime info for: {file_path}")
+        return None
 
 
 class _CachedFileInfo(object):
     def __init__(self, file_path: Path):
         self.file_path = file_path
-        self.mtime_info: _CachedFileMTimeInfo = _get_mtime_cache_info(file_path)
+        self.mtime_info: Optional[_CachedFileMTimeInfo] = _get_mtime_cache_info(
+            file_path
+        )
         self.contents: str = file_path.read_text(encoding="utf-8", errors="replace")
         self._yaml_contents: Optional[dict] = None
 
