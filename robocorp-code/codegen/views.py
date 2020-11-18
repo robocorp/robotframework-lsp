@@ -1,8 +1,13 @@
+import enum
+from typing import Optional
+
+
 class TreeView:
-    def __init__(self, id, name, contextual_title):
+    def __init__(self, id, name, contextual_title, menus):
         self.id = id
         self.name = name
         self.contextual_title = contextual_title
+        self.menus = menus
 
 
 class TreeViewContainer:
@@ -13,6 +18,16 @@ class TreeViewContainer:
         self.tree_views = tree_views
 
 
+class MenuGroup(enum.Enum):
+    NAVIGATION = "navigation"
+
+
+class Menu:
+    def __init__(self, command_id, group: Optional[MenuGroup] = None):
+        self.command_id = command_id
+        self.group = group
+
+
 TREE_VIEW_CONTAINERS = [
     TreeViewContainer(
         id="robocorp-robots",
@@ -20,7 +35,10 @@ TREE_VIEW_CONTAINERS = [
         icon="images/robocorp-outline.svg",
         tree_views=[
             TreeView(
-                id="robocorp-robots-tree", name="Robots", contextual_title="Robots"
+                id="robocorp-robots-tree",
+                name="Robots",
+                contextual_title="Robots",
+                menus=[Menu("robocorp.refreshRobotsView", MenuGroup.NAVIGATION)],
             ),
             # TreeView(id="robocorp-tasks-tree", name="Tasks", contextual_title="Tasks"),
         ],
@@ -59,3 +77,18 @@ def get_activation_events_for_json():
             activation_events.append("onView:" + tree_viewer.id)
 
     return activation_events
+
+
+def get_menus():
+    menus = []
+
+    for tree_view_container in TREE_VIEW_CONTAINERS:
+        for tree_viewer in tree_view_container.tree_views:
+            menu: Menu
+            for menu in tree_viewer.menus:
+                item = {"command": menu.command_id, "when": "view == " + tree_viewer.id}
+                if menu.group:
+                    item["group"] = menu.group.value
+                menus.append(item)
+
+    return menus

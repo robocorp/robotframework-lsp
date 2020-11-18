@@ -40,6 +40,7 @@
         "onCommand:robocorp.computeRobotLaunchFromRobocorpCodeLaunch",
         "onCommand:robocorp.setPythonInterpreter",
         "onCommand:robocorp.resolveInterpreter",
+        "onCommand:robocorp.refreshRobotsView",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree"
@@ -173,10 +174,28 @@
             },
             {
                 "command": "robocorp.setPythonInterpreter",
-                "title": "Set python.pythonPath configuration (used by the Python extension) based on robot.yaml",
+                "title": "Set python.pythonPath config based on robot.yaml",
                 "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.refreshRobotsView",
+                "title": "Refresh Robots view",
+                "category": "Robocorp",
+                "icon": {
+                    "light": "images/light/refresh.svg",
+                    "dark": "images/dark/refresh.svg"
+                }
             }
-        ]
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "robocorp.refreshRobotsView",
+                    "when": "view == robocorp-robots-tree",
+                    "group": "navigation"
+                }
+            ]
+        }
     },
     "main": "./vscode-client/out/extension",
     "scripts": {

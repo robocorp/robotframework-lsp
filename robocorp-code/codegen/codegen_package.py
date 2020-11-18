@@ -124,6 +124,7 @@ def get_json_contents():
             ],
             "keybindings": get_keybindings_for_json(),
             "commands": get_commands_for_json(),
+            "menus": {"view/title": views.get_menus()},
         },
         "main": "./vscode-client/out/extension",
         "scripts": {

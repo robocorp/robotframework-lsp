@@ -36,6 +36,7 @@ import { execFilePromise, ExecFileReturn } from './subprocess';
 import { createRobot, uploadRobot, cloudLogin, runRobotRCC, setPythonInterpreterFromRobotYaml } from './activities';
 import { sleep } from './time';
 import { handleProgressMessage, ProgressReport } from './progress';
+import { TREE_VIEW_ROBOCORP_ROBOTS_TREE } from './robocorpViews';
 
 
 const clientOptions: LanguageClientOptions = {
@@ -247,6 +248,7 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_RUN_ROBOT_RCC, () => runRobotRCC(true));
         commands.registerCommand(roboCommands.ROBOCORP_DEBUG_ROBOT_RCC, () => runRobotRCC(false));
         commands.registerCommand(roboCommands.ROBOCORP_SET_PYTHON_INTERPRETER, () => setPythonInterpreterFromRobotYaml());
+        commands.registerCommand(roboCommands.ROBOCORP_REFRESH_ROBOTS_VIEW, () => views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE));
         async function cloudLoginShowConfirmation() {
             let loggedIn = await cloudLogin();
             if (loggedIn) {
