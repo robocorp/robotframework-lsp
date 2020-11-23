@@ -573,3 +573,6 @@ class ServerManager(object):
         if api is not None:
             return api.get_robotframework_api_client()
         return None
+
+    def get_workspace_symbols_api_client(self) -> Optional[IRobotFrameworkApiClient]:
+        return self.get_source_format_rf_api_client()

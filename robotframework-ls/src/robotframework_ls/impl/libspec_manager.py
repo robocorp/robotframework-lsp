@@ -3,6 +3,8 @@ import sys
 from robotframework_ls.constants import NULL
 from robocorp_ls_core.robotframework_log import get_logger
 import threading
+from robotframework_ls.impl.robot_specbuilder import LibraryDoc
+from typing import Optional
 
 log = get_logger(__name__)
 
@@ -833,7 +835,9 @@ class LibspecManager(object):
             return True
         return False
 
-    def get_library_info(self, libname, create=True, current_doc_uri=None):
+    def get_library_info(
+        self, libname, create=True, current_doc_uri=None
+    ) -> Optional[LibraryDoc]:
         """
         :param libname:
             It may be a library name, a relative path to a .py file or an

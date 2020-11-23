@@ -1,10 +1,11 @@
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Optional
+from typing import Optional, List
 from robocorp_ls_core.protocols import IConfig, IMonitor
 from functools import partial
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
+from robocorp_ls_core.lsp import SymbolInformationTypedDict
 
 
 log = get_logger(__name__)
@@ -298,6 +299,30 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return None
 
         return signature_help(completion_context)
+
+    def m_workspace_symbols(self, query: Optional[str] = None):
+        func = partial(self._threaded_workspace_symbols, query)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_workspace_symbols(
+        self, query: Optional[str], monitor: IMonitor
+    ) -> Optional[List[SymbolInformationTypedDict]]:
+        from robotframework_ls.impl.workspace_symbols import workspace_symbols
+        from robotframework_ls.impl.completion_context import BaseContext
+        from robotframework_ls.impl.protocols import IRobotWorkspace
+        from typing import cast
+
+        workspace = self._workspace
+        if not workspace:
+            return []
+
+        robot_workspace = cast(IRobotWorkspace, workspace)
+
+        return workspace_symbols(
+            query,
+            BaseContext(workspace=robot_workspace, config=self.config, monitor=monitor),
+        )
 
     def m_shutdown(self, **_kwargs):
         PythonLanguageServer.m_shutdown(self, **_kwargs)

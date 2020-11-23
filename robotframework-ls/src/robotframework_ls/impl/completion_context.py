@@ -44,6 +44,28 @@ class _Memo(object):
         return False
 
 
+class BaseContext(object):
+    def __init__(self, workspace: IRobotWorkspace, config: IConfig, monitor: IMonitor):
+        self._workspace = workspace
+        self._config = config
+        self._monitor = monitor
+
+    @property
+    def monitor(self) -> IMonitor:
+        return self._monitor
+
+    @property
+    def workspace(self) -> IRobotWorkspace:
+        return self._workspace
+
+    @property
+    def config(self) -> IConfig:
+        return self._config
+
+    def check_cancelled(self) -> None:
+        self._monitor.check_cancelled()
+
+
 class CompletionContext(object):
 
     TYPE_TEST_CASE = RobotDocument.TYPE_TEST_CASE

@@ -22,7 +22,7 @@ https://microsoft.github.io/language-server-protocol/specification
 from typing import List, Union
 import typing
 
-from robocorp_ls_core.protocols import IEndPoint, IFuture
+from robocorp_ls_core.protocols import IEndPoint, IFuture, TypedDict
 
 
 class CompletionItemKind(object):
@@ -347,6 +347,47 @@ class LocationLink(_Base):
         self.targetUri = target_uri
         self.targetRange = target_range
         self.targetSelectionRange = target_selection_range
+
+
+class PositionTypedDict(TypedDict):
+    line: int
+    character: int
+
+
+class RangeTypedDict(TypedDict):
+    start: PositionTypedDict
+    end: PositionTypedDict
+
+
+class LocationTypedDict(TypedDict):
+    uri: str
+    range: RangeTypedDict
+
+
+class SymbolInformationTypedDict(TypedDict):
+    """
+    :ivar location:
+        The location of this symbol. The location's range is used by a tool
+        to reveal the location in the editor. If the symbol is selected in the
+        tool the range's start information is used to position the cursor. So
+        the range usually spans more then the actual symbol's name and does
+        normally include things like visibility modifiers.
+        
+        The range doesn't have to denote a node range in the sense of a abstract
+        syntax tree. It can therefore not be used to re-construct a hierarchy of
+        the symbols.
+
+    :ivar containerName: 
+        The name of the symbol containing this symbol. This information is for
+        user interface purposes (e.g. to render a qualifier in the user interface
+        if necessary). It can't be used to re-infer a hierarchy for the document
+        symbols.
+    """
+
+    name: str
+    kind: int  # SymbolKind value.
+    location: LocationTypedDict
+    containerName: str
 
 
 class Location(_Base):

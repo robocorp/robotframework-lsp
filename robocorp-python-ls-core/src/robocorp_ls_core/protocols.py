@@ -23,9 +23,13 @@ if sys.version_info[:2] < (3, 8):
     class Protocol(object):
         pass
 
+    class TypedDict(object):
+        pass
+
 
 else:
     from typing import Protocol
+    from typing import TypedDict
 
 
 T = TypeVar("T")
@@ -268,6 +272,13 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
         :Note: async complete.
         """
 
+    def request_workspace_symbols(
+        self, query: Optional[str] = None
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+
 
 class ILanguageServerClient(ILanguageServerClientBase, Protocol):
     pid: Optional[int]
@@ -335,6 +346,9 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
         pass
 
     def request_signature_help(self, uri: str, line: int, col: int):
+        pass
+
+    def request_workspace_symbols(self, query: Optional[str] = None):
         pass
 
 

@@ -237,9 +237,50 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             "workspace": {
                 "workspaceFolders": {"supported": True, "changeNotifications": True}
             },
+            "workspaceSymbolProvider": {"workDoneProgress": False},
         }
         log.info("Server capabilities: %s", server_capabilities)
         return server_capabilities
+
+    def m_workspace__symbol(self, query: Optional[str] = None) -> Any:
+        api_client = self._server_manager.get_workspace_symbols_api_client()
+        if api_client is not None:
+            ret = partial(self._threaded_workspace_symbol, api_client, query)
+            ret = require_monitor(ret)
+            return ret
+
+        log.info("Unable to search workspace symbols (no api available).")
+        return None  # Unable to get the api.
+
+    def _threaded_workspace_symbol(
+        self,
+        api_client: IRobotFrameworkApiClient,
+        query: Optional[str],
+        monitor: IMonitor,
+    ):
+        from robocorp_ls_core.client_base import wait_for_message_matcher
+
+        # Asynchronous completion.
+        message_matcher: Optional[
+            IIdMessageMatcher
+        ] = api_client.request_workspace_symbols(query)
+        if message_matcher is None:
+            log.debug("Message matcher for workspace symbols returned None.")
+            return None
+
+        if wait_for_message_matcher(
+            message_matcher,
+            api_client.request_cancel,
+            DEFAULT_COMPLETIONS_TIMEOUT,
+            monitor,
+        ):
+            msg = message_matcher.msg
+            if msg is not None:
+                result = msg.get("result")
+                if result:
+                    return result
+
+        return None
 
     def m_workspace__execute_command(self, command=None, arguments=()) -> Any:
         if command == "robot.addPluginsDir":
