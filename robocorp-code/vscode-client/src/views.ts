@@ -3,7 +3,13 @@ import * as vscode from 'vscode';
 import * as roboCommands from './robocorpCommands';
 import { ExtensionContext } from 'vscode';
 import { OUTPUT_CHANNEL } from './channel';
+import { runRobotRCC } from './activities';
 
+
+enum RobotEntryType {
+    Robot,
+    Task
+}
 
 interface RobotEntry {
     label: string;
@@ -11,6 +17,7 @@ interface RobotEntry {
     robot: LocalRobotMetadataInfo;
     taskName?: string;
     iconPath: string;
+    type: RobotEntryType;
 }
 
 
@@ -48,8 +55,8 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
     async getChildren(element?: RobotEntry): Promise<RobotEntry[]> {
         if (element) {
             // Get child elements.
-            if (element.taskName) {
-                return [];
+            if (element.type == RobotEntryType.Task) {
+                return []; // Tasks don't have children.
             }
             let yamlContents = element.robot.yamlContents;
             if (!yamlContents) {
@@ -68,6 +75,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                     'robot': robotInfo,
                     'taskName': task,
                     'iconPath': 'symbol-misc',
+                    'type': RobotEntryType.Task,
                 }
             ));
         }
@@ -92,6 +100,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                 'uri': vscode.Uri.file(robotInfo.filePath),
                 'robot': robotInfo,
                 'iconPath': 'package',
+                'type': RobotEntryType.Robot,
             }
         ));
     }
@@ -113,6 +122,21 @@ export function refreshTreeView(treeViewId: string) {
     }
 }
 
+export function runSelectedRobot(noDebug: boolean) {
+    const tree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
+    if (!tree || tree.selection.length == 0) {
+        vscode.window.showWarningMessage("Unable to make launch (Robot task not selected in tree).");
+        return;
+    }
+
+    if (tree.selection.length > 1) {
+        vscode.window.showWarningMessage("Unable to make launch -- only 1 task must be selected.");
+        return;
+    }
+
+    let element: RobotEntry = tree.selection[0];
+    runRobotRCC(noDebug, element.robot.filePath, element.taskName);
+}
 
 const debounce = (func, wait) => {
     let timeout;
@@ -132,6 +156,18 @@ export function registerViews(context: ExtensionContext) {
     let treeDataProvider = new RobotsTreeDataProvider();
     let tree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE, { 'treeDataProvider': treeDataProvider });
 
+
+    context.subscriptions.push(tree.onDidChangeSelection(e => {
+        let events: RobotEntry[] = e.selection;
+        if (!events || events.length == 0 || events.length > 1) {
+            vscode.commands.executeCommand('setContext', 'robocorp-code:single-task-selected', false);
+            return;
+        }
+        let robotEntry: RobotEntry = events[0]
+        vscode.commands.executeCommand('setContext', 'robocorp-code:single-task-selected', robotEntry.type == RobotEntryType.Task);
+    }));
+
+
     treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_ROBOTS_TREE, tree);
     treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_ROBOTS_TREE, treeDataProvider);
 
@@ -140,7 +176,6 @@ export function registerViews(context: ExtensionContext) {
     let onChange = debounce(() => {
         // Note: this doesn't currently work if the parent folder is renamed or removed.
         // (https://github.com/microsoft/vscode/pull/110858)
-        OUTPUT_CHANNEL.appendLine("Found change.");
         refreshTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
     }, 300);
 

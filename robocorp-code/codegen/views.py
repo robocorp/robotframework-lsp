@@ -23,9 +23,12 @@ class MenuGroup(enum.Enum):
 
 
 class Menu:
-    def __init__(self, command_id, group: Optional[MenuGroup] = None):
+    def __init__(
+        self, command_id, group: Optional[MenuGroup] = None, when: Optional[str] = None
+    ):
         self.command_id = command_id
         self.group = group
+        self.when = when
 
 
 TREE_VIEW_CONTAINERS = [
@@ -38,7 +41,19 @@ TREE_VIEW_CONTAINERS = [
                 id="robocorp-robots-tree",
                 name="Robots",
                 contextual_title="Robots",
-                menus=[Menu("robocorp.refreshRobotsView", MenuGroup.NAVIGATION)],
+                menus=[
+                    Menu(
+                        "robocorp.robotsViewTaskRun",
+                        MenuGroup.NAVIGATION,
+                        "robocorp-code:single-task-selected",
+                    ),
+                    Menu(
+                        "robocorp.robotsViewTaskDebug",
+                        MenuGroup.NAVIGATION,
+                        "robocorp-code:single-task-selected",
+                    ),
+                    Menu("robocorp.refreshRobotsView", MenuGroup.NAVIGATION),
+                ],
             ),
             # TreeView(id="robocorp-tasks-tree", name="Tasks", contextual_title="Tasks"),
         ],
@@ -86,7 +101,10 @@ def get_menus():
         for tree_viewer in tree_view_container.tree_views:
             menu: Menu
             for menu in tree_viewer.menus:
-                item = {"command": menu.command_id, "when": "view == " + tree_viewer.id}
+                when = f"view == {tree_viewer.id}"
+                if menu.when:
+                    when += f" && {menu.when}"
+                item = {"command": menu.command_id, "when": when}
                 if menu.group:
                     item["group"] = menu.group.value
                 menus.append(item)

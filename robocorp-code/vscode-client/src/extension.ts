@@ -33,7 +33,7 @@ import { getExtensionRelativeFile, verifyFileExists } from './files';
 import { getRccLocation } from './rcc';
 import { Timing } from './time';
 import { execFilePromise, ExecFileReturn } from './subprocess';
-import { createRobot, uploadRobot, cloudLogin, runRobotRCC, setPythonInterpreterFromRobotYaml } from './activities';
+import { createRobot, uploadRobot, cloudLogin, runRobotRCC, setPythonInterpreterFromRobotYaml, askAndRunRobotRCC } from './activities';
 import { sleep } from './time';
 import { handleProgressMessage, ProgressReport } from './progress';
 import { TREE_VIEW_ROBOCORP_ROBOTS_TREE } from './robocorpViews';
@@ -245,10 +245,12 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_GET_LANGUAGE_SERVER_PYTHON, () => getLanguageServerPython());
         commands.registerCommand(roboCommands.ROBOCORP_CREATE_ROBOT, () => createRobot());
         commands.registerCommand(roboCommands.ROBOCORP_UPLOAD_ROBOT_TO_CLOUD, () => uploadRobot());
-        commands.registerCommand(roboCommands.ROBOCORP_RUN_ROBOT_RCC, () => runRobotRCC(true));
-        commands.registerCommand(roboCommands.ROBOCORP_DEBUG_ROBOT_RCC, () => runRobotRCC(false));
+        commands.registerCommand(roboCommands.ROBOCORP_RUN_ROBOT_RCC, () => askAndRunRobotRCC(true));
+        commands.registerCommand(roboCommands.ROBOCORP_DEBUG_ROBOT_RCC, () => askAndRunRobotRCC(false));
         commands.registerCommand(roboCommands.ROBOCORP_SET_PYTHON_INTERPRETER, () => setPythonInterpreterFromRobotYaml());
         commands.registerCommand(roboCommands.ROBOCORP_REFRESH_ROBOTS_VIEW, () => views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE));
+        commands.registerCommand(roboCommands.ROBOCORP_ROBOTS_VIEW_TASK_RUN, () => views.runSelectedRobot(true));
+        commands.registerCommand(roboCommands.ROBOCORP_ROBOTS_VIEW_TASK_DEBUG, () => views.runSelectedRobot(false));
         async function cloudLoginShowConfirmation() {
             let loggedIn = await cloudLogin();
             if (loggedIn) {

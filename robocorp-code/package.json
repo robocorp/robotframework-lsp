@@ -35,6 +35,8 @@
         "onCommand:robocorp.runInRcc.internal",
         "onCommand:robocorp.runRobotRcc",
         "onCommand:robocorp.debugRobotRcc",
+        "onCommand:robocorp.robotsViewTaskRun",
+        "onCommand:robocorp.robotsViewTaskDebug",
         "onCommand:robocorp.saveInDiskLRU",
         "onCommand:robocorp.loadFromDiskLRU",
         "onCommand:robocorp.computeRobotLaunchFromRobocorpCodeLaunch",
@@ -173,6 +175,24 @@
                 "category": "Robocorp"
             },
             {
+                "command": "robocorp.robotsViewTaskRun",
+                "title": "Launch selected Task in Robots view",
+                "category": "Robocorp",
+                "icon": {
+                    "light": "images/light/run.svg",
+                    "dark": "images/dark/run.svg"
+                }
+            },
+            {
+                "command": "robocorp.robotsViewTaskDebug",
+                "title": "Debug selected Task in Robots view",
+                "category": "Robocorp",
+                "icon": {
+                    "light": "images/light/debug.svg",
+                    "dark": "images/dark/debug.svg"
+                }
+            },
+            {
                 "command": "robocorp.setPythonInterpreter",
                 "title": "Set python.pythonPath config based on robot.yaml",
                 "category": "Robocorp"
@@ -189,6 +209,16 @@
         ],
         "menus": {
             "view/title": [
+                {
+                    "command": "robocorp.robotsViewTaskRun",
+                    "when": "view == robocorp-robots-tree && robocorp-code:single-task-selected",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.robotsViewTaskDebug",
+                    "when": "view == robocorp-robots-tree && robocorp-code:single-task-selected",
+                    "group": "navigation"
+                },
                 {
                     "command": "robocorp.refreshRobotsView",
                     "when": "view == robocorp-robots-tree",

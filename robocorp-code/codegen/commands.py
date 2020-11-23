@@ -7,6 +7,7 @@ class Command(object):
         keybinding="",
         server_handled=True,
         icon=None,
+        enablement=None,
     ):
         """
         :param add_to_package_json:
@@ -21,6 +22,7 @@ class Command(object):
         self.keybinding = keybinding
         self.server_handled = server_handled
         self.icon = icon
+        self.enablement = enablement
 
 
 COMMANDS = [
@@ -120,6 +122,20 @@ COMMANDS = [
         server_handled=False,
     ),
     Command(
+        "robocorp.robotsViewTaskRun",
+        "Launch selected Task in Robots view",
+        add_to_package_json=True,
+        server_handled=False,
+        icon={"light": "images/light/run.svg", "dark": "images/dark/run.svg"},
+    ),
+    Command(
+        "robocorp.robotsViewTaskDebug",
+        "Debug selected Task in Robots view",
+        add_to_package_json=True,
+        server_handled=False,
+        icon={"light": "images/light/debug.svg", "dark": "images/dark/debug.svg"},
+    ),
+    Command(
         "robocorp.saveInDiskLRU",
         "Saves some data in an LRU in the disk",
         add_to_package_json=False,
@@ -185,6 +201,8 @@ def get_commands_for_json():
         dct = {"command": command.name, "title": command.title, "category": "Robocorp"}
         if command.icon:
             dct["icon"] = command.icon
+        if command.enablement:
+            dct["enablement"] = command.enablement
         commands_contributed.append(dct)
 
     return commands_contributed

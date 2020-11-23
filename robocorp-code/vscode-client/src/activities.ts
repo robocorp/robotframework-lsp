@@ -404,7 +404,7 @@ export async function uploadRobot() {
     } while (true);
 }
 
-export async function runRobotRCC(noDebug: boolean) {
+export async function askAndRunRobotRCC(noDebug: boolean) {
     let textEditor = window.activeTextEditor;
     let fileName: string | undefined = undefined;
 
@@ -481,12 +481,16 @@ export async function runRobotRCC(noDebug: boolean) {
         { 'name': RUN_IN_RCC_LRU_CACHE_NAME, 'entry': selectedItem.keyInLRU, 'lru_size': 3 }
     );
 
+    runRobotRCC(noDebug, selectedItem.robotYaml, selectedItem.taskName);
+}
+
+export async function runRobotRCC(noDebug: boolean, robotYaml: string, taskName: string) {
     let debugConfiguration: DebugConfiguration = {
         'name': 'Config',
         'type': 'robocorp-code',
         'request': 'launch',
-        'robot': selectedItem.robotYaml,
-        'task': selectedItem.taskName,
+        'robot': robotYaml,
+        'task': taskName,
         'args': [],
         'noDebug': noDebug,
     };
