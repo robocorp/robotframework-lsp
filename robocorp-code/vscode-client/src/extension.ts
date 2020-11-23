@@ -33,7 +33,7 @@ import { getExtensionRelativeFile, verifyFileExists } from './files';
 import { getRccLocation } from './rcc';
 import { Timing } from './time';
 import { execFilePromise, ExecFileReturn } from './subprocess';
-import { createRobot, uploadRobot, cloudLogin, runRobotRCC, setPythonInterpreterFromRobotYaml, askAndRunRobotRCC } from './activities';
+import { createRobot, uploadRobot, cloudLogin, runRobotRCC, cloudLogout, setPythonInterpreterFromRobotYaml, askAndRunRobotRCC } from './activities';
 import { sleep } from './time';
 import { handleProgressMessage, ProgressReport } from './progress';
 import { TREE_VIEW_ROBOCORP_ROBOTS_TREE } from './robocorpViews';
@@ -266,6 +266,7 @@ export async function activate(context: ExtensionContext) {
             }
         }
         commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGIN, () => cloudLoginShowConfirmation());
+        commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGOUT, () => cloudLogout());
         views.registerViews(context);
         registerDebugger(executable);
         context.subscriptions.push(disposable);

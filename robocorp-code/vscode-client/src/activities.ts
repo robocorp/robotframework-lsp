@@ -64,6 +64,34 @@ export async function cloudLogin(): Promise<boolean> {
     return true;
 }
 
+export async function cloudLogout(): Promise<void> {
+    console.log('Cloud Logout() called.')
+    let loggedOut: boolean;
+    // Start this in parallel while we ask the user for info.
+    let isLoginNeededPromise: Thenable<ActionResult> = commands.executeCommand(
+        roboCommands.ROBOCORP_IS_LOGIN_NEEDED_INTERNAL,
+    );
+
+    let isLoginNeeded: ActionResult = await isLoginNeededPromise;
+    if (!isLoginNeeded) {
+        window.showInformationMessage('Error getting information if logged in.');
+        return;
+    }
+
+    if (isLoginNeeded.result) {
+        window.showInformationMessage('Unable to logout. Not logged in with valid cloud credentials.');
+        return;
+    }
+    loggedOut = await commands.executeCommand(
+        roboCommands.ROBOCORP_CLOUD_LOGOUT_INTERNAL
+    );
+    if (!loggedOut) {
+        window.showInformationMessage('Unable to logout. Still logged in to cloud with valid credentials.');
+        return;
+    }
+    window.showInformationMessage('Cloud credentials successfully logged out and removed.');
+}
+
 async function askRobotSelection(robotsInfo: LocalRobotMetadataInfo[], message: string): Promise<LocalRobotMetadataInfo> {
     let robot: LocalRobotMetadataInfo;
     if (robotsInfo.length > 1) {

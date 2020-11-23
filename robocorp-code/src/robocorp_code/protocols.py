@@ -192,6 +192,9 @@ class IRcc(Protocol):
     def add_credentials(self, credential: str) -> ActionResult:
         pass
 
+    def remove_current_credentials(self) -> ActionResult:
+        pass
+
     def credentials_valid(self) -> bool:
         """
         Note: needs connection to the cloud.
