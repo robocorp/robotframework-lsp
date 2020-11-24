@@ -1,0 +1,7 @@
+- end:
+  - 3
+  - 29
+  msg: FOR loop has no closing END.
+  start:
+  - 3
+  - 0

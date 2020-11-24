@@ -1,0 +1,7 @@
+- end:
+  - 3
+  - 20
+  msg: IF has no closing END.
+  start:
+  - 3
+  - 0

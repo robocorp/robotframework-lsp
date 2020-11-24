@@ -1,13 +1,13 @@
 - end:
   - 7
-  - 7
+  - 6
   msg: Non-existing setting '"test"'.
   start:
   - 7
   - 0
 - end:
   - 9
-  - 32
+  - 31
   msg: 'Unrecognized section header ''*** Invalid Invalid Invalid ***''. Valid sections:
     ''Settings'', ''Variables'', ''Test Cases'', ''Tasks'', ''Keywords'' and ''Comments''.'
   start:

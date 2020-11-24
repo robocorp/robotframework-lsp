@@ -1,5 +1,5 @@
 import sys
-from typing import Iterator, Optional
+from typing import Iterator, Optional, List
 
 import ast as ast_module
 from robocorp_ls_core.lsp import Error
@@ -92,25 +92,37 @@ class _PrinterVisitor(ast_module.NodeVisitor):
 MAX_ERRORS = 100
 
 
-def collect_errors(node):
-    """
-    :return list(Error)
-    """
+def _get_errors_from_tokens(node):
+    for token in node.tokens:
+        if token.type in (token.ERROR, token.FATAL_ERROR):
+            start = (token.lineno - 1, token.col_offset)
+            end = (token.lineno - 1, token.end_col_offset)
+            error = Error(token.error, start, end)
+            yield error
+
+
+def collect_errors(node) -> List[Error]:
     errors = []
-    for _stack, node in _iter_nodes_filtered(node, accept_class="Error"):
-        msg = node.error
+
+    use_errors_attribute = "errors" in node.__class__._attributes
+
+    for _stack, node in _iter_nodes(node, recursive=True):
+        if node.__class__.__name__ == "Error":
+            errors.extend(_get_errors_from_tokens(node))
+
+        elif use_errors_attribute:
+            node_errors = getattr(node, "errors", ())
+            if node_errors:
+                for error in node_errors:
+                    errors.append(create_error_from_node(node, error, tokens=[node]))
 
         if len(errors) >= MAX_ERRORS:
             break
-        errors.append(create_error_from_node(node, msg))
 
     return errors
 
 
-def create_error_from_node(node, msg, tokens=None):
-    """
-    :return Error:
-    """
+def create_error_from_node(node, msg, tokens=None) -> Error:
     if tokens is None:
         tokens = node.tokens
 

@@ -29,7 +29,15 @@ def test_print_ast(data_regression):
     doc = RobotDocument("unused", source="*** settings ***")
     s = StringIO()
     ast_utils.print_ast(doc.get_ast(), stream=s)
-    data_regression.check(s.getvalue().splitlines())
+    assert [
+        x.replace("SETTING HEADER", "SETTING_HEADER") for x in s.getvalue().splitlines()
+    ] == [
+        "  File                                               (0, 0) -> (0, 16)",
+        "    SettingSection                                   (0, 0) -> (0, 16)",
+        "      SettingSectionHeader                           (0, 0) -> (0, 16)",
+        "      - SETTING_HEADER, '*** settings ***'                  (0, 0->16)",
+        "      - EOL, ''                                            (0, 16->16)",
+    ]
 
 
 def test_find_token(workspace):
