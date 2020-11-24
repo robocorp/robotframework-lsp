@@ -83,6 +83,8 @@ class LibraryDoc(object):
         self.inits = []
         self.keywords = []
 
+        self.symbols_cache: Optional[list] = None
+
     @property
     @instance_cache
     def source(self):

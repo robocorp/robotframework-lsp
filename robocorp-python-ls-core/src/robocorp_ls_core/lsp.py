@@ -19,7 +19,7 @@
 https://github.com/microsoft/language-server-protocol/tree/gh-pages/_specifications
 https://microsoft.github.io/language-server-protocol/specification
 """
-from typing import List, Union
+from typing import List, Union, Optional
 import typing
 
 from robocorp_ls_core.protocols import IEndPoint, IFuture, TypedDict
@@ -364,7 +364,7 @@ class LocationTypedDict(TypedDict):
     range: RangeTypedDict
 
 
-class SymbolInformationTypedDict(TypedDict):
+class SymbolInformationTypedDict(TypedDict, total=False):
     """
     :ivar location:
         The location of this symbol. The location's range is used by a tool
@@ -387,7 +387,7 @@ class SymbolInformationTypedDict(TypedDict):
     name: str
     kind: int  # SymbolKind value.
     location: LocationTypedDict
-    containerName: str
+    containerName: Optional[str]
 
 
 class Location(_Base):

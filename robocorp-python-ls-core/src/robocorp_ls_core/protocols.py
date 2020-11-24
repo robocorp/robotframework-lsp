@@ -24,7 +24,8 @@ if sys.version_info[:2] < (3, 8):
         pass
 
     class TypedDict(object):
-        pass
+        def __init_subclass__(self, *args, **kwargs):
+            pass
 
 
 else:

@@ -46,10 +46,12 @@ class RobotDocument(Document):
 
         self._generate_ast = generate_ast
         self._ast = None
+        self.symbols_cache = None
 
     @overrides(Document._clear_caches)
     def _clear_caches(self):
         Document._clear_caches(self)
+        self._symbols_cache = None
         self.get_ast.cache_clear(self)  # noqa (clear the instance_cache).
 
     def get_type(self):
