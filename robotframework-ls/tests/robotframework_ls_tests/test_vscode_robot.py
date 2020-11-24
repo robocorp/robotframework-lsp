@@ -401,3 +401,15 @@ Log It
     assert "Log" in docs
 
     data_regression.check(result)
+
+
+def test_workspace_symbols_integrated(
+    language_server_io: ILanguageServerClient, ws_root_path, data_regression
+):
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+
+    ret = language_server.request_workspace_symbols()
+    result = ret["result"]
+    assert len(result) > 0

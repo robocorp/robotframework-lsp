@@ -197,6 +197,17 @@ class LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    @implements(ILanguageServerClient.request_workspace_symbols)
+    def request_workspace_symbols(self, query: Optional[str] = None):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "workspace/symbol",
+                "params": {"query": query},
+            }
+        )
+
     @implements(ILanguageServerClient.find_definitions)
     def find_definitions(self, uri, line: int, col: int):
         return self.request(

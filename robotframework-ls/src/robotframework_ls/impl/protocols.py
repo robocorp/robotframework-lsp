@@ -36,6 +36,8 @@ class IRobotDocument(IDocument, Protocol):
     def get_ast(self) -> Any:
         pass
 
+    symbols_cache: Optional[list] = None
+
 
 class IRobotWorkspace(IWorkspace, Protocol):
     libspec_manager: Any

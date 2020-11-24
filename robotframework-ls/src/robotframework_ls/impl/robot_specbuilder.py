@@ -19,7 +19,6 @@ import os
 import weakref
 from robocorp_ls_core.cache import instance_cache
 from typing import Optional
-import sys
 from robocorp_ls_core.protocols import Sentinel
 
 
@@ -83,6 +82,8 @@ class LibraryDoc(object):
         self.lineno = lineno
         self.inits = []
         self.keywords = []
+
+        self.symbols_cache: Optional[list] = None
 
     @property
     @instance_cache
@@ -242,6 +243,11 @@ class KeywordDoc(object):
     @property
     def doc_format(self):
         return self._weak_libdoc().doc_format
+
+    def __repr__(self):
+        return "KeywordDoc(%s, line: %s)" % (self.name, self.lineno)
+
+    __str__ = __repr__
 
 
 class SpecDocBuilder(object):

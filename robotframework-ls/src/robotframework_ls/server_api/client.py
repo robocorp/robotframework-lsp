@@ -170,6 +170,14 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             self._build_msg("signatureHelp", doc_uri=doc_uri, line=line, col=col)
         )
 
+    def request_workspace_symbols(
+        self, query: Optional[str] = None
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(self._build_msg("workspaceSymbols", query=query))
+
     def request_cancel(self, message_id):
         self._check_process_alive()
         self.write(
