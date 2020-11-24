@@ -38,6 +38,7 @@ def workspace_symbols(
                 if lineno < 1:
                     log.info("Found lineno < 0 for: %s (in %s)", keyword, source)
                     continue
+
                 lineno -= 1
                 ret.append(
                     {

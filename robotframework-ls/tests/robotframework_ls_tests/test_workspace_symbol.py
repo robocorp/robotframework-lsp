@@ -10,5 +10,5 @@ def test_workspace_symbols(workspace, libspec_manager):
 
     config = Config()
 
-    symbols = workspace_symbols("", BaseContext(workspace, config, NULL))
+    symbols = workspace_symbols("", BaseContext(workspace.ws, config, NULL))
     assert len(symbols) > 0
