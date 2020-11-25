@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Set
 from robotframework_ls.impl.completion_context import BaseContext
 from robocorp_ls_core.lsp import SymbolInformationTypedDict
 from robocorp_ls_core.robotframework_log import get_logger
@@ -95,12 +95,15 @@ def workspace_symbols(
     from robotframework_ls.impl.protocols import IRobotWorkspace
     from pathlib import Path
     from typing import cast
+    from robotframework_ls.impl import ast_utils
 
     ret: List[SymbolInformationTypedDict] = []
     workspace: IRobotWorkspace = context.workspace
     libspec_manager: LibspecManager = workspace.libspec_manager
 
     folder_paths = sorted(set(workspace.get_folder_paths()))
+    library_names: Set[str] = set()
+
     for folder_path in folder_paths:
         for path in Path(folder_path).glob("**/*"):
             if path.name.lower().endswith((".robot", ".resource", ".txt")):
@@ -117,7 +120,14 @@ def workspace_symbols(
                     doc.symbols_cache = symbols_cache
                     add_to_ret(ret, symbols_cache, query)
 
-    for library_name in libspec_manager.get_library_names():
+                    ast = doc.get_ast()
+                    if ast:
+                        for library_import in ast_utils.iter_library_imports(ast):
+                            library_names.add(library_import.node.name)
+
+    library_names.update(libspec_manager.get_library_names())
+
+    for library_name in library_names:
         library_info: Optional[LibraryDoc] = libspec_manager.get_library_info(
             library_name, create=True
         )

@@ -646,16 +646,20 @@ class LibspecManager(object):
         # and have higher priority).
         iter_in = []
         for (_uri, info) in self._workspace_folder_uri_to_folder_info.items():
-            iter_in.append((info.libspec_canonical_filename_to_info, False))
+            if info.libspec_canonical_filename_to_info:
+                iter_in.append((info.libspec_canonical_filename_to_info, False))
 
         for (_uri, info) in self._pythonpath_folder_to_folder_info.items():
-            iter_in.append((info.libspec_canonical_filename_to_info, False))
+            if info.libspec_canonical_filename_to_info:
+                iter_in.append((info.libspec_canonical_filename_to_info, False))
 
         for (_uri, info) in self._additional_pythonpath_folder_to_folder_info.items():
-            iter_in.append((info.libspec_canonical_filename_to_info, False))
+            if info.libspec_canonical_filename_to_info:
+                iter_in.append((info.libspec_canonical_filename_to_info, False))
 
         for (_uri, info) in self._internal_folder_to_folder_info.items():
-            iter_in.append((info.libspec_canonical_filename_to_info, True))
+            if info.libspec_canonical_filename_to_info:
+                iter_in.append((info.libspec_canonical_filename_to_info, True))
 
         for canonical_filename_to_info, can_regenerate in iter_in:
             for canonical_spec_filename, info in list(
