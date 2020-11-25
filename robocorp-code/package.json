@@ -9,7 +9,7 @@
         "url": "https://github.com/robocorp/robotframework-lsp.git"
     },
     "license": "SEE LICENSE IN LICENSE.txt",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "icon": "images/icon.png",
     "publisher": "robocorp",
     "engines": {

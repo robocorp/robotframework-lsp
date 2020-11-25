@@ -1,3 +1,13 @@
+New in 0.5.0 (2020-11-25)
+-----------------------------
+
+- New Robots view (lists robots and allows launching/debugging them). #183
+- New action to set the pythonPath to be used by the Python extension based on the `robot.yaml`. #185
+- Templates available now have a description. #181
+- The account used to login is now tied to Robocorp Code. #189
+- Initial debug configurations are now provided. #184
+- Upgraded to use RCC v6.1.3. #194
+
 New in 0.4.0 (2020-11-08)
 -----------------------------
 
