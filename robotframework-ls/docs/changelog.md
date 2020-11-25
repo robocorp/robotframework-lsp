@@ -1,3 +1,9 @@
+New in 0.6.0 (2020-11-25)
+-----------------------------
+
+- Support new error syntax reporting (from Robot Framework 4.0)
+- Support for browsing workspace symbols (`Ctrl+T`)
+
 New in 0.5.0 (2020-10-26)
 -----------------------------
 
