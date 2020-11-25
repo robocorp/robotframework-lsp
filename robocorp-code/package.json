@@ -194,7 +194,7 @@
             },
             {
                 "command": "robocorp.setPythonInterpreter",
-                "title": "Set python.pythonPath config based on robot.yaml",
+                "title": "Set pythonPath based on robot.yaml",
                 "category": "Robocorp"
             },
             {

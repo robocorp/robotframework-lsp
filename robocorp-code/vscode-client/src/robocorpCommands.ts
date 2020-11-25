@@ -21,6 +21,6 @@ export const ROBOCORP_ROBOTS_VIEW_TASK_DEBUG = "robocorp.robotsViewTaskDebug";  
 export const ROBOCORP_SAVE_IN_DISK_LRU = "robocorp.saveInDiskLRU";  // Saves some data in an LRU in the disk
 export const ROBOCORP_LOAD_FROM_DISK_LRU = "robocorp.loadFromDiskLRU";  // Loads some LRU data from the disk
 export const ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH = "robocorp.computeRobotLaunchFromRobocorpCodeLaunch";  // Computes a robot launch debug configuration based on the robocorp code launch debug configuration
-export const ROBOCORP_SET_PYTHON_INTERPRETER = "robocorp.setPythonInterpreter";  // Set python.pythonPath config based on robot.yaml
+export const ROBOCORP_SET_PYTHON_INTERPRETER = "robocorp.setPythonInterpreter";  // Set pythonPath based on robot.yaml
 export const ROBOCORP_RESOLVE_INTERPRETER = "robocorp.resolveInterpreter";  // Resolves the interpreter to be used given a path
 export const ROBOCORP_REFRESH_ROBOTS_VIEW = "robocorp.refreshRobotsView";  // Refresh Robots view

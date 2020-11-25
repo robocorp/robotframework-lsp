@@ -333,13 +333,13 @@ async function getLanguageServerPythonUncached(): Promise<string> {
         for (let index = 0; index < maxTries; index++) {
             try {
                 let condaCheckResult: ExecFileReturn = await execFilePromise(rccLocation, ['conda', 'check', '-i', '--controller', 'RobocorpCode']);
-                if (condaCheckResult.stdout.indexOf('OK.') != -1) {
+                if (condaCheckResult.stderr.indexOf('OK.') != -1) {
                     break;
                 }
                 // Note: checking if conda is there is the first thing and sometimes
                 // it seems that right after downloading RCC, trying to run it right away doesn't work.
                 // So, try to retry if it doesn't work out.
-                OUTPUT_CHANNEL.appendLine('Expected OK. to be in the stdout. Found:\nStdout: ' + condaCheckResult.stdout + '\nStderr:' + condaCheckResult.stderr);
+                OUTPUT_CHANNEL.appendLine('Expected OK. to be in the stderr. Found:\nStdout: ' + condaCheckResult.stdout + '\nStderr:' + condaCheckResult.stderr);
 
                 // We couldn't find OK. Let's retry.
                 if (index == maxTries - 1) {
