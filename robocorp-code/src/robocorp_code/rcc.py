@@ -43,18 +43,22 @@ def download_rcc(location: str, force: bool = False) -> None:
 
                 if sys.platform == "win32":
                     if is_64:
-                        url = "https://downloads.code.robocorp.com/rcc/v4/windows64/rcc.exe"
+                        relative_path = "/windows64/rcc.exe"
                     else:
-                        url = "https://downloads.code.robocorp.com/rcc/v4/windows32/rcc.exe"
+                        relative_path = "/windows32/rcc.exe"
 
                 elif sys.platform == "darwin":
-                    url = "https://downloads.code.robocorp.com/rcc/v4/macos64/rcc"
+                    relative_path = "/macos64/rcc"
 
                 else:
                     if is_64:
-                        url = "https://downloads.code.robocorp.com/rcc/v4/linux64/rcc"
+                        relative_path = "/linux64/rcc"
                     else:
-                        url = "https://downloads.code.robocorp.com/rcc/v4/linux32/rcc"
+                        relative_path = "/linux32/rcc"
+
+                RCC_VERSION = "v6.1.3"
+                prefix = f"https://downloads.code.robocorp.com/rcc/{RCC_VERSION}"
+                url = prefix + relative_path
 
                 log.info(f"Downloading rcc from: {url} to: {location}.")
                 response = urllib.request.urlopen(url)
@@ -187,7 +191,6 @@ class Rcc(object):
         self,
         args: List[str],
         timeout: float = 30,
-        expect_ok=True,
         error_msg: str = "",
         mutex_name=None,
         cwd: Optional[str] = None,
@@ -261,15 +264,7 @@ class Rcc(object):
         output = boutput.decode("utf-8", "replace")
 
         log.debug(f"Output from: {cmdline}:\n{output}")
-        if expect_ok:
-            if "OK." in output:
-                return ActionResult(success=True, message=None, result=output)
-        else:
-            return ActionResult(success=True, message=None, result=output)
-
-        return ActionResult(
-            success=False, message="OK. not found in message", result=output
-        )
+        return ActionResult(success=True, message=None, result=output)
 
     _TEMPLATES = {
         "standard": "Standard - Robot Framework Robot.",
@@ -369,9 +364,7 @@ class Rcc(object):
 
         args = self._add_config_to_args(args)
 
-        result = self._run_rcc(
-            args, expect_ok=False, mutex_name=RCC_CREDENTIALS_MUTEX_NAME
-        )
+        result = self._run_rcc(args, mutex_name=RCC_CREDENTIALS_MUTEX_NAME)
         if not result.success:
             msg = f"Error checking credentials: {result.message}"
             log.critical(msg)
@@ -422,9 +415,7 @@ class Rcc(object):
         if error_action_result is not None:
             return error_action_result
 
-        result = self._run_rcc(
-            args, expect_ok=False, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME
-        )
+        result = self._run_rcc(args, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME)
 
         if not result.success:
             return ActionResult(False, result.message)
@@ -467,9 +458,7 @@ class Rcc(object):
         if error_action_result is not None:
             return error_action_result
 
-        result = self._run_rcc(
-            args, expect_ok=False, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME
-        )
+        result = self._run_rcc(args, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME)
         if not result.success:
             return ActionResult(False, result.message)
 
@@ -542,9 +531,7 @@ class Rcc(object):
         if error_action_result is not None:
             return error_action_result
 
-        ret = self._run_rcc(
-            args, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME, expect_ok=False
-        )
+        ret = self._run_rcc(args, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME)
         if not ret.success:
             return ret
 
@@ -592,7 +579,6 @@ class Rcc(object):
         ret = self._run_rcc(
             args,
             mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME,
-            expect_ok=False,
             cwd=str(robot_yaml_path.parent),
             timeout=timeout,  # Creating the env may be really slow!
         )
@@ -637,7 +623,6 @@ class Rcc(object):
         ret = self._run_rcc(
             args,
             mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME,
-            expect_ok=False,
             cwd=str(directory),
             timeout=timeout,  # Creating the env may be really slow!
         )

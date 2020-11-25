@@ -108,21 +108,14 @@ def rcc(config_provider: IConfigProvider, rcc_config_location: str) -> IRcc:
 
     rcc = Rcc(config_provider)
     # We don't want to track tests.
-    for _i in range(2):
-        # There's a bug in which the --do-not-track doesn't work the first time.
-        result = rcc._run_rcc(
-            "feedback identity --do-not-track --config".split() + [rcc_config_location],
-            expect_ok=False,
-        )
-        assert result.success
-        result_msg = result.result
-        assert result_msg
-        if "enabled" in result_msg:
-            continue
-        if "disabled" in result_msg:
-            break
-        raise AssertionError(f"Did not expect {result_msg}")
-    else:
+    # There's a bug in which the --do-not-track doesn't work the first time.
+    result = rcc._run_rcc(
+        "configure identity --do-not-track --config".split() + [rcc_config_location]
+    )
+    assert result.success
+    result_msg = result.result
+    assert result_msg
+    if "disabled" not in result_msg:
         raise AssertionError(f"Did not expect {result_msg}")
 
     return rcc

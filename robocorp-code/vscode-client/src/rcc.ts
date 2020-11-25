@@ -12,27 +12,30 @@ async function downloadRcc(progress: Progress<{ message?: string; increment?: nu
     let httpSettings = workspace.getConfiguration('http');
     configureXHR(httpSettings.get<string>('proxy'), httpSettings.get<boolean>('proxyStrictSSL'));
     let location = getExpectedRccLocation();
-    let url: string;
+    let relativePath: string;
     if (process.platform == 'win32') {
         if (process.arch === 'x64' || process.env.hasOwnProperty('PROCESSOR_ARCHITEW6432')) {
             // Check if node is a 64 bit process or if it's a 32 bit process running in a 64 bit processor.
-            url = 'https://downloads.code.robocorp.com/rcc/v4/windows64/rcc.exe';
+            relativePath = '/windows64/rcc.exe';
         } else {
             // Do we even have a way to test a 32 bit build?
-            url = 'https://downloads.code.robocorp.com/rcc/v4/windows32/rcc.exe';
+            relativePath = '/windows32/rcc.exe';
 
         }
     } else if (process.platform == 'darwin') {
-        url = 'https://downloads.code.robocorp.com/rcc/v4/macos64/rcc';
+        relativePath = '/macos64/rcc';
 
     } else {
         // Linux
         if (process.arch === 'x64') {
-            url = 'https://downloads.code.robocorp.com/rcc/v4/linux64/rcc';
+            relativePath = '/linux64/rcc';
         } else {
-            url = 'https://downloads.code.robocorp.com/rcc/v4/linux32/rcc';
+            relativePath = '/linux32/rcc';
         }
     }
+    const RCC_VERSION = "v6.1.3";
+    const prefix = "https://downloads.code.robocorp.com/rcc/" + RCC_VERSION;
+    const url: string = prefix + relativePath;
 
     // Downloads can go wrong (so, retry a few times before giving up).
     const maxTries = 3;

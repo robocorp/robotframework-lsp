@@ -503,7 +503,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
     def _run_in_rcc_internal(self, params=RunInRccParamsDict) -> ActionResultDict:
         try:
             args = params["args"]
-            ret = self._rcc._run_rcc(args, expect_ok=False)
+            ret = self._rcc._run_rcc(args)
         except Exception as e:
             log.exception(f"Error running in RCC: {params}.")
             return dict(success=False, message=str(e), result=None)

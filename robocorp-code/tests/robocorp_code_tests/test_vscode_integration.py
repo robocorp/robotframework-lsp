@@ -114,25 +114,17 @@ def language_server_initialized(
             }
         }
     )
-    # There's a bug in rcc where we may need to call the --do-not-track more than
-    # once.
-    for _i in range(2):
-        result = language_server.execute_command(
-            ROBOCORP_RUN_IN_RCC_INTERNAL,
-            [
-                {
-                    "args": "feedback identity --do-not-track --config".split()
-                    + [rcc_config_location]
-                }
-            ],
-        )
-        assert result["result"]["success"]
-        if "enabled" in result["result"]["result"]:
-            continue
-        if "disabled" in result["result"]["result"]:
-            break
-        raise AssertionError(f"Unexpected result: {result}")
-    else:
+    result = language_server.execute_command(
+        ROBOCORP_RUN_IN_RCC_INTERNAL,
+        [
+            {
+                "args": "configure identity --do-not-track --config".split()
+                + [rcc_config_location]
+            }
+        ],
+    )
+    assert result["result"]["success"]
+    if "disabled" not in result["result"]["result"]:
         raise AssertionError(f"Unexpected result: {result}")
 
     return language_server
