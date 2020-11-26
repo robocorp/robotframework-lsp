@@ -24,7 +24,7 @@ Note: the use of cloud-based orchestration in [Robocorp Cloud](https://robocorp.
 
 1. Install this extension together with the [Robot Framework Language Server extension](https://marketplace.visualstudio.com/items?itemName=robocorp.robotframework-lsp).
 
-1. Download [Robocorp VS Code extension - basic tutorial](https://robocorp.com/robots/robot/example-vscode-basics), and open it in VS Code.
+1. Download [Robocorp VS Code extension - basic tutorial](https://robocorp.com/robots/robot/robocorp-vs-code-extension-basic-tutorial), and open it in VS Code.
 
 1. Open the command palette - (Windows, Linux): `ctrl-shift-P` (macOS): `cmd-shift-P`
 
