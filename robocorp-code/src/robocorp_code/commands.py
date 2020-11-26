@@ -7,7 +7,7 @@ ROBOCORP_LIST_ROBOT_TEMPLATES_INTERNAL = "robocorp.listRobotTemplates.internal" 
 ROBOCORP_CREATE_ROBOT_INTERNAL = "robocorp.createRobot.internal"  # Actually calls rcc to create the robot
 ROBOCORP_UPLOAD_ROBOT_TO_CLOUD = "robocorp.uploadRobotToCloud"  # Upload Robot to the Robocorp Cloud
 ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL = "robocorp.localListRobots.internal"  # Lists the activities currently available in the workspace
-ROBOCORP_IS_LOGIN_NEEDED_INTERNAL = "robocorp.isLoginNeeded.internal"  # Checks if the user is already linked an account
+ROBOCORP_IS_LOGIN_NEEDED_INTERNAL = "robocorp.isLoginNeeded.internal"  # Checks if the user is already linked to an account
 ROBOCORP_CLOUD_LOGIN = "robocorp.cloudLogin"  # Link to Robocorp Cloud
 ROBOCORP_CLOUD_LOGIN_INTERNAL = "robocorp.cloudLogin.internal"  # Link to Robocorp Cloud (receives credentials)
 ROBOCORP_CLOUD_LIST_WORKSPACES_INTERNAL = "robocorp.cloudListWorkspaces.internal"  # Lists the workspaces available for the user (in the Robocorp Cloud)
@@ -23,9 +23,9 @@ ROBOCORP_LOAD_FROM_DISK_LRU = "robocorp.loadFromDiskLRU"  # Loads some LRU data 
 ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH = "robocorp.computeRobotLaunchFromRobocorpCodeLaunch"  # Computes a robot launch debug configuration based on the robocorp code launch debug configuration
 ROBOCORP_SET_PYTHON_INTERPRETER = "robocorp.setPythonInterpreter"  # Set pythonPath based on robot.yaml
 ROBOCORP_RESOLVE_INTERPRETER = "robocorp.resolveInterpreter"  # Resolves the interpreter to be used given a path
-ROBOCORP_REFRESH_ROBOTS_VIEW = "robocorp.refreshRobotsView"  # Refresh Robots view
 ROBOCORP_CLOUD_LOGOUT = "robocorp.cloudLogout"  # Unlink and remove credentials from Robocorp Cloud
 ROBOCORP_CLOUD_LOGOUT_INTERNAL = "robocorp.cloudLogout.internal"  # Unlink and remove credentials from Robocorp Cloud internal
+ROBOCORP_REFRESH_ROBOTS_VIEW = "robocorp.refreshRobotsView"  # Refresh Robots view
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,

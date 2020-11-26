@@ -65,31 +65,28 @@ export async function cloudLogin(): Promise<boolean> {
 }
 
 export async function cloudLogout(): Promise<void> {
-    console.log('Cloud Logout() called.')
-    let loggedOut: boolean;
-    // Start this in parallel while we ask the user for info.
-    let isLoginNeededPromise: Thenable<ActionResult> = commands.executeCommand(
-        roboCommands.ROBOCORP_IS_LOGIN_NEEDED_INTERNAL,
-    );
+    let loggedOut: ActionResult;
 
-    let isLoginNeeded: ActionResult = await isLoginNeededPromise;
+    let isLoginNeeded: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_IS_LOGIN_NEEDED_INTERNAL);
     if (!isLoginNeeded) {
-        window.showInformationMessage('Error getting information if logged in.');
+        window.showInformationMessage('Error getting information if already linked in.');
         return;
     }
 
     if (isLoginNeeded.result) {
-        window.showInformationMessage('Unable to logout. Not logged in with valid cloud credentials.');
+        window.showInformationMessage('Unable to unlink and remove credentials from Robocorp Cloud. Not linked with valid cloud credentials.');
         return;
     }
-    loggedOut = await commands.executeCommand(
-        roboCommands.ROBOCORP_CLOUD_LOGOUT_INTERNAL
-    );
+    loggedOut = await commands.executeCommand(roboCommands.ROBOCORP_CLOUD_LOGOUT_INTERNAL);
     if (!loggedOut) {
-        window.showInformationMessage('Unable to logout. Still logged in to cloud with valid credentials.');
+        window.showInformationMessage('Error with unlinking Robocorp Cloud credentials.');
         return;
     }
-    window.showInformationMessage('Cloud credentials successfully logged out and removed.');
+    if (!loggedOut.success) {
+        window.showInformationMessage('Unable to unlink Robocorp Cloud credentials.');
+        return;
+    }
+    window.showInformationMessage('Robocorp Cloud credentials successfully unlinked and removed.');
 }
 
 async function askRobotSelection(robotsInfo: LocalRobotMetadataInfo[], message: string): Promise<LocalRobotMetadataInfo> {

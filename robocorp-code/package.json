@@ -42,9 +42,9 @@
         "onCommand:robocorp.computeRobotLaunchFromRobocorpCodeLaunch",
         "onCommand:robocorp.setPythonInterpreter",
         "onCommand:robocorp.resolveInterpreter",
-        "onCommand:robocorp.refreshRobotsView",
         "onCommand:robocorp.cloudLogout",
         "onCommand:robocorp.cloudLogout.internal",
+        "onCommand:robocorp.refreshRobotsView",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree"
@@ -205,6 +205,11 @@
                 "category": "Robocorp"
             },
             {
+                "command": "robocorp.cloudLogout",
+                "title": "Unlink and remove credentials from Robocorp Cloud",
+                "category": "Robocorp"
+            },
+            {
                 "command": "robocorp.refreshRobotsView",
                 "title": "Refresh Robots view",
                 "category": "Robocorp",
@@ -212,11 +217,6 @@
                     "light": "images/light/refresh.svg",
                     "dark": "images/dark/refresh.svg"
                 }
-            },
-            {
-                "command": "robocorp.cloudLogout",
-                "title": "Unlink and remove credentials from Robocorp Cloud",
-                "category": "Robocorp"
             }
         ],
         "menus": {

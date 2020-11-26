@@ -69,7 +69,7 @@ COMMANDS = [
     ),
     Command(
         "robocorp.isLoginNeeded.internal",
-        "Checks if the user is already linked an account",
+        "Checks if the user is already linked to an account",
         add_to_package_json=False,
         server_handled=True,
     ),
