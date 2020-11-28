@@ -4,7 +4,8 @@ from robotframework_ls.constants import NULL
 from robocorp_ls_core.robotframework_log import get_logger
 import threading
 from robotframework_ls.impl.robot_specbuilder import LibraryDoc
-from typing import Optional
+from typing import Optional, Dict
+from robocorp_ls_core.protocols import Sentinel
 
 log = get_logger(__name__)
 
@@ -253,9 +254,8 @@ class _FolderInfo(object):
                 from robocorp_ls_core.watchdog_wrapper import PathInfo
 
                 folder_path = self.folder_path
-                self._watch = observer.notify_on_extensions_change(
+                self._watch = observer.notify_on_any_change(
                     [PathInfo(folder_path, recursive=self.recursive)],
-                    ["libspec"],
                     notifier.on_change,
                     (self._on_change_spec,),
                 )
@@ -399,12 +399,14 @@ class LibspecManager(object):
         """
         from robocorp_ls_core import watchdog_wrapper
 
+        self._libspec_failures_cache: Dict[tuple, bool] = {}
+
         self._main_thread = threading.current_thread()
 
         self._observer = watchdog_wrapper.create_observer()
 
-        self._spec_changes_notifier = watchdog_wrapper.create_notifier(
-            self._on_spec_file_changed, timeout=0.5
+        self._file_changes_notifier = watchdog_wrapper.create_notifier(
+            self._on_file_changed, timeout=0.5
         )
 
         self._libspec_dir = self.get_internal_libspec_dir()
@@ -497,9 +499,29 @@ class LibspecManager(object):
     def user_libspec_dir(self):
         return self._user_libspec_dir
 
-    def _on_spec_file_changed(self, spec_file, target):
+    def _on_file_changed(self, spec_file, folder_info_on_change_spec):
         log.debug("File change detected: %s", spec_file)
-        target(spec_file)
+
+        # Check if the cache related to libspec generation failure must be
+        # cleared.
+        fix = False
+        for cache_key in self._libspec_failures_cache:
+            libname = cache_key[0]
+            if libname in spec_file:
+                fix = True
+                break
+        if fix:
+            new = {}
+            for cache_key, value in self._libspec_failures_cache.items():
+                libname = cache_key[0]
+                if libname not in spec_file:
+                    new[cache_key] = value
+            # Always set as a whole (to avoid racing conditions).
+            self._libspec_failures_cache = new
+
+        # Notify _FolderInfo._on_change_spec
+        if spec_file.lower().endswith(".libspec"):
+            folder_info_on_change_spec(spec_file)
 
     def add_workspace_folder(self, folder_uri):
         self._check_in_main_thread()
@@ -512,7 +534,7 @@ class LibspecManager(object):
                 uris.to_fs_path(folder_uri), recursive=True
             )
             self._workspace_folder_uri_to_folder_info = cp
-            folder_info.start_watch(self._observer, self._spec_changes_notifier)
+            folder_info.start_watch(self._observer, self._file_changes_notifier)
             folder_info.synchronize()
         else:
             log.debug("Workspace folder already added: %s", folder_uri)
@@ -535,7 +557,7 @@ class LibspecManager(object):
             cp = self._additional_pythonpath_folder_to_folder_info.copy()
             folder_info = cp[folder_path] = _FolderInfo(folder_path, recursive=True)
             self._additional_pythonpath_folder_to_folder_info = cp
-            folder_info.start_watch(self._observer, self._spec_changes_notifier)
+            folder_info.start_watch(self._observer, self._file_changes_notifier)
             folder_info.synchronize()
         else:
             log.debug("Additional pythonpath folder already added: %s", folder_path)
@@ -607,22 +629,22 @@ class LibspecManager(object):
 
     def synchronize_workspace_folders(self):
         for folder_info in self._workspace_folder_uri_to_folder_info.values():
-            folder_info.start_watch(self._observer, self._spec_changes_notifier)
+            folder_info.start_watch(self._observer, self._file_changes_notifier)
             folder_info.synchronize()
 
     def synchronize_pythonpath_folders(self):
         for folder_info in self._pythonpath_folder_to_folder_info.values():
-            folder_info.start_watch(self._observer, self._spec_changes_notifier)
+            folder_info.start_watch(self._observer, self._file_changes_notifier)
             folder_info.synchronize()
 
     def synchronize_additional_pythonpath_folders(self):
         for folder_info in self._additional_pythonpath_folder_to_folder_info.values():
-            folder_info.start_watch(self._observer, self._spec_changes_notifier)
+            folder_info.start_watch(self._observer, self._file_changes_notifier)
             folder_info.synchronize()
 
     def synchronize_internal_libspec_folders(self):
         for folder_info in self._internal_folder_to_folder_info.values():
-            folder_info.start_watch(self._observer, self._spec_changes_notifier)
+            folder_info.start_watch(self._observer, self._file_changes_notifier)
             folder_info.synchronize()
 
     def _synchronize(self):
@@ -699,6 +721,28 @@ class LibspecManager(object):
         cwd=None,
         additional_path=None,
         is_builtin=False,
+    ):
+        cache_key = (
+            libname,
+            tuple(additional_path) if additional_path else additional_path,
+            is_builtin,
+            cwd,
+        )
+        not_created = self._libspec_failures_cache.get(cache_key, Sentinel.SENTINEL)
+        if not_created is Sentinel.SENTINEL:
+            created = self._cached_create_libspec(
+                libname, env, log_time, cwd, additional_path, is_builtin
+            )
+            if not created:
+                # Always set as a whole (to avoid racing conditions).
+                cp = self._libspec_failures_cache.copy()
+                cp[cache_key] = False
+                self._libspec_failures_cache = cp
+
+        return not_created
+
+    def _cached_create_libspec(
+        self, libname, env, log_time, cwd, additional_path, is_builtin
     ):
         """
         :param str libname:
@@ -807,7 +851,7 @@ class LibspecManager(object):
 
     def dispose(self):
         self._observer.dispose()
-        self._spec_changes_notifier.dispose()
+        self._file_changes_notifier.dispose()
 
     def _do_create_libspec_on_get(self, libname, current_doc_uri):
         from robocorp_ls_core import uris

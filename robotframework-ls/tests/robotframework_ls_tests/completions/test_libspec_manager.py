@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Optional
 
 
 def test_libspec_info(libspec_manager, tmpdir):
@@ -72,12 +73,50 @@ def method6():
 """
     )
 
-    library_info: LibraryDoc = libspec_manager.get_library_info("check_lib")
+    library_info: Optional[LibraryDoc] = libspec_manager.get_library_info("check_lib")
+    assert library_info is not None
     keywords: List[KeywordDoc] = library_info.keywords
     data_regression.check([keyword_to_dict(k) for k in keywords])
     assert (
         int(library_info.specversion) <= 3
     ), "Libpsec version changed. Check parsing. "
+
+
+def test_libspec_cache_no_lib(libspec_manager, workspace_dir):
+    from robotframework_ls.impl.robot_specbuilder import LibraryDoc
+    import time
+    from robocorp_ls_core.basic import wait_for_condition
+
+    os.makedirs(workspace_dir)
+    libspec_manager.add_additional_pythonpath_folder(workspace_dir)
+
+    def disallow_cached_create_libspec(*args, **kwargs):
+        raise AssertionError("Should not be called")
+
+    library_info: Optional[LibraryDoc] = libspec_manager.get_library_info("check_lib")
+    assert library_info is None
+
+    # Make sure that we don't try to create it anymore for the same lib.
+    original_cached_create_libspec = libspec_manager._cached_create_libspec
+    libspec_manager._cached_create_libspec = disallow_cached_create_libspec
+    library_info: Optional[LibraryDoc] = libspec_manager.get_library_info("check_lib")
+    assert library_info is None
+    libspec_manager._cached_create_libspec = original_cached_create_libspec
+
+    time.sleep(0.1)
+
+    path = Path(workspace_dir) / "check_lib.py"
+    path.write_text(
+        """
+def method2(a:int):
+    pass
+"""
+    )
+    # Check that the cache invalidation is in place!
+    wait_for_condition(
+        lambda: libspec_manager.get_library_info("check_lib") is not None,
+        msg="Did not recreate library in the available timeout.",
+    )
 
 
 def test_libspec_manager_caches(libspec_manager, workspace_dir):

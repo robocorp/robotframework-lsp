@@ -161,8 +161,58 @@ class _Observer(object):
                 for ext in self._extensions:
                     if event.src_path.lower().endswith(ext):
                         on_change(event.src_path, *call_args)
+                        break
 
         handler = _Handler(extensions)
+        watches = []
+        for path_info in paths:
+            watches.append(
+                self._observer.schedule(
+                    handler, path_info.path, recursive=path_info.recursive
+                )
+            )
+
+        self._start()
+        return _WatchList(watches, self._observer)
+
+    def notify_on_any_change(self, paths, on_change, call_args=()):
+        """
+        To be used as:
+        
+        notifier = create_notifier(callback=on_file_change, timeout=0.5)
+        
+        observer = create_observer() 
+        
+        watch = observer.notify_on_extensions_change(
+            [PathInfo('a', recursive=True)],
+            notifier.on_change
+        )
+        ...
+        watch.stop_tracking()
+        
+        notifier.dispose()
+        observer.dispose()
+        
+        Multiple changes on the same file will be sent as a single change (if
+        the changes occur during the available timeout).
+        
+        :param list(PathInfo) paths:
+        :param list(str) extensions:
+            The file extensions that should be tracked.
+        """
+        _import_watchdog()
+
+        from watchdog.events import FileSystemEventHandler
+
+        class _Handler(FileSystemEventHandler):
+            def __init__(self,):
+                FileSystemEventHandler.__init__(self)
+
+            def on_any_event(self, event):
+                # Note: notify on directory and file changes.
+                on_change(event.src_path, *call_args)
+
+        handler = _Handler()
         watches = []
         for path_info in paths:
             watches.append(
