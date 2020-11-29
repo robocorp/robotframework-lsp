@@ -155,6 +155,11 @@ class Rcc(object):
             return config.get_setting(setting_name, str, None)
         return None
 
+    def _get_robocorp_home(self) -> Optional[str]:
+        from robocorp_code.settings import ROBOCORP_HOME
+
+        return self._get_str_optional_setting(ROBOCORP_HOME)
+
     @property
     def config_location(self) -> Optional[str]:
         """
@@ -216,6 +221,10 @@ class Rcc(object):
         env["PYTHONIOENCODING"] = "utf-8"
         env["PYTHONUNBUFFERED"] = "1"
 
+        robocorp_home = self._get_robocorp_home()
+        if robocorp_home:
+            env["ROBOCORP_HOME"] = robocorp_home
+
         kwargs: dict = build_subprocess_kwargs(cwd, env, stderr=subprocess.PIPE)
         args = [rcc_location] + args + ["--controller", "RobocorpCode"]
         cmdline = " ".join([str(x) for x in args])
@@ -231,7 +240,7 @@ class Rcc(object):
         except CalledProcessError as e:
             stdout = as_str(e.stdout)
             stderr = as_str(e.stderr)
-            msg = f"Error running: {cmdline}.\nStdout: {stdout}\nStderr: {stderr}"
+            msg = f"Error running: {cmdline}.\nROBOCORP_HOME: {robocorp_home}\n\nStdout: {stdout}\nStderr: {stderr}"
             if log_errors:
                 log.exception(msg)
             if not error_msg:

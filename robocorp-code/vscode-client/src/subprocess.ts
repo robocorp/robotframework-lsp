@@ -1,8 +1,7 @@
 'use strict';
 
-import { sleep } from './time';
 import { OUTPUT_CHANNEL } from './channel';
-import { execFile, ExecException } from 'child_process';
+import { execFile, ExecException, ExecFileOptions } from 'child_process';
 
 export interface ExecFileError {
     error: ExecException;
@@ -15,9 +14,9 @@ export interface ExecFileReturn {
     stderr: string;
 };
 
-async function _execFileAsPromise(command: string, args: string[]): Promise<ExecFileReturn> {
+async function _execFileAsPromise(command: string, args: string[], options: ExecFileOptions): Promise<ExecFileReturn> {
     return new Promise((resolve, reject) => {
-        execFile(command, args, (error, stdout, stderr) => {
+        execFile(command, args, options, (error, stdout, stderr) => {
             if (error) {
                 reject({ error: 'error', 'stdout': stdout, 'stderr': stderr });
                 return;
@@ -27,10 +26,13 @@ async function _execFileAsPromise(command: string, args: string[]): Promise<Exec
     });
 }
 
-export async function execFilePromise(command: string, args: string[]): Promise<ExecFileReturn> {
+/**
+ * @param options may be something as: { env: { ...process.env, ENV_VAR: 'test' } }
+ */
+export async function execFilePromise(command: string, args: string[], options: ExecFileOptions): Promise<ExecFileReturn> {
     OUTPUT_CHANNEL.appendLine('Executing: ' + command + ',' + args);
     try {
-        return await _execFileAsPromise(command, args);
+        return await _execFileAsPromise(command, args, options);
     } catch (exc) {
         let errorInfo: ExecFileError = exc;
         let error: ExecException = errorInfo.error;

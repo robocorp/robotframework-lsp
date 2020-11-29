@@ -15,6 +15,7 @@ export const ROBOCORP_LANGUAGE_SERVER_PYTHON = "robocorp.language-server.python"
 export const ROBOCORP_RCC_LOCATION = "robocorp.rcc.location";
 export const ROBOCORP_RCC_ENDPOINT = "robocorp.rcc.endpoint";
 export const ROBOCORP_RCC_CONFIG_LOCATION = "robocorp.rcc.config_location";
+export const ROBOCORP_HOME = "robocorp.home";
 
 export function getLanguageServerTcpPort(): number {
     let key = ROBOCORP_LANGUAGE_SERVER_TCP_PORT;
@@ -48,5 +49,11 @@ export function getRccEndpoint(): string {
 
 export function getRccConfigLocation(): string {
     let key = ROBOCORP_RCC_CONFIG_LOCATION;
+    return get<string>(key);
+}
+
+
+export function getHome(): string {
+    let key = ROBOCORP_HOME;
     return get<string>(key);
 }

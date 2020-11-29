@@ -81,6 +81,11 @@
                     "type": "string",
                     "default": "",
                     "description": "Specifies the config location used by rcc."
+                },
+                "robocorp.home": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Specifies the value for ROBOCORP_HOME (where the conda environments will be downloaded). Must point to a directory without spaces in it."
                 }
             }
         },

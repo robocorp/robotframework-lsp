@@ -49,7 +49,9 @@ log = get_logger(__name__)
 _CachedFileMTimeInfo = namedtuple("_CachedFileMTimeInfo", "st_mtime, st_size, path")
 
 _CachedInterpreterMTime = Tuple[
-    _CachedFileMTimeInfo, Optional[_CachedFileMTimeInfo], Optional[_CachedFileMTimeInfo]
+    Optional[_CachedFileMTimeInfo],
+    Optional[_CachedFileMTimeInfo],
+    Optional[_CachedFileMTimeInfo],
 ]
 
 

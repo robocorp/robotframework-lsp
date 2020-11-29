@@ -178,6 +178,14 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
 function registerDebugger(pythonExecutable: string) {
     async function createDebugAdapterExecutable(config: DebugConfiguration): Promise<DebugAdapterExecutable> {
         let env = config.env;
+        let robotHome = roboConfig.getHome();
+        if (robotHome && robotHome.length > 0) {
+            if (env) {
+                env['ROBOCORP_HOME'] = robotHome;
+            } else {
+                env = { 'ROBOCORP_HOME': robotHome };
+            }
+        }
         let targetMain: string = path.resolve(__dirname, '../../src/robocorp_code_debug_adapter/__main__.py');
         if (!fs.existsSync(targetMain)) {
             window.showWarningMessage('Error. Expected: ' + targetMain + " to exist.");
@@ -313,7 +321,6 @@ async function getLanguageServerPython(): Promise<string> {
     return cachedPythonExe;
 }
 
-
 async function getLanguageServerPythonUncached(): Promise<string> {
     let rccLocation = await getRccLocation();
     if (!rccLocation) {
@@ -325,14 +332,72 @@ async function getLanguageServerPythonUncached(): Promise<string> {
         return;
     }
 
-    async function createDefaultEnv(progress: Progress<{ message?: string; increment?: number }>): Promise<ExecFileReturn> {
+    async function createDefaultEnv(progress: Progress<{ message?: string; increment?: number }>): Promise<ExecFileReturn> | undefined {
+        // Check that ROBOCORP_HOME is valid (i.e.: doesn't have any spaces in it).
+        let robocorpHome: string = roboConfig.getHome();
+        if (!robocorpHome || robocorpHome.length == 0) {
+            robocorpHome = process.env['ROBOCORP_HOME'];
+            if (!robocorpHome) {
+                try {
+                    let condaCheckResult: ExecFileReturn = await execFilePromise(rccLocation, ['env', 'variables', '-r', robotYaml, '--controller', 'RobocorpCode'], {});
+                    let splitted: string[] = condaCheckResult.stdout.split('\n');
+                    for (let index = 0; index < splitted.length; index++) {
+                        const element = splitted[index];
+                        if (element.startsWith('ROBOCORP_HOME=')) {
+                            robocorpHome = element.substring('ROBOCORP_HOME='.length);
+                            break;
+                        }
+                    }
+                } catch (err) {
+                    OUTPUT_CHANNEL.appendLine(err);
+                }
+            }
+        }
+        OUTPUT_CHANNEL.appendLine('ROBOCORP_HOME: ' + robocorpHome);
+
+        while (!robocorpHome || robocorpHome.length == 0 || robocorpHome.indexOf(' ') != -1) {
+            const SELECT_ROBOCORP_HOME = 'Set new ROBOCORP_HOME';
+            const CANCEL = "Cancel";
+            let result = await window.showInformationMessage(
+                "The current ROBOCORP_HOME is invalid (paths with spaces are not supported).",
+                SELECT_ROBOCORP_HOME,
+                CANCEL
+            );
+            if (!result || result == CANCEL) {
+                OUTPUT_CHANNEL.appendLine('Cancelled setting new ROBOCORP_HOME.');
+                return undefined;
+            }
+
+            let uriResult = await window.showOpenDialog({
+                'canSelectFolders': true,
+                'canSelectFiles': false,
+                'canSelectMany': false,
+                'openLabel': 'Set as ROBOCORP_HOME'
+            });
+            if (!uriResult) {
+                OUTPUT_CHANNEL.appendLine('Cancelled getting ROBOCORP_HOME path.');
+                return undefined;
+            }
+            if (uriResult.length != 1) {
+                OUTPUT_CHANNEL.appendLine('Expected 1 path to set as ROBOCORP_HOME. Found: ' + uriResult.length);
+                return undefined;
+            }
+            robocorpHome = uriResult[0].fsPath;
+            OUTPUT_CHANNEL.appendLine('Selected ROBOCORP_HOME: ' + robocorpHome);
+            let config = workspace.getConfiguration('robocorp');
+            await config.update('home', robocorpHome, ConfigurationTarget.Global);
+        }
+
         // Make sure that conda is installed.
         const maxTries = 5;
         progress.report({ message: 'Get conda (may take a few minutes).' });
         let timing = new Timing();
         for (let index = 0; index < maxTries; index++) {
             try {
-                let condaCheckResult: ExecFileReturn = await execFilePromise(rccLocation, ['conda', 'check', '-i', '--controller', 'RobocorpCode']);
+                let condaCheckResult: ExecFileReturn = await execFilePromise(
+                    rccLocation, ['conda', 'check', '-i', '--controller', 'RobocorpCode'],
+                    { env: { ...process.env, ROBOCORP_HOME: robocorpHome } }
+                );
                 if (condaCheckResult.stderr.indexOf('OK.') != -1) {
                     break;
                 }
@@ -362,7 +427,10 @@ async function getLanguageServerPythonUncached(): Promise<string> {
 
         progress.report({ message: 'Update env (may take a few minutes).' });
         // Get information on a base package with our basic dependencies (this can take a while...).
-        let resultPromise: Promise<ExecFileReturn> = execFilePromise(rccLocation, ['task', 'run', '--robot', robotYaml, '--controller', 'RobocorpCode']);
+        let resultPromise: Promise<ExecFileReturn> = execFilePromise(
+            rccLocation, ['task', 'run', '--robot', robotYaml, '--controller', 'RobocorpCode'],
+            { env: { ...process.env, ROBOCORP_HOME: robocorpHome } }
+        );
         timing = new Timing();
 
         let finishedCondaRun = false;
@@ -386,12 +454,22 @@ async function getLanguageServerPythonUncached(): Promise<string> {
         return result;
     }
 
-    let result: ExecFileReturn = await window.withProgress({
+    let result: ExecFileReturn | undefined = await window.withProgress({
         location: ProgressLocation.Notification,
         title: "Robocorp",
         cancellable: false
     }, createDefaultEnv);
 
+    function disabled(msg: string): undefined {
+        msg = 'Robocorp Code extension disabled. Reason: ' + msg;
+        OUTPUT_CHANNEL.appendLine(msg);
+        window.showErrorMessage(msg);
+        return undefined;
+    }
+
+    if (!result) {
+        return disabled('Unable to get python to launch language server.');
+    }
     try {
         let jsonContents = result.stderr;
         let start: number = jsonContents.indexOf('JSON START>>')
@@ -407,9 +485,8 @@ async function getLanguageServerPythonUncached(): Promise<string> {
         if (verifyFileExists(pythonExe)) {
             return pythonExe;
         }
+        return disabled('Python executable: ' + pythonExe + ' does not exist.');
     } catch (error) {
-        OUTPUT_CHANNEL.appendLine('Unable to get python to launch language server.\nStderr: ' + result.stderr + '\nStdout (json contents): ' + result.stdout);
-        return;
+        return disabled('Unable to get python to launch language server.\nStderr: ' + result.stderr + '\nStdout (json contents): ' + result.stdout);
     }
-    return undefined;
 }

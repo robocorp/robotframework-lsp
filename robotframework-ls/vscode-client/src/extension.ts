@@ -35,7 +35,7 @@ function createClientOptions(initializationOptions: object): LanguageClientOptio
 	const clientOptions: LanguageClientOptions = {
 		documentSelector: ["robotframework"],
 		synchronize: {
-			configurationSection: "robot"
+			configurationSection: ["robot", "robocorp.home"]
 		},
 		outputChannel: OUTPUT_CHANNEL,
 		initializationOptions: initializationOptions,

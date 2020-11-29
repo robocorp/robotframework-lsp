@@ -6,6 +6,7 @@ ROBOCORP_LANGUAGE_SERVER_PYTHON = "robocorp.language-server.python"
 ROBOCORP_RCC_LOCATION = "robocorp.rcc.location"
 ROBOCORP_RCC_ENDPOINT = "robocorp.rcc.endpoint"
 ROBOCORP_RCC_CONFIG_LOCATION = "robocorp.rcc.config_location"
+ROBOCORP_HOME = "robocorp.home"
 
 ALL_ROBOCORP_OPTIONS = frozenset(
     (
@@ -15,5 +16,6 @@ ALL_ROBOCORP_OPTIONS = frozenset(
         ROBOCORP_RCC_LOCATION,
         ROBOCORP_RCC_ENDPOINT,
         ROBOCORP_RCC_CONFIG_LOCATION,
+        ROBOCORP_HOME,
     )
 )
