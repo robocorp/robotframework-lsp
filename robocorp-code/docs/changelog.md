@@ -1,3 +1,9 @@
+New in 0.5.1 (2020-11-29)
+-----------------------------
+
+- If `ROBOCORP_HOME` has spaces in the path, detect it and ask for a new path without spaces. #200
+- Created `robocorp.home` setting to specify `ROBOCORP_HOME`.
+
 New in 0.5.0 (2020-11-25)
 -----------------------------
 

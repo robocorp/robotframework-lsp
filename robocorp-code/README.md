@@ -69,7 +69,7 @@ Find the full installation instructions at [https://robocorp.com/docs/product-ma
 
 During the first activation, the extension will download additional dependencies (such as Conda manager) that are required for it to run.
 
-### Features (0.5.0)
+### Features (0.5.1)
 
 - Automatic bootstrapping of the Python environment for the `Robot Framework Language Server`.
 - Create a Robot from a pre-configured template using the `Robocorp: Create Robot` action.
