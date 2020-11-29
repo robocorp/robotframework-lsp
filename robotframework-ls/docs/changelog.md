@@ -1,3 +1,8 @@
+New in 0.6.1 (2020-11-29)
+-----------------------------
+
+- Performance improvement: Cache that libspec could not be created.
+
 New in 0.6.0 (2020-11-25)
 -----------------------------
 
