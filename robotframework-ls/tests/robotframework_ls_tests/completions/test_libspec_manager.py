@@ -127,7 +127,7 @@ def test_libspec_no_rest(libspec_manager, workspace_dir):
 
     path = Path(workspace_dir) / "check_lib.py"
     path.write_text(
-        '''
+        r'''
 """Example library in reStructuredText format.
 
 - Formatting with **bold** and *italic*.
@@ -165,8 +165,8 @@ def my_keyword():
                 raise CalledProcessError(
                     1,
                     cmdline,
-                    "reST format requires 'docutils' module to be installed",
-                    "",
+                    b"reST format requires 'docutils' module to be installed",
+                    b"",
                 )
             return original(cmdline, *args, **kwargs)
 

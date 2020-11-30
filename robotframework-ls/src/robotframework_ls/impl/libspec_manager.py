@@ -857,7 +857,7 @@ class LibspecManager(object):
                     except subprocess.CalledProcessError as e:
                         if not _internal_force_text:
                             if (
-                                "reST format requires 'docutils' module to be installed"
+                                b"reST format requires 'docutils' module to be installed"
                                 in e.output
                             ):
                                 return self._cached_create_libspec(
