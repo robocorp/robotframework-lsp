@@ -64,6 +64,31 @@ export async function cloudLogin(): Promise<boolean> {
     return true;
 }
 
+export async function cloudLogout(): Promise<void> {
+    let loggedOut: ActionResult;
+
+    let isLoginNeeded: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_IS_LOGIN_NEEDED_INTERNAL);
+    if (!isLoginNeeded) {
+        window.showInformationMessage('Error getting information if already linked in.');
+        return;
+    }
+
+    if (isLoginNeeded.result) {
+        window.showInformationMessage('Unable to unlink and remove credentials from Robocorp Cloud. Not linked with valid cloud credentials.');
+        return;
+    }
+    loggedOut = await commands.executeCommand(roboCommands.ROBOCORP_CLOUD_LOGOUT_INTERNAL);
+    if (!loggedOut) {
+        window.showInformationMessage('Error with unlinking Robocorp Cloud credentials.');
+        return;
+    }
+    if (!loggedOut.success) {
+        window.showInformationMessage('Unable to unlink Robocorp Cloud credentials.');
+        return;
+    }
+    window.showInformationMessage('Robocorp Cloud credentials successfully unlinked and removed.');
+}
+
 async function askRobotSelection(robotsInfo: LocalRobotMetadataInfo[], message: string): Promise<LocalRobotMetadataInfo> {
     let robot: LocalRobotMetadataInfo;
     if (robotsInfo.length > 1) {

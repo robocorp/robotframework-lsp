@@ -42,6 +42,8 @@
         "onCommand:robocorp.computeRobotLaunchFromRobocorpCodeLaunch",
         "onCommand:robocorp.setPythonInterpreter",
         "onCommand:robocorp.resolveInterpreter",
+        "onCommand:robocorp.cloudLogout",
+        "onCommand:robocorp.cloudLogout.internal",
         "onCommand:robocorp.refreshRobotsView",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
@@ -166,7 +168,7 @@
             },
             {
                 "command": "robocorp.cloudLogin",
-                "title": "Log in Robocorp Cloud",
+                "title": "Link to Robocorp Cloud",
                 "category": "Robocorp"
             },
             {
@@ -200,6 +202,11 @@
             {
                 "command": "robocorp.setPythonInterpreter",
                 "title": "Set pythonPath based on robot.yaml",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.cloudLogout",
+                "title": "Unlink and remove credentials from Robocorp Cloud",
                 "category": "Robocorp"
             },
             {

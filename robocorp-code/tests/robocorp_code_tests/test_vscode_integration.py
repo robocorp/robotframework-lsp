@@ -433,6 +433,44 @@ def test_upload_to_cloud(
     assert result["success"]
 
 
+def test_logout_cloud(
+    language_server_initialized: IRobocorpLanguageServerClient,
+    monkeypatch,
+):
+    from robocorp_code import commands
+    from robocorp_code.rcc import Rcc
+
+    client = language_server_initialized
+
+    client.DEFAULT_TIMEOUT = 10  # The cloud may be slow.
+
+    def mock_run_rcc(self, args, *sargs, **kwargs):
+        if args[:5] == [
+            "config",
+            "credentials",
+            "--account",
+            "--robocorp-code",
+            "--delete",
+        ]:
+            return ActionResult(success=True, message=None, result="OK.\n")
+
+        raise AssertionError(f"Unexpected args: {args}")
+
+    def mock_credentials_valid(self):
+        # Mock rcc.credentials_valid() to return False after "successful" removal from cloud
+        return False
+
+    # Note: it should work without the monkeypatch as is, but it'd create a dummy
+    # (check test_upload_to_cloud for details)
+    # package and we don't have an API to remove it.
+    monkeypatch.setattr(Rcc, "_run_rcc", mock_run_rcc)
+    monkeypatch.setattr(Rcc, "credentials_valid", mock_credentials_valid)
+    result = client.execute_command(commands.ROBOCORP_CLOUD_LOGOUT_INTERNAL, [])[
+        "result"
+    ]
+    assert result["success"]
+
+
 def test_lru_disk_commands(language_server_initialized: IRobocorpLanguageServerClient):
     from robocorp_code import commands
 

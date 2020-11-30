@@ -69,19 +69,19 @@ COMMANDS = [
     ),
     Command(
         "robocorp.isLoginNeeded.internal",
-        "Checks if the user is already logged in",
+        "Checks if the user is already linked to an account",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
         "robocorp.cloudLogin",
-        "Log in Robocorp Cloud",
+        "Link to Robocorp Cloud",
         add_to_package_json=True,
         server_handled=False,
     ),
     Command(
         "robocorp.cloudLogin.internal",
-        "Log in Robocorp Cloud (receives credentials)",
+        "Link to Robocorp Cloud (receives credentials)",
         add_to_package_json=False,
         server_handled=True,
     ),
@@ -162,6 +162,18 @@ COMMANDS = [
     Command(
         "robocorp.resolveInterpreter",
         "Resolves the interpreter to be used given a path",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
+    Command(
+        "robocorp.cloudLogout",
+        "Unlink and remove credentials from Robocorp Cloud",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
+    Command(
+        "robocorp.cloudLogout.internal",
+        "Unlink and remove credentials from Robocorp Cloud internal",
         add_to_package_json=False,
         server_handled=True,
     ),

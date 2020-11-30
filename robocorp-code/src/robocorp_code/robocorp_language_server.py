@@ -259,6 +259,20 @@ class RobocorpLanguageServer(PythonLanguageServer):
             result = self._rcc.credentials_valid()
         return {"success": result, "message": None, "result": result}
 
+    @command_dispatcher(commands.ROBOCORP_CLOUD_LOGOUT_INTERNAL)
+    def _cloud_logout(self) -> ActionResultDict:
+        from robocorp_ls_core.progress_report import progress_context
+
+        self._feedback_metric("vscode.cloud.logout")
+
+        # When credentials are removed we need to remove existing caches.
+        self._dir_cache.discard(self.CLOUD_LIST_WORKSPACE_CACHE_KEY)
+
+        with progress_context(
+            self._endpoint, "Removing cloud credentials", self._dir_cache
+        ):
+            return self._rcc.remove_current_credentials().as_dict()
+
     @command_dispatcher(commands.ROBOCORP_SAVE_IN_DISK_LRU)
     def _save_in_disk_lru(self, params: dict) -> ActionResultDict:
         name = params["name"]
@@ -684,8 +698,8 @@ class RobocorpLanguageServer(PythonLanguageServer):
             target_robot: str = params.get("target_robot")
 
             for ep in self._pm.get_implementations(EPResolveInterpreter):
-                interpreter_info: IInterpreterInfo = ep.get_interpreter_info_for_doc_uri(
-                    uris.from_fs_path(target_robot)
+                interpreter_info: IInterpreterInfo = (
+                    ep.get_interpreter_info_for_doc_uri(uris.from_fs_path(target_robot))
                 )
                 if interpreter_info is not None:
                     return {

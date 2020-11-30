@@ -356,6 +356,16 @@ class Rcc(object):
 
         return self._run_rcc(args, mutex_name=RCC_CREDENTIALS_MUTEX_NAME)
 
+    @implements(IRcc.remove_current_credentials)
+    def remove_current_credentials(self) -> ActionResult:
+        self._last_verified_account_info = None
+        args = ["config", "credentials"]
+        args.append("--account")
+        args.append("--robocorp-code")
+        args.append("--delete")
+        args = self._add_config_to_args(args)
+        return self._run_rcc(args, mutex_name=RCC_CREDENTIALS_MUTEX_NAME)
+
     @implements(IRcc.credentials_valid)
     def credentials_valid(self) -> bool:
         account = self.get_valid_account_info()
