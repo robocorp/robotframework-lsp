@@ -262,7 +262,7 @@ export async function activate(context: ExtensionContext) {
         async function cloudLoginShowConfirmation() {
             let loggedIn = await cloudLogin();
             if (loggedIn) {
-                window.showInformationMessage("Successfully logged in Robocloud.")
+                window.showInformationMessage("Successfully logged in Robocorp Cloud.")
             }
         }
         commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGIN, () => cloudLoginShowConfirmation());
