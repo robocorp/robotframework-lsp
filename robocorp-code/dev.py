@@ -162,10 +162,18 @@ class Dev(object):
         readme = os.path.join(os.path.dirname(__file__), "README.md")
         with open(readme, "r") as f:
             content = f.read()
+
+        tag = self.get_tag()
+
         new_content = re.sub(
             r"\(docs/",
-            r"(https://github.com/robocorp/robotframework-lsp/tree/%s/robocorp-code/docs/"
-            % (self.get_tag(),),
+            fr"(https://github.com/robocorp/robotframework-lsp/tree/{tag}/robocorp-code/docs/",
+            content,
+        )
+
+        new_content = re.sub(
+            r"\(images/",
+            fr"(https://raw.githubusercontent.com/robocorp/robotframework-lsp/{tag}/robocorp-code/images/",
             content,
         )
 

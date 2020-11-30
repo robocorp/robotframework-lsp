@@ -17,7 +17,7 @@ Main features include:
 
 Note: the use of cloud-based orchestration in [Robocorp Cloud](https://robocorp.com/robocorp-cloud) requires a free account.
 
-![Example of a Robot running with the extension](./images/gif_run.gif)
+![Example of a Robot running with the extension](images/gif_run.gif)
 
 
 ### Get Started
@@ -40,7 +40,7 @@ Full instructions are available at [https://robocorp.com/docs/product-manuals/ro
 
 ### Features
 
-![image of command palette](./images/command-palette.png)
+![image of command palette](images/command-palette.png)
 
 - Create robots based on templates.
 
@@ -74,7 +74,8 @@ During the first activation, the extension will download additional dependencies
 - Automatic bootstrapping of the Python environment for the `Robot Framework Language Server`.
 - Create a Robot from a pre-configured template using the `Robocorp: Create Robot` action.
 - Upload a Robot to the cloud with the `Robocorp: Upload Robot to the Robocorp Cloud` action.
-- Log in to the cloud with the `Robocorp: Log in Robocorp Cloud` action.
+- Link to the cloud with the `Robocorp: Link to Robocorp Cloud` action.
+- Unlink from the cloud with the `Robocorp: Unlink and remove credentials from Robocorp Cloud` action.
 - Run a Robot with the `Robocorp: Run Robot` action.
 - Debug a Robot with the `Robocorp: Debug Robot` action. - It's possible to debug plain Python tasks using the Python extension or Robot Framework tasks using the Robot Framework Language Server (in which case the task must start with `python -m robot` and finish with the folder/filename to be run).
 - When a [robot.yaml](https://robocorp.com/docs/setup/robot-yaml-format) is found, it utilises the related Python environment when running/debugging `.robot` files using the RobotFramework Language Server.
