@@ -119,6 +119,41 @@ def method2(a:int):
     )
 
 
+def test_libspec_no_rest(libspec_manager, workspace_dir):
+
+    from robotframework_ls.impl.robot_specbuilder import LibraryDoc
+
+    os.makedirs(workspace_dir)
+    libspec_manager.add_additional_pythonpath_folder(workspace_dir)
+
+    path = Path(workspace_dir) / "check_lib.py"
+    path.write_text(
+        '''
+"""Example library in reStructuredText format.
+
+- Formatting with **bold** and *italic*.
+- URLs like http://example.com are turned to links.
+- Custom links like reStructuredText__ are supported.
+- Linking to \`My Keyword\` works but requires backtics to be escaped.
+
+__ http://docutils.sourceforge.net
+
+.. code:: robotframework
+
+    *** Test Cases ***
+    Example
+        My keyword    # How cool is this!!?!!?!1!!
+"""
+ROBOT_LIBRARY_DOC_FORMAT = 'reST'
+
+def my_keyword():
+    """Nothing more to see here."""
+'''
+    )
+    library_info: Optional[LibraryDoc] = libspec_manager.get_library_info("check_lib")
+    assert library_info is not None
+
+
 def test_libspec_manager_caches(libspec_manager, workspace_dir):
     from robocorp_ls_core import uris
     import os.path
