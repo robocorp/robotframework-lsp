@@ -120,7 +120,6 @@ def method2(a:int):
 
 
 def test_libspec_no_rest(libspec_manager, workspace_dir):
-
     from robotframework_ls.impl.robot_specbuilder import LibraryDoc
 
     os.makedirs(workspace_dir)
@@ -150,6 +149,29 @@ def my_keyword():
     """Nothing more to see here."""
 '''
     )
+
+    try:
+        import docutils  # noqa
+    except ImportError:
+        pass
+    else:
+        original = libspec_manager._subprocess_check_output
+        # If docutils is installed, mock it (otherwise, just execute as usual).
+
+        def raise_error(cmdline, *args, **kwargs):
+            from subprocess import CalledProcessError
+
+            if "--docformat" not in cmdline:
+                raise CalledProcessError(
+                    1,
+                    cmdline,
+                    "reST format requires 'docutils' module to be installed",
+                    "",
+                )
+            return original(cmdline, *args, **kwargs)
+
+        libspec_manager._subprocess_check_output = raise_error
+
     library_info: Optional[LibraryDoc] = libspec_manager.get_library_info("check_lib")
     assert library_info is not None
 
