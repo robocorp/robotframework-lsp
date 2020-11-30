@@ -741,8 +741,22 @@ class LibspecManager(object):
 
         return not_created
 
+    def _subprocess_check_output(self, *args, **kwargs):
+        # Only done for mocking.
+        from robocorp_ls_core.subprocess_wrapper import subprocess
+
+        return subprocess.check_output(*args, **kwargs)
+
     def _cached_create_libspec(
-        self, libname, env, log_time, cwd, additional_path, is_builtin
+        self,
+        libname,
+        env,
+        log_time,
+        cwd,
+        additional_path,
+        is_builtin,
+        *,
+        _internal_force_text=False,  # Should only be set from within this function.
     ):
         """
         :param str libname:
@@ -752,6 +766,10 @@ class LibspecManager(object):
         from robotframework_ls.impl import robot_constants
         from robocorp_ls_core.subprocess_wrapper import subprocess
         from robocorp_ls_core.system_mutex import timed_acquire_mutex
+
+        if _internal_force_text:
+            # In this case this is a recursive call and we already have the lock.
+            timed_acquire_mutex = NULL
 
         curtime = time.time()
 
@@ -768,6 +786,10 @@ class LibspecManager(object):
                 if additional_path:
                     if os.path.exists(additional_path):
                         call.extend(["-P", additional_path])
+
+                if _internal_force_text:
+                    call.append("--docformat")
+                    call.append("text")
 
                 additional_pythonpath_entries = list(
                     self._additional_pythonpath_folder_to_folder_info.keys()
@@ -807,7 +829,7 @@ class LibspecManager(object):
                     try:
                         try:
                             # Note: stdout is always subprocess.PIPE in this call.
-                            subprocess.check_output(
+                            self._subprocess_check_output(
                                 call,
                                 stderr=subprocess.STDOUT,
                                 stdin=subprocess.PIPE,
@@ -833,8 +855,26 @@ class LibspecManager(object):
                             return False
 
                     except subprocess.CalledProcessError as e:
+                        if not _internal_force_text:
+                            if (
+                                b"reST format requires 'docutils' module to be installed"
+                                in e.output
+                            ):
+                                return self._cached_create_libspec(
+                                    libname,
+                                    env,
+                                    log_time,
+                                    cwd,
+                                    additional_path,
+                                    is_builtin,
+                                    _internal_force_text=True,
+                                )
+
                         log.exception(
-                            "Error creating libspec: %s. Output:\n%s", libname, e.output
+                            "Error creating libspec: %s.\nReturn code: %s\nOutput:\n%s",
+                            libname,
+                            e.returncode,
+                            e.output,
                         )
                         return False
                     _dump_spec_filename_additional_info(

@@ -119,6 +119,63 @@ def method2(a:int):
     )
 
 
+def test_libspec_no_rest(libspec_manager, workspace_dir):
+    from robotframework_ls.impl.robot_specbuilder import LibraryDoc
+
+    os.makedirs(workspace_dir)
+    libspec_manager.add_additional_pythonpath_folder(workspace_dir)
+
+    path = Path(workspace_dir) / "check_lib.py"
+    path.write_text(
+        r'''
+"""Example library in reStructuredText format.
+
+- Formatting with **bold** and *italic*.
+- URLs like http://example.com are turned to links.
+- Custom links like reStructuredText__ are supported.
+- Linking to \`My Keyword\` works but requires backtics to be escaped.
+
+__ http://docutils.sourceforge.net
+
+.. code:: robotframework
+
+    *** Test Cases ***
+    Example
+        My keyword    # How cool is this!!?!!?!1!!
+"""
+ROBOT_LIBRARY_DOC_FORMAT = 'reST'
+
+def my_keyword():
+    """Nothing more to see here."""
+'''
+    )
+
+    try:
+        import docutils  # noqa
+    except ImportError:
+        pass
+    else:
+        original = libspec_manager._subprocess_check_output
+        # If docutils is installed, mock it (otherwise, just execute as usual).
+
+        def raise_error(cmdline, *args, **kwargs):
+            from subprocess import CalledProcessError
+
+            if "--docformat" not in cmdline:
+                raise CalledProcessError(
+                    1,
+                    cmdline,
+                    b"reST format requires 'docutils' module to be installed",
+                    b"",
+                )
+            return original(cmdline, *args, **kwargs)
+
+        libspec_manager._subprocess_check_output = raise_error
+
+    library_info: Optional[LibraryDoc] = libspec_manager.get_library_info("check_lib")
+    assert library_info is not None
+
+
 def test_libspec_manager_caches(libspec_manager, workspace_dir):
     from robocorp_ls_core import uris
     import os.path
