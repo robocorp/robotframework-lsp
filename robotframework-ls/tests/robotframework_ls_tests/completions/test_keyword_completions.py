@@ -67,7 +67,11 @@ def verify_changes(model=10):
 
 
 @pytest.mark.parametrize(
-    "library_import", ["case1_library", "case1_library.py", "__FULL_PATH__"]
+    "library_import",
+    [
+        "case1_library"
+        # , "case1_library.py", "__FULL_PATH__"
+    ],
 )
 def test_keyword_completions_user_library(
     data_regression, workspace, cases, libspec_manager, library_import, workspace_dir

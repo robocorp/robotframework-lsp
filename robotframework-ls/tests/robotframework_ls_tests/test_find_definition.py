@@ -439,3 +439,36 @@ Test
     assert definition.source.endswith("case4resource3.robot")
     assert definition.lineno == 1
     check_using_link_version(definition.source, target_link, target_original)
+
+
+def test_find_definition_same_basename(workspace, libspec_manager, cases, tmpdir):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case_same_basename", libspec_manager=libspec_manager)
+    doc1 = workspace.get_doc("tasks1.robot")
+    doc2 = workspace.get_doc("directory/tasks2.robot")
+
+    completion_context = CompletionContext(doc1, workspace=workspace.ws)
+    def1 = find_definition(completion_context)
+
+    completion_context = CompletionContext(doc2, workspace=workspace.ws)
+    def2 = find_definition(completion_context)
+    assert len(def1) == 1
+    assert len(def2) == 1
+    assert (
+        def1[0].source.replace("\\", "/").endswith("case_same_basename/my_library.py")
+    )
+    assert (
+        def2[0]
+        .source.replace("\\", "/")
+        .endswith("case_same_basename/directory/my_library.py")
+    )
+
+    found = [
+        lib_info
+        for lib_info in libspec_manager.iter_lib_info()
+        if lib_info.library_doc.name == "my_library"
+    ]
+
+    assert len(found) == 2

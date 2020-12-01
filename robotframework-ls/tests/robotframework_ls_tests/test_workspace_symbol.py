@@ -31,3 +31,20 @@ def test_workspace_symbols(workspace, libspec_manager):
 
     # i.e.: Expect the client to filter it afterwards.
     assert symbols == symbols3
+
+
+def test_workspace_symbols_same_basename(workspace, libspec_manager):
+    from robotframework_ls.impl.workspace_symbols import workspace_symbols
+    from robotframework_ls.impl.completion_context import BaseContext
+    from robocorp_ls_core.constants import NULL
+    from robocorp_ls_core.config import Config
+
+    workspace.set_root("case_same_basename", libspec_manager=libspec_manager)
+
+    config = Config()
+
+    symbols = workspace_symbols("", BaseContext(workspace.ws, config, NULL))
+    assert len(symbols) > 0
+
+    check_symbol(symbols, "In Lib 1")
+    check_symbol(symbols, "In Lib 2")

@@ -236,3 +236,7 @@ def test_libspec_manager_caches(libspec_manager, workspace_dir):
 
     # Updating is done in a thread.
     wait_for_test_condition(check_spec_2_a, sleep=1 / 5.0)
+
+
+def test_libspec_manager_same_basename(libspec_manager, workspace_dir):
+    pass

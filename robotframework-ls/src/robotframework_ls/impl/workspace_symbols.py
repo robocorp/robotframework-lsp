@@ -7,7 +7,7 @@ from robotframework_ls.impl.protocols import IRobotDocument
 log = get_logger(__name__)
 
 
-def add_to_ret(ret, symbols_cache, query: Optional[str]):
+def _add_to_ret(ret, symbols_cache, query: Optional[str]):
     # Note that we could filter it here based on the passed query, but
     # this is not being done for now for simplicity (given that we'd need
     # to do a fuzzy matching close to what the client already does anyways).
@@ -96,13 +96,16 @@ def workspace_symbols(
     from pathlib import Path
     from typing import cast
     from robotframework_ls.impl import ast_utils
+    from robotframework_ls.impl.robot_constants import STDLIBS
 
     ret: List[SymbolInformationTypedDict] = []
     workspace: IRobotWorkspace = context.workspace
     libspec_manager: LibspecManager = workspace.libspec_manager
 
     folder_paths = sorted(set(workspace.get_folder_paths()))
-    library_names: Set[str] = set()
+    library_name_and_current_doc: Set[tuple] = set()
+    for name in STDLIBS:
+        library_name_and_current_doc.add((name, None))
 
     for folder_path in folder_paths:
         for path in Path(folder_path).glob("**/*"):
@@ -118,18 +121,27 @@ def workspace_symbols(
                     if symbols_cache is None:
                         symbols_cache = _compute_symbols_from_ast(doc)
                     doc.symbols_cache = symbols_cache
-                    add_to_ret(ret, symbols_cache, query)
+                    _add_to_ret(ret, symbols_cache, query)
 
                     ast = doc.get_ast()
                     if ast:
                         for library_import in ast_utils.iter_library_imports(ast):
-                            library_names.add(library_import.node.name)
+                            target_filename = libspec_manager.get_library_target_filename(
+                                library_import.node.name, doc.uri
+                            )
 
-    library_names.update(libspec_manager.get_library_names())
+                            if not target_filename:
+                                library_name_and_current_doc.add(
+                                    (library_import.node.name, None)
+                                )
+                            else:
+                                library_name_and_current_doc.add(
+                                    (library_import.node.name, doc.uri)
+                                )
 
-    for library_name in library_names:
+    for library_name, current_doc_uri in library_name_and_current_doc:
         library_info: Optional[LibraryDoc] = libspec_manager.get_library_info(
-            library_name, create=True
+            library_name, create=True, current_doc_uri=current_doc_uri
         )
         if library_info is not None:
             symbols_cache = library_info.symbols_cache
@@ -139,6 +151,6 @@ def workspace_symbols(
                 )
 
             library_info.symbols_cache = symbols_cache
-            add_to_ret(ret, symbols_cache, query)
+            _add_to_ret(ret, symbols_cache, query)
 
     return ret
