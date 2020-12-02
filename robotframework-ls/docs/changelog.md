@@ -1,3 +1,9 @@
+New in 0.6.2 (2020-12-02)
+-----------------------------
+
+- If libspec cannot be generated because docutils is not installed, force text mode. [#199](https://github.com/robocorp/robotframework-lsp/issues/199)
+- Support libraries with the same basename but in different places. [#204](https://github.com/robocorp/robotframework-lsp/issues/204)
+
 New in 0.6.1 (2020-11-29)
 -----------------------------
 
