@@ -1,0 +1,23 @@
+<idea-plugin>
+    <id>robotframework.idea.robotframework-idea</id>
+    <name>Robot Framework Language Server</name>
+    <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">Robocorp</vendor>
+
+    <description><![CDATA[
+    RobotFramework support based on the Robot Framework Language Server
+    ]]></description>
+
+    <!-- please see https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+         on how to target different products -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType name="Robot Framework File" implementationClass="robotframework.idea.RobotFrameworkFileType"
+                  fieldName="INSTANCE" language="Robot Framework" extensions="robot,resource"/>
+    </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+    </actions>
+
+</idea-plugin>
