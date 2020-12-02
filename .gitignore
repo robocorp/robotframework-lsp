@@ -131,3 +131,5 @@ robotframework-ls/src/LICENSE
 robotframework-ls/src/README.md
 robotframework-ls/src/ThirdPartyNotices.txt
 robotframework-ls/src/robotframework_ls/vendored/robocode_ls_core/
+
+robotframework-idea/.gradle
