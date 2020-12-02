@@ -1,4 +1,4 @@
-New in X.X.X (XXXX-XX-XX)
+New in 0.5.2 (2020-12-02)
 -----------------------------
 
 - Unlink user from Robocorp Cloud 

@@ -57,7 +57,7 @@ To release a new version:
 
 - Create release branch (`git branch -D release-robocorp-code&git checkout -b release-robocorp-code`)
 
-- Update version (`python -m dev set-version 0.5.1`).
+- Update version (`python -m dev set-version 0.5.2`).
 
 - Update README.md to add notes on features/fixes.
 
@@ -67,4 +67,4 @@ To release a new version:
 
 - Rebase with master (`git checkout master&git rebase release-robocorp-code`).
 
-- Create a tag (`git tag robocorp-code-0.5.1`) and push it.
+- Create a tag (`git tag robocorp-code-0.5.2`) and push it.
