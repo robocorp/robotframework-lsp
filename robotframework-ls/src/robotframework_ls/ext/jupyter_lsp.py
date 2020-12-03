@@ -7,7 +7,7 @@ def spec_v1(app):
     """
     return {
         "robotframework_ls": dict(
-            version=1,
+            version=2,
             argv=["robotframework_ls"],
             languages=["robotframework", "plain"],
             mime_types=["text/x-robotframework"],
