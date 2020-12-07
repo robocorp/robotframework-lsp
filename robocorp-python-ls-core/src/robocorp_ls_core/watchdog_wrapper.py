@@ -22,17 +22,21 @@ class PathInfo(object):
         self.recursive = recursive
 
 
+def _get_watchdog_lib_dir():
+    parent_dir = os.path.dirname(__file__)
+    watchdog_dir = os.path.join(parent_dir, "libs", "watchdog_lib")
+    if not os.path.exists(watchdog_dir):
+        raise RuntimeError("Expected: %s to exist." % (watchdog_dir,))
+    return watchdog_dir
+
+
 def _import_watchdog():
     warnings.filterwarnings("ignore", message=".*failed to import fsevents.*")
 
     try:
         import watchdog
     except ImportError:
-        _parent_dir = os.path.dirname(__file__)
-        _watchdog_dir = os.path.join(_parent_dir, "libs", "watchdog_lib")
-        if not os.path.exists(_watchdog_dir):
-            raise RuntimeError("Expected: %s to exist." % (_watchdog_dir,))
-        sys.path.append(_watchdog_dir)
+        sys.path.append(_get_watchdog_lib_dir())
         import watchdog  # @UnusedImport
 
 

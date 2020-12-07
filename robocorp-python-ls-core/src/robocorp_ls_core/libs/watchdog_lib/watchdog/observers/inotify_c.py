@@ -197,7 +197,10 @@ class Inotify(object):
         self._path = path
         self._event_mask = event_mask
         self._is_recursive = recursive
-        self._add_dir_watch(path, recursive, event_mask)
+        if os.path.isdir(path):
+            self._add_dir_watch(path, recursive, event_mask)
+        else:
+            self._add_watch(path, event_mask)
         self._moved_from_events = dict()
 
     @property
@@ -421,6 +424,10 @@ class Inotify(object):
             raise OSError(errno.ENOSPC, "inotify watch limit reached")
         elif err == errno.EMFILE:
             raise OSError(errno.EMFILE, "inotify instance limit reached")
+        elif err == errno.EACCES:
+            # Prevent raising an exception when a file with no permissions
+            # changes
+            pass
         else:
             raise OSError(err, os.strerror(err))
 

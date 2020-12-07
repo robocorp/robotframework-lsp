@@ -1,4 +1,46 @@
 import time
+import pytest
+import sys
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="Mac OS only test.")
+def test_watchdog_macos():
+    # Make sure that the binary deps are distributed in Mac OS.
+
+    import os.path
+    from robocorp_ls_core import watchdog_wrapper
+
+    watchdog_wrapper._import_watchdog()
+    import watchdog
+
+    assert os.path.exists(
+        os.path.join(
+            watchdog_wrapper._get_watchdog_lib_dir(),
+            "_watchdog_fsevents.cpython-37m-darwin.so",
+        )
+    )
+    assert os.path.exists(
+        os.path.join(
+            watchdog_wrapper._get_watchdog_lib_dir(),
+            "_watchdog_fsevents.cpython-38-darwin.so",
+        )
+    )
+    assert os.path.exists(
+        os.path.join(
+            watchdog_wrapper._get_watchdog_lib_dir(),
+            "_watchdog_fsevents.cpython-39-darwin.so",
+        )
+    )
+
+    try:
+        from watchdog.observers import fsevents  # noqa
+    except:
+        sys_path = "\n    ".join(sorted(sys.path))
+        raise AssertionError(
+            f"Could not import _watchdog_fsevents.\nWatchdog found: {watchdog}\n"
+            f"sys.path:\n{sys_path}\n"
+            f"watchdog_dir: {watchdog_wrapper._get_watchdog_lib_dir()}\n"
+        )
 
 
 def test_watchdog_all(tmpdir):
@@ -151,3 +193,52 @@ def test_watchdog_extensions(tmpdir):
     finally:
         notifier.dispose()
         observer.dispose()
+
+
+def test_watchdog_only_recursive(tmpdir):
+    from robocorp_ls_core import watchdog_wrapper
+
+    watchdog_wrapper._import_watchdog()
+
+    import watchdog
+    from watchdog.observers import Observer
+    from watchdog.events import FileSystemEventHandler
+    import os.path
+
+    class Handler(FileSystemEventHandler):
+        def __init__(self):
+            FileSystemEventHandler.__init__(self)
+            self.changes = []
+
+        def on_any_event(self, event):
+            print(event.src_path)
+            self.changes.append(os.path.basename(event.src_path))
+
+    handler = Handler()
+    observer = Observer()
+
+    watches = []
+    watches.append(observer.schedule(handler, str(tmpdir), recursive=True))
+
+    try:
+        observer.start()
+        time.sleep(0.1)
+
+        tmpdir.join("my0.txt").write("foo")
+        tmpdir.join("dir_rec").mkdir()
+        tmpdir.join("dir_rec").join("my1.txt").write("foo")
+
+        expected = {"dir_rec", "my0.txt", "my1.txt"}
+        timeout_at = time.time() + 5
+        while not expected.issubset(handler.changes) and time.time() < timeout_at:
+            time.sleep(0.2)
+
+        if not expected.issubset(handler.changes):
+            raise AssertionError(
+                f"Did not find expected changes. Found: {handler.changes}"
+            )
+
+    finally:
+        for watch in watches:
+            observer.unschedule(watch)
+        observer.stop()
