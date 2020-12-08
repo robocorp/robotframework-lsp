@@ -1,3 +1,8 @@
+New in 0.6.3 (2020-12-08)
+-----------------------------
+
+- watchdog binary dependencies are shipped along in Mac OS [#190](https://github.com/robocorp/robotframework-lsp/issues/190)
+
 New in 0.6.2 (2020-12-02)
 -----------------------------
 
