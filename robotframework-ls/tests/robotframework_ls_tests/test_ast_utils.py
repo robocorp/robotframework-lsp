@@ -10,11 +10,18 @@ def test_iter_nodes():
         lst.append(
             "%s - %s" % ([s.__class__.__name__ for s in stack], node.__class__.__name__)
         )
-    assert lst == [
-        "[] - SettingSection",
-        "['SettingSection'] - SettingSectionHeader",
-        "['SettingSection'] - ResourceImport",
-    ]
+    assert lst in (
+        [
+            "[] - SettingSection",
+            "['SettingSection'] - SettingSectionHeader",
+            "['SettingSection'] - ResourceImport",
+        ],
+        [  # version 4.0.4 onwards
+            "[] - SettingSection",
+            "['SettingSection'] - SectionHeader",
+            "['SettingSection'] - ResourceImport",
+        ],
+    )
 
 
 def test_print_ast(data_regression):
@@ -31,13 +38,22 @@ def test_print_ast(data_regression):
     ast_utils.print_ast(doc.get_ast(), stream=s)
     assert [
         x.replace("SETTING HEADER", "SETTING_HEADER") for x in s.getvalue().splitlines()
-    ] == [
-        "  File                                               (0, 0) -> (0, 16)",
-        "    SettingSection                                   (0, 0) -> (0, 16)",
-        "      SettingSectionHeader                           (0, 0) -> (0, 16)",
-        "      - SETTING_HEADER, '*** settings ***'                  (0, 0->16)",
-        "      - EOL, ''                                            (0, 16->16)",
-    ]
+    ] in (
+        [
+            "  File                                               (0, 0) -> (0, 16)",
+            "    SettingSection                                   (0, 0) -> (0, 16)",
+            "      SettingSectionHeader                           (0, 0) -> (0, 16)",
+            "      - SETTING_HEADER, '*** settings ***'                  (0, 0->16)",
+            "      - EOL, ''                                            (0, 16->16)",
+        ],
+        [  # version 4.0.4 onwards
+            "  File                                               (0, 0) -> (0, 16)",
+            "    SettingSection                                   (0, 0) -> (0, 16)",
+            "      SectionHeader                                  (0, 0) -> (0, 16)",
+            "      - SETTING_HEADER, '*** settings ***'                  (0, 0->16)",
+            "      - EOL, ''                                            (0, 16->16)",
+        ],
+    )
 
 
 def test_find_token(workspace):
