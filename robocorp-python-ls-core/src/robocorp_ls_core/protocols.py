@@ -352,6 +352,16 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
     def request_workspace_symbols(self, query: Optional[str] = None):
         pass
 
+    def hover(self, uri: str, line: int, col: int):
+        """
+        :param uri:
+            The uri for the request.
+        :param line:
+            0-based line.
+        :param col:
+            0-based col.
+        """
+
 
 class IConfig(Protocol):
     def get_setting(

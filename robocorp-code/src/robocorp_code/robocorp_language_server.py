@@ -34,9 +34,13 @@ from robocorp_code.locators.locator_protocols import BrowserLocatorTypedDict
 
 log = get_logger(__name__)
 
-__file__ = os.path.abspath(__file__)
-if __file__.endswith((".pyc", ".pyo")):
-    __file__ = __file__[:-1]
+try:
+    __file__ = os.path.abspath(__file__)
+except NameError:
+    pass  # During pydevd debugger auto reload __file__ may not be there.
+else:
+    if __file__.endswith((".pyc", ".pyo")):
+        __file__ = __file__[:-1]
 
 
 class _RegisteredCommand(object):
@@ -340,9 +344,9 @@ class RobocorpLanguageServer(PythonLanguageServer):
             "documentHighlightProvider": False,
             "documentRangeFormattingProvider": False,
             "documentSymbolProvider": False,
-            "definitionProvider": True,
+            "definitionProvider": False,
             "executeCommandProvider": {"commands": ALL_SERVER_COMMANDS},
-            "hoverProvider": False,
+            "hoverProvider": True,
             "referencesProvider": False,
             "renameProvider": False,
             "foldingRangeProvider": False,
@@ -888,3 +892,46 @@ class RobocorpLanguageServer(PythonLanguageServer):
         self, params: dict = None
     ) -> "Future[ActionResultDict]":
         return self._locators_in_thread_api.create_locator_from_browser_pick()
+
+    def m_text_document__hover(self, **kwargs):
+        """
+        When hovering over a png in base64 surrounded by double-quotes... something as:
+        "iVBORw0KGgo...rest of png in base 64 contents..."
+        
+        i.e.: Provide the contents in markdown format to show the actual image from the
+        locators.json.
+        """
+        from robocorp_ls_core import uris
+        from robocorp_ls_core.protocols import IDocument
+        from robocorp_ls_core.protocols import IDocumentSelection
+        from robocorp_ls_core.lsp import Range
+        from robocorp_ls_core.lsp import MarkupKind
+        from robocorp_ls_core.lsp import MarkupContent
+
+        doc_uri = kwargs["textDocument"]["uri"]
+        # Note: 0-based
+        line: int = kwargs["position"]["line"]
+        col: int = kwargs["position"]["character"]
+        if not uris.to_fs_path(doc_uri).endswith("locators.json"):
+            return None
+        document: IDocument = self._workspace.get_document(
+            doc_uri, accept_from_file=True
+        )
+        sel: IDocumentSelection = document.selection(line, col)
+        current_line: str = sel.current_line
+        i: int = current_line.find(
+            '"iVBORw0KGgo'
+        )  # I.e.: pngs in base64 always start with this prefix.
+        if i >= 0:
+            current_line = current_line[i + 1 :]
+            i = current_line.find('"')
+            if i >= 0:
+                current_line = current_line[0:i]
+                image_path = f"data:image/png;base64,{current_line}"
+                s = f"![Screenshot]({image_path})"
+                return {
+                    "contents": MarkupContent(MarkupKind.Markdown, s).to_dict(),
+                    "range": Range((line, col), (line, col)).to_dict(),
+                }
+
+        return None

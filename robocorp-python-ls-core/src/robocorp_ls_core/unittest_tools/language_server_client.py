@@ -3,11 +3,7 @@ from typing import Mapping, Any, List, Optional, Dict
 
 from robocorp_ls_core.basic import implements
 from robocorp_ls_core.client_base import LanguageServerClientBase
-from robocorp_ls_core.protocols import (
-    ILanguageServerClient,
-    IMessageMatcher,
-    IIdMessageMatcher,
-)
+from robocorp_ls_core.protocols import ILanguageServerClient, IIdMessageMatcher
 
 
 log = logging.getLogger(__name__)
@@ -145,6 +141,20 @@ class LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    @implements(ILanguageServerClient.hover)
+    def hover(self, uri: str, line: int, col: int):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "textDocument/hover",
+                "params": {
+                    "textDocument": {"uri": uri},
+                    "position": {"line": line, "character": col},
+                },
+            }
+        )
+
     @implements(ILanguageServerClient.change_doc)
     def change_doc(self, uri: str, version: int, text: str):
         self.write(
@@ -207,6 +217,12 @@ class LanguageServerClient(LanguageServerClientBase):
                 "params": {"query": query},
             }
         )
+
+    def request_cancel(self, message_id) -> None:
+        """
+        Requests that some processing is cancelled.
+        """
+        raise AssertionError("Not implemented")
 
     @implements(ILanguageServerClient.find_definitions)
     def find_definitions(self, uri, line: int, col: int):
