@@ -45,6 +45,11 @@
         "onCommand:robocorp.cloudLogout",
         "onCommand:robocorp.cloudLogout.internal",
         "onCommand:robocorp.refreshRobotsView",
+        "onCommand:robocorp.startBrowserLocator",
+        "onCommand:robocorp.startBrowserLocator.internal",
+        "onCommand:robocorp.createLocatorFromBrowserPick",
+        "onCommand:robocorp.createLocatorFromBrowserPick.internal",
+        "onCommand:robocorp.stopBrowserLocator",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree"
@@ -217,6 +222,21 @@
                     "light": "images/light/refresh.svg",
                     "dark": "images/dark/refresh.svg"
                 }
+            },
+            {
+                "command": "robocorp.startBrowserLocator",
+                "title": "Start browser to create Locators",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.createLocatorFromBrowserPick",
+                "title": "Create Locator from browser pick",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.stopBrowserLocator",
+                "title": "Stop browser used to create Locators",
+                "category": "Robocorp"
             }
         ],
         "menus": {

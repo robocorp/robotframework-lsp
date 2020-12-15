@@ -1,6 +1,7 @@
 # i.e.: set to False only when debugging.
 import os
 import sys
+from typing import Optional
 
 USE_TIMEOUTS = True
 if "GITHUB_WORKFLOW" not in os.environ:
@@ -32,11 +33,11 @@ ENV_OPTION_LSP_DEBUG_PROCESS_ENVIRON = "LSP_DEBUG_PROCESS_ENVIRON"
 
 class BaseOptions(object):
 
-    tcp = False
-    host = "127.0.0.1"
-    port = 1456
-    log_file = None
-    verbose = 0
+    tcp: bool = False
+    host: str = "127.0.0.1"
+    port: int = 1456
+    log_file: Optional[str] = None
+    verbose: int = 0
 
     DEBUG_MESSAGE_MATCHERS = is_true_in_env(ENV_OPTION_LSP_DEBUG_MESSAGE_MATCHERS)
     DEBUG_PROCESS_ENVIRON = is_true_in_env(ENV_OPTION_LSP_DEBUG_PROCESS_ENVIRON)

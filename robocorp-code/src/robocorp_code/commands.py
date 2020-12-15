@@ -26,6 +26,11 @@ ROBOCORP_RESOLVE_INTERPRETER = "robocorp.resolveInterpreter"  # Resolves the int
 ROBOCORP_CLOUD_LOGOUT = "robocorp.cloudLogout"  # Unlink and remove credentials from Robocorp Cloud
 ROBOCORP_CLOUD_LOGOUT_INTERNAL = "robocorp.cloudLogout.internal"  # Unlink and remove credentials from Robocorp Cloud internal
 ROBOCORP_REFRESH_ROBOTS_VIEW = "robocorp.refreshRobotsView"  # Refresh Robots view
+ROBOCORP_START_BROWSER_LOCATOR = "robocorp.startBrowserLocator"  # Start browser to create Locators
+ROBOCORP_START_BROWSER_LOCATOR_INTERNAL = "robocorp.startBrowserLocator.internal"  # Start browser to create Locators. Requires the robot where the locators should be saved.
+ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK = "robocorp.createLocatorFromBrowserPick"  # Create Locator from browser pick
+ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK_INTERNAL = "robocorp.createLocatorFromBrowserPick.internal"  # Create Locator from browser pick (internal: provides no UI in case of errors).
+ROBOCORP_STOP_BROWSER_LOCATOR = "robocorp.stopBrowserLocator"  # Stop browser used to create Locators
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,
@@ -43,4 +48,7 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH,
     ROBOCORP_RESOLVE_INTERPRETER,
     ROBOCORP_CLOUD_LOGOUT_INTERNAL,
+    ROBOCORP_START_BROWSER_LOCATOR_INTERNAL,
+    ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK_INTERNAL,
+    ROBOCORP_STOP_BROWSER_LOCATOR,
 ]

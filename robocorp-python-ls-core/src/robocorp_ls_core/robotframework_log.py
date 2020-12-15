@@ -143,6 +143,18 @@ class _Logger(object):
     warn = warning = info
     error = exception
 
+    @property
+    def level(self):
+        # Note: return a level compatible with the logging.
+        import logging
+
+        log_level = _log_config.log_level
+        if log_level >= 2:
+            return logging.DEBUG
+        if log_level >= 1:
+            return logging.INFO
+        return logging.ERROR
+
     def _report(self, levelname, show_stacktrace, trim, msg="", *args):
         msg = _as_str(msg)
         if args:

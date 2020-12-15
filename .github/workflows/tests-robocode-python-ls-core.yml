@@ -11,7 +11,7 @@ on:
     paths:
     - robocorp-python-ls-core/**
     - .github/**
-      
+    
 jobs:
   build:
     runs-on: ${{ matrix.os }}

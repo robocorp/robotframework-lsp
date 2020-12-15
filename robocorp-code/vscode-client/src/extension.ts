@@ -25,6 +25,7 @@ import * as path from 'path';
 
 import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder, ProgressLocation, Progress, DebugAdapterExecutable, debug, DebugConfiguration, DebugConfigurationProvider, CancellationToken, ProviderResult, extensions, ConfigurationTarget } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
+import * as locators from './locators';
 import * as views from './views';
 import * as roboConfig from './robocorpSettings';
 import * as roboCommands from './robocorpCommands';
@@ -259,6 +260,8 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_REFRESH_ROBOTS_VIEW, () => views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE));
         commands.registerCommand(roboCommands.ROBOCORP_ROBOTS_VIEW_TASK_RUN, () => views.runSelectedRobot(true));
         commands.registerCommand(roboCommands.ROBOCORP_ROBOTS_VIEW_TASK_DEBUG, () => views.runSelectedRobot(false));
+        commands.registerCommand(roboCommands.ROBOCORP_START_BROWSER_LOCATOR, () => locators.startBrowserLocator());
+        commands.registerCommand(roboCommands.ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK, () => locators.pickBrowserLocator());
         async function cloudLoginShowConfirmation() {
             let loggedIn = await cloudLogin();
             if (loggedIn) {

@@ -184,6 +184,36 @@ COMMANDS = [
         server_handled=False,
         icon={"light": "images/light/refresh.svg", "dark": "images/dark/refresh.svg"},
     ),
+    Command(
+        "robocorp.startBrowserLocator",
+        "Start browser to create Locators",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
+    Command(
+        "robocorp.startBrowserLocator.internal",
+        "Start browser to create Locators. Requires the robot where the locators should be saved.",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
+    Command(
+        "robocorp.createLocatorFromBrowserPick",
+        "Create Locator from browser pick",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
+    Command(
+        "robocorp.createLocatorFromBrowserPick.internal",
+        "Create Locator from browser pick (internal: provides no UI in case of errors).",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
+    Command(
+        "robocorp.stopBrowserLocator",
+        "Stop browser used to create Locators",
+        add_to_package_json=True,
+        server_handled=True,
+    ),
 ]
 
 

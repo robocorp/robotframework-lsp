@@ -1,9 +1,10 @@
 from functools import partial
 import os
 from pathlib import Path
-from typing import List, Any, Optional, Dict
+from typing import List, Any, Optional, Dict, Union
 
 from robocorp_code import commands
+from concurrent.futures import Future
 from robocorp_code.protocols import (
     IRccWorkspace,
     IRccRobotMetadata,
@@ -28,6 +29,7 @@ from robocorp_ls_core.cache import CachedFileInfo
 from robocorp_ls_core.protocols import IConfig
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_code.locators.locator_protocols import BrowserLocatorTypedDict
 
 
 log = get_logger(__name__)
@@ -94,6 +96,131 @@ class ListWorkspaceCachedInfoDict(TypedDict):
     account_cache_key: tuple
 
 
+class BrowserLocatorContainer(TypedDict):
+    name: str
+    locator: BrowserLocatorTypedDict
+
+
+class ActionResultDictBrowserLocatorContainer(TypedDict):
+    success: bool
+    message: Optional[
+        str
+    ]  # if success == False, this can be some message to show to the user
+    result: Optional[BrowserLocatorContainer]
+
+
+class _LocatorsInThreadAPI:
+    """
+    An API which allows managing the LocatorServerManager and LocatorsDB in
+    a separate thread (note that most of its method calls return a Future).
+    """
+
+    def __init__(self):
+        from concurrent.futures.thread import ThreadPoolExecutor
+
+        # We only use 1 thread here!
+        self._thread_pool = ThreadPoolExecutor(1)
+        self._initialized = False
+
+    def shutdown(self):
+        self._thread_pool.shutdown(wait=False)
+
+    def _initialize_in_thread(self):
+        """
+        This should be called in the thread when making the first call to the
+        LocatorServerManager.
+        """
+        if self._initialized:
+            return
+
+        from robocorp_code.locators.server.locator_server_manager import (
+            LocatorServerManager,
+        )
+        from robocorp_code.locators_db import LocatorsDB
+
+        self._initialized = True
+        self._locator_server_manager = LocatorServerManager()
+        self._locators_db = LocatorsDB()
+
+    def _initialize_and_call(self, func):
+        self._initialize_in_thread()
+        return func()
+
+    def _submit_and_return_from_thread(self, func) -> Future:
+        future = self._thread_pool.submit(self._initialize_and_call, func)
+        return future
+
+    def create_locator_from_browser_pick(self) -> "Future[ActionResultDict]":
+        """
+        Creates a locator from a browser pick.
+        """
+        return self._submit_and_return_from_thread(
+            self._in_thread_create_locator_from_browser_pick
+        )
+
+    def _in_thread_create_locator_from_browser_pick(
+        self
+    ) -> ActionResultDictBrowserLocatorContainer:
+        from typing import cast
+
+        error_msg = self._locators_db.validate()
+        if error_msg:
+            return {"success": False, "message": error_msg, "result": None}
+
+        result = self._locator_server_manager.browser_locator_pick()
+        if result["success"]:
+            # Ok, it did get the info for the browser locator pick, now, let's
+            # add it to the json.
+            try:
+                browser_locator: BrowserLocatorTypedDict = cast(
+                    BrowserLocatorTypedDict, result["result"]
+                )
+                name = self._locators_db.add_browser_locator(browser_locator)
+                return {
+                    "success": True,
+                    "message": None,
+                    "result": {"name": name, "locator": result["result"]},
+                }
+
+            except Exception as e:
+                log.exception("Error creating browser locator.")
+                return {"success": False, "message": str(e), "result": None}
+
+        return result
+
+    def browser_locator_stop(self) -> "Future[ActionResultDict]":
+        """
+        Stops the browser locator.
+        """
+        return self._submit_and_return_from_thread(self._in_thread_browser_locator_stop)
+
+    def _in_thread_browser_locator_stop(self) -> ActionResultDict:
+        return self._locator_server_manager.browser_locator_stop()
+
+    def start_browser_locator(self, robot_yaml) -> "Future[ActionResultDict]":
+        """
+        Starts the browser locator and sets the robot yaml to be changed.
+        """
+        return self._submit_and_return_from_thread(
+            partial(self._in_thread_start_browser_locator, robot_yaml=robot_yaml)
+        )
+
+    def _in_thread_start_browser_locator(self, robot_yaml) -> ActionResultDict:
+        self._locators_db.set_robot_yaml_location(robot_yaml)
+        return self._locator_server_manager.browser_locator_start()
+
+    def set_robot_yaml_location(self, robot_yaml) -> "Future[None]":
+        """
+        Sets the robot yaml to be changed.
+        """
+        return self._submit_and_return_from_thread(
+            partial(self._in_thread_set_robot_yaml_location, robot_yaml=robot_yaml)
+        )
+
+    def _in_thread_set_robot_yaml_location(self, robot_yaml) -> None:
+        self._locators_db.set_robot_yaml_location(robot_yaml)
+
+
 class RobocorpLanguageServer(PythonLanguageServer):
 
     # V2: save the account info along to validate user.
@@ -138,6 +265,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         from robocorp_code.plugins.resolve_interpreter import register_plugins
 
         register_plugins(self._pm)
+        self._locators_in_thread_api = _LocatorsInThreadAPI()
 
     @overrides(PythonLanguageServer.m_initialize)
     def m_initialize(
@@ -176,6 +304,10 @@ class RobocorpLanguageServer(PythonLanguageServer):
         timeout_tracker.call_on_timeout(
             0.1, partial(self._rcc.feedack_metric, name, value)
         )
+
+    def m_shutdown(self, **_kwargs):
+        self._locators_in_thread_api.shutdown()
+        PythonLanguageServer.m_shutdown(self, **_kwargs)
 
     @overrides(PythonLanguageServer.cancel_lint)
     def cancel_lint(self, doc_uri):
@@ -717,3 +849,42 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
         # i.e.: no error but we couldn't find an interpreter.
         return {"success": True, "message": "", "result": None}
+
+    @command_dispatcher(
+        commands.ROBOCORP_START_BROWSER_LOCATOR_INTERNAL, expected_return_cls=Future
+    )
+    def _start_browser_locator(
+        self, params: dict = None
+    ) -> "Union[ActionResultDict, Future[ActionResultDict]]":
+        if not params or "robotYaml" not in params:
+            self._locators_in_thread_api.set_robot_yaml_location("")
+            return {
+                "success": False,
+                "message": "robot.yaml filename not passed",
+                "result": None,
+            }
+
+        robot_yaml = params["robotYaml"]
+        if not os.path.exists(robot_yaml):
+            return {
+                "success": False,
+                "message": f"robot.yaml {robot_yaml} does not exist.",
+                "result": None,
+            }
+
+        return self._locators_in_thread_api.start_browser_locator(robot_yaml=robot_yaml)
+
+    @command_dispatcher(
+        commands.ROBOCORP_STOP_BROWSER_LOCATOR, expected_return_cls=Future
+    )
+    def _stop_browser_locator(self, params: dict = None) -> "Future[ActionResultDict]":
+        return self._locators_in_thread_api.browser_locator_stop()
+
+    @command_dispatcher(
+        commands.ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK_INTERNAL,
+        expected_return_cls=Future,
+    )
+    def _create_locator_fom_browser_pick(
+        self, params: dict = None
+    ) -> "Future[ActionResultDict]":
+        return self._locators_in_thread_api.create_locator_from_browser_pick()

@@ -44,12 +44,6 @@ jobs:
       run: |
         pip install fire
         python -m dev vendor-robocorp-ls-core
-    - name: setup.py install robotframework-ls
-      working-directory: ./robotframework-ls
-      run: |
-        cd src
-        python setup.py install
-        cd ..
     - name: setup.py install
       working-directory: ./robocorp-code
       run: |
@@ -62,6 +56,10 @@ jobs:
         cd tests
         pip install -r test_requirements.txt
         cd ..
+    - name: Install Chrome
+      run: |
+        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        sudo apt install ./google-chrome-stable_current_amd64.deb
     - name: Test
       working-directory: ./robocorp-code/tests
       env:

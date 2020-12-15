@@ -5,3 +5,4 @@ dependencies:
   - python=3.8
   - pip:
     - rpaframework-core
+    - rpaframework-recognition

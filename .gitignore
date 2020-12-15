@@ -115,7 +115,6 @@ envs/
 .DS_Store
 
 out
-server
 node_modules
 .vscode-dev
 *.vsix

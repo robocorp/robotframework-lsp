@@ -89,7 +89,7 @@ export async function cloudLogout(): Promise<void> {
     window.showInformationMessage('Robocorp Cloud credentials successfully unlinked and removed.');
 }
 
-async function askRobotSelection(robotsInfo: LocalRobotMetadataInfo[], message: string): Promise<LocalRobotMetadataInfo> {
+export async function askRobotSelection(robotsInfo: LocalRobotMetadataInfo[], message: string): Promise<LocalRobotMetadataInfo> {
     let robot: LocalRobotMetadataInfo;
     if (robotsInfo.length > 1) {
         let captions: QuickPickItemWithAction[] = new Array();
