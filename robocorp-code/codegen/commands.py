@@ -214,6 +214,12 @@ COMMANDS = [
         add_to_package_json=True,
         server_handled=True,
     ),
+    Command(
+        "robocorp.getLocatorsJsonInfo",
+        "Obtain information from the locators.json given a robot.yaml.",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
 ]
 
 

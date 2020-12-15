@@ -25,6 +25,14 @@ class LocalRobotMetadataInfoDict(TypedDict):
     yamlContents: dict  # The contents of the robot.yaml
 
 
+class LocatorEntryInfoDict(TypedDict):
+    name: str
+    line: int
+    column: int
+    type: str  # "browser" or "image"
+    filePath: str
+
+
 class PackageInfoDict(TypedDict):
     name: str
     id: str
@@ -87,6 +95,14 @@ class ActionResultDictRobotLaunch(TypedDict):
         str
     ]  # if success == False, this can be some message to show to the user
     result: Optional[dict]
+
+
+class ActionResultDictLocatorsJsonInfo(TypedDict):
+    success: bool
+    message: Optional[
+        str
+    ]  # if success == False, this can be some message to show to the user
+    result: Optional[List[LocatorEntryInfoDict]]
 
 
 class ActionResultDictLocalRobotMetadata(TypedDict):

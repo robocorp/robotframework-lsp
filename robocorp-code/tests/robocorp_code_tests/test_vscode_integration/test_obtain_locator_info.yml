@@ -1,0 +1,10 @@
+- column: 4
+  filePath: locators.json
+  line: 1
+  name: Browser.Locator.00
+  type: browser
+- column: 4
+  filePath: locators.json
+  line: 8
+  name: Browser.Locator.01
+  type: browser

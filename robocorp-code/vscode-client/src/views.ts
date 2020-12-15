@@ -1,10 +1,18 @@
-import { TREE_VIEW_ROBOCORP_ROBOTS_TREE } from './robocorpViews';
+import { TREE_VIEW_ROBOCORP_LOCATORS_TREE, TREE_VIEW_ROBOCORP_ROBOTS_TREE } from './robocorpViews';
 import * as vscode from 'vscode';
 import * as roboCommands from './robocorpCommands';
 import { ExtensionContext } from 'vscode';
 import { OUTPUT_CHANNEL } from './channel';
 import { runRobotRCC } from './activities';
 
+
+interface LocatorEntry {
+    name: string;
+    line: number;
+    column: number;
+    type: string; // "browser", "image", "coordinate", ...
+    filePath: string;
+}
 
 enum RobotEntryType {
     Robot,
@@ -112,6 +120,77 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
     }
 }
 
+
+
+export class LocatorsTreeDataProvider implements vscode.TreeDataProvider<LocatorEntry> {
+
+    private _onDidChangeTreeData: vscode.EventEmitter<LocatorEntry | null> = new vscode.EventEmitter<LocatorEntry | null>();
+    readonly onDidChangeTreeData: vscode.Event<LocatorEntry | null> = this._onDidChangeTreeData.event;
+
+    private lastRobotEntry: RobotEntry = undefined;
+
+    fireRootChange() {
+        this._onDidChangeTreeData.fire(null);
+    }
+
+    onRobotsTreeSelectionChanged() {
+        const robotsTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
+        if (!robotsTree) {
+            return;
+        }
+        let robotEntry: RobotEntry = undefined;
+        if (robotsTree.selection.length != 0) {
+            robotEntry = robotsTree.selection[0];
+        }
+        if (!this.lastRobotEntry && !robotEntry) {
+            // nothing changed
+            return;
+        }
+
+        if (!this.lastRobotEntry && robotEntry) {
+            // i.e.: we didn't have a selection previously: refresh.
+            this.fireRootChange();
+            return;
+        }
+        if (!robotEntry && this.lastRobotEntry) {
+            this.fireRootChange();
+            return;
+        }
+        if (robotEntry.robot.filePath != this.lastRobotEntry.robot.filePath) {
+            // i.e.: the selection changed: refresh.
+            this.fireRootChange();
+            return;
+        }
+
+    }
+
+    async getChildren(element?: LocatorEntry): Promise<LocatorEntry[]> {
+        // i.e.: the contents of this tree depend on what's selected in the robots tree.
+        const robotsTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
+        if (!robotsTree || robotsTree.selection.length == 0) {
+            this.lastRobotEntry = undefined;
+            return [];
+        }
+        let robotEntry: RobotEntry = robotsTree.selection[0];
+        let actionResult: ActionResult = await vscode.commands.executeCommand(
+            roboCommands.ROBOCORP_GET_LOCATORS_JSON_INFO, { 'robotYaml': robotEntry.robot.filePath });
+        if (!actionResult['success']) {
+            this.lastRobotEntry = undefined;
+            return [];
+        }
+
+        this.lastRobotEntry = robotEntry;
+        let locatorInfo: LocatorEntry[] = actionResult['result'];
+        return locatorInfo;
+    }
+
+    getTreeItem(element: LocatorEntry): vscode.TreeItem {
+        const treeItem = new vscode.TreeItem(element.name);
+        treeItem.iconPath = new vscode.ThemeIcon(element.type == "browser" ? "browser" : "file-media");
+        return treeItem;
+    }
+}
+
 let treeViewIdToTreeView: Map<string, vscode.TreeView<any>> = new Map();
 let treeViewIdToTreeDataProvider: Map<string, vscode.TreeDataProvider<any>> = new Map();
 
@@ -123,18 +202,18 @@ export function refreshTreeView(treeViewId: string) {
 }
 
 export function runSelectedRobot(noDebug: boolean) {
-    const tree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
-    if (!tree || tree.selection.length == 0) {
-        vscode.window.showWarningMessage("Unable to make launch (Robot task not selected in tree).");
+    const robotsTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
+    if (!robotsTree || robotsTree.selection.length == 0) {
+        vscode.window.showWarningMessage("Unable to make launch (Robot task not selected in robotsTree).");
         return;
     }
 
-    if (tree.selection.length > 1) {
+    if (robotsTree.selection.length > 1) {
         vscode.window.showWarningMessage("Unable to make launch -- only 1 task must be selected.");
         return;
     }
 
-    let element: RobotEntry = tree.selection[0];
+    let element: RobotEntry = robotsTree.selection[0];
     runRobotRCC(noDebug, element.robot.filePath, element.taskName);
 }
 
@@ -154,10 +233,11 @@ const debounce = (func, wait) => {
 
 export function registerViews(context: ExtensionContext) {
     let treeDataProvider = new RobotsTreeDataProvider();
-    let tree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE, { 'treeDataProvider': treeDataProvider });
+    let robotsTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE, { 'treeDataProvider': treeDataProvider });
+    treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_ROBOTS_TREE, robotsTree);
+    treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_ROBOTS_TREE, treeDataProvider);
 
-
-    context.subscriptions.push(tree.onDidChangeSelection(e => {
+    context.subscriptions.push(robotsTree.onDidChangeSelection(e => {
         let events: RobotEntry[] = e.selection;
         if (!events || events.length == 0 || events.length > 1) {
             vscode.commands.executeCommand('setContext', 'robocorp-code:single-task-selected', false);
@@ -168,8 +248,14 @@ export function registerViews(context: ExtensionContext) {
     }));
 
 
-    treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_ROBOTS_TREE, tree);
-    treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_ROBOTS_TREE, treeDataProvider);
+    let locatorsDataProvider = new LocatorsTreeDataProvider();
+    let locatorsTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_LOCATORS_TREE, { 'treeDataProvider': locatorsDataProvider });
+    treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_LOCATORS_TREE, locatorsTree);
+    treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_LOCATORS_TREE, locatorsDataProvider);
+
+    robotsTree.onDidChangeSelection(
+        e => locatorsDataProvider.onRobotsTreeSelectionChanged()
+    );
 
     let watcher: vscode.FileSystemWatcher = vscode.workspace.createFileSystemWatcher("**/*robot.yaml");
 
@@ -183,6 +269,7 @@ export function registerViews(context: ExtensionContext) {
     watcher.onDidCreate(onChange);
     watcher.onDidDelete(onChange);
 
-    context.subscriptions.push(tree);
+    context.subscriptions.push(robotsTree);
+    context.subscriptions.push(locatorsTree);
     context.subscriptions.push(watcher);
 }

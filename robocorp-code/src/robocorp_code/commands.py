@@ -31,6 +31,7 @@ ROBOCORP_START_BROWSER_LOCATOR_INTERNAL = "robocorp.startBrowserLocator.internal
 ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK = "robocorp.createLocatorFromBrowserPick"  # Create Locator from browser pick
 ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK_INTERNAL = "robocorp.createLocatorFromBrowserPick.internal"  # Create Locator from browser pick (internal: provides no UI in case of errors).
 ROBOCORP_STOP_BROWSER_LOCATOR = "robocorp.stopBrowserLocator"  # Stop browser used to create Locators
+ROBOCORP_GET_LOCATORS_JSON_INFO = "robocorp.getLocatorsJsonInfo"  # Obtain information from the locators.json given a robot.yaml.
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,
@@ -51,4 +52,5 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_START_BROWSER_LOCATOR_INTERNAL,
     ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK_INTERNAL,
     ROBOCORP_STOP_BROWSER_LOCATOR,
+    ROBOCORP_GET_LOCATORS_JSON_INFO,
 ]

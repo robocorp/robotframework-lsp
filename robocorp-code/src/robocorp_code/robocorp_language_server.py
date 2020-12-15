@@ -23,6 +23,8 @@ from robocorp_code.protocols import (
     ActionResultDictLocalRobotMetadata,
     ActionResultDictRobotLaunch,
     TypedDict,
+    ActionResultDictLocatorsJsonInfo,
+    LocatorEntryInfoDict,
 )
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.cache import CachedFileInfo
@@ -935,3 +937,67 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 }
 
         return None
+
+    def _get_line_col(self, name, content_lines):
+        """
+        Note: there are Python libraries that can be used to extract line/col from json information:
+        https://pypi.org/project/dirtyjson/
+        https://pypi.org/project/json-cfg/ (jsoncfg.node_location(node)).
+        
+        So, we could use the json parsing with this, but there's some logic in
+        the LocatorsDatabase to deal with old formats and we may have to deal with
+        old formats too in this case... given that, for now let's just see if we
+        match a substring there (it's very inefficient, but we don't expect
+        thousands of locators, so, it should be ok).
+        """
+        match = f'"{name}"'
+        for i, line in enumerate(content_lines):
+            col = line.find(match)
+            if col >= 0:
+                return i, col
+
+        return 0, 0  # I.e.: unable to find
+
+    @command_dispatcher(commands.ROBOCORP_GET_LOCATORS_JSON_INFO)
+    def _get_locators_json_info(
+        self, params: dict = None
+    ) -> ActionResultDictLocatorsJsonInfo:
+        from RPA.core.locators.database import LocatorsDatabase
+        from RPA.core.locators.containers import Locator
+
+        if not params or "robotYaml" not in params:
+            return {
+                "success": False,
+                "message": "robot.yaml filename not passed",
+                "result": None,
+            }
+
+        path = Path(params["robotYaml"])
+        locators_json = path.parent / "locators.json"
+        locators_json_info: List[LocatorEntryInfoDict] = []
+        locator: Locator
+        if locators_json.exists():
+            with locators_json.open("r") as stream:
+                contents = stream.read()
+            content_lines = contents.splitlines()
+
+            try:
+                db = LocatorsDatabase(str(locators_json))
+                db.load()
+                for name, locator in db.locators.items():
+                    as_dict = locator.to_dict()
+                    line, col = self._get_line_col(name, content_lines)
+                    locators_json_info.append(
+                        {
+                            "name": name,
+                            "line": line,
+                            "column": col,
+                            "type": as_dict["type"],
+                            "filePath": str(locators_json),
+                        }
+                    )
+            except Exception as e:
+                log.exception(f"Error loading locators from: {locators_json}")
+                return {"success": False, "message": str(e), "result": None}
+
+        return {"success": True, "message": None, "result": locators_json_info}

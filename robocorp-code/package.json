@@ -50,9 +50,11 @@
         "onCommand:robocorp.createLocatorFromBrowserPick",
         "onCommand:robocorp.createLocatorFromBrowserPick.internal",
         "onCommand:robocorp.stopBrowserLocator",
+        "onCommand:robocorp.getLocatorsJsonInfo",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
+        "onView:robocorp-locators-tree",
         "onLanguage:json"
     ],
     "contributes": {
@@ -112,6 +114,11 @@
                     "id": "robocorp-robots-tree",
                     "name": "Robots",
                     "contextualTitle": "Robots"
+                },
+                {
+                    "id": "robocorp-locators-tree",
+                    "name": "Locators",
+                    "contextualTitle": "Locators"
                 }
             ]
         },

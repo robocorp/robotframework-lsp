@@ -599,3 +599,49 @@ def test_hover_integration(
             "end": {"line": 2, "character": 56},
         },
     }
+
+
+def test_obtain_locator_info(
+    language_server_initialized: IRobocorpLanguageServerClient, tmpdir, data_regression
+) -> None:
+
+    from robocorp_code import commands
+
+    # robot.yaml contents don't matter for this test (it just needs to be there).
+    robot_yaml = tmpdir.join("robot.yaml")
+    robot_yaml.write("")
+    tmpdir.join("locators.json").write(
+        """{
+    "Browser.Locator.00": {
+        "screenshot": "iVBORw0KGgoAAAANSUhEUgAAAVsAAAAiCAYAAADxlXpQAAAAAXNSR0IArs4c6QAAAKFJREFUeJzt1lENgDAUBMGClPr3+FDBNoEZBfe1uWtmZgHwqvv0AIA/EFuAgNgCBMQWICC2AAGxBQiILUBAbAEC91pr7b1P7wD4NM8WICC2AAGxBQiILUBAbAECYgsQEFuAgNgCBMQWICC2AAGxBQiILUBAbAECYgsQEFuAgNgCBK6ZmdMjAL7OswUIiC1AQGwBAmILEBBbgIDYAgTEFiDwADUBCKHOZd2rAAAAAElFTkSuQmCC",
+        "source": "https://www.google.com/?gws_rd=ssl",
+        "strategy": "name",
+        "type": "browser",
+        "value": "q"
+    },
+    "Browser.Locator.01": {
+        "screenshot": "iVBORw0KGgoAAAANSUhEUgAAACgAAAAsCAYAAAAXb/p7AAAAAXNSR0IArs4c6QAAAJxJREFUWIXt17EOgCAMhOFqHPrQDAx9aDbcTYw9jgjDfYsL0T+FGD167902dq4O+KJAlgJZCmQpkKVAlgJZCmRtH3ghiyPCWmv0Q93dSimptdAEZ8Sh9xna4lordUUcyD9JdlsyIiK1ThN8owmyshOE3oNPyERGpmf2Y+Ao6Ay6+5SHIveBzuAK238sKJClQJYCWQpkKZClQJYCWTdtZlHGc2zySwAAAABJRU5ErkJggg==",
+        "source": "https://www.google.com/?gws_rd=ssl",
+        "strategy": "class",
+        "type": "browser",
+        "value": "J9leP"
+    }
+}"""
+    )
+
+    language_server = language_server_initialized
+
+    result = language_server.execute_command(
+        commands.ROBOCORP_GET_LOCATORS_JSON_INFO, [{"robotYaml": str(robot_yaml)}]
+    )["result"]
+    assert result["success"]
+    res = result["result"]
+    new_res = []
+    for item in res:
+        new_item = {}
+        for key, val in item.items():
+            if key == "filePath":
+                val = os.path.basename(val)
+            new_item[key] = val
+        new_res.append(new_item)
+    data_regression.check(new_res)

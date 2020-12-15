@@ -31,3 +31,4 @@ export const ROBOCORP_START_BROWSER_LOCATOR_INTERNAL = "robocorp.startBrowserLoc
 export const ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK = "robocorp.createLocatorFromBrowserPick";  // Create Locator from browser pick
 export const ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK_INTERNAL = "robocorp.createLocatorFromBrowserPick.internal";  // Create Locator from browser pick (internal: provides no UI in case of errors).
 export const ROBOCORP_STOP_BROWSER_LOCATOR = "robocorp.stopBrowserLocator";  // Stop browser used to create Locators
+export const ROBOCORP_GET_LOCATORS_JSON_INFO = "robocorp.getLocatorsJsonInfo";  // Obtain information from the locators.json given a robot.yaml.

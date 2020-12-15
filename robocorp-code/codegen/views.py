@@ -55,7 +55,12 @@ TREE_VIEW_CONTAINERS = [
                     Menu("robocorp.refreshRobotsView", MenuGroup.NAVIGATION),
                 ],
             ),
-            # TreeView(id="robocorp-tasks-tree", name="Tasks", contextual_title="Tasks"),
+            TreeView(
+                id="robocorp-locators-tree",
+                name="Locators",
+                contextual_title="Locators",
+                menus=[],
+            ),
         ],
     )
 ]
