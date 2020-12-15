@@ -57,12 +57,6 @@ class RobocorpLanguageServerClient(LanguageServerClient):
         result = self.execute_command(commands.ROBOCORP_GET_PLUGINS_DIR, [])["result"]
         return result
 
-    def request_cancel(self, message_id) -> None:
-        """
-        Requests that some processing is cancelled.
-        """
-        raise AssertionError("Not implemented")
-
     def __typecheckself__(self) -> None:
         from robocorp_ls_core.protocols import check_implements
 

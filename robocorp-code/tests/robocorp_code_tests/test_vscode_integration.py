@@ -434,8 +434,7 @@ def test_upload_to_cloud(
 
 
 def test_logout_cloud(
-    language_server_initialized: IRobocorpLanguageServerClient,
-    monkeypatch,
+    language_server_initialized: IRobocorpLanguageServerClient, monkeypatch
 ):
     from robocorp_code import commands
     from robocorp_code.rcc import Rcc
@@ -573,4 +572,30 @@ def test_compute_python_launch_from_robocorp_code_launch(
         "args": [],
         "pythonPath": "c:/temp/py.exe",
         "console": "internalConsole",
+    }
+
+
+def test_hover_integration(
+    language_server_initialized: IRobocorpLanguageServerClient, cases: CasesFixture
+):
+    from robocorp_ls_core.workspace import Document
+
+    client = language_server_initialized
+    uri = "x/y/locators.json"
+    txt = """
+    "Browser.Locator.01": {
+        "screenshot": "iVBORw0KGgoAAAANSUhEUgAAACgAAAA" """
+    doc = Document("", txt)
+    client.open_doc(uri, 1, txt)
+    line, col = doc.get_last_line_col()
+    ret = client.hover(uri, line, col)
+    assert ret["result"] == {
+        "contents": {
+            "kind": "markdown",
+            "value": "![Screenshot](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAA)",
+        },
+        "range": {
+            "start": {"line": 2, "character": 56},
+            "end": {"line": 2, "character": 56},
+        },
     }

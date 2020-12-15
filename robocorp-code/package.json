@@ -52,7 +52,8 @@
         "onCommand:robocorp.stopBrowserLocator",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
-        "onView:robocorp-robots-tree"
+        "onView:robocorp-robots-tree",
+        "onLanguage:json"
     ],
     "contributes": {
         "configuration": {
