@@ -33,6 +33,12 @@ COMMANDS = [
         server_handled=False,
     ),
     Command(
+        "robocorp.getLanguageServerPythonInfo",
+        "Get info suitable to start the language server {pythonExe, environ}",
+        add_to_package_json=False,
+        server_handled=False,
+    ),
+    Command(
         "robocorp.getPluginsDir",
         "Get the directory for plugins",
         add_to_package_json=False,

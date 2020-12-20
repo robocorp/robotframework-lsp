@@ -32,6 +32,7 @@ from robocorp_ls_core.protocols import IConfig
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_code.locators.locator_protocols import BrowserLocatorTypedDict
+import sys
 
 
 log = get_logger(__name__)
@@ -250,6 +251,37 @@ class RobocorpLanguageServer(PythonLanguageServer):
         cache_dir = os.path.join(user_home, ".robocorp-code", ".cache")
 
         log.debug(f"Cache dir: {cache_dir}")
+
+        try:
+            import ssl
+        except:
+            # This means that we won't be able to download drivers to
+            # enable the creation of browser locators!
+            # Let's print a bit more info.
+            env_vars_info = ""
+
+            related_vars = [
+                "LD_LIBRARY_PATH",
+                "PATH",
+                "DYLD_LIBRARY_PATH",
+                "DYLD_FALLBACK_LIBRARY_PATH",
+            ]
+            for v in related_vars:
+                libpath = os.environ.get(v, "")
+
+                libpath = "\n    ".join(libpath.split(os.pathsep))
+                if libpath:
+                    libpath = "\n    " + libpath
+                else:
+                    libpath = " <not set>"
+
+                env_vars_info += f"{v}: {libpath}"
+
+            log.critical(
+                f"SSL module could not be imported.\n"
+                f"sys.executable: {sys.executable}\n"
+                f"Env vars info: {env_vars_info}\n"
+            )
 
         self._dir_cache = DirCache(cache_dir)
         self._rcc = Rcc(self)

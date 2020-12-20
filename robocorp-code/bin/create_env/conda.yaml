@@ -4,5 +4,6 @@ channels:
 dependencies:
   - python=3.8
   - pip:
+    - robotframework
     - rpaframework-core
     - rpaframework-recognition

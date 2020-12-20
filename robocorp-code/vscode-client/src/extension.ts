@@ -49,11 +49,14 @@ const clientOptions: LanguageClientOptions = {
 }
 
 
-function startLangServerIO(command: string, args: string[]): LanguageClient {
+function startLangServerIO(command: string, args: string[], environ?: { [key: string]: string }): LanguageClient {
     const serverOptions: ServerOptions = {
         command,
         args,
     };
+    if (environ) {
+        serverOptions.options = {env: environ};
+    }
     // See: https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
     return new LanguageClient(command, serverOptions, clientOptions);
 }
@@ -224,12 +227,12 @@ export async function activate(context: ExtensionContext) {
         let timing = new Timing();
         // The first thing we need is the python executable.
         OUTPUT_CHANNEL.appendLine("Activating Robocorp Code extension.");
-        let executable = await getLanguageServerPython();
-        if (!executable) {
+        let executableAndEnv = await getLanguageServerPythonInfo();
+        if (!executableAndEnv) {
             OUTPUT_CHANNEL.appendLine("Unable to activate Robocorp Code extension (unable to get python executable).");
             return;
         }
-        OUTPUT_CHANNEL.appendLine("Using python executable: " + executable);
+        OUTPUT_CHANNEL.appendLine("Using python executable: " + executableAndEnv.pythonExe);
 
         let port: number = roboConfig.getLanguageServerTcpPort();
         if (port) {
@@ -247,11 +250,12 @@ export async function activate(context: ExtensionContext) {
             if (lsArgs) {
                 args = args.concat(lsArgs);
             }
-            langServer = startLangServerIO(executable, args);
+            langServer = startLangServerIO(executableAndEnv.pythonExe, args, executableAndEnv.environ);
         }
 
         let disposable: Disposable = langServer.start();
         commands.registerCommand(roboCommands.ROBOCORP_GET_LANGUAGE_SERVER_PYTHON, () => getLanguageServerPython());
+        commands.registerCommand(roboCommands.ROBOCORP_GET_LANGUAGE_SERVER_PYTHON_INFO, () => getLanguageServerPythonInfo());
         commands.registerCommand(roboCommands.ROBOCORP_CREATE_ROBOT, () => createRobot());
         commands.registerCommand(roboCommands.ROBOCORP_UPLOAD_ROBOT_TO_CLOUD, () => uploadRobot());
         commands.registerCommand(roboCommands.ROBOCORP_RUN_ROBOT_RCC, () => askAndRunRobotRCC(true));
@@ -271,7 +275,7 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGIN, () => cloudLoginShowConfirmation());
         commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGOUT, () => cloudLogout());
         views.registerViews(context);
-        registerDebugger(executable);
+        registerDebugger(executableAndEnv.pythonExe);
         context.subscriptions.push(disposable);
 
         // i.e.: if we return before it's ready, the language server commands
@@ -309,23 +313,32 @@ export function deactivate(): Thenable<void> | undefined {
 }
 
 
-let cachedPythonExe: string;
+let _cachedPythonInfo: InterpreterInfo;
 
 
-async function getLanguageServerPython(): Promise<string> {
-    if (cachedPythonExe) {
-        return cachedPythonExe;
+async function getLanguageServerPython(): Promise<string | undefined> {
+    let info = await getLanguageServerPythonInfo();
+    if (!info) {
+        return undefined;
     }
-    let pythonExe = await getLanguageServerPythonUncached();
-    if (!pythonExe) {
+    return info.pythonExe;
+}
+
+
+async function getLanguageServerPythonInfo(): Promise<InterpreterInfo | undefined> {
+    if (_cachedPythonInfo) {
+        return _cachedPythonInfo;
+    }
+    let cachedPythonInfo = await getLanguageServerPythonInfoUncached();
+    if (!cachedPythonInfo) {
         return undefined; // Unable to get it.
     }
     // Ok, we got it (cache that info).
-    cachedPythonExe = pythonExe;
-    return cachedPythonExe;
+    _cachedPythonInfo = cachedPythonInfo;
+    return _cachedPythonInfo;
 }
 
-async function getLanguageServerPythonUncached(): Promise<string> {
+async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | undefined> {
     let rccLocation = await getRccLocation();
     if (!rccLocation) {
         return;
@@ -342,18 +355,11 @@ async function getLanguageServerPythonUncached(): Promise<string> {
         if (!robocorpHome || robocorpHome.length == 0) {
             robocorpHome = process.env['ROBOCORP_HOME'];
             if (!robocorpHome) {
-                try {
-                    let condaCheckResult: ExecFileReturn = await execFilePromise(rccLocation, ['env', 'variables', '-r', robotYaml, '--controller', 'RobocorpCode'], {});
-                    let splitted: string[] = condaCheckResult.stdout.split('\n');
-                    for (let index = 0; index < splitted.length; index++) {
-                        const element = splitted[index];
-                        if (element.startsWith('ROBOCORP_HOME=')) {
-                            robocorpHome = element.substring('ROBOCORP_HOME='.length);
-                            break;
-                        }
-                    }
-                } catch (err) {
-                    OUTPUT_CHANNEL.appendLine(err);
+                // Default from RCC (maybe it should provide an API to get it before creating an env?)
+                if (process.platform == 'win32') {
+                    robocorpHome = path.join(process.env.LOCALAPPDATA, 'robocorp');
+                } else {
+                    robocorpHome = path.join(process.env.HOME, '.robocorp');
                 }
             }
         }
@@ -487,7 +493,11 @@ async function getLanguageServerPythonUncached(): Promise<string> {
         let contents: object = JSON.parse(jsonContents);
         let pythonExe = contents['python_executable'];
         if (verifyFileExists(pythonExe)) {
-            return pythonExe;
+            return {
+                pythonExe: pythonExe,
+                environ: contents['environment'],
+                additionalPythonpathEntries: [],
+            };
         }
         return disabled('Python executable: ' + pythonExe + ' does not exist.');
     } catch (error) {

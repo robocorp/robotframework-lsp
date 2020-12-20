@@ -20,6 +20,7 @@
     ],
     "activationEvents": [
         "onCommand:robocorp.getLanguageServerPython",
+        "onCommand:robocorp.getLanguageServerPythonInfo",
         "onCommand:robocorp.getPluginsDir",
         "onCommand:robocorp.createRobot",
         "onCommand:robocorp.listRobotTemplates.internal",
