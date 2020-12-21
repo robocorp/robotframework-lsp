@@ -52,6 +52,9 @@
         "onCommand:robocorp.createLocatorFromBrowserPick.internal",
         "onCommand:robocorp.stopBrowserLocator",
         "onCommand:robocorp.getLocatorsJsonInfo",
+        "onCommand:robocorp.newLocatorUI",
+        "onCommand:robocorp.newLocatorUI.tree.internal",
+        "onCommand:robocorp.copyLocatorToClipboard.internal",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -246,6 +249,24 @@
                 "command": "robocorp.stopBrowserLocator",
                 "title": "Stop browser used to create Locators",
                 "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.newLocatorUI",
+                "title": "Create locator",
+                "category": "Robocorp",
+                "icon": "$(plus)"
+            },
+            {
+                "command": "robocorp.newLocatorUI.tree.internal",
+                "title": "Create locator from Robots tree selection",
+                "category": "Robocorp",
+                "icon": "$(plus)"
+            },
+            {
+                "command": "robocorp.copyLocatorToClipboard.internal",
+                "title": "Copy locator name to clipboard",
+                "category": "Robocorp",
+                "icon": "$(clippy)"
             }
         ],
         "menus": {
@@ -264,6 +285,32 @@
                     "command": "robocorp.refreshRobotsView",
                     "when": "view == robocorp-robots-tree",
                     "group": "navigation"
+                },
+                {
+                    "command": "robocorp.newLocatorUI.tree.internal",
+                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.copyLocatorToClipboard.internal",
+                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "robocorp.copyLocatorToClipboard.internal",
+                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "robocorp.newLocatorUI.tree.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.copyLocatorToClipboard.internal",
+                    "when": "false"
                 }
             ]
         }
@@ -273,13 +320,18 @@
         "vscode:prepublish": "cd vscode-client && npm run compile && cd ..",
         "compile": "cd vscode-client && tsc -p ./ && cd ..",
         "watch": "cd vscode-client && tsc -watch -p ./ && cd ..",
-        "postinstall": "node ./node_modules/vscode/bin/install"
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "pretest": "cd vscode-client && tsc -p ./ && cd ..",
+        "test": "node ./vscode-client/out/tests/runTests.js"
     },
     "devDependencies": {
         "typescript": "^3.8.2",
         "vscode": "^1.1.37",
         "@types/node": "^10.0.0",
-        "@types/mocha": "^2.2.32"
+        "@types/mocha": "^2.2.32",
+        "vscode-test": "^1.3.0",
+        "source-map-support": "^0.5.12",
+        "mocha": "^6.1.4"
     },
     "dependencies": {
         "vscode-languageclient": "^6.1.3",

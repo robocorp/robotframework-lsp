@@ -19,6 +19,7 @@ class TreeViewContainer:
 
 
 class MenuGroup(enum.Enum):
+    # https://code.visualstudio.com/api/references/contribution-points#contributes.menus
     NAVIGATION = "navigation"
 
 
@@ -41,25 +42,48 @@ TREE_VIEW_CONTAINERS = [
                 id="robocorp-robots-tree",
                 name="Robots",
                 contextual_title="Robots",
-                menus=[
-                    Menu(
-                        "robocorp.robotsViewTaskRun",
-                        MenuGroup.NAVIGATION,
-                        "robocorp-code:single-task-selected",
-                    ),
-                    Menu(
-                        "robocorp.robotsViewTaskDebug",
-                        MenuGroup.NAVIGATION,
-                        "robocorp-code:single-task-selected",
-                    ),
-                    Menu("robocorp.refreshRobotsView", MenuGroup.NAVIGATION),
-                ],
+                menus={
+                    # See: https://code.visualstudio.com/api/references/contribution-points#contributes.menus
+                    # for targets
+                    "view/title": [
+                        Menu(
+                            "robocorp.robotsViewTaskRun",
+                            MenuGroup.NAVIGATION,
+                            "robocorp-code:single-task-selected",
+                        ),
+                        Menu(
+                            "robocorp.robotsViewTaskDebug",
+                            MenuGroup.NAVIGATION,
+                            "robocorp-code:single-task-selected",
+                        ),
+                        Menu("robocorp.refreshRobotsView", MenuGroup.NAVIGATION),
+                    ]
+                },
             ),
             TreeView(
                 id="robocorp-locators-tree",
                 name="Locators",
                 contextual_title="Locators",
-                menus=[],
+                menus={
+                    "view/title": [
+                        Menu(
+                            "robocorp.newLocatorUI.tree.internal",
+                            MenuGroup.NAVIGATION,
+                            "robocorp-code:single-robot-selected",
+                        ),
+                        Menu(
+                            "robocorp.copyLocatorToClipboard.internal",
+                            MenuGroup.NAVIGATION,
+                            "robocorp-code:single-robot-selected",
+                        ),
+                    ],
+                    "view/item/context": [
+                        Menu(
+                            "robocorp.copyLocatorToClipboard.internal",
+                            when="robocorp-code:single-robot-selected",
+                        )
+                    ],
+                },
             ),
         ],
     )
@@ -100,18 +124,19 @@ def get_activation_events_for_json():
 
 
 def get_menus():
-    menus = []
+    menus = {}
 
     for tree_view_container in TREE_VIEW_CONTAINERS:
         for tree_viewer in tree_view_container.tree_views:
             menu: Menu
-            for menu in tree_viewer.menus:
-                when = f"view == {tree_viewer.id}"
-                if menu.when:
-                    when += f" && {menu.when}"
-                item = {"command": menu.command_id, "when": when}
-                if menu.group:
-                    item["group"] = menu.group.value
-                menus.append(item)
+            for menu_id, menu_lst in tree_viewer.menus.items():
+                for menu in menu_lst:
+                    when = f"view == {tree_viewer.id}"
+                    if menu.when:
+                        when += f" && {menu.when}"
+                    item = {"command": menu.command_id, "when": when}
+                    if menu.group:
+                        item["group"] = menu.group.value
+                    menus.setdefault(menu_id, []).append(item)
 
     return menus

@@ -2,38 +2,8 @@ import { commands, window, WorkspaceFolder, workspace, Uri, QuickPickItem, TextE
 import { join } from 'path';
 import { OUTPUT_CHANNEL } from './channel';
 import * as roboCommands from './robocorpCommands';
+import { QuickPickItemWithAction, sortCaptions, QuickPickItemRobotTask, showSelectOneQuickPick, showSelectOneStrQuickPick } from "./ask";
 
-
-interface QuickPickItemWithAction extends QuickPickItem {
-    action: any;
-    sortKey?: string;
-}
-
-interface QuickPickItemRobotTask extends QuickPickItem {
-    robotYaml: string;
-    taskName: string;
-    keyInLRU: string;
-}
-
-function sortCaptions(captions: QuickPickItemWithAction[]) {
-    captions.sort(function (a, b) {
-        if (a.sortKey < b.sortKey) {
-            return -1;
-        }
-        if (a.sortKey > b.sortKey) {
-            return 1;
-        }
-
-        if (a.label < b.label) {
-            return -1;
-        }
-        if (a.label > b.label) {
-            return 1;
-        }
-
-        return 0;
-    });
-}
 
 export async function cloudLogin(): Promise<boolean> {
     let loggedIn: boolean;
@@ -89,6 +59,29 @@ export async function cloudLogout(): Promise<void> {
     window.showInformationMessage('Robocorp Cloud credentials successfully unlinked and removed.');
 }
 
+export async function listAndAskRobotSelection(selectionMessage: string, noRobotErrorMessage: string): Promise<LocalRobotMetadataInfo> {
+    let actionResult: ActionResult = await commands.executeCommand(
+        roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL
+    );
+
+    if (!actionResult.success) {
+        window.showInformationMessage('Error listing robots: ' + actionResult.message);
+        return;
+    }
+    let robotsInfo: LocalRobotMetadataInfo[] = actionResult.result;
+
+    if (!robotsInfo || robotsInfo.length == 0) {
+        window.showInformationMessage(noRobotErrorMessage);
+        return;
+    }
+
+    let robot: LocalRobotMetadataInfo = await askRobotSelection(robotsInfo, selectionMessage);
+    if (!robot) {
+        return;
+    }
+    return robot;
+}
+
 export async function askRobotSelection(robotsInfo: LocalRobotMetadataInfo[], message: string): Promise<LocalRobotMetadataInfo> {
     let robot: LocalRobotMetadataInfo;
     if (robotsInfo.length > 1) {
@@ -103,14 +96,7 @@ export async function askRobotSelection(robotsInfo: LocalRobotMetadataInfo[], me
             };
             captions.push(caption);
         }
-        let selectedItem: QuickPickItemWithAction = await window.showQuickPick(
-            captions,
-            {
-                "canPickMany": false,
-                'placeHolder': message,
-                'ignoreFocusOut': true,
-            }
-        );
+        let selectedItem: QuickPickItemWithAction = await showSelectOneQuickPick(captions, message);
         if (!selectedItem) {
             return;
         }
@@ -177,13 +163,8 @@ export async function setPythonInterpreterFromRobotYaml() {
         }
 
         // Note: if we got here we have a robot in the workspace.
-        let selectedItem = await window.showQuickPick(
-            ['Workspace Settings', 'Global Settings'],
-            {
-                "canPickMany": false,
-                'placeHolder': 'Please select where the python.pythonPath configuration should be set.',
-                'ignoreFocusOut': true,
-            }
+        let selectedItem = await showSelectOneStrQuickPick(
+            ['Workspace Settings', 'Global Settings'], 'Please select where the python.pythonPath configuration should be set.'
         );
 
         if (!selectedItem) {
@@ -301,14 +282,10 @@ export async function uploadRobot() {
             };
             captions.push(caption);
 
-            let selectedItem: QuickPickItemWithAction = await window.showQuickPick(
-                captions,
-                {
-                    "canPickMany": false,
-                    'placeHolder': 'Please select Workspace to upload: ' + robot.name + ' (' + robot.directory + ')' + '.',
-                    'ignoreFocusOut': true,
-                }
+            let selectedItem: QuickPickItemWithAction = await showSelectOneQuickPick(
+                captions, 'Please select Workspace to upload: ' + robot.name + ' (' + robot.directory + ')' + '.'
             );
+
             if (!selectedItem) {
                 return;
             }
@@ -369,14 +346,10 @@ export async function uploadRobot() {
 
         sortCaptions(captions);
 
-        let selectedItem: QuickPickItemWithAction = await window.showQuickPick(
-            captions,
-            {
-                "canPickMany": false,
-                'placeHolder': 'Please select target Robot to upload: ' + robot.name + ' (' + robot.directory + ').',
-                'ignoreFocusOut': true,
-            }
+        let selectedItem: QuickPickItemWithAction = await showSelectOneQuickPick(
+            captions, 'Please select target Robot to upload: ' + robot.name + ' (' + robot.directory + ').'
         );
+
         if (!selectedItem) {
             return;
         }

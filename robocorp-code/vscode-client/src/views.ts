@@ -6,11 +6,14 @@ import { OUTPUT_CHANNEL } from './channel';
 import { runRobotRCC } from './activities';
 
 
-interface LocatorEntry {
+/**
+ * Note: if type is error|info the name is the message to be shown.
+ */
+export interface LocatorEntry {
     name: string;
     line: number;
     column: number;
-    type: string; // "browser", "image", "coordinate", ...
+    type: string; // "browser", "image", "coordinate", "error", "info",...
     filePath: string;
 }
 
@@ -120,8 +123,6 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
     }
 }
 
-
-
 export class LocatorsTreeDataProvider implements vscode.TreeDataProvider<LocatorEntry> {
 
     private _onDidChangeTreeData: vscode.EventEmitter<LocatorEntry | null> = new vscode.EventEmitter<LocatorEntry | null>();
@@ -134,14 +135,7 @@ export class LocatorsTreeDataProvider implements vscode.TreeDataProvider<Locator
     }
 
     onRobotsTreeSelectionChanged() {
-        const robotsTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
-        if (!robotsTree) {
-            return;
-        }
-        let robotEntry: RobotEntry = undefined;
-        if (robotsTree.selection.length != 0) {
-            robotEntry = robotsTree.selection[0];
-        }
+        let robotEntry: RobotEntry = getSelectedRobot();
         if (!this.lastRobotEntry && !robotEntry) {
             // nothing changed
             return;
@@ -169,14 +163,26 @@ export class LocatorsTreeDataProvider implements vscode.TreeDataProvider<Locator
         const robotsTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
         if (!robotsTree || robotsTree.selection.length == 0) {
             this.lastRobotEntry = undefined;
-            return [];
+            return [{
+                name: "<Waiting for Robot Selection...>",
+                type: "info",
+                line: 0,
+                column: 0,
+                filePath: undefined,
+            }];
         }
         let robotEntry: RobotEntry = robotsTree.selection[0];
         let actionResult: ActionResult = await vscode.commands.executeCommand(
             roboCommands.ROBOCORP_GET_LOCATORS_JSON_INFO, { 'robotYaml': robotEntry.robot.filePath });
         if (!actionResult['success']) {
             this.lastRobotEntry = undefined;
-            return [];
+            return [{
+                name: actionResult.message,
+                type: "error",
+                line: 0,
+                column: 0,
+                filePath: robotEntry.robot.filePath,
+            }];
         }
 
         this.lastRobotEntry = robotEntry;
@@ -186,7 +192,16 @@ export class LocatorsTreeDataProvider implements vscode.TreeDataProvider<Locator
 
     getTreeItem(element: LocatorEntry): vscode.TreeItem {
         const treeItem = new vscode.TreeItem(element.name);
-        treeItem.iconPath = new vscode.ThemeIcon(element.type == "browser" ? "browser" : "file-media");
+
+        // https://microsoft.github.io/vscode-codicons/dist/codicon.html
+        let iconPath = "file-media";
+        if (element.type == "browser") {
+            iconPath = "browser";
+        } else if (element.type == "error") {
+            iconPath = "error";
+
+        }
+        treeItem.iconPath = new vscode.ThemeIcon(iconPath);
         return treeItem;
     }
 }
@@ -201,19 +216,46 @@ export function refreshTreeView(treeViewId: string) {
     }
 }
 
-export function runSelectedRobot(noDebug: boolean) {
-    const robotsTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
+
+export function getSingleTreeSelection(treeId: string, noSelectionMessage?: string, moreThanOneSelectionMessage?: string) {
+    const robotsTree = treeViewIdToTreeView.get(treeId);
     if (!robotsTree || robotsTree.selection.length == 0) {
-        vscode.window.showWarningMessage("Unable to make launch (Robot task not selected in robotsTree).");
-        return;
+        if (noSelectionMessage) {
+            vscode.window.showWarningMessage(noSelectionMessage);
+        }
+        return undefined;
     }
 
     if (robotsTree.selection.length > 1) {
-        vscode.window.showWarningMessage("Unable to make launch -- only 1 task must be selected.");
-        return;
+        if (moreThanOneSelectionMessage) {
+            vscode.window.showWarningMessage(moreThanOneSelectionMessage);
+        }
+        return undefined;
     }
 
-    let element: RobotEntry = robotsTree.selection[0];
+    let element = robotsTree.selection[0];
+    return element;
+}
+
+/**
+ * Returns the selected robot or undefined if there are no robots or if more than one robot is selected.
+ * 
+ * If the messages are passed as a parameter, a warning is shown with that message if the selection is invalid.
+ */
+export function getSelectedRobot(noSelectionMessage?: string, moreThanOneSelectionMessage?: string): RobotEntry | undefined {
+    return getSingleTreeSelection(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
+}
+
+
+export function getSelectedLocator(noSelectionMessage?: string, moreThanOneSelectionMessage?: string): LocatorEntry | undefined {
+    return getSingleTreeSelection(TREE_VIEW_ROBOCORP_LOCATORS_TREE);
+}
+
+export function runSelectedRobot(noDebug: boolean) {
+    let element: RobotEntry = getSelectedRobot(
+        "Unable to make launch (Robot task not selected in Robots Tree).",
+        "Unable to make launch -- only 1 task must be selected."
+    );
     runRobotRCC(noDebug, element.robot.filePath, element.taskName);
 }
 
@@ -241,10 +283,12 @@ export function registerViews(context: ExtensionContext) {
         let events: RobotEntry[] = e.selection;
         if (!events || events.length == 0 || events.length > 1) {
             vscode.commands.executeCommand('setContext', 'robocorp-code:single-task-selected', false);
+            vscode.commands.executeCommand('setContext', 'robocorp-code:single-robot-selected', false);
             return;
         }
         let robotEntry: RobotEntry = events[0]
         vscode.commands.executeCommand('setContext', 'robocorp-code:single-task-selected', robotEntry.type == RobotEntryType.Task);
+        vscode.commands.executeCommand('setContext', 'robocorp-code:single-robot-selected', true);
     }));
 
 
@@ -253,23 +297,36 @@ export function registerViews(context: ExtensionContext) {
     treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_LOCATORS_TREE, locatorsTree);
     treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_LOCATORS_TREE, locatorsDataProvider);
 
-    robotsTree.onDidChangeSelection(
+    context.subscriptions.push(robotsTree.onDidChangeSelection(
         e => locatorsDataProvider.onRobotsTreeSelectionChanged()
-    );
+    ));
 
-    let watcher: vscode.FileSystemWatcher = vscode.workspace.createFileSystemWatcher("**/*robot.yaml");
+    let robotsWatcher: vscode.FileSystemWatcher = vscode.workspace.createFileSystemWatcher("**/robot.yaml");
 
-    let onChange = debounce(() => {
+    let onChangeRobotsYaml = debounce(() => {
         // Note: this doesn't currently work if the parent folder is renamed or removed.
         // (https://github.com/microsoft/vscode/pull/110858)
         refreshTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
     }, 300);
 
-    watcher.onDidChange(onChange);
-    watcher.onDidCreate(onChange);
-    watcher.onDidDelete(onChange);
+    robotsWatcher.onDidChange(onChangeRobotsYaml);
+    robotsWatcher.onDidCreate(onChangeRobotsYaml);
+    robotsWatcher.onDidDelete(onChangeRobotsYaml);
+
+    let locatorsWatcher: vscode.FileSystemWatcher = vscode.workspace.createFileSystemWatcher("**/locators.json");
+
+    let onChangeLocatorsJson = debounce(() => {
+        // Note: this doesn't currently work if the parent folder is renamed or removed.
+        // (https://github.com/microsoft/vscode/pull/110858)
+        refreshTreeView(TREE_VIEW_ROBOCORP_LOCATORS_TREE);
+    }, 300);
+
+    locatorsWatcher.onDidChange(onChangeLocatorsJson);
+    locatorsWatcher.onDidCreate(onChangeLocatorsJson);
+    locatorsWatcher.onDidDelete(onChangeLocatorsJson);
 
     context.subscriptions.push(robotsTree);
     context.subscriptions.push(locatorsTree);
-    context.subscriptions.push(watcher);
+    context.subscriptions.push(robotsWatcher);
+    context.subscriptions.push(locatorsWatcher);
 }

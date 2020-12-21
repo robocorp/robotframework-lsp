@@ -8,6 +8,7 @@ class Command(object):
         server_handled=True,
         icon=None,
         enablement=None,
+        hide_from_command_palette=False,
     ):
         """
         :param add_to_package_json:
@@ -23,6 +24,7 @@ class Command(object):
         self.server_handled = server_handled
         self.icon = icon
         self.enablement = enablement
+        self.hide_from_command_palette = hide_from_command_palette
 
 
 COMMANDS = [
@@ -198,7 +200,7 @@ COMMANDS = [
     ),
     Command(
         "robocorp.startBrowserLocator.internal",
-        "Start browser to create Locators. Requires the robot where the locators should be saved.",
+        "Start browser to create Locators. Requires the robot where the locators should be saved",
         add_to_package_json=False,
         server_handled=True,
     ),
@@ -210,7 +212,7 @@ COMMANDS = [
     ),
     Command(
         "robocorp.createLocatorFromBrowserPick.internal",
-        "Create Locator from browser pick (internal: provides no UI in case of errors).",
+        "Create Locator from browser pick (internal: provides no UI in case of errors)",
         add_to_package_json=False,
         server_handled=True,
     ),
@@ -222,9 +224,34 @@ COMMANDS = [
     ),
     Command(
         "robocorp.getLocatorsJsonInfo",
-        "Obtain information from the locators.json given a robot.yaml.",
+        "Obtain information from the locators.json given a robot.yaml",
         add_to_package_json=False,
         server_handled=True,
+    ),
+    Command(
+        "robocorp.newLocatorUI",
+        "Create locator",
+        add_to_package_json=True,
+        server_handled=False,
+        icon="$(plus)",
+    ),
+    # This is the same as the one above, but it won't ask what's the robot, it'll
+    # just use the one selected in the robots tree.
+    Command(
+        "robocorp.newLocatorUI.tree.internal",
+        "Create locator from Robots tree selection",
+        add_to_package_json=True,
+        server_handled=False,
+        hide_from_command_palette=True,
+        icon="$(plus)",
+    ),
+    Command(
+        "robocorp.copyLocatorToClipboard.internal",
+        "Copy locator name to clipboard",
+        add_to_package_json=True,
+        server_handled=False,
+        hide_from_command_palette=True,
+        icon="$(clippy)",
     ),
 ]
 

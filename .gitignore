@@ -118,6 +118,7 @@ out
 node_modules
 .vscode-dev
 *.vsix
+.vscode-test
 
 **/log.html
 **/output.xml

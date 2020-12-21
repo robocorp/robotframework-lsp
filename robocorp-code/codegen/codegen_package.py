@@ -34,6 +34,17 @@ def convert_case_to_camel(name):
     )
 
 
+def get_menus():
+    ret = views.get_menus()
+    commands_palette_entry = []
+    for command in COMMANDS:
+        if command.hide_from_command_palette:
+            commands_palette_entry.append({"command": command.name, "when": "false"})
+    if commands_palette_entry:
+        ret["commandPalette"] = commands_palette_entry
+    return ret
+
+
 def get_json_contents():
     from robocorp_code import __version__
 
@@ -125,7 +136,7 @@ def get_json_contents():
             ],
             "keybindings": get_keybindings_for_json(),
             "commands": get_commands_for_json(),
-            "menus": {"view/title": views.get_menus()},
+            "menus": get_menus(),
         },
         "main": "./vscode-client/out/extension",
         "scripts": {
@@ -133,12 +144,17 @@ def get_json_contents():
             "compile": "cd vscode-client && tsc -p ./ && cd ..",
             "watch": "cd vscode-client && tsc -watch -p ./ && cd ..",
             "postinstall": "node ./node_modules/vscode/bin/install",
+            "pretest": "cd vscode-client && tsc -p ./ && cd ..",
+            "test": "node ./vscode-client/out/tests/runTests.js",
         },
         "devDependencies": {
             "typescript": "^3.8.2",
             "vscode": "^1.1.37",
             "@types/node": "^10.0.0",
             "@types/mocha": "^2.2.32",
+            "vscode-test": "^1.3.0",
+            "source-map-support": "^0.5.12",
+            "mocha": "^6.1.4",
         },
         "dependencies": {
             "vscode-languageclient": "^6.1.3",

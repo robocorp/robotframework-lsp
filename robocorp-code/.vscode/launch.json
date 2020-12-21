@@ -20,6 +20,23 @@
                 // "SERVER_PORT": "8787",
                 // "SERVER_HOME_EXPORTED": "C:/export/pydev_lsp/eclipse"
             }
+        },
+        {
+            "name": "Extension Tests: Robocorp Code",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "args": [
+                "${workspaceRoot}/vscode-client/src/tests/resources",
+                "--extensionDevelopmentPath=${workspaceRoot}",
+                "--extensionTestsPath=${workspaceRoot}/vscode-client/out/tests/suite/index"
+            ],
+            "outFiles": [
+                "${workspaceRoot}/vscode-client/out/**/*.js"
+            ],
+            "preLaunchTask": "npm: compile"
         }
     ]
 }

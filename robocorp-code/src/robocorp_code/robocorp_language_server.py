@@ -1,5 +1,6 @@
 from functools import partial
 import os
+import sys
 from pathlib import Path
 from typing import List, Any, Optional, Dict, Union
 
@@ -271,9 +272,9 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
                 libpath = "\n    ".join(libpath.split(os.pathsep))
                 if libpath:
-                    libpath = "\n    " + libpath
+                    libpath = "\n    " + libpath + "\n"
                 else:
-                    libpath = " <not set>"
+                    libpath = " <not set>\n"
 
                 env_vars_info += f"{v}: {libpath}"
 
@@ -1016,6 +1017,19 @@ class RobocorpLanguageServer(PythonLanguageServer):
             try:
                 db = LocatorsDatabase(str(locators_json))
                 db.load()
+                if not db.locators.items():
+                    error = db.error
+                    if not isinstance(error, str):
+                        if isinstance(error, tuple) and len(error) == 2:
+                            try:
+                                error = error[0] % error[1]
+                            except:
+                                error = str(error)
+                        else:
+                            error = str(error)
+
+                    return {"success": False, "message": error, "result": None}
+
                 for name, locator in db.locators.items():
                     as_dict = locator.to_dict()
                     line, col = self._get_line_col(name, content_lines)
