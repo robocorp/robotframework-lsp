@@ -51,7 +51,7 @@ def test_server_manager(pm, server_manager) -> None:
 
     assert not server_manager._id_to_apis
 
-    api_source_format = server_manager._get_source_format_api()
+    api_source_format = server_manager._get_source_format_api("")
     api_default = server_manager._get_regular_api("")
     assert api_source_format is api_default
 

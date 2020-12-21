@@ -337,8 +337,10 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def m_text_document__formatting(
         self, textDocument=None, options=None
     ) -> Optional[list]:
-        source_format_rf_api_client = (
-            self._server_manager.get_source_format_rf_api_client()
+        doc_uri = textDocument["uri"]
+
+        source_format_rf_api_client = self._server_manager.get_source_format_rf_api_client(
+            doc_uri
         )
         if source_format_rf_api_client is None:
             log.info("Unable to get API for source format.")

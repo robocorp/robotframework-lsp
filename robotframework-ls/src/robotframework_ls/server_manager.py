@@ -535,9 +535,9 @@ class ServerManager(object):
 
     # Private APIs
 
-    def _get_source_format_api(self) -> _ServerApi:
+    def _get_source_format_api(self, doc_uri: str) -> _ServerApi:
         self._check_in_main_thread()
-        apis = self._get_default_apis()
+        apis = self._get_apis_for_doc_uri(doc_uri)
         return apis.api
 
     def _get_lint_api(self, doc_uri: str) -> _ServerApi:
@@ -568,11 +568,15 @@ class ServerManager(object):
             return api.get_robotframework_api_client()
         return None
 
-    def get_source_format_rf_api_client(self) -> Optional[IRobotFrameworkApiClient]:
-        api = self._get_source_format_api()
+    def get_source_format_rf_api_client(
+        self, doc_uri
+    ) -> Optional[IRobotFrameworkApiClient]:
+        api = self._get_source_format_api(doc_uri)
         if api is not None:
             return api.get_robotframework_api_client()
         return None
 
     def get_workspace_symbols_api_client(self) -> Optional[IRobotFrameworkApiClient]:
-        return self.get_source_format_rf_api_client()
+        self._check_in_main_thread()
+        apis = self._get_default_apis()
+        return apis.api.get_robotframework_api_client()
