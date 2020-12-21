@@ -23,7 +23,7 @@ import * as net from 'net';
 import * as path from 'path';
 import * as fs from 'fs';
 
-import { workspace, Disposable, ExtensionContext, window, commands, ConfigurationTarget, debug, DebugAdapterExecutable, ProviderResult, DebugConfiguration, WorkspaceFolder, CancellationToken, DebugConfigurationProvider } from 'vscode';
+import { workspace, Disposable, ExtensionContext, window, commands, ConfigurationTarget, debug, DebugAdapterExecutable, ProviderResult, DebugConfiguration, WorkspaceFolder, CancellationToken, DebugConfigurationProvider, extensions } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
 import { ProgressReport, handleProgressMessage } from './progress';
 import { Timing } from './time';
@@ -48,6 +48,8 @@ function startLangServerIO(command: string, args: string[], initializationOption
 		command,
 		args,
 	};
+	let src: string = path.resolve(__dirname, '../../src');
+	serverOptions.options = { env: { ...process.env, PYTHONPATH: src } };
 	// See: https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
 	return new LanguageClient(command, serverOptions, createClientOptions(initializationOptions));
 }
@@ -367,6 +369,17 @@ export async function activate(context: ExtensionContext) {
 		// may not be available.
 		OUTPUT_CHANNEL.appendLine("Waiting for RobotFramework (python) Language Server to finish activating...");
 		await langServer.onReady();
+
+		let version = extensions.getExtension('robocorp.robotframework-lsp').packageJSON.version;
+		try {
+			let lsVersion = await commands.executeCommand('robot.getLanguageServerVersion');
+			if (lsVersion != version) {
+				window.showErrorMessage('Error: expected robotframework-lsp version: ' + version + '. Found: ' + lsVersion + '.' +
+					' Please uninstall the older version from the python environment.')
+			}
+		} catch (err) {
+			window.showErrorMessage('Error: robotframework-lsp version mismatch. Please uninstall the older version from the python environment.')
+		}
 
 		langServer.onNotification("$/customProgress", (args: ProgressReport) => {
 			// OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);

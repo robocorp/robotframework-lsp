@@ -23,6 +23,7 @@ from robocorp_ls_core.jsonrpc.endpoint import require_monitor
 from robocorp_ls_core.jsonrpc.monitor import Monitor
 from functools import partial
 import itertools
+from robotframework_ls import __version__
 
 
 log = get_logger(__name__)
@@ -219,7 +220,11 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             "documentSymbolProvider": False,
             "definitionProvider": True,
             "executeCommandProvider": {
-                "commands": ["robot.addPluginsDir", "robot.resolveInterpreter"]
+                "commands": [
+                    "robot.addPluginsDir",
+                    "robot.resolveInterpreter",
+                    "robot.getLanguageServerVersion",
+                ]
             },
             "hoverProvider": False,
             "referencesProvider": False,
@@ -311,6 +316,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                         }
             except:
                 log.exception(f"Error resolving interpreter. Args: {arguments}")
+
+        elif command == "robot.getLanguageServerVersion":
+            return __version__
 
     @overrides(PythonLanguageServer.m_workspace__did_change_configuration)
     @log_and_silence_errors(log)
