@@ -1,3 +1,8 @@
+New in 0.6.4 (2020-12-21)
+-----------------------------
+
+- When launching the language server, pick the version shipped and not the one installed in the target python [#91](https://github.com/robocorp/robotframework-lsp/issues/91)
+
 New in 0.6.3 (2020-12-08)
 -----------------------------
 
