@@ -69,7 +69,7 @@ Find the full installation instructions at [https://robocorp.com/docs/product-ma
 
 During the first activation, the extension will download additional dependencies (such as Conda manager) that are required for it to run.
 
-### Features (0.5.3)
+### Features (0.6.0)
 
 - Automatic bootstrapping of the Python environment for the `Robot Framework Language Server`.
 - Create a Robot from a pre-configured template using the `Robocorp: Create Robot` action.
@@ -81,6 +81,8 @@ During the first activation, the extension will download additional dependencies
 - When a [robot.yaml](https://robocorp.com/docs/setup/robot-yaml-format) is found, it utilises the related Python environment when running/debugging `.robot` files using the RobotFramework Language Server.
 - Set the pythonPath configuration to get code completion in the Python extension through the `Set pythonPath based on robot.yaml` action.
 - View, launch and debug Robots from the `Robots` view.
+- View and create new [Browser Locators](https://robocorp.com/docs/development-howtos/browser/how-to-find-user-interface-elements-using-locators-in-web-applications) from the `Locators` view.
+- When hovering over a `"screenshot"` element in the `locators.json`, a preview is shown.
 
 ### Developing
 

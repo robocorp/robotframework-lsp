@@ -1,8 +1,15 @@
+New in 0.6.0 (2020-12-21)
+-----------------------------
+
+- Improved support for [locators](https://robocorp.com/docs/development-howtos/browser/how-to-find-user-interface-elements-using-locators-in-web-applications):
+    - Locators from locators.json are shown in the Locators tree.
+    - An action to create a new `Browser Locator' by selecting an element in a browser is now available in the tree.
+    - When hovering over a `"screenshot"` element in the `locators.json`, a preview is shown.
+
 New in 0.5.3 (2020-12-08)
 -----------------------------
 
 - Update RCC to version 7.0.4. #206
-
 
 New in 0.5.2 (2020-12-02)
 -----------------------------
