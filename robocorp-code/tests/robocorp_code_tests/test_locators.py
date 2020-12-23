@@ -1,4 +1,7 @@
 import pytest
+from pathlib import Path
+
+_image_b64 = "iVBORw0KGgoAAAANSUhEUgAAAb8AAAAiCAYAAADPnNdbAAAAAXNSR0IArs4c6QAAAJ1JREFUeJzt1TEBACAMwDDAv+fhAo4mCvp1z8wsAAg5vwMA4DXzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgJwLXQ0EQMJRx4AAAAAASUVORK5CYII="
 
 
 def test_locators_webdriver_basic():
@@ -17,7 +20,7 @@ def test_locators_webdriver_basic():
         "strategy": "name",
         "value": "q",
         "source": "https://www.google.com/?gws_rd=ssl",
-        "screenshot": "iVBORw0KGgoAAAANSUhEUgAAAb8AAAAiCAYAAADPnNdbAAAAAXNSR0IArs4c6QAAAJ1JREFUeJzt1TEBACAMwDDAv+fhAo4mCvp1z8wsAAg5vwMA4DXzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgJwLXQ0EQMJRx4AAAAAASUVORK5CYII=",
+        "screenshot": _image_b64,
     }
     assert dct["value"] == "q"
     assert dct["strategy"] == "name"
@@ -58,7 +61,7 @@ def test_locators_server(config_options_log):
     assert browser_locator_stop["success"]
 
 
-def test_locators_db(tmpdir):
+def test_locators_db_browser(tmpdir):
     from robocorp_code.locators_db import LocatorsDB
     import json
 
@@ -90,5 +93,71 @@ def test_locators_db(tmpdir):
                 "strategy": "strategy",
                 "type": "browser",
                 "value": "value",
+            },
+        }
+
+
+def test_locators_db_images(tmpdir):
+    from robocorp_code.locators_db import LocatorsDB
+    import json
+    from robocorp_code.locators.locator_protocols import ImageLocatorTypedDict
+
+    locators_db = LocatorsDB()
+    robot_yaml_location = tmpdir.join("robot.yaml")
+    locators_db.set_robot_yaml_location(str(robot_yaml_location))
+    image_locator: ImageLocatorTypedDict = {
+        "path_b64": _image_b64,
+        "source_b64": _image_b64,
+        "confidence": 80.0,
+        "type": "image",
+    }
+    locators_db.add_image_locator(image_locator)
+    locators_db.add_image_locator(image_locator)
+
+    with open(locators_db.locators_json, "r", encoding="utf-8") as stream:
+
+        assert json.load(stream) == {
+            "Image.Locator.00": {
+                "confidence": 80.0,
+                "path": ".images/Image.Locator.00-path.png",
+                "source": ".images/Image.Locator.00-source.png",
+                "type": "image",
+            },
+            "Image.Locator.01": {
+                "confidence": 80.0,
+                "path": ".images/Image.Locator.01-path.png",
+                "source": ".images/Image.Locator.01-source.png",
+                "type": "image",
+            },
+        }
+
+    p = Path(str(tmpdir)) / ".images" / "Image.Locator.01-source.png"
+    assert p.exists()
+
+    p = Path(str(tmpdir)) / ".images" / "Image.Locator.02-source.png"
+    p.write_text("not empty")
+    locators_db.add_image_locator(image_locator)
+
+    with open(locators_db.locators_json, "r", encoding="utf-8") as stream:
+
+        assert json.load(stream) == {
+            "Image.Locator.00": {
+                "confidence": 80.0,
+                "path": ".images/Image.Locator.00-path.png",
+                "source": ".images/Image.Locator.00-source.png",
+                "type": "image",
+            },
+            "Image.Locator.01": {
+                "confidence": 80.0,
+                "path": ".images/Image.Locator.01-path.png",
+                "source": ".images/Image.Locator.01-source.png",
+                "type": "image",
+            },
+            # i.e.: skip the Image.Locator.02 because the image is there already
+            "Image.Locator.03": {
+                "confidence": 80.0,
+                "path": ".images/Image.Locator.03-path.png",
+                "source": ".images/Image.Locator.03-source.png",
+                "type": "image",
             },
         }

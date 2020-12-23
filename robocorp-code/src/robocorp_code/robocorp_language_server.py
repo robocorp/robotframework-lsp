@@ -32,8 +32,10 @@ from robocorp_ls_core.cache import CachedFileInfo
 from robocorp_ls_core.protocols import IConfig
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
-from robocorp_code.locators.locator_protocols import BrowserLocatorTypedDict
-import sys
+from robocorp_code.locators.locator_protocols import (
+    BrowserLocatorTypedDict,
+    ImageLocatorTypedDict,
+)
 
 
 log = get_logger(__name__)
@@ -117,6 +119,19 @@ class ActionResultDictBrowserLocatorContainer(TypedDict):
     result: Optional[BrowserLocatorContainer]
 
 
+class ImageLocatorContainer(TypedDict):
+    name: str
+    locator: ImageLocatorTypedDict
+
+
+class ActionResultDictImageLocatorContainer(TypedDict):
+    success: bool
+    message: Optional[
+        str
+    ]  # if success == False, this can be some message to show to the user
+    result: Optional[ImageLocatorContainer]
+
+
 class _LocatorsInThreadAPI:
     """
     An API which allows managing the LocatorServerManager and LocatorsDB in
@@ -157,6 +172,48 @@ class _LocatorsInThreadAPI:
     def _submit_and_return_from_thread(self, func) -> Future:
         future = self._thread_pool.submit(self._initialize_and_call, func)
         return future
+
+    def create_locator_from_screenshot_pick(
+        self, robot_yaml
+    ) -> "Future[ActionResultDict]":
+        """
+        Creates a locator from a screenshot pick.
+        """
+        return self._submit_and_return_from_thread(
+            partial(self._in_thread_create_locator_from_screenshot_pick, robot_yaml)
+        )
+
+    def _in_thread_create_locator_from_screenshot_pick(
+        self, robot_yaml
+    ) -> ActionResultDictImageLocatorContainer:
+        from typing import cast
+
+        self._locators_db.set_robot_yaml_location(robot_yaml)
+
+        error_msg = self._locators_db.validate()
+        if error_msg:
+            return {"success": False, "message": error_msg, "result": None}
+
+        result = self._locator_server_manager.image_locator_pick()
+        if result["success"]:
+            # Ok, it did get the info for the browser locator pick, now, let's
+            # add it to the json.
+            try:
+                image_locator: ImageLocatorTypedDict = cast(
+                    ImageLocatorTypedDict, result["result"]
+                )
+                name = self._locators_db.add_image_locator(image_locator)
+                return {
+                    "success": True,
+                    "message": None,
+                    "result": {"name": name, "locator": result["result"]},
+                }
+
+            except Exception as e:
+                log.exception("Error creating browser locator.")
+                return {"success": False, "message": str(e), "result": None}
+
+        return result
 
     def create_locator_from_browser_pick(self) -> "Future[ActionResultDict]":
         """
@@ -890,7 +947,8 @@ class RobocorpLanguageServer(PythonLanguageServer):
         return {"success": True, "message": "", "result": None}
 
     @command_dispatcher(
-        commands.ROBOCORP_START_BROWSER_LOCATOR_INTERNAL, expected_return_cls=Future
+        commands.ROBOCORP_START_BROWSER_LOCATOR_INTERNAL,
+        expected_return_cls=(Future, dict),
     )
     def _start_browser_locator(
         self, params: dict = None
@@ -927,6 +985,33 @@ class RobocorpLanguageServer(PythonLanguageServer):
         self, params: dict = None
     ) -> "Future[ActionResultDict]":
         return self._locators_in_thread_api.create_locator_from_browser_pick()
+
+    @command_dispatcher(
+        commands.ROBOCORP_CREATE_LOCATOR_FROM_SCREEN_REGION_INTERNAL,
+        expected_return_cls=(Future, dict),
+    )
+    def _create_locator_fom_screenshot_pick(
+        self, params: dict = None
+    ) -> Union["Future[ActionResultDict]", ActionResultDict]:
+        if not params or "robotYaml" not in params:
+            self._locators_in_thread_api.set_robot_yaml_location("")
+            return {
+                "success": False,
+                "message": "robot.yaml filename not passed",
+                "result": None,
+            }
+
+        robot_yaml = params["robotYaml"]
+        if not os.path.exists(robot_yaml):
+            return {
+                "success": False,
+                "message": f"robot.yaml {robot_yaml} does not exist.",
+                "result": None,
+            }
+
+        return self._locators_in_thread_api.create_locator_from_screenshot_pick(
+            robot_yaml
+        )
 
     def m_text_document__hover(self, **kwargs):
         """

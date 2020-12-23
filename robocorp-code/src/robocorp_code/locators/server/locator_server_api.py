@@ -40,15 +40,55 @@ class LocatorServerApi(PythonLanguageServer):
             log.exception()
             return {"success": False, "message": str(e), "result": None}
 
+    def m_image_locator__pick(self) -> ActionResultDict:
+        try:
+            from pathlib import Path
+            from robocorp_code.locators.locator_protocols import ImageLocatorTypedDict
+            from subprocess import CalledProcessError
+            import json
+            import subprocess
+            import sys
+
+            _region, value, source = json.loads(
+                subprocess.check_output(
+                    [
+                        sys.executable,
+                        str(Path(__file__).parent.parent / "locator_image.py"),
+                    ],
+                    stderr=subprocess.PIPE,
+                )
+            )
+            result: ImageLocatorTypedDict = {
+                "type": "image",
+                "path_b64": value,
+                "source_b64": source,
+                "confidence": 80.0,
+            }
+
+            return {"success": True, "message": None, "result": result}
+        except CalledProcessError as e:
+            msg = f"Error on image locator.\nOutput:\n {e.output}\n\nStderr: {e.stderr}\n\nMessage: {str(e)}"
+            log.exception(msg)
+            return {"success": False, "message": msg, "result": None}
+
+        except Exception as e:
+            log.exception("Error on image locator")
+            return {"success": False, "message": str(e), "result": None}
+
     def m_browser_locator__pick(self) -> ActionResultDict:
         try:
             w = self._webdriver
             if not w or not w.is_running:
-                return {
-                    "success": False,
-                    "message": "Browser for locator creation is not running.",
-                    "result": None,
-                }
+                # If not running when pick is requested, start it now.
+                self.m_browser_locator__start()
+
+                w = self._webdriver
+                if not w or not w.is_running:
+                    return {
+                        "success": False,
+                        "message": "Browser for locator creation is not running.",
+                        "result": None,
+                    }
 
             result = w.pick_as_browser_locator_dict()
 

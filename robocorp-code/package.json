@@ -49,6 +49,8 @@
         "onCommand:robocorp.startBrowserLocator",
         "onCommand:robocorp.startBrowserLocator.internal",
         "onCommand:robocorp.createLocatorFromBrowserPick",
+        "onCommand:robocorp.createLocatorFromScreenRegion",
+        "onCommand:robocorp.createLocatorFromScreenRegion.internal",
         "onCommand:robocorp.createLocatorFromBrowserPick.internal",
         "onCommand:robocorp.stopBrowserLocator",
         "onCommand:robocorp.getLocatorsJsonInfo",
@@ -243,6 +245,11 @@
             {
                 "command": "robocorp.createLocatorFromBrowserPick",
                 "title": "Create Locator from browser pick",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.createLocatorFromScreenRegion",
+                "title": "Create Image Locator from screen region",
                 "category": "Robocorp"
             },
             {

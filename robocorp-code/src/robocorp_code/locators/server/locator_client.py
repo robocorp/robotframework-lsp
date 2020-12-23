@@ -88,3 +88,12 @@ class LocatorsApiClient(LanguageServerClientBase):
                 {"jsonrpc": "2.0", "id": msg_id, "method": "browserLocator/pick"}, None
             )
         )
+
+    def image_locator_pick(self) -> ActionResultDict:
+        self._check_process_alive()
+        msg_id = self.next_id()
+        return self._unpack_result_as_action_result_dict(
+            self.request(
+                {"jsonrpc": "2.0", "id": msg_id, "method": "imageLocator/pick"}, None
+            )
+        )

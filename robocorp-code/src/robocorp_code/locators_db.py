@@ -1,7 +1,11 @@
-from robocorp_code.locators.locator_protocols import BrowserLocatorTypedDict
+from robocorp_code.locators.locator_protocols import (
+    BrowserLocatorTypedDict,
+    ImageLocatorTypedDict,
+)
 from typing import Optional
 import itertools
 from functools import partial
+from pathlib import Path
 
 
 class LocatorsDB(object):
@@ -16,7 +20,6 @@ class LocatorsDB(object):
             return
 
         from RPA.core.locators.database import LocatorsDatabase
-        from pathlib import Path
 
         path = Path(robot_yaml_location)
 
@@ -32,9 +35,6 @@ class LocatorsDB(object):
     def locators_json(self):
         return self._locators_json
 
-    def _next_name(self):
-        return "Browser.Locator.%02d" % (self._next_id(),)
-
     def validate(self) -> str:
         """
         :return str:
@@ -44,6 +44,21 @@ class LocatorsDB(object):
             return "The locators.json location to save locators is still not provided."
 
         return ""
+
+    def _get_next_name_generator(self, pattern):
+        next_id = partial(next, itertools.count(0))
+        while True:
+            yield pattern % (next_id(),)
+
+    def _get_name(self, pattern: str, name: Optional[str] = None):
+        if not name:
+            db = self._locators_database
+            name_generator = self._get_next_name_generator(pattern)
+            while True:
+                name = next(name_generator)
+                if name not in db.locators:
+                    return name
+        return name
 
     def add_browser_locator(
         self, browser_locator: BrowserLocatorTypedDict, name: Optional[str] = None
@@ -58,15 +73,71 @@ class LocatorsDB(object):
 
         db = self._locators_database
         assert db is not None
-
-        if not name:
-            while True:
-                name = self._next_name()
-                if name not in db.locators:
-                    break
+        name = self._get_name("Browser.Locator.%02d", name)
 
         assert name
         # Pass a copy so that the original is not mutated.
         db.locators[name] = Locator.from_dict(browser_locator.copy())
+        db.save()
+        return name
+
+    def add_image_locator(
+        self, image_locator: ImageLocatorTypedDict, name: Optional[str] = None
+    ) -> str:
+        """
+        Adds the image locator with a given name (if a name is not given, one
+        is generated).
+        :return:
+            The name used to add the locator.
+        """
+        from RPA.core.locators.containers import Locator
+        import base64
+
+        images_dir: Path = Path(self._locators_json).parent / ".images"
+        images_dir.mkdir(parents=True, exist_ok=True)
+
+        db = self._locators_database
+        assert db is not None
+        if name:
+            path_name = name + "-path.png"
+            source_name = name + "-source.png"
+        else:
+            images = set(x.name for x in images_dir.glob("*.png"))
+
+            name_generator = self._get_next_name_generator("Image.Locator.%02d")
+            while True:
+                new_name = next(name_generator)
+                if new_name in db.locators:
+                    continue
+
+                path_name = new_name + "-path.png"
+                source_name = new_name + "-source.png"
+
+                if path_name in images:
+                    continue
+                if source_name in images:
+                    continue
+
+                break
+            name = new_name
+
+        assert name
+        # Convert to the format that's expected.
+        path_b64 = image_locator["path_b64"]
+        source_b64 = image_locator["source_b64"]
+
+        with (images_dir / path_name).open("wb") as stream:
+            stream.write(base64.b64decode(path_b64))
+
+        with (images_dir / source_name).open("wb") as stream:
+            stream.write(base64.b64decode(source_b64))
+
+        dct = {
+            "type": "image",
+            "confidence": image_locator["confidence"],
+            "path": ".images/" + path_name,
+            "source": ".images/" + source_name,
+        }
+        db.locators[name] = Locator.from_dict(dct)
         db.save()
         return name

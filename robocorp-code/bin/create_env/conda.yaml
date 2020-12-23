@@ -6,5 +6,7 @@ dependencies:
   - pip=20.1
   - pip:
     - robotframework
-    - rpaframework-core
-    - rpaframework-recognition
+    - rpaframework-core==5.2.0
+    - rpaframework-recognition==0.6.0
+    - mss==6.1.0
+    - pillow==8.0.1

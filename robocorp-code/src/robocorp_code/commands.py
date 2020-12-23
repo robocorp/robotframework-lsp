@@ -30,6 +30,8 @@ ROBOCORP_REFRESH_ROBOTS_VIEW = "robocorp.refreshRobotsView"  # Refresh Robots vi
 ROBOCORP_START_BROWSER_LOCATOR = "robocorp.startBrowserLocator"  # Start browser to create Locators
 ROBOCORP_START_BROWSER_LOCATOR_INTERNAL = "robocorp.startBrowserLocator.internal"  # Start browser to create Locators. Requires the robot where the locators should be saved
 ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK = "robocorp.createLocatorFromBrowserPick"  # Create Locator from browser pick
+ROBOCORP_CREATE_LOCATOR_FROM_SCREEN_REGION = "robocorp.createLocatorFromScreenRegion"  # Create Image Locator from screen region
+ROBOCORP_CREATE_LOCATOR_FROM_SCREEN_REGION_INTERNAL = "robocorp.createLocatorFromScreenRegion.internal"  # Create Image Locator from screen region (internal)
 ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK_INTERNAL = "robocorp.createLocatorFromBrowserPick.internal"  # Create Locator from browser pick (internal: provides no UI in case of errors)
 ROBOCORP_STOP_BROWSER_LOCATOR = "robocorp.stopBrowserLocator"  # Stop browser used to create Locators
 ROBOCORP_GET_LOCATORS_JSON_INFO = "robocorp.getLocatorsJsonInfo"  # Obtain information from the locators.json given a robot.yaml
@@ -54,6 +56,7 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_RESOLVE_INTERPRETER,
     ROBOCORP_CLOUD_LOGOUT_INTERNAL,
     ROBOCORP_START_BROWSER_LOCATOR_INTERNAL,
+    ROBOCORP_CREATE_LOCATOR_FROM_SCREEN_REGION_INTERNAL,
     ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK_INTERNAL,
     ROBOCORP_STOP_BROWSER_LOCATOR,
     ROBOCORP_GET_LOCATORS_JSON_INFO,

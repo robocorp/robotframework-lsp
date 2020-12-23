@@ -14,12 +14,19 @@ else:
     from typing import TypedDict
 
 
+class ImageLocatorTypedDict(TypedDict):
+    path_b64: str
+    source_b64: str
+    confidence: float
+    type: str  # 'browser', 'image', ...
+
+
 class BrowserLocatorTypedDict(TypedDict):
     strategy: str
     value: str
     source: str
     screenshot: str  # a.k.a: screenshot_as_base64
-    type: str  # 'browser', 'image'
+    type: str  # 'browser', 'image', ...
 
 
 class BrowserLocatorValidationTypedDict(TypedDict):

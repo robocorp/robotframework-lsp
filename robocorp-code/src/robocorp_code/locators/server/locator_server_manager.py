@@ -163,6 +163,16 @@ class LocatorServerManager:
             return api.browser_locator_pick()
         return {
             "success": False,
-            "message": "Unable to pick locators server api.",
+            "message": "Unable to browser pick locators server api.",
+            "result": None,
+        }
+
+    def image_locator_pick(self) -> ActionResultDict:
+        api = self._get_api_client()
+        if api is not None:
+            return api.image_locator_pick()
+        return {
+            "success": False,
+            "message": "Unable to image pick locators server api.",
             "result": None,
         }

@@ -269,6 +269,7 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_ROBOTS_VIEW_TASK_DEBUG, () => views.runSelectedRobot(false));
         commands.registerCommand(roboCommands.ROBOCORP_START_BROWSER_LOCATOR, () => locators.startBrowserLocator());
         commands.registerCommand(roboCommands.ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK, () => locators.pickBrowserLocator());
+        commands.registerCommand(roboCommands.ROBOCORP_CREATE_LOCATOR_FROM_SCREEN_REGION, () => locators.pickImageLocator());
         commands.registerCommand(roboCommands.ROBOCORP_NEW_LOCATOR_UI, () => locators.newLocatorUI());
         commands.registerCommand(roboCommands.ROBOCORP_NEW_LOCATOR_UI_TREE_INTERNAL, () => locators.newLocatorUITreeInternal());
         commands.registerCommand(roboCommands.ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL, () => locators.copySelectedToClipboard());

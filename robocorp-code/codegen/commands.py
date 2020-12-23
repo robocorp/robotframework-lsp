@@ -211,6 +211,18 @@ COMMANDS = [
         server_handled=False,
     ),
     Command(
+        "robocorp.createLocatorFromScreenRegion",
+        "Create Image Locator from screen region",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
+    Command(
+        "robocorp.createLocatorFromScreenRegion.internal",
+        "Create Image Locator from screen region (internal)",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
+    Command(
         "robocorp.createLocatorFromBrowserPick.internal",
         "Create Locator from browser pick (internal: provides no UI in case of errors)",
         add_to_package_json=False,
