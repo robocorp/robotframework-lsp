@@ -1,3 +1,6 @@
+from convert import convert_case_to_constant
+
+
 class Command(object):
     def __init__(
         self,
@@ -9,6 +12,7 @@ class Command(object):
         icon=None,
         enablement=None,
         hide_from_command_palette=False,
+        constant="",
     ):
         """
         :param add_to_package_json:
@@ -16,6 +20,9 @@ class Command(object):
         :param server_handled:
             If True this is a command handled in the server (and not in the client) and
             thus will be registered as such.
+        :param constant:
+            If given the internal constant used will be this one (used when a command
+            is renamed and we want to keep compatibility).
         """
         self.name = name
         self.title = title
@@ -25,6 +32,9 @@ class Command(object):
         self.icon = icon
         self.enablement = enablement
         self.hide_from_command_palette = hide_from_command_palette
+        if not constant:
+            constant = convert_case_to_constant(name)
+        self.constant = constant
 
 
 COMMANDS = [
@@ -251,7 +261,7 @@ COMMANDS = [
     # just use the one selected in the robots tree.
     Command(
         "robocorp.newLocatorUI.tree.internal",
-        "Create locator from Robots tree selection",
+        "New locator",
         add_to_package_json=True,
         server_handled=False,
         hide_from_command_palette=True,
@@ -264,6 +274,23 @@ COMMANDS = [
         server_handled=False,
         hide_from_command_palette=True,
         icon="$(clippy)",
+    ),
+    Command(
+        "robocorp.openRobotTreeSelection",
+        "Open robot.yaml",
+        add_to_package_json=True,
+        server_handled=False,
+        hide_from_command_palette=True,
+        icon="$(go-to-file)",
+    ),
+    Command(
+        "robocorp.openLocatorTreeSelection",
+        "Open locators.json",
+        add_to_package_json=True,
+        server_handled=False,
+        hide_from_command_palette=True,
+        icon="$(go-to-file)",
+        constant="ROBOCORP_OPEN_LOCATOR_TREE_SELECTION",
     ),
 ]
 

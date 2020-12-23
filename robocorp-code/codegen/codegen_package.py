@@ -6,32 +6,9 @@ from commands import (
     get_keybindings_for_json,
     COMMANDS,
 )
+from convert import convert_case_to_constant
 from settings import get_settings_for_json, SETTINGS
 import views
-
-
-def convert_case_to_constant(name):
-    import re
-
-    s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
-    return (
-        re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1)
-        .replace(".", "_")
-        .replace("-", "_")
-        .upper()
-    )
-
-
-def convert_case_to_camel(name):
-    import re
-
-    s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
-    return (
-        re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1)
-        .replace(".", "_")
-        .replace("-", "_")
-        .upper()
-    )
 
 
 def get_menus():
@@ -225,7 +202,7 @@ def write_js_commands():
 
     for contributed_command in COMMANDS:
         command_id = contributed_command.name
-        command_name = convert_case_to_constant(command_id)
+        command_name = contributed_command.constant
         command_constants.append(
             'export const %s = "%s";  // %s'
             % (command_name, command_id, contributed_command.title)
@@ -248,7 +225,7 @@ def write_py_commands():
 
     for contributed_command in COMMANDS:
         command_id = contributed_command.name
-        command_name = convert_case_to_constant(command_id)
+        command_name = contributed_command.constant
         command_constants.append(
             '%s = "%s"  # %s' % (command_name, command_id, contributed_command.title)
         )

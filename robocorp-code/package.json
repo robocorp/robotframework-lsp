@@ -57,6 +57,8 @@
         "onCommand:robocorp.newLocatorUI",
         "onCommand:robocorp.newLocatorUI.tree.internal",
         "onCommand:robocorp.copyLocatorToClipboard.internal",
+        "onCommand:robocorp.openRobotTreeSelection",
+        "onCommand:robocorp.openLocatorTreeSelection",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -265,7 +267,7 @@
             },
             {
                 "command": "robocorp.newLocatorUI.tree.internal",
-                "title": "Create locator from Robots tree selection",
+                "title": "New locator",
                 "category": "Robocorp",
                 "icon": "$(plus)"
             },
@@ -274,6 +276,18 @@
                 "title": "Copy locator name to clipboard",
                 "category": "Robocorp",
                 "icon": "$(clippy)"
+            },
+            {
+                "command": "robocorp.openRobotTreeSelection",
+                "title": "Open robot.yaml",
+                "category": "Robocorp",
+                "icon": "$(go-to-file)"
+            },
+            {
+                "command": "robocorp.openLocatorTreeSelection",
+                "title": "Open locators.json",
+                "category": "Robocorp",
+                "icon": "$(go-to-file)"
             }
         ],
         "menus": {
@@ -289,24 +303,42 @@
                     "group": "navigation"
                 },
                 {
+                    "command": "robocorp.openRobotTreeSelection",
+                    "when": "view == robocorp-robots-tree && robocorp-code:single-robot-selected",
+                    "group": "navigation"
+                },
+                {
                     "command": "robocorp.refreshRobotsView",
                     "when": "view == robocorp-robots-tree",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.copyLocatorToClipboard.internal",
+                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.openLocatorTreeSelection",
+                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
                     "group": "navigation"
                 },
                 {
                     "command": "robocorp.newLocatorUI.tree.internal",
                     "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
                     "group": "navigation"
-                },
-                {
-                    "command": "robocorp.copyLocatorToClipboard.internal",
-                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
-                    "group": "navigation"
                 }
             ],
             "view/item/context": [
                 {
+                    "command": "robocorp.openRobotTreeSelection",
+                    "when": "view == robocorp-robots-tree && robocorp-code:single-robot-selected"
+                },
+                {
                     "command": "robocorp.copyLocatorToClipboard.internal",
+                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected"
+                },
+                {
+                    "command": "robocorp.openLocatorTreeSelection",
                     "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected"
                 }
             ],
@@ -317,6 +349,14 @@
                 },
                 {
                     "command": "robocorp.copyLocatorToClipboard.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.openRobotTreeSelection",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.openLocatorTreeSelection",
                     "when": "false"
                 }
             ]

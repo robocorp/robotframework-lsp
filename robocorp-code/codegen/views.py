@@ -56,8 +56,19 @@ TREE_VIEW_CONTAINERS = [
                             MenuGroup.NAVIGATION,
                             "robocorp-code:single-task-selected",
                         ),
+                        Menu(
+                            "robocorp.openRobotTreeSelection",
+                            MenuGroup.NAVIGATION,
+                            "robocorp-code:single-robot-selected",
+                        ),
                         Menu("robocorp.refreshRobotsView", MenuGroup.NAVIGATION),
-                    ]
+                    ],
+                    "view/item/context": [
+                        Menu(
+                            "robocorp.openRobotTreeSelection",
+                            when="robocorp-code:single-robot-selected",
+                        )
+                    ],
                 },
             ),
             TreeView(
@@ -67,12 +78,17 @@ TREE_VIEW_CONTAINERS = [
                 menus={
                     "view/title": [
                         Menu(
-                            "robocorp.newLocatorUI.tree.internal",
+                            "robocorp.copyLocatorToClipboard.internal",
                             MenuGroup.NAVIGATION,
                             "robocorp-code:single-robot-selected",
                         ),
                         Menu(
-                            "robocorp.copyLocatorToClipboard.internal",
+                            "robocorp.openLocatorTreeSelection",
+                            MenuGroup.NAVIGATION,
+                            when="robocorp-code:single-robot-selected",
+                        ),
+                        Menu(
+                            "robocorp.newLocatorUI.tree.internal",
                             MenuGroup.NAVIGATION,
                             "robocorp-code:single-robot-selected",
                         ),
@@ -81,7 +97,11 @@ TREE_VIEW_CONTAINERS = [
                         Menu(
                             "robocorp.copyLocatorToClipboard.internal",
                             when="robocorp-code:single-robot-selected",
-                        )
+                        ),
+                        Menu(
+                            "robocorp.openLocatorTreeSelection",
+                            when="robocorp-code:single-robot-selected",
+                        ),
                     ],
                 },
             ),

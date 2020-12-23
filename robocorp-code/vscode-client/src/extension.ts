@@ -273,6 +273,8 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_NEW_LOCATOR_UI, () => locators.newLocatorUI());
         commands.registerCommand(roboCommands.ROBOCORP_NEW_LOCATOR_UI_TREE_INTERNAL, () => locators.newLocatorUITreeInternal());
         commands.registerCommand(roboCommands.ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL, () => locators.copySelectedToClipboard());
+        commands.registerCommand(roboCommands.ROBOCORP_OPEN_ROBOT_TREE_SELECTION, () => views.openRobotTreeSelection());
+        commands.registerCommand(roboCommands.ROBOCORP_OPEN_LOCATOR_TREE_SELECTION, () => views.openLocatorTreeSelection());
         async function cloudLoginShowConfirmation() {
             let loggedIn = await cloudLogin();
             if (loggedIn) {

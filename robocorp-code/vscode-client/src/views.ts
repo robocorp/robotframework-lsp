@@ -251,6 +251,20 @@ export function getSelectedLocator(noSelectionMessage?: string, moreThanOneSelec
     return getSingleTreeSelection(TREE_VIEW_ROBOCORP_LOCATORS_TREE);
 }
 
+export function openRobotTreeSelection() {
+    let robot: RobotEntry = getSelectedRobot();
+    if (robot) {
+        vscode.window.showTextDocument(robot.uri);
+    }
+}
+
+export function openLocatorTreeSelection() {
+    let locator: LocatorEntry = getSelectedLocator();
+    if (locator) {
+        vscode.window.showTextDocument(vscode.Uri.file(locator.filePath));
+    }
+}
+
 export function runSelectedRobot(noDebug: boolean) {
     let element: RobotEntry = getSelectedRobot(
         "Unable to make launch (Robot task not selected in Robots Tree).",
