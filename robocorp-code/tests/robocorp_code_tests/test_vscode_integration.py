@@ -575,7 +575,7 @@ def test_compute_python_launch_from_robocorp_code_launch(
     }
 
 
-def test_hover_integration(
+def test_hover_browser_integration(
     language_server_initialized: IRobocorpLanguageServerClient, cases: CasesFixture
 ):
     from robocorp_ls_core.workspace import Document
@@ -597,6 +597,50 @@ def test_hover_integration(
         "range": {
             "start": {"line": 2, "character": 56},
             "end": {"line": 2, "character": 56},
+        },
+    }
+
+
+def test_hover_image_integration(
+    language_server_initialized: IRobocorpLanguageServerClient, tmpdir
+):
+    from robocorp_ls_core.workspace import Document
+    from robocorp_code_tests.fixtures import IMAGE_IN_BASE64
+    import base64
+    from robocorp_ls_core import uris
+
+    locators_json = tmpdir.join("locators.json")
+    locators_json.write_text("", "utf-8")
+
+    imgs_dir = tmpdir.join(".images")
+    imgs_dir.mkdir()
+    img1 = imgs_dir.join("img1.png")
+    with img1.open("wb") as stream:
+        stream.write(base64.b64decode(IMAGE_IN_BASE64))
+
+    client = language_server_initialized
+    uri = uris.from_fs_path(str(locators_json))
+    txt = """
+    "Image.Locator.01": {
+        "path": ".images/img1.png",    
+        "source": ".images/img1.png" """
+    doc = Document("", txt)
+    client.open_doc(uri, 1, txt)
+    line, col = doc.get_last_line_col()
+    ret = client.hover(uri, line, col)
+    result = ret["result"]
+    value = result["contents"].pop("value")
+    assert value.startswith("![Screenshot](file://")
+    assert value.endswith("/.images/img1.png)")
+
+    assert ret["result"] == {
+        "contents": {
+            "kind": "markdown",
+            # "value": "![Screenshot](file:///c:/Users/fabio/AppData/Local/Temp/pytest-of-fabio/pytest-5202/test_hover_image_integration0/.images/img1.png)",
+        },
+        "range": {
+            "start": {"line": 3, "character": 37},
+            "end": {"line": 3, "character": 37},
         },
     }
 

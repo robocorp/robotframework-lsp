@@ -1,12 +1,11 @@
 import pytest
 from pathlib import Path
 
-_image_b64 = "iVBORw0KGgoAAAANSUhEUgAAAb8AAAAiCAYAAADPnNdbAAAAAXNSR0IArs4c6QAAAJ1JREFUeJzt1TEBACAMwDDAv+fhAo4mCvp1z8wsAAg5vwMA4DXzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgBzzAyDH/ADIMT8AcswPgJwLXQ0EQMJRx4AAAAAASUVORK5CYII="
-
 
 def test_locators_webdriver_basic():
     from robocorp_code.locators.locator_webdriver import Webdriver
     from robocorp_ls_core.robotframework_log import get_logger
+    from robocorp_code_tests.fixtures import IMAGE_IN_BASE64
 
     w = Webdriver(get_logger=get_logger, headless=True)
     w.start()
@@ -20,7 +19,7 @@ def test_locators_webdriver_basic():
         "strategy": "name",
         "value": "q",
         "source": "https://www.google.com/?gws_rd=ssl",
-        "screenshot": _image_b64,
+        "screenshot": IMAGE_IN_BASE64,
     }
     assert dct["value"] == "q"
     assert dct["strategy"] == "name"
@@ -101,13 +100,14 @@ def test_locators_db_images(tmpdir):
     from robocorp_code.locators_db import LocatorsDB
     import json
     from robocorp_code.locators.locator_protocols import ImageLocatorTypedDict
+    from robocorp_code_tests.fixtures import IMAGE_IN_BASE64
 
     locators_db = LocatorsDB()
     robot_yaml_location = tmpdir.join("robot.yaml")
     locators_db.set_robot_yaml_location(str(robot_yaml_location))
     image_locator: ImageLocatorTypedDict = {
-        "path_b64": _image_b64,
-        "source_b64": _image_b64,
+        "path_b64": IMAGE_IN_BASE64,
+        "source_b64": IMAGE_IN_BASE64,
         "confidence": 80.0,
         "type": "image",
     }

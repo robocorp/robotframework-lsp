@@ -1017,7 +1017,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         """
         When hovering over a png in base64 surrounded by double-quotes... something as:
         "iVBORw0KGgo...rest of png in base 64 contents..."
-        
+
         i.e.: Provide the contents in markdown format to show the actual image from the
         locators.json.
         """
@@ -1027,6 +1027,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         from robocorp_ls_core.lsp import Range
         from robocorp_ls_core.lsp import MarkupKind
         from robocorp_ls_core.lsp import MarkupContent
+        import base64
 
         doc_uri = kwargs["textDocument"]["uri"]
         # Note: 0-based
@@ -1054,6 +1055,23 @@ class RobocorpLanguageServer(PythonLanguageServer):
                     "range": Range((line, col), (line, col)).to_dict(),
                 }
 
+        # Could not find a base-64 img embedded, let's see if we have an element
+        # with a relative path.
+        import re
+
+        p = Path(document.path).parent
+
+        for found in re.findall('"(.+?)"', current_line):
+            if found.endswith(".png"):
+                check = p / found
+                if check.exists():
+                    as_uri = uris.from_fs_path(str(check))
+                    s = f"![Screenshot]({as_uri})"
+                    return {
+                        "contents": MarkupContent(MarkupKind.Markdown, s).to_dict(),
+                        "range": Range((line, col), (line, col)).to_dict(),
+                    }
+
         return None
 
     def _get_line_col(self, name, content_lines):
@@ -1061,7 +1079,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         Note: there are Python libraries that can be used to extract line/col from json information:
         https://pypi.org/project/dirtyjson/
         https://pypi.org/project/json-cfg/ (jsoncfg.node_location(node)).
-        
+
         So, we could use the json parsing with this, but there's some logic in
         the LocatorsDatabase to deal with old formats and we may have to deal with
         old formats too in this case... given that, for now let's just see if we
