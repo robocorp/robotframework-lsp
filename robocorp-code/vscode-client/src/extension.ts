@@ -221,6 +221,37 @@ function registerDebugger(pythonExecutable: string) {
     debug.registerDebugConfigurationProvider('robocorp-code', new RobocorpCodeDebugConfigurationProvider());
 }
 
+async function verifyRobotFrameworkInstalled() {
+    if (!roboConfig.getVerifylsp()) {
+        return;
+    }
+    const ROBOT_EXTENSION_ID = 'robocorp.robotframework-lsp';
+    let found = true;
+    try {
+        let extension = extensions.getExtension(ROBOT_EXTENSION_ID);
+        if (!extension) {
+            found = false;
+        }
+    } catch (error) {
+        found = false;
+    }
+    if (!found) {
+        // It seems it's not installed, install?
+        let install = 'Install';
+        let dontAsk = "Don't ask again";
+        let chosen = await window.showInformationMessage(
+            "It seems that the Robot Framework Language Server extension is not installed to work with .robot Files.",
+            install,
+            dontAsk
+        );
+        if (chosen == install) {
+            commands.executeCommand('workbench.extensions.search', ROBOT_EXTENSION_ID);
+        } else if (chosen == dontAsk) {
+            roboConfig.setVerifylsp(false);
+        }
+    }
+}
+
 
 let langServer: LanguageClient;
 
@@ -287,6 +318,7 @@ export async function activate(context: ExtensionContext) {
         registerDebugger(executableAndEnv.pythonExe);
         context.subscriptions.push(disposable);
 
+
         // i.e.: if we return before it's ready, the language server commands
         // may not be available.
         OUTPUT_CHANNEL.appendLine("Waiting for Robocorp Code (python) language server to finish activating...");
@@ -297,6 +329,8 @@ export async function activate(context: ExtensionContext) {
             // OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
             handleProgressMessage(args)
         });
+
+        verifyRobotFrameworkInstalled();
 
     } finally {
         workspace.onDidChangeConfiguration(event => {

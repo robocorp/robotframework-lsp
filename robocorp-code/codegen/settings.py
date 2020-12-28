@@ -74,6 +74,12 @@ SETTINGS = [
         "Specifies the value for ROBOCORP_HOME (where the conda environments will be downloaded). Must point to a directory without spaces in it.",
         setting_type="string",
     ),
+    Setting(
+        "robocorp.verifyLSP",
+        "true",
+        "Verify if the Robot Framework Language Server is installed?",
+        setting_type="boolean",
+    ),
 ]
 
 

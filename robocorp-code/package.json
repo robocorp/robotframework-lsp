@@ -104,6 +104,11 @@
                     "type": "string",
                     "default": "",
                     "description": "Specifies the value for ROBOCORP_HOME (where the conda environments will be downloaded). Must point to a directory without spaces in it."
+                },
+                "robocorp.verifyLSP": {
+                    "type": "boolean",
+                    "default": "true",
+                    "description": "Verify if the Robot Framework Language Server is installed?"
                 }
             }
         },

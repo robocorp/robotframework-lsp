@@ -7,6 +7,7 @@ ROBOCORP_RCC_LOCATION = "robocorp.rcc.location"
 ROBOCORP_RCC_ENDPOINT = "robocorp.rcc.endpoint"
 ROBOCORP_RCC_CONFIG_LOCATION = "robocorp.rcc.config_location"
 ROBOCORP_HOME = "robocorp.home"
+ROBOCORP_VERIFY_LSP = "robocorp.verifyLSP"
 
 ALL_ROBOCORP_OPTIONS = frozenset(
     (
@@ -17,5 +18,6 @@ ALL_ROBOCORP_OPTIONS = frozenset(
         ROBOCORP_RCC_ENDPOINT,
         ROBOCORP_RCC_CONFIG_LOCATION,
         ROBOCORP_HOME,
+        ROBOCORP_VERIFY_LSP,
     )
 )
