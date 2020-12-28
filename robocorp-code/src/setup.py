@@ -39,7 +39,7 @@ class BinaryDistribution(Distribution):
 
 setup(
     name="robocorp_code",
-    version="0.6.0",
+    version="0.6.1",
     description="Robocorp Code: Visual Studio Code Extension for Software Robot Development",
     long_description=README,
     url="https://github.com/robocorp/robotframework-lsp",

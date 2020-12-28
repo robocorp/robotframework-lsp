@@ -1,3 +1,12 @@
+New in 0.6.1 (2020-12-28)
+-----------------------------
+
+- Improved support for `Image Locators` #220
+    - Command to create a new `Image Locator` available from the Locators tree.
+    - Command to open selected locator from the Locators tree.
+    - When hovering over a `"path"` or `"source"` element in the `locators.json`, a preview is shown.
+- If the Robot Framework Language Server extension is not installed, suggest its installation. #212
+
 New in 0.6.0 (2020-12-21)
 -----------------------------
 
