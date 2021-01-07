@@ -4,7 +4,7 @@ from robocorp_ls_core import timeouts
 from robocorp_ls_core.basic import wait_for_condition
 
 
-@pytest.yield_fixture(autouse=True)
+@pytest.fixture(autouse=True)
 def _enable_debug_msgs():
     original = timeouts._DEBUG
     timeouts._DEBUG = True

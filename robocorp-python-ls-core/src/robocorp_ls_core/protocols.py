@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 import threading
 from typing import (
@@ -526,7 +524,7 @@ class IDocument(Protocol):
     def get_line_count(self) -> int:
         pass
 
-    def apply_change(self, change: TextDocumentContentChangeEvent) -> None:
+    def apply_change(self, change: "TextDocumentContentChangeEvent") -> None:
         pass
 
     def is_source_in_sync(self) -> bool:
