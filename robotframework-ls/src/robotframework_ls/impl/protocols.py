@@ -1,5 +1,15 @@
 import sys
-from typing import TypeVar, Any, Optional, List, Sequence
+from typing import (
+    TypeVar,
+    Any,
+    Optional,
+    List,
+    Sequence,
+    Tuple,
+    Iterable,
+    NamedTuple,
+    Generic,
+)
 from robocorp_ls_core.protocols import (
     Sentinel,
     IMonitor,
@@ -10,7 +20,6 @@ from robocorp_ls_core.protocols import (
 )
 from robocorp_ls_core.constants import NULL
 from collections import namedtuple
-from robotframework_ls.impl.robot_specbuilder import KeywordArg
 
 if sys.version_info[:2] < (3, 8):
 
@@ -22,11 +31,60 @@ else:
     from typing import Protocol
 
 T = TypeVar("T")
+Y = TypeVar("Y", covariant=True)
 
 
-NodeInfo = namedtuple("NodeInfo", "stack, node")
+class INode(Protocol):
+    pass
+
+
+class ILibraryImportNode(INode, Protocol):
+    name: str
+    alias: Optional[str]
+
+
+class NodeInfo(Generic[Y]):
+    stack: tuple
+    node: Y
+
+    __slots__ = ["stack", "node"]
+
+    def __init__(self, stack, node):
+        self.stack = stack
+        self.node = node
+
+
 TokenInfo = namedtuple("TokenInfo", "stack, node, token")
 KeywordUsageInfo = namedtuple("KeywordUsageInfo", "stack, node, token, name")
+
+
+class IKeywordArg(Protocol):
+    @property
+    def arg_name(self) -> str:
+        pass
+
+    @property
+    def is_keyword_arg(self) -> bool:
+        pass
+
+    @property
+    def is_star_arg(self) -> bool:
+        pass
+
+    @property
+    def arg_type(self) -> Optional[str]:
+        pass
+
+    @property
+    def default_value(self) -> Optional[str]:
+        pass
+
+
+class ILibraryDoc(Protocol):
+    filename: str
+    name: str
+    source: str
+    symbols_cache: Optional["ISymbolsCache"]
 
 
 class IRobotDocument(IDocument, Protocol):
@@ -36,11 +94,27 @@ class IRobotDocument(IDocument, Protocol):
     def get_ast(self) -> Any:
         pass
 
-    symbols_cache: Optional[list] = None
+    symbols_cache: Optional["ISymbolsCache"]
+
+
+class ISymbolsCache(Protocol):
+    def get_json_list(self) -> list:
+        pass
+
+    def get_library_info(self) -> Optional[ILibraryDoc]:
+        pass
+
+    def get_doc(self) -> Optional[IRobotDocument]:
+        pass
 
 
 class IRobotWorkspace(IWorkspace, Protocol):
     libspec_manager: Any
+
+    def iter_all_doc_uris_in_workspace(
+        self, extensions: Tuple[str, ...]
+    ) -> Iterable[str]:
+        pass
 
 
 class IKeywordFound(Protocol):
@@ -60,7 +134,7 @@ class IKeywordFound(Protocol):
         pass
 
     @property
-    def keyword_args(self) -> Sequence[KeywordArg]:
+    def keyword_args(self) -> Sequence[IKeywordArg]:
         pass
 
     @property
@@ -143,6 +217,23 @@ class IDefinition(Protocol):
 class IKeywordDefinition(IDefinition, Protocol):
 
     keyword_found: IKeywordFound
+
+
+class IBaseCompletionContext(Protocol):
+    @property
+    def monitor(self) -> Optional[IMonitor]:
+        pass
+
+    @property
+    def workspace(self) -> Optional[IRobotWorkspace]:
+        pass
+
+    @property
+    def config(self) -> Optional[IConfig]:
+        pass
+
+    def check_cancelled(self) -> None:
+        pass
 
 
 class ICompletionContext(Protocol):
@@ -233,4 +324,10 @@ class ICompletionContext(Protocol):
         pass
 
     def get_current_keyword_definition(self) -> Optional[IKeywordDefinition]:
+        pass
+
+    def get_resource_imports_as_docs(self) -> Tuple[IRobotDocument, ...]:
+        pass
+
+    def get_imported_libraries(self) -> Tuple[ILibraryImportNode, ...]:
         pass

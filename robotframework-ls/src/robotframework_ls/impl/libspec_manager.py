@@ -3,9 +3,9 @@ import sys
 from robotframework_ls.constants import NULL
 from robocorp_ls_core.robotframework_log import get_logger
 import threading
-from robotframework_ls.impl.robot_specbuilder import LibraryDoc
 from typing import Optional, Dict
 from robocorp_ls_core.protocols import Sentinel
+from robotframework_ls.impl.protocols import ILibraryDoc
 
 log = get_logger(__name__)
 
@@ -944,7 +944,7 @@ class LibspecManager(object):
 
     def get_library_info(
         self, libname: str, create: bool = True, current_doc_uri: Optional[str] = None
-    ) -> Optional[LibraryDoc]:
+    ) -> Optional[ILibraryDoc]:
         """
         :param libname:
             It may be a library name, a relative path to a .py file or an

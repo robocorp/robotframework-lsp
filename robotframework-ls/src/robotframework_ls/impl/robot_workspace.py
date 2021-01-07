@@ -4,7 +4,7 @@ from robocorp_ls_core.cache import instance_cache
 from robotframework_ls.constants import NULL
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.protocols import IRobotWorkspace, IRobotDocument
-from robocorp_ls_core.protocols import check_implements
+from robocorp_ls_core.protocols import check_implements, IWorkspaceFolder
 
 log = get_logger(__name__)
 
@@ -19,7 +19,7 @@ class RobotWorkspace(Workspace):
         self._generate_ast = generate_ast
 
     @overrides(Workspace.add_folder)
-    def add_folder(self, folder):
+    def add_folder(self, folder: IWorkspaceFolder):
         Workspace.add_folder(self, folder)
         self.libspec_manager.add_workspace_folder(folder.uri)
 

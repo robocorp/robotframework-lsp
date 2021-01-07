@@ -10,7 +10,7 @@ from robotframework_ls.impl.protocols import (
     IKeywordCollector,
 )
 from robotframework_ls.impl.robot_specbuilder import KeywordArg
-from typing import Tuple, Sequence
+from typing import Tuple, Sequence, List, Set
 
 
 log = get_logger(__name__)
@@ -238,7 +238,9 @@ def _collect_completions_from_ast(
             )
 
 
-def _collect_current_doc_keywords(completion_context, collector):
+def _collect_current_doc_keywords(
+    completion_context: ICompletionContext, collector: IKeywordCollector
+):
     """
     :param CompletionContext completion_context:
     """
@@ -251,7 +253,9 @@ def _collect_current_doc_keywords(completion_context, collector):
 _LibInfo = namedtuple("_LibInfo", "name, alias")
 
 
-def _collect_libraries_keywords(completion_context, collector):
+def _collect_libraries_keywords(
+    completion_context: ICompletionContext, collector: IKeywordCollector
+):
     """
     :param CompletionContext completion_context:
     """
@@ -295,16 +299,17 @@ def _collect_libraries_keywords(completion_context, collector):
                     )
 
 
-def _collect_resource_imports_keywords(completion_context, collector):
-    """
-    :param CompletionContext completion_context:
-    """
+def _collect_resource_imports_keywords(
+    completion_context: ICompletionContext, collector: IKeywordCollector
+):
     for resource_doc in completion_context.get_resource_imports_as_docs():
         new_ctx = completion_context.create_copy(resource_doc)
         _collect_following_imports(new_ctx, collector)
 
 
-def _collect_following_imports(completion_context, collector):
+def _collect_following_imports(
+    completion_context: ICompletionContext, collector: IKeywordCollector
+):
     completion_context.check_cancelled()
     if completion_context.memo.follow_import(completion_context.doc.uri):
         # i.e.: prevent collecting keywords for the same doc more than once.
@@ -316,10 +321,30 @@ def _collect_following_imports(completion_context, collector):
         _collect_libraries_keywords(completion_context, collector)
 
 
+class _CollectAllKeywordNames:
+    def __init__(self) -> None:
+        self.all_keyword_names: Set[str] = set()
+
+    def accepts(self, keyword_name: str) -> bool:
+        self.all_keyword_names.add(keyword_name)
+        return False
+
+    def on_keyword(self, keyword_found: IKeywordFound):
+        pass
+
+
+def collect_all_keyword_names(completion_context: ICompletionContext) -> Set[str]:
+    completion_context.memo.clear()
+    collector = _CollectAllKeywordNames()
+    _collect_following_imports(completion_context, collector)
+    return collector.all_keyword_names
+
+
 def collect_keywords(
     completion_context: ICompletionContext, collector: IKeywordCollector
 ):
     """
     Collects all the keywords that are available to the given completion_context.
     """
+    completion_context.memo.clear()
     _collect_following_imports(completion_context, collector)

@@ -20,6 +20,7 @@ import weakref
 from robocorp_ls_core.cache import instance_cache
 from typing import Optional
 from robocorp_ls_core.protocols import Sentinel
+from robotframework_ls.impl.protocols import ISymbolsCache
 
 
 def markdown_doc(obj):
@@ -83,7 +84,7 @@ class LibraryDoc(object):
         self.inits = []
         self.keywords = []
 
-        self.symbols_cache: Optional[list] = None
+        self.symbols_cache: Optional[ISymbolsCache] = None
 
     @property
     @instance_cache

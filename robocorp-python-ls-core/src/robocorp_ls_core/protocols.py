@@ -11,6 +11,7 @@ from typing import (
     List,
     Type,
     Iterator,
+    Iterable,
 )
 from typing import TypeVar
 import typing
@@ -530,12 +531,12 @@ class IWorkspace(Protocol):
     def root_uri(self):
         pass
 
-    def iter_documents(self) -> Iterator[IDocument]:
+    def iter_documents(self) -> Iterable[IDocument]:
         """
         Note: the lock must be obtained when iterating documents.
         """
 
-    def iter_folders(self) -> Iterator[IWorkspaceFolder]:
+    def iter_folders(self) -> Iterable[IWorkspaceFolder]:
         """
         Note: the lock must be obtained when iterating folders.
         """

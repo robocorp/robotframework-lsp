@@ -3,13 +3,14 @@ from robocorp_ls_core.constants import NULL
 from robocorp_ls_core.protocols import IMonitor, Sentinel, IConfig, IDocumentSelection
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.robot_workspace import RobotDocument
-from typing import Optional, Any, List
+from typing import Optional, Any, List, Tuple
 from robotframework_ls.impl.protocols import (
     IRobotDocument,
     ICompletionContext,
     TokenInfo,
     IRobotWorkspace,
     IKeywordDefinition,
+    ILibraryImportNode,
 )
 
 
@@ -18,25 +19,28 @@ log = get_logger(__name__)
 
 class _Memo(object):
     def __init__(self):
+        self.clear()
+
+    def clear(self):
         self._followed_imports_variables = {}
         self._followed_imports = {}
         self._completed_libraries = {}
 
-    def follow_import(self, uri):
+    def follow_import(self, uri: str) -> bool:
         if uri not in self._followed_imports:
             self._followed_imports[uri] = True
             return True
 
         return False
 
-    def follow_import_variables(self, uri):
+    def follow_import_variables(self, uri: str) -> bool:
         if uri not in self._followed_imports_variables:
             self._followed_imports_variables[uri] = True
             return True
 
         return False
 
-    def complete_for_library(self, library_name):
+    def complete_for_library(self, library_name: str) -> bool:
         if library_name not in self._completed_libraries:
             self._completed_libraries[library_name] = True
             return True
@@ -64,6 +68,12 @@ class BaseContext(object):
 
     def check_cancelled(self) -> None:
         self._monitor.check_cancelled()
+
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
+        from robotframework_ls.impl.protocols import IBaseCompletionContext
+
+        _: IBaseCompletionContext = check_implements(self)
 
 
 class CompletionContext(object):
@@ -281,7 +291,7 @@ class CompletionContext(object):
         return ast_utils.find_variable(section, self.sel.line, self.sel.col)
 
     @instance_cache
-    def get_imported_libraries(self):
+    def get_imported_libraries(self) -> Tuple[ILibraryImportNode, ...]:
         from robotframework_ls.impl import ast_utils
 
         ast = self.get_ast()
@@ -373,8 +383,8 @@ class CompletionContext(object):
         return None
 
     @instance_cache
-    def get_resource_imports_as_docs(self):
-        ret = []
+    def get_resource_imports_as_docs(self) -> Tuple[IRobotDocument, ...]:
+        ret: List[IRobotDocument] = []
 
         # Get keywords from resources
         resource_imports = self.get_resource_imports()

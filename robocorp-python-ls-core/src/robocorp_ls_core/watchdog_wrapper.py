@@ -133,7 +133,7 @@ class _Observer(object):
         
         watch = observer.notify_on_extensions_change(
             [PathInfo('a', recursive=True)],
-            ['libspec'], 
+            ['.libspec'], 
             notifier.on_change
         )
         ...

@@ -1,7 +1,7 @@
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Optional, List
+from typing import Optional, List, Set
 from robocorp_ls_core.protocols import IConfig, IMonitor
 from functools import partial
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
@@ -139,6 +139,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         from robotframework_ls.impl import variable_completions
         from robotframework_ls.impl import filesystem_section_completions
         from robotframework_ls.impl import keyword_parameter_completions
+        from robotframework_ls.impl import auto_import_completions
+        from robotframework_ls.impl.collect_keywords import collect_all_keyword_names
+        from robotframework_ls.impl import ast_utils
 
         completion_context = self._create_completion_context(
             doc_uri, line, col, monitor
@@ -151,7 +154,22 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             ret.extend(filesystem_section_completions.complete(completion_context))
 
         if not ret:
-            ret.extend(keyword_completions.complete(completion_context))
+            token_info = completion_context.get_current_token()
+            if token_info is not None:
+                token = ast_utils.get_keyword_name_token(
+                    token_info.node, token_info.token
+                )
+                if token is not None:
+                    imported_keyword_names: Set[str] = collect_all_keyword_names(
+                        completion_context
+                    )
+                    ret.extend(keyword_completions.complete(completion_context))
+                    ret.extend(
+                        auto_import_completions.complete(
+                            completion_context, imported_keyword_names
+                        )
+                    )
+                    return ret
 
         if not ret:
             ret.extend(variable_completions.complete(completion_context))

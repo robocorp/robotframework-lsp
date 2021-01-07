@@ -17,18 +17,223 @@
 # limitations under the License.
 import io
 import os
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Iterable, Tuple, Set
 
-import robocorp_ls_core  # noqa -- for typing.
 from robocorp_ls_core import uris
 from robocorp_ls_core.basic import implements
-from robocorp_ls_core.protocols import IWorkspace, IDocument, IDocumentSelection
+from robocorp_ls_core.protocols import (
+    IWorkspace,
+    IDocument,
+    IDocumentSelection,
+    IWorkspaceFolder,
+)
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.uris import uri_scheme, to_fs_path
 import threading
+from robocorp_ls_core.constants import NULL
+from robocorp_ls_core.lsp import TextDocumentItem, TextDocumentContentChangeEvent
 
 
 log = get_logger(__name__)
+
+
+class _DirInfo(object):
+    def __init__(self, scan_path):
+        self.scan_path = scan_path
+        self.mtime = self._get_mtime()
+        self.directories: Set[str] = set()
+        self.files: Set[str] = set()
+
+        self.extension_to_files: Dict[str, Tuple[str]] = {}
+        self.extensions_tracked: Set[str] = set()
+
+    def _get_mtime(self):
+        try:
+            return os.stat(self.scan_path).st_mtime_ns
+        except:
+            return -1
+
+    def mtime_changed(self) -> Tuple[bool, float]:
+        """
+        Returns whether the mtime changed and the current mtime.
+        """
+        mtime = self._get_mtime()
+
+        if self.mtime != mtime:
+            return True, mtime
+
+        return False, mtime
+
+
+class _VirtualFS(object):
+    def __init__(self, root_folder_path: str):
+        # from robocorp_ls_core.watchdog_wrapper import create_notifier, create_observer
+        # from robocorp_ls_core.watchdog_wrapper import PathInfo
+
+        self.cache_misses = 0
+        self.root_folder_path = root_folder_path
+
+        # Commented out but keeping around approach which'd use filesystem events for
+        # invalidation (in which case we wouldn't rely on the mtime while scanning).
+        # Decided to use the mtime approach for now due to being a bit simpler to
+        # implement and relying on events isn't always 100% guaranteed).
+        # self._observer = create_observer()
+        # self._notifier = create_notifier(callback=self._on_file_change, timeout=0.5)
+        # self._watch = self._observer.notify_on_any_change(
+        #     [PathInfo(root_folder_path, recursive=True)], self._notifier.on_change
+        # )
+        self._lock = threading.Lock()
+        self._dir_to_info: Dict[str, _DirInfo] = {}
+
+    # def _on_file_change(self, src_path):
+    #     is_dir = os.path.isdir(src_path)
+    #     with self._lock:
+    #         # If a directory changed, mark it and its parent as stale, otherwise
+    #         # just mark its parent as stale.
+    #         if is_dir:
+    #             self._dir_to_info.pop(src_path, None)
+    #
+    #         self._dir_to_info.pop(os.path.dirname(src_path), None)
+
+    def obtain_scan_lock(self):
+        """
+        When used with multiple threads, this lock must be updated prior to calling scandir.
+        """
+        return self._lock
+
+    def scandir(self, scan_path: str, directories: Set[str], extensions: Tuple[str]):
+        """
+        :param scan_path:
+            The path to be scanned.
+            
+        :param directories:
+            A set where the directories found in that path will be added to.
+            
+        :param extensions:
+            The extensions which are being searched (i.e.: ('.txt', '.py')).
+        """
+        dir_info = self._dir_to_info.get(scan_path)
+        force_rescan = False
+        if dir_info is not None:
+            if not dir_info.extensions_tracked.issuperset(extensions):
+                force_rescan = True
+            else:
+                changed, _mtime = dir_info.mtime_changed()
+                if changed:
+                    force_rescan = True
+
+        else:
+            force_rescan = True
+
+        if force_rescan:
+            # Create a new one as the old is outdated.
+            dir_info = _DirInfo(scan_path)
+
+        assert dir_info
+
+        dir_info.extensions_tracked.update(extensions)
+
+        if force_rescan:
+            self.cache_misses += 1
+            try:
+                with os.scandir(scan_path) as it:
+                    for entry in it:
+                        if entry.is_dir():
+                            dir_info.directories.add(
+                                os.path.join(scan_path, entry.name)
+                            )
+
+                        elif (
+                            entry.name.endswith(tuple(dir_info.extensions_tracked))
+                            and entry.is_file()
+                        ):
+                            dir_info.files.add(
+                                uris.from_fs_path(os.path.join(scan_path, entry.name))
+                            )
+            except:
+                log.exception("Error scanning dir: %s", scan_path)
+
+        directories.update(dir_info.directories)
+        for f in dir_info.files:
+            if f.endswith(extensions):
+                yield f
+        self._dir_to_info[scan_path] = dir_info
+
+    def dispose(self):
+        with self._lock:
+            self._dir_to_info.clear()
+
+        #  self._watch.stop_tracking()
+        #  self._notifier.dispose()
+        #  self._observer.dispose()
+
+
+class _WorkspaceFolderWithVirtualFS(object):
+    """
+    Walking a big tree may be time consuming, and very wasteful if users have
+    things which the language server doesn't need (for instance, having a
+    node_modules with thousands of unrelated files in the workspace).
+    
+    This class helps in keeping a cache just with the files we care about and
+    invalidating them as needed.
+    """
+
+    def __init__(self, uri, name):
+        self.uri = uri
+        self.name = name
+        self.path = uris.to_fs_path(uri)
+
+        # Created on demand only when needed
+        self._vs: Optional[_VirtualFS] = None
+        self._vs_lock_creation = threading.Lock()
+
+    def _obtain_vs(self):
+        vs = self._vs
+        if vs is not None:
+            return vs
+
+        with self._vs_lock_creation:
+            self._vs = vs = _VirtualFS(self.path)
+
+            # We don't need it anymore
+            self._vs_lock_creation = NULL
+
+        return vs
+
+    def _iter_doc_uris_recursive(
+        self, visited_paths: Set[str], extensions: Tuple[str]
+    ) -> Iterable[str]:
+        """
+        :param visited_paths:
+            A set to be used as a memory for the paths previously visited.
+            Passed as a parameter in case multiple folders are being visited and
+            one's inside the other.
+        
+        :param extensions:
+            The extensions which are being searched (i.e.: ('.txt', '.py')).
+        """
+        # Note: this function is meant to be thread-safe.
+
+        vs = self._obtain_vs()
+        scan_paths = {self.path}
+
+        with vs.obtain_scan_lock():
+
+            while scan_paths:
+                scan_path = scan_paths.pop()
+                if scan_path in visited_paths:
+                    continue
+                visited_paths.add(scan_path)
+
+                yield from vs.scandir(scan_path, scan_paths, extensions)
+
+    def dispose(self):
+        self._vs.dispose()
+
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
+
+        _: IWorkspaceFolder = check_implements(self)
 
 
 class Workspace(object):
@@ -37,7 +242,9 @@ class Workspace(object):
     may read from it.
     """
 
-    def __init__(self, root_uri, workspace_folders=None) -> None:
+    def __init__(
+        self, root_uri: str, workspace_folders: Optional[List[IWorkspaceFolder]] = None
+    ) -> None:
         from robocorp_ls_core.lsp import WorkspaceFolder
 
         self._main_thread = threading.current_thread()
@@ -45,7 +252,7 @@ class Workspace(object):
         self._root_uri = root_uri
         self._root_uri_scheme = uri_scheme(self._root_uri)
         self._root_path = to_fs_path(self._root_uri)
-        self._folders: Dict[str, WorkspaceFolder] = {}
+        self._folders: Dict[str, _WorkspaceFolderWithVirtualFS] = {}
 
         # Contains the docs with files considered open.
         self._docs: Dict[str, IDocument] = {}
@@ -72,28 +279,32 @@ class Workspace(object):
     def _create_document(self, doc_uri, source=None, version=None):
         return Document(doc_uri, source=source, version=version)
 
-    def add_folder(self, folder):
+    def add_folder(self, folder: IWorkspaceFolder):
         """
         :param WorkspaceFolder folder:
         """
         self._check_in_mutate_thread()
-        folders = self._folders.copy()
-        folders[folder.uri] = folder
-        self._folders = folders
+        if folder.uri not in self._folders:
+            folders = self._folders.copy()
+            folder = _WorkspaceFolderWithVirtualFS(folder.uri, folder.name)
+            folders[folder.uri] = folder
+            self._folders = folders
 
-    def remove_folder(self, folder_uri):
+    def remove_folder(self, folder_uri: str):
         self._check_in_mutate_thread()
-        folders = self._folders.copy()
-        folders.pop(folder_uri, None)
-        self._folders = folders
+        if folder_uri in self._folders:
+            folders = self._folders.copy()
+            folder = folders.pop(folder_uri)
+            folder.dispose()
+            self._folders = folders
 
     @implements(IWorkspace.iter_documents)
-    def iter_documents(self):
+    def iter_documents(self) -> Iterable[IDocument]:
         self._check_in_mutate_thread()  # i.e.: we don't really mutate here, but this is not thread safe.
         return self._docs.values()
 
     @implements(IWorkspace.iter_folders)
-    def iter_folders(self):
+    def iter_folders(self) -> Iterable[IWorkspaceFolder]:
         return (
             self._folders.values()
         )  # Ok, thread-safe (folders are always set as a whole)
@@ -139,9 +350,7 @@ class Workspace(object):
         ) and os.path.exists(self._root_path)
 
     @implements(IWorkspace.put_document)
-    def put_document(
-        self, text_document: "robocorp_ls_core.lsp.TextDocumentItem"
-    ) -> IDocument:
+    def put_document(self, text_document: TextDocumentItem) -> IDocument:
         self._check_in_mutate_thread()
         doc_uri = text_document.uri
         doc = self._docs[doc_uri] = self._create_document(
@@ -167,15 +376,13 @@ class Workspace(object):
         return self._root_path
 
     @property
-    def root_uri(self):
+    def root_uri(self) -> str:
         # Thread-safe (only accesses immutable data).
         return self._root_uri
 
-    def update_document(self, text_doc, change):
-        """
-        :param TextDocumentItem text_doc:
-        :param TextDocumentContentChangeEvent change:
-        """
+    def update_document(
+        self, text_doc: TextDocumentItem, change: TextDocumentContentChangeEvent
+    ):
         self._check_in_mutate_thread()
         doc_uri = text_doc["uri"]
         doc = self._docs[doc_uri]
@@ -185,6 +392,19 @@ class Workspace(object):
         new_doc = self._create_document(doc_uri, doc.source, text_doc["version"])
         new_doc.apply_change(change)
         self._docs[doc_uri] = new_doc
+
+    def iter_all_doc_uris_in_workspace(self, extensions: Tuple[str]) -> Iterable[str]:
+        """
+        :param extensions:
+            The extensions which are being searched (i.e.: ('.txt', '.py')).
+        """
+
+        # Folders are set as a whole, so, this is thread safe.
+        # This may be called in a thread.
+        folders = self._folders.values()
+        visited_paths: Set[str] = set()
+        for folder in folders:
+            yield from folder._iter_doc_uris_recursive(visited_paths, extensions)
 
     def __typecheckself__(self) -> None:
         from robocorp_ls_core.protocols import check_implements

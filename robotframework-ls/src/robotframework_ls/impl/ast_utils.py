@@ -1,10 +1,15 @@
 import sys
-from typing import Iterator, Optional, List
+from typing import Iterator, Optional, List, Tuple, Any, Union
 
 import ast as ast_module
 from robocorp_ls_core.lsp import Error
 from robocorp_ls_core.robotframework_log import get_logger
-from robotframework_ls.impl.protocols import TokenInfo, NodeInfo, KeywordUsageInfo
+from robotframework_ls.impl.protocols import (
+    TokenInfo,
+    NodeInfo,
+    KeywordUsageInfo,
+    ILibraryImportNode,
+)
 
 
 log = get_logger(__name__)
@@ -83,10 +88,9 @@ class _PrinterVisitor(ast_module.NodeVisitor):
                     )
                 )
 
-            ret = ast_module.NodeVisitor.generic_visit(self, node)
+            ast_module.NodeVisitor.generic_visit(self, node)
         finally:
             self._level -= 1
-        return ret
 
 
 MAX_ERRORS = 100
@@ -127,7 +131,7 @@ def create_error_from_node(node, msg, tokens=None) -> Error:
         tokens = node.tokens
 
     if not tokens:
-        log.log("No tokens found when visiting %s." % (node.__class__,))
+        log.info("No tokens found when visiting: %s.", node.__class__)
         start = (0, 0)
         end = (0, 0)
     else:
@@ -291,10 +295,9 @@ def _tokenize_variables_even_when_invalid(token, col):
             ]
 
 
-def _iter_nodes_filtered(ast, accept_class, recursive=True):
-    """
-    :rtype: generator(tuple(list,ast_module.AST))
-    """
+def _iter_nodes_filtered(
+    ast, accept_class: Union[Tuple[str, ...], str], recursive=True
+) -> Iterator[Tuple[list, Any]]:
     if not isinstance(accept_class, (list, tuple, set)):
         accept_class = (accept_class,)
     for stack, node in _iter_nodes(ast, recursive=recursive):
@@ -302,7 +305,34 @@ def _iter_nodes_filtered(ast, accept_class, recursive=True):
             yield stack, node
 
 
-def iter_library_imports(ast) -> Iterator[NodeInfo]:
+LIBRARY_IMPORT_CLASSES = ("LibraryImport",)
+RESOURCE_IMPORT_CLASSES = ("ResourceImport",)
+SETTING_SECTION_CLASSES = ("SettingSection",)
+
+
+def iter_nodes(
+    ast, accept_class: Union[Tuple[str, ...], str], recursive=True
+) -> Iterator[NodeInfo]:
+    if not isinstance(accept_class, (list, tuple, set)):
+        accept_class = (accept_class,)
+    for stack, node in _iter_nodes(ast, recursive=recursive):
+        if node.__class__.__name__ in accept_class:
+            yield NodeInfo(tuple(stack), node)
+
+
+def is_library_node_info(node_info: NodeInfo) -> bool:
+    return node_info.node.__class__.__name__ in LIBRARY_IMPORT_CLASSES
+
+
+def is_resource_node_info(node_info: NodeInfo) -> bool:
+    return node_info.node.__class__.__name__ in RESOURCE_IMPORT_CLASSES
+
+
+def is_setting_section_node_info(node_info: NodeInfo) -> bool:
+    return node_info.node.__class__.__name__ in SETTING_SECTION_CLASSES
+
+
+def iter_library_imports(ast) -> Iterator[NodeInfo[ILibraryImportNode]]:
     for stack, node in _iter_nodes_filtered(ast, accept_class="LibraryImport"):
         yield NodeInfo(tuple(stack), node)
 

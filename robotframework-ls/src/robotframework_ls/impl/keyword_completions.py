@@ -40,12 +40,12 @@ class _Collector(object):
             TextEdit,
         )
         from robocorp_ls_core.lsp import MarkupKind
-        from robotframework_ls.impl.robot_specbuilder import KeywordArg
+        from robotframework_ls.impl.protocols import IKeywordArg
 
         label = keyword_found.keyword_name
         text = label
 
-        arg: KeywordArg
+        arg: IKeywordArg
         for i, arg in enumerate(keyword_found.keyword_args):
             if arg.is_keyword_arg or arg.is_star_arg or arg.default_value is not None:
                 continue

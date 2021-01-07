@@ -29,7 +29,7 @@ def instance_cache(func):
     instance.cache_this()
     instance.cache_this.cache_clear(instance)
     
-    # set_lock(intance, lock) can be used to make the cache thread-safe.
+    # set_lock(instance, lock) can be used to make the cache thread-safe.
     # i.e.:
     instance.cache_this.set_lock(instance, lock) 
 
