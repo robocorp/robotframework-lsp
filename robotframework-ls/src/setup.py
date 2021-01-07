@@ -26,7 +26,7 @@ for path in [_thirdparty, _license, _copyright]:
 
 setup(
     name="robotframework-lsp",
-    version="0.6.4",
+    version="0.7.0",
     description="Language Server Protocol implementation for Robot Framework",
     long_description=_readme.read_text(),
     url="https://github.com/robocorp/robotframework-lsp",

@@ -1,3 +1,9 @@
+New in 0.7.0 (2021-01-07)
+-----------------------------
+
+- Code completion for all keywords in the workspace with auto-import of Library or Resource. [#210](https://github.com/robocorp/robotframework-lsp/issues/210)
+- When a space is at the end of a line when requesting a code-completion it's properly recognized as a part of the keyword.
+
 New in 0.6.4 (2020-12-21)
 -----------------------------
 
