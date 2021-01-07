@@ -33,8 +33,8 @@ async function downloadRcc(progress: Progress<{ message?: string; increment?: nu
             relativePath = '/linux32/rcc';
         }
     }
-    const RCC_VERSION = "v7.0.4";
-    const prefix = "https://downloads.code.robocorp.com/rcc/" + RCC_VERSION;
+    const RCC_VERSION = "v7.1.5";
+    const prefix = "https://downloads.robocorp.com/rcc/releases/" + RCC_VERSION;
     const url: string = prefix + relativePath;
 
     // Downloads can go wrong (so, retry a few times before giving up).

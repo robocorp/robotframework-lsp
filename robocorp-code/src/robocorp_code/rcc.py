@@ -56,8 +56,10 @@ def download_rcc(location: str, force: bool = False) -> None:
                     else:
                         relative_path = "/linux32/rcc"
 
-                RCC_VERSION = "v7.0.4"
-                prefix = f"https://downloads.code.robocorp.com/rcc/{RCC_VERSION}"
+                RCC_VERSION = "v7.1.5"
+                prefix = (
+                    f"https://downloads.robocorp.com/rcc/releases/{RCC_VERSION}"
+                )
                 url = prefix + relative_path
 
                 log.info(f"Downloading rcc from: {url} to: {location}.")
