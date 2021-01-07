@@ -202,6 +202,8 @@ def find_token(ast, line, col) -> Optional[TokenInfo]:
             tokens = node.tokens
         except AttributeError:
             continue
+
+        last_token = None
         for token in tokens:
             lineno = token.lineno - 1
             if lineno != line:
@@ -213,9 +215,24 @@ def find_token(ast, line, col) -> Optional[TokenInfo]:
                 # not the separator.
                 if token.col_offset < col < token.end_col_offset:
                     return TokenInfo(tuple(stack), node, token)
+
+            elif token.type == token.EOL:
+                # A trailing whitespace after a keyword should be part of
+                # the keyword, not EOL.
+                if token.col_offset <= col <= token.end_col_offset:
+                    diff = col - token.col_offset
+                    if last_token is not None and not token.value.strip():
+                        eol_contents = token.value[:diff]
+                        if len(eol_contents) <= 1:
+                            token = _append_eol_to_prev_token(last_token, eol_contents)
+
+                    return TokenInfo(tuple(stack), node, token)
+
             else:
                 if token.col_offset <= col <= token.end_col_offset:
                     return TokenInfo(tuple(stack), node, token)
+
+            last_token = token
 
     return None
 
@@ -535,3 +552,17 @@ def _strip_token_bdd_prefix(token):
                 error=token.error,
             )
     return token
+
+
+def _append_eol_to_prev_token(last_token, eol_token_contents):
+    from robot.api import Token
+
+    new_value = last_token.value + eol_token_contents
+
+    return Token(
+        type=last_token.type,
+        value=new_value,
+        lineno=last_token.lineno,
+        col_offset=last_token.col_offset,
+        error=last_token.error,
+    )

@@ -1,15 +1,5 @@
 import sys
-from typing import (
-    TypeVar,
-    Any,
-    Optional,
-    List,
-    Sequence,
-    Tuple,
-    Iterable,
-    NamedTuple,
-    Generic,
-)
+from typing import TypeVar, Any, Optional, List, Sequence, Tuple, Iterable, Generic
 from robocorp_ls_core.protocols import (
     Sentinel,
     IMonitor,

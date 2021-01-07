@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 import threading
 from typing import (
@@ -10,13 +12,18 @@ from typing import (
     Optional,
     List,
     Type,
-    Iterator,
     Iterable,
+    Tuple,
 )
 from typing import TypeVar
 import typing
 
 from enum import Enum
+
+
+if typing.TYPE_CHECKING:
+    # This would lead to a circular import, so, do it only when type-checking.
+    from robocorp_ls_core.lsp import TextDocumentContentChangeEvent
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -508,6 +515,18 @@ class IDocument(Protocol):
         pass
 
     def get_line(self, line: int) -> str:
+        pass
+
+    def get_last_line(self) -> str:
+        pass
+
+    def get_last_line_col(self) -> Tuple[int, int]:
+        pass
+
+    def get_line_count(self) -> int:
+        pass
+
+    def apply_change(self, change: TextDocumentContentChangeEvent) -> None:
         pass
 
     def is_source_in_sync(self) -> bool:

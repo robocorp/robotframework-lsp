@@ -23,6 +23,59 @@ def test_keyword_completions_builtin(workspace, libspec_manager):
     ]
 
 
+def test_keyword_completions_builtin_after_space(workspace, libspec_manager):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robocorp_ls_core.protocols import IDocument
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc: IDocument = workspace.get_doc("case1.robot")
+    doc.source = doc.source + "\n    should be "
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    assert sorted([comp["label"] for comp in completions]) == [
+        "Length Should Be",
+        "Should Be Empty",
+        "Should Be Equal",
+        "Should Be Equal As Integers",
+        "Should Be Equal As Numbers",
+        "Should Be Equal As Strings",
+        "Should Be True",
+    ]
+
+
+def test_keyword_completions_builtin_after_space_before_newline(
+    workspace, libspec_manager
+):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = doc.source + "\n    should be \n"
+
+    line, _col = doc.get_last_line_col()
+    line_contents = doc.get_line(line - 1)
+
+    completions = keyword_completions.complete(
+        CompletionContext(
+            doc, workspace=workspace.ws, line=line - 1, col=len(line_contents)
+        )
+    )
+
+    assert sorted([comp["label"] for comp in completions]) == [
+        "Length Should Be",
+        "Should Be Empty",
+        "Should Be Equal",
+        "Should Be Equal As Integers",
+        "Should Be Equal As Numbers",
+        "Should Be Equal As Strings",
+        "Should Be True",
+    ]
+
+
 def test_keyword_completions_changes_user_library(
     data_regression, workspace, cases, libspec_manager, workspace_dir
 ):

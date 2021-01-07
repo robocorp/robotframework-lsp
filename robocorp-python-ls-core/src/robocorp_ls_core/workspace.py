@@ -560,7 +560,7 @@ class Document(object):
         except IndexError:
             return ""
 
-    def get_last_line(self):
+    def get_last_line(self) -> str:
         try:
             last_line = self._lines[-1]
             if last_line.endswith("\r") or last_line.endswith("\n"):
@@ -569,7 +569,7 @@ class Document(object):
         except IndexError:
             return ""
 
-    def get_last_line_col(self):
+    def get_last_line_col(self) -> Tuple[int, int]:
         lines = self._lines
         if not lines:
             return (0, 0)
@@ -579,11 +579,11 @@ class Document(object):
                 return len(lines), 0
             return len(lines) - 1, len(last_line)
 
-    def get_line_count(self):
+    def get_line_count(self) -> int:
         lines = self._lines
         return len(lines)
 
-    def apply_change(self, change):
+    def apply_change(self, change: TextDocumentContentChangeEvent) -> None:
         """Apply a change to the document."""
         self._check_in_mutate_thread()
         text = change["text"]
