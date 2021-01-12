@@ -5,7 +5,7 @@ import weakref
 
 from robocorp_ls_core.basic import implements, as_str
 from robocorp_ls_core.constants import NULL
-from robocorp_ls_core.protocols import IConfig, IConfigProvider
+from robocorp_ls_core.protocols import IConfig, IConfigProvider, Sentinel
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_code.protocols import IRcc, IRccWorkspace, IRccRobotMetadata, ActionResult
 from pathlib import Path
@@ -57,9 +57,7 @@ def download_rcc(location: str, force: bool = False) -> None:
                         relative_path = "/linux32/rcc"
 
                 RCC_VERSION = "v7.1.5"
-                prefix = (
-                    f"https://downloads.robocorp.com/rcc/releases/{RCC_VERSION}"
-                )
+                prefix = f"https://downloads.robocorp.com/rcc/releases/{RCC_VERSION}"
                 url = prefix + relative_path
 
                 log.info(f"Downloading rcc from: {url} to: {location}.")
@@ -202,6 +200,7 @@ class Rcc(object):
         mutex_name=None,
         cwd: Optional[str] = None,
         log_errors=True,
+        stderr=Sentinel.SENTINEL,
     ) -> ActionResult[str]:
         """
         Returns an ActionResult where the result is the stdout of the executed command.
@@ -213,6 +212,9 @@ class Rcc(object):
         from robocorp_ls_core.basic import build_subprocess_kwargs
         from subprocess import check_output
         from robocorp_ls_core.subprocess_wrapper import subprocess
+
+        if stderr is Sentinel.SENTINEL:
+            stderr = subprocess.PIPE
 
         rcc_location = self.get_rcc_location()
 
@@ -227,7 +229,7 @@ class Rcc(object):
         if robocorp_home:
             env["ROBOCORP_HOME"] = robocorp_home
 
-        kwargs: dict = build_subprocess_kwargs(cwd, env, stderr=subprocess.PIPE)
+        kwargs: dict = build_subprocess_kwargs(cwd, env, stderr=stderr)
         args = [rcc_location] + args + ["--controller", "RobocorpCode"]
         cmdline = " ".join([str(x) for x in args])
 
@@ -543,6 +545,8 @@ class Rcc(object):
     def cloud_create_robot(
         self, workspace_id: str, robot_name: str
     ) -> ActionResult[str]:
+        from robocorp_ls_core.subprocess_wrapper import subprocess
+
         args = ["cloud", "new"]
         args.extend(["--workspace", workspace_id])
         args.extend(["--robot", robot_name])
@@ -552,7 +556,9 @@ class Rcc(object):
         if error_action_result is not None:
             return error_action_result
 
-        ret = self._run_rcc(args, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME)
+        ret = self._run_rcc(
+            args, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME, stderr=subprocess.STDOUT
+        )
         if not ret.success:
             return ret
 
