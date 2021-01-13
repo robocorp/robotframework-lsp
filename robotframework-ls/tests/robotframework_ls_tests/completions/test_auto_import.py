@@ -312,3 +312,47 @@ Resource    ../case1.robot
 User can call library
     case1.KeywordInCase1"""
     )
+
+
+def test_completion_with_auto_handle_unparseable_error(
+    workspace, setup_case2_in_dir_doc, workspace_dir
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import auto_import_completions
+    import os.path
+
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """/invalid/file/here ustehous usneothu snteuha usoentuho"""
+
+    os.makedirs(os.path.join(workspace_dir, "in_dir"), exist_ok=True)
+    with open(os.path.join(workspace_dir, "in_dir", "case3.robot"), "w") as stream:
+        stream.write(
+            """
+*** Keywords ***
+KeywordInCase1
+    In Lib 2"""
+        )
+
+    doc2 = setup_case2_in_dir_doc
+    doc2.source = """
+*** Test Cases ***
+User can call library
+    KeywordInCa"""
+
+    completions = auto_import_completions.complete(
+        CompletionContext(doc2, workspace=workspace.ws), set()
+    )
+
+    assert len(completions) == 1
+
+    apply_completion(doc2, completions[0])
+
+    assert (
+        doc2.source
+        == """*** Settings ***
+Resource    case3.robot
+
+*** Test Cases ***
+User can call library
+    KeywordInCase1"""
+    )

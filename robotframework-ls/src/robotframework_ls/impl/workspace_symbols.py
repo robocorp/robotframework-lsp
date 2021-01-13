@@ -152,9 +152,7 @@ def iter_symbols_caches(
 
         found = set()
         symbols_cache: Optional[ISymbolsCache]
-        for uri in workspace.iter_all_doc_uris_in_workspace(
-            (".robot", ".resource", ".txt")
-        ):
+        for uri in workspace.iter_all_doc_uris_in_workspace((".robot", ".resource")):
             if not uri:
                 continue
 

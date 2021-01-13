@@ -85,19 +85,26 @@ class RobotDocument(Document):
             log.exception("Error getting source for: %s" % (self.uri,))
             source = ""
 
-        t = self.get_type()
-        if t == self.TYPE_TEST_CASE:
-            return get_model(source)
+        try:
+            t = self.get_type()
+            if t == self.TYPE_TEST_CASE:
+                return get_model(source)
 
-        elif t == self.TYPE_RESOURCE:
-            return get_resource_model(source)
+            elif t == self.TYPE_RESOURCE:
+                return get_resource_model(source)
 
-        elif t == self.TYPE_INIT:
-            return get_init_model(source)
+            elif t == self.TYPE_INIT:
+                return get_init_model(source)
 
-        else:
-            log.critical("Unrecognized section: %s", t)
-            return get_model(source)
+            else:
+                log.critical("Unrecognized section: %s", t)
+                return get_model(source)
+        except:
+            log.critical(f"Error parsing {self.uri}")
+            # Note: we always want to return a valid AST here (the
+            # AST itself should have the error).
+            model = get_model(f"*** Unable to parse: {self.uri} ***")
+            return model
 
     def find_line_with_contents(self, contents: str) -> int:
         """

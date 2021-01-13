@@ -72,7 +72,7 @@ def pytest_configure(config):
         os.environ["PYTEST_TIMEOUT"] = "999999"
 
 
-@pytest.yield_fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def check_no_threads():
     yield
     _start_monitoring_threads()
@@ -175,7 +175,7 @@ DEBUG_MEMORY_INFO = False
 _global_collect_info = False
 
 
-@pytest.yield_fixture(autouse=False)
+@pytest.fixture(autouse=False)
 def before_after_each_function(request):
     global _global_collect_info
 

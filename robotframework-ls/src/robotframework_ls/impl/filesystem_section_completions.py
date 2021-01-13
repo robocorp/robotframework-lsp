@@ -1,6 +1,5 @@
 import os.path
 from robocorp_ls_core.robotframework_log import get_logger
-import sys
 
 log = get_logger(__name__)
 
@@ -74,10 +73,10 @@ def _add_completions_from_dir(
 
             use_path = filename
 
-        elif filename not in (u"__pycache__", u".git") and os.path.isdir(
+        elif filename not in ("__pycache__", ".git") and os.path.isdir(
             os.path.join(directory, filename)
         ):
-            use_path = filename + u"/"
+            use_path = filename + "/"
         else:
             continue
 
@@ -101,7 +100,7 @@ def _get_completions(completion_context, token, match_libs, extensions, skip_cur
     value_to_cursor = token.value
     if token.end_col_offset > sel.col:
         value_to_cursor = value_to_cursor[: -(token.end_col_offset - sel.col)]
-    if u"{" in value_to_cursor:
+    if "{" in value_to_cursor:
         value_to_cursor = completion_context.token_value_resolving_variables(
             value_to_cursor
         )
@@ -159,14 +158,14 @@ def _get_resource_completions(completion_context, token):
         completion_context,
         token,
         False,
-        (u".resource", u".robot", u".txt"),
+        (".resource", ".robot", ".txt"),
         skip_current=True,
     )
 
 
 def _get_library_completions(completion_context, token):
     return _get_completions(
-        completion_context, token, True, (u".py",), skip_current=False
+        completion_context, token, True, (".py",), skip_current=False
     )
 
 
