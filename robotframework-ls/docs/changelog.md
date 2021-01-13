@@ -1,3 +1,10 @@
+New in 0.7.1 (2021-01-13)
+-----------------------------
+
+- Support for If/For statements in debugger with the master version of RobotFramework. [#232](https://github.com/robocorp/robotframework-lsp/issues/232)
+- Properly handling case where parsing raised an Exception which could break code-completion and workspace symbols. [#231](https://github.com/robocorp/robotframework-lsp/issues/231)
+
+
 New in 0.7.0 (2021-01-07)
 -----------------------------
 
