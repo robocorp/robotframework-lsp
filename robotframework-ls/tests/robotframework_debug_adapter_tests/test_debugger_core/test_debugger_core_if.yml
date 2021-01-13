@@ -1,0 +1,44 @@
+Stack 0:
+- column: 0
+  line: 18
+  name: IF    ${counter} > 1
+  source:
+    name: case_control_flow_if.robot
+    path: '.../case_control_flow_if.robot'
+- column: 0
+  line: 16
+  name: 'TestCase: Can use resource keywords'
+  source:
+    name: case_control_flow_if.robot
+    path: '.../case_control_flow_if.robot'
+- column: 0
+  line: 1
+  name: 'TestSuite: Case Control Flow If'
+  source:
+    name: case_control_flow_if.robot
+    path: '.../case_control_flow_if.robot'
+Stack 1:
+- column: 0
+  line: 19
+  name: Log
+  source:
+    name: case_control_flow_if.robot
+    path: '.../case_control_flow_if.robot'
+- column: 0
+  line: 18
+  name: IF    ${counter} > 1
+  source:
+    name: case_control_flow_if.robot
+    path: '.../case_control_flow_if.robot'
+- column: 0
+  line: 16
+  name: 'TestCase: Can use resource keywords'
+  source:
+    name: case_control_flow_if.robot
+    path: '.../case_control_flow_if.robot'
+- column: 0
+  line: 1
+  name: 'TestSuite: Case Control Flow If'
+  source:
+    name: case_control_flow_if.robot
+    path: '.../case_control_flow_if.robot'

@@ -8,6 +8,11 @@ from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StackFrame
 from robotframework_debug_adapter.protocols import IBusyWait, IRobotDebugger
 from robotframework_debug_adapter_tests.fixtures import dbg_wait_for
 
+from robot import version
+
+# We don't even support version 2, so, this is ok.
+IS_ROBOT_4_ONWARDS = not version.get_version().startswith("3.")
+
 
 class DummyBusyWait(object):
     def __init__(self, debugger_impl: IRobotDebugger):
@@ -150,6 +155,42 @@ def test_debugger_core_for(debugger_api, robot_thread, data_regression) -> None:
         debugger_impl.step_continue()
 
     dbg_wait_for(lambda: debugger_impl.busy_wait.proceeded == 4)
+
+    data_regression.check(stack_frames_repr(stack_lst))
+    dbg_wait_for(lambda: robot_thread.result_code == 0)
+
+
+@pytest.mark.skipif(
+    not IS_ROBOT_4_ONWARDS, reason="If statement only available in RF 4 onwards."
+)
+def test_debugger_core_if(debugger_api, robot_thread, data_regression) -> None:
+    from robotframework_debug_adapter.debugger_impl import install_robot_debugger
+    from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
+
+    from robotframework_debug_adapter.constants import MAIN_THREAD_ID
+
+    debugger_impl = install_robot_debugger()
+    target = debugger_api.get_dap_case_file(
+        "case_control_flow/case_control_flow_if.robot"
+    )
+    line = debugger_api.get_line_index_with_content("Break 1", target)
+    debugger_impl.set_breakpoints(target, RobotBreakpoint(line))
+
+    robot_thread.run_target(target)
+
+    stack_lst: List[Optional[List[StackFrame]]] = []
+
+    try:
+        dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 1)
+        stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
+        debugger_impl.step_in()
+
+        dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 2)
+        stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
+    finally:
+        debugger_impl.step_continue()
+
+    dbg_wait_for(lambda: debugger_impl.busy_wait.proceeded == 2)
 
     data_regression.check(stack_frames_repr(stack_lst))
     dbg_wait_for(lambda: robot_thread.result_code == 0)

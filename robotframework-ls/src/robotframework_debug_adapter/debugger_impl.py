@@ -707,8 +707,20 @@ class _RobotDebuggerImpl(object):
 
     # ------------------------------------------------- RobotFramework listeners
 
+    def before_control_flow_stmt(self, control_flow_stmt, ctx, *args, **kwargs):
+        self._before_run_step(ctx, control_flow_stmt)
+
+    def after_control_flow_stmt(self, control_flow_stmt, ctx, *args, **kwargs):
+        self._after_run_step()
+
     def before_run_step(self, step_runner, step, name=None):
         ctx = step_runner._context
+        self._before_run_step(ctx, step)
+
+    def after_run_step(self, step_runner, step, name=None):
+        self._after_run_step()
+
+    def _before_run_step(self, ctx, step):
         self._stack_ctx_entries_deque.append(_StepEntry(ctx.variables.current, step))
         if self._skip_breakpoints:
             return
@@ -741,7 +753,7 @@ class _RobotDebuggerImpl(object):
         if stop_reason is not None:
             self.wait_suspended(stop_reason)
 
-    def after_run_step(self, step_runner, step, name=None):
+    def _after_run_step(self):
         self._stack_ctx_entries_deque.pop()
 
     def start_suite(self, data, result):
@@ -812,6 +824,35 @@ def install_robot_debugger() -> IRobotDebugger:
         DebugListener.on_end_test.register(impl.end_test)
 
         _patch(StepRunner, impl, "run_step", impl.before_run_step, impl.after_run_step)
+
+        try:
+            from robot.running.model import For  # type: ignore
+
+            _patch(
+                For,
+                impl,
+                "run",
+                impl.before_control_flow_stmt,
+                impl.after_control_flow_stmt,
+            )
+        except:
+            # This may not be the same on older versions...
+            pass
+
+        try:
+            from robot.running.model import If  # type: ignore
+
+            _patch(
+                If,
+                impl,
+                "run",
+                impl.before_control_flow_stmt,
+                impl.after_control_flow_stmt,
+            )
+        except:
+            # This may not be the same on older versions...
+            pass
+
         set_global_robot_debugger(impl)
     else:
         impl.reset()
