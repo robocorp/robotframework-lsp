@@ -52,6 +52,8 @@ function getRobotLabel(robotInfo: LocalRobotMetadataInfo): string {
     return label;
 }
 
+let _globalSentMetric: boolean = false;
+
 export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntry> {
 
     private _onDidChangeTreeData: vscode.EventEmitter<RobotEntry | null> = new vscode.EventEmitter<RobotEntry | null>();
@@ -89,6 +91,13 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                     'type': RobotEntryType.Task,
                 }
             ));
+        }
+
+        if (!_globalSentMetric) {
+            _globalSentMetric = true;
+            vscode.commands.executeCommand(roboCommands.ROBOCORP_SEND_METRIC, {
+                'name': 'vscode.treeview.used', 'value': '1'
+            });
         }
 
         // Get root elements.

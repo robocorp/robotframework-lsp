@@ -59,6 +59,7 @@
         "onCommand:robocorp.copyLocatorToClipboard.internal",
         "onCommand:robocorp.openRobotTreeSelection",
         "onCommand:robocorp.openLocatorTreeSelection",
+        "onCommand:robocorp.sendMetric",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",

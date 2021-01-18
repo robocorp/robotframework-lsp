@@ -40,3 +40,4 @@ export const ROBOCORP_NEW_LOCATOR_UI_TREE_INTERNAL = "robocorp.newLocatorUI.tree
 export const ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL = "robocorp.copyLocatorToClipboard.internal";  // Copy locator name to clipboard
 export const ROBOCORP_OPEN_ROBOT_TREE_SELECTION = "robocorp.openRobotTreeSelection";  // Open robot.yaml
 export const ROBOCORP_OPEN_LOCATOR_TREE_SELECTION = "robocorp.openLocatorTreeSelection";  // Open locators.json
+export const ROBOCORP_SEND_METRIC = "robocorp.sendMetric";  // Send metric

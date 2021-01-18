@@ -689,3 +689,20 @@ def test_obtain_locator_info(
             new_item[key] = val
         new_res.append(new_item)
     data_regression.check(new_res)
+
+
+def test_metric(language_server_initialized: IRobocorpLanguageServerClient) -> None:
+
+    from robocorp_code import commands
+
+    language_server = language_server_initialized
+
+    result = language_server.execute_command(
+        commands.ROBOCORP_SEND_METRIC, [{"value": "foo"}]
+    )["result"]
+    assert not result["success"]
+
+    result = language_server.execute_command(
+        commands.ROBOCORP_SEND_METRIC, [{"name": "bar", "value": "foo"}]
+    )["result"]
+    assert result["success"]

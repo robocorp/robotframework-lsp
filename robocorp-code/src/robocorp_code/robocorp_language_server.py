@@ -388,6 +388,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         from robocorp_code import __version__
 
         self._feedback_metric("vscode.started", __version__)
+        self._feedback_metric("vscode.started.os", sys.platform)
         return ret
 
     def _feedback_metric(self, name, value="+1"):
@@ -984,6 +985,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
     def _create_locator_fom_browser_pick(
         self, params: dict = None
     ) -> "Future[ActionResultDict]":
+        self._feedback_metric("vscode.locator.created", "browser")
         return self._locators_in_thread_api.create_locator_from_browser_pick()
 
     @command_dispatcher(
@@ -1009,9 +1011,24 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 "result": None,
             }
 
+        self._feedback_metric("vscode.locator.created", "image")
         return self._locators_in_thread_api.create_locator_from_screenshot_pick(
             robot_yaml
         )
+
+    @command_dispatcher(commands.ROBOCORP_SEND_METRIC)
+    def _send_metric(self, params: dict) -> ActionResultDict:
+        name = params.get("name")
+        value = params.get("value")
+        if name is None or value is None:
+            return {
+                "success": False,
+                "message": f"Expected name and value. Received name: {name!r} value: {value!r}",
+                "result": None,
+            }
+
+        self._feedback_metric(name, value)
+        return {"success": True, "message": None, "result": None}
 
     def m_text_document__hover(self, **kwargs):
         """
@@ -1027,7 +1044,6 @@ class RobocorpLanguageServer(PythonLanguageServer):
         from robocorp_ls_core.lsp import Range
         from robocorp_ls_core.lsp import MarkupKind
         from robocorp_ls_core.lsp import MarkupContent
-        import base64
 
         doc_uri = kwargs["textDocument"]["uri"]
         # Note: 0-based

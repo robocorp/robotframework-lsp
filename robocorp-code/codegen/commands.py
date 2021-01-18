@@ -292,6 +292,12 @@ COMMANDS = [
         icon="$(go-to-file)",
         constant="ROBOCORP_OPEN_LOCATOR_TREE_SELECTION",
     ),
+    Command(
+        "robocorp.sendMetric",
+        "Send metric",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
 ]
 
 

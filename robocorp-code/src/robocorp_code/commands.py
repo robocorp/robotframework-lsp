@@ -40,6 +40,7 @@ ROBOCORP_NEW_LOCATOR_UI_TREE_INTERNAL = "robocorp.newLocatorUI.tree.internal"  #
 ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL = "robocorp.copyLocatorToClipboard.internal"  # Copy locator name to clipboard
 ROBOCORP_OPEN_ROBOT_TREE_SELECTION = "robocorp.openRobotTreeSelection"  # Open robot.yaml
 ROBOCORP_OPEN_LOCATOR_TREE_SELECTION = "robocorp.openLocatorTreeSelection"  # Open locators.json
+ROBOCORP_SEND_METRIC = "robocorp.sendMetric"  # Send metric
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,
@@ -62,4 +63,5 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK_INTERNAL,
     ROBOCORP_STOP_BROWSER_LOCATOR,
     ROBOCORP_GET_LOCATORS_JSON_INFO,
+    ROBOCORP_SEND_METRIC,
 ]
