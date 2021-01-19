@@ -232,7 +232,9 @@ def test_cloud_list_workspaces_sorting(
     rcc_patch.apply()
 
     result = client.cloud_list_workspaces()
-    assert result["success"]
+    assert result[
+        "success"
+    ], f'Expected the cloud to list workspaces. Error: {result["message"]}'
     ws_info = result["result"]
     assert ws_info
 
@@ -444,13 +446,9 @@ def test_logout_cloud(
     client.DEFAULT_TIMEOUT = 10  # The cloud may be slow.
 
     def mock_run_rcc(self, args, *sargs, **kwargs):
-        if args[:5] == [
-            "config",
-            "credentials",
-            "--account",
-            "--robocorp-code",
-            "--delete",
-        ]:
+        from robocorp_code.rcc import ACCOUNT_NAME
+
+        if args[:5] == ["config", "credentials", "--account", ACCOUNT_NAME, "--delete"]:
             return ActionResult(success=True, message=None, result="OK.\n")
 
         raise AssertionError(f"Unexpected args: {args}")

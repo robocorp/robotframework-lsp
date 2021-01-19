@@ -36,13 +36,15 @@ def test_cloud_list_workspaces_cache_invalidate(
     )
 
     rcc = language_server._rcc
-    rcc._last_verified_account_info = AccountInfo("default account", "123")
+    rcc._last_verified_account_info = AccountInfo("default account", "123", "", "")
 
     assert language_server._cloud_list_workspaces({"refresh": False})["success"]
     rcc_patch.disallow_calls()
     assert language_server._cloud_list_workspaces({"refresh": False})["success"]
 
-    rcc.last_verified_account_info.account = AccountInfo("another account", "123")
+    rcc.last_verified_account_info.account = AccountInfo(
+        "another account", "123", "", ""
+    )
 
     # As account changed, the data should be fetched (as we can't due to the patching
     # the error is expected).

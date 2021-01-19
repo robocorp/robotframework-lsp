@@ -178,6 +178,7 @@ class RccPatch(object):
     def mock_run_rcc_default(self, args, *sargs, **kwargs) -> ActionResult:
         import json
         import copy
+        from robocorp_code.rcc import ACCOUNT_NAME
 
         if self.custom_handler is not None:
             ret = self.custom_handler(args, *sargs, **kwargs)
@@ -228,7 +229,7 @@ class RccPatch(object):
                 result=json.dumps(
                     [
                         {
-                            "account": "robocorp-code",
+                            "account": ACCOUNT_NAME,
                             "identifier": "001",
                             "endpoint": "https://endpoint.foo.bar",
                             "secret": "123...",

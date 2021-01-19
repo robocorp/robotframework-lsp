@@ -9,7 +9,7 @@ class Command(object):
         add_to_package_json=True,
         keybinding="",
         server_handled=True,
-        icon=None,
+        icon=None,  # https://microsoft.github.io/vscode-codicons/dist/codicon.html
         enablement=None,
         hide_from_command_palette=False,
         constant="",
@@ -92,10 +92,17 @@ COMMANDS = [
         server_handled=True,
     ),
     Command(
+        "robocorp.getLinkedAccountInfo.internal",
+        "Provides information related to the current linked account",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
+    Command(
         "robocorp.cloudLogin",
         "Link to Robocorp Cloud",
         add_to_package_json=True,
         server_handled=False,
+        icon="$(link)",
     ),
     Command(
         "robocorp.cloudLogin.internal",
@@ -188,6 +195,7 @@ COMMANDS = [
         "Unlink and remove credentials from Robocorp Cloud",
         add_to_package_json=True,
         server_handled=False,
+        icon="$(circle-slash)",
     ),
     Command(
         "robocorp.cloudLogout.internal",
@@ -198,6 +206,13 @@ COMMANDS = [
     Command(
         "robocorp.refreshRobotsView",
         "Refresh Robots view",
+        add_to_package_json=True,
+        server_handled=False,
+        icon={"light": "images/light/refresh.svg", "dark": "images/dark/refresh.svg"},
+    ),
+    Command(
+        "robocorp.refreshCloudView",
+        "Refresh Cloud view",
         add_to_package_json=True,
         server_handled=False,
         icon={"light": "images/light/refresh.svg", "dark": "images/dark/refresh.svg"},
@@ -282,6 +297,14 @@ COMMANDS = [
         server_handled=False,
         hide_from_command_palette=True,
         icon="$(go-to-file)",
+    ),
+    Command(
+        "robocorp.cloudUploadRobotTreeSelection",
+        "Upload Robot to Robocorp Cloud",
+        add_to_package_json=True,
+        server_handled=False,
+        hide_from_command_palette=True,
+        icon="$(cloud-upload)",
     ),
     Command(
         "robocorp.openLocatorTreeSelection",

@@ -1,9 +1,9 @@
-import { TREE_VIEW_ROBOCORP_LOCATORS_TREE, TREE_VIEW_ROBOCORP_ROBOTS_TREE } from './robocorpViews';
+import { TREE_VIEW_ROBOCORP_CLOUD_TREE, TREE_VIEW_ROBOCORP_LOCATORS_TREE, TREE_VIEW_ROBOCORP_ROBOTS_TREE } from './robocorpViews';
 import * as vscode from 'vscode';
 import * as roboCommands from './robocorpCommands';
 import { ExtensionContext } from 'vscode';
 import { OUTPUT_CHANNEL } from './channel';
-import { runRobotRCC } from './activities';
+import { runRobotRCC, uploadRobot } from './activities';
 
 
 /**
@@ -20,6 +20,13 @@ export interface LocatorEntry {
 enum RobotEntryType {
     Robot,
     Task
+}
+
+interface CloudEntry {
+    label: string;
+    iconPath?: string;
+    command?: vscode.Command;
+    children?: CloudEntry[];
 }
 
 interface RobotEntry {
@@ -53,6 +60,76 @@ function getRobotLabel(robotInfo: LocalRobotMetadataInfo): string {
 }
 
 let _globalSentMetric: boolean = false;
+
+
+export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry> {
+    private _onDidChangeTreeData: vscode.EventEmitter<CloudEntry | null> = new vscode.EventEmitter<CloudEntry | null>();
+    readonly onDidChangeTreeData: vscode.Event<CloudEntry | null> = this._onDidChangeTreeData.event;
+
+    public refreshOnce = false;
+
+    fireRootChange() {
+        this._onDidChangeTreeData.fire(null);
+    }
+
+    async getChildren(element?: CloudEntry): Promise<CloudEntry[]> {
+        if (!element) {
+            let accountInfoResult: ActionResult = await vscode.commands.executeCommand(roboCommands.ROBOCORP_GET_LINKED_ACCOUNT_INFO_INTERNAL);
+            if (!accountInfoResult.success) {
+                return [{
+                    'label': 'Account not linked. Click to link account.',
+                    'iconPath': 'link',
+                    'command': {
+                        'title': 'Link to Robocorp Cloud',
+                        'command': roboCommands.ROBOCORP_CLOUD_LOGIN,
+                    }
+                }];
+            }
+            let accountInfo = accountInfoResult.result;
+            let ret: CloudEntry[] = [{
+                'label': 'Account: ' + accountInfo['fullname'] + ' (' + accountInfo['email'] + ')',
+            }];
+
+
+            let refresh: boolean = this.refreshOnce;
+            this.refreshOnce = false;
+            let actionResult: ListWorkspacesActionResult = await vscode.commands.executeCommand(
+                roboCommands.ROBOCORP_CLOUD_LIST_WORKSPACES_INTERNAL, { 'refresh': refresh }
+            );
+            if (actionResult.success) {
+                let workspaceInfo: WorkspaceInfo[] = actionResult.result;
+                for (let i = 0; i < workspaceInfo.length; i++) {
+                    const element = workspaceInfo[i];
+                    let children: CloudEntry[] = [];
+
+                    let packages: PackageInfo[] = element.packages;
+                    for (let j = 0; j < packages.length; j++) {
+                        const p = packages[j];
+                        children.push({ 'label': p.name });
+                    }
+
+                    ret.push({
+                        'label': element.workspaceName,
+                        'children': children
+                    });
+                }
+            }
+
+            return ret;
+        }
+        if (element.children) {
+            return element.children;
+        }
+        return [];
+    }
+
+    getTreeItem(element: CloudEntry): vscode.TreeItem {
+        const treeItem = new vscode.TreeItem(element.label, element.children ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
+        treeItem.command = element.command;
+        treeItem.iconPath = new vscode.ThemeIcon(element.iconPath);
+        return treeItem;
+    }
+}
 
 export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntry> {
 
@@ -218,6 +295,14 @@ export class LocatorsTreeDataProvider implements vscode.TreeDataProvider<Locator
 let treeViewIdToTreeView: Map<string, vscode.TreeView<any>> = new Map();
 let treeViewIdToTreeDataProvider: Map<string, vscode.TreeDataProvider<any>> = new Map();
 
+export function refreshCloudTreeView() {
+    let dataProvider: CloudTreeDataProvider = <CloudTreeDataProvider>treeViewIdToTreeDataProvider.get(TREE_VIEW_ROBOCORP_CLOUD_TREE);
+    if (dataProvider) {
+        dataProvider.refreshOnce = true;
+        dataProvider.fireRootChange();
+    }
+}
+
 export function refreshTreeView(treeViewId: string) {
     let dataProvider: RobotsTreeDataProvider = <RobotsTreeDataProvider>treeViewIdToTreeDataProvider.get(treeViewId);
     if (dataProvider) {
@@ -267,6 +352,13 @@ export function openRobotTreeSelection() {
     }
 }
 
+export function cloudUploadRobotTreeSelection() {
+    let robot: RobotEntry = getSelectedRobot();
+    if (robot) {
+        uploadRobot(robot.robot);
+    }
+}
+
 export function openLocatorTreeSelection() {
     let locator: LocatorEntry = getSelectedLocator();
     if (locator) {
@@ -297,6 +389,11 @@ const debounce = (func, wait) => {
 };
 
 export function registerViews(context: ExtensionContext) {
+    let cloudTreeDataProvider = new CloudTreeDataProvider();
+    let cloudTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_CLOUD_TREE, { 'treeDataProvider': cloudTreeDataProvider });
+    treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_CLOUD_TREE, cloudTree);
+    treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_CLOUD_TREE, cloudTreeDataProvider);
+
     let treeDataProvider = new RobotsTreeDataProvider();
     let robotsTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE, { 'treeDataProvider': treeDataProvider });
     treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_ROBOTS_TREE, robotsTree);

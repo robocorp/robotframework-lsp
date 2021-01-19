@@ -296,6 +296,7 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_DEBUG_ROBOT_RCC, () => askAndRunRobotRCC(false));
         commands.registerCommand(roboCommands.ROBOCORP_SET_PYTHON_INTERPRETER, () => setPythonInterpreterFromRobotYaml());
         commands.registerCommand(roboCommands.ROBOCORP_REFRESH_ROBOTS_VIEW, () => views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE));
+        commands.registerCommand(roboCommands.ROBOCORP_REFRESH_CLOUD_VIEW, () => views.refreshCloudTreeView());
         commands.registerCommand(roboCommands.ROBOCORP_ROBOTS_VIEW_TASK_RUN, () => views.runSelectedRobot(true));
         commands.registerCommand(roboCommands.ROBOCORP_ROBOTS_VIEW_TASK_DEBUG, () => views.runSelectedRobot(false));
         commands.registerCommand(roboCommands.ROBOCORP_START_BROWSER_LOCATOR, () => locators.startBrowserLocator());
@@ -305,6 +306,7 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_NEW_LOCATOR_UI_TREE_INTERNAL, () => locators.newLocatorUITreeInternal());
         commands.registerCommand(roboCommands.ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL, () => locators.copySelectedToClipboard());
         commands.registerCommand(roboCommands.ROBOCORP_OPEN_ROBOT_TREE_SELECTION, () => views.openRobotTreeSelection());
+        commands.registerCommand(roboCommands.ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION, () => views.cloudUploadRobotTreeSelection());
         commands.registerCommand(roboCommands.ROBOCORP_OPEN_LOCATOR_TREE_SELECTION, () => views.openLocatorTreeSelection());
         async function cloudLoginShowConfirmation() {
             let loggedIn = await cloudLogin();
@@ -328,6 +330,9 @@ export async function activate(context: ExtensionContext) {
         langServer.onNotification("$/customProgress", (args: ProgressReport) => {
             // OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
             handleProgressMessage(args)
+        });
+        langServer.onNotification("$/linkedAccountChanged", () => {
+            views.refreshCloudTreeView();
         });
 
         verifyRobotFrameworkInstalled();

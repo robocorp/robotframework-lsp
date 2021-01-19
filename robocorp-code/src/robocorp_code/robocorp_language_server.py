@@ -482,6 +482,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
             self._endpoint, "Adding cloud credentials", self._dir_cache
         ):
             result = self._rcc.add_credentials(credentials)
+            self._endpoint.notify("$/linkedAccountChanged")
             if not result.success:
                 return result.as_dict()
 
@@ -500,7 +501,9 @@ class RobocorpLanguageServer(PythonLanguageServer):
         with progress_context(
             self._endpoint, "Removing cloud credentials", self._dir_cache
         ):
-            return self._rcc.remove_current_credentials().as_dict()
+            ret = self._rcc.remove_current_credentials().as_dict()
+            self._endpoint.notify("$/linkedAccountChanged")
+            return ret
 
     @command_dispatcher(commands.ROBOCORP_SAVE_IN_DISK_LRU)
     def _save_in_disk_lru(self, params: dict) -> ActionResultDict:
@@ -559,6 +562,30 @@ class RobocorpLanguageServer(PythonLanguageServer):
                     key = (ws_id, pack_id)
                     ws_id_and_pack_id_to_lru_index[key] = i
         return ws_id_and_pack_id_to_lru_index
+
+    @command_dispatcher(commands.ROBOCORP_GET_LINKED_ACCOUNT_INFO_INTERNAL)
+    def _get_linked_account_info(self, params=None) -> ActionResultDict:
+        from robocorp_code.rcc import AccountInfo
+
+        curr_account_info: Optional[AccountInfo] = self._rcc.last_verified_account_info
+        if curr_account_info is None:
+            curr_account_info = self._rcc.get_valid_account_info()
+            if curr_account_info is None:
+                return {
+                    "success": False,
+                    "message": "Unable to get account info (no linked account).",
+                    "result": None,
+                }
+        return {
+            "success": True,
+            "message": None,
+            "result": {
+                "account": curr_account_info.account,
+                "identifier": curr_account_info.identifier,
+                "email": curr_account_info.email,
+                "fullname": curr_account_info.fullname,
+            },
+        }
 
     @command_dispatcher(commands.ROBOCORP_CLOUD_LIST_WORKSPACES_INTERNAL)
     def _cloud_list_workspaces(

@@ -3,3 +3,4 @@
 export const TREE_VIEW_CONTAINER_ROBOCORP_ROBOTS = "robocorp-robots";  // Robocorp Code
 export const TREE_VIEW_ROBOCORP_ROBOTS_TREE = "robocorp-robots-tree";  // Robocorp Code
 export const TREE_VIEW_ROBOCORP_LOCATORS_TREE = "robocorp-locators-tree";  // Robocorp Code
+export const TREE_VIEW_ROBOCORP_CLOUD_TREE = "robocorp-cloud-tree";  // Robocorp Code

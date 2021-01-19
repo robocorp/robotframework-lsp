@@ -1,5 +1,6 @@
 import enum
 from typing import Optional
+from robocorp_code.commands import ROBOCORP_CLOUD_LOGIN, ROBOCORP_CLOUD_LOGOUT
 
 
 class TreeView:
@@ -61,13 +62,22 @@ TREE_VIEW_CONTAINERS = [
                             MenuGroup.NAVIGATION,
                             "robocorp-code:single-robot-selected",
                         ),
+                        Menu(
+                            "robocorp.cloudUploadRobotTreeSelection",
+                            MenuGroup.NAVIGATION,
+                            "robocorp-code:single-robot-selected",
+                        ),
                         Menu("robocorp.refreshRobotsView", MenuGroup.NAVIGATION),
                     ],
                     "view/item/context": [
                         Menu(
                             "robocorp.openRobotTreeSelection",
                             when="robocorp-code:single-robot-selected",
-                        )
+                        ),
+                        Menu(
+                            "robocorp.cloudUploadRobotTreeSelection",
+                            when="robocorp-code:single-robot-selected",
+                        ),
                     ],
                 },
             ),
@@ -103,6 +113,18 @@ TREE_VIEW_CONTAINERS = [
                             when="robocorp-code:single-robot-selected",
                         ),
                     ],
+                },
+            ),
+            TreeView(
+                id="robocorp-cloud-tree",
+                name="Robocorp Cloud",
+                contextual_title="Robocorp Cloud",
+                menus={
+                    "view/title": [
+                        Menu(ROBOCORP_CLOUD_LOGIN, MenuGroup.NAVIGATION),
+                        Menu(ROBOCORP_CLOUD_LOGOUT, MenuGroup.NAVIGATION),
+                        Menu("robocorp.refreshCloudView", MenuGroup.NAVIGATION),
+                    ]
                 },
             ),
         ],

@@ -192,8 +192,7 @@ export async function setPythonInterpreterFromRobotYaml() {
 }
 
 
-export async function uploadRobot() {
-
+export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
     // Start this in parallel while we ask the user for info.
     let isLoginNeededPromise: Thenable<ActionResult> = commands.executeCommand(
         roboCommands.ROBOCORP_IS_LOGIN_NEEDED_INTERNAL,
@@ -230,9 +229,11 @@ export async function uploadRobot() {
         }
     }
 
-    let robot: LocalRobotMetadataInfo = await askRobotSelection(robotsInfo, 'Please select the Robot to upload to the Cloud.');
     if (!robot) {
-        return;
+        robot = await askRobotSelection(robotsInfo, 'Please select the Robot to upload to the Cloud.');
+        if (!robot) {
+            return;
+        }
     }
 
     let refresh = false;

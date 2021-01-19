@@ -28,6 +28,7 @@
         "onCommand:robocorp.uploadRobotToCloud",
         "onCommand:robocorp.localListRobots.internal",
         "onCommand:robocorp.isLoginNeeded.internal",
+        "onCommand:robocorp.getLinkedAccountInfo.internal",
         "onCommand:robocorp.cloudLogin",
         "onCommand:robocorp.cloudLogin.internal",
         "onCommand:robocorp.cloudListWorkspaces.internal",
@@ -46,6 +47,7 @@
         "onCommand:robocorp.cloudLogout",
         "onCommand:robocorp.cloudLogout.internal",
         "onCommand:robocorp.refreshRobotsView",
+        "onCommand:robocorp.refreshCloudView",
         "onCommand:robocorp.startBrowserLocator",
         "onCommand:robocorp.startBrowserLocator.internal",
         "onCommand:robocorp.createLocatorFromBrowserPick",
@@ -58,12 +60,14 @@
         "onCommand:robocorp.newLocatorUI.tree.internal",
         "onCommand:robocorp.copyLocatorToClipboard.internal",
         "onCommand:robocorp.openRobotTreeSelection",
+        "onCommand:robocorp.cloudUploadRobotTreeSelection",
         "onCommand:robocorp.openLocatorTreeSelection",
         "onCommand:robocorp.sendMetric",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
         "onView:robocorp-locators-tree",
+        "onView:robocorp-cloud-tree",
         "onLanguage:json"
     ],
     "contributes": {
@@ -133,6 +137,11 @@
                     "id": "robocorp-locators-tree",
                     "name": "Locators",
                     "contextualTitle": "Locators"
+                },
+                {
+                    "id": "robocorp-cloud-tree",
+                    "name": "Robocorp Cloud",
+                    "contextualTitle": "Robocorp Cloud"
                 }
             ]
         },
@@ -196,7 +205,8 @@
             {
                 "command": "robocorp.cloudLogin",
                 "title": "Link to Robocorp Cloud",
-                "category": "Robocorp"
+                "category": "Robocorp",
+                "icon": "$(link)"
             },
             {
                 "command": "robocorp.runRobotRcc",
@@ -234,11 +244,21 @@
             {
                 "command": "robocorp.cloudLogout",
                 "title": "Unlink and remove credentials from Robocorp Cloud",
-                "category": "Robocorp"
+                "category": "Robocorp",
+                "icon": "$(circle-slash)"
             },
             {
                 "command": "robocorp.refreshRobotsView",
                 "title": "Refresh Robots view",
+                "category": "Robocorp",
+                "icon": {
+                    "light": "images/light/refresh.svg",
+                    "dark": "images/dark/refresh.svg"
+                }
+            },
+            {
+                "command": "robocorp.refreshCloudView",
+                "title": "Refresh Cloud view",
                 "category": "Robocorp",
                 "icon": {
                     "light": "images/light/refresh.svg",
@@ -290,6 +310,12 @@
                 "icon": "$(go-to-file)"
             },
             {
+                "command": "robocorp.cloudUploadRobotTreeSelection",
+                "title": "Upload Robot to Robocorp Cloud",
+                "category": "Robocorp",
+                "icon": "$(cloud-upload)"
+            },
+            {
                 "command": "robocorp.openLocatorTreeSelection",
                 "title": "Open locators.json",
                 "category": "Robocorp",
@@ -314,6 +340,11 @@
                     "group": "navigation"
                 },
                 {
+                    "command": "robocorp.cloudUploadRobotTreeSelection",
+                    "when": "view == robocorp-robots-tree && robocorp-code:single-robot-selected",
+                    "group": "navigation"
+                },
+                {
                     "command": "robocorp.refreshRobotsView",
                     "when": "view == robocorp-robots-tree",
                     "group": "navigation"
@@ -332,11 +363,30 @@
                     "command": "robocorp.newLocatorUI.tree.internal",
                     "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
                     "group": "navigation"
+                },
+                {
+                    "command": "robocorp.cloudLogin",
+                    "when": "view == robocorp-cloud-tree",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.cloudLogout",
+                    "when": "view == robocorp-cloud-tree",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.refreshCloudView",
+                    "when": "view == robocorp-cloud-tree",
+                    "group": "navigation"
                 }
             ],
             "view/item/context": [
                 {
                     "command": "robocorp.openRobotTreeSelection",
+                    "when": "view == robocorp-robots-tree && robocorp-code:single-robot-selected"
+                },
+                {
+                    "command": "robocorp.cloudUploadRobotTreeSelection",
                     "when": "view == robocorp-robots-tree && robocorp-code:single-robot-selected"
                 },
                 {
@@ -359,6 +409,10 @@
                 },
                 {
                     "command": "robocorp.openRobotTreeSelection",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.cloudUploadRobotTreeSelection",
                     "when": "false"
                 },
                 {

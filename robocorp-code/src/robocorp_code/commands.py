@@ -9,6 +9,7 @@ ROBOCORP_CREATE_ROBOT_INTERNAL = "robocorp.createRobot.internal"  # Actually cal
 ROBOCORP_UPLOAD_ROBOT_TO_CLOUD = "robocorp.uploadRobotToCloud"  # Upload Robot to the Robocorp Cloud
 ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL = "robocorp.localListRobots.internal"  # Lists the activities currently available in the workspace
 ROBOCORP_IS_LOGIN_NEEDED_INTERNAL = "robocorp.isLoginNeeded.internal"  # Checks if the user is already linked to an account
+ROBOCORP_GET_LINKED_ACCOUNT_INFO_INTERNAL = "robocorp.getLinkedAccountInfo.internal"  # Provides information related to the current linked account
 ROBOCORP_CLOUD_LOGIN = "robocorp.cloudLogin"  # Link to Robocorp Cloud
 ROBOCORP_CLOUD_LOGIN_INTERNAL = "robocorp.cloudLogin.internal"  # Link to Robocorp Cloud (receives credentials)
 ROBOCORP_CLOUD_LIST_WORKSPACES_INTERNAL = "robocorp.cloudListWorkspaces.internal"  # Lists the workspaces available for the user (in the Robocorp Cloud)
@@ -27,6 +28,7 @@ ROBOCORP_RESOLVE_INTERPRETER = "robocorp.resolveInterpreter"  # Resolves the int
 ROBOCORP_CLOUD_LOGOUT = "robocorp.cloudLogout"  # Unlink and remove credentials from Robocorp Cloud
 ROBOCORP_CLOUD_LOGOUT_INTERNAL = "robocorp.cloudLogout.internal"  # Unlink and remove credentials from Robocorp Cloud internal
 ROBOCORP_REFRESH_ROBOTS_VIEW = "robocorp.refreshRobotsView"  # Refresh Robots view
+ROBOCORP_REFRESH_CLOUD_VIEW = "robocorp.refreshCloudView"  # Refresh Cloud view
 ROBOCORP_START_BROWSER_LOCATOR = "robocorp.startBrowserLocator"  # Start browser to create Locators
 ROBOCORP_START_BROWSER_LOCATOR_INTERNAL = "robocorp.startBrowserLocator.internal"  # Start browser to create Locators. Requires the robot where the locators should be saved
 ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK = "robocorp.createLocatorFromBrowserPick"  # Create Locator from browser pick
@@ -39,6 +41,7 @@ ROBOCORP_NEW_LOCATOR_UI = "robocorp.newLocatorUI"  # Create locator
 ROBOCORP_NEW_LOCATOR_UI_TREE_INTERNAL = "robocorp.newLocatorUI.tree.internal"  # New locator
 ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL = "robocorp.copyLocatorToClipboard.internal"  # Copy locator name to clipboard
 ROBOCORP_OPEN_ROBOT_TREE_SELECTION = "robocorp.openRobotTreeSelection"  # Open robot.yaml
+ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION = "robocorp.cloudUploadRobotTreeSelection"  # Upload Robot to Robocorp Cloud
 ROBOCORP_OPEN_LOCATOR_TREE_SELECTION = "robocorp.openLocatorTreeSelection"  # Open locators.json
 ROBOCORP_SEND_METRIC = "robocorp.sendMetric"  # Send metric
 
@@ -48,6 +51,7 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_CREATE_ROBOT_INTERNAL,
     ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL,
     ROBOCORP_IS_LOGIN_NEEDED_INTERNAL,
+    ROBOCORP_GET_LINKED_ACCOUNT_INFO_INTERNAL,
     ROBOCORP_CLOUD_LOGIN_INTERNAL,
     ROBOCORP_CLOUD_LIST_WORKSPACES_INTERNAL,
     ROBOCORP_UPLOAD_TO_NEW_ROBOT_INTERNAL,

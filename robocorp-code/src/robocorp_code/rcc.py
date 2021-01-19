@@ -19,6 +19,8 @@ log = get_logger(__name__)
 RCC_CLOUD_ROBOT_MUTEX_NAME = "rcc_cloud_activity"
 RCC_CREDENTIALS_MUTEX_NAME = "rcc_credentials"
 
+ACCOUNT_NAME = "robocorp-code"
+
 
 def download_rcc(location: str, force: bool = False) -> None:
     """
@@ -133,6 +135,8 @@ class RccWorkspace(object):
 class AccountInfo:
     account: str
     identifier: str
+    email: str
+    fullname: str
 
 
 class Rcc(object):
@@ -354,7 +358,7 @@ class Rcc(object):
 
         args = self._add_config_to_args(args)
         args.append("--account")
-        args.append("--robocorp-code")
+        args.append(ACCOUNT_NAME)
 
         args.append(credential)
 
@@ -365,7 +369,7 @@ class Rcc(object):
         self._last_verified_account_info = None
         args = ["config", "credentials"]
         args.append("--account")
-        args.append("--robocorp-code")
+        args.append(ACCOUNT_NAME)
         args.append("--delete")
         args = self._add_config_to_args(args)
         return self._run_rcc(args, mutex_name=RCC_CREDENTIALS_MUTEX_NAME)
@@ -379,7 +383,16 @@ class Rcc(object):
         import json
 
         self._last_verified_account_info = None
-        args = ["config", "credentials", "-j", "--verified"]
+        args = [
+            "config",
+            "credentials",
+            "-j",
+            "--verified",
+            # Note: it doesn't really filter in this case, so, filter it
+            # manually afterwards.
+            # "--account",
+            # ACCOUNT_NAME,
+        ]
         endpoint = self.endpoint
         if endpoint:
             args.append("--endpoint")
@@ -399,31 +412,36 @@ class Rcc(object):
             log.critical(msg)
             return None
 
-        credentials = json.loads(output)
+        try:
+            credentials = json.loads(output)
+            credentials = [
+                credential
+                for credential in credentials
+                if credential.get("account", "").lower() == ACCOUNT_NAME
+            ]
 
-        def key(credential):
-            account = credential.get("account", "").lower()
-            # Make sure that we check the robocorp-code account (which is the one
-            # we add through VSCode) first and then the default account (which
-            # would be the one configured if we added it in a previous version
-            # of Robocorp Code). Otherwise, if those aren't found, accept one
-            # that came from Robocorp Lab.
-            if account == "robocorp-code":
-                return 0
-            if account == "default account":
-                return 1
+            for credential in credentials:
+                timestamp = credential.get("verified")
+                if timestamp and int(timestamp):
 
-            return 2
+                    details = credential.get("details", {})
+                    if not isinstance(details, dict):
+                        email = "<Email:Unknown>"
+                        fullname = "<Name: Unknown>"
+                    else:
+                        email = str(details.get("email", "<Email: Unknown>"))
+                        fullname = (
+                            f'{details.get("first_name")} {details.get("last_name")}'
+                        )
 
-        credentials = sorted(credentials, key=key)
+                    account = self._last_verified_account_info = AccountInfo(
+                        credential["account"], credential["identifier"], email, fullname
+                    )
 
-        for credential in credentials:
-            timestamp = credential.get("verified")
-            if timestamp and int(timestamp):
-                account = self._last_verified_account_info = AccountInfo(
-                    credential["account"], credential["identifier"]
-                )
-                return account
+                    return account
+        except:
+            log.exception("Error loading credentials from: %s", output)
+
         # Found no valid credential
         return None
 
