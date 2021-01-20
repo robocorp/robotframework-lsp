@@ -23,7 +23,7 @@ import * as net from 'net';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder, ProgressLocation, Progress, DebugAdapterExecutable, debug, DebugConfiguration, DebugConfigurationProvider, CancellationToken, ProviderResult, extensions, ConfigurationTarget } from 'vscode';
+import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder, ProgressLocation, Progress, DebugAdapterExecutable, debug, DebugConfiguration, DebugConfigurationProvider, CancellationToken, ProviderResult, extensions, ConfigurationTarget, env, Uri } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
 import * as locators from './locators';
 import * as views from './views';
@@ -386,6 +386,140 @@ async function getLanguageServerPythonInfo(): Promise<InterpreterInfo | undefine
     return _cachedPythonInfo;
 }
 
+async function enableWindowsLongPathSupport(rccLocation: string) {
+    try {
+        try {
+            // Expected failure if not admin.
+            await execFilePromise(
+                rccLocation, ['configure', 'longpaths', '--enable'],
+                { env: { ...process.env } }
+            );
+            await sleep(100);
+        } catch (error) {
+            // Expected error (it means we need an elevated shell to run the command).
+            try {
+                // Now, at this point we resolve the links to have a canonical location, because
+                // we'll execute with a different user (i.e.: admin), we first resolve substs
+                // which may not be available for that user (i.e.: a subst can be applied to one
+                // account and not to the other) because path.resolve and fs.realPathSync don't
+                // seem to resolve substed drives, we do it manually here.
+
+                if (rccLocation.charAt(1) == ':') { // Check that we're actually have a drive there.
+                    try {
+                        let resolved: string = fs.readlinkSync(rccLocation.charAt(0) + ':');
+                        rccLocation = path.join(resolved, rccLocation.slice(2));
+                    } catch (error) {
+                        // ignore (it's not a link)
+                    }
+                }
+
+                rccLocation = path.resolve(rccLocation);
+                rccLocation = fs.realpathSync(rccLocation);
+            } catch (error) {
+                OUTPUT_CHANNEL.appendLine('Error (handled) resolving rcc canonical location: ' + error);
+            }
+            rccLocation = rccLocation.split('\\').join('/'); // escape for the shell execute
+            let result: ExecFileReturn = await execFilePromise(
+                'C:/Windows/System32/mshta.exe', // i.e.: Windows scripting
+                [
+                    "javascript: var shell = new ActiveXObject('shell.application');" + // create a shell
+                    "shell.ShellExecute('" + rccLocation + "', 'configure longpaths --enable', '', 'runas', 1);close();" // runas will run in elevated mode
+                ],
+                { env: { ...process.env } }
+            );
+            // Wait a second for the command to be executed as admin before proceeding.
+            await sleep(1000);
+        }
+    } catch (error) {
+        // Ignore here...
+    }
+}
+
+async function isLongPathSupportEnabledOnWindows(rccLocation: string): Promise<boolean> {
+    let enabled: boolean = true;
+    try {
+        let configureLongpathsOutput: ExecFileReturn = await execFilePromise(
+            rccLocation, ['configure', 'longpaths'],
+            { env: { ...process.env } },
+        );
+        if (configureLongpathsOutput.stdout.indexOf('OK.') != -1 || configureLongpathsOutput.stderr.indexOf('OK.') != -1) {
+            enabled = true;
+        } else {
+            enabled = false;
+        }
+    } catch (error) {
+        enabled = false;
+    }
+    if (enabled) {
+        OUTPUT_CHANNEL.appendLine('Windows long paths support enabled');
+    } else {
+        OUTPUT_CHANNEL.appendLine(
+            'Windows long paths support NOT enabled.');
+    }
+    return enabled;
+}
+
+async function verifyLongPathSupportOnWindows(rccLocation: string): Promise<boolean> {
+    if (process.platform == 'win32') {
+        while (true) {
+            let enabled: boolean = await isLongPathSupportEnabledOnWindows(rccLocation);
+
+            if (!enabled) {
+                const YES = 'Yes (requires elevated shell)';
+                const MANUALLY = 'Open manual instructions';
+
+                let result = await window.showErrorMessage(
+                    "Windows long paths support (required by Robocorp Code) is not enabled. Would you like to have Robocorp Code enable it now?",
+                    { 'modal': true },
+                    YES,
+                    MANUALLY,
+                    // Auto-cancel in modal
+                );
+                if (result == YES) {
+                    // Enable it.
+                    await enableWindowsLongPathSupport(rccLocation);
+                    let enabled = await isLongPathSupportEnabledOnWindows(rccLocation);
+                    if (enabled) {
+                        return true;
+                    } else {
+                        let result = await window.showErrorMessage(
+                            "It was not possible to automatically enable windows long path support. " +
+                            "Please follow the instructions from https://robocorp.com/docs/troubleshooting/windows-long-path (press Ok to open in browser).",
+                            { 'modal': true },
+                            'Ok',
+                            // Auto-cancel in modal
+                        );
+                        if (result == 'Ok') {
+                            await env.openExternal(Uri.parse('https://robocorp.com/docs/troubleshooting/windows-long-path'));
+                        }
+                    }
+                } else if (result == MANUALLY) {
+                    await env.openExternal(Uri.parse('https://robocorp.com/docs/troubleshooting/windows-long-path'));
+
+                } else {
+                    // Cancel
+                    OUTPUT_CHANNEL.appendLine('Extension will not be activated because Windows long paths support not enabled.');
+                    return false;
+                }
+
+                result = await window.showInformationMessage(
+                    "Press Ok after Long Path support is manually enabled.",
+                    { 'modal': true },
+                    'Ok',
+                    // Auto-cancel in modal
+                );
+                if (!result) {
+                    OUTPUT_CHANNEL.appendLine('Extension will not be activated because Windows long paths support not enabled.');
+                    return false;
+                }
+
+            } else {
+                return true;
+            }
+        }
+    }
+}
+
 async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | undefined> {
     let rccLocation = await getRccLocation();
     if (!rccLocation) {
@@ -398,6 +532,10 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
     }
 
     async function createDefaultEnv(progress: Progress<{ message?: string; increment?: number }>): Promise<ExecFileReturn> | undefined {
+        // Check that the user has long names enabled on windows.
+        if (!await verifyLongPathSupportOnWindows(rccLocation)) {
+            return undefined;
+        }
         // Check that ROBOCORP_HOME is valid (i.e.: doesn't have any spaces in it).
         let robocorpHome: string = roboConfig.getHome();
         if (!robocorpHome || robocorpHome.length == 0) {
