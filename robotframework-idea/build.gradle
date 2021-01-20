@@ -1,3 +1,7 @@
+// To test: gradlew clean test
+// To build: gradlew buildPlugin
+// Check all tasks: gradlew tasks
+
 plugins {
     id 'java'
     id 'org.jetbrains.intellij' version '0.6.5'
@@ -25,5 +29,11 @@ patchPluginXml {
       <em>most HTML tags may be used</em>"""
 }
 test {
-    useJUnitPlatform()
+    useJUnit()
+
+    testLogging {
+        // Show that tests are run in the command-line output
+        events 'started', 'passed'
+        showStandardStreams true
+    }
 }

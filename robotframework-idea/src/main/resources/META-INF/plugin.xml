@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>robotframework.idea.robotframework-idea</id>
     <name>Robot Framework Language Server</name>
-    <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">Robocorp</vendor>
+    <vendor email="fabio@robocorp.com" url="https://www.robocorp.com">Robocorp</vendor>
 
     <description><![CDATA[
     RobotFramework support based on the Robot Framework Language Server
@@ -12,8 +12,13 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <fileType name="Robot Framework File" implementationClass="robotframework.idea.RobotFrameworkFileType"
+        <fileType name="Robot Framework" implementationClass="robotframework.idea.RobotFrameworkFileType"
                   fieldName="INSTANCE" language="Robot Framework" extensions="robot,resource"/>
+
+        <colorSettingsPage implementation="robotframework.idea.RobotColorsPage"/>
+        <lang.syntaxHighlighterFactory language="Robot Framework"
+                                       implementationClass="robotframework.idea.RobotFrameworkSyntaxHighlightingFactory"/>
+
     </extensions>
 
     <actions>
