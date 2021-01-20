@@ -23,7 +23,7 @@ public class RobotFrameworkFileType extends LanguageFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return "Robot Framework file";
+    return "Robot Framework";
   }
 
   @NotNull
