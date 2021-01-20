@@ -1,3 +1,19 @@
+New in 0.7.0 (2021-01-20)
+-----------------------------
+
+- Tree for Robocorp Cloud info. #225
+  - Link credentials.
+  - Unlink credentials.
+  - Refresh.
+  - Workspaces/Robots available.
+- Cloud credentials not entered in Robocorp Code are no longer used as a fallback. #230
+- Credentials now stored as `robocorp-code` instead of `--robocorp-code`.
+- Upload Robot selected in Robots tree to the cloud.
+- Check that the Windows Long Path support is enabled. #235
+- Metrics for feature usage. #234
+- Properly uploading to a new Robot in the cloud. #229
+
+
 New in 0.6.2 (2021-01-07)
 -----------------------------
 
