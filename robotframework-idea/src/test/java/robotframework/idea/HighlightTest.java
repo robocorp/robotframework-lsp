@@ -9,12 +9,11 @@ import org.junit.Test;
 
 public class HighlightTest {
     @Test
-    public void testHightlight() {
+    public void testLexer() {
         RobotFrameworkSyntaxHighlightingFactory factory = new RobotFrameworkSyntaxHighlightingFactory();
         @NotNull SyntaxHighlighter syntaxHightlighter = factory.getSyntaxHighlighter(null, null);
         Lexer lexer = syntaxHightlighter.getHighlightingLexer();
         lexer.start("*** Settings ***\nfoo\n");
-        lexer.advance();
         Assert.assertEquals("*** Settings ***", lexer.getTokenText());
         lexer.advance();
         Assert.assertEquals("\n", lexer.getTokenText());
