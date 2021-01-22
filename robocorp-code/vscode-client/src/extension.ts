@@ -518,6 +518,7 @@ async function verifyLongPathSupportOnWindows(rccLocation: string): Promise<bool
             }
         }
     }
+    return true;
 }
 
 async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | undefined> {

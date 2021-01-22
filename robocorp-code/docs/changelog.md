@@ -1,3 +1,8 @@
+New in 0.7.1 (2021-01-22)
+-----------------------------
+
+- Fixed issue starting Robocorp Code on Mac OS and Linux.
+
 New in 0.7.0 (2021-01-20)
 -----------------------------
 
