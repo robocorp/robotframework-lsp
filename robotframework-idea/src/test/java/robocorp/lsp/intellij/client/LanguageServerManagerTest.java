@@ -33,14 +33,12 @@ public class LanguageServerManagerTest {
                 builder
         );
 
-        LanguageServerManager languageServerManager = new LanguageServerManager(robotDefinition);
-
         // TODO: Don't hardcode this.
         String projectRoot = "X:\\vscode-robot\\robotframework-lsp\\robotframework-idea\\src\\test\\resources";
         try {
-            languageServerManager.start(".robot", projectRoot);
+            LanguageServerManager.start(robotDefinition, ".robot", projectRoot);
         } finally {
-            languageServerManager.stop(projectRoot);
+            LanguageServerManager.disposeAll();
         }
 
     }
