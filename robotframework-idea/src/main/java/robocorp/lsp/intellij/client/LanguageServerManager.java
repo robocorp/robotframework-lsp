@@ -15,6 +15,7 @@
  */
 package robocorp.lsp.intellij.client;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -28,10 +29,7 @@ import robocorp.lsp.intellij.client.startup.LanguageServerDefinition;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
@@ -64,63 +62,33 @@ class DefaultLanguageClient implements LanguageClient {
     }
 }
 
-public class LanguageServerManager {
+class LanguageServerComm {
 
-    private static final Map<LanguageServerDefinition, LanguageServerManager> definitionToManager = new ConcurrentHashMap<>();
-    private static final Object lock = new Object();
+    private final Future<Void> future;
+    private final LanguageServer languageServer;
+    private static final Logger LOG = Logger.getInstance(LanguageServerComm.class);
 
-    public static LanguageServerManager getInstance(LanguageServerDefinition definition) {
-        // First get unsynched for performance... if it doesn't work, sync it afterwards.
-        LanguageServerManager languageServerManager = definitionToManager.get(definition);
-        if(languageServerManager != null){
-            return languageServerManager;
-        }
-        synchronized (lock){
-            languageServerManager = definitionToManager.get(definition);
-            if(languageServerManager == null){
-                languageServerManager = new LanguageServerManager(definition);
-                definitionToManager.put(definition, languageServerManager);
+    public LanguageServerComm(DefaultLanguageClient client, Launcher<LanguageServer> launcher, String projectRootPath, LanguageServerDefinition languageServerDefinition) {
+        languageServer = launcher.getRemoteProxy();
+        future = launcher.startListening();
+        languageServer.initialize(getInitParams(projectRootPath));
+        languageServer.initialized(new InitializedParams());
+    }
+
+    public void shutdown() {
+        if (isConnected()) {
+            try {
+                future.cancel(true);
+                languageServer.shutdown();
+                languageServer.exit();
+            } catch (Exception e) {
+                LOG.error(e);
             }
         }
-        return languageServerManager;
     }
 
-    private final LanguageServerDefinition languageServerDefinition;
-
-    private Map<String, List<String>> projectRootPathToClient = new HashMap();
-
-    /**
-     * Note: it can be be instantiated for testing, but in general for the plugin the LanguageServerManager.getInstance()
-     * should be used.
-     * @param definition
-     */
-    public LanguageServerManager(LanguageServerDefinition definition) {
-        this.languageServerDefinition = definition;
-    }
-
-
-    public void stop(String projectRootPath) throws IOException {
-        languageServerDefinition.stop(projectRootPath);
-    }
-
-    public void start(String ext, String projectRootPath) throws IOException {
-        if (!ext.startsWith(".")) {
-            throw new AssertionError("Expected extension to start with '.'");
-        }
-        if (languageServerDefinition.ext.contains(ext)) {
-            Pair<InputStream, OutputStream> streams = languageServerDefinition.start(projectRootPath);
-            InputStream inputStream = streams.getKey();
-            OutputStream outputStream = streams.getValue();
-            DefaultLanguageClient client = new DefaultLanguageClient();
-            Launcher<LanguageServer> launcher = LSPLauncher.createClientLauncher(
-                    client, inputStream, outputStream);
-            LanguageServer languageServer = launcher.getRemoteProxy();
-            languageServer.initialize(getInitParams(projectRootPath));
-            languageServer.initialized(new InitializedParams());
-            Future<Void> future = launcher.startListening();
-
-            return;
-        }
+    public boolean isConnected() {
+        return future != null && !future.isDone() && !future.isCancelled();
     }
 
     private InitializeParams getInitParams(@NotNull String projectRootPath) {
@@ -156,4 +124,91 @@ public class LanguageServerManager {
         return initParams;
     }
 
+}
+
+public class LanguageServerManager {
+
+    private static final Map<LanguageServerDefinition, LanguageServerManager> definitionToManager = new ConcurrentHashMap<>();
+    private static final Object lockDefinitionToManager = new Object();
+    private static final Logger LOG = Logger.getInstance(LanguageServerManager.class);
+
+    public static LanguageServerManager getInstance(LanguageServerDefinition definition) {
+        // First get unsynchronized for performance... if it doesn't work, sync it afterwards.
+        LanguageServerManager languageServerManager = definitionToManager.get(definition);
+        if (languageServerManager != null) {
+            return languageServerManager;
+        }
+        synchronized (lockDefinitionToManager) {
+            languageServerManager = definitionToManager.get(definition);
+            if (languageServerManager == null) {
+                languageServerManager = new LanguageServerManager(definition);
+                definitionToManager.put(definition, languageServerManager);
+            }
+        }
+        return languageServerManager;
+    }
+
+    public static void start(LanguageServerDefinition definition, String ext, String projectRootPath) throws IOException {
+        getInstance(definition).start(ext, projectRootPath);
+    }
+
+    public static void disposeAll() {
+        synchronized (lockDefinitionToManager) {
+            Set<Map.Entry<LanguageServerDefinition, LanguageServerManager>> entries = definitionToManager.entrySet();
+            for (Map.Entry<LanguageServerDefinition, LanguageServerManager> entry : entries) {
+                try {
+                    entry.getValue().dispose();
+                } catch (Exception e) {
+                    LOG.error(e);
+                }
+            }
+            entries.clear();
+        }
+    }
+
+    private final LanguageServerDefinition languageServerDefinition;
+
+    private final Map<String, LanguageServerComm> projectRootPathToComm = new HashMap();
+
+    private final Object lockProjectRootPathToComm = new Object();
+
+    private LanguageServerManager(LanguageServerDefinition definition) {
+        this.languageServerDefinition = definition;
+    }
+
+    private void start(String ext, String projectRootPath) throws IOException {
+        if (!ext.startsWith(".")) {
+            throw new AssertionError("Expected extension to start with '.'");
+        }
+        if (languageServerDefinition.ext.contains(ext)) {
+            synchronized (lockProjectRootPathToComm) {
+                LanguageServerComm languageServerComm = projectRootPathToComm.get(projectRootPath);
+                if (languageServerComm == null || !languageServerComm.isConnected()) {
+                    Pair<InputStream, OutputStream> streams = languageServerDefinition.start(projectRootPath);
+                    InputStream inputStream = streams.getKey();
+                    OutputStream outputStream = streams.getValue();
+                    DefaultLanguageClient client = new DefaultLanguageClient();
+                    Launcher<LanguageServer> launcher = LSPLauncher.createClientLauncher(
+                            client, inputStream, outputStream);
+
+                    languageServerComm = new LanguageServerComm(client, launcher, projectRootPath, languageServerDefinition);
+                    projectRootPathToComm.put(projectRootPath, languageServerComm);
+                }
+            }
+        }
+    }
+
+    private void dispose() {
+        synchronized (lockProjectRootPathToComm) {
+            Set<Map.Entry<String, LanguageServerComm>> entries = projectRootPathToComm.entrySet();
+            for (Map.Entry<String, LanguageServerComm> entry : entries) {
+                try {
+                    entry.getValue().shutdown();
+                } catch (Exception e) {
+                    LOG.error(e);
+                }
+            }
+            projectRootPathToComm.clear();
+        }
+    }
 }
