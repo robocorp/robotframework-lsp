@@ -43,7 +43,7 @@ public class LanguageServerCompletionContributor extends CompletionContributor {
                     }
 
                     String uri = Uris.toUri(file);
-                    Position serverPos = DocumentUtils.offsetToLSPPos(editor, offset);
+                    Position serverPos = EditorUtils.offsetToLSPPos(editor, offset);
                     String txt = originalFile.getNode().getText();
                     return null;
                 }, ProgressIndicatorProvider.getGlobalProgressIndicator());
