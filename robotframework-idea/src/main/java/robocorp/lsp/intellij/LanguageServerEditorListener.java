@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -15,18 +16,22 @@ public class LanguageServerEditorListener implements EditorFactoryListener {
 
     public void editorCreated(@NotNull EditorFactoryEvent event) {
         Editor editor = event.getEditor();
-        VirtualFile file = EditorUtils.getVirtualFile(editor);
-        if (file == null) {
+        editorCreated(EditorToLSPEditor.wrap(editor));
+    }
+    public void editorCreated(ILSPEditor editor) {
+        @Nullable LanguageServerDefinition definition = editor.getLanguageDefinition();
+        if(definition == null){
             return;
         }
-        LanguageServerDefinition definition = EditorUtils.getLanguageDefinition(file);
-        if (definition == null) {
+
+        String uri = editor.getURI();
+        String projectPath = editor.getProjectPath();
+        if(uri == null || projectPath == null){
             return;
         }
-        String uri = Uris.toUri(file);
-        Project project = editor.getProject();
+
         try {
-            LanguageServerManager manager = LanguageServerManager.start(definition, "." + file.getExtension(), project.getBasePath());
+            LanguageServerManager manager = LanguageServerManager.start(definition, editor.getExtension(), projectPath);
             EditorLanguageServerConnection.setup(manager, editor);
         } catch (IOException e) {
             LOG.error(e);

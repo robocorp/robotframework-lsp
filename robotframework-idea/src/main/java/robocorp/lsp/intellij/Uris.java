@@ -38,4 +38,8 @@ public class Uris {
         }
         return pathToUri(file.getPath());
     }
+
+    public static @NotNull String toUri(File file) {
+        return pathToUri(file.getAbsolutePath());
+    }
 }
