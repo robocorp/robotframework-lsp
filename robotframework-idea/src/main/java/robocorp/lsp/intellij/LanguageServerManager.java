@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package robocorp.lsp.intellij.client;
+package robocorp.lsp.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
 import org.apache.commons.lang3.tuple.Pair;
@@ -23,8 +23,7 @@ import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.jetbrains.annotations.NotNull;
-import robocorp.lsp.intellij.Uris;
-import robocorp.lsp.intellij.client.startup.LanguageServerDefinition;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -131,6 +130,19 @@ public class LanguageServerManager {
     private static final Map<LanguageServerDefinition, LanguageServerManager> definitionToManager = new ConcurrentHashMap<>();
     private static final Object lockDefinitionToManager = new Object();
     private static final Logger LOG = Logger.getInstance(LanguageServerManager.class);
+
+    public static @Nullable LanguageServerManager getInstance(@NotNull String ext) {
+        if (!ext.startsWith(".")) {
+            throw new AssertionError("Expected extension to start with '.'");
+        }
+        Set<Map.Entry<LanguageServerDefinition, LanguageServerManager>> entries = definitionToManager.entrySet();
+        for (Map.Entry<LanguageServerDefinition, LanguageServerManager> entry : entries) {
+            if(entry.getKey().ext.contains(ext)){
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
 
     public static LanguageServerManager getInstance(LanguageServerDefinition definition) {
         // First get unsynchronized for performance... if it doesn't work, sync it afterwards.
