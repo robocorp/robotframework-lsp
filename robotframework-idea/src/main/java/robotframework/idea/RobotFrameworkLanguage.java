@@ -12,7 +12,7 @@ public class RobotFrameworkLanguage extends Language {
     public static final RobotFrameworkLanguage INSTANCE = new RobotFrameworkLanguage();
 
     private RobotFrameworkLanguage() {
-        super("Robot Framework");
+        super("RobotFramework");
     }
 
 }

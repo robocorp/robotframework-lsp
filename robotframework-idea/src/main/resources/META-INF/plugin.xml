@@ -13,12 +13,16 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="Robot Framework" implementationClass="robotframework.idea.RobotFrameworkFileType"
-                  fieldName="INSTANCE" language="Robot Framework" extensions="robot,resource"/>
+                  fieldName="INSTANCE" language="RobotFramework" extensions="robot"/>
+
+        <lang.parserDefinition language="RobotFramework"
+                               implementationClass="robotframework.idea.RobotParserDefinition"/>
 
         <colorSettingsPage implementation="robotframework.idea.RobotColorsPage"/>
-        <lang.syntaxHighlighterFactory language="Robot Framework"
+        <lang.syntaxHighlighterFactory language="RobotFramework"
                                        implementationClass="robotframework.idea.RobotFrameworkSyntaxHighlightingFactory"/>
-
+        <completion.contributor implementationClass="robocorp.lsp.intellij.client.LanguageServerCompletionContributor"
+                                language="RobotFramework"/>
     </extensions>
 
 </idea-plugin>
