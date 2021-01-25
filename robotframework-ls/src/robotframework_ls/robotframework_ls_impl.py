@@ -242,7 +242,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             "workspace": {
                 "workspaceFolders": {"supported": True, "changeNotifications": True}
             },
-            "workspaceSymbolProvider": {"workDoneProgress": False},
+            "workspaceSymbolProvider": True,
+            # The one below isn't accepted by lsp4j (it's still in LSP 3.15.0).
+            # "workspaceSymbolProvider": {"workDoneProgress": False},
         }
         log.info("Server capabilities: %s", server_capabilities)
         return server_capabilities

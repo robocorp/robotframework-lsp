@@ -16,6 +16,7 @@
 package robocorp.lsp.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.MessageType;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -29,9 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 class DefaultLanguageClient implements LanguageClient {
 
@@ -59,70 +58,6 @@ class DefaultLanguageClient implements LanguageClient {
     public void logMessage(MessageParams message) {
 
     }
-}
-
-class LanguageServerComm {
-
-    private final Future<Void> future;
-    private final LanguageServer languageServer;
-    private static final Logger LOG = Logger.getInstance(LanguageServerComm.class);
-
-    public LanguageServerComm(DefaultLanguageClient client, Launcher<LanguageServer> launcher, String projectRootPath, LanguageServerDefinition languageServerDefinition) {
-        languageServer = launcher.getRemoteProxy();
-        future = launcher.startListening();
-        languageServer.initialize(getInitParams(projectRootPath));
-        languageServer.initialized(new InitializedParams());
-    }
-
-    public void shutdown() {
-        if (isConnected()) {
-            try {
-                future.cancel(true);
-                languageServer.shutdown();
-                languageServer.exit();
-            } catch (Exception e) {
-                LOG.error(e);
-            }
-        }
-    }
-
-    public boolean isConnected() {
-        return future != null && !future.isDone() && !future.isCancelled();
-    }
-
-    private InitializeParams getInitParams(@NotNull String projectRootPath) {
-        InitializeParams initParams = new InitializeParams();
-        initParams.setRootUri(Uris.pathToUri(projectRootPath));
-        WorkspaceClientCapabilities workspaceClientCapabilities = new WorkspaceClientCapabilities();
-        workspaceClientCapabilities.setApplyEdit(true);
-        workspaceClientCapabilities.setDidChangeWatchedFiles(new DidChangeWatchedFilesCapabilities());
-        workspaceClientCapabilities.setExecuteCommand(new ExecuteCommandCapabilities());
-        workspaceClientCapabilities.setWorkspaceEdit(new WorkspaceEditCapabilities());
-        workspaceClientCapabilities.setSymbol(new SymbolCapabilities());
-        workspaceClientCapabilities.setWorkspaceFolders(false);
-        workspaceClientCapabilities.setConfiguration(false);
-
-        TextDocumentClientCapabilities textDocumentClientCapabilities = new TextDocumentClientCapabilities();
-        textDocumentClientCapabilities.setCodeAction(new CodeActionCapabilities());
-        textDocumentClientCapabilities.setCompletion(new CompletionCapabilities(new CompletionItemCapabilities(true)));
-        textDocumentClientCapabilities.setDefinition(new DefinitionCapabilities());
-        textDocumentClientCapabilities.setDocumentHighlight(new DocumentHighlightCapabilities());
-        textDocumentClientCapabilities.setFormatting(new FormattingCapabilities());
-        textDocumentClientCapabilities.setHover(new HoverCapabilities());
-        textDocumentClientCapabilities.setOnTypeFormatting(new OnTypeFormattingCapabilities());
-        textDocumentClientCapabilities.setRangeFormatting(new RangeFormattingCapabilities());
-        textDocumentClientCapabilities.setReferences(new ReferencesCapabilities());
-        textDocumentClientCapabilities.setRename(new RenameCapabilities());
-        textDocumentClientCapabilities.setSemanticHighlightingCapabilities(new SemanticHighlightingCapabilities(false));
-        textDocumentClientCapabilities.setSignatureHelp(new SignatureHelpCapabilities());
-        textDocumentClientCapabilities.setSynchronization(new SynchronizationCapabilities(true, true, true));
-        initParams.setCapabilities(
-                new ClientCapabilities(workspaceClientCapabilities, textDocumentClientCapabilities, null));
-        initParams.setInitializationOptions(null);
-
-        return initParams;
-    }
-
 }
 
 public class LanguageServerManager {
@@ -160,8 +95,10 @@ public class LanguageServerManager {
         return languageServerManager;
     }
 
-    public static void start(LanguageServerDefinition definition, String ext, String projectRootPath) throws IOException {
-        getInstance(definition).start(ext, projectRootPath);
+    public static LanguageServerManager start(LanguageServerDefinition definition, String ext, String projectRootPath) throws IOException {
+        LanguageServerManager instance = getInstance(definition);
+        instance.start(ext, projectRootPath);
+        return instance;
     }
 
     public static void disposeAll() {
@@ -180,7 +117,7 @@ public class LanguageServerManager {
 
     private final LanguageServerDefinition languageServerDefinition;
 
-    private final Map<String, LanguageServerComm> projectRootPathToComm = new HashMap();
+    private final Map<String, LanguageServerComm> projectRootPathToComm = new ConcurrentHashMap<>();
 
     private final Object lockProjectRootPathToComm = new Object();
 
@@ -222,5 +159,9 @@ public class LanguageServerManager {
             }
             projectRootPathToComm.clear();
         }
+    }
+
+    public LanguageServerComm getComm(String projectRootPath){
+        return projectRootPathToComm.get(projectRootPath);
     }
 }

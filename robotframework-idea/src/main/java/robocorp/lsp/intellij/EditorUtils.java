@@ -18,27 +18,31 @@
  */
 package robocorp.lsp.intellij;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.DocumentUtil;
 import org.eclipse.lsp4j.Position;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import static java.lang.Math.min;
 
 /**
  * Various methods to convert offsets / logical position / server position
  */
-public class DocumentUtils {
+public class EditorUtils {
 
-    private static Logger LOG = Logger.getInstance(DocumentUtils.class);
+    private static Logger LOG = Logger.getInstance(EditorUtils.class);
     public static final String WIN_SEPARATOR = "\r\n";
     public static final String LINUX_SEPARATOR = "\n";
 
@@ -177,4 +181,20 @@ public class DocumentUtils {
         return computableReadAction(() -> !editor.getSettings().isUseTabCharacter(editor.getProject()));
     }
 
+    public static @Nullable VirtualFile getVirtualFile(Editor editor) {
+        VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+        return file;
+    }
+
+    public static @Nullable LanguageServerDefinition getLanguageDefinition(VirtualFile file) {
+        FileType fileType = file.getFileType();
+        if (fileType instanceof LanguageFileType) {
+            Language language = ((LanguageFileType) fileType).getLanguage();
+            if (language instanceof ILSPLanguage) {
+                LanguageServerDefinition definition = ((ILSPLanguage) language).getLanguageDefinition();
+                return definition;
+            }
+        }
+        return null;
+    }
 }
