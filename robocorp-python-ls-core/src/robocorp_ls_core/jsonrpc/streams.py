@@ -139,12 +139,17 @@ class JsonRpcStreamWriter(object):
 
                 as_bytes = body.encode("utf-8")
                 stream = self._wfile
-                stream.write(
-                    ("Content-Length: %s\r\n\r\n" % len(as_bytes)).encode("ascii")
-                )
+                content_len_bytes = (
+                    "Content-Length: %s\r\n\r\n" % len(as_bytes)
+                ).encode("ascii")
+                stream.write(content_len_bytes)
                 stream.write(as_bytes)
                 stream.flush()
                 return True
             except Exception:  # pylint: disable=broad-except
-                log.exception("Failed to write message to output file %s", message)
+                log.exception(
+                    "Failed to write message to output file %s - closed: %s",
+                    message,
+                    self._wfile.closed,
+                )
                 return False

@@ -23,26 +23,14 @@ public class LanguageServerCompletionContributor extends CompletionContributor {
     public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
         final Editor editor = parameters.getEditor();
         final int offset = parameters.getOffset();
+        final EditorLanguageServerConnection editorLanguageServerConnection = EditorLanguageServerConnection.getFromUserData(editor);
         final PsiFile originalFile = parameters.getOriginalFile();
-        final Language language = originalFile.getLanguage();
-        if (language instanceof ILSPLanguage) {
+        if (editorLanguageServerConnection != null) {
             try {
                 ApplicationUtil.runWithCheckCanceled(() -> {
-                    LanguageServerDefinition languageDefinition = ((ILSPLanguage) language).getLanguageDefinition();
                     Project project = editor.getProject();
                     String basePath = project.getBasePath();
-                    VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
-                    if (file == null) {
-                        return null;
-                    }
-
-                    LanguageServerManager instance = LanguageServerManager.getInstance("." + file.getExtension());
-                    if (instance == null) {
-                        // i.e.: It must be already started elsewhere.
-                        return null;
-                    }
-
-                    String uri = Uris.toUri(file);
+                    String uri = editorLanguageServerConnection.getURI();
                     Position serverPos = EditorUtils.offsetToLSPPos(editor, offset);
                     String txt = originalFile.getNode().getText();
                     return null;
