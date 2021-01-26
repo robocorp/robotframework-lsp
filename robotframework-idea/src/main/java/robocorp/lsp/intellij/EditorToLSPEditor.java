@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -30,7 +31,7 @@ public class EditorToLSPEditor {
         private final String uri;
         private final String extension;
         private final String projectPath;
-        private List<Diagnostic> diagnostics;
+        private List<Diagnostic> diagnostics = new ArrayList<>();
 
         public EditorAsLSPEditor(Editor editor) {
             this.editor = new WeakReference<>(editor);
@@ -111,6 +112,10 @@ public class EditorToLSPEditor {
 
         @Override
         public void setDiagnostics(List<Diagnostic> diagnostics) {
+            if(diagnostics == null){
+                throw new AssertionError("Diagnostic list must not be null.");
+            }
+
             this.diagnostics = diagnostics;
             Editor editor = this.editor.get();
             Project project = editor.getProject();
@@ -156,7 +161,7 @@ public class EditorToLSPEditor {
         private final String extension;
         private final String projectPath;
         private final DocumentImpl document;
-        private List<Diagnostic> diagnostics;
+        private List<Diagnostic> diagnostics = new ArrayList<>();
 
         public LSPEditorStub(LanguageServerDefinition definition, String uri, String extension, String projectPath) {
             this.definition = definition;
@@ -208,6 +213,9 @@ public class EditorToLSPEditor {
 
         @Override
         public void setDiagnostics(List<Diagnostic> diagnostics) {
+            if(diagnostics == null){
+                throw new AssertionError("Diagnostic list must not be null.");
+            }
             this.diagnostics = diagnostics;
         }
 

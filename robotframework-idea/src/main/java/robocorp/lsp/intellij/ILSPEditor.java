@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.Position;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public interface ILSPEditor extends UserDataHolder {
 
     Document getDocument();
 
-    void setDiagnostics(List<Diagnostic> diagnostics);
+    void setDiagnostics(@NotNull List<Diagnostic> diagnostics);
 
-    List<Diagnostic> getDiagnostics();
+    @NotNull List<Diagnostic> getDiagnostics();
 }
