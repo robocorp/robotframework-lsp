@@ -21,18 +21,71 @@ package robocorp.lsp.intellij;
 import com.intellij.openapi.diagnostic.Logger;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * A trait representing a ServerDefinition
- */
 public class LanguageServerDefinition {
+    public static class StreamConnectionProvider {
+
+        private final Logger LOG = Logger.getInstance(StreamConnectionProvider.class);
+
+        @NotNull
+        private final ProcessBuilder builder;
+        @Nullable
+        private Process process = null;
+
+        public StreamConnectionProvider(@NotNull ProcessBuilder processBuilder) {
+            this.builder = processBuilder;
+        }
+
+        public void start() throws IOException {
+            LOG.info("Starting server process.");
+            process = builder.start();
+            if (!process.isAlive()) {
+                throw new IOException("Unable to start language server: " + this.toString());
+            } else {
+                LOG.info("Server process started " + process);
+            }
+        }
+
+        @Nullable
+        public InputStream getInputStream() {
+            return process != null ? process.getInputStream() : null;
+        }
+
+        @Nullable
+        public OutputStream getOutputStream() {
+            return process != null ? process.getOutputStream() : null;
+        }
+
+        public void stop() {
+            if (process != null) {
+                process.destroy();
+            }
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof StreamConnectionProvider) {
+                StreamConnectionProvider other = (StreamConnectionProvider) obj;
+                return builder.equals(other.builder);
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(builder);
+        }
+    }
 
     private static final Logger LOG = Logger.getInstance(LanguageServerDefinition.class);
     private final String languageId;
@@ -92,11 +145,6 @@ public class LanguageServerDefinition {
         }
     }
 
-    @Override
-    public String toString() {
-        return "ServerDefinition for " + ext;
-    }
-
     /**
      * Creates a StreamConnectionProvider given the working directory
      *
@@ -107,7 +155,13 @@ public class LanguageServerDefinition {
         return new StreamConnectionProvider(processBuilder);
     }
 
+    @Override
+    public String toString() {
+        return "ServerDefinition for " + ext + " - " + languageId;
+    }
+
     public String getLanguageId() {
         return languageId;
     }
+
 }

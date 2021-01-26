@@ -1,5 +1,7 @@
 package robocorp.lsp.intellij;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -7,14 +9,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.Position;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
+import java.util.List;
 
 
 public class EditorToLSPEditor {
+    private static final Logger LOG = Logger.getInstance(EditorToLSPEditor.class);
+
     public static class EditorAsLSPEditor implements ILSPEditor {
 
         private final WeakReference<Editor> editor;
@@ -22,6 +30,7 @@ public class EditorToLSPEditor {
         private final String uri;
         private final String extension;
         private final String projectPath;
+        private List<Diagnostic> diagnostics;
 
         public EditorAsLSPEditor(Editor editor) {
             this.editor = new WeakReference<>(editor);
@@ -74,6 +83,15 @@ public class EditorToLSPEditor {
         }
 
         @Override
+        public int LSPPosToOffset(Position pos) {
+            Editor editor = this.editor.get();
+            if(editor == null){
+                throw new RuntimeException("Editor already disposed.");
+            }
+            return EditorUtils.LSPPosToOffset(editor, pos);
+        }
+
+        @Override
         public String getText() {
             Editor editor = this.editor.get();
             if(editor == null){
@@ -89,6 +107,27 @@ public class EditorToLSPEditor {
                 throw new RuntimeException("Editor already disposed.");
             }
             return editor.getDocument();
+        }
+
+        @Override
+        public void setDiagnostics(List<Diagnostic> diagnostics) {
+            this.diagnostics = diagnostics;
+            Editor editor = this.editor.get();
+            Project project = editor.getProject();
+            EditorUtils.runReadAction(() -> {
+                final PsiFile file = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument());
+                if (file == null) {
+                    return null;
+                }
+                LOG.debug("Triggering force full DaemonCodeAnalyzer execution.");
+                DaemonCodeAnalyzer.getInstance(project).restart(file);
+                return null;
+            });
+        }
+
+        @Override
+        public List<Diagnostic> getDiagnostics() {
+            return diagnostics;
         }
 
         @Override
@@ -117,6 +156,7 @@ public class EditorToLSPEditor {
         private final String extension;
         private final String projectPath;
         private final DocumentImpl document;
+        private List<Diagnostic> diagnostics;
 
         public LSPEditorStub(LanguageServerDefinition definition, String uri, String extension, String projectPath) {
             this.definition = definition;
@@ -152,6 +192,11 @@ public class EditorToLSPEditor {
         }
 
         @Override
+        public int LSPPosToOffset(Position pos) {
+            return EditorUtils.LSPPosToOffset(document, pos);
+        }
+
+        @Override
         public String getText() {
             return document.getText();
         }
@@ -159,6 +204,16 @@ public class EditorToLSPEditor {
         @Override
         public Document getDocument(){
             return document;
+        }
+
+        @Override
+        public void setDiagnostics(List<Diagnostic> diagnostics) {
+            this.diagnostics = diagnostics;
+        }
+
+        @Override
+        public List<Diagnostic> getDiagnostics() {
+            return diagnostics;
         }
     }
 

@@ -1,5 +1,7 @@
 package robocorp.lsp.intellij;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -7,12 +9,15 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import org.eclipse.lsp4j.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -27,8 +32,9 @@ public class EditorLanguageServerConnection {
     private final DocumentListener documentListener;
     private final String projectRoot;
     private final TextDocumentSyncKind syncKind;
+    private final LanguageServerCommunication.IDiagnosticsListener diagnosticsListener;
 
-    private int version = -1;
+    private volatile int version = -1;
 
     private EditorLanguageServerConnection(LanguageServerManager manager, ILSPEditor editor) throws ExecutionException, InterruptedException, LanguageServerUnavailableException, TimeoutException, IOException {
         this.languageServerManager = manager;
@@ -37,27 +43,34 @@ public class EditorLanguageServerConnection {
         this.identifier = new TextDocumentIdentifier(editor.getURI());
 
         LanguageServerCommunication comm = manager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
-        if(comm == null){
+        if (comm == null) {
             throw new LanguageServerUnavailableException("Unable to get language server communication for: " + projectRoot);
         }
+        diagnosticsListener = params -> {
+            List<Diagnostic> diagnostics = params.getDiagnostics();
+            editor.setDiagnostics(diagnostics);
+        };
+        comm.addDiagnosticsListener(editor.getURI(), diagnosticsListener);
         this.syncKind = comm.getServerCapabilitySyncKind();
 
         String languageId = editor.getLanguageDefinition().getLanguageId();
-        comm.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(identifier.getUri(), languageId, version++, editor.getText())));
+        version += 1;
+        comm.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(identifier.getUri(), languageId, version, editor.getText())));
 
         documentListener = new DocumentListener() {
             @Override
             public void documentChanged(@NotNull DocumentEvent event) {
+                TextDocumentContentChangeEvent changeEvent = new TextDocumentContentChangeEvent();
                 DidChangeTextDocumentParams changesParams = new DidChangeTextDocumentParams(new VersionedTextDocumentIdentifier(),
-                        Collections.singletonList(new TextDocumentContentChangeEvent()));
+                        Collections.singletonList(changeEvent));
                 changesParams.getTextDocument().setUri(identifier.getUri());
-                changesParams.getTextDocument().setVersion(version++);
+                version += 1;
+                changesParams.getTextDocument().setVersion(version);
 
                 try {
                     LanguageServerCommunication comm = manager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
 
                     if (syncKind == TextDocumentSyncKind.Incremental) {
-                        TextDocumentContentChangeEvent changeEvent = changesParams.getContentChanges().get(0);
                         CharSequence newText = event.getNewFragment();
                         int offset = event.getOffset();
                         int newTextLength = event.getNewLength();
@@ -112,17 +125,18 @@ public class EditorLanguageServerConnection {
 
     public void editorReleased() throws InterruptedException, ExecutionException, TimeoutException, IOException {
         Object userData = editor.getUserData(KEY_IN_USER_DATA);
-        if(userData == null){
+        if (userData == null) {
             return;
         }
-        if(userData == this){
+        if (userData == this) {
             // I.e.: closes the connection.
             LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
             comm.didClose(new DidCloseTextDocumentParams(identifier));
+            comm.removeDiagnosticsListener(editor.getURI(), diagnosticsListener);
 
             editor.getDocument().removeDocumentListener(documentListener);
             editor.putUserData(KEY_IN_USER_DATA, null);
-        }else{
+        } else {
             LOG.info("editorReleased called for wrong EditorLanguageServerConnection?");
         }
     }
@@ -131,5 +145,11 @@ public class EditorLanguageServerConnection {
         return editor.getURI();
     }
 
+    public List<Diagnostic> getDiagnostics() {
+        return editor.getDiagnostics();
+    }
 
+    public int LSPPosToOffset(Position pos) {
+        return editor.LSPPosToOffset(pos);
+    }
 }
