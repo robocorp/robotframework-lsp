@@ -1,37 +1,122 @@
 package robocorp.lsp.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.apache.commons.net.util.ListenerList;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.management.ManagementFactory;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 
 public class LanguageServerCommunication {
 
+
+    public static interface IDiagnosticsListener{
+        void onDiagnostics(PublishDiagnosticsParams params);
+    }
+
+    public static class DefaultLanguageClient implements LanguageClient {
+
+        private static final Logger LOG = Logger.getInstance(DefaultLanguageClient.class);
+
+
+        private final Map<String, List<IDiagnosticsListener>> uriToDiagnosticsListener = new ConcurrentHashMap<>();
+        private final Object lockUriToDiagnosticsListener = new Object();
+
+        @Override
+        public void telemetryEvent(Object object) {
+
+        }
+
+        @Override
+        public void publishDiagnostics(PublishDiagnosticsParams diagnostics) {
+            String uri = diagnostics.getUri();
+            List<IDiagnosticsListener> listenerList = uriToDiagnosticsListener.get(uri);
+            if(listenerList != null){
+                for(IDiagnosticsListener listener:listenerList){
+                    listener.onDiagnostics(diagnostics);
+                }
+            }
+        }
+
+        @Override
+        public void showMessage(MessageParams messageParams) {
+
+        }
+
+        @Override
+        public CompletableFuture<MessageActionItem> showMessageRequest(ShowMessageRequestParams requestParams) {
+            return null;
+        }
+
+        @Override
+        public void logMessage(MessageParams message) {
+
+        }
+
+        public void addDiagnosticsListener(String uri, IDiagnosticsListener listener) {
+            synchronized (lockUriToDiagnosticsListener){
+                List<IDiagnosticsListener> listeners = uriToDiagnosticsListener.get(uri);
+                if(listeners == null){
+                    listeners = new CopyOnWriteArrayList<IDiagnosticsListener>();
+                    uriToDiagnosticsListener.put(uri, listeners);
+                }
+                listeners.add(listener);
+            }
+        }
+
+        public void removeDiagnosticsListener(String uri, IDiagnosticsListener listener) {
+            synchronized (lockUriToDiagnosticsListener){
+                List<IDiagnosticsListener> listeners = uriToDiagnosticsListener.get(uri);
+                if(listeners == null){
+                    listeners = new CopyOnWriteArrayList<IDiagnosticsListener>();
+                    uriToDiagnosticsListener.put(uri, listeners);
+                }
+                listeners.remove(listener);
+                if(listeners.size() == 0){
+                    uriToDiagnosticsListener.remove(uri);
+                }
+            }
+        }
+    }
+
     private static final Logger LOG = Logger.getInstance(LanguageServerCommunication.class);
 
-    private final Future<Void> future;
+    private final Future<Void> lifecycleFuture;
     private final LanguageServer languageServer;
     private final InitializeResult initializeResult;
-
+    private final DefaultLanguageClient client;
 
     public LanguageServerCommunication(DefaultLanguageClient client, Launcher<LanguageServer> launcher, String projectRootPath, LanguageServerDefinition languageServerDefinition)
             throws InterruptedException, ExecutionException, TimeoutException {
-        languageServer = launcher.getRemoteProxy();
-        future = launcher.startListening();
+        this.languageServer = launcher.getRemoteProxy();
+        this.lifecycleFuture = launcher.startListening();
         CompletableFuture<InitializeResult> initializeResultFuture = languageServer.initialize(getInitParams(projectRootPath));
-        initializeResult = initializeResultFuture.get(10, TimeUnit.SECONDS);
-        languageServer.initialized(new InitializedParams());
+        this.initializeResult = initializeResultFuture.get(10, TimeUnit.SECONDS);
+        this.languageServer.initialized(new InitializedParams());
+        this.client = client;
     }
+
+    public void addDiagnosticsListener(String uri, IDiagnosticsListener listener) {
+        this.client.addDiagnosticsListener(uri, listener);
+    }
+
+    public void removeDiagnosticsListener(String uri, IDiagnosticsListener diagnosticsListener) {
+        this.client.removeDiagnosticsListener(uri, diagnosticsListener);
+    }
+
 
     public void shutdown() {
         if (isConnected()) {
             try {
-                future.cancel(true);
+                lifecycleFuture.cancel(true);
                 languageServer.shutdown();
                 languageServer.exit();
             } catch (Exception e) {
@@ -41,7 +126,7 @@ public class LanguageServerCommunication {
     }
 
     public boolean isConnected() {
-        return future != null && !future.isDone() && !future.isCancelled();
+        return lifecycleFuture != null && !lifecycleFuture.isDone() && !lifecycleFuture.isCancelled();
     }
 
     public boolean canSendCommands() {
@@ -51,6 +136,14 @@ public class LanguageServerCommunication {
     private InitializeParams getInitParams(@NotNull String projectRootPath) {
         InitializeParams initParams = new InitializeParams();
         initParams.setRootUri(Uris.pathToUri(projectRootPath));
+
+        try {
+            // Java 9 only
+            initParams.setProcessId((int) ProcessHandle.current().pid());
+        } catch (Exception e) {
+            initParams.setProcessId(Integer.parseInt(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]));
+        }
+
         WorkspaceClientCapabilities workspaceClientCapabilities = new WorkspaceClientCapabilities();
         workspaceClientCapabilities.setApplyEdit(true);
         workspaceClientCapabilities.setDidChangeWatchedFiles(new DidChangeWatchedFilesCapabilities());

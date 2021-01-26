@@ -14,7 +14,6 @@ public class LanguageServerEditorListener implements EditorFactoryListener {
         LOG.debug("Created LanguageServerEditorListener");
     }
 
-
     @Override
     public void editorCreated(@NotNull EditorFactoryEvent event) {
         Editor editor = event.getEditor();

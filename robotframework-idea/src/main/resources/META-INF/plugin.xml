@@ -21,8 +21,9 @@
         <colorSettingsPage implementation="robotframework.idea.RobotColorsPage"/>
         <lang.syntaxHighlighterFactory language="RobotFramework"
                                        implementationClass="robotframework.idea.RobotFrameworkSyntaxHighlightingFactory"/>
-        <completion.contributor implementationClass="robocorp.lsp.intellij.LanguageServerCompletionContributor"
+        <completion.contributor implementationClass="robocorp.lsp.intellij.FeatureCodeCompletion"
                                 language="RobotFramework"/>
+        <externalAnnotator language="RobotFramework" implementationClass="robocorp.lsp.intellij.FeatureDiagnostics"/>
         <editorFactoryListener implementation="robocorp.lsp.intellij.LanguageServerEditorListener"/>
     </extensions>
 

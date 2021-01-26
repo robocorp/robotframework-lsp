@@ -31,35 +31,6 @@ import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.*;
 
-class DefaultLanguageClient implements LanguageClient {
-    private static final Logger LOG = Logger.getInstance(DefaultLanguageClient.class);
-
-    @Override
-    public void telemetryEvent(Object object) {
-
-    }
-
-    @Override
-    public void publishDiagnostics(PublishDiagnosticsParams diagnostics) {
-        String uri = diagnostics.getUri();
-        LOG.info("Diagnostics for: " + uri + ": " + diagnostics);
-    }
-
-    @Override
-    public void showMessage(MessageParams messageParams) {
-
-    }
-
-    @Override
-    public CompletableFuture<MessageActionItem> showMessageRequest(ShowMessageRequestParams requestParams) {
-        return null;
-    }
-
-    @Override
-    public void logMessage(MessageParams message) {
-
-    }
-}
 
 public class LanguageServerManager {
 
@@ -137,7 +108,7 @@ public class LanguageServerManager {
                     Pair<InputStream, OutputStream> streams = languageServerDefinition.start(projectRootPath);
                     InputStream inputStream = streams.getKey();
                     OutputStream outputStream = streams.getValue();
-                    DefaultLanguageClient client = new DefaultLanguageClient();
+                    LanguageServerCommunication.DefaultLanguageClient client = new LanguageServerCommunication.DefaultLanguageClient();
                     Launcher<LanguageServer> launcher = LSPLauncher.createClientLauncher(
                             client, inputStream, outputStream);
 
