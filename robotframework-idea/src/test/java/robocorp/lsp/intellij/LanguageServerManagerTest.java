@@ -3,6 +3,7 @@ package robocorp.lsp.intellij;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.TextDocumentSyncOptions;
@@ -12,6 +13,7 @@ import org.junit.Test;
 import robotframework.idea.RobotFrameworkLanguage;
 
 import java.io.File;
+import java.util.List;
 
 public class LanguageServerManagerTest extends BasePlatformTestCase {
     private static final Logger LOG = Logger.getInstance(LanguageServerManagerTest.class);
@@ -41,6 +43,19 @@ public class LanguageServerManagerTest extends BasePlatformTestCase {
             EditorUtils.runWriteAction(()->{
                 document.setText("*** Some error here");
             });
+
+            final List<Diagnostic> diagnostics = TestUtils.waitForCondition(()->{
+                List<Diagnostic> d = conn.getDiagnostics();
+                if(d != null && d.size() > 0){
+                    return d;
+                }
+                return null;
+            });
+            Assert.assertEquals(1, diagnostics.size());
+            if(!diagnostics.get(0).getMessage().contains("Unrecognized section header '*** Some error here'")){
+                fail("Unexpected message: " + diagnostics.get(0).getMessage());
+            }
+
             conn.editorReleased();
         } finally {
             LanguageServerManager.disposeAll();

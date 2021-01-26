@@ -96,7 +96,7 @@ public class EditorLanguageServerConnection {
                         changeEvent.setRangeLength(newTextLength);
                         changeEvent.setText(newText.toString());
                     } else if (syncKind == TextDocumentSyncKind.Full) {
-                        changesParams.getContentChanges().get(0).setText(editor.getText());
+                        changeEvent.setText(editor.getText());
                     }
                     comm.didChange(changesParams);
                 } catch (Exception e) {
@@ -145,7 +145,7 @@ public class EditorLanguageServerConnection {
         return editor.getURI();
     }
 
-    public List<Diagnostic> getDiagnostics() {
+    public @NotNull List<Diagnostic> getDiagnostics() {
         return editor.getDiagnostics();
     }
 
