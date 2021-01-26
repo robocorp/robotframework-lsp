@@ -103,13 +103,19 @@ public class EditorUtils {
      */
     public static Position offsetToLSPPos(Editor editor, int offset) {
         return computableReadAction(() -> {
-            Document doc = editor.getDocument();
-            int line = doc.getLineNumber(offset);
-            int lineStart = doc.getLineStartOffset(line);
-            String lineTextBeforeOffset = doc.getText(TextRange.create(lineStart, offset));
-            int column = lineTextBeforeOffset.length();
-            return computableReadAction(() -> new Position(line, column));
+            return offsetToLSPPos(editor.getDocument(), offset);
+            //TODO: Check if this is better...
+//            LogicalPosition logicalPosition = editor.offsetToLogicalPosition(offset);
+//            return new Position(logicalPosition.line, logicalPosition.column);
         });
+    }
+
+    public static Position offsetToLSPPos(Document doc, int offset) {
+        int line = doc.getLineNumber(offset);
+        int lineStart = doc.getLineStartOffset(line);
+        String lineTextBeforeOffset = doc.getText(TextRange.create(lineStart, offset));
+        int column = lineTextBeforeOffset.length();
+        return new Position(line, column);
     }
 
     /**
@@ -196,5 +202,9 @@ public class EditorUtils {
             }
         }
         return null;
+    }
+
+    static public void runWriteAction(Runnable runnable) {
+        ApplicationManager.getApplication().runWriteAction(runnable);
     }
 }

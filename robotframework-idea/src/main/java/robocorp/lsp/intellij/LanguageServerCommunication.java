@@ -3,31 +3,28 @@ package robocorp.lsp.intellij;
 import com.intellij.openapi.diagnostic.Logger;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
-public class LanguageServerComm {
+public class LanguageServerCommunication {
+
+    private static final Logger LOG = Logger.getInstance(LanguageServerCommunication.class);
 
     private final Future<Void> future;
     private final LanguageServer languageServer;
-    private static final Logger LOG = Logger.getInstance(LanguageServerComm.class);
-    private final CompletableFuture<InitializeResult> initializeResult;
+    private final InitializeResult initializeResult;
 
-    public LanguageServerComm(DefaultLanguageClient client, Launcher<LanguageServer> launcher, String projectRootPath, LanguageServerDefinition languageServerDefinition) {
+
+    public LanguageServerCommunication(DefaultLanguageClient client, Launcher<LanguageServer> launcher, String projectRootPath, LanguageServerDefinition languageServerDefinition)
+            throws InterruptedException, ExecutionException, TimeoutException {
         languageServer = launcher.getRemoteProxy();
         future = launcher.startListening();
-        initializeResult = languageServer.initialize(getInitParams(projectRootPath));
-        while (!initializeResult.isDone()){
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                LOG.error(e);
-            }
-        }
+        CompletableFuture<InitializeResult> initializeResultFuture = languageServer.initialize(getInitParams(projectRootPath));
+        initializeResult = initializeResultFuture.get(10, TimeUnit.SECONDS);
         languageServer.initialized(new InitializedParams());
     }
 
@@ -48,7 +45,7 @@ public class LanguageServerComm {
     }
 
     public boolean canSendCommands() {
-        return isConnected() && initializeResult.isDone();
+        return isConnected() && initializeResult != null;
     }
 
     private InitializeParams getInitParams(@NotNull String projectRootPath) {
@@ -84,11 +81,50 @@ public class LanguageServerComm {
         return initParams;
     }
 
-    public ServerCapabilities getServerCapabilities() throws ExecutionException, InterruptedException {
+    public @Nullable ServerCapabilities getServerCapabilities() throws ExecutionException, InterruptedException {
         if (initializeResult != null)
-            return initializeResult.get().getCapabilities();
+            return initializeResult.getCapabilities();
         else {
             return null;
+        }
+    }
+
+    public TextDocumentSyncKind getServerCapabilitySyncKind() throws ExecutionException, InterruptedException, LanguageServerUnavailableException {
+        ServerCapabilities serverCapabilities = getServerCapabilities();
+        if(serverCapabilities == null){
+            throw new LanguageServerUnavailableException("Server is still not initialized (capabilities unavailable).");
+        }
+        Either<TextDocumentSyncKind, TextDocumentSyncOptions> textDocumentSync = serverCapabilities.getTextDocumentSync();
+        TextDocumentSyncKind syncKind;
+        if(textDocumentSync.isLeft()){
+            syncKind = textDocumentSync.getLeft();
+        }else{
+            TextDocumentSyncOptions right = textDocumentSync.getRight();
+            syncKind = right.getChange();
+        }
+        return syncKind;
+    }
+
+    public void didOpen(DidOpenTextDocumentParams params) {
+        try {
+            languageServer.getTextDocumentService().didOpen(params);
+        } catch (Exception e) {
+            LOG.error(e);
+        }
+    }
+    public void didClose(DidCloseTextDocumentParams params) {
+        try {
+            languageServer.getTextDocumentService().didClose(params);
+        } catch (Exception e) {
+            LOG.error(e);
+        }
+    }
+
+    public void didChange(DidChangeTextDocumentParams params) {
+        try {
+            languageServer.getTextDocumentService().didChange(params);
+        } catch (Exception e) {
+            LOG.error(e);
         }
     }
 }

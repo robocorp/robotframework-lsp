@@ -35,13 +35,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LanguageServerDefinition {
 
     private static final Logger LOG = Logger.getInstance(LanguageServerDefinition.class);
+    private final String languageId;
 
     public Set<String> ext;
     private Map<String, StreamConnectionProvider> streamConnectionProviders = new ConcurrentHashMap<>();
     private static final Object streamConnectionProvidersLock = new Object();
     protected ProcessBuilder processBuilder;
 
-    public LanguageServerDefinition(Set<String> ext, ProcessBuilder process) {
+    public LanguageServerDefinition(Set<String> ext, ProcessBuilder process, String languageId) {
+        this.languageId = languageId;
         for(String s:ext) {
             if (!s.startsWith(".")) {
                 throw new AssertionError("Expected extension to start with '.'");
@@ -105,4 +107,7 @@ public class LanguageServerDefinition {
         return new StreamConnectionProvider(processBuilder);
     }
 
+    public String getLanguageId() {
+        return languageId;
+    }
 }

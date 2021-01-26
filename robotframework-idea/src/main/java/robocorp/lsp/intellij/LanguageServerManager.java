@@ -16,7 +16,6 @@
 package robocorp.lsp.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.MessageType;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -33,6 +32,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 class DefaultLanguageClient implements LanguageClient {
+    private static final Logger LOG = Logger.getInstance(DefaultLanguageClient.class);
 
     @Override
     public void telemetryEvent(Object object) {
@@ -41,7 +41,8 @@ class DefaultLanguageClient implements LanguageClient {
 
     @Override
     public void publishDiagnostics(PublishDiagnosticsParams diagnostics) {
-
+        String uri = diagnostics.getUri();
+        LOG.info("Diagnostics for: " + uri + ": " + diagnostics);
     }
 
     @Override
@@ -95,7 +96,7 @@ public class LanguageServerManager {
         return languageServerManager;
     }
 
-    public static LanguageServerManager start(LanguageServerDefinition definition, String ext, String projectRootPath) throws IOException {
+    public static LanguageServerManager start(LanguageServerDefinition definition, String ext, String projectRootPath) throws IOException, InterruptedException, ExecutionException, TimeoutException {
         LanguageServerManager instance = getInstance(definition);
         instance.start(ext, projectRootPath);
         return instance;
@@ -117,7 +118,7 @@ public class LanguageServerManager {
 
     private final LanguageServerDefinition languageServerDefinition;
 
-    private final Map<String, LanguageServerComm> projectRootPathToComm = new ConcurrentHashMap<>();
+    private final Map<String, LanguageServerCommunication> projectRootPathToComm = new ConcurrentHashMap<>();
 
     private final Object lockProjectRootPathToComm = new Object();
 
@@ -125,14 +126,14 @@ public class LanguageServerManager {
         this.languageServerDefinition = definition;
     }
 
-    private void start(String ext, String projectRootPath) throws IOException {
+    private @Nullable LanguageServerCommunication start(String ext, String projectRootPath) throws IOException, InterruptedException, ExecutionException, TimeoutException {
         if (!ext.startsWith(".")) {
             throw new AssertionError("Expected extension to start with '.'");
         }
         if (languageServerDefinition.ext.contains(ext)) {
             synchronized (lockProjectRootPathToComm) {
-                LanguageServerComm languageServerComm = projectRootPathToComm.get(projectRootPath);
-                if (languageServerComm == null || !languageServerComm.isConnected()) {
+                LanguageServerCommunication languageServerCommunication = projectRootPathToComm.get(projectRootPath);
+                if (languageServerCommunication == null || !languageServerCommunication.isConnected()) {
                     Pair<InputStream, OutputStream> streams = languageServerDefinition.start(projectRootPath);
                     InputStream inputStream = streams.getKey();
                     OutputStream outputStream = streams.getValue();
@@ -140,17 +141,19 @@ public class LanguageServerManager {
                     Launcher<LanguageServer> launcher = LSPLauncher.createClientLauncher(
                             client, inputStream, outputStream);
 
-                    languageServerComm = new LanguageServerComm(client, launcher, projectRootPath, languageServerDefinition);
-                    projectRootPathToComm.put(projectRootPath, languageServerComm);
+                    languageServerCommunication = new LanguageServerCommunication(client, launcher, projectRootPath, languageServerDefinition);
+                    projectRootPathToComm.put(projectRootPath, languageServerCommunication);
+                    return languageServerCommunication;
                 }
             }
         }
+        return null;
     }
 
     private void dispose() {
         synchronized (lockProjectRootPathToComm) {
-            Set<Map.Entry<String, LanguageServerComm>> entries = projectRootPathToComm.entrySet();
-            for (Map.Entry<String, LanguageServerComm> entry : entries) {
+            Set<Map.Entry<String, LanguageServerCommunication>> entries = projectRootPathToComm.entrySet();
+            for (Map.Entry<String, LanguageServerCommunication> entry : entries) {
                 try {
                     entry.getValue().shutdown();
                 } catch (Exception e) {
@@ -161,7 +164,14 @@ public class LanguageServerManager {
         }
     }
 
-    public LanguageServerComm getComm(String projectRootPath){
-        return projectRootPathToComm.get(projectRootPath);
+    /**
+     * If the communication is not in-place at this point, we start/restart it.
+     */
+    public @Nullable LanguageServerCommunication getLanguageServerCommunication(String ext, String projectRootPath) throws InterruptedException, ExecutionException, TimeoutException, IOException {
+        LanguageServerCommunication comm = projectRootPathToComm.get(projectRootPath);
+        if(comm != null && comm.isConnected()){
+            return comm;
+        }
+        return start(ext, projectRootPath);
     }
 }

@@ -38,7 +38,8 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
 
         robotDefinition = new LanguageServerDefinition(
                 new HashSet<>(Arrays.asList(".robot", ".resource")),
-                builder
+                builder,
+                "RobotFramework"
         );
     }
 

@@ -23,10 +23,11 @@
                                        implementationClass="robotframework.idea.RobotFrameworkSyntaxHighlightingFactory"/>
         <completion.contributor implementationClass="robocorp.lsp.intellij.LanguageServerCompletionContributor"
                                 language="RobotFramework"/>
+        <editorFactoryListener implementation="robocorp.lsp.intellij.LanguageServerEditorListener"/>
     </extensions>
 
-    <applicationListeners>
-        <listener class="robocorp.lsp.intellij.LanguageServerEditorListener"
-                  topic="com.intellij.openapi.editor.event.EditorFactoryListener"/>
-    </applicationListeners>
+<!--    <applicationListeners>-->
+<!--        <listener class=""-->
+<!--                  topic="com.intellij.openapi.editor.event.EditorFactoryListener"/>-->
+<!--    </applicationListeners>-->
 </idea-plugin>
