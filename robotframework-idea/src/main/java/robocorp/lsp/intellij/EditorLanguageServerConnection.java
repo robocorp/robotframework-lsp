@@ -1,7 +1,5 @@
 package robocorp.lsp.intellij;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -9,15 +7,15 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -151,5 +149,18 @@ public class EditorLanguageServerConnection {
 
     public int LSPPosToOffset(Position pos) {
         return editor.LSPPosToOffset(pos);
+    }
+
+    public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(int offset) {
+        try {
+            LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
+            Position pos = editor.offsetToLSPPos(offset);
+            CompletionParams params = new CompletionParams(identifier, pos);
+            CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion = comm.completion(params);
+            return completion;
+        } catch (Exception e) {
+            LOG.error(e);
+        }
+        return null;
     }
 }

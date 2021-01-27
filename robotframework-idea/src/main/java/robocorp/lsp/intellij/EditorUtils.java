@@ -23,19 +23,19 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.DocumentUtil;
 import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextEdit;
 import org.jetbrains.annotations.Nullable;
 
-import static java.lang.Math.min;
+import javax.swing.text.BadLocationException;
+import java.util.*;
 
 /**
  * Various methods to convert offsets / logical position / server position
@@ -45,6 +45,30 @@ public class EditorUtils {
     private static Logger LOG = Logger.getInstance(EditorUtils.class);
     public static final String WIN_SEPARATOR = "\r\n";
     public static final String LINUX_SEPARATOR = "\n";
+
+    private static final Comparator<TextEdit> TEXT_EDIT_COMPARATOR = new Comparator<TextEdit>() {
+
+        @Override
+        public int compare(TextEdit t1, TextEdit t2) {
+            return compare(t1.getRange(), t2.getRange());
+        }
+
+        public int compare(Range r1, Range r2) {
+            int ret = compare(r1.getStart(), r2.getStart());
+            if (ret != 0) {
+                return ret;
+            }
+            return compare(r1.getEnd(), r2.getEnd());
+        }
+
+        public int compare(Position p1, Position p2) {
+            int ret = p1.getLine() - p2.getLine();
+            if (ret != 0) {
+                return ret;
+            }
+            return p1.getCharacter() - p2.getCharacter();
+        }
+    };
 
     /**
      * Gets the line at the given offset given an editor and bolds the text between the given offsets
@@ -66,28 +90,6 @@ public class EditorUtils {
             return runReadAction(() -> line.substring(0, startOffsetInLine) + "<b>" + line
                     .substring(startOffsetInLine, endOffsetInLine) + "</b>" + line.substring(endOffsetInLine));
         });
-    }
-
-    /**
-     * Transforms a LogicalPosition (IntelliJ) to an LSP Position
-     *
-     * @param position the LogicalPosition
-     * @param editor   The editor
-     * @return the Position
-     */
-    public static Position logicalToLSPPos(LogicalPosition position, Editor editor) {
-        return offsetToLSPPos(editor, editor.logicalPositionToOffset(position));
-    }
-
-    /**
-     * Transforms a LogicalPosition (IntelliJ) to an LSP Position
-     *
-     * @param position the LogicalPosition
-     * @param editor   The editor
-     * @return the Position
-     */
-    public static Position offsetToLSPPos(LogicalPosition position, Editor editor) {
-        return offsetToLSPPos(editor, editor.logicalPositionToOffset(position));
     }
 
     /**
@@ -127,7 +129,7 @@ public class EditorUtils {
     /**
      * Transforms an LSP position to an editor offset
      *
-     * @param pos    The LSPPos
+     * @param pos The LSPPos
      * @return The offset
      */
     public static int LSPPosToOffset(Document doc, Position pos) {
@@ -168,4 +170,23 @@ public class EditorUtils {
     static public <T> T runReadAction(Computable<T> computable) {
         return ApplicationManager.getApplication().runReadAction(computable);
     }
+
+    public static void applyTextEdits(Document doc, Collection<? extends TextEdit> edits) throws BadLocationException {
+        List<TextEdit> sortedEdits = new ArrayList<>(edits);
+        Collections.sort(sortedEdits, TEXT_EDIT_COMPARATOR);
+        runWriteAction(() -> {
+            for (int i = sortedEdits.size() - 1; i >= 0; i--) {
+                // Do it backwards so that we edit from the end of the file to the start (otherwise
+                // offsets become invalid as we edit).
+                TextEdit te = sortedEdits.get(i);
+                Range r = te.getRange();
+                if (r != null && r.getStart() != null && r.getEnd() != null) {
+                    int start = LSPPosToOffset(doc, r.getStart());
+                    int end = LSPPosToOffset(doc, r.getEnd());
+                    doc.replaceString(start, end, te.getNewText());
+                }
+            }
+        });
+    }
+
 }
