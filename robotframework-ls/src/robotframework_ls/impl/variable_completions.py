@@ -37,7 +37,7 @@ class _VariableFoundFromToken(object):
         if variable_name is None:
             variable_name = str(variable_token)
         self.variable_name = variable_name
-        self.variable_value = variable_value
+        self.variable_value = str(variable_value)
 
     @property
     @instance_cache
@@ -66,7 +66,7 @@ class _VariableFoundFromToken(object):
 class _VariableFoundFromSettings(object):
     def __init__(self, variable_name, variable_value):
         self.variable_name = variable_name
-        self.variable_value = variable_value
+        self.variable_value = str(variable_value)
 
     @property
     @instance_cache

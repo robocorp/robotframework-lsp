@@ -37,9 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.text.BadLocationException;
 import java.util.*;
 
-/**
- * Various methods to convert offsets / logical position / server position
- */
 public class EditorUtils {
 
     private static Logger LOG = Logger.getInstance(EditorUtils.class);
@@ -70,35 +67,13 @@ public class EditorUtils {
         }
     };
 
-    /**
-     * Gets the line at the given offset given an editor and bolds the text between the given offsets
-     *
-     * @param editor      The editor
-     * @param startOffset The starting offset
-     * @param endOffset   The ending offset
-     * @return The document line
-     */
-    public static String getLineText(Editor editor, int startOffset, int endOffset) {
+    public static String getLineToCursor(final Document doc, final int cursorOffset) {
         return runReadAction(() -> {
-            Document doc = editor.getDocument();
-            int lineIdx = doc.getLineNumber(startOffset);
-            int lineStartOff = doc.getLineStartOffset(lineIdx);
-            int lineEndOff = doc.getLineEndOffset(lineIdx);
-            String line = doc.getText(new TextRange(lineStartOff, lineEndOff));
-            int startOffsetInLine = startOffset - lineStartOff;
-            int endOffsetInLine = endOffset - lineStartOff;
-            return runReadAction(() -> line.substring(0, startOffsetInLine) + "<b>" + line
-                    .substring(startOffsetInLine, endOffsetInLine) + "</b>" + line.substring(endOffsetInLine));
+            int lineStartOff = doc.getLineStartOffset(doc.getLineNumber(cursorOffset));
+            return doc.getText(new TextRange(lineStartOff, cursorOffset));
         });
     }
 
-    /**
-     * Calculates a Position given an editor and an offset
-     *
-     * @param editor The editor
-     * @param offset The offset
-     * @return an LSP position
-     */
     public static Position offsetToLSPPos(Editor editor, int offset) {
         return runReadAction(() -> {
             return offsetToLSPPos(editor.getDocument(), offset);
@@ -126,12 +101,6 @@ public class EditorUtils {
         return LSPPosToOffset(editor.getDocument(), pos);
     }
 
-    /**
-     * Transforms an LSP position to an editor offset
-     *
-     * @param pos The LSPPos
-     * @return The offset
-     */
     public static int LSPPosToOffset(Document doc, Position pos) {
         return runReadAction(() -> {
             try {
