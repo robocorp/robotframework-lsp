@@ -1,7 +1,6 @@
 package robocorp.lsp.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
-import org.apache.commons.net.util.ListenerList;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -16,6 +15,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 public class LanguageServerCommunication {
+
 
 
     public static interface IDiagnosticsListener{
@@ -220,4 +220,9 @@ public class LanguageServerCommunication {
             LOG.error(e);
         }
     }
+
+    public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams params) {
+        return languageServer.getTextDocumentService().completion(params);
+    }
+
 }
