@@ -40,19 +40,19 @@ public class LanguageServerManagerTest extends BasePlatformTestCase {
             EditorLanguageServerConnection conn = languageServerEditorListener.editorCreated(stub);
             Assert.assertNotNull(conn);
             Document document = stub.getDocument();
-            EditorUtils.runWriteAction(()->{
+            EditorUtils.runWriteAction(() -> {
                 document.setText("*** Some error here");
             });
 
-            final List<Diagnostic> diagnostics = TestUtils.waitForCondition(()->{
+            final List<Diagnostic> diagnostics = TestUtils.waitForCondition(() -> {
                 List<Diagnostic> d = conn.getDiagnostics();
-                if(d != null && d.size() > 0){
+                if (d != null && d.size() > 0) {
                     return d;
                 }
                 return null;
             });
             Assert.assertEquals(1, diagnostics.size());
-            if(!diagnostics.get(0).getMessage().contains("Unrecognized section header '*** Some error here'")){
+            if (!diagnostics.get(0).getMessage().contains("Unrecognized section header '*** Some error here'")) {
                 fail("Unexpected message: " + diagnostics.get(0).getMessage());
             }
 

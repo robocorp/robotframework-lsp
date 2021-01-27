@@ -47,6 +47,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+// https://intellij-support.jetbrains.com/hc/en-us/community/posts/360010327299-Code-completion-without-applying-initial-lookupString
+// (Code-completion without applying initial lookupString)
 public class FeatureCodeCompletion extends CompletionContributor {
     private static final Logger LOG = Logger.getInstance(FeatureCodeCompletion.class);
 
@@ -73,37 +75,35 @@ public class FeatureCodeCompletion extends CompletionContributor {
 
     private static class LSPPrefixMatcher extends PrefixMatcher {
 
-        private final List<String> prefixesToMatch = new ArrayList<>();
-
-        public LSPPrefixMatcher(String lineToCursor) {
-            super(lineToCursor);
-
+        private static String getPrefix(String lineToCursor) {
             lineToCursor = lineToCursor.stripTrailing();
 
             StringBuilder builder = new StringBuilder();
             for (int i = lineToCursor.length() - 1; i >= 0; i--) {
                 char c = lineToCursor.charAt(i);
-                if (!Character.isWhitespace(c)) {
+                if (!Character.isWhitespace(c) && c != '{' && c != '}' && c != '$' & c != '*') {
                     builder.append(c);
                 } else {
                     if (builder.length() > 0) {
-                        prefixesToMatch.add(builder.reverse().toString().toLowerCase());
-                        builder.setLength(0);
+                        return builder.reverse().toString().toLowerCase();
                     }
                 }
             }
             if (builder.length() > 0) {
-                prefixesToMatch.add(builder.reverse().toString().toLowerCase());
+                return builder.reverse().toString().toLowerCase();
             }
+            return lineToCursor;
+        }
+
+        public LSPPrefixMatcher(String lineToCursor) {
+            super(getPrefix(lineToCursor));
         }
 
         @Override
         public boolean prefixMatches(@NotNull String name) {
             name = name.toLowerCase();
-            for (String s : prefixesToMatch) {
-                if (name.contains(s)) {
-                    return true;
-                }
+            if (name.contains(myPrefix)) {
+                return true;
             }
             return false;
         }
@@ -170,12 +170,20 @@ public class FeatureCodeCompletion extends CompletionContributor {
         final CompletionItemKind kind = item.getKind();
         final String label = item.getLabel();
         final Icon icon = LanguageServerIcons.getCompletionIcon(kind);
+        String t = label;
+        while (t.startsWith("$") || t.startsWith("{") || t.startsWith("}")) {
+            t = t.substring(1);
+        }
+        while (t.endsWith("$") || t.endsWith("{") || t.endsWith("}")) {
+            t = t.substring(0, t.length() - 1);
+        }
+        final String lookupString = t;
 
         return new LookupElement() {
 
             @Override
             public @NotNull String getLookupString() {
-                return label;
+                return lookupString;
             }
 
             @Override
@@ -280,7 +288,6 @@ public class FeatureCodeCompletion extends CompletionContributor {
                     EditorModificationUtil.moveCaretRelatively(editor, -template.getTemplateText().length());
                 }
                 TemplateManager.getInstance(project).startTemplate(editor, template);
-
             }
         };
     }
@@ -288,7 +295,7 @@ public class FeatureCodeCompletion extends CompletionContributor {
     public static final Pattern SNIPPET_PLACEHOLDER_REGEX = Pattern.compile("(\\$\\{\\d+:?([^{^}]*)}|\\$\\d+)");
 
     private String removePlaceholders(String text) {
-        return SNIPPET_PLACEHOLDER_REGEX.matcher(text).replaceAll("");
+        return SNIPPET_PLACEHOLDER_REGEX.matcher(text).replaceAll("").replace("\\$", "$");
     }
 
 }

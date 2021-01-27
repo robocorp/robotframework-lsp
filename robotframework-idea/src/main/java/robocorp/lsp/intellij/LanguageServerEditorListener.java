@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 public class LanguageServerEditorListener implements EditorFactoryListener {
     private static final Logger LOG = Logger.getInstance(LanguageServerEditorListener.class);
 
-    public LanguageServerEditorListener(){
+    public LanguageServerEditorListener() {
         LOG.debug("Created LanguageServerEditorListener");
     }
 
@@ -24,22 +24,24 @@ public class LanguageServerEditorListener implements EditorFactoryListener {
     public void editorReleased(@NotNull EditorFactoryEvent event) {
         Editor editor = event.getEditor();
         EditorLanguageServerConnection conn = EditorLanguageServerConnection.getFromUserData(editor);
-        try {
-            conn.editorReleased();
-        } catch (Exception e) {
-            LOG.error(e);
+        if (conn != null) {
+            try {
+                conn.editorReleased();
+            } catch (Exception e) {
+                LOG.error(e);
+            }
         }
     }
 
     public EditorLanguageServerConnection editorCreated(ILSPEditor editor) {
         @Nullable LanguageServerDefinition definition = editor.getLanguageDefinition();
-        if(definition == null){
+        if (definition == null) {
             return null;
         }
 
         String uri = editor.getURI();
         String projectPath = editor.getProjectPath();
-        if(uri == null || projectPath == null){
+        if (uri == null || projectPath == null) {
             return null;
         }
 
