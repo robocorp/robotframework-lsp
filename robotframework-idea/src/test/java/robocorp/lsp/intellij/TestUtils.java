@@ -27,6 +27,4 @@ public class TestUtils {
 
         throw new AssertionError("Error. Condition not satisfied during the available time.");
     }
-
-    ;
 }

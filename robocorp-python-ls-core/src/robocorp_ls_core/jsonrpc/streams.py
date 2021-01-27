@@ -139,9 +139,9 @@ class JsonRpcStreamWriter(object):
 
                 as_bytes = body.encode("utf-8")
                 stream = self._wfile
-                content_len_bytes = (
-                    "Content-Length: %s\r\n\r\n" % len(as_bytes)
-                ).encode("ascii")
+                content_len_as_str = "Content-Length: %s\r\n\r\n" % len(as_bytes)
+                content_len_bytes = content_len_as_str.encode("ascii")
+
                 stream.write(content_len_bytes)
                 stream.write(as_bytes)
                 stream.flush()

@@ -30,11 +30,13 @@ public class Uris {
     }
 
     public static @NotNull String toUri(VirtualFile file) {
+        String urlStr = "<error getting file.getUrl()>";
         try {
-            URL url = new URL(file.getUrl());
+            urlStr = file.getUrl();
+            URL url = new URL(urlStr);
             return url.toURI().toString();
         } catch (MalformedURLException | URISyntaxException e) {
-            LOG.error("Error converting url: " + file.getUrl() + " to uri", e);
+            LOG.info("Error converting url: " + urlStr + " to uri", e);
         }
         return pathToUri(file.getPath());
     }
