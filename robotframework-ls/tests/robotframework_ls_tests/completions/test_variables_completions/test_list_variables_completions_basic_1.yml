@@ -1,7 +1,5 @@
 - deprecated: false
-  documentation:
-  - Matti
-  - Teppo
+  documentation: ('Matti', 'Teppo')
   documentationFormat: plaintext
   insertText: '@{NAMES}'
   insertTextFormat: 2
@@ -18,9 +16,7 @@
         character: 22
         line: 8
 - deprecated: false
-  documentation:
-  - '@{NAMES}'
-  - Seppo
+  documentation: ('@{NAMES}', 'Seppo')
   documentationFormat: plaintext
   insertText: '@{NAMES2}'
   insertTextFormat: 2

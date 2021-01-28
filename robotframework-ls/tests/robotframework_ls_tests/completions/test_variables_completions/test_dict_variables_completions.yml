@@ -1,8 +1,5 @@
 - deprecated: false
-  documentation:
-  - name=Matti
-  - address=xxx
-  - phone=123
+  documentation: ('name=Matti', 'address=xxx', 'phone=123')
   documentationFormat: plaintext
   insertText: '&{USER 1}'
   insertTextFormat: 2

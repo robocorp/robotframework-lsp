@@ -1,6 +1,5 @@
 - deprecated: false
-  documentation:
-  - variable2
+  documentation: variable2
   documentationFormat: plaintext
   insertText: ${VAR2}
   insertTextFormat: 2
@@ -17,8 +16,7 @@
         character: 11
         line: 8
 - deprecated: false
-  documentation:
-  - variable1
+  documentation: variable1
   documentationFormat: plaintext
   insertText: ${VAR1}
   insertTextFormat: 2
