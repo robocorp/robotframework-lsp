@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
 
 public class Uris {
 
@@ -30,14 +27,6 @@ public class Uris {
     }
 
     public static @NotNull String toUri(VirtualFile file) {
-        String urlStr = "<error getting file.getUrl()>";
-        try {
-            urlStr = file.getUrl();
-            URL url = new URL(urlStr);
-            return url.toURI().toString();
-        } catch (MalformedURLException | URISyntaxException e) {
-            LOG.info("Error converting url: " + urlStr + " to uri", e);
-        }
         return pathToUri(file.getPath());
     }
 
