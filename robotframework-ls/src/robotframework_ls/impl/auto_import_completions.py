@@ -251,11 +251,11 @@ def _obtain_import_location_info(completion_context) -> _ImportLocationInfo:
                 create=True,
                 current_doc_uri=completion_context.doc.uri,
             )
-
-            if library_doc.source:
-                import_location_info.imported_libraries.add(library_doc.source)
-            else:
-                import_location_info.imported_libraries.add(library_doc.name)
+            if library_doc is not None:
+                if library_doc.source:
+                    import_location_info.imported_libraries.add(library_doc.source)
+                else:
+                    import_location_info.imported_libraries.add(library_doc.name)
 
         elif ast_utils.is_resource_node_info(node_info):
             import_location_info.resource_node_info = node_info

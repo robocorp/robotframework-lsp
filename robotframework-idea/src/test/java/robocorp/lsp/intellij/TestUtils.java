@@ -1,7 +1,5 @@
 package robocorp.lsp.intellij;
 
-import org.junit.Assert;
-
 public class TestUtils {
     public interface ICondition<T> {
         public T check();
@@ -13,7 +11,7 @@ public class TestUtils {
     public static <T> T waitForCondition(ICondition<T> condition) {
         long initialTime = System.currentTimeMillis();
 
-        while (System.currentTimeMillis() < initialTime + 2000) {
+        while (System.currentTimeMillis() < initialTime + 5000) {
             T check = condition.check();
             if (check != null) {
                 return check;

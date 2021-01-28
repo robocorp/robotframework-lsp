@@ -27,38 +27,34 @@ public class LanguageServerManagerTest extends BasePlatformTestCase {
         String uri = Uris.toUri(case1robot);
         String extension = ".robot";
 
-        try {
-            LanguageServerManager manager = LanguageServerManager.start(definition, extension, projectRoot);
-            ServerCapabilities serverCapabilities = manager.getLanguageServerCommunication(extension, projectRoot).getServerCapabilities();
-            Either<TextDocumentSyncKind, TextDocumentSyncOptions> textDocumentSync = serverCapabilities.getTextDocumentSync();
-            Assert.assertEquals(TextDocumentSyncKind.Incremental, textDocumentSync.getRight().getChange());
+        LanguageServerManager manager = LanguageServerManager.start(definition, extension, projectRoot);
+        ServerCapabilities serverCapabilities = manager.getLanguageServerCommunication(extension, projectRoot).getServerCapabilities();
+        Either<TextDocumentSyncKind, TextDocumentSyncOptions> textDocumentSync = serverCapabilities.getTextDocumentSync();
+        Assert.assertEquals(TextDocumentSyncKind.Incremental, textDocumentSync.getRight().getChange());
 
-            // Ok, manager is in place, let's open an editor and do some changes.
-            LanguageServerEditorListener languageServerEditorListener = new LanguageServerEditorListener();
-            EditorToLSPEditor.LSPEditorStub stub = (EditorToLSPEditor.LSPEditorStub) EditorToLSPEditor.createStub(
-                    definition, uri, extension, projectRoot);
-            EditorLanguageServerConnection conn = languageServerEditorListener.editorCreated(stub);
-            Assert.assertNotNull(conn);
-            Document document = stub.getDocument();
-            EditorUtils.runWriteAction(() -> {
-                document.setText("*** Some error here");
-            });
+        // Ok, manager is in place, let's open an editor and do some changes.
+        LanguageServerEditorListener languageServerEditorListener = new LanguageServerEditorListener();
+        EditorToLSPEditor.LSPEditorStub stub = (EditorToLSPEditor.LSPEditorStub) EditorToLSPEditor.createStub(
+                definition, uri, extension, projectRoot);
+        EditorLanguageServerConnection conn = languageServerEditorListener.editorCreated(stub);
+        Assert.assertNotNull(conn);
+        Document document = stub.getDocument();
+        EditorUtils.runWriteAction(() -> {
+            document.setText("*** Some error here");
+        });
 
-            final List<Diagnostic> diagnostics = TestUtils.waitForCondition(() -> {
-                List<Diagnostic> d = conn.getDiagnostics();
-                if (d != null && d.size() > 0) {
-                    return d;
-                }
-                return null;
-            });
-            Assert.assertEquals(1, diagnostics.size());
-            if (!diagnostics.get(0).getMessage().contains("Unrecognized section header '*** Some error here'")) {
-                fail("Unexpected message: " + diagnostics.get(0).getMessage());
+        final List<Diagnostic> diagnostics = TestUtils.waitForCondition(() -> {
+            List<Diagnostic> d = conn.getDiagnostics();
+            if (d != null && d.size() > 0) {
+                return d;
             }
-
-            conn.editorReleased();
-        } finally {
-            LanguageServerManager.disposeAll();
+            return null;
+        });
+        Assert.assertEquals(1, diagnostics.size());
+        if (!diagnostics.get(0).getMessage().contains("Unrecognized section header '*** Some error here'")) {
+            fail("Unexpected message: " + diagnostics.get(0).getMessage());
         }
+
+        conn.editorReleased();
     }
 }

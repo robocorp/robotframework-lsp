@@ -149,6 +149,42 @@ Check It
     data_regression.check(request_completion())
 
 
+def test_keyword_completions_prefer_local_library_import(
+    language_server_tcp: ILanguageServerClient, ws_root_path, data_regression, cases
+):
+    from robocorp_ls_core.workspace import Document
+    from robocorp_ls_core import uris
+
+    try:
+        os.makedirs(ws_root_path)
+    except:
+        pass
+
+    language_server = language_server_tcp
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    case1_robot_path = cases.get_path("case1/case1.robot")
+    contents = """
+*** Settings ***
+Library           case1_library
+
+*** Test Cases ***
+User can call library
+    verify model   1
+    verify_another_mod"""
+
+    uri = uris.from_fs_path(case1_robot_path)
+    language_server.open_doc(uri, 1, text=contents)
+
+    def request_completion():
+        doc = Document("", source=contents)
+        line, col = doc.get_last_line_col()
+        completions = language_server.get_completions(uri, line, col)
+        del completions["id"]
+        return completions
+
+    data_regression.check(request_completion())
+
+
 def test_variables_completions_integrated(
     language_server_tcp: ILanguageServerClient, ws_root_path, data_regression
 ):
