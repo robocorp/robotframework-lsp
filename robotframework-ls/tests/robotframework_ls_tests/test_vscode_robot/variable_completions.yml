@@ -1,8 +1,7 @@
 jsonrpc: '2.0'
 result:
 - deprecated: false
-  documentation:
-  - Robot Framework
+  documentation: Robot Framework
   documentationFormat: plaintext
   insertText: ${NAME}
   insertTextFormat: 2
@@ -19,8 +18,7 @@ result:
         character: 22
         line: 9
 - deprecated: false
-  documentation:
-  - '2.0'
+  documentation: '2.0'
   documentationFormat: plaintext
   insertText: ${VERSION}
   insertTextFormat: 2
@@ -37,8 +35,7 @@ result:
         character: 22
         line: 9
 - deprecated: false
-  documentation:
-  - ${NAME} ${VERSION}
+  documentation: ${NAME} ${VERSION}
   documentationFormat: plaintext
   insertText: ${ROBOT}
   insertTextFormat: 2
