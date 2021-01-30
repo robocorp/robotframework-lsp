@@ -25,10 +25,6 @@
                                 language="RobotFramework"/>
         <externalAnnotator language="RobotFramework" implementationClass="robocorp.lsp.intellij.FeatureDiagnostics"/>
         <editorFactoryListener implementation="robocorp.lsp.intellij.LanguageServerEditorListener"/>
+        <lang.commenter language="RobotFramework" implementationClass="robotframework.idea.RobotCommenter"/>
     </extensions>
-
-<!--    <applicationListeners>-->
-<!--        <listener class=""-->
-<!--                  topic="com.intellij.openapi.editor.event.EditorFactoryListener"/>-->
-<!--    </applicationListeners>-->
 </idea-plugin>
