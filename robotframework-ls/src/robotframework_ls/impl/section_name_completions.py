@@ -19,6 +19,8 @@ def complete(completion_context):
         if section is not None:
             selection = completion_context.sel  #: :type selection: DocumentSelection
             line_to_col = selection.line_to_column
+            if line_to_col.endswith("  "):
+                return []
             replace_to_col = selection.col
             if section.names_in_brackets:
                 for i, c in enumerate(line_to_col):
