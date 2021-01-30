@@ -173,18 +173,21 @@ def iter_symbols_caches(
                 ast = doc.get_ast()
                 if ast:
                     for library_import in ast_utils.iter_library_imports(ast):
-                        target_filename = libspec_manager.get_library_target_filename(
-                            library_import.node.name, doc.uri
-                        )
+                        libname = library_import.node.name
+                        if libname:
+                            target_filename = libspec_manager.get_library_target_filename(
+                                libname, doc.uri
+                            )
 
-                        if not target_filename:
-                            library_name_and_current_doc.add(
-                                (library_import.node.name, None)
-                            )
-                        else:
-                            library_name_and_current_doc.add(
-                                (library_import.node.name, doc.uri)
-                            )
+                            if not target_filename:
+                                library_name_and_current_doc.add(
+                                    (library_import.node.name, None)
+                                )
+                            else:
+                                library_name_and_current_doc.add(
+                                    (library_import.node.name, doc.uri)
+                                )
+
         for library_name, current_doc_uri in library_name_and_current_doc:
             library_info: Optional[ILibraryDoc] = libspec_manager.get_library_info(
                 library_name, create=True, current_doc_uri=current_doc_uri
