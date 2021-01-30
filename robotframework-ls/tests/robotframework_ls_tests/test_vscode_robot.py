@@ -149,6 +149,34 @@ Check It
     data_regression.check(request_completion())
 
 
+def test_completions_after_library(
+    language_server_tcp: ILanguageServerClient, ws_root_path, data_regression, cases
+):
+    from robocorp_ls_core.workspace import Document
+
+    case1_path = cases.get_path("case1")
+
+    language_server = language_server_tcp
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    language_server.open_doc(uri, 1)
+    contents = """
+*** Settings ***
+Library    """
+    language_server.change_doc(uri, 2, contents)
+
+    language_server_tcp.settings({"settings": {"robot": {"pythonpath": [case1_path]}}})
+
+    def request_completion():
+        doc = Document("", source=contents)
+        line, col = doc.get_last_line_col()
+        completions = language_server.get_completions(uri, line, col)
+        del completions["id"]
+        return completions
+
+    assert not request_completion()["result"]
+
+
 def test_keyword_completions_prefer_local_library_import(
     language_server_tcp: ILanguageServerClient, ws_root_path, data_regression, cases
 ):
