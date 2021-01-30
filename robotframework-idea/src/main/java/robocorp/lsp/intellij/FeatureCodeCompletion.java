@@ -75,34 +75,48 @@ public class FeatureCodeCompletion extends CompletionContributor {
 
     private static class LSPPrefixMatcher extends PrefixMatcher {
 
+        private final String normalizedPrefix;
+
         private static String getPrefix(String lineToCursor) {
             lineToCursor = lineToCursor.stripTrailing();
 
             StringBuilder builder = new StringBuilder();
             for (int i = lineToCursor.length() - 1; i >= 0; i--) {
                 char c = lineToCursor.charAt(i);
-                if (!Character.isWhitespace(c) && c != '{' && c != '}' && c != '$' & c != '*') {
+                if (!Character.isWhitespace(c) && c != '{' && c != '}' && c != '$' & c != '*' && c != '.') {
                     builder.append(c);
                 } else {
                     if (builder.length() > 0) {
-                        return builder.reverse().toString().toLowerCase();
+                        return builder.reverse().toString();
                     }
                 }
             }
             if (builder.length() > 0) {
-                return builder.reverse().toString().toLowerCase();
+                return builder.reverse().toString();
             }
             return lineToCursor;
         }
 
         public LSPPrefixMatcher(String lineToCursor) {
             super(getPrefix(lineToCursor));
+            normalizedPrefix = this.normalizeRobotName(myPrefix);
+        }
+
+        private static String normalizeRobotName(String myPrefix) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < myPrefix.length(); i++) {
+                char c = myPrefix.charAt(i);
+                if (!Character.isWhitespace(c) && c != '_') {
+                    sb.append(Character.toLowerCase(c));
+                }
+            }
+            return sb.toString();
         }
 
         @Override
         public boolean prefixMatches(@NotNull String name) {
-            name = name.toLowerCase();
-            if (name.contains(myPrefix)) {
+            name = normalizeRobotName(name);
+            if (name.contains(normalizedPrefix)) {
                 return true;
             }
             return false;

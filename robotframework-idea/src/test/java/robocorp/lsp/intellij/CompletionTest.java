@@ -55,4 +55,14 @@ public class CompletionTest extends BasePlatformTestCase {
         myFixture.testCompletion("casekeywords.robot", "casekeywords_after.robot");
 
     }
+
+    @Test
+    public void testKeywordsLibnameDotted() throws Exception {
+        myFixture.configureByFiles("case_libname_dotted.robot");
+        Editor editor = myFixture.getEditor();
+        EditorLanguageServerConnection conn = EditorLanguageServerConnection.getFromUserData(editor);
+        int textLength = editor.getDocument().getTextLength();
+        editor.getCaretModel().moveToOffset(textLength);
+        myFixture.testCompletion("case_libname_dotted.robot", "case_libname_dotted_after.robot");
+    }
 }
