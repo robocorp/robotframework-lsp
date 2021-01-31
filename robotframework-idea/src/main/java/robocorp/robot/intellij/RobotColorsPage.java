@@ -20,6 +20,7 @@ public class RobotColorsPage implements ColorSettingsPage {
     static {
         ATTRIBUTES = new AttributesDescriptor[]{
                 new AttributesDescriptor("color.settings.heading", RobotFrameworkSyntaxHighlightingFactory.HEADING),
+                new AttributesDescriptor("color.settings.comment", RobotFrameworkSyntaxHighlightingFactory.COMMENT)
         };
     }
 
@@ -36,7 +37,7 @@ public class RobotColorsPage implements ColorSettingsPage {
     @Override
     public @NonNls
     @NotNull String getDemoText() {
-        return "*** Settings ***\nLibrary    Test\n";
+        return "*** Settings ***\nLibrary    Test\n# Comment\n";
     }
 
     @Override

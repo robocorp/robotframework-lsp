@@ -1,5 +1,6 @@
-*** Settings ***
+***Settings***
 Library           case1_library
+Task Setup
 
 *** Test Cases ***
 User can call library

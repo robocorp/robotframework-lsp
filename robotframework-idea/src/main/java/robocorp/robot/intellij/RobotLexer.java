@@ -16,6 +16,10 @@ public class RobotLexer extends LexerBase {
     private int tokenStartPosition;
     private IElementType currentToken;
 
+    private static int STATE_AFTER_NEW_LINE = 0;
+    private static int STATE_DEFAULT = 1;
+    private int state;
+
     @Override
     public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
         this.buffer = buffer;
@@ -25,12 +29,13 @@ public class RobotLexer extends LexerBase {
 
         this.tokenStartPosition = startOffset;
         this.position = startOffset;
+        this.state = initialState;
         advance();
     }
 
     @Override
     public int getState() {
-        return 0;
+        return state;
     }
 
     @Override
@@ -56,33 +61,38 @@ public class RobotLexer extends LexerBase {
             return;
         }
         this.currentToken = RobotElementType.DEFAULT;
+        int currState = state;
 
         char c = this.buffer.charAt(this.position);
         if (c == '\r' || c == '\n') {
-            this.currentToken = RobotElementType.WHITESPACE;
+            this.currentToken = RobotElementType.NEW_LINE;
+            state = STATE_AFTER_NEW_LINE;
             skipNewLines();
             return;
         }
-        if (c == '*') {
-            if (isHeading(this.position)) {
+        if (c == ' ' || c == '\t') {
+            this.currentToken = RobotElementType.WHITESPACE;
+            skipWhitespaces();
+            return;
+        }
+        state = STATE_DEFAULT;
+
+        if (currState == STATE_AFTER_NEW_LINE) {
+            if (c == '*' && isHeading(this.position)) {
                 this.currentToken = RobotElementType.HEADING;
                 goToEndOfLine();
-                return;
+            } else if (c == '#') {
+                this.currentToken = RobotElementType.COMMENT;
+                goToEndOfLine();
             }
         }
-
-        goToEndOfLine();
+        goToSpaceOrEndOfLine();
     }
 
     private boolean isHeading(int position) {
         return charAtEquals(position, '*') &&
                 charAtEquals(position + 1, '*') &&
-                charAtEquals(position + 2, '*') &&
-                isSpace(position + 3);
-    }
-
-    private boolean isSpace(int position) {
-        return charAtEquals(position, ' ');
+                charAtEquals(position + 2, '*');
     }
 
     private boolean charAtEquals(int position, char c) {
@@ -93,8 +103,18 @@ public class RobotLexer extends LexerBase {
         return charAtEquals(position, '\n') || charAtEquals(position, '\r');
     }
 
+    private boolean isSpace(int position) {
+        return charAtEquals(position, ' ') || charAtEquals(position, '\t');
+    }
+
     private void skipNewLines() {
         while (isNewLine(this.position)) {
+            this.position++;
+        }
+    }
+
+    private void skipWhitespaces() {
+        while (isSpace(this.position)) {
             this.position++;
         }
     }
@@ -102,6 +122,17 @@ public class RobotLexer extends LexerBase {
     private void goToEndOfLine() {
         while (this.position < this.getBufferEnd() && !isNewLine(this.position)) {
             this.position++;
+        }
+    }
+
+    private void goToSpaceOrEndOfLine() {
+        while (this.position < this.getBufferEnd()) {
+            char c = this.buffer.charAt(position);
+            if (c != ' ' && c != '\t' && c != '\n' && c != '\r') {
+                this.position++;
+            } else {
+                break;
+            }
         }
     }
 
