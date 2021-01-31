@@ -11,7 +11,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
 class Highlighter implements @NotNull SyntaxHighlighter {
     @Override
     public @NotNull Lexer getHighlightingLexer() {
@@ -22,6 +21,8 @@ class Highlighter implements @NotNull SyntaxHighlighter {
     public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
         if (tokenType == RobotElementType.HEADING) {
             return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.HEADING};
+        } else if (tokenType == RobotElementType.COMMENT) {
+            return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.COMMENT};
         }
         return new TextAttributesKey[0];
     }
@@ -29,7 +30,11 @@ class Highlighter implements @NotNull SyntaxHighlighter {
 
 public class RobotFrameworkSyntaxHighlightingFactory extends SyntaxHighlighterFactory {
 
-    public static final TextAttributesKey HEADING = TextAttributesKey.createTextAttributesKey(RobotElementType.HEADING.toString(), DefaultLanguageHighlighterColors.STRING);
+    public static final TextAttributesKey HEADING = TextAttributesKey.createTextAttributesKey(
+            RobotElementType.HEADING.toString(), DefaultLanguageHighlighterColors.KEYWORD);
+
+    public static final TextAttributesKey COMMENT = TextAttributesKey.createTextAttributesKey(
+            RobotElementType.COMMENT.toString(), DefaultLanguageHighlighterColors.LINE_COMMENT);
 
     @Override
     public @NotNull SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {

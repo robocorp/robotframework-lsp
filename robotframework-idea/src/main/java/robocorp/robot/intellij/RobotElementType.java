@@ -9,7 +9,9 @@ public class RobotElementType extends IElementType {
         super(debugName, RobotFrameworkLanguage.INSTANCE);
     }
 
+    public static final RobotElementType NEW_LINE = new RobotElementType("NEW_LINE");
     public static final RobotElementType WHITESPACE = new RobotElementType("WHITESPACE");
     public static final RobotElementType HEADING = new RobotElementType("HEADING");
     public static final RobotElementType DEFAULT = new RobotElementType("DEFAULT");
+    public static final RobotElementType COMMENT = new RobotElementType("COMMENT");
 }
