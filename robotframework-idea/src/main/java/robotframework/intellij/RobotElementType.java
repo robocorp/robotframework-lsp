@@ -1,4 +1,4 @@
-package robotframework.idea;
+package robotframework.intellij;
 
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;

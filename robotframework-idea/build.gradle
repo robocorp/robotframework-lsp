@@ -7,7 +7,7 @@ plugins {
     id 'org.jetbrains.intellij' version '0.6.5'
 }
 
-group 'robotframework.idea'
+group 'robotframework.intellij'
 version '1.0-SNAPSHOT'
 
 repositories {

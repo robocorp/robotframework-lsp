@@ -1,4 +1,4 @@
-package robotframework.idea;
+package robotframework.intellij;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;

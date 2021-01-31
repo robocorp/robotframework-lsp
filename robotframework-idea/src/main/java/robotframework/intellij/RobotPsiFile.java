@@ -1,4 +1,4 @@
-package robotframework.idea;
+package robotframework.intellij;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.Language;

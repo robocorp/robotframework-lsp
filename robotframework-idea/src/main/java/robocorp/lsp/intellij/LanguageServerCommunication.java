@@ -16,16 +16,13 @@ import java.util.concurrent.*;
 
 public class LanguageServerCommunication {
 
-
-
-    public static interface IDiagnosticsListener{
+    public static interface IDiagnosticsListener {
         void onDiagnostics(PublishDiagnosticsParams params);
     }
 
     public static class DefaultLanguageClient implements LanguageClient {
 
         private static final Logger LOG = Logger.getInstance(DefaultLanguageClient.class);
-
 
         private final Map<String, List<IDiagnosticsListener>> uriToDiagnosticsListener = new ConcurrentHashMap<>();
         private final Object lockUriToDiagnosticsListener = new Object();
@@ -39,8 +36,8 @@ public class LanguageServerCommunication {
         public void publishDiagnostics(PublishDiagnosticsParams diagnostics) {
             String uri = diagnostics.getUri();
             List<IDiagnosticsListener> listenerList = uriToDiagnosticsListener.get(uri);
-            if(listenerList != null){
-                for(IDiagnosticsListener listener:listenerList){
+            if (listenerList != null) {
+                for (IDiagnosticsListener listener : listenerList) {
                     listener.onDiagnostics(diagnostics);
                 }
             }
@@ -62,9 +59,9 @@ public class LanguageServerCommunication {
         }
 
         public void addDiagnosticsListener(String uri, IDiagnosticsListener listener) {
-            synchronized (lockUriToDiagnosticsListener){
+            synchronized (lockUriToDiagnosticsListener) {
                 List<IDiagnosticsListener> listeners = uriToDiagnosticsListener.get(uri);
-                if(listeners == null){
+                if (listeners == null) {
                     listeners = new CopyOnWriteArrayList<IDiagnosticsListener>();
                     uriToDiagnosticsListener.put(uri, listeners);
                 }
@@ -73,14 +70,14 @@ public class LanguageServerCommunication {
         }
 
         public void removeDiagnosticsListener(String uri, IDiagnosticsListener listener) {
-            synchronized (lockUriToDiagnosticsListener){
+            synchronized (lockUriToDiagnosticsListener) {
                 List<IDiagnosticsListener> listeners = uriToDiagnosticsListener.get(uri);
-                if(listeners == null){
+                if (listeners == null) {
                     listeners = new CopyOnWriteArrayList<IDiagnosticsListener>();
                     uriToDiagnosticsListener.put(uri, listeners);
                 }
                 listeners.remove(listener);
-                if(listeners.size() == 0){
+                if (listeners.size() == 0) {
                     uriToDiagnosticsListener.remove(uri);
                 }
             }
@@ -111,7 +108,6 @@ public class LanguageServerCommunication {
     public void removeDiagnosticsListener(String uri, IDiagnosticsListener diagnosticsListener) {
         this.client.removeDiagnosticsListener(uri, diagnosticsListener);
     }
-
 
     public void shutdown() {
         if (isConnected()) {
@@ -184,14 +180,14 @@ public class LanguageServerCommunication {
 
     public TextDocumentSyncKind getServerCapabilitySyncKind() throws ExecutionException, InterruptedException, LanguageServerUnavailableException {
         ServerCapabilities serverCapabilities = getServerCapabilities();
-        if(serverCapabilities == null){
+        if (serverCapabilities == null) {
             throw new LanguageServerUnavailableException("Server is still not initialized (capabilities unavailable).");
         }
         Either<TextDocumentSyncKind, TextDocumentSyncOptions> textDocumentSync = serverCapabilities.getTextDocumentSync();
         TextDocumentSyncKind syncKind;
-        if(textDocumentSync.isLeft()){
+        if (textDocumentSync.isLeft()) {
             syncKind = textDocumentSync.getLeft();
-        }else{
+        } else {
             TextDocumentSyncOptions right = textDocumentSync.getRight();
             syncKind = right.getChange();
         }
@@ -205,6 +201,7 @@ public class LanguageServerCommunication {
             LOG.error(e);
         }
     }
+
     public void didClose(DidCloseTextDocumentParams params) {
         try {
             languageServer.getTextDocumentService().didClose(params);
@@ -223,6 +220,10 @@ public class LanguageServerCommunication {
 
     public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams params) {
         return languageServer.getTextDocumentService().completion(params);
+    }
+
+    public CompletableFuture<List<? extends SymbolInformation>> symbol(WorkspaceSymbolParams symbolParams) {
+        return languageServer.getWorkspaceService().symbol(symbolParams);
     }
 
 }

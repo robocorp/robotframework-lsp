@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class Uris {
 
@@ -31,6 +33,15 @@ public class Uris {
     }
 
     public static @NotNull String toUri(File file) {
-        return pathToUri(file.getAbsolutePath());
+        return file.toURI().toString();
+    }
+
+    public static File toFile(String uri) {
+        try {
+            return new File(new URI(uri));
+        } catch (URISyntaxException e) {
+            LOG.error("Error converting uri: " + uri, e);
+            return null;
+        }
     }
 }

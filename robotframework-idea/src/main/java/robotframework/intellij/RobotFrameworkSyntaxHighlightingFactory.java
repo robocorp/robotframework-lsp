@@ -1,7 +1,6 @@
-package robotframework.idea;
+package robotframework.intellij;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.LexerBase;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;

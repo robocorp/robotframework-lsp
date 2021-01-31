@@ -1,4 +1,4 @@
-package robotframework.idea;
+package robotframework.intellij;
 
 import com.intellij.lexer.LexerBase;
 import com.intellij.psi.tree.IElementType;

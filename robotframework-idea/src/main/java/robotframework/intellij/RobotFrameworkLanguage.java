@@ -1,4 +1,4 @@
-package robotframework.idea;
+package robotframework.intellij;
 
 import com.intellij.lang.Language;
 import robocorp.lsp.intellij.ILSPLanguage;
