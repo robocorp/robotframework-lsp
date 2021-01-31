@@ -1,4 +1,4 @@
-package robotframework.intellij;
+package robocorp.robot.intellij;
 
 import com.intellij.lang.Commenter;
 import org.jetbrains.annotations.Nullable;

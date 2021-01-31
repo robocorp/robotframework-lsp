@@ -10,7 +10,7 @@ import org.eclipse.lsp4j.TextDocumentSyncOptions;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Assert;
 import org.junit.Test;
-import robotframework.intellij.RobotFrameworkLanguage;
+import robocorp.robot.intellij.RobotFrameworkLanguage;
 
 import java.io.File;
 import java.util.List;
