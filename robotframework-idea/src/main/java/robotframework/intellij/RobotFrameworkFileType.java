@@ -1,4 +1,4 @@
-package robotframework.idea;
+package robotframework.intellij;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NotNull;

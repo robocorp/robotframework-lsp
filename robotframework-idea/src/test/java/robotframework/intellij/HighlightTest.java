@@ -1,8 +1,7 @@
-package robotframework.idea;
+package robotframework.intellij;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;

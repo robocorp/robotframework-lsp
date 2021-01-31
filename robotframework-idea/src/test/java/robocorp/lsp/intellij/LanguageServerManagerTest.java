@@ -10,7 +10,7 @@ import org.eclipse.lsp4j.TextDocumentSyncOptions;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Assert;
 import org.junit.Test;
-import robotframework.idea.RobotFrameworkLanguage;
+import robotframework.intellij.RobotFrameworkLanguage;
 
 import java.io.File;
 import java.util.List;
@@ -22,7 +22,7 @@ public class LanguageServerManagerTest extends BasePlatformTestCase {
     public void testLanguageServerManager() throws Exception {
         LanguageServerDefinition definition = RobotFrameworkLanguage.INSTANCE.getLanguageDefinition();
         // TODO: Don't hardcode this.
-        String projectRoot = "X:/vscode-robot/robotframework-lsp/robotframework-idea/src/test/resources";
+        String projectRoot = "X:/vscode-robot/robotframework-lsp/robotframework-intellij/src/test/resources";
         File case1robot = new File(projectRoot, "case1.robot");
         String uri = Uris.toUri(case1robot);
         String extension = ".robot";

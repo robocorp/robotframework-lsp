@@ -13,7 +13,7 @@
         <priority value="debug" />
         <appender-ref ref="console" />
     </category>
-    <category name="#robotframework.idea">
+    <category name="#robotframework.intellij">
         <priority value="debug" />
         <appender-ref ref="console" />
     </category>

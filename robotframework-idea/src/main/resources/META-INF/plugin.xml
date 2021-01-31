@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>robotframework.idea.robotframework-idea</id>
+    <id>robocorp.lsp.intellij</id>
     <name>Robot Framework Language Server</name>
     <vendor email="fabio@robocorp.com" url="https://www.robocorp.com">Robocorp</vendor>
 
@@ -11,20 +11,30 @@
          on how to target different products -->
     <depends>com.intellij.modules.platform</depends>
 
+    <extensionPoints>
+        <extensionPoint name="languageDefinitionContributor"
+                        interface="robocorp.lsp.intellij.ILanguageDefinitionContributor"/>
+    </extensionPoints>
+
+    <extensions defaultExtensionNs="robocorp.lsp.intellij">
+        <languageDefinitionContributor implementation="robotframework.intellij.RobotLanguageDefinitionProvider"/>
+    </extensions>
     <extensions defaultExtensionNs="com.intellij">
-        <fileType name="Robot Framework" implementationClass="robotframework.idea.RobotFrameworkFileType"
+        <fileType name="Robot Framework" implementationClass="robotframework.intellij.RobotFrameworkFileType"
                   fieldName="INSTANCE" language="RobotFramework" extensions="robot"/>
 
         <lang.parserDefinition language="RobotFramework"
-                               implementationClass="robotframework.idea.RobotParserDefinition"/>
+                               implementationClass="robotframework.intellij.RobotParserDefinition"/>
 
-        <colorSettingsPage implementation="robotframework.idea.RobotColorsPage"/>
+        <colorSettingsPage implementation="robotframework.intellij.RobotColorsPage"/>
         <lang.syntaxHighlighterFactory language="RobotFramework"
-                                       implementationClass="robotframework.idea.RobotFrameworkSyntaxHighlightingFactory"/>
+                                       implementationClass="robotframework.intellij.RobotFrameworkSyntaxHighlightingFactory"/>
         <completion.contributor implementationClass="robocorp.lsp.intellij.FeatureCodeCompletion"
                                 language="RobotFramework"/>
         <externalAnnotator language="RobotFramework" implementationClass="robocorp.lsp.intellij.FeatureDiagnostics"/>
         <editorFactoryListener implementation="robocorp.lsp.intellij.LanguageServerEditorListener"/>
-        <lang.commenter language="RobotFramework" implementationClass="robotframework.idea.RobotCommenter"/>
+        <lang.commenter language="RobotFramework" implementationClass="robotframework.intellij.RobotCommenter"/>
+        <gotoSymbolContributor implementation="robocorp.lsp.intellij.FeatureSymbols"/>
     </extensions>
+
 </idea-plugin>
