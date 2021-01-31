@@ -50,6 +50,8 @@ import java.util.concurrent.TimeoutException;
 
 public class FeatureSymbols implements ChooseByNameContributorEx {
 
+    private static final Logger LOG = Logger.getInstance(FeatureSymbols.class);
+
     public static class LSPNavigationItem extends OpenFileDescriptor implements NavigationItem {
 
         private ItemPresentation presentation;
@@ -182,12 +184,19 @@ public class FeatureSymbols implements ChooseByNameContributorEx {
 
     @Override
     public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope globalSearchScope, @Nullable IdFilter idFilter) {
-        String queryString = Optional.ofNullable(globalSearchScope.getProject())
+        Project project = globalSearchScope.getProject();
+        if (project == null) {
+            LOG.info("Not getting workspace symbols for language server (project is null).");
+            return;
+        }
+        String queryString = Optional.ofNullable(project)
                 .map(p -> p.getUserData(ChooseByNamePopup.CURRENT_SEARCH_PATTERN)).orElse("");
 
-        for (LSPNavigationItem item : workspaceSymbolProvider.workspaceSymbols(queryString, globalSearchScope.getProject())) {
+        for (LSPNavigationItem item : workspaceSymbolProvider.workspaceSymbols(queryString, project)) {
             if (globalSearchScope.isSearchInLibraries() || globalSearchScope.accept(item.getFile())) {
-                processor.process(item.getName());
+                if (!processor.process(item.getName())) {
+                    break;
+                }
             }
         }
     }
@@ -198,7 +207,9 @@ public class FeatureSymbols implements ChooseByNameContributorEx {
 
         for (LSPNavigationItem item : workspaceSymbolProvider.workspaceSymbols(s, findSymbolParameters.getProject())) {
             if (searchScope.isSearchInLibraries() || searchScope.accept(item.getFile())) {
-                processor.process(item);
+                if (!processor.process(item)) {
+                    break;
+                }
             }
         }
     }

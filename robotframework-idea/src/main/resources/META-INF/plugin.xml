@@ -17,23 +17,23 @@
     </extensionPoints>
 
     <extensions defaultExtensionNs="robocorp.lsp.intellij">
-        <languageDefinitionContributor implementation="robotframework.intellij.RobotLanguageDefinitionProvider"/>
+        <languageDefinitionContributor implementation="robocorp.robot.intellij.RobotLanguageDefinitionProvider"/>
     </extensions>
     <extensions defaultExtensionNs="com.intellij">
-        <fileType name="Robot Framework" implementationClass="robotframework.intellij.RobotFrameworkFileType"
+        <fileType name="Robot Framework" implementationClass="robocorp.robot.intellij.RobotFrameworkFileType"
                   fieldName="INSTANCE" language="RobotFramework" extensions="robot"/>
 
         <lang.parserDefinition language="RobotFramework"
-                               implementationClass="robotframework.intellij.RobotParserDefinition"/>
+                               implementationClass="robocorp.robot.intellij.RobotParserDefinition"/>
 
-        <colorSettingsPage implementation="robotframework.intellij.RobotColorsPage"/>
+        <colorSettingsPage implementation="robocorp.robot.intellij.RobotColorsPage"/>
         <lang.syntaxHighlighterFactory language="RobotFramework"
-                                       implementationClass="robotframework.intellij.RobotFrameworkSyntaxHighlightingFactory"/>
+                                       implementationClass="robocorp.robot.intellij.RobotFrameworkSyntaxHighlightingFactory"/>
         <completion.contributor implementationClass="robocorp.lsp.intellij.FeatureCodeCompletion"
                                 language="RobotFramework"/>
         <externalAnnotator language="RobotFramework" implementationClass="robocorp.lsp.intellij.FeatureDiagnostics"/>
         <editorFactoryListener implementation="robocorp.lsp.intellij.LanguageServerEditorListener"/>
-        <lang.commenter language="RobotFramework" implementationClass="robotframework.intellij.RobotCommenter"/>
+        <lang.commenter language="RobotFramework" implementationClass="robocorp.robot.intellij.RobotCommenter"/>
         <gotoSymbolContributor implementation="robocorp.lsp.intellij.FeatureSymbols"/>
     </extensions>
 

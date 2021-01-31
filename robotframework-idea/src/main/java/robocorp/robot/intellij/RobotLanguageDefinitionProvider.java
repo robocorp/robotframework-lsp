@@ -1,4 +1,4 @@
-package robotframework.intellij;
+package robocorp.robot.intellij;
 
 import robocorp.lsp.intellij.ILanguageDefinitionContributor;
 import robocorp.lsp.intellij.LanguageServerDefinition;
