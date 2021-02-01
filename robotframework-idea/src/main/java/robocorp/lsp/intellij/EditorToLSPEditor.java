@@ -1,6 +1,8 @@
 package robocorp.lsp.intellij;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -18,8 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-
 
 public class EditorToLSPEditor {
     private static final Logger LOG = Logger.getInstance(EditorToLSPEditor.class);
@@ -31,7 +33,7 @@ public class EditorToLSPEditor {
         private final String uri;
         private final String extension;
         private final String projectPath;
-        private List<Diagnostic> diagnostics = new ArrayList<>();
+        private volatile List<Diagnostic> diagnostics = new ArrayList<>();
 
         public EditorAsLSPEditor(Editor editor) {
             this.editor = new WeakReference<>(editor);
@@ -77,7 +79,7 @@ public class EditorToLSPEditor {
         @Override
         public Position offsetToLSPPos(int offset) {
             Editor editor = this.editor.get();
-            if(editor == null){
+            if (editor == null) {
                 throw new RuntimeException("Editor already disposed.");
             }
             return EditorUtils.offsetToLSPPos(editor, offset);
@@ -86,7 +88,7 @@ public class EditorToLSPEditor {
         @Override
         public int LSPPosToOffset(Position pos) {
             Editor editor = this.editor.get();
-            if(editor == null){
+            if (editor == null) {
                 throw new RuntimeException("Editor already disposed.");
             }
             return EditorUtils.LSPPosToOffset(editor, pos);
@@ -95,7 +97,7 @@ public class EditorToLSPEditor {
         @Override
         public String getText() {
             Editor editor = this.editor.get();
-            if(editor == null){
+            if (editor == null) {
                 throw new RuntimeException("Editor already disposed.");
             }
             return editor.getDocument().getText();
@@ -104,34 +106,36 @@ public class EditorToLSPEditor {
         @Override
         public Document getDocument() {
             Editor editor = this.editor.get();
-            if(editor == null){
+            if (editor == null) {
                 throw new RuntimeException("Editor already disposed.");
             }
             return editor.getDocument();
         }
 
         @Override
-        public void setDiagnostics(List<Diagnostic> diagnostics) {
-            if(diagnostics == null){
+        public void setDiagnostics(@NotNull List<Diagnostic> diagnostics) {
+            if (diagnostics == null) {
                 throw new AssertionError("Diagnostic list must not be null.");
             }
 
-            this.diagnostics = diagnostics;
-            Editor editor = this.editor.get();
-            Project project = editor.getProject();
-            EditorUtils.runReadAction(() -> {
+            this.diagnostics = Collections.unmodifiableList(diagnostics);
+            ApplicationManager.getApplication().invokeLater(() -> {
+                Editor editor = this.editor.get();
+                if (editor == null || editor.isDisposed()) {
+                    return;
+                }
+                Project project = editor.getProject();
                 final PsiFile file = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument());
                 if (file == null) {
-                    return null;
+                    return;
                 }
                 LOG.debug("Triggering force full DaemonCodeAnalyzer execution.");
                 DaemonCodeAnalyzer.getInstance(project).restart(file);
-                return null;
             });
         }
 
         @Override
-        public List<Diagnostic> getDiagnostics() {
+        public @NotNull List<Diagnostic> getDiagnostics() {
             return diagnostics;
         }
 
@@ -207,24 +211,23 @@ public class EditorToLSPEditor {
         }
 
         @Override
-        public Document getDocument(){
+        public Document getDocument() {
             return document;
         }
 
         @Override
-        public void setDiagnostics(List<Diagnostic> diagnostics) {
-            if(diagnostics == null){
+        public void setDiagnostics(@NotNull List<Diagnostic> diagnostics) {
+            if (diagnostics == null) {
                 throw new AssertionError("Diagnostic list must not be null.");
             }
             this.diagnostics = diagnostics;
         }
 
         @Override
-        public List<Diagnostic> getDiagnostics() {
+        public @NotNull List<Diagnostic> getDiagnostics() {
             return diagnostics;
         }
     }
-
 
     public static ILSPEditor wrap(Editor editor) {
         return new EditorAsLSPEditor(editor);

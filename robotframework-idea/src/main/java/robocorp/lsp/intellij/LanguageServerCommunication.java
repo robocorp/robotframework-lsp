@@ -226,4 +226,7 @@ public class LanguageServerCommunication {
         return languageServer.getWorkspaceService().symbol(symbolParams);
     }
 
+    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
+        return languageServer.getTextDocumentService().definition(params);
+    }
 }

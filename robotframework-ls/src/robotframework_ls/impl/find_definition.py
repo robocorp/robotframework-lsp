@@ -42,10 +42,11 @@ class _DefinitionFromLibrary(object):
         self.keyword_name = ""
         self.library_doc = library_doc
         self.source = library_doc.source
-        self.lineno = 1
-        self.end_lineno = 1
-        self.col_offset = 1
-        self.end_col_offset = 1
+        # Note: line/offsets 0-based.
+        self.lineno = 0
+        self.end_lineno = 0
+        self.col_offset = 0
+        self.end_col_offset = 0
 
     def __str__(self):
         return "DefinitionFromLibrary[%s]" % (self.source,)
@@ -66,10 +67,11 @@ class _DefinitionFromResource(object):
         self.keyword_name = ""
         self.resource_doc = resource_doc
         self.source = uris.to_fs_path(resource_doc.uri)
-        self.lineno = 1
-        self.end_lineno = 1
-        self.col_offset = 1
-        self.end_col_offset = 1
+        # Note: line/offsets 0-based.
+        self.lineno = 0
+        self.end_lineno = 0
+        self.col_offset = 0
+        self.end_col_offset = 0
 
     def __str__(self):
         return "DefinitionFromResource[%s]" % (self.source,)
