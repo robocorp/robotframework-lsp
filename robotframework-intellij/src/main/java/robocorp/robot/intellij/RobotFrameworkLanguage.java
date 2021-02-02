@@ -26,6 +26,19 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         // Use to get proper path?
         // System.out.println(LanguageServerManagerTest.class.getResource("LanguageServerManagerTest.class"));
 
+        RobotPreferences robotPreferences = RobotPreferences.getInstance();
+        String robotLanguageServerPython = robotPreferences.getRobotLanguageServerPython();
+        String robotLanguageServerArgs = robotPreferences.getRobotLanguageServerArgs();
+        String robotLanguageServerTcpPort = robotPreferences.getRobotLanguageServerTcpPort().trim();
+        int port = 0;
+        if (!robotLanguageServerTcpPort.isEmpty()) {
+            try {
+                port = Integer.parseInt(robotLanguageServerTcpPort);
+            } catch (NumberFormatException e) {
+                // ignore
+            }
+        }
+
         // TODO: Don't hard-code this!
         String target = "X:/vscode-robot/robotframework-lsp/robotframework-ls/src/robotframework_ls/__main__.py";
         String python = "c:/bin/Miniconda/envs/py37_tests/python.exe";
@@ -39,8 +52,17 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         robotDefinition = new LanguageServerDefinition(
                 new HashSet<>(Arrays.asList(".robot", ".resource")),
                 builder,
+                port,
                 "RobotFramework"
         );
+
+        robotPreferences.addListener((property, oldValue, newValue) -> {
+            if (RobotPreferences.ROBOT_LANGUAGE_SERVER_PYTHON.equals(property) ||
+                    RobotPreferences.ROBOT_LANGUAGE_SERVER_ARGS.equals(property) ||
+                    RobotPreferences.ROBOT_LANGUAGE_SERVER_TCP_PORT.equals(property)) {
+                // We must restart the language server!
+            }
+        });
     }
 
     public LanguageServerDefinition getLanguageDefinition() {

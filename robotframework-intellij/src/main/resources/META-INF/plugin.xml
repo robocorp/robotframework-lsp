@@ -4,7 +4,7 @@
     <vendor email="fabio@robocorp.com" url="https://www.robocorp.com">Robocorp</vendor>
 
     <description><![CDATA[
-    RobotFramework support based on the Robot Framework Language Server
+    RobotFramework support based on the Robot Framework Language Server (by Robocorp).
     ]]></description>
 
     <!-- please see https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
@@ -35,6 +35,8 @@
         <editorFactoryListener implementation="robocorp.lsp.intellij.LanguageServerEditorListener"/>
         <lang.commenter language="RobotFramework" implementationClass="robocorp.robot.intellij.RobotCommenter"/>
         <gotoSymbolContributor implementation="robocorp.lsp.intellij.FeatureSymbols"/>
+        <applicationConfigurable instance="robocorp.robot.intellij.RobotPreferencesPage" parentId="language"/>
+        <applicationService serviceImplementation="robocorp.robot.intellij.RobotPreferences"/>
     </extensions>
 
 </idea-plugin>

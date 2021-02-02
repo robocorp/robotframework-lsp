@@ -36,7 +36,7 @@ public class Uris {
         return file.toURI().toString();
     }
 
-    public static File toFile(String uri) {
+    public static @Nullable File toFile(String uri) {
         try {
             return new File(new URI(uri));
         } catch (URISyntaxException e) {

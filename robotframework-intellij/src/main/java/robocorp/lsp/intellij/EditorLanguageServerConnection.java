@@ -151,13 +151,23 @@ public class EditorLanguageServerConnection {
         return editor.LSPPosToOffset(pos);
     }
 
-    public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(int offset) {
+    public @Nullable CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(int offset) {
         try {
             LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
             Position pos = editor.offsetToLSPPos(offset);
             CompletionParams params = new CompletionParams(identifier, pos);
             CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion = comm.completion(params);
             return completion;
+        } catch (Exception e) {
+            LOG.error(e);
+        }
+        return null;
+    }
+
+    public @Nullable ServerCapabilities getServerCapabilities() {
+        try {
+            LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
+            return comm.getServerCapabilities();
         } catch (Exception e) {
             LOG.error(e);
         }
