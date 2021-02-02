@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
@@ -13,13 +12,8 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SymbolsTest extends BasePlatformTestCase {
+public class SymbolsTest extends LSPTesCase {
     private static final Logger LOG = Logger.getInstance(SymbolsTest.class);
-
-    @Override
-    protected String getTestDataPath() {
-        return "src/test/resources";
-    }
 
     @Test
     public void testSymbols() throws Exception {

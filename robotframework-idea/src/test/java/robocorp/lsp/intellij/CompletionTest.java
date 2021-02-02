@@ -2,30 +2,17 @@ package robocorp.lsp.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import org.eclipse.lsp4j.Diagnostic;
 import org.junit.Test;
 
 import java.util.List;
 
-public class CompletionTest extends BasePlatformTestCase {
+public class CompletionTest extends LSPTesCase {
     private static final Logger LOG = Logger.getInstance(CompletionTest.class);
 
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
-    }
-
-    @Override
-    protected TempDirTestFixture createTempDirTestFixture() {
-        return new TempDirTestFixtureImpl();
-    }
-
-    @Override
-    protected String getTestDataPath() {
-        return "src/test/resources";
     }
 
     @Test

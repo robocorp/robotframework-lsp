@@ -2,7 +2,6 @@ package robocorp.lsp.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
@@ -15,7 +14,7 @@ import robocorp.robot.intellij.RobotFrameworkLanguage;
 import java.io.File;
 import java.util.List;
 
-public class LanguageServerManagerTest extends BasePlatformTestCase {
+public class LanguageServerManagerTest extends LSPTesCase {
     private static final Logger LOG = Logger.getInstance(LanguageServerManagerTest.class);
 
     @Test

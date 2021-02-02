@@ -33,6 +33,7 @@ test {
     useJUnit()
 
     systemProperty 'NO_FS_ROOTS_ACCESS_CHECK', true
+    systemProperty 'idea.ProcessCanceledException', 'disabled'
 
     testLogging {
         // Show that tests are run in the command-line output
