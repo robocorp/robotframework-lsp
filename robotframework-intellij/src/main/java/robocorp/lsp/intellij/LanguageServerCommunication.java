@@ -236,6 +236,14 @@ public class LanguageServerCommunication {
         }
     }
 
+    public void didChangeConfiguration(DidChangeConfigurationParams params) {
+        try {
+            languageServer.getWorkspaceService().didChangeConfiguration(params);
+        } catch (Exception e) {
+            LOG.error(e);
+        }
+    }
+
     public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams params) {
         return languageServer.getTextDocumentService().completion(params);
     }
