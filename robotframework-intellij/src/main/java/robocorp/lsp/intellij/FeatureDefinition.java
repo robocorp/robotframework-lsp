@@ -21,6 +21,10 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * The parser (instance of com.intellij.lang.ParserDefinition) must generate LSPPsiAstElement
+ * elements so that the go to definition works!
+ */
 public class FeatureDefinition {
 
     private static final Logger LOG = Logger.getInstance(FeatureDefinition.class);
@@ -89,7 +93,13 @@ public class FeatureDefinition {
             }
 
             VirtualFile targetVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(targetFile);
+            if (targetVirtualFile == null) {
+                return null;
+            }
             PsiFile targetPsiFile = EditorUtils.getPSIFile(project, targetVirtualFile);
+            if (targetPsiFile == null) {
+                return null;
+            }
             Document targetDocument = FileDocumentManager.getInstance().getDocument(targetVirtualFile);
             if (targetDocument == null) {
                 return null;

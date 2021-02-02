@@ -26,8 +26,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 public class LanguageServerDefinition {
@@ -70,6 +72,7 @@ public class LanguageServerDefinition {
 
         @NotNull
         private final ProcessBuilder builder;
+        private final int port;
 
         @Nullable
         private Process process = null;
@@ -77,20 +80,17 @@ public class LanguageServerDefinition {
         @Nullable
         private SocketStreamProvider socketStreamProvider = null;
 
-        public LanguageServerStreams(@NotNull ProcessBuilder processBuilder) {
+        public LanguageServerStreams(@NotNull ProcessBuilder processBuilder, int port) {
             this.builder = processBuilder;
+            this.port = port;
         }
 
         public void start() throws IOException {
             LOG.info("Starting server process.");
 
-            String lsp_socket_ip = System.getenv("LSP_SOCKET_IP");
-            String lsp_socket_port = System.getenv("LSP_SOCKET_PORT");
-            // lsp_socket_ip = "127.0.0.1";
-            // lsp_socket_port = "1456";
-            if (lsp_socket_ip != null && lsp_socket_port != null) {
-                LOG.info("Server connecting to " + lsp_socket_ip + " - " + lsp_socket_port);
-                this.socketStreamProvider = new SocketStreamProvider(lsp_socket_ip, Integer.parseInt(lsp_socket_port));
+            if (port > 0) {
+                LOG.info("Server connecting to " + port);
+                this.socketStreamProvider = new SocketStreamProvider("127.0.0.1", port);
             } else {
                 process = builder.start();
                 if (!process.isAlive()) {
@@ -161,10 +161,18 @@ public class LanguageServerDefinition {
     private static final Logger LOG = Logger.getInstance(LanguageServerDefinition.class);
     private final String languageId;
 
-    public Set<String> ext;
-    protected ProcessBuilder processBuilder;
+    public final Set<String> ext;
+    private ProcessBuilder processBuilder;
+    private int port;
 
-    public LanguageServerDefinition(Set<String> ext, ProcessBuilder process, String languageId) {
+    public interface ILanguageServerDefinitionListeners {
+
+        void onChanged(LanguageServerDefinition languageServerDefinition);
+    }
+
+    private List<ILanguageServerDefinitionListeners> listeners = new CopyOnWriteArrayList<>();
+
+    public LanguageServerDefinition(Set<String> ext, ProcessBuilder process, int port, String languageId) {
         this.languageId = languageId;
         for (String s : ext) {
             if (!s.startsWith(".")) {
@@ -173,7 +181,15 @@ public class LanguageServerDefinition {
         }
 
         this.ext = ext;
+        this.port = port;
         this.processBuilder = process;
+    }
+
+    public void setProcessBuilder(ProcessBuilder processBuilder) {
+        this.processBuilder = processBuilder;
+        for (ILanguageServerDefinitionListeners listener : listeners) {
+            listener.onChanged(this);
+        }
     }
 
     /**
@@ -183,7 +199,7 @@ public class LanguageServerDefinition {
      * @return The stream connection provider
      */
     public LanguageServerStreams createConnectionProvider(String workingDir) {
-        return new LanguageServerStreams(processBuilder);
+        return new LanguageServerStreams(processBuilder, port);
     }
 
     @Override

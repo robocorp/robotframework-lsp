@@ -43,35 +43,20 @@
             "title": "Robot Framework Language Server Configuration",
             "type": "object",
             "properties": {
-                "robot.editor.4spacesTab": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Replaces the key stroke of tab with 4 spaces. Set to 'false' to active VSCode default."
-                },
-                "robot.completions.section_headers.form": {
+                "robot.language-server.python": {
                     "type": "string",
-                    "default": "plural",
-                    "description": "Defines how completions should be shown for section headers (i.e.: *** Setting(s) ***).",
-                    "enum": [
-                        "plural",
-                        "singular",
-                        "both"
-                    ]
-                },
-                "robot.language-server.tcp-port": {
-                    "type": "number",
-                    "default": 0,
-                    "description": "If the port is specified, connect to the language server previously started at the given port. Requires a VSCode restart to take effect."
+                    "default": "",
+                    "description": "Specifies the path to the python executable to be used for the Robot Framework Language Server (the default is searching python on the PATH).\nRequires a restart to take effect."
                 },
                 "robot.language-server.args": {
                     "type": "array",
                     "default": [],
-                    "description": "Specifies the arguments to be passed to the robotframework language server (i.e.: [\"-vv\", \"--log-file=~/robotframework_ls.log\"]). Requires a VSCode restart to take effect."
+                    "description": "Specifies the arguments to be passed to the robotframework language server (i.e.: [\"-vv\", \"--log-file=~/robotframework_ls.log\"]).\nRequires a restart to take effect."
                 },
-                "robot.language-server.python": {
-                    "type": "string",
-                    "default": "",
-                    "description": "Specifies the path to the python executable to be used for the Robot Framework Language Server (the default is searching python on the PATH). Requires a VSCode restart to take effect."
+                "robot.language-server.tcp-port": {
+                    "type": "number",
+                    "default": 0,
+                    "description": "If the port is specified, connect to the language server previously started at the given port.\nRequires a restart to take effect."
                 },
                 "robot.python.executable": {
                     "type": "string",
@@ -81,17 +66,32 @@
                 "robot.python.env": {
                     "type": "object",
                     "default": {},
-                    "description": "Specifies the environment to be used when loading `robotframework` code and dependent libraries."
+                    "description": "Specifies the environment to be used when loading `robotframework` code and dependent libraries.\ni.e.: {\"MY_ENV_VAR\": \"some_value\"}"
                 },
                 "robot.variables": {
                     "type": "object",
                     "default": {},
-                    "description": "Specifies custom variables to be considered by `robotframework` (used when resolving variables and automatically passed to the launch config as --variable entries). i.e.: {\"RESOURCES\": \"c:/temp/resources\"}"
+                    "description": "Specifies custom variables to be considered by `robotframework` (used when resolving variables and automatically passed to the launch config as --variable entries).\ni.e.: {\"RESOURCES\": \"c:/temp/resources\"}"
                 },
                 "robot.pythonpath": {
                     "type": "array",
                     "default": [],
-                    "description": "Specifies the entries to be added to the PYTHONPATH (used when resolving resources and imports and automatically passed to the launch config as --pythonpath entries). i.e.: [\"</my/path_entry>\"]"
+                    "description": "Specifies the entries to be added to the PYTHONPATH (used when resolving resources and imports and automatically passed to the launch config as --pythonpath entries).\ni.e.: [\"</my/path_entry>\"]"
+                },
+                "robot.completions.section_headers.form": {
+                    "type": "string",
+                    "default": "plural",
+                    "description": "Defines how completions should be shown for section headers (i.e.: *** Setting(s) ***).\nOne of: plural, singular, both.",
+                    "enum": [
+                        "plural",
+                        "singular",
+                        "both"
+                    ]
+                },
+                "robot.editor.4spacesTab": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Replaces the key stroke of tab with 4 spaces. Set to 'false' to active VSCode default."
                 }
             }
         },
