@@ -16,21 +16,15 @@
 package robocorp.lsp.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
-import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.Launcher;
-import org.eclipse.lsp4j.launch.LSPLauncher;
-import org.eclipse.lsp4j.services.LanguageClient;
-import org.eclipse.lsp4j.services.LanguageServer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.*;
-
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 public class LanguageServerManager {
 
@@ -44,7 +38,7 @@ public class LanguageServerManager {
         }
         Set<Map.Entry<LanguageServerDefinition, LanguageServerManager>> entries = definitionToManager.entrySet();
         for (Map.Entry<LanguageServerDefinition, LanguageServerManager> entry : entries) {
-            if(entry.getKey().ext.contains(ext)){
+            if (entry.getKey().ext.contains(ext)) {
                 return entry.getValue();
             }
         }
@@ -76,14 +70,17 @@ public class LanguageServerManager {
     public static void disposeAll() {
         synchronized (lockDefinitionToManager) {
             Set<Map.Entry<LanguageServerDefinition, LanguageServerManager>> entries = definitionToManager.entrySet();
-            for (Map.Entry<LanguageServerDefinition, LanguageServerManager> entry : entries) {
-                try {
-                    entry.getValue().dispose();
-                } catch (Exception e) {
-                    LOG.error(e);
+            try {
+                for (Map.Entry<LanguageServerDefinition, LanguageServerManager> entry : entries) {
+                    try {
+                        entry.getValue().dispose();
+                    } catch (Exception e) {
+                        LOG.error(e);
+                    }
                 }
+            } finally {
+                entries.clear();
             }
-            entries.clear();
         }
     }
 
@@ -105,14 +102,7 @@ public class LanguageServerManager {
             synchronized (lockProjectRootPathToComm) {
                 LanguageServerCommunication languageServerCommunication = projectRootPathToComm.get(projectRootPath);
                 if (languageServerCommunication == null || !languageServerCommunication.isConnected()) {
-                    Pair<InputStream, OutputStream> streams = languageServerDefinition.start(projectRootPath);
-                    InputStream inputStream = streams.getKey();
-                    OutputStream outputStream = streams.getValue();
-                    LanguageServerCommunication.DefaultLanguageClient client = new LanguageServerCommunication.DefaultLanguageClient();
-                    Launcher<LanguageServer> launcher = LSPLauncher.createClientLauncher(
-                            client, inputStream, outputStream);
-
-                    languageServerCommunication = new LanguageServerCommunication(client, launcher, projectRootPath, languageServerDefinition);
+                    languageServerCommunication = new LanguageServerCommunication(projectRootPath, languageServerDefinition);
                     projectRootPathToComm.put(projectRootPath, languageServerCommunication);
                     return languageServerCommunication;
                 }
@@ -140,7 +130,7 @@ public class LanguageServerManager {
      */
     public @Nullable LanguageServerCommunication getLanguageServerCommunication(String ext, String projectRootPath) throws InterruptedException, ExecutionException, TimeoutException, IOException {
         LanguageServerCommunication comm = projectRootPathToComm.get(projectRootPath);
-        if(comm != null && comm.isConnected()){
+        if (comm != null && comm.isConnected()) {
             return comm;
         }
         return start(ext, projectRootPath);

@@ -11,15 +11,25 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.ILightStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
+import robocorp.lsp.psi.LSPPsiAstElement;
 
 class RobotParser implements PsiParser {
 
     private void doParse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
         PsiBuilder.@NotNull Marker rootMarker = builder.mark();
         while (!builder.eof()) {
+            IElementType tokenType = builder.getTokenType();
+            PsiBuilder.@NotNull Marker mark = null;
+            if (tokenType != null) {
+                mark = builder.mark();
+            }
             builder.advanceLexer();
+            if (tokenType != null) {
+                mark.done(tokenType);
+            }
         }
         rootMarker.done(root);
     }
@@ -75,7 +85,7 @@ public class RobotParserDefinition implements ParserDefinition {
 
     @Override
     public @NotNull TokenSet getCommentTokens() {
-        return TokenSet.EMPTY;
+        return TokenSet.create(RobotElementType.COMMENT);
     }
 
     @Override
@@ -86,10 +96,11 @@ public class RobotParserDefinition implements ParserDefinition {
     @Override
     public @NotNull PsiElement createElement(ASTNode node) {
         final IElementType type = node.getElementType();
-        LOG.info("RobotParserDefinition: createElement being used (returned null).");
-        // See: https://upsource.jetbrains.com/idea-ce/structure/idea-ce-4b94ba01122752d7576eb9d69638b6e89d1671b7/plugins/properties/properties-psi-impl/src/com/intellij/lang/properties/psi/impl
-        // return new RobotPsiElement();
-        return null;
+        if (type != null) {
+            LSPPsiAstElement element = new LSPPsiAstElement(node);
+            return element;
+        }
+        return PsiUtilCore.NULL_PSI_ELEMENT;
     }
 
     @Override

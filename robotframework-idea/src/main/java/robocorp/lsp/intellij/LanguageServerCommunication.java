@@ -4,11 +4,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.util.List;
 import java.util.Map;
@@ -90,15 +94,28 @@ public class LanguageServerCommunication {
     private final LanguageServer languageServer;
     private final InitializeResult initializeResult;
     private final DefaultLanguageClient client;
+    private final LanguageServerDefinition.LanguageServerStreams languageServerStreams;
+    private final LanguageServerDefinition languageServerDefinition;
 
-    public LanguageServerCommunication(DefaultLanguageClient client, Launcher<LanguageServer> launcher, String projectRootPath, LanguageServerDefinition languageServerDefinition)
-            throws InterruptedException, ExecutionException, TimeoutException {
+    public LanguageServerCommunication(String projectRootPath, LanguageServerDefinition languageServerDefinition)
+            throws InterruptedException, ExecutionException, TimeoutException, IOException {
+
+        LanguageServerDefinition.LanguageServerStreams languageServerStreams = languageServerDefinition.createConnectionProvider(projectRootPath);
+        languageServerStreams.start();
+        InputStream inputStream = languageServerStreams.getInputStream();
+        OutputStream outputStream = languageServerStreams.getOutputStream();
+        DefaultLanguageClient client = new LanguageServerCommunication.DefaultLanguageClient();
+        Launcher<LanguageServer> launcher = LSPLauncher.createClientLauncher(
+                client, inputStream, outputStream);
+
         this.languageServer = launcher.getRemoteProxy();
         this.lifecycleFuture = launcher.startListening();
         CompletableFuture<InitializeResult> initializeResultFuture = languageServer.initialize(getInitParams(projectRootPath));
         this.initializeResult = initializeResultFuture.get(10, TimeUnit.SECONDS);
         this.languageServer.initialized(new InitializedParams());
         this.client = client;
+        this.languageServerStreams = languageServerStreams;
+        this.languageServerDefinition = languageServerDefinition;
     }
 
     public void addDiagnosticsListener(String uri, IDiagnosticsListener listener) {
@@ -115,6 +132,7 @@ public class LanguageServerCommunication {
                 lifecycleFuture.cancel(true);
                 languageServer.shutdown();
                 languageServer.exit();
+                languageServerStreams.stop();
             } catch (Exception e) {
                 LOG.error(e);
             }
@@ -226,4 +244,7 @@ public class LanguageServerCommunication {
         return languageServer.getWorkspaceService().symbol(symbolParams);
     }
 
+    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
+        return languageServer.getTextDocumentService().definition(params);
+    }
 }
