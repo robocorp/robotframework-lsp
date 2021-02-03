@@ -35,6 +35,7 @@ import com.intellij.psi.PsiManager;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.text.BadLocationException;
@@ -123,7 +124,7 @@ public class EditorUtils {
         return file;
     }
 
-    public static @Nullable LanguageServerDefinition getLanguageDefinition(VirtualFile file) {
+    public static @Nullable LanguageServerDefinition getLanguageDefinition(@NotNull VirtualFile file) {
         FileType fileType = file.getFileType();
         if (fileType instanceof LanguageFileType) {
             Language language = ((LanguageFileType) fileType).getLanguage();
@@ -135,15 +136,15 @@ public class EditorUtils {
         return null;
     }
 
-    static public void runWriteAction(Runnable runnable) {
+    static public void runWriteAction(@NotNull Runnable runnable) {
         ApplicationManager.getApplication().runWriteAction(runnable);
     }
 
-    static public <T> T runReadAction(Computable<T> computable) {
+    static public <T> T runReadAction(@NotNull Computable<T> computable) {
         return ApplicationManager.getApplication().runReadAction(computable);
     }
 
-    public static void applyTextEdits(Document doc, Collection<? extends TextEdit> edits) throws BadLocationException {
+    public static void applyTextEdits(@NotNull Document doc, Collection<? extends TextEdit> edits) throws BadLocationException {
         List<TextEdit> sortedEdits = new ArrayList<>(edits);
         Collections.sort(sortedEdits, TEXT_EDIT_COMPARATOR);
         runWriteAction(() -> {
@@ -161,11 +162,22 @@ public class EditorUtils {
         });
     }
 
-    public static @Nullable PsiFile getPSIFile(Editor editor) {
-        return PsiManager.getInstance(editor.getProject()).findFile(EditorUtils.getVirtualFile(editor));
+    public static @Nullable PsiFile getPSIFile(@NotNull Editor editor) {
+        Project project = editor.getProject();
+        if (project == null) {
+            return null;
+        }
+        VirtualFile virtualFile = EditorUtils.getVirtualFile(editor);
+        if (virtualFile == null) {
+            return null;
+        }
+        return PsiManager.getInstance(project).findFile(virtualFile);
     }
 
-    public static @Nullable PsiFile getPSIFile(Project project, VirtualFile virtualFile) {
+    public static @Nullable PsiFile getPSIFile(@Nullable Project project, @Nullable VirtualFile virtualFile) {
+        if (project == null || virtualFile == null) {
+            return null;
+        }
         return PsiManager.getInstance(project).findFile(virtualFile);
     }
 

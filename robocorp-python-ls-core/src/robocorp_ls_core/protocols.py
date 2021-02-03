@@ -550,7 +550,7 @@ class IWorkspace(Protocol):
 
     def iter_documents(self) -> Iterable[IDocument]:
         """
-        Note: the lock must be obtained when iterating documents.
+        Note: can only be called in the main thread.
         """
 
     def iter_folders(self) -> Iterable[IWorkspaceFolder]:

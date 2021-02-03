@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class EditorLanguageServerConnection {
     private static final Logger LOG = Logger.getInstance(LanguageServerCommunication.class);
@@ -29,10 +30,9 @@ public class EditorLanguageServerConnection {
     private final TextDocumentIdentifier identifier;
     private final DocumentListener documentListener;
     private final String projectRoot;
-    private final TextDocumentSyncKind syncKind;
     private final LanguageServerCommunication.IDiagnosticsListener diagnosticsListener;
 
-    private volatile int version = -1;
+    private final AtomicInteger version = new AtomicInteger(-1);
 
     private EditorLanguageServerConnection(LanguageServerManager manager, ILSPEditor editor) throws ExecutionException, InterruptedException, LanguageServerUnavailableException, TimeoutException, IOException {
         this.languageServerManager = manager;
@@ -49,24 +49,24 @@ public class EditorLanguageServerConnection {
             editor.setDiagnostics(diagnostics);
         };
         comm.addDiagnosticsListener(editor.getURI(), diagnosticsListener);
-        this.syncKind = comm.getServerCapabilitySyncKind();
-
-        String languageId = editor.getLanguageDefinition().getLanguageId();
-        version += 1;
-        comm.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(identifier.getUri(), languageId, version, editor.getText())));
+        comm.didOpen(this);
 
         documentListener = new DocumentListener() {
             @Override
             public void documentChanged(@NotNull DocumentEvent event) {
-                TextDocumentContentChangeEvent changeEvent = new TextDocumentContentChangeEvent();
-                DidChangeTextDocumentParams changesParams = new DidChangeTextDocumentParams(new VersionedTextDocumentIdentifier(),
-                        Collections.singletonList(changeEvent));
-                changesParams.getTextDocument().setUri(identifier.getUri());
-                version += 1;
-                changesParams.getTextDocument().setVersion(version);
 
                 try {
                     LanguageServerCommunication comm = manager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
+                    if (comm == null) {
+                        return;
+                    }
+                    TextDocumentContentChangeEvent changeEvent = new TextDocumentContentChangeEvent();
+                    DidChangeTextDocumentParams changesParams = new DidChangeTextDocumentParams(new VersionedTextDocumentIdentifier(),
+                            Collections.singletonList(changeEvent));
+                    changesParams.getTextDocument().setUri(identifier.getUri());
+                    changesParams.getTextDocument().setVersion(version.incrementAndGet());
+
+                    TextDocumentSyncKind syncKind = comm.getServerCapabilitySyncKind();
 
                     if (syncKind == TextDocumentSyncKind.Incremental) {
                         CharSequence newText = event.getNewFragment();
@@ -106,11 +106,21 @@ public class EditorLanguageServerConnection {
         document.addDocumentListener(documentListener);
     }
 
-    public static EditorLanguageServerConnection editorCreated(LanguageServerManager manager, ILSPEditor editor) throws ExecutionException, InterruptedException, LanguageServerUnavailableException, TimeoutException, IOException {
+    @Nullable
+    public DidOpenTextDocumentParams getDidOpenTextDocumentParams() {
+        LanguageServerDefinition languageDefinition = editor.getLanguageDefinition();
+        if (languageDefinition == null) {
+            return null;
+        }
+        String languageId = languageDefinition.getLanguageId();
+        TextDocumentItem textDocumentItem = new TextDocumentItem(identifier.getUri(), languageId, version.incrementAndGet(), editor.getText());
+        return new DidOpenTextDocumentParams(textDocumentItem);
+    }
+
+    public static void editorCreated(LanguageServerManager manager, ILSPEditor editor) throws ExecutionException, InterruptedException, LanguageServerUnavailableException, TimeoutException, IOException {
         EditorLanguageServerConnection conn = new EditorLanguageServerConnection(manager, editor);
         // i.e.: notifies of open and start listening for document changes.
         editor.putUserData(KEY_IN_USER_DATA, conn);
-        return conn;
     }
 
     public static EditorLanguageServerConnection getFromUserData(UserDataHolder editor) {
@@ -129,8 +139,10 @@ public class EditorLanguageServerConnection {
         if (userData == this) {
             // I.e.: closes the connection.
             LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
-            comm.didClose(new DidCloseTextDocumentParams(identifier));
-            comm.removeDiagnosticsListener(editor.getURI(), diagnosticsListener);
+            if (comm != null) {
+                comm.didClose(this);
+                comm.removeDiagnosticsListener(editor.getURI(), diagnosticsListener);
+            }
 
             editor.getDocument().removeDocumentListener(documentListener);
             editor.putUserData(KEY_IN_USER_DATA, null);
@@ -139,8 +151,8 @@ public class EditorLanguageServerConnection {
         }
     }
 
-    public String getURI() {
-        return editor.getURI();
+    public TextDocumentIdentifier getIdentifier() {
+        return identifier;
     }
 
     public @NotNull List<Diagnostic> getDiagnostics() {
@@ -154,6 +166,9 @@ public class EditorLanguageServerConnection {
     public @Nullable CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(int offset) {
         try {
             LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
+            if (comm == null) {
+                return null;
+            }
             Position pos = editor.offsetToLSPPos(offset);
             CompletionParams params = new CompletionParams(identifier, pos);
             @Nullable CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion = comm.completion(params);
@@ -168,7 +183,19 @@ public class EditorLanguageServerConnection {
     public @Nullable ServerCapabilities getServerCapabilities() {
         try {
             LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
+            if (comm == null) {
+                return null;
+            }
             return comm.getServerCapabilities();
+        } catch (Exception e) {
+            LOG.error(e);
+        }
+        return null;
+    }
+
+    public @Nullable LanguageServerCommunication getLanguageServerCommunication() {
+        try {
+            return languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
         } catch (Exception e) {
             LOG.error(e);
         }

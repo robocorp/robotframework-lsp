@@ -45,9 +45,15 @@ public class FeatureDefinition {
             return null;
         }
         LanguageServerDefinition languageDefinition = EditorUtils.getLanguageDefinition(virtualFile);
+        if (languageDefinition == null) {
+            return null;
+        }
         LanguageServerManager languageServerManager = LanguageServerManager.getInstance(languageDefinition);
         try {
             LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(languageDefinition.ext.iterator().next(), basePath);
+            if (comm == null) {
+                return null;
+            }
             String uri = Uris.toUri(virtualFile);
             TextRange absoluteRange = reference.getAbsoluteRange();
             Document document = FileDocumentManager.getInstance().getDocument(virtualFile);

@@ -31,23 +31,17 @@ public class FeatureDiagnostics extends ExternalAnnotator<EditorLanguageServerCo
     @Override
     public void apply(@NotNull PsiFile file, EditorLanguageServerConnection editorLanguageServerConnection, @NotNull AnnotationHolder holder) {
         List<Diagnostic> diagnostics = editorLanguageServerConnection.getDiagnostics();
-        if(diagnostics != null){
-            for(Diagnostic diagnostic:diagnostics){
-                int startOffset = editorLanguageServerConnection.LSPPosToOffset(diagnostic.getRange().getStart());
-                int endOffset = editorLanguageServerConnection.LSPPosToOffset(diagnostic.getRange().getEnd());
+        for (Diagnostic diagnostic : diagnostics) {
+            int startOffset = editorLanguageServerConnection.LSPPosToOffset(diagnostic.getRange().getStart());
+            int endOffset = editorLanguageServerConnection.LSPPosToOffset(diagnostic.getRange().getEnd());
 
-                HighlightSeverity severity = HighlightSeverity.ERROR;
-                switch (diagnostic.getSeverity()) {
-                    case Warning:
-                        severity = HighlightSeverity.WARNING;
-                    case Information:
-                        severity = HighlightSeverity.INFORMATION;
-                    case Hint:
-                        severity = HighlightSeverity.INFORMATION;
-                }
+            HighlightSeverity severity = switch (diagnostic.getSeverity()) {
+                case Warning -> HighlightSeverity.WARNING;
+                case Information, Hint -> HighlightSeverity.INFORMATION;
+                default -> HighlightSeverity.ERROR;
+            };
 
-                holder.newAnnotation(severity, diagnostic.getMessage()).range(new TextRange(startOffset, endOffset)).create();
-            }
+            holder.newAnnotation(severity, diagnostic.getMessage()).range(new TextRange(startOffset, endOffset)).create();
         }
     }
 }

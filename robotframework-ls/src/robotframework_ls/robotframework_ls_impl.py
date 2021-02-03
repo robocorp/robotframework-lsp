@@ -296,6 +296,17 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             self._pm.load_plugins_from(Path(directory))
             return True
 
+        elif command == "robot.getInternalInfo":
+            in_memory_docs = []
+            workspace = self.workspace
+            if workspace:
+                for doc in workspace.iter_documents():
+                    in_memory_docs.append({"uri": doc.uri})
+            return {
+                "settings": self.config.get_full_settings(),
+                "in_memory_docs": in_memory_docs,
+            }
+
         elif command == "robot.resolveInterpreter":
             try:
                 from robocorp_ls_core import uris

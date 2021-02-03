@@ -1,15 +1,12 @@
 package robocorp.lsp.intellij;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -114,10 +111,6 @@ public class EditorToLSPEditor {
 
         @Override
         public void setDiagnostics(@NotNull List<Diagnostic> diagnostics) {
-            if (diagnostics == null) {
-                throw new AssertionError("Diagnostic list must not be null.");
-            }
-
             this.diagnostics = Collections.unmodifiableList(diagnostics);
             ApplicationManager.getApplication().invokeLater(() -> {
                 Editor editor = this.editor.get();
@@ -158,82 +151,8 @@ public class EditorToLSPEditor {
         }
     }
 
-    public static class LSPEditorStub extends UserDataHolderBase implements ILSPEditor {
-
-        private final LanguageServerDefinition definition;
-        private final String uri;
-        private final String extension;
-        private final String projectPath;
-        private final DocumentImpl document;
-        private List<Diagnostic> diagnostics = new ArrayList<>();
-
-        public LSPEditorStub(LanguageServerDefinition definition, String uri, String extension, String projectPath) {
-            this.definition = definition;
-            this.uri = uri;
-            this.extension = extension;
-            this.projectPath = projectPath;
-            this.document = new DocumentImpl("");
-        }
-
-        @Override
-        public @Nullable LanguageServerDefinition getLanguageDefinition() {
-            return definition;
-        }
-
-        @Override
-        public @Nullable String getURI() {
-            return uri;
-        }
-
-        @Override
-        public @Nullable String getExtension() {
-            return extension;
-        }
-
-        @Override
-        public @Nullable String getProjectPath() {
-            return projectPath;
-        }
-
-        @Override
-        public Position offsetToLSPPos(int offset) {
-            return EditorUtils.offsetToLSPPos(document, offset);
-        }
-
-        @Override
-        public int LSPPosToOffset(Position pos) {
-            return EditorUtils.LSPPosToOffset(document, pos);
-        }
-
-        @Override
-        public String getText() {
-            return document.getText();
-        }
-
-        @Override
-        public Document getDocument() {
-            return document;
-        }
-
-        @Override
-        public void setDiagnostics(@NotNull List<Diagnostic> diagnostics) {
-            if (diagnostics == null) {
-                throw new AssertionError("Diagnostic list must not be null.");
-            }
-            this.diagnostics = diagnostics;
-        }
-
-        @Override
-        public @NotNull List<Diagnostic> getDiagnostics() {
-            return diagnostics;
-        }
-    }
-
     public static ILSPEditor wrap(Editor editor) {
         return new EditorAsLSPEditor(editor);
     }
 
-    public static ILSPEditor createStub(LanguageServerDefinition definition, String uri, String extension, String projectPath) {
-        return new LSPEditorStub(definition, uri, extension, projectPath);
-    }
 }
