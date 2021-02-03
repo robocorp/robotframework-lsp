@@ -144,6 +144,9 @@ public class FeatureSymbols implements ChooseByNameContributorEx {
 
                     final WorkspaceSymbolParams symbolParams = new WorkspaceSymbolParams(name);
                     CompletableFuture<List<? extends SymbolInformation>> symbol = comm.symbol(symbolParams);
+                    if (symbol == null) {
+                        return lst;
+                    }
                     List<? extends SymbolInformation> symbolInformation = null;
                     try {
                         symbolInformation = symbol.get(4, TimeUnit.SECONDS);

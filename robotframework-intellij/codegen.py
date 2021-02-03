@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import robocorp.lsp.intellij.LanguageServerDefinition;
 
 import javax.swing.*;
 
@@ -105,6 +106,12 @@ public class RobotPreferencesPage implements Configurable {
     @Override
     public void apply() throws ConfigurationException {
         RobotPreferences settings = RobotPreferences.getInstance();
+        String s;
+        {% for preference in preferences %}
+        s = settings.{{ preference['validate_name'] }}(component.{{ preference['getter_name']}}());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in {{ preference['visible_name'] }}:\\n" + s);
+        }{% endfor %}
         {% for preference in preferences %}
         settings.{{ preference['setter_name'] }}(component.{{ preference['getter_name']}}());{% endfor %}
     }
@@ -121,9 +128,10 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import robocorp.lsp.intellij.LanguageServerDefinition;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Collection;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 
 class RobotState {
@@ -179,6 +187,26 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
     public String {{ preference['getter_name'] }}() {
         return {{ preference['java_name'] }};
     }
+    
+    public String {{ preference['validate_name'] }}(String {{ preference['java_name'] }}) {
+        if({{ preference['java_name'] }}.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            {{ preference['json_load'] }};
+            {% if preference.get('enum') %} {% for enum_value in preference.get('enum') %}
+            if({{ preference['java_name'] }}.equals("{{ enum_value }}")){
+                return "";
+            }{% endfor %}
+            return "Unexpected value: " + {{ preference['java_name'] }};
+            {% else %}
+            return "";
+            {% endif %}
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
 
     public void {{ preference['setter_name'] }}(String s) {
         if (s == null) {
@@ -189,25 +217,26 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         }
         String old = {{ preference['java_name'] }};
         {{ preference['java_name'] }} = s;
-        for (IRobotPreferencesListener listener : listeners) {
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             listener.onChanged({{ preference['constant_name'] }}, old, s);
         }
     }
     {% endfor %}
 
-    interface IRobotPreferencesListener {
-        void onChanged(String property, String oldValue, String newValue);
-    }
-
-    private List<IRobotPreferencesListener> listeners = new CopyOnWriteArrayList<>();
+    private Collection<LanguageServerDefinition.IPreferencesListener> listeners = new CopyOnWriteArraySet<>();
 
     public static RobotPreferences getInstance() {
         return ServiceManager.getService(RobotPreferences.class);
     }
 
-    public void addListener(IRobotPreferencesListener listener) {
+    public void addListener(LanguageServerDefinition.IPreferencesListener listener) {
         listeners.add(listener);
     }
+    
+    public void removeListener(LanguageServerDefinition.IPreferencesListener listener) {
+        listeners.remove(listener);
+    }
+
 }
 '''
 
@@ -240,11 +269,13 @@ def main():
             prop_value['description'] = final_desc
             prop_value['dotted_name'] = prop_name
             prop_value['constant_name'] = prop_name.replace('.', '_').replace('-', '_').upper()
-            prop_value['visible_name'] = prop_name.replace('.', ' ').replace('-', ' ').replace('_', ' ').title()
+            visible_name = prop_name.replace('robot.', '')
+            prop_value['visible_name'] = visible_name.replace('.', ' ').replace('-', ' ').replace('_', ' ').title()
             base_name = prop_name.replace('.', ' ').replace('-', ' ').replace('_', ' ').title().replace(' ', '')
             java_name = prop_value['java_name'] = base_name[0].lower() + base_name[1:]
             prop_value['getter_name'] = 'get' + base_name[0].upper() + base_name[1:]
             prop_value['setter_name'] = 'set' + base_name[0].upper() + base_name[1:]
+            prop_value['validate_name'] = 'validate' + base_name[0].upper() + base_name[1:]
 
             if prop_value['type'] == 'array':
                 json_load = f'g.fromJson({java_name}, JsonArray.class)'
