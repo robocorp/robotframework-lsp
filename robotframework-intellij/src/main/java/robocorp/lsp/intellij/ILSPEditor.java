@@ -1,7 +1,6 @@
 package robocorp.lsp.intellij;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.Position;

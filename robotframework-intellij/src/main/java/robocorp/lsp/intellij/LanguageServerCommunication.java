@@ -21,9 +21,173 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+class InternalConnection {
+
+    private LanguageServerDefinition.LanguageServerStreams languageServerStreams;
+
+    private static final Logger LOG = Logger.getInstance(InternalConnection.class);
+
+    // Passed on constructor
+    private final String projectRootPath;
+    private final LanguageServerDefinition languageServerDefinition;
+    private final LanguageServerCommunication.DefaultLanguageClient client;
+
+    // Set when starting
+    private LanguageServer languageServer;
+    private Future<Void> lifecycleFuture;
+    private InitializeResult initializeResult;
+    private final LanguageServerDefinition.IPreferencesListener preferencesListener;
+    private final AtomicInteger counter = new AtomicInteger();
+
+    public void shutdown() {
+        languageServerDefinition.unregisterPreferencesListener(preferencesListener);
+        lifecycleFuture.cancel(true);
+        languageServer.shutdown();
+        languageServer.exit();
+        languageServerStreams.stop();
+    }
+
+    public ServerCapabilities getServerCapabilities() {
+        if (initializeResult != null)
+            return initializeResult.getCapabilities();
+        else {
+            return null;
+        }
+    }
+
+    enum State {
+        initialState,
+        initializing,
+        initialized,
+        crashed
+    }
+
+    private volatile State state = State.initialState;
+
+    private static InitializeParams getInitParams(@NotNull String projectRootPath) {
+        InitializeParams initParams = new InitializeParams();
+        initParams.setRootUri(Uris.pathToUri(projectRootPath));
+
+        try {
+            // Java 9 only
+            initParams.setProcessId((int) ProcessHandle.current().pid());
+        } catch (Exception e) {
+            initParams.setProcessId(Integer.parseInt(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]));
+        }
+
+        WorkspaceClientCapabilities workspaceClientCapabilities = new WorkspaceClientCapabilities();
+        workspaceClientCapabilities.setApplyEdit(true);
+        workspaceClientCapabilities.setDidChangeWatchedFiles(new DidChangeWatchedFilesCapabilities());
+        workspaceClientCapabilities.setExecuteCommand(new ExecuteCommandCapabilities());
+        workspaceClientCapabilities.setWorkspaceEdit(new WorkspaceEditCapabilities());
+        workspaceClientCapabilities.setSymbol(new SymbolCapabilities());
+        workspaceClientCapabilities.setWorkspaceFolders(false);
+        workspaceClientCapabilities.setConfiguration(false);
+
+        TextDocumentClientCapabilities textDocumentClientCapabilities = new TextDocumentClientCapabilities();
+        textDocumentClientCapabilities.setCodeAction(new CodeActionCapabilities());
+        textDocumentClientCapabilities.setCompletion(new CompletionCapabilities(new CompletionItemCapabilities(true)));
+        textDocumentClientCapabilities.setDefinition(new DefinitionCapabilities());
+        textDocumentClientCapabilities.setDocumentHighlight(new DocumentHighlightCapabilities());
+        textDocumentClientCapabilities.setFormatting(new FormattingCapabilities());
+        textDocumentClientCapabilities.setHover(new HoverCapabilities());
+        textDocumentClientCapabilities.setOnTypeFormatting(new OnTypeFormattingCapabilities());
+        textDocumentClientCapabilities.setRangeFormatting(new RangeFormattingCapabilities());
+        textDocumentClientCapabilities.setReferences(new ReferencesCapabilities());
+        textDocumentClientCapabilities.setRename(new RenameCapabilities());
+        textDocumentClientCapabilities.setSignatureHelp(new SignatureHelpCapabilities());
+        textDocumentClientCapabilities.setSynchronization(new SynchronizationCapabilities(true, true, true));
+        initParams.setCapabilities(
+                new ClientCapabilities(workspaceClientCapabilities, textDocumentClientCapabilities, null));
+        initParams.setInitializationOptions(null);
+
+        return initParams;
+    }
+
+    public InternalConnection(String projectRootPath, LanguageServerDefinition languageServerDefinition, LanguageServerCommunication.DefaultLanguageClient client) {
+        this.projectRootPath = projectRootPath;
+        this.languageServerDefinition = languageServerDefinition;
+        this.client = client;
+
+        preferencesListener = (propName, oldValue, newValue) -> {
+            // Whenever preferences change, send it to the server.
+            if (!isConnected()) {
+                return;
+            }
+            final int currValue = counter.incrementAndGet();
+            ApplicationManager.getApplication().invokeLater(() -> {
+                if (counter.get() == currValue) {
+                    // i.e.: if we receive multiple notifications at once, notify only once in the last notification.
+                    this.didChangeConfiguration(new DidChangeConfigurationParams(languageServerDefinition.getPreferences()));
+                }
+            });
+        };
+    }
+
+    public void start() {
+        if (state != State.initialState) {
+            // Can only initialize when on the initial state.
+            return;
+        }
+        try {
+            state = State.initializing;
+            LanguageServerDefinition.LanguageServerStreams languageServerStreams = languageServerDefinition.createConnectionProvider(projectRootPath);
+            languageServerStreams.start();
+            InputStream inputStream = languageServerStreams.getInputStream();
+            OutputStream outputStream = languageServerStreams.getOutputStream();
+            Launcher<LanguageServer> launcher = LSPLauncher.createClientLauncher(
+                    client, inputStream, outputStream);
+
+            this.languageServer = launcher.getRemoteProxy();
+            this.lifecycleFuture = launcher.startListening();
+            CompletableFuture<InitializeResult> initializeResultFuture = languageServer.initialize(getInitParams(projectRootPath));
+            InitializeResult tempResult = null;
+            for (int i = 0; i < 10; i++) {
+                try {
+                    tempResult = initializeResultFuture.get(1, TimeUnit.SECONDS);
+                } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                    if (!this.isConnected() || i == 9) {
+                        throw e;
+                    }
+                }
+            }
+            initializeResult = tempResult;
+            this.languageServerStreams = languageServerStreams;
+
+            this.didChangeConfiguration(new DidChangeConfigurationParams(languageServerDefinition.getPreferences()));
+            languageServerDefinition.registerPreferencesListener(preferencesListener);
+            this.languageServer.initialized(new InitializedParams());
+
+        } catch (Exception e) {
+            LOG.error(e);
+            state = State.crashed;
+        }
+    }
+
+    boolean isConnected() {
+        return lifecycleFuture != null && !lifecycleFuture.isDone() && !lifecycleFuture.isCancelled();
+    }
+
+    public void didChangeConfiguration(DidChangeConfigurationParams params) {
+        if (!this.isConnected()) {
+            LOG.info("Unable to change config: disconnected.");
+            return;
+        }
+        try {
+            languageServer.getWorkspaceService().didChangeConfiguration(params);
+        } catch (Exception e) {
+            LOG.error(e);
+        }
+    }
+
+    /*default*/ LanguageServer getLanguageServer() {
+        return languageServer;
+    }
+}
+
 public class LanguageServerCommunication {
 
-    public static interface IDiagnosticsListener {
+    public interface IDiagnosticsListener {
         void onDiagnostics(PublishDiagnosticsParams params);
     }
 
@@ -69,7 +233,7 @@ public class LanguageServerCommunication {
             synchronized (lockUriToDiagnosticsListener) {
                 Collection<IDiagnosticsListener> listeners = uriToDiagnosticsListener.get(uri);
                 if (listeners == null) {
-                    listeners = new CopyOnWriteArraySet<IDiagnosticsListener>();
+                    listeners = new CopyOnWriteArraySet<>();
                     uriToDiagnosticsListener.put(uri, listeners);
                 }
                 listeners.add(listener);
@@ -80,7 +244,7 @@ public class LanguageServerCommunication {
             synchronized (lockUriToDiagnosticsListener) {
                 Collection<IDiagnosticsListener> listeners = uriToDiagnosticsListener.get(uri);
                 if (listeners == null) {
-                    listeners = new CopyOnWriteArraySet<IDiagnosticsListener>();
+                    listeners = new CopyOnWriteArraySet<>();
                     uriToDiagnosticsListener.put(uri, listeners);
                 }
                 listeners.remove(listener);
@@ -93,57 +257,20 @@ public class LanguageServerCommunication {
 
     private static final Logger LOG = Logger.getInstance(LanguageServerCommunication.class);
 
-    private final Future<Void> lifecycleFuture;
-    private final LanguageServer languageServer;
-    private final InitializeResult initializeResult;
     private final DefaultLanguageClient client;
-    private final LanguageServerDefinition.LanguageServerStreams languageServerStreams;
     private final LanguageServerDefinition languageServerDefinition;
-    private final LanguageServerDefinition.IPreferencesListener preferencesListener;
-    private final AtomicInteger counter = new AtomicInteger();
+    private InternalConnection internalConnection;
+
+    // i.e.: after disposed the communication won't be restored!
+    private volatile boolean disposed = false;
 
     public LanguageServerCommunication(String projectRootPath, LanguageServerDefinition languageServerDefinition)
             throws InterruptedException, ExecutionException, TimeoutException, IOException {
+        DefaultLanguageClient client = new DefaultLanguageClient();
+        this.internalConnection = new InternalConnection(projectRootPath, languageServerDefinition, client);
+        internalConnection.start();
 
-        LanguageServerDefinition.LanguageServerStreams languageServerStreams = languageServerDefinition.createConnectionProvider(projectRootPath);
-        languageServerStreams.start();
-        InputStream inputStream = languageServerStreams.getInputStream();
-        OutputStream outputStream = languageServerStreams.getOutputStream();
-        DefaultLanguageClient client = new LanguageServerCommunication.DefaultLanguageClient();
-        Launcher<LanguageServer> launcher = LSPLauncher.createClientLauncher(
-                client, inputStream, outputStream);
-
-        this.languageServer = launcher.getRemoteProxy();
-        this.lifecycleFuture = launcher.startListening();
-        CompletableFuture<InitializeResult> initializeResultFuture = languageServer.initialize(getInitParams(projectRootPath));
-        InitializeResult tempResult = null;
-        for (int i = 0; i < 10; i++) {
-            try {
-                tempResult = initializeResultFuture.get(1, TimeUnit.SECONDS);
-            } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                if (!this.isConnected() || i == 9) {
-                    throw e;
-                }
-            }
-        }
-        initializeResult = tempResult;
-        this.didChangeConfiguration(new DidChangeConfigurationParams(languageServerDefinition.getPreferences()));
-        preferencesListener = (propName, oldValue, newValue) -> {
-            if (!isConnected()) {
-                return;
-            }
-            final int currValue = counter.incrementAndGet();
-            ApplicationManager.getApplication().invokeLater(() -> {
-                if (counter.get() == currValue) {
-                    // i.e.: if we receive multiple notifications at once, notify only once in the last notification.
-                    this.didChangeConfiguration(new DidChangeConfigurationParams(languageServerDefinition.getPreferences()));
-                }
-            });
-        };
-        languageServerDefinition.registerPreferencesListener(preferencesListener);
-        this.languageServer.initialized(new InitializedParams());
         this.client = client;
-        this.languageServerStreams = languageServerStreams;
         this.languageServerDefinition = languageServerDefinition;
     }
 
@@ -155,75 +282,22 @@ public class LanguageServerCommunication {
         this.client.removeDiagnosticsListener(uri, diagnosticsListener);
     }
 
-    public void shutdown() {
-        if (isConnected()) {
+    public void shutdown(boolean dispose) {
+        if (dispose) {
+            // When disposed it won't be restarted anymore.
+            this.disposed = true;
+        }
+        if (internalConnection.isConnected()) {
             try {
-                languageServerDefinition.unregisterPreferencesListener(preferencesListener);
-                lifecycleFuture.cancel(true);
-                languageServer.shutdown();
-                languageServer.exit();
-                languageServerStreams.stop();
+                internalConnection.shutdown();
             } catch (Exception e) {
                 LOG.error(e);
             }
         }
     }
 
-    public boolean isConnected() {
-        return lifecycleFuture != null && !lifecycleFuture.isDone() && !lifecycleFuture.isCancelled();
-    }
-
-    public boolean canSendCommands() {
-        return isConnected() && initializeResult != null;
-    }
-
-    private InitializeParams getInitParams(@NotNull String projectRootPath) {
-        InitializeParams initParams = new InitializeParams();
-        initParams.setRootUri(Uris.pathToUri(projectRootPath));
-
-        try {
-            // Java 9 only
-            initParams.setProcessId((int) ProcessHandle.current().pid());
-        } catch (Exception e) {
-            initParams.setProcessId(Integer.parseInt(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]));
-        }
-
-        WorkspaceClientCapabilities workspaceClientCapabilities = new WorkspaceClientCapabilities();
-        workspaceClientCapabilities.setApplyEdit(true);
-        workspaceClientCapabilities.setDidChangeWatchedFiles(new DidChangeWatchedFilesCapabilities());
-        workspaceClientCapabilities.setExecuteCommand(new ExecuteCommandCapabilities());
-        workspaceClientCapabilities.setWorkspaceEdit(new WorkspaceEditCapabilities());
-        workspaceClientCapabilities.setSymbol(new SymbolCapabilities());
-        workspaceClientCapabilities.setWorkspaceFolders(false);
-        workspaceClientCapabilities.setConfiguration(false);
-
-        TextDocumentClientCapabilities textDocumentClientCapabilities = new TextDocumentClientCapabilities();
-        textDocumentClientCapabilities.setCodeAction(new CodeActionCapabilities());
-        textDocumentClientCapabilities.setCompletion(new CompletionCapabilities(new CompletionItemCapabilities(true)));
-        textDocumentClientCapabilities.setDefinition(new DefinitionCapabilities());
-        textDocumentClientCapabilities.setDocumentHighlight(new DocumentHighlightCapabilities());
-        textDocumentClientCapabilities.setFormatting(new FormattingCapabilities());
-        textDocumentClientCapabilities.setHover(new HoverCapabilities());
-        textDocumentClientCapabilities.setOnTypeFormatting(new OnTypeFormattingCapabilities());
-        textDocumentClientCapabilities.setRangeFormatting(new RangeFormattingCapabilities());
-        textDocumentClientCapabilities.setReferences(new ReferencesCapabilities());
-        textDocumentClientCapabilities.setRename(new RenameCapabilities());
-        textDocumentClientCapabilities.setSemanticHighlightingCapabilities(new SemanticHighlightingCapabilities(false));
-        textDocumentClientCapabilities.setSignatureHelp(new SignatureHelpCapabilities());
-        textDocumentClientCapabilities.setSynchronization(new SynchronizationCapabilities(true, true, true));
-        initParams.setCapabilities(
-                new ClientCapabilities(workspaceClientCapabilities, textDocumentClientCapabilities, null));
-        initParams.setInitializationOptions(null);
-
-        return initParams;
-    }
-
     public @Nullable ServerCapabilities getServerCapabilities() throws ExecutionException, InterruptedException {
-        if (initializeResult != null)
-            return initializeResult.getCapabilities();
-        else {
-            return null;
-        }
+        return internalConnection.getServerCapabilities();
     }
 
     public TextDocumentSyncKind getServerCapabilitySyncKind() throws ExecutionException, InterruptedException, LanguageServerUnavailableException {
@@ -242,8 +316,28 @@ public class LanguageServerCommunication {
         return syncKind;
     }
 
-    public void didOpen(DidOpenTextDocumentParams params) {
-        if (!this.isConnected()) {
+    private LanguageServer obtainSynchronizedLanguageServer() {
+        if (!internalConnection.isConnected()) {
+            // XXX: We must restart if it's not connected (and when restarted the docs/settings
+            // must be set again).
+            return null;
+        }
+        LanguageServer languageServer = internalConnection.getLanguageServer();
+        return languageServer;
+    }
+
+    public void didOpen(EditorLanguageServerConnection editorLanguageServerConnection) {
+        DidOpenTextDocumentParams params = editorLanguageServerConnection.getDidOpenTextDocumentParams();
+        if (params == null) {
+            return;
+        }
+        this.didOpen(params);
+    }
+
+    private void didOpen(DidOpenTextDocumentParams params) {
+        LanguageServer languageServer = obtainSynchronizedLanguageServer();
+
+        if (languageServer == null) {
             LOG.info("Unable forward open: disconnected.");
             return;
         }
@@ -254,8 +348,14 @@ public class LanguageServerCommunication {
         }
     }
 
-    public void didClose(DidCloseTextDocumentParams params) {
-        if (!this.isConnected()) {
+    public void didClose(EditorLanguageServerConnection editorLanguageServerConnection) {
+        this.didClose(new DidCloseTextDocumentParams(editorLanguageServerConnection.getIdentifier()));
+    }
+
+    private void didClose(DidCloseTextDocumentParams params) {
+        LanguageServer languageServer = obtainSynchronizedLanguageServer();
+
+        if (languageServer == null) {
             LOG.info("Unable forward close: disconnected.");
             return;
         }
@@ -267,7 +367,9 @@ public class LanguageServerCommunication {
     }
 
     public void didChange(DidChangeTextDocumentParams params) {
-        if (!this.isConnected()) {
+        LanguageServer languageServer = obtainSynchronizedLanguageServer();
+
+        if (languageServer == null) {
             LOG.info("Unable forward change: disconnected.");
             return;
         }
@@ -278,20 +380,10 @@ public class LanguageServerCommunication {
         }
     }
 
-    public void didChangeConfiguration(DidChangeConfigurationParams params) {
-        if (!this.isConnected()) {
-            LOG.info("Unable to change config: disconnected.");
-            return;
-        }
-        try {
-            languageServer.getWorkspaceService().didChangeConfiguration(params);
-        } catch (Exception e) {
-            LOG.error(e);
-        }
-    }
-
     public @Nullable CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams params) {
-        if (!this.isConnected()) {
+        LanguageServer languageServer = obtainSynchronizedLanguageServer();
+
+        if (languageServer == null) {
             LOG.info("Unable to get symbol: disconnected.");
             return null;
         }
@@ -299,7 +391,9 @@ public class LanguageServerCommunication {
     }
 
     public @Nullable CompletableFuture<List<? extends SymbolInformation>> symbol(WorkspaceSymbolParams symbolParams) {
-        if (!this.isConnected()) {
+        LanguageServer languageServer = obtainSynchronizedLanguageServer();
+
+        if (languageServer == null) {
             LOG.info("Unable to get symbol: disconnected.");
             return null;
         }
@@ -307,11 +401,24 @@ public class LanguageServerCommunication {
     }
 
     public @Nullable CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
-        if (!this.isConnected()) {
+        LanguageServer languageServer = obtainSynchronizedLanguageServer();
+
+        if (languageServer == null) {
             LOG.info("Unable to get definition: disconnected.");
             return null;
         }
 
         return languageServer.getTextDocumentService().definition(params);
+    }
+
+    public @Nullable CompletableFuture<Object> command(ExecuteCommandParams params) {
+        LanguageServer languageServer = obtainSynchronizedLanguageServer();
+
+        if (languageServer == null) {
+            LOG.info("Unable to run command: disconnected.");
+            return null;
+        }
+
+        return languageServer.getWorkspaceService().executeCommand(params);
     }
 }

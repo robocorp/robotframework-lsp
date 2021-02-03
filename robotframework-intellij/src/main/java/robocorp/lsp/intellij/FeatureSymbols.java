@@ -43,7 +43,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -54,7 +53,7 @@ public class FeatureSymbols implements ChooseByNameContributorEx {
 
     public static class LSPNavigationItem extends OpenFileDescriptor implements NavigationItem {
 
-        private ItemPresentation presentation;
+        private final ItemPresentation presentation;
 
         LSPNavigationItem(String name, String location, Icon icon, @NotNull Project project, @NotNull VirtualFile file,
                           int logicalLine, int logicalColumn) {
@@ -89,11 +88,11 @@ public class FeatureSymbols implements ChooseByNameContributorEx {
             return Objects.hash(this.getLine(), this.getColumn(), this.getName());
         }
 
-        private class LSPItemPresentation implements ItemPresentation {
+        private static class LSPItemPresentation implements ItemPresentation {
 
-            private String location;
-            private String presentableText;
-            private Icon icon;
+            private final String location;
+            private final String presentableText;
+            private final Icon icon;
 
             LSPItemPresentation(String location, String presentableText, Icon icon) {
                 this.location = location;
@@ -141,13 +140,16 @@ public class FeatureSymbols implements ChooseByNameContributorEx {
                     LanguageServerDefinition languageDefinition = contributor.getLanguageDefinition();
                     LanguageServerManager languageServerManager = LanguageServerManager.getInstance(languageDefinition);
                     LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(languageDefinition.ext.iterator().next(), basePath);
+                    if (comm == null) {
+                        return lst;
+                    }
 
                     final WorkspaceSymbolParams symbolParams = new WorkspaceSymbolParams(name);
                     CompletableFuture<List<? extends SymbolInformation>> symbol = comm.symbol(symbolParams);
                     if (symbol == null) {
                         return lst;
                     }
-                    List<? extends SymbolInformation> symbolInformation = null;
+                    List<? extends SymbolInformation> symbolInformation;
                     try {
                         symbolInformation = symbol.get(4, TimeUnit.SECONDS);
                     } catch (TimeoutException e) {
@@ -192,8 +194,7 @@ public class FeatureSymbols implements ChooseByNameContributorEx {
             LOG.info("Not getting workspace symbols for language server (project is null).");
             return;
         }
-        String queryString = Optional.ofNullable(project)
-                .map(p -> p.getUserData(ChooseByNamePopup.CURRENT_SEARCH_PATTERN)).orElse("");
+        String queryString = project.getUserData(ChooseByNamePopup.CURRENT_SEARCH_PATTERN);
 
         for (LSPNavigationItem item : workspaceSymbolProvider.workspaceSymbols(queryString, project)) {
             if (globalSearchScope.isSearchInLibraries() || globalSearchScope.accept(item.getFile())) {

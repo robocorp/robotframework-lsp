@@ -29,7 +29,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -99,7 +101,7 @@ public class FeatureCodeCompletion extends CompletionContributor {
 
         public LSPPrefixMatcher(String lineToCursor) {
             super(getPrefix(lineToCursor));
-            normalizedPrefix = this.normalizeRobotName(myPrefix);
+            normalizedPrefix = normalizeRobotName(myPrefix);
         }
 
         private static String normalizeRobotName(String myPrefix) {
@@ -116,10 +118,7 @@ public class FeatureCodeCompletion extends CompletionContributor {
         @Override
         public boolean prefixMatches(@NotNull String name) {
             name = normalizeRobotName(name);
-            if (name.contains(normalizedPrefix)) {
-                return true;
-            }
-            return false;
+            return name.contains(normalizedPrefix);
         }
 
         @Override
@@ -137,6 +136,10 @@ public class FeatureCodeCompletion extends CompletionContributor {
             try {
                 final String lineToCursor = EditorUtils.getLineToCursor(editor.getDocument(), offset);
 
+                ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+                if (progressIndicator == null) {
+                    progressIndicator = new EmptyProgressIndicator();
+                }
                 ApplicationUtil.runWithCheckCanceled(() -> {
                     CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion = editorLanguageServerConnection.completion(offset);
                     if (completion == null) {
@@ -154,16 +157,12 @@ public class FeatureCodeCompletion extends CompletionContributor {
                         if (res.getLeft() != null) {
                             for (CompletionItem item : res.getLeft()) {
                                 LookupElement lookupElement = createLookupItem(item);
-                                if (lookupElement != null) {
-                                    completionResult.addElement(lookupElement);
-                                }
+                                completionResult.addElement(lookupElement);
                             }
                         } else if (res.getRight() != null) {
                             for (CompletionItem item : res.getRight().getItems()) {
                                 LookupElement lookupElement = createLookupItem(item);
-                                if (lookupElement != null) {
-                                    completionResult.addElement(lookupElement);
-                                }
+                                completionResult.addElement(lookupElement);
                             }
                         }
                     } finally {
@@ -171,7 +170,7 @@ public class FeatureCodeCompletion extends CompletionContributor {
                     }
 
                     return null;
-                }, ProgressIndicatorProvider.getGlobalProgressIndicator());
+                }, progressIndicator);
             } catch (ProcessCanceledException ignored) {
                 // Cancelled.
             } catch (Exception e) {
@@ -180,7 +179,7 @@ public class FeatureCodeCompletion extends CompletionContributor {
         }
     }
 
-    private LookupElement createLookupItem(final CompletionItem item) {
+    private @NotNull LookupElement createLookupItem(final CompletionItem item) {
         final CompletionItemKind kind = item.getKind();
         final String label = item.getLabel();
         final Icon icon = LanguageServerIcons.getCompletionIcon(kind);
@@ -261,6 +260,9 @@ public class FeatureCodeCompletion extends CompletionContributor {
             private void prepareAndRunSnippet(@NotNull InsertionContext context, @NotNull String insertText) {
                 Editor editor = context.getEditor();
                 Project project = editor.getProject();
+                if (project == null) {
+                    return;
+                }
                 List<SnippetVariable> variables = new ArrayList<>();
                 // Extracts variables using placeholder REGEX pattern.
                 Matcher varMatcher = SNIPPET_PLACEHOLDER_REGEX.matcher(insertText);

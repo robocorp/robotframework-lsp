@@ -33,24 +33,27 @@ public class LanguageServerEditorListener implements EditorFactoryListener {
         }
     }
 
-    public EditorLanguageServerConnection editorCreated(ILSPEditor editor) {
+    public void editorCreated(ILSPEditor editor) {
         @Nullable LanguageServerDefinition definition = editor.getLanguageDefinition();
         if (definition == null) {
-            return null;
+            return;
         }
 
         String uri = editor.getURI();
         String projectPath = editor.getProjectPath();
         if (uri == null || projectPath == null) {
-            return null;
+            return;
         }
 
         try {
-            LanguageServerManager manager = LanguageServerManager.start(definition, editor.getExtension(), projectPath);
-            return EditorLanguageServerConnection.editorCreated(manager, editor);
+            String extension = editor.getExtension();
+            if (extension == null) {
+                return;
+            }
+            LanguageServerManager manager = LanguageServerManager.start(definition, extension, projectPath);
+            EditorLanguageServerConnection.editorCreated(manager, editor);
         } catch (Exception e) {
             LOG.error(e);
         }
-        return null;
     }
 }

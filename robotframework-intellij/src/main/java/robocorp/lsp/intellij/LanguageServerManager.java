@@ -63,14 +63,28 @@ public class LanguageServerManager {
 
     public static LanguageServerManager start(LanguageServerDefinition definition, String ext, String projectRootPath) throws IOException, InterruptedException, ExecutionException, TimeoutException {
         LanguageServerManager instance = getInstance(definition);
-        instance.start(ext, projectRootPath);
+        if (!ext.startsWith(".")) {
+            throw new AssertionError("Expected extension to start with '.'");
+        }
+        if (instance.languageServerDefinition.ext.contains(ext)) {
+            synchronized (instance.lockProjectRootPathToComm) {
+                LanguageServerCommunication languageServerCommunication = instance.projectRootPathToComm.get(projectRootPath);
+                if (languageServerCommunication == null) {
+                    languageServerCommunication = new LanguageServerCommunication(projectRootPath, instance.languageServerDefinition);
+                    instance.projectRootPathToComm.put(projectRootPath, languageServerCommunication);
+                }
+            }
+        }
         return instance;
     }
 
+    /**
+     * After a dispose, all existing communications will be removed.
+     */
     public static void disposeAll() {
         synchronized (lockDefinitionToManager) {
-            Set<Map.Entry<LanguageServerDefinition, LanguageServerManager>> entries = definitionToManager.entrySet();
             try {
+                Set<Map.Entry<LanguageServerDefinition, LanguageServerManager>> entries = definitionToManager.entrySet();
                 for (Map.Entry<LanguageServerDefinition, LanguageServerManager> entry : entries) {
                     try {
                         entry.getValue().dispose();
@@ -79,7 +93,23 @@ public class LanguageServerManager {
                     }
                 }
             } finally {
-                entries.clear();
+                definitionToManager.clear();
+            }
+        }
+    }
+
+    /**
+     * After a shutdown, it may still be restarted (unlike a dispose).
+     */
+    public static void shutdownAll() {
+        synchronized (lockDefinitionToManager) {
+            Set<Map.Entry<LanguageServerDefinition, LanguageServerManager>> entries = definitionToManager.entrySet();
+            for (Map.Entry<LanguageServerDefinition, LanguageServerManager> entry : entries) {
+                try {
+                    entry.getValue().shutdown();
+                } catch (Exception e) {
+                    LOG.error(e);
+                }
             }
         }
     }
@@ -94,14 +124,52 @@ public class LanguageServerManager {
         this.languageServerDefinition = definition;
     }
 
-    private @Nullable LanguageServerCommunication start(String ext, String projectRootPath) throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    private void dispose() {
+        synchronized (lockProjectRootPathToComm) {
+            try {
+                Set<Map.Entry<String, LanguageServerCommunication>> entries = projectRootPathToComm.entrySet();
+                for (Map.Entry<String, LanguageServerCommunication> entry : entries) {
+                    try {
+                        entry.getValue().shutdown(true);
+                    } catch (Exception e) {
+                        LOG.error(e);
+                    }
+                }
+            } finally {
+                projectRootPathToComm.clear();
+            }
+        }
+    }
+
+    public void shutdown() {
+        synchronized (lockProjectRootPathToComm) {
+            Set<Map.Entry<String, LanguageServerCommunication>> entries = projectRootPathToComm.entrySet();
+            for (Map.Entry<String, LanguageServerCommunication> entry : entries) {
+                try {
+                    entry.getValue().shutdown(false);
+                } catch (Exception e) {
+                    LOG.error(e);
+                }
+            }
+        }
+
+    }
+
+    /**
+     * If the communication is not in-place at this point, it may be started.
+     */
+    public @Nullable LanguageServerCommunication getLanguageServerCommunication(String ext, String projectRootPath) throws InterruptedException, ExecutionException, TimeoutException, IOException {
+        LanguageServerCommunication comm = projectRootPathToComm.get(projectRootPath);
+        if (comm != null) {
+            return comm;
+        }
         if (!ext.startsWith(".")) {
             throw new AssertionError("Expected extension to start with '.'");
         }
         if (languageServerDefinition.ext.contains(ext)) {
             synchronized (lockProjectRootPathToComm) {
                 LanguageServerCommunication languageServerCommunication = projectRootPathToComm.get(projectRootPath);
-                if (languageServerCommunication == null || !languageServerCommunication.isConnected()) {
+                if (languageServerCommunication == null) {
                     languageServerCommunication = new LanguageServerCommunication(projectRootPath, languageServerDefinition);
                     projectRootPathToComm.put(projectRootPath, languageServerCommunication);
                     return languageServerCommunication;
@@ -109,30 +177,5 @@ public class LanguageServerManager {
             }
         }
         return null;
-    }
-
-    private void dispose() {
-        synchronized (lockProjectRootPathToComm) {
-            Set<Map.Entry<String, LanguageServerCommunication>> entries = projectRootPathToComm.entrySet();
-            for (Map.Entry<String, LanguageServerCommunication> entry : entries) {
-                try {
-                    entry.getValue().shutdown();
-                } catch (Exception e) {
-                    LOG.error(e);
-                }
-            }
-            projectRootPathToComm.clear();
-        }
-    }
-
-    /**
-     * If the communication is not in-place at this point, we start/restart it.
-     */
-    public @Nullable LanguageServerCommunication getLanguageServerCommunication(String ext, String projectRootPath) throws InterruptedException, ExecutionException, TimeoutException, IOException {
-        LanguageServerCommunication comm = projectRootPathToComm.get(projectRootPath);
-        if (comm != null && comm.isConnected()) {
-            return comm;
-        }
-        return start(ext, projectRootPath);
     }
 }
