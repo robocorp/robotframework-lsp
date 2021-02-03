@@ -54,7 +54,23 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
                 builder,
                 port,
                 "RobotFramework"
-        );
+        ) {
+
+            @Override
+            public Object getPreferences() {
+                return RobotPreferences.getInstance().asJsonObject();
+            }
+
+            @Override
+            public void registerPreferencesListener(IPreferencesListener preferencesListener) {
+                RobotPreferences.getInstance().addListener(preferencesListener);
+            }
+
+            @Override
+            public void unregisterPreferencesListener(IPreferencesListener preferencesListener) {
+                RobotPreferences.getInstance().removeListener(preferencesListener);
+            }
+        };
 
         robotPreferences.addListener((property, oldValue, newValue) -> {
             if (RobotPreferences.ROBOT_LANGUAGE_SERVER_PYTHON.equals(property) ||

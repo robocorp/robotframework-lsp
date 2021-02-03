@@ -1,5 +1,6 @@
 package robocorp.lsp.intellij;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -14,9 +15,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class LanguageServerCommunication {
 
@@ -28,7 +31,7 @@ public class LanguageServerCommunication {
 
         private static final Logger LOG = Logger.getInstance(DefaultLanguageClient.class);
 
-        private final Map<String, List<IDiagnosticsListener>> uriToDiagnosticsListener = new ConcurrentHashMap<>();
+        private final Map<String, Collection<IDiagnosticsListener>> uriToDiagnosticsListener = new ConcurrentHashMap<>();
         private final Object lockUriToDiagnosticsListener = new Object();
 
         @Override
@@ -39,7 +42,7 @@ public class LanguageServerCommunication {
         @Override
         public void publishDiagnostics(PublishDiagnosticsParams diagnostics) {
             String uri = diagnostics.getUri();
-            List<IDiagnosticsListener> listenerList = uriToDiagnosticsListener.get(uri);
+            Collection<IDiagnosticsListener> listenerList = uriToDiagnosticsListener.get(uri);
             if (listenerList != null) {
                 for (IDiagnosticsListener listener : listenerList) {
                     listener.onDiagnostics(diagnostics);
@@ -64,9 +67,9 @@ public class LanguageServerCommunication {
 
         public void addDiagnosticsListener(String uri, IDiagnosticsListener listener) {
             synchronized (lockUriToDiagnosticsListener) {
-                List<IDiagnosticsListener> listeners = uriToDiagnosticsListener.get(uri);
+                Collection<IDiagnosticsListener> listeners = uriToDiagnosticsListener.get(uri);
                 if (listeners == null) {
-                    listeners = new CopyOnWriteArrayList<IDiagnosticsListener>();
+                    listeners = new CopyOnWriteArraySet<IDiagnosticsListener>();
                     uriToDiagnosticsListener.put(uri, listeners);
                 }
                 listeners.add(listener);
@@ -75,9 +78,9 @@ public class LanguageServerCommunication {
 
         public void removeDiagnosticsListener(String uri, IDiagnosticsListener listener) {
             synchronized (lockUriToDiagnosticsListener) {
-                List<IDiagnosticsListener> listeners = uriToDiagnosticsListener.get(uri);
+                Collection<IDiagnosticsListener> listeners = uriToDiagnosticsListener.get(uri);
                 if (listeners == null) {
-                    listeners = new CopyOnWriteArrayList<IDiagnosticsListener>();
+                    listeners = new CopyOnWriteArraySet<IDiagnosticsListener>();
                     uriToDiagnosticsListener.put(uri, listeners);
                 }
                 listeners.remove(listener);
@@ -96,6 +99,8 @@ public class LanguageServerCommunication {
     private final DefaultLanguageClient client;
     private final LanguageServerDefinition.LanguageServerStreams languageServerStreams;
     private final LanguageServerDefinition languageServerDefinition;
+    private final LanguageServerDefinition.IPreferencesListener preferencesListener;
+    private final AtomicInteger counter = new AtomicInteger();
 
     public LanguageServerCommunication(String projectRootPath, LanguageServerDefinition languageServerDefinition)
             throws InterruptedException, ExecutionException, TimeoutException, IOException {
@@ -111,7 +116,31 @@ public class LanguageServerCommunication {
         this.languageServer = launcher.getRemoteProxy();
         this.lifecycleFuture = launcher.startListening();
         CompletableFuture<InitializeResult> initializeResultFuture = languageServer.initialize(getInitParams(projectRootPath));
-        this.initializeResult = initializeResultFuture.get(10, TimeUnit.SECONDS);
+        InitializeResult tempResult = null;
+        for (int i = 0; i < 10; i++) {
+            try {
+                tempResult = initializeResultFuture.get(1, TimeUnit.SECONDS);
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                if (!this.isConnected() || i == 9) {
+                    throw e;
+                }
+            }
+        }
+        initializeResult = tempResult;
+        this.didChangeConfiguration(new DidChangeConfigurationParams(languageServerDefinition.getPreferences()));
+        preferencesListener = (propName, oldValue, newValue) -> {
+            if (!isConnected()) {
+                return;
+            }
+            final int currValue = counter.incrementAndGet();
+            ApplicationManager.getApplication().invokeLater(() -> {
+                if (counter.get() == currValue) {
+                    // i.e.: if we receive multiple notifications at once, notify only once in the last notification.
+                    this.didChangeConfiguration(new DidChangeConfigurationParams(languageServerDefinition.getPreferences()));
+                }
+            });
+        };
+        languageServerDefinition.registerPreferencesListener(preferencesListener);
         this.languageServer.initialized(new InitializedParams());
         this.client = client;
         this.languageServerStreams = languageServerStreams;
@@ -129,6 +158,7 @@ public class LanguageServerCommunication {
     public void shutdown() {
         if (isConnected()) {
             try {
+                languageServerDefinition.unregisterPreferencesListener(preferencesListener);
                 lifecycleFuture.cancel(true);
                 languageServer.shutdown();
                 languageServer.exit();
@@ -213,6 +243,10 @@ public class LanguageServerCommunication {
     }
 
     public void didOpen(DidOpenTextDocumentParams params) {
+        if (!this.isConnected()) {
+            LOG.info("Unable forward open: disconnected.");
+            return;
+        }
         try {
             languageServer.getTextDocumentService().didOpen(params);
         } catch (Exception e) {
@@ -221,6 +255,10 @@ public class LanguageServerCommunication {
     }
 
     public void didClose(DidCloseTextDocumentParams params) {
+        if (!this.isConnected()) {
+            LOG.info("Unable forward close: disconnected.");
+            return;
+        }
         try {
             languageServer.getTextDocumentService().didClose(params);
         } catch (Exception e) {
@@ -229,6 +267,10 @@ public class LanguageServerCommunication {
     }
 
     public void didChange(DidChangeTextDocumentParams params) {
+        if (!this.isConnected()) {
+            LOG.info("Unable forward change: disconnected.");
+            return;
+        }
         try {
             languageServer.getTextDocumentService().didChange(params);
         } catch (Exception e) {
@@ -237,6 +279,10 @@ public class LanguageServerCommunication {
     }
 
     public void didChangeConfiguration(DidChangeConfigurationParams params) {
+        if (!this.isConnected()) {
+            LOG.info("Unable to change config: disconnected.");
+            return;
+        }
         try {
             languageServer.getWorkspaceService().didChangeConfiguration(params);
         } catch (Exception e) {
@@ -244,15 +290,28 @@ public class LanguageServerCommunication {
         }
     }
 
-    public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams params) {
+    public @Nullable CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams params) {
+        if (!this.isConnected()) {
+            LOG.info("Unable to get symbol: disconnected.");
+            return null;
+        }
         return languageServer.getTextDocumentService().completion(params);
     }
 
-    public CompletableFuture<List<? extends SymbolInformation>> symbol(WorkspaceSymbolParams symbolParams) {
+    public @Nullable CompletableFuture<List<? extends SymbolInformation>> symbol(WorkspaceSymbolParams symbolParams) {
+        if (!this.isConnected()) {
+            LOG.info("Unable to get symbol: disconnected.");
+            return null;
+        }
         return languageServer.getWorkspaceService().symbol(symbolParams);
     }
 
-    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
+    public @Nullable CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
+        if (!this.isConnected()) {
+            LOG.info("Unable to get definition: disconnected.");
+            return null;
+        }
+
         return languageServer.getTextDocumentService().definition(params);
     }
 }

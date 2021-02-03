@@ -8,9 +8,10 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import robocorp.lsp.intellij.LanguageServerDefinition;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Collection;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 
 class RobotState {
@@ -150,6 +151,21 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
     public String getRobotLanguageServerPython() {
         return robotLanguageServerPython;
     }
+    
+    public String validateRobotLanguageServerPython(String robotLanguageServerPython) {
+        if(robotLanguageServerPython.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            new JsonPrimitive(robotLanguageServerPython);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
 
     public void setRobotLanguageServerPython(String s) {
         if (s == null) {
@@ -160,7 +176,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         }
         String old = robotLanguageServerPython;
         robotLanguageServerPython = s;
-        for (IRobotPreferencesListener listener : listeners) {
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             listener.onChanged(ROBOT_LANGUAGE_SERVER_PYTHON, old, s);
         }
     }
@@ -169,6 +185,21 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
 
     public String getRobotLanguageServerArgs() {
         return robotLanguageServerArgs;
+    }
+    
+    public String validateRobotLanguageServerArgs(String robotLanguageServerArgs) {
+        if(robotLanguageServerArgs.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            g.fromJson(robotLanguageServerArgs, JsonArray.class);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
     }
 
     public void setRobotLanguageServerArgs(String s) {
@@ -180,7 +211,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         }
         String old = robotLanguageServerArgs;
         robotLanguageServerArgs = s;
-        for (IRobotPreferencesListener listener : listeners) {
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             listener.onChanged(ROBOT_LANGUAGE_SERVER_ARGS, old, s);
         }
     }
@@ -189,6 +220,21 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
 
     public String getRobotLanguageServerTcpPort() {
         return robotLanguageServerTcpPort;
+    }
+    
+    public String validateRobotLanguageServerTcpPort(String robotLanguageServerTcpPort) {
+        if(robotLanguageServerTcpPort.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            new JsonPrimitive(Integer.parseInt(robotLanguageServerTcpPort));
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
     }
 
     public void setRobotLanguageServerTcpPort(String s) {
@@ -200,7 +246,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         }
         String old = robotLanguageServerTcpPort;
         robotLanguageServerTcpPort = s;
-        for (IRobotPreferencesListener listener : listeners) {
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             listener.onChanged(ROBOT_LANGUAGE_SERVER_TCP_PORT, old, s);
         }
     }
@@ -209,6 +255,21 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
 
     public String getRobotPythonExecutable() {
         return robotPythonExecutable;
+    }
+    
+    public String validateRobotPythonExecutable(String robotPythonExecutable) {
+        if(robotPythonExecutable.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            new JsonPrimitive(robotPythonExecutable);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
     }
 
     public void setRobotPythonExecutable(String s) {
@@ -220,7 +281,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         }
         String old = robotPythonExecutable;
         robotPythonExecutable = s;
-        for (IRobotPreferencesListener listener : listeners) {
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             listener.onChanged(ROBOT_PYTHON_EXECUTABLE, old, s);
         }
     }
@@ -229,6 +290,21 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
 
     public String getRobotPythonEnv() {
         return robotPythonEnv;
+    }
+    
+    public String validateRobotPythonEnv(String robotPythonEnv) {
+        if(robotPythonEnv.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            g.fromJson(robotPythonEnv, JsonObject.class);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
     }
 
     public void setRobotPythonEnv(String s) {
@@ -240,7 +316,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         }
         String old = robotPythonEnv;
         robotPythonEnv = s;
-        for (IRobotPreferencesListener listener : listeners) {
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             listener.onChanged(ROBOT_PYTHON_ENV, old, s);
         }
     }
@@ -249,6 +325,21 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
 
     public String getRobotVariables() {
         return robotVariables;
+    }
+    
+    public String validateRobotVariables(String robotVariables) {
+        if(robotVariables.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            g.fromJson(robotVariables, JsonObject.class);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
     }
 
     public void setRobotVariables(String s) {
@@ -260,7 +351,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         }
         String old = robotVariables;
         robotVariables = s;
-        for (IRobotPreferencesListener listener : listeners) {
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             listener.onChanged(ROBOT_VARIABLES, old, s);
         }
     }
@@ -269,6 +360,21 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
 
     public String getRobotPythonpath() {
         return robotPythonpath;
+    }
+    
+    public String validateRobotPythonpath(String robotPythonpath) {
+        if(robotPythonpath.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            g.fromJson(robotPythonpath, JsonArray.class);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
     }
 
     public void setRobotPythonpath(String s) {
@@ -280,7 +386,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         }
         String old = robotPythonpath;
         robotPythonpath = s;
-        for (IRobotPreferencesListener listener : listeners) {
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             listener.onChanged(ROBOT_PYTHONPATH, old, s);
         }
     }
@@ -289,6 +395,30 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
 
     public String getRobotCompletionsSectionHeadersForm() {
         return robotCompletionsSectionHeadersForm;
+    }
+    
+    public String validateRobotCompletionsSectionHeadersForm(String robotCompletionsSectionHeadersForm) {
+        if(robotCompletionsSectionHeadersForm.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            new JsonPrimitive(robotCompletionsSectionHeadersForm);
+             
+            if(robotCompletionsSectionHeadersForm.equals("plural")){
+                return "";
+            }
+            if(robotCompletionsSectionHeadersForm.equals("singular")){
+                return "";
+            }
+            if(robotCompletionsSectionHeadersForm.equals("both")){
+                return "";
+            }
+            return "Unexpected value: " + robotCompletionsSectionHeadersForm;
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
     }
 
     public void setRobotCompletionsSectionHeadersForm(String s) {
@@ -300,23 +430,24 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         }
         String old = robotCompletionsSectionHeadersForm;
         robotCompletionsSectionHeadersForm = s;
-        for (IRobotPreferencesListener listener : listeners) {
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             listener.onChanged(ROBOT_COMPLETIONS_SECTION_HEADERS_FORM, old, s);
         }
     }
     
 
-    interface IRobotPreferencesListener {
-        void onChanged(String property, String oldValue, String newValue);
-    }
-
-    private List<IRobotPreferencesListener> listeners = new CopyOnWriteArrayList<>();
+    private Collection<LanguageServerDefinition.IPreferencesListener> listeners = new CopyOnWriteArraySet<>();
 
     public static RobotPreferences getInstance() {
         return ServiceManager.getService(RobotPreferences.class);
     }
 
-    public void addListener(IRobotPreferencesListener listener) {
+    public void addListener(LanguageServerDefinition.IPreferencesListener listener) {
         listeners.add(listener);
     }
+    
+    public void removeListener(LanguageServerDefinition.IPreferencesListener listener) {
+        listeners.remove(listener);
+    }
+
 }

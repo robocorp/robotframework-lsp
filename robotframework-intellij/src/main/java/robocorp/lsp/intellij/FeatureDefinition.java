@@ -58,6 +58,9 @@ public class FeatureDefinition {
             TextDocumentIdentifier textDocumentIdentifier = new TextDocumentIdentifier(uri);
             DefinitionParams params = new DefinitionParams(textDocumentIdentifier, pos);
             CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition = comm.definition(params);
+            if (definition == null) {
+                return null;
+            }
 
             Either<List<? extends Location>, List<? extends LocationLink>> listListEither = definition.get(2, TimeUnit.SECONDS);
             if (listListEither == null) {

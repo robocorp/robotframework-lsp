@@ -26,13 +26,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.List;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 
-public class LanguageServerDefinition {
+public abstract class LanguageServerDefinition {
+
+    public abstract Object getPreferences();
+
+    public interface IPreferencesListener {
+        void onChanged(String property, String oldValue, String newValue);
+    }
+
+    public abstract void registerPreferencesListener(IPreferencesListener o);
+
+    public abstract void unregisterPreferencesListener(IPreferencesListener preferencesListener);
 
     private static final class SocketStreamProvider {
         private final String host;
@@ -170,7 +180,7 @@ public class LanguageServerDefinition {
         void onChanged(LanguageServerDefinition languageServerDefinition);
     }
 
-    private List<ILanguageServerDefinitionListeners> listeners = new CopyOnWriteArrayList<>();
+    private Collection<ILanguageServerDefinitionListeners> listeners = new CopyOnWriteArraySet<>();
 
     public LanguageServerDefinition(Set<String> ext, ProcessBuilder process, int port, String languageId) {
         this.languageId = languageId;

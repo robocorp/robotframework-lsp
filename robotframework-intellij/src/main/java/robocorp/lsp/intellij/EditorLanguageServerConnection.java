@@ -156,7 +156,8 @@ public class EditorLanguageServerConnection {
             LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
             Position pos = editor.offsetToLSPPos(offset);
             CompletionParams params = new CompletionParams(identifier, pos);
-            CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion = comm.completion(params);
+            @Nullable CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion = comm.completion(params);
+            // May be null
             return completion;
         } catch (Exception e) {
             LOG.error(e);
