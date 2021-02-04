@@ -11,13 +11,10 @@ import org.eclipse.lsp4j.services.LanguageServer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -40,11 +37,23 @@ class InternalConnection {
     private final AtomicInteger counter = new AtomicInteger();
 
     public void shutdown() {
-        languageServerDefinition.unregisterPreferencesListener(preferencesListener);
-        lifecycleFuture.cancel(true);
-        languageServer.shutdown();
-        languageServer.exit();
-        languageServerStreams.stop();
+        try {
+            languageServerDefinition.unregisterPreferencesListener(preferencesListener);
+            if (isConnected()) {
+                lifecycleFuture.cancel(true);
+                try {
+                    languageServer.shutdown().get(1, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    // ignore
+                }
+                languageServer.exit();
+                languageServerStreams.stop();
+            }
+        } catch (Exception e) {
+            LOG.error(e);
+        } finally {
+            state = State.finished;
+        }
     }
 
     public ServerCapabilities getServerCapabilities() {
@@ -56,13 +65,18 @@ class InternalConnection {
     }
 
     enum State {
-        initialState,
-        initializing,
-        initialized,
-        crashed
+        initial, // Just created
+        initializing, // Initializing started
+        initialized, // Properly initialized (ok to use)
+        finished, // shutdown
+        crashed; // crashed while initializing
     }
 
-    private volatile State state = State.initialState;
+    private volatile State state = State.initial;
+
+    public State getState() {
+        return state;
+    }
 
     private static InitializeParams getInitParams(@NotNull String projectRootPath) {
         InitializeParams initParams = new InitializeParams();
@@ -124,14 +138,14 @@ class InternalConnection {
         };
     }
 
-    public void start() {
-        if (state != State.initialState) {
+    public void start(Set<EditorLanguageServerConnection> editorConnections) {
+        if (state != State.initial) {
             // Can only initialize when on the initial state.
             return;
         }
         try {
             state = State.initializing;
-            LanguageServerDefinition.LanguageServerStreams languageServerStreams = languageServerDefinition.createConnectionProvider(projectRootPath);
+            LanguageServerDefinition.LanguageServerStreams languageServerStreams = languageServerDefinition.createConnectionProvider();
             languageServerStreams.start();
             InputStream inputStream = languageServerStreams.getInputStream();
             OutputStream outputStream = languageServerStreams.getOutputStream();
@@ -156,16 +170,26 @@ class InternalConnection {
 
             this.didChangeConfiguration(new DidChangeConfigurationParams(languageServerDefinition.getPreferences()));
             languageServerDefinition.registerPreferencesListener(preferencesListener);
+
+            for (EditorLanguageServerConnection editorLanguageServerConnection : editorConnections) {
+                try {
+                    languageServer.getTextDocumentService().didOpen(editorLanguageServerConnection.getDidOpenTextDocumentParams());
+                } catch (Exception e) {
+                    LOG.error(e);
+                }
+            }
+
             this.languageServer.initialized(new InitializedParams());
+            state = State.initialized;
 
         } catch (Exception e) {
-            LOG.error(e);
+            EditorUtils.logError(LOG, e);
             state = State.crashed;
         }
     }
 
     boolean isConnected() {
-        return lifecycleFuture != null && !lifecycleFuture.isDone() && !lifecycleFuture.isCancelled();
+        return state == State.initialized && lifecycleFuture != null && !lifecycleFuture.isDone() && !lifecycleFuture.isCancelled();
     }
 
     public void didChangeConfiguration(DidChangeConfigurationParams params) {
@@ -186,6 +210,8 @@ class InternalConnection {
 }
 
 public class LanguageServerCommunication {
+
+    private final String projectRootPath;
 
     public interface IDiagnosticsListener {
         void onDiagnostics(PublishDiagnosticsParams params);
@@ -259,19 +285,98 @@ public class LanguageServerCommunication {
 
     private final DefaultLanguageClient client;
     private final LanguageServerDefinition languageServerDefinition;
+    private final Object internalConnectionLock = new Object();
+    private final Object disposeLock = new Object();
+
     private InternalConnection internalConnection;
+
+    private final Callbacks.ICallback<LanguageServerDefinition> onChangedLanguageDefinition = (obj) -> {
+        // i.e.: enable it to be restarted.
+        crashCount = 0;
+
+        // It should auto-restart when needed.
+        shutdown(false);
+    };
 
     // i.e.: after disposed the communication won't be restored!
     private volatile boolean disposed = false;
+    private volatile int crashCount = 0;
 
-    public LanguageServerCommunication(String projectRootPath, LanguageServerDefinition languageServerDefinition)
-            throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    public int getCrashCount() {
+        return crashCount;
+    }
+
+    // When reinitializing we must send open events for the existing editors.
+    // Note that it's not thread safe and access must sync on `internalConnectionLock` as it's
+    // used during initialization.
+    private final Set<EditorLanguageServerConnection> editorConnections = new HashSet<>();
+
+    public LanguageServerCommunication(String projectRootPath, LanguageServerDefinition languageServerDefinition) {
         DefaultLanguageClient client = new DefaultLanguageClient();
-        this.internalConnection = new InternalConnection(projectRootPath, languageServerDefinition, client);
-        internalConnection.start();
-
+        this.projectRootPath = projectRootPath;
         this.client = client;
         this.languageServerDefinition = languageServerDefinition;
+
+        languageServerDefinition.onChangedLanguageDefinition.register(onChangedLanguageDefinition);
+
+        this.startInternalConnection();
+    }
+
+    private void startInternalConnection() {
+        synchronized (internalConnectionLock) {
+            while (true) {
+                if (crashCount >= 5) {
+                    EditorUtils.logError(LOG, "The language server already crashed 5 times when starting, so, it won't be restarted again until a configuration change or restart.");
+                    return;
+                }
+                if (this.internalConnection != null) {
+                    this.internalConnection.shutdown();
+                }
+                this.internalConnection = new InternalConnection(projectRootPath, languageServerDefinition, client);
+                internalConnection.start(editorConnections);
+                InternalConnection.State state = internalConnection.getState();
+                if (state == InternalConnection.State.initialized) {
+                    crashCount = 0; // When a successful initialization is done, reset the crash count.
+                    return;
+                } else {
+                    crashCount += 1;
+                    EditorUtils.logError(LOG, "Expected state to be initialized. Current state is: " + state);
+                }
+            }
+        }
+    }
+
+    private @Nullable LanguageServer obtainSynchronizedLanguageServer() {
+        if (disposed) {
+            return null;
+        }
+        synchronized (internalConnectionLock) {
+            if (!internalConnection.isConnected()) {
+                startInternalConnection();
+                if (!internalConnection.isConnected()) {
+                    return null;
+                }
+            }
+            LanguageServer languageServer = internalConnection.getLanguageServer();
+            return languageServer;
+        }
+    }
+
+    public void shutdown(boolean dispose) {
+        synchronized (disposeLock) {
+            if (this.disposed) {
+                return;
+            }
+            if (dispose) {
+                // When disposed it won't be restarted anymore.
+                this.disposed = true;
+            }
+        }
+        try {
+            internalConnection.shutdown();
+        } catch (Exception e) {
+            LOG.error(e);
+        }
     }
 
     public void addDiagnosticsListener(String uri, IDiagnosticsListener listener) {
@@ -282,25 +387,11 @@ public class LanguageServerCommunication {
         this.client.removeDiagnosticsListener(uri, diagnosticsListener);
     }
 
-    public void shutdown(boolean dispose) {
-        if (dispose) {
-            // When disposed it won't be restarted anymore.
-            this.disposed = true;
-        }
-        if (internalConnection.isConnected()) {
-            try {
-                internalConnection.shutdown();
-            } catch (Exception e) {
-                LOG.error(e);
-            }
-        }
-    }
-
-    public @Nullable ServerCapabilities getServerCapabilities() throws ExecutionException, InterruptedException {
+    public @Nullable ServerCapabilities getServerCapabilities() {
         return internalConnection.getServerCapabilities();
     }
 
-    public TextDocumentSyncKind getServerCapabilitySyncKind() throws ExecutionException, InterruptedException, LanguageServerUnavailableException {
+    public TextDocumentSyncKind getServerCapabilitySyncKind() throws LanguageServerUnavailableException {
         ServerCapabilities serverCapabilities = getServerCapabilities();
         if (serverCapabilities == null) {
             throw new LanguageServerUnavailableException("Server is still not initialized (capabilities unavailable).");
@@ -316,26 +407,18 @@ public class LanguageServerCommunication {
         return syncKind;
     }
 
-    private LanguageServer obtainSynchronizedLanguageServer() {
-        if (!internalConnection.isConnected()) {
-            // XXX: We must restart if it's not connected (and when restarted the docs/settings
-            // must be set again).
-            return null;
-        }
-        LanguageServer languageServer = internalConnection.getLanguageServer();
-        return languageServer;
-    }
-
     public void didOpen(EditorLanguageServerConnection editorLanguageServerConnection) {
         DidOpenTextDocumentParams params = editorLanguageServerConnection.getDidOpenTextDocumentParams();
         if (params == null) {
             return;
         }
-        this.didOpen(params);
-    }
-
-    private void didOpen(DidOpenTextDocumentParams params) {
         LanguageServer languageServer = obtainSynchronizedLanguageServer();
+        synchronized (internalConnectionLock) {
+            // ObtainSynchronizedLanguageServer may create a new language server,
+            // so, we only want to add the connections after that so that there's
+            // no double `didOpen` message.
+            editorConnections.add(editorLanguageServerConnection);
+        }
 
         if (languageServer == null) {
             LOG.info("Unable forward open: disconnected.");
@@ -349,10 +432,9 @@ public class LanguageServerCommunication {
     }
 
     public void didClose(EditorLanguageServerConnection editorLanguageServerConnection) {
-        this.didClose(new DidCloseTextDocumentParams(editorLanguageServerConnection.getIdentifier()));
-    }
-
-    private void didClose(DidCloseTextDocumentParams params) {
+        synchronized (internalConnectionLock) {
+            editorConnections.remove(editorLanguageServerConnection);
+        }
         LanguageServer languageServer = obtainSynchronizedLanguageServer();
 
         if (languageServer == null) {
@@ -360,7 +442,7 @@ public class LanguageServerCommunication {
             return;
         }
         try {
-            languageServer.getTextDocumentService().didClose(params);
+            languageServer.getTextDocumentService().didClose(new DidCloseTextDocumentParams(editorLanguageServerConnection.getIdentifier()));
         } catch (Exception e) {
             LOG.error(e);
         }

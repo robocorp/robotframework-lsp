@@ -7,6 +7,7 @@ import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.junit.Assert;
 import org.junit.Test;
+import robocorp.robot.intellij.RobotPreferences;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,28 +34,50 @@ public class RestartLanguageServerTest extends LSPTesCase {
                     "    Error not defined");
         });
         EditorLanguageServerConnection conn = EditorLanguageServerConnection.getFromUserData(editor);
-        final List<Diagnostic> diagnostics = TestUtils.waitForCondition(() -> {
+        TestUtils.waitForCondition(() -> {
             List<Diagnostic> d = conn.getDiagnostics();
             if (d != null && d.size() > 0) {
                 return d;
             }
             return null;
         });
-        verifyInternalInfo(conn);
+        long pid = verifyInternalInfo(conn);
 
         // Ok, disposed of all. We should auto-restart when needed.
         LanguageServerManager.shutdownAll();
 
+        long newPid = verifyInternalInfo(conn);
+        Assert.assertNotEquals(pid, newPid);
+
+        // Ok, we've been able to restart properly, now, let's change the settings so
+        // that the python executable is invalid (and thus it should be impossible to
+        // restart).
+        RobotPreferences robotPreferences = RobotPreferences.getInstance();
+        try {
+            EditorUtils.ignoreLogErrors += 1;
+            robotPreferences.setRobotLanguageServerPython("/wrong/executable");
+
+            LanguageServerCommunication languageServerCommunication = conn.getLanguageServerCommunication();
+            CompletableFuture<Object> future = languageServerCommunication.command(new ExecuteCommandParams("robot.getInternalInfo", new ArrayList<>()));
+            Assert.assertNull(future);
+            Assert.assertEquals(5, languageServerCommunication.getCrashCount());
+            robotPreferences.setRobotLanguageServerPython(""); // reset to default
+        } finally {
+            EditorUtils.ignoreLogErrors -= 1;
+        }
+
         verifyInternalInfo(conn);
+
     }
 
-    private void verifyInternalInfo(EditorLanguageServerConnection conn) throws InterruptedException, java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException {
+    private long verifyInternalInfo(EditorLanguageServerConnection conn) throws InterruptedException, java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException {
         LanguageServerCommunication languageServerCommunication = conn.getLanguageServerCommunication();
         CompletableFuture<Object> future = languageServerCommunication.command(new ExecuteCommandParams("robot.getInternalInfo", new ArrayList<>()));
         Map<Object, Object> o = (Map) future.get(4, TimeUnit.SECONDS);
         LOG.info(o.toString());
         Assert.assertEquals("{}", o.get("settings").toString());
-        List<Object> inMemoryDocs = (List<Object>) o.get("in_memory_docs");
+        List<Object> inMemoryDocs = (List<Object>) o.get("inMemoryDocs");
         Assert.assertEquals(1, inMemoryDocs.size());
+        return ((Double) o.get("processId")).longValue();
     }
 }

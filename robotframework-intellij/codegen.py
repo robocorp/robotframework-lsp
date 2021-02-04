@@ -184,11 +184,19 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
     {% for preference in preferences %}
     private String {{ preference['java_name'] }} = "";
 
-    public String {{ preference['getter_name'] }}() {
+    public @NotNull String {{ preference['getter_name'] }}() {
         return {{ preference['java_name'] }};
     }
     
-    public String {{ preference['validate_name'] }}(String {{ preference['java_name'] }}) {
+    public @Nullable {{ preference['java_json_type'] }} {{ preference['getter_name'] }}AsJson() {
+        if({{ preference['java_name'] }}.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return {{ preference['json_load'] }};
+    }
+    
+    public @NotNull String {{ preference['validate_name'] }}(String {{ preference['java_name'] }}) {
         if({{ preference['java_name'] }}.isEmpty()) {
             return "";
         }
@@ -279,15 +287,19 @@ def main():
 
             if prop_value['type'] == 'array':
                 json_load = f'g.fromJson({java_name}, JsonArray.class)'
+                prop_value['java_json_type'] = 'JsonArray'
 
             elif prop_value['type'] == 'object':
                 json_load = f'g.fromJson({java_name}, JsonObject.class)'
+                prop_value['java_json_type'] = 'JsonObject'
 
             elif prop_value['type'] == 'string':
                 json_load = f'new JsonPrimitive({java_name})'
+                prop_value['java_json_type'] = 'JsonPrimitive'
                 
             elif prop_value['type'] == 'number':
                 json_load = f'new JsonPrimitive(Integer.parseInt({java_name}))'
+                prop_value['java_json_type'] = 'JsonPrimitive'
                 
             else:
                 raise AssertionError('Unhandled type: ' + prop_value['type'])

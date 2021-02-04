@@ -304,7 +304,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                     in_memory_docs.append({"uri": doc.uri})
             return {
                 "settings": self.config.get_full_settings(),
-                "in_memory_docs": in_memory_docs,
+                "inMemoryDocs": in_memory_docs,
+                "processId": os.getpid(),
             }
 
         elif command == "robot.resolveInterpreter":

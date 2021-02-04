@@ -26,25 +26,33 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 
 public abstract class LanguageServerDefinition {
 
+    /**
+     * Subclasses must override to return the settings to be sent to the language server.
+     */
     public abstract Object getPreferences();
 
     public interface IPreferencesListener {
         void onChanged(String property, String oldValue, String newValue);
     }
 
-    public abstract void registerPreferencesListener(IPreferencesListener o);
-
+    /**
+     * Subclasses must notify when a setting has changed so that it can be sent to the language server.
+     */
     public abstract void unregisterPreferencesListener(IPreferencesListener preferencesListener);
 
+    /**
+     * Subclasses must notify when a setting has changed so that it can be sent to the language server.
+     */
+    public abstract void registerPreferencesListener(IPreferencesListener o);
+
     private static final class SocketStreamProvider {
+
         private final String host;
         private final int port;
         private InputStream fInputStream;
@@ -172,15 +180,14 @@ public abstract class LanguageServerDefinition {
     private final String languageId;
 
     public final Set<String> ext;
-    private ProcessBuilder processBuilder;
+
+    // May be changed when preferences change.
     private int port;
 
-    public interface ILanguageServerDefinitionListeners {
+    // May be changed when preferences change.
+    private ProcessBuilder processBuilder;
 
-        void onChanged(LanguageServerDefinition languageServerDefinition);
-    }
-
-    private Collection<ILanguageServerDefinitionListeners> listeners = new CopyOnWriteArraySet<>();
+    public final Callbacks<LanguageServerDefinition> onChangedLanguageDefinition = new Callbacks();
 
     public LanguageServerDefinition(Set<String> ext, ProcessBuilder process, int port, String languageId) {
         this.languageId = languageId;
@@ -190,25 +197,27 @@ public abstract class LanguageServerDefinition {
             }
         }
 
-        this.ext = ext;
+        this.ext = Set.copyOf(ext);
         this.port = port;
         this.processBuilder = process;
     }
 
     public void setProcessBuilder(ProcessBuilder processBuilder) {
         this.processBuilder = processBuilder;
-        for (ILanguageServerDefinitionListeners listener : listeners) {
-            listener.onChanged(this);
-        }
+        onChangedLanguageDefinition.onCallback(this);
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+        onChangedLanguageDefinition.onCallback(this);
     }
 
     /**
      * Creates a StreamConnectionProvider given the working directory
      *
-     * @param workingDir The root directory
      * @return The stream connection provider
      */
-    public LanguageServerStreams createConnectionProvider(String workingDir) {
+    public LanguageServerStreams createConnectionProvider() {
         return new LanguageServerStreams(processBuilder, port);
     }
 

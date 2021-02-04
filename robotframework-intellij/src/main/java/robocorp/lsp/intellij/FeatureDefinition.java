@@ -3,6 +3,7 @@ package robocorp.lsp.intellij;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -118,6 +119,8 @@ public class FeatureDefinition {
 
             String text = targetDocument.getText(new TextRange(startOffset, endOffset));
             return new LSPGenericPsiElement(project, targetPsiFile, text, startOffset, endOffset);
+        } catch (ProcessCanceledException e) {
+            // If it was cancelled, just ignore it (don't log).
         } catch (Exception e) {
             LOG.error(e);
         }
