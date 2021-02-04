@@ -181,4 +181,20 @@ public class EditorUtils {
         return PsiManager.getInstance(project).findFile(virtualFile);
     }
 
+    public static int ignoreLogErrors = 0;
+
+    public static void logError(Logger logger, Exception e) {
+        if (ignoreLogErrors > 0) {
+            return;
+        }
+        logger.error(e);
+    }
+
+    public static void logError(Logger logger, String message) {
+        if (ignoreLogErrors > 0) {
+            return;
+        }
+        logger.error(message);
+    }
+
 }

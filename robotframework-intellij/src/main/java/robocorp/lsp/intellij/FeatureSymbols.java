@@ -25,6 +25,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -176,7 +177,8 @@ public class FeatureSymbols implements ChooseByNameContributorEx {
                         }
                     }
                 }
-
+            } catch (ProcessCanceledException e) {
+                // ignore
             } catch (Exception e) {
                 LOG.error(e);
                 return lst;

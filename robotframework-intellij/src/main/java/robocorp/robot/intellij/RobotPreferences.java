@@ -148,11 +148,19 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
     
     private String robotLanguageServerPython = "";
 
-    public String getRobotLanguageServerPython() {
+    public @NotNull String getRobotLanguageServerPython() {
         return robotLanguageServerPython;
     }
     
-    public String validateRobotLanguageServerPython(String robotLanguageServerPython) {
+    public @Nullable JsonPrimitive getRobotLanguageServerPythonAsJson() {
+        if(robotLanguageServerPython.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return new JsonPrimitive(robotLanguageServerPython);
+    }
+    
+    public @NotNull String validateRobotLanguageServerPython(String robotLanguageServerPython) {
         if(robotLanguageServerPython.isEmpty()) {
             return "";
         }
@@ -183,11 +191,19 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
     
     private String robotLanguageServerArgs = "";
 
-    public String getRobotLanguageServerArgs() {
+    public @NotNull String getRobotLanguageServerArgs() {
         return robotLanguageServerArgs;
     }
     
-    public String validateRobotLanguageServerArgs(String robotLanguageServerArgs) {
+    public @Nullable JsonArray getRobotLanguageServerArgsAsJson() {
+        if(robotLanguageServerArgs.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return g.fromJson(robotLanguageServerArgs, JsonArray.class);
+    }
+    
+    public @NotNull String validateRobotLanguageServerArgs(String robotLanguageServerArgs) {
         if(robotLanguageServerArgs.isEmpty()) {
             return "";
         }
@@ -218,11 +234,19 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
     
     private String robotLanguageServerTcpPort = "";
 
-    public String getRobotLanguageServerTcpPort() {
+    public @NotNull String getRobotLanguageServerTcpPort() {
         return robotLanguageServerTcpPort;
     }
     
-    public String validateRobotLanguageServerTcpPort(String robotLanguageServerTcpPort) {
+    public @Nullable JsonPrimitive getRobotLanguageServerTcpPortAsJson() {
+        if(robotLanguageServerTcpPort.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return new JsonPrimitive(Integer.parseInt(robotLanguageServerTcpPort));
+    }
+    
+    public @NotNull String validateRobotLanguageServerTcpPort(String robotLanguageServerTcpPort) {
         if(robotLanguageServerTcpPort.isEmpty()) {
             return "";
         }
@@ -253,11 +277,19 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
     
     private String robotPythonExecutable = "";
 
-    public String getRobotPythonExecutable() {
+    public @NotNull String getRobotPythonExecutable() {
         return robotPythonExecutable;
     }
     
-    public String validateRobotPythonExecutable(String robotPythonExecutable) {
+    public @Nullable JsonPrimitive getRobotPythonExecutableAsJson() {
+        if(robotPythonExecutable.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return new JsonPrimitive(robotPythonExecutable);
+    }
+    
+    public @NotNull String validateRobotPythonExecutable(String robotPythonExecutable) {
         if(robotPythonExecutable.isEmpty()) {
             return "";
         }
@@ -288,11 +320,19 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
     
     private String robotPythonEnv = "";
 
-    public String getRobotPythonEnv() {
+    public @NotNull String getRobotPythonEnv() {
         return robotPythonEnv;
     }
     
-    public String validateRobotPythonEnv(String robotPythonEnv) {
+    public @Nullable JsonObject getRobotPythonEnvAsJson() {
+        if(robotPythonEnv.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return g.fromJson(robotPythonEnv, JsonObject.class);
+    }
+    
+    public @NotNull String validateRobotPythonEnv(String robotPythonEnv) {
         if(robotPythonEnv.isEmpty()) {
             return "";
         }
@@ -323,11 +363,19 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
     
     private String robotVariables = "";
 
-    public String getRobotVariables() {
+    public @NotNull String getRobotVariables() {
         return robotVariables;
     }
     
-    public String validateRobotVariables(String robotVariables) {
+    public @Nullable JsonObject getRobotVariablesAsJson() {
+        if(robotVariables.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return g.fromJson(robotVariables, JsonObject.class);
+    }
+    
+    public @NotNull String validateRobotVariables(String robotVariables) {
         if(robotVariables.isEmpty()) {
             return "";
         }
@@ -358,11 +406,19 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
     
     private String robotPythonpath = "";
 
-    public String getRobotPythonpath() {
+    public @NotNull String getRobotPythonpath() {
         return robotPythonpath;
     }
     
-    public String validateRobotPythonpath(String robotPythonpath) {
+    public @Nullable JsonArray getRobotPythonpathAsJson() {
+        if(robotPythonpath.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return g.fromJson(robotPythonpath, JsonArray.class);
+    }
+    
+    public @NotNull String validateRobotPythonpath(String robotPythonpath) {
         if(robotPythonpath.isEmpty()) {
             return "";
         }
@@ -393,11 +449,19 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
     
     private String robotCompletionsSectionHeadersForm = "";
 
-    public String getRobotCompletionsSectionHeadersForm() {
+    public @NotNull String getRobotCompletionsSectionHeadersForm() {
         return robotCompletionsSectionHeadersForm;
     }
     
-    public String validateRobotCompletionsSectionHeadersForm(String robotCompletionsSectionHeadersForm) {
+    public @Nullable JsonPrimitive getRobotCompletionsSectionHeadersFormAsJson() {
+        if(robotCompletionsSectionHeadersForm.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return new JsonPrimitive(robotCompletionsSectionHeadersForm);
+    }
+    
+    public @NotNull String validateRobotCompletionsSectionHeadersForm(String robotCompletionsSectionHeadersForm) {
         if(robotCompletionsSectionHeadersForm.isEmpty()) {
             return "";
         }
