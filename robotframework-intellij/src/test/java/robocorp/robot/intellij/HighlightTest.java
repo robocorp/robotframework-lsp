@@ -5,8 +5,9 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
+import robocorp.lsp.intellij.LSPTesCase;
 
-public class HighlightTest {
+public class HighlightTest extends LSPTesCase {
     @Test
     public void testLexer() {
         RobotFrameworkSyntaxHighlightingFactory factory = new RobotFrameworkSyntaxHighlightingFactory();

@@ -233,8 +233,13 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
 
     private Collection<LanguageServerDefinition.IPreferencesListener> listeners = new CopyOnWriteArraySet<>();
 
-    public static RobotPreferences getInstance() {
-        return ServiceManager.getService(RobotPreferences.class);
+    public static @Nullable RobotPreferences getInstance() {
+        try {
+            return ServiceManager.getService(RobotPreferences.class);
+        } catch (Exception e) {
+            LOG.error("Error getting RobotPreferences", e);
+            return null;
+        }
     }
 
     public void addListener(LanguageServerDefinition.IPreferencesListener listener) {

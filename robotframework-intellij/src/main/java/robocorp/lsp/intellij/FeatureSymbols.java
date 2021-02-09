@@ -44,6 +44,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -157,6 +158,10 @@ public class FeatureSymbols implements ChooseByNameContributorEx {
                         LOG.warn("Request for workspace symbols timed out.");
                         return lst;
                     }
+                    if (symbolInformation == null) {
+                        LOG.warn("Symbol information not available.");
+                        return lst;
+                    }
                     for (SymbolInformation information : symbolInformation) {
                         final Location location = information.getLocation();
                         String uri = location.getUri();
@@ -177,7 +182,7 @@ public class FeatureSymbols implements ChooseByNameContributorEx {
                         }
                     }
                 }
-            } catch (ProcessCanceledException e) {
+            } catch (ProcessCanceledException | CancellationException e) {
                 // ignore
             } catch (Exception e) {
                 LOG.error(e);
@@ -197,6 +202,9 @@ public class FeatureSymbols implements ChooseByNameContributorEx {
             return;
         }
         String queryString = project.getUserData(ChooseByNamePopup.CURRENT_SEARCH_PATTERN);
+        if (queryString == null) {
+            queryString = "";
+        }
 
         for (LSPNavigationItem item : workspaceSymbolProvider.workspaceSymbols(queryString, project)) {
             if (globalSearchScope.isSearchInLibraries() || globalSearchScope.accept(item.getFile())) {
