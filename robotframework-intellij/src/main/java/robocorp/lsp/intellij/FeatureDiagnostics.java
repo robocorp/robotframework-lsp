@@ -35,11 +35,19 @@ public class FeatureDiagnostics extends ExternalAnnotator<EditorLanguageServerCo
             int startOffset = editorLanguageServerConnection.LSPPosToOffset(diagnostic.getRange().getStart());
             int endOffset = editorLanguageServerConnection.LSPPosToOffset(diagnostic.getRange().getEnd());
 
-            HighlightSeverity severity = switch (diagnostic.getSeverity()) {
-                case Warning -> HighlightSeverity.WARNING;
-                case Information, Hint -> HighlightSeverity.INFORMATION;
-                default -> HighlightSeverity.ERROR;
-            };
+            HighlightSeverity severity;
+            switch (diagnostic.getSeverity()) {
+                case Warning:
+                    severity = HighlightSeverity.WARNING;
+                    break;
+                case Information:
+                case Hint:
+                    severity = HighlightSeverity.INFORMATION;
+                    break;
+                default:
+                    severity = HighlightSeverity.ERROR;
+                    break;
+            }
 
             holder.newAnnotation(severity, diagnostic.getMessage()).range(new TextRange(startOffset, endOffset)).create();
         }

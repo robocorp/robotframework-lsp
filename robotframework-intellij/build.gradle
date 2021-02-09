@@ -8,7 +8,7 @@ plugins {
 }
 
 group 'robotframework.intellij'
-version '1.0-SNAPSHOT'
+version '0.7.1'
 
 repositories {
     mavenCentral()
