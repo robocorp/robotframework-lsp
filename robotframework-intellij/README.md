@@ -34,7 +34,7 @@ Features (0.7.2)
 - Code analysis
 - Go to definition
 - Browse Keywords (symbols)
-- Syntax highlighting (pretty basic right now)
+- Syntax highlighting (very basic right now)
 
 See: [Changelog](docs/changelog.md) for details.
 
