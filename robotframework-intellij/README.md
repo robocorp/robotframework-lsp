@@ -26,10 +26,10 @@ may be needed (by default it'll use the `python` from the `PATH`).
 
 The settings may be configured at: `File > Settings > Languages & Frameworks > Robot Framework Language Server`.
 
-Features (0.7.1)
+Features (0.7.2)
 -----------------
 
-- Settings for the language server may be set at `File > Settings > Languages & Frameworks > Robot Framework Language Server`
+- Settings page for the language server
 - Code completion
 - Code analysis
 - Go to definition
