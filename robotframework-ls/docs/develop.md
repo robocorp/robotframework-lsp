@@ -30,9 +30,9 @@ To release a new version:
 
 - Update version (`python -m dev set-version 0.7.1`).
 
-- Update README.md to add notes on features/fixes.
+- Update README.md to add notes on features/fixes (on `robotframework-ls` and `robotframework-intellij`).
 
-- Update changelog.md to add notes on features/fixes and set release date.
+- Update changelog.md to add notes on features/fixes and set release date (on `robotframework-ls` and `robotframework-intellij`).
 
 - Push contents, get the build in https://github.com/robocorp/robotframework-lsp/actions and install locally to test.
 
