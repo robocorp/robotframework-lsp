@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import robocorp.lsp.intellij.ILSPLanguage;
@@ -150,9 +151,9 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
 
         if (resourceFile.exists()) {
             // In dev it's something as:
-            // robotframework-lsp/robotframework-intellij/src/main/resources/robotframework-intellij-resource.txt
+            // ...robotframework-lsp/robotframework-intellij/src/main/resources/robotframework-intellij-resource.txt
             // and we want:
-            // robotframework-lsp/robotframework-ls/__main__.py
+            // ...robotframework-lsp/robotframework-ls/__main__.py
             File parentFile = resourceFile.getParentFile().getParentFile().getParentFile().getParentFile().getParentFile();
             File pySrc = new File(new File(parentFile, "robotframework-ls"), "src");
             File main = new File(new File(pySrc, "robotframework_ls"), "__main__.py");
@@ -165,6 +166,11 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         String mainStr = resourceFile.toString();
         if (mainStr.startsWith("file:/") || mainStr.startsWith("file:\\")) {
             mainStr = mainStr.substring(6);
+            if (!SystemInfo.isWindows) {
+                if (!mainStr.startsWith("/")) {
+                    mainStr = "/" + mainStr;
+                }
+            }
         }
 
         if (mainStr.contains("jar!")) {
