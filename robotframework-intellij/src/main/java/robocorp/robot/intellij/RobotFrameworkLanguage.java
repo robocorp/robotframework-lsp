@@ -173,49 +173,32 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
             }
         }
 
+        File directory;
         if (mainStr.contains("jar!")) {
             // Something as:
             // file:\D:\x\vscode-robot\robotframework-lsp\robotframework-intellij\build\idea-sandbox\plugins\robotframework-intellij\lib\robotframework-intellij-0.7.1.jar!\robotframework-intellij-resource.txt
             // Search in the lib dir (along the .jar).
             int i = mainStr.lastIndexOf("jar!");
             String substring = mainStr.substring(0, i);
-            File libDir = new File(substring).getParentFile();
-            File main = new File(new File(libDir, "robotframework_ls"), "__main__.py");
+            directory = new File(substring);
+        } else {
+            directory = new File(mainStr);
+        }
+        
+        while (directory != null) {
+            File main = new File(new File(directory, "robotframework_ls"), "__main__.py");
             if (main.exists()) {
                 return main;
             }
             builder.append("Target location:\n" + main + "\n");
 
-            // Also check in the lib dir parent (inside of robotframework-intellij).
-            main = new File(new File(libDir.getParentFile(), "robotframework_ls"), "__main__.py");
+            main = new File(new File(new File(new File(directory, "robotframework-ls"), "src"), "robotframework_ls"), "__main__.py");
             if (main.exists()) {
                 return main;
             }
             builder.append("Target location:\n" + main + "\n");
+            directory = directory.getParentFile();
         }
-
-        if (mainStr.contains("jar!") && mainStr.contains("idea-sandbox") && mainStr.contains("robotframework-lsp")) {
-            // Still in dev mode when inside the idea-sandbox (on gradlew buildPlugin).
-            // It's something as:
-            // file:\D:\x\vscode-robot\robotframework-lsp\robotframework-intellij\build\idea-sandbox\plugins\robotframework-intellij\lib\robotframework-intellij-0.7.1.jar!\robotframework-intellij-resource.txt
-            int i = mainStr.lastIndexOf("robotframework-lsp");
-            String substring = mainStr.substring(0, i);
-            File p1 = new File(substring, "robotframework-ls");
-            if (p1.exists()) {
-                File p2 = new File(p1, "src");
-                if (p2.exists()) {
-                    File main = new File(new File(p2, "robotframework_ls"), "__main__.py");
-                    if (main.exists()) {
-                        return main;
-                    }
-                } else {
-                    builder.append("Target location:\n" + p2 + " does not exist\n");
-                }
-            } else {
-                builder.append("Target location:\n" + p1 + " does not exist\n");
-            }
-        }
-
         throw new RuntimeException("Unable to discover __main__.py location.\nResource file: " + mainStr + "\nDetails:\n" + builder.toString());
     }
 
