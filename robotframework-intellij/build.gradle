@@ -7,8 +7,19 @@ plugins {
     id 'org.jetbrains.intellij' version '0.6.5'
 }
 
+publishPlugin {
+    token = System.getenv("ORG_GRADLE_PROJECT_intellijPublishToken")
+}
+
 group 'robotframework.intellij'
-version '0.7.1'
+version '0.7.2'
+
+task finishBuild(type: Exec) {
+    def finishArgs = ['python', "finish_build.py"]
+    commandLine finishArgs
+}
+
+buildPlugin.finalizedBy finishBuild
 
 repositories {
     mavenCentral()
@@ -24,11 +35,21 @@ dependencies {
 intellij {
     version '2020.3'
 }
+
 patchPluginXml {
     changeNotes """
-      Add change notes here.<br>
-      <em>most HTML tags may be used</em>"""
+    Initial release with support for:<br>
+    <ul>
+    <li>Settings page for the language server</li>
+    <li>Code completion</li>
+    <li>Code analysis</li>
+    <li>Go to definition</li>
+    <li>Browse Keywords (symbols)</li>
+    <li>Syntax highlighting (very basic right now)</li>
+    </ul>
+      """
 }
+
 test {
     useJUnit()
 

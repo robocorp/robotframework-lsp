@@ -69,7 +69,6 @@ jobs:
         /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
         pwd
         ./gradlew buildPlugin
-        python finish_build.py
     - uses: actions/upload-artifact@v1
       with:
         name: intellij-distribution

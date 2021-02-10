@@ -27,6 +27,8 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.7
+        
+    # Build Python version
     - name: Install deps
       run: pip install --upgrade pip fire twine wheel setuptools
     - name: Vendor robocorp_ls_core
@@ -38,14 +40,30 @@ jobs:
       run: |
         cp ../README.md ./README.md
         python setup.py sdist bdist_wheel --universal
+        
+    # VSCode (build)
     - run: npm install -g vsce
     - run: vsce package -o robotframework-lsp.vsix
     - uses: actions/upload-artifact@v1
       with:
         name: robotframework-lsp.vsix
         path: ./robotframework-ls/robotframework-lsp.vsix
+
+    # Intellij (build)  
+    - name: Package
+      run: ./gradlew buildPlugin
+    - uses: actions/upload-artifact@v1
+      with:
+        name: intellij-distribution
+        path: robotframework-intellij/build/distributions/
+
     - name: Check tag version
       run: python -m dev check-tag-version
+      
+    - name: Publish intellij plugin
+      run: ./gradlew publishPlugin
+      env:
+        ORG_GRADLE_PROJECT_intellijPublishToken: ${{ secrets.ORG_GRADLE_PROJECT_intellijPublishToken }}
     - name: Upload to PyPI
       working-directory: ./robotframework-ls/src
       run: twine upload dist/*

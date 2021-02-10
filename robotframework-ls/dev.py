@@ -49,18 +49,29 @@ def _fix_contents_version(contents, version):
     return contents
 
 
+def _fix_intellij_contents_version(contents, version):
+    new_lines = []
+    for line in contents.splitlines():
+        if line.startswith("version '"):
+            new_lines.append(f"version '{version}'")
+        else:
+            new_lines.append(line)
+    return "\n".join(new_lines)
+
+
 class Dev(object):
     def set_version(self, version):
         """
         Sets a new version for robotframework-lsp in all the needed files.
         """
 
-        def update_version(version, filepath):
+        def update_version(version, filepath, fix_func=_fix_contents_version):
             with open(filepath, "r") as stream:
                 contents = stream.read()
 
-            new_contents = _fix_contents_version(contents, version)
+            new_contents = fix_func(contents, version)
             if contents != new_contents:
+                print("Changed: ", filepath)
                 with open(filepath, "w") as stream:
                     stream.write(new_contents)
 
@@ -68,6 +79,12 @@ class Dev(object):
         update_version(version, os.path.join(".", "src", "setup.py"))
         update_version(
             version, os.path.join(".", "src", "robotframework_ls", "__init__.py")
+        )
+
+        update_version(
+            version,
+            os.path.join("..", "robotframework-intellij", "build.gradle"),
+            _fix_intellij_contents_version,
         )
 
     def get_tag(self):
