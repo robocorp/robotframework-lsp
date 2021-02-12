@@ -138,28 +138,23 @@ TREE_VIEW_CONTAINERS = [
                 menus={
                     "view/title": [
                         Menu(
-                            "robocorp.copyLocatorToClipboard.internal",
+                            "robocorp.newRobocorpInspectorBrowser",
                             MenuGroup.NAVIGATION,
                             "robocorp-code:single-robot-selected",
                         ),
                         Menu(
-                            "robocorp.openLocatorTreeSelection",
-                            MenuGroup.NAVIGATION,
-                            when="robocorp-code:single-robot-selected",
-                        ),
-                        Menu(
-                            "robocorp.newLocatorUI.tree.internal",
+                            "robocorp.newRobocorpInspectorImage",
                             MenuGroup.NAVIGATION,
                             "robocorp-code:single-robot-selected",
                         ),
                     ],
                     "view/item/context": [
                         Menu(
-                            "robocorp.copyLocatorToClipboard.internal",
+                            "robocorp.editRobocorpInspectorLocator",
                             when="robocorp-code:single-robot-selected",
                         ),
                         Menu(
-                            "robocorp.openLocatorTreeSelection",
+                            "robocorp.copyLocatorToClipboard.internal",
                             when="robocorp-code:single-robot-selected",
                         ),
                     ],

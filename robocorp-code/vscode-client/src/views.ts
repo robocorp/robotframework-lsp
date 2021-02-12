@@ -289,13 +289,6 @@ export function cloudUploadRobotTreeSelection() {
     }
 }
 
-export function openLocatorTreeSelection() {
-    let locator: LocatorEntry = getSelectedLocator();
-    if (locator) {
-        vscode.window.showTextDocument(vscode.Uri.file(locator.filePath));
-    }
-}
-
 export async function createRccTerminalTreeSelection() {
     let robot: RobotEntry = getSelectedRobot();
     if (robot) {

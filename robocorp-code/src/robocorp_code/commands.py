@@ -2,6 +2,7 @@
 
 ROBOCORP_GET_LANGUAGE_SERVER_PYTHON = "robocorp.getLanguageServerPython"  # Get a python executable suitable to start the language server
 ROBOCORP_GET_LANGUAGE_SERVER_PYTHON_INFO = "robocorp.getLanguageServerPythonInfo"  # Get info suitable to start the language server {pythonExe, environ}
+ROBOCORP_GET_INSPECTOR_PYTHON_INFO = "robocorp.getInspectorPythonInfo"  # Get info suitable to start the Robocorp inspector {pythonExe, environ}
 ROBOCORP_GET_PLUGINS_DIR = "robocorp.getPluginsDir"  # Get the directory for plugins
 ROBOCORP_CREATE_ROBOT = "robocorp.createRobot"  # Create Robot
 ROBOCORP_LIST_ROBOT_TEMPLATES_INTERNAL = "robocorp.listRobotTemplates.internal"  # Provides a list with the available robot templates
@@ -34,20 +35,13 @@ ROBOCORP_NEW_FOLDER_IN_ROBOT_CONTENT_VIEW = "robocorp.newFolderInRobotContentVie
 ROBOCORP_DELETE_RESOURCE_IN_ROBOT_CONTENT_VIEW = "robocorp.deleteResourceInRobotContentView"  # Delete
 ROBOCORP_RENAME_RESOURCE_IN_ROBOT_CONTENT_VIEW = "robocorp.renameResourceInRobotContentView"  # Rename
 ROBOCORP_REFRESH_CLOUD_VIEW = "robocorp.refreshCloudView"  # Refresh Cloud view
-ROBOCORP_START_BROWSER_LOCATOR = "robocorp.startBrowserLocator"  # Start browser to create Locators
-ROBOCORP_START_BROWSER_LOCATOR_INTERNAL = "robocorp.startBrowserLocator.internal"  # Start browser to create Locators. Requires the robot where the locators should be saved
-ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK = "robocorp.createLocatorFromBrowserPick"  # Create Locator from browser pick
-ROBOCORP_CREATE_LOCATOR_FROM_SCREEN_REGION = "robocorp.createLocatorFromScreenRegion"  # Create Image Locator from screen region
-ROBOCORP_CREATE_LOCATOR_FROM_SCREEN_REGION_INTERNAL = "robocorp.createLocatorFromScreenRegion.internal"  # Create Image Locator from screen region (internal)
-ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK_INTERNAL = "robocorp.createLocatorFromBrowserPick.internal"  # Create Locator from browser pick (internal: provides no UI in case of errors)
-ROBOCORP_STOP_BROWSER_LOCATOR = "robocorp.stopBrowserLocator"  # Stop browser used to create Locators
 ROBOCORP_GET_LOCATORS_JSON_INFO = "robocorp.getLocatorsJsonInfo"  # Obtain information from the locators.json given a robot.yaml
-ROBOCORP_NEW_LOCATOR_UI = "robocorp.newLocatorUI"  # Create locator
-ROBOCORP_NEW_LOCATOR_UI_TREE_INTERNAL = "robocorp.newLocatorUI.tree.internal"  # New locator
+ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER = "robocorp.newRobocorpInspectorBrowser"  # Add Browser Locator
+ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE = "robocorp.newRobocorpInspectorImage"  # Add Image Locator
+ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR = "robocorp.editRobocorpInspectorLocator"  # Edit locator
 ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL = "robocorp.copyLocatorToClipboard.internal"  # Copy locator name to clipboard
 ROBOCORP_OPEN_ROBOT_TREE_SELECTION = "robocorp.openRobotTreeSelection"  # Open robot.yaml
 ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION = "robocorp.cloudUploadRobotTreeSelection"  # Upload Robot to Robocorp Cloud
-ROBOCORP_OPEN_LOCATOR_TREE_SELECTION = "robocorp.openLocatorTreeSelection"  # Open locators.json
 ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION = "robocorp.rccTerminalCreateRobotTreeSelection"  # Open terminal with Robot environment
 ROBOCORP_SEND_METRIC = "robocorp.sendMetric"  # Send metric
 ROBOCORP_SUBMIT_ISSUE_INTERNAL = "robocorp.submitIssue.internal"  # Submit issue (internal)
@@ -73,10 +67,6 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH,
     ROBOCORP_RESOLVE_INTERPRETER,
     ROBOCORP_CLOUD_LOGOUT_INTERNAL,
-    ROBOCORP_START_BROWSER_LOCATOR_INTERNAL,
-    ROBOCORP_CREATE_LOCATOR_FROM_SCREEN_REGION_INTERNAL,
-    ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK_INTERNAL,
-    ROBOCORP_STOP_BROWSER_LOCATOR,
     ROBOCORP_GET_LOCATORS_JSON_INFO,
     ROBOCORP_SEND_METRIC,
     ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL,
