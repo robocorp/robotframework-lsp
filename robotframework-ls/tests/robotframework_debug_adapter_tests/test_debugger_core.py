@@ -60,6 +60,7 @@ def run_robot_cli(dap_logs_dir):
             [
                 "--outputdir=%s" % (dap_logs_dir,),
                 "--listener=robotframework_debug_adapter.listeners.DebugListener",
+                "--listener=robotframework_debug_adapter.listeners.DebugListenerV2",
                 target,
             ],
             exit=False,

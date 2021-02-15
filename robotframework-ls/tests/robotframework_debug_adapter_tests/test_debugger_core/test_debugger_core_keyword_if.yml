@@ -19,11 +19,11 @@ Stack 0:
     path: '.../case_control_flow_for.robot'
 Stack 1:
 - column: 0
-  line: 1
+  line: 19
   name: My Equal Redefined
   source:
-    name: None
-    path: None
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
 - column: 0
   line: 19
   name: Run Keyword If
@@ -50,11 +50,11 @@ Stack 2:
     name: case_control_flow_for.robot
     path: '.../case_control_flow_for.robot'
 - column: 0
-  line: 1
+  line: 19
   name: My Equal Redefined
   source:
-    name: None
-    path: None
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
 - column: 0
   line: 19
   name: Run Keyword If

@@ -575,6 +575,7 @@ class RunRobotThread(threading.Thread):
             [
                 "--outputdir=%s" % (self.dap_logs_dir,),
                 "--listener=robotframework_debug_adapter.listeners.DebugListener",
+                "--listener=robotframework_debug_adapter.listeners.DebugListenerV2",
                 self.target,
             ],
             exit=False,

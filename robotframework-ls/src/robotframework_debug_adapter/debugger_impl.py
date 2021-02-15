@@ -205,16 +205,22 @@ class _TestFrameInfo(_BaseFrameInfo):
 
 
 class _KeywordFrameInfo(_BaseFrameInfo):
-    def __init__(self, stack_list, dap_frame, keyword, variables):
+    def __init__(self, stack_list, dap_frame, name, lineno, args, variables):
         self._stack_list = weakref.ref(stack_list)
         self._dap_frame = dap_frame
-        self._keyword = keyword
+        self._name = name
+        self._lineno = lineno
         self._scopes = None
+        self._args = args
         self._variables = variables
 
     @property
-    def keyword(self):
-        return self._keyword
+    def name(self):
+        return self._name
+
+    @property
+    def lineno(self):
+        return self._lineno
 
     @property
     def variables(self):
@@ -248,11 +254,7 @@ class _KeywordFrameInfo(_BaseFrameInfo):
             Scope("Builtins", builtions_variables_reference, expensive=False),
         ]
 
-        try:
-            args = self._keyword.args
-        except:
-            log.debug("Unable to get arguments for keyword: %s", self._keyword)
-            args = []
+        args = self._args
         stack_list.register_variables_reference(
             locals_variables_reference, _ArgsAsDAP(args)
         )
@@ -289,24 +291,20 @@ class _StackInfo(object):
     def register_variables_reference(self, variables_reference, children):
         self._ref_id_to_children[variables_reference] = children
 
-    def add_keyword_entry_stack(self, keyword, filename: str, variables) -> int:
+    def add_keyword_entry_stack(
+        self, name, lineno, filename: str, args, variables
+    ) -> int:
         frame_id: int = next_id()
-        try:
-            name = str(keyword).strip()
-            if not name:
-                name = keyword.__class__.__name__
-        except:
-            name = "<Unable to get keyword name>"
         dap_frame = StackFrame(
             frame_id,
             name=name,
-            line=keyword.lineno or 1,
+            line=lineno or 1,
             column=0,
             source=Source(name=os.path.basename(filename), path=filename),
         )
         self._dap_frames.append(dap_frame)
         self._frame_id_to_frame_info[frame_id] = _KeywordFrameInfo(
-            self, dap_frame, keyword, variables
+            self, dap_frame, name, lineno, args, variables
         )
         return frame_id
 
@@ -360,7 +358,7 @@ class _StackInfo(object):
         return lst
 
 
-_StepEntry = namedtuple("_StepEntry", "variables, keyword")
+_StepEntry = namedtuple("_StepEntry", "name, lineno, source, args, variables")
 _SuiteEntry = namedtuple("_SuiteEntry", "name, source")
 _TestEntry = namedtuple("_TestEntry", "name, source, lineno")
 
@@ -410,7 +408,7 @@ class _EvaluationInfo(object):
                 "Can only evaluate at a Keyword context (current context: %s)"
                 % (info.get_type_name(),)
             )
-        log.info("Doing evaluation in the Keyword context: %s", info.keyword)
+        log.info("Doing evaluation in the Keyword context: %s", info.name)
 
         from robotframework_ls.impl.text_utilities import is_variable_text
 
@@ -577,23 +575,25 @@ class _RobotDebuggerImpl(object):
         for entry in reversed(self._stack_ctx_entries_deque):
             try:
                 if entry.__class__ == _StepEntry:
-                    keyword = entry.keyword
+                    name = entry.name
+                    lineno = entry.lineno
                     variables = entry.variables
-                    filename = self._get_filename(keyword, u"Keyword")
+                    args = entry.args
+                    filename = self._get_filename(entry, u"Keyword")
 
                     frame_id = stack_info.add_keyword_entry_stack(
-                        keyword, filename, variables
+                        name, lineno, filename, args, variables
                     )
 
                 elif entry.__class__ == _SuiteEntry:
                     name = u"TestSuite: %s" % (entry.name,)
-                    filename = self._get_filename(keyword, u"TestSuite")
+                    filename = self._get_filename(entry, u"TestSuite")
 
                     frame_id = stack_info.add_suite_entry_stack(name, filename)
 
                 elif entry.__class__ == _TestEntry:
                     name = u"TestCase: %s" % (entry.name,)
-                    filename = self._get_filename(keyword, u"TestCase")
+                    filename = self._get_filename(entry, u"TestCase")
 
                     frame_id = stack_info.add_test_entry_stack(
                         name, filename, entry.lineno
@@ -707,39 +707,129 @@ class _RobotDebuggerImpl(object):
 
     # ------------------------------------------------- RobotFramework listeners
 
-    def before_control_flow_stmt(self, control_flow_stmt, ctx, *args, **kwargs):
-        self._before_run_step(ctx, control_flow_stmt)
+    # 4.0 versions where the lineno is available on the V2 listener
+    def start_keyword_v2(self, _name, attributes):
+        from robot.running.context import EXECUTION_CONTEXTS
 
+        ctx = EXECUTION_CONTEXTS.current
+        lineno = attributes["lineno"]
+        source = attributes["source"]
+        name = attributes["kwname"]
+        args = attributes["args"]
+        if not args:
+            args = []
+        self._before_run_step(ctx, name, lineno, source, args)
+
+    # 4.0 versions where the lineno is available on the V2 listener
+    def end_keyword_v2(self, name, attributes):
+        self._after_run_step()
+
+    # 3.x versions where the lineno is NOT available on the V2 listener
+    def before_control_flow_stmt(self, control_flow_stmt, ctx, *args, **kwargs):
+        name = ""
+        try:
+            if control_flow_stmt.type == "IF/ELSE ROOT":
+                name = control_flow_stmt.body[0].condition
+
+            elif control_flow_stmt.type == "KEYWORD":
+                name = control_flow_stmt.name
+
+            else:
+                name = str(control_flow_stmt).strip()
+        except:
+            pass
+
+        if not name:
+            name = control_flow_stmt.__class__.__name__
+
+        try:
+            lineno = control_flow_stmt.lineno
+            source = control_flow_stmt.source
+        except AttributeError:
+            return
+
+        try:
+            args = control_flow_stmt.args
+        except AttributeError:
+            args = []
+        self._before_run_step(ctx, name, lineno, source, args)
+
+    # 3.x versions where the lineno is NOT available on the V2 listener
     def after_control_flow_stmt(self, control_flow_stmt, ctx, *args, **kwargs):
         self._after_run_step()
 
-    def before_run_step(self, step_runner, step, name=None):
-        ctx = step_runner._context
-        self._before_run_step(ctx, step)
-
-    def after_run_step(self, step_runner, step, name=None):
-        self._after_run_step()
-
-    def _before_run_step(self, ctx, step):
-        self._stack_ctx_entries_deque.append(_StepEntry(ctx.variables.current, step))
-        if self._skip_breakpoints:
-            return
-
+    def before_keyword_runner(self, runner, step, *args, **kwargs):
+        name = ""
+        try:
+            name = step.name
+        except:
+            pass
+        if not name:
+            name = step.__class__.__name__
         try:
             lineno = step.lineno
             source = step.source
         except AttributeError:
             return
+        try:
+            args = step.args
+        except AttributeError:
+            args = []
+        ctx = runner._context
+        self._before_run_step(ctx, name, lineno, source, args)
+
+    def after_keyword_runner(self, runner, step, *args, **kwargs):
+        self._after_run_step()
+
+    # 3.x versions where the lineno is NOT available on the V2 listener
+    def before_run_step(self, step_runner, step, name=None):
+        try:
+            name = str(step).strip()
+            if not name:
+                name = step.__class__.__name__
+        except:
+            name = "<Unable to get keyword name>"
+        try:
+            lineno = step.lineno
+            source = step.source
+        except AttributeError:
+            return
+        try:
+            args = step.args
+        except AttributeError:
+            args = []
+        ctx = step_runner._context
+        self._before_run_step(ctx, name, lineno, source, args)
+
+    # 3.x versions where the lineno is NOT available on the V2 listener
+    def after_run_step(self, step_runner, step, name=None):
+        self._after_run_step()
+
+    def _before_run_step(self, ctx, name, lineno, source, args):
+        if source is None or lineno is None:
+            # RunKeywordIf doesn't have a source, so, just show the caller source.
+            for entry in reversed(self._stack_ctx_entries_deque):
+                if source is None:
+                    source = entry.source
+                if lineno is None:
+                    lineno = entry.lineno
+                break
+
+        self._stack_ctx_entries_deque.append(
+            _StepEntry(name, lineno, source, args, ctx.variables.current)
+        )
+        if self._skip_breakpoints:
+            return
 
         source = file_utils.get_abs_path_real_path_and_base_from_file(source)[1]
         log.debug(
-            "run_step %s, %s - step: %s - %s\n", step, lineno, self._step_cmd, source
+            "run_step %s, %s - step: %s - %s\n", name, lineno, self._step_cmd, source
         )
         lines = self._filename_to_line_to_breakpoint.get(source)
 
         stop_reason: Optional[ReasonEnum] = None
         step_cmd = self._step_cmd
-        if lines and step.lineno in lines:
+        if lines and lineno in lines:
             stop_reason = ReasonEnum.REASON_BREAKPOINT
 
         elif step_cmd is not None:
@@ -801,6 +891,55 @@ def get_global_robot_debugger() -> Optional[IRobotDebugger]:
     return _DebuggerHolder._dbg
 
 
+def _apply_monkeypatching_latest(impl):
+    from robot.running.model import If, For
+    from robot.running.bodyrunner import KeywordRunner
+
+    _patch(
+        KeywordRunner,
+        impl,
+        "run",
+        impl.before_keyword_runner,
+        impl.after_keyword_runner,
+    )
+    _patch(If, impl, "run", impl.before_control_flow_stmt, impl.after_control_flow_stmt)
+    _patch(
+        For, impl, "run", impl.before_control_flow_stmt, impl.after_control_flow_stmt
+    )
+
+
+def _apply_monkeypatching_before_4_b_2(impl):
+    from robot.running.steprunner import (  # type: ignore
+        StepRunner,  #  @UnresolvedImport
+    )
+
+    _patch(StepRunner, impl, "run_step", impl.before_run_step, impl.after_run_step)
+
+    try:
+        from robot.running.model import For  # type: ignore # @UnresolvedImport
+
+        _patch(
+            For,
+            impl,
+            "run",
+            impl.before_control_flow_stmt,
+            impl.after_control_flow_stmt,
+        )
+    except:
+        # This may not be the same on older versions...
+        pass
+
+    try:
+        from robot.running.model import If  # type: ignore # @UnresolvedImport
+
+        _patch(
+            If, impl, "run", impl.before_control_flow_stmt, impl.after_control_flow_stmt
+        )
+    except:
+        # This may not be the same on older versions...
+        pass
+
+
 def install_robot_debugger() -> IRobotDebugger:
     """
     Installs the robot debugger and registers it where needed. If a debugger
@@ -812,8 +951,8 @@ def install_robot_debugger() -> IRobotDebugger:
 
     if impl is None:
         # Note: only patches once, afterwards, returns the same instance.
-        from robot.running.steprunner import StepRunner  # type: ignore
         from robotframework_debug_adapter.listeners import DebugListener
+        from robotframework_debug_adapter.listeners import DebugListenerV2
 
         impl = _RobotDebuggerImpl()
 
@@ -823,35 +962,31 @@ def install_robot_debugger() -> IRobotDebugger:
         DebugListener.on_start_test.register(impl.start_test)
         DebugListener.on_end_test.register(impl.end_test)
 
-        _patch(StepRunner, impl, "run_step", impl.before_run_step, impl.after_run_step)
+        use_monkeypatching = True
+        # Not using monkey-patching would've been nice, but due to:
+        # https://github.com/robotframework/robotframework/issues/3855
+        # we can't really use it.
+        #
+        # On RobotFramework 3.x and earlier 4.x dev versions, we do some monkey-patching because
+        # the listener was not able to give linenumbers.
+        from robot import get_version
 
-        try:
-            from robot.running.model import For  # type: ignore
+        version = get_version()
+        use_monkeypatching = version.startswith("3.") or version.startswith("4.0.a")
 
-            _patch(
-                For,
-                impl,
-                "run",
-                impl.before_control_flow_stmt,
-                impl.after_control_flow_stmt,
-            )
-        except:
-            # This may not be the same on older versions...
-            pass
-
-        try:
-            from robot.running.model import If  # type: ignore
-
-            _patch(
-                If,
-                impl,
-                "run",
-                impl.before_control_flow_stmt,
-                impl.after_control_flow_stmt,
-            )
-        except:
-            # This may not be the same on older versions...
-            pass
+        if False and use_monkeypatching:
+            # NOT CURRENTLY USED!!
+            # https://github.com/robotframework/robotframework/issues/3855
+            #
+            # i.e.: there's no start/end keyword on V3, so, we can currently
+            # only get linenumbers on the V2 api.
+            DebugListenerV2.on_start_keyword.register(impl.start_keyword_v2)
+            DebugListenerV2.on_end_keyword.register(impl.end_keyword_v2)
+        else:
+            try:
+                _apply_monkeypatching_before_4_b_2(impl)
+            except ImportError:
+                _apply_monkeypatching_latest(impl)
 
         set_global_robot_debugger(impl)
     else:

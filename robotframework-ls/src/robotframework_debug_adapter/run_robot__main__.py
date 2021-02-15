@@ -46,8 +46,9 @@ def connect(port):
 
     try:
         # 10 seconds default timeout
-        timeout = int(os.environ.get(ENV_OPTION_ROBOT_DAP_TIMEOUT, DEFAULT_TIMEOUT))
-        s.settimeout(timeout)
+        timeout = os.environ.get(ENV_OPTION_ROBOT_DAP_TIMEOUT, DEFAULT_TIMEOUT)
+        if timeout is not None:
+            s.settimeout(int(timeout))
         s.connect(("127.0.0.1", port))
         s.settimeout(None)  # no timeout after connected
         log.info("Connected.")
@@ -111,8 +112,12 @@ class _RobotTargetComm(threading.Thread):
         self.write_message(msg)
 
     def start_communication_threads(self):
-        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import writer_thread
-        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import reader_thread
+        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
+            writer_thread,
+        )
+        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
+            reader_thread,
+        )
 
         read_from = self._socket.makefile("rb")
         write_to = self._socket.makefile("wb")
@@ -137,7 +142,9 @@ class _RobotTargetComm(threading.Thread):
 
     def terminate(self):
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEventBody
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            TerminatedEventBody,
+        )
 
         self.write_message(TerminatedEvent(TerminatedEventBody()))
 
@@ -196,7 +203,9 @@ class _RobotTargetComm(threading.Thread):
         """
         :param InitializeRequest request:
         """
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import InitializedEvent
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ProcessEvent
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ProcessEventBody
@@ -214,8 +223,11 @@ class _RobotTargetComm(threading.Thread):
         self.write_message(InitializedEvent())
 
     def on_attach_request(self, request):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import AttachResponse
+
         attach_response = build_response(request)
         self.write_message(attach_response)
 
@@ -266,8 +278,12 @@ class _RobotTargetComm(threading.Thread):
         )
 
     def on_continue_request(self, request):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ContinueResponseBody
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            ContinueResponseBody,
+        )
 
         response = build_response(
             request, kwargs=dict(body=ContinueResponseBody(allThreadsContinued=True))
@@ -281,7 +297,9 @@ class _RobotTargetComm(threading.Thread):
         self.write_message(response)
 
     def on_stepIn_request(self, request):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
 
         response = build_response(request)
 
@@ -292,7 +310,9 @@ class _RobotTargetComm(threading.Thread):
         self.write_message(response)
 
     def on_next_request(self, request):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
 
         response = build_response(request)
 
@@ -304,7 +324,9 @@ class _RobotTargetComm(threading.Thread):
         self.write_message(response)
 
     def on_stepOut_request(self, request):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
 
         response = build_response(request)
 
@@ -320,9 +342,13 @@ class _RobotTargetComm(threading.Thread):
         :param ThreadsRequest request:
         """
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Thread
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ThreadsResponseBody
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            ThreadsResponseBody,
+        )
         from robotframework_debug_adapter.constants import MAIN_THREAD_ID
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
 
         threads = [Thread(MAIN_THREAD_ID, "Main Thread").to_dict()]
         kwargs = {"body": ThreadsResponseBody(threads)}
@@ -334,8 +360,12 @@ class _RobotTargetComm(threading.Thread):
         """
         :param StackTraceRequest request:
         """
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StackTraceResponseBody
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            StackTraceResponseBody,
+        )
 
         thread_id = request.arguments.threadId
 
@@ -353,7 +383,9 @@ class _RobotTargetComm(threading.Thread):
         """
         :param ConfigurationDoneRequest request:
         """
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
 
         response = build_response(request)
         self.write_message(response)
@@ -363,8 +395,12 @@ class _RobotTargetComm(threading.Thread):
         """
         :param ScopesRequest request:
         """
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ScopesResponseBody
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            ScopesResponseBody,
+        )
 
         frame_id = request.arguments.frameId
 
@@ -382,8 +418,12 @@ class _RobotTargetComm(threading.Thread):
         """
         :param VariablesRequest request:
         """
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import VariablesResponseBody
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            VariablesResponseBody,
+        )
 
         variables_reference = request.arguments.variablesReference
 
@@ -398,8 +438,12 @@ class _RobotTargetComm(threading.Thread):
         self.write_message(response)
 
     def _evaluate_response(self, request, result, error_message=""):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import EvaluateResponseBody
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            EvaluateResponseBody,
+        )
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
 
         body = EvaluateResponseBody(result=result, variablesReference=0)
         if not error_message:
@@ -469,7 +513,8 @@ def main():
     robot_args = args[3:]
     if debug:
         robot_args = [
-            "--listener=robotframework_debug_adapter.listeners.DebugListener"
+            "--listener=robotframework_debug_adapter.listeners.DebugListener",
+            "--listener=robotframework_debug_adapter.listeners.DebugListenerV2",
         ] + robot_args
 
     s = connect(int(port))

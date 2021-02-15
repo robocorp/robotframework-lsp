@@ -1,7 +1,7 @@
 Stack 0:
 - column: 0
   line: 18
-  name: IF    ${counter} > 1
+  name: ${counter} > 1
   source:
     name: case_control_flow_if.robot
     path: '.../case_control_flow_if.robot'
@@ -26,7 +26,7 @@ Stack 1:
     path: '.../case_control_flow_if.robot'
 - column: 0
   line: 18
-  name: IF    ${counter} > 1
+  name: ${counter} > 1
   source:
     name: case_control_flow_if.robot
     path: '.../case_control_flow_if.robot'
