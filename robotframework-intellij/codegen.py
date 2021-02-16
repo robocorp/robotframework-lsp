@@ -253,6 +253,10 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
 }
 '''
 
+def camel_to_snake(name):
+    import re
+    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
 
 def main():
     import json
@@ -281,10 +285,10 @@ def main():
 
             prop_value['description'] = final_desc
             prop_value['dotted_name'] = prop_name
-            prop_value['constant_name'] = prop_name.replace('.', '_').replace('-', '_').upper()
+            prop_value['constant_name'] = camel_to_snake(prop_name).replace('.', '_').replace('-', '_').upper()
             visible_name = prop_name.replace('robot.', '')
-            prop_value['visible_name'] = visible_name.replace('.', ' ').replace('-', ' ').replace('_', ' ').title()
-            base_name = prop_name.replace('.', ' ').replace('-', ' ').replace('_', ' ').title().replace(' ', '')
+            prop_value['visible_name'] = camel_to_snake(visible_name).replace('.', ' ').replace('-', ' ').replace('_', ' ').title()
+            base_name = camel_to_snake(prop_name).replace('.', ' ').replace('-', ' ').replace('_', ' ').title().replace(' ', '')
             java_name = prop_value['java_name'] = base_name[0].lower() + base_name[1:]
             prop_value['getter_name'] = 'get' + base_name[0].upper() + base_name[1:]
             prop_value['setter_name'] = 'set' + base_name[0].upper() + base_name[1:]
@@ -304,6 +308,10 @@ def main():
                 
             elif prop_value['type'] == 'number':
                 json_load = f'new JsonPrimitive(Integer.parseInt({java_name}))'
+                prop_value['java_json_type'] = 'JsonPrimitive'
+                
+            elif prop_value['type'] == 'boolean':
+                json_load = f'new JsonPrimitive(Boolean.parseBoolean({java_name}))'
                 prop_value['java_json_type'] = 'JsonPrimitive'
                 
             else:

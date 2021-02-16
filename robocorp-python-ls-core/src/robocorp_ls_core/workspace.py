@@ -303,6 +303,9 @@ class Workspace(object):
         self._check_in_mutate_thread()  # i.e.: we don't really mutate here, but this is not thread safe.
         return self._docs.values()
 
+    def get_open_docs_uris(self) -> List[IDocument]:
+        return list(self._docs.keys())
+
     @implements(IWorkspace.iter_folders)
     def iter_folders(self) -> Iterable[IWorkspaceFolder]:
         return (

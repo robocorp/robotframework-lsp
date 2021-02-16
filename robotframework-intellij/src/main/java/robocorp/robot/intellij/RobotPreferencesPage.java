@@ -27,6 +27,7 @@ class RobotPreferencesComponent {
     private final JBTextField robotVariables = new JBTextField();
     private final JBTextField robotPythonpath = new JBTextField();
     private final JBTextField robotCompletionsSectionHeadersForm = new JBTextField();
+    private final JBTextField robotWorkspaceSymbolsOnlyForOpenDocs = new JBTextField();
 
     public RobotPreferencesComponent() {
         panel = FormBuilder.createFormBuilder()
@@ -46,6 +47,8 @@ class RobotPreferencesComponent {
                 .addComponent(createJTextArea("Specifies the entries to be added to the PYTHONPATH (used when resolving resources and imports and\nautomatically passed to the launch config as --pythonpath entries).\ni.e.: [\"</my/path_entry>\"]\nNote: expected as JSON Array\n\n"))
                 .addLabeledComponent(new JBLabel("Completions Section Headers Form"), robotCompletionsSectionHeadersForm, 1, false)
                 .addComponent(createJTextArea("Defines how completions should be shown for section headers (i.e.: *** Setting(s) ***).\nOne of: plural, singular, both.\n\n"))
+                .addLabeledComponent(new JBLabel("Workspace Symbols Only For Open Docs"), robotWorkspaceSymbolsOnlyForOpenDocs, 1, false)
+                .addComponent(createJTextArea("Collecting workspace symbols can be resource intensive on big projects and may slow down code-\ncompletion, in this case, it's possible collect info only for open files on big projects.\n\n"))
                 
                 .addComponentFillVertically(new JPanel(), 0)
                 .getPanel();
@@ -142,6 +145,15 @@ class RobotPreferencesComponent {
         robotCompletionsSectionHeadersForm.setText(newText);
     }
     
+    @NotNull
+    public String getRobotWorkspaceSymbolsOnlyForOpenDocs() {
+        return robotWorkspaceSymbolsOnlyForOpenDocs.getText();
+    }
+
+    public void setRobotWorkspaceSymbolsOnlyForOpenDocs (@NotNull String newText) {
+        robotWorkspaceSymbolsOnlyForOpenDocs.setText(newText);
+    }
+    
 
 }
 
@@ -202,6 +214,10 @@ public class RobotPreferencesPage implements Configurable {
             return true;
         }
         
+        if(!settings.getRobotWorkspaceSymbolsOnlyForOpenDocs().equals(component.getRobotWorkspaceSymbolsOnlyForOpenDocs())){
+            return true;
+        }
+        
         return false;
     }
 
@@ -217,6 +233,7 @@ public class RobotPreferencesPage implements Configurable {
         component.setRobotVariables(settings.getRobotVariables());
         component.setRobotPythonpath(settings.getRobotPythonpath());
         component.setRobotCompletionsSectionHeadersForm(settings.getRobotCompletionsSectionHeadersForm());
+        component.setRobotWorkspaceSymbolsOnlyForOpenDocs(settings.getRobotWorkspaceSymbolsOnlyForOpenDocs());
     }
 
     @Override
@@ -256,6 +273,10 @@ public class RobotPreferencesPage implements Configurable {
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Completions Section Headers Form:\n" + s);
         }
+        s = settings.validateRobotWorkspaceSymbolsOnlyForOpenDocs(component.getRobotWorkspaceSymbolsOnlyForOpenDocs());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Workspace Symbols Only For Open Docs:\n" + s);
+        }
         
         settings.setRobotLanguageServerPython(component.getRobotLanguageServerPython());
         settings.setRobotLanguageServerArgs(component.getRobotLanguageServerArgs());
@@ -265,5 +286,6 @@ public class RobotPreferencesPage implements Configurable {
         settings.setRobotVariables(component.getRobotVariables());
         settings.setRobotPythonpath(component.getRobotPythonpath());
         settings.setRobotCompletionsSectionHeadersForm(component.getRobotCompletionsSectionHeadersForm());
+        settings.setRobotWorkspaceSymbolsOnlyForOpenDocs(component.getRobotWorkspaceSymbolsOnlyForOpenDocs());
     }
 }

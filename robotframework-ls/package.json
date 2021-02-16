@@ -88,6 +88,11 @@
                         "both"
                     ]
                 },
+                "robot.workspaceSymbolsOnlyForOpenDocs": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Collecting workspace symbols can be resource intensive on big projects and may slow down code-completion, in this case, it's possible collect info only for open files on big projects."
+                },
                 "robot.editor.4spacesTab": {
                     "type": "boolean",
                     "default": true,
