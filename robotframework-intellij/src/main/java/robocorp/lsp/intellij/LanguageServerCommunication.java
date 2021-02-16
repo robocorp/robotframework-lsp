@@ -151,7 +151,9 @@ class InternalConnection {
             state = State.initializing;
             LanguageServerDefinition.LanguageServerStreams languageServerStreams = languageServerDefinition.createConnectionProvider();
             if (languageServerStreams == null) {
-                throw new RuntimeException("It's not possible to start the language server (python not found). Please configure the python executable in the settings to start the language server.");
+                // Configuration is not valid. Bail out.
+                state = State.crashed;
+                return;
             }
             languageServerStreams.start();
             InputStream inputStream = languageServerStreams.getInputStream();

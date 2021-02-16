@@ -126,13 +126,12 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         if (!robotLanguageServerPython.isEmpty()) {
             python = robotLanguageServerPython;
         }
-        python = null;
         if (python == null) {
             // If we can't discover the python executable, we have to wait for the user to provide it.
             String msg = "Unable to find a python executable in the PATH.\n\nPlease configure the 'Language Server Python' in the 'Robot Framework Language Server' settings.";
-            LOG.info(msg);
             Notifications.Bus.notify(new Notification(
                     "Robot Framework Language Server", "Unable to start Robot Framework Language Server", msg, NotificationType.ERROR));
+            LOG.error(msg);
             return null;
         }
 
