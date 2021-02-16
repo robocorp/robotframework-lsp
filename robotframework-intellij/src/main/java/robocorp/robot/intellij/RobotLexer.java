@@ -64,6 +64,13 @@ public class RobotLexer extends LexerBase {
         int currState = state;
 
         char c = this.buffer.charAt(this.position);
+        if (c == '$' && charAtEquals(this.position + 1, '{')) {
+            this.currentToken = RobotElementType.VARIABLE;
+            state = STATE_DEFAULT;
+            skipVar();
+            return;
+        }
+
         if (c == '\r' || c == '\n') {
             this.currentToken = RobotElementType.NEW_LINE;
             state = STATE_AFTER_NEW_LINE;
@@ -116,6 +123,19 @@ public class RobotLexer extends LexerBase {
     private void skipWhitespaces() {
         while (isSpace(this.position)) {
             this.position++;
+        }
+    }
+
+    private void skipVar() {
+        while (this.position < this.getBufferEnd()) {
+            char c = this.buffer.charAt(position);
+            if (c == '\n' && c == '\r') {
+                break;
+            }
+            this.position++;
+            if (c == '}') {
+                break;
+            }
         }
     }
 

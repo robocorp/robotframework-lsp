@@ -23,6 +23,8 @@ class Highlighter implements @NotNull SyntaxHighlighter {
             return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.HEADING};
         } else if (tokenType == RobotElementType.COMMENT) {
             return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.COMMENT};
+        } else if (tokenType == RobotElementType.VARIABLE) {
+            return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.VARIABLE};
         }
         return new TextAttributesKey[0];
     }
@@ -35,6 +37,9 @@ public class RobotFrameworkSyntaxHighlightingFactory extends SyntaxHighlighterFa
 
     public static final TextAttributesKey COMMENT = TextAttributesKey.createTextAttributesKey(
             RobotElementType.COMMENT.toString(), DefaultLanguageHighlighterColors.LINE_COMMENT);
+
+    public static final TextAttributesKey VARIABLE = TextAttributesKey.createTextAttributesKey(
+            RobotElementType.VARIABLE.toString(), DefaultLanguageHighlighterColors.INSTANCE_FIELD);
 
     @Override
     public @NotNull SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {

@@ -66,7 +66,13 @@ public class EditorLanguageServerConnection {
                     changesParams.getTextDocument().setUri(identifier.getUri());
                     changesParams.getTextDocument().setVersion(version.incrementAndGet());
 
-                    TextDocumentSyncKind syncKind = comm.getServerCapabilitySyncKind();
+                    TextDocumentSyncKind syncKind;
+                    try {
+                        syncKind = comm.getServerCapabilitySyncKind();
+                    } catch (LanguageServerUnavailableException e) {
+                        // If it's not available, just bail out.
+                        return;
+                    }
 
                     if (syncKind == TextDocumentSyncKind.Incremental) {
                         CharSequence newText = event.getNewFragment();
