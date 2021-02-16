@@ -19,13 +19,12 @@
 package robocorp.lsp.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -88,7 +87,7 @@ public abstract class LanguageServerDefinition {
 
         private final Logger LOG = Logger.getInstance(LanguageServerStreams.class);
 
-        @NotNull
+        @Nullable
         private final ProcessBuilder builder;
         private final int port;
 
@@ -98,7 +97,7 @@ public abstract class LanguageServerDefinition {
         @Nullable
         private SocketStreamProvider socketStreamProvider = null;
 
-        public LanguageServerStreams(@NotNull ProcessBuilder processBuilder, int port) {
+        public LanguageServerStreams(@Nullable ProcessBuilder processBuilder, int port) {
             this.builder = processBuilder;
             this.port = port;
         }
@@ -110,7 +109,19 @@ public abstract class LanguageServerDefinition {
                 LOG.info("Server connecting to " + port);
                 this.socketStreamProvider = new SocketStreamProvider("127.0.0.1", port);
             } else {
+                if (this.builder == null) {
+                    throw new IOException("Unable to start language server: " + this.toString() + " python executable must be set.");
+                }
                 process = builder.start();
+                String property = System.getProperty("user.home");
+                File dir = new File(property, ".robotframework-ls");
+                dir.mkdirs();
+
+                DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH_mm");
+                File file = new File(dir, ".intellij-rf-ls-" + dtf.format(LocalDateTime.now()) + ".log");
+
+                StreamRedirectorThread thread = new StreamRedirectorThread(process.getErrorStream(), new FileOutputStream(file, true));
+                thread.start();
                 if (!process.isAlive()) {
                     throw new IOException("Unable to start language server: " + this.toString());
                 } else {
@@ -165,7 +176,7 @@ public abstract class LanguageServerDefinition {
         public boolean equals(Object obj) {
             if (obj instanceof LanguageServerStreams) {
                 LanguageServerStreams other = (LanguageServerStreams) obj;
-                return builder.equals(other.builder);
+                return Objects.equals(builder, other.builder);
             }
             return false;
         }
@@ -185,11 +196,14 @@ public abstract class LanguageServerDefinition {
     private int port;
 
     // May be changed when preferences change.
-    private ProcessBuilder processBuilder;
+    private @Nullable ProcessBuilder processBuilder;
 
-    public final Callbacks<LanguageServerDefinition> onChangedLanguageDefinition = new Callbacks();
+    public final Callbacks<LanguageServerDefinition> onChangedLanguageDefinition = new Callbacks<>();
 
-    public LanguageServerDefinition(Set<String> ext, ProcessBuilder process, int port, String languageId) {
+    /**
+     * @param processBuilder may be null if the python executable is not available.
+     */
+    public LanguageServerDefinition(Set<String> ext, @Nullable ProcessBuilder processBuilder, int port, String languageId) {
         this.languageId = languageId;
         for (String s : ext) {
             if (!s.startsWith(".")) {
@@ -199,10 +213,10 @@ public abstract class LanguageServerDefinition {
 
         this.ext = Set.copyOf(ext);
         this.port = port;
-        this.processBuilder = process;
+        this.processBuilder = processBuilder;
     }
 
-    public void setProcessBuilder(ProcessBuilder processBuilder) {
+    public void setProcessBuilder(@Nullable ProcessBuilder processBuilder) {
         this.processBuilder = processBuilder;
         onChangedLanguageDefinition.onCallback(this);
     }
@@ -215,9 +229,12 @@ public abstract class LanguageServerDefinition {
     /**
      * Creates a StreamConnectionProvider given the working directory
      *
-     * @return The stream connection provider
+     * @return The stream connection provider or null if it's not possible to create one.
      */
-    public LanguageServerStreams createConnectionProvider() {
+    public @Nullable LanguageServerStreams createConnectionProvider() {
+        if (processBuilder == null && port <= 0) {
+            return null;
+        }
         return new LanguageServerStreams(processBuilder, port);
     }
 

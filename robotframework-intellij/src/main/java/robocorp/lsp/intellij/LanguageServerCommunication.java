@@ -138,6 +138,10 @@ class InternalConnection {
         };
     }
 
+    public boolean isProperlyConfigured() {
+        return languageServerDefinition.createConnectionProvider() != null;
+    }
+
     public void start(Set<EditorLanguageServerConnection> editorConnections) {
         if (state != State.initial) {
             // Can only initialize when on the initial state.
@@ -146,6 +150,9 @@ class InternalConnection {
         try {
             state = State.initializing;
             LanguageServerDefinition.LanguageServerStreams languageServerStreams = languageServerDefinition.createConnectionProvider();
+            if (languageServerStreams == null) {
+                throw new RuntimeException("It's not possible to start the language server (python not found). Please configure the python executable in the settings to start the language server.");
+            }
             languageServerStreams.start();
             InputStream inputStream = languageServerStreams.getInputStream();
             OutputStream outputStream = languageServerStreams.getOutputStream();
@@ -352,6 +359,9 @@ public class LanguageServerCommunication {
         }
         synchronized (internalConnectionLock) {
             if (!internalConnection.isConnected()) {
+                if (!internalConnection.isProperlyConfigured()) {
+                    return null;
+                }
                 startInternalConnection();
                 if (!internalConnection.isConnected()) {
                     return null;

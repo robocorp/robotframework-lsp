@@ -37,6 +37,7 @@
         <gotoSymbolContributor implementation="robocorp.lsp.intellij.FeatureSymbols"/>
         <applicationConfigurable instance="robocorp.robot.intellij.RobotPreferencesPage" parentId="language"/>
         <applicationService serviceImplementation="robocorp.robot.intellij.RobotPreferences"/>
+        <notificationGroup id="Robot Framework Language Server" displayType="BALLOON"/>
     </extensions>
 
 </idea-plugin>

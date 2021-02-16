@@ -4,12 +4,18 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.intellij.lang.Language;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import robocorp.lsp.intellij.ILSPLanguage;
 import robocorp.lsp.intellij.LanguageServerDefinition;
+import robocorp.lsp.intellij.SearchPython;
 
 import java.io.File;
 import java.net.URL;
@@ -109,16 +115,25 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         return port;
     }
 
-    @NotNull
+    @Nullable
     private ProcessBuilder createProcessBuilderFromPreferences() {
         File main = getMain();
 
         @Nullable RobotPreferences robotPreferences = RobotPreferences.getInstance();
-        String python = "python"; // i.e.: if it's in the PATH it should be picked up!
+        @Nullable String python = SearchPython.getDefaultPythonExecutable();
 
         String robotLanguageServerPython = robotPreferences != null ? robotPreferences.getRobotLanguageServerPython().trim() : "";
         if (!robotLanguageServerPython.isEmpty()) {
             python = robotLanguageServerPython;
+        }
+        python = null;
+        if (python == null) {
+            // If we can't discover the python executable, we have to wait for the user to provide it.
+            String msg = "Unable to find a python executable in the PATH.\n\nPlease configure the 'Language Server Python' in the 'Robot Framework Language Server' settings.";
+            LOG.info(msg);
+            Notifications.Bus.notify(new Notification(
+                    "Robot Framework Language Server", "Unable to start Robot Framework Language Server", msg, NotificationType.ERROR));
+            return null;
         }
 
         List<String> commands = new ArrayList(Arrays.asList(python, "-u", main.toString()));
@@ -184,7 +199,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         } else {
             directory = new File(mainStr);
         }
-        
+
         while (directory != null) {
             File main = new File(new File(directory, "robotframework_ls"), "__main__.py");
             if (main.exists()) {
