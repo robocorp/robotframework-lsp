@@ -202,7 +202,7 @@ class InternalConnection {
     }
 
     public void didChangeConfiguration(DidChangeConfigurationParams params) {
-        if (!this.isConnected()) {
+        if (state != State.initializing && !this.isConnected()) {
             LOG.info("Unable to change config: disconnected.");
             return;
         }

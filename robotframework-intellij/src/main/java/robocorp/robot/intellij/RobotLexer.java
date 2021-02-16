@@ -64,7 +64,7 @@ public class RobotLexer extends LexerBase {
         int currState = state;
 
         char c = this.buffer.charAt(this.position);
-        if (c == '$' && charAtEquals(this.position + 1, '{')) {
+        if (isVarStart(c)) {
             this.currentToken = RobotElementType.VARIABLE;
             state = STATE_DEFAULT;
             skipVar();
@@ -93,7 +93,11 @@ public class RobotLexer extends LexerBase {
                 goToEndOfLine();
             }
         }
-        goToSpaceOrEndOfLine();
+        goToSpaceOrEndOfLineOrVarStart();
+    }
+
+    private boolean isVarStart(char c) {
+        return (c == '$' || c == '&' || c == '@') && charAtEquals(this.position + 1, '{');
     }
 
     private boolean isHeading(int position) {
@@ -145,10 +149,10 @@ public class RobotLexer extends LexerBase {
         }
     }
 
-    private void goToSpaceOrEndOfLine() {
+    private void goToSpaceOrEndOfLineOrVarStart() {
         while (this.position < this.getBufferEnd()) {
             char c = this.buffer.charAt(position);
-            if (c != ' ' && c != '\t' && c != '\n' && c != '\r') {
+            if (c != ' ' && c != '\t' && c != '\n' && c != '\r' && !isVarStart(c)) {
                 this.position++;
             } else {
                 break;

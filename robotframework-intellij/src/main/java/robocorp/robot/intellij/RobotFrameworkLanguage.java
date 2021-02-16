@@ -121,6 +121,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
 
         @Nullable RobotPreferences robotPreferences = RobotPreferences.getInstance();
         @Nullable String python = SearchPython.getDefaultPythonExecutable();
+        // python = "C:\\bin\\Miniconda\\envs\\py_38_tests\\python.exe";
 
         String robotLanguageServerPython = robotPreferences != null ? robotPreferences.getRobotLanguageServerPython().trim() : "";
         if (!robotLanguageServerPython.isEmpty()) {

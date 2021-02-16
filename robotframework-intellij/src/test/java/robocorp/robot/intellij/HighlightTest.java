@@ -54,6 +54,27 @@ public class HighlightTest extends LSPTesCase {
     }
 
     @Test
+    public void testLexerVars2() {
+        RobotFrameworkSyntaxHighlightingFactory factory = new RobotFrameworkSyntaxHighlightingFactory();
+        @NotNull SyntaxHighlighter syntaxHightlighter = factory.getSyntaxHighlighter(null, null);
+        Lexer lexer = syntaxHightlighter.getHighlightingLexer();
+        lexer.start("Some${var}foo\n");
+        Assert.assertEquals("Some", lexer.getTokenText());
+        lexer.advance();
+        Assert.assertEquals("${var}", lexer.getTokenText());
+        Assert.assertEquals(RobotElementType.VARIABLE, lexer.getTokenType());
+        lexer.advance();
+        Assert.assertEquals("foo", lexer.getTokenText());
+        lexer.advance();
+        Assert.assertEquals("\n", lexer.getTokenText());
+        lexer.advance();
+        // Nothing else to match
+        Assert.assertEquals("", lexer.getTokenText());
+        lexer.advance();
+        Assert.assertEquals("", lexer.getTokenText());
+    }
+
+    @Test
     public void testLexerComments() {
         RobotFrameworkSyntaxHighlightingFactory factory = new RobotFrameworkSyntaxHighlightingFactory();
         @NotNull SyntaxHighlighter syntaxHightlighter = factory.getSyntaxHighlighter(null, null);

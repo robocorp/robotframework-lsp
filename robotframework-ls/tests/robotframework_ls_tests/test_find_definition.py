@@ -35,6 +35,34 @@ def test_find_definition_keyword(workspace, libspec_manager):
         assert definition.lineno == 1
 
 
+def test_find_definition_keyword_resource_in_pythonpath(
+    workspace, libspec_manager, cases
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+    from robotframework_ls.robot_config import RobotConfig
+    from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
+
+    case2_path = cases.get_path("case2")
+    config = RobotConfig()
+    config.update({"robot": {"pythonpath": [case2_path]}})
+    assert config.get_setting(OPTION_ROBOT_PYTHONPATH, list, []) == [case2_path]
+    libspec_manager.config = config
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """
+*** Settings ***
+Resource    case2.robot"""
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws, config=config)
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1, "Failed to find definition"
+    definition = next(iter(definitions))
+    assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 0
+
+
 def test_find_definition_keyword_fixture(workspace, libspec_manager):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.find_definition import find_definition
