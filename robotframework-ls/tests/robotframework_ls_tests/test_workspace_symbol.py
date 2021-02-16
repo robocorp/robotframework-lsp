@@ -34,13 +34,10 @@ def test_workspace_symbols(workspace, libspec_manager):
 
 
 def test_workspace_symbols_same_basename(workspace, libspec_manager):
-    from robotframework_ls.impl import workspace_symbols as workspace_symbols_module
     from robotframework_ls.impl.workspace_symbols import workspace_symbols
     from robotframework_ls.impl.completion_context import BaseContext
     from robocorp_ls_core.constants import NULL
     from robocorp_ls_core.config import Config
-
-    workspace_symbols_module.WORKSPACE_SYMBOLS_TIMEOUT = 5
 
     workspace.set_root("case_same_basename", libspec_manager=libspec_manager)
 

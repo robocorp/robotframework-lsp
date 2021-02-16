@@ -28,7 +28,7 @@ To release a new version:
 
 - Create release branch (`git branch -D release-robotframework-lsp&git checkout -b release-robotframework-lsp`)
 
-- Update version (`python -m dev set-version 0.7.2`).
+- Update version (`python -m dev set-version 0.8.0`).
 
 - Update README.md to add notes on features/fixes (on `robotframework-ls` and `robotframework-intellij`).
 
@@ -40,11 +40,11 @@ To release a new version:
 
 - Rebase with master (`git checkout master&git rebase release-robotframework-lsp`).
 
-- Create a tag (`git tag robotframework-lsp-0.7.2`) and push it.
+- Create a tag (`git tag robotframework-lsp-0.8.0`) and push it.
 
 - Send release msg. i.e.:
 
-`Robot Framework Language Server 0.7.2` is now available (both from `pip install robotframework-lsp` or through the `VSCode marketplace`).
+`Robot Framework Language Server 0.8.0` is now available (both from `pip install robotframework-lsp` or through the `VSCode marketplace`).
 
 The main changes are:
 

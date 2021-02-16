@@ -1,3 +1,10 @@
+New in 0.8.0 (2021-02-16)
+-----------------------------
+
+- New setting: robot.workspaceSymbolsOnlyForOpenDocs for cases where code-completion is slow due to workspace symbols scanning. [#243](https://github.com/robocorp/robotframework-lsp/issues/243) 
+- Don't offer completions for section names after 2 spaces of the section name.
+- Debugger is working with the latest Robot Framework master.
+
 New in 0.7.1 (2021-01-13)
 -----------------------------
 

@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.7.2'
+version '0.8.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -23,6 +23,12 @@ buildPlugin.finalizedBy finishBuild
 
 repositories {
     mavenCentral()
+}
+
+allprojects {
+    apply plugin: 'java'
+    sourceCompatibility = 11
+    targetCompatibility = 11
 }
 
 dependencies {
@@ -47,6 +53,13 @@ patchPluginXml {
     <li>Browse Keywords (symbols)</li>
     <li>Syntax highlighting (very basic right now)</li>
     </ul>
+    <br>
+    <strong>
+    Important: The Intellij Language Server integration is currently in alpha for early access.<br>
+    Please report any issues found during testing at:<br>
+    <br>
+    <a href="https://github.com/robocorp/robotframework-lsp/issues">https://github.com/robocorp/robotframework-lsp/issues</a>.
+    </strong>
       """
 }
 
