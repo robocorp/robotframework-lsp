@@ -8,8 +8,13 @@ from robotframework_ls.impl.protocols import (
     ILibraryDoc,
 )
 import weakref
+from robotframework_ls.impl.robot_lsp_constants import (
+    OPTION_ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS,
+)
 
 log = get_logger(__name__)
+
+WORKSPACE_SYMBOLS_TIMEOUT = 1.0
 
 
 class SymbolsCache:
@@ -152,9 +157,41 @@ def iter_symbols_caches(
 
         found = set()
         symbols_cache: Optional[ISymbolsCache]
-        for uri in workspace.iter_all_doc_uris_in_workspace((".robot", ".resource")):
+
+        config = context.config
+        workspace_symbols_only_for_open_docs = False
+        if config:
+            workspace_symbols_only_for_open_docs = config.get_setting(
+                OPTION_ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS, bool, False
+            )
+
+        import time
+
+        initial_time = time.time()
+
+        if workspace_symbols_only_for_open_docs:
+
+            def iter_in():
+                for doc_uri in workspace.get_open_docs_uris():
+                    yield doc_uri
+
+        else:
+
+            def iter_in():
+                for uri in workspace.iter_all_doc_uris_in_workspace(
+                    (".robot", ".resource")
+                ):
+                    yield uri
+
+        for uri in iter_in():
             if not uri:
                 continue
+
+            if time.time() - initial_time > (WORKSPACE_SYMBOLS_TIMEOUT / 2):
+                log.info(
+                    "Timed out gathering information from workspace symbols (only partial information was collected). Consider enabling the 'robot.workspaceSymbolsOnlyForOpenDocs' setting."
+                )
+                break
 
             doc = cast(
                 Optional[IRobotDocument],
@@ -188,10 +225,18 @@ def iter_symbols_caches(
                                     (library_import.node.name, doc.uri)
                                 )
 
+        initial_time = time.time()
         for library_name, current_doc_uri in library_name_and_current_doc:
             library_info: Optional[ILibraryDoc] = libspec_manager.get_library_info(
                 library_name, create=True, current_doc_uri=current_doc_uri
             )
+
+            if time.time() - initial_time > (WORKSPACE_SYMBOLS_TIMEOUT / 2):
+                log.info(
+                    "Timed out gathering information from workspace symbols (only partial information was collected). Consider enabling the 'robot.workspaceSymbolsOnlyForOpenDocs' setting."
+                )
+                break
+
             if library_info is not None:
                 if library_info.source is not None:
                     if library_info.source in found:

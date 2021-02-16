@@ -161,6 +161,10 @@ def sync_builtins(tmpdir_factory, cases):
 
 @pytest.fixture
 def libspec_manager(tmpdir):
+    from robotframework_ls.impl import workspace_symbols as workspace_symbols_module
+
+    workspace_symbols_module.WORKSPACE_SYMBOLS_TIMEOUT = 5
+
     from robotframework_ls.impl.libspec_manager import LibspecManager
 
     libspec_manager = LibspecManager(user_libspec_dir=str(tmpdir.join("user_libspec")))
