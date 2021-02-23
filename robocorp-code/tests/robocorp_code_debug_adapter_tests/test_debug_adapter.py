@@ -66,7 +66,7 @@ def test_simple_launch(debugger_api: _DebuggerAPI, rcc: Rcc, rcc_config_location
     debugger_api.configuration_done()
 
     # i.e.: Big timeout because creating the environment may be slow.
-    debugger_api.read(TerminatedEvent, timeout=120)
+    debugger_api.read(TerminatedEvent, timeout=360)
     debugger_api.assert_message_found(
         OutputEvent, lambda msg: "Task 1 executed" in msg.body.output
     )

@@ -585,50 +585,13 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
             await config.update('home', robocorpHome, ConfigurationTarget.Global);
         }
 
-        // Make sure that conda is installed.
-        const maxTries = 5;
-        progress.report({ message: 'Get conda (may take a few minutes).' });
-        let timing = new Timing();
-        for (let index = 0; index < maxTries; index++) {
-            try {
-                let condaCheckResult: ExecFileReturn = await execFilePromise(
-                    rccLocation, ['conda', 'check', '-i', '--controller', 'RobocorpCode'],
-                    { env: { ...process.env, ROBOCORP_HOME: robocorpHome } }
-                );
-                if (condaCheckResult.stderr.indexOf('OK.') != -1) {
-                    break;
-                }
-                // Note: checking if conda is there is the first thing and sometimes
-                // it seems that right after downloading RCC, trying to run it right away doesn't work.
-                // So, try to retry if it doesn't work out.
-                OUTPUT_CHANNEL.appendLine('Expected OK. to be in the stderr. Found:\nStdout: ' + condaCheckResult.stdout + '\nStderr:' + condaCheckResult.stderr);
-
-                // We couldn't find OK. Let's retry.
-                if (index == maxTries - 1) {
-                    throw Error("Unable to install conda with RCC. Extension won't be usable (see Debug Console output for details).");
-                } else {
-                    OUTPUT_CHANNEL.appendLine('Will retry shortly...');
-                }
-            } catch (err) {
-                // Some error happened. Let's retry.
-                if (index == maxTries - 1) {
-                    throw Error("Unable to install conda with RCC. Extension won't be usable (see Debug Console output for details).");
-                } else {
-                    OUTPUT_CHANNEL.appendLine('Will retry shortly...');
-                }
-            }
-            await sleep(250);
-        }
-
-        OUTPUT_CHANNEL.appendLine('Took ' + timing.getTotalElapsedAsStr() + ' to get conda.')
-
         progress.report({ message: 'Update env (may take a few minutes).' });
         // Get information on a base package with our basic dependencies (this can take a while...).
         let resultPromise: Promise<ExecFileReturn> = execFilePromise(
             rccLocation, ['task', 'run', '--robot', robotYaml, '--controller', 'RobocorpCode'],
             { env: { ...process.env, ROBOCORP_HOME: robocorpHome } }
         );
-        timing = new Timing();
+        let timing = new Timing();
 
         let finishedCondaRun = false;
         let onFinish = function () {

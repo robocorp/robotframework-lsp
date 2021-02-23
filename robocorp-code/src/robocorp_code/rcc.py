@@ -58,7 +58,7 @@ def download_rcc(location: str, force: bool = False) -> None:
                     else:
                         relative_path = "/linux32/rcc"
 
-                RCC_VERSION = "v7.1.5"
+                RCC_VERSION = "v9.4.3"
                 prefix = f"https://downloads.robocorp.com/rcc/releases/{RCC_VERSION}"
                 url = prefix + relative_path
 
@@ -675,11 +675,9 @@ class Rcc(object):
 
     @implements(IRcc.check_conda_installed)
     def check_conda_installed(self, timeout=None) -> ActionResult[str]:
-        return self._run_rcc(
-            ["conda", "check", "-i"],
-            mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME,
-            timeout=timeout,  # Creating the env may be really slow!
-        )
+        # With mamba this is not needed anymore.
+        # Note: api kept just for backward compatibility.
+        return ActionResult(success=True, message=None, result="OK.")
 
     @implements(IRcc.feedack_metric)
     def feedack_metric(self, name, value="+1") -> ActionResult[str]:

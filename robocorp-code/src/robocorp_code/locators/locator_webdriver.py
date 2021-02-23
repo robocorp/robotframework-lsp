@@ -124,7 +124,16 @@ class Webdriver:
 
                 kwargs["options"] = chrome_options
             for download in [False, True]:
-                executable = webdriver.executable(browser, download=download)
+                if hasattr(webdriver, "executable"):  # old version
+                    executable = webdriver.executable(browser, download=download)
+                else:
+                    # new version
+                    if not download:
+                        executable = webdriver.cache(browser)
+                        if not executable:
+                            continue
+                    else:
+                        executable = webdriver.download(browser)
                 try:
                     if executable:
                         driver = webdriver.start(
