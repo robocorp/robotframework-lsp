@@ -44,3 +44,5 @@ export const ROBOCORP_OPEN_ROBOT_TREE_SELECTION = "robocorp.openRobotTreeSelecti
 export const ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION = "robocorp.cloudUploadRobotTreeSelection";  // Upload Robot to Robocorp Cloud
 export const ROBOCORP_OPEN_LOCATOR_TREE_SELECTION = "robocorp.openLocatorTreeSelection";  // Open locators.json
 export const ROBOCORP_SEND_METRIC = "robocorp.sendMetric";  // Send metric
+export const ROBOCORP_SUBMIT_ISSUE_INTERNAL = "robocorp.submitIssue.internal";  // Submit issue (internal)
+export const ROBOCORP_SUBMIT_ISSUE = "robocorp.submitIssue";  // Submit issue

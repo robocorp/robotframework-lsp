@@ -321,6 +321,13 @@ COMMANDS = [
         add_to_package_json=False,
         server_handled=True,
     ),
+    Command(
+        "robocorp.submitIssue.internal",
+        "Submit issue (internal)",
+        server_handled=False,
+        hide_from_command_palette=True,
+    ),
+    Command("robocorp.submitIssue", "Submit issue", server_handled=False),
 ]
 
 

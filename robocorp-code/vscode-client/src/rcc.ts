@@ -1,9 +1,12 @@
 import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 import { XHRResponse, configure as configureXHR, xhr } from './requestLight';
 import { getExtensionRelativeFile } from './files';
-import { workspace, window, ProgressLocation, CancellationToken, Progress } from 'vscode';
+import { workspace, window, ProgressLocation, CancellationToken, Progress, extensions } from 'vscode';
 import { OUTPUT_CHANNEL } from './channel';
 import { Timing, sleep } from './time';
+import { execFilePromise } from './subprocess';
 
 async function downloadRcc(progress: Progress<{ message?: string; increment?: number }>, token: CancellationToken): Promise<string | undefined> {
 
@@ -127,4 +130,129 @@ export async function getRccLocation(): Promise<string | undefined> {
     }
     return location;
 
+}
+
+export async function submitIssueUI(logPath: string) {
+    // Collect the issue information and send it using RCC.
+    let name: string = await window.showInputBox({
+        'prompt': 'Please provide your name for the issue report',
+        'ignoreFocusOut': true,
+    });
+    if (!name) {
+        return;
+    }
+    let email: string = await window.showInputBox({
+        'prompt': 'Please provide your e-mail for the issue report',
+        'ignoreFocusOut': true,
+    });
+    if (!email) {
+        return;
+    }
+    let issueDescription: string = await window.showInputBox({
+        'prompt': 'Please provide a brief description of the issue',
+        'ignoreFocusOut': true,
+    });
+    if (!issueDescription) {
+        return;
+    }
+    await submitIssue(
+        logPath,
+        "N/A",
+        email,
+        "N/A",
+        "N/A",
+        issueDescription,
+    )
+}
+
+export async function submitIssue(
+    logPath: string,
+    dialogMessage: string,
+    email: string,
+    errorName: string,
+    errorCode: string,
+    errorMessage: string,
+): Promise<undefined> {
+    let errored: boolean = false;
+    try {
+        let rccLocation: string | undefined = await getRccLocation();
+        if (rccLocation) {
+            if (!fs.existsSync(rccLocation)) {
+                OUTPUT_CHANNEL.appendLine('Unable to send issue report (' + rccLocation + ') does not exist.')
+                return;
+            }
+
+            function acceptLogFile(f: string): boolean {
+                let lower = path.basename(f).toLowerCase();
+                if (!lower.endsWith(".log")) {
+                    return false;
+                }
+                // Whitelist what we want so that we don't gather unwanted info.
+                if (lower.includes("robocorp code") || lower.includes("robot framework") || lower.includes("exthost")) {
+                    return true;
+                }
+                return false;
+            }
+
+            // This should be parent directory for the logs.
+            let logsRootDir: string = path.dirname(logPath);
+            OUTPUT_CHANNEL.appendLine('Log path: ' + logsRootDir);
+            let logFiles: string[] = [];
+
+            const stat = await fs.promises.stat(logsRootDir);
+            if (stat.isDirectory()) {
+                // Get the .log files under the logsRootDir and subfolders.
+                const files: string[] = await fs.promises.readdir(logsRootDir);
+                for (const fileI of files) {
+                    let f: string = path.join(logsRootDir, fileI);
+                    const stat = await fs.promises.stat(f);
+                    if (acceptLogFile(f) && stat.isFile()) {
+                        logFiles.push(f);
+                    } else if (stat.isDirectory()) {
+                        // No need to recurse (we just go 1 level deep).
+                        let currDir: string = f;
+                        const innerFiles: string[] = await fs.promises.readdir(currDir);
+                        for (const fileI of innerFiles) {
+                            let f: string = path.join(currDir, fileI);
+                            const stat = await fs.promises.stat(f);
+                            if (acceptLogFile(f) && stat.isFile()) {
+                                logFiles.push(f);
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            let version = extensions.getExtension('robocorp.robocorp-code').packageJSON.version;
+            const metadata = {
+                logsRootDir,
+                platform: os.platform(),
+                osRelease: os.release(),
+                nodeVersion: process.version,
+                version: version,
+                controller: 'rcc.robocorpcode',
+                dialogMessage,
+                email,
+                errorName,
+                errorCode,
+                errorMessage,
+            };
+            const reportPath: string = path.join(os.tmpdir(), `robocode_issue_report_${Date.now()}.json`);
+            fs.writeFileSync(reportPath, JSON.stringify(metadata, null, 4), { encoding: 'utf-8' });
+            let args: string[] = ['feedback', 'issue', '-r', reportPath, '--controller', 'RobocorpCode'];
+            for (const file of logFiles) {
+                args.push('-a');
+                args.push(file);
+            }
+            await execFilePromise(rccLocation, args, {});
+        }
+    } catch (err) {
+        errored = true;
+        OUTPUT_CHANNEL.appendLine('Error sending issue: ' + err);
+    }
+    if (!errored) {
+        OUTPUT_CHANNEL.appendLine('Issue sent.');
+    }
+    return;
 }

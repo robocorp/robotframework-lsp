@@ -44,6 +44,8 @@ ROBOCORP_OPEN_ROBOT_TREE_SELECTION = "robocorp.openRobotTreeSelection"  # Open r
 ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION = "robocorp.cloudUploadRobotTreeSelection"  # Upload Robot to Robocorp Cloud
 ROBOCORP_OPEN_LOCATOR_TREE_SELECTION = "robocorp.openLocatorTreeSelection"  # Open locators.json
 ROBOCORP_SEND_METRIC = "robocorp.sendMetric"  # Send metric
+ROBOCORP_SUBMIT_ISSUE_INTERNAL = "robocorp.submitIssue.internal"  # Submit issue (internal)
+ROBOCORP_SUBMIT_ISSUE = "robocorp.submitIssue"  # Submit issue
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,

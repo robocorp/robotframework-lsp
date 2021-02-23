@@ -63,6 +63,8 @@
         "onCommand:robocorp.cloudUploadRobotTreeSelection",
         "onCommand:robocorp.openLocatorTreeSelection",
         "onCommand:robocorp.sendMetric",
+        "onCommand:robocorp.submitIssue.internal",
+        "onCommand:robocorp.submitIssue",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -320,6 +322,16 @@
                 "title": "Open locators.json",
                 "category": "Robocorp",
                 "icon": "$(go-to-file)"
+            },
+            {
+                "command": "robocorp.submitIssue.internal",
+                "title": "Submit issue (internal)",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.submitIssue",
+                "title": "Submit issue",
+                "category": "Robocorp"
             }
         ],
         "menus": {
@@ -417,6 +429,10 @@
                 },
                 {
                     "command": "robocorp.openLocatorTreeSelection",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.submitIssue.internal",
                     "when": "false"
                 }
             ]

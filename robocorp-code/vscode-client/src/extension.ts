@@ -31,7 +31,7 @@ import * as roboConfig from './robocorpSettings';
 import * as roboCommands from './robocorpCommands';
 import { OUTPUT_CHANNEL } from './channel';
 import { getExtensionRelativeFile, verifyFileExists } from './files';
-import { getRccLocation } from './rcc';
+import { getRccLocation, submitIssue, submitIssueUI } from './rcc';
 import { Timing } from './time';
 import { execFilePromise, ExecFileReturn } from './subprocess';
 import { createRobot, uploadRobot, cloudLogin, runRobotRCC, cloudLogout, setPythonInterpreterFromRobotYaml, askAndRunRobotRCC } from './activities';
@@ -76,7 +76,6 @@ function startLangServerTCP(addr: number): LanguageClient {
             });
         });
     }
-
 
     return new LanguageClient(`tcp lang server (port ${addr})`, serverOptions, clientOptions);
 }
@@ -261,6 +260,27 @@ export async function activate(context: ExtensionContext) {
         let timing = new Timing();
         // The first thing we need is the python executable.
         OUTPUT_CHANNEL.appendLine("Activating Robocorp Code extension.");
+        // Note: register the submit issue actions early on so that we can later actually
+        // report startup errors.
+        let logPath: string = context.logPath;
+        commands.registerCommand(roboCommands.ROBOCORP_SUBMIT_ISSUE, () => { submitIssueUI(logPath) });
+
+        // i.e.: allow other extensions to also use our submit issue api.
+        commands.registerCommand(roboCommands.ROBOCORP_SUBMIT_ISSUE_INTERNAL, (
+            dialogMessage: string,
+            email: string,
+            errorName: string,
+            errorCode: string,
+            errorMessage: string,
+        ) => submitIssue(
+            logPath, // gotten from plugin context
+            dialogMessage,
+            email,
+            errorName,
+            errorCode,
+            errorMessage)
+        );
+
         let executableAndEnv = await getLanguageServerPythonInfo();
         if (!executableAndEnv) {
             OUTPUT_CHANNEL.appendLine("Unable to activate Robocorp Code extension (unable to get python executable).");
