@@ -1,3 +1,13 @@
+New in 0.8.0 (2021-02-24)
+-----------------------------
+
+- Upgrade to RCC 9.4.3. #242
+- Fix creating browser locator with rpaframework-core 6.0.0.
+- New `Robocorp: Submit issue` command.
+  - Allows reporting issues to Robocorp from within VSCode.
+  - Attaches logging and system information. 
+
+
 New in 0.7.1 (2021-01-22)
 -----------------------------
 

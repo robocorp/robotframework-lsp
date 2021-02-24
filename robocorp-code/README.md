@@ -69,7 +69,7 @@ Find the full installation instructions at [https://robocorp.com/docs/product-ma
 
 During the first activation, the extension will download additional dependencies (such as Conda manager) that are required for it to run.
 
-### Features (0.7.1)
+### Features (0.8.0)
 
 - Automatic bootstrapping of the Python environment for the `Robot Framework Language Server`.
 - Create a Robot from a pre-configured template using the `Robocorp: Create Robot` action.
@@ -84,6 +84,7 @@ During the first activation, the extension will download additional dependencies
 - View and create new [Browser Locators](https://robocorp.com/docs/development-howtos/browser/how-to-find-user-interface-elements-using-locators-in-web-applications) from the `Locators` view.
 - View and create new [Image Locators](https://robocorp.com/docs/product-manuals/robocorp-lab/locating-and-targeting-user-interface-elements-in-robocorp-lab) from the `Locators` view.
 - When hovering over a `"screenshot"`, `"path"` or `"source"` element in the `locators.json`, a preview is shown.
+- Send issue reports with the `Robocorp: Submit issue` action.
 
 ### Developing
 
