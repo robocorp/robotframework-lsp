@@ -15,6 +15,10 @@ def rf_root():
     robot_path = init.parent
     src = robot_path.parent
     root = src.parent
+
+    if not (root / "atest" / "resources").exists():
+        pytest.skip("A source distribution of robotframework is needed for this test.")
+
     return root
 
 

@@ -242,7 +242,11 @@ def find_variable(ast, line, col) -> Optional[TokenInfo]:
     if token_info is not None:
         token = token_info.token
         if "{" in token.value:
-            for part in _tokenize_variables_even_when_invalid(token, col):
+            parts = _tokenize_variables_even_when_invalid(token, col)
+            if not parts:
+                return None
+
+            for part in parts:
                 if part.col_offset <= col <= part.end_col_offset:
                     if part.type == part.VARIABLE:
                         return TokenInfo(token_info.stack, token_info.node, part)

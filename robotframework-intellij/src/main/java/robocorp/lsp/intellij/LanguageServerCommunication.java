@@ -168,6 +168,7 @@ class InternalConnection {
             for (int i = 0; i < 10; i++) {
                 try {
                     tempResult = initializeResultFuture.get(1, TimeUnit.SECONDS);
+                    break;
                 } catch (InterruptedException | ExecutionException | TimeoutException e) {
                     if (!this.isConnected() || i == 9) {
                         throw e;
