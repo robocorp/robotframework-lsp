@@ -377,9 +377,15 @@ class CompletionContext(object):
                     doc_uri = uris.from_fs_path(resource_path)
                     resource_doc = ws.get_document(doc_uri, accept_from_file=True)
                     if resource_doc is None:
-                        log.info("Resource not found: %s", resource_path)
                         continue
                     return resource_doc
+
+                log.info(
+                    "Unable to find: %s (checked paths: %s)",
+                    name_with_resolved_vars,
+                    check_paths,
+                )
+
         return None
 
     @instance_cache

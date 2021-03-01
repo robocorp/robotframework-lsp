@@ -1,7 +1,17 @@
-import time
+import pytest
 
 
-def test_workspace_memory_cache(tmpdir):
+@pytest.fixture
+def small_vs_sleep():
+    from robocorp_ls_core.workspace import _VirtualFSThread
+
+    original = _VirtualFSThread.SLEEP_AMONG_SCANS
+    _VirtualFSThread.SLEEP_AMONG_SCANS = 0.05
+    yield
+    _VirtualFSThread.SLEEP_AMONG_SCANS = original
+
+
+def test_workspace_memory_cache(tmpdir, small_vs_sleep):
     from robocorp_ls_core.workspace import Workspace
     from robocorp_ls_core import uris
     from robocorp_ls_core.lsp import WorkspaceFolder
@@ -9,29 +19,24 @@ def test_workspace_memory_cache(tmpdir):
 
     root_uri = uris.from_fs_path(str(tmpdir))
     workspace_folders = [WorkspaceFolder(root_uri, os.path.basename(str(tmpdir)))]
-    ws = Workspace(root_uri, workspace_folders)
+    ws = Workspace(root_uri, workspace_folders, track_file_extensions=(".py", ".txt"))
 
     folders = list(ws.iter_folders())
     assert len(folders) == 1
     folder = folders[0]
-    vs = folder._obtain_vs()
-    assert vs.cache_misses == 0
+    vs = folder._vs
+    vs.wait_for_check_done(5)
 
     assert list(ws.iter_all_doc_uris_in_workspace((".py", ".txt"))) == []
-    assert vs.cache_misses == 1
     # If the change is too fast the mtime may end up being the same...
-    time.sleep(0.01)
 
     f = tmpdir.join("my.txt")
     f.write_text("foo", "utf-8")
+    vs.wait_for_check_done(5)
 
     assert list(ws.iter_all_doc_uris_in_workspace((".py", ".txt"))) == [
         uris.from_fs_path(str(f))
     ]
-    assert vs.cache_misses == 2
-
-    # If the change is too fast the mtime may end up being the same...
-    time.sleep(0.01)
 
     dir1 = tmpdir.join("dir1")
     dir1.mkdir()
@@ -39,32 +44,32 @@ def test_workspace_memory_cache(tmpdir):
     f2 = dir1.join("my.py")
     f2.write_text("foo", "utf-8")
 
+    vs.wait_for_check_done(5)
     assert set(ws.iter_all_doc_uris_in_workspace((".py", ".txt"))) == {
         uris.from_fs_path(str(f)),
         uris.from_fs_path(str(f2)),
     }
 
-    # Cache miss went += 2 because 2 folders were changed.
-    assert vs.cache_misses == 4
-
-    # No cache misses now
+    vs.wait_for_check_done(5)
     assert set(ws.iter_all_doc_uris_in_workspace((".py", ".txt"))) == {
         uris.from_fs_path(str(f)),
         uris.from_fs_path(str(f2)),
     }
-    assert vs.cache_misses == 4
 
     # If the change is too fast the mtime may end up being the same...
-    time.sleep(0.01)
     f2.remove()
 
+    vs.wait_for_check_done(5)
     assert set(ws.iter_all_doc_uris_in_workspace((".py", ".txt"))) == {
         uris.from_fs_path(str(f))
     }
-    assert vs.cache_misses == 5
 
-    # No cache miss now
+    vs.wait_for_check_done(5)
     assert set(ws.iter_all_doc_uris_in_workspace((".py", ".txt"))) == {
         uris.from_fs_path(str(f))
     }
-    assert vs.cache_misses == 5
+
+    ws.remove_folder(root_uri)
+    assert set(ws.iter_all_doc_uris_in_workspace((".py", ".txt"))) == set()
+    vs._virtual_fsthread.join(0.5)
+    assert not vs._virtual_fsthread.is_alive()

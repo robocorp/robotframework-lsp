@@ -3,6 +3,7 @@ import pytest
 import os
 import logging
 from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
+from robotframework_ls.constants import NULL
 
 __file__ = os.path.abspath(__file__)  # @ReservedAssignment
 
@@ -170,6 +171,19 @@ def libspec_manager(tmpdir):
     libspec_manager = LibspecManager(user_libspec_dir=str(tmpdir.join("user_libspec")))
     yield libspec_manager
     libspec_manager.dispose()
+
+
+def initialize_robotframework_server_api(libspec_manager=NULL):
+    from robotframework_ls.server_api.server import RobotFrameworkServerApi
+    from io import BytesIO
+
+    read_from = BytesIO()
+    write_to = BytesIO()
+    robot_framework_server_api = RobotFrameworkServerApi(
+        read_from, write_to, libspec_manager=libspec_manager
+    )
+    robot_framework_server_api.m_initialize()
+    return robot_framework_server_api
 
 
 @pytest.fixture(scope="session")

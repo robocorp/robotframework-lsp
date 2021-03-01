@@ -130,6 +130,13 @@ def test_completion_with_auto_import_case1_library_imported_1(
 
     doc = setup_case2_doc
 
+    # Needed to pre-generate the information
+    workspace.ws.libspec_manager.get_library_info(
+        libname="case1_library",
+        create=True,
+        current_doc_uri=workspace.get_doc("case1.robot").uri,
+    )
+
     # Get completions from the user library adding the *** Settings ***
     completions = auto_import_completions.complete(
         CompletionContext(doc, workspace=workspace.ws), set()
@@ -156,6 +163,12 @@ def test_completion_with_auto_import_case1_library_imported_2(
     from robotframework_ls.impl.completion_context import CompletionContext
 
     doc = setup_case2_doc
+    # Needed to pre-generate the information
+    workspace.ws.libspec_manager.get_library_info(
+        libname="case1_library",
+        create=True,
+        current_doc_uri=workspace.get_doc("case1.robot").uri,
+    )
 
     # Get completions from the user library adding the existing *** Settings ***
     doc.source = """*** Settings ***
@@ -195,6 +208,14 @@ def test_completion_with_auto_import_case1_library_imported_3(
 *** Test Cases ***
 User can call library
     Verify another m"""
+
+    # Needed to pre-generate the information
+    workspace.ws.libspec_manager.get_library_info(
+        libname="case1_library",
+        create=True,
+        current_doc_uri=workspace.get_doc("case1.robot").uri,
+    )
+
     completions = auto_import_completions.complete(
         CompletionContext(doc, workspace=workspace.ws), set()
     )
@@ -339,6 +360,8 @@ KeywordInCase1
 User can call library
     KeywordInCa"""
 
+    # i.e.: make sure that our in-memory folders are in sync.
+    workspace.ws.wait_for_check_done(5)
     completions = auto_import_completions.complete(
         CompletionContext(doc2, workspace=workspace.ws), set()
     )

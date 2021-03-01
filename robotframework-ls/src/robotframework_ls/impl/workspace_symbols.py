@@ -14,6 +14,7 @@ from robotframework_ls.impl.robot_lsp_constants import (
 
 log = get_logger(__name__)
 
+WORKSPACE_SYMBOLS_FIRST_TIMEOUT = 6.0  # The first time it can take a bit longer
 WORKSPACE_SYMBOLS_TIMEOUT = 1.0
 
 
@@ -135,13 +136,21 @@ def _compute_symbols_from_library_info(library_name, library_info) -> SymbolsCac
 
 
 def iter_symbols_caches(
-    query: Optional[str], context: IBaseCompletionContext, show_builtins: bool = True
+    query: Optional[str],
+    context: IBaseCompletionContext,
+    show_builtins: bool = True,
+    called=[],
 ) -> Iterator[ISymbolsCache]:
+    if not called:
+        TIMEOUT = WORKSPACE_SYMBOLS_FIRST_TIMEOUT
+        called.append(True)
+    else:
+        TIMEOUT = WORKSPACE_SYMBOLS_TIMEOUT
+
     try:
         from robotframework_ls.impl.libspec_manager import LibspecManager
         from robotframework_ls.impl.protocols import IRobotWorkspace
         from typing import cast
-        from robotframework_ls.impl import ast_utils
         from robotframework_ls.impl.robot_constants import STDLIBS, BUILTIN_LIB
 
         workspace: Optional[IRobotWorkspace] = context.workspace
@@ -187,7 +196,9 @@ def iter_symbols_caches(
             if not uri:
                 continue
 
-            if time.time() - initial_time > (WORKSPACE_SYMBOLS_TIMEOUT / 2):
+            context.check_cancelled()
+
+            if time.time() - initial_time > TIMEOUT:
                 log.info(
                     "Timed out gathering information from workspace symbols (only partial information was collected). Consider enabling the 'robot.workspaceSymbolsOnlyForOpenDocs' setting."
                 )
@@ -207,31 +218,21 @@ def iter_symbols_caches(
                 doc.symbols_cache = symbols_cache
                 yield symbols_cache
 
-                ast = doc.get_ast()
-                if ast:
-                    for library_import in ast_utils.iter_library_imports(ast):
-                        libname = library_import.node.name
-                        if libname:
-                            target_filename = libspec_manager.get_library_target_filename(
-                                libname, doc.uri
-                            )
+        already_checked = set()
+        library_info: ILibraryDoc
+        # I.e.: just iterate over pre-created (don't create any here as it may be slow...
+        # let code analysis or some background thread do that).
+        for _internal_lib_info in libspec_manager.iter_lib_info():
+            library_info = _internal_lib_info.library_doc
+            library_name = library_info.name
+            library_id = (library_info.name, library_info.source)
+            if library_id in already_checked:
+                continue
+            already_checked.add(library_id)
 
-                            if not target_filename:
-                                library_name_and_current_doc.add(
-                                    (library_import.node.name, None)
-                                )
-                            else:
-                                library_name_and_current_doc.add(
-                                    (library_import.node.name, doc.uri)
-                                )
+            context.check_cancelled()
 
-        initial_time = time.time()
-        for library_name, current_doc_uri in library_name_and_current_doc:
-            library_info: Optional[ILibraryDoc] = libspec_manager.get_library_info(
-                library_name, create=True, current_doc_uri=current_doc_uri
-            )
-
-            if time.time() - initial_time > (WORKSPACE_SYMBOLS_TIMEOUT / 2):
+            if time.time() - initial_time > TIMEOUT:
                 log.info(
                     "Timed out gathering information from workspace symbols (only partial information was collected). Consider enabling the 'robot.workspaceSymbolsOnlyForOpenDocs' setting."
                 )

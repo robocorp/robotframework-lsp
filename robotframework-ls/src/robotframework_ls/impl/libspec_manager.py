@@ -530,7 +530,7 @@ class LibspecManager(object):
         if spec_file.lower().endswith(".libspec"):
             folder_info_on_change_spec(spec_file)
 
-    def add_workspace_folder(self, folder_uri):
+    def add_workspace_folder(self, folder_uri: str):
         self._check_in_main_thread()
         from robocorp_ls_core import uris
 
@@ -546,7 +546,7 @@ class LibspecManager(object):
         else:
             log.debug("Workspace folder already added: %s", folder_uri)
 
-    def remove_workspace_folder(self, folder_uri):
+    def remove_workspace_folder(self, folder_uri: str):
         self._check_in_main_thread()
         if folder_uri in self._workspace_folder_uri_to_folder_info:
             log.debug("Removed workspace folder: %s", folder_uri)
@@ -824,12 +824,12 @@ class LibspecManager(object):
                 else:
                     libspec_filename = os.path.join(libspec_dir, libname + ".libspec")
 
-                log.debug(f"Obtaining mutex to generate libpsec: {libspec_filename}.")
+                log.debug(f"Obtaining mutex to generate libspec: {libspec_filename}.")
                 with timed_acquire_mutex(
                     _get_libspec_mutex_name(libspec_filename)
                 ):  # Could fail.
                     log.debug(
-                        f"Obtained mutex to generate libpsec: {libspec_filename}."
+                        f"Obtained mutex to generate libspec: {libspec_filename}."
                     )
                     call.append(libspec_filename)
 
@@ -848,7 +848,7 @@ class LibspecManager(object):
                     try:
                         try:
                             # Note: stdout is always subprocess.PIPE in this call.
-                            # Note: the env is alway inherited (the process which has
+                            # Note: the env is always inherited (the process which has
                             # the LibspecManager must be the target env already).
                             self._subprocess_check_output(
                                 call,

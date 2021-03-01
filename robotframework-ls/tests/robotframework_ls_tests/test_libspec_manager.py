@@ -79,7 +79,7 @@ def method6():
     data_regression.check([keyword_to_dict(k) for k in keywords])
     assert (
         int(library_info.specversion) <= 3
-    ), "Libpsec version changed. Check parsing. "
+    ), "Libspec version changed. Check parsing. "
 
 
 def test_libspec_cache_no_lib(libspec_manager, workspace_dir):

@@ -1,6 +1,7 @@
 import pytest
 import os.path
 from robocorp_ls_core.protocols import IRobotFrameworkApiClient
+from robotframework_ls_tests.fixtures import initialize_robotframework_server_api
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
@@ -142,22 +143,8 @@ def _check_in_separate_process(method_name, module_name="test_server", update_en
     )
 
 
-def _initialize_robotframework_server_api():
-    from robotframework_ls.server_api.server import RobotFrameworkServerApi
-    from io import BytesIO
-    from robotframework_ls.constants import NULL
-
-    read_from = BytesIO()
-    write_to = BytesIO()
-    robot_framework_server_api = RobotFrameworkServerApi(
-        read_from, write_to, libspec_manager=NULL
-    )
-    robot_framework_server_api.m_initialize()
-    return robot_framework_server_api
-
-
 def test_check_version():
-    api = _initialize_robotframework_server_api()
+    api = initialize_robotframework_server_api()
     # In tests we always have at least 3.2.
     assert api._check_min_version((3, 2))
 
@@ -181,7 +168,7 @@ def check_no_robotframework():
             raise ImportError()
 
     with before(builtins, "__import__", fail_robot_import):
-        api = _initialize_robotframework_server_api()
+        api = initialize_robotframework_server_api()
         assert "robot" not in sys.modules
         assert api.m_version() == "NO_ROBOT"
         result = api.m_lint("something foo bar")
@@ -204,7 +191,7 @@ def check_no_robotframework():
 def check_robotframework_load():
     import sys
 
-    api = _initialize_robotframework_server_api()
+    api = initialize_robotframework_server_api()
     # Just initializing should not try to load robotframework
     assert "robot" not in sys.modules
     assert api.m_version() is not None
