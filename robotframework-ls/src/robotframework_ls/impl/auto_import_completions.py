@@ -2,11 +2,13 @@ from robotframework_ls.impl.protocols import (
     ICompletionContext,
     IRobotDocument,
     ILibraryDoc,
+    IKeywordFound,
 )
 from robocorp_ls_core.lsp import CompletionItemKind
-from typing import Optional, List, Set
+from typing import Optional, List, Set, Dict, Any
 from robotframework_ls.impl.protocols import NodeInfo
 import os.path
+from robocorp_ls_core import uris
 
 
 class _Collector(object):
@@ -15,7 +17,7 @@ class _Collector(object):
         selection,
         token,
         import_location_info: "_ImportLocationInfo",
-        imported_keyword_names: Set[str],
+        imported_keyword_name_to_keyword: Dict[str, List[IKeywordFound]],
     ):
         from robotframework_ls.impl.string_matcher import RobotStringMatcher
 
@@ -25,21 +27,39 @@ class _Collector(object):
         self.selection = selection
         self.import_location_info = import_location_info
         self.token = token
-        self.imported_keyword_names = imported_keyword_names
+        self.imported_keyword_name_to_keyword = imported_keyword_name_to_keyword
 
         self._matcher = RobotStringMatcher(token_str)
 
-    def accepts(self, keyword_name):
-        return self._matcher.accepts_keyword_name(keyword_name)
+    def accepts(self, symbols_entry):
+        keyword_name = symbols_entry["name"]
+        if not self._matcher.accepts_keyword_name(keyword_name):
+            return False
+
+        keywords_found: List[IKeywordFound] = self.imported_keyword_name_to_keyword.get(
+            keyword_name
+        )
+        if not keywords_found:
+            return True
+        for keyword_found in keywords_found:
+            if (
+                uris.from_fs_path(keyword_found.source)
+                == symbols_entry["location"]["uri"]
+            ):
+                return False
+
+        return True
 
     def create_completion_item(
         self,
         keyword_name,
         selection,
         token,
-        col_delta=0,
+        col_delta: int,
+        memo: Set[str],
         lib_import: Optional[str] = None,
         resource_path: Optional[str] = None,
+        data: Optional[Any] = None,
     ) -> None:
         """
         Note: the lib_import and resource_path are the strings to be added
@@ -56,6 +76,11 @@ class _Collector(object):
             TextEdit,
         )
         from robocorp_ls_core.lsp import MarkupKind
+
+        label = f"{keyword_name} ({lib_import or resource_path})"
+        if label in memo:
+            return
+        memo.add(label)
 
         prefix = ""
         import_line = -1
@@ -77,10 +102,9 @@ class _Collector(object):
                     - 1
                 )
 
-        label = f"{keyword_name} ({lib_import or resource_path})"
         text = keyword_name
 
-        if keyword_name in self.imported_keyword_names:
+        if keyword_name in self.imported_keyword_name_to_keyword:
             check = lib_import or resource_path
             if check:
                 basename = os.path.basename(check)
@@ -124,6 +148,7 @@ class _Collector(object):
                 insertTextFormat=InsertTextFormat.Snippet,
                 documentationFormat=MarkupKind.PlainText,
                 additionalTextEdits=additional_text_edits,
+                data=data,
             ).to_dict()
         )
 
@@ -133,7 +158,6 @@ def _collect_auto_import_completions(
 ):
     from robotframework_ls.impl.workspace_symbols import iter_symbols_caches
     from robotframework_ls.impl.protocols import ISymbolsCache
-    from robocorp_ls_core import uris
     from robocorp_ls_core.protocols import IWorkspace
 
     symbols_cache: ISymbolsCache
@@ -146,6 +170,8 @@ def _collect_auto_import_completions(
         folder_paths.append(uris.to_fs_path(folder.uri))
 
     curr_doc_path = os.path.dirname(uris.to_fs_path(completion_context.doc.uri))
+
+    memo: Set[str] = set()
 
     for symbols_cache in iter_symbols_caches(
         None, completion_context, show_builtins=False
@@ -196,14 +222,16 @@ def _collect_auto_import_completions(
 
         json_list = symbols_cache.get_json_list()
         for entry in json_list:
-            keyword_name = entry["name"]
-            if collector.accepts(keyword_name):
+            if collector.accepts(entry):
                 collector.create_completion_item(
-                    keyword_name,
+                    entry["name"],
                     selection,
                     token,
+                    0,
+                    memo,
                     lib_import=lib_import,
                     resource_path=resource_path,
+                    data=None,
                 )
 
 
@@ -267,7 +295,10 @@ def _obtain_import_location_info(completion_context) -> _ImportLocationInfo:
     return import_location_info
 
 
-def complete(completion_context: ICompletionContext, imported_keyword_names: Set[str]):
+def complete(
+    completion_context: ICompletionContext,
+    imported_keyword_name_to_keyword: Dict[str, List[IKeywordFound]],
+):
     from robotframework_ls.impl import ast_utils
 
     token_info = completion_context.get_current_token()
@@ -280,7 +311,7 @@ def complete(completion_context: ICompletionContext, imported_keyword_names: Set
                 completion_context.sel,
                 token,
                 import_location_info,
-                imported_keyword_names,
+                imported_keyword_name_to_keyword,
             )
             _collect_auto_import_completions(completion_context, collector)
 

@@ -35,6 +35,13 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
 
     public static final RobotFrameworkLanguage INSTANCE = new RobotFrameworkLanguage();
     private final LanguageServerDefinition robotDefinition;
+    private String robotFrameworkLSUserHome;
+
+    public void setRobotFrameworkLSUserHome(String robotFrameworkLSUserHome) {
+        this.robotFrameworkLSUserHome = robotFrameworkLSUserHome;
+        // reset the current process builder when it changes
+        robotDefinition.setProcessBuilder(createProcessBuilderFromPreferences());
+    }
 
     private RobotFrameworkLanguage() {
         super("RobotFramework");
@@ -152,6 +159,10 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         builder.redirectError(ProcessBuilder.Redirect.PIPE);
         builder.redirectOutput(ProcessBuilder.Redirect.PIPE);
         builder.redirectInput(ProcessBuilder.Redirect.PIPE);
+
+        if (this.robotFrameworkLSUserHome != null) {
+            builder.environment().put("ROBOTFRAMEWORK_LS_USER_HOME", this.robotFrameworkLSUserHome);
+        }
         return builder;
     }
 

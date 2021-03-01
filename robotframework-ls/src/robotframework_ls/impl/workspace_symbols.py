@@ -252,7 +252,7 @@ def iter_symbols_caches(
 
                 yield symbols_cache
                 library_info.symbols_cache = symbols_cache
-    except:
+    except Exception:
         log.exception()
         raise
 

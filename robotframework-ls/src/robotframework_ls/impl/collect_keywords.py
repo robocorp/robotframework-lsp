@@ -10,7 +10,7 @@ from robotframework_ls.impl.protocols import (
     IKeywordCollector,
 )
 from robotframework_ls.impl.robot_specbuilder import KeywordArg
-from typing import Tuple, Sequence, List, Set
+from typing import Tuple, Sequence, List, Set, Dict
 
 
 log = get_logger(__name__)
@@ -321,23 +321,27 @@ def _collect_following_imports(
         _collect_libraries_keywords(completion_context, collector)
 
 
-class _CollectAllKeywordNames:
+class _CollectKeywordNameToKeywordFound:
     def __init__(self) -> None:
-        self.all_keyword_names: Set[str] = set()
+        self.keyword_name_to_keyword_found: Dict[str, List[IKeywordFound]] = {}
 
     def accepts(self, keyword_name: str) -> bool:
-        self.all_keyword_names.add(keyword_name)
-        return False
+        return True
 
     def on_keyword(self, keyword_found: IKeywordFound):
-        pass
+        lst = self.keyword_name_to_keyword_found.get(keyword_found.keyword_name)
+        if lst is None:
+            self.keyword_name_to_keyword_found[keyword_found.keyword_name] = lst = []
+        lst.append(keyword_found)
 
 
-def collect_all_keyword_names(completion_context: ICompletionContext) -> Set[str]:
+def collect_keyword_name_to_keyword_found(
+    completion_context: ICompletionContext
+) -> Dict[str, List[IKeywordFound]]:
     completion_context.memo.clear()
-    collector = _CollectAllKeywordNames()
+    collector = _CollectKeywordNameToKeywordFound()
     _collect_following_imports(completion_context, collector)
-    return collector.all_keyword_names
+    return collector.keyword_name_to_keyword_found
 
 
 def collect_keywords(

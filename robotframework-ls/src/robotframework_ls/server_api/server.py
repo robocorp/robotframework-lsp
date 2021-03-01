@@ -1,11 +1,12 @@
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Optional, List, Set
+from typing import Optional, List, Dict
 from robocorp_ls_core.protocols import IConfig, IMonitor
 from functools import partial
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
 from robocorp_ls_core.lsp import SymbolInformationTypedDict
+from robotframework_ls.impl.protocols import IKeywordFound
 
 
 log = get_logger(__name__)
@@ -140,7 +141,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         from robotframework_ls.impl import filesystem_section_completions
         from robotframework_ls.impl import keyword_parameter_completions
         from robotframework_ls.impl import auto_import_completions
-        from robotframework_ls.impl.collect_keywords import collect_all_keyword_names
+        from robotframework_ls.impl.collect_keywords import (
+            collect_keyword_name_to_keyword_found,
+        )
         from robotframework_ls.impl import ast_utils
 
         completion_context = self._create_completion_context(
@@ -160,13 +163,13 @@ class RobotFrameworkServerApi(PythonLanguageServer):
                     token_info.node, token_info.token
                 )
                 if token is not None:
-                    imported_keyword_names: Set[str] = collect_all_keyword_names(
-                        completion_context
-                    )
+                    keyword_name_to_keyword_found: Dict[
+                        str, List[IKeywordFound]
+                    ] = collect_keyword_name_to_keyword_found(completion_context)
                     ret.extend(keyword_completions.complete(completion_context))
                     ret.extend(
                         auto_import_completions.complete(
-                            completion_context, imported_keyword_names
+                            completion_context, keyword_name_to_keyword_found
                         )
                     )
                     return ret
