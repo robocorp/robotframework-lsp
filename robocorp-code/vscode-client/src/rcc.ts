@@ -134,20 +134,20 @@ export async function getRccLocation(): Promise<string | undefined> {
 
 export async function submitIssueUI(logPath: string) {
     // Collect the issue information and send it using RCC.
-    let name: string = await window.showInputBox({
-        'prompt': 'Please provide your name for the issue report',
-        'ignoreFocusOut': true,
-    });
-    if (!name) {
-        return;
-    }
-    let email: string = await window.showInputBox({
-        'prompt': 'Please provide your e-mail for the issue report',
-        'ignoreFocusOut': true,
-    });
-    if (!email) {
-        return;
-    }
+    let email: string;
+    let askEmailMsg: string = 'Please provide your e-mail for the issue report'
+    do{
+        email = await window.showInputBox({
+            'prompt': askEmailMsg,
+            'ignoreFocusOut': true,
+        });
+        if (!email) {
+            return;
+        }
+        // if it doesn't have an @, ask again
+        askEmailMsg = 'Invalid e-mail provided. Please provide your e-mail for the issue report'
+    }while(email.indexOf('@') == -1);
+
     let issueDescription: string = await window.showInputBox({
         'prompt': 'Please provide a brief description of the issue',
         'ignoreFocusOut': true,
@@ -157,10 +157,10 @@ export async function submitIssueUI(logPath: string) {
     }
     await submitIssue(
         logPath,
-        "N/A",
+        "Robocorp Code",
         email,
-        "N/A",
-        "N/A",
+        "Robocorp Code",
+        "Robocorp Code",
         issueDescription,
     )
 }
