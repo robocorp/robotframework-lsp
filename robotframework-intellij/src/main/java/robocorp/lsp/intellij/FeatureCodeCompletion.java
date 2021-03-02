@@ -115,8 +115,12 @@ public class FeatureCodeCompletion extends CompletionContributor {
                     return builder.reverse().toString();
                 }
                 builder.append(c);
-                if (c == '$') {
-                    return builder.reverse().toString();
+                if (c == '{' && !buf.isEmpty()) {
+                    char last = buf.lastChar();
+                    if (last == '$' || last == '@' || last == '&') {
+                        builder.append(last);
+                        return builder.reverse().toString();
+                    }
                 }
             }
             if (builder.length() > 0) {
@@ -237,11 +241,19 @@ public class FeatureCodeCompletion extends CompletionContributor {
 
             @Override
             public void handleInsert(@NotNull InsertionContext context) {
+                TextEdit textEdit = item.getTextEdit();
                 Document document = context.getDocument();
-                document.deleteString(context.getStartOffset(), context.getTailOffset());
+                int startOffset = context.getStartOffset();
+                Position startPos = textEdit.getRange().getStart();
+                int startPosOffset = EditorUtils.LSPPosToOffset(document, startPos);
+
+                if (startPosOffset > startOffset) {
+                    // i.e.: Don't remove what wasn't added in the first place.
+                    startOffset = startPosOffset;
+                }
+                document.deleteString(startOffset, context.getTailOffset());
 
                 ArrayList<TextEdit> lst = new ArrayList<>();
-                TextEdit textEdit = item.getTextEdit();
                 final String originalText = textEdit.getNewText();
                 if (item.getInsertTextFormat() == InsertTextFormat.Snippet) {
                     textEdit.setNewText(removePlaceholders(textEdit.getNewText()));
@@ -259,7 +271,6 @@ public class FeatureCodeCompletion extends CompletionContributor {
                 }
 
                 // Calculate the new cursor offset.
-                Position startPos = textEdit.getRange().getStart();
                 Position offsetPos = new Position(startPos.getLine(), startPos.getCharacter());
                 if (additionalTextEdits != null) {
                     for (TextEdit t : additionalTextEdits) {
