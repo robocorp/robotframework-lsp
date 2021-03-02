@@ -310,5 +310,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+16) pydev.debugger (EPL)
+https://github.com/fabioz/Pydev/
 
-16) All third party packages in node_modules folders are licensed under the licenses specified in those packages.
+Eclipse Public License - v 1.0
+
+THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC
+LICENSE ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THE PROGRAM
+CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT.
+
+
+
+17) All third party packages in node_modules folders are licensed under the licenses specified in those packages.

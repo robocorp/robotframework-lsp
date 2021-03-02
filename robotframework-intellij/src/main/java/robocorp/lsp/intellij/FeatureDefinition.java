@@ -69,7 +69,8 @@ public class FeatureDefinition {
                 return null;
             }
 
-            Either<List<? extends Location>, List<? extends LocationLink>> listListEither = definition.get(2, TimeUnit.SECONDS);
+            Either<List<? extends Location>, List<? extends LocationLink>> listListEither = definition.get(
+                    Timeouts.getDefinitionTimeout(), TimeUnit.SECONDS);
             if (listListEither == null) {
                 return null;
             }
