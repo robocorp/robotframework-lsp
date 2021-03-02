@@ -289,6 +289,7 @@ public class FeatureCodeCompletion extends CompletionContributor {
 
                 final int[] varIndex = {0};
                 variables.forEach(var -> {
+                    var.variableValue = var.variableValue.replace("\\$", "$");
                     template.addTextSegment(splitInsertText[varIndex[0]]);
                     template.addVariable(varIndex[0] + "_" + var.variableValue, new TextExpression(var.variableValue),
                             new TextExpression(var.variableValue), true, false);
