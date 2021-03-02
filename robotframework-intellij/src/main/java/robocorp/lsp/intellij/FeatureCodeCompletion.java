@@ -75,22 +75,48 @@ public class FeatureCodeCompletion extends CompletionContributor {
         }
     }
 
-    private static class LSPPrefixMatcher extends PrefixMatcher {
+    public static class LSPPrefixMatcher extends PrefixMatcher {
 
         private final String normalizedPrefix;
 
-        private static String getPrefix(String lineToCursor) {
-            lineToCursor = lineToCursor.stripTrailing();
-
+        public static String getPrefix(String lineToCursor) {
+            // This is really unfortunate. We have to add logic which should be in the language
+            // server in the client as it seems there's no way to not have Intellij use that
+            // info (even if doing so makes things wrong).
+            // This is used both when applying a completion and even when Intellij tries
+            // to be smart and applies a partial completion just based on the prefix
+            // (i.e.: https://github.com/robocorp/robotframework-lsp/issues/248)
+            // The logic below is only valid for the Robot Framework Language Server (other
+            // language servers would need to have a custom logic here).
+            FastStringBuffer buf = new FastStringBuffer(lineToCursor, 0);
+            if (buf.length() == 0) {
+                return "";
+            }
             StringBuilder builder = new StringBuilder();
-            for (int i = lineToCursor.length() - 1; i >= 0; i--) {
-                char c = lineToCursor.charAt(i);
-                if (!Character.isWhitespace(c) && c != '{' && c != '}' && c != '$' & c != '*' && c != '.') {
-                    builder.append(c);
-                } else {
-                    if (builder.length() > 0) {
-                        return builder.reverse().toString();
-                    }
+            if (buf.lastChar() == ' ') {
+                buf.deleteLast();
+                builder.append(' ');
+            }
+            // 2 spaces
+            if (buf.lastChar() == ' ') {
+                return "";
+            }
+
+            while (buf.length() > 0) {
+                char c = buf.lastChar();
+                buf.deleteLast();
+
+                if (c == ' ' && (buf.length() == 0 || buf.lastChar() == ' ' || buf.lastChar() == '}')) {
+                    // 2 spaces or a single space before the line end.
+                    return builder.reverse().toString();
+                }
+
+                if (c == '.') {
+                    return builder.reverse().toString();
+                }
+                builder.append(c);
+                if (c == '$') {
+                    return builder.reverse().toString();
                 }
             }
             if (builder.length() > 0) {
@@ -145,7 +171,7 @@ public class FeatureCodeCompletion extends CompletionContributor {
                     if (completion == null) {
                         return null;
                     }
-                    Either<List<CompletionItem>, CompletionList> res = completion.get(5, TimeUnit.SECONDS);
+                    Either<List<CompletionItem>, CompletionList> res = completion.get(Timeouts.getCompletionTimeout(), TimeUnit.SECONDS);
                     if (res == null) {
                         return null;
                     }
@@ -183,14 +209,7 @@ public class FeatureCodeCompletion extends CompletionContributor {
         final CompletionItemKind kind = item.getKind();
         final String label = item.getLabel();
         final Icon icon = LanguageServerIcons.getCompletionIcon(kind);
-        String t = label;
-        while (t.startsWith("$") || t.startsWith("{") || t.startsWith("}")) {
-            t = t.substring(1);
-        }
-        while (t.endsWith("$") || t.endsWith("{") || t.endsWith("}")) {
-            t = t.substring(0, t.length() - 1);
-        }
-        final String lookupString = t;
+        final String lookupString = label;
 
         return new LookupElement() {
 

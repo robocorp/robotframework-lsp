@@ -153,7 +153,7 @@ public class FeatureSymbols implements ChooseByNameContributorEx {
                     }
                     List<? extends SymbolInformation> symbolInformation;
                     try {
-                        symbolInformation = symbol.get(4, TimeUnit.SECONDS);
+                        symbolInformation = symbol.get(Timeouts.getSymbolsTimeout(), TimeUnit.SECONDS);
                     } catch (TimeoutException e) {
                         LOG.warn("Request for workspace symbols timed out.");
                         return lst;

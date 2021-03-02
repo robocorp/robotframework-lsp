@@ -126,7 +126,11 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
 
         @Nullable RobotPreferences robotPreferences = RobotPreferences.getInstance();
         @Nullable String python = SearchPython.getDefaultPythonExecutable();
-        // python = "C:\\bin\\Miniconda\\envs\\py_38_tests\\python.exe";
+
+        boolean develop = false;
+        if (develop) {
+            python = "C:\\bin\\Miniconda\\envs\\py_38_tests\\python.exe";
+        }
 
         String robotLanguageServerPython = robotPreferences != null ? robotPreferences.getRobotLanguageServerPython().trim() : "";
         if (!robotLanguageServerPython.isEmpty()) {
@@ -148,10 +152,10 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
                 commands.add(e.toString());
             }
         }
-        //else {
-        //     commands.add("-vv");
-        //     commands.add("--log-file=c:/temp/robotframework_ls.log");
-        // }
+        if (develop) {
+            commands.add("-vv");
+            commands.add("--log-file=c:/temp/robotframework_ls.log");
+        }
 
         ProcessBuilder builder = new ProcessBuilder(commands);
         builder.redirectError(ProcessBuilder.Redirect.PIPE);
