@@ -6,7 +6,7 @@ import { getExtensionRelativeFile } from './files';
 import { workspace, window, ProgressLocation, CancellationToken, Progress, extensions } from 'vscode';
 import { OUTPUT_CHANNEL } from './channel';
 import { Timing, sleep } from './time';
-import { execFilePromise } from './subprocess';
+import { execFilePromise, ExecFileReturn } from './subprocess';
 
 async function downloadRcc(progress: Progress<{ message?: string; increment?: number }>, token: CancellationToken): Promise<string | undefined> {
 
@@ -163,6 +163,64 @@ export async function submitIssueUI(logPath: string) {
         "N/A",
         issueDescription,
     )
+}
+
+export const STATUS_OK = 'ok'
+export const STATUS_FATAL = 'fatal'
+export const STATUS_FAIL = 'fail'
+export const STATUS_WARNING = 'warning'
+
+export interface CheckDiagnostic {
+    type: string
+    status: string // ok | fatal | fail | warning
+    message: string
+    url: string
+}
+
+export class RCCDiagnostics {
+    failedChecks: CheckDiagnostic[];
+    private roboHomeOk: boolean;
+
+    constructor(checks: CheckDiagnostic[]) {
+        this.roboHomeOk = true;
+        this.failedChecks = [];
+
+        for (const check of checks) {
+            if (check.status != STATUS_OK) {
+                this.failedChecks.push(check);
+                if (check.type == 'RPA' && check.message.indexOf('ROBOCORP_HOME') != -1) {
+                    this.roboHomeOk = false;
+                }
+            }
+        }
+    }
+
+    isRobocorpHomeOk(): boolean {
+        return this.roboHomeOk;
+    }
+}
+
+/**
+ * @param robocorpHome if given, this will be passed as the ROBOCORP_HOME environment variable.
+ */
+export async function runConfigDiagnostics(rccLocation: string, robocorpHome: string | undefined): Promise<RCCDiagnostics | undefined> {
+    try {
+        let env = { ...process.env };
+        if (robocorpHome) {
+            env['ROBOCORP_HOME'] = robocorpHome;
+        }
+        let configureLongpathsOutput: ExecFileReturn = await execFilePromise(
+            rccLocation, ['configure', 'diagnostics', '-j'],
+            { env: env },
+        );
+        OUTPUT_CHANNEL.appendLine('RCC Diagnostics:\nStdout:\n' + configureLongpathsOutput.stdout + '\nStderr:\n' + configureLongpathsOutput.stderr);
+        let outputAsJSON = JSON.parse(configureLongpathsOutput.stdout);
+        let checks: CheckDiagnostic[] = outputAsJSON.checks;
+        return new RCCDiagnostics(checks);
+    } catch (error) {
+        OUTPUT_CHANNEL.appendLine('Error getting RCC diagnostics: ' + error);
+        return undefined;
+    }
 }
 
 export async function submitIssue(

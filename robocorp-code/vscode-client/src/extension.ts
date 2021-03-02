@@ -31,7 +31,7 @@ import * as roboConfig from './robocorpSettings';
 import * as roboCommands from './robocorpCommands';
 import { OUTPUT_CHANNEL } from './channel';
 import { getExtensionRelativeFile, verifyFileExists } from './files';
-import { getRccLocation, submitIssue, submitIssueUI } from './rcc';
+import { CheckDiagnostic, getRccLocation, RCCDiagnostics, runConfigDiagnostics, STATUS_FAIL, STATUS_FATAL, STATUS_OK, STATUS_WARNING, submitIssue, submitIssueUI } from './rcc';
 import { Timing } from './time';
 import { execFilePromise, ExecFileReturn } from './subprocess';
 import { createRobot, uploadRobot, cloudLogin, runRobotRCC, cloudLogout, setPythonInterpreterFromRobotYaml, askAndRunRobotRCC } from './activities';
@@ -572,11 +572,19 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
         }
         OUTPUT_CHANNEL.appendLine('ROBOCORP_HOME: ' + robocorpHome);
 
-        while (!robocorpHome || robocorpHome.length == 0 || robocorpHome.indexOf(' ') != -1) {
+        let rccDiagnostics: RCCDiagnostics | undefined = await runConfigDiagnostics(rccLocation, robocorpHome);
+        if (!rccDiagnostics) {
+            let msg = 'There was an error getting RCC diagnostics. Robocorp Code will not be started!';
+            OUTPUT_CHANNEL.appendLine(msg);
+            window.showErrorMessage(msg);
+            return undefined;
+        }
+
+        while (!rccDiagnostics.isRobocorpHomeOk()) {
             const SELECT_ROBOCORP_HOME = 'Set new ROBOCORP_HOME';
             const CANCEL = "Cancel";
             let result = await window.showInformationMessage(
-                "The current ROBOCORP_HOME is invalid (paths with spaces are not supported).",
+                "The current ROBOCORP_HOME is invalid (paths with spaces/non ascii chars are not supported).",
                 SELECT_ROBOCORP_HOME,
                 CANCEL
             );
@@ -600,9 +608,44 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
                 return undefined;
             }
             robocorpHome = uriResult[0].fsPath;
-            OUTPUT_CHANNEL.appendLine('Selected ROBOCORP_HOME: ' + robocorpHome);
-            let config = workspace.getConfiguration('robocorp');
-            await config.update('home', robocorpHome, ConfigurationTarget.Global);
+            rccDiagnostics = await runConfigDiagnostics(rccLocation, robocorpHome);
+            if (!rccDiagnostics) {
+                let msg = 'There was an error getting RCC diagnostics. Robocorp Code will not be started!';
+                OUTPUT_CHANNEL.appendLine(msg);
+                window.showErrorMessage(msg);
+                return undefined;
+            }
+            if (rccDiagnostics.isRobocorpHomeOk()) {
+                OUTPUT_CHANNEL.appendLine('Selected ROBOCORP_HOME: ' + robocorpHome);
+                let config = workspace.getConfiguration('robocorp');
+                await config.update('home', robocorpHome, ConfigurationTarget.Global);
+            }
+        }
+
+        function createOpenUrl(failedCheck) {
+            return (value) => {
+                if (value == 'Open troubleshoot URL') {
+                    env.openExternal(Uri.parse(failedCheck.url));
+                }
+            };
+        }
+        let canProceed: boolean = true;
+        for (const failedCheck of rccDiagnostics.failedChecks) {
+            if (failedCheck.status == STATUS_FATAL) {
+                canProceed = false;
+            }
+            let func = window.showErrorMessage;
+            if (failedCheck.status == STATUS_WARNING) {
+                func = window.showWarningMessage;
+            }
+            if (failedCheck.url) {
+                func(failedCheck.message, 'Open troubleshoot URL').then(createOpenUrl(failedCheck));
+            } else {
+                func(failedCheck.message)
+            }
+        }
+        if (!canProceed) {
+            return undefined;
         }
 
         progress.report({ message: 'Update env (may take a few minutes).' });
@@ -659,9 +702,30 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
         }
         start += 'JSON START>>'.length;
         jsonContents = jsonContents.substr(start, end - start);
-        OUTPUT_CHANNEL.appendLine('Parsing json contents: ' + jsonContents);
         let contents: object = JSON.parse(jsonContents);
         let pythonExe = contents['python_executable'];
+        OUTPUT_CHANNEL.appendLine('Python executable: ' + pythonExe);
+        OUTPUT_CHANNEL.appendLine('Python version: ' + contents['python_version']);
+        OUTPUT_CHANNEL.appendLine('Robot Version: ' + contents['robot_version']);
+        let env = contents['environment'];
+        if (!env) {
+            OUTPUT_CHANNEL.appendLine('Environment: NOT received');
+        } else {
+            // Print some env vars we may care about:
+            OUTPUT_CHANNEL.appendLine('Environment:');
+            OUTPUT_CHANNEL.appendLine('    PYTHONPATH: ' + env['PYTHONPATH']);
+            OUTPUT_CHANNEL.appendLine('    APPDATA: ' + env['APPDATA']);
+            OUTPUT_CHANNEL.appendLine('    HOMEDRIVE: ' + env['HOMEDRIVE']);
+            OUTPUT_CHANNEL.appendLine('    HOMEPATH: ' + env['HOMEPATH']);
+            OUTPUT_CHANNEL.appendLine('    HOME: ' + env['HOME']);
+            OUTPUT_CHANNEL.appendLine('    ROBOT_ROOT: ' + env['ROBOT_ROOT']);
+            OUTPUT_CHANNEL.appendLine('    ROBOT_ARTIFACTS: ' + env['ROBOT_ARTIFACTS']);
+            OUTPUT_CHANNEL.appendLine('    RCC_INSTALLATION_ID: ' + env['RCC_INSTALLATION_ID']);
+            OUTPUT_CHANNEL.appendLine('    ROBOCORP_HOME: ' + env['ROBOCORP_HOME']);
+            OUTPUT_CHANNEL.appendLine('    PROCESSOR_ARCHITECTURE: ' + env['PROCESSOR_ARCHITECTURE']);
+            OUTPUT_CHANNEL.appendLine('    OS: ' + env['OS']);
+            OUTPUT_CHANNEL.appendLine('    PATH: ' + env['PATH']);
+        }
         if (verifyFileExists(pythonExe)) {
             return {
                 pythonExe: pythonExe,
