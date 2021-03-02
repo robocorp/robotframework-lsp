@@ -13,7 +13,7 @@ Some task
 
 @pytest.fixture
 def check(workspace, libspec_manager, data_regression):
-    def check_func(source, col_delta=0, expect_completions=True):
+    def check_func(source, col_delta=0, expect_completions=True, line_col=None):
         from robotframework_ls.impl.completion_context import CompletionContext
         from robotframework_ls.impl import keyword_parameter_completions
 
@@ -21,8 +21,11 @@ def check(workspace, libspec_manager, data_regression):
         doc = workspace.get_doc("case2.robot")
         doc.source = source
 
-        line, col = doc.get_last_line_col()
-        col += col_delta
+        if line_col is not None:
+            line, col = line_col
+        else:
+            line, col = doc.get_last_line_col()
+            col += col_delta
 
         completions = keyword_parameter_completions.complete(
             CompletionContext(doc, workspace=workspace.ws, line=line, col=col)
@@ -46,6 +49,21 @@ def test_keyword_completions_params_complete_existing_simple(check):
 
 def test_keyword_completions_params_complete_existing_2nd(check):
     check(CASE_TEMPLATE + "    arg2=10    ar")
+
+
+def test_keyword_completions_params_complete_existing_no_chars(check):
+    check(CASE_TEMPLATE + "    arg2=10    ")
+
+
+def test_keyword_completions_params_complete_existing_no_chars_with_empty_new_line_after(
+    check
+):
+    from robocorp_ls_core.workspace import Document
+
+    base = CASE_TEMPLATE + "    arg2=10    "
+    doc = Document("", base)
+    line, col = doc.get_last_line_col()
+    check(base + "\n    ", line_col=(line, col))
 
 
 def test_keyword_completions_params_dont_complete(check):

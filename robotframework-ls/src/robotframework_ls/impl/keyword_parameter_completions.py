@@ -43,7 +43,7 @@ def _create_completion_item(
 
 def complete(completion_context: ICompletionContext) -> List[dict]:
     from robotframework_ls.impl.protocols import IKeywordFound
-    from robotframework_ls.impl.robot_specbuilder import KeywordArg
+    from robotframework_ls.impl.protocols import IKeywordArg
 
     ret: List[dict] = []
     sel = completion_context.sel
@@ -70,12 +70,13 @@ def complete(completion_context: ICompletionContext) -> List[dict]:
             if "=" in curr_token_value:
                 return ret
 
-            if token.end_col_offset > sel.col:
+            # Note: If it's an empty word, it's okay to be in the middle.
+            if token.end_col_offset > sel.col and curr_token_value.strip():
                 return []
 
             word_to_column = curr_token_value.strip()
 
-            arg: KeywordArg
+            arg: IKeywordArg
             for arg in keyword_args:
                 if arg.is_keyword_arg or arg.is_star_arg:
                     continue

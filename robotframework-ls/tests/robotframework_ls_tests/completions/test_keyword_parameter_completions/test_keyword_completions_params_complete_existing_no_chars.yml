@@ -1,0 +1,34 @@
+- deprecated: false
+  documentation: ${arg1}
+  documentationFormat: plaintext
+  insertText: arg1=
+  insertTextFormat: 1
+  kind: 5
+  label: arg1=
+  preselect: false
+  textEdit:
+    newText: arg1=
+    range:
+      end:
+        character: 37
+        line: 8
+      start:
+        character: 37
+        line: 8
+- deprecated: false
+  documentation: ${arg2}
+  documentationFormat: plaintext
+  insertText: arg2=
+  insertTextFormat: 1
+  kind: 5
+  label: arg2=
+  preselect: false
+  textEdit:
+    newText: arg2=
+    range:
+      end:
+        character: 37
+        line: 8
+      start:
+        character: 37
+        line: 8

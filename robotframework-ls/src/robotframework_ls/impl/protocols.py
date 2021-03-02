@@ -50,6 +50,10 @@ KeywordUsageInfo = namedtuple("KeywordUsageInfo", "stack, node, token, name")
 
 class IKeywordArg(Protocol):
     @property
+    def original_arg(self) -> str:
+        pass
+
+    @property
     def arg_name(self) -> str:
         pass
 
