@@ -103,7 +103,7 @@ def test_libspec_cache_no_lib(libspec_manager, workspace_dir):
     assert library_info is None
     libspec_manager._cached_create_libspec = original_cached_create_libspec
 
-    time.sleep(0.1)
+    time.sleep(0.2)
 
     path = Path(workspace_dir) / "check_lib.py"
     path.write_text(
@@ -116,6 +116,7 @@ def method2(a:int):
     wait_for_condition(
         lambda: libspec_manager.get_library_info("check_lib") is not None,
         msg="Did not recreate library in the available timeout.",
+        timeout=15,
     )
 
 
