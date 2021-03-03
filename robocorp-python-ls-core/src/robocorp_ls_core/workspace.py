@@ -196,9 +196,6 @@ class _VirtualFSThread(threading.Thread):
 
 class _VirtualFS(object):
     def __init__(self, root_folder_path: str, extensions: List[str]):
-        # from robocorp_ls_core.watchdog_wrapper import create_notifier, create_observer
-        # from robocorp_ls_core.watchdog_wrapper import PathInfo
-
         self.root_folder_path = root_folder_path
 
         self._dir_to_info: Dict[str, _DirInfo] = {}

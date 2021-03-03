@@ -43,7 +43,8 @@ def test_watchdog_macos():
         )
 
 
-def test_watchdog_all(tmpdir):
+@pytest.mark.parametrize("backend", ["watchdog", "fsnotify"])
+def test_watchdog_all(tmpdir, backend):
     from robocorp_ls_core import watchdog_wrapper
     from robocorp_ls_core.watchdog_wrapper import PathInfo
     from robocorp_ls_core.unittest_tools.fixtures import wait_for_test_condition
@@ -58,7 +59,7 @@ def test_watchdog_all(tmpdir):
         assert args == ("foo", "bar")
 
     notifier = watchdog_wrapper.create_notifier(on_change, timeout=0.1)
-    observer = watchdog_wrapper.create_observer()
+    observer = watchdog_wrapper.create_observer(backend, None)
 
     watch = observer.notify_on_any_change(
         [
@@ -96,7 +97,8 @@ def test_watchdog_all(tmpdir):
         observer.dispose()
 
 
-def test_watchdog_extensions(tmpdir):
+@pytest.mark.parametrize("backend", ["watchdog", "fsnotify"])
+def test_watchdog_extensions(tmpdir, backend):
     from robocorp_ls_core import watchdog_wrapper
     from robocorp_ls_core.watchdog_wrapper import PathInfo
     from robocorp_ls_core.unittest_tools.fixtures import wait_for_test_condition
@@ -111,14 +113,13 @@ def test_watchdog_extensions(tmpdir):
         assert args == ("foo", "bar")
 
     notifier = watchdog_wrapper.create_notifier(on_change, timeout=0.1)
-    observer = watchdog_wrapper.create_observer()
+    observer = watchdog_wrapper.create_observer(backend, (".libspec",))
 
-    watch = observer.notify_on_extensions_change(
+    watch = observer.notify_on_any_change(
         [
             PathInfo(tmpdir.join("dir_not_rec"), False),
             PathInfo(tmpdir.join("dir_rec"), True),
         ],
-        ["libspec"],
         notifier.on_change,
         call_args=("foo", "bar"),
     )

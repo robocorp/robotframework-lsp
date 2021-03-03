@@ -1,0 +1,11 @@
+fsnotify-0.2.1.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+fsnotify-0.2.1.dist-info/LICENSE,sha256=X47D6i39KocE8tJLUBJoKnELkQVDapxTUn3neBOOheA,1073
+fsnotify-0.2.1.dist-info/METADATA,sha256=7lZBnk7vBbxc9-YVTmjkI_2MGFGe-U0Cj8vI2OMUknM,2456
+fsnotify-0.2.1.dist-info/RECORD,,
+fsnotify-0.2.1.dist-info/REQUESTED,sha256=47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU,0
+fsnotify-0.2.1.dist-info/WHEEL,sha256=Z-nyYpwrcSqxfdux5Mbn_DQ525iP7J2DG3JgGvOYyTQ,110
+fsnotify-0.2.1.dist-info/top_level.txt,sha256=Uik-6AdG4ijxEWJNdpPiqvXd6SpTT_vcbob_kjDrolU,9
+fsnotify/__init__.py,sha256=6V5wW_d1PUQUsm5xIr78sVQVNTASkOsj4LJV88qcjt4,13442
+fsnotify/__pycache__/__init__.cpython-37.pyc,,
+fsnotify/__pycache__/scandir_vendored.cpython-37.pyc,,
+fsnotify/scandir_vendored.py,sha256=KCOwdkBO2IA_hye_IV41JLNzpbYP45rJB0RiqXTAI8s,26249

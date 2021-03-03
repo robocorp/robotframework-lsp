@@ -410,7 +410,18 @@ class LibspecManager(object):
 
         self._main_thread = threading.current_thread()
 
-        self._observer = watchdog_wrapper.create_observer()
+        watch_impl = os.environ.get("ROBOTFRAMEWORK_LS_WATCH_IMPL", "watchdog")
+        if watch_impl not in ("watchdog", "fsnotify"):
+            log.info(
+                f"ROBOTFRAMEWORK_LS_WATCH_IMPL should be 'watchdog' or 'fsnotify'. Found: {watch_impl} (falling back to fsnotify)"
+            )
+            # i.e.: the default is watchdog, so, if a different one is set,
+            # presumably the default is not ok, so, fall back to watchdog.
+            watch_impl = "fsnotify"
+
+        self._observer = watchdog_wrapper.create_observer(
+            watch_impl, (".py", ".libspec")
+        )
 
         self._file_changes_notifier = watchdog_wrapper.create_notifier(
             self._on_file_changed, timeout=0.5
