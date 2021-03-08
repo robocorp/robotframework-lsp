@@ -46,6 +46,12 @@ def main():
     try:
         import sys
 
+        if sys.version_info[0] <= 2:
+            raise AssertionError(
+                "Python 3+ is required for the RobotFramework Debug Adapter.\nCurrent executable: "
+                + sys.executable
+            )
+
         try:
             import robotframework_debug_adapter
             import robotframework_ls
@@ -73,8 +79,12 @@ def main():
         log = get_logger("robotframework_debug_adapter.__main__")
         log_args_and_python(log, sys.argv, robotframework_ls.__version__)
 
-        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import reader_thread
-        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import writer_thread
+        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
+            reader_thread,
+        )
+        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
+            writer_thread,
+        )
         from robotframework_debug_adapter.debug_adapter_comm import DebugAdapterComm
 
         try:

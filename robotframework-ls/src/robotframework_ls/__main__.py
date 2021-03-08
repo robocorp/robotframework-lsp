@@ -131,6 +131,11 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
 
 if __name__ == "__main__":
     try:
+        if sys.version_info[0] <= 2:
+            raise AssertionError(
+                "Python 3+ is required for the RobotFramework Language Server.\nCurrent executable: "
+                + sys.executable
+            )
         main()
     except (SystemExit, KeyboardInterrupt):
         pass
