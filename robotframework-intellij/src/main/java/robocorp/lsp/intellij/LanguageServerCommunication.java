@@ -170,6 +170,7 @@ class InternalConnection {
                     tempResult = initializeResultFuture.get(1, TimeUnit.SECONDS);
                     break;
                 } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                    languageServerStreams.verifyProcess();
                     if (!this.isConnected() || i == 9) {
                         throw e;
                     }

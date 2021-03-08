@@ -96,6 +96,7 @@ public abstract class LanguageServerDefinition {
 
         @Nullable
         private SocketStreamProvider socketStreamProvider = null;
+        private File file;
 
         public LanguageServerStreams(@Nullable ProcessBuilder processBuilder, int port) {
             this.builder = processBuilder;
@@ -119,13 +120,25 @@ public abstract class LanguageServerDefinition {
 
                 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH_mm");
                 File file = new File(dir, ".intellij-rf-ls-" + dtf.format(LocalDateTime.now()) + ".log");
+                this.file = file;
 
                 StreamRedirectorThread thread = new StreamRedirectorThread(process.getErrorStream(), new FileOutputStream(file, true));
                 thread.start();
+                verifyProcess();
+                LOG.info("Server process started " + process + ".\nStderr may be seen at:\n" + file);
+            }
+        }
+
+        public void verifyProcess() throws IOException {
+            if (this.port <= 0) {
                 if (!process.isAlive()) {
-                    throw new IOException("Unable to start language server: " + this.toString());
-                } else {
-                    LOG.info("Server process started " + process);
+                    String msg;
+                    if (builder == null) {
+                        msg = "<N/A> (ProcessBuilder is null!)";
+                    } else {
+                        msg = "" + builder.command();
+                    }
+                    throw new IOException("Language server process exited.\nCommand line: " + msg + ".\nStderr may be seen at:\n" + file + "\n");
                 }
             }
         }
