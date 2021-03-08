@@ -111,7 +111,7 @@ public class FeatureCodeCompletion extends CompletionContributor {
                     return builder.reverse().toString();
                 }
 
-                if (c == '.') {
+                if (c == '.' || c == '/') {
                     return builder.reverse().toString();
                 }
                 builder.append(c);

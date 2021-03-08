@@ -72,4 +72,15 @@ public class CompletionTest extends LSPTesCase {
         editor.getCaretModel().moveToOffset(textLength);
         myFixture.testCompletion("case_keyword_args_at.robot", "case_keyword_args_at_after.robot");
     }
+
+    @Test
+    public void testCompleteResourceName() throws Exception {
+        myFixture.configureByFiles("sub/case_sub.robot", "case_keyword_with_args_after.robot");
+        Editor editor = myFixture.getEditor();
+        EditorLanguageServerConnection conn = EditorLanguageServerConnection.getFromUserData(editor);
+        int textLength = editor.getDocument().getTextLength();
+        editor.getCaretModel().moveToOffset(textLength);
+        myFixture.testCompletion("sub/case_sub.robot", "sub/case_sub_after.robot");
+    }
+
 }
