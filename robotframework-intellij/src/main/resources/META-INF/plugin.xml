@@ -21,7 +21,7 @@
     </extensions>
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="Robot Framework" implementationClass="robocorp.robot.intellij.RobotFrameworkFileType"
-                  fieldName="INSTANCE" language="RobotFramework" extensions="robot"/>
+                  fieldName="INSTANCE" language="RobotFramework" extensions="robot;resource"/>
 
         <lang.parserDefinition language="RobotFramework"
                                implementationClass="robocorp.robot.intellij.RobotParserDefinition"/>
