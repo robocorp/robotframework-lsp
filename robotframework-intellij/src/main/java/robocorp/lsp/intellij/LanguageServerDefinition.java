@@ -19,10 +19,12 @@
 package robocorp.lsp.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
@@ -138,9 +140,27 @@ public abstract class LanguageServerDefinition {
                     } else {
                         msg = "" + builder.command();
                     }
-                    throw new IOException("Language server process exited.\nCommand line: " + msg + ".\nStderr may be seen at:\n" + file + "\n");
+                    throw new IOException("Language server process exited.\nCommand line: " + msg + ".\nStderr may be seen at:\n" + file + "\nContents (last " + LEN_TO_READ + " chars):\n" + readFileContents());
                 }
             }
+        }
+
+        private final int LEN_TO_READ = 10000;
+
+        private String readFileContents() {
+            if (file != null && file.exists()) {
+                try {
+                    char[] chars = FileUtil.loadFileText(file, StandardCharsets.UTF_8);
+
+                    if (chars.length > LEN_TO_READ) {
+                        return " ... " + new String(chars, chars.length - LEN_TO_READ, LEN_TO_READ);
+                    }
+                    return new String(chars);
+                } catch (IOException e) {
+                    return "Unable to load contents.";
+                }
+            }
+            return "<N/A>";
         }
 
         @Nullable
