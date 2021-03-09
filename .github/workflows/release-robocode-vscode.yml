@@ -58,3 +58,7 @@ jobs:
       run: vsce publish -p $VSCE_TOKEN
       env:
         VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+    - name: Publish to open vsx marketplace 
+      run: npx ovsx publish robocorp-code.vsix -p $OPEN_VSX_TOKEN
+      env:
+        OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
