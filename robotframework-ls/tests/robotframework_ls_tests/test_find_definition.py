@@ -1,4 +1,5 @@
 from typing import Tuple
+import os.path
 
 
 def test_find_definition_builtin(workspace, libspec_manager):
@@ -500,3 +501,17 @@ def test_find_definition_same_basename(workspace, libspec_manager, cases, tmpdir
     ]
 
     assert len(found) == 2
+
+
+def test_find_definition_in_package_init(workspace, libspec_manager, cases, tmpdir):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case_package_lib", libspec_manager=libspec_manager)
+    doc1 = workspace.get_doc("case_package.robot")
+
+    completion_context = CompletionContext(doc1, workspace=workspace.ws)
+    def1 = find_definition(completion_context)
+    assert len(def1) == 1
+    assert def1[0].source.endswith("__init__.py")
+    assert os.path.basename(os.path.dirname(def1[0].source)) == "package"

@@ -786,9 +786,14 @@ class LibspecManager(object):
 
         if target_file is not None:
             additional_path = os.path.dirname(target_file)
+            if os.path.splitext(os.path.basename(target_file))[0] == "__init__":
+                additional_path = os.path.dirname(additional_path)
+
             additional_path_exists = os.path.exists(additional_path)
             if additional_path and additional_path_exists:
                 cwd = additional_path
+            if libname.endswith(("/", "\\")):
+                libname = libname[:-1]
             libname = os.path.basename(libname)
             if libname.lower().endswith((".py", ".class", ".java")):
                 libname = os.path.splitext(libname)[0]
@@ -944,6 +949,9 @@ class LibspecManager(object):
                 cwd = os.path.dirname(uris.to_fs_path(current_doc_uri))
                 if cwd and os.path.isdir(cwd):
                     f = os.path.join(cwd, libname)
+                    if os.path.isdir(f):
+                        f = os.path.join(f, "__init__.py")
+
                     if os.path.exists(f):
                         target_file = f
 
