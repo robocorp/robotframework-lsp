@@ -141,7 +141,7 @@ public class FeatureSymbols implements ChooseByNameContributorEx {
                 for (ILanguageDefinitionContributor contributor : EP_NAME.getExtensionList()) {
                     LanguageServerDefinition languageDefinition = contributor.getLanguageDefinition();
                     LanguageServerManager languageServerManager = LanguageServerManager.getInstance(languageDefinition);
-                    LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(languageDefinition.ext.iterator().next(), basePath);
+                    LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(languageDefinition.ext.iterator().next(), basePath, project);
                     if (comm == null) {
                         return lst;
                     }

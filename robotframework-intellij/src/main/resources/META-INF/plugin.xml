@@ -35,8 +35,13 @@
         <editorFactoryListener implementation="robocorp.lsp.intellij.LanguageServerEditorListener"/>
         <lang.commenter language="RobotFramework" implementationClass="robocorp.robot.intellij.RobotCommenter"/>
         <gotoSymbolContributor implementation="robocorp.lsp.intellij.FeatureSymbols"/>
+
         <applicationConfigurable instance="robocorp.robot.intellij.RobotPreferencesPage" parentId="language"/>
+        <projectConfigurable instance="robocorp.robot.intellij.RobotProjectPreferencesPage" parentId="language"/>
+
         <applicationService serviceImplementation="robocorp.robot.intellij.RobotPreferences"/>
+        <projectService serviceImplementation="robocorp.robot.intellij.RobotProjectPreferences"/>
+
         <notificationGroup id="Robot Framework Language Server" displayType="BALLOON"/>
     </extensions>
 

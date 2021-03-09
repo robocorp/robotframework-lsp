@@ -40,7 +40,7 @@ public class EditorLanguageServerConnection {
         this.projectRoot = editor.getProjectPath();
         this.identifier = new TextDocumentIdentifier(editor.getURI());
 
-        LanguageServerCommunication comm = manager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
+        LanguageServerCommunication comm = manager.getLanguageServerCommunication(editor.getExtension(), projectRoot, editor.getProject());
         if (comm == null) {
             throw new LanguageServerUnavailableException("Unable to get language server communication for: " + projectRoot);
         }
@@ -56,7 +56,7 @@ public class EditorLanguageServerConnection {
             public void documentChanged(@NotNull DocumentEvent event) {
 
                 try {
-                    LanguageServerCommunication comm = manager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
+                    LanguageServerCommunication comm = manager.getLanguageServerCommunication(editor.getExtension(), projectRoot, editor.getProject());
                     if (comm == null) {
                         return;
                     }
@@ -144,7 +144,7 @@ public class EditorLanguageServerConnection {
         }
         if (userData == this) {
             // I.e.: closes the connection.
-            LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
+            LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot, editor.getProject());
             if (comm != null) {
                 comm.didClose(this);
                 comm.removeDiagnosticsListener(editor.getURI(), diagnosticsListener);
@@ -171,7 +171,7 @@ public class EditorLanguageServerConnection {
 
     public @Nullable CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(int offset) {
         try {
-            LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
+            LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot, editor.getProject());
             if (comm == null) {
                 return null;
             }
@@ -188,7 +188,7 @@ public class EditorLanguageServerConnection {
 
     public @Nullable ServerCapabilities getServerCapabilities() {
         try {
-            LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
+            LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot, editor.getProject());
             if (comm == null) {
                 return null;
             }
@@ -201,7 +201,7 @@ public class EditorLanguageServerConnection {
 
     public @Nullable LanguageServerCommunication getLanguageServerCommunication() {
         try {
-            return languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot);
+            return languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot, editor.getProject());
         } catch (Exception e) {
             LOG.error(e);
         }

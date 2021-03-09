@@ -2,6 +2,7 @@ package robocorp.lsp.intellij;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -25,6 +26,7 @@ class InternalConnection {
     private static final Logger LOG = Logger.getInstance(InternalConnection.class);
 
     // Passed on constructor
+    private final Project project;
     private final String projectRootPath;
     private final LanguageServerDefinition languageServerDefinition;
     private final LanguageServerCommunication.DefaultLanguageClient client;
@@ -38,7 +40,7 @@ class InternalConnection {
 
     public void shutdown() {
         try {
-            languageServerDefinition.unregisterPreferencesListener(preferencesListener);
+            languageServerDefinition.unregisterPreferencesListener(project, preferencesListener);
             if (isConnected()) {
                 lifecycleFuture.cancel(true);
                 try {
@@ -118,10 +120,11 @@ class InternalConnection {
         return initParams;
     }
 
-    public InternalConnection(String projectRootPath, LanguageServerDefinition languageServerDefinition, LanguageServerCommunication.DefaultLanguageClient client) {
+    public InternalConnection(Project project, String projectRootPath, LanguageServerDefinition languageServerDefinition, LanguageServerCommunication.DefaultLanguageClient client) {
         this.projectRootPath = projectRootPath;
         this.languageServerDefinition = languageServerDefinition;
         this.client = client;
+        this.project = project;
 
         preferencesListener = (propName, oldValue, newValue) -> {
             // Whenever preferences change, send it to the server.
@@ -132,7 +135,7 @@ class InternalConnection {
             ApplicationManager.getApplication().invokeLater(() -> {
                 if (counter.get() == currValue) {
                     // i.e.: if we receive multiple notifications at once, notify only once in the last notification.
-                    this.didChangeConfiguration(new DidChangeConfigurationParams(languageServerDefinition.getPreferences()));
+                    this.didChangeConfiguration(new DidChangeConfigurationParams(languageServerDefinition.getPreferences(project)));
                 }
             });
         };
@@ -179,8 +182,8 @@ class InternalConnection {
             initializeResult = tempResult;
             this.languageServerStreams = languageServerStreams;
 
-            this.didChangeConfiguration(new DidChangeConfigurationParams(languageServerDefinition.getPreferences()));
-            languageServerDefinition.registerPreferencesListener(preferencesListener);
+            this.didChangeConfiguration(new DidChangeConfigurationParams(languageServerDefinition.getPreferences(project)));
+            languageServerDefinition.registerPreferencesListener(project, preferencesListener);
 
             for (EditorLanguageServerConnection editorLanguageServerConnection : editorConnections) {
                 try {
@@ -223,6 +226,7 @@ class InternalConnection {
 public class LanguageServerCommunication {
 
     private final String projectRootPath;
+    private final Project project;
 
     public interface IDiagnosticsListener {
         void onDiagnostics(PublishDiagnosticsParams params);
@@ -322,9 +326,10 @@ public class LanguageServerCommunication {
     // used during initialization.
     private final Set<EditorLanguageServerConnection> editorConnections = new HashSet<>();
 
-    public LanguageServerCommunication(String projectRootPath, LanguageServerDefinition languageServerDefinition) {
+    public LanguageServerCommunication(Project project, String projectRootPath, LanguageServerDefinition languageServerDefinition) {
         DefaultLanguageClient client = new DefaultLanguageClient();
         this.projectRootPath = projectRootPath;
+        this.project = project;
         this.client = client;
         this.languageServerDefinition = languageServerDefinition;
 
@@ -343,7 +348,7 @@ public class LanguageServerCommunication {
                 if (this.internalConnection != null) {
                     this.internalConnection.shutdown();
                 }
-                this.internalConnection = new InternalConnection(projectRootPath, languageServerDefinition, client);
+                this.internalConnection = new InternalConnection(project, projectRootPath, languageServerDefinition, client);
                 internalConnection.start(editorConnections);
                 InternalConnection.State state = internalConnection.getState();
                 if (state == InternalConnection.State.initialized) {

@@ -16,6 +16,7 @@
 package robocorp.lsp.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +62,7 @@ public class LanguageServerManager {
         return languageServerManager;
     }
 
-    public static LanguageServerManager start(LanguageServerDefinition definition, String ext, String projectRootPath) throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    public static LanguageServerManager start(LanguageServerDefinition definition, String ext, String projectRootPath, Project project) throws IOException, InterruptedException, ExecutionException, TimeoutException {
         LanguageServerManager instance = getInstance(definition);
         if (!ext.startsWith(".")) {
             throw new AssertionError("Expected extension to start with '.'");
@@ -70,7 +71,7 @@ public class LanguageServerManager {
             synchronized (instance.lockProjectRootPathToComm) {
                 LanguageServerCommunication languageServerCommunication = instance.projectRootPathToComm.get(projectRootPath);
                 if (languageServerCommunication == null) {
-                    languageServerCommunication = new LanguageServerCommunication(projectRootPath, instance.languageServerDefinition);
+                    languageServerCommunication = new LanguageServerCommunication(project, projectRootPath, instance.languageServerDefinition);
                     instance.projectRootPathToComm.put(projectRootPath, languageServerCommunication);
                 }
             }
@@ -158,7 +159,7 @@ public class LanguageServerManager {
     /**
      * If the communication is not in-place at this point, it may be started.
      */
-    public @Nullable LanguageServerCommunication getLanguageServerCommunication(String ext, String projectRootPath) throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    public @Nullable LanguageServerCommunication getLanguageServerCommunication(String ext, String projectRootPath, Project project) throws InterruptedException, ExecutionException, TimeoutException, IOException {
         LanguageServerCommunication comm = projectRootPathToComm.get(projectRootPath);
         if (comm != null) {
             return comm;
@@ -170,7 +171,7 @@ public class LanguageServerManager {
             synchronized (lockProjectRootPathToComm) {
                 LanguageServerCommunication languageServerCommunication = projectRootPathToComm.get(projectRootPath);
                 if (languageServerCommunication == null) {
-                    languageServerCommunication = new LanguageServerCommunication(projectRootPath, languageServerDefinition);
+                    languageServerCommunication = new LanguageServerCommunication(project, projectRootPath, languageServerDefinition);
                     projectRootPathToComm.put(projectRootPath, languageServerCommunication);
                     return languageServerCommunication;
                 }

@@ -8,6 +8,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,10 +18,7 @@ import robocorp.lsp.intellij.SearchPython;
 
 import java.io.File;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * Interesting:
@@ -51,7 +49,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
 
         // Note: the RobotPreferences are required to startup (so, we need a running intellij app environment
         // to startup -- this means that all tests must also be a subclass of LSPTestCase/BasePlatformTestCase).
-        @Nullable RobotPreferences robotPreferences = RobotPreferences.getInstance();
+        @Nullable RobotPreferences robotAppPreferences = RobotPreferences.getInstance();
 
         ProcessBuilder builder = createProcessBuilderFromPreferences();
 
@@ -63,35 +61,55 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         ) {
 
             @Override
-            public Object getPreferences() {
-                @Nullable RobotPreferences robotPreferences = RobotPreferences.getInstance();
-                if (robotPreferences == null) {
-                    return new JsonObject();
+            public Object getPreferences(Project project) {
+                // Get the basic app preferences.
+                @Nullable RobotPreferences robotAppPreferences = RobotPreferences.getInstance();
+                JsonObject jsonObject;
+                if (robotAppPreferences == null) {
+                    jsonObject = new JsonObject();
+                } else {
+                    jsonObject = robotAppPreferences.asJsonObject();
                 }
-                return robotPreferences.asJsonObject();
+
+                // Override project-specific preferences.
+                RobotProjectPreferences robotProjectPreferences = RobotProjectPreferences.getInstance(project);
+                if (robotProjectPreferences != null) {
+                    JsonObject projectJsonObject = robotProjectPreferences.asJsonObject();
+                    Set<Map.Entry<String, JsonElement>> entries = projectJsonObject.entrySet();
+                    for (Map.Entry<String, JsonElement> entry : entries) {
+                        jsonObject.add(entry.getKey(), entry.getValue());
+                    }
+                }
+                return jsonObject;
             }
 
             @Override
-            public void registerPreferencesListener(IPreferencesListener preferencesListener) {
-                @Nullable RobotPreferences robotPreferences = RobotPreferences.getInstance();
-                if (robotPreferences == null) {
-                    return;
+            public void registerPreferencesListener(Project project, IPreferencesListener preferencesListener) {
+                @Nullable RobotPreferences robotAppPreferences = RobotPreferences.getInstance();
+                if (robotAppPreferences != null) {
+                    robotAppPreferences.addListener(preferencesListener);
                 }
-                robotPreferences.addListener(preferencesListener);
+                RobotProjectPreferences robotProjectPreferences = RobotProjectPreferences.getInstance(project);
+                if (robotProjectPreferences != null) {
+                    robotProjectPreferences.addListener(preferencesListener);
+                }
             }
 
             @Override
-            public void unregisterPreferencesListener(IPreferencesListener preferencesListener) {
-                @Nullable RobotPreferences robotPreferences = RobotPreferences.getInstance();
-                if (robotPreferences == null) {
-                    return;
+            public void unregisterPreferencesListener(Project project, IPreferencesListener preferencesListener) {
+                @Nullable RobotPreferences robotAppPreferences = RobotPreferences.getInstance();
+                if (robotAppPreferences != null) {
+                    robotAppPreferences.removeListener(preferencesListener);
                 }
-                robotPreferences.removeListener(preferencesListener);
+                RobotProjectPreferences robotProjectPreferences = RobotProjectPreferences.getInstance(project);
+                if (robotProjectPreferences != null) {
+                    robotProjectPreferences.removeListener(preferencesListener);
+                }
             }
         };
 
-        if (robotPreferences != null) {
-            robotPreferences.addListener((property, oldValue, newValue) -> {
+        if (robotAppPreferences != null) {
+            robotAppPreferences.addListener((property, oldValue, newValue) -> {
                 if (RobotPreferences.ROBOT_LANGUAGE_SERVER_PYTHON.equals(property) ||
                         RobotPreferences.ROBOT_LANGUAGE_SERVER_ARGS.equals(property)
                 ) {

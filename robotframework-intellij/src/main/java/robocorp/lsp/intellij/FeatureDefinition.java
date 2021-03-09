@@ -38,7 +38,7 @@ public class FeatureDefinition {
         }
         @NotNull Project project = element.getProject();
         VirtualFile virtualFile = psiFile.getVirtualFile();
-        if (virtualFile == null) {
+        if (virtualFile == null || project == null) {
             return null;
         }
         String basePath = project.getBasePath();
@@ -51,7 +51,7 @@ public class FeatureDefinition {
         }
         LanguageServerManager languageServerManager = LanguageServerManager.getInstance(languageDefinition);
         try {
-            LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(languageDefinition.ext.iterator().next(), basePath);
+            LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(languageDefinition.ext.iterator().next(), basePath, project);
             if (comm == null) {
                 return null;
             }

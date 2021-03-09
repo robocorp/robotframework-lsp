@@ -30,6 +30,7 @@ public class EditorToLSPEditor {
         private final String uri;
         private final String extension;
         private final String projectPath;
+        private final Project project;
         private volatile List<Diagnostic> diagnostics = new ArrayList<>();
 
         public EditorAsLSPEditor(Editor editor) {
@@ -40,12 +41,15 @@ public class EditorToLSPEditor {
                 uri = null;
                 extension = null;
                 projectPath = null;
+                project = null;
                 return;
             }
             definition = EditorUtils.getLanguageDefinition(file);
             uri = Uris.toUri(file);
             extension = "." + file.getExtension();
-            Project project = editor.getProject();
+            project = editor.getProject();
+
+            // loads to project
             if (project != null) {
                 projectPath = project.getBasePath();
             } else {
@@ -71,6 +75,12 @@ public class EditorToLSPEditor {
         @Override
         public @Nullable String getProjectPath() {
             return projectPath;
+        }
+
+        @Nullable
+        @Override
+        public Project getProject() {
+            return project;
         }
 
         @Override

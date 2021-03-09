@@ -1,6 +1,7 @@
 package robocorp.lsp.intellij;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.Position;
@@ -20,6 +21,8 @@ public interface ILSPEditor extends UserDataHolder {
     @Nullable String getExtension();
 
     @Nullable String getProjectPath();
+
+    @Nullable Project getProject();
 
     Position offsetToLSPPos(int offset);
 

@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,8 @@ public class LanguageServerEditorListener implements EditorFactoryListener {
 
         String uri = editor.getURI();
         String projectPath = editor.getProjectPath();
-        if (uri == null || projectPath == null) {
+        Project project = editor.getProject();
+        if (uri == null || projectPath == null || project == null) {
             return;
         }
 
@@ -50,7 +52,7 @@ public class LanguageServerEditorListener implements EditorFactoryListener {
             if (extension == null) {
                 return;
             }
-            LanguageServerManager manager = LanguageServerManager.start(definition, extension, projectPath);
+            LanguageServerManager manager = LanguageServerManager.start(definition, extension, projectPath, project);
             EditorLanguageServerConnection.editorCreated(manager, editor);
         } catch (Exception e) {
             LOG.error(e);

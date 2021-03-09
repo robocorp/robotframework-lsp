@@ -19,6 +19,7 @@
 package robocorp.lsp.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ public abstract class LanguageServerDefinition {
     /**
      * Subclasses must override to return the settings to be sent to the language server.
      */
-    public abstract Object getPreferences();
+    public abstract Object getPreferences(Project project);
 
     public interface IPreferencesListener {
         void onChanged(String property, String oldValue, String newValue);
@@ -45,12 +46,12 @@ public abstract class LanguageServerDefinition {
     /**
      * Subclasses must notify when a setting has changed so that it can be sent to the language server.
      */
-    public abstract void unregisterPreferencesListener(IPreferencesListener preferencesListener);
+    public abstract void unregisterPreferencesListener(Project project, IPreferencesListener preferencesListener);
 
     /**
      * Subclasses must notify when a setting has changed so that it can be sent to the language server.
      */
-    public abstract void registerPreferencesListener(IPreferencesListener o);
+    public abstract void registerPreferencesListener(Project project, IPreferencesListener preferencesListener);
 
     private static final class SocketStreamProvider {
 
