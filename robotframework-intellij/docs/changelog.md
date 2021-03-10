@@ -1,3 +1,13 @@
+New in 0.9.1 (2021-03-20)
+-----------------------------
+
+- Handles .resource files. [#251](https://github.com/robocorp/robotframework-lsp/issues/251)
+- If some error happens starting up the language server, show more information.
+- The settings may now also be set per project and not only globally. [#254](https://github.com/robocorp/robotframework-lsp/issues/254)
+- Fix issue getting prefix for filesystem completions. [#256](https://github.com/robocorp/robotframework-lsp/issues/256)
+- Support python packages as libraries (package/__init__.py). [#228](https://github.com/robocorp/robotframework-lsp/issues/228)
+
+
 New in 0.9.0 (2021-03-03)
 -----------------------------
 
@@ -19,6 +29,7 @@ New in 0.8.0 (2021-02-16)
 - Notifying when python cannot be found on the PATH.
 - Improved language server startup.
 - Added syntax highlighting for variables. 
+
 
 New in 0.7.2 (2021-02-10)
 -----------------------------

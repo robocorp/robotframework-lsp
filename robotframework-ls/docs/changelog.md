@@ -1,3 +1,8 @@
+New in 0.9.1 (2021-03-10)
+-----------------------------
+
+- Support python packages as libraries (package/__init__.py). [#228](https://github.com/robocorp/robotframework-lsp/issues/228)
+
 New in 0.9.0 (2021-03-03)
 -----------------------------
 

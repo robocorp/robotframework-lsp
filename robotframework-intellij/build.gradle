@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.9.0'
+version '0.9.1'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -45,20 +45,14 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.9.0
+    Release 0.9.1
     </p>
     <ul>
-      <li>Fixed issue applying arguments completion.</li>
-      <li>Code completion for arguments properly brought up if a part of it is still not typed.</li>
-      <li>Prefix properly computed for completions. [#248](https://github.com/robocorp/robotframework-lsp/issues/248)</li>
-      <li>Completion with dollar sign properly applied. [#249](https://github.com/robocorp/robotframework-lsp/issues/249)</li>
-      <li>Gathering workspace symbols is much faster.</li>
-      <li>Keyword completions should not be duplicated by the auto-import Keyword completions anymore.</li> 
-      <li>It's now possible to use polling instead of native filesystem notifications</li>
-      <ul>
-        <li>It may be useful in case watchdog is having glitches.</li>
-        <li>To use it, set an environment variable: `ROBOTFRAMEWORK_LS_WATCH_IMPL=fsnotify`</li>
-      </ul>
+      <li>Handles .resource files. [#251](https://github.com/robocorp/robotframework-lsp/issues/251)</li>
+      <li>If some error happens starting up the language server, show more information.</li>
+      <li>The settings may now also be set per project and not only globally. [#254](https://github.com/robocorp/robotframework-lsp/issues/254)</li>
+      <li>Fix issue getting prefix for filesystem completions. [#256](https://github.com/robocorp/robotframework-lsp/issues/256)</li>
+      <li>Support python packages as libraries (package/__init__.py). [#228](https://github.com/robocorp/robotframework-lsp/issues/228)</li>
     </ul>    
     <br>
     Current feature set:<br>
