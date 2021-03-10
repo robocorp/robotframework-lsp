@@ -199,16 +199,22 @@ function registerDebugger(languageServerExecutable: string) {
 		}
 	};
 
+	try{
+		debug.registerDebugConfigurationProvider('robotframework-lsp', new RobotDebugConfigurationProvider());
+	
+		debug.registerDebugAdapterDescriptorFactory('robotframework-lsp', {
+			createDebugAdapterDescriptor: session => {
+				let env = session.configuration.env;
+				let target = session.configuration.target;
+				return createDebugAdapterExecutable(env, target);
+			}
+		});
+	}catch(error){
+		// i.e.: https://github.com/microsoft/vscode/issues/118562
+		OUTPUT_CHANNEL.appendLine('Error registering debugger: ' + error);
+	}
 
-	debug.registerDebugAdapterDescriptorFactory('robotframework-lsp', {
-		createDebugAdapterDescriptor: session => {
-			let env = session.configuration.env;
-			let target = session.configuration.target;
-			return createDebugAdapterExecutable(env, target);
-		}
-	});
 
-	debug.registerDebugConfigurationProvider('robotframework-lsp', new RobotDebugConfigurationProvider());
 }
 
 
