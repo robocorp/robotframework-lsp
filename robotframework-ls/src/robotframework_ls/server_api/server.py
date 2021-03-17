@@ -1,7 +1,7 @@
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union
 from robocorp_ls_core.protocols import IConfig, IMonitor
 from functools import partial
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
@@ -279,7 +279,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return []
         return [x.to_dict() for x in create_text_edit_from_diff(text, new_contents)]
 
-    def _create_completion_context(self, doc_uri, line, col, monitor: IMonitor):
+    def _create_completion_context(
+        self, doc_uri, line, col, monitor: Union[IMonitor, None]
+    ):
         from robotframework_ls.impl.completion_context import CompletionContext
 
         if not self._check_min_version((3, 2)):
@@ -344,6 +346,24 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             query,
             BaseContext(workspace=robot_workspace, config=self.config, monitor=monitor),
         )
+
+    def m_text_document__semantic_tokens__range(self, textDocument=None, range=None):
+        from robotframework_ls.impl.semantic_tokens import semantic_tokens_range
+
+        doc_uri = textDocument["uri"]
+        context = self._create_completion_context(doc_uri, -1, -1, None)
+        if context is None:
+            return []
+        return semantic_tokens_range(context, range)
+
+    def m_text_document__semantic_tokens__full(self, textDocument=None):
+        from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
+
+        doc_uri = textDocument["uri"]
+        context = self._create_completion_context(doc_uri, -1, -1, None)
+        if context is None:
+            return []
+        return {"resultId": None, "data": semantic_tokens_full(context)}
 
     def m_shutdown(self, **_kwargs):
         PythonLanguageServer.m_shutdown(self, **_kwargs)

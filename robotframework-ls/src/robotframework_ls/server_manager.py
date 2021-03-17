@@ -365,7 +365,8 @@ class _ServerApi(object):
         self._check_in_main_thread()
         api = self.get_robotframework_api_client()
         if api is not None:
-            api.forward(method_name, params)
+            return api.forward(method_name, params)
+        return None
 
     @log_and_silence_errors(log)
     def forward_async(self, method_name, params) -> Optional[IMessageMatcher]:
@@ -572,6 +573,14 @@ class ServerManager(object):
         self, doc_uri
     ) -> Optional[IRobotFrameworkApiClient]:
         api = self._get_source_format_api(doc_uri)
+        if api is not None:
+            return api.get_robotframework_api_client()
+        return None
+
+    def get_semantic_tokens_rf_api_client(
+        self, doc_uri
+    ) -> Optional[IRobotFrameworkApiClient]:
+        api = self._get_regular_api(doc_uri)
         if api is not None:
             return api.get_robotframework_api_client()
         return None

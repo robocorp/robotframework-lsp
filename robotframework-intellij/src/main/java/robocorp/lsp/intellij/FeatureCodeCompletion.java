@@ -241,7 +241,11 @@ public class FeatureCodeCompletion extends CompletionContributor {
 
             @Override
             public void handleInsert(@NotNull InsertionContext context) {
-                TextEdit textEdit = item.getTextEdit();
+                Either<TextEdit, InsertReplaceEdit> either = item.getTextEdit();
+                if (!either.isLeft()) {
+                    throw new RuntimeException("Expected only TextEdit, not InsertReplaceEdit.");
+                }
+                TextEdit textEdit = either.getLeft();
                 Document document = context.getDocument();
                 int startOffset = context.getStartOffset();
                 Position startPos = textEdit.getRange().getStart();

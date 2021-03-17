@@ -31,6 +31,8 @@
                                        implementationClass="robocorp.robot.intellij.RobotFrameworkSyntaxHighlightingFactory"/>
         <completion.contributor implementationClass="robocorp.lsp.intellij.FeatureCodeCompletion"
                                 language="RobotFramework"/>
+        <externalAnnotator language="RobotFramework"
+                           implementationClass="robocorp.lsp.intellij.FeatureSemanticHighlighting"/>
         <externalAnnotator language="RobotFramework" implementationClass="robocorp.lsp.intellij.FeatureDiagnostics"/>
         <editorFactoryListener implementation="robocorp.lsp.intellij.LanguageServerEditorListener"/>
         <lang.commenter language="RobotFramework" implementationClass="robocorp.robot.intellij.RobotCommenter"/>

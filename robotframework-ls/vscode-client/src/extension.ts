@@ -24,7 +24,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 import { workspace, Disposable, ExtensionContext, window, commands, ConfigurationTarget, debug, DebugAdapterExecutable, ProviderResult, DebugConfiguration, WorkspaceFolder, CancellationToken, DebugConfigurationProvider, extensions } from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
+import { LanguageClientOptions } from 'vscode-languageclient';
+import { LanguageClient, ServerOptions } from 'vscode-languageclient/node';
 import { ProgressReport, handleProgressMessage } from './progress';
 import { Timing } from './time';
 

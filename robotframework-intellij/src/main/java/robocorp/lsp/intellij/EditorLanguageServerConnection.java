@@ -33,6 +33,7 @@ public class EditorLanguageServerConnection {
     private final LanguageServerCommunication.IDiagnosticsListener diagnosticsListener;
 
     private final AtomicInteger version = new AtomicInteger(-1);
+    private SemanticTokensWithRegistrationOptions semanticTokensProvider;
 
     private EditorLanguageServerConnection(LanguageServerManager manager, ILSPEditor editor) throws ExecutionException, InterruptedException, LanguageServerUnavailableException, TimeoutException, IOException {
         this.languageServerManager = manager;
@@ -44,12 +45,19 @@ public class EditorLanguageServerConnection {
         if (comm == null) {
             throw new LanguageServerUnavailableException("Unable to get language server communication for: " + projectRoot);
         }
+
         diagnosticsListener = params -> {
             List<Diagnostic> diagnostics = params.getDiagnostics();
             editor.setDiagnostics(diagnostics);
         };
         comm.addDiagnosticsListener(editor.getURI(), diagnosticsListener);
         comm.didOpen(this);
+
+        ServerCapabilities serverCapabilities = comm.getServerCapabilities();
+        if (serverCapabilities == null) {
+            throw new LanguageServerUnavailableException("Unable to get language server capabilities for: " + projectRoot);
+        }
+        semanticTokensProvider = serverCapabilities.getSemanticTokensProvider();
 
         documentListener = new DocumentListener() {
             @Override
@@ -137,6 +145,10 @@ public class EditorLanguageServerConnection {
         return null;
     }
 
+    public ILSPEditor getEditor() {
+        return editor;
+    }
+
     public void editorReleased() throws InterruptedException, ExecutionException, TimeoutException, IOException {
         Object userData = editor.getUserData(KEY_IN_USER_DATA);
         if (userData == null) {
@@ -206,5 +218,23 @@ public class EditorLanguageServerConnection {
             LOG.error(e);
         }
         return null;
+    }
+
+    public SemanticTokensWithRegistrationOptions getSemanticTokensProvider() {
+        return semanticTokensProvider;
+    }
+
+    public CompletableFuture<SemanticTokens> getSemanticTokens() {
+        try {
+            LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot, editor.getProject());
+            if (comm == null) {
+                return null;
+            }
+            SemanticTokensParams params = new SemanticTokensParams(identifier);
+            return comm.getSemanticTokens(params);
+        } catch (Exception e) {
+            LOG.error(e);
+            return null;
+        }
     }
 }

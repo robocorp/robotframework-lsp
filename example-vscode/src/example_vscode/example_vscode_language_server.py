@@ -5,6 +5,44 @@ from robocorp_ls_core.protocols import IConfig
 
 log = get_logger(__name__)
 
+TOKEN_TYPES = [
+    "namespace",
+    "type",
+    "class",
+    "enum",
+    "interface",
+    "struct",
+    "typeParameter",
+    "parameter",
+    "variable",
+    "property",
+    "enumMember",
+    "event",
+    "function",
+    "method",
+    "macro",
+    "keyword",
+    "modifier",
+    "comment",
+    "string",
+    "number",
+    "regexp",
+    "operator",
+]
+
+TOKEN_MODIFIERS = [
+    "declaration",
+    "definition",
+    "readonly",
+    "static",
+    "deprecated",
+    "abstract",
+    "async",
+    "modification",
+    "documentation",
+    "defaultLibrary",
+]
+
 
 class ExampleVSCodeLanguageServer(PythonLanguageServer):
     @overrides(PythonLanguageServer.capabilities)
@@ -23,7 +61,7 @@ class ExampleVSCodeLanguageServer(PythonLanguageServer):
             "documentHighlightProvider": False,
             "documentRangeFormattingProvider": False,
             "documentSymbolProvider": False,
-            "definitionProvider": True,
+            "definitionProvider": False,
             "executeCommandProvider": {"commands": ["extension.sayHello"]},
             "hoverProvider": False,
             "referencesProvider": False,
@@ -37,6 +75,14 @@ class ExampleVSCodeLanguageServer(PythonLanguageServer):
             "workspace": {
                 "workspaceFolders": {"supported": True, "changeNotifications": True}
             },
+            "semanticTokensProvider": {
+                "legend": {
+                    "tokenTypes": TOKEN_TYPES,
+                    "tokenModifiers": TOKEN_MODIFIERS,
+                },
+                "range": False,
+                "full": False,
+            },
         }
         log.info("Server capabilities: %s", server_capabilities)
         return server_capabilities
@@ -45,6 +91,12 @@ class ExampleVSCodeLanguageServer(PythonLanguageServer):
         import sys
 
         sys.stderr.write("Execute command: %s with args: %s\n" % (command, arguments))
+
+    def m_text_document__semantic_tokens__full(self, textDocument=None):
+        # # deltaLine: 1, deltaCol: 0, len: 10, tokenType: 2 (class), tokenModifier: 0 (none)
+        # # deltaLine: 1, deltaCol: 0, len: 10, tokenType: 2 (class), tokenModifier: 0 (none)
+        # return {"data": [1, 0, 10, 1, 0, 1, 0, 10, 1, 0]}
+        return {"data": []}
 
     def lint(self, doc_uri, is_saved):
         pass

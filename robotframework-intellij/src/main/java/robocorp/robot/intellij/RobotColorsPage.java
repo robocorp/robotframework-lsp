@@ -21,7 +21,15 @@ public class RobotColorsPage implements ColorSettingsPage {
         ATTRIBUTES = new AttributesDescriptor[]{
                 new AttributesDescriptor("color.settings.heading", RobotFrameworkSyntaxHighlightingFactory.HEADING),
                 new AttributesDescriptor("color.settings.comment", RobotFrameworkSyntaxHighlightingFactory.COMMENT),
-                new AttributesDescriptor("color.settings.variable", RobotFrameworkSyntaxHighlightingFactory.VARIABLE)
+                new AttributesDescriptor("color.settings.variable", RobotFrameworkSyntaxHighlightingFactory.VARIABLE),
+                new AttributesDescriptor("color.settings.parameter", RobotFrameworkSyntaxHighlightingFactory.PARAMETER),
+                new AttributesDescriptor("color.settings.name", RobotFrameworkSyntaxHighlightingFactory.NAME),
+                new AttributesDescriptor("color.settings.setting", RobotFrameworkSyntaxHighlightingFactory.SETTING),
+                new AttributesDescriptor("color.settings.keyword", RobotFrameworkSyntaxHighlightingFactory.KEYWORD),
+                new AttributesDescriptor("color.settings.variableOperator", RobotFrameworkSyntaxHighlightingFactory.VARIABLE_OPERATOR),
+                new AttributesDescriptor("color.settings.keywordCall", RobotFrameworkSyntaxHighlightingFactory.KEYWORD_CALL),
+                new AttributesDescriptor("color.settings.settingOperator", RobotFrameworkSyntaxHighlightingFactory.SETTING_OPERATOR),
+                new AttributesDescriptor("color.settings.control", RobotFrameworkSyntaxHighlightingFactory.CONTROL),
         };
     }
 

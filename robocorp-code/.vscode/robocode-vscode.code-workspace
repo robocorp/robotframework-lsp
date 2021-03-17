@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../../robotframework-ls"
+		},
+		{
+			"path": "../../example-vscode"
 		}
 	],
 	"settings": {

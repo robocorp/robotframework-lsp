@@ -1,0 +1,24 @@
+{
+    "fileTypes": [
+        "example_vscode"
+    ],
+    "repository": {
+        "comment": {
+            "match": "(?:^ ?|\\t+| {2,})(#.*)$",
+            "captures": {
+                "1": {
+                    "name": "comment.line.example"
+                }
+            },
+            "name": "meta.comment.example"
+        }
+   },
+    "uuid": "a7fb3310-bc3b-431e-b8fc-b44feb9d2a9f",
+    "patterns": [
+        {
+            "include": "#comment"
+        }
+    ],
+    "name": "ExampleVSCode",
+    "scopeName": "source.example.vscode"
+}

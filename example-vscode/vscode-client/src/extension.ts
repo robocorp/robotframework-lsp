@@ -24,9 +24,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 import { workspace, Disposable, ExtensionContext, window, commands, Uri, ConfigurationTarget, debug, DebugAdapterExecutable } from 'vscode';
-import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, ErrorAction, ErrorHandler, CloseAction, TransportKind } from 'vscode-languageclient';
-import { print } from 'util';
-import { exec } from 'child_process';
+import { LanguageClientOptions } from 'vscode-languageclient';
+import { LanguageClient, ServerOptions } from 'vscode-languageclient/node';
 
 function startLangServerIO(command: string, args: string[], documentSelector: string[]): LanguageClient {
 	const serverOptions: ServerOptions = {
@@ -125,7 +124,7 @@ function startLangServerIOWithPython(context: ExtensionContext, pythonExecutable
 		args = args.concat(lsArgs);
 	}
 
-	let langServer: LanguageClient = startLangServerIO(pythonExecutable, args, ["example_lang"]);
+	let langServer: LanguageClient = startLangServerIO(pythonExecutable, args, ["example_vscode"]);
 	let disposable: Disposable = langServer.start();
 	afterStartLangServer(pythonExecutable);
 	context.subscriptions.push(disposable);
@@ -202,7 +201,7 @@ export function activate(context: ExtensionContext) {
 		let port: number = config.get<number>("language-server.tcp-port");
 		if (port) {
 			// For TCP server needs to be started seperately
-			let langServer = startLangServerTCP(port, ["example_lang"]);
+			let langServer = startLangServerTCP(port, ["example_vscode"]);
 			let disposable: Disposable = langServer.start();
 			afterStartLangServer(undefined);
 			context.subscriptions.push(disposable);

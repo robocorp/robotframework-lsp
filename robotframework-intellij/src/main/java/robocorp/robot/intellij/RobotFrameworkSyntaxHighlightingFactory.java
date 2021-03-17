@@ -11,6 +11,9 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
+
 class Highlighter implements @NotNull SyntaxHighlighter {
     @Override
     public @NotNull Lexer getHighlightingLexer() {
@@ -25,6 +28,22 @@ class Highlighter implements @NotNull SyntaxHighlighter {
             return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.COMMENT};
         } else if (tokenType == RobotElementType.VARIABLE) {
             return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.VARIABLE};
+        } else if (tokenType == RobotElementType.PARAMETER) {
+            return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.PARAMETER};
+        } else if (tokenType == RobotElementType.NAME) {
+            return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.NAME};
+        } else if (tokenType == RobotElementType.SETTING) {
+            return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.SETTING};
+        } else if (tokenType == RobotElementType.KEYWORD) {
+            return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.KEYWORD};
+        } else if (tokenType == RobotElementType.VARIABLE_OPERATOR) {
+            return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.VARIABLE_OPERATOR};
+        } else if (tokenType == RobotElementType.KEYWORD_CALL) {
+            return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.KEYWORD_CALL};
+        } else if (tokenType == RobotElementType.SETTING_OPERATOR) {
+            return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.SETTING_OPERATOR};
+        } else if (tokenType == RobotElementType.CONTROL) {
+            return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.CONTROL};
         }
         return new TextAttributesKey[0];
     }
@@ -40,6 +59,50 @@ public class RobotFrameworkSyntaxHighlightingFactory extends SyntaxHighlighterFa
 
     public static final TextAttributesKey VARIABLE = TextAttributesKey.createTextAttributesKey(
             RobotElementType.VARIABLE.toString(), DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+
+    public static final TextAttributesKey PARAMETER = TextAttributesKey.createTextAttributesKey(
+            RobotElementType.PARAMETER.toString(), DefaultLanguageHighlighterColors.PARAMETER);
+
+    public static final TextAttributesKey NAME = TextAttributesKey.createTextAttributesKey(
+            RobotElementType.NAME.toString(), DefaultLanguageHighlighterColors.STRING);
+
+    public static final TextAttributesKey SETTING = TextAttributesKey.createTextAttributesKey(
+            RobotElementType.SETTING.toString(), DefaultLanguageHighlighterColors.METADATA);
+
+    public static final TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey(
+            RobotElementType.KEYWORD.toString(), DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
+
+    public static final TextAttributesKey VARIABLE_OPERATOR = TextAttributesKey.createTextAttributesKey(
+            RobotElementType.VARIABLE_OPERATOR.toString(), DefaultLanguageHighlighterColors.PARENTHESES);
+
+    public static final TextAttributesKey KEYWORD_CALL = TextAttributesKey.createTextAttributesKey(
+            RobotElementType.KEYWORD_CALL.toString(), DefaultLanguageHighlighterColors.METADATA);
+
+    public static final TextAttributesKey SETTING_OPERATOR = TextAttributesKey.createTextAttributesKey(
+            RobotElementType.SETTING_OPERATOR.toString(), DefaultLanguageHighlighterColors.PARENTHESES);
+
+    public static final TextAttributesKey CONTROL = TextAttributesKey.createTextAttributesKey(
+            RobotElementType.CONTROL.toString(), DefaultLanguageHighlighterColors.KEYWORD);
+
+    private static Map<String, TextAttributesKey> lspTypeToTextAttributeKey = new HashMap<>();
+
+    static {
+        lspTypeToTextAttributeKey.put("header", HEADING);
+        lspTypeToTextAttributeKey.put("comment", COMMENT);
+        lspTypeToTextAttributeKey.put("variable", VARIABLE);
+        lspTypeToTextAttributeKey.put("parameter", PARAMETER);
+        lspTypeToTextAttributeKey.put("name", NAME);
+        lspTypeToTextAttributeKey.put("setting", SETTING);
+        lspTypeToTextAttributeKey.put("keywordNameDefinition", KEYWORD);
+        lspTypeToTextAttributeKey.put("variableOperator", VARIABLE_OPERATOR);
+        lspTypeToTextAttributeKey.put("keywordNameCall", KEYWORD_CALL);
+        lspTypeToTextAttributeKey.put("settingOperator", VARIABLE);
+        lspTypeToTextAttributeKey.put("control", CONTROL);
+    }
+
+    public static TextAttributesKey getFromType(String s) {
+        return lspTypeToTextAttributeKey.get(s);
+    }
 
     @Override
     public @NotNull SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {

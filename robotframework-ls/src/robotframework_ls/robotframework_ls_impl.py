@@ -205,6 +205,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     @overrides(PythonLanguageServer.capabilities)
     def capabilities(self):
         from robocorp_ls_core.lsp import TextDocumentSyncKind
+        from robotframework_ls.impl.semantic_tokens import TOKEN_TYPES, TOKEN_MODIFIERS
 
         server_capabilities = {
             "codeActionProvider": False,
@@ -245,6 +246,14 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             "workspaceSymbolProvider": True,
             # The one below isn't accepted by lsp4j (it's still in LSP 3.15.0).
             # "workspaceSymbolProvider": {"workDoneProgress": False},
+            "semanticTokensProvider": {
+                "legend": {
+                    "tokenTypes": TOKEN_TYPES,
+                    "tokenModifiers": TOKEN_MODIFIERS,
+                },
+                "range": False,
+                "full": True,
+            },
         }
         log.info("Server capabilities: %s", server_capabilities)
         return server_capabilities
@@ -288,6 +297,29 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                     return result
 
         return None
+
+    def m_text_document__semantic_tokens__range(self, textDocument=None, range=None):
+        doc_uri = textDocument["uri"]
+        api = self._server_manager.get_semantic_tokens_rf_api_client(doc_uri)
+        if api is None:
+            return []
+
+        return api.forward(
+            "textDocument/semanticTokens/range",
+            {"textDocument": textDocument, "range": range},
+        )
+
+    def m_text_document__semantic_tokens__full(self, textDocument=None):
+        doc_uri = textDocument["uri"]
+        api = self._server_manager.get_semantic_tokens_rf_api_client(doc_uri)
+        if api is None:
+            return []
+        ret = api.forward(
+            "textDocument/semanticTokens/full", {"textDocument": textDocument}
+        )
+        if ret is not None:
+            return ret["result"]
+        return []
 
     def m_workspace__execute_command(self, command=None, arguments=()) -> Any:
         if command == "robot.addPluginsDir":

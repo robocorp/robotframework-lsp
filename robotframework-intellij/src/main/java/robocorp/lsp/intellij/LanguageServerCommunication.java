@@ -522,4 +522,16 @@ public class LanguageServerCommunication {
 
         return languageServer.getWorkspaceService().executeCommand(params);
     }
+
+    public CompletableFuture<SemanticTokens> getSemanticTokens(SemanticTokensParams params) {
+        LanguageServer languageServer = obtainSynchronizedLanguageServer();
+
+        if (languageServer == null) {
+            LOG.info("Unable to run command: disconnected.");
+            return null;
+        }
+
+        return languageServer.getTextDocumentService().semanticTokensFull(params);
+    }
+
 }

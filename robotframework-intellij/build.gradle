@@ -23,6 +23,10 @@ buildPlugin.finalizedBy finishBuild
 
 repositories {
     mavenCentral()
+
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots/"
+    }
 }
 
 allprojects {
@@ -34,7 +38,7 @@ allprojects {
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-    compile group: 'org.eclipse.lsp4j', name: 'org.eclipse.lsp4j', version: '0.10.0'
+    compile group: 'org.eclipse.lsp4j', name: 'org.eclipse.lsp4j', version: '0.11.0-SNAPSHOT'
 }
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
