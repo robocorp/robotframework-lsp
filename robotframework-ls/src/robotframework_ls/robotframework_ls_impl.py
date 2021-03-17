@@ -460,7 +460,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     @overrides(PythonLanguageServer.m_workspace__did_change_workspace_folders)
     def m_workspace__did_change_workspace_folders(self, event=None, **_kwargs):
         self._server_manager.forward(
-            ("api", "lint"), "workspace/didChangeWorkspaceFolders", event
+            ("api", "lint"), "workspace/didChangeWorkspaceFolders", {"event": event}
         )
         PythonLanguageServer.m_workspace__did_change_workspace_folders(
             self, event=event, **_kwargs
