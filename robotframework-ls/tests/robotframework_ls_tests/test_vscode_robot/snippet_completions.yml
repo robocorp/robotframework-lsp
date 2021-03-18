@@ -9,14 +9,14 @@ result:
     \    $0\nEND"
   insertTextFormat: 2
   kind: 15
-  label: FOR/IN
+  label: FOR IN
   preselect: false
   textEdit:
     newText: "FOR    ${${1:element}}    IN    @{${2:LIST}}\n    Log    ${${1:element}}\n\
       \    $0\nEND"
     range:
       end:
-        character: 8
+        character: 10
         line: 3
       start:
         character: 4
@@ -32,14 +32,14 @@ result:
     \    Log    ${${1:index}}: ${${2:element}}\n    $0\nEND"
   insertTextFormat: 2
   kind: 15
-  label: FOR/IN ENUMERATE
+  label: FOR IN ENUMERATE
   preselect: false
   textEdit:
     newText: "FOR    ${${1:index}}    ${${2:element}}    IN ENUMERATE    @{${3:LIST}}\n\
       \    Log    ${${1:index}}: ${${2:element}}\n    $0\nEND"
     range:
       end:
-        character: 8
+        character: 10
         line: 3
       start:
         character: 4
@@ -54,14 +54,14 @@ result:
     \    Log    ${${1:counter}}\n    $0\nEND"
   insertTextFormat: 2
   kind: 15
-  label: FOR/IN RANGE
+  label: FOR IN RANGE
   preselect: false
   textEdit:
     newText: "FOR    ${${1:counter}}    IN RANGE    ${2:START}    ${3:END}    ${4:opt.STEPS}\n\
       \    Log    ${${1:counter}}\n    $0\nEND"
     range:
       end:
-        character: 8
+        character: 10
         line: 3
       start:
         character: 4
@@ -78,7 +78,7 @@ result:
     END"
   insertTextFormat: 2
   kind: 15
-  label: FOR/IN ZIP
+  label: FOR IN ZIP
   preselect: false
   textEdit:
     newText: "FOR    ${${1:l1-element}}    ${${2:l2-element}}    IN ZIP    ${${3:LIST-1}}\
@@ -86,7 +86,7 @@ result:
       \  $0\nEND"
     range:
       end:
-        character: 8
+        character: 10
         line: 3
       start:
         character: 4

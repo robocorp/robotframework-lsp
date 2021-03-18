@@ -5,6 +5,72 @@ import java.util.List;
 
 public class StringUtils {
 
+    public static int getFirstCharPosition(String src) {
+        int i = 0;
+        boolean breaked = false;
+        int len = src.length();
+        while (i < len) {
+            if (!Character.isWhitespace(src.charAt(i))) {
+                i++;
+                breaked = true;
+                break;
+            }
+            i++;
+        }
+        if (!breaked) {
+            i++;
+        }
+        return (i - 1);
+    }
+
+    /**
+     * @param selection the text from where we want to get the indentation
+     * @return a string representing the whitespaces and tabs befor the first char in the passed line.
+     */
+    public static String getIndentationFromLine(String selection) {
+        int firstCharPosition = getFirstCharPosition(selection);
+        return selection.substring(0, firstCharPosition);
+    }
+
+    /**
+     * Splits the given string in a list where each element is a line.
+     *
+     * @param string string to be split.
+     * @return list of strings where each string is a line.
+     * @note the new line characters are also added to the returned string.
+     */
+    public static List<String> splitInLines(String string) {
+        ArrayList<String> ret = new ArrayList<String>();
+        int len = string.length();
+
+        char c;
+        FastStringBuffer buf = new FastStringBuffer();
+
+        for (int i = 0; i < len; i++) {
+            c = string.charAt(i);
+
+            buf.append(c);
+
+            if (c == '\r') {
+                if (i < len - 1 && string.charAt(i + 1) == '\n') {
+                    i++;
+                    buf.append('\n');
+                }
+                ret.add(buf.toString());
+                buf.clear();
+            }
+            if (c == '\n') {
+                ret.add(buf.toString());
+                buf.clear();
+
+            }
+        }
+        if (buf.length() != 0) {
+            ret.add(buf.toString());
+        }
+        return ret;
+    }
+
     /**
      * Splits some string given some char (that char will not appear in the returned strings)
      * Empty strings are also never added.

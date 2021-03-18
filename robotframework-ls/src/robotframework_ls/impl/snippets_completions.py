@@ -1,6 +1,6 @@
 _SNIPPETS = {
-    "FOR/IN": {
-        "prefix": "FOR/IN",
+    "FOR IN": {
+        "prefix": "FOR IN",
         "body": [
             "FOR    ${${1:element}}    IN    @{${2:LIST}}",
             "    Log    ${${1:element}}",
@@ -9,8 +9,8 @@ _SNIPPETS = {
         ],
         "description": "Snippet of a FOR IN loop.\n\nA for loop that iterates over a list of values and assigns one value to a variable per iteration.",
     },
-    "FOR/IN ENUMERATE": {
-        "prefix": "FOR/IN ENUMERATE",
+    "FOR IN ENUMERATE": {
+        "prefix": "FOR IN ENUMERATE",
         "body": [
             "FOR    ${${1:index}}    ${${2:element}}    IN ENUMERATE    @{${3:LIST}}",
             "    Log    ${${1:index}}: ${${2:element}}",
@@ -19,8 +19,8 @@ _SNIPPETS = {
         ],
         "description": "Snippet of a FOR IN ENUMERATE loop.\n\nA for loop that iterates over a list of values and assigns the iteration index to the first and the value to the second variable per iteration.",
     },
-    "FOR/IN RANGE": {
-        "prefix": "FOR/IN RANGE",
+    "FOR IN RANGE": {
+        "prefix": "FOR IN RANGE",
         "body": [
             "FOR    ${${1:counter}}    IN RANGE    ${2:START}    ${3:END}    ${4:opt.STEPS}",
             "    Log    ${${1:counter}}",
@@ -29,8 +29,8 @@ _SNIPPETS = {
         ],
         "description": "Snippet of a FOR IN RANGE loop.\n\nA for loop that iterates over a range of values with an optional configurable step width.",
     },
-    "FOR/IN ZIP": {
-        "prefix": "FOR/IN ZIP",
+    "FOR IN ZIP": {
+        "prefix": "FOR IN ZIP",
         "body": [
             "FOR    ${${1:l1-element}}    ${${2:l2-element}}    IN ZIP    ${${3:LIST-1}}    ${${4:LIST-2}}",
             "    Log    ${${1:l1-element}} - ${${2:l2-element}}",
@@ -38,6 +38,22 @@ _SNIPPETS = {
             "END",
         ],
         "description": "Snippet of a FOR IN ZIP loop\n\nA for loop that iterates over two lists and assigns the values from the first list to the first variable and values from the second list to the second variable per iteration.",
+    },
+    "IF STATEMENT": {
+        "prefix": "IF STATEMENT",
+        "body": ["IF    ${${1:var1}} == ${${1:var2}}", "    $0", "END"],
+        "description": "Snippet of an IF..END statement.",
+    },
+    "IF ELSE STATEMENT": {
+        "prefix": "IF ELSE STATEMENT",
+        "body": [
+            "IF    ${${1:var1}} == ${${1:var2}}",
+            "    ${3:Call Keyword}",
+            "ELSE",
+            "    $0",
+            "END",
+        ],
+        "description": "Snippet of an IF..ELSE..END statement",
     },
     "Run Keyword If": {
         "prefix": "Run Keyword If",

@@ -261,7 +261,7 @@ def test_snippets_completions_integrated(
     contents = """
 *** Test Cases ***
 List Variable
-    for/"""
+    for in"""
     language_server.change_doc(uri, 2, contents)
 
     doc = Document("", source=contents)

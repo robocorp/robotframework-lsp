@@ -34,6 +34,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -43,6 +44,7 @@ import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -255,12 +257,29 @@ public class FeatureCodeCompletion extends CompletionContributor {
                     // i.e.: Don't remove what wasn't added in the first place.
                     startOffset = startPosOffset;
                 }
+
+                int lineStartOffset = document.getLineStartOffset(startPos.getLine());
+                String currLineText = document.getText(new TextRange(lineStartOffset, startOffset));
+
                 document.deleteString(startOffset, context.getTailOffset());
 
                 ArrayList<TextEdit> lst = new ArrayList<>();
-                final String originalText = textEdit.getNewText();
+                String originalText = textEdit.getNewText();
+                int i;
+                if ((i = originalText.indexOf('\n')) != -1) {
+                    // i.e.: properly indent the other lines
+                    String indentationFromLine = StringUtils.getIndentationFromLine(currLineText);
+                    List<String> lines = StringUtils.splitInLines(originalText);
+                    Iterator<String> it = lines.iterator();
+                    FastStringBuffer buf = new FastStringBuffer(it.next(), indentationFromLine.length() * 10); // First is added as is.
+                    while (it.hasNext()) {
+                        buf.append(indentationFromLine);
+                        buf.append(it.next());
+                    }
+                    originalText = buf.toString();
+                }
                 if (item.getInsertTextFormat() == InsertTextFormat.Snippet) {
-                    textEdit.setNewText(removePlaceholders(textEdit.getNewText()));
+                    textEdit.setNewText(removePlaceholders(originalText));
                 }
                 lst.add(textEdit);
                 List<TextEdit> additionalTextEdits = item.getAdditionalTextEdits();
@@ -308,27 +327,31 @@ public class FeatureCodeCompletion extends CompletionContributor {
                 }
 
                 variables.sort(Comparator.comparingInt(o -> o.startIndex));
-                final String[] finalInsertText = {insertText};
-                variables.forEach(var -> finalInsertText[0] = finalInsertText[0].replace(var.lspSnippetText, "$"));
+                String finalInsertText = insertText;
+                for (SnippetVariable var : variables) {
+                    finalInsertText = finalInsertText.replace(var.lspSnippetText, "XXX_REPLACE_XXX_ROBOT_LSP_XXX");
+                }
 
-                String[] splitInsertText = finalInsertText[0].split("\\$");
-                finalInsertText[0] = String.join("", splitInsertText);
+                String[] splitInsertText = finalInsertText.split("XXX_REPLACE_XXX_ROBOT_LSP_XXX");
+                finalInsertText = String.join("", splitInsertText);
 
-                TemplateImpl template = (TemplateImpl) TemplateManager.getInstance(project).createTemplate(finalInsertText[0],
+                TemplateImpl template = (TemplateImpl) TemplateManager.getInstance(project).createTemplate(finalInsertText,
                         "groupLSP");
                 template.parseSegments();
 
                 // prevent "smart" indent of next line...
                 template.setToIndent(false);
 
-                final int[] varIndex = {0};
-                variables.forEach(var -> {
+                int varIndex = 0;
+                for (SnippetVariable var : variables) {
                     var.variableValue = var.variableValue.replace("\\$", "$");
-                    template.addTextSegment(splitInsertText[varIndex[0]]);
-                    template.addVariable(varIndex[0] + "_" + var.variableValue, new TextExpression(var.variableValue),
+                    String text = splitInsertText[varIndex];
+                    template.addTextSegment(text);
+                    String name = varIndex + "_" + var.variableValue;
+                    template.addVariable(name, new TextExpression(var.variableValue),
                             new TextExpression(var.variableValue), true, false);
-                    varIndex[0]++;
-                });
+                    varIndex++;
+                }
                 // If the snippet text ends with a placeholder, there will be no string segment left to append after the last
                 // variable.
                 if (splitInsertText.length != variables.size()) {

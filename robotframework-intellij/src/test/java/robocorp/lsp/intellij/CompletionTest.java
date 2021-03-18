@@ -30,6 +30,14 @@ public class CompletionTest extends LSPTesCase {
         myFixture.configureByFiles("casekeywords.robot", "case1_library.py");
         Editor editor = myFixture.getEditor();
         EditorLanguageServerConnection conn = EditorLanguageServerConnection.getFromUserData(editor);
+        waitForDiagnostic(conn);
+        int textLength = editor.getDocument().getTextLength();
+        editor.getCaretModel().moveToOffset(textLength);
+        myFixture.testCompletion("casekeywords.robot", "casekeywords_after.robot");
+
+    }
+
+    private List<Diagnostic> waitForDiagnostic(EditorLanguageServerConnection conn) {
         final List<Diagnostic> diagnostics = TestUtils.waitForCondition(() -> {
             List<Diagnostic> d = conn.getDiagnostics();
             if (d != null && d.size() > 0) {
@@ -37,10 +45,7 @@ public class CompletionTest extends LSPTesCase {
             }
             return null;
         });
-        int textLength = editor.getDocument().getTextLength();
-        editor.getCaretModel().moveToOffset(textLength);
-        myFixture.testCompletion("casekeywords.robot", "casekeywords_after.robot");
-
+        return diagnostics;
     }
 
     @Test
@@ -81,6 +86,17 @@ public class CompletionTest extends LSPTesCase {
         int textLength = editor.getDocument().getTextLength();
         editor.getCaretModel().moveToOffset(textLength);
         myFixture.testCompletion("sub/case_sub.robot", "sub/case_sub_after.robot");
+    }
+
+    @Test
+    public void testCompleteForEnumerate() throws Exception {
+        myFixture.configureByFiles("case_for_complete.robot");
+        Editor editor = myFixture.getEditor();
+        EditorLanguageServerConnection conn = EditorLanguageServerConnection.getFromUserData(editor);
+        waitForDiagnostic(conn);
+        int textLength = editor.getDocument().getTextLength();
+        editor.getCaretModel().moveToOffset(textLength);
+        myFixture.testCompletion("case_for_complete.robot", "case_for_complete_after.robot");
     }
 
 }
