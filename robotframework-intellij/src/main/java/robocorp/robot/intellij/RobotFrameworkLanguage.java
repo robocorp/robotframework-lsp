@@ -18,6 +18,7 @@ import robocorp.lsp.intellij.SearchPython;
 
 import java.io.File;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -232,20 +233,48 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         }
 
         while (directory != null) {
-            File main = new File(new File(directory, "robotframework_ls"), "__main__.py");
-            if (main.exists()) {
+            File main = checkDirectoryForMain(builder, directory);
+            if (main != null) {
                 return main;
             }
-            builder.append("Target location:\n" + main + "\n");
 
-            main = new File(new File(new File(new File(directory, "robotframework-ls"), "src"), "robotframework_ls"), "__main__.py");
-            if (main.exists()) {
-                return main;
+            // Let's see if it's url-quoted.
+            try {
+                String dirAsAbsolute = directory.getAbsolutePath();
+                String decoded = java.net.URLDecoder.decode(dirAsAbsolute, StandardCharsets.UTF_8.name());
+                if (decoded != null && !decoded.equals(dirAsAbsolute)) {
+                    main = checkDirectoryForMain(builder, new File(decoded));
+                    if (main != null) {
+                        return main;
+                    }
+                }
+            } catch (Exception e) {
+                LOG.error(e);
             }
-            builder.append("Target location:\n" + main + "\n");
+
             directory = directory.getParentFile();
         }
         throw new RuntimeException("Unable to discover __main__.py location.\nResource file: " + mainStr + "\nDetails:\n" + builder.toString());
+    }
+
+    @Nullable
+    private File checkDirectoryForMain(StringBuilder builder, File directory) {
+        if (!directory.exists()) {
+            builder.append("Directory: " + directory + " does not exist.\n");
+            return null;
+        }
+        File main = new File(new File(directory, "robotframework_ls"), "__main__.py");
+        if (main.exists()) {
+            return main;
+        }
+        builder.append("Checked" + main + "\n");
+
+        main = new File(new File(new File(new File(directory, "robotframework-ls"), "src"), "robotframework_ls"), "__main__.py");
+        if (main.exists()) {
+            return main;
+        }
+        builder.append("Checked:" + main + "\n");
+        return null;
     }
 
     public LanguageServerDefinition getLanguageDefinition() {
