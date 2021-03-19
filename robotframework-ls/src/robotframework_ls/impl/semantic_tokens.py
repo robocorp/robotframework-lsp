@@ -16,6 +16,7 @@ TOKEN_TYPES = [
     "keywordNameCall",  # meta.keyword.call.robot
     "settingOperator",  # keyword.operator.setting.robot
     "control",
+    "testCaseName",
 ]
 
 TOKEN_MODIFIERS = [
@@ -54,6 +55,7 @@ from robotframework_ls.impl.robot_constants import (
     VARIABLE,
     KEYWORD,
     CONTROL_TOKENS,
+    TESTCASE_NAME,
 )
 
 
@@ -63,6 +65,7 @@ RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX = {
     COMMENT: TOKEN_TYPE_TO_INDEX["comment"],
     NAME: TOKEN_TYPE_TO_INDEX["name"],
     KEYWORD_NAME: TOKEN_TYPE_TO_INDEX["keywordNameDefinition"],
+    TESTCASE_NAME: TOKEN_TYPE_TO_INDEX["testCaseName"],
     KEYWORD: TOKEN_TYPE_TO_INDEX["keywordNameCall"],
     ARGUMENT: TOKEN_TYPE_TO_INDEX["parameter"],
     VARIABLE: TOKEN_TYPE_TO_INDEX["variable"],

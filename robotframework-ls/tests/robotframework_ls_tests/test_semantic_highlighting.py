@@ -80,6 +80,52 @@ Some Keyword
     ]
 
 
+def test_semantic_highlighting_task_name(workspace):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
+    from robotframework_ls.impl.semantic_tokens import decode_semantic_tokens
+
+    workspace.set_root("case1")
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """*** Task ***
+Some Task
+""".replace(
+        "\r\n", "\n"
+    ).replace(
+        "\r", "\n"
+    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    semantic_tokens = semantic_tokens_full(context)
+    assert decode_semantic_tokens(semantic_tokens, doc) == [
+        ("*** Task ***", "header"),
+        ("Some Task", "testCaseName"),
+    ]
+
+
+def test_semantic_highlighting_comments(workspace):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
+    from robotframework_ls.impl.semantic_tokens import decode_semantic_tokens
+
+    workspace.set_root("case1")
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """*** Comments ***
+Comment part 1
+Comment part 2
+""".replace(
+        "\r\n", "\n"
+    ).replace(
+        "\r", "\n"
+    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    semantic_tokens = semantic_tokens_full(context)
+    assert decode_semantic_tokens(semantic_tokens, doc) == [
+        ("*** Comments ***", "header"),
+        ("Comment part 1", "comment"),
+        ("Comment part 2", "comment"),
+    ]
+
+
 def test_semantic_highlighting_for_if(workspace):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.semantic_tokens import semantic_tokens_full

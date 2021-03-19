@@ -30,6 +30,7 @@ public class RobotColorsPage implements ColorSettingsPage {
                 new AttributesDescriptor("color.settings.keywordCall", RobotFrameworkSyntaxHighlightingFactory.KEYWORD_CALL),
                 new AttributesDescriptor("color.settings.settingOperator", RobotFrameworkSyntaxHighlightingFactory.SETTING_OPERATOR),
                 new AttributesDescriptor("color.settings.control", RobotFrameworkSyntaxHighlightingFactory.CONTROL),
+                new AttributesDescriptor("color.settings.testCaseName", RobotFrameworkSyntaxHighlightingFactory.TEST_CASE_NAME),
         };
     }
 
@@ -46,7 +47,7 @@ public class RobotColorsPage implements ColorSettingsPage {
     @Override
     public @NonNls
     @NotNull String getDemoText() {
-        return "*** Settings ***\nLibrary    Test\n# Comment\n${variable}\n";
+        return "*** Settings ***\nLibrary    Test\n# Comment\n${variable}\n\n*** Keyword ***\nKeyword Definition\n    [Arguments]     ${arg1}     ${arg2}\n    Keyword Call    ${arg1}     ${arg2}\n";
     }
 
     @Override

@@ -62,6 +62,9 @@
                     ],
                     "control": [
                         "keyword.control.flow.robot"
+                    ],
+                    "testCaseName": [
+                        "entity.name.function.robot"
                     ]
                 }
             }

@@ -44,6 +44,8 @@ class Highlighter implements @NotNull SyntaxHighlighter {
             return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.SETTING_OPERATOR};
         } else if (tokenType == RobotElementType.CONTROL) {
             return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.CONTROL};
+        } else if (tokenType == RobotElementType.TEST_CASE_NAME) {
+            return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.TEST_CASE_NAME};
         }
         return new TextAttributesKey[0];
     }
@@ -84,6 +86,9 @@ public class RobotFrameworkSyntaxHighlightingFactory extends SyntaxHighlighterFa
     public static final TextAttributesKey CONTROL = TextAttributesKey.createTextAttributesKey(
             RobotElementType.CONTROL.toString(), DefaultLanguageHighlighterColors.KEYWORD);
 
+    public static final TextAttributesKey TEST_CASE_NAME = TextAttributesKey.createTextAttributesKey(
+            RobotElementType.TEST_CASE_NAME.toString(), DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
+
     private static Map<String, TextAttributesKey> lspTypeToTextAttributeKey = new HashMap<>();
 
     static {
@@ -98,6 +103,7 @@ public class RobotFrameworkSyntaxHighlightingFactory extends SyntaxHighlighterFa
         lspTypeToTextAttributeKey.put("keywordNameCall", KEYWORD_CALL);
         lspTypeToTextAttributeKey.put("settingOperator", VARIABLE);
         lspTypeToTextAttributeKey.put("control", CONTROL);
+        lspTypeToTextAttributeKey.put("testCaseName", TEST_CASE_NAME);
     }
 
     public static TextAttributesKey getFromType(String s) {

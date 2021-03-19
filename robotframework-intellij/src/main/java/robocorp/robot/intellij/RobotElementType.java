@@ -23,4 +23,5 @@ public class RobotElementType extends IElementType {
     public static final RobotElementType KEYWORD_CALL = new RobotElementType("KEYWORD_CALL");
     public static final RobotElementType SETTING_OPERATOR = new RobotElementType("SETTING_OPERATOR");
     public static final RobotElementType CONTROL = new RobotElementType("CONTROL");
+    public static final RobotElementType TEST_CASE_NAME = new RobotElementType("TEST_CASE_NAME");
 }
