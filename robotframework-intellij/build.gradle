@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.9.1'
+version '0.10.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -49,14 +49,15 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.9.1
+    Release 0.10.0
     </p>
     <ul>
-      <li>Handles .resource files. [#251](https://github.com/robocorp/robotframework-lsp/issues/251)</li>
-      <li>If some error happens starting up the language server, show more information.</li>
-      <li>The settings may now also be set per project and not only globally. [#254](https://github.com/robocorp/robotframework-lsp/issues/254)</li>
-      <li>Fix issue getting prefix for filesystem completions. [#256](https://github.com/robocorp/robotframework-lsp/issues/256)</li>
-      <li>Support python packages as libraries (package/__init__.py). [#228](https://github.com/robocorp/robotframework-lsp/issues/228)</li>
+      <li>Fixed issue initializing the language server if there was a space in the installation path.</li>
+      <li>Improved coloring is now computed on a thread using the `semanticTokens/full` request.</li>
+      <li>Fixed issue applying `FOR` templates.</li>
+      <li>Multi-line completions are properly indented when applied.</li>
+      <li>`FOR` templates no longer have a `/` in them.</li>
+      <li>Added templates for `IF` statements.</li>
     </ul>    
     <br>
     Current feature set:<br>
@@ -66,7 +67,7 @@ patchPluginXml {
     <li>Code analysis</li>
     <li>Go to definition</li>
     <li>Browse Keywords (symbols)</li>
-    <li>Syntax highlighting (very basic right now)</li>
+    <li>Syntax highlighting (with `semanticTokens/full` request)</li>
     </ul>
     <br>
     <strong>

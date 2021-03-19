@@ -1,3 +1,12 @@
+New in 0.10.0 (2021-03-19)
+-----------------------------
+
+- Fixed issue changing workspace folders.
+- Added templates for `IF` statements.
+- `FOR` templates no longer have a `/` in them.
+- Added support for `semanticTokens/full` in the language server.
+- Minimum VSCode version required is now `1.53.0`.
+
 New in 0.9.1 (2021-03-10)
 -----------------------------
 

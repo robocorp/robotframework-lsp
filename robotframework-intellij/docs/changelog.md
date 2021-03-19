@@ -1,3 +1,14 @@
+New in 0.10.0 (2021-03-19)
+-----------------------------
+
+- Fixed issue initializing the language server if there was a space in the installation path.
+- Improved coloring is now computed on a thread using the `semanticTokens/full` request.
+- Fixed issue applying `FOR` templates.
+- Multi-line completions are properly indented when applied.
+- `FOR` templates no longer have a `/` in them.
+- Added templates for `IF` statements.
+
+
 New in 0.9.1 (2021-03-20)
 -----------------------------
 

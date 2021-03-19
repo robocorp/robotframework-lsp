@@ -39,7 +39,7 @@ may be needed (by default it'll use the `python` from the `PATH`).
 
 The settings may be configured at: `File > Settings > Languages & Frameworks > Robot Framework Language Server`.
 
-Features (0.9.1)
+Features (0.10.0)
 -----------------
 
 - Settings page for the language server (per project and global)
@@ -47,7 +47,7 @@ Features (0.9.1)
 - Code analysis
 - Go to definition
 - Browse Keywords (symbols -- note: enable the `robot.workspaceSymbolsOnlyForOpenDocs` when dealing with big workspaces)
-- Syntax highlighting (very basic right now)
+- Syntax highlighting (with `semanticTokens/full` request).
 
 See: [Changelog](docs/changelog.md) for details.
 

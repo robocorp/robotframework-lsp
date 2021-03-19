@@ -30,7 +30,7 @@ may be needed.
 See: [Config](docs/config.md) for details.
   
 
-Features (0.9.1)
+Features (0.10.0)
 -----------------
 
 - Code analysis: checks if keywords are properly imported/defined.
@@ -38,7 +38,7 @@ Features (0.9.1)
 - Code completion for all keywords in the workspace with auto-import of Library or Resource.
 - Go to definition for keywords, variables, resource imports and library imports.
 - Symbols browser for keywords (activated through `Ctrl + T`).
-- Syntax highlighting.
+- Syntax highlighting (using `semanticTokens`).
 - Syntax validation.
 - Signature Help (activated through `Ctrl + Shift + Space`).
 - Code Formatting (see: [Editor Settings](https://code.visualstudio.com/docs/getstarted/settings#_language-specific-editor-settings) for details on how to toggle code formatting just for `robotframework`).
