@@ -44,8 +44,13 @@ To release a new version:
 
 - Send release msg. i.e.:
 
-`Robot Framework Language Server 0.10.0` is now available (both from `pip install robotframework-lsp` or through the `VSCode marketplace`).
+Hi @channel, `RobotFramework Language Server 0.10.0` is now available.
 
-The main changes are:
+Official clients are available for `VSCode` and `Intellij` (alpha) (in the respective Marketplaces).
+Other editors supporting language servers can get it with: `pip install robotframework-lsp`.
+
+Note: the Intellij Marketplace can take some time to update, but it can be already installed manually from: https://plugins.jetbrains.com/XXX
+
+Changes in this release:
 
 ...
