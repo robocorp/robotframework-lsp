@@ -19,6 +19,7 @@
 package robocorp.lsp.intellij;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -39,6 +40,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.text.BadLocationException;
+import java.awt.*;
+import java.util.List;
 import java.util.*;
 
 public class EditorUtils {
@@ -124,12 +127,12 @@ public class EditorUtils {
         return file;
     }
 
-    public static @Nullable LanguageServerDefinition getLanguageDefinition(@NotNull VirtualFile file) {
+    public static @Nullable LanguageServerDefinition getLanguageDefinition(@NotNull VirtualFile file, @NotNull Project project) {
         FileType fileType = file.getFileType();
         if (fileType instanceof LanguageFileType) {
             Language language = ((LanguageFileType) fileType).getLanguage();
             if (language instanceof ILSPLanguage) {
-                LanguageServerDefinition definition = ((ILSPLanguage) language).getLanguageDefinition();
+                LanguageServerDefinition definition = ((ILSPLanguage) language).getLanguageDefinition(project);
                 return definition;
             }
         }
@@ -197,4 +200,8 @@ public class EditorUtils {
         logger.error(message);
     }
 
+    public static boolean isHeadlessEnv() {
+        Application app = ApplicationManager.getApplication();
+        return app == null ? GraphicsEnvironment.isHeadless() : app.isUnitTestMode() || app.isHeadlessEnvironment();
+    }
 }

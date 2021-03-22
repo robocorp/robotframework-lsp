@@ -44,15 +44,16 @@ public class EditorToLSPEditor {
                 project = null;
                 return;
             }
-            definition = EditorUtils.getLanguageDefinition(file);
             uri = Uris.toUri(file);
             extension = "." + file.getExtension();
             project = editor.getProject();
 
             // loads to project
             if (project != null) {
+                definition = EditorUtils.getLanguageDefinition(file, project);
                 projectPath = project.getBasePath();
             } else {
+                definition = null;
                 projectPath = null;
             }
         }

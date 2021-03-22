@@ -17,6 +17,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 class RobotProjectState {
     
+    public String robotLanguageServerPython = "";
+    public String robotLanguageServerArgs = "";
+    public String robotLanguageServerTcpPort = "";
     public String robotPythonExecutable = "";
     public String robotPythonEnv = "";
     public String robotVariables = "";
@@ -30,6 +33,9 @@ class RobotProjectState {
 public class RobotProjectPreferences implements PersistentStateComponent<RobotState> {
 
     
+    public static final String ROBOT_LANGUAGE_SERVER_PYTHON = "robot.language-server.python";
+    public static final String ROBOT_LANGUAGE_SERVER_ARGS = "robot.language-server.args";
+    public static final String ROBOT_LANGUAGE_SERVER_TCP_PORT = "robot.language-server.tcp-port";
     public static final String ROBOT_PYTHON_EXECUTABLE = "robot.python.executable";
     public static final String ROBOT_PYTHON_ENV = "robot.python.env";
     public static final String ROBOT_VARIABLES = "robot.variables";
@@ -45,6 +51,9 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
     public RobotState getState() {
         RobotState robotState = new RobotState();
         
+        robotState.robotLanguageServerPython = getRobotLanguageServerPython();
+        robotState.robotLanguageServerArgs = getRobotLanguageServerArgs();
+        robotState.robotLanguageServerTcpPort = getRobotLanguageServerTcpPort();
         robotState.robotPythonExecutable = getRobotPythonExecutable();
         robotState.robotPythonEnv = getRobotPythonEnv();
         robotState.robotVariables = getRobotVariables();
@@ -58,6 +67,9 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
     @Override
     public void loadState(@NotNull RobotState robotState) {
         
+        setRobotLanguageServerPython(robotState.robotLanguageServerPython);
+        setRobotLanguageServerArgs(robotState.robotLanguageServerArgs);
+        setRobotLanguageServerTcpPort(robotState.robotLanguageServerTcpPort);
         setRobotPythonExecutable(robotState.robotPythonExecutable);
         setRobotPythonEnv(robotState.robotPythonEnv);
         setRobotVariables(robotState.robotVariables);
@@ -70,6 +82,30 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
     public JsonObject asJsonObject() {
         Gson g = new Gson();
         JsonObject jsonObject = new JsonObject();
+        
+        if(!robotLanguageServerPython.isEmpty()){
+            try {
+                jsonObject.add(ROBOT_LANGUAGE_SERVER_PYTHON, new JsonPrimitive(robotLanguageServerPython));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotLanguageServerArgs.isEmpty()){
+            try {
+                jsonObject.add(ROBOT_LANGUAGE_SERVER_ARGS, g.fromJson(robotLanguageServerArgs, JsonArray.class));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotLanguageServerTcpPort.isEmpty()){
+            try {
+                jsonObject.add(ROBOT_LANGUAGE_SERVER_TCP_PORT, new JsonPrimitive(Integer.parseInt(robotLanguageServerTcpPort)));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
         
         if(!robotPythonExecutable.isEmpty()){
             try {
@@ -122,6 +158,135 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         return jsonObject;
     }
 
+    
+    private String robotLanguageServerPython = "";
+
+    public @NotNull String getRobotLanguageServerPython() {
+        return robotLanguageServerPython;
+    }
+    
+    public @Nullable JsonPrimitive getRobotLanguageServerPythonAsJson() {
+        if(robotLanguageServerPython.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return new JsonPrimitive(robotLanguageServerPython);
+    }
+    
+    public @NotNull String validateRobotLanguageServerPython(String robotLanguageServerPython) {
+        if(robotLanguageServerPython.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            new JsonPrimitive(robotLanguageServerPython);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLanguageServerPython(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLanguageServerPython)) {
+            return;
+        }
+        String old = robotLanguageServerPython;
+        robotLanguageServerPython = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            listener.onChanged(ROBOT_LANGUAGE_SERVER_PYTHON, old, s);
+        }
+    }
+    
+    private String robotLanguageServerArgs = "";
+
+    public @NotNull String getRobotLanguageServerArgs() {
+        return robotLanguageServerArgs;
+    }
+    
+    public @Nullable JsonArray getRobotLanguageServerArgsAsJson() {
+        if(robotLanguageServerArgs.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return g.fromJson(robotLanguageServerArgs, JsonArray.class);
+    }
+    
+    public @NotNull String validateRobotLanguageServerArgs(String robotLanguageServerArgs) {
+        if(robotLanguageServerArgs.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            g.fromJson(robotLanguageServerArgs, JsonArray.class);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLanguageServerArgs(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLanguageServerArgs)) {
+            return;
+        }
+        String old = robotLanguageServerArgs;
+        robotLanguageServerArgs = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            listener.onChanged(ROBOT_LANGUAGE_SERVER_ARGS, old, s);
+        }
+    }
+    
+    private String robotLanguageServerTcpPort = "";
+
+    public @NotNull String getRobotLanguageServerTcpPort() {
+        return robotLanguageServerTcpPort;
+    }
+    
+    public @Nullable JsonPrimitive getRobotLanguageServerTcpPortAsJson() {
+        if(robotLanguageServerTcpPort.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return new JsonPrimitive(Integer.parseInt(robotLanguageServerTcpPort));
+    }
+    
+    public @NotNull String validateRobotLanguageServerTcpPort(String robotLanguageServerTcpPort) {
+        if(robotLanguageServerTcpPort.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            new JsonPrimitive(Integer.parseInt(robotLanguageServerTcpPort));
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLanguageServerTcpPort(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLanguageServerTcpPort)) {
+            return;
+        }
+        String old = robotLanguageServerTcpPort;
+        robotLanguageServerTcpPort = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            listener.onChanged(ROBOT_LANGUAGE_SERVER_TCP_PORT, old, s);
+        }
+    }
     
     private String robotPythonExecutable = "";
 

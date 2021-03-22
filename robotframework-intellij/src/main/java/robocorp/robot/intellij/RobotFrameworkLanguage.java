@@ -4,22 +4,34 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.intellij.lang.Language;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBTextArea;
+import com.intellij.ui.components.JBTextField;
+import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import robocorp.lsp.intellij.ILSPLanguage;
-import robocorp.lsp.intellij.LanguageServerDefinition;
-import robocorp.lsp.intellij.SearchPython;
+import robocorp.lsp.intellij.*;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.File;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * Interesting:
@@ -31,103 +43,44 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
     private static final Logger LOG = Logger.getInstance(RobotFrameworkLanguage.class);
 
     public static final RobotFrameworkLanguage INSTANCE = new RobotFrameworkLanguage();
-    private final LanguageServerDefinition robotDefinition;
+    private final Map<Project, LanguageServerDefinition> projectToDefinition = new HashMap<>();
+    private final Object projectToDefinitionLock = new Object();
     private String robotFrameworkLSUserHome;
+    private volatile boolean showingDialogToConfigureExecutable;
 
     public void setRobotFrameworkLSUserHome(String robotFrameworkLSUserHome) {
         this.robotFrameworkLSUserHome = robotFrameworkLSUserHome;
         // reset the current process builder when it changes
-        robotDefinition.setProcessBuilder(createProcessBuilderFromPreferences());
+        synchronized (projectToDefinitionLock) {
+            Set<Map.Entry<Project, LanguageServerDefinition>> entries = projectToDefinition.entrySet();
+            for (Map.Entry<Project, LanguageServerDefinition> entry : entries) {
+                entry.getValue().setProcessBuilder(createProcessBuilderFromPreferences(entry.getKey()));
+            }
+        }
     }
 
     private RobotFrameworkLanguage() {
         super("RobotFramework");
-
-        // Note: for the real-world use-case packing the language server see:
-        // https://intellij-support.jetbrains.com/hc/en-us/community/posts/206917225-Plugin-installation-as-unpacked-folder
-        // Use to get proper path?
-        // System.out.println(LanguageServerManagerTest.class.getResource("LanguageServerManagerTest.class"));
-
-        // Note: the RobotPreferences are required to startup (so, we need a running intellij app environment
-        // to startup -- this means that all tests must also be a subclass of LSPTestCase/BasePlatformTestCase).
-        @Nullable RobotPreferences robotAppPreferences = RobotPreferences.getInstance();
-
-        ProcessBuilder builder = createProcessBuilderFromPreferences();
-
-        robotDefinition = new LanguageServerDefinition(
-                new HashSet<>(Arrays.asList(".robot", ".resource")),
-                builder,
-                getPortFromPreferences(),
-                "RobotFramework"
-        ) {
-
-            @Override
-            public Object getPreferences(Project project) {
-                // Get the basic app preferences.
-                @Nullable RobotPreferences robotAppPreferences = RobotPreferences.getInstance();
-                JsonObject jsonObject;
-                if (robotAppPreferences == null) {
-                    jsonObject = new JsonObject();
-                } else {
-                    jsonObject = robotAppPreferences.asJsonObject();
-                }
-
-                // Override project-specific preferences.
-                RobotProjectPreferences robotProjectPreferences = RobotProjectPreferences.getInstance(project);
-                if (robotProjectPreferences != null) {
-                    JsonObject projectJsonObject = robotProjectPreferences.asJsonObject();
-                    Set<Map.Entry<String, JsonElement>> entries = projectJsonObject.entrySet();
-                    for (Map.Entry<String, JsonElement> entry : entries) {
-                        jsonObject.add(entry.getKey(), entry.getValue());
-                    }
-                }
-                return jsonObject;
-            }
-
-            @Override
-            public void registerPreferencesListener(Project project, IPreferencesListener preferencesListener) {
-                @Nullable RobotPreferences robotAppPreferences = RobotPreferences.getInstance();
-                if (robotAppPreferences != null) {
-                    robotAppPreferences.addListener(preferencesListener);
-                }
-                RobotProjectPreferences robotProjectPreferences = RobotProjectPreferences.getInstance(project);
-                if (robotProjectPreferences != null) {
-                    robotProjectPreferences.addListener(preferencesListener);
-                }
-            }
-
-            @Override
-            public void unregisterPreferencesListener(Project project, IPreferencesListener preferencesListener) {
-                @Nullable RobotPreferences robotAppPreferences = RobotPreferences.getInstance();
-                if (robotAppPreferences != null) {
-                    robotAppPreferences.removeListener(preferencesListener);
-                }
-                RobotProjectPreferences robotProjectPreferences = RobotProjectPreferences.getInstance(project);
-                if (robotProjectPreferences != null) {
-                    robotProjectPreferences.removeListener(preferencesListener);
-                }
-            }
-        };
-
-        if (robotAppPreferences != null) {
-            robotAppPreferences.addListener((property, oldValue, newValue) -> {
-                if (RobotPreferences.ROBOT_LANGUAGE_SERVER_PYTHON.equals(property) ||
-                        RobotPreferences.ROBOT_LANGUAGE_SERVER_ARGS.equals(property)
-                ) {
-                    robotDefinition.setProcessBuilder(createProcessBuilderFromPreferences());
-                } else if (RobotPreferences.ROBOT_LANGUAGE_SERVER_TCP_PORT.equals(property)) {
-                    robotDefinition.setPort(getPortFromPreferences());
-                }
-            });
-        }
     }
 
-    private int getPortFromPreferences() {
-        RobotPreferences robotPreferences = RobotPreferences.getInstance();
-        if (robotPreferences == null) {
+    private int getPortFromPreferences(Project project) {
+        RobotProjectPreferences projectPreferences = RobotProjectPreferences.getInstance(project);
+        if (projectPreferences != null) {
+            String tcpPort = projectPreferences.getRobotLanguageServerTcpPort();
+            if (!tcpPort.isEmpty()) {
+                try {
+                    return Integer.parseInt(tcpPort);
+                } catch (NumberFormatException e) {
+                    // ignore
+                }
+            }
+        }
+
+        RobotPreferences appPreferences = RobotPreferences.getInstance();
+        if (appPreferences == null) {
             return 0;
         }
-        String robotLanguageServerTcpPort = robotPreferences.getRobotLanguageServerTcpPort().trim();
+        String robotLanguageServerTcpPort = appPreferences.getRobotLanguageServerTcpPort().trim();
         int port = 0;
         if (!robotLanguageServerTcpPort.isEmpty()) {
             try {
@@ -140,37 +93,91 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
     }
 
     @Nullable
-    private ProcessBuilder createProcessBuilderFromPreferences() {
+    private ProcessBuilder createProcessBuilderFromPreferences(Project project) {
         File main = getMain();
 
-        @Nullable RobotPreferences robotPreferences = RobotPreferences.getInstance();
+        RobotProjectPreferences projectPreferences = RobotProjectPreferences.getInstance(project);
+
+        @Nullable RobotPreferences robotAppPreferences = RobotPreferences.getInstance();
+
+        // ---------------- Get Python executable
+
         @Nullable String python = SearchPython.getDefaultPythonExecutable();
+        boolean foundPythonInPreferences = false;
+        boolean foundValidPythonInPreferences = false;
 
         boolean develop = false;
         if (develop) {
             python = "C:\\bin\\Miniconda\\envs\\py_38_tests\\python.exe";
         }
 
-        String robotLanguageServerPython = robotPreferences != null ? robotPreferences.getRobotLanguageServerPython().trim() : "";
+        String robotLanguageServerPython = projectPreferences != null ? projectPreferences.getRobotLanguageServerPython().trim() : "";
         if (!robotLanguageServerPython.isEmpty()) {
-            python = robotLanguageServerPython;
+            foundPythonInPreferences = true;
+            String msg;
+            if ((msg = isValidPython(robotLanguageServerPython)) == null) {
+                python = robotLanguageServerPython;
+                foundValidPythonInPreferences = true;
+            } else {
+                // Notifications.Bus.notify(new Notification(
+                //        "Robot Framework Language Server", "Invalid Python in Project preferences", msg, NotificationType.ERROR));
+            }
         }
-        if (python == null) {
-            // If we can't discover the python executable, we have to wait for the user to provide it.
-            String msg = "Unable to find a python executable in the PATH.\n\nPlease configure the 'Language Server Python' in the 'Robot Framework Language Server' settings.";
-            Notifications.Bus.notify(new Notification(
-                    "Robot Framework Language Server", "Unable to start Robot Framework Language Server", msg, NotificationType.ERROR));
-            LOG.error(msg);
+
+        if (!foundValidPythonInPreferences) {
+            robotLanguageServerPython = robotAppPreferences != null ? robotAppPreferences.getRobotLanguageServerPython().trim() : "";
+            if (!robotLanguageServerPython.isEmpty()) {
+                foundPythonInPreferences = true;
+                String msg;
+                if ((msg = isValidPython(robotLanguageServerPython)) == null) {
+                    python = robotLanguageServerPython;
+                    foundValidPythonInPreferences = true;
+                } else {
+                    // Notifications.Bus.notify(new Notification(
+                    //        "Robot Framework Language Server", "Invalid Python in App preferences", msg, NotificationType.ERROR));
+                }
+            }
+        }
+
+        if (!foundPythonInPreferences) {
+            // No Python in the preferences: use default
+            String msg;
+            if ((msg = isValidPython(python)) == null) {
+                // Ok, go with default Python!
+            } else {
+                // If we can't discover the python executable, we have to wait for the user to provide it.
+                // Notifications.Bus.notify(new Notification(
+                //        "Robot Framework Language Server", "Unable to start Robot Framework Language Server", msg, NotificationType.ERROR));
+
+                // Ask the user for a Python executable to actually start the language server.
+                if (!showingDialogToConfigureExecutable) {
+                    ApplicationManager.getApplication().invokeLater(() -> showDialogToConfigurePythonExecutable(project));
+                }
+                return null;
+            }
+        } else if (!foundValidPythonInPreferences) {
+            // A Python in the preferences was found but wasn't valid: show UI to configure
+            if (!showingDialogToConfigureExecutable) {
+                ApplicationManager.getApplication().invokeLater(() -> showDialogToConfigurePythonExecutable(project));
+            }
             return null;
         }
 
+        // ---------------- Get arguments
+
         List<String> commands = new ArrayList(Arrays.asList(python, "-u", main.toString()));
-        @Nullable JsonArray robotLanguageServerArgs = robotPreferences != null ? robotPreferences.getRobotLanguageServerArgsAsJson() : new JsonArray();
+
+        @Nullable JsonArray robotLanguageServerArgs = projectPreferences != null ? projectPreferences.getRobotLanguageServerArgsAsJson() : new JsonArray();
+        if (robotLanguageServerArgs == null) {
+            robotLanguageServerArgs = robotAppPreferences != null ? robotAppPreferences.getRobotLanguageServerArgsAsJson() : new JsonArray();
+        }
+
         if (robotLanguageServerArgs != null) {
             for (JsonElement e : robotLanguageServerArgs) {
                 commands.add(e.toString());
             }
         }
+
         if (develop) {
             commands.add("-vv");
             commands.add("--log-file=c:/temp/robotframework_ls.log");
@@ -185,6 +192,165 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
             builder.environment().put("ROBOTFRAMEWORK_LS_USER_HOME", this.robotFrameworkLSUserHome);
         }
         return builder;
+    }
+
+    private JBTextArea createJTextArea(String text) {
+        JBTextArea f = new JBTextArea();
+        f.setText(text);
+        f.setEditable(false);
+        f.setBackground(null);
+        f.setBorder(null);
+        f.setFont(UIManager.getFont("Label.font"));
+        return f;
+    }
+
+    private void showDialogToConfigurePythonExecutable(Project project) {
+        if (EditorUtils.isHeadlessEnv()) {
+            return;
+        }
+        if (showingDialogToConfigureExecutable) {
+            return;
+        }
+        showingDialogToConfigureExecutable = true;
+        try {
+            final @Nullable RobotPreferences preferences = RobotPreferences.getInstance();
+            final @Nullable RobotProjectPreferences projectPreferences = RobotProjectPreferences.getInstance(project);
+            if (preferences == null) {
+                LOG.error("Unable to get preferences.");
+                return;
+            }
+
+            final JBTextField robotLanguageServerPython = new JBTextField();
+            final JBTextField robotLanguageServerArgs = new JBTextField();
+
+            // Set initial values.
+            if (projectPreferences != null) {
+                robotLanguageServerPython.setText(projectPreferences.getRobotLanguageServerPython());
+            }
+            if (robotLanguageServerPython.getText().trim().isEmpty()) {
+                robotLanguageServerPython.setText(preferences.getRobotLanguageServerPython());
+            }
+            if (projectPreferences != null) {
+                robotLanguageServerArgs.setText(projectPreferences.getRobotLanguageServerArgs());
+            }
+            if (robotLanguageServerArgs.getText().trim().isEmpty()) {
+                robotLanguageServerArgs.setText(preferences.getRobotLanguageServerArgs());
+            }
+
+            final JBLabel errorLabel = new JBLabel("");
+            errorLabel.setForeground(Color.RED);
+            JBTextArea area1 = createJTextArea("Specifies the path to the python executable to be used for the Robot Framework Language Server (the\ndefault is searching python on the PATH).\n\n");
+            JBTextArea area2 = createJTextArea("Specifies the arguments to be passed to the robotframework language server (i.e.: [\"-vv\", \"--log-file=~/robotframework_ls.log\"]).\nNote: expected format: JSON Array\n\n");
+            KeyListener listener = new KeyAdapter() {
+                @Override
+                public void keyReleased(KeyEvent e) {
+                    errorLabel.setText("");
+                }
+            };
+            area1.addKeyListener(listener);
+            final JPanel panel = FormBuilder.createFormBuilder()
+                    .addComponent(createJTextArea("Please provide information on the Python executable and arguments to be able to start the Robot Framework Language Server.\n"))
+                    .addLabeledComponent(new JBLabel("Language Server Python"), robotLanguageServerPython, 1, false)
+                    .addComponent(area1)
+                    .addLabeledComponent(new JBLabel("Language Server Args"), robotLanguageServerArgs, 1, false)
+                    .addComponent(area2)
+                    .addComponent(errorLabel)
+                    .addComponentFillVertically(new JPanel(), 0)
+                    .getPanel();
+
+            DialogBuilder builder = new DialogBuilder();
+            builder.setCenterPanel(panel);
+            builder.setTitle("Robot Framework Language Server");
+            builder.removeAllActions();
+            final int SAVE_IN_APP = DialogWrapper.NEXT_USER_EXIT_CODE;
+            final int SAVE_IN_PROJECT = DialogWrapper.NEXT_USER_EXIT_CODE + 1;
+
+            Supplier<Boolean> validate = () -> {
+                String errorMsg = preferences.validateRobotLanguageServerPython(robotLanguageServerPython.getText());
+                if (!errorMsg.isEmpty()) {
+                    errorLabel.setText(errorMsg);
+                    return false;
+                }
+                errorMsg = preferences.validateRobotLanguageServerArgs(robotLanguageServerArgs.getText());
+                if (!errorMsg.isEmpty()) {
+                    errorLabel.setText(errorMsg);
+                    return false;
+                }
+                String validPython = isValidPython(robotLanguageServerPython.getText());
+                if (validPython != null) {
+                    errorLabel.setText(validPython);
+                    return false;
+                }
+                errorLabel.setText("");
+                return true;
+            };
+            builder.addAction(new AbstractAction("Save in User settings") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (!validate.get()) {
+                        return;
+                    }
+                    builder.getDialogWrapper().close(SAVE_IN_APP);
+                }
+            });
+            builder.addAction(new AbstractAction("Save in Project settings") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (!validate.get()) {
+                        return;
+                    }
+                    builder.getDialogWrapper().close(SAVE_IN_PROJECT);
+                }
+            });
+            builder.addCancelAction();
+            validate.get(); // Validate once with initial values prior to starting.
+
+            int code = builder.show();
+            switch (code) {
+                case SAVE_IN_APP:
+                    preferences.setRobotLanguageServerPython(robotLanguageServerPython.getText());
+                    preferences.setRobotLanguageServerArgs(robotLanguageServerArgs.getText());
+                    break;
+                case SAVE_IN_PROJECT:
+                    projectPreferences.setRobotLanguageServerPython(robotLanguageServerPython.getText());
+                    projectPreferences.setRobotLanguageServerArgs(robotLanguageServerArgs.getText());
+                    break;
+            }
+
+        } finally {
+            showingDialogToConfigureExecutable = false;
+        }
+    }
+
+    private String isValidPython(String robotLanguageServerPython) {
+        if (robotLanguageServerPython == null || robotLanguageServerPython.length() == 0) {
+            return "Python executable not specified.";
+        }
+        if (!new File(robotLanguageServerPython).exists()) {
+            return robotLanguageServerPython + " does not exist.";
+        }
+
+        ProcessBuilder builder = new ProcessBuilder(robotLanguageServerPython, "-c", "import sys;sys.stderr.write('%s.%s\\n' % sys.version_info[:2]);");
+        builder.redirectError(ProcessBuilder.Redirect.PIPE);
+        builder.redirectOutput(ProcessBuilder.Redirect.PIPE);
+        builder.redirectInput(ProcessBuilder.Redirect.PIPE);
+        try {
+            Process process = builder.start();
+            InputStream errorStream = process.getErrorStream();
+            process.waitFor(2, TimeUnit.SECONDS);
+            byte[] b = errorStream.readAllBytes();
+            String s = new String(b, StandardCharsets.UTF_8);
+            List<String> split = StringUtils.split(s.trim(), '.');
+            int majorVersion = Integer.parseInt(split.get(0));
+            if (majorVersion <= 2) {
+                return "Python executable specified has version: " + s + " (Python 3 onwards is required).";
+            }
+
+        } catch (Exception e) {
+            return "Unable to execute " + robotLanguageServerPython + " error: " + e.toString();
+        }
+
+        return null;
     }
 
     /**
@@ -277,8 +443,101 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         return null;
     }
 
-    public LanguageServerDefinition getLanguageDefinition() {
-        return robotDefinition;
+    public LanguageServerDefinition getLanguageDefinition(final Project project) {
+        synchronized (projectToDefinitionLock) {
+            LanguageServerDefinition definition = projectToDefinition.get(project);
+            if (definition == null) {
+                definition = createLanguageServerDefinition(project);
+                projectToDefinition.put(project, definition);
+            }
+            return definition;
+        }
+    }
+
+    private LanguageServerDefinition createLanguageServerDefinition(final Project project) {
+        // Note: for the real-world use-case packing the language server see:
+        // https://intellij-support.jetbrains.com/hc/en-us/community/posts/206917225-Plugin-installation-as-unpacked-folder
+        // Use to get proper path?
+        // System.out.println(LanguageServerManagerTest.class.getResource("LanguageServerManagerTest.class"));
+
+        final LanguageServerDefinition definition = new LanguageServerDefinition(
+                new HashSet<>(Arrays.asList(".robot", ".resource")),
+                createProcessBuilderFromPreferences(project),
+                getPortFromPreferences(project),
+                "RobotFramework"
+        ) {
+
+            @Override
+            public Object getPreferences(Project project) {
+                // Get the basic app preferences.
+                @Nullable RobotPreferences robotAppPreferences = RobotPreferences.getInstance();
+                JsonObject jsonObject;
+                if (robotAppPreferences == null) {
+                    jsonObject = new JsonObject();
+                } else {
+                    jsonObject = robotAppPreferences.asJsonObject();
+                }
+
+                // Override project-specific preferences.
+                RobotProjectPreferences robotProjectPreferences = RobotProjectPreferences.getInstance(project);
+                if (robotProjectPreferences != null) {
+                    JsonObject projectJsonObject = robotProjectPreferences.asJsonObject();
+                    Set<Map.Entry<String, JsonElement>> entries = projectJsonObject.entrySet();
+                    for (Map.Entry<String, JsonElement> entry : entries) {
+                        jsonObject.add(entry.getKey(), entry.getValue());
+                    }
+                }
+                return jsonObject;
+            }
+
+            @Override
+            public void registerPreferencesListener(Project project, IPreferencesListener preferencesListener) {
+                @Nullable RobotPreferences robotAppPreferences = RobotPreferences.getInstance();
+                if (robotAppPreferences != null) {
+                    robotAppPreferences.addListener(preferencesListener);
+                }
+                RobotProjectPreferences robotProjectPreferences = RobotProjectPreferences.getInstance(project);
+                if (robotProjectPreferences != null) {
+                    robotProjectPreferences.addListener(preferencesListener);
+                }
+            }
+
+            @Override
+            public void unregisterPreferencesListener(Project project, IPreferencesListener preferencesListener) {
+                @Nullable RobotPreferences robotAppPreferences = RobotPreferences.getInstance();
+                if (robotAppPreferences != null) {
+                    robotAppPreferences.removeListener(preferencesListener);
+                }
+                RobotProjectPreferences robotProjectPreferences = RobotProjectPreferences.getInstance(project);
+                if (robotProjectPreferences != null) {
+                    robotProjectPreferences.removeListener(preferencesListener);
+                }
+            }
+        };
+
+        LanguageServerDefinition.IPreferencesListener listener = (property, oldValue, newValue) -> {
+            if (RobotPreferences.ROBOT_LANGUAGE_SERVER_PYTHON.equals(property) ||
+                    RobotPreferences.ROBOT_LANGUAGE_SERVER_ARGS.equals(property)
+            ) {
+                definition.setProcessBuilder(createProcessBuilderFromPreferences(project));
+            } else if (RobotPreferences.ROBOT_LANGUAGE_SERVER_TCP_PORT.equals(property)) {
+                definition.setPort(getPortFromPreferences(project));
+            }
+        };
+
+        // Note: the RobotPreferences are required to startup (so, we need a running intellij app environment
+        // to startup -- this means that all tests must also be a subclass of LSPTestCase/BasePlatformTestCase).
+        @Nullable RobotPreferences robotAppPreferences = RobotPreferences.getInstance();
+
+        if (robotAppPreferences != null) {
+            robotAppPreferences.addListener(listener);
+        }
+
+        RobotProjectPreferences projectPreferences = RobotProjectPreferences.getInstance(project);
+        if (projectPreferences != null) {
+            projectPreferences.addListener(listener);
+        }
+        return definition;
     }
 
 }

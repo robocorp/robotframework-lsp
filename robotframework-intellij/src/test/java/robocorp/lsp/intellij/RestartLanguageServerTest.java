@@ -60,7 +60,7 @@ public class RestartLanguageServerTest extends LSPTesCase {
             LanguageServerCommunication languageServerCommunication = conn.getLanguageServerCommunication();
             CompletableFuture<Object> future = languageServerCommunication.command(new ExecuteCommandParams("robot.getInternalInfo", new ArrayList<>()));
             Assert.assertNull(future);
-            Assert.assertEquals(5, languageServerCommunication.getCrashCount());
+            Assert.assertEquals(0, languageServerCommunication.getCrashCount()); // Note: we don't even try to start because the settings are invalid.
             robotPreferences.setRobotLanguageServerPython(""); // reset to default
         } finally {
             EditorUtils.ignoreLogErrors -= 1;

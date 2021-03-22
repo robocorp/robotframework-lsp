@@ -45,7 +45,7 @@ public class FeatureDefinition {
         if (basePath == null) {
             return null;
         }
-        LanguageServerDefinition languageDefinition = EditorUtils.getLanguageDefinition(virtualFile);
+        LanguageServerDefinition languageDefinition = EditorUtils.getLanguageDefinition(virtualFile, project);
         if (languageDefinition == null) {
             return null;
         }

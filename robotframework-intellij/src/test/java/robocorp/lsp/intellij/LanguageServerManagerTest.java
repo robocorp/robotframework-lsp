@@ -19,7 +19,7 @@ public class LanguageServerManagerTest extends LSPTesCase {
 
     @Test
     public void testLanguageServerManager() throws Exception {
-        LanguageServerDefinition definition = RobotFrameworkLanguage.INSTANCE.getLanguageDefinition();
+        LanguageServerDefinition definition = RobotFrameworkLanguage.INSTANCE.getLanguageDefinition(myFixture.getProject());
         myFixture.configureByFiles("case1.robot", "case1_library.py");
         Editor editor = myFixture.getEditor();
         EditorLanguageServerConnection connection = EditorLanguageServerConnection.getFromUserData(editor);

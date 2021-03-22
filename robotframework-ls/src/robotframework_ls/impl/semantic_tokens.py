@@ -208,9 +208,13 @@ def semantic_tokens_full(context: CompletionContext):
             for token in tokens:
                 for token_part, token_type_index in tokenize_variables(token):
                     lineno = token_part.lineno - 1
+                    if lineno < 0:
+                        lineno = 0
                     append(lineno - last_line)
                     if lineno != last_line:
                         last_column = token_part.col_offset
+                        if last_column < 0:
+                            last_column = 0
                         append(last_column)
                     else:
                         col_delta = token_part.col_offset - last_column

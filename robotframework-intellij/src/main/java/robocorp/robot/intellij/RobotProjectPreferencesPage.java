@@ -20,6 +20,9 @@ class RobotProjectPreferencesComponent {
 
     private final JPanel panel;
     
+    private final JBTextField robotLanguageServerPython = new JBTextField();
+    private final JBTextField robotLanguageServerArgs = new JBTextField();
+    private final JBTextField robotLanguageServerTcpPort = new JBTextField();
     private final JBTextField robotPythonExecutable = new JBTextField();
     private final JBTextField robotPythonEnv = new JBTextField();
     private final JBTextField robotVariables = new JBTextField();
@@ -29,18 +32,24 @@ class RobotProjectPreferencesComponent {
 
     public RobotProjectPreferencesComponent() {
         panel = FormBuilder.createFormBuilder()
+                .addLabeledComponent(new JBLabel("Language Server Python"), robotLanguageServerPython, 1, false)
+                .addComponent(createJTextArea("Specifies the path to the python executable to be used for the Robot Framework Language Server (the default is searching python on the PATH).\n"))
+                .addLabeledComponent(new JBLabel("Language Server Args"), robotLanguageServerArgs, 1, false)
+                .addComponent(createJTextArea("Specifies the arguments to be passed to the robotframework language server (i.e.: [\"-vv\", \"--log-file=~/robotframework_ls.log\"]).\nNote: expected format: JSON Array\n"))
+                .addLabeledComponent(new JBLabel("Language Server Tcp Port"), robotLanguageServerTcpPort, 1, false)
+                .addComponent(createJTextArea("If the port is specified, connect to the language server previously started at the given port.\n"))
                 .addLabeledComponent(new JBLabel("Python Executable"), robotPythonExecutable, 1, false)
-                .addComponent(createJTextArea("Specifies the path to the python executable to be used to load `robotframework` code and dependent\nlibraries (the default is using the same python used for the language server).\n\n"))
+                .addComponent(createJTextArea("Specifies the path to the python executable to be used to load `robotframework` code and dependent libraries (the default is using the same python\nused for the language server).\n"))
                 .addLabeledComponent(new JBLabel("Python Env"), robotPythonEnv, 1, false)
-                .addComponent(createJTextArea("Specifies the environment to be used when loading `robotframework` code and dependent libraries.\ni.e.: {\"MY_ENV_VAR\": \"some_value\"}\nNote: expected as JSON Object\n\n"))
+                .addComponent(createJTextArea("Specifies the environment to be used when loading `robotframework` code and dependent libraries.i.e.: {\"MY_ENV_VAR\": \"some_value\"}\nNote: expected format: JSON Object\n"))
                 .addLabeledComponent(new JBLabel("Variables"), robotVariables, 1, false)
-                .addComponent(createJTextArea("Specifies custom variables to be considered by `robotframework` (used when resolving variables and\nautomatically passed to the launch config as --variable entries).\ni.e.: {\"RESOURCES\": \"c:/temp/resources\"}\nNote: expected as JSON Object\n\n"))
+                .addComponent(createJTextArea("Specifies custom variables to be considered by `robotframework` (used when resolving variables and automatically passed to the launch config as\n--variable entries).i.e.: {\"RESOURCES\": \"c:/temp/resources\"}\nNote: expected format: JSON Object\n"))
                 .addLabeledComponent(new JBLabel("Pythonpath"), robotPythonpath, 1, false)
-                .addComponent(createJTextArea("Specifies the entries to be added to the PYTHONPATH (used when resolving resources and imports and\nautomatically passed to the launch config as --pythonpath entries).\ni.e.: [\"</my/path_entry>\"]\nNote: expected as JSON Array\n\n"))
+                .addComponent(createJTextArea("Specifies the entries to be added to the PYTHONPATH (used when resolving resources and imports and automatically passed to the launch config as\n--pythonpath entries).i.e.: [\"</my/path_entry>\"]\nNote: expected format: JSON Array\n"))
                 .addLabeledComponent(new JBLabel("Completions Section Headers Form"), robotCompletionsSectionHeadersForm, 1, false)
-                .addComponent(createJTextArea("Defines how completions should be shown for section headers (i.e.: *** Setting(s) ***).\nOne of: plural, singular, both.\n\n"))
+                .addComponent(createJTextArea("Defines how completions should be shown for section headers (i.e.: *** Setting(s) ***).One of: plural, singular, both.\n"))
                 .addLabeledComponent(new JBLabel("Workspace Symbols Only For Open Docs"), robotWorkspaceSymbolsOnlyForOpenDocs, 1, false)
-                .addComponent(createJTextArea("Collecting workspace symbols can be resource intensive on big projects and may slow down code-\ncompletion, in this case, it's possible collect info only for open files on big projects.\n\n"))
+                .addComponent(createJTextArea("Collecting workspace symbols can be resource intensive on big projects and may slow down code-completion, in this case, it's possible collect info\nonly for open files on big projects.\n"))
                 
                 .addComponentFillVertically(new JPanel(), 0)
                 .getPanel();
@@ -64,6 +73,33 @@ class RobotProjectPreferencesComponent {
         return robotPythonExecutable;
     }
 
+    
+    @NotNull
+    public String getRobotLanguageServerPython() {
+        return robotLanguageServerPython.getText();
+    }
+
+    public void setRobotLanguageServerPython (@NotNull String newText) {
+        robotLanguageServerPython.setText(newText);
+    }
+    
+    @NotNull
+    public String getRobotLanguageServerArgs() {
+        return robotLanguageServerArgs.getText();
+    }
+
+    public void setRobotLanguageServerArgs (@NotNull String newText) {
+        robotLanguageServerArgs.setText(newText);
+    }
+    
+    @NotNull
+    public String getRobotLanguageServerTcpPort() {
+        return robotLanguageServerTcpPort.getText();
+    }
+
+    public void setRobotLanguageServerTcpPort (@NotNull String newText) {
+        robotLanguageServerTcpPort.setText(newText);
+    }
     
     @NotNull
     public String getRobotPythonExecutable() {
@@ -156,6 +192,18 @@ public class RobotProjectPreferencesPage implements Configurable {
     public boolean isModified() {
         RobotProjectPreferences settings = RobotProjectPreferences.getInstance(project);
         
+        if(!settings.getRobotLanguageServerPython().equals(component.getRobotLanguageServerPython())){
+            return true;
+        }
+        
+        if(!settings.getRobotLanguageServerArgs().equals(component.getRobotLanguageServerArgs())){
+            return true;
+        }
+        
+        if(!settings.getRobotLanguageServerTcpPort().equals(component.getRobotLanguageServerTcpPort())){
+            return true;
+        }
+        
         if(!settings.getRobotPythonExecutable().equals(component.getRobotPythonExecutable())){
             return true;
         }
@@ -187,6 +235,9 @@ public class RobotProjectPreferencesPage implements Configurable {
     public void reset() {
         RobotProjectPreferences settings = RobotProjectPreferences.getInstance(project);
         
+        component.setRobotLanguageServerPython(settings.getRobotLanguageServerPython());
+        component.setRobotLanguageServerArgs(settings.getRobotLanguageServerArgs());
+        component.setRobotLanguageServerTcpPort(settings.getRobotLanguageServerTcpPort());
         component.setRobotPythonExecutable(settings.getRobotPythonExecutable());
         component.setRobotPythonEnv(settings.getRobotPythonEnv());
         component.setRobotVariables(settings.getRobotVariables());
@@ -200,6 +251,18 @@ public class RobotProjectPreferencesPage implements Configurable {
         RobotProjectPreferences settings = RobotProjectPreferences.getInstance(project);
         String s;
         
+        s = settings.validateRobotLanguageServerPython(component.getRobotLanguageServerPython());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Language Server Python:\n" + s);
+        }
+        s = settings.validateRobotLanguageServerArgs(component.getRobotLanguageServerArgs());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Language Server Args:\n" + s);
+        }
+        s = settings.validateRobotLanguageServerTcpPort(component.getRobotLanguageServerTcpPort());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Language Server Tcp Port:\n" + s);
+        }
         s = settings.validateRobotPythonExecutable(component.getRobotPythonExecutable());
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Python Executable:\n" + s);
@@ -225,6 +288,9 @@ public class RobotProjectPreferencesPage implements Configurable {
             throw new ConfigurationException("Error in Workspace Symbols Only For Open Docs:\n" + s);
         }
         
+        settings.setRobotLanguageServerPython(component.getRobotLanguageServerPython());
+        settings.setRobotLanguageServerArgs(component.getRobotLanguageServerArgs());
+        settings.setRobotLanguageServerTcpPort(component.getRobotLanguageServerTcpPort());
         settings.setRobotPythonExecutable(component.getRobotPythonExecutable());
         settings.setRobotPythonEnv(component.getRobotPythonEnv());
         settings.setRobotVariables(component.getRobotVariables());

@@ -284,13 +284,13 @@ def main():
                 continue
 
             description = prop_value.get('description', '').replace('"', '\\"')
+            description = description.replace('Requires a restart to take effect.', '')
             final_desc = ''
             for d in description.split('\n'):
-                d = '\\n'.join(textwrap.wrap(d, 100))
-                d += '\\n'
+                d = '\\n'.join(textwrap.wrap(d, 150))
                 final_desc += d
             if prop_value['type'] in ['array', 'object']:
-                final_desc += 'Note: expected as JSON ' + prop_value['type'].title() + '\\n'
+                final_desc += '\\nNote: expected format: JSON ' + prop_value['type'].title()
 
             final_desc += '\\n'
 
@@ -357,7 +357,7 @@ def main():
         require_project = True,
     )
     target = os.path.join(this_dir, 'src', 'main', 'java', 'robocorp', 'robot', 'intellij', 'RobotProjectPreferencesPage.java')
-    project_preferences = [x for x in preferences if 'languageserver' not in x['getter_name'].lower()]
+    project_preferences = preferences
     new_contents = Template(TEMPLATE_ROBOT_PREFERENCES_PAGE).render(preferences=project_preferences, **kwargs)
     with open(target, 'w') as stream:
         stream.write(new_contents)
