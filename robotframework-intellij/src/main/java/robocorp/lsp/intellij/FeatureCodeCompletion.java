@@ -48,6 +48,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,6 +57,8 @@ import java.util.regex.Pattern;
 // (Code-completion without applying initial lookupString)
 public class FeatureCodeCompletion extends CompletionContributor {
     private static final Logger LOG = Logger.getInstance(FeatureCodeCompletion.class);
+
+    private static final AtomicReference<CompletableFuture<Either<List<CompletionItem>, CompletionList>>> currentCompletion = new AtomicReference<>();
 
     private static class SnippetVariable {
         String lspSnippetText;
@@ -174,10 +178,33 @@ public class FeatureCodeCompletion extends CompletionContributor {
                 }
                 ApplicationUtil.runWithCheckCanceled(() -> {
                     CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion = editorLanguageServerConnection.completion(offset);
+                    CompletableFuture<Either<List<CompletionItem>, CompletionList>> oldCompletion = currentCompletion.getAndSet(completion);
+                    if (oldCompletion != null) {
+                        // i.e.: Whenever we start a completion cancel the previous one (which is very common
+                        // when completing as we type).
+                        oldCompletion.cancel(true);
+                    }
+
                     if (completion == null) {
                         return null;
                     }
-                    Either<List<CompletionItem>, CompletionList> res = completion.get(Timeouts.getCompletionTimeout(), TimeUnit.SECONDS);
+                    Either<List<CompletionItem>, CompletionList> res = null;
+                    long timeout = Timeouts.getCompletionTimeout();
+                    long timeoutAt = System.currentTimeMillis() + (timeout * 1000);
+                    while (true) {
+                        try {
+                            res = completion.get(50, TimeUnit.MILLISECONDS);
+                            break; // Ok, completion gotten
+                        } catch (TimeoutException e) {
+                            // ignore internal timeout
+                        }
+                        if (System.currentTimeMillis() > timeoutAt) {
+                            // Timed out (cancel the completion on the server).
+                            completion.cancel(true);
+                            return null;
+                        }
+                    }
+
                     if (res == null) {
                         return null;
                     }
@@ -203,8 +230,8 @@ public class FeatureCodeCompletion extends CompletionContributor {
 
                     return null;
                 }, progressIndicator);
-            } catch (ProcessCanceledException ignored) {
-                // Cancelled.
+            } catch (ProcessCanceledException | InterruptedException ignored) {
+                // Cancelled (InterruptedException is thrown when completion.cancel(true) is called from another thread).
             } catch (Exception e) {
                 LOG.error("Unable to get completions", e);
             }
