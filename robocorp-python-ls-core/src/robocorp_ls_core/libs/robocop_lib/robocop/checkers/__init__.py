@@ -87,9 +87,16 @@ class RawFileChecker(BaseChecker):  # noqa
 
     def parse_file(self):
         """ Read file line by line and for each call check_line method. """
-        with open(self.source) as file:
-            for lineno, line in enumerate(file):
-                self.check_line(line, lineno + 1)
+        lines = getattr(self, 'lines', None)
+        if lines is not None:
+            self._parse_lines(lines)
+        else:
+            with open(self.source) as file:
+                self._parse_lines(file)
+
+    def _parse_lines(self, lines):
+        for lineno, line in enumerate(lines):
+            self.check_line(line, lineno + 1)
 
     def check_line(self, line, lineno):
         raise NotImplementedError

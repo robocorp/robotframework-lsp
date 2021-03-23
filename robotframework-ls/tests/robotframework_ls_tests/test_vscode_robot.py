@@ -37,6 +37,38 @@ def test_diagnostics(language_server, ws_root_path, data_regression):
     check_diagnostics(language_server, data_regression)
 
 
+def test_diagnostics_robocop(language_server, ws_root_path, data_regression):
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
+
+    uri = "untitled:Untitled-1"
+    message_matcher = language_server.obtain_pattern_message_matcher(
+        {"method": "textDocument/publishDiagnostics"}
+    )
+    language_server.open_doc(uri, 1)
+    assert message_matcher.event.wait(TIMEOUT)
+
+    message_matcher = language_server.obtain_pattern_message_matcher(
+        {"method": "textDocument/publishDiagnostics"}
+    )
+    language_server.change_doc(
+        uri,
+        2,
+        """
+*** Test Cases ***
+Test
+    Fail
+    
+Test
+    Fail
+""",
+    )
+    assert message_matcher.event.wait(TIMEOUT)
+    diag = message_matcher.msg
+
+    data_regression.check(diag, basename="diagnostics")
+
+
 def test_section_completions_integrated(language_server, ws_root_path, data_regression):
     language_server.initialize(ws_root_path, process_id=os.getpid())
     uri = "untitled:Untitled-1"

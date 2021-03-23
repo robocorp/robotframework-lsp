@@ -129,6 +129,8 @@ class Robocop:
             if checker.disabled:
                 continue
             checker.source = filename
+            if source is not None:
+                checker.lines = source.splitlines()
             checker.scan_file(ast_model)
             found_issues += checker.issues
             checker.issues.clear()
