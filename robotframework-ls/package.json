@@ -103,15 +103,15 @@
                     "default": {},
                     "description": "Specifies custom variables to be considered by `robotframework` (used when resolving variables and automatically passed to the launch config as --variable entries).\ni.e.: {\"RESOURCES\": \"c:/temp/resources\"}"
                 },
-                "robot.lint.robocop.enabled": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Specifies whether to lint with Robocop."
-                },
                 "robot.pythonpath": {
                     "type": "array",
                     "default": [],
                     "description": "Specifies the entries to be added to the PYTHONPATH (used when resolving resources and imports and automatically passed to the launch config as --pythonpath entries).\ni.e.: [\"</my/path_entry>\"]"
+                },
+                "robot.lint.robocop.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Specifies whether to lint with Robocop."
                 },
                 "robot.completions.section_headers.form": {
                     "type": "string",

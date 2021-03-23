@@ -27,6 +27,7 @@ class RobotPreferencesComponent {
     private final JBTextField robotPythonEnv = new JBTextField();
     private final JBTextField robotVariables = new JBTextField();
     private final JBTextField robotPythonpath = new JBTextField();
+    private final JBTextField robotLintRobocopEnabled = new JBTextField();
     private final JBTextField robotCompletionsSectionHeadersForm = new JBTextField();
     private final JBTextField robotWorkspaceSymbolsOnlyForOpenDocs = new JBTextField();
 
@@ -46,6 +47,8 @@ class RobotPreferencesComponent {
                 .addComponent(createJTextArea("Specifies custom variables to be considered by `robotframework` (used when resolving variables and automatically passed to the launch config as\n--variable entries).i.e.: {\"RESOURCES\": \"c:/temp/resources\"}\nNote: expected format: JSON Object\n"))
                 .addLabeledComponent(new JBLabel("Pythonpath"), robotPythonpath, 1, false)
                 .addComponent(createJTextArea("Specifies the entries to be added to the PYTHONPATH (used when resolving resources and imports and automatically passed to the launch config as\n--pythonpath entries).i.e.: [\"</my/path_entry>\"]\nNote: expected format: JSON Array\n"))
+                .addLabeledComponent(new JBLabel("Lint Robocop Enabled"), robotLintRobocopEnabled, 1, false)
+                .addComponent(createJTextArea("Specifies whether to lint with Robocop.\n"))
                 .addLabeledComponent(new JBLabel("Completions Section Headers Form"), robotCompletionsSectionHeadersForm, 1, false)
                 .addComponent(createJTextArea("Defines how completions should be shown for section headers (i.e.: *** Setting(s) ***).One of: plural, singular, both.\n"))
                 .addLabeledComponent(new JBLabel("Workspace Symbols Only For Open Docs"), robotWorkspaceSymbolsOnlyForOpenDocs, 1, false)
@@ -138,6 +141,15 @@ class RobotPreferencesComponent {
     }
     
     @NotNull
+    public String getRobotLintRobocopEnabled() {
+        return robotLintRobocopEnabled.getText();
+    }
+
+    public void setRobotLintRobocopEnabled (@NotNull String newText) {
+        robotLintRobocopEnabled.setText(newText);
+    }
+    
+    @NotNull
     public String getRobotCompletionsSectionHeadersForm() {
         return robotCompletionsSectionHeadersForm.getText();
     }
@@ -211,6 +223,10 @@ public class RobotPreferencesPage implements Configurable {
             return true;
         }
         
+        if(!settings.getRobotLintRobocopEnabled().equals(component.getRobotLintRobocopEnabled())){
+            return true;
+        }
+        
         if(!settings.getRobotCompletionsSectionHeadersForm().equals(component.getRobotCompletionsSectionHeadersForm())){
             return true;
         }
@@ -233,6 +249,7 @@ public class RobotPreferencesPage implements Configurable {
         component.setRobotPythonEnv(settings.getRobotPythonEnv());
         component.setRobotVariables(settings.getRobotVariables());
         component.setRobotPythonpath(settings.getRobotPythonpath());
+        component.setRobotLintRobocopEnabled(settings.getRobotLintRobocopEnabled());
         component.setRobotCompletionsSectionHeadersForm(settings.getRobotCompletionsSectionHeadersForm());
         component.setRobotWorkspaceSymbolsOnlyForOpenDocs(settings.getRobotWorkspaceSymbolsOnlyForOpenDocs());
     }
@@ -270,6 +287,10 @@ public class RobotPreferencesPage implements Configurable {
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Pythonpath:\n" + s);
         }
+        s = settings.validateRobotLintRobocopEnabled(component.getRobotLintRobocopEnabled());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Lint Robocop Enabled:\n" + s);
+        }
         s = settings.validateRobotCompletionsSectionHeadersForm(component.getRobotCompletionsSectionHeadersForm());
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Completions Section Headers Form:\n" + s);
@@ -286,6 +307,7 @@ public class RobotPreferencesPage implements Configurable {
         settings.setRobotPythonEnv(component.getRobotPythonEnv());
         settings.setRobotVariables(component.getRobotVariables());
         settings.setRobotPythonpath(component.getRobotPythonpath());
+        settings.setRobotLintRobocopEnabled(component.getRobotLintRobocopEnabled());
         settings.setRobotCompletionsSectionHeadersForm(component.getRobotCompletionsSectionHeadersForm());
         settings.setRobotWorkspaceSymbolsOnlyForOpenDocs(component.getRobotWorkspaceSymbolsOnlyForOpenDocs());
     }

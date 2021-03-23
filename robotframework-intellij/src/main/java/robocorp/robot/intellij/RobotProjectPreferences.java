@@ -24,6 +24,7 @@ class RobotProjectState {
     public String robotPythonEnv = "";
     public String robotVariables = "";
     public String robotPythonpath = "";
+    public String robotLintRobocopEnabled = "";
     public String robotCompletionsSectionHeadersForm = "";
     public String robotWorkspaceSymbolsOnlyForOpenDocs = "";
 }
@@ -40,6 +41,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
     public static final String ROBOT_PYTHON_ENV = "robot.python.env";
     public static final String ROBOT_VARIABLES = "robot.variables";
     public static final String ROBOT_PYTHONPATH = "robot.pythonpath";
+    public static final String ROBOT_LINT_ROBOCOP_ENABLED = "robot.lint.robocop.enabled";
     public static final String ROBOT_COMPLETIONS_SECTION_HEADERS_FORM = "robot.completions.section_headers.form";
     public static final String ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS = "robot.workspaceSymbolsOnlyForOpenDocs";
     
@@ -58,6 +60,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         robotState.robotPythonEnv = getRobotPythonEnv();
         robotState.robotVariables = getRobotVariables();
         robotState.robotPythonpath = getRobotPythonpath();
+        robotState.robotLintRobocopEnabled = getRobotLintRobocopEnabled();
         robotState.robotCompletionsSectionHeadersForm = getRobotCompletionsSectionHeadersForm();
         robotState.robotWorkspaceSymbolsOnlyForOpenDocs = getRobotWorkspaceSymbolsOnlyForOpenDocs();
         return robotState;
@@ -74,6 +77,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         setRobotPythonEnv(robotState.robotPythonEnv);
         setRobotVariables(robotState.robotVariables);
         setRobotPythonpath(robotState.robotPythonpath);
+        setRobotLintRobocopEnabled(robotState.robotLintRobocopEnabled);
         setRobotCompletionsSectionHeadersForm(robotState.robotCompletionsSectionHeadersForm);
         setRobotWorkspaceSymbolsOnlyForOpenDocs(robotState.robotWorkspaceSymbolsOnlyForOpenDocs);
     }
@@ -134,6 +138,14 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         if(!robotPythonpath.isEmpty()){
             try {
                 jsonObject.add(ROBOT_PYTHONPATH, g.fromJson(robotPythonpath, JsonArray.class));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotLintRobocopEnabled.isEmpty()){
+            try {
+                jsonObject.add(ROBOT_LINT_ROBOCOP_ENABLED, new JsonPrimitive(Boolean.parseBoolean(robotLintRobocopEnabled)));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -457,6 +469,49 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         robotPythonpath = s;
         for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             listener.onChanged(ROBOT_PYTHONPATH, old, s);
+        }
+    }
+    
+    private String robotLintRobocopEnabled = "";
+
+    public @NotNull String getRobotLintRobocopEnabled() {
+        return robotLintRobocopEnabled;
+    }
+    
+    public @Nullable JsonPrimitive getRobotLintRobocopEnabledAsJson() {
+        if(robotLintRobocopEnabled.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return new JsonPrimitive(Boolean.parseBoolean(robotLintRobocopEnabled));
+    }
+    
+    public @NotNull String validateRobotLintRobocopEnabled(String robotLintRobocopEnabled) {
+        if(robotLintRobocopEnabled.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            new JsonPrimitive(Boolean.parseBoolean(robotLintRobocopEnabled));
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLintRobocopEnabled(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLintRobocopEnabled)) {
+            return;
+        }
+        String old = robotLintRobocopEnabled;
+        robotLintRobocopEnabled = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            listener.onChanged(ROBOT_LINT_ROBOCOP_ENABLED, old, s);
         }
     }
     
