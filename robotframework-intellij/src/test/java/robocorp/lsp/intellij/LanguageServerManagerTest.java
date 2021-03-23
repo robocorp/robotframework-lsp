@@ -39,7 +39,6 @@ public class LanguageServerManagerTest extends LSPTesCase {
             }
             return null;
         });
-        Assert.assertEquals(1, diagnostics.size());
         if (!diagnostics.get(0).getMessage().contains("Unrecognized section header '*** Some error here'")) {
             fail("Unexpected message: " + diagnostics.get(0).getMessage());
         }
