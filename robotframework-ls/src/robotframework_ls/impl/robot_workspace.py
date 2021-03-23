@@ -88,23 +88,27 @@ class RobotDocument(Document):
         try:
             t = self.get_type()
             if t == self.TYPE_TEST_CASE:
-                return get_model(source)
+                ast = get_model(source)
 
             elif t == self.TYPE_RESOURCE:
-                return get_resource_model(source)
+                ast = get_resource_model(source)
 
             elif t == self.TYPE_INIT:
-                return get_init_model(source)
+                ast = get_init_model(source)
 
             else:
                 log.critical("Unrecognized section: %s", t)
-                return get_model(source)
+                ast = get_model(source)
+
+            ast.source = self.path
+            return ast
         except:
             log.critical(f"Error parsing {self.uri}")
             # Note: we always want to return a valid AST here (the
             # AST itself should have the error).
-            model = get_model(f"*** Unable to parse: {self.uri} ***")
-            return model
+            ast = get_model(f"*** Unable to parse: {self.uri} ***")
+            ast.source = self.path
+            return ast
 
     def find_line_with_contents(self, contents: str) -> int:
         """

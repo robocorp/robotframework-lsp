@@ -1,0 +1,35 @@
+import os.path
+import sys
+from pathlib import Path
+from typing import List, Dict
+
+
+def _import_robocop():
+    try:
+        import robocop
+    except ImportError:
+        _parent_dir = os.path.dirname(__file__)
+        _robocop_dir = os.path.join(_parent_dir, "libs", "robocop_lib")
+        if not os.path.exists(_robocop_dir):
+            raise RuntimeError("Expected: %s to exist." % (_robocop_dir,))
+        sys.path.append(_robocop_dir)
+        import robocop  # @UnusedImport
+
+
+def collect_robocop_diagnostics(
+    project_root: Path, ast_model, filename: str, source: str
+) -> List[Dict]:
+
+    _import_robocop()
+
+    import robocop
+    from robocop.config import Config
+    from robocop.utils import issues_to_lsp_diagnostic
+
+    config = Config(root=project_root)
+    robocop_runner = robocop.Robocop(config=config)
+    robocop_runner.reload_config()
+
+    issues = robocop_runner.run_check(ast_model, filename, source)
+    diag_issues = issues_to_lsp_diagnostic(issues)
+    return diag_issues

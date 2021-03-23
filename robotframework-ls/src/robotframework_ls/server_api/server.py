@@ -103,10 +103,15 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
     def _threaded_lint(self, doc_uri, monitor: IMonitor):
         from robocorp_ls_core.jsonrpc.exceptions import JsonRpcRequestCancelled
+        from robotframework_ls.impl.robot_lsp_constants import (
+            OPTION_ROBOT_LINT_ROBOCOP_ENABLED,
+        )
+        from robocorp_ls_core import uris
 
         try:
             from robotframework_ls.impl.ast_utils import collect_errors
             from robotframework_ls.impl import code_analysis
+            import os.path
 
             log.debug("Lint: starting (in thread).")
 
@@ -120,9 +125,42 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             log.debug("Collected AST errors (in thread): %s", len(errors))
             monitor.check_cancelled()
             analysis_errors = code_analysis.collect_analysis_errors(completion_context)
+            monitor.check_cancelled()
             log.debug("Collected analysis errors (in thread): %s", len(analysis_errors))
             errors.extend(analysis_errors)
-            return [error.to_lsp_diagnostic() for error in errors]
+
+            lsp_diagnostics = [error.to_lsp_diagnostic() for error in errors]
+
+            try:
+                config = completion_context.config
+                if config is None or config.get_setting(
+                    OPTION_ROBOT_LINT_ROBOCOP_ENABLED, bool, True
+                ):
+                    from robocorp_ls_core.robocop_wrapper import (
+                        collect_robocop_diagnostics,
+                    )
+
+                    workspace = completion_context.workspace
+                    if workspace is not None:
+                        project_root = workspace.root_path
+                    else:
+                        project_root = os.path.abspath(".")
+
+                    monitor.check_cancelled()
+                    lsp_diagnostics.extend(
+                        collect_robocop_diagnostics(
+                            project_root,
+                            ast,
+                            uris.to_fs_path(doc_uri),
+                            completion_context.doc.source,
+                        )
+                    )
+            except Exception:
+                log.exception(
+                    "Error collecting Robocop errors (possibly an unsupported Robocop version is installed)."
+                )
+
+            return lsp_diagnostics
         except JsonRpcRequestCancelled:
             raise JsonRpcRequestCancelled("Lint cancelled (inside lint)")
         except:
@@ -280,7 +318,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         return [x.to_dict() for x in create_text_edit_from_diff(text, new_contents)]
 
     def _create_completion_context(
-        self, doc_uri, line, col, monitor: Union[IMonitor, None]
+        self, doc_uri, line, col, monitor: Optional[IMonitor]
     ):
         from robotframework_ls.impl.completion_context import CompletionContext
 

@@ -103,6 +103,11 @@
                     "default": {},
                     "description": "Specifies custom variables to be considered by `robotframework` (used when resolving variables and automatically passed to the launch config as --variable entries).\ni.e.: {\"RESOURCES\": \"c:/temp/resources\"}"
                 },
+                "robot.lint.robocop.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Specifies whether to lint with Robocop."
+                },
                 "robot.pythonpath": {
                     "type": "array",
                     "default": [],

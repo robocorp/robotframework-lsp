@@ -90,7 +90,7 @@ class CompletionContext(object):
         workspace=None,
         config=None,
         memo=None,
-        monitor: IMonitor = NULL,
+        monitor: Optional[IMonitor] = NULL,
     ) -> None:
         """
         :param robocorp_ls_core.workspace.Document doc:
