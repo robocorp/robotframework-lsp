@@ -221,7 +221,7 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
     def get_version(self):
         pass
 
-    def lint(self, doc_uri: str) -> list:
+    def lint(self, doc_uri: str) -> dict:
         pass
 
     def request_lint(self, doc_uri: str) -> Optional[IIdMessageMatcher]:

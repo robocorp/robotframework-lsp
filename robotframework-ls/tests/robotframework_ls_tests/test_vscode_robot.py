@@ -8,6 +8,7 @@ log = logging.getLogger(__name__)
 
 def check_diagnostics(language_server, data_regression):
     from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
+    from robotframework_ls_tests.fixtures import sort_diagnostics
 
     uri = "untitled:Untitled-1"
     message_matcher = language_server.obtain_pattern_message_matcher(
@@ -21,9 +22,8 @@ def check_diagnostics(language_server, data_regression):
     )
     language_server.change_doc(uri, 2, "*** Invalid Invalid ***")
     assert message_matcher.event.wait(TIMEOUT)
-    diag = message_matcher.msg
-
-    data_regression.check(diag, basename="diagnostics")
+    diag = message_matcher.msg["params"]["diagnostics"]
+    data_regression.check(sort_diagnostics(diag), basename="diagnostics")
 
 
 def test_diagnostics(language_server, ws_root_path, data_regression):
@@ -38,8 +38,10 @@ def test_diagnostics(language_server, ws_root_path, data_regression):
 
 
 def test_diagnostics_robocop(language_server, ws_root_path, data_regression):
-    language_server.initialize(ws_root_path, process_id=os.getpid())
+    from robotframework_ls_tests.fixtures import sort_diagnostics
     from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
 
     uri = "untitled:Untitled-1"
     message_matcher = language_server.obtain_pattern_message_matcher(
@@ -64,9 +66,8 @@ Test
 """,
     )
     assert message_matcher.event.wait(TIMEOUT)
-    diag = message_matcher.msg
-
-    data_regression.check(diag, basename="diagnostics")
+    diag = message_matcher.msg["params"]["diagnostics"]
+    data_regression.check(sort_diagnostics(diag), basename="test_diagnostics_robocop")
 
 
 def test_section_completions_integrated(language_server, ws_root_path, data_regression):

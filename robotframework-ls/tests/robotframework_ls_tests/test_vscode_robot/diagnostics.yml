@@ -1,82 +1,46 @@
-jsonrpc: '2.0'
-method: textDocument/publishDiagnostics
-params:
-  diagnostics:
-  - code: '0704'
-    message: Ignored data found in file
-    range:
-      end:
-        character: 0
-        line: 0
-      start:
-        character: 0
-        line: 0
-    severity: 2
-    source: robocop
-  - code: '0203'
-    message: Missing documentation in suite
-    range:
-      end:
-        character: 0
-        line: -1
-      start:
-        character: 0
-        line: -1
-    severity: 2
-    source: robocop
-  - code: '0202'
-    message: Missing documentation in test case
-    range:
-      end:
-        character: 0
-        line: 2
-      start:
-        character: 0
-        line: 2
-    severity: 2
-    source: robocop
-  - code: '0202'
-    message: Missing documentation in test case
-    range:
-      end:
-        character: 0
-        line: 5
-      start:
-        character: 0
-        line: 5
-    severity: 2
-    source: robocop
-  - code: 0801
-    message: Multiple test cases with name "Test" in suite
-    range:
-      end:
-        character: 0
-        line: 2
-      start:
-        character: 0
-        line: 2
-    severity: 1
-    source: robocop
-  - code: 0801
-    message: Multiple test cases with name "Test" in suite
-    range:
-      end:
-        character: 0
-        line: 5
-      start:
-        character: 0
-        line: 5
-    severity: 1
-    source: robocop
-  - code: 0509
-    message: Section is empty
-    range:
-      end:
-        character: 0
-        line: 0
-      start:
-        character: 0
-        line: 0
-    severity: 2
-    source: robocop
-  uri: untitled:Untitled-1
+- code: '0203'
+  message: Missing documentation in suite
+  range:
+    end:
+      character: 0
+      line: 0
+    start:
+      character: 0
+      line: 0
+  severity: 2
+  source: robocop
+- code: '0401'
+  message: 'Robot Framework syntax error: Unrecognized section header ''*** Invalid
+    Invalid ***''. Valid sections: ''Settings'', ''Variables'', ''Test Cases'', ''Tasks'',
+    ''Keywords'' and ''Comments''.'
+  range:
+    end:
+      character: 0
+      line: 0
+    start:
+      character: 0
+      line: 0
+  severity: 1
+  source: robocop
+- code: '1002'
+  message: Missing trailing blank line at the end of file
+  range:
+    end:
+      character: 0
+      line: 0
+    start:
+      character: 0
+      line: 0
+  severity: 2
+  source: robocop
+- message: 'Unrecognized section header ''*** Invalid Invalid ***''. Valid sections:
+    ''Settings'', ''Variables'', ''Test Cases'', ''Tasks'', ''Keywords'' and ''Comments''.'
+  range:
+    end:
+      character: 23
+      line: 0
+    start:
+      character: 0
+      line: 0
+  severity: 1
+  source: robotframework

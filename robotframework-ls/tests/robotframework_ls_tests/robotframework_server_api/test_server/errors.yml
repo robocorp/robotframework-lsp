@@ -1,6 +1,38 @@
-id: 3
-jsonrpc: '2.0'
-result:
+- code: '0203'
+  message: Missing documentation in suite
+  range:
+    end:
+      character: 0
+      line: 0
+    start:
+      character: 0
+      line: 0
+  severity: 2
+  source: robocop
+- code: '0401'
+  message: 'Robot Framework syntax error: Unrecognized section header ''*** foo bar
+    ***''. Valid sections: ''Settings'', ''Variables'', ''Test Cases'', ''Tasks'',
+    ''Keywords'' and ''Comments''.'
+  range:
+    end:
+      character: 0
+      line: 0
+    start:
+      character: 0
+      line: 0
+  severity: 1
+  source: robocop
+- code: '1002'
+  message: Missing trailing blank line at the end of file
+  range:
+    end:
+      character: 0
+      line: 0
+    start:
+      character: 0
+      line: 0
+  severity: 2
+  source: robocop
 - message: 'Unrecognized section header ''*** foo bar ***''. Valid sections: ''Settings'',
     ''Variables'', ''Test Cases'', ''Tasks'', ''Keywords'' and ''Comments''.'
   range:

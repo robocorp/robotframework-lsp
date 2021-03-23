@@ -72,11 +72,15 @@ def server_api_process_io(server_process):
 
 
 def test_server(server_api_process_io: IRobotFrameworkApiClient, data_regression):
+    from robotframework_ls_tests.fixtures import sort_diagnostics
+
     server_api_process_io.initialize(process_id=os.getpid())
     assert server_api_process_io.get_version() >= "3.2"
 
     server_api_process_io.open("untitled", 1, "*** foo bar ***")
-    data_regression.check(server_api_process_io.lint("untitled"), basename="errors")
+
+    diag = server_api_process_io.lint("untitled")["result"]
+    data_regression.check(sort_diagnostics(diag), basename="errors")
 
 
 def test_server_cancel(

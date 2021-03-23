@@ -119,7 +119,13 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             if completion_context is None:
                 return []
 
+            config = completion_context.config
+            robocop_enabled = config is None or config.get_setting(
+                OPTION_ROBOT_LINT_ROBOCOP_ENABLED, bool, True
+            )
+
             ast = completion_context.get_ast()
+            source = completion_context.doc.source
             monitor.check_cancelled()
             errors = collect_errors(ast)
             log.debug("Collected AST errors (in thread): %s", len(errors))
@@ -132,10 +138,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             lsp_diagnostics = [error.to_lsp_diagnostic() for error in errors]
 
             try:
-                config = completion_context.config
-                if config is None or config.get_setting(
-                    OPTION_ROBOT_LINT_ROBOCOP_ENABLED, bool, True
-                ):
+                if robocop_enabled:
                     from robocorp_ls_core.robocop_wrapper import (
                         collect_robocop_diagnostics,
                     )
@@ -149,10 +152,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
                     monitor.check_cancelled()
                     lsp_diagnostics.extend(
                         collect_robocop_diagnostics(
-                            project_root,
-                            ast,
-                            uris.to_fs_path(doc_uri),
-                            completion_context.doc.source,
+                            project_root, ast, uris.to_fs_path(doc_uri), source
                         )
                     )
             except Exception:

@@ -239,3 +239,16 @@ def workspace_dir(tmpdir):
     parent = str(tmpdir)
     basename = "ws áéíóú"
     return os.path.join(parent, basename)
+
+
+def sort_diagnostics(diagnostics):
+    def key(diag_dict):
+        return (
+            diag_dict["source"],
+            diag_dict["range"]["start"]["line"],
+            diag_dict.get("code", 0),
+            diag_dict["severity"],
+            diag_dict["message"],
+        )
+
+    return sorted(diagnostics, key=key)
