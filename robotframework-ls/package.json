@@ -76,12 +76,12 @@
                 "robot.language-server.python": {
                     "type": "string",
                     "default": "",
-                    "description": "Specifies the path to the python executable to be used for the Robot Framework Language Server (the default is searching python on the PATH).\nRequires a restart to take effect."
+                    "description": "Path to the python executable used to start the Robot Framework Language Server (the default is searching python on the PATH).\nRequires a restart to take effect."
                 },
                 "robot.language-server.args": {
                     "type": "array",
                     "default": [],
-                    "description": "Specifies the arguments to be passed to the robotframework language server (i.e.: [\"-vv\", \"--log-file=~/robotframework_ls.log\"]).\nRequires a restart to take effect."
+                    "description": "Arguments to be passed to the Robot Framework Language Server (i.e.: [\"-vv\", \"--log-file=~/robotframework_ls.log\"]).\nRequires a restart to take effect."
                 },
                 "robot.language-server.tcp-port": {
                     "type": "number",
@@ -91,22 +91,22 @@
                 "robot.python.executable": {
                     "type": "string",
                     "default": "",
-                    "description": "Specifies the path to the python executable to be used to load `robotframework` code and dependent libraries (the default is using the same python used for the language server)."
+                    "description": "Secondary python executable used to load user code and dependent libraries (the default is using the same python used for the language server)."
                 },
                 "robot.python.env": {
                     "type": "object",
                     "default": {},
-                    "description": "Specifies the environment to be used when loading `robotframework` code and dependent libraries.\ni.e.: {\"MY_ENV_VAR\": \"some_value\"}"
+                    "description": "Environment variables used to load user code and dependent libraries.\ni.e.: {\"MY_ENV_VAR\": \"some_value\"}"
                 },
                 "robot.variables": {
                     "type": "object",
                     "default": {},
-                    "description": "Specifies custom variables to be considered by `robotframework` (used when resolving variables and automatically passed to the launch config as --variable entries).\ni.e.: {\"RESOURCES\": \"c:/temp/resources\"}"
+                    "description": "Custom variables passed to RobotFramework (used when resolving variables and automatically passed to the launch config as --variable entries).\ni.e.: {\"EXECDIR\": \"c:/my/proj/src\"}"
                 },
                 "robot.pythonpath": {
                     "type": "array",
                     "default": [],
-                    "description": "Specifies the entries to be added to the PYTHONPATH (used when resolving resources and imports and automatically passed to the launch config as --pythonpath entries).\ni.e.: [\"</my/path_entry>\"]"
+                    "description": "Entries to be added to the PYTHONPATH (used when resolving resources and imports and automatically passed to the launch config as --pythonpath entries).\ni.e.: [\"c:/my/pro/src\"]"
                 },
                 "robot.lint.robocop.enabled": {
                     "type": "boolean",
