@@ -28,12 +28,14 @@ the python executable used for launching the Language Server or Robot Framework)
 may be needed.
 
 See: [Config](docs/config.md) for details.
+See: [FAQ](docs/faq.md) for common issues encountered while configuring the language server.
   
 
-Features (0.10.0)
+Features (0.11.0)
 -----------------
 
 - Code analysis: checks if keywords are properly imported/defined.
+- Linting with [Robocop](https://robocop.readthedocs.io/en/latest/).
 - Code completion for keywords, keyword parameters, section headers, section settings, variables, resource imports and library imports.
 - Code completion for all keywords in the workspace with auto-import of Library or Resource.
 - Go to definition for keywords, variables, resource imports and library imports.

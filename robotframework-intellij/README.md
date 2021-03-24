@@ -3,7 +3,7 @@ Robot Framework Language Server for Intellij
 
 Requirements
 -------------
-Intellij or some other Intellij-based product (such as PyCharm).
+Intellij (2020.3 onwards) or some other Intellij-based product (such as PyCharm).
 
 Python 3.7+ and [Robot Framework](https://robotframework.org/) 3.2+.
 
@@ -39,12 +39,13 @@ may be needed (by default it'll use the `python` from the `PATH`).
 
 The settings may be configured at: `File > Settings > Languages & Frameworks > Robot Framework Language Server`.
 
-Features (0.10.0)
+Features (0.11.0)
 -----------------
 
 - Settings page for the language server (per project and global)
 - Code completion
 - Code analysis
+- Linting with [Robocop](https://robocop.readthedocs.io/en/latest/).
 - Go to definition
 - Browse Keywords (symbols -- note: enable the `robot.workspaceSymbolsOnlyForOpenDocs` when dealing with big workspaces)
 - Syntax highlighting (with `semanticTokens/full` request).

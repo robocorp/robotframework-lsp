@@ -1,3 +1,17 @@
+New in 0.11.0 (2021-03-24)
+-----------------------------
+
+- [Intellij] Improved initialization of language server to validate the python executable and ask for a new one if the one found is not valid.
+- [Intellij] Fix PYTHONPATH so that the language server shipped in the Intellij plugin is the one used.
+- [Intellij] When requesting a completion, cancel previous one requested.
+- [Intellij] Language server executable can be project dependent.
+- [Robocop](https://robocop.readthedocs.io/en/latest/) is now used to lint (enabled by default, can be disabled in settings).
+- Snippets completion is now properly case-insensitive.
+- If there's some problem computing semantic tokens, log it and still return a valid value. [#274](https://github.com/robocorp/robotframework-lsp/issues/274)
+- If a keyword name is defined in the context, don't try to create an auto-import for it.
+- Reworded some settings to be clearer.
+
+
 New in 0.10.0 (2021-03-19)
 -----------------------------
 
