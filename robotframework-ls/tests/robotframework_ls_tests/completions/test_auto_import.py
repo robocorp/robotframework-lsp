@@ -352,18 +352,22 @@ User can call library
         CompletionContext(doc2, workspace=workspace.ws), keyword_name_to_keyword_found
     )
 
-    assert len(completions) == 1
-    apply_completion(doc2, completions[0])
+    assert len(completions) == 0
 
-    assert (
-        doc2.source
-        == """*** Settings ***
-Resource    ../case1.robot
-
-*** Test Cases ***
-User can call library
-    case1.KeywordInCase1"""
-    )
+    # The check done is now only by the keyword name, don't try to resolve if
+    # it's a different keyword because it's defined in another file.
+    #     assert len(completions) == 1
+    #     apply_completion(doc2, completions[0])
+    #
+    #     assert (
+    #         doc2.source
+    #         == """*** Settings ***
+    # Resource    ../case1.robot
+    #
+    # *** Test Cases ***
+    # User can call library
+    #     case1.KeywordInCase1"""
+    #     )
 
 
 def test_completion_with_auto_handle_unparseable_error(

@@ -41,14 +41,25 @@ class _Collector(object):
         )
         if not keywords_found:
             return True
-        for keyword_found in keywords_found:
-            if (
-                uris.from_fs_path(keyword_found.source)
-                == symbols_entry["location"]["uri"]
-            ):
-                return False
 
-        return True
+        # No longer do this check: if there's some symbol imported already, don't
+        # try to match with the filename (just don't show it).
+        #
+        # This change was done because the check below wasn't perfect
+        # and because it can be a bit confusing since everything imported
+        # works as a wild import in RobotFramework (so, even if it was a different
+        # keyword from a different place, importing it would make it clash and
+        # thus such a completion is kind of strange).
+        #
+        # for keyword_found in keywords_found:
+        #     if (
+        #         uris.from_fs_path(keyword_found.source)
+        #         == symbols_entry["location"]["uri"]
+        #     ):
+        #         return False
+        # return True
+
+        return False
 
     def create_completion_item(
         self,
