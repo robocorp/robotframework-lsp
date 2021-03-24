@@ -70,7 +70,7 @@ def main():
 
         configure_logger("dap", LOG_LEVEL, LOG_FILENAME)
         log = get_logger("robocorp_code_debug_adapter.__main__")
-        log_args_and_python(log, sys.argv, robocorp_code.__version__)
+        log_args_and_python(log, sys.argv, robocorp_code)
 
         from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
             reader_thread,

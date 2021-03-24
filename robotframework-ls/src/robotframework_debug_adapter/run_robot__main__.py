@@ -501,7 +501,7 @@ def main():
 
     configure_logger("robot", LOG_LEVEL, LOG_FILENAME)
     log = get_log()
-    log_args_and_python(log, sys.argv, robotframework_ls.__version__)
+    log_args_and_python(log, sys.argv, robotframework_ls)
 
     from robotframework_ls.options import DEFAULT_TIMEOUT
 

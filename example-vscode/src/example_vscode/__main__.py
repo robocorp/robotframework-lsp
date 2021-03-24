@@ -88,7 +88,10 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
     )
 
     if language_server_class is None:
-        from example_vscode.example_vscode_language_server import ExampleVSCodeLanguageServer
+        from example_vscode.example_vscode_language_server import (
+            ExampleVSCodeLanguageServer,
+        )
+
         language_server_class = ExampleVSCodeLanguageServer
 
     parser = argparse.ArgumentParser()
@@ -101,7 +104,7 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
 
     configure_logger("lsp", verbose, log_file)
     log = get_logger("example_vscode.__main__")
-    log_args_and_python(log, original_args, example_vscode.__version__)
+    log_args_and_python(log, original_args, example_vscode)
 
     if args.tcp:
         start_tcp_lang_server(

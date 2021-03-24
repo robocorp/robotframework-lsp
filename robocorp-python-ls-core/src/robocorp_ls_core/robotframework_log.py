@@ -244,12 +244,13 @@ def configure_logger(postfix, log_level, log_file):
     return _RestoreCtxManager(prev_config)
 
 
-def log_args_and_python(log, argv, version):
+def log_args_and_python(log, argv, module):
     log.debug("Arguments: %s", argv)
     log.debug(
-        "Python: %s - lsp: %s - platform: %s - sys.prefix: %s - sys.executable: %s",
+        "Python: %s - lsp: %s (%s) - platform: %s - sys.prefix: %s - sys.executable: %s",
         sys.version,
-        version,
+        getattr(module, "__version__", "<unable to get __version__>"),
+        module,
         sys.platform,
         sys.prefix,
         sys.executable,

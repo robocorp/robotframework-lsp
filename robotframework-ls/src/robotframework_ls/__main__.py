@@ -118,7 +118,7 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
 
     configure_logger("lsp", verbose, log_file)
     log = get_logger("robotframework_ls.__main__")
-    log_args_and_python(log, original_args, robotframework_ls.__version__)
+    log_args_and_python(log, original_args, robotframework_ls)
 
     if args.tcp:
         start_tcp_lang_server(

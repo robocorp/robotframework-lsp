@@ -136,7 +136,7 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
 
     configure_logger("lsp", verbose, log_file)
     log = get_logger("robocorp_code.__main__")
-    log_args_and_python(log, original_args, robocorp_code.__version__)
+    log_args_and_python(log, original_args, robocorp_code)
 
     try:
         from robocorp_code.options import Setup, Options
