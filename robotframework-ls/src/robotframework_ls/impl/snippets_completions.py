@@ -126,7 +126,7 @@ def complete(completion_context):
     :param CompletionContext completion_context:
     """
     sel = completion_context.sel  #::type sel: DocumentSelection
-    line_to_column = sel.line_to_column.lstrip()
+    line_to_column = sel.line_to_column.lstrip().lower()
     if not line_to_column:
         return []
 
