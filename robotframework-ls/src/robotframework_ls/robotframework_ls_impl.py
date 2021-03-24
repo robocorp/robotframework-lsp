@@ -299,27 +299,26 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         return None
 
     def m_text_document__semantic_tokens__range(self, textDocument=None, range=None):
-        doc_uri = textDocument["uri"]
-        api = self._server_manager.get_semantic_tokens_rf_api_client(doc_uri)
-        if api is None:
-            return []
-
-        return api.forward(
-            "textDocument/semanticTokens/range",
-            {"textDocument": textDocument, "range": range},
-        )
+        raise RuntimeError("Not currently implemented!")
 
     def m_text_document__semantic_tokens__full(self, textDocument=None):
-        doc_uri = textDocument["uri"]
-        api = self._server_manager.get_semantic_tokens_rf_api_client(doc_uri)
-        if api is None:
-            return []
-        ret = api.forward(
-            "textDocument/semanticTokens/full", {"textDocument": textDocument}
-        )
-        if ret is not None:
-            return ret["result"]
-        return []
+        try:
+            doc_uri = textDocument["uri"]
+            api = self._server_manager.get_semantic_tokens_rf_api_client(doc_uri)
+            if api is None:
+                log.info(
+                    "Unable to get api client when computing semantic tokens (full)."
+                )
+                return {"resultId": None, "data": []}
+
+            ret = api.forward(
+                "textDocument/semanticTokens/full", {"textDocument": textDocument}
+            )
+            if ret is not None:
+                return ret["result"]
+        except:
+            log.exception("Error computing semantic tokens (full).")
+        return {"resultId": None, "data": []}
 
     def m_workspace__execute_command(self, command=None, arguments=()) -> Any:
         if command == "robot.addPluginsDir":

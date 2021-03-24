@@ -386,13 +386,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         )
 
     def m_text_document__semantic_tokens__range(self, textDocument=None, range=None):
-        from robotframework_ls.impl.semantic_tokens import semantic_tokens_range
-
-        doc_uri = textDocument["uri"]
-        context = self._create_completion_context(doc_uri, -1, -1, None)
-        if context is None:
-            return []
-        return semantic_tokens_range(context, range)
+        raise RuntimeError("Not currently implemented!")
 
     def m_text_document__semantic_tokens__full(self, textDocument=None):
         from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
@@ -400,7 +394,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         doc_uri = textDocument["uri"]
         context = self._create_completion_context(doc_uri, -1, -1, None)
         if context is None:
-            return []
+            return {"resultId": None, "data": []}
         return {"resultId": None, "data": semantic_tokens_full(context)}
 
     def m_shutdown(self, **_kwargs):
