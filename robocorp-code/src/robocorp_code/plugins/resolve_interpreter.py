@@ -125,17 +125,22 @@ class _CachedInterpreterInfo(object):
         if not result.success:
             raise RuntimeError(f"Unable to get env details. Error: {result.message}.")
 
-        json_contents: Optional[str] = result.result
-        if not json_contents:
+        contents: Optional[str] = result.result
+        if not contents:
             raise RuntimeError(f"Unable to get output when getting environment.")
 
         root = str(robot_yaml_file_info.file_path.parent)
 
         environ = {}
-        for line in json_contents.splitlines(keepends=False):
+        for line in contents.splitlines(keepends=False):
+            line = line.strip()
+            if line.startswith("="):  # ignore hidden env variable
+                continue
             parts = line.split("=", 1)
             if len(parts) == 2:
-                environ[parts[0]] = parts[1]
+                p0 = parts[0].strip()
+                if p0:
+                    environ[p0] = parts[1]
 
         pythonpath_lst = robot_yaml_file_info.yaml_contents.get("PYTHONPATH", [])
         additional_pythonpath_entries: List[str] = []
