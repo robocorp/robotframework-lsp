@@ -71,23 +71,19 @@ RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX = {
     VARIABLE: TOKEN_TYPE_TO_INDEX["variable"],
 }
 
+
 for tok_type in HEADER_TOKENS:  # *** Settings ***, ...
     RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[tok_type] = TOKEN_TYPE_TO_INDEX["header"]
-    RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[tok_type.replace(" ", "_")] = TOKEN_TYPE_TO_INDEX[
-        "header"
-    ]
 
 for tok_type in SETTING_TOKENS:  # Library, Teardown, ...
     RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[tok_type] = TOKEN_TYPE_TO_INDEX["setting"]
-    RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[tok_type.replace(" ", "_")] = TOKEN_TYPE_TO_INDEX[
-        "setting"
-    ]
 
 for tok_type in CONTROL_TOKENS:  # Library, Teardown, ...
     RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[tok_type] = TOKEN_TYPE_TO_INDEX["control"]
-    RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[tok_type.replace(" ", "_")] = TOKEN_TYPE_TO_INDEX[
-        "control"
-    ]
+
+for key, val in list(RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.items()):
+    RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[key.replace(" ", "_")] = val
+
 
 VARIABLE_INDEX = TOKEN_TYPE_TO_INDEX["variable"]
 VARIABLE_OPERATOR_INDEX = TOKEN_TYPE_TO_INDEX["variableOperator"]
