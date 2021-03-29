@@ -1,3 +1,10 @@
+New in 0.11.1 (2021-03-29)
+-----------------------------
+
+- [Robocop](https://robocop.readthedocs.io/en/latest/) updated to 1.6.1.
+- Fixes in semantic syntax hightlighting with Robot Framework 3.x.
+- Keywords from `Reserved.py` are no longer shown for auto-import.
+
 New in 0.11.0 (2021-03-24)
 -----------------------------
 

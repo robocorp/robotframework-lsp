@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.11.0'
+version '0.11.1'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -49,18 +49,12 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.11.0
+    Release 0.11.1
     </p>
     <ul>
-      <li>[Intellij] Improved initialization of language server to validate the python executable and ask for a new one if the one found is not valid.</li>
-      <li>[Intellij] Fix PYTHONPATH so that the language server shipped in the Intellij plugin is the one used.</li>
-      <li>[Intellij] When requesting a completion, cancel previous one requested.</li>
-      <li>[Intellij] Language server executable can be project dependent.</li>
-      <li>[Robocop](https://robocop.readthedocs.io/en/latest/) is now used to lint (enabled by default, can be disabled in settings).</li>
-      <li>Snippets completion is now properly case-insensitive.</li>
-      <li>If there's some problem computing semantic tokens, log it and still return a valid value.</li>
-      <li>If a keyword name is defined in the context, don't try to create an auto-import for it.</li>
-      <li>Reworded some settings to be clearer.</li>
+        <li>[Robocop](https://robocop.readthedocs.io/en/latest/) updated to 1.6.1.</li>
+        <li>Fixes in semantic syntax hightlighting with Robot Framework 3.x.</li>
+        <li>Keywords from `Reserved.py` are no longer shown for auto-import.</li>
     </ul>    
     <br>
     Current feature set:<br>

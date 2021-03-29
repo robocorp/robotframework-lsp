@@ -294,7 +294,7 @@ def main():
             if prop_value['type'] in ['array', 'object']:
                 final_desc += '\\nNote: expected format: JSON ' + prop_value['type'].title()
             elif prop_value['type'] in ['boolean']:
-                final_desc += '\\nNote: expected "true" or "false"'
+                final_desc += '\\nNote: expected \'true\' or \'false\''
 
             final_desc += '\\n'
 
