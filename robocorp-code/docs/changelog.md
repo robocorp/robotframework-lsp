@@ -1,3 +1,9 @@
+New in 0.8.2 (2021-03-29)
+-----------------------------
+
+- Ignoring environment variables starting with `=` (which could end up breaking the language server startup).
+
+
 New in 0.8.1 (2021-03-24)
 -----------------------------
 
