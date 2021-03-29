@@ -1,67 +1,133 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<keywordspec name="Reserved" type="LIBRARY" format="HTML" scope="GLOBAL" namedargs="true" generated="2020-06-16T12:05:34Z" specversion="2" source="C:\bin\Miniconda\envs\vscode-robot\lib\site-packages\robot\libraries\Reserved.py" lineno="20">
-<version></version>
-<scope>global</scope>
-<namedargs>yes</namedargs>
+<keywordspec name="Reserved" type="LIBRARY" format="HTML" scope="GLOBAL" generated="2021-03-29T11:31:45Z" specversion="3" source="X:\vscode-robot\robotframework\src\robot\libraries\Reserved.py" lineno="23">
+<version/>
 <doc>&lt;p&gt;Documentation for library &lt;code&gt;Reserved&lt;/code&gt;.&lt;/p&gt;</doc>
-<kw name="Break">
-<arguments>
-<arg>*varargs</arg>
+<tags>
+</tags>
+<inits>
+</inits>
+<keywords>
+<kw name="Break" lineno="34">
+<arguments repr="*args, **kwargs">
+<arg kind="VAR_POSITIONAL" required="false" repr="*args">
+<name>args</name>
+</arg>
+<arg kind="VAR_NAMED" required="false" repr="**kwargs">
+<name>kwargs</name>
+</arg>
 </arguments>
-<doc></doc>
+<doc/>
+<shortdoc/>
 </kw>
-<kw name="Continue">
-<arguments>
-<arg>*varargs</arg>
+<kw name="Continue" lineno="34">
+<arguments repr="*args, **kwargs">
+<arg kind="VAR_POSITIONAL" required="false" repr="*args">
+<name>args</name>
+</arg>
+<arg kind="VAR_NAMED" required="false" repr="**kwargs">
+<name>kwargs</name>
+</arg>
 </arguments>
-<doc></doc>
+<doc/>
+<shortdoc/>
 </kw>
-<kw name="Elif">
-<arguments>
-<arg>*varargs</arg>
+<kw name="Elif" lineno="34">
+<arguments repr="*args, **kwargs">
+<arg kind="VAR_POSITIONAL" required="false" repr="*args">
+<name>args</name>
+</arg>
+<arg kind="VAR_NAMED" required="false" repr="**kwargs">
+<name>kwargs</name>
+</arg>
 </arguments>
-<doc></doc>
+<doc/>
+<shortdoc/>
 </kw>
-<kw name="Else">
-<arguments>
-<arg>*varargs</arg>
+<kw name="Else" lineno="34">
+<arguments repr="*args, **kwargs">
+<arg kind="VAR_POSITIONAL" required="false" repr="*args">
+<name>args</name>
+</arg>
+<arg kind="VAR_NAMED" required="false" repr="**kwargs">
+<name>kwargs</name>
+</arg>
 </arguments>
-<doc></doc>
+<doc/>
+<shortdoc/>
 </kw>
-<kw name="Else If">
-<arguments>
-<arg>*varargs</arg>
+<kw name="Else If" lineno="34">
+<arguments repr="*args, **kwargs">
+<arg kind="VAR_POSITIONAL" required="false" repr="*args">
+<name>args</name>
+</arg>
+<arg kind="VAR_NAMED" required="false" repr="**kwargs">
+<name>kwargs</name>
+</arg>
 </arguments>
-<doc></doc>
+<doc/>
+<shortdoc/>
 </kw>
-<kw name="End">
-<arguments>
-<arg>*varargs</arg>
+<kw name="End" lineno="34">
+<arguments repr="*args, **kwargs">
+<arg kind="VAR_POSITIONAL" required="false" repr="*args">
+<name>args</name>
+</arg>
+<arg kind="VAR_NAMED" required="false" repr="**kwargs">
+<name>kwargs</name>
+</arg>
 </arguments>
-<doc></doc>
+<doc/>
+<shortdoc/>
 </kw>
-<kw name="For">
-<arguments>
-<arg>*varargs</arg>
+<kw name="For" lineno="34">
+<arguments repr="*args, **kwargs">
+<arg kind="VAR_POSITIONAL" required="false" repr="*args">
+<name>args</name>
+</arg>
+<arg kind="VAR_NAMED" required="false" repr="**kwargs">
+<name>kwargs</name>
+</arg>
 </arguments>
-<doc></doc>
+<doc/>
+<shortdoc/>
 </kw>
-<kw name="If">
-<arguments>
-<arg>*varargs</arg>
+<kw name="If" lineno="34">
+<arguments repr="*args, **kwargs">
+<arg kind="VAR_POSITIONAL" required="false" repr="*args">
+<name>args</name>
+</arg>
+<arg kind="VAR_NAMED" required="false" repr="**kwargs">
+<name>kwargs</name>
+</arg>
 </arguments>
-<doc></doc>
+<doc/>
+<shortdoc/>
 </kw>
-<kw name="Return">
-<arguments>
-<arg>*varargs</arg>
+<kw name="Return" lineno="34">
+<arguments repr="*args, **kwargs">
+<arg kind="VAR_POSITIONAL" required="false" repr="*args">
+<name>args</name>
+</arg>
+<arg kind="VAR_NAMED" required="false" repr="**kwargs">
+<name>kwargs</name>
+</arg>
 </arguments>
-<doc></doc>
+<doc/>
+<shortdoc/>
 </kw>
-<kw name="While">
-<arguments>
-<arg>*varargs</arg>
+<kw name="While" lineno="34">
+<arguments repr="*args, **kwargs">
+<arg kind="VAR_POSITIONAL" required="false" repr="*args">
+<name>args</name>
+</arg>
+<arg kind="VAR_NAMED" required="false" repr="**kwargs">
+<name>kwargs</name>
+</arg>
 </arguments>
-<doc></doc>
+<doc/>
+<shortdoc/>
 </kw>
+</keywords>
+<datatypes>
+</datatypes>
 </keywordspec>

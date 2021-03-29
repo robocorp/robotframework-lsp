@@ -92,7 +92,7 @@ def _add_completions_from_dir(
 def _get_completions(completion_context, token, match_libs, extensions, skip_current):
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
     from robocorp_ls_core import uris
-    from robotframework_ls.impl.robot_constants import BUILTIN_LIB
+    from robotframework_ls.impl.robot_constants import BUILTIN_LIB, RESERVED_LIB
 
     ret = []
 
@@ -126,6 +126,7 @@ def _get_completions(completion_context, token, match_libs, extensions, skip_cur
             libspec_manager = completion_context.workspace.libspec_manager
             library_names = set(libspec_manager.get_library_names())
             library_names.discard(BUILTIN_LIB)
+            library_names.discard(RESERVED_LIB)
 
             for library_name in library_names:
                 if matcher.accepts(library_name):

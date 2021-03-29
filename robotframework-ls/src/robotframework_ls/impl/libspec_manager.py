@@ -602,6 +602,7 @@ class LibspecManager(object):
             from robotframework_ls.impl import robot_constants
             from robocorp_ls_core.system_mutex import timed_acquire_mutex
             from robocorp_ls_core.system_mutex import generate_mutex_name
+            from robotframework_ls.impl.robot_constants import RESERVED_LIB
 
             initial_time = time.time()
             wait_for = []
@@ -620,6 +621,8 @@ class LibspecManager(object):
                 ):
                     log.debug("Obtained mutex to generate builtins.")
                     for libname in robot_constants.STDLIBS:
+                        if libname == RESERVED_LIB:
+                            continue
                         builtins_libspec_dir = self._builtins_libspec_dir
                         if not os.path.exists(
                             os.path.join(builtins_libspec_dir, f"{libname}.libspec")

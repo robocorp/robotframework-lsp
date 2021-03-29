@@ -1,13 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<keywordspec name="Easter" type="LIBRARY" format="HTML" scope="GLOBAL" namedargs="true" generated="2020-06-16T12:05:34Z" specversion="2" source="C:\bin\Miniconda\envs\vscode-robot\lib\site-packages\robot\libraries\Easter.py" lineno="1">
-<version></version>
-<scope>global</scope>
-<namedargs>yes</namedargs>
+<keywordspec name="Easter" type="LIBRARY" format="HTML" scope="GLOBAL" generated="2021-03-29T11:31:45Z" specversion="3" source="X:\vscode-robot\robotframework\src\robot\libraries\Easter.py" lineno="1">
+<version/>
 <doc>&lt;p&gt;Documentation for library &lt;code&gt;Easter&lt;/code&gt;.&lt;/p&gt;</doc>
+<tags>
+</tags>
+<inits>
+</inits>
+<keywords>
 <kw name="None Shall Pass" lineno="19">
-<arguments>
-<arg>who</arg>
+<arguments repr="who">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="who">
+<name>who</name>
+</arg>
 </arguments>
-<doc></doc>
+<doc/>
+<shortdoc/>
 </kw>
+</keywords>
+<datatypes>
+</datatypes>
 </keywordspec>

@@ -158,6 +158,7 @@ RESOURCE_FILE_SECTIONS = [
 
 
 BUILTIN_LIB = "BuiltIn"
+RESERVED_LIB = "Reserved"
 
 # From robot.libraries.STDLIBS
 STDLIBS = frozenset(
@@ -170,7 +171,7 @@ STDLIBS = frozenset(
         "OperatingSystem",
         "Process",
         # "Remote", -- Remote doesn't really have any keywords.
-        "Reserved",
+        RESERVED_LIB,
         "Screenshot",
         "String",
         "Telnet",

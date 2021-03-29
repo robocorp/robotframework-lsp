@@ -11,11 +11,16 @@ import weakref
 from robotframework_ls.impl.robot_lsp_constants import (
     OPTION_ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS,
 )
+from robocorp_ls_core.options import USE_TIMEOUTS
 
 log = get_logger(__name__)
 
 WORKSPACE_SYMBOLS_FIRST_TIMEOUT = 6.0  # The first time it can take a bit longer
 WORKSPACE_SYMBOLS_TIMEOUT = 1.0
+
+if not USE_TIMEOUTS:
+    WORKSPACE_SYMBOLS_FIRST_TIMEOUT = 999999.0
+    WORKSPACE_SYMBOLS_TIMEOUT = 999999.0
 
 
 class SymbolsCache:
@@ -151,7 +156,11 @@ def iter_symbols_caches(
         from robotframework_ls.impl.libspec_manager import LibspecManager
         from robotframework_ls.impl.protocols import IRobotWorkspace
         from typing import cast
-        from robotframework_ls.impl.robot_constants import STDLIBS, BUILTIN_LIB
+        from robotframework_ls.impl.robot_constants import (
+            STDLIBS,
+            BUILTIN_LIB,
+            RESERVED_LIB,
+        )
 
         workspace: Optional[IRobotWorkspace] = context.workspace
         if not workspace:
@@ -160,6 +169,8 @@ def iter_symbols_caches(
 
         library_name_and_current_doc: Set[tuple] = set()
         for name in STDLIBS:
+            if name == RESERVED_LIB:
+                continue
             if not show_builtins and name == BUILTIN_LIB:
                 continue
             library_name_and_current_doc.add((name, None))
@@ -225,6 +236,11 @@ def iter_symbols_caches(
         for _internal_lib_info in libspec_manager.iter_lib_info():
             library_info = _internal_lib_info.library_doc
             library_name = library_info.name
+            if library_name == RESERVED_LIB:
+                continue
+            if not show_builtins and library_name == BUILTIN_LIB:
+                continue
+
             library_id = (library_info.name, library_info.source)
             if library_id in already_checked:
                 continue

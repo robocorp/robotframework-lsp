@@ -21,23 +21,21 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py36-master",
-          
+          "windows-py36-pip-v3",
           "ubuntu-py38-master",
+          "ubuntu-py38-pip-v4",
           "ubuntu-pypy3-master",
-          
-          "ubuntu-py38-pip",
 #           "macos-py37",
         ]
         
         include:
-          - name: "windows-py36-master"
+          - name: "windows-py36-pip-v3"
             python: "3.6"
             os: windows-latest
           - name: "ubuntu-py38-master"
             python: "3.8"
             os: ubuntu-latest
-          - name: "ubuntu-py38-pip"
+          - name: "ubuntu-py38-pip-v4"
             python: "3.8"
             os: ubuntu-latest
           - name: "ubuntu-pypy3-master"
@@ -64,8 +62,11 @@ jobs:
       run: python -W ignore -m pip install https://github.com/robotframework/robotframework/archive/master.zip --no-warn-script-location --disable-pip-version-check
       if: contains(matrix.name, '-master')
     - name: Install robotframework from pip
-      run: python -W ignore -m pip install robotframework
-      if: contains(matrix.name, '-pip')
+      run: python -W ignore -m pip install "robotframework>=3.2,<4.0"
+      if: contains(matrix.name, '-pip-v3')
+    - name: Install robotframework from pip
+      run: python -W ignore -m pip install "robotframework>=4.0"
+      if: contains(matrix.name, '-pip-v4')
     - name: Vendor robocorp_ls_core
       working-directory: ./robotframework-ls
       run: |

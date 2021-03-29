@@ -469,3 +469,21 @@ Testing Completion Here
     # I.e.: all the related symbols are already imported and will be shown
     # in the regular completion.
     assert len(completions) == 0
+
+
+def test_no_reserved_keywords(workspace, setup_case2_in_dir_doc):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import auto_import_completions
+
+    doc = workspace.get_doc("case1.robot")
+
+    doc.source = """
+*** Keywords ***
+KeywordInCase1
+    Else i"""
+
+    completions = auto_import_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws), {}
+    )
+    for completion in completions:
+        assert completion["label"] != "Else If (Reserved)"

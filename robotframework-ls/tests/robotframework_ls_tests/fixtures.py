@@ -128,7 +128,7 @@ def main_module():
 
 
 @pytest.fixture(autouse=True, scope="session")
-def sync_builtins(tmpdir_factory, cases):
+def sync_builtins(tmpdir_factory):
     """
     Pre-generate the builtins.
     """
@@ -144,7 +144,10 @@ def sync_builtins(tmpdir_factory, cases):
         # Ignore exception if it's already created.
         pass
 
-    builtin_libs = cases.get_path("builtin_libs")
+    f = __file__
+    original_resources_dir = os.path.join(os.path.dirname(f), "_resources")
+    builtin_libs = os.path.join(original_resources_dir, "builtin_libs")
+    assert os.path.exists(builtin_libs)
 
     # Uncomment the line to regenerate the libspec files for the builtin libraries.
     # LibspecManager(builtin_libspec_dir=builtin_libs)

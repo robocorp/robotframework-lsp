@@ -1,27 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<keywordspec name="String" type="LIBRARY" format="HTML" scope="GLOBAL" namedargs="true" generated="2020-06-16T12:05:34Z" specversion="2" source="C:\bin\Miniconda\envs\vscode-robot\lib\site-packages\robot\libraries\String.py" lineno="31">
-<version>3.2.2.dev1</version>
-<scope>global</scope>
-<namedargs>yes</namedargs>
+<keywordspec name="String" type="LIBRARY" format="HTML" scope="GLOBAL" generated="2021-03-29T11:31:45Z" specversion="3" source="X:\vscode-robot\robotframework\src\robot\libraries\String.py" lineno="32">
+<version>4.0rc1.dev1</version>
 <doc>&lt;p&gt;A test library for string manipulation and verification.&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;String&lt;/code&gt; is Robot Framework's standard library for manipulating strings (e.g. `Replace String Using Regexp`, `Split To Lines`) and verifying their contents (e.g. `Should Be String`).&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;String&lt;/code&gt; is Robot Framework's standard library for manipulating strings (e.g. &lt;a href="#Replace%20String%20Using%20Regexp" class="name"&gt;Replace String Using Regexp&lt;/a&gt;, &lt;a href="#Split%20To%20Lines" class="name"&gt;Split To Lines&lt;/a&gt;) and verifying their contents (e.g. &lt;a href="#Should%20Be%20String" class="name"&gt;Should Be String&lt;/a&gt;).&lt;/p&gt;
 &lt;p&gt;Following keywords from &lt;code&gt;BuiltIn&lt;/code&gt; library can also be used with strings:&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;`Catenate`&lt;/li&gt;
-&lt;li&gt;`Get Length`&lt;/li&gt;
-&lt;li&gt;`Length Should Be`&lt;/li&gt;
-&lt;li&gt;`Should (Not) Be Empty`&lt;/li&gt;
-&lt;li&gt;`Should (Not) Be Equal (As Strings/Integers/Numbers)`&lt;/li&gt;
-&lt;li&gt;`Should (Not) Match (Regexp)`&lt;/li&gt;
-&lt;li&gt;`Should (Not) Contain`&lt;/li&gt;
-&lt;li&gt;`Should (Not) Start With`&lt;/li&gt;
-&lt;li&gt;`Should (Not) End With`&lt;/li&gt;
-&lt;li&gt;`Convert To String`&lt;/li&gt;
-&lt;li&gt;`Convert To Bytes`&lt;/li&gt;
+&lt;li&gt;&lt;span class="name"&gt;Catenate&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span class="name"&gt;Get Length&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span class="name"&gt;Length Should Be&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span class="name"&gt;Should (Not) Be Empty&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span class="name"&gt;Should (Not) Be Equal (As Strings/Integers/Numbers)&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span class="name"&gt;Should (Not) Match (Regexp)&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span class="name"&gt;Should (Not) Contain&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span class="name"&gt;Should (Not) Start With&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span class="name"&gt;Should (Not) End With&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span class="name"&gt;Convert To String&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span class="name"&gt;Convert To Bytes&lt;/span&gt;&lt;/li&gt;
 &lt;/ul&gt;</doc>
-<kw name="Convert To Lower Case" lineno="55">
-<arguments>
-<arg>string</arg>
+<tags>
+</tags>
+<inits>
+</inits>
+<keywords>
+<kw name="Convert To Lower Case" lineno="56">
+<arguments repr="string">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Converts string to lower case.&lt;/p&gt;
 &lt;p&gt;Uses Python's standard &lt;a href="https://docs.python.org/library/stdtypes.html#str.lower"&gt;lower()&lt;/a&gt; method.&lt;/p&gt;
@@ -48,11 +53,17 @@
 &lt;td&gt;1a2c3d&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
+<shortdoc>Converts string to lower case.</shortdoc>
 </kw>
-<kw name="Convert To Title Case" lineno="87">
-<arguments>
-<arg>string</arg>
-<arg>exclude=None</arg>
+<kw name="Convert To Title Case" lineno="89">
+<arguments repr="string, exclude=None">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="exclude=None">
+<name>exclude</name>
+<default>None</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Converts string to title case.&lt;/p&gt;
 &lt;p&gt;Uses the following algorithm:&lt;/p&gt;
@@ -63,7 +74,7 @@
 &lt;li&gt;Title case the first alphabetical character of each word that has not been excluded.&lt;/li&gt;
 &lt;li&gt;Join all words together so that original whitespace is preserved.&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;Explicitly excluded words can be given as a list or as a string with words separated by a comma and an optional space. Excluded words are actually considered to be regular expression patterns, so it is possible to use something like "example[.!?]?" to match the word "example" on it own and also if followed by ".", "!" or "?". See `BuiltIn.Should Match Regexp` for more information about Python regular expression syntax in general and how to use it in Robot Framework test data in particular.&lt;/p&gt;
+&lt;p&gt;Explicitly excluded words can be given as a list or as a string with words separated by a comma and an optional space. Excluded words are actually considered to be regular expression patterns, so it is possible to use something like "example[.!?]?" to match the word "example" on it own and also if followed by ".", "!" or "?". See &lt;span class="name"&gt;BuiltIn.Should Match Regexp&lt;/span&gt; for more information about Python regular expression syntax in general and how to use it in Robot Framework test data in particular.&lt;/p&gt;
 &lt;p&gt;Examples:&lt;/p&gt;
 &lt;table border="1"&gt;
 &lt;tr&gt;
@@ -105,10 +116,13 @@
 &lt;/table&gt;
 &lt;p&gt;The reason this keyword does not use Python's standard &lt;a href="https://docs.python.org/library/stdtypes.html#str.title"&gt;title()&lt;/a&gt; method is that it can yield undesired results, for example, if strings contain upper case letters or special characters like apostrophes. It would, for example, convert "it's an OK iPhone" to "It'S An Ok Iphone".&lt;/p&gt;
 &lt;p&gt;New in Robot Framework 3.2.&lt;/p&gt;</doc>
+<shortdoc>Converts string to title case.</shortdoc>
 </kw>
-<kw name="Convert To Upper Case" lineno="72">
-<arguments>
-<arg>string</arg>
+<kw name="Convert To Upper Case" lineno="73">
+<arguments repr="string">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Converts string to upper case.&lt;/p&gt;
 &lt;p&gt;Uses Python's standard &lt;a href="https://docs.python.org/library/stdtypes.html#str.upper"&gt;upper()&lt;/a&gt; method.&lt;/p&gt;
@@ -135,12 +149,20 @@
 &lt;td&gt;1A2C3D&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
+<shortdoc>Converts string to upper case.</shortdoc>
 </kw>
-<kw name="Decode Bytes To String" lineno="167">
-<arguments>
-<arg>bytes</arg>
-<arg>encoding</arg>
-<arg>errors=strict</arg>
+<kw name="Decode Bytes To String" lineno="171">
+<arguments repr="bytes, encoding, errors=strict">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="bytes">
+<name>bytes</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="encoding">
+<name>encoding</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="errors=strict">
+<name>errors</name>
+<default>strict</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Decodes the given &lt;code&gt;bytes&lt;/code&gt; to a Unicode string using the given &lt;code&gt;encoding&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;errors&lt;/code&gt; argument controls what to do if decoding some bytes fails. All values accepted by &lt;code&gt;decode&lt;/code&gt; method in Python are valid, but in practice the following values are most useful:&lt;/p&gt;
@@ -166,13 +188,21 @@
 &lt;td&gt;errors=ignore&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;
-&lt;p&gt;Use `Encode String To Bytes` if you need to convert Unicode strings to byte strings, and `Convert To String` in &lt;code&gt;BuiltIn&lt;/code&gt; if you need to convert arbitrary objects to Unicode strings.&lt;/p&gt;</doc>
+&lt;p&gt;Use &lt;a href="#Encode%20String%20To%20Bytes" class="name"&gt;Encode String To Bytes&lt;/a&gt; if you need to convert Unicode strings to byte strings, and &lt;span class="name"&gt;Convert To String&lt;/span&gt; in &lt;code&gt;BuiltIn&lt;/code&gt; if you need to convert arbitrary objects to Unicode strings.&lt;/p&gt;</doc>
+<shortdoc>Decodes the given ``bytes`` to a Unicode string using the given ``encoding``.</shortdoc>
 </kw>
-<kw name="Encode String To Bytes" lineno="144">
-<arguments>
-<arg>string</arg>
-<arg>encoding</arg>
-<arg>errors=strict</arg>
+<kw name="Encode String To Bytes" lineno="148">
+<arguments repr="string, encoding, errors=strict">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="encoding">
+<name>encoding</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="errors=strict">
+<name>errors</name>
+<default>strict</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Encodes the given Unicode &lt;code&gt;string&lt;/code&gt; to bytes using the given &lt;code&gt;encoding&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;errors&lt;/code&gt; argument controls what to do if encoding some characters fails. All values accepted by &lt;code&gt;encode&lt;/code&gt; method in Python are valid, but in practice the following values are most useful:&lt;/p&gt;
@@ -198,35 +228,52 @@
 &lt;td&gt;errors=ignore&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;
-&lt;p&gt;Use `Convert To Bytes` in &lt;code&gt;BuiltIn&lt;/code&gt; if you want to create bytes based on character or integer sequences. Use `Decode Bytes To String` if you need to convert byte strings to Unicode strings and `Convert To String` in &lt;code&gt;BuiltIn&lt;/code&gt; if you need to convert arbitrary objects to Unicode.&lt;/p&gt;</doc>
+&lt;p&gt;Use &lt;span class="name"&gt;Convert To Bytes&lt;/span&gt; in &lt;code&gt;BuiltIn&lt;/code&gt; if you want to create bytes based on character or integer sequences. Use &lt;a href="#Decode%20Bytes%20To%20String" class="name"&gt;Decode Bytes To String&lt;/a&gt; if you need to convert byte strings to Unicode strings and &lt;span class="name"&gt;Convert To String&lt;/span&gt; in &lt;code&gt;BuiltIn&lt;/code&gt; if you need to convert arbitrary objects to Unicode.&lt;/p&gt;</doc>
+<shortdoc>Encodes the given Unicode ``string`` to bytes using the given ``encoding``.</shortdoc>
 </kw>
-<kw name="Fetch From Left" lineno="555">
-<arguments>
-<arg>string</arg>
-<arg>marker</arg>
+<kw name="Fetch From Left" lineno="561">
+<arguments repr="string, marker">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="marker">
+<name>marker</name>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Returns contents of the &lt;code&gt;string&lt;/code&gt; before the first occurrence of &lt;code&gt;marker&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;If the &lt;code&gt;marker&lt;/code&gt; is not found, whole string is returned.&lt;/p&gt;
-&lt;p&gt;See also `Fetch From Right`, `Split String` and `Split String From Right`.&lt;/p&gt;</doc>
+&lt;p&gt;See also &lt;a href="#Fetch%20From%20Right" class="name"&gt;Fetch From Right&lt;/a&gt;, &lt;a href="#Split%20String" class="name"&gt;Split String&lt;/a&gt; and &lt;a href="#Split%20String%20From%20Right" class="name"&gt;Split String From Right&lt;/a&gt;.&lt;/p&gt;</doc>
+<shortdoc>Returns contents of the ``string`` before the first occurrence of ``marker``.</shortdoc>
 </kw>
-<kw name="Fetch From Right" lineno="565">
-<arguments>
-<arg>string</arg>
-<arg>marker</arg>
+<kw name="Fetch From Right" lineno="571">
+<arguments repr="string, marker">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="marker">
+<name>marker</name>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Returns contents of the &lt;code&gt;string&lt;/code&gt; after the last occurrence of &lt;code&gt;marker&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;If the &lt;code&gt;marker&lt;/code&gt; is not found, whole string is returned.&lt;/p&gt;
-&lt;p&gt;See also `Fetch From Left`, `Split String` and `Split String From Right`.&lt;/p&gt;</doc>
+&lt;p&gt;See also &lt;a href="#Fetch%20From%20Left" class="name"&gt;Fetch From Left&lt;/a&gt;, &lt;a href="#Split%20String" class="name"&gt;Split String&lt;/a&gt; and &lt;a href="#Split%20String%20From%20Right" class="name"&gt;Split String From Right&lt;/a&gt;.&lt;/p&gt;</doc>
+<shortdoc>Returns contents of the ``string`` after the last occurrence of ``marker``.</shortdoc>
 </kw>
-<kw name="Format String" lineno="191">
-<arguments>
-<arg>template</arg>
-<arg>*positional</arg>
-<arg>**named</arg>
+<kw name="Format String" lineno="195">
+<arguments repr="template, *positional, **named">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="template">
+<name>template</name>
+</arg>
+<arg kind="VAR_POSITIONAL" required="false" repr="*positional">
+<name>positional</name>
+</arg>
+<arg kind="VAR_NAMED" required="false" repr="**named">
+<name>named</name>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Formats a &lt;code&gt;template&lt;/code&gt; using the given &lt;code&gt;positional&lt;/code&gt; and &lt;code&gt;named&lt;/code&gt; arguments.&lt;/p&gt;
 &lt;p&gt;The template can be either be a string or an absolute path to an existing file. In the latter case the file is read and its contents are used as the template. If the template file contains non-ASCII characters, it must be encoded using UTF-8.&lt;/p&gt;
-&lt;p&gt;The template is formatted using Python's &lt;a href="https://docs.python.org/library/string.html#format-string-syntax"&gt;format string syntax&lt;/a&gt;. Placeholders are marked using &lt;code&gt;{}&lt;/code&gt; with possible field name and format specification inside. Literal curly braces can be inserted by doubling them like `{{` and `}}`.&lt;/p&gt;
+&lt;p&gt;The template is formatted using Python's &lt;a href="https://docs.python.org/library/string.html#format-string-syntax"&gt;format string syntax&lt;/a&gt;. Placeholders are marked using &lt;code&gt;{}&lt;/code&gt; with possible field name and format specification inside. Literal curly braces can be inserted by doubling them like &lt;span class="name"&gt;{{&lt;/span&gt; and &lt;span class="name"&gt;}}&lt;/span&gt;.&lt;/p&gt;
 &lt;p&gt;Examples:&lt;/p&gt;
 &lt;table border="1"&gt;
 &lt;tr&gt;
@@ -279,11 +326,18 @@
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;New in Robot Framework 3.1.&lt;/p&gt;</doc>
+<shortdoc>Formats a ``template`` using the given ``positional`` and ``named`` arguments.</shortdoc>
 </kw>
-<kw name="Generate Random String" lineno="575">
-<arguments>
-<arg>length=8</arg>
-<arg>chars=[LETTERS][NUMBERS]</arg>
+<kw name="Generate Random String" lineno="581">
+<arguments repr="length=8, chars=[LETTERS][NUMBERS]">
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="length=8">
+<name>length</name>
+<default>8</default>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="chars=[LETTERS][NUMBERS]">
+<name>chars</name>
+<default>[LETTERS][NUMBERS]</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Generates a string with a desired &lt;code&gt;length&lt;/code&gt; from the given &lt;code&gt;chars&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;The population sequence &lt;code&gt;chars&lt;/code&gt; contains the characters to use when generating the random string. It can contain any characters, and it is possible to use special markers explained in the table below:&lt;/p&gt;
@@ -336,11 +390,16 @@
 &lt;td&gt;[NUMBERS]abcdef&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
+<shortdoc>Generates a string with a desired ``length`` from the given ``chars``.</shortdoc>
 </kw>
-<kw name="Get Line" lineno="256">
-<arguments>
-<arg>string</arg>
-<arg>line_number</arg>
+<kw name="Get Line" lineno="260">
+<arguments repr="string, line_number">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="line_number">
+<name>line_number</name>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Returns the specified line from the given &lt;code&gt;string&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;Line numbering starts from 0 and it is possible to use negative indices to refer to lines from the end. The line is returned without the newline character.&lt;/p&gt;
@@ -359,19 +418,30 @@
 &lt;td&gt;-2&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;
-&lt;p&gt;Use `Split To Lines` if all lines are needed.&lt;/p&gt;</doc>
+&lt;p&gt;Use &lt;a href="#Split%20To%20Lines" class="name"&gt;Split To Lines&lt;/a&gt; if all lines are needed.&lt;/p&gt;</doc>
+<shortdoc>Returns the specified line from the given ``string``.</shortdoc>
 </kw>
-<kw name="Get Line Count" lineno="223">
-<arguments>
-<arg>string</arg>
+<kw name="Get Line Count" lineno="227">
+<arguments repr="string">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Returns and logs the number of lines in the given string.&lt;/p&gt;</doc>
+<shortdoc>Returns and logs the number of lines in the given string.</shortdoc>
 </kw>
-<kw name="Get Lines Containing String" lineno="272">
-<arguments>
-<arg>string</arg>
-<arg>pattern</arg>
-<arg>case_insensitive=False</arg>
+<kw name="Get Lines Containing String" lineno="276">
+<arguments repr="string, pattern, case_insensitive=False">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="pattern">
+<name>pattern</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="case_insensitive=False">
+<name>case_insensitive</name>
+<default>False</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Returns lines of the given &lt;code&gt;string&lt;/code&gt; that contain the &lt;code&gt;pattern&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;The &lt;code&gt;pattern&lt;/code&gt; is always considered to be a normal string, not a glob or regexp pattern. A line matches if the &lt;code&gt;pattern&lt;/code&gt; is found anywhere on it.&lt;/p&gt;
@@ -394,13 +464,21 @@
 &lt;td&gt;case-insensitive&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;
-&lt;p&gt;See `Get Lines Matching Pattern` and `Get Lines Matching Regexp` if you need more complex pattern matching.&lt;/p&gt;</doc>
+&lt;p&gt;See &lt;a href="#Get%20Lines%20Matching%20Pattern" class="name"&gt;Get Lines Matching Pattern&lt;/a&gt; and &lt;a href="#Get%20Lines%20Matching%20Regexp" class="name"&gt;Get Lines Matching Regexp&lt;/a&gt; if you need more complex pattern matching.&lt;/p&gt;</doc>
+<shortdoc>Returns lines of the given ``string`` that contain the ``pattern``.</shortdoc>
 </kw>
-<kw name="Get Lines Matching Pattern" lineno="303">
-<arguments>
-<arg>string</arg>
-<arg>pattern</arg>
-<arg>case_insensitive=False</arg>
+<kw name="Get Lines Matching Pattern" lineno="307">
+<arguments repr="string, pattern, case_insensitive=False">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="pattern">
+<name>pattern</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="case_insensitive=False">
+<name>case_insensitive</name>
+<default>False</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Returns lines of the given &lt;code&gt;string&lt;/code&gt; that match the &lt;code&gt;pattern&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;The &lt;code&gt;pattern&lt;/code&gt; is a &lt;i&gt;glob pattern&lt;/i&gt; where:&lt;/p&gt;
@@ -442,16 +520,24 @@
 &lt;td&gt;case_insensitive=true&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;
-&lt;p&gt;See `Get Lines Matching Regexp` if you need more complex patterns and `Get Lines Containing String` if searching literal strings is enough.&lt;/p&gt;</doc>
+&lt;p&gt;See &lt;a href="#Get%20Lines%20Matching%20Regexp" class="name"&gt;Get Lines Matching Regexp&lt;/a&gt; if you need more complex patterns and &lt;a href="#Get%20Lines%20Containing%20String" class="name"&gt;Get Lines Containing String&lt;/a&gt; if searching literal strings is enough.&lt;/p&gt;</doc>
+<shortdoc>Returns lines of the given ``string`` that match the ``pattern``.</shortdoc>
 </kw>
-<kw name="Get Lines Matching Regexp" lineno="339">
-<arguments>
-<arg>string</arg>
-<arg>pattern</arg>
-<arg>partial_match=False</arg>
+<kw name="Get Lines Matching Regexp" lineno="343">
+<arguments repr="string, pattern, partial_match=False">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="pattern">
+<name>pattern</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="partial_match=False">
+<name>partial_match</name>
+<default>False</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Returns lines of the given &lt;code&gt;string&lt;/code&gt; that match the regexp &lt;code&gt;pattern&lt;/code&gt;.&lt;/p&gt;
-&lt;p&gt;See `BuiltIn.Should Match Regexp` for more information about Python regular expression syntax in general and how to use it in Robot Framework test data in particular.&lt;/p&gt;
+&lt;p&gt;See &lt;span class="name"&gt;BuiltIn.Should Match Regexp&lt;/span&gt; for more information about Python regular expression syntax in general and how to use it in Robot Framework test data in particular.&lt;/p&gt;
 &lt;p&gt;By default lines match only if they match the pattern fully, but partial matching can be enabled by giving the &lt;code&gt;partial_match&lt;/code&gt; argument a true value. The value is considered true if it is a non-empty string that is not equal to &lt;code&gt;false&lt;/code&gt;, &lt;code&gt;none&lt;/code&gt; or &lt;code&gt;no&lt;/code&gt;. If the value is not a string, its truth value is got directly in Python. Considering &lt;code&gt;none&lt;/code&gt; false is new in RF 3.0.3.&lt;/p&gt;
 &lt;p&gt;If the pattern is empty, it matches only empty lines by default. When partial matching is enabled, empty pattern matches all lines.&lt;/p&gt;
 &lt;p&gt;Notice that to make the match case-insensitive, you need to prefix the pattern with case-insensitive flag &lt;code&gt;(?i)&lt;/code&gt;.&lt;/p&gt;
@@ -480,17 +566,24 @@
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;
-&lt;p&gt;See `Get Lines Matching Pattern` and `Get Lines Containing String` if you do not need full regular expression powers (and complexity).&lt;/p&gt;
+&lt;p&gt;See &lt;a href="#Get%20Lines%20Matching%20Pattern" class="name"&gt;Get Lines Matching Pattern&lt;/a&gt; and &lt;a href="#Get%20Lines%20Containing%20String" class="name"&gt;Get Lines Containing String&lt;/a&gt; if you do not need full regular expression powers (and complexity).&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;partial_match&lt;/code&gt; argument is new in Robot Framework 2.9. In earlier versions exact match was always required.&lt;/p&gt;</doc>
+<shortdoc>Returns lines of the given ``string`` that match the regexp ``pattern``.</shortdoc>
 </kw>
-<kw name="Get Regexp Matches" lineno="385">
-<arguments>
-<arg>string</arg>
-<arg>pattern</arg>
-<arg>*groups</arg>
+<kw name="Get Regexp Matches" lineno="389">
+<arguments repr="string, pattern, *groups">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="pattern">
+<name>pattern</name>
+</arg>
+<arg kind="VAR_POSITIONAL" required="false" repr="*groups">
+<name>groups</name>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Returns a list of all non-overlapping matches in the given string.&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;string&lt;/code&gt; is the string to find matches from and &lt;code&gt;pattern&lt;/code&gt; is the regular expression. See `BuiltIn.Should Match Regexp` for more information about Python regular expression syntax in general and how to use it in Robot Framework test data in particular.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;string&lt;/code&gt; is the string to find matches from and &lt;code&gt;pattern&lt;/code&gt; is the regular expression. See &lt;span class="name"&gt;BuiltIn.Should Match Regexp&lt;/span&gt; for more information about Python regular expression syntax in general and how to use it in Robot Framework test data in particular.&lt;/p&gt;
 &lt;p&gt;If no groups are used, the returned list contains full matches. If one group is used, the list contains only contents of that group. If multiple groups are used, the list contains tuples that contain individual group contents. All groups can be given as indexes (starting from 1) and named groups also as names.&lt;/p&gt;
 &lt;p&gt;Examples:&lt;/p&gt;
 &lt;table border="1"&gt;
@@ -544,12 +637,20 @@ ${named group} = ['he', 'ri']
 ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;/pre&gt;
 &lt;p&gt;New in Robot Framework 2.9.&lt;/p&gt;</doc>
+<shortdoc>Returns a list of all non-overlapping matches in the given string.</shortdoc>
 </kw>
-<kw name="Get Substring" lineno="606">
-<arguments>
-<arg>string</arg>
-<arg>start</arg>
-<arg>end=None</arg>
+<kw name="Get Substring" lineno="612">
+<arguments repr="string, start, end=None">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="start">
+<name>start</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="end=None">
+<name>end</name>
+<default>None</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Returns a substring from &lt;code&gt;start&lt;/code&gt; index to &lt;code&gt;end&lt;/code&gt; index.&lt;/p&gt;
 &lt;p&gt;The &lt;code&gt;start&lt;/code&gt; index is inclusive and &lt;code&gt;end&lt;/code&gt; is exclusive. Indexing starts from 0, and it is possible to use negative indices to refer to characters from the end.&lt;/p&gt;
@@ -591,15 +692,20 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
+<shortdoc>Returns a substring from ``start`` index to ``end`` index.</shortdoc>
 </kw>
-<kw name="Remove String" lineno="469">
-<arguments>
-<arg>string</arg>
-<arg>*removables</arg>
+<kw name="Remove String" lineno="473">
+<arguments repr="string, *removables">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="VAR_POSITIONAL" required="false" repr="*removables">
+<name>removables</name>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Removes all &lt;code&gt;removables&lt;/code&gt; from the given &lt;code&gt;string&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;removables&lt;/code&gt; are used as literal strings. Each removable will be matched to a temporary string from which preceding removables have been already removed. See second example below.&lt;/p&gt;
-&lt;p&gt;Use `Remove String Using Regexp` if more powerful pattern matching is needed. If only a certain number of matches should be removed, `Replace String` or `Replace String Using Regexp` can be used.&lt;/p&gt;
+&lt;p&gt;Use &lt;a href="#Remove%20String%20Using%20Regexp" class="name"&gt;Remove String Using Regexp&lt;/a&gt; if more powerful pattern matching is needed. If only a certain number of matches should be removed, &lt;a href="#Replace%20String" class="name"&gt;Replace String&lt;/a&gt; or &lt;a href="#Replace%20String%20Using%20Regexp" class="name"&gt;Replace String Using Regexp&lt;/a&gt; can be used.&lt;/p&gt;
 &lt;p&gt;A modified version of the string is returned and the original string is not altered.&lt;/p&gt;
 &lt;p&gt;Examples:&lt;/p&gt;
 &lt;table border="1"&gt;
@@ -632,24 +738,39 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
+<shortdoc>Removes all ``removables`` from the given ``string``.</shortdoc>
 </kw>
-<kw name="Remove String Using Regexp" lineno="493">
-<arguments>
-<arg>string</arg>
-<arg>*patterns</arg>
+<kw name="Remove String Using Regexp" lineno="497">
+<arguments repr="string, *patterns">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="VAR_POSITIONAL" required="false" repr="*patterns">
+<name>patterns</name>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Removes &lt;code&gt;patterns&lt;/code&gt; from the given &lt;code&gt;string&lt;/code&gt;.&lt;/p&gt;
-&lt;p&gt;This keyword is otherwise identical to `Remove String`, but the &lt;code&gt;patterns&lt;/code&gt; to search for are considered to be a regular expression. See `Replace String Using Regexp` for more information about the regular expression syntax. That keyword can also be used if there is a need to remove only a certain number of occurrences.&lt;/p&gt;</doc>
+&lt;p&gt;This keyword is otherwise identical to &lt;a href="#Remove%20String" class="name"&gt;Remove String&lt;/a&gt;, but the &lt;code&gt;patterns&lt;/code&gt; to search for are considered to be a regular expression. See &lt;a href="#Replace%20String%20Using%20Regexp" class="name"&gt;Replace String Using Regexp&lt;/a&gt; for more information about the regular expression syntax. That keyword can also be used if there is a need to remove only a certain number of occurrences.&lt;/p&gt;</doc>
+<shortdoc>Removes ``patterns`` from the given ``string``.</shortdoc>
 </kw>
-<kw name="Replace String" lineno="424">
-<arguments>
-<arg>string</arg>
-<arg>search_for</arg>
-<arg>replace_with</arg>
-<arg>count=-1</arg>
+<kw name="Replace String" lineno="428">
+<arguments repr="string, search_for, replace_with, count=-1">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="search_for">
+<name>search_for</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="replace_with">
+<name>replace_with</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="count=-1">
+<name>count</name>
+<default>-1</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Replaces &lt;code&gt;search_for&lt;/code&gt; in the given &lt;code&gt;string&lt;/code&gt; with &lt;code&gt;replace_with&lt;/code&gt;.&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;search_for&lt;/code&gt; is used as a literal string. See `Replace String Using Regexp` if more powerful pattern matching is needed. If you need to just remove a string see `Remove String`.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;search_for&lt;/code&gt; is used as a literal string. See &lt;a href="#Replace%20String%20Using%20Regexp" class="name"&gt;Replace String Using Regexp&lt;/a&gt; if more powerful pattern matching is needed. If you need to just remove a string see &lt;a href="#Remove%20String" class="name"&gt;Remove String&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;If the optional argument &lt;code&gt;count&lt;/code&gt; is given, only that many occurrences from left are replaced. Negative &lt;code&gt;count&lt;/code&gt; means that all occurrences are replaced (default behaviour) and zero means that nothing is done.&lt;/p&gt;
 &lt;p&gt;A modified version of the string is returned and the original string is not altered.&lt;/p&gt;
 &lt;p&gt;Examples:&lt;/p&gt;
@@ -687,17 +808,27 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
+<shortdoc>Replaces ``search_for`` in the given ``string`` with ``replace_with``.</shortdoc>
 </kw>
-<kw name="Replace String Using Regexp" lineno="448">
-<arguments>
-<arg>string</arg>
-<arg>pattern</arg>
-<arg>replace_with</arg>
-<arg>count=-1</arg>
+<kw name="Replace String Using Regexp" lineno="452">
+<arguments repr="string, pattern, replace_with, count=-1">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="pattern">
+<name>pattern</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="replace_with">
+<name>replace_with</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="count=-1">
+<name>count</name>
+<default>-1</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Replaces &lt;code&gt;pattern&lt;/code&gt; in the given &lt;code&gt;string&lt;/code&gt; with &lt;code&gt;replace_with&lt;/code&gt;.&lt;/p&gt;
-&lt;p&gt;This keyword is otherwise identical to `Replace String`, but the &lt;code&gt;pattern&lt;/code&gt; to search for is considered to be a regular expression.  See `BuiltIn.Should Match Regexp` for more information about Python regular expression syntax in general and how to use it in Robot Framework test data in particular.&lt;/p&gt;
-&lt;p&gt;If you need to just remove a string see `Remove String Using Regexp`.&lt;/p&gt;
+&lt;p&gt;This keyword is otherwise identical to &lt;a href="#Replace%20String" class="name"&gt;Replace String&lt;/a&gt;, but the &lt;code&gt;pattern&lt;/code&gt; to search for is considered to be a regular expression.  See &lt;span class="name"&gt;BuiltIn.Should Match Regexp&lt;/span&gt; for more information about Python regular expression syntax in general and how to use it in Robot Framework test data in particular.&lt;/p&gt;
+&lt;p&gt;If you need to just remove a string see &lt;a href="#Remove%20String%20Using%20Regexp" class="name"&gt;Remove String Using Regexp&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;Examples:&lt;/p&gt;
 &lt;table border="1"&gt;
 &lt;tr&gt;
@@ -717,80 +848,138 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;td&gt;count=1&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
+<shortdoc>Replaces ``pattern`` in the given ``string`` with ``replace_with``.</shortdoc>
 </kw>
-<kw name="Should Be Byte String" lineno="703">
-<arguments>
-<arg>item</arg>
-<arg>msg=None</arg>
+<kw name="Should Be Byte String" lineno="710">
+<arguments repr="item, msg=None">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="item">
+<name>item</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="msg=None">
+<name>msg</name>
+<default>None</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Fails if the given &lt;code&gt;item&lt;/code&gt; is not a byte string.&lt;/p&gt;
-&lt;p&gt;Use `Should Be Unicode String` if you want to verify the &lt;code&gt;item&lt;/code&gt; is a Unicode string, or `Should Be String` if both Unicode and byte strings are fine. See `Should Be String` for more details about Unicode strings and byte strings.&lt;/p&gt;
+&lt;p&gt;Use &lt;a href="#Should%20Be%20Unicode%20String" class="name"&gt;Should Be Unicode String&lt;/a&gt; if you want to verify the &lt;code&gt;item&lt;/code&gt; is a Unicode string, or &lt;a href="#Should%20Be%20String" class="name"&gt;Should Be String&lt;/a&gt; if both Unicode and byte strings are fine. See &lt;a href="#Should%20Be%20String" class="name"&gt;Should Be String&lt;/a&gt; for more details about Unicode strings and byte strings.&lt;/p&gt;
 &lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<shortdoc>Fails if the given ``item`` is not a byte string.</shortdoc>
 </kw>
-<kw name="Should Be Lowercase" lineno="717">
-<arguments>
-<arg>string</arg>
-<arg>msg=None</arg>
+<kw name="Should Be Lowercase" lineno="724">
+<arguments repr="string, msg=None">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="msg=None">
+<name>msg</name>
+<default>None</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Fails if the given &lt;code&gt;string&lt;/code&gt; is not in lowercase.&lt;/p&gt;
 &lt;p&gt;For example, &lt;code&gt;'string'&lt;/code&gt; and &lt;code&gt;'with specials!'&lt;/code&gt; would pass, and &lt;code&gt;'String'&lt;/code&gt;, &lt;code&gt;''&lt;/code&gt; and &lt;code&gt;' '&lt;/code&gt; would fail.&lt;/p&gt;
 &lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;
-&lt;p&gt;See also `Should Be Uppercase` and `Should Be Titlecase`.&lt;/p&gt;</doc>
+&lt;p&gt;See also &lt;a href="#Should%20Be%20Uppercase" class="name"&gt;Should Be Uppercase&lt;/a&gt; and &lt;a href="#Should%20Be%20Title%20Case" class="name"&gt;Should Be Titlecase&lt;/a&gt;.&lt;/p&gt;</doc>
+<shortdoc>Fails if the given ``string`` is not in lowercase.</shortdoc>
 </kw>
-<kw name="Should Be String" lineno="656">
-<arguments>
-<arg>item</arg>
-<arg>msg=None</arg>
+<kw name="Should Be String" lineno="663">
+<arguments repr="item, msg=None">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="item">
+<name>item</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="msg=None">
+<name>msg</name>
+<default>None</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Fails if the given &lt;code&gt;item&lt;/code&gt; is not a string.&lt;/p&gt;
-&lt;p&gt;With Python 2, except with IronPython, this keyword passes regardless is the &lt;code&gt;item&lt;/code&gt; a Unicode string or a byte string. Use `Should Be Unicode String` or `Should Be Byte String` if you want to restrict the string type. Notice that with Python 2, except with IronPython, &lt;code&gt;'string'&lt;/code&gt; creates a byte string and &lt;code&gt;u'unicode'&lt;/code&gt; must be used to create a Unicode string.&lt;/p&gt;
+&lt;p&gt;With Python 2, except with IronPython, this keyword passes regardless is the &lt;code&gt;item&lt;/code&gt; a Unicode string or a byte string. Use &lt;a href="#Should%20Be%20Unicode%20String" class="name"&gt;Should Be Unicode String&lt;/a&gt; or &lt;a href="#Should%20Be%20Byte%20String" class="name"&gt;Should Be Byte String&lt;/a&gt; if you want to restrict the string type. Notice that with Python 2, except with IronPython, &lt;code&gt;'string'&lt;/code&gt; creates a byte string and &lt;code&gt;u'unicode'&lt;/code&gt; must be used to create a Unicode string.&lt;/p&gt;
 &lt;p&gt;With Python 3 and IronPython, this keyword passes if the string is a Unicode string but fails if it is bytes. Notice that with both Python 3 and IronPython, &lt;code&gt;'string'&lt;/code&gt; creates a Unicode string, and &lt;code&gt;b'bytes'&lt;/code&gt; must be used to create a byte string.&lt;/p&gt;
 &lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<shortdoc>Fails if the given ``item`` is not a string.</shortdoc>
 </kw>
-<kw name="Should Be Titlecase" lineno="745">
-<arguments>
-<arg>string</arg>
-<arg>msg=None</arg>
+<kw name="Should Be Title Case" lineno="753">
+<arguments repr="string, msg=None, exclude=None">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="msg=None">
+<name>msg</name>
+<default>None</default>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="exclude=None">
+<name>exclude</name>
+<default>None</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Fails if given &lt;code&gt;string&lt;/code&gt; is not title.&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;string&lt;/code&gt; is a titlecased string if there is at least one character in it, uppercase characters only follow uncased characters and lowercase characters only cased ones.&lt;/p&gt;
-&lt;p&gt;For example, &lt;code&gt;'This Is Title'&lt;/code&gt; would pass, and &lt;code&gt;'Word In UPPER'&lt;/code&gt;, &lt;code&gt;'Word In lower'&lt;/code&gt;, &lt;code&gt;''&lt;/code&gt; and &lt;code&gt;' '&lt;/code&gt; would fail.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;string&lt;/code&gt; is a title cased string if there is at least one uppercase letter in each word.&lt;/p&gt;
+&lt;p&gt;For example, &lt;code&gt;'This Is Title'&lt;/code&gt; and &lt;code&gt;'OK, Give Me My iPhone'&lt;/code&gt; would pass. &lt;code&gt;'all words lower'&lt;/code&gt; and &lt;code&gt;'Word In lower'&lt;/code&gt; would fail.&lt;/p&gt;
+&lt;p&gt;This logic changed in Robot Framework 4.0 to be compatible with &lt;a href="#Convert%20To%20Title%20Case" class="name"&gt;Convert to Title Case&lt;/a&gt;. See &lt;a href="#Convert%20To%20Title%20Case" class="name"&gt;Convert to Title Case&lt;/a&gt; for title case algorithm and reasoning.&lt;/p&gt;
 &lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;
-&lt;p&gt;See also `Should Be Uppercase` and `Should Be Lowercase`.&lt;/p&gt;</doc>
+&lt;p&gt;Words can be explicitly excluded with the optional &lt;code&gt;exclude&lt;/code&gt; argument.&lt;/p&gt;
+&lt;p&gt;Explicitly excluded words can be given as a list or as a string with words separated by a comma and an optional space. Excluded words are actually considered to be regular expression patterns, so it is possible to use something like "example[.!?]?" to match the word "example" on it own and also if followed by ".", "!" or "?". See &lt;span class="name"&gt;BuiltIn.Should Match Regexp&lt;/span&gt; for more information about Python regular expression syntax in general and how to use it in Robot Framework test data in particular.&lt;/p&gt;
+&lt;p&gt;See also &lt;a href="#Should%20Be%20Uppercase" class="name"&gt;Should Be Uppercase&lt;/a&gt; and &lt;a href="#Should%20Be%20Lowercase" class="name"&gt;Should Be Lowercase&lt;/a&gt;.&lt;/p&gt;</doc>
+<shortdoc>Fails if given ``string`` is not title.</shortdoc>
 </kw>
-<kw name="Should Be Unicode String" lineno="689">
-<arguments>
-<arg>item</arg>
-<arg>msg=None</arg>
+<kw name="Should Be Unicode String" lineno="696">
+<arguments repr="item, msg=None">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="item">
+<name>item</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="msg=None">
+<name>msg</name>
+<default>None</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Fails if the given &lt;code&gt;item&lt;/code&gt; is not a Unicode string.&lt;/p&gt;
-&lt;p&gt;Use `Should Be Byte String` if you want to verify the &lt;code&gt;item&lt;/code&gt; is a byte string, or `Should Be String` if both Unicode and byte strings are fine. See `Should Be String` for more details about Unicode strings and byte strings.&lt;/p&gt;
+&lt;p&gt;Use &lt;a href="#Should%20Be%20Byte%20String" class="name"&gt;Should Be Byte String&lt;/a&gt; if you want to verify the &lt;code&gt;item&lt;/code&gt; is a byte string, or &lt;a href="#Should%20Be%20String" class="name"&gt;Should Be String&lt;/a&gt; if both Unicode and byte strings are fine. See &lt;a href="#Should%20Be%20String" class="name"&gt;Should Be String&lt;/a&gt; for more details about Unicode strings and byte strings.&lt;/p&gt;
 &lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<shortdoc>Fails if the given ``item`` is not a Unicode string.</shortdoc>
 </kw>
-<kw name="Should Be Uppercase" lineno="731">
-<arguments>
-<arg>string</arg>
-<arg>msg=None</arg>
+<kw name="Should Be Uppercase" lineno="738">
+<arguments repr="string, msg=None">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="msg=None">
+<name>msg</name>
+<default>None</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Fails if the given &lt;code&gt;string&lt;/code&gt; is not in uppercase.&lt;/p&gt;
 &lt;p&gt;For example, &lt;code&gt;'STRING'&lt;/code&gt; and &lt;code&gt;'WITH SPECIALS!'&lt;/code&gt; would pass, and &lt;code&gt;'String'&lt;/code&gt;, &lt;code&gt;''&lt;/code&gt; and &lt;code&gt;' '&lt;/code&gt; would fail.&lt;/p&gt;
 &lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;
-&lt;p&gt;See also `Should Be Titlecase` and `Should Be Lowercase`.&lt;/p&gt;</doc>
+&lt;p&gt;See also &lt;a href="#Should%20Be%20Title%20Case" class="name"&gt;Should Be Titlecase&lt;/a&gt; and &lt;a href="#Should%20Be%20Lowercase" class="name"&gt;Should Be Lowercase&lt;/a&gt;.&lt;/p&gt;</doc>
+<shortdoc>Fails if the given ``string`` is not in uppercase.</shortdoc>
 </kw>
-<kw name="Should Not Be String" lineno="677">
-<arguments>
-<arg>item</arg>
-<arg>msg=None</arg>
+<kw name="Should Not Be String" lineno="684">
+<arguments repr="item, msg=None">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="item">
+<name>item</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="msg=None">
+<name>msg</name>
+<default>None</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Fails if the given &lt;code&gt;item&lt;/code&gt; is a string.&lt;/p&gt;
-&lt;p&gt;See `Should Be String` for more details about Unicode strings and byte strings.&lt;/p&gt;
+&lt;p&gt;See &lt;a href="#Should%20Be%20String" class="name"&gt;Should Be String&lt;/a&gt; for more details about Unicode strings and byte strings.&lt;/p&gt;
 &lt;p&gt;The default error message can be overridden with the optional &lt;code&gt;msg&lt;/code&gt; argument.&lt;/p&gt;</doc>
+<shortdoc>Fails if the given ``item`` is a string.</shortdoc>
 </kw>
-<kw name="Split String" lineno="507">
-<arguments>
-<arg>string</arg>
-<arg>separator=None</arg>
-<arg>max_split=-1</arg>
+<kw name="Split String" lineno="512">
+<arguments repr="string, separator=None, max_split=-1">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="separator=None">
+<name>separator</name>
+<default>None</default>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="max_split=-1">
+<name>max_split</name>
+<default>-1</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Splits the &lt;code&gt;string&lt;/code&gt; using &lt;code&gt;separator&lt;/code&gt; as a delimiter string.&lt;/p&gt;
 &lt;p&gt;If a &lt;code&gt;separator&lt;/code&gt; is not given, any whitespace string is a separator. In that case also possible consecutive whitespace as well as leading and trailing whitespace is ignored.&lt;/p&gt;
@@ -822,16 +1011,25 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;td&gt;1&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;
-&lt;p&gt;See `Split String From Right` if you want to start splitting from right, and `Fetch From Left` and `Fetch From Right` if you only want to get first/last part of the string.&lt;/p&gt;</doc>
+&lt;p&gt;See &lt;a href="#Split%20String%20From%20Right" class="name"&gt;Split String From Right&lt;/a&gt; if you want to start splitting from right, and &lt;a href="#Fetch%20From%20Left" class="name"&gt;Fetch From Left&lt;/a&gt; and &lt;a href="#Fetch%20From%20Right" class="name"&gt;Fetch From Right&lt;/a&gt; if you only want to get first/last part of the string.&lt;/p&gt;</doc>
+<shortdoc>Splits the ``string`` using ``separator`` as a delimiter string.</shortdoc>
 </kw>
-<kw name="Split String From Right" lineno="532">
-<arguments>
-<arg>string</arg>
-<arg>separator=None</arg>
-<arg>max_split=-1</arg>
+<kw name="Split String From Right" lineno="538">
+<arguments repr="string, separator=None, max_split=-1">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="separator=None">
+<name>separator</name>
+<default>None</default>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="max_split=-1">
+<name>max_split</name>
+<default>-1</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Splits the &lt;code&gt;string&lt;/code&gt; using &lt;code&gt;separator&lt;/code&gt; starting from right.&lt;/p&gt;
-&lt;p&gt;Same as `Split String`, but splitting is started from right. This has an effect only when &lt;code&gt;max_split&lt;/code&gt; is given.&lt;/p&gt;
+&lt;p&gt;Same as &lt;a href="#Split%20String" class="name"&gt;Split String&lt;/a&gt;, but splitting is started from right. This has an effect only when &lt;code&gt;max_split&lt;/code&gt; is given.&lt;/p&gt;
 &lt;p&gt;Examples:&lt;/p&gt;
 &lt;table border="1"&gt;
 &lt;tr&gt;
@@ -851,10 +1049,13 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;td&gt;1&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
+<shortdoc>Splits the ``string`` using ``separator`` starting from right.</shortdoc>
 </kw>
-<kw name="Split String To Characters" lineno="547">
-<arguments>
-<arg>string</arg>
+<kw name="Split String To Characters" lineno="553">
+<arguments repr="string">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Splits the given &lt;code&gt;string&lt;/code&gt; to characters.&lt;/p&gt;
 &lt;p&gt;Example:&lt;/p&gt;
@@ -865,12 +1066,21 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;td&gt;${string}&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;</doc>
+<shortdoc>Splits the given ``string`` to characters.</shortdoc>
 </kw>
-<kw name="Split To Lines" lineno="229">
-<arguments>
-<arg>string</arg>
-<arg>start=0</arg>
-<arg>end=None</arg>
+<kw name="Split To Lines" lineno="233">
+<arguments repr="string, start=0, end=None">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="start=0">
+<name>start</name>
+<default>0</default>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="end=None">
+<name>end</name>
+<default>None</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Splits the given string to lines.&lt;/p&gt;
 &lt;p&gt;It is possible to get only a selection of lines from &lt;code&gt;start&lt;/code&gt; to &lt;code&gt;end&lt;/code&gt; so that &lt;code&gt;start&lt;/code&gt; index is inclusive and &lt;code&gt;end&lt;/code&gt; is exclusive. Line numbering starts from 0, and it is possible to use negative indices to refer to lines from the end.&lt;/p&gt;
@@ -920,13 +1130,22 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;td&gt;&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/table&gt;
-&lt;p&gt;Use `Get Line` if you only need to get a single line.&lt;/p&gt;</doc>
+&lt;p&gt;Use &lt;a href="#Get%20Line" class="name"&gt;Get Line&lt;/a&gt; if you only need to get a single line.&lt;/p&gt;</doc>
+<shortdoc>Splits the given string to lines.</shortdoc>
 </kw>
-<kw name="Strip String" lineno="624">
-<arguments>
-<arg>string</arg>
-<arg>mode=both</arg>
-<arg>characters=None</arg>
+<kw name="Strip String" lineno="631">
+<arguments repr="string, mode=both, characters=None">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="string">
+<name>string</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="mode=both">
+<name>mode</name>
+<default>both</default>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="characters=None">
+<name>characters</name>
+<default>None</default>
+</arg>
 </arguments>
 <doc>&lt;p&gt;Remove leading and/or trailing whitespaces from the given string.&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;mode&lt;/code&gt; is either &lt;code&gt;left&lt;/code&gt; to remove leading characters, &lt;code&gt;right&lt;/code&gt; to remove trailing characters, &lt;code&gt;both&lt;/code&gt; (default) to remove the characters from both sides of the string or &lt;code&gt;none&lt;/code&gt; to return the unmodified string.&lt;/p&gt;
@@ -971,5 +1190,9 @@ ${two groups} = [('h', 'e'), ('r', 'i')]
 &lt;/tr&gt;
 &lt;/table&gt;
 &lt;p&gt;New in Robot Framework 3.0.&lt;/p&gt;</doc>
+<shortdoc>Remove leading and/or trailing whitespaces from the given string.</shortdoc>
 </kw>
+</keywords>
+<datatypes>
+</datatypes>
 </keywordspec>
