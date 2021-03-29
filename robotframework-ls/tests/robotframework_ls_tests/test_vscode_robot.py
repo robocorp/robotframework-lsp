@@ -70,6 +70,47 @@ Test
     data_regression.check(sort_diagnostics(diag), basename="test_diagnostics_robocop")
 
 
+def test_diagnostics_robocop_configuration_file(
+    language_server, ws_root_path, data_regression
+):
+    from robotframework_ls_tests.fixtures import sort_diagnostics
+    from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
+    from robocorp_ls_core import uris
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    src = os.path.join(ws_root_path, "my", "src")
+    os.makedirs(src)
+    target_robot = os.path.join(src, "target.robot")
+    config_file = os.path.join(ws_root_path, "my", ".robocop")
+    with open(config_file, "w") as stream:
+        stream.write(
+            """
+--exclude missing-doc-testcase
+--include missing-doc-suite
+"""
+        )
+
+    uri = uris.from_fs_path(target_robot)
+    message_matcher = language_server.obtain_pattern_message_matcher(
+        {"method": "textDocument/publishDiagnostics"}
+    )
+    language_server.open_doc(
+        uri,
+        1,
+        text="""
+*** Test Cases ***
+Test
+    Fail
+
+""",
+    )
+    assert message_matcher.event.wait(TIMEOUT)
+    diag = message_matcher.msg["params"]["diagnostics"]
+    data_regression.check(
+        sort_diagnostics(diag), basename="test_diagnostics_robocop_configuration_file"
+    )
+
+
 def test_section_completions_integrated(language_server, ws_root_path, data_regression):
     language_server.initialize(ws_root_path, process_id=os.getpid())
     uri = "untitled:Untitled-1"

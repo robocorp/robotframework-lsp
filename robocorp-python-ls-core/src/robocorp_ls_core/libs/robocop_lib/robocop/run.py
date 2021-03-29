@@ -43,11 +43,10 @@ class Robocop:
         self.reports = dict()
         self.disabler = None
         self.root = os.getcwd()
-        self.config = Config() if config is None else config
+        self.config = Config(from_cli=from_cli) if config is None else config
         self.from_cli = from_cli
-        if from_cli:
-            self.config.parse_opts()
-        else:
+        self.config.parse_opts(from_cli=from_cli)
+        if not from_cli:
             self.config.reports.add('json_report')
         self.out = self.set_output()
 
@@ -106,19 +105,15 @@ class Robocop:
                 self.files[resource] = (FileType.RESOURCE, get_resource_model(str(resource)))
 
     def run_checks(self):
-        files_with_issues = 0
         for file in self.files:
             model = self.files[file][1]
             found_issues = self.run_check(model, str(file))
             issues_to_lsp_diagnostic(found_issues)
-            if found_issues:
-                files_with_issues += 1
             found_issues.sort()
             for issue in found_issues:
                 self.report(issue)
         if 'file_stats' in self.reports:
             self.reports['file_stats'].files_count = len(self.files)
-            self.reports['file_stats'].files_with_issues = files_with_issues
 
     def run_check(self, ast_model, filename, source=None):
         found_issues = []
@@ -128,12 +123,8 @@ class Robocop:
         for checker in self.checkers:
             if checker.disabled:
                 continue
-            checker.source = filename
-            if source is not None:
-                checker.lines = source.splitlines()
-            checker.scan_file(ast_model)
-            found_issues += checker.issues
-            checker.issues.clear()
+            found_issues += [issue for issue in checker.scan_file(ast_model, filename, source)
+                             if not self.disabler.is_rule_disabled(issue)]
         return found_issues
 
     def register_disablers(self, filename, source):
@@ -141,10 +132,6 @@ class Robocop:
         self.disabler = DisablersFinder(filename=filename, source=source)
 
     def report(self, rule_msg):
-        if not rule_msg.enabled:  # disabled from cli
-            return
-        if self.disabler.is_rule_disabled(rule_msg):  # disabled from source code
-            return
         for report in self.reports.values():
             report.add_message(rule_msg)
         try:

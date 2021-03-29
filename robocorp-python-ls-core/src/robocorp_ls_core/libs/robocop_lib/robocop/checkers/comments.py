@@ -74,9 +74,8 @@ class IgnoredDataChecker(RawFileChecker):
     }
 
     def parse_file(self):
-        lines = getattr(self, 'lines', None)
-        if lines is not None:
-            self._parse_lines(lines)
+        if self.lines is not None:
+            self._parse_lines(self.lines)
         else:
             with open(self.source) as file:
                 self._parse_lines(file)

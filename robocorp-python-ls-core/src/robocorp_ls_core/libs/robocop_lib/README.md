@@ -2,7 +2,7 @@ The files in this directory contain robocop and the needed deps.
 
 To update, erase it and run:
 
-pip install --no-deps git+https://github.com/MarketSquare/robotframework-robocop.git --target .
+pip install --no-deps robotframework-robocop --target .
 
 Then:
 - remove bin

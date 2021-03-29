@@ -43,6 +43,7 @@ class BaseChecker:
     def __init__(self, configurable=None):
         self.disabled = False
         self.source = None
+        self.lines = None
         self.rules_map = {}
         self.configurable = set() if configurable is None else configurable
         self.register_rules(self.rules)
@@ -59,7 +60,8 @@ class BaseChecker:
         if rule not in self.rules_map:
             raise ValueError(f"Missing definition for message with name {rule}")
         message = self.rules_map[rule].prepare_message(*args, source=self.source, node=node, lineno=lineno, col=col)
-        self.issues.append(message)
+        if message.enabled:
+            self.issues.append(message)
 
     def configure(self, param, value):
         self.__dict__[param] = value
@@ -71,8 +73,15 @@ class BaseChecker:
 class VisitorChecker(BaseChecker, ModelVisitor):  # noqa
     type = 'visitor_checker'
 
-    def scan_file(self, *args):
-        self.visit_File(*args)
+    def scan_file(self, ast_model, filename, in_memory_content):
+        self.issues = []
+        self.source = filename
+        if in_memory_content is not None:
+            self.lines = in_memory_content.splitlines()
+        else:
+            self.lines = None
+        self.visit_File(ast_model)
+        return self.issues
 
     def visit_File(self, node):  # noqa
         """ Perform generic ast visit on file node. """
@@ -82,14 +91,20 @@ class VisitorChecker(BaseChecker, ModelVisitor):  # noqa
 class RawFileChecker(BaseChecker):  # noqa
     type = 'rawfile_checker'
 
-    def scan_file(self, *args):
+    def scan_file(self, ast_model, filename, in_memory_content):
+        self.issues = []
+        self.source = filename
+        if in_memory_content is not None:
+            self.lines = in_memory_content.splitlines()
+        else:
+            self.lines = None
         self.parse_file()
+        return self.issues
 
     def parse_file(self):
         """ Read file line by line and for each call check_line method. """
-        lines = getattr(self, 'lines', None)
-        if lines is not None:
-            self._parse_lines(lines)
+        if self.lines is not None:
+            self._parse_lines(self.lines)
         else:
             with open(self.source) as file:
                 self._parse_lines(file)

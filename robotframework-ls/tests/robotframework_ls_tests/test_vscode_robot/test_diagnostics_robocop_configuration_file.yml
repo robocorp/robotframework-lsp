@@ -1,0 +1,11 @@
+- code: '0203'
+  message: Missing documentation in suite
+  range:
+    end:
+      character: 0
+      line: 0
+    start:
+      character: 0
+      line: 0
+  severity: 2
+  source: robocop

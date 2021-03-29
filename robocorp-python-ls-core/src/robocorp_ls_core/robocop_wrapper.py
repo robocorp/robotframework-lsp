@@ -26,7 +26,12 @@ def collect_robocop_diagnostics(
     from robocop.config import Config
     from robocop.utils import issues_to_lsp_diagnostic
 
-    config = Config(root=project_root)
+    filename_parent = Path(filename).parent
+    if filename_parent.exists():
+        config = Config(root=filename_parent)
+    else:
+        # Unsaved files.
+        config = Config(root=project_root)
     robocop_runner = robocop.Robocop(config=config)
     robocop_runner.reload_config()
 
