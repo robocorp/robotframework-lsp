@@ -116,6 +116,19 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
     verbose = args.verbose
     log_file = args.log_file or ""
 
+    if not log_file:
+        # If not specified in args, also check the environment variables.
+        log_file = os.environ.get("ROBOTFRAMEWORK_LS_LOG_FILE", "")
+        if log_file:
+            # If the log file comes from the environment, make sure the log-level
+            # also comes from it (with a log-level==2 by default).
+            Setup.options.log_file = log_file
+            try:
+                verbose = int(os.environ.get("ROBOTFRAMEWORK_LS_LOG_LEVEL", "2"))
+            except:
+                verbose = 2
+            Setup.options.verbose = verbose
+
     configure_logger("lsp", verbose, log_file)
     log = get_logger("robotframework_ls.__main__")
     log_args_and_python(log, original_args, robotframework_ls)
