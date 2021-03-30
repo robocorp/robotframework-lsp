@@ -341,6 +341,11 @@ def iter_nodes(
             yield NodeInfo(tuple(stack), node)
 
 
+def iter_all_nodes(ast, recursive=True) -> Iterator[NodeInfo]:
+    for stack, node in _iter_nodes(ast, recursive=recursive):
+        yield NodeInfo(tuple(stack), node)
+
+
 def is_library_node_info(node_info: NodeInfo) -> bool:
     return node_info.node.__class__.__name__ in LIBRARY_IMPORT_CLASSES
 

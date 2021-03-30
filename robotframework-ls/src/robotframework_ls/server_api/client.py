@@ -170,6 +170,12 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             self._build_msg("signatureHelp", doc_uri=doc_uri, line=line, col=col)
         )
 
+    def request_folding_range(self, doc_uri) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(self._build_msg("foldingRange", doc_uri=doc_uri))
+
     def request_workspace_symbols(
         self, query: Optional[str] = None
     ) -> Optional[IIdMessageMatcher]:

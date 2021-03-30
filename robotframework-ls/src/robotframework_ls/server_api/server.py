@@ -1,7 +1,7 @@
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Optional, List, Dict, Union
+from typing import Optional, List, Dict
 from robocorp_ls_core.protocols import IConfig, IMonitor
 from functools import partial
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
@@ -360,6 +360,22 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return None
 
         return signature_help(completion_context)
+
+    def m_folding_range(self, doc_uri: str):
+        func = partial(self._threaded_folding_range, doc_uri)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_folding_range(
+        self, doc_uri: str, monitor: IMonitor
+    ) -> Optional[dict]:
+        from robotframework_ls.impl.folding_range import folding_range
+
+        completion_context = self._create_completion_context(doc_uri, 0, 0, monitor)
+        if completion_context is None:
+            return None
+
+        return folding_range(completion_context)
 
     def m_workspace_symbols(self, query: Optional[str] = None):
         func = partial(self._threaded_workspace_symbols, query)

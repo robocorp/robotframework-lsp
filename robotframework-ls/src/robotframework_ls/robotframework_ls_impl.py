@@ -230,7 +230,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             "hoverProvider": False,
             "referencesProvider": False,
             "renameProvider": False,
-            "foldingRangeProvider": False,
+            "foldingRangeProvider": True,
             # Note that there are no auto-trigger characters (there's no good
             # character as there's no `(` for parameters and putting it as a
             # space becomes a bit too much).
@@ -654,6 +654,65 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         ] = rf_api_client.request_signature_help(doc_uri, line, col)
         if message_matcher is None:
             log.debug("Message matcher for signature returned None.")
+            return None
+
+        if wait_for_message_matcher(
+            message_matcher,
+            rf_api_client.request_cancel,
+            DEFAULT_COMPLETIONS_TIMEOUT,
+            monitor,
+        ):
+            msg = message_matcher.msg
+            if msg is not None:
+                result = msg.get("result")
+                if result:
+                    return result
+
+        return None
+
+    def m_text_document__folding_range(self, **kwargs):
+        """
+        "params": {
+            "textDocument": {
+                "uri": "file:///x%3A/vscode-robot/local_test/Basic/resources/keywords.robot"
+            },
+        },
+        """
+        doc_uri = kwargs["textDocument"]["uri"]
+
+        rf_api_client = self._server_manager.get_regular_rf_api_client(doc_uri)
+        if rf_api_client is not None:
+            func = partial(self._folding_range, rf_api_client, doc_uri)
+            func = require_monitor(func)
+            return func
+
+        log.info("Unable to get folding range (no api available).")
+        return []
+
+    @log_and_silence_errors(log)
+    def _folding_range(
+        self, rf_api_client: IRobotFrameworkApiClient, doc_uri: str, monitor: Monitor
+    ) -> Optional[dict]:
+        from robocorp_ls_core.client_base import wait_for_message_matcher
+
+        ws = self.workspace
+        if not ws:
+            log.critical("Workspace must be set before getting the folding ranges.")
+            return None
+
+        document = ws.get_document(doc_uri, accept_from_file=True)
+        if document is None:
+            log.critical(
+                "Unable to find document (%s) for folding ranges." % (doc_uri,)
+            )
+            return None
+
+        # Asynchronous completion.
+        message_matcher: Optional[
+            IIdMessageMatcher
+        ] = rf_api_client.request_folding_range(doc_uri)
+        if message_matcher is None:
+            log.debug("Message matcher for folding range None.")
             return None
 
         if wait_for_message_matcher(

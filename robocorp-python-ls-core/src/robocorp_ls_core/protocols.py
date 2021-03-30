@@ -279,6 +279,11 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
         :Note: async complete.
         """
 
+    def request_folding_range(self, doc_uri: str) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+
     def request_workspace_symbols(
         self, query: Optional[str] = None
     ) -> Optional[IIdMessageMatcher]:

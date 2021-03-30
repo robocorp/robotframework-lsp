@@ -103,6 +103,12 @@ class TextDocumentSyncKind(object):
     INCREMENTAL = 2
 
 
+class FoldingRangeKind(object):
+    COMMENT = "comment"
+    IMPORTS = "imports"
+    REGION = "region"
+
+
 class _Base(object):
     def __getitem__(self, name):
         return getattr(self, name)
@@ -388,6 +394,38 @@ class SymbolInformationTypedDict(TypedDict, total=False):
     kind: int  # SymbolKind value.
     location: LocationTypedDict
     containerName: Optional[str]
+
+
+class FoldingRange(TypedDict, total=False):
+    """
+    Represents a folding range. To be valid, start and end line must be bigger
+    than zero and smaller than the number of lines in the document. Clients
+    are free to ignore invalid ranges.
+    """
+
+    # The zero-based start line of the range to fold. The folded area starts
+    # after the line's last character. To be valid, the end must be zero or
+    # larger and smaller than the number of lines in the document.
+    startLine: int
+
+    # The zero-based character offset from where the folded range starts. If
+    # not defined, defaults to the length of the start line.
+    startCharacter: Optional[int]
+
+    # The zero-based end line of the range to fold. The folded area ends with
+    # the line's last character. To be valid, the end must be zero or larger
+    # and smaller than the number of lines in the document.
+    endLine: int
+
+    # The zero-based character offset before the folded range ends. If not
+    # defined, defaults to the length of the end line.
+    endCharacter: Optional[int]
+
+    # Describes the kind of the folding range such as `comment` or `region`.
+    # The kind is used to categorize folding ranges and used by commands like
+    # 'Fold all comments'. See [FoldingRangeKind](#FoldingRangeKind) for an
+    # enumeration of standardized kinds.
+    kind: Optional[str]
 
 
 class Location(_Base):
