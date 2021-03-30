@@ -2,6 +2,7 @@
 Constants that help in describing the accepted structure of a file.
 """
 from typing import Tuple, Dict
+import os
 
 BDD_PREFIXES = ["given ", "when ", "then ", "and ", "but "]
 VARIABLE_PREFIXES = ("@", "%", "$", "&")
@@ -38,6 +39,11 @@ BUILTIN_VARIABLES = [
     ("&{SUITE_METADATA}", ""),
     ("@{TEST_TAGS}", ""),
 ]
+
+# i.e.: Just the variables we can resolve statically...
+BUILTIN_VARIABLES_RESOLVED = dict(
+    [("/", os.sep), (":", os.pathsep), ("\\n", os.linesep), ("SPACE", " ")]
+)
 
 
 class Section(object):

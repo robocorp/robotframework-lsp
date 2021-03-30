@@ -23,6 +23,43 @@ def test_keyword_completions_builtin(workspace, libspec_manager):
     ]
 
 
+@pytest.mark.parametrize("separator", ("${/}", "/", "\\"))
+@pytest.mark.parametrize("use_config", (True, False))
+def test_keyword_completions_directory_separator(
+    workspace, libspec_manager, use_config, separator
+):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.robot_config import RobotConfig
+    import sys
+
+    if sys.platform != "win32" and separator == "\\":
+        return
+
+    workspace.set_root("case_inner_keywords", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case_root.robot")
+    doc.source = f"""
+*** Settings ***
+Resource    inner{separator}case_inner.robot
+
+
+*** Test Cases ***
+Testing Completion Here
+    Check with ke"""
+
+    if use_config:
+        config = RobotConfig()
+    else:
+        config = None
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws, config=config)
+    )
+    assert sorted([comp["label"] for comp in completions]) == [
+        "Check with keyword at inner"
+    ]
+
+
 def test_keyword_completions_builtin_after_space(workspace, libspec_manager):
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
@@ -143,8 +180,8 @@ def test_keyword_completions_user_library(
         )
         library_import = case1_py_path
 
-    doc.source = doc.source.replace(u"case1_library", library_import)
-    doc.source = doc.source + u"\n    verify"
+    doc.source = doc.source.replace("case1_library", library_import)
+    doc.source = doc.source + "\n    verify"
 
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
