@@ -571,3 +571,19 @@ Can use resource keywords
     )
 
     data_regression.check(completions)
+
+
+def test_keyword_completions_circular_imports(workspace, libspec_manager):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    workspace.set_root("case_circular", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("main.robot")
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    assert sorted([comp["label"] for comp in completions]) == [
+        "My Keyword 1",
+        "My Keyword 2",
+    ]

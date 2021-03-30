@@ -355,8 +355,10 @@ class CompletionContext(object):
                     # It's a relative resource, resolve its location based on the
                     # current file.
                     check_paths = [
-                        os.path.join(
-                            os.path.dirname(self.doc.path), name_with_resolved_vars
+                        os.path.normpath(
+                            os.path.join(
+                                os.path.dirname(self.doc.path), name_with_resolved_vars
+                            )
                         )
                     ]
                     config = self.config
@@ -365,8 +367,11 @@ class CompletionContext(object):
                             OPTION_ROBOT_PYTHONPATH, list, []
                         ):
                             check_paths.append(
-                                os.path.join(
-                                    additional_pythonpath_entry, name_with_resolved_vars
+                                os.path.normpath(
+                                    os.path.join(
+                                        additional_pythonpath_entry,
+                                        name_with_resolved_vars,
+                                    )
                                 )
                             )
 
