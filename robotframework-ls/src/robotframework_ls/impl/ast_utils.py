@@ -454,8 +454,9 @@ def create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
 
     elif isinstance_name(node, ("Fixture", "TestTemplate")):
         node, token = _strip_node_and_token_bdd_prefix(node, Token.NAME)
-        keyword_name = token.value
-        return KeywordUsageInfo(tuple(stack), node, token, keyword_name)
+        if token is not None:
+            keyword_name = token.value
+            return KeywordUsageInfo(tuple(stack), node, token, keyword_name)
 
     return None
 
@@ -527,6 +528,8 @@ def _strip_node_and_token_bdd_prefix(node, token_type):
     we can stop doing this.
     """
     original_token = node.get_token(token_type)
+    if original_token is None:
+        return node, None
     token = _strip_token_bdd_prefix(original_token)
     if token is original_token:
         # i.e.: No change was done.

@@ -185,3 +185,16 @@ Test
     config = RobotConfig()
     # Note: we don't give errors if we can't resolve a resource.
     _collect_errors(workspace, doc, data_regression, basename="no_error", config=config)
+
+
+def test_empty_teardown(workspace, libspec_manager, data_regression):
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+
+    doc.source = """
+*** Test Cases ***
+My Test 1
+  [Teardown]
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
