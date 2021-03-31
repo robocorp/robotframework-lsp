@@ -174,7 +174,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
 
         if (robotLanguageServerArgs != null) {
             for (JsonElement e : robotLanguageServerArgs) {
-                commands.add(e.toString());
+                commands.add(e.getAsString());
             }
         }
 
