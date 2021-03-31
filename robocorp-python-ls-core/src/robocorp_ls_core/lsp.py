@@ -396,7 +396,7 @@ class SymbolInformationTypedDict(TypedDict, total=False):
     containerName: Optional[str]
 
 
-class FoldingRange(TypedDict, total=False):
+class FoldingRangeTypedDict(TypedDict, total=False):
     """
     Represents a folding range. To be valid, start and end line must be bigger
     than zero and smaller than the number of lines in the document. Clients

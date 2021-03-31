@@ -6,7 +6,6 @@ from robotframework_ls.constants import DEFAULT_COMPLETIONS_TIMEOUT
 from robocorp_ls_core.robotframework_log import get_logger
 from typing import Any, Optional, List, Dict
 from robocorp_ls_core.protocols import (
-    IMessageMatcher,
     IConfig,
     IWorkspace,
     IIdMessageMatcher,
@@ -475,65 +474,6 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def cancel_lint(self, doc_uri) -> None:
         self._lint_manager.cancel_lint(doc_uri)
 
-    def m_text_document__definition(self, **kwargs):
-        doc_uri = kwargs["textDocument"]["uri"]
-        # Note: 0-based
-        line, col = kwargs["position"]["line"], kwargs["position"]["character"]
-
-        rf_api_client = self._server_manager.get_regular_rf_api_client(doc_uri)
-        if rf_api_client is not None:
-            ret = partial(
-                self._threaded_document_definition, rf_api_client, doc_uri, line, col
-            )
-            ret = require_monitor(ret)
-            return ret
-
-        log.info("Unable to find definition (no api available).")
-        return None  # Unable to get the api.
-
-    @log_and_silence_errors(log)
-    def _threaded_document_definition(
-        self,
-        rf_api_client: IRobotFrameworkApiClient,
-        doc_uri: str,
-        line: int,
-        col: int,
-        monitor: IMonitor,
-    ) -> Optional[list]:
-
-        from robocorp_ls_core.client_base import wait_for_message_matchers
-
-        workspace = self.workspace
-        if not workspace:
-            error_msg = "Workspace is closed."
-            log.critical(error_msg)
-            raise RuntimeError(error_msg)
-
-        document = workspace.get_document(doc_uri, accept_from_file=True)
-        if document is None:
-            error_msg = "Unable to find document (%s) for definition." % (doc_uri,)
-            log.critical(error_msg)
-            raise RuntimeError(error_msg)
-
-        message_matchers: List[Optional[IIdMessageMatcher]] = [
-            rf_api_client.request_find_definition(doc_uri, line, col)
-        ]
-        accepted_message_matchers = wait_for_message_matchers(
-            message_matchers,
-            monitor,
-            rf_api_client.request_cancel,
-            DEFAULT_COMPLETIONS_TIMEOUT,
-        )
-        message_matcher: IMessageMatcher
-        for message_matcher in accepted_message_matchers:
-            msg = message_matcher.msg
-            if msg is not None:
-                result = msg.get("result")
-                if result:
-                    return result
-
-        return None
-
     def m_text_document__completion(self, **kwargs):
         doc_uri = kwargs["textDocument"]["uri"]
         # Note: 0-based
@@ -600,6 +540,74 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         return completions
 
+    @log_and_silence_errors(log)
+    def _async_api_request(
+        self,
+        rf_api_client: IRobotFrameworkApiClient,
+        request_method_name: str,
+        doc_uri: str,
+        monitor: IMonitor,
+        **kwargs,
+    ):
+        from robocorp_ls_core.client_base import wait_for_message_matcher
+
+        func = getattr(rf_api_client, request_method_name)
+
+        ws = self.workspace
+        if not ws:
+            log.critical(
+                "Workspace must be set before calling %s.", request_method_name
+            )
+            return None
+
+        document = ws.get_document(doc_uri, accept_from_file=True)
+        if document is None:
+            log.critical(
+                "Unable to find document (%s) for %s." % (doc_uri, request_method_name)
+            )
+            return None
+
+        # Asynchronous completion.
+        message_matcher: Optional[IIdMessageMatcher] = func(doc_uri, **kwargs)
+        if message_matcher is None:
+            log.debug("Message matcher for %s returned None.", request_method_name)
+            return None
+
+        if wait_for_message_matcher(
+            message_matcher,
+            rf_api_client.request_cancel,
+            DEFAULT_COMPLETIONS_TIMEOUT,
+            monitor,
+        ):
+            msg = message_matcher.msg
+            if msg is not None:
+                result = msg.get("result")
+                if result:
+                    return result
+
+        return None
+
+    def m_text_document__definition(self, **kwargs):
+        doc_uri = kwargs["textDocument"]["uri"]
+        # Note: 0-based
+        line, col = kwargs["position"]["line"], kwargs["position"]["character"]
+
+        rf_api_client = self._server_manager.get_regular_rf_api_client(doc_uri)
+        if rf_api_client is not None:
+            func = partial(
+                self._async_api_request,
+                rf_api_client,
+                "request_find_definition",
+                doc_uri=doc_uri,
+                line=line,
+                col=col,
+            )
+            func = require_monitor(func)
+            return func
+
+        log.info("Unable to find definition (no api available).")
+        return None
+
     def m_text_document__signature_help(self, **kwargs):
         """
         "params": {
@@ -620,55 +628,19 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         rf_api_client = self._server_manager.get_regular_rf_api_client(doc_uri)
         if rf_api_client is not None:
-            func = partial(self._signature_help, rf_api_client, doc_uri, line, col)
+            func = partial(
+                self._async_api_request,
+                rf_api_client,
+                "request_signature_help",
+                doc_uri=doc_uri,
+                line=line,
+                col=col,
+            )
             func = require_monitor(func)
             return func
 
         log.info("Unable to get signature (no api available).")
         return []
-
-    @log_and_silence_errors(log)
-    def _signature_help(
-        self,
-        rf_api_client: IRobotFrameworkApiClient,
-        doc_uri: str,
-        line: int,
-        col: int,
-        monitor: Monitor,
-    ) -> Optional[dict]:
-        from robocorp_ls_core.client_base import wait_for_message_matcher
-
-        ws = self.workspace
-        if not ws:
-            log.critical("Workspace must be set before getting signature help.")
-            return None
-
-        document = ws.get_document(doc_uri, accept_from_file=True)
-        if document is None:
-            log.critical("Unable to find document (%s) for completions." % (doc_uri,))
-            return None
-
-        # Asynchronous completion.
-        message_matcher: Optional[
-            IIdMessageMatcher
-        ] = rf_api_client.request_signature_help(doc_uri, line, col)
-        if message_matcher is None:
-            log.debug("Message matcher for signature returned None.")
-            return None
-
-        if wait_for_message_matcher(
-            message_matcher,
-            rf_api_client.request_cancel,
-            DEFAULT_COMPLETIONS_TIMEOUT,
-            monitor,
-        ):
-            msg = message_matcher.msg
-            if msg is not None:
-                result = msg.get("result")
-                if result:
-                    return result
-
-        return None
 
     def m_text_document__folding_range(self, **kwargs):
         """
@@ -682,49 +654,21 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         rf_api_client = self._server_manager.get_regular_rf_api_client(doc_uri)
         if rf_api_client is not None:
-            func = partial(self._folding_range, rf_api_client, doc_uri)
+            func = partial(
+                self._async_api_request,
+                rf_api_client,
+                "request_folding_range",
+                doc_uri=doc_uri,
+            )
             func = require_monitor(func)
             return func
 
         log.info("Unable to get folding range (no api available).")
         return []
 
-    @log_and_silence_errors(log)
-    def _folding_range(
-        self, rf_api_client: IRobotFrameworkApiClient, doc_uri: str, monitor: Monitor
-    ) -> Optional[dict]:
-        from robocorp_ls_core.client_base import wait_for_message_matcher
-
-        ws = self.workspace
-        if not ws:
-            log.critical("Workspace must be set before getting the folding ranges.")
-            return None
-
-        document = ws.get_document(doc_uri, accept_from_file=True)
-        if document is None:
-            log.critical(
-                "Unable to find document (%s) for folding ranges." % (doc_uri,)
-            )
-            return None
-
-        # Asynchronous completion.
-        message_matcher: Optional[
-            IIdMessageMatcher
-        ] = rf_api_client.request_folding_range(doc_uri)
-        if message_matcher is None:
-            log.debug("Message matcher for folding range None.")
-            return None
-
-        if wait_for_message_matcher(
-            message_matcher,
-            rf_api_client.request_cancel,
-            DEFAULT_COMPLETIONS_TIMEOUT,
-            monitor,
-        ):
-            msg = message_matcher.msg
-            if msg is not None:
-                result = msg.get("result")
-                if result:
-                    return result
-
-        return None
+    # WIP
+    # def m_text_document__hover(self, **kwargs):
+    #     doc_uri = kwargs["textDocument"]["uri"]
+    #     # Note: 0-based
+    #     line, col = kwargs["position"]["line"], kwargs["position"]["character"]
+    #     return None  # Unable to get the api.

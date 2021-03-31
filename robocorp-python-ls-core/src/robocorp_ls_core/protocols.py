@@ -360,6 +360,9 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
     def request_signature_help(self, uri: str, line: int, col: int):
         pass
 
+    def request_folding_range(self, uri: str):
+        pass
+
     def request_workspace_symbols(self, query: Optional[str] = None):
         pass
 

@@ -551,3 +551,26 @@ def test_workspace_symbols_integrated(
     ret = language_server.request_workspace_symbols()
     result = ret["result"]
     assert len(result) > 0
+
+
+def test_folding_range_integrated(
+    language_server_io: ILanguageServerClient, ws_root_path, data_regression
+):
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    txt = """
+*** Test Cases ***
+Log It
+    Log    
+
+Log It2
+    Log    
+
+"""
+    language_server.open_doc(uri, 1, txt)
+
+    ret = language_server.request_folding_range(uri)
+    result = ret["result"]
+    data_regression.check(result)
