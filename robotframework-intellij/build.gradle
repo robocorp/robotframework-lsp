@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.11.1'
+version '0.12.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -52,9 +52,19 @@ patchPluginXml {
     Release 0.11.1
     </p>
     <ul>
-        <li>[Robocop](https://robocop.readthedocs.io/en/latest/) updated to 1.6.1.</li>
-        <li>Fixes in semantic syntax hightlighting with Robot Framework 3.x.</li>
-        <li>Keywords from `Reserved.py` are no longer shown for auto-import.</li>
+    
+    <li>By default, fsnotify (polling) is now used on Linux and Mac and watchdog (native) on Windows due to resource usage limits on Linux and Mac.</li>
+    <ul>
+      <li>Using `watchdog` is still recommended when possible. See the [FAQ](https://github.com/robocorp/robotframework-lsp/blob/master/robotframework-ls/docs/faq.md#how-to-change-the-file-watch-mode)
+      for details.</li> 
+    </ul>
+    <li>Code analysis with empty teardown works properly.</li>
+    <li>No longer recursing on local circular imports.</li>
+    <li>System directory separator is recognized.</li>
+    <li>It's now possible to enable logging through a `ROBOTFRAMEWORK_LS_LOG_FILE` environment variable.</li>
+    <li>[Robocop](https://robocop.readthedocs.io/en/latest/) fixes integrated (trailing blank line, misaligned variable).</li>
+    <li>[Intellij] Fixed issue initializing language server with arguments in Mac OS.</li>
+
     </ul>    
     <br>
     Current feature set:<br>

@@ -1,3 +1,17 @@
+New in 0.12.0 (2021-04-01)
+-----------------------------
+
+- By default, fsnotify (polling) is now used on Linux and Mac and watchdog (native) on Windows due to resource usage limits on Linux and Mac.
+  Using `watchdog` is still recommended when possible. See the [FAQ](https://github.com/robocorp/robotframework-lsp/blob/master/robotframework-ls/docs/faq.md#how-to-change-the-file-watch-mode)
+  for details. 
+- Code analysis with empty teardown works properly. [#289](https://github.com/robocorp/robotframework-lsp/issues/289)
+- No longer recursing on local circular imports. [#269](https://github.com/robocorp/robotframework-lsp/issues/269)
+- System directory separator `${/}` is recognized. [#153](https://github.com/robocorp/robotframework-lsp/issues/153)
+- It's now possible to enable logging through a `ROBOTFRAMEWORK_LS_LOG_FILE` environment variable.
+- [Robocop](https://robocop.readthedocs.io/en/latest/) fixes integrated (trailing blank line, misaligned variable).
+- [Intellij] Fixed issue initializing language server with arguments in Mac OS.
+
+
 New in 0.11.1 (2021-03-29)
 -----------------------------
 

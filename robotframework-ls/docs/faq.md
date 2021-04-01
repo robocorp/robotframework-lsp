@@ -9,9 +9,8 @@ a given library.
 
 If you're in `VSCode`, the error may be seen in the `OUTPUT` tab, selecting `Robot Framework` in the dropdown.
 
-For `Intellij`, it's possible to enable logging by setting `["-vv", "--log-file=<path/to/robotframework_ls.log>"]`
-(properly replacing the `<path/to>` to some local path in your machine) in the `Language Server Args` in the
-`Robot Framework` settings and then checking the log files generated (look for `EXCEPTION` in the log files).
+For `Intellij`, it's possible to see it by turning on the logging
+(see [Reporting Issues](reporting_issues.md) for details -- look for `EXCEPTION` in the log files).
 
 **Important**: After the logs are collected, revert the changes to stop the logging
 (having the logging on may make the language server go slower).

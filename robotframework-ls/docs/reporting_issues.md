@@ -6,8 +6,9 @@ the [Issue Tracker](https://github.com/robocorp/robotframework-lsp/issues/new).
 
 If it's a bug, please collect the logs so that it's possible to verify what's happening.
 
-To do that, set the `robot.language-server.args` setting to `["-vv", "--log-file=<path/to/robotframework_ls.log>"]`
-(properly replacing the `<path/to>` to some local path in your machine).
+To do that it's possible to either:
+- Set the `robot.language-server.args` setting to `["-vv", "--log-file=<path/to/robotframework_ls.log>"]` (`Language Server Args` in the Intellij settings).  
+- Set an environment variable: `ROBOTFRAMEWORK_LS_LOG_FILE=<path/to/robotframework_ls.log>`.
 
 Note: In `VSCode` it's possible to use `Ctrl+,` to open the user preferences to set some setting.
 
@@ -22,5 +23,6 @@ in the specified directory and attach them to the issue.
 Note: the language server usually creates multiple log files, one for each process it spawns,
 and all of those should be attached.
    
-Important: After the logs are collected, remove (or comment) the `robot.language-server.args` setting
-to stop the logging (having the logging on may make the language server go slower). 
+**Important** : After the logs are collected, **remove** (or comment) the `robot.language-server.args` setting 
+or unset the `ROBOTFRAMEWORK_LS_LOG_FILE` environment variable to **stop the logging** 
+(having the logging on may make the language server go slower). 
