@@ -410,14 +410,26 @@ class LibspecManager(object):
 
         self._main_thread = threading.current_thread()
 
-        watch_impl = os.environ.get("ROBOTFRAMEWORK_LS_WATCH_IMPL", "watchdog")
-        if watch_impl not in ("watchdog", "fsnotify"):
+        watch_impl = os.environ.get("ROBOTFRAMEWORK_LS_WATCH_IMPL", "auto")
+        if watch_impl not in ("watchdog", "fsnotify", "auto"):
             log.info(
-                f"ROBOTFRAMEWORK_LS_WATCH_IMPL should be 'watchdog' or 'fsnotify'. Found: {watch_impl} (falling back to fsnotify)"
+                f"ROBOTFRAMEWORK_LS_WATCH_IMPL should be 'auto', 'watchdog' or 'fsnotify'. Found: {watch_impl} (falling back to auto)"
             )
-            # i.e.: the default is watchdog, so, if a different one is set,
-            # presumably the default is not ok, so, fall back to watchdog.
-            watch_impl = "fsnotify"
+            watch_impl = "auto"
+
+        if watch_impl == "auto":
+            # In auto mode we use watchdog for windows and fsnotify (polling)
+            # for Linux and Mac. The reason for that is that on Linux and Mac
+            # if big folders are watched the system may complain due to the
+            # lack of resources, which may prevent the extension from working
+            # properly.
+            #
+            # If users want to opt-in, they can change to watchdog (and
+            # ideally install it to their env to get native extensions).
+            if sys.platform == "win32":
+                watch_impl = "watchdog"
+            else:
+                watch_impl = "fsnotify"
 
         self._observer = watchdog_wrapper.create_observer(
             watch_impl, (".py", ".libspec")

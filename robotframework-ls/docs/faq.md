@@ -62,7 +62,7 @@ i.e.: Given a resource import such as: `Resource ${some_variable}/my.resource`,
 How to enable/disable autoformat on save on VSCode?
 ---------------------------------------------------
 
-1. Open command pallete (`Ctrl+Shift+P`) and select the command `Preferences: Configure Language Specific Settings ...`.
+1. Open command palette (`Ctrl+Shift+P`) and select the command `Preferences: Configure Language Specific Settings ...`.
 
 2. Select `Robot Framework (robotframework)`
 
@@ -110,20 +110,45 @@ itself), so, if you want to use a different
 version is `1.6.1`).
 
 Note that a default version is also shipped (but it may not be the latest `Robocop`
-version). 
+version).
 
 
 How to install a build from GitHub on Intellij?
 ------------------------------------------------
 
 First download the `distribution-intellij.zip` from one of the `Tests - Intellij` jobs
-in [https://github.com/robocorp/robotframework-lsp/actions](https://github.com/robocorp/robotframework-lsp/actions), then
-extract the `robotframework-intellij-X.XX.X.zip` from it (due to a limitation in the GitHub upload artifacts action,
-even a single .zip is zipped again).
+in [https://github.com/robocorp/robotframework-lsp/actions](https://github.com/robocorp/robotframework-lsp/actions),
+then extract the `robotframework-intellij-X.XX.X.zip` from it (due to a limitation in the GitHub upload artifacts
+action, even a single .zip is zipped again).
 
-Afterwards, proceed to `File` > `Settings` > `Plugins`, click the `gear` icon,
-choose `Install Plugin from Disk...`, point to the `robotframework-intellij-X.XX.X.zip` file and then restart Intellij. 
+Afterwards, proceed to `File` > `Settings` > `Plugins`, click the `gear` icon, choose `Install Plugin from Disk...`,
+point to the `robotframework-intellij-X.XX.X.zip` file and then restart Intellij.
 
-**Note (common on Mac OS)**: if you unzipped and instead of the `robotframework-intellij-X.XX.X.zip` you get directories,
-your .zip program is automatically unzipping the .zip inside the `distribution-intellij.zip`.
-In this case you can either use a different program to unzip or re-zip those extracted contents into a new .zip.
+**Note (common on Mac OS)**: if you unzipped and instead of the `robotframework-intellij-X.XX.X.zip` you get
+directories, your .zip program is automatically unzipping the .zip inside the `distribution-intellij.zip`. In this case
+you can either use a different program to unzip or re-zip those extracted contents into a new .zip.
+
+
+How to change the file-watch mode?
+----------------------------------
+
+By default the language server uses `watchdog` for native file watching on Windows and polling (through `fsnotify`) on
+Mac and Linux (because for these using the `watchdog`
+library may run out of system resources, in which case those limits may have to be manually raised).
+
+It's possible to change the file-watch mode by setting an environment variable:
+
+`ROBOTFRAMEWORK_LS_WATCH_IMPL` to one of the following values:
+
+- `watchdog`: for native file watching (in this case, please also install the latest `watchdog`
+  in your python environment and raise the related limits according to your workspace contents --
+  see: https://pythonhosted.org/watchdog/installation.html for more details).
+
+- `fsnotify` for file watching using polling.
+
+After setting the environment variable on your system, please restart the language server client you're using so that it
+picks up the new environment variable value.
+
+**Note**: when possible using `watchdog` is recommended.
+
+
