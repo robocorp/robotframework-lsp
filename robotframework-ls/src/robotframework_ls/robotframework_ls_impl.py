@@ -226,7 +226,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                     "robot.getLanguageServerVersion",
                 ]
             },
-            "hoverProvider": False,
+            "hoverProvider": True,
             "referencesProvider": False,
             "renameProvider": False,
             "foldingRangeProvider": True,
@@ -666,9 +666,22 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         log.info("Unable to get folding range (no api available).")
         return []
 
-    # WIP
-    # def m_text_document__hover(self, **kwargs):
-    #     doc_uri = kwargs["textDocument"]["uri"]
-    #     # Note: 0-based
-    #     line, col = kwargs["position"]["line"], kwargs["position"]["character"]
-    #     return None  # Unable to get the api.
+    def m_text_document__hover(self, **kwargs):
+        doc_uri = kwargs["textDocument"]["uri"]
+        # Note: 0-based
+        line, col = kwargs["position"]["line"], kwargs["position"]["character"]
+        rf_api_client = self._server_manager.get_regular_rf_api_client(doc_uri)
+        if rf_api_client is not None:
+            func = partial(
+                self._async_api_request,
+                rf_api_client,
+                "request_hover",
+                doc_uri=doc_uri,
+                line=line,
+                col=col,
+            )
+            func = require_monitor(func)
+            return func
+
+        log.info("Unable to compute hover (no api available).")
+        return []

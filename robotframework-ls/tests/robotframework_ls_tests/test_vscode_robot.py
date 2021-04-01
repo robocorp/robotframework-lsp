@@ -541,6 +541,32 @@ Log It
     data_regression.check(result)
 
 
+def test_hover_integrated(
+    language_server_io: ILanguageServerClient, ws_root_path, data_regression
+):
+    from robocorp_ls_core.workspace import Document
+    from robocorp_ls_core.lsp import HoverTypedDict
+
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    txt = """
+*** Test Cases ***
+Log It
+    Log    """
+    doc = Document("", txt)
+    language_server.open_doc(uri, 1, txt)
+    line, col = doc.get_last_line_col()
+
+    ret = language_server.request_hover(uri, line, col)
+    result: HoverTypedDict = ret["result"]
+
+    contents = result["contents"]
+    assert "Log" in contents["value"]
+    assert contents["kind"] == "markdown"
+
+
 def test_workspace_symbols_integrated(
     language_server_io: ILanguageServerClient, ws_root_path, data_regression
 ):

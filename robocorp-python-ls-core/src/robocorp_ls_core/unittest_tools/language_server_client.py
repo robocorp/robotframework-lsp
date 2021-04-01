@@ -207,6 +207,20 @@ class LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    @implements(ILanguageServerClient.request_hover)
+    def request_hover(self, uri, line, col):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "textDocument/hover",
+                "params": {
+                    "textDocument": {"uri": uri},
+                    "position": {"line": line, "character": col},
+                },
+            }
+        )
+
     @implements(ILanguageServerClient.request_folding_range)
     def request_folding_range(self, uri):
         return self.request(

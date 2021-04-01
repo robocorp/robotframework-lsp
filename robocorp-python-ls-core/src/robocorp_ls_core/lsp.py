@@ -19,7 +19,7 @@
 https://github.com/microsoft/language-server-protocol/tree/gh-pages/_specifications
 https://microsoft.github.io/language-server-protocol/specification
 """
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Any
 import typing
 
 from robocorp_ls_core.protocols import IEndPoint, IFuture, TypedDict
@@ -394,6 +394,34 @@ class SymbolInformationTypedDict(TypedDict, total=False):
     kind: int  # SymbolKind value.
     location: LocationTypedDict
     containerName: Optional[str]
+
+
+class MarkupContentTypedDict(TypedDict):
+    kind: str  # "plaintext" | "markdown"
+    value: str
+
+
+class HoverTypedDict(TypedDict, total=False):
+    contents: MarkupContentTypedDict
+    range: RangeTypedDict  # Optional
+
+
+class ResponseErrorTypedDict(TypedDict, total=False):
+    code: int
+    message: str
+    data: Any  # Optional
+
+
+class ResponseTypedDict(TypedDict, total=False):
+    id: Union[int, str, None]
+    result: Any  # Optional
+    error: ResponseErrorTypedDict  # Optional
+
+
+class HoverResponseTypedDict(TypedDict, total=False):
+    id: Union[int, str, None]
+    result: HoverTypedDict  # Optional
+    error: ResponseErrorTypedDict  # Optional
 
 
 class FoldingRangeTypedDict(TypedDict, total=False):

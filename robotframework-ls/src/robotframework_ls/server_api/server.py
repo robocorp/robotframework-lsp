@@ -5,7 +5,11 @@ from typing import Optional, List, Dict
 from robocorp_ls_core.protocols import IConfig, IMonitor
 from functools import partial
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
-from robocorp_ls_core.lsp import SymbolInformationTypedDict
+from robocorp_ls_core.lsp import (
+    SymbolInformationTypedDict,
+    FoldingRangeTypedDict,
+    HoverTypedDict,
+)
 from robotframework_ls.impl.protocols import IKeywordFound
 
 
@@ -368,14 +372,32 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
     def _threaded_folding_range(
         self, doc_uri: str, monitor: IMonitor
-    ) -> Optional[dict]:
+    ) -> List[FoldingRangeTypedDict]:
         from robotframework_ls.impl.folding_range import folding_range
 
         completion_context = self._create_completion_context(doc_uri, 0, 0, monitor)
         if completion_context is None:
-            return None
+            return []
 
         return folding_range(completion_context)
+
+    def m_hover(self, doc_uri: str, line: int, col: int):
+        func = partial(self._threaded_hover, doc_uri, line, col)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_hover(
+        self, doc_uri: str, line, col, monitor: IMonitor
+    ) -> Optional[HoverTypedDict]:
+        from robotframework_ls.impl.hover import hover
+
+        completion_context = self._create_completion_context(
+            doc_uri, line, col, monitor
+        )
+        if completion_context is None:
+            return None
+
+        return hover(completion_context)
 
     def m_workspace_symbols(self, query: Optional[str] = None):
         func = partial(self._threaded_workspace_symbols, query)

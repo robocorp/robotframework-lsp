@@ -74,7 +74,7 @@ How to enable/disable autoformat on save on VSCode?
   },
 ```
 
-How do I configure the Robocop linter?
+How to configure the Robocop linter?
 ---------------------------------------
 
 To configure the linter create a `.robocop` file in your workspace root and fill it with the values you want.
@@ -90,7 +90,7 @@ Example of `.robocop` file:
 --exclude missing-doc-suite
 ```
 
-How do I disable the Robocop linter?
+How to disable the Robocop linter?
 ---------------------------------------
 
 To completely disable the `Robocop` linter, change the setting:
@@ -100,7 +100,7 @@ To completely disable the `Robocop` linter, change the setting:
 to `false` (in the Intellij UI, it's the `Lint Robocop Enabled` setting).
 
 
-How do I change the Robocop version used?
+How to change the Robocop version used?
 -------------------------------------------
 
 The language server will initially try to load the version available from the
@@ -124,3 +124,6 @@ even a single .zip is zipped again).
 Afterwards, proceed to `File` > `Settings` > `Plugins`, click the `gear` icon,
 choose `Install Plugin from Disk...`, point to the `robotframework-intellij-X.XX.X.zip` file and then restart Intellij. 
 
+**Note (common on Mac OS)**: if you unzipped and instead of the `robotframework-intellij-X.XX.X.zip` you get directories,
+your .zip program is automatically unzipping the .zip inside the `distribution-intellij.zip`.
+In this case you can either use a different program to unzip or re-zip those extracted contents into a new .zip.

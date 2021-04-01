@@ -176,6 +176,16 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         """
         return self.request_async(self._build_msg("foldingRange", doc_uri=doc_uri))
 
+    def request_hover(
+        self, doc_uri: str, line: int, col: int
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(
+            self._build_msg("hover", doc_uri=doc_uri, line=line, col=col)
+        )
+
     def request_workspace_symbols(
         self, query: Optional[str] = None
     ) -> Optional[IIdMessageMatcher]:

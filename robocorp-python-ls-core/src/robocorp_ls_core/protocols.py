@@ -22,6 +22,7 @@ from enum import Enum
 if typing.TYPE_CHECKING:
     # This would lead to a circular import, so, do it only when type-checking.
     from robocorp_ls_core.lsp import TextDocumentContentChangeEvent
+    from robocorp_ls_core.lsp import HoverResponseTypedDict
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -221,7 +222,7 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
     def get_version(self):
         pass
 
-    def lint(self, doc_uri: str) -> dict:
+    def lint(self, doc_uri: str) -> list:
         pass
 
     def request_lint(self, doc_uri: str) -> Optional[IIdMessageMatcher]:
@@ -280,6 +281,13 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
         """
 
     def request_folding_range(self, doc_uri: str) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+
+    def request_hover(
+        self, doc_uri: str, line: int, col: int
+    ) -> Optional[IIdMessageMatcher]:
         """
         :Note: async complete.
         """
@@ -358,6 +366,9 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
         pass
 
     def request_signature_help(self, uri: str, line: int, col: int):
+        pass
+
+    def request_hover(self, uri: str, line: int, col: int) -> "HoverResponseTypedDict":
         pass
 
     def request_folding_range(self, uri: str):

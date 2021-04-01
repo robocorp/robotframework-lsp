@@ -11,6 +11,7 @@ from robotframework_ls.impl.protocols import (
     IRobotWorkspace,
     IKeywordDefinition,
     ILibraryImportNode,
+    KeywordUsageInfo,
 )
 
 
@@ -443,6 +444,21 @@ class CompletionContext(object):
         Provides the current keyword even if we're in its arguments and not actually
         on the keyword itself.
         """
+        current_keyword_definition_and_usage_info = (
+            self.get_current_keyword_definition_and_usage_info()
+        )
+        if not current_keyword_definition_and_usage_info:
+            return None
+        return current_keyword_definition_and_usage_info[0]
+
+    @instance_cache
+    def get_current_keyword_definition_and_usage_info(
+        self
+    ) -> Optional[Tuple[IKeywordDefinition, KeywordUsageInfo]]:
+        """
+        Provides the current keyword even if we're in its arguments and not actually
+        on the keyword itself.
+        """
         from robotframework_ls.impl.find_definition import find_keyword_definition
         from robotframework_ls.impl import ast_utils
 
@@ -472,7 +488,7 @@ class CompletionContext(object):
                 )
                 if definitions and len(definitions) >= 1:
                     definition: IKeywordDefinition = next(iter(definitions))
-                    return definition
+                    return definition, usage_info
         return None
 
     def __typecheckself__(self) -> None:
