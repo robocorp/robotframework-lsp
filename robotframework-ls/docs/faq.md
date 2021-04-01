@@ -112,3 +112,15 @@ version is `1.6.1`).
 Note that a default version is also shipped (but it may not be the latest `Robocop`
 version). 
 
+
+How to install a build from GitHub on Intellij?
+------------------------------------------------
+
+First download the `distribution-intellij.zip` from one of the `Tests - Intellij` jobs
+in [https://github.com/robocorp/robotframework-lsp/actions](https://github.com/robocorp/robotframework-lsp/actions), then
+extract the `robotframework-intellij-X.XX.X.zip` from it (due to a limitation in the GitHub upload artifacts action,
+even a single .zip is zipped again).
+
+Afterwards, proceed to `File` > `Settings` > `Plugins`, click the `gear` icon,
+choose `Install Plugin from Disk...`, point to the `robotframework-intellij-X.XX.X.zip` file and then restart Intellij. 
+
