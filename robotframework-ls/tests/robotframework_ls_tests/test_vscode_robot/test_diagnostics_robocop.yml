@@ -86,14 +86,3 @@
       line: 5
   severity: 1
   source: robocop
-- code: '1002'
-  message: Missing trailing blank line at the end of file
-  range:
-    end:
-      character: 0
-      line: 6
-    start:
-      character: 0
-      line: 6
-  severity: 2
-  source: robocop
