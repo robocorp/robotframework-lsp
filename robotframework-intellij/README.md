@@ -16,8 +16,8 @@ The Intellij Language Server integration is currently in alpha for early access.
 Please report any issues found during testing.
 
 
-Installing latest from Github Actions
---------------------------------------
+Installing latest from JetBrains Marketplace
+---------------------------------------------
 
 Install the latest from [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/16086-robot-framework-language-server)
 from Intellij by accessing `Settings > Plugins` and searching for `Robocorp`.
@@ -25,10 +25,7 @@ from Intellij by accessing `Settings > Plugins` and searching for `Robocorp`.
 Installing latest from Github Actions
 --------------------------------------
 
-It's also possible to download the latest build from [Tests Intellij](https://github.com/robocorp/robotframework-lsp/actions?query=workflow%3A%22Tests+-+Intellij%22)
-from GitHub Actions. Open the latest successful run, download the `intellij-distribution.zip` and unpack it locally, then
-head over to Intellij: `File > Settings > Plugins` and choose to `Install Plugin from Disk` (by clicking the `gear` icon in the plugins page),
-then, select the `robotframework-intellij-X.X.X.zip` (which was inside of `intellij-distribution.zip`). 
+See the [FAQ: How to install a build from GitHub on Intellij?](https://github.com/robocorp/robotframework-lsp/blob/master/robotframework-ls/docs/faq.md#how-to-install-a-build-from-github-on-intellij).
 
 Configuration
 -------------
