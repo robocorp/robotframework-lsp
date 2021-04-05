@@ -25,7 +25,7 @@ from Intellij by accessing `Settings > Plugins` and searching for `Robocorp`.
 Installing latest from Github Actions
 --------------------------------------
 
-See the [FAQ: How to install a build from GitHub on Intellij?](https://github.com/robocorp/robotframework-lsp/blob/master/robotframework-ls/docs/faq.md#how-to-install-a-build-from-github-on-intellij).
+See the [FAQ: How to install a build from GitHub on Intellij?](https://github.com/robocorp/robotframework-lsp/blob/master/robotframework-ls/docs/faq.md#how-to-install-a-build-from-github-on-intellij)
 
 Configuration
 -------------
