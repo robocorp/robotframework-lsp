@@ -264,7 +264,14 @@ def _collect_libraries_keywords(
     from robocorp_ls_core.lsp import CompletionItemKind
 
     libraries = completion_context.get_imported_libraries()
-    library_infos = set(_LibInfo(library.name, library.alias) for library in libraries)
+
+    library_infos = set(
+        _LibInfo(
+            completion_context.token_value_resolving_variables(library.name),
+            library.alias,
+        )
+        for library in libraries
+    )
     library_infos.add(_LibInfo(BUILTIN_LIB, None))
     libspec_manager = completion_context.workspace.libspec_manager
 

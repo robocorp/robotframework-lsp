@@ -1,0 +1,20 @@
+id: 2
+jsonrpc: '2.0'
+result:
+- deprecated: false
+  documentation: ''
+  documentationFormat: markdown
+  insertText: In Lib 2
+  insertTextFormat: 2
+  kind: 2
+  label: In Lib 2
+  preselect: false
+  textEdit:
+    newText: In Lib 2
+    range:
+      end:
+        character: 10
+        line: 6
+      start:
+        character: 4
+        line: 6

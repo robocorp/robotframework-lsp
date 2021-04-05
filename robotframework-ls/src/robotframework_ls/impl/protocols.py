@@ -325,3 +325,6 @@ class ICompletionContext(Protocol):
 
     def get_imported_libraries(self) -> Tuple[ILibraryImportNode, ...]:
         pass
+
+    def token_value_resolving_variables(self, token) -> str:
+        pass
