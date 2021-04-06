@@ -357,6 +357,55 @@ Some Keyword
     data_regression.check(completions)
 
 
+def test_env_variables_resolved_on_completion_integrated(
+    language_server_tcp: ILanguageServerClient, workspace_dir, data_regression, cases
+):
+    from robocorp_ls_core.workspace import Document
+
+    language_server = language_server_tcp
+    language_server.initialize(workspace_dir, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    language_server.open_doc(uri, 1)
+    contents = """*** Settings ***
+Library           %{ROOT}/directory/my_library.py
+
+
+*** Keywords ***
+Some Keyword
+    In Lib"""
+    language_server.change_doc(uri, 2, contents)
+
+    # Note: for libraries, if we found it, we keep it in memory (so, even though
+    # we removed the entry, it'll still be accessible).
+    language_server_tcp.settings(
+        {
+            "settings": {
+                "robot": {
+                    "python": {"env": {"ROOT": cases.get_path("case_same_basename")}}
+                }
+            }
+        }
+    )
+
+    doc = Document("", source=contents)
+    line, col = doc.get_last_line_col()
+    completions = language_server.get_completions(uri, line, col)
+    data_regression.check(completions)
+
+    contents = """*** Settings ***
+Library           %{ROOT}/directory/my_library.py
+
+
+*** Keywords ***
+Some Keyword
+    In Lib 2"""
+    language_server.change_doc(uri, 2, contents)
+    definitions = language_server.find_definitions(uri, line, col)
+    found = definitions["result"]
+    assert len(found) == 1
+    assert found[0]["uri"].endswith("my_library.py")
+
+
 def test_snippets_completions_integrated(
     language_server_tcp, ws_root_path, data_regression
 ):

@@ -206,7 +206,9 @@ def find_definition(completion_context: ICompletionContext) -> Sequence[IDefinit
             libspec_manager = completion_context.workspace.libspec_manager
             completion_context.check_cancelled()
             library_doc = libspec_manager.get_library_info(
-                token.value, create=True, current_doc_uri=completion_context.doc.uri
+                completion_context.token_value_resolving_variables(token),
+                create=True,
+                current_doc_uri=completion_context.doc.uri,
             )
             if library_doc is not None:
                 definition = _DefinitionFromLibrary(library_doc)

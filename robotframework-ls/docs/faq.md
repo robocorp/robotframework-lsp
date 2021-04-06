@@ -35,7 +35,7 @@ the `PYTHONPATH`.
     Notes:
     
       - `-a` may be used to specify an argument
-      - In RobotFramework 3.x `--format XML:HTML` must also be passed)
+      - In RobotFramework 3.x `--format XML:HTML` must also be passed
       - See `python -m robot.libdoc -h` for more details
     
     Whenever the library changes, make sure you manually regenerate the libspec.

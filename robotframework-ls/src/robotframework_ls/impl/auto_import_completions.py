@@ -286,7 +286,7 @@ def _obtain_import_location_info(completion_context) -> _ImportLocationInfo:
             import_location_info.library_node_info = node_info
 
             library_doc = libspec_manager.get_library_info(
-                node_info.node.name,
+                completion_context.token_value_resolving_variables(node_info.node.name),
                 create=True,
                 current_doc_uri=completion_context.doc.uri,
             )

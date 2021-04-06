@@ -331,7 +331,10 @@ class CompletionContext(object):
                 initial_v = v = str(v)
                 if v.startswith("${") and v.endswith("}"):
                     v = v[2:-1]
-                    parts.append(self.convert_robot_variable(v, initial_v))
+                    parts.append(self._convert_robot_variable(v, initial_v))
+                elif v.startswith("%{") and v.endswith("}"):
+                    v = v[2:-1]
+                    parts.append(self._convert_environment_variable(v, initial_v))
                 else:
                     log.info("Cannot resolve variable: %s", v)
                     parts.append(v)  # Leave unresolved.
@@ -416,14 +419,26 @@ class CompletionContext(object):
             return value_if_not_found
         return ret
 
-    def convert_robot_variable(self, var_name, value_if_not_found):
+    def _resolve_environment_variable(self, var_name, value_if_not_found, log_info):
+        import os
+
+        ret = os.environ.get(var_name, Sentinel.SENTINEL)
+        if ret is Sentinel.SENTINEL:
+            log.info(*log_info)
+            return value_if_not_found
+        return ret
+
+    def _convert_robot_variable(self, var_name, value_if_not_found):
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_VARIABLES
 
         if self.config is None:
             value = self._resolve_builtin(
                 var_name,
                 value_if_not_found,
-                ("Config not available while trying to convert variable: %s", var_name),
+                (
+                    "Config not available while trying to convert robot variable: %s",
+                    var_name,
+                ),
             )
         else:
             robot_variables = self.config.get_setting(OPTION_ROBOT_VARIABLES, dict, {})
@@ -432,7 +447,32 @@ class CompletionContext(object):
                 value = self._resolve_builtin(
                     var_name,
                     value_if_not_found,
-                    ("Unable to find variable: %s", var_name),
+                    ("Unable to find robot variable: %s", var_name),
+                )
+
+        value = str(value)
+        return value
+
+    def _convert_environment_variable(self, var_name, value_if_not_found):
+        from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHON_ENV
+
+        if self.config is None:
+            value = self._resolve_environment_variable(
+                var_name,
+                value_if_not_found,
+                (
+                    "Config not available while trying to convert environment variable: %s",
+                    var_name,
+                ),
+            )
+        else:
+            robot_env_vars = self.config.get_setting(OPTION_ROBOT_PYTHON_ENV, dict, {})
+            value = robot_env_vars.get(var_name, Sentinel.SENTINEL)
+            if value is Sentinel.SENTINEL:
+                value = self._resolve_environment_variable(
+                    var_name,
+                    value_if_not_found,
+                    ("Unable to find environment variable: %s", var_name),
                 )
 
         value = str(value)
