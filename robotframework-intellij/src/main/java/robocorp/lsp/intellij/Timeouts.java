@@ -3,6 +3,8 @@ package robocorp.lsp.intellij;
 public class Timeouts {
     // Initial values (after the first one succeeds, the timeout becomes lower).
     private static long definitionTimeout = 5;
+    private static long hoverTimeout = 5;
+
     private static long symbolsTimeout = 8;
     private static long completionsTimeout = 8;
 
@@ -23,5 +25,12 @@ public class Timeouts {
         long ret = completionsTimeout;
         completionsTimeout = 3;
         return ret;
+    }
+
+    public static long getHoverTimeout() {
+        long ret = hoverTimeout;
+        hoverTimeout = 3;
+        return ret;
+
     }
 }

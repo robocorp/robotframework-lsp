@@ -534,4 +534,14 @@ public class LanguageServerCommunication {
         return languageServer.getTextDocumentService().semanticTokensFull(params);
     }
 
+    public @Nullable CompletableFuture<Hover> hover(HoverParams params) {
+        LanguageServer languageServer = obtainSynchronizedLanguageServer();
+
+        if (languageServer == null) {
+            LOG.info("Unable to get hover: disconnected.");
+            return null;
+        }
+        return languageServer.getTextDocumentService().hover(params);
+    }
+
 }

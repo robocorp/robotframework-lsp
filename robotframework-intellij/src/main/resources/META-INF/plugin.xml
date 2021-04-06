@@ -45,6 +45,8 @@
         <projectService serviceImplementation="robocorp.robot.intellij.RobotProjectPreferences"/>
 
         <notificationGroup id="Robot Framework Language Server" displayType="BALLOON"/>
+        <lang.documentationProvider language="RobotFramework"
+                                    implementationClass="robocorp.lsp.intellij.FeatureHover"/>
     </extensions>
 
 </idea-plugin>

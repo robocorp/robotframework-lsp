@@ -119,7 +119,7 @@ public class FeatureDefinition {
             int endOffset = EditorUtils.LSPPosToOffset(targetDocument, targetRange.getEnd());
 
             String text = targetDocument.getText(new TextRange(startOffset, endOffset));
-            return new LSPGenericPsiElement(project, targetPsiFile, text, startOffset, endOffset);
+            return new LSPGenericPsiElement(project, targetPsiFile, text, startOffset, endOffset, targetRange, textDocumentIdentifier, pos, languageDefinition);
         } catch (ProcessCanceledException e) {
             // If it was cancelled, just ignore it (don't log).
         } catch (Exception e) {

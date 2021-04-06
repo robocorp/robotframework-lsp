@@ -3,15 +3,18 @@ package robocorp.lsp.psi;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementBase;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import robocorp.lsp.intellij.LanguageServerDefinition;
 
 public class LSPGenericPsiElement extends PsiElementBase implements PsiNameIdentifierOwner, NavigatablePsiElement {
 
@@ -39,13 +42,22 @@ public class LSPGenericPsiElement extends PsiElementBase implements PsiNameIdent
 
     public final int startOffset;
     public final int endOffset;
+    public final Range startRange;
 
-    public LSPGenericPsiElement(@NotNull Project project, @NotNull PsiFile file, @NotNull String text, int startOffset, int endOffset) {
+    public final TextDocumentIdentifier originalId;
+    public final Position originalPos;
+    public final LanguageServerDefinition languageDefinition;
+
+    public LSPGenericPsiElement(@NotNull Project project, @NotNull PsiFile file, @NotNull String text, int startOffset, int endOffset, Range startRange, TextDocumentIdentifier originalId, Position originalPos, LanguageServerDefinition languageDefinition) {
         this.project = project;
         this.file = file;
         this.text = text;
         this.startOffset = startOffset;
         this.endOffset = endOffset;
+        this.startRange = startRange;
+        this.originalId = originalId;
+        this.originalPos = originalPos;
+        this.languageDefinition = languageDefinition;
     }
 
     @Override
@@ -61,8 +73,7 @@ public class LSPGenericPsiElement extends PsiElementBase implements PsiNameIdent
     @Override
     @NotNull
     public Language getLanguage() {
-        // XXX: Can we do better than this?
-        return PlainTextLanguage.INSTANCE;
+        return file.getLanguage();
     }
 
     @Override
@@ -78,9 +89,9 @@ public class LSPGenericPsiElement extends PsiElementBase implements PsiNameIdent
     @Override
     public String toString() {
         if (text.length() > 0) {
-            return text + " at: " + file.getName() + " offset: " + startOffset;
+            return text + " at: " + file.getName() + " line: " + startRange.getStart().getLine() + 1;
         }
-        return file.getName() + " offset: " + startOffset;
+        return file.getName() + " line: " + startRange.getStart().getLine() + 1;
     }
 
     @Override
