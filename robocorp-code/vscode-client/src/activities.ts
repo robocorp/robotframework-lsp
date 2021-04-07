@@ -192,6 +192,38 @@ export async function setPythonInterpreterFromRobotYaml() {
 }
 
 
+export async function rccConfigurationDiagnostics() {
+    let actionResult: ActionResult = await commands.executeCommand(
+        roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL
+    );
+    if (!actionResult.success) {
+        window.showInformationMessage('Error listing robots: ' + actionResult.message);
+        return;
+    }
+    let robotsInfo: LocalRobotMetadataInfo[] = actionResult.result;
+
+    if (!robotsInfo || robotsInfo.length == 0) {
+        window.showInformationMessage('No Robot detected in the Workspace. If a robot.yaml is available, open it for more information.');
+        return;
+    }
+
+    let robot = await askRobotSelection(robotsInfo, 'Please select the Robot to analyze.');
+    if (!robot) {
+        return;
+    }
+
+    let diagnosticsActionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL, {'robotYaml': robot.filePath});
+    if (!diagnosticsActionResult.success) {
+        window.showErrorMessage('Error computing diagnostics for Robot: ' + diagnosticsActionResult.message);
+        return;
+    }
+
+    OUTPUT_CHANNEL.appendLine(diagnosticsActionResult.result);
+    workspace.openTextDocument({'content': diagnosticsActionResult.result}).then(document => {
+        window.showTextDocument(document);
+    });
+}
+
 export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
     // Start this in parallel while we ask the user for info.
     let isLoginNeededPromise: Thenable<ActionResult> = commands.executeCommand(

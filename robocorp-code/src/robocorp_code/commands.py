@@ -46,6 +46,8 @@ ROBOCORP_OPEN_LOCATOR_TREE_SELECTION = "robocorp.openLocatorTreeSelection"  # Op
 ROBOCORP_SEND_METRIC = "robocorp.sendMetric"  # Send metric
 ROBOCORP_SUBMIT_ISSUE_INTERNAL = "robocorp.submitIssue.internal"  # Submit issue (internal)
 ROBOCORP_SUBMIT_ISSUE = "robocorp.submitIssue"  # Submit issue
+ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL = "robocorp.configuration.diagnostics.internal"  # Robot Configuration Diagnostics (internal)
+ROBOCORP_CONFIGURATION_DIAGNOSTICS = "robocorp.configuration.diagnostics"  # Robot Configuration Diagnostics
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,
@@ -70,4 +72,5 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_STOP_BROWSER_LOCATOR,
     ROBOCORP_GET_LOCATORS_JSON_INFO,
     ROBOCORP_SEND_METRIC,
+    ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL,
 ]

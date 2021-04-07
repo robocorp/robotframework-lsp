@@ -34,7 +34,7 @@ import { getExtensionRelativeFile, verifyFileExists } from './files';
 import { CheckDiagnostic, getRccLocation, RCCDiagnostics, runConfigDiagnostics, STATUS_FAIL, STATUS_FATAL, STATUS_OK, STATUS_WARNING, submitIssue, submitIssueUI } from './rcc';
 import { Timing } from './time';
 import { execFilePromise, ExecFileReturn } from './subprocess';
-import { createRobot, uploadRobot, cloudLogin, runRobotRCC, cloudLogout, setPythonInterpreterFromRobotYaml, askAndRunRobotRCC } from './activities';
+import { createRobot, uploadRobot, cloudLogin, runRobotRCC, cloudLogout, setPythonInterpreterFromRobotYaml, askAndRunRobotRCC, rccConfigurationDiagnostics } from './activities';
 import { sleep } from './time';
 import { handleProgressMessage, ProgressReport } from './progress';
 import { TREE_VIEW_ROBOCORP_ROBOTS_TREE } from './robocorpViews';
@@ -316,6 +316,7 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_GET_LANGUAGE_SERVER_PYTHON_INFO, () => getLanguageServerPythonInfo());
         commands.registerCommand(roboCommands.ROBOCORP_CREATE_ROBOT, () => createRobot());
         commands.registerCommand(roboCommands.ROBOCORP_UPLOAD_ROBOT_TO_CLOUD, () => uploadRobot());
+        commands.registerCommand(roboCommands.ROBOCORP_CONFIGURATION_DIAGNOSTICS, () => rccConfigurationDiagnostics());
         commands.registerCommand(roboCommands.ROBOCORP_RUN_ROBOT_RCC, () => askAndRunRobotRCC(true));
         commands.registerCommand(roboCommands.ROBOCORP_DEBUG_ROBOT_RCC, () => askAndRunRobotRCC(false));
         commands.registerCommand(roboCommands.ROBOCORP_SET_PYTHON_INTERPRETER, () => setPythonInterpreterFromRobotYaml());

@@ -26,6 +26,7 @@ from robocorp_code.protocols import (
     TypedDict,
     ActionResultDictLocatorsJsonInfo,
     LocatorEntryInfoDict,
+    ConfigurationDiagnosticsDict,
 )
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.cache import CachedFileInfo
@@ -520,6 +521,19 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
     def m_workspace__execute_command(self, command=None, arguments=()) -> Any:
         return command_dispatcher.dispatch(self, command, arguments)
+
+    @command_dispatcher(commands.ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL)
+    def _configuration_diagnostics_internal(
+        self, params: ConfigurationDiagnosticsDict
+    ) -> ActionResultDict:
+        from robocorp_ls_core.progress_report import progress_context
+
+        robot_yaml = params["robotYaml"]
+        with progress_context(
+            self._endpoint, "Collecting configuration diagnostics", self._dir_cache
+        ):
+            action_result = self._rcc.configuration_diagnostics(robot_yaml, json=False)
+            return action_result.as_dict()
 
     @command_dispatcher(commands.ROBOCORP_IS_LOGIN_NEEDED_INTERNAL)
     def _is_login_needed_internal(self) -> ActionResultDict:

@@ -690,9 +690,11 @@ class Rcc(object):
     def __typecheckself__(self) -> None:
         _: IRcc = check_implements(self)
 
-    def configuration_diagnostics(self, robot_yaml) -> ActionResult[str]:
+    def configuration_diagnostics(self, robot_yaml, json=True) -> ActionResult[str]:
         return self._run_rcc(
-            ["configuration", "diagnostics", "--json", "-r", robot_yaml],
+            ["configuration", "diagnostics"]
+            + (["--json"] if json else [])
+            + ["-r", robot_yaml],
             mutex_name=None,
         )
 

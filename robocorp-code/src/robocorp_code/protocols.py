@@ -125,6 +125,10 @@ class CloudLoginParamsDict(TypedDict):
     credentials: str
 
 
+class ConfigurationDiagnosticsDict(TypedDict):
+    robotYaml: str
+
+
 class CloudListWorkspaceDict(TypedDict):
     refresh: bool  # False means we can use the last cached results and True means it should be updated.
 

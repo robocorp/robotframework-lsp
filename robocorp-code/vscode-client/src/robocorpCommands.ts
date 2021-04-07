@@ -46,3 +46,5 @@ export const ROBOCORP_OPEN_LOCATOR_TREE_SELECTION = "robocorp.openLocatorTreeSel
 export const ROBOCORP_SEND_METRIC = "robocorp.sendMetric";  // Send metric
 export const ROBOCORP_SUBMIT_ISSUE_INTERNAL = "robocorp.submitIssue.internal";  // Submit issue (internal)
 export const ROBOCORP_SUBMIT_ISSUE = "robocorp.submitIssue";  // Submit issue
+export const ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL = "robocorp.configuration.diagnostics.internal";  // Robot Configuration Diagnostics (internal)
+export const ROBOCORP_CONFIGURATION_DIAGNOSTICS = "robocorp.configuration.diagnostics";  // Robot Configuration Diagnostics

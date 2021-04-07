@@ -65,6 +65,8 @@
         "onCommand:robocorp.sendMetric",
         "onCommand:robocorp.submitIssue.internal",
         "onCommand:robocorp.submitIssue",
+        "onCommand:robocorp.configuration.diagnostics.internal",
+        "onCommand:robocorp.configuration.diagnostics",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -333,6 +335,16 @@
                 "command": "robocorp.submitIssue",
                 "title": "Submit issue",
                 "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.configuration.diagnostics.internal",
+                "title": "Robot Configuration Diagnostics (internal)",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.configuration.diagnostics",
+                "title": "Robot Configuration Diagnostics",
+                "category": "Robocorp"
             }
         ],
         "menus": {
@@ -434,6 +446,10 @@
                 },
                 {
                     "command": "robocorp.submitIssue.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.configuration.diagnostics.internal",
                     "when": "false"
                 }
             ]

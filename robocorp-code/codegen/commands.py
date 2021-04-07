@@ -328,6 +328,17 @@ COMMANDS = [
         hide_from_command_palette=True,
     ),
     Command("robocorp.submitIssue", "Submit issue", server_handled=False),
+    Command(
+        "robocorp.configuration.diagnostics.internal",
+        "Robot Configuration Diagnostics (internal)",
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
+    Command(
+        "robocorp.configuration.diagnostics",
+        "Robot Configuration Diagnostics",
+        server_handled=False,
+    ),
 ]
 
 
