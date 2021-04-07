@@ -86,6 +86,7 @@ def test_libspec_cache_no_lib(libspec_manager, workspace_dir):
     from robotframework_ls.impl.robot_specbuilder import LibraryDoc
     import time
     from robocorp_ls_core.basic import wait_for_condition
+    import sys
 
     os.makedirs(workspace_dir)
     libspec_manager.add_additional_pythonpath_folder(workspace_dir)
@@ -103,7 +104,11 @@ def test_libspec_cache_no_lib(libspec_manager, workspace_dir):
     assert library_info is None
     libspec_manager._cached_create_libspec = original_cached_create_libspec
 
-    time.sleep(0.2)
+    # The difference is on the default filesystem native vs polling approach.
+    if sys.platform == "win32":
+        time.sleep(0.2)
+    else:
+        time.sleep(3)
 
     path = Path(workspace_dir) / "check_lib.py"
     path.write_text(

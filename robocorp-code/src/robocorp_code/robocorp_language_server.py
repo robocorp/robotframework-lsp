@@ -408,11 +408,74 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
     @overrides(PythonLanguageServer.cancel_lint)
     def cancel_lint(self, doc_uri):
-        pass  # no-op
+        pass  # no-op (we don't cancel it if the file changes)
 
     @overrides(PythonLanguageServer.lint)
     def lint(self, doc_uri, is_saved):
-        pass  # no-op
+        from robocorp_ls_core.lsp import DiagnosticSeverity
+        from robocorp_ls_core import uris
+        import json
+
+        if is_saved:
+            # When a documnt is saved, if it's a conda.yaml or a robot.yaml,
+            # validate it.
+            if doc_uri.endswith("conda.yaml") or doc_uri.endswith("robot.yaml"):
+                robot_yaml_fs_path = uris.to_fs_path(doc_uri)
+                if robot_yaml_fs_path.endswith("conda.yaml"):
+                    p = os.path.dirname(robot_yaml_fs_path)
+                    for _ in range(3):
+                        target = os.path.join(p, "robot.yaml")
+                        if target and os.path.exists(target):
+                            robot_yaml_fs_path = target
+                            break
+                    else:
+                        # We didn't find the 'robot.yaml' for the 'conda.yaml'
+                        # bail out.
+                        return
+
+                action_result = self._rcc.configuration_diagnostics(robot_yaml_fs_path)
+                if action_result.success:
+                    json_contents = action_result.result
+                    as_dict = json.loads(json_contents)
+                    checks = as_dict.get("checks", [])
+                    found = []
+                    if isinstance(checks, (list, tuple)):
+                        for check in checks:
+                            if isinstance(check, dict):
+                                status = check.get("status", "ok").lower()
+                                if status != "ok":
+
+                                    # Default is error (for fail/fatal)
+                                    severity = DiagnosticSeverity.Error
+
+                                    if status in ("warn", "warning"):
+                                        severity = DiagnosticSeverity.Warning
+                                    elif status in ("info", "information"):
+                                        severity = DiagnosticSeverity.Information
+
+                                    # The actual line is not given by rcc, so, put
+                                    # all errors in the first 2 lines.
+                                    message = check.get(
+                                        "message", "<unable to get error message>"
+                                    )
+
+                                    url = check.get("url")
+                                    if url:
+                                        message += (
+                                            f" -- see: {url} for more information."
+                                        )
+                                    found.append(
+                                        {
+                                            "range": {
+                                                "start": {"line": 0, "character": 0},
+                                                "end": {"line": 1, "character": 0},
+                                            },
+                                            "severity": severity,
+                                            "source": "robocorp-code",
+                                            "message": message,
+                                        }
+                                    )
+                    self._lsp_messages.publish_diagnostics(doc_uri, found)
 
     @overrides(PythonLanguageServer._create_config)
     def _create_config(self) -> IConfig:

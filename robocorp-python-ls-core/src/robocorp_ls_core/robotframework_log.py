@@ -37,6 +37,13 @@ def _as_str(s):
     return s
 
 
+MAX_LOG_MSG_SIZE = 2000
+try:
+    MAX_LOG_MSG_SIZE = int(os.environ.get("MAX_LOG_MSG_SIZE", MAX_LOG_MSG_SIZE))
+except:
+    pass
+
+
 class _LogConfig(object):
 
     __slots__ = ["_lock", "__stream", "prefix", "log_level", "_log_file", "pid"]
@@ -90,8 +97,8 @@ class _LogConfig(object):
     def report(self, logger_name, show_stacktrace, levelname, message, trim):
         if trim:
             msg_len = len(message)
-            if msg_len > 1000:
-                message = f"{message[:800]} ... <trimmed {msg_len} to 1000> ... {message[-200:]}"
+            if msg_len > MAX_LOG_MSG_SIZE:
+                message = f"{message[:MAX_LOG_MSG_SIZE-200]} ... <trimmed {msg_len} to {MAX_LOG_MSG_SIZE}> ... {message[-200:]}"
 
         log_format = (
             self.prefix

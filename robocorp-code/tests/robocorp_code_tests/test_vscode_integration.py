@@ -704,3 +704,61 @@ def test_metric(language_server_initialized: IRobocorpLanguageServerClient) -> N
         commands.ROBOCORP_SEND_METRIC, [{"name": "bar", "value": "foo"}]
     )["result"]
     assert result["success"]
+
+
+def sort_diagnostics(diagnostics):
+    def key(diag_dict):
+        return (
+            diag_dict["source"],
+            diag_dict["range"]["start"]["line"],
+            diag_dict.get("code", 0),
+            diag_dict["severity"],
+            diag_dict["message"],
+        )
+
+    return sorted(diagnostics, key=key)
+
+
+def test_lint_robot_integration(
+    language_server_initialized: IRobocorpLanguageServerClient, tmpdir, data_regression
+):
+    from robocorp_ls_core import uris
+    from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
+
+    robot_yaml = tmpdir.join("robot.yaml")
+    robot_yaml_text = """
+tasks:
+  Obtain environment information:
+    command: 
+      - python
+      - get_env_info.py
+
+artifactsDir: output
+
+condaConfigFile: conda.yaml
+
+"""
+    robot_yaml.write_text(robot_yaml_text, "utf-8")
+
+    conda_yaml = tmpdir.join("conda.yaml")
+    conda_yaml.write_text(
+        """
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.8
+""",
+        "utf-8",
+    )
+
+    language_server = language_server_initialized
+    robot_yaml_uri = uris.from_fs_path(str(robot_yaml))
+    message_matcher = language_server.obtain_pattern_message_matcher(
+        {"method": "textDocument/publishDiagnostics"}
+    )
+    language_server.open_doc(robot_yaml_uri, 1, robot_yaml_text)
+
+    assert message_matcher.event.wait(TIMEOUT)
+    diag = message_matcher.msg["params"]["diagnostics"]
+    data_regression.check(sort_diagnostics(diag))

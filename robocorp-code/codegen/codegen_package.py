@@ -43,7 +43,7 @@ def get_json_contents():
         "categories": ["Debuggers"],
         "activationEvents": get_activation_events_for_json()
         + views.get_activation_events_for_json()
-        + ["onLanguage:json"],
+        + ["onLanguage:json", "onLanguage:yaml"],
         "contributes": {
             "configuration": {
                 "title": "Robocorp Code Language Server Configuration",

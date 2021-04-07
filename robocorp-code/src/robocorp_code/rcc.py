@@ -280,7 +280,7 @@ class Rcc(object):
 
         output = boutput.decode("utf-8", "replace")
 
-        log.debug(f"Output from: {cmdline}:\n{output}")
+        log.debug("Output from: %s:\n%s", cmdline, output)
         return ActionResult(success=True, message=None, result=output)
 
     _TEMPLATES = {
@@ -689,6 +689,12 @@ class Rcc(object):
 
     def __typecheckself__(self) -> None:
         _: IRcc = check_implements(self)
+
+    def configuration_diagnostics(self, robot_yaml) -> ActionResult[str]:
+        return self._run_rcc(
+            ["configuration", "diagnostics", "--json", "-r", robot_yaml],
+            mutex_name=None,
+        )
 
 
 def make_numbered_in_temp(

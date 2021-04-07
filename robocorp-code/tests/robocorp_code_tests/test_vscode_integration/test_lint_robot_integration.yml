@@ -1,0 +1,30 @@
+- message: No ignoreFiles defined, so everything ends up inside robot.zip file.
+  range:
+    end:
+      character: 0
+      line: 1
+    start:
+      character: 0
+      line: 0
+  severity: 2
+  source: robocorp-code
+- message: Try to avoid defaults channel, and prefer using conda-forge instead.
+  range:
+    end:
+      character: 0
+      line: 1
+    start:
+      character: 0
+      line: 0
+  severity: 2
+  source: robocorp-code
+- message: Try to avoid putting defaults channel as first channel.
+  range:
+    end:
+      character: 0
+      line: 1
+    start:
+      character: 0
+      line: 0
+  severity: 2
+  source: robocorp-code

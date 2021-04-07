@@ -70,7 +70,8 @@
         "onView:robocorp-robots-tree",
         "onView:robocorp-locators-tree",
         "onView:robocorp-cloud-tree",
-        "onLanguage:json"
+        "onLanguage:json",
+        "onLanguage:yaml"
     ],
     "contributes": {
         "configuration": {

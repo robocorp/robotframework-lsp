@@ -41,7 +41,11 @@ import { TREE_VIEW_ROBOCORP_ROBOTS_TREE } from './robocorpViews';
 
 
 const clientOptions: LanguageClientOptions = {
-    documentSelector: [{ language: 'json', pattern: '**/locators.json' }],
+    documentSelector: [
+        { language: 'json', pattern: '**/locators.json' },
+        { language: 'yaml', pattern: '**/conda.yaml' },
+        { language: 'yaml', pattern: '**/robot.yaml' }
+    ],
     synchronize: {
         configurationSection: "robocorp"
     },
