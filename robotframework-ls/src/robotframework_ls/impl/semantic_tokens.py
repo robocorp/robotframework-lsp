@@ -199,6 +199,7 @@ def semantic_tokens_full(context: CompletionContext):
     last_line = 0
     last_column = 0
     for _stack, node in ast_utils._iter_nodes(ast, recursive=True):
+        context.check_cancelled()
         tokens = getattr(node, "tokens", None)
         if tokens:
             for token in tokens:

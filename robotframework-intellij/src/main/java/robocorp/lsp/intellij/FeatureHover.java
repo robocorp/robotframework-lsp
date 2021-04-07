@@ -18,9 +18,7 @@ import robocorp.lsp.psi.LSPGenericPsiElement;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-
+import java.util.concurrent.*;
 
 public class FeatureHover implements DocumentationProvider {
 
@@ -79,7 +77,7 @@ public class FeatureHover implements DocumentationProvider {
                         return StringEscapeUtils.escapeHtml(right.getValue());
                     }
                 }
-            } catch (ProcessCanceledException e) {
+            } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException | TimeoutException e) {
                 // If it was cancelled, just ignore it (don't log).
             } catch (Exception e) {
                 LOG.error(e);

@@ -399,14 +399,29 @@ class _ServerApi(object):
             self._robotframework_api_client.shutdown()
 
 
-class _RegularAndLintApi(object):
-    def __init__(self, api, lint_api):
+class _RegularLintAndOthersApi(object):
+    """
+    This encapsulates 3 different processes (each process is an API).
+    
+    The default (api) is usually used for requests which are real-time,
+    such as code-completion, find definition, signature help and hover.
+    
+    The lint api is used for linting.
+    
+    The others api is used for other requests which are a middle ground between
+    the lint (slowest) and the default (fastest). It covers requests such as
+    document formatting, code folding, semantic tokens and workspace symbols.
+    """
+
+    def __init__(self, api, lint_api, others_api):
         self.api = api
         self.lint_api = lint_api
+        self.others_api = others_api
 
     def __iter__(self):
         yield self.api
         yield self.lint_api
+        yield self.others_api
 
     def set_interpreter_info(self, interpreter_info: IInterpreterInfo):
         for api in self:
@@ -435,7 +450,7 @@ class ServerManager(object):
         self._config: Optional[IConfig] = config
         self._workspace: Optional[IWorkspace] = workspace
         self._pm = pm
-        self._id_to_apis: Dict[str, _RegularAndLintApi] = {}
+        self._id_to_apis: Dict[str, _RegularLintAndOthersApi] = {}
         if language_server is None:
             self._language_server_ref = lambda: None
         else:
@@ -466,63 +481,72 @@ class ServerManager(object):
         for api in self._iter_all_apis():
             api.workspace = workspace
 
-    def _create_apis(self, api_id) -> _RegularAndLintApi:
+    def _create_apis(self, api_id) -> _RegularLintAndOthersApi:
         self._check_in_main_thread()
         assert api_id not in self._id_to_apis, f"{api_id} already created."
         api = _ServerApi(".api", self._language_server_ref)
         lint_api = _ServerApi(".lint.api", self._language_server_ref)
+        others_api = _ServerApi(".others.api", self._language_server_ref)
 
         config = self._config
         if config is not None:
             api.config = config
             lint_api.config = config
+            others_api.config = config
 
         workspace = self._workspace
         if workspace is not None:
             api.workspace = workspace
             lint_api.workspace = workspace
+            others_api.workspace = workspace
 
-        apis = _RegularAndLintApi(api, lint_api)
+        apis = _RegularLintAndOthersApi(api, lint_api, others_api)
         self._id_to_apis[api_id] = apis
         return apis
 
-    def _get_default_apis(self) -> _RegularAndLintApi:
+    def _get_default_apis(self) -> _RegularLintAndOthersApi:
         self._check_in_main_thread()
         apis = self._id_to_apis.get(DEFAULT_API_ID)
         if not apis:
             apis = self._create_apis(DEFAULT_API_ID)
         return apis
 
-    def _get_apis_for_doc_uri(self, doc_uri: str) -> _RegularAndLintApi:
+    def _get_apis_for_doc_uri(self, doc_uri: str) -> _RegularLintAndOthersApi:
         self._check_in_main_thread()
-        for ep in self._pm.get_implementations(EPResolveInterpreter):
-            interpreter_info = ep.get_interpreter_info_for_doc_uri(doc_uri)
-            if interpreter_info is not None:
-                # Note: we currently only identify things through the interpreter
-                # id, but a potential optimization would be using the same python
-                # executable in different APIs if they match.
-                interpreter_id = interpreter_info.get_interpreter_id()
-                apis = self._id_to_apis.get(interpreter_id)
-                if apis is not None:
-                    apis.set_interpreter_info(interpreter_info)
-                else:
-                    apis = self._create_apis(interpreter_id)
-                    apis.set_interpreter_info(interpreter_info)
+        if doc_uri:
+            for ep in self._pm.get_implementations(EPResolveInterpreter):
+                interpreter_info = ep.get_interpreter_info_for_doc_uri(doc_uri)
+                if interpreter_info is not None:
+                    # Note: we currently only identify things through the interpreter
+                    # id, but a potential optimization would be using the same python
+                    # executable in different APIs if they match.
+                    interpreter_id = interpreter_info.get_interpreter_id()
+                    apis = self._id_to_apis.get(interpreter_id)
+                    if apis is not None:
+                        apis.set_interpreter_info(interpreter_info)
+                    else:
+                        apis = self._create_apis(interpreter_id)
+                        apis.set_interpreter_info(interpreter_info)
 
-                return apis
+                    return apis
 
         return self._get_default_apis()
 
     def forward(self, target: Tuple[str, ...], method_name: str, params: Any) -> None:
         self._check_in_main_thread()
-        apis: _RegularAndLintApi
+        apis: _RegularLintAndOthersApi
         for apis in self._id_to_apis.values():
+            # Note: always forward async to all APIs (all the messages are sent
+            # from the current main thread, so, the messages ordering is still
+            # guaranteed to be correct).
             if "api" in target:
-                apis.api.forward(method_name, params)
+                apis.api.forward_async(method_name, params)
 
             if "lint" in target:
-                # For the lint api, things should be asynchronous.
                 apis.lint_api.forward_async(method_name, params)
+
+            if "others" in target:
+                apis.others_api.forward_async(method_name, params)
 
     def shutdown(self) -> None:
         self._check_in_main_thread()
@@ -536,10 +560,10 @@ class ServerManager(object):
 
     # Private APIs
 
-    def _get_source_format_api(self, doc_uri: str) -> _ServerApi:
+    def _get_others_api(self, doc_uri: str) -> _ServerApi:
         self._check_in_main_thread()
         apis = self._get_apis_for_doc_uri(doc_uri)
-        return apis.api
+        return apis.others_api
 
     def _get_lint_api(self, doc_uri: str) -> _ServerApi:
         self._check_in_main_thread()
@@ -569,18 +593,8 @@ class ServerManager(object):
             return api.get_robotframework_api_client()
         return None
 
-    def get_source_format_rf_api_client(
-        self, doc_uri
-    ) -> Optional[IRobotFrameworkApiClient]:
-        api = self._get_source_format_api(doc_uri)
-        if api is not None:
-            return api.get_robotframework_api_client()
-        return None
-
-    def get_semantic_tokens_rf_api_client(
-        self, doc_uri
-    ) -> Optional[IRobotFrameworkApiClient]:
-        api = self._get_regular_api(doc_uri)
+    def get_others_api_client(self, doc_uri) -> Optional[IRobotFrameworkApiClient]:
+        api = self._get_others_api(doc_uri)
         if api is not None:
             return api.get_robotframework_api_client()
         return None
@@ -588,4 +602,4 @@ class ServerManager(object):
     def get_workspace_symbols_api_client(self) -> Optional[IRobotFrameworkApiClient]:
         self._check_in_main_thread()
         apis = self._get_default_apis()
-        return apis.api.get_robotframework_api_client()
+        return apis.others_api.get_robotframework_api_client()

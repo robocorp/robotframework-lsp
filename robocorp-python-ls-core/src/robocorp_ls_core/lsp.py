@@ -396,6 +396,13 @@ class SymbolInformationTypedDict(TypedDict, total=False):
     containerName: Optional[str]
 
 
+class TextDocumentTypedDict(TypedDict, total=False):
+    uri: str
+    languageId: str  # Optional
+    version: int  # Optional
+    text: str  # Optional
+
+
 class MarkupContentTypedDict(TypedDict):
     kind: str  # "plaintext" | "markdown"
     value: str

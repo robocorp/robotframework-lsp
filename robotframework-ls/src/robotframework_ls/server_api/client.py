@@ -2,6 +2,7 @@ from typing import Optional
 
 from robocorp_ls_core.client_base import LanguageServerClientBase
 from robocorp_ls_core.protocols import IIdMessageMatcher
+from robocorp_ls_core.lsp import TextDocumentTypedDict
 
 
 class SubprocessDiedError(Exception):
@@ -84,6 +85,18 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         :Note: async complete.
         """
         return self.request_async(self._build_msg("lint", doc_uri=doc_uri))
+
+    def request_semantic_tokens_full(
+        self, text_document: TextDocumentTypedDict
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(
+            self._build_msg(
+                "textDocument/semanticTokens/full", textDocument=text_document
+            )
+        )
 
     def forward(self, method_name, params):
         self._check_process_alive()

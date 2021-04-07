@@ -257,68 +257,6 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         log.info("Server capabilities: %s", server_capabilities)
         return server_capabilities
 
-    def m_workspace__symbol(self, query: Optional[str] = None) -> Any:
-        api_client = self._server_manager.get_workspace_symbols_api_client()
-        if api_client is not None:
-            ret = partial(self._threaded_workspace_symbol, api_client, query)
-            ret = require_monitor(ret)
-            return ret
-
-        log.info("Unable to search workspace symbols (no api available).")
-        return None  # Unable to get the api.
-
-    def _threaded_workspace_symbol(
-        self,
-        api_client: IRobotFrameworkApiClient,
-        query: Optional[str],
-        monitor: IMonitor,
-    ):
-        from robocorp_ls_core.client_base import wait_for_message_matcher
-
-        # Asynchronous completion.
-        message_matcher: Optional[
-            IIdMessageMatcher
-        ] = api_client.request_workspace_symbols(query)
-        if message_matcher is None:
-            log.debug("Message matcher for workspace symbols returned None.")
-            return None
-
-        if wait_for_message_matcher(
-            message_matcher,
-            api_client.request_cancel,
-            DEFAULT_COMPLETIONS_TIMEOUT,
-            monitor,
-        ):
-            msg = message_matcher.msg
-            if msg is not None:
-                result = msg.get("result")
-                if result:
-                    return result
-
-        return None
-
-    def m_text_document__semantic_tokens__range(self, textDocument=None, range=None):
-        raise RuntimeError("Not currently implemented!")
-
-    def m_text_document__semantic_tokens__full(self, textDocument=None):
-        try:
-            doc_uri = textDocument["uri"]
-            api = self._server_manager.get_semantic_tokens_rf_api_client(doc_uri)
-            if api is None:
-                log.info(
-                    "Unable to get api client when computing semantic tokens (full)."
-                )
-                return {"resultId": None, "data": []}
-
-            ret = api.forward(
-                "textDocument/semanticTokens/full", {"textDocument": textDocument}
-            )
-            if ret is not None:
-                return ret["result"]
-        except:
-            log.exception("Error computing semantic tokens (full).")
-        return {"resultId": None, "data": []}
-
     def m_workspace__execute_command(self, command=None, arguments=()) -> Any:
         if command == "robot.addPluginsDir":
             directory: str = arguments[0]
@@ -391,7 +329,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     ) -> Optional[list]:
         doc_uri = textDocument["uri"]
 
-        source_format_rf_api_client = self._server_manager.get_source_format_rf_api_client(
+        source_format_rf_api_client = self._server_manager.get_others_api_client(
             doc_uri
         )
         if source_format_rf_api_client is None:
@@ -427,7 +365,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     @overrides(PythonLanguageServer.m_text_document__did_close)
     def m_text_document__did_close(self, textDocument=None, **_kwargs):
         self._server_manager.forward(
-            ("api", "lint"), "textDocument/didClose", {"textDocument": textDocument}
+            ("api", "lint", "others"),
+            "textDocument/didClose",
+            {"textDocument": textDocument},
         )
         PythonLanguageServer.m_text_document__did_close(
             self, textDocument=textDocument, **_kwargs
@@ -436,7 +376,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     @overrides(PythonLanguageServer.m_text_document__did_open)
     def m_text_document__did_open(self, textDocument=None, **_kwargs):
         self._server_manager.forward(
-            ("api", "lint"), "textDocument/didOpen", {"textDocument": textDocument}
+            ("api", "lint", "others"),
+            "textDocument/didOpen",
+            {"textDocument": textDocument},
         )
         PythonLanguageServer.m_text_document__did_open(
             self, textDocument=textDocument, **_kwargs
@@ -447,7 +389,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         self, contentChanges=None, textDocument=None, **_kwargs
     ):
         self._server_manager.forward(
-            ("api", "lint"),
+            ("api", "lint", "others"),
             "textDocument/didChange",
             {"contentChanges": contentChanges, "textDocument": textDocument},
         )
@@ -458,7 +400,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     @overrides(PythonLanguageServer.m_workspace__did_change_workspace_folders)
     def m_workspace__did_change_workspace_folders(self, event=None, **_kwargs):
         self._server_manager.forward(
-            ("api", "lint"), "workspace/didChangeWorkspaceFolders", {"event": event}
+            ("api", "lint", "others"),
+            "workspace/didChangeWorkspaceFolders",
+            {"event": event},
         )
         PythonLanguageServer.m_workspace__did_change_workspace_folders(
             self, event=event, **_kwargs
@@ -587,6 +531,38 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         return None
 
+    @log_and_silence_errors(log)
+    def _async_api_request_no_doc(
+        self,
+        rf_api_client: IRobotFrameworkApiClient,
+        request_method_name: str,
+        monitor: IMonitor,
+        **kwargs,
+    ):
+        from robocorp_ls_core.client_base import wait_for_message_matcher
+
+        func = getattr(rf_api_client, request_method_name)
+
+        # Asynchronous completion.
+        message_matcher: Optional[IIdMessageMatcher] = func(**kwargs)
+        if message_matcher is None:
+            log.debug("Message matcher for %s returned None.", request_method_name)
+            return None
+
+        if wait_for_message_matcher(
+            message_matcher,
+            rf_api_client.request_cancel,
+            DEFAULT_COMPLETIONS_TIMEOUT,
+            monitor,
+        ):
+            msg = message_matcher.msg
+            if msg is not None:
+                result = msg.get("result")
+                if result:
+                    return result
+
+        return None
+
     def m_text_document__definition(self, **kwargs):
         doc_uri = kwargs["textDocument"]["uri"]
         # Note: 0-based
@@ -652,7 +628,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         """
         doc_uri = kwargs["textDocument"]["uri"]
 
-        rf_api_client = self._server_manager.get_regular_rf_api_client(doc_uri)
+        rf_api_client = self._server_manager.get_others_api_client(doc_uri)
         if rf_api_client is not None:
             func = partial(
                 self._async_api_request,
@@ -685,3 +661,37 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         log.info("Unable to compute hover (no api available).")
         return []
+
+    def m_text_document__semantic_tokens__range(self, textDocument=None, range=None):
+        raise RuntimeError("Not currently implemented!")
+
+    def m_text_document__semantic_tokens__full(self, textDocument=None):
+        doc_uri = textDocument["uri"]
+        api = self._server_manager.get_others_api_client(doc_uri)
+        if api is None:
+            log.info("Unable to get api client when computing semantic tokens (full).")
+            return {"resultId": None, "data": []}
+
+        func = partial(
+            self._async_api_request_no_doc,
+            api,
+            "request_semantic_tokens_full",
+            text_document=textDocument,
+        )
+        func = require_monitor(func)
+        return func
+
+    def m_workspace__symbol(self, query: Optional[str] = None) -> Any:
+        api = self._server_manager.get_others_api_client("")
+        if api is None:
+            log.info("Unable to search workspace symbols (no api available).")
+            return None
+
+        func = partial(
+            self._async_api_request_no_doc,
+            api,
+            "request_workspace_symbols",
+            query=query,
+        )
+        func = require_monitor(func)
+        return func

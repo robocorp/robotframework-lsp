@@ -226,7 +226,7 @@ public class EditorLanguageServerConnection {
 
     public CompletableFuture<SemanticTokens> getSemanticTokens() {
         try {
-            LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot, editor.getProject());
+            LanguageServerCommunication comm = getLanguageServerCommunication();
             if (comm == null) {
                 return null;
             }

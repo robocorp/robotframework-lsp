@@ -46,9 +46,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -182,7 +180,11 @@ public class FeatureCodeCompletion extends CompletionContributor {
                     if (oldCompletion != null) {
                         // i.e.: Whenever we start a completion cancel the previous one (which is very common
                         // when completing as we type).
-                        oldCompletion.cancel(true);
+                        try {
+                            oldCompletion.cancel(true);
+                        } catch (ProcessCanceledException | CompletionException | CancellationException e) {
+                            // ignore
+                        }
                     }
 
                     if (completion == null) {
@@ -230,7 +232,7 @@ public class FeatureCodeCompletion extends CompletionContributor {
 
                     return null;
                 }, progressIndicator);
-            } catch (ProcessCanceledException | InterruptedException ignored) {
+            } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException ignored) {
                 // Cancelled (InterruptedException is thrown when completion.cancel(true) is called from another thread).
             } catch (Exception e) {
                 LOG.error("Unable to get completions", e);

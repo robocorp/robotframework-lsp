@@ -51,15 +51,15 @@ def test_server_manager(pm, server_manager) -> None:
 
     assert not server_manager._id_to_apis
 
-    api_source_format = server_manager._get_source_format_api("")
+    api_source_format = server_manager._get_others_api("")
     api_default = server_manager._get_regular_api("")
-    assert api_source_format is api_default
+    assert api_source_format is not api_default
 
     assert len(server_manager._id_to_apis) == 1
     for api in server_manager._iter_all_apis():
         assert api._server_process is None, "API should be lazy-loaded."
 
     api_doc_uri1 = server_manager._get_regular_api("doc_uri_1")
-    assert api_doc_uri1 is not api_source_format
+    assert api_doc_uri1 is not api_default
     assert api_default._get_python_executable() == sys.executable
     assert api_doc_uri1._get_python_executable() == "python_exe_doc1"

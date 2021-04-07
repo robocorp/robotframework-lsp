@@ -2,6 +2,7 @@ package robocorp.lsp.intellij;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -51,6 +52,9 @@ class InternalConnection {
                 languageServer.exit();
                 languageServerStreams.stop();
             }
+
+        } catch (ProcessCanceledException | CompletionException | CancellationException e) {
+            // ignore
         } catch (Exception e) {
             LOG.error(e);
         } finally {

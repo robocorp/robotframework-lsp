@@ -19,8 +19,7 @@ import robocorp.lsp.psi.LSPPsiAstElement;
 
 import java.io.File;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * The parser (instance of com.intellij.lang.ParserDefinition) must generate LSPPsiAstElement
@@ -120,7 +119,7 @@ public class FeatureDefinition {
 
             String text = targetDocument.getText(new TextRange(startOffset, endOffset));
             return new LSPGenericPsiElement(project, targetPsiFile, text, startOffset, endOffset, targetRange, textDocumentIdentifier, pos, languageDefinition);
-        } catch (ProcessCanceledException e) {
+        } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException | TimeoutException e) {
             // If it was cancelled, just ignore it (don't log).
         } catch (Exception e) {
             LOG.error(e);

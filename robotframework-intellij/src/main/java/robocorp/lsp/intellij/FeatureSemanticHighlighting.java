@@ -5,7 +5,11 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -19,7 +23,9 @@ import robocorp.robot.intellij.RobotFrameworkSyntaxHighlightingFactory;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
 public class FeatureSemanticHighlighting extends ExternalAnnotator<EditorLanguageServerConnection, Pair<SemanticTokens, EditorLanguageServerConnection>> {
@@ -34,9 +40,35 @@ public class FeatureSemanticHighlighting extends ExternalAnnotator<EditorLanguag
 
     @Override
     public @Nullable Pair<SemanticTokens, EditorLanguageServerConnection> doAnnotate(EditorLanguageServerConnection connection) {
-        CompletableFuture<SemanticTokens> semanticTokens = connection.getSemanticTokens();
         try {
-            return Pair.create(semanticTokens.get(2, TimeUnit.SECONDS), connection);
+            CompletableFuture<SemanticTokens> semanticTokens = connection.getSemanticTokens();
+            if (semanticTokens == null) {
+                return null;
+            }
+            DocumentListener listener = new DocumentListener() {
+                @Override
+                public void beforeDocumentChange(@NotNull DocumentEvent event) {
+                    try {
+                        semanticTokens.cancel(true);
+                    } catch (ProcessCanceledException | CompletionException | CancellationException e) {
+                        // ignore
+                    }
+                }
+            };
+            Document document = connection.getEditor().getDocument();
+            if (document != null) {
+                document.addDocumentListener(listener);
+            }
+            try {
+                return Pair.create(semanticTokens.get(Timeouts.getSemanticHighlightingTimeout(), TimeUnit.SECONDS), connection);
+            } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException ignored) {
+                // Cancelled (InterruptedException is thrown when completion.cancel(true) is called from another thread).
+                return null;
+            } finally {
+                if (document != null) {
+                    document.removeDocumentListener(listener);
+                }
+            }
         } catch (Exception e) {
             LOG.error("Unable to compute semantic tokens.", e);
             return null;
@@ -44,11 +76,19 @@ public class FeatureSemanticHighlighting extends ExternalAnnotator<EditorLanguag
     }
 
     @Override
-    public void apply(@NotNull PsiFile file, Pair<SemanticTokens, EditorLanguageServerConnection> pair, @NotNull AnnotationHolder holder) {
+    public void apply(@NotNull PsiFile
+                              file, Pair<SemanticTokens, EditorLanguageServerConnection> pair, @NotNull AnnotationHolder holder) {
         ILSPEditor editor = pair.second.getEditor();
         if (editor == null) {
             return;
         }
+
+        Document document = editor.getDocument();
+        if (document == null) {
+            return;
+        }
+
+        int textLength = document.getTextLength();
 
         SemanticTokensWithRegistrationOptions semanticTokensProvider = pair.second.getSemanticTokensProvider();
         SemanticTokensLegend legend = semanticTokensProvider.getLegend();
@@ -76,8 +116,15 @@ public class FeatureSemanticHighlighting extends ExternalAnnotator<EditorLanguag
             int startOffset = editor.LSPPosToOffset(pos);
             int endOffset = startOffset + tokenLen;
 
-            AnnotationBuilder range = holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(new TextRange(startOffset, endOffset));
-            range.textAttributes(RobotFrameworkSyntaxHighlightingFactory.getFromType(tokenTypes.get(tokenType))).create();
+            try {
+                if (endOffset > textLength) {
+                    break;
+                }
+                AnnotationBuilder range = holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(new TextRange(startOffset, endOffset));
+                range.textAttributes(RobotFrameworkSyntaxHighlightingFactory.getFromType(tokenTypes.get(tokenType))).create();
+            } catch (Exception e) {
+                LOG.error(e);
+            }
         }
     }
 }

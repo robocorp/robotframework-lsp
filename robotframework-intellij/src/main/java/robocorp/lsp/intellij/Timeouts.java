@@ -31,6 +31,9 @@ public class Timeouts {
         long ret = hoverTimeout;
         hoverTimeout = 3;
         return ret;
+    }
 
+    public static long getSemanticHighlightingTimeout() {
+        return 3;
     }
 }

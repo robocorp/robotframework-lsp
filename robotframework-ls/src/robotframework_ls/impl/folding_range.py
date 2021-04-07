@@ -7,7 +7,9 @@ from robocorp_ls_core.robotframework_log import get_logger
 log = get_logger(__name__)
 
 
-def folding_range(completion_context: ICompletionContext) -> List[FoldingRangeTypedDict]:
+def folding_range(
+    completion_context: ICompletionContext
+) -> List[FoldingRangeTypedDict]:
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.protocols import NodeInfo
 
@@ -17,6 +19,7 @@ def folding_range(completion_context: ICompletionContext) -> List[FoldingRangeTy
     ret: List[FoldingRangeTypedDict] = []
     node: NodeInfo
     for node in ast_utils.iter_all_nodes(ast):
+        completion_context.check_cancelled()
         try:
             start_line = node.node.lineno - 1
             end_line = node.node.end_lineno - 1

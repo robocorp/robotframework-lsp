@@ -143,6 +143,7 @@ class CompletionContext(object):
             workspace=self._workspace,
             config=self._config,
             memo=self._memo,
+            monitor=self._monitor,
         )
         ctx._original_ctx = self
         return ctx
@@ -155,6 +156,7 @@ class CompletionContext(object):
             workspace=self._workspace,
             config=self._config,
             memo=self._memo,
+            monitor=self._monitor,
         )
         ctx._original_ctx = self
         return ctx

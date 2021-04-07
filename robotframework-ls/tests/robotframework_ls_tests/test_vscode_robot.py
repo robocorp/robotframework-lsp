@@ -460,13 +460,15 @@ def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regressio
         }
         language_server_tcp.settings({"settings": {"robot": {"python": {"env": env}}}})
 
-        check_diagnostics(language_server_tcp, data_regression)
-        assert len(server_apis) == 2
-        assert len(server_processes) == 2
+        processes_per_api = 3
 
         check_diagnostics(language_server_tcp, data_regression)
-        assert len(server_apis) == 2
-        assert len(server_processes) == 2
+        assert len(server_apis) == processes_per_api
+        assert len(server_processes) == processes_per_api
+
+        check_diagnostics(language_server_tcp, data_regression)
+        assert len(server_apis) == processes_per_api
+        assert len(server_processes) == processes_per_api
 
         log.info("Killing server api process.")
         for pid in server_processes:
@@ -476,8 +478,8 @@ def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regressio
         time.sleep(0.2)
 
         check_diagnostics(language_server_tcp, data_regression)
-        assert len(server_processes) == 4
-        assert len(server_apis) == 2
+        assert len(server_processes) == processes_per_api * 2
+        assert len(server_apis) == processes_per_api
 
 
 def test_missing_message(language_server, ws_root_path):

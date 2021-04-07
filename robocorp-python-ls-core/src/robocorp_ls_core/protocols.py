@@ -23,6 +23,7 @@ if typing.TYPE_CHECKING:
     # This would lead to a circular import, so, do it only when type-checking.
     from robocorp_ls_core.lsp import TextDocumentContentChangeEvent
     from robocorp_ls_core.lsp import HoverResponseTypedDict
+    from robocorp_ls_core.lsp import TextDocumentTypedDict
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -226,6 +227,11 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
         pass
 
     def request_lint(self, doc_uri: str) -> Optional[IIdMessageMatcher]:
+        pass
+
+    def request_semantic_tokens_full(
+        self, text_document: "TextDocumentTypedDict"
+    ) -> Optional[IIdMessageMatcher]:
         pass
 
     def forward(self, method_name, params):

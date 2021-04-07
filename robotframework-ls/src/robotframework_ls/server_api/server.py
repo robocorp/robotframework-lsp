@@ -9,6 +9,7 @@ from robocorp_ls_core.lsp import (
     SymbolInformationTypedDict,
     FoldingRangeTypedDict,
     HoverTypedDict,
+    TextDocumentTypedDict,
 )
 from robotframework_ls.impl.protocols import IKeywordFound
 
@@ -427,10 +428,17 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         raise RuntimeError("Not currently implemented!")
 
     def m_text_document__semantic_tokens__full(self, textDocument=None):
+        func = partial(self.threaded_semantic_tokens_full, textDocument=textDocument)
+        func = require_monitor(func)
+        return func
+
+    def threaded_semantic_tokens_full(
+        self, textDocument: TextDocumentTypedDict, monitor: Optional[IMonitor] = None
+    ):
         from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
 
         doc_uri = textDocument["uri"]
-        context = self._create_completion_context(doc_uri, -1, -1, None)
+        context = self._create_completion_context(doc_uri, -1, -1, monitor)
         if context is None:
             return {"resultId": None, "data": []}
         return {"resultId": None, "data": semantic_tokens_full(context)}
