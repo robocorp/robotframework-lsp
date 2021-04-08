@@ -1,3 +1,10 @@
+New in 0.9.0 (2021-04-08)
+-----------------------------
+
+- New action: `Robocorp: Robot Configuration Diagnostics` to validate a Robot on request.
+- Robot configuration is now validated automatically when a `robot.yaml` or `conda.yaml` is opened or saved.
+
+
 New in 0.8.2 (2021-03-29)
 -----------------------------
 
