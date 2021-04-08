@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.13.0'
+version '0.13.1'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,10 +50,11 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.13.0
+    Release 0.13.1
     </p>
     <ul>
     
+    <li>[Intellij] Mark as compatible with Intellij 2021.1.</li>
     <li>[Intellij] Cancel semantic tokens request if document changes.</li>
     <li>[Intellij] Check if range is valid before applying semantic token.</li>
     <li>[Intellij] Add hover support. [#278]</li>
@@ -86,7 +87,7 @@ patchPluginXml {
     // See https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html?from=jetbrains.org#intellij-platform-based-products-of-recent-ide-versions
 
     sinceBuild '203'
-    untilBuild '211'
+    untilBuild '211.*'
 }
 
 test {
