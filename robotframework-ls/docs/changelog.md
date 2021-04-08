@@ -1,3 +1,9 @@
+New in 0.13.0 (2021-04-08)
+-----------------------------
+
+- Resolve environment variables when trying to resolve libraries/resources paths (i.e.: `%{env_var}`). [#295](https://github.com/robocorp/robotframework-lsp/issues/295)
+- Properly resolve variables for Library imports (not only Resource imports).
+
 New in 0.12.0 (2021-04-01)
 -----------------------------
 

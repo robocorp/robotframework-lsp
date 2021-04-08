@@ -36,15 +36,16 @@ may be needed (by default it'll use the `python` from the `PATH`).
 
 The settings may be configured at: `File > Settings > Languages & Frameworks > Robot Framework Language Server`.
 
-Features (0.12.0)
+Features (0.13.0)
 -----------------
 
-- Settings page for the language server (per project and global)
-- Code completion
-- Code analysis
+- Settings page for the language server (per project and global).
+- Code completion.
+- Code analysis.
 - Linting with [Robocop](https://robocop.readthedocs.io/en/latest/).
-- Go to definition
-- Browse Keywords (symbols -- note: enable the `robot.workspaceSymbolsOnlyForOpenDocs` when dealing with big workspaces)
+- Go to definition.
+- Hover.
+- Browse Keywords (symbols -- note: enable the `robot.workspaceSymbolsOnlyForOpenDocs` when dealing with big workspaces).
 - Syntax highlighting (with `semanticTokens/full` request).
 
 See: [Changelog](docs/changelog.md) for details.

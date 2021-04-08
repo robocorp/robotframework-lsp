@@ -1,3 +1,15 @@
+New in 0.13.0 (2021-04-08)
+-----------------------------
+
+- [Intellij] Supporting Intellij 2020.3 to 2021.1.
+- [Intellij] Cancel semantic tokens request if document changes.
+- [Intellij] Check if range is valid before applying semantic token.
+- [Intellij] Add hover support. [#278](https://github.com/robocorp/robotframework-lsp/issues/278)
+- [Intellij] updated lsp4j to 0.12.0
+- Resolve environment variables when trying to resolve libraries/resources paths (i.e.: `%{env_var}`). [#295](https://github.com/robocorp/robotframework-lsp/issues/295)
+- Properly resolve variables for Library imports (not only Resource imports).
+
+
 New in 0.12.0 (2021-04-01)
 -----------------------------
 
