@@ -587,3 +587,25 @@ def test_keyword_completions_circular_imports(workspace, libspec_manager):
         "My Keyword 1",
         "My Keyword 2",
     ]
+
+
+def test_keyword_completions_lib_with_params(workspace, libspec_manager, cases):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.robot_config import RobotConfig
+    from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
+
+    workspace.set_root("case_params_on_lib", libspec_manager=libspec_manager)
+
+    caseroot = cases.get_path("case_params_on_lib")
+    config = RobotConfig()
+    config.update({"robot": {"pythonpath": [caseroot]}})
+    assert config.get_setting(OPTION_ROBOT_PYTHONPATH, list, []) == [caseroot]
+    libspec_manager.config = config
+
+    doc = workspace.get_doc("case_params_on_lib.robot")
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    assert sorted([comp["label"] for comp in completions]) == ["Some Method"]
