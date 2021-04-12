@@ -50,6 +50,9 @@ public class FeatureHover implements DocumentationProvider {
                     return null;
                 }
                 Hover hover = future.get(Timeouts.getHoverTimeout(), TimeUnit.SECONDS);
+                if (hover == null) {
+                    return null;
+                }
                 Either<List<Either<String, MarkedString>>, MarkupContent> contents = hover.getContents();
                 if (contents.isLeft()) {
                     List<Either<String, MarkedString>> left = contents.getLeft();
