@@ -26,6 +26,9 @@ public interface ILSPEditor extends UserDataHolder {
 
     Position offsetToLSPPos(int offset);
 
+    /**
+     * Note: return of a negative number means the position is no longer valid.
+     */
     int LSPPosToOffset(Position pos);
 
     String getText();

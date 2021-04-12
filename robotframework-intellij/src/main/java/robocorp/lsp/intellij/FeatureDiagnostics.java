@@ -34,6 +34,10 @@ public class FeatureDiagnostics extends ExternalAnnotator<EditorLanguageServerCo
         for (Diagnostic diagnostic : diagnostics) {
             int startOffset = editorLanguageServerConnection.LSPPosToOffset(diagnostic.getRange().getStart());
             int endOffset = editorLanguageServerConnection.LSPPosToOffset(diagnostic.getRange().getEnd());
+            if (startOffset < 0 || endOffset < 0) {
+                // This means that it's out of sync, so, bail out.
+                return;
+            }
 
             HighlightSeverity severity;
             switch (diagnostic.getSeverity()) {

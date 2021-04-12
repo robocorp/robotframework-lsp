@@ -116,6 +116,11 @@ public class FeatureSemanticHighlighting extends ExternalAnnotator<EditorLanguag
             int startOffset = editor.LSPPosToOffset(pos);
             int endOffset = startOffset + tokenLen;
 
+            if (startOffset < 0) {
+                // out of sync
+                break;
+            }
+
             try {
                 if (endOffset > textLength) {
                     break;

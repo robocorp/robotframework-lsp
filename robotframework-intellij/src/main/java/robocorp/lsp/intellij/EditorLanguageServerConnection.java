@@ -177,6 +177,9 @@ public class EditorLanguageServerConnection {
         return editor.getDiagnostics();
     }
 
+    /**
+     * Note: return of a negative number means the position is no longer valid.
+     */
     public int LSPPosToOffset(Position pos) {
         return editor.LSPPosToOffset(pos);
     }
