@@ -7,6 +7,8 @@
     RobotFramework support based on the Robot Framework Language Server (by Robocorp).
     ]]></description>
 
+    <!-- Some interesting references:
+    https://github.com/intellij-rust/intellij-rust/blob/master/src/main/resources/META-INF/rust-core.xml -->
     <!-- please see https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
          on how to target different products -->
     <depends>com.intellij.modules.platform</depends>
@@ -47,6 +49,8 @@
         <notificationGroup id="Robot Framework Language Server" displayType="BALLOON"/>
         <lang.documentationProvider language="RobotFramework"
                                     implementationClass="robocorp.lsp.intellij.FeatureHover"/>
+        <lang.foldingBuilder language="RobotFramework"
+                             implementationClass="robocorp.lsp.intellij.FeatureCodeFolding"/>
     </extensions>
 
 </idea-plugin>

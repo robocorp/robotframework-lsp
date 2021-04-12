@@ -38,6 +38,7 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import robocorp.robot.intellij.RobotPsiFile;
 
 import javax.swing.text.BadLocationException;
 import java.awt.*;
@@ -139,6 +140,14 @@ public class EditorUtils {
         return null;
     }
 
+    public static @Nullable LanguageServerDefinition getLanguageDefinition(RobotPsiFile robotPsiFile) {
+        Language language = robotPsiFile.getLanguage();
+        if (language instanceof ILSPLanguage) {
+            return ((ILSPLanguage) language).getLanguageDefinition(robotPsiFile.getProject());
+        }
+        return null;
+    }
+
     static public void runWriteAction(@NotNull Runnable runnable) {
         ApplicationManager.getApplication().runWriteAction(runnable);
     }
@@ -204,4 +213,5 @@ public class EditorUtils {
         Application app = ApplicationManager.getApplication();
         return app == null ? GraphicsEnvironment.isHeadless() : app.isUnitTestMode() || app.isHeadlessEnvironment();
     }
+
 }

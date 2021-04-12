@@ -36,4 +36,8 @@ public class Timeouts {
     public static long getSemanticHighlightingTimeout() {
         return 3;
     }
+
+    public static long getFoldingRangeTimeout() {
+        return 3;
+    }
 }

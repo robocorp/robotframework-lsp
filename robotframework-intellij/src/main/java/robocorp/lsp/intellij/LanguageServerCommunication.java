@@ -548,4 +548,16 @@ public class LanguageServerCommunication {
         return languageServer.getTextDocumentService().hover(params);
     }
 
+    public CompletableFuture<List<FoldingRange>> getFoldingRanges(FoldingRangeRequestParams params) {
+        LanguageServer languageServer = obtainSynchronizedLanguageServer();
+
+        if (languageServer == null) {
+            LOG.info("Unable to run command: disconnected.");
+            return null;
+        }
+
+        return languageServer.getTextDocumentService().foldingRange(params);
+
+    }
+
 }

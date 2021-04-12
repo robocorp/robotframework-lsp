@@ -60,6 +60,18 @@ public class LSPGenericPsiElement extends PsiElementBase implements PsiNameIdent
         this.languageDefinition = languageDefinition;
     }
 
+    public LSPGenericPsiElement(@NotNull Project project, @NotNull PsiFile file, @NotNull String text, int startOffset, int endOffset) {
+        this.project = project;
+        this.file = file;
+        this.text = text;
+        this.startOffset = startOffset;
+        this.endOffset = endOffset;
+        this.startRange = null;
+        this.originalId = null;
+        this.originalPos = null;
+        this.languageDefinition = null;
+    }
+
     @Override
     public ASTNode getNode() {
         return null;
