@@ -288,8 +288,13 @@ def main():
             description = prop_value.get('description', '').replace('"', '\\"')
             description = description.replace('Requires a restart to take effect.', '')
             final_desc = ''
-            for d in description.split('\n'):
-                d = '\\n'.join(textwrap.wrap(d, 150))
+            description = description.replace('\n', ' ')
+            description = description.replace('(', '\\n(')
+            description = description.replace('\\n(s)', '(s)') # Undo the (s) case
+            for i, d in enumerate(description.split('\\n')):
+                if i > 0:
+                    final_desc += '\\n'
+                d = '\\n'.join(textwrap.wrap(d, 100))
                 final_desc += d
             if prop_value['type'] in ['array', 'object']:
                 final_desc += '\\nNote: expected format: JSON ' + prop_value['type'].title()

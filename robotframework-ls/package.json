@@ -96,17 +96,17 @@
                 "robot.python.env": {
                     "type": "object",
                     "default": {},
-                    "description": "Environment variables used to load user code and dependent libraries.\ni.e.: {\"MY_ENV_VAR\": \"some_value\"}"
+                    "description": "Environment variables used to load user code and dependent libraries.\n(i.e.: {\"MY_ENV_VAR\": \"some_value\"})"
                 },
                 "robot.variables": {
                     "type": "object",
                     "default": {},
-                    "description": "Custom variables passed to RobotFramework (used when resolving variables and automatically passed to the launch config as --variable entries).\ni.e.: {\"EXECDIR\": \"c:/my/proj/src\"}"
+                    "description": "Custom variables passed to RobotFramework (used when resolving variables and automatically passed to the launch config as --variable entries).\n(i.e.: {\"EXECDIR\": \"c:/my/proj/src\"})"
                 },
                 "robot.pythonpath": {
                     "type": "array",
                     "default": [],
-                    "description": "Entries to be added to the PYTHONPATH (used when resolving resources and imports and automatically passed to the launch config as --pythonpath entries).\ni.e.: [\"c:/my/pro/src\"]"
+                    "description": "Entries to be added to the PYTHONPATH (used when resolving resources and imports and automatically passed to the launch config as --pythonpath entries).\n(i.e.: [\"c:/my/pro/src\"])"
                 },
                 "robot.lint.robocop.enabled": {
                     "type": "boolean",
