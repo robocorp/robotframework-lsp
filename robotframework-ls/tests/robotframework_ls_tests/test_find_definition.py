@@ -503,7 +503,7 @@ def test_find_definition_same_basename(workspace, libspec_manager, cases, tmpdir
     assert len(found) == 2
 
 
-def test_find_definition_in_package_init(workspace, libspec_manager, cases, tmpdir):
+def test_find_definition_in_package_init(workspace, libspec_manager):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.find_definition import find_definition
 
@@ -515,3 +515,24 @@ def test_find_definition_in_package_init(workspace, libspec_manager, cases, tmpd
     assert len(def1) == 1
     assert def1[0].source.endswith("__init__.py")
     assert os.path.basename(os.path.dirname(def1[0].source)) == "package"
+
+
+def test_find_definition_in_pythonpath(workspace, libspec_manager, cases):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+    from robotframework_ls.robot_config import RobotConfig
+    from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
+
+    add_to_pythonpath = cases.get_path("case_search_pythonpath/libraries")
+    config = RobotConfig()
+    config.update({"robot": {"pythonpath": [add_to_pythonpath]}})
+    assert config.get_setting(OPTION_ROBOT_PYTHONPATH, list, []) == [add_to_pythonpath]
+    libspec_manager.config = config
+
+    workspace.set_root("case_search_pythonpath", libspec_manager=libspec_manager)
+    doc1 = workspace.get_doc("case_search_pythonpath.robot")
+
+    completion_context = CompletionContext(doc1, workspace=workspace.ws, config=config)
+    def1 = find_definition(completion_context)
+    assert len(def1) == 1
+    assert def1[0].source.endswith("lib_in_pythonpath.py")

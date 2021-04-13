@@ -6,6 +6,7 @@ import threading
 from typing import Optional, Dict
 from robocorp_ls_core.protocols import Sentinel
 from robotframework_ls.impl.protocols import ILibraryDoc
+import itertools
 
 log = get_logger(__name__)
 
@@ -832,10 +833,8 @@ class LibspecManager(object):
                     call.append("--docformat")
                     call.append("text")
 
-                additional_pythonpath_entries = list(
-                    self._additional_pythonpath_folder_to_folder_info.keys()
-                )
-                for entry in list(additional_pythonpath_entries):
+                # Note: always set as a whole, so, iterate in generator is thread-safe.
+                for entry in self._additional_pythonpath_folder_to_folder_info:
                     if os.path.exists(entry):
                         call.extend(["-P", entry])
 
@@ -948,7 +947,7 @@ class LibspecManager(object):
             return True
         return False
 
-    def get_library_target_filename(
+    def _get_library_target_filename(
         self, libname: str, current_doc_uri: Optional[str] = None
     ) -> Optional[str]:
         from robocorp_ls_core import uris
@@ -974,6 +973,23 @@ class LibspecManager(object):
                         f += ".py"
                         if os.path.exists(f):
                             target_file = f
+
+            if target_file is None and libname.endswith((".py", ".class", ".java")):
+                iter_in_pythonpath_directories = itertools.chain(
+                    self._additional_pythonpath_folder_to_folder_info.keys(),
+                    self._pythonpath_folder_to_folder_info.keys(),
+                )
+
+                # https://github.com/robocorp/robotframework-lsp/issues/266
+                # If the user specifies a file, we don't just search the current
+                # relative folder, we also need to search for relative entries
+                # in the whole PYTHONPATH.
+                for entry in iter_in_pythonpath_directories:
+                    check_target = os.path.join(entry, libname)
+                    if os.path.exists(check_target):
+                        target_file = check_target
+                        break
+
         return target_file
 
     def get_library_info(
@@ -988,7 +1004,7 @@ class LibspecManager(object):
         """
 
         libname_lower = libname.lower()
-        target_file = self.get_library_target_filename(libname, current_doc_uri)
+        target_file = self._get_library_target_filename(libname, current_doc_uri)
 
         if target_file:
             normalized_target_file = os.path.normcase(os.path.normpath(target_file))
