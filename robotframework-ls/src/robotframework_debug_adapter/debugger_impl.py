@@ -716,12 +716,18 @@ class _RobotDebuggerImpl(object):
         source = attributes["source"]
         name = attributes["kwname"]
         args = attributes["args"]
+        if attributes.get("status") == "NOT RUN":
+            return
         if not args:
             args = []
         self._before_run_step(ctx, name, lineno, source, args)
 
     # 4.0 versions where the lineno is available on the V2 listener
     def end_keyword_v2(self, name, attributes):
+
+        if attributes.get("status") == "NOT RUN":
+            return
+
         self._after_run_step()
 
     # 3.x versions where the lineno is NOT available on the V2 listener
@@ -962,11 +968,6 @@ def install_robot_debugger() -> IRobotDebugger:
         DebugListener.on_start_test.register(impl.start_test)
         DebugListener.on_end_test.register(impl.end_test)
 
-        use_monkeypatching = True
-        # Not using monkey-patching would've been nice, but due to:
-        # https://github.com/robotframework/robotframework/issues/3855
-        # we can't really use it.
-        #
         # On RobotFramework 3.x and earlier 4.x dev versions, we do some monkey-patching because
         # the listener was not able to give linenumbers.
         from robot import get_version
@@ -974,15 +975,12 @@ def install_robot_debugger() -> IRobotDebugger:
         version = get_version()
         use_monkeypatching = version.startswith("3.") or version.startswith("4.0.a")
 
-        if False and use_monkeypatching:
-            # NOT CURRENTLY USED!!
-            # https://github.com/robotframework/robotframework/issues/3855
-            #
-            # i.e.: there's no start/end keyword on V3, so, we can currently
-            # only get linenumbers on the V2 api.
+        if not use_monkeypatching:
+            # 4.0.0 onwards
             DebugListenerV2.on_start_keyword.register(impl.start_keyword_v2)
             DebugListenerV2.on_end_keyword.register(impl.end_keyword_v2)
         else:
+            # Older versions
             try:
                 _apply_monkeypatching_before_4_b_2(impl)
             except ImportError:

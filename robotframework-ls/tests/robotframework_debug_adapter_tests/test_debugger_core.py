@@ -152,12 +152,30 @@ def test_debugger_core_for(debugger_api, robot_thread, data_regression) -> None:
 
         dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 4)
         stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
+
+        n_proceeded = 4
+        if IS_ROBOT_4_ONWARDS:
+            # We have additional steps as we get one step with the creation
+            # of the ${counter} variable when stepping into the for.
+            debugger_impl.step_in()
+
+            dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 5)
+            stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
+            debugger_impl.step_in()
+
+            dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 6)
+            stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
+            n_proceeded = 6
     finally:
         debugger_impl.step_continue()
 
-    dbg_wait_for(lambda: debugger_impl.busy_wait.proceeded == 4)
+    dbg_wait_for(lambda: debugger_impl.busy_wait.proceeded == n_proceeded)
 
-    data_regression.check(stack_frames_repr(stack_lst))
+    if IS_ROBOT_4_ONWARDS:
+        basename = "test_debugger_core_for.v4"
+    else:
+        basename = "test_debugger_core_for.v3"
+    data_regression.check(stack_frames_repr(stack_lst), basename=basename)
     dbg_wait_for(lambda: robot_thread.result_code == 0)
 
 
@@ -189,7 +207,7 @@ def test_debugger_core_if(debugger_api, robot_thread, data_regression) -> None:
         dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 2)
         stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
     finally:
-        debugger_impl.step_continue()
+        debugger_impl.step_in()  # Will actually finish the program now.
 
     dbg_wait_for(lambda: debugger_impl.busy_wait.proceeded == 2)
 

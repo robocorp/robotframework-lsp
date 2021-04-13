@@ -18,7 +18,9 @@ from robotframework_debug_adapter_tests.fixtures import _DebuggerAPI
 
 def test_invalid_launch_1(debugger_api: _DebuggerAPI):
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import LaunchRequest
-    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import LaunchRequestArguments
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+        LaunchRequestArguments,
+    )
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Response
 
     debugger_api.initialize()
@@ -157,6 +159,7 @@ def format_stack_frames(stack_frames):
 
 def test_debugger_for_workflow(debugger_api, data_regression):
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+    from robotframework_debug_adapter_tests.test_debugger_core import IS_ROBOT_4_ONWARDS
 
     debugger_api.initialize()
     target = debugger_api.get_dap_case_file(
@@ -171,16 +174,24 @@ def test_debugger_for_workflow(debugger_api, data_regression):
     debugger_api.configuration_done()
 
     json_hit = debugger_api.wait_for_thread_stopped()
+    debugger_api.set_breakpoints(target, [])
     stack_frames = json_hit.stack_trace_response.body.stackFrames
+
+    suffix = ".v3"
+    if IS_ROBOT_4_ONWARDS:
+        suffix = ".v4"
+
     data_regression.check(
-        format_stack_frames(stack_frames), basename="test_debugger_for_workflow_break"
+        format_stack_frames(stack_frames),
+        basename="test_debugger_for_workflow_break" + suffix,
     )
 
     debugger_api.step_in(json_hit.thread_id)
     json_hit = debugger_api.wait_for_thread_stopped("step")
     stack_frames = json_hit.stack_trace_response.body.stackFrames
     data_regression.check(
-        format_stack_frames(stack_frames), basename="test_debugger_for_workflow_step_in"
+        format_stack_frames(stack_frames),
+        basename="test_debugger_for_workflow_step_in" + suffix,
     )
 
     debugger_api.continue_event()

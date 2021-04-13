@@ -1,0 +1,150 @@
+Stack 0:
+- column: 0
+  line: 14
+  name: ${counter} IN RANGE [ 1 | 3 ]
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 13
+  name: 'TestCase: Can use resource keywords'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 1
+  name: 'TestSuite: Case Control Flow For'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+Stack 1:
+- column: 0
+  line: 14
+  name: ${counter} = 1
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 14
+  name: ${counter} IN RANGE [ 1 | 3 ]
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 13
+  name: 'TestCase: Can use resource keywords'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 1
+  name: 'TestSuite: Case Control Flow For'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+Stack 2:
+- column: 0
+  line: 15
+  name: Log
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 14
+  name: ${counter} = 1
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 14
+  name: ${counter} IN RANGE [ 1 | 3 ]
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 13
+  name: 'TestCase: Can use resource keywords'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 1
+  name: 'TestSuite: Case Control Flow For'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+Stack 3:
+- column: 0
+  line: 14
+  name: ${counter} = 2
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 14
+  name: ${counter} IN RANGE [ 1 | 3 ]
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 13
+  name: 'TestCase: Can use resource keywords'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 1
+  name: 'TestSuite: Case Control Flow For'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+Stack 4:
+- column: 0
+  line: 15
+  name: Log
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 14
+  name: ${counter} = 2
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 14
+  name: ${counter} IN RANGE [ 1 | 3 ]
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 13
+  name: 'TestCase: Can use resource keywords'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 1
+  name: 'TestSuite: Case Control Flow For'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+Stack 5:
+- column: 0
+  line: 17
+  name: My Equal Redefined
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 13
+  name: 'TestCase: Can use resource keywords'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
+- column: 0
+  line: 1
+  name: 'TestSuite: Case Control Flow For'
+  source:
+    name: case_control_flow_for.robot
+    path: '.../case_control_flow_for.robot'
