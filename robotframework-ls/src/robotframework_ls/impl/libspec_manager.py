@@ -789,10 +789,17 @@ class LibspecManager(object):
         from robotframework_ls.impl import robot_constants
         from robocorp_ls_core.subprocess_wrapper import subprocess
         from robocorp_ls_core.system_mutex import timed_acquire_mutex
+        from robocorp_ls_core.robotframework_log import get_log_level
 
         if _internal_force_text:
             # In this case this is a recursive call and we already have the lock.
             timed_acquire_mutex = NULL
+
+        log_exception = log.exception
+        if is_builtin and libname == "Dialogs" and get_log_level() < 1:
+            # Dialogs may have dependencies that are not available, so, don't show
+            # it unless verbose mode is enabled.
+            log_exception = log.debug
 
         additional_path = None
         additional_path_exists = False
@@ -917,7 +924,7 @@ class LibspecManager(object):
                                     _internal_force_text=True,
                                 )
 
-                        log.exception(
+                        log_exception(
                             "Error creating libspec: %s.\nReturn code: %s\nOutput:\n%s",
                             libname,
                             e.returncode,
@@ -929,7 +936,7 @@ class LibspecManager(object):
                     )
                     return True
             except Exception:
-                log.exception("Error creating libspec: %s", libname)
+                log_exception("Error creating libspec: %s", libname)
                 return False
         finally:
             if log_time:
