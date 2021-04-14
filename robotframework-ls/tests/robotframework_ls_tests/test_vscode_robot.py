@@ -33,7 +33,9 @@ def test_diagnostics(language_server, ws_root_path, data_regression):
     env = {
         "PYTHONPATH": os.path.dirname(os.path.dirname(os.path.abspath(robot.__file__)))
     }
-    language_server.settings({"settings": {"robot": {"python": {"env": env}}}})
+    language_server.settings(
+        {"settings": {"robot.python.env": env, "robot.lint.robocop.enabled": True}}
+    )
     check_diagnostics(language_server, data_regression)
 
 
@@ -42,6 +44,8 @@ def test_diagnostics_robocop(language_server, ws_root_path, data_regression):
     from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
 
     language_server.initialize(ws_root_path, process_id=os.getpid())
+
+    language_server.settings({"settings": {"robot.lint.robocop.enabled": True}})
 
     uri = "untitled:Untitled-1"
     message_matcher = language_server.obtain_pattern_message_matcher(
@@ -78,6 +82,7 @@ def test_diagnostics_robocop_configuration_file(
     from robocorp_ls_core import uris
 
     language_server.initialize(ws_root_path, process_id=os.getpid())
+    language_server.settings({"settings": {"robot.lint.robocop.enabled": True}})
     src = os.path.join(ws_root_path, "my", "src")
     os.makedirs(src)
     target_robot = os.path.join(src, "target.robot")
@@ -458,7 +463,9 @@ def test_restart_when_api_dies(language_server_tcp, ws_root_path, data_regressio
                 os.path.dirname(os.path.abspath(robot.__file__))
             )
         }
-        language_server_tcp.settings({"settings": {"robot": {"python": {"env": env}}}})
+        language_server_tcp.settings(
+            {"settings": {"robot.python.env": env, "robot.lint.robocop.enabled": True}}
+        )
 
         processes_per_api = 3
 

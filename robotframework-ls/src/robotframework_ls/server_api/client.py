@@ -1,8 +1,9 @@
-from typing import Optional
+from typing import Optional, Dict
 
 from robocorp_ls_core.client_base import LanguageServerClientBase
-from robocorp_ls_core.protocols import IIdMessageMatcher
-from robocorp_ls_core.lsp import TextDocumentTypedDict
+from robocorp_ls_core.protocols import IIdMessageMatcher, IRobotFrameworkApiClient
+from robocorp_ls_core.lsp import TextDocumentTypedDict, ResponseTypedDict
+from robocorp_ls_core.basic import implements
 
 
 class SubprocessDiedError(Exception):
@@ -48,6 +49,17 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             timeout=30 if USE_TIMEOUTS else NO_TIMEOUT,
         )
 
+    @implements(IRobotFrameworkApiClient.settings)
+    def settings(self, settings: Dict):
+        self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "workspace/didChangeConfiguration",
+                "params": settings,
+            }
+        )
+
     def get_version(self):
         """
         :return:
@@ -67,7 +79,8 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
 
         return self._version
 
-    def lint(self, doc_uri) -> list:
+    @implements(IRobotFrameworkApiClient.lint)
+    def lint(self, doc_uri) -> ResponseTypedDict:
         self._check_process_alive()
         msg_id = self.next_id()
         return self.request(

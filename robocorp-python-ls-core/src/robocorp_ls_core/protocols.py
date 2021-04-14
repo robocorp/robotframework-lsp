@@ -24,6 +24,7 @@ if typing.TYPE_CHECKING:
     from robocorp_ls_core.lsp import TextDocumentContentChangeEvent
     from robocorp_ls_core.lsp import HoverResponseTypedDict
     from robocorp_ls_core.lsp import TextDocumentTypedDict
+    from robocorp_ls_core.lsp import ResponseTypedDict
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -223,7 +224,7 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
     def get_version(self):
         pass
 
-    def lint(self, doc_uri: str) -> list:
+    def lint(self, doc_uri: str) -> "ResponseTypedDict":
         pass
 
     def request_lint(self, doc_uri: str) -> Optional[IIdMessageMatcher]:
@@ -304,6 +305,9 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
         """
         :Note: async complete.
         """
+
+    def settings(self, settings: Dict):
+        pass
 
 
 class ILanguageServerClient(ILanguageServerClientBase, Protocol):

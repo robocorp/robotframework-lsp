@@ -41,6 +41,9 @@ public class FeatureSemanticHighlighting extends ExternalAnnotator<EditorLanguag
     @Override
     public @Nullable Pair<SemanticTokens, EditorLanguageServerConnection> doAnnotate(EditorLanguageServerConnection connection) {
         try {
+            if (connection == null) {
+                return null;
+            }
             CompletableFuture<SemanticTokens> semanticTokens = connection.getSemanticTokens();
             if (semanticTokens == null) {
                 return null;

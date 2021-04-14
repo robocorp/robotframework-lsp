@@ -75,6 +75,8 @@ def test_server(server_api_process_io: IRobotFrameworkApiClient, data_regression
     from robotframework_ls_tests.fixtures import sort_diagnostics
 
     server_api_process_io.initialize(process_id=os.getpid())
+    server_api_process_io.settings({"settings": {"robot.lint.robocop.enabled": True}})
+
     assert server_api_process_io.get_version() >= "3.2"
 
     server_api_process_io.open("untitled", 1, "*** foo bar ***")

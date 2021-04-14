@@ -98,14 +98,14 @@ Example of `.robocop` file:
 --exclude missing-doc-suite
 ```
 
-How to disable the Robocop linter?
+How to enable the Robocop linter?
 ---------------------------------------
 
-To completely disable the `Robocop` linter, change the setting:
+To enable the `Robocop` linter, change the setting:
 
 `robot.lint.robocop.enabled`
 
-to `false` (in the Intellij UI, it's the `Lint Robocop Enabled` setting).
+to `true` (in the Intellij UI, it's the `Lint Robocop Enabled` setting).
 
 
 How to change the Robocop version used?

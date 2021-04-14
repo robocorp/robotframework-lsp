@@ -126,7 +126,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
             config = completion_context.config
             robocop_enabled = config is None or config.get_setting(
-                OPTION_ROBOT_LINT_ROBOCOP_ENABLED, bool, True
+                OPTION_ROBOT_LINT_ROBOCOP_ENABLED, bool, False
             )
 
             ast = completion_context.get_ast()

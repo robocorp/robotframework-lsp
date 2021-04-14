@@ -110,7 +110,7 @@
                 },
                 "robot.lint.robocop.enabled": {
                     "type": "boolean",
-                    "default": true,
+                    "default": false,
                     "description": "Specifies whether to lint with Robocop."
                 },
                 "robot.completions.section_headers.form": {
