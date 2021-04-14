@@ -1,3 +1,18 @@
+New in 0.14.0 (2021-04-14)
+-----------------------------
+
+- [Intellij] Add code-folding support to Intellij client.
+- [Intellij] Wrap the preferences labels at 100 columns. [#307](https://github.com/robocorp/robotframework-lsp/issues/307)
+- [Intellij] Handle case where hover info is unavailable. [#306](https://github.com/robocorp/robotframework-lsp/issues/306)
+- [Intellij] Consider cases where the position from the LSP is no longer valid. [#297](https://github.com/robocorp/robotframework-lsp/issues/297)
+- [Intellij] Protect against NPE on Semantic Highlighting.
+- Robocop linter is now opt-in instead of opt-out. [#312](https://github.com/robocorp/robotframework-lsp/issues/312)
+- Add code-completion for `${CURDIR}`. [#313](https://github.com/robocorp/robotframework-lsp/issues/313)
+- Use listener instead of monkey-patching when debugging (RF 4 onwards). [#310](https://github.com/robocorp/robotframework-lsp/issues/310)
+- Silence exception from creating libspec for Dialogs module. [#93](https://github.com/robocorp/robotframework-lsp/issues/93)
+- Search `PYTHONPATH` when looking to resolve relative paths in Imports. [#266](https://github.com/robocorp/robotframework-lsp/issues/266)
+
+
 New in 0.13.1 (2021-04-08)
 -----------------------------
 

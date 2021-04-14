@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.13.1'
+version '0.14.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,17 +50,20 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.13.1
+    Release 0.14.0
     </p>
     <ul>
     
-    <li>[Intellij] Mark as compatible with Intellij 2021.1.</li>
-    <li>[Intellij] Cancel semantic tokens request if document changes.</li>
-    <li>[Intellij] Check if range is valid before applying semantic token.</li>
-    <li>[Intellij] Add hover support. [#278]</li>
-    <li>[Intellij] updated lsp4j to 0.12.0</li>
-    <li>Resolve environment variables when trying to resolve libraries/resources paths (i.e.: <strong>%{env_var}</strong>). [#295]</li>
-    <li>Properly resolve variables for Library imports (not only Resource imports).</li>
+    <li>[Intellij] Add code-folding support to Intellij client.</li>
+    <li>[Intellij] Wrap the preferences labels at 100 columns.</li>
+    <li>[Intellij] Handle case where hover info is unavailable.</li>
+    <li>[Intellij] Consider cases where the position from the LSP is no longer valid.</li>
+    <li>[Intellij] Protect against NPE on Semantic Highlighting.</li>
+    <li>Robocop linter is now opt-in instead of opt-out.</li>
+    <li>Add code-completion for &dollar;&#123;CURDIR&#125;.</li>
+    <li>Use listener instead of monkey-patching when debugging (RF 4 onwards).</li>
+    <li>Silence exception from creating libspec for Dialogs module.</li>
+    <li>Search `PYTHONPATH` when looking to resolve relative paths in Imports.</li>
 
     </ul>    
     <br>
@@ -71,6 +74,7 @@ patchPluginXml {
     <li>Code analysis</li>
     <li>Go to definition</li>
     <li>Hover</li>
+    <li>Code folding</li>
     <li>Browse Keywords (symbols)</li>
     <li>Syntax highlighting (with `semanticTokens/full` request)</li>
     </ul>
