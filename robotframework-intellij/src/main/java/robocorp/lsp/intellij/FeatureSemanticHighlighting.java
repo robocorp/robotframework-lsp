@@ -60,7 +60,11 @@ public class FeatureSemanticHighlighting extends ExternalAnnotator<EditorLanguag
                 document.addDocumentListener(listener);
             }
             try {
-                return Pair.create(semanticTokens.get(Timeouts.getSemanticHighlightingTimeout(), TimeUnit.SECONDS), connection);
+                SemanticTokens tokens = semanticTokens.get(Timeouts.getSemanticHighlightingTimeout(), TimeUnit.SECONDS);
+                if (tokens == null) {
+                    return null;
+                }
+                return Pair.create(tokens, connection);
             } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException ignored) {
                 // Cancelled (InterruptedException is thrown when completion.cancel(true) is called from another thread).
                 return null;
@@ -78,6 +82,9 @@ public class FeatureSemanticHighlighting extends ExternalAnnotator<EditorLanguag
     @Override
     public void apply(@NotNull PsiFile
                               file, Pair<SemanticTokens, EditorLanguageServerConnection> pair, @NotNull AnnotationHolder holder) {
+        if (pair == null) {
+            return;
+        }
         ILSPEditor editor = pair.second.getEditor();
         if (editor == null) {
             return;
