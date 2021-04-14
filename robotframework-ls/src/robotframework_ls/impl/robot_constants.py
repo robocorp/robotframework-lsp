@@ -13,6 +13,7 @@ VARIABLE_PREFIXES = ("@", "%", "$", "&")
 BUILTIN_VARIABLES = [
     ("${TEMPDIR}", "abspath(tempfile.gettempdir())"),
     ("${EXECDIR}", "abspath('.')"),
+    ("${CURDIR}", "abspath('.')"),
     ("${/}", "os.sep"),
     ("${:}", "os.pathsep"),
     ("${\\n}", "os.linesep"),

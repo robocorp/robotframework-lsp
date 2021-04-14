@@ -86,6 +86,23 @@ result:
         character: 22
         line: 9
 - deprecated: false
+  documentation: abspath('.')
+  documentationFormat: plaintext
+  insertText: ${CURDIR}
+  insertTextFormat: 2
+  kind: 6
+  label: ${CURDIR}
+  preselect: false
+  textEdit:
+    newText: \${CURDIR}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
   documentation: os.sep
   documentationFormat: plaintext
   insertText: ${/}
