@@ -100,6 +100,8 @@ class _CachedInterpreterInfo(object):
         env_json_path_file_info: Optional[_CachedFileInfo],
         pm: PluginManager,
     ):
+        import json
+
         try:
             # Kept for backward compatibility
             from robotframework_ls.ep_resolve_interpreter import DefaultInterpreterInfo
@@ -132,15 +134,11 @@ class _CachedInterpreterInfo(object):
         root = str(robot_yaml_file_info.file_path.parent)
 
         environ = {}
-        for line in contents.splitlines(keepends=False):
-            line = line.strip()
-            if line.startswith("="):  # ignore hidden env variable
-                continue
-            parts = line.split("=", 1)
-            if len(parts) == 2:
-                p0 = parts[0].strip()
-                if p0:
-                    environ[p0] = parts[1]
+        for entry in json.loads(contents):
+            key = entry["key"]
+            value = entry["value"]
+            if key:
+                environ[key] = value
 
         pythonpath_lst = robot_yaml_file_info.yaml_contents.get("PYTHONPATH", [])
         additional_pythonpath_entries: List[str] = []

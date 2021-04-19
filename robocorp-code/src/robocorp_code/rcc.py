@@ -58,7 +58,7 @@ def download_rcc(location: str, force: bool = False) -> None:
                     else:
                         relative_path = "/linux32/rcc"
 
-                RCC_VERSION = "v9.7.4"
+                RCC_VERSION = "v9.9.15"
                 prefix = f"https://downloads.robocorp.com/rcc/releases/{RCC_VERSION}"
                 url = prefix + relative_path
 
@@ -621,6 +621,7 @@ class Rcc(object):
         if env_json_path:
             args.append("-e")
             args.append(str(env_json_path))
+        args.append("-j")
         ret = self._run_rcc(
             args,
             mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME,
