@@ -18,6 +18,8 @@ def compute_robot_launch_from_robocorp_code_launch(
     python_exe: Optional[str],
 ) -> ActionResultDictRobotLaunch:
 
+    import sys
+
     if not name:
         return {
             "success": False,
@@ -104,11 +106,34 @@ def compute_robot_launch_from_robocorp_code_launch(
 
     command = task_info.get("command")
     if not command:
-        return {
-            "success": False,
-            "message": f"Expected the task: {task} to have the command defined.",
-            "result": None,
-        }
+        shell = task_info.get("shell")
+        if shell:
+            import shlex
+
+            command = shlex.split(shell, posix=True)
+        else:
+            robot_task_name = task_info.get("robotTaskName")
+            if robot_task_name:
+                command = [
+                    "python",
+                    "-m",
+                    "robot",
+                    "--report",
+                    "NONE",
+                    "--outputdir",
+                    "output",
+                    "--logtitle",
+                    "Task log",
+                    "--task",
+                    robot_task_name,
+                    os.path.dirname(robot),
+                ]
+            else:
+                return {
+                    "success": False,
+                    "message": f"Expected the task: {task} to have the command/shell/robotTaskName defined.",
+                    "result": None,
+                }
 
     if not isinstance(command, list):
         return {
@@ -121,20 +146,47 @@ def compute_robot_launch_from_robocorp_code_launch(
     cwd = os.path.dirname(robot)
 
     if command[:3] == ["python", "-m", "robot"]:
-        target = command[-1]
-        if not os.path.isabs(target):
-            target = os.path.abspath(os.path.join(os.path.dirname(robot), target))
+        args: List[str] = command[3:]
 
-        if not os.path.exists(target):
+        if not args:
             return {
                 "success": False,
                 "message": (
-                    f"Expected the last argument to be the robot file/directory to be executed. Found: {target}"
+                    f"Expected the robot file/directory to be executed to be provided"
                 ),
                 "result": None,
             }
 
-        args: List[str] = command[3:-1]  # i.e.: Remove python -m robot ... target
+        target_last = args[-1]
+        if not os.path.isabs(target_last):
+            target_last = os.path.abspath(
+                os.path.join(os.path.dirname(robot), target_last)
+            )
+
+        if os.path.exists(target_last):
+            target = target_last
+            args = args[:-1]  # i.e.: Remove python -m robot ... target
+        else:
+            # Not the last...also check if the first argument is the target.
+            target_first = args[0]
+
+            if not os.path.isabs(target_first):
+                target_first = os.path.abspath(
+                    os.path.join(os.path.dirname(robot), target_first)
+                )
+
+            if os.path.exists(target_first):
+                target = target_first
+                args = args[1:]  # i.e.: Remove python -m robot ... target ...
+
+            else:
+                return {
+                    "success": False,
+                    "message": (
+                        f"Expected the first/last argument to be the robot file/directory to be executed. Found: first:{target_first}, last:{target_last}"
+                    ),
+                    "result": None,
+                }
 
         if additional_pythonpath_entries:
             for s in additional_pythonpath_entries:

@@ -1,3 +1,161 @@
+def test_compute_launch_robot(tmpdir):
+    from robocorp_code import compute_launch
+
+    robot_yaml = tmpdir.join("robot.yaml")
+    tmpdir.join("task.py").write("foo")
+    robot_yaml.write(
+        f"""
+tasks:
+  Default:
+    command:
+      - python
+      - -m
+      - robot
+      - {str(tmpdir)}
+
+condaConfigFile: conda.yaml
+artifactsDir: output
+PATH:
+  - .
+PYTHONPATH:
+  - .
+ignoreFiles:
+    - .gitignore
+"""
+    )
+
+    additional_pythonpath_entries = []
+    launch = compute_launch.compute_robot_launch_from_robocorp_code_launch(
+        "Launch name",
+        "launch",
+        "Default",
+        str(robot_yaml),
+        additional_pythonpath_entries,
+        None,
+        None,
+    )
+
+    assert launch == {
+        "success": True,
+        "message": None,
+        "result": {
+            "type": "robotframework-lsp",
+            "name": "Launch name",
+            "request": "launch",
+            "target": str(tmpdir),
+            "cwd": str(tmpdir),
+            "args": [],
+            "terminal": "none",
+        },
+    }
+
+
+def test_compute_launch_robot_shell(tmpdir):
+    from robocorp_code import compute_launch
+
+    robot_yaml = tmpdir.join("robot.yaml")
+    tmpdir.join("task.py").write("foo")
+    d = str(tmpdir).replace("\\", "/")
+    robot_yaml.write(
+        f"""
+tasks:
+  Default:
+    shell: python -m robot {d} "task name"
+
+condaConfigFile: conda.yaml
+artifactsDir: output
+PATH:
+  - .
+PYTHONPATH:
+  - .
+ignoreFiles:
+    - .gitignore
+"""
+    )
+
+    additional_pythonpath_entries = []
+    launch = compute_launch.compute_robot_launch_from_robocorp_code_launch(
+        "Launch name",
+        "launch",
+        "Default",
+        str(robot_yaml),
+        additional_pythonpath_entries,
+        None,
+        None,
+    )
+
+    assert launch == {
+        "success": True,
+        "message": None,
+        "result": {
+            "type": "robotframework-lsp",
+            "name": "Launch name",
+            "request": "launch",
+            "target": d,
+            "cwd": str(tmpdir),
+            "args": ["task name"],
+            "terminal": "none",
+        },
+    }
+
+
+def test_compute_launch_robot_taskname(tmpdir):
+    from robocorp_code import compute_launch
+
+    robot_yaml = tmpdir.join("robot.yaml")
+    tmpdir.join("task.py").write("foo")
+    robot_yaml.write(
+        f"""
+tasks:
+  Default:
+    robotTaskName: my Task
+
+condaConfigFile: conda.yaml
+artifactsDir: output
+PATH:
+  - .
+PYTHONPATH:
+  - .
+ignoreFiles:
+    - .gitignore
+"""
+    )
+
+    additional_pythonpath_entries = []
+    launch = compute_launch.compute_robot_launch_from_robocorp_code_launch(
+        "Launch name",
+        "launch",
+        "Default",
+        str(robot_yaml),
+        additional_pythonpath_entries,
+        None,
+        None,
+    )
+
+    assert launch == {
+        "success": True,
+        "message": None,
+        "result": {
+            "type": "robotframework-lsp",
+            "name": "Launch name",
+            "request": "launch",
+            "target": str(tmpdir),
+            "cwd": str(tmpdir),
+            "args": [
+                "--report",
+                "NONE",
+                "--outputdir",
+                "output",
+                "--logtitle",
+                "Task log",
+                "--task",
+                "my Task",
+            ],
+            "terminal": "none",
+        },
+    }
+
+
 def test_compute_launch_01(tmpdir):
     import os
     from robocorp_code import compute_launch
