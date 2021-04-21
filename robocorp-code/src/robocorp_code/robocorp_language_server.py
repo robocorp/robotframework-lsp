@@ -494,9 +494,9 @@ class RobocorpLanguageServer(PythonLanguageServer):
             # "codeLensProvider": {
             #     "resolveProvider": False,  # We may need to make this configurable
             # },
-            "completionProvider": {
-                "resolveProvider": False  # We know everything ahead of time
-            },
+            # "completionProvider": {
+            #     "resolveProvider": False  # We know everything ahead of time
+            # },
             "documentFormattingProvider": False,
             "documentHighlightProvider": False,
             "documentRangeFormattingProvider": False,
@@ -518,6 +518,9 @@ class RobocorpLanguageServer(PythonLanguageServer):
         }
         log.info("Server capabilities: %s", server_capabilities)
         return server_capabilities
+
+    def m_text_document__completion(self, **kwargs):
+        return []
 
     def m_workspace__execute_command(self, command=None, arguments=()) -> Any:
         return command_dispatcher.dispatch(self, command, arguments)
