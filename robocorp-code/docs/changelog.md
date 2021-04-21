@@ -1,3 +1,10 @@
+New in 0.9.2 (2021-04-21)
+-----------------------------
+
+- Fix issue where completions were requested on .yaml files when that shouldn't be the case.
+- Support for robot tasks with a `shell` or `robotTaskName`.
+
+
 New in 0.9.1 (2021-04-19)
 -----------------------------
 
