@@ -4,8 +4,9 @@ set -eux
 # this runs _after_ `environment.yml` has been fulfilled, ensuring python, node,
 # and jupyter tooling
 
-mkdir -p ${NB_PYTHON_PREFIX}/share/jupyter/lab/settings
-cp .binder/overrides.json ${NB_PYTHON_PREFIX}/share/jupyter/lab/settings
+export JLSP_SETTINGS=${HOME}/.jupyter/lab/user-settings/\@krassowski/jupyterlab-lsp
+mkdir -p "${JLSP_SETTINGS}"
+cp .binder/jupyterlab-lsp-settings.json "${JLSP_SETTINGS}"
 
 cd robotframework-ls
 
