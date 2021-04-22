@@ -1,3 +1,2 @@
-firefox
 chromium-browser
 chromedriver
