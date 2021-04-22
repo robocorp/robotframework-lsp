@@ -6,7 +6,7 @@ set -eux
 
 export JLSP_SETTINGS=${HOME}/.jupyter/lab/user-settings/\@krassowski/jupyterlab-lsp
 mkdir -p "${JLSP_SETTINGS}"
-cp .binder/jupyterlab-lsp-settings.json "${JLSP_SETTINGS}"
+cp .binder/jupyterlab-lsp-settings.json "${JLSP_SETTINGS}/plugin.jupyterlab-settings"
 
 cd robotframework-ls
 
