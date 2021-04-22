@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -eux
+
+# this runs _after_ `environment.yml` has been fulfilled, ensuring python, node,
+# and jupyter tooling
+
+# installs the local development assets
+pushd robotframework-ls/src
+  python -m pip install -e . --ignore-installed --no-deps
+popd

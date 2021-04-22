@@ -9,11 +9,15 @@ def spec_v1(app):
         "robotframework_ls": dict(
             version=2,
             argv=["robotframework_ls"],
-            languages=["robotframework", "plain"],
+            languages=["robotframework"],
             mime_types=["text/x-robotframework"],
             urls=dict(
                 home="https://github.com/robocorp/robotframework-lsp",
                 issues="https://github.com/robocorp/robotframework-lsp/issues",
             ),
+            install=dict(
+                pip="pip install robotframework-lsp",
+                conda="conda install -c conda-forge robotframework-lsp",
+            )
         )
     }

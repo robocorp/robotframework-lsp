@@ -1,0 +1,16 @@
+name: robotframework-lsp
+
+channels:
+  - conda-forge
+
+dependencies:
+  - docutils >=0.16,<1.0
+  - ipywidgets >=7.5.1,<8
+  - jupyterlab >=3,<3.1
+  - jupyterlab_robotmode
+  - nodejs >=14,<15
+  - python >=3.7,<3.10
+  - robotframework-robocop
+  - robotframework-seleniumlibrary >=4.4
+  - robotkernel
+  - xeus-robot
