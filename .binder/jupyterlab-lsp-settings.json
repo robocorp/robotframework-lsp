@@ -1,0 +1,13 @@
+{
+  "language_servers": {
+    "robotframework_ls": {
+      "serverSettings": {
+        "robot.lint.robocop.enabled": true,
+        "robot.language-server.args": [
+          "-vv",
+          "--log-file=~/robotframework_ls.log"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -eux
+
+# this runs _after_ `environment.yml` has been fulfilled, ensuring python, node,
+# and jupyter tooling
+
+export JLSP_SETTINGS=${HOME}/.jupyter/lab/user-settings/\@krassowski/jupyterlab-lsp
+mkdir -p "${JLSP_SETTINGS}"
+cp .binder/jupyterlab-lsp-settings.json "${JLSP_SETTINGS}/plugin.jupyterlab-settings"
+
+cd robotframework-ls
+
+python -m dev vendor-robocorp-ls-core
+
+cd src
+
+python -m pip install -e . --ignore-installed --no-deps
+
+jupyter kernelspec list
+jupyter serverextension list
+jupyter server extension list
+jupyter labextension list
