@@ -6,7 +6,6 @@ channels:
 dependencies:
   - docutils >=0.16,<1.0
   - fire
-  - firefox
   - geckodriver
   - ipywidgets >=7.5.1,<8
   - jupyter-lsp-python-plugins
