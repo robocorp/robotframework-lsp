@@ -224,6 +224,8 @@ public abstract class LanguageServerDefinition {
     private static final Logger LOG = Logger.getInstance(LanguageServerDefinition.class);
     private final String languageId;
 
+    // Extensions (expected to start with a dot).
+    // i.e.: .robot
     public final Set<String> ext;
 
     // May be changed when preferences change.

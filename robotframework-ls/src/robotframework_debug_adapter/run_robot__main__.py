@@ -494,6 +494,7 @@ def main():
     from robocorp_ls_core.robotframework_log import (
         configure_logger,
         log_args_and_python,
+        close_logging_streams,
     )
 
     from robotframework_debug_adapter.constants import LOG_FILENAME
@@ -541,6 +542,8 @@ def main():
         processor.terminate()
         if processor.terminated.wait(2):
             log.debug("Processed dap terminate event in robot.")
+        close_logging_streams()
+
     sys.exit(exitcode)
 
 

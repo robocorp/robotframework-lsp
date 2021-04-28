@@ -27,6 +27,7 @@ import sys
 from datetime import datetime
 from robocorp_ls_core.protocols import ILog
 from typing import Dict
+from robocorp_ls_core.constants import NULL
 
 name_to_logger: Dict[str, ILog] = {}
 
@@ -94,6 +95,13 @@ class _LogConfig(object):
 
         return stream
 
+    def close_logging_streams(self):
+        with self._lock:
+            if self.__stream is not None:
+                self.__stream.write("-- Closing logging streams --")
+                self.__stream.close()
+            self.__stream = NULL
+
     def report(self, logger_name, show_stacktrace, levelname, message, trim):
         if trim:
             msg_len = len(message)
@@ -125,6 +133,10 @@ class _LogConfig(object):
 
 
 _log_config = _LogConfig()
+
+
+def close_logging_streams():
+    _log_config.close_logging_streams()
 
 
 class _Logger(object):

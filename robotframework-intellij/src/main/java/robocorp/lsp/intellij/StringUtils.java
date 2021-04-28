@@ -7,17 +7,17 @@ public class StringUtils {
 
     public static int getFirstCharPosition(String src) {
         int i = 0;
-        boolean breaked = false;
+        boolean broken = false;
         int len = src.length();
         while (i < len) {
             if (!Character.isWhitespace(src.charAt(i))) {
                 i++;
-                breaked = true;
+                broken = true;
                 break;
             }
             i++;
         }
-        if (!breaked) {
+        if (!broken) {
             i++;
         }
         return (i - 1);
@@ -40,7 +40,7 @@ public class StringUtils {
      * @note the new line characters are also added to the returned string.
      */
     public static List<String> splitInLines(String string) {
-        ArrayList<String> ret = new ArrayList<String>();
+        ArrayList<String> ret = new ArrayList<>();
         int len = string.length();
 
         char c;
@@ -129,7 +129,7 @@ public class StringUtils {
         if (length == 1) {
             return split(string, toSplit.charAt(0));
         }
-        ArrayList<String> ret = new ArrayList<String>();
+        ArrayList<String> ret = new ArrayList<>();
         if (length == 0) {
             ret.add(string);
             return ret;

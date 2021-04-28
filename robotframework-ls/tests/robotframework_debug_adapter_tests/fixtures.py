@@ -275,6 +275,7 @@ class _DebuggerAPI(object):
         from robocorp_ls_core.basic import as_str
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import InitializedEvent
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Response
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ProcessEvent
 
         launch_args = LaunchRequestArguments(
             __sessionId="some_id", noDebug=not debug, target=target, terminal=terminal
@@ -297,6 +298,7 @@ class _DebuggerAPI(object):
         if success:
             # Initialized is sent just before the launch response (at which
             # point it's possible to send breakpoints).
+            self.read(ProcessEvent)
             event = self.read(InitializedEvent)
             assert isinstance(event, InitializedEvent)
 

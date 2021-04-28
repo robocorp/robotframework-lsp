@@ -47,6 +47,12 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
     private final Object projectToDefinitionLock = new Object();
     private String robotFrameworkLSUserHome;
     private volatile boolean showingDialogToConfigureExecutable;
+    private String languageServerPython;
+
+    @Override
+    public String getLanguageServerPython() {
+        return languageServerPython;
+    }
 
     public void setRobotFrameworkLSUserHome(String robotFrameworkLSUserHome) {
         this.robotFrameworkLSUserHome = robotFrameworkLSUserHome;
@@ -94,7 +100,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
 
     @Nullable
     private ProcessBuilder createProcessBuilderFromPreferences(Project project) {
-        File main = getMain();
+        File main = getLSPMainScript();
 
         RobotProjectPreferences projectPreferences = RobotProjectPreferences.getInstance(project);
 
@@ -162,6 +168,8 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
             }
             return null;
         }
+
+        this.languageServerPython = python;
 
         // ---------------- Get arguments
 
@@ -365,11 +373,19 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         return null;
     }
 
+    public File getLSPMainScript() {
+        return getMainScript("robotframework_ls");
+    }
+
+    public File getDAPMainScript() {
+        return getMainScript("robotframework_debug_adapter");
+    }
+
     /**
      * Finds out the __main__.py file location.
      */
     @NotNull
-    private File getMain() {
+    public static File getMainScript(final String packageName) {
         URL resourceURL = RobotFrameworkLanguage.class.getClassLoader().getResource("robotframework-intellij-resource.txt");
         File resourceFile = new File(resourceURL.getFile());
         StringBuilder builder = new StringBuilder();
@@ -381,7 +397,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
             // ...robotframework-lsp/robotframework-ls/__main__.py
             File parentFile = resourceFile.getParentFile().getParentFile().getParentFile().getParentFile().getParentFile();
             File pySrc = new File(new File(parentFile, "robotframework-ls"), "src");
-            File main = new File(new File(pySrc, "robotframework_ls"), "__main__.py");
+            File main = new File(new File(pySrc, packageName), "__main__.py");
             if (main.exists()) {
                 return main;
             }
@@ -411,7 +427,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         }
 
         while (directory != null) {
-            File main = checkDirectoryForMain(builder, directory);
+            File main = checkDirectoryForMain(packageName, builder, directory);
             if (main != null) {
                 return main;
             }
@@ -421,7 +437,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
                 String dirAsAbsolute = directory.getAbsolutePath();
                 String decoded = java.net.URLDecoder.decode(dirAsAbsolute, StandardCharsets.UTF_8.name());
                 if (decoded != null && !decoded.equals(dirAsAbsolute)) {
-                    main = checkDirectoryForMain(builder, new File(decoded));
+                    main = checkDirectoryForMain(packageName, builder, new File(decoded));
                     if (main != null) {
                         return main;
                     }
@@ -436,18 +452,18 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
     }
 
     @Nullable
-    private File checkDirectoryForMain(StringBuilder builder, File directory) {
+    private static File checkDirectoryForMain(final String packageName, StringBuilder builder, File directory) {
         if (!directory.exists()) {
             builder.append("Directory: " + directory + " does not exist.\n");
             return null;
         }
-        File main = new File(new File(directory, "robotframework_ls"), "__main__.py");
+        File main = new File(new File(directory, packageName), "__main__.py");
         if (main.exists()) {
             return main;
         }
         builder.append("Checked" + main + "\n");
 
-        main = new File(new File(new File(new File(directory, "robotframework-ls"), "src"), "robotframework_ls"), "__main__.py");
+        main = new File(new File(new File(new File(directory, "robotframework-ls"), "src"), packageName), "__main__.py");
         if (main.exists()) {
             return main;
         }

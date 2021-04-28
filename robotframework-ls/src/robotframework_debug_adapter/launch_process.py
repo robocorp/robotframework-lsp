@@ -54,6 +54,7 @@ class _DebugAdapterRobotTargetComm(threading.Thread):
         self._process_event = threading.Event()
 
         self._terminated_event_msg = None
+        self._terminated_lock = threading.Lock()
         self._terminated_event = threading.Event()
 
         self._write_to_robot_queue = queue.Queue()
@@ -78,7 +79,9 @@ class _DebugAdapterRobotTargetComm(threading.Thread):
         from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
             writer_thread_no_auto_seq,
         )
-        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import reader_thread
+        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
+            reader_thread,
+        )
 
         try:
             assert (
@@ -179,6 +182,13 @@ class _DebugAdapterRobotTargetComm(threading.Thread):
         self._process_event_msg = event
         self._process_event.set()
 
+        debug_adapter_comm = self._weak_debug_adapter_comm()
+        if debug_adapter_comm is not None:
+            event.body.kwargs["dapProcessId"] = os.getpid()
+            debug_adapter_comm.write_to_client_message(event)
+        else:
+            log.debug("Command processor collected in event: %s" % (event,))
+
     def get_pid(self):
         assert self._process_event.is_set()
         return self._process_event_msg.body.systemProcessId
@@ -191,12 +201,39 @@ class _DebugAdapterRobotTargetComm(threading.Thread):
             log.debug("Command processor collected in event: %s" % (event,))
 
     def on_terminated_event(self, event):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEventBody
+        with self._terminated_lock:
+            if self._terminated_event.is_set():
+                return
 
-        self._terminated_event_msg = event
-        self._terminated_event.set()
-        self.write_to_robot_message(TerminatedEvent(TerminatedEventBody()))
+            if event is None:
+                from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+                    TerminatedEvent,
+                )
+                from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+                    TerminatedEventBody,
+                )
+
+                restart = False
+                event = TerminatedEvent(body=TerminatedEventBody(restart=restart))
+
+            self._terminated_event_msg = event
+            self._terminated_event.set()
+
+        debug_adapter_comm = self._weak_debug_adapter_comm()
+        if debug_adapter_comm is not None:
+            debug_adapter_comm.write_to_client_message(event)
+        else:
+            log.debug("Command processor collected in event: %s" % (event,))
+
+    def notify_exit(self):
+        self.on_terminated_event(None)
+        log.debug("Target process finished (forcibly exiting debug adapter in 100ms).")
+
+        # If the target process is terminated, wait a bit and exit ourselves.
+        import time
+
+        time.sleep(0.1)
+        os._exit(0)
 
     def write_to_robot_message(self, protocol_message, on_response=None):
         """
@@ -224,9 +261,6 @@ class _DebugAdapterRobotTargetComm(threading.Thread):
         ret = self._process_event.wait(DEFAULT_TIMEOUT)
         log.debug("Received process event: %s" % (ret,))
         return ret
-
-    def wait_for_process_terminated(self, timeout):
-        return self._terminated_event.wait(timeout)
 
 
 def _noop(*args, **kwargs):
@@ -257,7 +291,7 @@ def _notify_on_exited_pid(on_exit, pid):
             if not is_process_alive(pid):
                 break
 
-            time.sleep(0.5)
+            time.sleep(0.2)
         log.debug("pid exited (_notify_on_exited_pid).")
         on_exit()
     except:
@@ -279,7 +313,6 @@ class LaunchProcess(object):
         "_launch_response",
         "_next_seq",
         "_track_process_pid",
-        "_sent_terminated",
         "_env",
     ]
 
@@ -301,7 +334,6 @@ class LaunchProcess(object):
         self._launch_response = launch_response
         self._next_seq = partial(next, itertools.count(0))
         self._track_process_pid = None
-        self._sent_terminated = threading.Event()
 
         self._debug_adapter_robot_target_comm = _DebugAdapterRobotTargetComm(
             debug_adapter_comm
@@ -410,23 +442,10 @@ class LaunchProcess(object):
     def run_in_debug_mode(self):
         return self._run_in_debug_mode
 
-    def notify_exit(self):
-        if self._sent_terminated.is_set():
-            return
-        self._sent_terminated.set()
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEventBody
-
-        debug_adapter_comm = self._weak_debug_adapter_comm()
-        if debug_adapter_comm is not None:
-            restart = False
-            terminated_event = TerminatedEvent(
-                body=TerminatedEventBody(restart=restart)
-            )
-            debug_adapter_comm.write_to_client_message(terminated_event)
-
     def send_and_wait_for_configuration_done_request(self):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ConfigurationDoneRequest
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            ConfigurationDoneRequest,
+        )
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             ConfigurationDoneArguments,
         )
@@ -465,7 +484,9 @@ class LaunchProcess(object):
         from robotframework_debug_adapter.constants import TERMINAL_NONE
         from robotframework_debug_adapter.constants import TERMINAL_EXTERNAL
         from robotframework_debug_adapter.constants import TERMINAL_INTEGRATED
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import RunInTerminalRequest
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            RunInTerminalRequest,
+        )
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             RunInTerminalRequestArguments,
         )
@@ -578,7 +599,10 @@ class LaunchProcess(object):
             return
         t = threading.Thread(
             target=_notify_on_exited_pid,
-            args=(self.notify_exit, self._track_process_pid),
+            args=(
+                self._debug_adapter_robot_target_comm.notify_exit,
+                self._track_process_pid,
+            ),
             name="Track PID alive",
         )
         t.daemon = True

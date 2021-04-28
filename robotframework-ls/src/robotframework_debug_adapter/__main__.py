@@ -42,6 +42,9 @@ def main():
     the command processor which will interpret and act on it, posting the results to the writer queue.
     """
 
+    def close_logging_streams():
+        pass
+
     log = None
     try:
         import sys
@@ -70,6 +73,7 @@ def main():
             get_logger,
             configure_logger,
             log_args_and_python,
+            close_logging_streams,
         )
 
         from robotframework_debug_adapter.constants import LOG_FILENAME
@@ -141,6 +145,7 @@ def main():
     finally:
         if log is not None:
             log.debug("Exited main.\n")
+        close_logging_streams()
 
 
 if __name__ == "__main__":
