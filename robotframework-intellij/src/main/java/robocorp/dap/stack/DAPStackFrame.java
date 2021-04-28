@@ -20,6 +20,7 @@
 package robocorp.dap.stack;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -33,6 +34,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValueChildrenList;
 import org.jetbrains.annotations.NotNull;
 import robocorp.dap.RobotDebugProcess;
 
@@ -53,6 +55,10 @@ public class DAPStackFrame extends XStackFrame {
         myDebugProcess = debugProcess;
         myFrameInfo = frameInfo;
         myPosition = position;
+    }
+
+    public DAPStackFrameInfo getFrameInfo() {
+        return myFrameInfo;
     }
 
     @Override
@@ -104,24 +110,22 @@ public class DAPStackFrame extends XStackFrame {
 
     @Override
     public void computeChildren(@NotNull final XCompositeNode node) {
-//        if (node.isObsolete()) return;
-//        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-//            try {
-//                boolean cached = myDebugProcess.isFrameCached(this);
-//                XValueChildrenList values = myDebugProcess.loadFrame(this);
-//                if (!node.isObsolete()) {
-//                    addChildren(node, values);
-//                }
-//                if (values != null && !cached) {
-//                    PyDebugValue.getAsyncValues(this, myDebugProcess, values);
-//                }
-//            } catch (PyDebuggerException e) {
-//                if (!node.isObsolete()) {
-//                    node.setErrorMessage("Error: unable to display frame variables.");
-//                }
-//                LOG.warn(e);
-//            }
-//        });
+        if (node.isObsolete()) {
+            return;
+        }
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            try {
+                if (!node.isObsolete()) {
+                    XValueChildrenList values = myDebugProcess.loadScopesFromFrame(this);
+                    node.addChildren(values, true);
+                }
+            } catch (Exception e) {
+                if (!node.isObsolete()) {
+                    node.setErrorMessage("Error: unable to display frame variables.");
+                }
+                LOG.warn(e);
+            }
+        });
     }
 
     @NotNull

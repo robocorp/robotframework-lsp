@@ -15,6 +15,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import org.eclipse.lsp4j.debug.*;
 import org.eclipse.lsp4j.debug.launch.DSPLauncher;
@@ -68,6 +69,53 @@ public class RobotDebugProcess extends XDebugProcess {
         final DAPStackFrame frame = new DAPStackFrame(getSession().getProject(), this, frameInfo,
                 positionConverter.convertFromDAP(frameInfo.getPosition()));
         return frame;
+    }
+
+    public XValueChildrenList loadScopesFromFrame(DAPStackFrame dapStackFrame) throws InterruptedException, ExecutionException, TimeoutException {
+        DAPStackFrameInfo frameInfo = dapStackFrame.getFrameInfo();
+        int frameId = frameInfo.getId();
+        ScopesArguments args = new ScopesArguments();
+        args.setFrameId(frameId);
+        CompletableFuture<ScopesResponse> scopesResponseCompletableFuture = remoteProxy.scopes(args);
+        ScopesResponse scopesResponse = scopesResponseCompletableFuture.get(DAPTimeouts.getGetScopesTimeout(), TimeUnit.SECONDS);
+        Scope[] scopes = scopesResponse.getScopes();
+        XValueChildrenList ret = new XValueChildrenList();
+        for (Scope s : scopes) {
+            ret.add(new DAPDebugScope(s, this));
+        }
+        return ret;
+    }
+
+    public XValueChildrenList loadVariablesFromScope(DAPDebugScope dapDebugScope) throws InterruptedException, ExecutionException, TimeoutException {
+        Scope scope = dapDebugScope.getScope();
+        int variablesReference = scope.getVariablesReference();
+        VariablesArguments args = new VariablesArguments();
+        args.setVariablesReference(variablesReference);
+        CompletableFuture<VariablesResponse> variablesResponseCompletableFuture = remoteProxy.variables(args);
+        VariablesResponse variablesResponse = variablesResponseCompletableFuture.get(DAPTimeouts.getVariablesTimeout(), TimeUnit.SECONDS);
+        Variable[] variables = variablesResponse.getVariables();
+        XValueChildrenList ret = new XValueChildrenList();
+        for (Variable v : variables) {
+            ret.add(new DAPDebugVariable(v, this));
+        }
+        return ret;
+    }
+
+    public XValueChildrenList loadVariablesFromVariable(DAPDebugVariable dapDebugVariable) throws InterruptedException, ExecutionException, TimeoutException {
+        int variablesReference = dapDebugVariable.getVariable().getVariablesReference();
+        XValueChildrenList ret = new XValueChildrenList();
+        if (variablesReference <= 0) {
+            return ret;
+        }
+        VariablesArguments args = new VariablesArguments();
+        args.setVariablesReference(variablesReference);
+        CompletableFuture<VariablesResponse> variablesResponseCompletableFuture = remoteProxy.variables(args);
+        VariablesResponse variablesResponse = variablesResponseCompletableFuture.get(DAPTimeouts.getVariablesTimeout(), TimeUnit.SECONDS);
+        Variable[] variables = variablesResponse.getVariables();
+        for (Variable v : variables) {
+            ret.add(new DAPDebugVariable(v, this));
+        }
+        return ret;
     }
 
     private class RobotBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XBreakpointProperties>> {
