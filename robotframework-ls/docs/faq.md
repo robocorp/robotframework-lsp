@@ -160,3 +160,12 @@ picks up the new environment variable value.
 **Note**: when possible using `watchdog` is recommended.
 
 
+How to solve (NO_ROBOT) too old for linting
+--------------------------------------------
+
+This means that the Python which is being used doesn't have `Robot Framework` installed.
+
+To fix this, please use a configure a Python executable which does have `Robot Framework`
+installed (either through `robot.language-server.python` or `robot.python.executable` 
+-- see: [config.md](config.md) for details) or install
+`Robot Framework` in the Python that's being used by the language server.
