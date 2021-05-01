@@ -16,4 +16,8 @@ public class DAPTimeouts {
     public static long getVariablesTimeout() {
         return 10;
     }
+
+    public static long getEvaluateTimeout() {
+        return 10;
+    }
 }

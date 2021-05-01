@@ -61,6 +61,10 @@ public class DAPStackFrame extends XStackFrame {
         return myFrameInfo;
     }
 
+    public RobotDebugProcess getDebugProcess() {
+        return myDebugProcess;
+    }
+
     @Override
     public Object getEqualityObject() {
         return STACK_FRAME_EQUALITY_OBJECT;
@@ -73,7 +77,7 @@ public class DAPStackFrame extends XStackFrame {
 
     @Override
     public XDebuggerEvaluator getEvaluator() {
-        return null;
+        return new DAPDebuggerEvaluator(this);
     }
 
     @Override
