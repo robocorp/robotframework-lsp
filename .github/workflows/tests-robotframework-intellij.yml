@@ -32,7 +32,10 @@ jobs:
             os: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
+    - name: Checkout repository and submodules
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: Set up Python ${{ matrix.python }}
       uses: actions/setup-python@v1
       with:

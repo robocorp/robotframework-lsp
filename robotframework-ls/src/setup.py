@@ -24,6 +24,47 @@ for path in [_thirdparty, _license, _copyright]:
         shutil.copy2(_origin, path)
 
 
+def collect_vendored_files():
+    """Provides pydevd files relative to "robotframework_debug_adapter.vendored".
+    """
+    import os
+
+    VENDORED_ROOT = os.path.dirname(os.path.abspath(__file__))
+    VENDORED_ROOT = os.path.join(
+        VENDORED_ROOT, "robotframework_debug_adapter", "vendored"
+    )
+    ret = []
+    for dir_, _, files in os.walk(VENDORED_ROOT):
+        for file_name in files:
+            if file_name.lower().endswith(
+                (
+                    ".py",
+                    ".pyd",
+                    ".so",
+                    ".exe",
+                    ".dll",
+                    ".dylib",
+                    ".bat",
+                    ".c",
+                    ".cpp",
+                    ".h",
+                    ".hpp",
+                    ".sh",
+                    ".pxd",
+                    ".pyx",
+                    ".md",
+                    "makefile",
+                    "license",
+                )
+            ):
+                rel_dir = os.path.relpath(dir_, VENDORED_ROOT)
+                rel_file = os.path.join(rel_dir, file_name)
+                ret.append(rel_file)
+
+    assert len(ret) > 50, "Did not collect vendored files properly. Found: %s" % (ret,)
+    return ret
+
+
 setup(
     name="robotframework-lsp",
     version="0.14.0",
@@ -76,6 +117,7 @@ setup(
         "Topic :: Text Editors :: Integrated Development Environments (IDE)",
         "Topic :: Software Development :: Debuggers",
     ],
+    package_data={"robotframework_debug_adapter.vendored": collect_vendored_files()},
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # pip to create the appropriate form of executable for the target platform.

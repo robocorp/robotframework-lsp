@@ -226,7 +226,6 @@ class _RobotTargetComm(threading.Thread):
         from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
             build_response,
         )
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import AttachResponse
 
         attach_response = build_response(request)
         self.write_message(attach_response)
@@ -481,6 +480,9 @@ def get_log():
 
 
 def main():
+    # Make sure that we can use pydevd.
+    import robotframework_debug_adapter.vendored.force_pydevd  # @UnusedImport
+
     src_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     try:
         import robotframework_ls

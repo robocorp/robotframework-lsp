@@ -1,0 +1,3 @@
+[submodule "robotframework-ls/src/robotframework_debug_adapter/vendored/vendored_pydevd"]
+	path = robotframework-ls/src/robotframework_debug_adapter/vendored/vendored_pydevd
+	url = https://github.com/fabioz/PyDev.Debugger/

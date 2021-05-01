@@ -37,7 +37,8 @@ jobs:
             os: macos-latest
 
     steps:
-    - uses: actions/checkout@v1
+    - name: Checkout repository
+      uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python }}
       uses: actions/setup-python@v1
       with:

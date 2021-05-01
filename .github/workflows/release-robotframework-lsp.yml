@@ -16,7 +16,10 @@ jobs:
       fail-fast: true
 
     steps:
-    - uses: actions/checkout@v1
+    - name: Checkout repository and submodules
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: Setup node
       uses: actions/setup-node@v1
       with:
