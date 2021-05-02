@@ -480,9 +480,6 @@ def get_log():
 
 
 def main():
-    # Make sure that we can use pydevd.
-    import robotframework_debug_adapter.vendored.force_pydevd  # @UnusedImport
-
     src_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     try:
         import robotframework_ls
@@ -510,7 +507,7 @@ def main():
 
     args = sys.argv[1:]
     assert args[0] == "--port"
-    port = args[1]
+    port = int(args[1])
     debug = True if args[2] == "--debug" else False
 
     robot_args = args[3:]
@@ -520,7 +517,26 @@ def main():
             "--listener=robotframework_debug_adapter.listeners.DebugListenerV2",
         ] + robot_args
 
-    s = connect(int(port))
+    s = connect(port)
+
+    if debug:
+        # Make sure that we can use pydevd (initialize only in debug mode).
+        import robotframework_debug_adapter.vendored.force_pydevd  # @UnusedImport
+
+        import pydevd
+
+        pydevd.settrace(
+            "127.0.0.1",
+            port=port,
+            suspend=False,
+            trace_only_current_thread=False,
+            overwrite_prev_trace=True,
+            patch_multiprocessing=False,
+            block_until_connected=True,
+            wait_for_ready_to_run=False,
+            notify_stdin=False,
+        )
+
     processor = _RobotTargetComm(s, debug=debug)
     processor.start_communication_threads()
     if not processor.configuration_done.wait(DEFAULT_TIMEOUT):

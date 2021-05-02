@@ -24,7 +24,10 @@ log = get_logger(__name__)
 
 class DebugAdapterComm(object):
     """
-    This is the class that actually processes commands.
+    This is the class that actually processes commands from the client (VSCode)
+    using the process stdin/stdout.
+    
+    It's responsible for actually starting the debugger process later on.
 
     It's created in the main thread and then control is passed on to the reader thread so that whenever
     something is read the json is handled by this processor.
@@ -81,7 +84,9 @@ class DebugAdapterComm(object):
         """
         :param InitializeRequest request:
         """
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
 
         # : :type initialize_response: InitializeResponse
         # : :type body: Capabilities
@@ -96,7 +101,9 @@ class DebugAdapterComm(object):
         """
         :param LaunchRequest request:
         """
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
         from robotframework_debug_adapter.launch_process import LaunchProcess
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import InitializedEvent
 
@@ -131,7 +138,9 @@ class DebugAdapterComm(object):
         """
         :param ConfigurationDoneRequest request:
         """
-        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import build_response
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+            build_response,
+        )
 
         configuration_done_response = build_response(request)
         launch_process = self._launch_process
