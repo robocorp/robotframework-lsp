@@ -81,6 +81,8 @@ def dap_process(dap_log_file, dap_process_stderr_file):
     env = os.environ.copy()
     env["ROBOTFRAMEWORK_DAP_LOG_LEVEL"] = "3"
     env["ROBOTFRAMEWORK_DAP_LOG_FILENAME"] = dap_log_file
+    env["PYDEVD_DEBUG_FILE"] = dap_log_file
+    env["PYDEVD_DEBUG"] = "1"
 
     dap_process = subprocess.Popen(
         [sys.executable, "-u", __main__.__file__],
@@ -241,14 +243,18 @@ class _DebuggerAPI(object):
         self.write(StepOutRequest(arguments))
         self.read(StepOutResponse)
 
-    def continue_event(self):
+    def continue_event(self, thread_id, accept_terminated=False):
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ContinueRequest
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ContinueArguments
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ContinueResponse
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
 
-        arguments = ContinueArguments(None)
+        arguments = ContinueArguments(thread_id)
         self.write(ContinueRequest(arguments))
-        self.read(ContinueResponse)
+        expected = [ContinueResponse]
+        if accept_terminated:
+            expected.append(TerminatedEvent)
+        return self.read(expect_class=tuple(expected))
 
     def launch(
         self,

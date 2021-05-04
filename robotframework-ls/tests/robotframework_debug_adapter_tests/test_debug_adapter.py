@@ -74,9 +74,9 @@ def test_error_handling(debugger_api: _DebuggerAPI):
     debugger_api.set_breakpoints(target, 4)
     debugger_api.configuration_done()
 
-    debugger_api.wait_for_thread_stopped()
+    json_hit = debugger_api.wait_for_thread_stopped()
 
-    debugger_api.continue_event()
+    debugger_api.continue_event(json_hit.thread_id)
 
     debugger_api.read(TerminatedEvent)
 
@@ -101,25 +101,77 @@ def test_simple_launch(debugger_api: _DebuggerAPI):
     )
 
 
-def test_simple_debug_launch(debugger_api: _DebuggerAPI):
+def test_simple_debug_launch_stop_on_robot(debugger_api: _DebuggerAPI):
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ThreadsResponse
 
     debugger_api.initialize()
     target = debugger_api.get_dap_case_file("case_log.robot")
+
+    debugger_api.launch(target, debug=True)
+    threads_response: ThreadsResponse = (debugger_api.list_threads())
+    assert len(threads_response.body.threads) == 1
+    thread = next(iter(threads_response.body.threads))
+    debugger_api.set_breakpoints(target, 4)
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(file="case_log.robot")
+    assert json_hit.thread_id == thread["id"]
+
+    debugger_api.continue_event(json_hit.thread_id)
+
+    debugger_api.read(TerminatedEvent)
+
+
+def test_simple_debug_launch_stop_on_pydevd(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+
+    debugger_api.initialize()
+    target = debugger_api.get_dap_case_file("case_python.robot")
+    mypylib = debugger_api.get_dap_case_file("mypylib.py")
 
     debugger_api.launch(target, debug=True)
     threads_response = (
         debugger_api.list_threads()
     )  #: :type thread_response: ThreadsResponse
     assert len(threads_response.body.threads) == 1
-    debugger_api.set_breakpoints(target, 4)
+    bp = debugger_api.get_line_index_with_content("break here", filename=mypylib)
+    debugger_api.set_breakpoints(mypylib, bp)
     debugger_api.configuration_done()
 
-    debugger_api.wait_for_thread_stopped()
+    json_hit = debugger_api.wait_for_thread_stopped(file="mypylib.py")
 
-    debugger_api.continue_event()
+    msg = debugger_api.continue_event(json_hit.thread_id, accept_terminated=True)
+    if not isinstance(msg, TerminatedEvent):
+        debugger_api.read(TerminatedEvent)
 
-    debugger_api.read(TerminatedEvent)
+
+def test_simple_debug_launch_stop_on_robot_and_pydevd(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ThreadsResponse
+
+    debugger_api.initialize()
+    target = debugger_api.get_dap_case_file("case_python.robot")
+    debugger_api.target = target
+    mypylib = debugger_api.get_dap_case_file("mypylib.py")
+
+    debugger_api.launch(target, debug=True)
+    threads_response: ThreadsResponse = (debugger_api.list_threads())
+    assert len(threads_response.body.threads) == 1
+    bp_robot = debugger_api.get_line_index_with_content("Some Call")
+    bp_pydevd = debugger_api.get_line_index_with_content("break here", filename=mypylib)
+    debugger_api.set_breakpoints(target, bp_robot)
+    debugger_api.set_breakpoints(mypylib, bp_pydevd)
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(file="case_python.robot")
+    msg = debugger_api.continue_event(json_hit.thread_id)
+
+    debugger_api.wait_for_thread_stopped(file="mypylib.py")
+    msg = debugger_api.continue_event(json_hit.thread_id, accept_terminated=True)
+
+    if not isinstance(msg, TerminatedEvent):
+        debugger_api.read(TerminatedEvent)
 
 
 def test_step_in(debugger_api: _DebuggerAPI):
@@ -141,7 +193,7 @@ def test_step_in(debugger_api: _DebuggerAPI):
 
     json_hit = debugger_api.wait_for_thread_stopped("step", name="Should Be Equal")
 
-    debugger_api.continue_event()
+    debugger_api.continue_event(json_hit.thread_id)
 
     debugger_api.read(TerminatedEvent)
 
@@ -194,7 +246,7 @@ def test_debugger_for_workflow(debugger_api, data_regression):
         basename="test_debugger_for_workflow_step_in" + suffix,
     )
 
-    debugger_api.continue_event()
+    debugger_api.continue_event(json_hit.thread_id)
 
     debugger_api.read(TerminatedEvent)
 
@@ -220,7 +272,7 @@ def test_step_next(debugger_api: _DebuggerAPI):
         "step", name="Yet Another Equal Redefined"
     )
 
-    debugger_api.continue_event()
+    debugger_api.continue_event(json_hit.thread_id)
 
     debugger_api.read(TerminatedEvent)
 
@@ -246,7 +298,7 @@ def test_step_out(debugger_api: _DebuggerAPI):
         "step", name="Yet Another Equal Redefined"
     )
 
-    debugger_api.continue_event()
+    debugger_api.continue_event(json_hit.thread_id)
 
     debugger_api.read(TerminatedEvent)
 
@@ -292,7 +344,7 @@ def test_variables(debugger_api: _DebuggerAPI):
     )
     assert "'${arg1}'" not in name_to_var and "u'${arg1}'" not in name_to_var
 
-    debugger_api.continue_event()
+    debugger_api.continue_event(json_hit.thread_id)
 
     debugger_api.read(TerminatedEvent)
 
@@ -363,13 +415,13 @@ def test_evaluate(debugger_api: _DebuggerAPI):
         target, debugger_api.get_line_index_with_content("Break 2")
     )
 
-    debugger_api.continue_event()
+    debugger_api.continue_event(json_hit.thread_id)
 
     json_hit = debugger_api.wait_for_thread_stopped(name="Should Be Equal")
     response = debugger_api.evaluate(
         "${arg1}", frameId=json_hit.frame_id, context="watch"
     )
     assert response.body.result in ("['2', '2']", "[u'2', u'2']")
-    debugger_api.continue_event()
+    debugger_api.continue_event(json_hit.thread_id)
 
     debugger_api.read(TerminatedEvent)

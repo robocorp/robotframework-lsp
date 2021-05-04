@@ -611,11 +611,19 @@ class _RobotDebuggerImpl(object):
         for frame_id in stack_list.iter_frame_ids():
             self._frame_id_to_tid.pop(frame_id)
 
+    def get_current_thread_id(self, thread=None):
+        from robotframework_debug_adapter.vendored import force_pydevd  # noqa
+        from _pydevd_bundle.pydevd_constants import get_current_thread_id
+
+        if thread is None:
+            thread = threading.current_thread()
+        return get_current_thread_id(thread)
+
     def wait_suspended(self, reason: ReasonEnum) -> None:
-        from robotframework_debug_adapter.constants import MAIN_THREAD_ID
+        thread_id = self.get_current_thread_id()
 
         log.info("wait_suspended", reason)
-        self._create_stack_info(MAIN_THREAD_ID)
+        self._create_stack_info(thread_id)
         try:
             self._run_state = STATE_PAUSED
             self._reason = reason
@@ -643,7 +651,7 @@ class _RobotDebuggerImpl(object):
 
         finally:
             self._reason = ReasonEnum.REASON_NOT_STOPPED
-            self._dispose_stack_info(MAIN_THREAD_ID)
+            self._dispose_stack_info(thread_id)
 
     @implements(IRobotDebugger.evaluate)
     def evaluate(self, frame_id, expression) -> IEvaluationInfo:

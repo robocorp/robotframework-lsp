@@ -86,6 +86,9 @@ class IRobotDebugger(Protocol):
     def iter_frame_ids(self, thread_id) -> Iterable[int]:
         pass
 
+    def get_current_thread_id(self, thread=None) -> int:
+        pass
+
 
 class INextId(Protocol):
     def __call__(self) -> T:

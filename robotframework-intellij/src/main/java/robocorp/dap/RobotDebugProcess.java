@@ -281,22 +281,34 @@ public class RobotDebugProcess extends XDebugProcess {
 
     @Override
     public void resume(@Nullable XSuspendContext context) {
-        remoteProxy.continue_(new ContinueArguments());
+        DAPSuspendContext dapCtx = (DAPSuspendContext) context;
+        ContinueArguments args = new ContinueArguments();
+        args.setThreadId(dapCtx.getThreadId());
+        remoteProxy.continue_(args);
     }
 
     @Override
     public void startStepOver(@Nullable XSuspendContext context) {
-        remoteProxy.next(new NextArguments());
+        DAPSuspendContext dapCtx = (DAPSuspendContext) context;
+        NextArguments args = new NextArguments();
+        args.setThreadId(dapCtx.getThreadId());
+        remoteProxy.next(args);
     }
 
     @Override
     public void startStepInto(@Nullable XSuspendContext context) {
-        remoteProxy.stepIn(new StepInArguments());
+        DAPSuspendContext dapCtx = (DAPSuspendContext) context;
+        StepInArguments args = new StepInArguments();
+        args.setThreadId(dapCtx.getThreadId());
+        remoteProxy.stepIn(args);
     }
 
     @Override
     public void startStepOut(@Nullable XSuspendContext context) {
-        remoteProxy.stepOut(new StepOutArguments());
+        DAPSuspendContext dapCtx = (DAPSuspendContext) context;
+        StepOutArguments args = new StepOutArguments();
+        args.setThreadId(dapCtx.getThreadId());
+        remoteProxy.stepOut(args);
     }
 
     public void threadSuspended(final DAPThreadInfo threadInfo) {

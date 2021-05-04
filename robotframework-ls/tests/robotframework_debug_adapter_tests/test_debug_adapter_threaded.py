@@ -63,8 +63,12 @@ class _ClientThread(threading.Thread):
         socket, _addr = self._server_socket.accept()
         self._server_socket.close()
 
-        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import writer_thread
-        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import reader_thread
+        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
+            writer_thread,
+        )
+        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
+            reader_thread,
+        )
         import queue
         from robotframework_debug_adapter_tests.fixtures import _DebuggerAPI
 
@@ -127,7 +131,9 @@ def test_debug_adapter_threaded(
     """
     import robotframework_ls
     from robotframework_debug_adapter_tests.fixtures import dbg_wait_for
-    from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import STOP_WRITER_THREAD
+    from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
+        STOP_WRITER_THREAD,
+    )
 
     robotframework_ls.import_robocorp_ls_core()
 
@@ -151,7 +157,9 @@ def test_debug_adapter_threaded(
 
             # Note: _RobotTargetComm takes care of initializing the debugger.
             processor = _RobotTargetComm(connect(address[1]), debug=True)
-            reader, writer = processor.start_communication_threads()
+            reader, writer = processor.start_communication_threads(
+                mark_as_pydevd_threads=False
+            )
             assert client_thread.started.wait(2)
 
             # Ok, at this point the setup should be done, let's set a breakpoint
@@ -166,8 +174,10 @@ def test_debug_adapter_threaded(
             # things on this thread).
             robot_thread.run_target(target)
 
-            client_thread.debugger_api.wait_for_thread_stopped(file=target, line=line)
-            client_thread.debugger_api.continue_event()
+            json_hit = client_thread.debugger_api.wait_for_thread_stopped(
+                file=target, line=line
+            )
+            client_thread.debugger_api.continue_event(json_hit.thread_id)
             dbg_wait_for(
                 lambda: robot_thread.result_code is not None,
                 msg="Robot execution did not finish properly.",
@@ -180,8 +190,10 @@ def test_debug_adapter_threaded(
 
             robot_thread2 = RunRobotThread(dap_logs_dir)
             robot_thread2.run_target(target)
-            client_thread.debugger_api.wait_for_thread_stopped(file=target, line=line)
-            client_thread.debugger_api.continue_event()
+            json_hit = client_thread.debugger_api.wait_for_thread_stopped(
+                file=target, line=line
+            )
+            client_thread.debugger_api.continue_event(json_hit.thread_id)
             dbg_wait_for(
                 lambda: robot_thread2.result_code is not None,
                 msg="Robot execution did not finish properly.",

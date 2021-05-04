@@ -1,19 +1,31 @@
-from functools import partial
-import itertools
-import json
+from __future__ import annotations
+
 import os
 import queue
 import threading
+import typing
 
+from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import BaseSchema
+from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+    TerminatedEvent,
+    TerminatedEventBody,
+)
 from robocorp_ls_core.robotframework_log import get_logger
-from robotframework_debug_adapter.constants import DEBUG
+from robotframework_debug_adapter.base_launch_process_target import (
+    BaseLaunchProcessTargetComm,
+)
 from robotframework_ls.options import DEFAULT_TIMEOUT
+from typing import Optional
+
+
+if typing.TYPE_CHECKING:
+    from robotframework_debug_adapter.debug_adapter_comm import DebugAdapterComm
 
 
 log = get_logger(__name__)
 
 
-class LaunchProcessDebugAdapterRobotTargetComm(threading.Thread):
+class LaunchProcessDebugAdapterRobotTargetComm(BaseLaunchProcessTargetComm):
     """
     This class is used so intermediate talking to the server.
     
@@ -28,25 +40,12 @@ class LaunchProcessDebugAdapterRobotTargetComm(threading.Thread):
             from it in the `_from_robot` method in this class.
     """
 
-    def __init__(self, debug_adapter_comm):
-        threading.Thread.__init__(self)
-        import weakref
+    def __init__(self, debug_adapter_comm: DebugAdapterComm):
+        BaseLaunchProcessTargetComm.__init__(self, debug_adapter_comm)
 
         self._server_socket = None
-        self._connected_event = threading.Event()
 
-        self._process_event_msg = None
-        self._process_event = threading.Event()
-
-        self._terminated_event_msg = None
-        self._terminated_lock = threading.Lock()
-        self._terminated_event = threading.Event()
-
-        self._write_to_robot_queue = queue.Queue()
-        self._weak_debug_adapter_comm = weakref.ref(debug_adapter_comm)
-
-        self._next_seq = partial(next, itertools.count(0))
-        self._msg_id_to_on_response = {}
+        self._write_to_robot_queue: "queue.Queue[BaseSchema]" = queue.Queue()
 
     def start_listening(self, connections_count):
         import socket
@@ -77,7 +76,7 @@ class LaunchProcessDebugAdapterRobotTargetComm(threading.Thread):
 
             # while True:
             # Only handle a single connection...
-            socket, addr = self._server_socket.accept()
+            socket, _addr = self._server_socket.accept()
 
             read_from = socket.makefile("rb")
             write_to = socket.makefile("wb")
@@ -109,61 +108,8 @@ class LaunchProcessDebugAdapterRobotTargetComm(threading.Thread):
         except:
             log.exception()
 
-    def _from_robot(self, protocol_message):
-        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
-            READER_THREAD_STOPPED,
-        )
-
-        if protocol_message is READER_THREAD_STOPPED:
-            if DEBUG:
-                log.debug(
-                    "%s when reading from robot: READER_THREAD_STOPPED."
-                    % (self.__class__.__name__,)
-                )
-            return
-
-        if DEBUG:
-            log.debug(
-                "Process json: %s\n"
-                % (json.dumps(protocol_message.to_dict(), indent=4, sort_keys=True),)
-            )
-
-        try:
-            on_response = None
-            if protocol_message.type == "request":
-                method_name = "on_%s_request" % (protocol_message.command,)
-            elif protocol_message.type == "event":
-                method_name = "on_%s_event" % (protocol_message.event,)
-            elif protocol_message.type == "response":
-                on_response = self._msg_id_to_on_response.pop(
-                    protocol_message.request_seq, None
-                )
-                method_name = "on_%s_response" % (protocol_message.command,)
-            else:
-                if DEBUG:
-                    log.debug(
-                        "Unable to decide how to deal with protocol type: %s (read from robot - %s).\n"
-                        % (protocol_message.type, self.__class__.__name__)
-                    )
-                return
-
-            if on_response is not None:
-                on_response(protocol_message)
-
-            on_request = getattr(self, method_name, None)
-
-            if on_request is not None:
-                on_request(protocol_message)
-            elif on_response is not None:
-                pass
-            else:
-                if DEBUG:
-                    log.debug(
-                        "Unhandled: %s not available when reading from robot - %s.\n"
-                        % (method_name, self.__class__.__name__)
-                    )
-        except:
-            log.exception("Error")
+    def _from_robot(self, protocol_message: BaseSchema) -> None:
+        self._handle_received_protocol_message_from_backend(protocol_message, "robot")
 
     def on_process_event(self, event):
         self._process_event_msg = event
@@ -180,26 +126,12 @@ class LaunchProcessDebugAdapterRobotTargetComm(threading.Thread):
         assert self._process_event.is_set()
         return self._process_event_msg.body.systemProcessId
 
-    def on_stopped_event(self, event):
-        debug_adapter_comm = self._weak_debug_adapter_comm()
-        if debug_adapter_comm is not None:
-            debug_adapter_comm.write_to_client_message(event)
-        else:
-            log.debug("Command processor collected in event: %s" % (event,))
-
-    def on_terminated_event(self, event):
+    def on_terminated_event(self, event: Optional[TerminatedEvent]) -> None:
         with self._terminated_lock:
             if self._terminated_event.is_set():
                 return
 
             if event is None:
-                from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
-                    TerminatedEvent,
-                )
-                from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
-                    TerminatedEventBody,
-                )
-
                 restart = False
                 event = TerminatedEvent(body=TerminatedEventBody(restart=restart))
 
@@ -212,7 +144,7 @@ class LaunchProcessDebugAdapterRobotTargetComm(threading.Thread):
         else:
             log.debug("Command processor collected in event: %s" % (event,))
 
-    def notify_exit(self):
+    def notify_exit(self) -> None:
         self.on_terminated_event(None)
         log.debug("Target process finished (forcibly exiting debug adapter in 100ms).")
 
@@ -222,12 +154,15 @@ class LaunchProcessDebugAdapterRobotTargetComm(threading.Thread):
         time.sleep(0.1)
         os._exit(0)
 
-    def write_to_robot_message(self, protocol_message, on_response=None):
+    def write_to_robot_message(
+        self, protocol_message: BaseSchema, on_response=None
+    ) -> None:
         """
         :param BaseSchema protocol_message:
             Some instance of one of the messages in the debug_adapter.schema.
         """
-        seq = protocol_message.seq = self._next_seq()
+        seq: int = self._next_seq()
+        protocol_message.seq = seq
         if on_response is not None:
             self._msg_id_to_on_response[seq] = on_response
         self._write_to_robot_queue.put(protocol_message)

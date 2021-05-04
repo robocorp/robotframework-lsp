@@ -13917,6 +13917,1321 @@ class DisassembledInstruction(BaseSchema):
         return dct
 
 
+@register_request('setDebuggerProperty')
+@register
+class SetDebuggerPropertyRequest(BaseSchema):
+    """
+    The request can be used to enable or disable debugger features.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "request"
+            ]
+        },
+        "command": {
+            "type": "string",
+            "enum": [
+                "setDebuggerProperty"
+            ]
+        },
+        "arguments": {
+            "type": "SetDebuggerPropertyArguments"
+        }
+    }
+    __refs__ = set(['arguments'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, arguments, seq=-1, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param string command: 
+        :param SetDebuggerPropertyArguments arguments: 
+        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        """
+        self.type = 'request'
+        self.command = 'setDebuggerProperty'
+        if arguments is None:
+            self.arguments = SetDebuggerPropertyArguments()
+        else:
+            self.arguments = SetDebuggerPropertyArguments(update_ids_from_dap=update_ids_from_dap, **arguments) if arguments.__class__ !=  SetDebuggerPropertyArguments else arguments
+        self.seq = seq
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        command = self.command
+        arguments = self.arguments
+        seq = self.seq
+        dct = {
+            'type': type,
+            'command': command,
+            'arguments': arguments.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'seq': seq,
+        }
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class SetDebuggerPropertyArguments(BaseSchema):
+    """
+    Arguments for 'setDebuggerProperty' request.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "ideOS": {
+            "type": [
+                "string"
+            ],
+            "description": "OS where the ide is running. Supported values [Windows, Linux]"
+        },
+        "dontTraceStartPatterns": {
+            "type": [
+                "array"
+            ],
+            "description": "Patterns to match with the start of the file paths. Matching paths will be added to a list of file where trace is ignored."
+        },
+        "dontTraceEndPatterns": {
+            "type": [
+                "array"
+            ],
+            "description": "Patterns to match with the end of the file paths. Matching paths will be added to a list of file where trace is ignored."
+        },
+        "skipSuspendOnBreakpointException": {
+            "type": [
+                "array"
+            ],
+            "description": "List of exceptions that should be skipped when doing condition evaluations."
+        },
+        "skipPrintBreakpointException": {
+            "type": [
+                "array"
+            ],
+            "description": "List of exceptions that should skip printing to stderr when doing condition evaluations."
+        },
+        "multiThreadsSingleNotification": {
+            "type": [
+                "boolean"
+            ],
+            "description": "If false then a notification is generated for each thread event. If true a single event is gnenerated, and all threads follow that behavior."
+        }
+    }
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, ideOS=None, dontTraceStartPatterns=None, dontTraceEndPatterns=None, skipSuspendOnBreakpointException=None, skipPrintBreakpointException=None, multiThreadsSingleNotification=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param ['string'] ideOS: OS where the ide is running. Supported values [Windows, Linux]
+        :param ['array'] dontTraceStartPatterns: Patterns to match with the start of the file paths. Matching paths will be added to a list of file where trace is ignored.
+        :param ['array'] dontTraceEndPatterns: Patterns to match with the end of the file paths. Matching paths will be added to a list of file where trace is ignored.
+        :param ['array'] skipSuspendOnBreakpointException: List of exceptions that should be skipped when doing condition evaluations.
+        :param ['array'] skipPrintBreakpointException: List of exceptions that should skip printing to stderr when doing condition evaluations.
+        :param ['boolean'] multiThreadsSingleNotification: If false then a notification is generated for each thread event. If true a single event is gnenerated, and all threads follow that behavior.
+        """
+        self.ideOS = ideOS
+        self.dontTraceStartPatterns = dontTraceStartPatterns
+        self.dontTraceEndPatterns = dontTraceEndPatterns
+        self.skipSuspendOnBreakpointException = skipSuspendOnBreakpointException
+        self.skipPrintBreakpointException = skipPrintBreakpointException
+        self.multiThreadsSingleNotification = multiThreadsSingleNotification
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        ideOS = self.ideOS
+        dontTraceStartPatterns = self.dontTraceStartPatterns
+        dontTraceEndPatterns = self.dontTraceEndPatterns
+        skipSuspendOnBreakpointException = self.skipSuspendOnBreakpointException
+        skipPrintBreakpointException = self.skipPrintBreakpointException
+        multiThreadsSingleNotification = self.multiThreadsSingleNotification
+        dct = {
+        }
+        if ideOS is not None:
+            dct['ideOS'] = ideOS
+        if dontTraceStartPatterns is not None:
+            dct['dontTraceStartPatterns'] = dontTraceStartPatterns
+        if dontTraceEndPatterns is not None:
+            dct['dontTraceEndPatterns'] = dontTraceEndPatterns
+        if skipSuspendOnBreakpointException is not None:
+            dct['skipSuspendOnBreakpointException'] = skipSuspendOnBreakpointException
+        if skipPrintBreakpointException is not None:
+            dct['skipPrintBreakpointException'] = skipPrintBreakpointException
+        if multiThreadsSingleNotification is not None:
+            dct['multiThreadsSingleNotification'] = multiThreadsSingleNotification
+        dct.update(self.kwargs)
+        return dct
+
+
+@register_response('setDebuggerProperty')
+@register
+class SetDebuggerPropertyResponse(BaseSchema):
+    """
+    Response to 'setDebuggerProperty' request. This is just an acknowledgement, so no body field is
+    required.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "response"
+            ]
+        },
+        "request_seq": {
+            "type": "integer",
+            "description": "Sequence number of the corresponding request."
+        },
+        "success": {
+            "type": "boolean",
+            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+        },
+        "command": {
+            "type": "string",
+            "description": "The command requested."
+        },
+        "message": {
+            "type": "string",
+            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "_enum": [
+                "cancelled"
+            ],
+            "enumDescriptions": [
+                "request was cancelled."
+            ]
+        },
+        "body": {
+            "type": [
+                "array",
+                "boolean",
+                "integer",
+                "null",
+                "number",
+                "object",
+                "string"
+            ],
+            "description": "Contains request result if success is true and optional error details if success is false."
+        }
+    }
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, request_seq, success, command, seq=-1, message=None, body=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param integer request_seq: Sequence number of the corresponding request.
+        :param boolean success: Outcome of the request.
+        If true, the request was successful and the 'body' attribute may contain the result of the request.
+        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        :param string command: The command requested.
+        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param string message: Contains the raw error in short form if 'success' is false.
+        This raw error might be interpreted by the frontend and is not shown in the UI.
+        Some predefined values exist.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        """
+        self.type = 'response'
+        self.request_seq = request_seq
+        self.success = success
+        self.command = command
+        self.seq = seq
+        self.message = message
+        self.body = body
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        request_seq = self.request_seq
+        success = self.success
+        command = self.command
+        seq = self.seq
+        message = self.message
+        body = self.body
+        dct = {
+            'type': type,
+            'request_seq': request_seq,
+            'success': success,
+            'command': command,
+            'seq': seq,
+        }
+        if message is not None:
+            dct['message'] = message
+        if body is not None:
+            dct['body'] = body
+        dct.update(self.kwargs)
+        return dct
+
+
+@register_event('pydevdInputRequested')
+@register
+class PydevdInputRequestedEvent(BaseSchema):
+    """
+    The event indicates input was requested by debuggee.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "event"
+            ]
+        },
+        "event": {
+            "type": "string",
+            "enum": [
+                "pydevdInputRequested"
+            ]
+        },
+        "body": {
+            "type": [
+                "array",
+                "boolean",
+                "integer",
+                "null",
+                "number",
+                "object",
+                "string"
+            ],
+            "description": "Event-specific information."
+        }
+    }
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, seq=-1, body=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param string event: 
+        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Event-specific information.
+        """
+        self.type = 'event'
+        self.event = 'pydevdInputRequested'
+        self.seq = seq
+        self.body = body
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        event = self.event
+        seq = self.seq
+        body = self.body
+        dct = {
+            'type': type,
+            'event': event,
+            'seq': seq,
+        }
+        if body is not None:
+            dct['body'] = body
+        dct.update(self.kwargs)
+        return dct
+
+
+@register_request('setPydevdSourceMap')
+@register
+class SetPydevdSourceMapRequest(BaseSchema):
+    """
+    Sets multiple PydevdSourceMap for a single source and clears all previous PydevdSourceMap in that
+    source.
+    
+    i.e.: Maps paths and lines in a 1:N mapping (use case: map a single file in the IDE to multiple
+    IPython cells).
+    
+    To clear all PydevdSourceMap for a source, specify an empty array.
+    
+    Interaction with breakpoints: When a new mapping is sent, breakpoints that match the source (or
+    previously matched a source) are reapplied.
+    
+    Interaction with launch pathMapping: both mappings are independent. This mapping is applied after
+    the launch pathMapping.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "request"
+            ]
+        },
+        "command": {
+            "type": "string",
+            "enum": [
+                "setPydevdSourceMap"
+            ]
+        },
+        "arguments": {
+            "type": "SetPydevdSourceMapArguments"
+        }
+    }
+    __refs__ = set(['arguments'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, arguments, seq=-1, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param string command: 
+        :param SetPydevdSourceMapArguments arguments: 
+        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        """
+        self.type = 'request'
+        self.command = 'setPydevdSourceMap'
+        if arguments is None:
+            self.arguments = SetPydevdSourceMapArguments()
+        else:
+            self.arguments = SetPydevdSourceMapArguments(update_ids_from_dap=update_ids_from_dap, **arguments) if arguments.__class__ !=  SetPydevdSourceMapArguments else arguments
+        self.seq = seq
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        command = self.command
+        arguments = self.arguments
+        seq = self.seq
+        dct = {
+            'type': type,
+            'command': command,
+            'arguments': arguments.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'seq': seq,
+        }
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class SetPydevdSourceMapArguments(BaseSchema):
+    """
+    Arguments for 'setPydevdSourceMap' request.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "source": {
+            "description": "The source location of the PydevdSourceMap; 'source.path' must be specified (e.g.: for an ipython notebook this could be something as /home/notebook/note.py).",
+            "type": "Source"
+        },
+        "pydevdSourceMaps": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/PydevdSourceMap"
+            },
+            "description": "The PydevdSourceMaps to be set to the given source (provide an empty array to clear the source mappings for a given path)."
+        }
+    }
+    __refs__ = set(['source'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, source, pydevdSourceMaps=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param Source source: The source location of the PydevdSourceMap; 'source.path' must be specified (e.g.: for an ipython notebook this could be something as /home/notebook/note.py).
+        :param array pydevdSourceMaps: The PydevdSourceMaps to be set to the given source (provide an empty array to clear the source mappings for a given path).
+        """
+        if source is None:
+            self.source = Source()
+        else:
+            self.source = Source(update_ids_from_dap=update_ids_from_dap, **source) if source.__class__ !=  Source else source
+        self.pydevdSourceMaps = pydevdSourceMaps
+        if update_ids_from_dap and self.pydevdSourceMaps:
+            for o in self.pydevdSourceMaps:
+                PydevdSourceMap.update_dict_ids_from_dap(o)
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        source = self.source
+        pydevdSourceMaps = self.pydevdSourceMaps
+        if pydevdSourceMaps and hasattr(pydevdSourceMaps[0], "to_dict"):
+            pydevdSourceMaps = [x.to_dict() for x in pydevdSourceMaps]
+        dct = {
+            'source': source.to_dict(update_ids_to_dap=update_ids_to_dap),
+        }
+        if pydevdSourceMaps is not None:
+            dct['pydevdSourceMaps'] = [PydevdSourceMap.update_dict_ids_to_dap(o) for o in pydevdSourceMaps] if (update_ids_to_dap and pydevdSourceMaps) else pydevdSourceMaps
+        dct.update(self.kwargs)
+        return dct
+
+
+@register_response('setPydevdSourceMap')
+@register
+class SetPydevdSourceMapResponse(BaseSchema):
+    """
+    Response to 'setPydevdSourceMap' request. This is just an acknowledgement, so no body field is
+    required.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "response"
+            ]
+        },
+        "request_seq": {
+            "type": "integer",
+            "description": "Sequence number of the corresponding request."
+        },
+        "success": {
+            "type": "boolean",
+            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+        },
+        "command": {
+            "type": "string",
+            "description": "The command requested."
+        },
+        "message": {
+            "type": "string",
+            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "_enum": [
+                "cancelled"
+            ],
+            "enumDescriptions": [
+                "request was cancelled."
+            ]
+        },
+        "body": {
+            "type": [
+                "array",
+                "boolean",
+                "integer",
+                "null",
+                "number",
+                "object",
+                "string"
+            ],
+            "description": "Contains request result if success is true and optional error details if success is false."
+        }
+    }
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, request_seq, success, command, seq=-1, message=None, body=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param integer request_seq: Sequence number of the corresponding request.
+        :param boolean success: Outcome of the request.
+        If true, the request was successful and the 'body' attribute may contain the result of the request.
+        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        :param string command: The command requested.
+        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param string message: Contains the raw error in short form if 'success' is false.
+        This raw error might be interpreted by the frontend and is not shown in the UI.
+        Some predefined values exist.
+        :param ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] body: Contains request result if success is true and optional error details if success is false.
+        """
+        self.type = 'response'
+        self.request_seq = request_seq
+        self.success = success
+        self.command = command
+        self.seq = seq
+        self.message = message
+        self.body = body
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        request_seq = self.request_seq
+        success = self.success
+        command = self.command
+        seq = self.seq
+        message = self.message
+        body = self.body
+        dct = {
+            'type': type,
+            'request_seq': request_seq,
+            'success': success,
+            'command': command,
+            'seq': seq,
+        }
+        if message is not None:
+            dct['message'] = message
+        if body is not None:
+            dct['body'] = body
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class PydevdSourceMap(BaseSchema):
+    """
+    Information that allows mapping a local line to a remote source/line.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "line": {
+            "type": "integer",
+            "description": "The local line to which the mapping should map to (e.g.: for an ipython notebook this would be the first line of the cell in the file)."
+        },
+        "endLine": {
+            "type": "integer",
+            "description": "The end line."
+        },
+        "runtimeSource": {
+            "description": "The path that the user has remotely -- 'source.path' must be specified (e.g.: for an ipython notebook this could be something as '<ipython-input-1-4561234>')",
+            "type": "Source"
+        },
+        "runtimeLine": {
+            "type": "integer",
+            "description": "The remote line to which the mapping should map to (e.g.: for an ipython notebook this would be always 1 as it'd map the start of the cell)."
+        }
+    }
+    __refs__ = set(['runtimeSource'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, line, endLine, runtimeSource, runtimeLine, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param integer line: The local line to which the mapping should map to (e.g.: for an ipython notebook this would be the first line of the cell in the file).
+        :param integer endLine: The end line.
+        :param Source runtimeSource: The path that the user has remotely -- 'source.path' must be specified (e.g.: for an ipython notebook this could be something as '<ipython-input-1-4561234>')
+        :param integer runtimeLine: The remote line to which the mapping should map to (e.g.: for an ipython notebook this would be always 1 as it'd map the start of the cell).
+        """
+        self.line = line
+        self.endLine = endLine
+        if runtimeSource is None:
+            self.runtimeSource = Source()
+        else:
+            self.runtimeSource = Source(update_ids_from_dap=update_ids_from_dap, **runtimeSource) if runtimeSource.__class__ !=  Source else runtimeSource
+        self.runtimeLine = runtimeLine
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        line = self.line
+        endLine = self.endLine
+        runtimeSource = self.runtimeSource
+        runtimeLine = self.runtimeLine
+        dct = {
+            'line': line,
+            'endLine': endLine,
+            'runtimeSource': runtimeSource.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'runtimeLine': runtimeLine,
+        }
+        dct.update(self.kwargs)
+        return dct
+
+
+@register_request('pydevdSystemInfo')
+@register
+class PydevdSystemInfoRequest(BaseSchema):
+    """
+    The request can be used retrieve system information, python version, etc.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "request"
+            ]
+        },
+        "command": {
+            "type": "string",
+            "enum": [
+                "pydevdSystemInfo"
+            ]
+        },
+        "arguments": {
+            "type": "PydevdSystemInfoArguments"
+        }
+    }
+    __refs__ = set(['arguments'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, seq=-1, arguments=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param string command: 
+        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param PydevdSystemInfoArguments arguments: 
+        """
+        self.type = 'request'
+        self.command = 'pydevdSystemInfo'
+        self.seq = seq
+        if arguments is None:
+            self.arguments = PydevdSystemInfoArguments()
+        else:
+            self.arguments = PydevdSystemInfoArguments(update_ids_from_dap=update_ids_from_dap, **arguments) if arguments.__class__ !=  PydevdSystemInfoArguments else arguments
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        command = self.command
+        seq = self.seq
+        arguments = self.arguments
+        dct = {
+            'type': type,
+            'command': command,
+            'seq': seq,
+        }
+        if arguments is not None:
+            dct['arguments'] = arguments.to_dict(update_ids_to_dap=update_ids_to_dap)
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class PydevdSystemInfoArguments(BaseSchema):
+    """
+    Arguments for 'pydevdSystemInfo' request.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {}
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+    
+        """
+    
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        dct = {
+        }
+        dct.update(self.kwargs)
+        return dct
+
+
+@register_response('pydevdSystemInfo')
+@register
+class PydevdSystemInfoResponse(BaseSchema):
+    """
+    Response to 'pydevdSystemInfo' request.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "response"
+            ]
+        },
+        "request_seq": {
+            "type": "integer",
+            "description": "Sequence number of the corresponding request."
+        },
+        "success": {
+            "type": "boolean",
+            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+        },
+        "command": {
+            "type": "string",
+            "description": "The command requested."
+        },
+        "message": {
+            "type": "string",
+            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "_enum": [
+                "cancelled"
+            ],
+            "enumDescriptions": [
+                "request was cancelled."
+            ]
+        },
+        "body": {
+            "type": "object",
+            "properties": {
+                "python": {
+                    "$ref": "#/definitions/PydevdPythonInfo",
+                    "description": "Information about the python version running in the current process."
+                },
+                "platform": {
+                    "$ref": "#/definitions/PydevdPlatformInfo",
+                    "description": "Information about the plarforn on which the current process is running."
+                },
+                "process": {
+                    "$ref": "#/definitions/PydevdProcessInfo",
+                    "description": "Information about the current process."
+                },
+                "pydevd": {
+                    "$ref": "#/definitions/PydevdInfo",
+                    "description": "Information about pydevd."
+                }
+            },
+            "required": [
+                "python",
+                "platform",
+                "process",
+                "pydevd"
+            ]
+        }
+    }
+    __refs__ = set(['body'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, request_seq, success, command, body, seq=-1, message=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param integer request_seq: Sequence number of the corresponding request.
+        :param boolean success: Outcome of the request.
+        If true, the request was successful and the 'body' attribute may contain the result of the request.
+        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        :param string command: The command requested.
+        :param PydevdSystemInfoResponseBody body: 
+        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param string message: Contains the raw error in short form if 'success' is false.
+        This raw error might be interpreted by the frontend and is not shown in the UI.
+        Some predefined values exist.
+        """
+        self.type = 'response'
+        self.request_seq = request_seq
+        self.success = success
+        self.command = command
+        if body is None:
+            self.body = PydevdSystemInfoResponseBody()
+        else:
+            self.body = PydevdSystemInfoResponseBody(update_ids_from_dap=update_ids_from_dap, **body) if body.__class__ !=  PydevdSystemInfoResponseBody else body
+        self.seq = seq
+        self.message = message
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        request_seq = self.request_seq
+        success = self.success
+        command = self.command
+        body = self.body
+        seq = self.seq
+        message = self.message
+        dct = {
+            'type': type,
+            'request_seq': request_seq,
+            'success': success,
+            'command': command,
+            'body': body.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'seq': seq,
+        }
+        if message is not None:
+            dct['message'] = message
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class PydevdPythonInfo(BaseSchema):
+    """
+    This object contains python version and implementation details.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "version": {
+            "type": "string",
+            "description": "Python version as a string in semver format: <major>.<minor>.<micro><releaselevel><serial>."
+        },
+        "implementation": {
+            "description": "Python version as a string in this format <major>.<minor>.<micro><releaselevel><serial>.",
+            "type": "PydevdPythonImplementationInfo"
+        }
+    }
+    __refs__ = set(['implementation'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, version=None, implementation=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string version: Python version as a string in semver format: <major>.<minor>.<micro><releaselevel><serial>.
+        :param PydevdPythonImplementationInfo implementation: Python version as a string in this format <major>.<minor>.<micro><releaselevel><serial>.
+        """
+        self.version = version
+        if implementation is None:
+            self.implementation = PydevdPythonImplementationInfo()
+        else:
+            self.implementation = PydevdPythonImplementationInfo(update_ids_from_dap=update_ids_from_dap, **implementation) if implementation.__class__ !=  PydevdPythonImplementationInfo else implementation
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        version = self.version
+        implementation = self.implementation
+        dct = {
+        }
+        if version is not None:
+            dct['version'] = version
+        if implementation is not None:
+            dct['implementation'] = implementation.to_dict(update_ids_to_dap=update_ids_to_dap)
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class PydevdPythonImplementationInfo(BaseSchema):
+    """
+    This object contains python implementation details.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "name": {
+            "type": "string",
+            "description": "Python implementation name."
+        },
+        "version": {
+            "type": "string",
+            "description": "Python version as a string in semver format: <major>.<minor>.<micro><releaselevel><serial>."
+        },
+        "description": {
+            "type": "string",
+            "description": "Optional description for this python implementation."
+        }
+    }
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, name=None, version=None, description=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string name: Python implementation name.
+        :param string version: Python version as a string in semver format: <major>.<minor>.<micro><releaselevel><serial>.
+        :param string description: Optional description for this python implementation.
+        """
+        self.name = name
+        self.version = version
+        self.description = description
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        name = self.name
+        version = self.version
+        description = self.description
+        dct = {
+        }
+        if name is not None:
+            dct['name'] = name
+        if version is not None:
+            dct['version'] = version
+        if description is not None:
+            dct['description'] = description
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class PydevdPlatformInfo(BaseSchema):
+    """
+    This object contains python version and implementation details.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "name": {
+            "type": "string",
+            "description": "Name of the platform as returned by 'sys.platform'."
+        }
+    }
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, name=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string name: Name of the platform as returned by 'sys.platform'.
+        """
+        self.name = name
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        name = self.name
+        dct = {
+        }
+        if name is not None:
+            dct['name'] = name
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class PydevdProcessInfo(BaseSchema):
+    """
+    This object contains python process details.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "pid": {
+            "type": "integer",
+            "description": "Process ID for the current process."
+        },
+        "ppid": {
+            "type": "integer",
+            "description": "Parent Process ID for the current process."
+        },
+        "executable": {
+            "type": "string",
+            "description": "Path to the executable as returned by 'sys.executable'."
+        },
+        "bitness": {
+            "type": "integer",
+            "description": "Integer value indicating the bitness of the current process."
+        }
+    }
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, pid=None, ppid=None, executable=None, bitness=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param integer pid: Process ID for the current process.
+        :param integer ppid: Parent Process ID for the current process.
+        :param string executable: Path to the executable as returned by 'sys.executable'.
+        :param integer bitness: Integer value indicating the bitness of the current process.
+        """
+        self.pid = pid
+        self.ppid = ppid
+        self.executable = executable
+        self.bitness = bitness
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        pid = self.pid
+        ppid = self.ppid
+        executable = self.executable
+        bitness = self.bitness
+        dct = {
+        }
+        if pid is not None:
+            dct['pid'] = pid
+        if ppid is not None:
+            dct['ppid'] = ppid
+        if executable is not None:
+            dct['executable'] = executable
+        if bitness is not None:
+            dct['bitness'] = bitness
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class PydevdInfo(BaseSchema):
+    """
+    This object contains details on pydevd.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "usingCython": {
+            "type": "boolean",
+            "description": "Specifies whether the cython native module is being used."
+        },
+        "usingFrameEval": {
+            "type": "boolean",
+            "description": "Specifies whether the frame eval native module is being used."
+        }
+    }
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, usingCython=None, usingFrameEval=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param boolean usingCython: Specifies whether the cython native module is being used.
+        :param boolean usingFrameEval: Specifies whether the frame eval native module is being used.
+        """
+        self.usingCython = usingCython
+        self.usingFrameEval = usingFrameEval
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        usingCython = self.usingCython
+        usingFrameEval = self.usingFrameEval
+        dct = {
+        }
+        if usingCython is not None:
+            dct['usingCython'] = usingCython
+        if usingFrameEval is not None:
+            dct['usingFrameEval'] = usingFrameEval
+        dct.update(self.kwargs)
+        return dct
+
+
+@register_request('pydevdAuthorize')
+@register
+class PydevdAuthorizeRequest(BaseSchema):
+    """
+    A request to authorize the ide to start accepting commands.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "request"
+            ]
+        },
+        "command": {
+            "type": "string",
+            "enum": [
+                "pydevdAuthorize"
+            ]
+        },
+        "arguments": {
+            "type": "PydevdAuthorizeArguments"
+        }
+    }
+    __refs__ = set(['arguments'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, arguments, seq=-1, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param string command: 
+        :param PydevdAuthorizeArguments arguments: 
+        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        """
+        self.type = 'request'
+        self.command = 'pydevdAuthorize'
+        if arguments is None:
+            self.arguments = PydevdAuthorizeArguments()
+        else:
+            self.arguments = PydevdAuthorizeArguments(update_ids_from_dap=update_ids_from_dap, **arguments) if arguments.__class__ !=  PydevdAuthorizeArguments else arguments
+        self.seq = seq
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        command = self.command
+        arguments = self.arguments
+        seq = self.seq
+        dct = {
+            'type': type,
+            'command': command,
+            'arguments': arguments.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'seq': seq,
+        }
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class PydevdAuthorizeArguments(BaseSchema):
+    """
+    Arguments for 'pydevdAuthorize' request.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "debugServerAccessToken": {
+            "type": "string",
+            "description": "The access token to access the debug server."
+        }
+    }
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, debugServerAccessToken=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string debugServerAccessToken: The access token to access the debug server.
+        """
+        self.debugServerAccessToken = debugServerAccessToken
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        debugServerAccessToken = self.debugServerAccessToken
+        dct = {
+        }
+        if debugServerAccessToken is not None:
+            dct['debugServerAccessToken'] = debugServerAccessToken
+        dct.update(self.kwargs)
+        return dct
+
+
+@register_response('pydevdAuthorize')
+@register
+class PydevdAuthorizeResponse(BaseSchema):
+    """
+    Response to 'pydevdAuthorize' request.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "response"
+            ]
+        },
+        "request_seq": {
+            "type": "integer",
+            "description": "Sequence number of the corresponding request."
+        },
+        "success": {
+            "type": "boolean",
+            "description": "Outcome of the request.\nIf true, the request was successful and the 'body' attribute may contain the result of the request.\nIf the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error')."
+        },
+        "command": {
+            "type": "string",
+            "description": "The command requested."
+        },
+        "message": {
+            "type": "string",
+            "description": "Contains the raw error in short form if 'success' is false.\nThis raw error might be interpreted by the frontend and is not shown in the UI.\nSome predefined values exist.",
+            "_enum": [
+                "cancelled"
+            ],
+            "enumDescriptions": [
+                "request was cancelled."
+            ]
+        },
+        "body": {
+            "type": "object",
+            "properties": {
+                "clientAccessToken": {
+                    "type": "string",
+                    "description": "The access token to access the client (i.e.: usually the IDE)."
+                }
+            },
+            "required": [
+                "clientAccessToken"
+            ]
+        }
+    }
+    __refs__ = set(['body'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, request_seq, success, command, body, seq=-1, message=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param integer request_seq: Sequence number of the corresponding request.
+        :param boolean success: Outcome of the request.
+        If true, the request was successful and the 'body' attribute may contain the result of the request.
+        If the value is false, the attribute 'message' contains the error in short form and the 'body' may contain additional information (see 'ErrorResponse.body.error').
+        :param string command: The command requested.
+        :param PydevdAuthorizeResponseBody body: 
+        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        :param string message: Contains the raw error in short form if 'success' is false.
+        This raw error might be interpreted by the frontend and is not shown in the UI.
+        Some predefined values exist.
+        """
+        self.type = 'response'
+        self.request_seq = request_seq
+        self.success = success
+        self.command = command
+        if body is None:
+            self.body = PydevdAuthorizeResponseBody()
+        else:
+            self.body = PydevdAuthorizeResponseBody(update_ids_from_dap=update_ids_from_dap, **body) if body.__class__ !=  PydevdAuthorizeResponseBody else body
+        self.seq = seq
+        self.message = message
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        request_seq = self.request_seq
+        success = self.success
+        command = self.command
+        body = self.body
+        seq = self.seq
+        message = self.message
+        dct = {
+            'type': type,
+            'request_seq': request_seq,
+            'success': success,
+            'command': command,
+            'body': body.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'seq': seq,
+        }
+        if message is not None:
+            dct['message'] = message
+        dct.update(self.kwargs)
+        return dct
+
+
 @register
 class ErrorResponseBody(BaseSchema):
     """
@@ -15955,6 +17270,112 @@ class MessageVariables(BaseSchema):
 
     def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
         dct = {
+        }
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class PydevdSystemInfoResponseBody(BaseSchema):
+    """
+    "body" of PydevdSystemInfoResponse
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "python": {
+            "description": "Information about the python version running in the current process.",
+            "type": "PydevdPythonInfo"
+        },
+        "platform": {
+            "description": "Information about the plarforn on which the current process is running.",
+            "type": "PydevdPlatformInfo"
+        },
+        "process": {
+            "description": "Information about the current process.",
+            "type": "PydevdProcessInfo"
+        },
+        "pydevd": {
+            "description": "Information about pydevd.",
+            "type": "PydevdInfo"
+        }
+    }
+    __refs__ = set(['python', 'platform', 'process', 'pydevd'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, python, platform, process, pydevd, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param PydevdPythonInfo python: Information about the python version running in the current process.
+        :param PydevdPlatformInfo platform: Information about the plarforn on which the current process is running.
+        :param PydevdProcessInfo process: Information about the current process.
+        :param PydevdInfo pydevd: Information about pydevd.
+        """
+        if python is None:
+            self.python = PydevdPythonInfo()
+        else:
+            self.python = PydevdPythonInfo(update_ids_from_dap=update_ids_from_dap, **python) if python.__class__ !=  PydevdPythonInfo else python
+        if platform is None:
+            self.platform = PydevdPlatformInfo()
+        else:
+            self.platform = PydevdPlatformInfo(update_ids_from_dap=update_ids_from_dap, **platform) if platform.__class__ !=  PydevdPlatformInfo else platform
+        if process is None:
+            self.process = PydevdProcessInfo()
+        else:
+            self.process = PydevdProcessInfo(update_ids_from_dap=update_ids_from_dap, **process) if process.__class__ !=  PydevdProcessInfo else process
+        if pydevd is None:
+            self.pydevd = PydevdInfo()
+        else:
+            self.pydevd = PydevdInfo(update_ids_from_dap=update_ids_from_dap, **pydevd) if pydevd.__class__ !=  PydevdInfo else pydevd
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        python = self.python
+        platform = self.platform
+        process = self.process
+        pydevd = self.pydevd
+        dct = {
+            'python': python.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'platform': platform.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'process': process.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'pydevd': pydevd.to_dict(update_ids_to_dap=update_ids_to_dap),
+        }
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class PydevdAuthorizeResponseBody(BaseSchema):
+    """
+    "body" of PydevdAuthorizeResponse
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "clientAccessToken": {
+            "type": "string",
+            "description": "The access token to access the client (i.e.: usually the IDE)."
+        }
+    }
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, clientAccessToken, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string clientAccessToken: The access token to access the client (i.e.: usually the IDE).
+        """
+        self.clientAccessToken = clientAccessToken
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        clientAccessToken = self.clientAccessToken
+        dct = {
+            'clientAccessToken': clientAccessToken,
         }
         dct.update(self.kwargs)
         return dct

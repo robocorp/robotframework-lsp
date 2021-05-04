@@ -139,26 +139,26 @@ public class DAPDebugProtocolClient implements IDebugProtocolClient {
 
     @Override
     public void output(OutputEventArguments args) {
-        singleThreadExecutor.execute(() -> {
-            RobotDebugProcess robotDebugProcess = this.weakRobotDebugProcess.get();
-            if (robotDebugProcess == null) {
-                return;
-            }
-            XDebugSession session = robotDebugProcess.getSession();
-            if (session == null) {
-                return;
-            }
-            ConsoleView consoleView = session.getConsoleView();
-            if (consoleView == null) {
-                return;
-            }
-            String category = args.getCategory();
-            ConsoleViewContentType contentType = ConsoleViewContentType.SYSTEM_OUTPUT;
-            if ("stderr".equals(category)) {
-                contentType = ConsoleViewContentType.ERROR_OUTPUT;
-            }
-            consoleView.print(args.getOutput(), contentType);
-        });
+        // Note: make output happen in the current thread (it should be reasonably fast
+        // and can affect how fast the initial output appears to the user).
+        RobotDebugProcess robotDebugProcess = this.weakRobotDebugProcess.get();
+        if (robotDebugProcess == null) {
+            return;
+        }
+        XDebugSession session = robotDebugProcess.getSession();
+        if (session == null) {
+            return;
+        }
+        ConsoleView consoleView = session.getConsoleView();
+        if (consoleView == null) {
+            return;
+        }
+        String category = args.getCategory();
+        ConsoleViewContentType contentType = ConsoleViewContentType.SYSTEM_OUTPUT;
+        if ("stderr".equals(category)) {
+            contentType = ConsoleViewContentType.ERROR_OUTPUT;
+        }
+        consoleView.print(args.getOutput(), contentType);
     }
 
     public Collection<DAPThreadInfo> getThreads() {

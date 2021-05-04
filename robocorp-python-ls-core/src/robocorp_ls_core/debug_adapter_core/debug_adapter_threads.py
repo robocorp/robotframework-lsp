@@ -109,7 +109,13 @@ def _read_len(stream, content_length) -> bytes:
         # len(buf) < content_length (just keep on going).
 
 
-def reader_thread(stream, process_command, write_queue, debug_prefix=b"read"):
+def reader_thread(
+    stream,
+    process_command,
+    write_queue,
+    debug_prefix=b"read",
+    update_ids_from_dap=False,
+):
     from robocorp_ls_core.debug_adapter_core.dap import dap_base_schema
 
     from robocorp_ls_core.debug_adapter_core.dap import (
@@ -127,9 +133,13 @@ def reader_thread(stream, process_command, write_queue, debug_prefix=b"read"):
                 # A response with success == False doesn't need to be translated
                 # as the original response (to avoid the validation).
                 if not data.get("success", True) and data.get("type") == "response":
-                    protocol_message = dap_base_schema.from_dict(data, cls=Response)
+                    protocol_message = dap_base_schema.from_dict(
+                        data, update_ids_from_dap=update_ids_from_dap, cls=Response
+                    )
                 else:
-                    protocol_message = dap_base_schema.from_dict(data)
+                    protocol_message = dap_base_schema.from_dict(
+                        data, update_ids_from_dap=update_ids_from_dap
+                    )
                 process_command(protocol_message)
             except Exception as e:
                 log.exception("Error processing message.")
@@ -149,7 +159,9 @@ def reader_thread(stream, process_command, write_queue, debug_prefix=b"read"):
         process_command(READER_THREAD_STOPPED)
 
 
-def writer_thread_no_auto_seq(stream, queue, debug_prefix="write"):
+def writer_thread_no_auto_seq(
+    stream, queue, debug_prefix="write", update_ids_to_dap=False
+):
     """
     Same as writer_thread but does not set the message 'seq' automatically
     (meant to be used when responses, which need the seq id set need to be handled). 
@@ -176,7 +188,7 @@ def writer_thread_no_auto_seq(stream, queue, debug_prefix="write"):
                     # Some protocol message
                     assert to_write.seq >= 0
                     try:
-                        to_write = to_json()
+                        to_write = to_json(update_ids_to_dap=update_ids_to_dap)
                     except:
                         log.exception("Error serializing %s to json.", to_write)
                         continue
@@ -200,7 +212,7 @@ def writer_thread_no_auto_seq(stream, queue, debug_prefix="write"):
         log.debug("Exit reader thread.")
 
 
-def writer_thread(stream, queue, debug_prefix="write"):
+def writer_thread(stream, queue, debug_prefix="write", update_ids_to_dap=False):
     """
     Same as writer_thread_no_auto_seq but sets the message 'seq' automatically.
     """
@@ -228,7 +240,7 @@ def writer_thread(stream, queue, debug_prefix="write"):
                     # Some protocol message
                     to_write.seq = _next_seq()
                     try:
-                        to_write = to_json()
+                        to_write = to_json(update_ids_to_dap=update_ids_to_dap)
                     except:
                         log.exception("Error serializing %s to json.", to_write)
                         continue

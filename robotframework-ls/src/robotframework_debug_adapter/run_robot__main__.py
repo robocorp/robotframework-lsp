@@ -4,6 +4,7 @@ import socket as socket_module
 import sys
 import threading
 import traceback
+import weakref
 
 try:
     import queue
@@ -72,6 +73,7 @@ class _RobotTargetComm(threading.Thread):
         self._write_queue = queue.Queue()
         self.configuration_done = threading.Event()
         self.terminated = threading.Event()
+        self._run_in_debug_mode = debug
 
         log = get_log()
         if debug:
@@ -102,16 +104,17 @@ class _RobotTargetComm(threading.Thread):
     def _notify_stopped(self):
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StoppedEvent
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StoppedEventBody
-        from robotframework_debug_adapter.constants import MAIN_THREAD_ID
+
+        thread_id = self.get_current_thread_id()
 
         reason = self._debugger_impl.stop_reason
         body = StoppedEventBody(
-            reason.value, allThreadsStopped=True, threadId=MAIN_THREAD_ID
+            reason.value, allThreadsStopped=True, threadId=thread_id
         )
         msg = StoppedEvent(body)
         self.write_message(msg)
 
-    def start_communication_threads(self):
+    def start_communication_threads(self, mark_as_pydevd_threads):
         from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
             writer_thread,
         )
@@ -124,17 +127,29 @@ class _RobotTargetComm(threading.Thread):
 
         writer = self._writer_thread = threading.Thread(
             target=writer_thread,
-            args=(write_to, self._write_queue, "write to dap"),
+            args=(write_to, self._write_queue, "write to dap", True),
             name="Write from robot to dap (_RobotTargetComm)",
         )
         writer.setDaemon(True)
 
         reader = self._reader_thread = threading.Thread(
             target=reader_thread,
-            args=(read_from, self.process_message, self._write_queue, b"read from dap"),
+            args=(
+                read_from,
+                self.process_message,
+                self._write_queue,
+                b"read from dap",
+                True,
+            ),
             name="Read from dap to robot (_RobotTargetComm)",
         )
         reader.setDaemon(True)
+
+        if mark_as_pydevd_threads:
+            import pydevd
+
+            pydevd.mark_as_pydevd_daemon_thread(reader)
+            pydevd.mark_as_pydevd_daemon_thread(writer)
 
         reader.start()
         writer.start()
@@ -344,16 +359,26 @@ class _RobotTargetComm(threading.Thread):
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             ThreadsResponseBody,
         )
-        from robotframework_debug_adapter.constants import MAIN_THREAD_ID
         from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
             build_response,
         )
 
-        threads = [Thread(MAIN_THREAD_ID, "Main Thread").to_dict()]
+        thread_id = self.get_current_thread_id()
+
+        threads = [Thread(thread_id, "Main Thread").to_dict()]
         kwargs = {"body": ThreadsResponseBody(threads)}
         # : :type threads_response: ThreadsResponse
         threads_response = build_response(request, kwargs)
         self.write_message(threads_response)
+
+    def get_current_thread_id(self):
+        if self._run_in_debug_mode:
+            from robotframework_debug_adapter.vendored import force_pydevd  # noqa
+            from _pydevd_bundle.pydevd_constants import get_current_thread_id
+
+            return get_current_thread_id(threading.current_thread())
+        else:
+            return 1
 
     def on_stackTrace_request(self, request):
         """
@@ -538,7 +563,8 @@ def main():
         )
 
     processor = _RobotTargetComm(s, debug=debug)
-    processor.start_communication_threads()
+    reader, writer = processor.start_communication_threads(debug)
+
     if not processor.configuration_done.wait(DEFAULT_TIMEOUT):
         sys.stderr.write(
             "Process not configured for launch in the available timeout.\n"

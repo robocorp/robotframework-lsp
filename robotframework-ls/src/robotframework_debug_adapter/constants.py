@@ -37,6 +37,3 @@ class StepEnum(enum.Enum):
     STEP_IN = 1
     STEP_NEXT = 2
     STEP_OUT = 3
-
-
-MAIN_THREAD_ID = 1

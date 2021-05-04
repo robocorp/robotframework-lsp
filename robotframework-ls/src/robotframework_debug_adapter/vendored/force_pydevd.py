@@ -100,3 +100,13 @@ if not pydevd_available:
     pydevd_defaults.PydevdCustomization.DEFAULT_PROTOCOL = (
         pydevd_constants.HTTP_JSON_PROTOCOL
     )
+
+
+from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
+    BaseSchema as RobotSchema,
+)
+from _pydevd_bundle._debug_adapter.pydevd_base_schema import BaseSchema as PyDevdSchema
+
+PyDevdSchema._obj_id_to_dap_id = RobotSchema._obj_id_to_dap_id
+PyDevdSchema._dap_id_to_obj_id = RobotSchema._dap_id_to_obj_id
+PyDevdSchema._next_dap_id = RobotSchema._next_dap_id

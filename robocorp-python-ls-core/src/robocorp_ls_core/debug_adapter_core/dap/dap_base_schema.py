@@ -23,14 +23,20 @@ log = get_logger(__name__)
 
 
 class BaseSchema(object):
+    type: str
+    seq: int
+
     @staticmethod
     def initialize_ids_translation():
         BaseSchema._dap_id_to_obj_id = {0: 0, None: None}
         BaseSchema._obj_id_to_dap_id = {0: 0, None: None}
         BaseSchema._next_dap_id = partial(next, itertools.count(1))
 
-    def to_json(self):
-        return json.dumps(self.to_dict())
+    def to_json(self, update_ids_to_dap=False):
+        return json.dumps(self.to_dict(update_ids_to_dap=update_ids_to_dap))
+
+    def to_dict(self, update_ids_to_dap=False) -> dict:
+        raise NotImplementedError("Must be overridden.")
 
     @staticmethod
     def _translate_id_to_dap(obj_id):

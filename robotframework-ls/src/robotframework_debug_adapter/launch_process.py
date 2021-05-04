@@ -14,14 +14,31 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 from functools import partial
-from robocorp_ls_core.robotframework_log import get_logger
-from robotframework_debug_adapter.constants import DEBUG
-from robotframework_ls.options import DEFAULT_TIMEOUT
 import itertools
 import os.path
 import threading
+from typing import Optional
+import typing
+
+from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import BaseSchema
+from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+    LaunchRequest,
+    LaunchResponse,
+    DisconnectRequest,
+)
+from robocorp_ls_core.robotframework_log import get_logger
+from robotframework_debug_adapter.base_launch_process_target import (
+    IProtocolMessageCallable,
+)
+from robotframework_debug_adapter.constants import DEBUG
+from robotframework_ls.options import DEFAULT_TIMEOUT
+
+
+if typing.TYPE_CHECKING:
+    from robotframework_debug_adapter.debug_adapter_comm import DebugAdapterComm
 
 log = get_logger(__name__)
 
@@ -80,14 +97,20 @@ class LaunchProcess(object):
         "_env",
     ]
 
-    def __init__(self, request, launch_response, debug_adapter_comm) -> None:
+    def __init__(
+        self,
+        request: LaunchRequest,
+        launch_response: LaunchResponse,
+        debug_adapter_comm: DebugAdapterComm,
+    ) -> None:
         self._init(request, launch_response, debug_adapter_comm)
 
-    def _init(self, request, launch_response, debug_adapter_comm) -> None:
-        """
-        :param LaunchRequest request:
-        :param LaunchResponse launch_response:
-        """
+    def _init(
+        self,
+        request: LaunchRequest,
+        launch_response: LaunchResponse,
+        debug_adapter_comm: DebugAdapterComm,
+    ) -> None:
         import weakref
         from robotframework_debug_adapter.constants import VALID_TERMINAL_OPTIONS
         from robotframework_debug_adapter.constants import TERMINAL_NONE
@@ -214,14 +237,17 @@ class LaunchProcess(object):
         self._cmdline = cmdline
 
     @property
-    def valid(self):
+    def valid(self) -> bool:
         return self._valid
 
     @property
-    def run_in_debug_mode(self):
+    def run_in_debug_mode(self) -> bool:
         return self._run_in_debug_mode
 
-    def send_and_wait_for_configuration_done_request(self):
+    def send_and_wait_for_configuration_done_request(self) -> bool:
+        """
+        :return: Whether the configuration done response was received.
+        """
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             ConfigurationDoneRequest,
         )
@@ -229,20 +255,49 @@ class LaunchProcess(object):
             ConfigurationDoneArguments,
         )
 
-        event = threading.Event()
+        event_robot = threading.Event()
+        track_events = [event_robot]
+
         self._debug_adapter_robot_target_comm.write_to_robot_message(
             ConfigurationDoneRequest(ConfigurationDoneArguments()),
-            on_response=lambda *args, **kwargs: event.set(),
+            on_response=lambda *args, **kwargs: event_robot.set(),
         )
+
+        if self._run_in_debug_mode:
+            event_pydevd = threading.Event()
+            track_events.append(event_pydevd)
+            self._debug_adapter_pydevd_target_comm.write_to_pydevd_message(
+                ConfigurationDoneRequest(ConfigurationDoneArguments()),
+                on_response=lambda *args, **kwargs: event_pydevd.set(),
+            )
+
         log.debug(
             "Wating for configuration_done response for %s seconds."
             % (DEFAULT_TIMEOUT,)
         )
-        ret = event.wait(DEFAULT_TIMEOUT)
+        ret = True
+        for event in track_events:
+            ret = ret and event.wait(DEFAULT_TIMEOUT)
+            if not ret:
+                break
         log.debug("Received configuration_done response: %s" % (ret,))
         return ret
 
-    def resend_request_to_robot(self, request):
+    def resend_request_to_stopped_target(self, request: BaseSchema, target) -> None:
+        if target is None:
+            log.debug(f"Detected no paused backend to resend request: {request}")
+            return
+
+        if target is self._debug_adapter_pydevd_target_comm:
+            self.resend_request_to_pydevd(request)
+        elif target is self._debug_adapter_robot_target_comm:
+            self.resend_request_to_robot(request)
+        else:
+            log.debug(
+                f"Stopped target unexpected: {target} for resending request: {request}"
+            )
+
+    def resend_request_to_robot(self, request: BaseSchema) -> None:
         request_seq = request.seq
 
         def on_response(response_msg):
@@ -258,6 +313,38 @@ class LaunchProcess(object):
         self._debug_adapter_robot_target_comm.write_to_robot_message(
             request, on_response
         )
+
+    def resend_request_to_pydevd(self, request: BaseSchema) -> None:
+        request_seq = request.seq
+
+        def on_response(response_msg):
+            response_msg.request_seq = request_seq
+            debug_adapter_comm = self._weak_debug_adapter_comm()
+            if debug_adapter_comm is not None:
+                debug_adapter_comm.write_to_client_message(response_msg)
+            else:
+                log.debug(
+                    "Command processor collected in resend request: %s" % (request,)
+                )
+
+        self._debug_adapter_pydevd_target_comm.write_to_pydevd_message(
+            request, on_response
+        )
+
+    def write_to_robot_and_pydevd(self, request: BaseSchema):
+        self._debug_adapter_robot_target_comm.write_to_robot_message(request)
+        if self._run_in_debug_mode:
+            self._debug_adapter_pydevd_target_comm.write_to_pydevd_message(request)
+
+    def write_to_pydevd(
+        self,
+        request: BaseSchema,
+        on_response: Optional[IProtocolMessageCallable] = None,
+    ):
+        if self._run_in_debug_mode:
+            self._debug_adapter_pydevd_target_comm.write_to_pydevd_message(
+                request, on_response=on_response
+            )
 
     def launch(self):
         from robotframework_debug_adapter.constants import TERMINAL_NONE
@@ -367,11 +454,11 @@ class LaunchProcess(object):
                 )
                 self._valid = False
 
-        self._debug_adapter_robot_target_comm.write_to_robot_message(
-            InitializeRequest(
-                InitializeRequestArguments("robot-launch-process-adapter")
-            )
+        initialize_request = InitializeRequest(
+            InitializeRequestArguments("robot-launch-process-adapter")
         )
+        self.write_to_robot_and_pydevd(initialize_request)
+
         # Note: only start listening stdout/stderr when connected.
         for t in threads:
             t.start()
@@ -386,7 +473,7 @@ class LaunchProcess(object):
         else:
             self._track_process_pid = self._debug_adapter_robot_target_comm.get_pid()
 
-    def after_launch_response_sent(self):
+    def after_launch_response_sent(self) -> None:
         if self._track_process_pid is None:
             log.debug("Unable to track if pid is alive (pid unavailable).")
             return
@@ -401,7 +488,7 @@ class LaunchProcess(object):
         t.daemon = True
         t.start()
 
-    def disconnect(self, disconnect_request):
+    def disconnect(self, disconnect_request: DisconnectRequest) -> None:
         from robocorp_ls_core.basic import kill_process_and_subprocesses
 
         if self._popen is not None:

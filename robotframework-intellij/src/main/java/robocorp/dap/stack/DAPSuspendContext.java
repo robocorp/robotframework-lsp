@@ -34,10 +34,16 @@ public class DAPSuspendContext extends XSuspendContext {
 
     private final DAPExecutionStack myActiveStack;
     private final RobotDebugProcess myDebugProcess;
+    private final DAPThreadInfo myThreadInfo;
 
     public DAPSuspendContext(@NotNull final RobotDebugProcess debugProcess, @NotNull final DAPThreadInfo threadInfo) {
         myDebugProcess = debugProcess;
         myActiveStack = new DAPExecutionStack(debugProcess, threadInfo, getThreadIcon(threadInfo));
+        myThreadInfo = threadInfo;
+    }
+
+    public int getThreadId(){
+        return myThreadInfo.getId();
     }
 
     @Override

@@ -32,9 +32,8 @@ class DummyBusyWait(object):
 
     @implements(IBusyWait.wait)
     def wait(self) -> None:
-        from robotframework_debug_adapter.constants import MAIN_THREAD_ID
-
-        frames = self.debugger_impl.get_frames(MAIN_THREAD_ID)
+        thread_id = self.debugger_impl.get_current_thread_id()
+        frames = self.debugger_impl.get_frames(thread_id)
         if not frames:
             self.stack.append([])
         else:
@@ -99,8 +98,6 @@ def test_debugger_core(debugger_api_core, robot_thread) -> None:
     from robotframework_debug_adapter.debugger_impl import install_robot_debugger
     from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
 
-    from robotframework_debug_adapter.constants import MAIN_THREAD_ID
-
     debugger_impl = install_robot_debugger()
     target = debugger_api_core.get_dap_case_file("case_log.robot")
     debugger_api_core.target = target
@@ -108,10 +105,11 @@ def test_debugger_core(debugger_api_core, robot_thread) -> None:
     debugger_impl.set_breakpoints(target, RobotBreakpoint(line))
 
     robot_thread.run_target(target)
+    thread_id = debugger_impl.get_current_thread_id(robot_thread)
     try:
         dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 1)
 
-        stack = debugger_impl.get_frames(MAIN_THREAD_ID)
+        stack = debugger_impl.get_frames(thread_id)
     finally:
         debugger_impl.step_continue()
 
@@ -124,9 +122,8 @@ def test_debugger_core_for(debugger_api, robot_thread, data_regression) -> None:
     from robotframework_debug_adapter.debugger_impl import install_robot_debugger
     from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
 
-    from robotframework_debug_adapter.constants import MAIN_THREAD_ID
-
     debugger_impl = install_robot_debugger()
+    thread_id = debugger_impl.get_current_thread_id(robot_thread)
     target = debugger_api.get_dap_case_file(
         "case_control_flow/case_control_flow_for.robot"
     )
@@ -139,19 +136,19 @@ def test_debugger_core_for(debugger_api, robot_thread, data_regression) -> None:
 
     try:
         dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 1)
-        stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
+        stack_lst.append(debugger_impl.get_frames(thread_id))
         debugger_impl.step_in()
 
         dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 2)
-        stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
+        stack_lst.append(debugger_impl.get_frames(thread_id))
         debugger_impl.step_in()
 
         dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 3)
-        stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
+        stack_lst.append(debugger_impl.get_frames(thread_id))
         debugger_impl.step_in()
 
         dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 4)
-        stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
+        stack_lst.append(debugger_impl.get_frames(thread_id))
 
         n_proceeded = 4
         if IS_ROBOT_4_ONWARDS:
@@ -160,11 +157,11 @@ def test_debugger_core_for(debugger_api, robot_thread, data_regression) -> None:
             debugger_impl.step_in()
 
             dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 5)
-            stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
+            stack_lst.append(debugger_impl.get_frames(thread_id))
             debugger_impl.step_in()
 
             dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 6)
-            stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
+            stack_lst.append(debugger_impl.get_frames(thread_id))
             n_proceeded = 6
     finally:
         debugger_impl.step_continue()
@@ -186,9 +183,8 @@ def test_debugger_core_if(debugger_api, robot_thread, data_regression) -> None:
     from robotframework_debug_adapter.debugger_impl import install_robot_debugger
     from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
 
-    from robotframework_debug_adapter.constants import MAIN_THREAD_ID
-
     debugger_impl = install_robot_debugger()
+    thread_id = debugger_impl.get_current_thread_id(robot_thread)
     target = debugger_api.get_dap_case_file(
         "case_control_flow/case_control_flow_if.robot"
     )
@@ -201,11 +197,11 @@ def test_debugger_core_if(debugger_api, robot_thread, data_regression) -> None:
 
     try:
         dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 1)
-        stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
+        stack_lst.append(debugger_impl.get_frames(thread_id))
         debugger_impl.step_in()
 
         dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 2)
-        stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
+        stack_lst.append(debugger_impl.get_frames(thread_id))
     finally:
         debugger_impl.step_in()  # Will actually finish the program now.
 
@@ -219,9 +215,8 @@ def test_debugger_core_keyword_if(debugger_api, robot_thread, data_regression) -
     from robotframework_debug_adapter.debugger_impl import install_robot_debugger
     from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
 
-    from robotframework_debug_adapter.constants import MAIN_THREAD_ID
-
     debugger_impl = install_robot_debugger()
+    thread_id = debugger_impl.get_current_thread_id(robot_thread)
     target = debugger_api.get_dap_case_file(
         "case_control_flow/case_control_flow_for.robot"
     )
@@ -243,19 +238,19 @@ def test_debugger_core_keyword_if(debugger_api, robot_thread, data_regression) -
 
     try:
         check_waited(1)
-        stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
+        stack_lst.append(debugger_impl.get_frames(thread_id))
         debugger_impl.step_in()
 
         check_waited(2)
-        stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
+        stack_lst.append(debugger_impl.get_frames(thread_id))
         debugger_impl.step_in()
 
         check_waited(3)
-        stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
+        stack_lst.append(debugger_impl.get_frames(thread_id))
         debugger_impl.step_in()
 
         check_waited(4)
-        stack_lst.append(debugger_impl.get_frames(MAIN_THREAD_ID))
+        stack_lst.append(debugger_impl.get_frames(thread_id))
     finally:
         debugger_impl.step_continue()
 
@@ -403,11 +398,11 @@ def test_debugger_core_evaluate(debugger_api_core, robot_thread, tmpdir) -> None
     from robotframework_debug_adapter.debugger_impl import install_robot_debugger
     from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
 
-    from robotframework_debug_adapter.constants import MAIN_THREAD_ID
     from robotframework_debug_adapter.debugger_impl import InvalidFrameIdError
     from robotframework_debug_adapter.debugger_impl import InvalidFrameTypeError
 
     debugger_impl = install_robot_debugger()
+    thread_id = debugger_impl.get_current_thread_id(robot_thread)
     target = debugger_api_core.get_dap_case_file("case_evaluate.robot")
     debugger_api_core.target = target
     line = debugger_api_core.get_line_index_with_content("Break 1")
@@ -421,7 +416,7 @@ def test_debugger_core_evaluate(debugger_api_core, robot_thread, tmpdir) -> None
         filename = str(tmpdir.join("file.txt"))
         filename = filename.replace("\\", "/")
         content = "file.txt"
-        frame_ids = list(debugger_impl.iter_frame_ids(MAIN_THREAD_ID))
+        frame_ids = list(debugger_impl.iter_frame_ids(thread_id))
 
         # Fail due to invalid frame id
         eval_info = debugger_impl.evaluate(

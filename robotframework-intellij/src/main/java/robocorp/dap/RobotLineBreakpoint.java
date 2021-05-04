@@ -32,6 +32,9 @@ public class RobotLineBreakpoint extends XLineBreakpointTypeBase {
 
     @Override
     public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
+        if (file.getName().endsWith(".py")) {
+            return true;
+        }
         LanguageServerDefinition languageDefinition = EditorUtils.getLanguageDefinition(file, project);
         if (languageDefinition != null && languageDefinition.ext.contains(".robot")) {
             return true;
