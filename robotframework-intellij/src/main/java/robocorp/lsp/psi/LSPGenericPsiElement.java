@@ -113,6 +113,11 @@ public class LSPGenericPsiElement extends PsiElementBase implements PsiNameIdent
     }
 
     @Override
+    public String getName() {
+        return this.text;
+    }
+
+    @Override
     public void navigate(boolean requestFocus) {
         VirtualFile file = getContainingFile().getVirtualFile();
         if (file != null) {
