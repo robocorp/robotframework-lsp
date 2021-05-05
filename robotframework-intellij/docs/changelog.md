@@ -1,3 +1,16 @@
+New in 0.15.0 (2021-05-05)
+-----------------------------
+
+- Debugger:
+  - Add line breakpoints in `.robot` or `.py` files.
+  - Evaluate keywords in debug console/hover/watch.
+  - Pause at breakpoints to inspect the stack and see variables.
+  - Step in.
+  - Step over.
+  - Step return.
+  - Continue.
+
+
 New in 0.14.0 (2021-04-14)
 -----------------------------
 

@@ -17,7 +17,7 @@ public class RobotLaunchConfigRunOptions extends LocatableRunConfigurationOption
 
     public String computeWorkingDir() {
         if (workingDir == null) {
-            if (target != null) {
+            if (target != null && !target.isEmpty()) {
                 return new File(target).getParent();
             }
         }

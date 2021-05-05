@@ -1,3 +1,10 @@
+New in 0.15.0 (2021-05-05)
+-----------------------------
+
+- Mixed-mode debugging:
+  - Add line breakpoints in `.robot` or `.py` files.
+
+
 New in 0.14.0 (2021-04-14)
 -----------------------------
 

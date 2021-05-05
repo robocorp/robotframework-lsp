@@ -36,7 +36,7 @@ may be needed (by default it'll use the `python` from the `PATH`).
 
 The settings may be configured at: `File > Settings > Languages & Frameworks > Robot Framework Language Server`.
 
-Features (0.14.0)
+Features (0.15.0)
 -----------------
 
 - Settings page for the language server (per project and global).
@@ -48,6 +48,15 @@ Features (0.14.0)
 - Code folding.
 - Browse Keywords (symbols -- note: enable the `robot.workspaceSymbolsOnlyForOpenDocs` when dealing with big workspaces).
 - Syntax highlighting (with `semanticTokens/full` request).
+- Debugger:
+  - Add line breakpoints in `.robot` or `.py` files.
+  - Evaluate keywords in debug console/hover/watch.
+  - Pause at breakpoints to inspect the stack and see variables.
+  - Step in.
+  - Step over.
+  - Step return.
+  - Continue.
+
 
 See: [Changelog](docs/changelog.md) for details.
 

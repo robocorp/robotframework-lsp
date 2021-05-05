@@ -52,7 +52,11 @@ public class RobotRunSettingsEditor extends SettingsEditor<RobotRunProfileOption
         targetRobot.setText(target != null ? target : "");
 
         List<String> args = options.args;
-        argumentsEditor.setText(ARGS_LINE_JOINER.fun(args));
+        if (args == null) {
+            argumentsEditor.setText("");
+        } else {
+            argumentsEditor.setText(ARGS_LINE_JOINER.fun(args));
+        }
 
         String workDirectory = options.workingDir;
         if (workDirectory == null) {

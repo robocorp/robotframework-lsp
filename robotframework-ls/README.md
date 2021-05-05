@@ -31,7 +31,7 @@ See: [Config](docs/config.md) for details.
 See: [FAQ](docs/faq.md) for common issues encountered while configuring the language server.
   
 
-Features (0.14.0)
+Features (0.15.0)
 -----------------
 
 - Code analysis: checks if keywords are properly imported/defined.
@@ -44,18 +44,17 @@ Features (0.14.0)
 - Syntax validation.
 - Signature Help (activated through `Ctrl + Shift + Space`).
 - Code Formatting (see: [Editor Settings](https://code.visualstudio.com/docs/getstarted/settings#_language-specific-editor-settings) for details on how to toggle code formatting just for `robotframework`).
-- Hover
-- Code folding
+- Hover.
+- Code folding.
 - Launch `.robot` files.
-- Debug `.robot` files.
-    - Debugger features:
-        - Evaluate keywords in debug console/hover/watch
-        - Add line breakpoints
-        - Pause at breakpoints to inspect the stack and see variables
-        - Step in
-        - Step over
-        - Step return
-        - Continue
+- Debugger:
+  - Add line breakpoints in `.robot` or `.py` files.
+  - Evaluate keywords in debug console/hover/watch
+  - Pause at breakpoints to inspect the stack and see variables
+  - Step in
+  - Step over
+  - Step return
+  - Continue
 
 See: [Changelog](docs/changelog.md) for details.
 

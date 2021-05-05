@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.14.0'
+version '0.15.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,20 +51,21 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.14.0
+    Release 0.15.0
     </p>
     <ul>
-    
-    <li>[Intellij] Add code-folding support to Intellij client.</li>
-    <li>[Intellij] Wrap the preferences labels at 100 columns.</li>
-    <li>[Intellij] Handle case where hover info is unavailable.</li>
-    <li>[Intellij] Consider cases where the position from the LSP is no longer valid.</li>
-    <li>[Intellij] Protect against NPE on Semantic Highlighting.</li>
-    <li>Robocop linter is now opt-in instead of opt-out.</li>
-    <li>Add code-completion for &dollar;&#123;CURDIR&#125;.</li>
-    <li>Use listener instead of monkey-patching when debugging (RF 4 onwards).</li>
-    <li>Silence exception from creating libspec for Dialogs module.</li>
-    <li>Search `PYTHONPATH` when looking to resolve relative paths in Imports.</li>
+
+    <li>Debugging RobotFramework (and Python in the same debug session) is now possible!</li>
+    <li>Debugger features:</li>
+    <ul>    
+      <li>Add line breakpoints in `.robot` or `.py` files.</li>
+      <li>Evaluate keywords in debug console/hover/watch.</li>
+      <li>Pause at breakpoints to inspect the stack and see variables.</li>
+      <li>Step in.</li>
+      <li>Step over.</li>
+      <li>Step return.</li>
+      <li>Continue.</li>
+    </ul>    
 
     </ul>    
     <br>
@@ -78,6 +79,17 @@ patchPluginXml {
     <li>Code folding</li>
     <li>Browse Keywords (symbols)</li>
     <li>Syntax highlighting (with `semanticTokens/full` request)</li>
+    <li>Debugger:</li>
+    <ul>    
+      <li>Add line breakpoints in `.robot` or `.py` files.</li>
+      <li>Evaluate keywords in debug console/hover/watch.</li>
+      <li>Pause at breakpoints to inspect the stack and see variables.</li>
+      <li>Step in.</li>
+      <li>Step over.</li>
+      <li>Step return.</li>
+      <li>Continue.</li>
+    </ul>    
+
     </ul>
     <br>
     <strong>
