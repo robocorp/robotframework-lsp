@@ -62,11 +62,13 @@
         "onCommand:robocorp.openRobotTreeSelection",
         "onCommand:robocorp.cloudUploadRobotTreeSelection",
         "onCommand:robocorp.openLocatorTreeSelection",
+        "onCommand:robocorp.rccTerminalCreateRobotTreeSelection",
         "onCommand:robocorp.sendMetric",
         "onCommand:robocorp.submitIssue.internal",
         "onCommand:robocorp.submitIssue",
         "onCommand:robocorp.configuration.diagnostics.internal",
         "onCommand:robocorp.configuration.diagnostics",
+        "onCommand:robocorp.rccTerminalNew",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -327,6 +329,12 @@
                 "icon": "$(go-to-file)"
             },
             {
+                "command": "robocorp.rccTerminalCreateRobotTreeSelection",
+                "title": "Open terminal with Robot environment",
+                "category": "Robocorp",
+                "icon": "$(terminal)"
+            },
+            {
                 "command": "robocorp.submitIssue.internal",
                 "title": "Submit issue (internal)",
                 "category": "Robocorp"
@@ -345,6 +353,12 @@
                 "command": "robocorp.configuration.diagnostics",
                 "title": "Robot Configuration Diagnostics",
                 "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.rccTerminalNew",
+                "title": "Terminal with Robot environment",
+                "category": "Robocorp",
+                "icon": "$(terminal)"
             }
         ],
         "menus": {
@@ -366,6 +380,11 @@
                 },
                 {
                     "command": "robocorp.cloudUploadRobotTreeSelection",
+                    "when": "view == robocorp-robots-tree && robocorp-code:single-robot-selected",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.rccTerminalCreateRobotTreeSelection",
                     "when": "view == robocorp-robots-tree && robocorp-code:single-robot-selected",
                     "group": "navigation"
                 },
@@ -442,6 +461,10 @@
                 },
                 {
                     "command": "robocorp.openLocatorTreeSelection",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.rccTerminalCreateRobotTreeSelection",
                     "when": "false"
                 },
                 {

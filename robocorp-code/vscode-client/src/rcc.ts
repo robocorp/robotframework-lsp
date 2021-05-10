@@ -210,7 +210,7 @@ export async function runConfigDiagnostics(rccLocation: string, robocorpHome: st
             env['ROBOCORP_HOME'] = robocorpHome;
         }
         let configureLongpathsOutput: ExecFileReturn = await execFilePromise(
-            rccLocation, ['configure', 'diagnostics', '-j'],
+            rccLocation, ['configure', 'diagnostics', '-j', '--controller', 'RobocorpCode'],
             { env: env },
         );
         OUTPUT_CHANNEL.appendLine('RCC Diagnostics:\nStdout:\n' + configureLongpathsOutput.stdout + '\nStderr:\n' + configureLongpathsOutput.stderr);

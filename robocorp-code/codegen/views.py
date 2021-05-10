@@ -67,6 +67,11 @@ TREE_VIEW_CONTAINERS = [
                             MenuGroup.NAVIGATION,
                             "robocorp-code:single-robot-selected",
                         ),
+                        Menu(
+                            "robocorp.rccTerminalCreateRobotTreeSelection",
+                            MenuGroup.NAVIGATION,
+                            "robocorp-code:single-robot-selected",
+                        ),
                         Menu("robocorp.refreshRobotsView", MenuGroup.NAVIGATION),
                     ],
                     "view/item/context": [

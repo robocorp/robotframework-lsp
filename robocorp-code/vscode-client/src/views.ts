@@ -4,6 +4,7 @@ import * as roboCommands from './robocorpCommands';
 import { ExtensionContext } from 'vscode';
 import { OUTPUT_CHANNEL } from './channel';
 import { runRobotRCC, uploadRobot } from './activities';
+import { createRccTerminal } from './rccTerminal';
 
 
 /**
@@ -365,6 +366,14 @@ export function openLocatorTreeSelection() {
         vscode.window.showTextDocument(vscode.Uri.file(locator.filePath));
     }
 }
+
+export async function createRccTerminalTreeSelection() {
+    let robot: RobotEntry = getSelectedRobot();
+    if (robot) {
+        createRccTerminal(robot.robot);
+    }
+}
+
 
 export function runSelectedRobot(noDebug: boolean) {
     let element: RobotEntry = getSelectedRobot(

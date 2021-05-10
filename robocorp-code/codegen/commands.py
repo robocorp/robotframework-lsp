@@ -316,6 +316,15 @@ COMMANDS = [
         constant="ROBOCORP_OPEN_LOCATOR_TREE_SELECTION",
     ),
     Command(
+        "robocorp.rccTerminalCreateRobotTreeSelection",
+        "Open terminal with Robot environment",
+        add_to_package_json=True,
+        server_handled=False,
+        hide_from_command_palette=True,
+        icon="$(terminal)",
+        constant="ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION",
+    ),
+    Command(
         "robocorp.sendMetric",
         "Send metric",
         add_to_package_json=False,
@@ -338,6 +347,12 @@ COMMANDS = [
         "robocorp.configuration.diagnostics",
         "Robot Configuration Diagnostics",
         server_handled=False,
+    ),
+    Command(
+        "robocorp.rccTerminalNew",
+        "Terminal with Robot environment",
+        server_handled=False,
+        icon="$(terminal)",
     ),
 ]
 
