@@ -1,6 +1,7 @@
 - command:
     arguments:
     - name: Log It
+      path: Untitled-1
       uri: untitled:Untitled-1
     command: robot.run
     title: Run
@@ -14,6 +15,7 @@
 - command:
     arguments:
     - name: Log It
+      path: Untitled-1
       uri: untitled:Untitled-1
     command: robot.debug
     title: Debug
@@ -27,6 +29,7 @@
 - command:
     arguments:
     - name: Log It2
+      path: Untitled-1
       uri: untitled:Untitled-1
     command: robot.run
     title: Run
@@ -40,6 +43,7 @@
 - command:
     arguments:
     - name: Log It2
+      path: Untitled-1
       uri: untitled:Untitled-1
     command: robot.debug
     title: Debug

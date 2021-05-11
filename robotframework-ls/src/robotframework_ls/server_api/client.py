@@ -208,6 +208,12 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         """
         return self.request_async(self._build_msg("codeLens", doc_uri=doc_uri))
 
+    def request_list_tests(self, doc_uri) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(self._build_msg("listTests", doc_uri=doc_uri))
+
     def request_hover(
         self, doc_uri: str, line: int, col: int
     ) -> Optional[IIdMessageMatcher]:
@@ -238,6 +244,5 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
 
     def __typecheckself__(self) -> None:
         from robocorp_ls_core.protocols import check_implements
-        from robocorp_ls_core.protocols import IRobotFrameworkApiClient
 
         _: IRobotFrameworkApiClient = check_implements(self)

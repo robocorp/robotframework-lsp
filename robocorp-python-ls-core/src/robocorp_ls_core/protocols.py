@@ -310,6 +310,12 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
         pass
 
 
+class ITestInfoTypedDict(TypedDict):
+    uri: str
+    path: str
+    name: str
+
+
 class ILanguageServerClient(ILanguageServerClientBase, Protocol):
     pid: Optional[int]
 

@@ -224,6 +224,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                     "robot.addPluginsDir",
                     "robot.resolveInterpreter",
                     "robot.getLanguageServerVersion",
+                    "robot.getInternalInfo",
+                    "robot.listTests",
                 ]
             },
             "hoverProvider": True,
@@ -301,6 +303,23 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         elif command == "robot.getLanguageServerVersion":
             return __version__
+
+        elif command == "robot.listTests":
+            doc_uri = arguments[0]["uri"]
+
+            rf_api_client = self._server_manager.get_others_api_client(doc_uri)
+            if rf_api_client is not None:
+                func = partial(
+                    self._async_api_request,
+                    rf_api_client,
+                    "request_list_tests",
+                    doc_uri=doc_uri,
+                )
+                func = require_monitor(func)
+                return func
+
+            log.info("Unable to list tests (no api available).")
+            return []
 
     @overrides(PythonLanguageServer.m_workspace__did_change_configuration)
     @log_and_silence_errors(log)

@@ -2,7 +2,7 @@ from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.robotframework_log import get_logger
 from typing import Optional, List, Dict
-from robocorp_ls_core.protocols import IConfig, IMonitor
+from robocorp_ls_core.protocols import IConfig, IMonitor, ITestInfoTypedDict
 from functools import partial
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
 from robocorp_ls_core.lsp import (
@@ -398,6 +398,22 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return []
 
         return code_lens(completion_context)
+
+    def m_list_tests(self, doc_uri: str):
+        func = partial(self._threaded_list_tests, doc_uri)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_list_tests(
+        self, doc_uri: str, monitor: IMonitor
+    ) -> List[ITestInfoTypedDict]:
+        from robotframework_ls.impl.code_lens import list_tests
+
+        completion_context = self._create_completion_context(doc_uri, 0, 0, monitor)
+        if completion_context is None:
+            return []
+
+        return list_tests(completion_context)
 
     def m_hover(self, doc_uri: str, line: int, col: int):
         func = partial(self._threaded_hover, doc_uri, line, col)

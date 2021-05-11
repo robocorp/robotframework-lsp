@@ -1,6 +1,7 @@
 - command:
     arguments:
     - name: Some Test
+      path: case4.robot
       uri: case4.robot
     command: robot.run
     title: Run
@@ -14,6 +15,7 @@
 - command:
     arguments:
     - name: Some Test
+      path: case4.robot
       uri: case4.robot
     command: robot.debug
     title: Debug
@@ -27,6 +29,7 @@
 - command:
     arguments:
     - name: Some Task
+      path: case4.robot
       uri: case4.robot
     command: robot.run
     title: Run
@@ -40,6 +43,7 @@
 - command:
     arguments:
     - name: Some Task
+      path: case4.robot
       uri: case4.robot
     command: robot.debug
     title: Debug

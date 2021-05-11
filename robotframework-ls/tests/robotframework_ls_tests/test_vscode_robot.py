@@ -715,9 +715,28 @@ Log It2
 
     ret = language_server.request_code_lens(uri)
     found = ret["result"]
-    # For checking the test we need to make the uri the same among runs.
-    for c in found:
-        uri = c["command"]["arguments"][0]["uri"]
-        c["command"]["arguments"][0]["uri"] = uri.split("/")[-1]
     data_regression.check(found)
+
+
+def test_list_tests_integrated(
+    language_server_io: ILanguageServerClient, ws_root_path, data_regression
+):
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    txt = """
+*** Test Case ***
+Log It
+    Log    
+
+*** Task ***
+Log It2
+    Log    
+
+"""
+    language_server.open_doc(uri, 1, txt)
+
+    ret = language_server.execute_command("robot.listTests", [{"uri": uri}])
+    found = ret["result"]
     data_regression.check(found)

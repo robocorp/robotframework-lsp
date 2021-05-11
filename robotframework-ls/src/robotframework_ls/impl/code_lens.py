@@ -3,8 +3,44 @@ from typing import List
 from robocorp_ls_core.lsp import CodeLensTypedDict
 from robotframework_ls.impl.protocols import ICompletionContext, NodeInfo
 from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.protocols import ITestInfoTypedDict
 
 log = get_logger(__name__)
+
+
+def list_tests(completion_context: ICompletionContext) -> List[ITestInfoTypedDict]:
+    from robotframework_ls.impl import ast_utils
+    from robotframework_ls.impl import robot_constants
+
+    ast = completion_context.get_ast()
+    completion_context.check_cancelled()
+
+    ret: List[ITestInfoTypedDict] = []
+    node: NodeInfo
+    for node in ast_utils.iter_tests(ast):
+        completion_context.check_cancelled()
+        try:
+
+            test_case_name_token = node.node.header.get_token(
+                robot_constants.TESTCASE_NAME
+            )
+            if test_case_name_token is None:
+                # Old versions have slashes and not spaces as a separator.
+                test_case_name_token = node.node.header.get_token(
+                    robot_constants.TESTCASE_NAME.replace(" ", "_")
+                )
+
+            ret.append(
+                {
+                    "uri": completion_context.doc.uri,
+                    "path": completion_context.doc.path,
+                    "name": test_case_name_token.value,
+                }
+            )
+        except Exception:
+            log.exception("Error listing tests in document.")
+
+    return ret
 
 
 def code_lens(completion_context: ICompletionContext) -> List[CodeLensTypedDict]:
@@ -46,6 +82,7 @@ def code_lens(completion_context: ICompletionContext) -> List[CodeLensTypedDict]
                 "arguments": [
                     {
                         "uri": completion_context.doc.uri,
+                        "path": completion_context.doc.path,
                         "name": test_case_name_token.value,
                     }
                 ],
@@ -61,7 +98,11 @@ def code_lens(completion_context: ICompletionContext) -> List[CodeLensTypedDict]
                 "title": "Debug",
                 "command": "robot.debug",
                 "arguments": [
-                    {"uri": completion_context.doc.uri, "name": node.node.name}
+                    {
+                        "uri": completion_context.doc.uri,
+                        "path": completion_context.doc.path,
+                        "name": node.node.name,
+                    }
                 ],
             }
 
