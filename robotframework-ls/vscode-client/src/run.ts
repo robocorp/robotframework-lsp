@@ -5,7 +5,7 @@ import * as path from 'path';
 interface ITestInfo {
     uri: string
     path: string
-    name: string
+    name: string  // if '*' it means that it should run all tests in the path.
 }
 
 export async function robotRun(params?: ITestInfo) {
@@ -24,10 +24,36 @@ export async function robotDebug(params?: ITestInfo) {
     }
 }
 
+export async function robotRunSuite(resource: Uri) {
+    await _debugSuite(resource, true);
+
+}
+
+export async function robotDebugSuite(resource: Uri) {
+    await _debugSuite(resource, false);
+}
+
+async function _debugSuite(resource: Uri | undefined, noDebug: boolean) {
+    try {
+        if (!resource) {
+            // i.e.: collect the tests from the file and ask which one to run.
+            let activeTextEditor: TextEditor | undefined = window.activeTextEditor;
+            if (!activeTextEditor) {
+                window.showErrorMessage('Can only run a test/task suite if the related file is currently opened.');
+                return;
+            }
+            resource = activeTextEditor.document.uri;
+        }
+        await _debug({ 'uri': resource.toString(), 'path': resource.fsPath, 'name': '*' }, noDebug);
+    } catch (error) {
+        OUTPUT_CHANNEL.appendLine(error)
+    }
+}
+
 async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
     let executeUri: Uri
     let executePath: string
-    let executeNames: string[]
+    let executeName: string
 
     if (!params) {
         // i.e.: collect the tests from the file and ask which one to run.
@@ -47,7 +73,7 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
         executePath = uri.fsPath;
 
         if (tests.length == 1) {
-            executeNames = [tests[0].name];
+            executeName = tests[0].name;
 
         } else {
             let items: string[] = [];
@@ -57,9 +83,6 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
             let selectedItem = await window.showQuickPick(
                 items,
                 {
-                    // The code is done so that could pick many, but the UI is horrible, 
-                    // presenting a list of checkboxes instead of allowing to select based
-                    // on the selection / quick filtering, so, just leave it without picking many.
                     "canPickMany": false,
                     'placeHolder': 'Please select Test / Task to run.',
                     'ignoreFocusOut': true,
@@ -68,12 +91,12 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
             if (!selectedItem) {
                 return;
             }
-            executeNames = [selectedItem];
+            executeName = selectedItem;
         }
     } else {
         executeUri = Uri.file(params.path);
         executePath = params.path;
-        executeNames = [params.name];
+        executeName = params.name;
     }
 
     let workspaceFolder = workspace.getWorkspaceFolder(executeUri);
@@ -84,15 +107,16 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
         cwd = path.dirname(executePath);
     }
 
-    let args: string[] = [];
-    for (const name of executeNames) {
-        args.push('-t');
-        args.push(name);
+    let args: string[];
+    if (executeName == '*') {
+        args = [];
+    } else {
+        args = ['-t', executeName];
     }
 
     let debugConfiguration: DebugConfiguration = {
         "type": "robotframework-lsp",
-        "name": "Robot Framework: Launch " + executeNames.join(', '),
+        "name": "Robot Framework: Launch " + executeName,
         "request": "launch",
         "cwd": cwd,
         "target": executePath,
@@ -105,6 +129,8 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
 }
 
 export async function registerRunCommands(context: ExtensionContext) {
-    context.subscriptions.push(commands.registerCommand('robot.run', robotRun));
-    context.subscriptions.push(commands.registerCommand('robot.debug', robotDebug));
+    context.subscriptions.push(commands.registerCommand('robot.runTest', robotRun));
+    context.subscriptions.push(commands.registerCommand('robot.debugTest', robotDebug));
+    context.subscriptions.push(commands.registerCommand('robot.runSuite', robotRunSuite));
+    context.subscriptions.push(commands.registerCommand('robot.debugSuite', robotDebugSuite));
 }

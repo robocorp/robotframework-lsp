@@ -718,6 +718,29 @@ Log It2
     data_regression.check(found)
 
 
+def test_code_lens_integrated_suites(
+    language_server_io: ILanguageServerClient, ws_root_path, data_regression
+):
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    txt = """
+*** Task ***
+Log It
+    Log    
+
+Log It2
+    Log    
+
+"""
+    language_server.open_doc(uri, 1, txt)
+
+    ret = language_server.request_code_lens(uri)
+    found = ret["result"]
+    data_regression.check(found)
+
+
 def test_list_tests_integrated(
     language_server_io: ILanguageServerClient, ws_root_path, data_regression
 ):

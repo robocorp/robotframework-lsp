@@ -383,6 +383,14 @@ def iter_tests(ast) -> Iterator[NodeInfo]:
         yield NodeInfo(tuple(stack), node)
 
 
+def iter_test_case_sections(ast) -> Iterator[NodeInfo]:
+    # Sections are top-level, so, we don't need to do it recursively.
+    for stack, node in _iter_nodes_filtered(
+        ast, accept_class="TestCaseSection", recursive=False
+    ):
+        yield NodeInfo(tuple(stack), node)
+
+
 def iter_keyword_arguments_as_str(ast) -> Iterator[str]:
     for token in iter_keyword_arguments_as_tokens(ast):
         yield str(token)

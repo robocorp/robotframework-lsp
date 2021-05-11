@@ -1,9 +1,37 @@
 - command:
     arguments:
+    - name: '*'
+      path: Untitled-1
+      uri: untitled:Untitled-1
+    command: robot.runTest
+    title: Run Suite
+  range:
+    end:
+      character: 0
+      line: 0
+    start:
+      character: 0
+      line: 0
+- command:
+    arguments:
+    - name: '*'
+      path: Untitled-1
+      uri: untitled:Untitled-1
+    command: robot.debugTest
+    title: Debug Suite
+  range:
+    end:
+      character: 0
+      line: 0
+    start:
+      character: 0
+      line: 0
+- command:
+    arguments:
     - name: Log It
       path: Untitled-1
       uri: untitled:Untitled-1
-    command: robot.run
+    command: robot.runTest
     title: Run
   range:
     end:
@@ -17,7 +45,7 @@
     - name: Log It
       path: Untitled-1
       uri: untitled:Untitled-1
-    command: robot.debug
+    command: robot.debugTest
     title: Debug
   range:
     end:
@@ -31,7 +59,7 @@
     - name: Log It2
       path: Untitled-1
       uri: untitled:Untitled-1
-    command: robot.run
+    command: robot.runTest
     title: Run
   range:
     end:
@@ -45,7 +73,7 @@
     - name: Log It2
       path: Untitled-1
       uri: untitled:Untitled-1
-    command: robot.debug
+    command: robot.debugTest
     title: Debug
   range:
     end:
