@@ -208,9 +208,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         server_capabilities = {
             "codeActionProvider": False,
-            # "codeLensProvider": {
-            #     "resolveProvider": False,  # We may need to make this configurable
-            # },
+            "codeLensProvider": {
+                "resolveProvider": False  # We may need to make this configurable
+            },
             "completionProvider": {
                 "resolveProvider": False  # We know everything ahead of time
             },
@@ -640,6 +640,23 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             return func
 
         log.info("Unable to get folding range (no api available).")
+        return []
+
+    def m_text_document__code_lens(self, **kwargs):
+        doc_uri = kwargs["textDocument"]["uri"]
+
+        rf_api_client = self._server_manager.get_others_api_client(doc_uri)
+        if rf_api_client is not None:
+            func = partial(
+                self._async_api_request,
+                rf_api_client,
+                "request_code_lens",
+                doc_uri=doc_uri,
+            )
+            func = require_monitor(func)
+            return func
+
+        log.info("Unable to get code lens (no api available).")
         return []
 
     def m_text_document__hover(self, **kwargs):

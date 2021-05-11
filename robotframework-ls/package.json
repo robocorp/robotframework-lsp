@@ -29,7 +29,9 @@
         "onLanguage:robotframework",
         "onDebugInitialConfigurations",
         "onDebugResolve:robotframework-lsp",
-        "onCommand:robot.resolveInterpreter"
+        "onCommand:robot.resolveInterpreter",
+        "onCommand:robot.run",
+        "onCommand:robot.debug"
     ],
     "galleryBanner": {
         "theme": "dark",

@@ -1,0 +1,52 @@
+- command:
+    arguments:
+    - name: Log It
+      uri: untitled:Untitled-1
+    command: robot.run
+    title: Run
+  range:
+    end:
+      character: 6
+      line: 2
+    start:
+      character: 0
+      line: 2
+- command:
+    arguments:
+    - name: Log It
+      uri: untitled:Untitled-1
+    command: robot.debug
+    title: Debug
+  range:
+    end:
+      character: 6
+      line: 2
+    start:
+      character: 0
+      line: 2
+- command:
+    arguments:
+    - name: Log It2
+      uri: untitled:Untitled-1
+    command: robot.run
+    title: Run
+  range:
+    end:
+      character: 7
+      line: 6
+    start:
+      character: 0
+      line: 6
+- command:
+    arguments:
+    - name: Log It2
+      uri: untitled:Untitled-1
+    command: robot.debug
+    title: Debug
+  range:
+    end:
+      character: 7
+      line: 6
+    start:
+      character: 0
+      line: 6

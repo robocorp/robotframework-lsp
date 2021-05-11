@@ -1,0 +1,52 @@
+- command:
+    arguments:
+    - name: Some Test
+      uri: case4.robot
+    command: robot.run
+    title: Run
+  range:
+    end:
+      character: 9
+      line: 3
+    start:
+      character: 0
+      line: 3
+- command:
+    arguments:
+    - name: Some Test
+      uri: case4.robot
+    command: robot.debug
+    title: Debug
+  range:
+    end:
+      character: 9
+      line: 3
+    start:
+      character: 0
+      line: 3
+- command:
+    arguments:
+    - name: Some Task
+      uri: case4.robot
+    command: robot.run
+    title: Run
+  range:
+    end:
+      character: 9
+      line: 7
+    start:
+      character: 0
+      line: 7
+- command:
+    arguments:
+    - name: Some Task
+      uri: case4.robot
+    command: robot.debug
+    title: Debug
+  range:
+    end:
+      character: 9
+      line: 7
+    start:
+      character: 0
+      line: 7

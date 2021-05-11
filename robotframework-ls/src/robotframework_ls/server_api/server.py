@@ -10,6 +10,7 @@ from robocorp_ls_core.lsp import (
     FoldingRangeTypedDict,
     HoverTypedDict,
     TextDocumentTypedDict,
+    CodeLensTypedDict,
 )
 from robotframework_ls.impl.protocols import IKeywordFound
 
@@ -381,6 +382,22 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return []
 
         return folding_range(completion_context)
+
+    def m_code_lens(self, doc_uri: str):
+        func = partial(self._threaded_code_lens, doc_uri)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_code_lens(
+        self, doc_uri: str, monitor: IMonitor
+    ) -> List[CodeLensTypedDict]:
+        from robotframework_ls.impl.code_lens import code_lens
+
+        completion_context = self._create_completion_context(doc_uri, 0, 0, monitor)
+        if completion_context is None:
+            return []
+
+        return code_lens(completion_context)
 
     def m_hover(self, doc_uri: str, line: int, col: int):
         func = partial(self._threaded_hover, doc_uri, line, col)

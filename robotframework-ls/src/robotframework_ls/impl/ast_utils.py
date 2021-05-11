@@ -378,6 +378,11 @@ def iter_variables(ast) -> Iterator[NodeInfo]:
         yield NodeInfo(tuple(stack), node)
 
 
+def iter_tests(ast) -> Iterator[NodeInfo]:
+    for stack, node in _iter_nodes_filtered(ast, accept_class="TestCase"):
+        yield NodeInfo(tuple(stack), node)
+
+
 def iter_keyword_arguments_as_str(ast) -> Iterator[str]:
     for token in iter_keyword_arguments_as_tokens(ast):
         yield str(token)

@@ -356,7 +356,15 @@ class LocationLink(_Base):
 
 
 class PositionTypedDict(TypedDict):
+    # Line position in a document (zero-based).
     line: int
+
+    # Character offset on a line in a document (zero-based). Assuming that
+    # the line is represented as a string, the `character` value represents
+    # the gap between the `character` and `character + 1`.
+    #
+    # If the character value is greater than the line length it defaults back
+    # to the line length.
     character: int
 
 
@@ -429,6 +437,32 @@ class HoverResponseTypedDict(TypedDict, total=False):
     id: Union[int, str, None]
     result: HoverTypedDict  # Optional
     error: ResponseErrorTypedDict  # Optional
+
+
+class CommandTypedDict(TypedDict, total=False):
+    # Title of the command, like `save`.
+    title: str
+
+    # The identifier of the actual command handler.
+    command: str
+
+    # Arguments that the command handler should be
+    # invoked with.
+    arguments: Optional[list]
+
+
+class CodeLensTypedDict(TypedDict, total=False):
+
+    # The range in which this code lens is valid. Should only span a single
+    # line.
+    range: RangeTypedDict
+
+    # The command this code lens represents.
+    command: Optional[CommandTypedDict]
+
+    # A data entry field that is preserved on a code lens item between a code
+    # lens and a code lens resolve request.
+    data: Optional[Any]
 
 
 class FoldingRangeTypedDict(TypedDict, total=False):

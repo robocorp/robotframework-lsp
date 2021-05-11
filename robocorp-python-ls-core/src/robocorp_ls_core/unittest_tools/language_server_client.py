@@ -232,6 +232,17 @@ class LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    @implements(ILanguageServerClient.request_code_lens)
+    def request_code_lens(self, uri):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "textDocument/codeLens",
+                "params": {"textDocument": {"uri": uri}},
+            }
+        )
+
     @implements(ILanguageServerClient.request_workspace_symbols)
     def request_workspace_symbols(self, query: Optional[str] = None):
         return self.request(
