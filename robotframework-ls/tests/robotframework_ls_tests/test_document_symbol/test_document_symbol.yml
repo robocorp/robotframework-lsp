@@ -1,0 +1,132 @@
+- children: []
+  kind: 3
+  name: Settings
+  range:
+    end:
+      character: 16
+      line: 2
+    start:
+      character: 0
+      line: 2
+  selectionRange:
+    end:
+      character: 16
+      line: 2
+    start:
+      character: 0
+      line: 2
+- children:
+  - kind: 5
+    name: Some Test
+    range:
+      end:
+        character: 9
+        line: 6
+      start:
+        character: 0
+        line: 6
+    selectionRange:
+      end:
+        character: 9
+        line: 6
+      start:
+        character: 0
+        line: 6
+  kind: 3
+  name: Test Cases
+  range:
+    end:
+      character: 18
+      line: 5
+    start:
+      character: 0
+      line: 5
+  selectionRange:
+    end:
+      character: 18
+      line: 5
+    start:
+      character: 0
+      line: 5
+- children:
+  - kind: 5
+    name: Some Task
+    range:
+      end:
+        character: 9
+        line: 10
+      start:
+        character: 0
+        line: 10
+    selectionRange:
+      end:
+        character: 9
+        line: 10
+      start:
+        character: 0
+        line: 10
+  - kind: 5
+    name: Some Task 2
+    range:
+      end:
+        character: 11
+        line: 13
+      start:
+        character: 0
+        line: 13
+    selectionRange:
+      end:
+        character: 11
+        line: 13
+      start:
+        character: 0
+        line: 13
+  kind: 3
+  name: Task
+  range:
+    end:
+      character: 12
+      line: 9
+    start:
+      character: 0
+      line: 9
+  selectionRange:
+    end:
+      character: 12
+      line: 9
+    start:
+      character: 0
+      line: 9
+- children:
+  - kind: 12
+    name: Some Keyword
+    range:
+      end:
+        character: 12
+        line: 17
+      start:
+        character: 0
+        line: 17
+    selectionRange:
+      end:
+        character: 12
+        line: 17
+      start:
+        character: 0
+        line: 17
+  kind: 3
+  name: Keyword
+  range:
+    end:
+      character: 15
+      line: 16
+    start:
+      character: 0
+      line: 16
+  selectionRange:
+    end:
+      character: 15
+      line: 16
+    start:
+      character: 0
+      line: 16

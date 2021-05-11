@@ -591,3 +591,15 @@ def _append_eol_to_prev_token(last_token, eol_token_contents):
         col_offset=last_token.col_offset,
         error=last_token.error,
     )
+
+
+def create_range_from_token(token):
+    from robocorp_ls_core.lsp import RangeTypedDict, PositionTypedDict
+
+    start: PositionTypedDict = {"line": token.lineno - 1, "character": token.col_offset}
+    end: PositionTypedDict = {
+        "line": token.lineno - 1,
+        "character": token.end_col_offset,
+    }
+    code_lens_range: RangeTypedDict = {"start": start, "end": end}
+    return code_lens_range

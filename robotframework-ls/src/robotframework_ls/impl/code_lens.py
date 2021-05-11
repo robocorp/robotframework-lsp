@@ -43,27 +43,13 @@ def list_tests(completion_context: ICompletionContext) -> List[ITestInfoTypedDic
     return ret
 
 
-def create_range_from_token(test_case_name_token):
-    from robocorp_ls_core.lsp import RangeTypedDict, PositionTypedDict
-
-    start: PositionTypedDict = {
-        "line": test_case_name_token.lineno - 1,
-        "character": test_case_name_token.col_offset,
-    }
-    end: PositionTypedDict = {
-        "line": test_case_name_token.lineno - 1,
-        "character": test_case_name_token.end_col_offset,
-    }
-    code_lens_range: RangeTypedDict = {"start": start, "end": end}
-    return code_lens_range
-
-
 def code_lens(completion_context: ICompletionContext) -> List[CodeLensTypedDict]:
     from robotframework_ls.impl import ast_utils
     from robocorp_ls_core.lsp import CommandTypedDict
     from robot.api import Token  # noqa
     from robocorp_ls_core.lsp import PositionTypedDict
     from robocorp_ls_core.lsp import RangeTypedDict
+    from robotframework_ls.impl.ast_utils import create_range_from_token
 
     ast = completion_context.get_ast()
     completion_context.check_cancelled()

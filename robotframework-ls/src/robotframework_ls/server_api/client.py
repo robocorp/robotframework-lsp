@@ -208,6 +208,12 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         """
         return self.request_async(self._build_msg("codeLens", doc_uri=doc_uri))
 
+    def request_document_symbol(self, doc_uri) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(self._build_msg("documentSymbol", doc_uri=doc_uri))
+
     def request_list_tests(self, doc_uri) -> Optional[IIdMessageMatcher]:
         """
         :Note: async complete.

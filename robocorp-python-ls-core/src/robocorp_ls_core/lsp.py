@@ -19,6 +19,7 @@
 https://github.com/microsoft/language-server-protocol/tree/gh-pages/_specifications
 https://microsoft.github.io/language-server-protocol/specification
 """
+from __future__ import annotations
 from typing import List, Union, Optional, Any
 import typing
 
@@ -449,6 +450,41 @@ class CommandTypedDict(TypedDict, total=False):
     # Arguments that the command handler should be
     # invoked with.
     arguments: Optional[list]
+
+
+class DocumentSymbolTypedDict(TypedDict, total=False):
+
+    # The name of this symbol. Will be displayed in the user interface and
+    # therefore must not be an empty string or a string only consisting of
+    # white spaces.
+    name: str
+
+    # More detail for this symbol, e.g the signature of a function.
+    detail: Optional[str]
+
+    # The kind of this symbol.
+    kind: int  # SymbolKind
+
+    # Tags for this document symbol.
+    # @since 3.16.0
+    tags: Optional[List[int]]
+
+    # Indicates if this symbol is deprecated.
+    # @deprecated Use tags instead
+    deprecated: Optional[bool]
+
+    # The range enclosing this symbol not including leading/trailing whitespace
+    # but everything else like comments. This information is typically used to
+    # determine if the clients cursor is inside the symbol to reveal in the
+    # symbol in the UI.
+    range: Range
+
+    # The range that should be selected and revealed when this symbol is being
+    # picked, e.g. the name of a function. Must be contained by the `range`.
+    selectionRange: RangeTypedDict
+
+    # Children of this symbol, e.g. properties of a class.
+    children: Optional[list]  # Optional[List[DocumentSymbolTypedDict]]
 
 
 class CodeLensTypedDict(TypedDict, total=False):

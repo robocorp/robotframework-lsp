@@ -180,6 +180,18 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         workspaceFolders=None,
         **_kwargs,
     ) -> dict:
+        # capabilities = _kwargs.get("capabilities", {})
+        # text_document_capabilities = capabilities.get("textDocument", {})
+        # document_symbol_capabilities = text_document_capabilities.get(
+        #     "documentSymbol", {}
+        # )
+        # hierarchical_document_symbol_support = document_symbol_capabilities.get(
+        #     "hierarchicalDocumentSymbolSupport", False
+        # )
+        # self._hierarchical_document_symbol_support = (
+        #     hierarchical_document_symbol_support
+        # )
+
         ret = PythonLanguageServer.m_initialize(
             self,
             processId=processId,
@@ -217,7 +229,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             "documentFormattingProvider": True,
             "documentHighlightProvider": False,
             "documentRangeFormattingProvider": False,
-            "documentSymbolProvider": False,
+            "documentSymbolProvider": True,
             "definitionProvider": True,
             "executeCommandProvider": {
                 "commands": [
@@ -676,6 +688,23 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             return func
 
         log.info("Unable to get code lens (no api available).")
+        return []
+
+    def m_text_document__document_symbol(self, **kwargs):
+        doc_uri = kwargs["textDocument"]["uri"]
+
+        rf_api_client = self._server_manager.get_others_api_client(doc_uri)
+        if rf_api_client is not None:
+            func = partial(
+                self._async_api_request,
+                rf_api_client,
+                "request_document_symbol",
+                doc_uri=doc_uri,
+            )
+            func = require_monitor(func)
+            return func
+
+        log.info("Unable to get document symbol (no api available).")
         return []
 
     def m_text_document__hover(self, **kwargs):

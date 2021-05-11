@@ -243,6 +243,17 @@ class LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    @implements(ILanguageServerClient.request_document_symbol)
+    def request_document_symbol(self, uri):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "textDocument/document_symbol",
+                "params": {"textDocument": {"uri": uri}},
+            }
+        )
+
     @implements(ILanguageServerClient.request_workspace_symbols)
     def request_workspace_symbols(self, query: Optional[str] = None):
         return self.request(

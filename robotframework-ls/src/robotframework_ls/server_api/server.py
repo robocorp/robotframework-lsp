@@ -11,6 +11,7 @@ from robocorp_ls_core.lsp import (
     HoverTypedDict,
     TextDocumentTypedDict,
     CodeLensTypedDict,
+    DocumentSymbolTypedDict,
 )
 from robotframework_ls.impl.protocols import IKeywordFound
 
@@ -398,6 +399,22 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return []
 
         return code_lens(completion_context)
+
+    def m_document_symbol(self, doc_uri: str):
+        func = partial(self._threaded_document_symbol, doc_uri)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_document_symbol(
+        self, doc_uri: str, monitor: IMonitor
+    ) -> List[DocumentSymbolTypedDict]:
+        from robotframework_ls.impl.document_symbol import document_symbol
+
+        completion_context = self._create_completion_context(doc_uri, 0, 0, monitor)
+        if completion_context is None:
+            return []
+
+        return document_symbol(completion_context)
 
     def m_list_tests(self, doc_uri: str):
         func = partial(self._threaded_list_tests, doc_uri)

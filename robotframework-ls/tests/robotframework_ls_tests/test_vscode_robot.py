@@ -763,3 +763,26 @@ Log It2
     ret = language_server.execute_command("robot.listTests", [{"uri": uri}])
     found = ret["result"]
     data_regression.check(found)
+
+
+def test_document_symbol_integrated(
+    language_server_io: ILanguageServerClient, ws_root_path, data_regression
+):
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    txt = """
+*** Task ***
+Log It
+    Log    
+
+Log It2
+    Log    
+
+"""
+    language_server.open_doc(uri, 1, txt)
+
+    ret = language_server.request_document_symbol(uri)
+    found = ret["result"]
+    data_regression.check(found)

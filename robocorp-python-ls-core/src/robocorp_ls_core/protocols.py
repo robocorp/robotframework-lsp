@@ -393,6 +393,9 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
     def request_code_lens(self, uri: str):
         pass
 
+    def request_document_symbol(self, uri: str):
+        pass
+
     def request_workspace_symbols(self, query: Optional[str] = None):
         pass
 

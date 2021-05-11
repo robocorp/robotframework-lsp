@@ -1,0 +1,49 @@
+- children:
+  - kind: 5
+    name: Log It
+    range:
+      end:
+        character: 6
+        line: 2
+      start:
+        character: 0
+        line: 2
+    selectionRange:
+      end:
+        character: 6
+        line: 2
+      start:
+        character: 0
+        line: 2
+  - kind: 5
+    name: Log It2
+    range:
+      end:
+        character: 7
+        line: 5
+      start:
+        character: 0
+        line: 5
+    selectionRange:
+      end:
+        character: 7
+        line: 5
+      start:
+        character: 0
+        line: 5
+  kind: 3
+  name: Task
+  range:
+    end:
+      character: 12
+      line: 1
+    start:
+      character: 0
+      line: 1
+  selectionRange:
+    end:
+      character: 12
+      line: 1
+    start:
+      character: 0
+      line: 1
