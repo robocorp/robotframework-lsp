@@ -1,8 +1,8 @@
 - command:
     arguments:
     - name: '*'
-      path: case4.robot
-      uri: case4.robot
+      path: Untitled-1
+      uri: untitled:Untitled-1
     command: robot.runTest
     title: Run Suite
   range:
@@ -15,8 +15,8 @@
 - command:
     arguments:
     - name: '*'
-      path: case4.robot
-      uri: case4.robot
+      path: Untitled-1
+      uri: untitled:Untitled-1
     command: robot.debugTest
     title: Debug Suite
   range:
@@ -28,57 +28,57 @@
       line: 0
 - command:
     arguments:
-    - name: Some Test
-      path: case4.robot
-      uri: case4.robot
+    - name: Log It
+      path: Untitled-1
+      uri: untitled:Untitled-1
     command: robot.runTest
     title: Run
   range:
     end:
-      character: 9
-      line: 3
+      character: 6
+      line: 2
     start:
       character: 0
-      line: 3
+      line: 2
 - command:
     arguments:
-    - name: Some Test
-      path: case4.robot
-      uri: case4.robot
+    - name: Log It
+      path: Untitled-1
+      uri: untitled:Untitled-1
     command: robot.debugTest
     title: Debug
   range:
     end:
-      character: 9
-      line: 3
+      character: 6
+      line: 2
     start:
       character: 0
-      line: 3
+      line: 2
 - command:
     arguments:
-    - name: Some Task
-      path: case4.robot
-      uri: case4.robot
+    - name: Log It2
+      path: Untitled-1
+      uri: untitled:Untitled-1
     command: robot.runTest
     title: Run
   range:
     end:
-      character: 9
-      line: 7
+      character: 7
+      line: 5
     start:
       character: 0
-      line: 7
+      line: 5
 - command:
     arguments:
-    - name: Some Task
-      path: case4.robot
-      uri: case4.robot
+    - name: Log It2
+      path: Untitled-1
+      uri: untitled:Untitled-1
     command: robot.debugTest
     title: Debug
   range:
     end:
-      character: 9
-      line: 7
+      character: 7
+      line: 5
     start:
       character: 0
-      line: 7
+      line: 5

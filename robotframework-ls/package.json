@@ -34,8 +34,10 @@
         "onCommand:robot.getInternalInfo",
         "onCommand:robot.resolveInterpreter",
         "onCommand:robot.listTests",
-        "onCommand:robot.run",
-        "onCommand:robot.debug"
+        "onCommand:robot.runTest",
+        "onCommand:robot.debugTest",
+        "onCommand:robot.runSuite",
+        "onCommand:robot.debugSuite"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -44,18 +46,60 @@
     "contributes": {
         "commands": [
             {
-                "command": "robot.run",
+                "command": "robot.runTest",
                 "category": "Robot Framework",
                 "title": "Run Test/Task",
                 "icon": "$(play)"
             },
             {
-                "command": "robot.debug",
+                "command": "robot.debugTest",
                 "category": "Robot Framework",
                 "title": "Debug Test/Task",
                 "icon": "$(debug)"
+            },
+            {
+                "command": "robot.runSuite",
+                "category": "Robot Framework",
+                "title": "Run Tests/Tasks Suite",
+                "icon": "$(run-all)"
+            },
+            {
+                "command": "robot.debugSuite",
+                "category": "Robot Framework",
+                "title": "Debug Tests/Tasks Suite",
+                "icon": "$(debug-alt)"
             }
         ],
+        "menus": {
+            "editor/title/run": [
+                {
+                    "command": "robot.runSuite",
+                    "title": "Run Tests/Tasks Suite",
+                    "group": "1_run@robot_run1",
+                    "when": "resourceExtname == .robot && !isInDiffEditor"
+                },
+                {
+                    "command": "robot.debugSuite",
+                    "title": "Debug Tests/Tasks Suite",
+                    "group": "1_run@robot_run2",
+                    "when": "resourceExtname == .robot && !isInDiffEditor"
+                }
+            ],
+            "explorer/context": [
+                {
+                    "command": "robot.runSuite",
+                    "title": "Run Tests/Tasks Suite",
+                    "group": "9_robot_run@1",
+                    "when": "resourceExtname == .robot || explorerResourceIsFolder"
+                },
+                {
+                    "command": "robot.debugSuite",
+                    "title": "Debug Tests/Tasks Suite",
+                    "group": "9_robot_run@2",
+                    "when": "resourceExtname == .robot || explorerResourceIsFolder"
+                }
+            ]
+        },
         "semanticTokenScopes": [
             {
                 "scopes": {
