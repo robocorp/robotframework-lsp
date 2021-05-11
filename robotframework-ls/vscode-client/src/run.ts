@@ -1,6 +1,8 @@
-import { commands, debug, DebugConfiguration, DebugSessionOptions, ExtensionContext, TextEditor, Uri, window, workspace } from "vscode";
+import { commands, debug, DebugConfiguration, DebugSessionOptions, ExtensionContext, TextEditor, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { OUTPUT_CHANNEL } from "./extension";
 import * as path from 'path';
+import { parse } from 'jsonc-parser';
+import * as fs from 'fs';
 
 interface ITestInfo {
     uri: string
@@ -26,11 +28,51 @@ export async function robotDebug(params?: ITestInfo) {
 
 export async function robotRunSuite(resource: Uri) {
     await _debugSuite(resource, true);
-
 }
 
 export async function robotDebugSuite(resource: Uri) {
     await _debugSuite(resource, false);
+}
+
+
+async function checkFileExists(file) {
+    return fs.promises.access(file, fs.constants.F_OK)
+        .then(() => true)
+        .catch(() => false)
+}
+
+
+async function readAllDebugConfigs(workspaceFolder: WorkspaceFolder): Promise<DebugConfiguration[]> {
+    const filename = path.join(workspaceFolder.uri.fsPath, '.vscode', 'launch.json');
+    if (!(await checkFileExists(filename))) {
+        return [];
+    }
+
+    try {
+        const text: string = await fs.promises.readFile(filename, 'utf-8');
+        const parsed = parse(text, [], { allowTrailingComma: true, disallowComments: false });
+        if (!parsed.configurations || !Array.isArray(parsed.configurations)) {
+            throw Error('Missing field in launch.json: configurations');
+        }
+        if (!parsed.version) {
+            throw Error('Missing field in launch.json: version');
+        }
+        // We do not bother ensuring each item is a DebugConfiguration...
+        return parsed.configurations;
+    } catch (exc) {
+        OUTPUT_CHANNEL.appendLine('Error reading debug configurations to find the code-lens template.\nError: ' + exc + "\nlaunch.json target: " + filename);
+        return [];
+    }
+}
+
+async function readLaunchTemplate(workspaceFolder: WorkspaceFolder): Promise<DebugConfiguration | undefined> {
+    const configs = await readAllDebugConfigs(workspaceFolder);
+    for (const cfg of configs) {
+        if (cfg.type == 'robotframework-lsp' && cfg.name && cfg.name.toLowerCase() == 'robot framework: launch template') {
+            return cfg as DebugConfiguration;
+        }
+    }
+    return undefined;
 }
 
 async function _debugSuite(resource: Uri | undefined, noDebug: boolean) {
@@ -101,8 +143,10 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
 
     let workspaceFolder = workspace.getWorkspaceFolder(executeUri);
     let cwd: string;
+    let launchTemplate: DebugConfiguration = undefined;
     if (workspaceFolder) {
         cwd = workspaceFolder.uri.fsPath;
+        launchTemplate = await readLaunchTemplate(workspaceFolder);
     } else {
         cwd = path.dirname(executePath);
     }
@@ -114,6 +158,7 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
         args = ['-t', executeName];
     }
 
+
     let debugConfiguration: DebugConfiguration = {
         "type": "robotframework-lsp",
         "name": "Robot Framework: Launch " + executeName,
@@ -124,6 +169,21 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
         "env": {},
         "args": args,
     };
+
+    if(launchTemplate){
+        if(launchTemplate.cwd){
+            debugConfiguration.cwd = launchTemplate.cwd;
+        }
+        if(launchTemplate.terminal){
+            debugConfiguration.terminal = launchTemplate.terminal;
+        }
+        if(launchTemplate.env){
+            debugConfiguration.env = launchTemplate.env;
+        }
+        if(launchTemplate.args){
+            debugConfiguration.args = debugConfiguration.args.concat(launchTemplate.args);
+        }
+    }
     let debugSessionOptions: DebugSessionOptions = { "noDebug": noDebug };
     debug.startDebugging(workspaceFolder, debugConfiguration, debugSessionOptions)
 }
