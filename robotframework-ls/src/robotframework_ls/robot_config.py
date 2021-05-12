@@ -13,3 +13,32 @@ def get_robotframework_ls_home():
         user_home = os.path.expanduser("~")
 
     return os.path.join(user_home, ".robotframework-ls")
+
+
+def create_convert_keyword_format_func(config):
+    if config is not None:
+        from robotframework_ls.impl.robot_lsp_constants import (
+            OPTION_ROBOT_COMPLETION_KEYWORDS_FORMAT,
+        )
+
+        keyword_format = config.get_setting(
+            OPTION_ROBOT_COMPLETION_KEYWORDS_FORMAT, str, ""
+        )
+
+        if keyword_format:
+            keyword_format = keyword_format.lower().replace(" ", "_").strip()
+            # Convert its format depending on
+            # the user configuration.
+            if keyword_format == "first_upper":
+                return lambda label: label.capitalize()
+
+            elif keyword_format == "title_case":
+                return lambda label: label.title()
+
+            elif keyword_format == "all_lower":
+                return lambda label: label.lower()
+
+            elif keyword_format == "all_upper":
+                return lambda label: label.upper()
+
+    return lambda x: x

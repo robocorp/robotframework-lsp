@@ -170,6 +170,7 @@ def _collect_auto_import_completions(
     from robotframework_ls.impl.workspace_symbols import iter_symbols_caches
     from robotframework_ls.impl.protocols import ISymbolsCache
     from robocorp_ls_core.protocols import IWorkspace
+    from robotframework_ls.robot_config import create_convert_keyword_format_func
 
     symbols_cache: ISymbolsCache
     selection = completion_context.sel
@@ -183,6 +184,11 @@ def _collect_auto_import_completions(
     curr_doc_path = os.path.dirname(uris.to_fs_path(completion_context.doc.uri))
 
     memo: Set[str] = set()
+
+    default_convert_keyword_format = create_convert_keyword_format_func(
+        completion_context.config
+    )
+    noop = lambda x: x
 
     for symbols_cache in iter_symbols_caches(
         None, completion_context, show_builtins=False
@@ -222,6 +228,8 @@ def _collect_auto_import_completions(
             else:
                 lib_import = library_info.name
 
+            convert_keyword_format = default_convert_keyword_format
+
         elif doc is not None:
             resource_path = doc.path
             try:
@@ -230,12 +238,13 @@ def _collect_auto_import_completions(
                 )
             except:
                 pass
+            convert_keyword_format = noop
 
         json_list = symbols_cache.get_json_list()
         for entry in json_list:
             if collector.accepts(entry):
                 collector.create_completion_item(
-                    entry["name"],
+                    convert_keyword_format(entry["name"]),
                     selection,
                     token,
                     0,

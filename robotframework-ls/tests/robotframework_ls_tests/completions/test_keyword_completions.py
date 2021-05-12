@@ -23,6 +23,44 @@ def test_keyword_completions_builtin(workspace, libspec_manager):
     ]
 
 
+def test_keyword_completions_format(workspace, libspec_manager):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.robot_config import RobotConfig
+    from robotframework_ls.impl.robot_lsp_constants import (
+        OPTION_ROBOT_COMPLETION_KEYWORDS_FORMAT,
+        OPTION_ROBOT_COMPLETION_KEYWORDS_FORMAT_FIRST_UPPER,
+    )
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = doc.source + "\n    should be"
+
+    config = RobotConfig()
+    config.update(
+        {
+            OPTION_ROBOT_COMPLETION_KEYWORDS_FORMAT: OPTION_ROBOT_COMPLETION_KEYWORDS_FORMAT_FIRST_UPPER
+        }
+    )
+    assert (
+        config.get_setting(OPTION_ROBOT_COMPLETION_KEYWORDS_FORMAT, str, "")
+        == OPTION_ROBOT_COMPLETION_KEYWORDS_FORMAT_FIRST_UPPER
+    )
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws, config=config)
+    )
+    assert sorted([comp["label"] for comp in completions]) == [
+        "Length should be",
+        "Should be empty",
+        "Should be equal",
+        "Should be equal as integers",
+        "Should be equal as numbers",
+        "Should be equal as strings",
+        "Should be true",
+    ]
+
+
 @pytest.mark.parametrize("separator", ("${/}", "/", "\\"))
 @pytest.mark.parametrize("use_config", (True, False))
 def test_keyword_completions_directory_separator(

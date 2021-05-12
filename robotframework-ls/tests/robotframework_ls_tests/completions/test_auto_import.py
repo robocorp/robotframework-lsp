@@ -49,6 +49,54 @@ User can call library
     )
 
 
+def test_completion_with_auto_import_keyword_format(
+    workspace, cases, libspec_manager, workspace_dir
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import auto_import_completions
+    from robotframework_ls.robot_config import RobotConfig
+    from robotframework_ls.impl.robot_lsp_constants import (
+        OPTION_ROBOT_COMPLETION_KEYWORDS_FORMAT,
+    )
+
+    cases.copy_to("case1", workspace_dir)
+
+    config = RobotConfig()
+    # Check that although the options are presented with case, the comparison
+    # internally is case-insensitive.
+    config.update({OPTION_ROBOT_COMPLETION_KEYWORDS_FORMAT: "AlL lowEr"})
+
+    workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+
+    doc.source = """
+*** Settings ***
+Library    case1_library
+
+*** Test Cases ***
+User can call library
+    Copy Diction"""
+
+    completions = auto_import_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws, config=config), {}
+    )
+
+    assert len(completions) == 1
+    apply_completion(doc, completions[0])
+
+    assert (
+        doc.source
+        == """
+*** Settings ***
+Library    case1_library
+Library    Collections
+
+*** Test Cases ***
+User can call library
+    copy dictionary"""
+    )
+
+
 def test_completion_with_auto_import_import_not_duplicated_case1_library(
     workspace, cases, libspec_manager, workspace_dir
 ):

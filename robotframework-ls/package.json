@@ -187,6 +187,17 @@
                         "both"
                     ]
                 },
+                "robot.completions.keywords.format": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Defines how keyword completions should be applied\nOne of: First upper, Title Case, ALL UPPER, all lower.",
+                    "enum": [
+                        "First upper",
+                        "Title Case",
+                        "ALL UPPER",
+                        "all lower"
+                    ]
+                },
                 "robot.workspaceSymbolsOnlyForOpenDocs": {
                     "type": "boolean",
                     "default": false,
