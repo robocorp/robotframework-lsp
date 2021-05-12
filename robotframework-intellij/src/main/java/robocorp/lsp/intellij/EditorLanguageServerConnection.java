@@ -246,7 +246,7 @@ public class EditorLanguageServerConnection {
             // If it was cancelled, just ignore it (don't log).
         } catch (Exception e) {
             LOG.error(e);
-            return null;
         }
+        return null;
     }
 }
