@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.15.0'
+version '0.16.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,23 +51,15 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.15.0
+    Release 0.16.0
     </p>
     <ul>
 
-    <li>Debugging RobotFramework (and Python in the same debug session) is now possible!</li>
-    <li>Debugger features:</li>
-    <ul>    
-      <li>Add line breakpoints in `.robot` or `.py` files.</li>
-      <li>Evaluate keywords in debug console/hover/watch.</li>
-      <li>Pause at breakpoints to inspect the stack and see variables.</li>
-      <li>Step in.</li>
-      <li>Step over.</li>
-      <li>Step return.</li>
-      <li>Continue.</li>
-    </ul>    
-
-    </ul>    
+    <li>Outline is shown in the structure view.</li>
+    <li>It's possible to configure the casing of keywords from libraries used in code-completion.</li>
+    <li>Fixed issue where a cancelled exception was logged.</li>
+    </ul>
+    
     <br>
     Current feature set:<br>
     <ul>
@@ -82,7 +74,7 @@ patchPluginXml {
     <li>Debugger:</li>
     <ul>    
       <li>Add line breakpoints in `.robot` or `.py` files.</li>
-      <li>Evaluate keywords in debug console/hover/watch.</li>
+      <li>Evaluate keywords.</li>
       <li>Pause at breakpoints to inspect the stack and see variables.</li>
       <li>Step in.</li>
       <li>Step over.</li>

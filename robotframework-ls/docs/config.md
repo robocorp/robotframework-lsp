@@ -20,6 +20,8 @@ Configuration settings
 
 - `robot.editor.4spacesTab`: used to put 4 spaces instead of using tabs or indenting to a tab level in the editor (default: true).
 
+- `robot.completions.keywords.format`: used to configure how keywords from libraries will be applied during code-completion.
+
 
 Development/debug settings
 ---------------------------

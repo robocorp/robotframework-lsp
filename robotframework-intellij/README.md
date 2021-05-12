@@ -36,12 +36,13 @@ may be needed (by default it'll use the `python` from the `PATH`).
 
 The settings may be configured at: `File > Settings > Languages & Frameworks > Robot Framework Language Server`.
 
-Features (0.15.0)
+Features (0.16.0)
 -----------------
 
 - Settings page for the language server (per project and global).
 - Code completion.
 - Code analysis.
+- Outline in Structure view.
 - Linting with [Robocop](https://robocop.readthedocs.io/en/latest/).
 - Go to definition.
 - Hover.

@@ -3,7 +3,7 @@
     "displayName": "Robot Framework Language Server",
     "description": "VSCode extension support for Robot Framework",
     "author": "Fabio Zadrozny",
-    "homepage": "https://github.com/robocorp/robotframework-lsp/blob/robotframework-lsp-0.15.0/robotframework-ls/README.md",
+    "homepage": "https://github.com/robocorp/robotframework-lsp/blob/robotframework-lsp-0.16.0/robotframework-ls/README.md",
     "repository": {
         "type": "git",
         "url": "https://github.com/robocorp/robotframework-lsp.git"
@@ -12,7 +12,7 @@
         "url": "https://github.com/robocorp/robotframework-lsp/issues"
     },
     "license": "Apache 2.0",
-    "version": "0.15.0",
+    "version": "0.16.0",
     "icon": "images/icon.png",
     "publisher": "robocorp",
     "categories": [
@@ -190,7 +190,7 @@
                 "robot.completions.keywords.format": {
                     "type": "string",
                     "default": "",
-                    "description": "Defines how keyword completions should be applied\nOne of: First upper, Title Case, ALL UPPER, all lower.",
+                    "description": "Defines how keyword completions should be applied.\nOne of: First upper, Title Case, ALL UPPER, all lower.",
                     "enum": [
                         "First upper",
                         "Title Case",

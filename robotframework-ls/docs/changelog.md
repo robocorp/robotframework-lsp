@@ -1,3 +1,15 @@
+New in 0.16.0 (2021-05-12)
+-----------------------------
+
+- Document symbols.
+- It's possible to configure the casing of keywords from libraries used in code-completion.
+- Launching/debugging improvements (VSCode):
+  - Code lens with options to run/debug a test, task or suite.
+  - Commands to run/debug a test, task or suite
+  - Note: it's possible to configure the command/code lens launch by having a `Robot Framework: Launch template` launch config.
+  - When a run is done in the internal terminal, provide hyperlinks to open html results in the browser.
+
+
 New in 0.15.0 (2021-05-05)
 -----------------------------
 

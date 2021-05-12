@@ -1,9 +1,17 @@
+New in 0.16.0 (2021-05-12)
+-----------------------------
+
+- [Intellij] Outline is shown in the structure view.
+- [Intellij] Fixed issue where a cancelled exception was logged.
+- It's possible to configure the casing of keywords from libraries used in code-completion.
+
+
 New in 0.15.0 (2021-05-05)
 -----------------------------
 
 - Debugger:
   - Add line breakpoints in `.robot` or `.py` files.
-  - Evaluate keywords in debug console/hover/watch.
+  - Evaluate keywords.
   - Pause at breakpoints to inspect the stack and see variables.
   - Step in.
   - Step over.
