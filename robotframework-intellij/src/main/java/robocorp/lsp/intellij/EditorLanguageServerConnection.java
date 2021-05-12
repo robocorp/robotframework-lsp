@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,9 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class EditorLanguageServerConnection {
@@ -111,6 +110,8 @@ public class EditorLanguageServerConnection {
                         changeEvent.setText(editor.getText());
                     }
                     comm.didChange(changesParams);
+                } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException | TimeoutException e) {
+                    // If it was cancelled, just ignore it (don't log).
                 } catch (Exception e) {
                     LOG.error(e);
                 }
@@ -195,6 +196,8 @@ public class EditorLanguageServerConnection {
             @Nullable CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion = comm.completion(params);
             // May be null
             return completion;
+        } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException | TimeoutException e) {
+            // If it was cancelled, just ignore it (don't log).
         } catch (Exception e) {
             LOG.error(e);
         }
@@ -208,6 +211,8 @@ public class EditorLanguageServerConnection {
                 return null;
             }
             return comm.getServerCapabilities();
+        } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException | TimeoutException e) {
+            // If it was cancelled, just ignore it (don't log).
         } catch (Exception e) {
             LOG.error(e);
         }
@@ -217,6 +222,8 @@ public class EditorLanguageServerConnection {
     public @Nullable LanguageServerCommunication getLanguageServerCommunication() {
         try {
             return languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot, editor.getProject());
+        } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException | TimeoutException e) {
+            // If it was cancelled, just ignore it (don't log).
         } catch (Exception e) {
             LOG.error(e);
         }
@@ -235,6 +242,8 @@ public class EditorLanguageServerConnection {
             }
             SemanticTokensParams params = new SemanticTokensParams(identifier);
             return comm.getSemanticTokens(params);
+        } catch (ProcessCanceledException | CompletionException | CancellationException e) {
+            // If it was cancelled, just ignore it (don't log).
         } catch (Exception e) {
             LOG.error(e);
             return null;
