@@ -499,10 +499,20 @@ public class LanguageServerCommunication {
         LanguageServer languageServer = obtainSynchronizedLanguageServer();
 
         if (languageServer == null) {
-            LOG.info("Unable to get symbol: disconnected.");
+            LOG.info("Unable to get workspace symbol: disconnected.");
             return null;
         }
         return languageServer.getWorkspaceService().symbol(symbolParams);
+    }
+
+    public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(DocumentSymbolParams documentSymbolParams) {
+        LanguageServer languageServer = obtainSynchronizedLanguageServer();
+
+        if (languageServer == null) {
+            LOG.info("Unable to get document symbol: disconnected.");
+            return null;
+        }
+        return languageServer.getTextDocumentService().documentSymbol(documentSymbolParams);
     }
 
     public @Nullable CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {

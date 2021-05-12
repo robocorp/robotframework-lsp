@@ -52,6 +52,7 @@
                                     implementationClass="robocorp.lsp.intellij.FeatureHover"/>
         <lang.foldingBuilder language="RobotFramework"
                              implementationClass="robocorp.lsp.intellij.FeatureCodeFolding"/>
+        <lang.psiStructureViewFactory language="RobotFramework" implementationClass="robocorp.lsp.intellij.FeatureOutline"/>
 
         <configurationType implementation="robocorp.dap.RobotConfigurationType"/>
         <programRunner implementation="robocorp.dap.RobotProgramRunner"/>

@@ -79,6 +79,7 @@ public class LanguageServerIcons {
             case EnumMember:
                 return Nodes.Field;
             case Method:
+            case Function:
                 return Nodes.Method;
             case Variable:
                 return Nodes.Variable;
@@ -88,6 +89,8 @@ public class LanguageServerIcons {
                 return Nodes.ClassInitializer;
             case Enum:
                 return Nodes.Enum;
+            case Namespace:
+                return AllIcons.General.Settings;
             default:
                 return Nodes.Tag;
         }

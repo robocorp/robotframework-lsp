@@ -40,4 +40,8 @@ public class Timeouts {
     public static long getFoldingRangeTimeout() {
         return 3;
     }
+
+    public static long getDocumentSymbolTimeout() {
+        return 3;
+    }
 }
