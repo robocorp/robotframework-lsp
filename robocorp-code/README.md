@@ -69,7 +69,7 @@ Find the full installation instructions at [https://robocorp.com/docs/product-ma
 
 During the first activation, the extension will download additional dependencies (such as Conda manager) that are required for it to run.
 
-### Features (0.9.2)
+### Features (0.10.0)
 
 - Automatic bootstrapping of the Python environment for the `Robot Framework Language Server`.
 - Create a Robot from a pre-configured template using the `Robocorp: Create Robot` action.
@@ -77,6 +77,7 @@ During the first activation, the extension will download additional dependencies
 - Link to the cloud with the `Robocorp: Link to Robocorp Cloud` action.
 - Unlink from the cloud with the `Robocorp: Unlink and remove credentials from Robocorp Cloud` action.
 - Verify Robot for inconsistencies with `Robocorp: Robot Configuration Diagnostics` action.
+- Create a terminal with a Robot environment through the `Robocorp: Terminal with Robot environment` action.
 - Run a Robot with the `Robocorp: Run Robot` action.
 - Debug a Robot with the `Robocorp: Debug Robot` action. - It's possible to debug plain Python tasks using the Python extension or Robot Framework tasks using the Robot Framework Language Server (in which case the task must start with `python -m robot` and finish with the folder/filename to be run).
 - When a [robot.yaml](https://robocorp.com/docs/setup/robot-yaml-format) is found, it utilises the related Python environment when running/debugging `.robot` files using the RobotFramework Language Server.
