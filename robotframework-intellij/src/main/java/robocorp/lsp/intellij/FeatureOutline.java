@@ -7,7 +7,10 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -20,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -41,8 +45,110 @@ public class FeatureOutline implements PsiStructureViewFactory {
 
         @Override
         public @NotNull StructureViewModel createStructureViewModel(@Nullable Editor editor) {
-            return new StructureViewModelBase(psiFile, editor, new RobotFileStructureViewElement(psiFile))
-                    .withSorters(Sorter.ALPHA_SORTER);
+            return new LSPStructureViewModel(psiFile, editor);
+        }
+
+    }
+
+    static class LSPStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider {
+        private final LSPStructureViewDocumentListener listener;
+
+        public LSPStructureViewModel(PsiFile psiFile, @Nullable Editor editor) {
+            super(psiFile, editor, new RobotFileStructureViewElement(psiFile, editor));
+            withSorters(Sorter.ALPHA_SORTER);
+
+            // Starts to automatically listen to document changes.
+            this.listener = new LSPStructureViewDocumentListener(this, psiFile, editor);
+        }
+
+        @Override
+        public void dispose() {
+            this.listener.dispose();
+            super.dispose();
+        }
+
+        @Override
+        public boolean isAlwaysShowsPlus(StructureViewTreeElement element) {
+            return element.getChildren().length > 0;
+        }
+
+        @Override
+        public boolean isAlwaysLeaf(StructureViewTreeElement element) {
+            return element.getChildren().length == 0;
+        }
+
+        @Override
+        public boolean isAutoExpand(@NotNull StructureViewTreeElement element) {
+            return true;
+        }
+
+        @Override
+        public boolean isSmartExpand() {
+            return true;
+        }
+
+    }
+
+    private static class LSPStructureViewDocumentListener implements DocumentListener {
+        private final PsiFile psiFile;
+        private final WeakReference<LSPStructureViewModel> vievModelWeakReference;
+        private final WeakReference<Document> documentWeakReference;
+        private volatile boolean disposed;
+        private volatile ScheduledFuture<?> scheduledFuture;
+
+        public LSPStructureViewDocumentListener(LSPStructureViewModel lspStructureViewModel, PsiFile psiFile, @Nullable Editor editor) {
+            this.vievModelWeakReference = new WeakReference<>(lspStructureViewModel);
+            this.psiFile = psiFile;
+            this.disposed = false;
+
+            if (editor != null) {
+                Document document = editor.getDocument();
+                documentWeakReference = new WeakReference<>(document);
+
+                document.addDocumentListener(this);
+            } else {
+                documentWeakReference = new WeakReference<>(null);
+            }
+        }
+
+        @Override
+        public void documentChanged(@NotNull DocumentEvent event) {
+            ScheduledFuture<?> old = scheduledFuture;
+            if (old != null) {
+                old.cancel(false);
+            }
+            scheduledFuture = scheduler.schedule(
+                    () -> {
+                        LSPStructureViewModel viewModel = this.vievModelWeakReference.get();
+                        if (viewModel == null) {
+                            Document document = documentWeakReference.get();
+                            if (document != null) {
+                                document.removeDocumentListener(this);
+                            }
+                            return;
+                        }
+                        RobotFileStructureViewElement root = (RobotFileStructureViewElement) viewModel.getRoot();
+                        if (disposed) {
+                            return;
+                        }
+                        root.updateChildren(psiFile);
+                        if (disposed) {
+                            return;
+                        }
+                        viewModel.fireModelUpdate();
+                    },
+                    2, TimeUnit.SECONDS);
+        }
+
+        public void dispose() {
+            if (disposed) {
+                return;
+            }
+            disposed = true;
+            Document document = documentWeakReference.get();
+            if (document != null) {
+                document.removeDocumentListener(this);
+            }
         }
     }
 
@@ -116,14 +222,21 @@ public class FeatureOutline implements PsiStructureViewFactory {
         }
     }
 
+    static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
     static class RobotFileStructureViewElement implements StructureViewTreeElement {
         private final PsiFile psiFile;
-        private TreeElement[] children;
+        private final Editor editor;
+        private volatile TreeElement[] children;
 
-        public RobotFileStructureViewElement(PsiFile psiFile) {
+        public RobotFileStructureViewElement(PsiFile psiFile, Editor editor) {
             this.psiFile = psiFile;
+            this.editor = editor;
             this.children = TreeElement.EMPTY_ARRAY;
+            updateChildren(psiFile);
+        }
 
+        private void updateChildren(PsiFile psiFile) {
             @NotNull Project project = psiFile.getProject();
             VirtualFile virtualFile = psiFile.getVirtualFile();
             if (virtualFile == null || project == null) {
@@ -167,7 +280,6 @@ public class FeatureOutline implements PsiStructureViewFactory {
                     }
                 }
                 children = temp.toArray(new TreeElement[0]);
-
             } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException | TimeoutException e) {
                 // If it was cancelled, just ignore it (don't log).
                 return;
