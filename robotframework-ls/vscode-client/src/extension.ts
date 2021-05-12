@@ -29,6 +29,7 @@ import { LanguageClient, ServerOptions } from 'vscode-languageclient/node';
 import { ProgressReport, handleProgressMessage } from './progress';
 import { Timing } from './time';
 import { registerRunCommands } from './run';
+import { registerLinkProviders } from './linkProvider';
 
 const OUTPUT_CHANNEL_NAME = "Robot Framework";
 export const OUTPUT_CHANNEL = window.createOutputChannel(OUTPUT_CHANNEL_NAME);
@@ -372,6 +373,7 @@ export async function activate(context: ExtensionContext) {
 		let disposable: Disposable = langServer.start();
 		registerDebugger(executableAndMessage.executable);
 		await registerRunCommands(context);
+		await registerLinkProviders(context);
 		context.subscriptions.push(disposable);
 
 		// i.e.: if we return before it's ready, the language server commands
