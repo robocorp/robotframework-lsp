@@ -29,6 +29,7 @@ class RobotPreferencesComponent {
     private final JBTextField robotPythonpath = new JBTextField();
     private final JBTextField robotLintRobocopEnabled = new JBTextField();
     private final JBTextField robotCompletionsSectionHeadersForm = new JBTextField();
+    private final JBTextField robotCompletionsKeywordsFormat = new JBTextField();
     private final JBTextField robotWorkspaceSymbolsOnlyForOpenDocs = new JBTextField();
 
     public RobotPreferencesComponent() {
@@ -51,6 +52,8 @@ class RobotPreferencesComponent {
                 .addComponent(createJTextArea("Specifies whether to lint with Robocop.\nNote: expected 'true' or 'false'\n"))
                 .addLabeledComponent(new JBLabel("Completions Section Headers Form"), robotCompletionsSectionHeadersForm, 1, false)
                 .addComponent(createJTextArea("Defines how completions should be shown for section headers\n(i.e.: *** Setting(s) ***). One of: plural, singular, both.\n"))
+                .addLabeledComponent(new JBLabel("Completions Keywords Format"), robotCompletionsKeywordsFormat, 1, false)
+                .addComponent(createJTextArea("Defines how keyword completions should be applied.\nOne of: First upper, Title Case, ALL UPPER, all lower.\n"))
                 .addLabeledComponent(new JBLabel("Workspace Symbols Only For Open Docs"), robotWorkspaceSymbolsOnlyForOpenDocs, 1, false)
                 .addComponent(createJTextArea("Collecting workspace symbols can be resource intensive on big projects and may slow down code-\ncompletion, in this case, it's possible collect info only for open files on big projects.\nNote: expected 'true' or 'false'\n"))
                 
@@ -159,6 +162,15 @@ class RobotPreferencesComponent {
     }
     
     @NotNull
+    public String getRobotCompletionsKeywordsFormat() {
+        return robotCompletionsKeywordsFormat.getText();
+    }
+
+    public void setRobotCompletionsKeywordsFormat (@NotNull String newText) {
+        robotCompletionsKeywordsFormat.setText(newText);
+    }
+    
+    @NotNull
     public String getRobotWorkspaceSymbolsOnlyForOpenDocs() {
         return robotWorkspaceSymbolsOnlyForOpenDocs.getText();
     }
@@ -231,6 +243,10 @@ public class RobotPreferencesPage implements Configurable {
             return true;
         }
         
+        if(!settings.getRobotCompletionsKeywordsFormat().equals(component.getRobotCompletionsKeywordsFormat())){
+            return true;
+        }
+        
         if(!settings.getRobotWorkspaceSymbolsOnlyForOpenDocs().equals(component.getRobotWorkspaceSymbolsOnlyForOpenDocs())){
             return true;
         }
@@ -251,6 +267,7 @@ public class RobotPreferencesPage implements Configurable {
         component.setRobotPythonpath(settings.getRobotPythonpath());
         component.setRobotLintRobocopEnabled(settings.getRobotLintRobocopEnabled());
         component.setRobotCompletionsSectionHeadersForm(settings.getRobotCompletionsSectionHeadersForm());
+        component.setRobotCompletionsKeywordsFormat(settings.getRobotCompletionsKeywordsFormat());
         component.setRobotWorkspaceSymbolsOnlyForOpenDocs(settings.getRobotWorkspaceSymbolsOnlyForOpenDocs());
     }
 
@@ -295,6 +312,10 @@ public class RobotPreferencesPage implements Configurable {
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Completions Section Headers Form:\n" + s);
         }
+        s = settings.validateRobotCompletionsKeywordsFormat(component.getRobotCompletionsKeywordsFormat());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Completions Keywords Format:\n" + s);
+        }
         s = settings.validateRobotWorkspaceSymbolsOnlyForOpenDocs(component.getRobotWorkspaceSymbolsOnlyForOpenDocs());
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Workspace Symbols Only For Open Docs:\n" + s);
@@ -309,6 +330,7 @@ public class RobotPreferencesPage implements Configurable {
         settings.setRobotPythonpath(component.getRobotPythonpath());
         settings.setRobotLintRobocopEnabled(component.getRobotLintRobocopEnabled());
         settings.setRobotCompletionsSectionHeadersForm(component.getRobotCompletionsSectionHeadersForm());
+        settings.setRobotCompletionsKeywordsFormat(component.getRobotCompletionsKeywordsFormat());
         settings.setRobotWorkspaceSymbolsOnlyForOpenDocs(component.getRobotWorkspaceSymbolsOnlyForOpenDocs());
     }
 }

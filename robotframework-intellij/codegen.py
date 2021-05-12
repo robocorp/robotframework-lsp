@@ -215,7 +215,7 @@ public class {{ class_ }} implements PersistentStateComponent<RobotState> {
             Gson g = new Gson();
             {{ preference['json_load'] }};
             {% if preference.get('enum') %} {% for enum_value in preference.get('enum') %}
-            if({{ preference['java_name'] }}.equals("{{ enum_value }}")){
+            if({{ preference['java_name'] }}.equalsIgnoreCase("{{ enum_value }}")){
                 return "";
             }{% endfor %}
             return "Unexpected value: " + {{ preference['java_name'] }};
@@ -294,7 +294,13 @@ def main():
             for i, d in enumerate(description.split('\\n')):
                 if i > 0:
                     final_desc += '\\n'
-                d = '\\n'.join(textwrap.wrap(d, 100))
+                line_len = 100
+                if prop_name == 'robot.completions.keywords.format':
+                    i = d.index('One of')
+                    d = '\\n'.join((d[:i].strip(), d[i:].strip()))
+                    
+                else:
+                    d = '\\n'.join(textwrap.wrap(d, line_len))
                 final_desc += d
             if prop_value['type'] in ['array', 'object']:
                 final_desc += '\\nNote: expected format: JSON ' + prop_value['type'].title()
