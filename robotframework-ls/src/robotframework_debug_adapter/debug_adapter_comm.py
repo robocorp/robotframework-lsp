@@ -130,8 +130,12 @@ class DebugAdapterComm(object):
         self._initialize_request_arguments = request.arguments
         initialize_response: InitializeResponse = build_response(request)
         self._supports_run_in_terminal = request.arguments.supportsRunInTerminalRequest
-        body: Capabilities = initialize_response.body
-        body.supportsConfigurationDoneRequest = True
+        capabilities: Capabilities = initialize_response.body
+        capabilities.supportsConfigurationDoneRequest = True
+        capabilities.supportsConditionalBreakpoints = True
+        capabilities.supportsHitConditionalBreakpoints = True
+        capabilities.supportsLogPoints = True
+        # capabilities.supportsSetVariable = True
         self.write_to_client_message(initialize_response)
 
     def on_launch_request(self, request: LaunchRequest):

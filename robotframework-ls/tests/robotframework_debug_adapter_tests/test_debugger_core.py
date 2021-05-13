@@ -211,6 +211,58 @@ def test_debugger_core_if(debugger_api, robot_thread, data_regression) -> None:
     dbg_wait_for(lambda: robot_thread.result_code == 0)
 
 
+def test_debugger_core_condition_breakpoint(debugger_api, robot_thread) -> None:
+    from robotframework_debug_adapter.debugger_impl import install_robot_debugger
+    from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
+
+    debugger_impl = install_robot_debugger()
+    target = debugger_api.get_dap_case_file("case_condition.robot")
+    line = debugger_api.get_line_index_with_content("Log    ${counter}", target)
+
+    debugger_impl.set_breakpoints(
+        target, RobotBreakpoint(line, condition="${counter} == 2")
+    )
+
+    robot_thread.run_target(target)
+
+    # It should only stop once (when counter == 2).
+    dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 1)
+
+    thread_id = debugger_impl.get_current_thread_id(robot_thread)
+    frame_ids = list(debugger_impl.iter_frame_ids(thread_id))
+    eval_info = debugger_impl.evaluate(frame_ids[0], "${counter}")
+    assert eval_info.future.result() == 2
+
+    debugger_impl.step_continue()
+
+    dbg_wait_for(lambda: robot_thread.result_code == 0)
+
+
+def test_debugger_core_hit_condition_breakpoint(debugger_api, robot_thread) -> None:
+    from robotframework_debug_adapter.debugger_impl import install_robot_debugger
+    from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
+
+    debugger_impl = install_robot_debugger()
+    target = debugger_api.get_dap_case_file("case_condition.robot")
+    line = debugger_api.get_line_index_with_content("Log    ${counter}", target)
+
+    debugger_impl.set_breakpoints(target, RobotBreakpoint(line, hit_condition=2))
+
+    robot_thread.run_target(target)
+
+    # It should only stop once (when counter == 2).
+    dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 1)
+
+    thread_id = debugger_impl.get_current_thread_id(robot_thread)
+    frame_ids = list(debugger_impl.iter_frame_ids(thread_id))
+    eval_info = debugger_impl.evaluate(frame_ids[0], "${counter}")
+    assert eval_info.future.result() == 2
+
+    debugger_impl.step_continue()
+
+    dbg_wait_for(lambda: robot_thread.result_code == 0)
+
+
 def test_debugger_core_keyword_if(debugger_api, robot_thread, data_regression) -> None:
     from robotframework_debug_adapter.debugger_impl import install_robot_debugger
     from robotframework_debug_adapter.debugger_impl import RobotBreakpoint

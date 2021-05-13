@@ -95,6 +95,7 @@ class _RobotTargetComm(threading.Thread):
             else:
                 debugger_impl = install_robot_debugger()
                 debugger_impl.busy_wait.before_wait.append(self._notify_stopped)
+                debugger_impl.write_message = self.write_message
 
                 log.debug("Finished patching execution context.")
                 self._debugger_impl = debugger_impl
@@ -231,6 +232,10 @@ class _RobotTargetComm(threading.Thread):
         initialize_response = build_response(request)
         capabilities = initialize_response.body
         capabilities.supportsConfigurationDoneRequest = True
+        capabilities.supportsConditionalBreakpoints = True
+        capabilities.supportsHitConditionalBreakpoints = True
+        capabilities.supportsLogPoints = True
+        # capabilities.supportsSetVariable = True
         self.write_message(initialize_response)
         self.write_message(
             ProcessEvent(ProcessEventBody(sys.executable, systemProcessId=os.getpid()))
@@ -276,7 +281,23 @@ class _RobotTargetComm(threading.Thread):
                         verified=True, line=source_breakpoint.line, source=source
                     ).to_dict()
                 )
-                robot_breakpoints.append(RobotBreakpoint(source_breakpoint.line))
+                hit_condition = None
+                try:
+                    if source_breakpoint.hitCondition is not None:
+                        hit_condition = int(source_breakpoint.hitCondition)
+                except:
+                    log.exception(
+                        "Unable to evaluate hit condition (%s) to an int. Ignoring it.",
+                        source_breakpoint.hitCondition,
+                    )
+                robot_breakpoints.append(
+                    RobotBreakpoint(
+                        source_breakpoint.line,
+                        source_breakpoint.condition,
+                        hit_condition,
+                        source_breakpoint.logMessage,
+                    )
+                )
 
         if self._debugger_impl:
             self._debugger_impl.set_breakpoints(filename, robot_breakpoints)

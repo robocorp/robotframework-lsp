@@ -9,6 +9,7 @@ from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import BaseSchema
 from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
     TerminatedEvent,
     TerminatedEventBody,
+    OutputEvent,
 )
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_debug_adapter.base_launch_process_target import (
@@ -125,6 +126,13 @@ class LaunchProcessDebugAdapterRobotTargetComm(BaseLaunchProcessTargetComm):
     def get_pid(self):
         assert self._process_event.is_set()
         return self._process_event_msg.body.systemProcessId
+
+    def on_output_event(self, event: OutputEvent) -> None:
+        debug_adapter_comm = self._weak_debug_adapter_comm()
+        if debug_adapter_comm is not None:
+            debug_adapter_comm.write_to_client_message(event)
+        else:
+            log.debug("Command processor collected in event: %s" % (event,))
 
     def on_terminated_event(self, event: Optional[TerminatedEvent]) -> None:
         with self._terminated_lock:

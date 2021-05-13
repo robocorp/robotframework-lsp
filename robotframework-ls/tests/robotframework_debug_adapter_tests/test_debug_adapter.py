@@ -277,6 +277,84 @@ def test_step_next(debugger_api: _DebuggerAPI):
     debugger_api.read(TerminatedEvent)
 
 
+def test_stop_on_condition(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+
+    debugger_api.initialize()
+    target = debugger_api.get_dap_case_file("case_condition.robot")
+    debugger_api.target = target
+
+    debugger_api.launch(target, debug=True)
+    line = debugger_api.get_line_index_with_content("Log    ${counter}")
+    debugger_api.set_breakpoints(
+        target, line, line_to_kwargs={line: {"condition": "${counter} == 2"}}
+    )
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(name="Log")
+
+    name_to_scope = debugger_api.get_name_to_scope(json_hit.frame_id)
+    assert sorted(name_to_scope.keys()) == ["Arguments", "Builtins", "Variables"]
+    name_to_var = debugger_api.get_variables_name_to_var(json_hit.frame_id)
+    assert name_to_var["'${counter}'"].value == "2"
+
+    msg = debugger_api.continue_event(json_hit.thread_id, accept_terminated=True)
+    if not isinstance(msg, TerminatedEvent):
+        debugger_api.read(TerminatedEvent)
+
+
+def test_stop_on_hit_condition(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+
+    debugger_api.initialize()
+    target = debugger_api.get_dap_case_file("case_condition.robot")
+    debugger_api.target = target
+
+    debugger_api.launch(target, debug=True)
+    line = debugger_api.get_line_index_with_content("Log    ${counter}")
+    debugger_api.set_breakpoints(
+        target, line, line_to_kwargs={line: {"hitCondition": "2"}}
+    )
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(name="Log")
+
+    name_to_scope = debugger_api.get_name_to_scope(json_hit.frame_id)
+    assert sorted(name_to_scope.keys()) == ["Arguments", "Builtins", "Variables"]
+    name_to_var = debugger_api.get_variables_name_to_var(json_hit.frame_id)
+    assert name_to_var["'${counter}'"].value == "2"
+
+    msg = debugger_api.continue_event(json_hit.thread_id, accept_terminated=True)
+    if not isinstance(msg, TerminatedEvent):
+        debugger_api.read(TerminatedEvent)
+
+
+def test_log_on_breakpoint(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEvent
+
+    debugger_api.initialize()
+    target = debugger_api.get_dap_case_file("case_condition.robot")
+    debugger_api.target = target
+
+    debugger_api.launch(target, debug=True)
+    line = debugger_api.get_line_index_with_content("Log    ${counter}")
+    debugger_api.set_breakpoints(
+        target, line, line_to_kwargs={line: {"logMessage": "Counter is: ${counter}"}}
+    )
+    debugger_api.configuration_done()
+    debugger_api.read(TerminatedEvent)
+
+    debugger_api.assert_message_found(
+        OutputEvent,
+        accept_msg=lambda output: output.body.output.strip() == "Counter is: 1",
+    )
+    debugger_api.assert_message_found(
+        OutputEvent,
+        accept_msg=lambda output: output.body.output.strip() == "Counter is: 2",
+    )
+
+
 def test_step_out(debugger_api: _DebuggerAPI):
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
 

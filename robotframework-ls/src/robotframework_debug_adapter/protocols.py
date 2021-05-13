@@ -24,6 +24,11 @@ class IEvaluationInfo(Protocol):
 class IRobotBreakpoint(Protocol):
     # 1-based line for the breakpoint.
     lineno: int
+    condition: Optional[str]
+    hit_condition: Optional[int]
+    log_message: Optional[str]
+
+    hits: int
 
 
 class IBusyWait(Protocol):

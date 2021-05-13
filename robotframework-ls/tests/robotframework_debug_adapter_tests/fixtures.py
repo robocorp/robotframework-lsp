@@ -319,7 +319,7 @@ class _DebuggerAPI(object):
 
         return self.wait_for_response(self.write(ThreadsRequest()))
 
-    def set_breakpoints(self, target, lines):
+    def set_breakpoints(self, target, lines, line_to_kwargs={}):
         import os.path
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             SetBreakpointsRequest,
@@ -343,7 +343,10 @@ class _DebuggerAPI(object):
                     source=Source(name=os.path.basename(target), path=target),
                     lines=lines,
                     breakpoints=[
-                        SourceBreakpoint(line=line).to_dict() for line in lines
+                        SourceBreakpoint(
+                            line=line, **line_to_kwargs.get(line, {})
+                        ).to_dict()
+                        for line in lines
                     ],
                 )
             )

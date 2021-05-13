@@ -142,6 +142,14 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
     }
 
     let workspaceFolder = workspace.getWorkspaceFolder(executeUri);
+    if(!workspaceFolder){
+        let folders = workspace.workspaceFolders;
+        if(folders){
+            // Use the currently opened folder.
+            workspaceFolder = folders[0];
+        }
+    }
+
     let cwd: string;
     let launchTemplate: DebugConfiguration = undefined;
     if (workspaceFolder) {

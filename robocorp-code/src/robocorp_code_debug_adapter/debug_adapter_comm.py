@@ -87,13 +87,17 @@ class DebugAdapterComm(object):
         )
 
         # : :type initialize_response: InitializeResponse
-        # : :type body: Capabilities
+        # : :type capabilities: Capabilities
         self._initialize_request_arguments = request.arguments
         initialize_response = build_response(request)
         self._supports_run_in_terminal = request.arguments.supportsRunInTerminalRequest
         self._rcc_config_location = request.arguments.kwargs.get("rccConfigLocation")
-        body = initialize_response.body
-        body.supportsConfigurationDoneRequest = True
+        capabilities = initialize_response.body
+        capabilities.supportsConfigurationDoneRequest = True
+        capabilities.supportsConditionalBreakpoints = True
+        capabilities.supportsHitConditionalBreakpoints = True
+        capabilities.supportsLogPoints = True
+        # capabilities.supportsSetVariable = True
         self.write_to_client_message(initialize_response)
 
     def on_launch_request(self, request):

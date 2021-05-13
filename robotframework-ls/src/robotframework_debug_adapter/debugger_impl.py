@@ -37,6 +37,8 @@ from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
     Scope,
     Source,
     Variable,
+    OutputEvent,
+    OutputEventBody,
 )
 
 from robotframework_ls.impl.robot_constants import BUILTIN_VARIABLES
@@ -58,12 +60,36 @@ next_id: INextId = partial(next, itertools.count(1))
 
 
 class RobotBreakpoint(object):
-    def __init__(self, lineno: int):
+    def __init__(
+        self,
+        lineno: int,
+        condition: Optional[str] = None,
+        hit_condition: Optional[int] = None,
+        log_message: Optional[str] = None,
+    ):
         """
-        :param int lineno:
+        :param lineno:
             1-based line for the breakpoint.
+            
+        :param condition:
+            If specified, the breakpoint will only be hit if the condition
+            evaluates to True.
+            
+        :param hit_condition:
+            If specified, the breakpoint will only be hit after it hits the
+            specified number of times.
+            
+        :param log_message:
+            If specified, the breakpoint will not actually break, it'll just
+            print the given message instead of breaking.
         """
         self.lineno = lineno
+        self.condition = condition
+        if hit_condition is not None:
+            hit_condition = int(hit_condition)
+        self.hit_condition = hit_condition
+        self.log_message = log_message
+        self.hits = 0
 
 
 class BusyWait(object):
@@ -514,6 +540,13 @@ class _RobotDebuggerImpl(object):
         self._evaluations = []
         self._skip_breakpoints = 0
 
+    def write_message(self, msg):
+        log.critical(
+            "Message: %s not sent!\nExpected _RobotDebuggerImpl.write_message to be replaced to the actual implementation!",
+            msg,
+        )
+        raise AssertionError("Error")
+
     @property
     def stop_reason(self) -> ReasonEnum:
         return self._reason
@@ -560,11 +593,11 @@ class _RobotDebuggerImpl(object):
         try:
             source = obj.source
             if source is None:
-                return u"None"
+                return "None"
 
             filename, _changed = file_utils.norm_file_to_client(source)
         except:
-            filename = u"<Unable to get %s filename>" % (msg,)
+            filename = "<Unable to get %s filename>" % (msg,)
             log.exception(filename)
 
         return filename
@@ -579,21 +612,21 @@ class _RobotDebuggerImpl(object):
                     lineno = entry.lineno
                     variables = entry.variables
                     args = entry.args
-                    filename = self._get_filename(entry, u"Keyword")
+                    filename = self._get_filename(entry, "Keyword")
 
                     frame_id = stack_info.add_keyword_entry_stack(
                         name, lineno, filename, args, variables
                     )
 
                 elif entry.__class__ == _SuiteEntry:
-                    name = u"TestSuite: %s" % (entry.name,)
-                    filename = self._get_filename(entry, u"TestSuite")
+                    name = "TestSuite: %s" % (entry.name,)
+                    filename = self._get_filename(entry, "TestSuite")
 
                     frame_id = stack_info.add_suite_entry_stack(name, filename)
 
                 elif entry.__class__ == _TestEntry:
-                    name = u"TestCase: %s" % (entry.name,)
-                    filename = self._get_filename(entry, u"TestCase")
+                    name = "TestCase: %s" % (entry.name,)
+                    filename = self._get_filename(entry, "TestCase")
 
                     frame_id = stack_info.add_test_entry_stack(
                         name, filename, entry.lineno
@@ -843,10 +876,78 @@ class _RobotDebuggerImpl(object):
 
         stop_reason: Optional[ReasonEnum] = None
         step_cmd = self._step_cmd
-        if lines and lineno in lines:
-            stop_reason = ReasonEnum.REASON_BREAKPOINT
+        if lines:
+            bp: Optional[IRobotBreakpoint] = lines.get(lineno)
+            if bp:
+                # Mark it to stop and then go over exclusions based on condition
+                # and hit_condition.
+                stop_reason = ReasonEnum.REASON_BREAKPOINT
 
-        elif step_cmd is not None:
+                if bp.condition:
+                    try:
+                        from robot.variables.evaluation import (
+                            evaluate_expression,
+                        )  # noqa
+
+                        curr_vars = ctx.variables.current
+                        hit = bool(
+                            evaluate_expression(
+                                curr_vars.replace_string(bp.condition), curr_vars.store
+                            )
+                        )
+                        if not hit:
+                            log.debug(
+                                "Breakpoint at %s (%s) skipped (%s evaluated to False)",
+                                source,
+                                lineno,
+                                bp.condition,
+                            )
+                            stop_reason = None
+                    except:
+                        log.exception("Error evaluating: %s", bp.condition)
+
+                if stop_reason is not None and bp.hit_condition:
+                    bp.hits += 1
+                    if bp.hits != bp.hit_condition:
+                        log.debug(
+                            "Breakpoint at %s (%s) skipped (hit condition: %s evaluated to False)",
+                            source,
+                            lineno,
+                            bp.hit_condition,
+                        )
+                        stop_reason = None
+
+                if stop_reason is not None:
+                    if bp.log_message:
+                        curr_vars = ctx.variables.current
+                        try:
+                            message = curr_vars.replace_string(bp.log_message)
+                        except Exception as e:
+                            message = (
+                                f"Error evaluating: {bp.log_message}.\nError: {e}\n"
+                            )
+
+                        if not message.endswith(("\n", "\r")):
+                            message += "\n"
+
+                        self.write_message(
+                            OutputEvent(
+                                body=OutputEventBody(
+                                    source=Source(path=source),
+                                    line=lineno,
+                                    output=message,
+                                    category="console",
+                                )
+                            )
+                        )
+                        log.debug(
+                            "Breakpoint at %s (%s) skipped (due to being a log message breakpoint).",
+                            source,
+                            lineno,
+                        )
+                        stop_reason = None
+
+        if stop_reason is None and step_cmd is not None:
             if step_cmd == StepEnum.STEP_IN:
                 stop_reason = ReasonEnum.REASON_STEP
 
