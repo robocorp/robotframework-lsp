@@ -47,26 +47,26 @@
         "commands": [
             {
                 "command": "robot.runTest",
-                "category": "Robot Framework",
                 "title": "Run Test/Task",
+                "category": "Robot Framework",
                 "icon": "$(play)"
             },
             {
                 "command": "robot.debugTest",
-                "category": "Robot Framework",
                 "title": "Debug Test/Task",
+                "category": "Robot Framework",
                 "icon": "$(debug)"
             },
             {
                 "command": "robot.runSuite",
-                "category": "Robot Framework",
                 "title": "Run Tests/Tasks Suite",
+                "category": "Robot Framework",
                 "icon": "$(run-all)"
             },
             {
                 "command": "robot.debugSuite",
-                "category": "Robot Framework",
                 "title": "Debug Tests/Tasks Suite",
+                "category": "Robot Framework",
                 "icon": "$(debug-alt)"
             }
         ],

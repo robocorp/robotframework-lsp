@@ -633,3 +633,35 @@ class IMonitor(Protocol):
         """
         raises JsonRpcRequestCancelled if cancelled.
         """
+
+
+class ActionResult(Generic[T]):
+
+    success: bool
+    message: Optional[
+        str
+    ]  # if success == False, this can be some message to show to the user
+    result: Optional[T]
+
+    def __init__(
+        self, success: bool, message: Optional[str] = None, result: Optional[T] = None
+    ):
+        self.success = success
+        self.message = message
+        self.result = result
+
+    def as_dict(self):
+        return {"success": self.success, "message": self.message, "result": self.result}
+
+    def __str__(self):
+        return f"ActionResult(success={self.success!r}, message={self.message!r}, result={self.result!r})"
+
+    __repr__ = __str__
+
+
+class ActionResultDict(TypedDict):
+    success: bool
+    message: Optional[
+        str
+    ]  # if success == False, this can be some message to show to the user
+    result: Any

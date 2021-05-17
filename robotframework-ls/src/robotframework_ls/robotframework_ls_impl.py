@@ -11,6 +11,7 @@ from robocorp_ls_core.protocols import (
     IIdMessageMatcher,
     IRobotFrameworkApiClient,
     IMonitor,
+    ActionResultDict,
 )
 from pathlib import Path
 from robotframework_ls.ep_providers import (
@@ -23,6 +24,7 @@ from robocorp_ls_core.jsonrpc.monitor import Monitor
 from functools import partial
 import itertools
 from robotframework_ls import __version__
+import typing
 
 
 log = get_logger(__name__)
@@ -217,6 +219,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def capabilities(self):
         from robocorp_ls_core.lsp import TextDocumentSyncKind
         from robotframework_ls.impl.semantic_tokens import TOKEN_TYPES, TOKEN_MODIFIERS
+        from robotframework_ls import commands
 
         server_capabilities = {
             "codeActionProvider": False,
@@ -239,6 +242,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                     "robot.getInternalInfo",
                     "robot.listTests",
                 ]
+                + commands.ALL_SERVER_COMMANDS
             },
             "hoverProvider": True,
             "referencesProvider": False,

@@ -9,7 +9,7 @@ import sys
 import weakref
 import os
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, List, Iterable
 from robotframework_ls.ep_resolve_interpreter import (
     EPResolveInterpreter,
     IInterpreterInfo,
@@ -413,7 +413,7 @@ class _RegularLintAndOthersApi(object):
     document formatting, code folding, semantic tokens and workspace symbols.
     """
 
-    def __init__(self, api, lint_api, others_api):
+    def __init__(self, api: _ServerApi, lint_api: _ServerApi, others_api: _ServerApi):
         self.api = api
         self.lint_api = lint_api
         self.others_api = others_api
@@ -463,7 +463,7 @@ class ServerManager(object):
                 f"This may only be called at the thread: {self._main_thread}. Current thread: {curr_thread}"
             )
 
-    def _iter_all_apis(self):
+    def _iter_all_apis(self) -> Iterable[_ServerApi]:
         self._check_in_main_thread()
         for apis in self._id_to_apis.values():
             for api in apis:
@@ -557,6 +557,9 @@ class ServerManager(object):
         self._check_in_main_thread()
         for api in self._iter_all_apis():
             api.exit()
+
+    def collect_apis(self) -> List[_ServerApi]:
+        return list(self._iter_all_apis())
 
     # Private APIs
 
