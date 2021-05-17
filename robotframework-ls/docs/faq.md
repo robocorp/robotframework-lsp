@@ -160,7 +160,7 @@ picks up the new environment variable value.
 **Note**: when possible using `watchdog` is recommended.
 
 
-How to solve (NO_ROBOT) too old for linting
+How to solve (NO_ROBOT) too old for linting?
 --------------------------------------------
 
 This means that the Python which is being used doesn't have `Robot Framework` installed.
@@ -169,3 +169,29 @@ To fix this, please use a configure a Python executable which does have `Robot F
 installed (either through `robot.language-server.python` or `robot.python.executable` 
 -- see: [config.md](config.md) for details) or install
 `Robot Framework` in the Python that's being used by the language server.
+
+
+How to configure the launch from a code lens/shortcut?
+------------------------------------------------------
+
+To configure the launch from a code lens/shortcut, please create a launch
+configuration named `Robot Framework: Launch template` in `.vscode/launch.json`.
+
+i.e.: To configure the terminal to be an `integrated` terminal on all launches
+and to specify all launches to have an additional `--argumentfile /path/to/arguments.txt`,
+it's possible to create a `.vscode/launch.json` such as:
+
+```
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "robotframework-lsp",
+            "name": "Robot Framework: Launch template",
+            "request": "launch",
+            "terminal": "integrated",
+            "args": ["--argumentfile", "/path/to/arguments.txt"]
+        }
+    ]
+}
+```
