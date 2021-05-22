@@ -9,7 +9,7 @@ if __file__.endswith((".pyc", ".pyo")):
 
 
 @pytest.fixture
-def server_process(tmpdir, on_timeout):
+def server_process(tmpdir, on_timeout, remote_fs_observer):
     from robocorp_ls_core.basic import kill_process_and_subprocesses
     from robotframework_ls.server_api.server__main__ import start_server_process
 
@@ -22,7 +22,12 @@ def server_process(tmpdir, on_timeout):
     }
 
     language_server_api_process = start_server_process(
-        args=["-vv", "--log-file=%s" % log_file], env=env
+        args=[
+            "-vv",
+            "--log-file=%s" % log_file,
+            f"--remote-fs-observer-port={remote_fs_observer.port}",
+        ],
+        env=env,
     )
     returncode = language_server_api_process.poll()
     assert returncode is None

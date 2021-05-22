@@ -322,6 +322,7 @@ User can call library
 def test_completion_with_auto_import_resource_import(workspace, setup_case2_in_dir_doc):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import auto_import_completions
+    from robocorp_ls_core.basic import wait_for_condition
 
     doc = workspace.get_doc("case1.robot")
 
@@ -337,6 +338,14 @@ KeywordInCase1
 User can call library
     KeywordInCa"""
 
+    wait_for_condition(
+        lambda: len(
+            auto_import_completions.complete(
+                CompletionContext(doc2, workspace=workspace.ws), {}
+            )
+        )
+        == 1
+    )
     completions = auto_import_completions.complete(
         CompletionContext(doc2, workspace=workspace.ws), {}
     )
@@ -424,6 +433,7 @@ def test_completion_with_auto_handle_unparseable_error(
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import auto_import_completions
     import os.path
+    from robocorp_ls_core.basic import wait_for_condition
 
     doc = workspace.get_doc("case1.robot")
     doc.source = """/invalid/file/here ustehous usneothu snteuha usoentuho"""
@@ -444,7 +454,15 @@ User can call library
     KeywordInCa"""
 
     # i.e.: make sure that our in-memory folders are in sync.
-    workspace.ws.wait_for_check_done(5)
+    wait_for_condition(
+        lambda: len(
+            auto_import_completions.complete(
+                CompletionContext(doc2, workspace=workspace.ws), {}
+            )
+        )
+        == 1
+    )
+
     completions = auto_import_completions.complete(
         CompletionContext(doc2, workspace=workspace.ws), {}
     )

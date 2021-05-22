@@ -28,6 +28,7 @@ from robocorp_ls_core.jsonrpc.endpoint import Endpoint
 from robocorp_ls_core.jsonrpc.streams import JsonRpcStreamReader, JsonRpcStreamWriter
 
 from robocorp_ls_core import uris
+from robocorp_ls_core.watchdog_wrapper import IFSObserver
 
 log = get_logger(__name__)
 
@@ -258,7 +259,9 @@ class PythonLanguageServer(MethodDispatcher):
         if workspaceFolders:
             workspaceFolders = [WorkspaceFolder(**w) for w in workspaceFolders]
 
-        self.workspace = self._create_workspace(rootUri, workspaceFolders or [])
+        self.workspace = self._create_workspace(
+            rootUri, self._obtain_fs_observer(), workspaceFolders or []
+        )
 
         if processId not in (None, -1, 0):
             exit_when_pid_exists(processId)
@@ -266,13 +269,28 @@ class PythonLanguageServer(MethodDispatcher):
         # Get our capabilities
         return {"capabilities": self.capabilities()}
 
+    def _obtain_fs_observer(self) -> IFSObserver:
+        """
+        The FSObserver is needed to keep the list of files updated in the
+        Workspace (_VirtualFS).
+        """
+        try:
+            return self._observer
+        except AttributeError:
+            from robocorp_ls_core import watchdog_wrapper
+
+            self._observer = watchdog_wrapper.create_observer("dummy", None)
+            return self._observer
+
     def _create_config(self) -> IConfig:
         raise NotImplementedError(f"Not implemented in: {self.__class__}")
 
-    def _create_workspace(self, root_uri, workspace_folders) -> IWorkspace:
+    def _create_workspace(
+        self, root_uri: str, fs_observer: IFSObserver, workspace_folders
+    ) -> IWorkspace:
         from robocorp_ls_core.workspace import Workspace
 
-        return Workspace(root_uri, workspace_folders)
+        return Workspace(root_uri, fs_observer, workspace_folders)
 
     def m_initialized(self, **_kwargs):
         pass

@@ -35,7 +35,7 @@ def start_server_process(args=(), python_exe=None, env=None):
     :param args:
         The list of arguments for the server process.
         i.e.:
-            ["-vv", "--log-file=%s" % log_file]
+            ["-vv", "--log-file=%s" % log_file, "--remote-fs-observer-port=23456"]
     """
     from robocorp_ls_core.robotframework_log import get_logger
     from robocorp_ls_core.subprocess_wrapper import subprocess
@@ -110,7 +110,36 @@ def main():
         from robotframework_ls import __main__
         from robotframework_ls.server_api.server import RobotFrameworkServerApi
 
-        __main__.main(language_server_class=RobotFrameworkServerApi)
+        args = sys.argv[1:]
+        new_args = []
+
+        found_remote_fs_obverver_port = False
+        for arg in args:
+            if arg.startswith("--remote-fs-observer-port="):
+                # Now, in this process, we don't own the RemoteFSObserver, we
+                # just expect to connect to an existing one.
+                found_remote_fs_obverver_port = True
+                port = int(arg.split("=")[1].strip())
+                from robocorp_ls_core.remote_fs_observer_impl import RemoteFSObserver
+
+                observer = RemoteFSObserver("<unused>", extensions=None)
+                observer.connect_to_server(port)
+
+                class RobotFrameworkServerApiWithObserver(RobotFrameworkServerApi):
+                    def __init__(self, *args, **kwargs):
+                        kwargs["observer"] = observer
+                        RobotFrameworkServerApi.__init__(self, *args, **kwargs)
+
+            else:
+                new_args.append(arg)
+
+        if not found_remote_fs_obverver_port:
+            raise RuntimeError(
+                'Expected "--remote-fs-observer-port=" to be passed in the arguments.'
+            )
+        __main__.main(
+            language_server_class=RobotFrameworkServerApiWithObserver, args=new_args
+        )
     except:
         try:
             if log is not None:

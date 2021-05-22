@@ -25,6 +25,8 @@ from functools import partial
 import itertools
 from robotframework_ls import __version__
 import typing
+import sys
+from robocorp_ls_core.watchdog_wrapper import IFSObserver
 
 
 log = get_logger(__name__)
@@ -130,6 +132,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         from robotframework_ls.ep_providers import DefaultConfigurationProvider
         from robotframework_ls.ep_providers import DefaultEndPointProvider
         from robotframework_ls.ep_providers import DefaultDirCacheProvider
+        from robocorp_ls_core import watchdog_wrapper
+        from robocorp_ls_core.remote_fs_observer_impl import RemoteFSObserver
+        from robocorp_ls_core.options import Setup
 
         PythonLanguageServer.__init__(self, rx, tx)
 
@@ -153,8 +158,45 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         self._pm.set_instance(
             EPEndPointProvider, DefaultEndPointProvider(self._endpoint)
         )
+
+        watch_impl = os.environ.get("ROBOTFRAMEWORK_LS_WATCH_IMPL", "auto")
+        if watch_impl not in ("watchdog", "fsnotify", "auto"):
+            log.info(
+                f"ROBOTFRAMEWORK_LS_WATCH_IMPL should be 'auto', 'watchdog' or 'fsnotify'. Found: {watch_impl} (falling back to auto)"
+            )
+            watch_impl = "auto"
+
+        if watch_impl == "auto":
+            # In auto mode we use watchdog for windows and fsnotify (polling)
+            # for Linux and Mac. The reason for that is that on Linux and Mac
+            # if big folders are watched the system may complain due to the
+            # lack of resources, which may prevent the extension from working
+            # properly.
+            #
+            # If users want to opt-in, they can change to watchdog (and
+            # ideally install it to their env to get native extensions).
+            if sys.platform == "win32":
+                watch_impl = "watchdog"
+            else:
+                watch_impl = "fsnotify"
+
+        self._fs_observer = watchdog_wrapper.create_remote_observer(
+            watch_impl, (".py", ".libspec", "robot", ".resource")
+        )
+        remote_observer = typing.cast(RemoteFSObserver, self._fs_observer)
+        log_file = Setup.options.log_file
+        if not isinstance(log_file, str):
+            log_file = None
+        remote_observer.start_server(log_file=log_file)
+
         self._server_manager = ServerManager(self._pm, language_server=self)
         self._lint_manager = _LintManager(self._server_manager, self._lsp_messages)
+
+    def get_remote_fs_observer_port(self) -> Optional[int]:
+        from robocorp_ls_core.remote_fs_observer_impl import RemoteFSObserver
+
+        remote_observer = typing.cast(RemoteFSObserver, self._fs_observer)
+        return remote_observer.port
 
     @overrides(PythonLanguageServer._create_config)
     def _create_config(self) -> IConfig:
@@ -167,11 +209,19 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         PythonLanguageServer._on_workspace_set(self, workspace)
         self._server_manager.set_workspace(workspace)
 
+    @overrides(PythonLanguageServer._obtain_fs_observer)
+    def _obtain_fs_observer(self) -> IFSObserver:
+        return self._fs_observer
+
     @overrides(PythonLanguageServer._create_workspace)
-    def _create_workspace(self, root_uri, workspace_folders):
+    def _create_workspace(
+        self, root_uri: str, fs_observer: IFSObserver, workspace_folders
+    ):
         from robotframework_ls.impl.robot_workspace import RobotWorkspace
 
-        return RobotWorkspace(root_uri, workspace_folders, generate_ast=False)
+        return RobotWorkspace(
+            root_uri, fs_observer, workspace_folders, generate_ast=False
+        )
 
     def m_initialize(
         self,
@@ -348,6 +398,13 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     @overrides(PythonLanguageServer.m_shutdown)
     @log_and_silence_errors(log)
     def m_shutdown(self, **kwargs):
+        try:
+            from robocorp_ls_core.remote_fs_observer_impl import RemoteFSObserver
+
+            remote_observer = typing.cast(RemoteFSObserver, self._fs_observer)
+            remote_observer.dispose()
+        except Exception:
+            log.exception("Error disposing RemoteFSObserver.")
         self._server_manager.shutdown()
 
         PythonLanguageServer.m_shutdown(self, **kwargs)

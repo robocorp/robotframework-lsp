@@ -110,7 +110,9 @@ class JsonRpcStreamReader(object):
                 except:
                     log.exception("Error processing JSON message %s", data)
                     continue
-        except:
+        except ConnectionResetError:
+            pass  # Just ignore this one (connection was closed)
+        except Exception:
             log.exception("Error in JsonRpcStreamReader.")
         finally:
             log.debug("Exited JsonRpcStreamReader.")

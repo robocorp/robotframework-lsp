@@ -192,6 +192,10 @@ def get_log_level():
     return _log_config.log_level
 
 
+def get_log_file():
+    return _log_config.log_file
+
+
 def get_logger(name: str) -> ILog:
     """
     Use as:

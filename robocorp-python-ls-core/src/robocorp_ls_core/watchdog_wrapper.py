@@ -7,16 +7,27 @@ import sys
 import logging
 import threading
 import weakref
+from typing import List, Tuple, Optional, Set, Sequence
 
 log = logging.getLogger(__name__)
 
 __file__ = os.path.abspath(__file__)  # @ReservedAssignment
 
+# Hack so that we don't break the runtime on versions prior to Python 3.8.
+if sys.version_info[:2] < (3, 8):
+
+    class Protocol(object):
+        pass
+
+
+else:
+    from typing import Protocol
+
 
 class PathInfo(object):
     __slots__ = ["path", "recursive"]
 
-    def __init__(self, path, recursive):
+    def __init__(self, path: str, recursive: bool):
         path = str(path)
         self.path = path
         self.recursive = recursive
@@ -32,6 +43,30 @@ class PathInfo(object):
 
     def __hash__(self, *args, **kwargs):
         return hash(tuple(self.path, self.recursive))
+
+
+class IFSCallback(Protocol):
+    def __call__(self, src_path, *call_args):
+        pass
+
+
+class IFSWatch(Protocol):
+    def stop_tracking(self):
+        pass
+
+
+class IFSObserver(Protocol):
+    def notify_on_any_change(
+        self,
+        paths: List[PathInfo],
+        on_change: IFSCallback,
+        call_args=(),
+        extensions: Optional[Sequence[str]] = None,
+    ) -> IFSWatch:
+        pass
+
+    def dispose(self):
+        pass
 
 
 def _get_watchdog_lib_dir():
@@ -82,23 +117,28 @@ def _import_fsnotify():
 
 
 class _Notifier(threading.Thread):
-    def __init__(self, callback, timeout):
+    def __init__(
+        self, callback, timeout: int, extensions: Optional[Tuple[str, ...]] = None
+    ):
         """
         :param callback:
             Callable which should be called when a file with the given extension changes.
         :param timeout:
             The amount of time which should elapse to send notifications (so, multiple
             modifications of the same file will be sent as a single notification).
+        :param extensions:
+            Only notify file changes of the given extensions.
         """
         threading.Thread.__init__(self)
         self.name = "FS Notifier Thread (_Notifier class)"
         self.daemon = True
 
-        self._changes = set()
+        self._changes: Set[tuple] = set()
         self._event = threading.Event()
         self._timeout = timeout
         self._disposed = False
         self._callback = callback
+        self._extensions = extensions
 
     def run(self):
         import time
@@ -121,6 +161,15 @@ class _Notifier(threading.Thread):
             self._event.clear()
 
     def on_change(self, src_path, *call_args):
+        if self._extensions:
+            for ext in self._extensions:
+                if src_path.lower().endswith(ext):
+                    # Ok, proceed to notify.
+                    break
+            else:
+                # Skip this notification as it's not in one of the available
+                # extensions.
+                return
         self._changes.add((src_path,) + tuple(call_args))
         self._event.set()
 
@@ -129,10 +178,20 @@ class _Notifier(threading.Thread):
         self._event.set()
 
 
-def create_notifier(callback, timeout):
-    notifier = _Notifier(callback, timeout)
+def create_notifier(callback, timeout, extensions=None):
+    notifier = _Notifier(callback, timeout, extensions)
     notifier.start()
     return notifier
+
+
+class _DummyWatchList(object):
+    def stop_tracking(self):
+        pass
+
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
+
+        _: IFSWatch = check_implements(self)
 
 
 class _FSNotifyWatchList(object):
@@ -147,6 +206,11 @@ class _FSNotifyWatchList(object):
             observer._stop_tracking(self._new_tracked_paths, self._new_notifications)
         self._new_tracked_paths = []
         self._new_notifications = []
+
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
+
+        _: IFSWatch = check_implements(self)
 
 
 class _FSNotifyObserver(threading.Thread):
@@ -178,6 +242,7 @@ class _FSNotifyObserver(threading.Thread):
         self._all_paths_to_track = []
         self._lock = threading.Lock()
         self._notifications = []
+        self._was_started = False
 
     def dispose(self):
         if not self._disposed.is_set():
@@ -185,12 +250,18 @@ class _FSNotifyObserver(threading.Thread):
             self._watcher.dispose()
 
     def run(self):
-        while not self._disposed.is_set():
-            for _change, src_path in self._watcher.iter_changes():
-                lower = src_path.lower()
-                for path, on_change, call_args in self._notifications:
-                    if lower.startswith(path):
-                        on_change(src_path, *call_args)
+        log.debug("Started listening on _FSNotifyObserver.")
+        try:
+            while not self._disposed.is_set():
+                for _change, src_path in self._watcher.iter_changes():
+                    lower = src_path.lower()
+                    for path, on_change, call_args in self._notifications:
+                        if lower.startswith(path):
+                            on_change(src_path, *call_args)
+        except:
+            log.exception("Error collecting changes in _FSNotifyObserver.")
+        finally:
+            log.debug("Finished listening on _FSNotifyObserver.")
 
     def _tracked_paths_set_on_thread(self):
         with self._lock:
@@ -205,11 +276,27 @@ class _FSNotifyObserver(threading.Thread):
                 self._notifications.remove(notification)
         threading.Thread(target=self._tracked_paths_set_on_thread).start()
 
-    def notify_on_any_change(self, paths, on_change, call_args=()):
+    def notify_on_any_change(
+        self,
+        paths: List[PathInfo],
+        on_change: IFSCallback,
+        call_args=(),
+        extensions: Optional[Sequence[str]] = None,
+    ) -> IFSWatch:
         if self._disposed.is_set():
-            return
+            return _DummyWatchList()
 
         import fsnotify
+
+        used_on_change = on_change
+        if extensions:
+
+            def on_change_with_extensions(src_path, *args):
+                lower = src_path.lower()
+                if lower.endswith(extensions):
+                    on_change(src_path, *args)
+
+            used_on_change = on_change_with_extensions
 
         with self._lock:
             new_paths_to_track = []
@@ -217,16 +304,25 @@ class _FSNotifyObserver(threading.Thread):
             for path in paths:
                 tracked_path = fsnotify.TrackedPath(path.path, path.recursive)
                 new_paths_to_track.append(tracked_path)
-                new_notifications.append((path.path.lower(), on_change, call_args))
+                new_notifications.append((path.path.lower(), used_on_change, call_args))
 
             self._notifications.extend(new_notifications)
             self._all_paths_to_track.extend(new_paths_to_track)
 
         threading.Thread(target=self._tracked_paths_set_on_thread).start()
-        if not self.is_alive():
-            self.start()
+        if not self._was_started:
+            with self._lock:
+                # Check again with the lock in place.
+                if not self._was_started:
+                    self._was_started = True
+                    self.start()
 
         return _FSNotifyWatchList(new_paths_to_track, new_notifications, self)
+
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
+
+        _: IFSObserver = check_implements(self)
 
 
 class _WatchdogWatchList(object):
@@ -238,8 +334,16 @@ class _WatchdogWatchList(object):
         observer = self._observer()
         if observer is not None:
             for watch in self.watches:
-                observer.unschedule(watch)
+                try:
+                    observer.unschedule(watch)
+                except Exception:
+                    pass
         self.watches = []
+
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
+
+        _: IFSWatch = check_implements(self)
 
 
 class _WatchdogObserver(object):
@@ -258,7 +362,13 @@ class _WatchdogObserver(object):
             self._started = True
             self._observer.start()
 
-    def notify_on_any_change(self, paths, on_change, call_args=()):
+    def notify_on_any_change(
+        self,
+        paths: List[PathInfo],
+        on_change: IFSCallback,
+        call_args=(),
+        extensions: Optional[Sequence[str]] = None,
+    ) -> IFSWatch:
         """
         To be used as:
         
@@ -268,7 +378,8 @@ class _WatchdogObserver(object):
         
         watch = observer.notify_on_any_change(
             [PathInfo('a', recursive=True)],
-            notifier.on_change
+            notifier.on_change,
+            extensions=('.py', '.robot'),
         )
         ...
         watch.stop_tracking()
@@ -285,7 +396,8 @@ class _WatchdogObserver(object):
         """
         from watchdog.events import FileSystemEventHandler
 
-        extensions = self._extensions
+        if not extensions:
+            extensions = self._extensions
 
         class _Handler(FileSystemEventHandler):
             def __init__(self,):
@@ -313,12 +425,36 @@ class _WatchdogObserver(object):
         self._start()
         return _WatchdogWatchList(watches, self._observer)
 
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
 
-def create_observer(backend, extensions):
+        _: IFSObserver = check_implements(self)
+
+
+class _DummyFSObserver(object):
+    def notify_on_any_change(
+        self,
+        paths: List[PathInfo],
+        on_change: IFSCallback,
+        call_args=(),
+        extensions: Optional[Sequence[str]] = None,
+    ) -> IFSWatch:
+        return _DummyWatchList()
+
+    def dispose(self):
+        pass
+
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
+
+        _: IFSObserver = check_implements(self)
+
+
+def create_observer(backend: str, extensions: Optional[Tuple[str, ...]]) -> IFSObserver:
     """
     :param backend:
         The backend to use.
-        'fsnotify' or 'watchdog'.
+        'fsnotify', 'watchdog' or 'dummy'.
     """
     if backend == "watchdog":
         _import_watchdog()
@@ -328,4 +464,21 @@ def create_observer(backend, extensions):
         _import_fsnotify()
         return _FSNotifyObserver(extensions)
 
+    elif backend == "dummy":
+        return _DummyFSObserver()
+
     raise AssertionError(f"Unhandled observer: {backend}")
+
+
+def create_remote_observer(
+    backend: str, extensions: Optional[Tuple[str, ...]]
+) -> IFSObserver:
+    """
+    :param backend:
+        The backend to use.
+        'fsnotify' or 'watchdog'.
+    """
+    assert backend in ("watchdog", "fsnotify")
+    from robocorp_ls_core.remote_fs_observer_impl import RemoteFSObserver
+
+    return RemoteFSObserver(backend, extensions)

@@ -5,17 +5,25 @@ from robotframework_ls.constants import NULL
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.protocols import IRobotWorkspace, IRobotDocument
 from robocorp_ls_core.protocols import check_implements, IWorkspaceFolder
+from robocorp_ls_core.watchdog_wrapper import IFSObserver
 
 log = get_logger(__name__)
 
 
 class RobotWorkspace(Workspace):
     def __init__(
-        self, root_uri, workspace_folders=None, libspec_manager=NULL, generate_ast=True
+        self,
+        root_uri,
+        fs_observer: IFSObserver,
+        workspace_folders=None,
+        libspec_manager=NULL,
+        generate_ast=True,
     ):
         self.libspec_manager = libspec_manager
 
-        Workspace.__init__(self, root_uri, workspace_folders=workspace_folders)
+        Workspace.__init__(
+            self, root_uri, fs_observer, workspace_folders=workspace_folders
+        )
         self._generate_ast = generate_ast
 
     @overrides(Workspace.add_folder)

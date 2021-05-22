@@ -4,6 +4,7 @@ import os
 import logging
 from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 from robotframework_ls.constants import NULL
+from robocorp_ls_core.watchdog_wrapper import IFSObserver
 
 __file__ = os.path.abspath(__file__)  # @ReservedAssignment
 
@@ -164,14 +165,47 @@ def sync_builtins(tmpdir_factory):
 
 
 @pytest.fixture
-def libspec_manager(tmpdir):
+def remote_fs_observer(tmpdir, on_timeout):
+    def write_on_finish():
+        import sys
+
+        dirname = os.path.dirname(log_file)
+        for f in os.listdir(dirname):
+            if f.startswith(
+                "robotframework_api_tests_api_remote_fs_observer"
+            ) and f.endswith(".log"):
+                full = os.path.join(dirname, f)
+                sys.stderr.write("\n--- %s contents:\n" % (full,))
+                with open(full, "r") as stream:
+                    sys.stderr.write(stream.read())
+
+    on_timeout.add(write_on_finish)
+
+    from robocorp_ls_core.watchdog_wrapper import create_remote_observer
+
+    remote_fsobserver = create_remote_observer(
+        "watchdog", (".py", ".libspec", "robot", ".resource")
+    )
+    log_file = str(tmpdir.join("robotframework_api_tests_api_remote_fs_observer.log"))
+    remote_fsobserver.start_server(log_file=log_file)
+    yield remote_fsobserver
+
+    remote_fsobserver.dispose()
+    on_timeout.remove(write_on_finish)
+    write_on_finish()
+
+
+@pytest.fixture
+def libspec_manager(tmpdir, remote_fs_observer):
     from robotframework_ls.impl import workspace_symbols as workspace_symbols_module
 
     workspace_symbols_module.WORKSPACE_SYMBOLS_TIMEOUT = 5
 
     from robotframework_ls.impl.libspec_manager import LibspecManager
 
-    libspec_manager = LibspecManager(user_libspec_dir=str(tmpdir.join("user_libspec")))
+    libspec_manager = LibspecManager(
+        user_libspec_dir=str(tmpdir.join("user_libspec")), observer=remote_fs_observer
+    )
     yield libspec_manager
     libspec_manager.dispose()
 
@@ -202,9 +236,10 @@ def cases(tmpdir_factory) -> CasesFixture:
 
 
 class _WorkspaceFixture(object):
-    def __init__(self, cases):
+    def __init__(self, cases, fs_observer: IFSObserver):
         self._cases = cases
         self._ws = None
+        self._fs_observer = fs_observer
 
     @property
     def ws(self):
@@ -222,7 +257,7 @@ class _WorkspaceFixture(object):
         from robocorp_ls_core import uris
         from robotframework_ls.impl.robot_workspace import RobotWorkspace
 
-        self._ws = RobotWorkspace(uris.from_fs_path(path), **kwargs)
+        self._ws = RobotWorkspace(uris.from_fs_path(path), self._fs_observer, **kwargs)
 
     def get_doc(self, root_relative_path, accept_from_file=True):
         from robocorp_ls_core import uris
@@ -233,8 +268,8 @@ class _WorkspaceFixture(object):
 
 
 @pytest.fixture
-def workspace(cases):
-    return _WorkspaceFixture(cases)
+def workspace(cases, remote_fs_observer):
+    return _WorkspaceFixture(cases, remote_fs_observer)
 
 
 @pytest.fixture

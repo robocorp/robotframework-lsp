@@ -2,7 +2,7 @@ from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.robotframework_log import get_logger
 from typing import Optional, List, Dict
-from robocorp_ls_core.protocols import IConfig, IMonitor, ITestInfoTypedDict
+from robocorp_ls_core.protocols import IConfig, IMonitor, ITestInfoTypedDict, IWorkspace
 from functools import partial
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
 from robocorp_ls_core.lsp import (
@@ -14,6 +14,7 @@ from robocorp_ls_core.lsp import (
     DocumentSymbolTypedDict,
 )
 from robotframework_ls.impl.protocols import IKeywordFound
+from robocorp_ls_core.watchdog_wrapper import IFSObserver
 
 
 log = get_logger(__name__)
@@ -26,12 +27,18 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     an API to use the bits we need from robotframework in a separate process).
     """
 
-    def __init__(self, read_from, write_to, libspec_manager=None):
+    def __init__(
+        self,
+        read_from,
+        write_to,
+        libspec_manager=None,
+        observer: Optional[IFSObserver] = None,
+    ):
         from robotframework_ls.impl.libspec_manager import LibspecManager
 
         if libspec_manager is None:
             try:
-                libspec_manager = LibspecManager()
+                libspec_manager = LibspecManager(observer=observer)
             except:
                 log.exception("Unable to properly initialize the LibspecManager.")
                 raise
@@ -84,12 +91,21 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     def cancel_lint(self, *args, **kwargs):
         pass  # No-op for this server.
 
+    @overrides(PythonLanguageServer._obtain_fs_observer)
+    def _obtain_fs_observer(self) -> IFSObserver:
+        return self.libspec_manager.fs_observer
+
     @overrides(PythonLanguageServer._create_workspace)
-    def _create_workspace(self, root_uri, workspace_folders):
+    def _create_workspace(
+        self, root_uri: str, fs_observer: IFSObserver, workspace_folders
+    ) -> IWorkspace:
         from robotframework_ls.impl.robot_workspace import RobotWorkspace
 
         return RobotWorkspace(
-            root_uri, workspace_folders, libspec_manager=self.libspec_manager
+            root_uri,
+            fs_observer,
+            workspace_folders,
+            libspec_manager=self.libspec_manager,
         )
 
     def m_lint(self, doc_uri):

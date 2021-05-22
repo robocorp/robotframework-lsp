@@ -197,6 +197,7 @@ class _ServerApi(object):
         return env
 
     def get_robotframework_api_client(self) -> Optional[IRobotFrameworkApiClient]:
+
         self._check_in_main_thread()
         workspace = self.workspace
         assert (
@@ -222,6 +223,9 @@ class _ServerApi(object):
                 from robocorp_ls_core.jsonrpc.streams import (
                     JsonRpcStreamWriter,
                     JsonRpcStreamReader,
+                )
+                from robotframework_ls.robotframework_ls_impl import (
+                    RobotFrameworkLanguageServer,
                 )
 
                 args = []
@@ -249,6 +253,16 @@ class _ServerApi(object):
                 self._used_python_executable = python_exe
                 self._used_environ = environ
 
+                robot_framework_language_server: RobotFrameworkLanguageServer = self.robot_framework_language_server
+                remote_fs_observer_port = (
+                    robot_framework_language_server.get_remote_fs_observer_port()
+                )
+                if not remote_fs_observer_port:
+                    raise RuntimeError(
+                        f"Expected the port to hear the Remote filesystem observer to be available. Found: {remote_fs_observer_port}"
+                    )
+
+                args.append(f"--remote-fs-observer-port={remote_fs_observer_port}")
                 server_process = start_server_process(
                     args=args, python_exe=python_exe, env=environ
                 )

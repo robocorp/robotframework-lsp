@@ -34,6 +34,7 @@ from robocorp_ls_core.lsp import TextDocumentItem, TextDocumentContentChangeEven
 import weakref
 from collections import namedtuple
 import time
+from robocorp_ls_core.watchdog_wrapper import IFSObserver
 
 
 log = get_logger(__name__)
@@ -44,26 +45,7 @@ _FileMTimeInfo = namedtuple("_FileMTimeInfo", "st_mtime, st_size")
 class _DirInfo(object):
     def __init__(self, scan_path):
         self.scan_path = scan_path
-        self.mtime = self._get_mtime()
-        self.directories: Set[str] = set()
-        self.files_to_mtime: Dict[str, _FileMTimeInfo] = {}
-
-    def _get_mtime(self):
-        try:
-            return os.stat(self.scan_path).st_mtime_ns
-        except:
-            return -1
-
-    def mtime_changed(self) -> Tuple[bool, float]:
-        """
-        Returns whether the mtime changed and the current mtime.
-        """
-        mtime = self._get_mtime()
-
-        if self.mtime != mtime:
-            return True, mtime
-
-        return False, mtime
+        self.files_in_directory: Set[str] = set()
 
 
 class _VirtualFSThread(threading.Thread):
@@ -72,6 +54,8 @@ class _VirtualFSThread(threading.Thread):
     INNER_SLEEP = 0.1
 
     def __init__(self, virtual_fs):
+        from robocorp_ls_core.watchdog_wrapper import IFSWatch
+
         threading.Thread.__init__(self)
         self.daemon = True
         from os.path import basename
@@ -95,13 +79,16 @@ class _VirtualFSThread(threading.Thread):
         self.first_check_done = threading.Event()
         self._check_done_events = []
         self._last_sleep = None
+        self._fs_watch: Optional[IFSWatch] = None
+        self._dirs_changed = set()
+        self._trigger_loop = threading.Event()
 
     def _check_need_sleep(self):
         last_sleep = self._last_sleep
         if last_sleep is None:
             self._last_sleep = time.time()
             return
-        if time.time() - last_sleep > 0.5:
+        if time.time() - last_sleep > 0.3:
             time.sleep(self.INNER_SLEEP)
             self._last_sleep = time.time()
 
@@ -113,7 +100,7 @@ class _VirtualFSThread(threading.Thread):
             )
             return
 
-        self._check_need_sleep()
+        self._last_sleep = time.time()
         if self._disposed.is_set():
             return
 
@@ -131,18 +118,11 @@ class _VirtualFSThread(threading.Thread):
                 if i % 100 == 0:
                     self._check_need_sleep()
                 if entry.is_dir():
-                    if self.accept_directory(entry.path):
-                        stat = entry.stat()
-                        dir_info.directories.add(entry.path)
-                        dir_info.mtime = stat.st_mtime_ns
-                        if recursive:
-                            self._check_dir(entry.path, directories, level + 1)
+                    if recursive and self.accept_directory(entry.path):
+                        self._check_dir(entry.path, directories, level + 1)
 
                 elif self.accept_file(entry.path):
-                    stat = entry.stat()
-                    dir_info.files_to_mtime[entry.path] = _FileMTimeInfo(
-                        stat.st_mtime_ns, stat.st_size
-                    )
+                    dir_info.files_in_directory.add(entry.path)
 
             virtual_fs = self._virtual_fs()
             if virtual_fs is None:
@@ -152,38 +132,93 @@ class _VirtualFSThread(threading.Thread):
             pass  # Directory was removed in the meanwhile.
 
     def run(self):
-        # Do initial scan
-        virtual_fs = self._virtual_fs()
+        from robocorp_ls_core.watchdog_wrapper import PathInfo
 
+        virtual_fs: _VirtualFS = self._virtual_fs()
+        fs_observer: IFSObserver = virtual_fs._fs_observer
+
+        # Setup tracking for changes
+        self._fs_watch = fs_observer.notify_on_any_change(
+            [PathInfo(self.root_folder_path, recursive=True)],
+            on_change=self._on_change,
+            extensions=virtual_fs._extensions,
+        )
+        check_done_events = self._check_done_events
+        self._check_done_events = []
+
+        # Do initial scan
         self._check_dir(self.root_folder_path, set())
+
+        # Notify of initial scan
         self.first_check_done.set()
-        self._notify_check_done_events()
+        self._notify_check_done_events(check_done_events)
 
         while not self._disposed.is_set():
-            if self._disposed.wait(self.SLEEP_AMONG_SCANS):
+            self._trigger_loop.wait(self.SLEEP_AMONG_SCANS)
+            if self._disposed.is_set():
                 return
+
+            check_done_events = self._check_done_events
+            self._check_done_events = []
+
+            # Wait 100 more millis to catch up to further changes in the same loop.
+            time.sleep(0.1)
 
             virtual_fs = self._virtual_fs()
             if virtual_fs is None:
+                self.dispose()
                 return
 
-            directories = set()
-            current = list(virtual_fs._dir_to_info)
-            self._check_dir(self.root_folder_path, directories)
+            # This would do a clean update, which'd be very cost intensive...
+            # Instead, let's work only on the `_dirs_changed`.
+            # directories = set()
+            # current = list(virtual_fs._dir_to_info)
+            # self._check_dir(self.root_folder_path, directories)
+            #
+            # for d in current:
+            #     if d not in directories:
+            #         virtual_fs._dir_to_info.pop(d, None)
 
-            for d in current:
-                if d not in directories:
-                    virtual_fs._dir_to_info.pop(d, None)
+            dirs_changed = self._dirs_changed
+            self._dirs_changed = set()
+
+            for dir_path in dirs_changed:
+                dir_info = _DirInfo(dir_path)
+                try:
+                    assert not isinstance(dir_path, bytes)
+                    if self._disposed.is_set():
+                        return
+
+                    for entry in os.scandir(dir_path):
+                        if not entry.is_dir() and self.accept_file(entry.path):
+                            dir_info.files_in_directory.add(entry.path)
+                except OSError:
+                    if not os.path.exists(dir_path):
+                        # Directory was removed.
+                        virtual_fs._dir_to_info.pop(dir_path, None)
+                else:
+                    virtual_fs._dir_to_info[dir_path] = dir_info
 
             virtual_fs = None
-            self._notify_check_done_events()
+
+            self._trigger_loop.clear()
+            self._notify_check_done_events(check_done_events)
+
+    def _on_change(self, src_path):
+        changed_dir = os.path.dirname(src_path)
+        self._dirs_changed.add(changed_dir)
+        self._trigger_loop.set()
 
     def dispose(self):
-        self._disposed.set()
+        fs_watch = self._fs_watch
+        if fs_watch is not None:
+            fs_watch.stop_tracking()
+            self._fs_watch = None
 
-    def _notify_check_done_events(self):
-        check_done_events = self._check_done_events
-        self._check_done_events = []
+        self._disposed.set()
+        self._trigger_loop.set()
+
+    def _notify_check_done_events(self, check_done_events):
         for event in check_done_events:
             event.set()
 
@@ -195,12 +230,15 @@ class _VirtualFSThread(threading.Thread):
 
 
 class _VirtualFS(object):
-    def __init__(self, root_folder_path: str, extensions: List[str]):
+    def __init__(
+        self, root_folder_path: str, extensions: Iterable[str], fs_observer: IFSObserver
+    ):
         self.root_folder_path = root_folder_path
 
         self._dir_to_info: Dict[str, _DirInfo] = {}
 
         self._extensions = set(extensions)
+        self._fs_observer = fs_observer
 
         # Do initial scan and then start tracking changes.
         self._virtual_fsthread = _VirtualFSThread(self)
@@ -209,25 +247,17 @@ class _VirtualFS(object):
     def wait_for_check_done(self, timeout):
         self._virtual_fsthread.wait_for_check_done(timeout)
 
-    def scandir(self, scan_path: str, directories: Set[str], extensions: Tuple[str]):
+    def _iter_all_doc_uris(self, extensions: Tuple[str, ...]) -> Iterable[str]:
         """
-        :param scan_path:
-            The path to be scanned.
-            
-        :param directories:
-            A set where the directories found in that path will be added to.
-            
         :param extensions:
             The extensions which are being searched (i.e.: ('.txt', '.py')).
         """
         assert self._extensions.issuperset(extensions)
-        dir_info = self._dir_to_info.get(scan_path)
-        if dir_info is None:
-            return
-        directories.update(dir_info.directories)
-        for f in dir_info.files_to_mtime:
-            if f.endswith(extensions):
-                yield uris.from_fs_path(f)
+        dir_infos = list(self._dir_to_info.values())
+        for dir_info in dir_infos:
+            for f in dir_info.files_in_directory:
+                if f.endswith(extensions):
+                    yield uris.from_fs_path(f)
 
     def dispose(self):
         self._virtual_fsthread.dispose()
@@ -244,37 +274,24 @@ class _WorkspaceFolderWithVirtualFS(object):
     invalidating them as needed.
     """
 
-    def __init__(self, uri, name, track_file_extensions):
+    def __init__(self, uri, name, track_file_extensions, fs_observer: IFSObserver):
         self.uri = uri
         self.name = name
         self.path = uris.to_fs_path(uri)
 
-        self._vs: _VirtualFS = _VirtualFS(self.path, track_file_extensions)
+        self._vs: _VirtualFS = _VirtualFS(
+            self.path, track_file_extensions, fs_observer=fs_observer
+        )
 
-    def _iter_doc_uris_recursive(
-        self, visited_paths: Set[str], extensions: Tuple[str]
-    ) -> Iterable[str]:
+    def _iter_all_doc_uris(self, extensions: Tuple[str, ...]) -> Iterable[str]:
         """
-        :param visited_paths:
-            A set to be used as a memory for the paths previously visited.
-            Passed as a parameter in case multiple folders are being visited and
-            one's inside the other.
-        
         :param extensions:
             The extensions which are being searched (i.e.: ('.txt', '.py')).
         """
         # Note: this function is meant to be thread-safe.
 
         vs = self._vs
-        scan_paths = {self.path}
-
-        while scan_paths:
-            scan_path = scan_paths.pop()
-            if scan_path in visited_paths:
-                continue
-            visited_paths.add(scan_path)
-
-            yield from vs.scandir(scan_path, scan_paths, extensions)
+        yield from vs._iter_all_doc_uris(extensions)
 
     def wait_for_check_done(self, timeout):
         self._vs.wait_for_check_done(timeout)
@@ -297,6 +314,7 @@ class Workspace(object):
     def __init__(
         self,
         root_uri: str,
+        fs_observer: IFSObserver,
         workspace_folders: Optional[List[IWorkspaceFolder]] = None,
         track_file_extensions=(".robot", ".resource"),
     ) -> None:
@@ -309,6 +327,7 @@ class Workspace(object):
         self._root_path = to_fs_path(self._root_uri)
         self._folders: Dict[str, _WorkspaceFolderWithVirtualFS] = {}
         self._track_file_extensions = track_file_extensions
+        self._fs_observer = fs_observer
 
         # Contains the docs with files considered open.
         self._docs: Dict[str, IDocument] = {}
@@ -346,6 +365,7 @@ class Workspace(object):
                 folder.uri,
                 folder.name,
                 track_file_extensions=self._track_file_extensions,
+                fs_observer=self._fs_observer,
             )
             folders[folder.uri] = folder
             self._folders = folders
@@ -460,7 +480,9 @@ class Workspace(object):
         new_doc.apply_change(change)
         self._docs[doc_uri] = new_doc
 
-    def iter_all_doc_uris_in_workspace(self, extensions: Tuple[str]) -> Iterable[str]:
+    def iter_all_doc_uris_in_workspace(
+        self, extensions: Tuple[str, ...]
+    ) -> Iterable[str]:
         """
         :param extensions:
             The extensions which are being searched (i.e.: ('.txt', '.py')).
@@ -469,9 +491,8 @@ class Workspace(object):
         # Folders are set as a whole, so, this is thread safe.
         # This may be called in a thread.
         folders = self._folders.values()
-        visited_paths: Set[str] = set()
         for folder in folders:
-            yield from folder._iter_doc_uris_recursive(visited_paths, extensions)
+            yield from folder._iter_all_doc_uris(extensions)
 
     def __typecheckself__(self) -> None:
         from robocorp_ls_core.protocols import check_implements

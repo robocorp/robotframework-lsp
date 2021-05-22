@@ -37,6 +37,8 @@ from robocorp_code.locators.locator_protocols import (
     BrowserLocatorTypedDict,
     ImageLocatorTypedDict,
 )
+from robocorp_ls_core.watchdog_wrapper import IFSObserver
+from robocorp_ls_core import watchdog_wrapper
 
 
 log = get_logger(__name__)
@@ -342,6 +344,8 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 f"Env vars info: {env_vars_info}\n"
             )
 
+        self._fs_observer = None
+
         self._dir_cache = DirCache(cache_dir)
         self._rcc = Rcc(self)
         self._track = True
@@ -406,6 +410,12 @@ class RobocorpLanguageServer(PythonLanguageServer):
     def m_shutdown(self, **_kwargs):
         self._locators_in_thread_api.shutdown()
         PythonLanguageServer.m_shutdown(self, **_kwargs)
+
+    @overrides(PythonLanguageServer._obtain_fs_observer)
+    def _obtain_fs_observer(self) -> IFSObserver:
+        if self._fs_observer is None:
+            self._fs_observer = watchdog_wrapper.create_observer("dummy", ())
+        return self._fs_observer
 
     @overrides(PythonLanguageServer.cancel_lint)
     def cancel_lint(self, doc_uri):
