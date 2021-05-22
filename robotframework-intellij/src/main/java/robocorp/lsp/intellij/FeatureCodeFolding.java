@@ -46,6 +46,9 @@ public class FeatureCodeFolding extends CustomFoldingBuilder {
                 return;
             }
             Project project = robotPsiFile.getProject();
+            if (project == null) {
+                return;
+            }
             String projectRoot = project.getBasePath();
             if (projectRoot == null) {
                 return;
@@ -65,6 +68,9 @@ public class FeatureCodeFolding extends CustomFoldingBuilder {
 
             try {
                 LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication("." + extension, projectRoot, project);
+                if (comm == null) {
+                    return;
+                }
                 String uri = Uris.toUri(virtualFile);
                 TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
                 FoldingRangeRequestParams params = new FoldingRangeRequestParams(textDocument);
