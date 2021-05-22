@@ -61,37 +61,40 @@ def code_lens(completion_context: ICompletionContext) -> List[CodeLensTypedDict]
     end: PositionTypedDict = {"line": 0, "character": 0}
     code_lens_range: RangeTypedDict = {"start": start, "end": end}
 
-    # Run Test command
-    command: CommandTypedDict = {
-        "title": "Run Suite",
-        "command": "robot.runTest",
-        "arguments": [
-            {
-                "uri": completion_context.doc.uri,
-                "path": completion_context.doc.path,
-                "name": "*",
-            }
-        ],
-    }
+    test_case_sections = list(ast_utils.iter_test_case_sections(ast))
 
-    ret.append({"range": code_lens_range, "command": command})
+    if len(test_case_sections) > 0:
+        # Run Test command
+        command: CommandTypedDict = {
+            "title": "Run Suite",
+            "command": "robot.runTest",
+            "arguments": [
+                {
+                    "uri": completion_context.doc.uri,
+                    "path": completion_context.doc.path,
+                    "name": "*",
+                }
+            ],
+        }
 
-    # Debug Test command
-    command = {
-        "title": "Debug Suite",
-        "command": "robot.debugTest",
-        "arguments": [
-            {
-                "uri": completion_context.doc.uri,
-                "path": completion_context.doc.path,
-                "name": "*",
-            }
-        ],
-    }
+        ret.append({"range": code_lens_range, "command": command})
 
-    ret.append({"range": code_lens_range, "command": command})
+        # Debug Test command
+        command = {
+            "title": "Debug Suite",
+            "command": "robot.debugTest",
+            "arguments": [
+                {
+                    "uri": completion_context.doc.uri,
+                    "path": completion_context.doc.path,
+                    "name": "*",
+                }
+            ],
+        }
 
-    for node_info in ast_utils.iter_test_case_sections(ast):
+        ret.append({"range": code_lens_range, "command": command})
+
+    for node_info in test_case_sections:
         try:
             for test_node in node_info.node.body:
                 test_case_name_token = test_node.header.get_token(Token.TESTCASE_NAME)
