@@ -9,6 +9,7 @@ def check_symbol(symbols, name):
 def test_workspace_symbols(workspace, libspec_manager):
     from robotframework_ls.impl.workspace_symbols import workspace_symbols
     from robotframework_ls.impl.completion_context import BaseContext
+    from robocorp_ls_core.basic import wait_for_condition
     from robocorp_ls_core.constants import NULL
     from robocorp_ls_core.config import Config
 
@@ -16,12 +17,20 @@ def test_workspace_symbols(workspace, libspec_manager):
 
     config = Config()
 
+    def find_expected_symbols():
+        symbols = workspace_symbols("", BaseContext(workspace.ws, config, NULL))
+        assert len(symbols) > 0
+
+        try:
+            check_symbol(symbols, "List Files In Directory")
+            check_symbol(symbols, "Yet Another Equal Redefined")
+        except AssertionError:
+            return False
+        return True
+
+    wait_for_condition(find_expected_symbols)
+
     symbols = workspace_symbols("", BaseContext(workspace.ws, config, NULL))
-    assert len(symbols) > 0
-
-    check_symbol(symbols, "List Files In Directory")
-    check_symbol(symbols, "Yet Another Equal Redefined")
-
     symbols2 = workspace_symbols("", BaseContext(workspace.ws, config, NULL))
     assert symbols == symbols2
 

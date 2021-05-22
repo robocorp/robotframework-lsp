@@ -229,8 +229,22 @@ class _FSNotifyObserver(threading.Thread):
             extensions = ()
 
         watcher = self._watcher = fsnotify.Watcher()
-        watcher.target_time_for_notification = 3.0
-        watcher.target_time_for_single_scan = 3.0
+        poll_time = os.environ.get("ROBOTFRAMEWORK_LS_POLL_TIME")
+        watcher.target_time_for_notification = 4.0
+        watcher.target_time_for_single_scan = 4.0
+
+        if poll_time:
+            try:
+                poll_time = int(poll_time)
+            except Exception:
+                log.exception(
+                    "Unable to convert ROBOTFRAMEWORK_LS_POLL_TIME (%s) to an int.",
+                    poll_time,
+                )
+            else:
+                watcher.target_time_for_notification = poll_time
+                watcher.target_time_for_single_scan = poll_time
+
         watcher.accepted_file_extensions = extensions
         # Could be customizable...
         watcher.ignored_dirs = {
