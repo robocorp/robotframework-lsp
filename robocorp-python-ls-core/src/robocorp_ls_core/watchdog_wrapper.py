@@ -8,6 +8,7 @@ import logging
 import threading
 import weakref
 from typing import List, Tuple, Optional, Set, Sequence
+from robocorp_ls_core.uris import normalize_drive
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ class PathInfo(object):
 
     def __init__(self, path: str, recursive: bool):
         path = str(path)
-        self.path = path
+        self.path = normalize_drive(path)
         self.recursive = recursive
 
     def __eq__(self, o):
@@ -170,6 +171,7 @@ class _Notifier(threading.Thread):
                 # Skip this notification as it's not in one of the available
                 # extensions.
                 return
+        src_path = normalize_drive(src_path)
         self._changes.add((src_path,) + tuple(call_args))
         self._event.set()
 
@@ -256,8 +258,8 @@ class _FSNotifyObserver(threading.Thread):
                 for _change, src_path in self._watcher.iter_changes():
                     lower = src_path.lower()
                     for path, on_change, call_args in self._notifications:
-                        if lower.startswith(path):
-                            on_change(src_path, *call_args)
+                        if lower.startswith(path.lower()):
+                            on_change(normalize_drive(src_path), *call_args)
         except:
             log.exception("Error collecting changes in _FSNotifyObserver.")
         finally:
@@ -304,7 +306,7 @@ class _FSNotifyObserver(threading.Thread):
             for path in paths:
                 tracked_path = fsnotify.TrackedPath(path.path, path.recursive)
                 new_paths_to_track.append(tracked_path)
-                new_notifications.append((path.path.lower(), used_on_change, call_args))
+                new_notifications.append((path.path, used_on_change, call_args))
 
             self._notifications.extend(new_notifications)
             self._all_paths_to_track.extend(new_paths_to_track)

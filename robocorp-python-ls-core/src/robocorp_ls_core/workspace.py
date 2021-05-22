@@ -28,7 +28,7 @@ from robocorp_ls_core.protocols import (
     IWorkspaceFolder,
 )
 from robocorp_ls_core.robotframework_log import get_logger
-from robocorp_ls_core.uris import uri_scheme, to_fs_path
+from robocorp_ls_core.uris import uri_scheme, to_fs_path, normalize_drive
 import threading
 from robocorp_ls_core.lsp import TextDocumentItem, TextDocumentContentChangeEvent
 import weakref
@@ -104,6 +104,7 @@ class _VirtualFSThread(threading.Thread):
         if self._disposed.is_set():
             return
 
+        dir_path = normalize_drive(dir_path)
         directories.add(dir_path)
         dir_info = _DirInfo(dir_path)
         try:
@@ -122,7 +123,7 @@ class _VirtualFSThread(threading.Thread):
                         self._check_dir(entry.path, directories, level + 1)
 
                 elif self.accept_file(entry.path):
-                    dir_info.files_in_directory.add(entry.path)
+                    dir_info.files_in_directory.add(normalize_drive(entry.path))
 
             virtual_fs = self._virtual_fs()
             if virtual_fs is None:
@@ -183,6 +184,7 @@ class _VirtualFSThread(threading.Thread):
             self._dirs_changed = set()
 
             for dir_path in dirs_changed:
+                dir_path = normalize_drive(dir_path)
                 dir_info = _DirInfo(dir_path)
                 try:
                     assert not isinstance(dir_path, bytes)
@@ -233,7 +235,7 @@ class _VirtualFS(object):
     def __init__(
         self, root_folder_path: str, extensions: Iterable[str], fs_observer: IFSObserver
     ):
-        self.root_folder_path = root_folder_path
+        self.root_folder_path = normalize_drive(root_folder_path)
 
         self._dir_to_info: Dict[str, _DirInfo] = {}
 

@@ -17,6 +17,7 @@
 import pytest
 from robocorp_ls_core.constants import IS_WIN
 from robocorp_ls_core import uris
+import sys
 
 unix_only = pytest.mark.skipif(IS_WIN, reason="Unix only")
 windows_only = pytest.mark.skipif(not IS_WIN, reason="Windows only")
@@ -85,3 +86,13 @@ def test_win_from_fs_path(path, uri):
 )
 def test_uri_with(uri, kwargs, new_uri):
     assert uris.uri_with(uri, **kwargs) == new_uri
+
+
+def test_normalize_drive():
+    from robocorp_ls_core.uris import normalize_drive
+
+    if sys.platform == "win32":
+        assert normalize_drive("c:/teMp") == "c:/teMp"
+        assert normalize_drive("X:/Temp") == "x:/Temp"
+        assert normalize_drive("temp") == "temp"
+        assert normalize_drive("") == ""

@@ -15,6 +15,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import sys
 
 """A collection of URI utilities with logic built on the VSCode URI library.
 
@@ -32,6 +33,20 @@ from urllib.parse import (
 )
 
 RE_DRIVE_LETTER_PATH = re.compile(r"^\/[a-zA-Z]:")
+
+
+if sys.platform == "win32":
+
+    def normalize_drive(filename):
+        if len(filename) > 1 and filename[1] == ":" and not filename[0].islower():
+            return filename[0].lower() + filename[1:]
+        return filename
+
+
+else:
+
+    def normalize_drive(filename):
+        return filename
 
 
 def _normalize_win_path(path):
@@ -98,6 +113,7 @@ def to_fs_path(uri: str) -> str:
 
     if IS_WIN:
         value = value.replace("/", "\\")
+        value = normalize_drive(value)
 
     return value
 

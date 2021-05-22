@@ -1,3 +1,6 @@
+import sys
+
+
 def test_isinstance_name():
     from robocorp_ls_core.basic import isinstance_name
 
