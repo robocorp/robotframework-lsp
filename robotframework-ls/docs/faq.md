@@ -195,3 +195,41 @@ it's possible to create a `.vscode/launch.json` such as:
     ]
 }
 ```
+
+How to use variables in settings?
+----------------------------------
+
+Since `Robot Framework Language Server 0.17.0`, the settings may contain variables
+in the settings.
+
+The variables available are `${workspace}`, which points to the workspace root or
+`${env.ENV_VAR_NAME}`, which will obtain the `ENV_VAR_NAME` from the environment
+variables.
+
+Also, since `0.17.0`, it's also possible to prefix a setting value with `~` so that
+the user homedir is replaced.
+
+Example:
+
+```
+{
+  "robot.pythonpath": [
+      "~/lib/", 
+      "${worskpace}/lib", 
+      "${env.MYROOT}/lib"
+    ]
+}
+```
+
+
+How to debug high-cpu usage in Robot Framework Language Server?
+----------------------------------------------------------------
+
+Note: `Robot Framework Language Server 0.17.0` has a bugfix for a case which
+could result in high-cpu usage, so, make sure you have the newest version
+released prior to reporting an issue.
+
+If even after upgrading you have a Python process with high-cpu related to the
+`Robot Framework Language Server`, please create an issue with the related
+`pstats` files following the steps provided in 
+https://github.com/robocorp/robotframework-lsp/issues/350#issuecomment-842506969 
