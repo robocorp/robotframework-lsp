@@ -30,6 +30,7 @@ import { ProgressReport, handleProgressMessage } from './progress';
 import { Timing } from './time';
 import { registerRunCommands } from './run';
 import { registerLinkProviders } from './linkProvider';
+import { expandVars, getArrayStrFromConfigExpandingVars, getStrFromConfigExpandingVars } from './expandVars';
 
 const OUTPUT_CHANNEL_NAME = "Robot Framework";
 export const OUTPUT_CHANNEL = window.createOutputChannel(OUTPUT_CHANNEL_NAME);
@@ -107,7 +108,7 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
 		// When we resolve a configuration we add the pythonpath and variables to the command line.
 		let args: Array<string> = debugConfiguration.args;
 		let config = workspace.getConfiguration("robot");
-		let pythonpath: Array<string> = config.get<Array<string>>("pythonpath");
+		let pythonpath: Array<string> = getArrayStrFromConfigExpandingVars(config, "pythonpath");
 		let variables: object = config.get("variables");
 		let targetRobot: object = debugConfiguration.target;
 
@@ -136,7 +137,7 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
 		for (let key in variables) {
 			if (variables.hasOwnProperty(key)) {
 				newArgs.push('--variable');
-				newArgs.push(key + ':' + variables[key]);
+				newArgs.push(key + ':' + expandVars(variables[key]));
 			}
 		}
 		if (args) {
@@ -158,8 +159,7 @@ interface InterpreterInfo {
 
 function registerDebugger(languageServerExecutable: string) {
 	async function createDebugAdapterExecutable(env: { [key: string]: string }, targetRobot: string): Promise<DebugAdapterExecutable> {
-		let config = workspace.getConfiguration("robot");
-		let dapPythonExecutable: string = config.get<string>("python.executable");
+		let dapPythonExecutable: string = getStrFromConfigExpandingVars(workspace.getConfiguration("robot"), "python.executable");
 
 		// If it's not specified in the language, let's check if some plugin wants to provide an implementation.
 		let interpreter: InterpreterInfo = await commands.executeCommand('robot.resolveInterpreter', targetRobot);
@@ -202,9 +202,9 @@ function registerDebugger(languageServerExecutable: string) {
 		}
 	};
 
-	try{
+	try {
 		debug.registerDebugConfigurationProvider('robotframework-lsp', new RobotDebugConfigurationProvider());
-	
+
 		debug.registerDebugAdapterDescriptorFactory('robotframework-lsp', {
 			createDebugAdapterDescriptor: session => {
 				let env = session.configuration.env;
@@ -212,7 +212,7 @@ function registerDebugger(languageServerExecutable: string) {
 				return createDebugAdapterExecutable(env, target);
 			}
 		});
-	}catch(error){
+	} catch (error) {
 		// i.e.: https://github.com/microsoft/vscode/issues/118562
 		OUTPUT_CHANNEL.appendLine('Error registering debugger: ' + error);
 	}
@@ -229,8 +229,7 @@ interface ExecutableAndMessage {
 
 async function getDefaultLanguageServerPythonExecutable(): Promise<ExecutableAndMessage> {
 	OUTPUT_CHANNEL.appendLine("Getting language server Python executable.");
-	let config = workspace.getConfiguration("robot");
-	let languageServerPython: string = config.get<string>("language-server.python");
+	let languageServerPython: string = getStrFromConfigExpandingVars(workspace.getConfiguration("robot"), "language-server.python");
 	let executable: string = languageServerPython;
 
 	if (!executable || (executable.indexOf('/') == -1 && executable.indexOf('\\') == -1)) {
@@ -303,25 +302,47 @@ export async function activate(context: ExtensionContext) {
 			let saveInWorkspace: string = 'Yes (save in workspace settings)';
 
 			let selection = await window.showWarningMessage(executableAndMessage.message, ...[saveInUser, saveInWorkspace, 'No']);
-			// Try to use the Robocorp Code extension to provide one for us (if it's installed and
-			// available).
-
-
 			// robot.language-server.python
 			if (selection == saveInUser || selection == saveInWorkspace) {
 				let onfulfilled = await window.showOpenDialog({
 					'canSelectMany': false,
 					'openLabel': 'Select python exe'
 				});
-				if (!onfulfilled && onfulfilled.length > 0) {
-					let configurationTarget: ConfigurationTarget = ConfigurationTarget.Workspace;
-					if (selection == saveInUser) {
-						configurationTarget = ConfigurationTarget.Global;
-					}
-					let config = workspace.getConfiguration("robot");
-					config.update("language-server.python", onfulfilled[0].fsPath, configurationTarget);
-					executableAndMessage = { 'executable': onfulfilled[0].fsPath, message: undefined };
+				if (!onfulfilled || onfulfilled.length == 0) {
+					// There's not much we can do (besides start listening to changes to the related variables
+					// on the finally block so that we start listening and ask for a reload if a related configuration changes).
+					OUTPUT_CHANNEL.appendLine("Unable to start (python selection cancelled).");
+					return;
 				}
+
+				let configurationTarget: ConfigurationTarget;
+				if (selection == saveInUser) {
+					configurationTarget = ConfigurationTarget.Global;
+				} else {
+					configurationTarget = ConfigurationTarget.Workspace;
+				}
+
+				let config = workspace.getConfiguration("robot");
+				try {
+					config.update("language-server.python", onfulfilled[0].fsPath, configurationTarget);
+				} catch (err) {
+					let errorMessage = "Error persisting python to start the language server.\nError: " + err;
+					OUTPUT_CHANNEL.appendLine(errorMessage);
+
+					if (configurationTarget == ConfigurationTarget.Workspace) {
+						try {
+							config.update("language-server.python", onfulfilled[0].fsPath, ConfigurationTarget.Global);
+							window.showInformationMessage("It was not possible to save the configuration in the workspace. It was saved in the user settings instead.");
+							err = undefined;
+						} catch (err2) {
+							// ignore this one (show original error).
+						}
+					}
+					if (err !== undefined) {
+						window.showErrorMessage(errorMessage);
+					}
+				}
+				executableAndMessage = { 'executable': onfulfilled[0].fsPath, message: undefined };
 			} else {
 				// There's not much we can do (besides start listening to changes to the related variables
 				// on the finally block so that we start listening and ask for a reload if a related configuration changes).
@@ -330,8 +351,7 @@ export async function activate(context: ExtensionContext) {
 			}
 		}
 
-		let config = workspace.getConfiguration("robot");
-		let port: number = config.get<number>("language-server.tcp-port");
+		let port: number = workspace.getConfiguration("robot").get<number>("language-server.tcp-port");
 		let langServer: LanguageClient;
 
 		let initializationOptions: object = {};
@@ -362,8 +382,7 @@ export async function activate(context: ExtensionContext) {
 			}
 
 			let args: Array<string> = ["-u", targetMain];
-			let config = workspace.getConfiguration("robot");
-			let lsArgs = config.get<Array<string>>("language-server.args");
+			let lsArgs = workspace.getConfiguration("robot").get<Array<string>>("language-server.args");
 			if (lsArgs) {
 				args = args.concat(lsArgs);
 			}
