@@ -862,6 +862,12 @@ class _RobotDebuggerImpl(object):
                     lineno = entry.lineno
                 break
 
+        if not source:
+            return
+        if not source.endswith((".robot", ".resource", ".txt")):
+            robot_init = os.path.join(source, "__init__.robot")
+            if os.path.exists(robot_init):
+                source = robot_init
         self._stack_ctx_entries_deque.append(
             _StepEntry(name, lineno, source, args, ctx.variables.current)
         )

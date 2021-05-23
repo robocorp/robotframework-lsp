@@ -283,7 +283,7 @@ class _RobotTargetComm(threading.Thread):
                 )
                 hit_condition = None
                 try:
-                    if source_breakpoint.hitCondition is not None:
+                    if source_breakpoint.hitCondition:
                         hit_condition = int(source_breakpoint.hitCondition)
                 except:
                     log.exception(
