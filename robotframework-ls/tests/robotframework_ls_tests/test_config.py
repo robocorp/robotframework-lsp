@@ -1,7 +1,8 @@
 import pytest
+import os
 
 
-def test_config():
+def test_config_basic():
     from robotframework_ls.impl.robot_lsp_constants import (
         OPTION_ROBOT_PYTHON_EXECUTABLE,
     )
@@ -33,6 +34,40 @@ def test_config():
 
     with pytest.raises(KeyError):
         assert config.get_setting("robot.not_there", int)
+
+
+def test_config_variable_resolution(monkeypatch):
+    from robotframework_ls.impl.robot_lsp_constants import (
+        OPTION_ROBOT_PYTHON_EXECUTABLE,
+    )
+    from robotframework_ls.robot_config import RobotConfig
+    from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_VARIABLES
+    from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
+
+    monkeypatch.setenv("FOO", "22")
+    config = RobotConfig()
+    settings = {
+        "robot": {
+            "python": {"executable": "${env.FOO}"},
+            "variables": {"VAR1": "~/foo${env.FOO}/${env.FOO}"},
+            "pythonpath": ["~/foo${env.FOO}/${env.FOO}", "${workspace}/a"],
+        }
+    }
+    config.update(settings)
+    assert config.get_setting(OPTION_ROBOT_PYTHON_EXECUTABLE, str) == "22"
+    assert config.get_setting(OPTION_ROBOT_VARIABLES, dict) == {
+        "VAR1": os.path.expanduser("~") + "/foo22/22"
+    }
+    assert config.get_setting(OPTION_ROBOT_PYTHONPATH, list) == [
+        os.path.expanduser("~") + "/foo22/22",
+        "${workspace}/a",
+    ]
+
+    config.set_workspace_dir("workspacepath")
+    assert config.get_setting(OPTION_ROBOT_PYTHONPATH, list) == [
+        os.path.expanduser("~") + "/foo22/22",
+        "workspacepath/a",
+    ]
 
 
 def test_config_flatten_01():

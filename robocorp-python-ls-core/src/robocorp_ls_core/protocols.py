@@ -434,7 +434,10 @@ class IConfig(Protocol):
     def get_full_settings(self) -> dict:
         pass
 
-    def set_override_settings(self, override_settings: dict):
+    def set_override_settings(self, override_settings: dict) -> None:
+        pass
+
+    def set_workspace_dir(self, workspace: str) -> None:
         pass
 
 

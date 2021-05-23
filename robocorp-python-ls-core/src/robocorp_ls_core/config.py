@@ -17,7 +17,8 @@
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.basic import implements
 from robocorp_ls_core.protocols import IConfig, Sentinel
-from typing import Any, FrozenSet
+from typing import Any, FrozenSet, Optional
+import os
 
 
 log = get_logger(__name__)
@@ -47,7 +48,12 @@ class Config(object):
 
         self._settings: dict = {}
         self._override_settings: dict = {}
+
+        self._original_settings: dict = {}
+        self._original_override_settings: dict = {}
+
         self._full_settings: dict = {}
+        self._workspace_dir: Optional[str] = None
 
     @implements(IConfig.get_setting)
     def get_setting(self, key, expected_type, default=Sentinel.SENTINEL) -> Any:
@@ -74,18 +80,103 @@ class Config(object):
         self._full_settings = full_settings
         log.info("Updated settings to %s", full_settings)
 
+    def _get_var_value(self, name):
+        ret = name
+        if name in ("${workspace}", "${workspaceRoot}"):
+            if self._workspace_dir is not None:
+                ret = self._workspace_dir
+            else:
+                log.debug("Unable to make workspace replacement for variable: %s", name)
+
+        elif name.startswith("${env."):
+            name = name[6:-1]
+            ret = os.environ.get(name)  # Note: should be case-insensitive on windows.
+        else:
+            log.debug("Unable to resolve variable: %s", name)
+
+        return ret
+
+    def _var_replace(self, option, value):
+        import re
+
+        compiled = re.compile(r"\${([^{}]*)}")
+        lasti = 0
+        new_value = []
+        for o in compiled.finditer(value):
+            new_value.append(value[lasti : o.start()])
+            new_value.append(self._get_var_value(o.group(0)))
+            lasti = o.end()
+
+        if lasti == 0:
+            # Nothing changed
+            return value
+
+        new_value.append(value[lasti:])
+        ret = "".join(new_value)
+        if ret.startswith("~"):
+            ret = os.path.expanduser(ret)
+
+        log.debug("Changed setting: %s from %s to %s", option, value, ret)
+
+        return ret
+
+    def _replace_variables_in_settings(self, settings: dict) -> dict:
+        """
+        :param settings:
+            The settings where the variables should be replaced.
+            Note that this instance is unchanged.
+            
+        :return dict:
+            Returns a new dict with the variables replaced.
+        """
+        settings = settings.copy()
+        for option in self.ALL_OPTIONS:
+            value = settings.get(option)
+            if isinstance(value, str):
+                settings[option] = self._var_replace(option, value)
+
+            elif isinstance(value, list):
+                new_value = []
+                for val in value:
+                    if isinstance(val, str):
+                        new_value.append(self._var_replace(option, val))
+                    else:
+                        new_value.append(val)
+                settings[option] = new_value
+
+            elif isinstance(value, dict):
+                new_dct = {}
+                for key, val in value.items():
+                    if isinstance(val, str):
+                        new_dct[key] = self._var_replace(option, val)
+                    else:
+                        new_dct[key] = val
+                settings[option] = new_dct
+        return settings
+
     @implements(IConfig.update)
     def update(self, settings: dict):
         settings = flatten_keys(settings, all_options=self.ALL_OPTIONS)
-        self._settings = settings
+        self._original_settings = settings
+        self._settings = self._replace_variables_in_settings(settings)
         self._update_full_settings()
 
     @implements(IConfig.set_override_settings)
     def set_override_settings(self, override_settings):
         settings = flatten_keys(override_settings, all_options=self.ALL_OPTIONS)
-        self._override_settings = settings
+        self._original_override_settings = settings
+        self._override_settings = self._replace_variables_in_settings(settings)
         self._update_full_settings()
 
     @implements(IConfig.get_full_settings)
     def get_full_settings(self):
         return self._full_settings
+
+    @implements(IConfig.set_workspace_dir)
+    def set_workspace_dir(self, workspace: str):
+        self._workspace_dir = workspace
+        self._settings = self._replace_variables_in_settings(self._original_settings)
+        self._override_settings = self._replace_variables_in_settings(
+            self._original_override_settings
+        )
+        self._update_full_settings()

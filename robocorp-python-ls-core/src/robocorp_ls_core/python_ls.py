@@ -207,6 +207,7 @@ class PythonLanguageServer(MethodDispatcher):
     @workspace.setter
     def workspace(self, workspace: IWorkspace) -> None:
         self._workspace = workspace
+        self._config.set_workspace_dir(workspace.root_path)
         self._on_workspace_set(workspace)
 
     def _on_workspace_set(self, workspace: IWorkspace):
