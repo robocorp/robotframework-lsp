@@ -16,117 +16,150 @@
       character: 0
       line: 2
 - children:
-  - kind: 5
-    name: Some Test
+  - kind: 13
+    name: ${foo}
     range:
       end:
-        character: 9
+        character: 6
         line: 6
       start:
         character: 0
         line: 6
     selectionRange:
       end:
-        character: 9
+        character: 6
         line: 6
       start:
         character: 0
         line: 6
   kind: 3
-  name: Test Cases
+  name: Variables
   range:
     end:
-      character: 18
+      character: 17
       line: 5
     start:
       character: 0
       line: 5
   selectionRange:
     end:
-      character: 18
+      character: 17
       line: 5
     start:
       character: 0
       line: 5
+- children:
+  - kind: 5
+    name: Some Test
+    range:
+      end:
+        character: 9
+        line: 9
+      start:
+        character: 0
+        line: 9
+    selectionRange:
+      end:
+        character: 9
+        line: 9
+      start:
+        character: 0
+        line: 9
+  kind: 3
+  name: Test Cases
+  range:
+    end:
+      character: 18
+      line: 8
+    start:
+      character: 0
+      line: 8
+  selectionRange:
+    end:
+      character: 18
+      line: 8
+    start:
+      character: 0
+      line: 8
 - children:
   - kind: 5
     name: Some Task
     range:
       end:
         character: 9
-        line: 10
+        line: 13
       start:
         character: 0
-        line: 10
+        line: 13
     selectionRange:
       end:
         character: 9
-        line: 10
+        line: 13
       start:
         character: 0
-        line: 10
+        line: 13
   - kind: 5
     name: Some Task 2
     range:
       end:
         character: 11
-        line: 13
+        line: 16
       start:
         character: 0
-        line: 13
+        line: 16
     selectionRange:
       end:
         character: 11
-        line: 13
+        line: 16
       start:
         character: 0
-        line: 13
+        line: 16
   kind: 3
   name: Task
   range:
     end:
       character: 12
-      line: 9
+      line: 12
     start:
       character: 0
-      line: 9
+      line: 12
   selectionRange:
     end:
       character: 12
-      line: 9
+      line: 12
     start:
       character: 0
-      line: 9
+      line: 12
 - children:
   - kind: 12
     name: Some Keyword
     range:
       end:
         character: 12
-        line: 17
+        line: 20
       start:
         character: 0
-        line: 17
+        line: 20
     selectionRange:
       end:
         character: 12
-        line: 17
+        line: 20
       start:
         character: 0
-        line: 17
+        line: 20
   kind: 3
   name: Keyword
   range:
     end:
       character: 15
-      line: 16
+      line: 19
     start:
       character: 0
-      line: 16
+      line: 19
   selectionRange:
     end:
       character: 15
-      line: 16
+      line: 19
     start:
       character: 0
-      line: 16
+      line: 19

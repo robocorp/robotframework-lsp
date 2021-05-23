@@ -11,7 +11,9 @@ def collect_children(ast) -> List[DocumentSymbolTypedDict]:
 
     ret: List[DocumentSymbolTypedDict] = []
 
-    for node_info in ast_utils.iter_nodes(ast, accept_class=("Keyword", "TestCase")):
+    for node_info in ast_utils.iter_nodes(
+        ast, accept_class=("Keyword", "TestCase", "Variable")
+    ):
         node = node_info.node
         classname = node.__class__.__name__
         if classname == "Keyword":
@@ -31,6 +33,17 @@ def collect_children(ast) -> List[DocumentSymbolTypedDict]:
             doc_symbol = {
                 "name": str(token),
                 "kind": SymbolKind.Class,
+                "range": symbol_range,
+                "selectionRange": symbol_range,
+            }
+            ret.append(doc_symbol)
+
+        elif classname == "Variable":
+            token = node.get_token(Token.VARIABLE)
+            symbol_range = create_range_from_token(token)
+            doc_symbol = {
+                "name": str(token),
+                "kind": SymbolKind.Variable,
                 "range": symbol_range,
                 "selectionRange": symbol_range,
             }

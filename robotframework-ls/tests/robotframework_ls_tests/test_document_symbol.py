@@ -8,6 +8,9 @@ def test_document_symbol(workspace, libspec_manager, data_regression):
     
 *** Settings ***
 Library    Foo
+
+*** Variables ***
+${foo}     foo
     
 *** Test Cases ***
 Some Test
