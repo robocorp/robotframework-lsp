@@ -31,7 +31,7 @@ See: [Config](docs/config.md) for details.
 See: [FAQ](docs/faq.md) for common issues encountered while configuring the language server.
   
 
-Features (0.16.0)
+Features (0.17.0)
 -----------------
 
 - Code analysis: checks if keywords are properly imported/defined.
@@ -53,6 +53,7 @@ Features (0.16.0)
   - Add line breakpoints in `.robot` or `.py` files.
   - Evaluate keywords in debug console/hover/watch
   - Pause at breakpoints to inspect the stack and see variables
+  - Breakpoint condition/hitCondition/logMessage
   - Step in
   - Step over
   - Step return

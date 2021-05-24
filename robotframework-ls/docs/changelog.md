@@ -1,3 +1,20 @@
+New in 0.17.0 (2021-05-24)
+-----------------------------
+
+- Variables may be used in settings. See the [related FAQ](https://github.com/robocorp/robotframework-lsp/blob/master/robotframework-ls/docs/faq.md#how-to-use-variables-in-settings) for details.
+- Semantic highlighting was improved to differentiate the parameter (name) from the argument (value).
+- Code-lens to run/debug suite is only shown if there are actually tests in the suite.
+- Breakpoint improvements (condition, hitCondition, logMessage).
+- Variables are now shown in the document outline.
+- When launching a `.robot`, if a `__init__.robot` is present in the same directory, a `--suite` is done by default.
+- Breakpoints are properly hit on `__init__.robot` files.
+- Fixed issue which could lead to high-cpu due to filesystem polling.
+  - It's now possible to set an environment variable `ROBOTFRAMEWORK_LS_POLL_TIME=<poll time in seconds>` to change the filesystem target poll time.
+  - When possible, it's recommended to set an environment variable `ROBOTFRAMEWORK_LS_WATCH_IMPL=watchdog` to use native watches on Linux and MacOS (already default on Windows).
+  - A file-observer is started as a separate process and multiple clients communicate with it.
+  
+ 
+
 New in 0.16.0 (2021-05-12)
 -----------------------------
 
