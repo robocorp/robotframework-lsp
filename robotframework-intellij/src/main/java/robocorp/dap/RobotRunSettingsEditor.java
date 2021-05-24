@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,6 +44,8 @@ public class RobotRunSettingsEditor extends SettingsEditor<RobotRunProfileOption
     private TextFieldWithBrowseButton workingDir;
     private ComponentWithBrowseButton.BrowseFolderActionListener workingDirSelectListener;
 
+    private JBCheckBox makeSuite;
+
     private EnvironmentVariablesComponent envVarsComponent;
 
     @Override
@@ -64,6 +67,8 @@ public class RobotRunSettingsEditor extends SettingsEditor<RobotRunProfileOption
         } else {
             workingDir.setText(workDirectory);
         }
+
+        makeSuite.setSelected(options.makeSuite);
 
         Map<String, String> environment = options.env;
         if (environment == null) {
@@ -114,6 +119,8 @@ public class RobotRunSettingsEditor extends SettingsEditor<RobotRunProfileOption
         } else {
             options.workingDir = workingDirText;
         }
+
+        options.makeSuite = makeSuite.isSelected();
     }
 
     @Override
@@ -138,6 +145,15 @@ public class RobotRunSettingsEditor extends SettingsEditor<RobotRunProfileOption
         workingDir = new TextFieldWithBrowseButton();
         workingDirLabeledComponent.setComponent(workingDir);
         panel.add(workingDirLabeledComponent, ExternalSystemUiUtil.getFillLineConstraints(0));
+
+        makeSuite = new JBCheckBox();
+        makeSuite.setText("Make --suite from folder when running .robot?");
+        makeSuite.setToolTipText(
+                "<html>When selected, if there's an __init__.robot in the same folder<br/>" +
+                        "as the .robot being run, a suite is created for the folder and<br/>" +
+                        "the robot file is selected to be run (leave checked to <br/>" +
+                        "load __init__.robot when running a .robot file).</html>");
+        panel.add(makeSuite, ExternalSystemUiUtil.getFillLineConstraints(0));
 
         envVarsComponent = new EnvironmentVariablesComponent();
         panel.add(envVarsComponent, ExternalSystemUiUtil.getFillLineConstraints(0));

@@ -280,6 +280,11 @@
                                 "type": "object",
                                 "description": "Environment variables to be added to the launch."
                             },
+                            "makeSuite": {
+                                "type": "boolean",
+                                "description": "When running, always create a suite for the current folder and then filter the test name (to automatically load __init__.robot).",
+                                "default": true
+                            },
                             "terminal": {
                                 "type": "string",
                                 "enum": [

@@ -14,6 +14,7 @@ public class RobotLaunchConfigRunOptions extends LocatableRunConfigurationOption
     public List<String> args;
     public Map<String, String> env;
     public String workingDir;
+    public boolean makeSuite = true;
 
     public String computeWorkingDir() {
         if (workingDir == null) {

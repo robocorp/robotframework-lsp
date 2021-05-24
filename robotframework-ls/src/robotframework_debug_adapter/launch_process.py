@@ -142,6 +142,7 @@ class LaunchProcess(object):
         self._cwd = request.arguments.kwargs.get("cwd")
         self._terminal = request.arguments.kwargs.get("terminal", TERMINAL_NONE)
         args = request.arguments.kwargs.get("args") or []
+        make_suite = request.arguments.kwargs.get("makeSuite", True)
         args = [str(arg) for arg in args]
 
         env = {}
@@ -220,6 +221,14 @@ class LaunchProcess(object):
             return mark_invalid("Error checking if run_robot__main__.py exists.")
 
         else:
+            target_args = [target]
+            if make_suite:
+                if os.path.isfile(target):
+                    target_dir = os.path.dirname(target)
+                    if os.path.exists(os.path.join(target_dir, "__init__.robot")):
+                        target_name = os.path.splitext(os.path.basename(target))[0]
+                        target_args = ["--suite", target_name, target_dir]
+
             # Note: target must be the last parameter.
             cmdline = (
                 [
@@ -231,7 +240,7 @@ class LaunchProcess(object):
                     "--debug" if self._run_in_debug_mode else "--no-debug",
                 ]
                 + args
-                + [target]
+                + target_args
             )
 
         self._cmdline = cmdline

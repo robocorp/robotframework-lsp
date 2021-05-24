@@ -229,6 +229,7 @@ public class RobotDebugProcess extends XDebugProcess {
         launchArgs.put("args", options.args);
         launchArgs.put("cwd", options.computeWorkingDir());
         launchArgs.put("env", options.env);
+        launchArgs.put("makeSuite", options.makeSuite);
 
         launchArgs.put("noDebug", !isDebug);
         launchArgs.put("__sessionId", "sessionId");

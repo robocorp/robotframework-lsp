@@ -382,6 +382,33 @@ def test_break_on_init(debugger_api: _DebuggerAPI):
     debugger_api.read(TerminatedEvent)
 
 
+def test_init_auto_loaded(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+
+    debugger_api.initialize()
+    target = debugger_api.get_dap_case_file("check_init/lsp_test.robot")
+    target_init = debugger_api.get_dap_case_file("check_init/__init__.robot")
+    debugger_api.target = target
+
+    debugger_api.launch(target, debug=True)
+    bp_setup = debugger_api.get_line_index_with_content(
+        "Suite Setup", filename=target_init
+    )
+    bp_teardown = debugger_api.get_line_index_with_content(
+        "Suite Teardown", filename=target_init
+    )
+    debugger_api.set_breakpoints(target_init, (bp_setup, bp_teardown))
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(file="__init__.robot")
+    debugger_api.continue_event(json_hit.thread_id)
+
+    json_hit = debugger_api.wait_for_thread_stopped(file="__init__.robot")
+    debugger_api.continue_event(json_hit.thread_id)
+
+    debugger_api.read(TerminatedEvent)
+
+
 def test_step_out(debugger_api: _DebuggerAPI):
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
 

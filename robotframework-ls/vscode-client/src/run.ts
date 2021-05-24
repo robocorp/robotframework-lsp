@@ -188,6 +188,9 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
         if(launchTemplate.env){
             debugConfiguration.env = launchTemplate.env;
         }
+        if(launchTemplate.makeSuite !== undefined){
+            debugConfiguration.makeSuite = launchTemplate.makeSuite;
+        }
         if(launchTemplate.args){
             debugConfiguration.args = debugConfiguration.args.concat(launchTemplate.args);
         }

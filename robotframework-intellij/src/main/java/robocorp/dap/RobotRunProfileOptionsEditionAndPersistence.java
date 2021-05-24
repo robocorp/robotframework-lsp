@@ -58,6 +58,7 @@ public class RobotRunProfileOptionsEditionAndPersistence extends LocatableConfig
                 case "args":
                 case "env":
                 case "workingDir":
+                case "makeSuite":
                     return true;
             }
             return false;

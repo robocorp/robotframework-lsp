@@ -192,6 +192,11 @@ def get_json_contents():
                                     "type": "object",
                                     "description": "Environment variables to be added to the launch.",
                                 },
+                                "makeSuite": {
+                                    "type": "boolean",
+                                    "description": "When running, always create a suite for the current folder and then filter the target (to automatically load __init__.robot).",
+                                    "default": True,
+                                },
                                 "terminal": {
                                     "type": "string",
                                     "enum": ["none", "integrated", "external"],
