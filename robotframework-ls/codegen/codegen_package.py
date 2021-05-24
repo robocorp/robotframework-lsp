@@ -69,6 +69,8 @@ def get_json_contents():
                         "keywordNameCall": ["meta.keyword.call.robot"],
                         "control": ["keyword.control.flow.robot"],
                         "testCaseName": ["entity.name.function.robot"],
+                        "parameterName": ["variable.parameter.robot"],
+                        "argumentValue": ["string.quoted.single.robot"],
                     }
                 }
             ],

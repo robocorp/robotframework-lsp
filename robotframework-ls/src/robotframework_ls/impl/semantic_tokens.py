@@ -1,10 +1,10 @@
-from robotframework_ls.impl.completion_context import CompletionContext
 from typing import List, Tuple
+import itertools
 from robocorp_ls_core.protocols import IDocument
+from robotframework_ls.impl.protocols import ICompletionContext
 
 
 TOKEN_TYPES = [
-    "parameter",
     "variable",
     "comment",
     # Custom added
@@ -17,6 +17,8 @@ TOKEN_TYPES = [
     "settingOperator",  # keyword.operator.setting.robot
     "control",
     "testCaseName",
+    "parameterName",
+    "argumentValue",
 ]
 
 TOKEN_MODIFIERS = [
@@ -67,7 +69,7 @@ RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX = {
     KEYWORD_NAME: TOKEN_TYPE_TO_INDEX["keywordNameDefinition"],
     TESTCASE_NAME: TOKEN_TYPE_TO_INDEX["testCaseName"],
     KEYWORD: TOKEN_TYPE_TO_INDEX["keywordNameCall"],
-    ARGUMENT: TOKEN_TYPE_TO_INDEX["parameter"],
+    ARGUMENT: TOKEN_TYPE_TO_INDEX["argumentValue"],
     VARIABLE: TOKEN_TYPE_TO_INDEX["variable"],
 }
 
@@ -88,6 +90,7 @@ for key, val in list(RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.items()):
 VARIABLE_INDEX = TOKEN_TYPE_TO_INDEX["variable"]
 VARIABLE_OPERATOR_INDEX = TOKEN_TYPE_TO_INDEX["variableOperator"]
 SETTING_INDEX = TOKEN_TYPE_TO_INDEX["setting"]
+PARAMETER_NAME_INDEX = TOKEN_TYPE_TO_INDEX["parameterName"]
 
 
 class _DummyToken(object):
@@ -103,12 +106,49 @@ def semantic_tokens_range(context, range):
 
 def tokenize_variables(initial_token):
     try:
+
         iter_in = initial_token.tokenize_variables()
     except:
         token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.get(initial_token.type)
         if token_type_index is not None:
             yield initial_token, token_type_index
     else:
+        if initial_token.type == ARGUMENT:
+            first_token = next(iter_in)
+            equals_pos = first_token.value.find("=")
+            if equals_pos != -1:
+                tok = _DummyToken()
+                tok.type = "parameterName"
+                tok.value = first_token.value[:equals_pos]
+                tok.lineno = first_token.lineno
+                tok.col_offset = first_token.col_offset
+                prev_col_offset_end = tok.end_col_offset = first_token.col_offset + len(
+                    tok.value
+                )
+                yield tok, PARAMETER_NAME_INDEX
+
+                tok = _DummyToken()
+                tok.type = "variableOperator"
+                tok.value = "="
+                tok.lineno = first_token.lineno
+                tok.col_offset = prev_col_offset_end
+                prev_col_offset_end = tok.end_col_offset = prev_col_offset_end + 1
+                yield tok, VARIABLE_OPERATOR_INDEX
+
+                # Add the remainder back.
+                first_token_remainder = _DummyToken()
+                first_token_remainder.type = first_token.type
+                first_token_remainder.value = first_token.value[equals_pos + 1 :]
+                first_token_remainder.lineno = first_token.lineno
+                first_token_remainder.col_offset = prev_col_offset_end
+                prev_col_offset_end = (
+                    first_token_remainder.end_col_offset
+                ) = prev_col_offset_end + len(first_token_remainder.value)
+
+                iter_in = itertools.chain(iter([first_token_remainder]), iter_in)
+            else:
+                iter_in = itertools.chain(iter((first_token,)), iter_in)
+
         for token in iter_in:
 
             token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.get(token.type)
@@ -185,7 +225,7 @@ def tokenize_variables(initial_token):
                     yield token, token_type_index
 
 
-def semantic_tokens_full(context: CompletionContext):
+def semantic_tokens_full(context: ICompletionContext):
     from robotframework_ls.impl import ast_utils
 
     try:

@@ -55,11 +55,11 @@ Some Keyword
             ("[", "variableOperator"),
             ("Arguments", "setting"),
             ("]", "variableOperator"),
-            ("Some ", "parameter"),
+            ("Some ", "argumentValue"),
             ("${", "variableOperator"),
             ("arg1", "variable"),
             ("}", "variableOperator"),
-            ("Another ", "parameter"),
+            ("Another ", "argumentValue"),
             ("${", "variableOperator"),
             ("arg2", "variable"),
             ("}", "variableOperator"),
@@ -70,6 +70,40 @@ Some Keyword
             ("${", "variableOperator"),
             ("arg2", "variable"),
             ("}", "variableOperator"),
+        ],
+    )
+
+
+def test_semantic_highlighting_arguments(workspace):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
+
+    workspace.set_root("case1")
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """
+*** Test Cases ***
+Some Test
+    Clear All Highlights    formatter=some ${arg1} other
+""".replace(
+        "\r\n", "\n"
+    ).replace(
+        "\r", "\n"
+    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    semantic_tokens = semantic_tokens_full(context)
+    check(
+        (semantic_tokens, doc),
+        [
+            ("*** Test Cases ***", "header"),
+            ("Some Test", "testCaseName"),
+            ("Clear All Highlights", "keywordNameCall"),
+            ("formatter", "parameterName"),
+            ("=", "variableOperator"),
+            ("some ", "argumentValue"),
+            ("${", "variableOperator"),
+            ("arg1", "variable"),
+            ("}", "variableOperator"),
+            (" other", "argumentValue"),
         ],
     )
 
@@ -202,33 +236,33 @@ Some keyword
             ("${", "variableOperator"),
             ("random", "variable"),
             ("}", "variableOperator"),
-            (" == ", "parameter"),
+            (" == ", "argumentValue"),
             ("${", "variableOperator"),
             ("NUMBER_TO_PASS_ON", "variable"),
             ("}", "variableOperator"),
             ("Pass Execution", "keywordNameCall"),
-            ('"', "parameter"),
+            ('"', "argumentValue"),
             ("${", "variableOperator"),
             ("random", "variable"),
             ("}", "variableOperator"),
-            (" == ", "parameter"),
+            (" == ", "argumentValue"),
             ("${", "variableOperator"),
             ("NUMBER_TO_PASS_ON", "variable"),
             ("}", "variableOperator"),
-            ('"', "parameter"),
+            ('"', "argumentValue"),
             ("ELSE IF", "control"),
             ("${", "variableOperator"),
             ("random", "variable"),
             ("}", "variableOperator"),
-            (" > ", "parameter"),
+            (" > ", "argumentValue"),
             ("${", "variableOperator"),
             ("NUMBER_TO_PASS_ON", "variable"),
             ("}", "variableOperator"),
             ("Log To Console", "keywordNameCall"),
-            ("Too high.", "parameter"),
+            ("Too high.", "argumentValue"),
             ("ELSE", "control"),
             ("Log To Console", "keywordNameCall"),
-            ("Too low.", "parameter"),
+            ("Too low.", "argumentValue"),
             ("END", "control"),
             ("END", "control"),
         ],

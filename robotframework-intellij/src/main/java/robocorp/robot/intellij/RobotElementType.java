@@ -15,7 +15,8 @@ public class RobotElementType extends IElementType {
     public static final RobotElementType DEFAULT = new RobotElementType("DEFAULT");
     public static final RobotElementType COMMENT = new RobotElementType("COMMENT");
     public static final RobotElementType VARIABLE = new RobotElementType("VARIABLE");
-    public static final RobotElementType PARAMETER = new RobotElementType("PARAMETER");
+    public static final RobotElementType PARAMETER_NAME = new RobotElementType("PARAMETER_NAME");
+    public static final RobotElementType ARGUMENT_VALUE = new RobotElementType("ARGUMENT_VALUE");
     public static final RobotElementType NAME = new RobotElementType("NAME");
     public static final RobotElementType SETTING = new RobotElementType("SETTING");
     public static final RobotElementType KEYWORD = new RobotElementType("KEYWORD");

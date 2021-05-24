@@ -129,6 +129,12 @@
                     ],
                     "testCaseName": [
                         "entity.name.function.robot"
+                    ],
+                    "parameterName": [
+                        "variable.parameter.robot"
+                    ],
+                    "argumentValue": [
+                        "string.quoted.single.robot"
                     ]
                 }
             }

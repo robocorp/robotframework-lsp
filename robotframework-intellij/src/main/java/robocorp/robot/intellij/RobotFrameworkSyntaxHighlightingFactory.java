@@ -28,8 +28,10 @@ class Highlighter implements @NotNull SyntaxHighlighter {
             return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.COMMENT};
         } else if (tokenType == RobotElementType.VARIABLE) {
             return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.VARIABLE};
-        } else if (tokenType == RobotElementType.PARAMETER) {
-            return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.PARAMETER};
+        } else if (tokenType == RobotElementType.PARAMETER_NAME) {
+            return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.PARAMETER_NAME};
+        } else if (tokenType == RobotElementType.ARGUMENT_VALUE) {
+            return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.ARGUMENT_VALUE};
         } else if (tokenType == RobotElementType.NAME) {
             return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.NAME};
         } else if (tokenType == RobotElementType.SETTING) {
@@ -62,8 +64,11 @@ public class RobotFrameworkSyntaxHighlightingFactory extends SyntaxHighlighterFa
     public static final TextAttributesKey VARIABLE = TextAttributesKey.createTextAttributesKey(
             RobotElementType.VARIABLE.toString(), DefaultLanguageHighlighterColors.INSTANCE_FIELD);
 
-    public static final TextAttributesKey PARAMETER = TextAttributesKey.createTextAttributesKey(
-            RobotElementType.PARAMETER.toString(), DefaultLanguageHighlighterColors.PARAMETER);
+    public static final TextAttributesKey PARAMETER_NAME = TextAttributesKey.createTextAttributesKey(
+            RobotElementType.PARAMETER_NAME.toString(), DefaultLanguageHighlighterColors.NUMBER);
+
+    public static final TextAttributesKey ARGUMENT_VALUE = TextAttributesKey.createTextAttributesKey(
+            RobotElementType.ARGUMENT_VALUE.toString(), DefaultLanguageHighlighterColors.PARAMETER);
 
     public static final TextAttributesKey NAME = TextAttributesKey.createTextAttributesKey(
             RobotElementType.NAME.toString(), DefaultLanguageHighlighterColors.STRING);
@@ -95,7 +100,8 @@ public class RobotFrameworkSyntaxHighlightingFactory extends SyntaxHighlighterFa
         lspTypeToTextAttributeKey.put("header", HEADING);
         lspTypeToTextAttributeKey.put("comment", COMMENT);
         lspTypeToTextAttributeKey.put("variable", VARIABLE);
-        lspTypeToTextAttributeKey.put("parameter", PARAMETER);
+        lspTypeToTextAttributeKey.put("parameterName", PARAMETER_NAME);
+        lspTypeToTextAttributeKey.put("argumentValue", ARGUMENT_VALUE);
         lspTypeToTextAttributeKey.put("name", NAME);
         lspTypeToTextAttributeKey.put("setting", SETTING);
         lspTypeToTextAttributeKey.put("keywordNameDefinition", KEYWORD);
