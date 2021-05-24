@@ -127,6 +127,9 @@ class _DebuggerAPI(object):
         Waits for a message and returns it (may throw error if there's a timeout waiting for the message).
         """
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEvent
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            ConfigurationDoneResponse,
+        )
 
         while True:
             msg = self.read_queue.get(timeout=TIMEOUT)
@@ -139,8 +142,8 @@ class _DebuggerAPI(object):
                 if self._matches(msg, expect_class, accept_msg):
                     return msg
 
-                # Only skip OutputEvent. Other events must match.
-                if not isinstance(msg, OutputEvent):
+                # Skip OutputEvent and ConfigurationDoneResponse. Other events must match.
+                if not isinstance(msg, (OutputEvent, ConfigurationDoneResponse)):
                     raise AssertionError(
                         "Received: %s when expecting: %s" % (msg, expect_class)
                     )
@@ -214,7 +217,6 @@ class _DebuggerAPI(object):
         )
 
         self.write(ConfigurationDoneRequest())
-        self.read(ConfigurationDoneResponse)
 
     def step_in(self, thread_id):
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StepInRequest
