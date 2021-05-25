@@ -211,6 +211,13 @@ COMMANDS = [
         icon={"light": "images/light/refresh.svg", "dark": "images/dark/refresh.svg"},
     ),
     Command(
+        "robocorp.refreshRobotContentView",
+        "Refresh Robot Content view",
+        add_to_package_json=True,
+        server_handled=False,
+        icon={"light": "images/light/refresh.svg", "dark": "images/dark/refresh.svg"},
+    ),
+    Command(
         "robocorp.refreshCloudView",
         "Refresh Cloud view",
         add_to_package_json=True,

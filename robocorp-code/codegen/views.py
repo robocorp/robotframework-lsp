@@ -90,7 +90,11 @@ TREE_VIEW_CONTAINERS = [
                 id="robocorp-robot-content-tree",
                 name="Robot Content",
                 contextual_title="Robot Content",
-                menus={},
+                menus={
+                    "view/title": [
+                        Menu("robocorp.refreshRobotContentView", MenuGroup.NAVIGATION)
+                    ]
+                },
             ),
             TreeView(
                 id="robocorp-locators-tree",

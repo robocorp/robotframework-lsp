@@ -28,6 +28,7 @@ ROBOCORP_RESOLVE_INTERPRETER = "robocorp.resolveInterpreter"  # Resolves the int
 ROBOCORP_CLOUD_LOGOUT = "robocorp.cloudLogout"  # Unlink and remove credentials from Robocorp Cloud
 ROBOCORP_CLOUD_LOGOUT_INTERNAL = "robocorp.cloudLogout.internal"  # Unlink and remove credentials from Robocorp Cloud internal
 ROBOCORP_REFRESH_ROBOTS_VIEW = "robocorp.refreshRobotsView"  # Refresh Robots view
+ROBOCORP_REFRESH_ROBOT_CONTENT_VIEW = "robocorp.refreshRobotContentView"  # Refresh Robot Content view
 ROBOCORP_REFRESH_CLOUD_VIEW = "robocorp.refreshCloudView"  # Refresh Cloud view
 ROBOCORP_START_BROWSER_LOCATOR = "robocorp.startBrowserLocator"  # Start browser to create Locators
 ROBOCORP_START_BROWSER_LOCATOR_INTERNAL = "robocorp.startBrowserLocator.internal"  # Start browser to create Locators. Requires the robot where the locators should be saved

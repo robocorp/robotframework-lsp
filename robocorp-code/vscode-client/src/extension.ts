@@ -38,7 +38,7 @@ import { execFilePromise, ExecFileReturn } from './subprocess';
 import { createRobot, uploadRobot, cloudLogin, runRobotRCC, cloudLogout, setPythonInterpreterFromRobotYaml, askAndRunRobotRCC, rccConfigurationDiagnostics } from './activities';
 import { sleep } from './time';
 import { handleProgressMessage, ProgressReport } from './progress';
-import { TREE_VIEW_ROBOCORP_ROBOTS_TREE } from './robocorpViews';
+import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from './robocorpViews';
 import { askAndCreateRccTerminal } from './rccTerminal';
 
 
@@ -323,6 +323,7 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_DEBUG_ROBOT_RCC, () => askAndRunRobotRCC(false));
         commands.registerCommand(roboCommands.ROBOCORP_SET_PYTHON_INTERPRETER, () => setPythonInterpreterFromRobotYaml());
         commands.registerCommand(roboCommands.ROBOCORP_REFRESH_ROBOTS_VIEW, () => views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE));
+        commands.registerCommand(roboCommands.ROBOCORP_REFRESH_ROBOT_CONTENT_VIEW, () => views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE));
         commands.registerCommand(roboCommands.ROBOCORP_REFRESH_CLOUD_VIEW, () => views.refreshCloudTreeView());
         commands.registerCommand(roboCommands.ROBOCORP_ROBOTS_VIEW_TASK_RUN, () => views.runSelectedRobot(true));
         commands.registerCommand(roboCommands.ROBOCORP_ROBOTS_VIEW_TASK_DEBUG, () => views.runSelectedRobot(false));

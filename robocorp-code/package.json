@@ -47,6 +47,7 @@
         "onCommand:robocorp.cloudLogout",
         "onCommand:robocorp.cloudLogout.internal",
         "onCommand:robocorp.refreshRobotsView",
+        "onCommand:robocorp.refreshRobotContentView",
         "onCommand:robocorp.refreshCloudView",
         "onCommand:robocorp.startBrowserLocator",
         "onCommand:robocorp.startBrowserLocator.internal",
@@ -270,6 +271,15 @@
                 }
             },
             {
+                "command": "robocorp.refreshRobotContentView",
+                "title": "Refresh Robot Content view",
+                "category": "Robocorp",
+                "icon": {
+                    "light": "images/light/refresh.svg",
+                    "dark": "images/dark/refresh.svg"
+                }
+            },
+            {
                 "command": "robocorp.refreshCloudView",
                 "title": "Refresh Cloud view",
                 "category": "Robocorp",
@@ -397,6 +407,11 @@
                 {
                     "command": "robocorp.refreshRobotsView",
                     "when": "view == robocorp-robots-tree",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.refreshRobotContentView",
+                    "when": "view == robocorp-robot-content-tree",
                     "group": "navigation"
                 },
                 {

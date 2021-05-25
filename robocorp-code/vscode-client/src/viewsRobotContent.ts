@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { OUTPUT_CHANNEL } from './channel';
-import { TREE_VIEW_ROBOCORP_ROBOTS_TREE } from './robocorpViews';
+import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from './robocorpViews';
 import { FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeView } from './viewsCommon';
 import { dirname, join } from 'path';
 import { Uri } from 'vscode';
@@ -78,7 +78,7 @@ export class RobotContentTreeDataProvider implements vscode.TreeDataProvider<FSE
             return ret;
         } else {
             // We have a parent...
-            if(!element.isDirectory){
+            if (!element.isDirectory) {
                 return ret;
             }
             try {
@@ -99,9 +99,9 @@ export class RobotContentTreeDataProvider implements vscode.TreeDataProvider<FSE
 
     getTreeItem(element: FSEntry): vscode.TreeItem {
         const treeItem = new vscode.TreeItem(element.name);
-        if(element.isDirectory){
+        if (element.isDirectory) {
             treeItem.collapsibleState = TreeItemCollapsibleState.Collapsed;
-        }else{
+        } else {
             treeItem.collapsibleState = TreeItemCollapsibleState.None;
         }
 
