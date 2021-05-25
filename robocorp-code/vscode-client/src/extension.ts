@@ -24,7 +24,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder, ProgressLocation, Progress, DebugAdapterExecutable, debug, DebugConfiguration, DebugConfigurationProvider, CancellationToken, ProviderResult, extensions, ConfigurationTarget, env, Uri } from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
+import { LanguageClientOptions } from 'vscode-languageclient';
+import { LanguageClient, ServerOptions } from 'vscode-languageclient/node';
 import * as locators from './locators';
 import * as views from './views';
 import * as roboConfig from './robocorpSettings';

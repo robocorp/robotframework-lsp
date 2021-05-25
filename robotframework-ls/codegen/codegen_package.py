@@ -255,7 +255,7 @@ def get_json_contents():
             "@types/node": "^11.0.40",
             "@types/vscode": "1.53.0",
             "vscode-test": "1.5.1",
-            "typescript": "^3.6.4",
+            "typescript": "^3.8.2",
         },
         "engines": {"vscode": "^1.53.0"},
     }
