@@ -87,6 +87,12 @@ TREE_VIEW_CONTAINERS = [
                 },
             ),
             TreeView(
+                id="robocorp-robot-content-tree",
+                name="Robot Content",
+                contextual_title="Robot Content",
+                menus={},
+            ),
+            TreeView(
                 id="robocorp-locators-tree",
                 name="Locators",
                 contextual_title="Locators",

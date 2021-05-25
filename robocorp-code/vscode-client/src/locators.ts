@@ -2,7 +2,7 @@ import * as roboCommands from './robocorpCommands';
 import { commands, window, env } from "vscode";
 import { askRobotSelection, listAndAskRobotSelection } from "./activities";
 import { QuickPickItemWithAction, showSelectOneQuickPick, showSelectOneStrQuickPick } from './ask';
-import { getSelectedLocator, getSelectedRobot, LocatorEntry } from './views';
+import { getSelectedLocator, getSelectedRobot, LocatorEntry } from './viewsCommon';
 import { OUTPUT_CHANNEL } from './channel';
 
 

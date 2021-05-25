@@ -72,6 +72,7 @@
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
+        "onView:robocorp-robot-content-tree",
         "onView:robocorp-locators-tree",
         "onView:robocorp-cloud-tree",
         "onLanguage:json",
@@ -139,6 +140,11 @@
                     "id": "robocorp-robots-tree",
                     "name": "Robots",
                     "contextualTitle": "Robots"
+                },
+                {
+                    "id": "robocorp-robot-content-tree",
+                    "name": "Robot Content",
+                    "contextualTitle": "Robot Content"
                 },
                 {
                     "id": "robocorp-locators-tree",

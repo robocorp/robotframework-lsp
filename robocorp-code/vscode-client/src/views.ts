@@ -1,48 +1,13 @@
-import { TREE_VIEW_ROBOCORP_CLOUD_TREE, TREE_VIEW_ROBOCORP_LOCATORS_TREE, TREE_VIEW_ROBOCORP_ROBOTS_TREE } from './robocorpViews';
+import { TREE_VIEW_ROBOCORP_CLOUD_TREE, TREE_VIEW_ROBOCORP_LOCATORS_TREE, TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from './robocorpViews';
 import * as vscode from 'vscode';
 import * as roboCommands from './robocorpCommands';
 import { ExtensionContext } from 'vscode';
 import { OUTPUT_CHANNEL } from './channel';
 import { runRobotRCC, uploadRobot } from './activities';
 import { createRccTerminal } from './rccTerminal';
+import { RobotContentTreeDataProvider } from './viewsRobotContent';
+import { basename, CloudEntry, getSelectedLocator, getSelectedRobot, LocatorEntry, RobotEntry, RobotEntryType, treeViewIdToTreeDataProvider, treeViewIdToTreeView } from './viewsCommon';
 
-
-/**
- * Note: if type is error|info the name is the message to be shown.
- */
-export interface LocatorEntry {
-    name: string;
-    line: number;
-    column: number;
-    type: string; // "browser", "image", "coordinate", "error", "info",...
-    filePath: string;
-}
-
-enum RobotEntryType {
-    Robot,
-    Task
-}
-
-interface CloudEntry {
-    label: string;
-    iconPath?: string;
-    command?: vscode.Command;
-    children?: CloudEntry[];
-}
-
-interface RobotEntry {
-    label: string;
-    uri: vscode.Uri;
-    robot: LocalRobotMetadataInfo;
-    taskName?: string;
-    iconPath: string;
-    type: RobotEntryType;
-}
-
-
-function basename(s) {
-    return s.split('\\').pop().split('/').pop();
-}
 
 function getRobotLabel(robotInfo: LocalRobotMetadataInfo): string {
     let label: string = undefined;
@@ -210,6 +175,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
     }
 }
 
+
 export class LocatorsTreeDataProvider implements vscode.TreeDataProvider<LocatorEntry> {
 
     private _onDidChangeTreeData: vscode.EventEmitter<LocatorEntry | null> = new vscode.EventEmitter<LocatorEntry | null>();
@@ -293,9 +259,6 @@ export class LocatorsTreeDataProvider implements vscode.TreeDataProvider<Locator
     }
 }
 
-let treeViewIdToTreeView: Map<string, vscode.TreeView<any>> = new Map();
-let treeViewIdToTreeDataProvider: Map<string, vscode.TreeDataProvider<any>> = new Map();
-
 export function refreshCloudTreeView() {
     let dataProvider: CloudTreeDataProvider = <CloudTreeDataProvider>treeViewIdToTreeDataProvider.get(TREE_VIEW_ROBOCORP_CLOUD_TREE);
     if (dataProvider) {
@@ -311,40 +274,6 @@ export function refreshTreeView(treeViewId: string) {
     }
 }
 
-
-export function getSingleTreeSelection(treeId: string, noSelectionMessage?: string, moreThanOneSelectionMessage?: string) {
-    const robotsTree = treeViewIdToTreeView.get(treeId);
-    if (!robotsTree || robotsTree.selection.length == 0) {
-        if (noSelectionMessage) {
-            vscode.window.showWarningMessage(noSelectionMessage);
-        }
-        return undefined;
-    }
-
-    if (robotsTree.selection.length > 1) {
-        if (moreThanOneSelectionMessage) {
-            vscode.window.showWarningMessage(moreThanOneSelectionMessage);
-        }
-        return undefined;
-    }
-
-    let element = robotsTree.selection[0];
-    return element;
-}
-
-/**
- * Returns the selected robot or undefined if there are no robots or if more than one robot is selected.
- * 
- * If the messages are passed as a parameter, a warning is shown with that message if the selection is invalid.
- */
-export function getSelectedRobot(noSelectionMessage?: string, moreThanOneSelectionMessage?: string): RobotEntry | undefined {
-    return getSingleTreeSelection(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
-}
-
-
-export function getSelectedLocator(noSelectionMessage?: string, moreThanOneSelectionMessage?: string): LocatorEntry | undefined {
-    return getSingleTreeSelection(TREE_VIEW_ROBOCORP_LOCATORS_TREE);
-}
 
 export function openRobotTreeSelection() {
     let robot: RobotEntry = getSelectedRobot();
@@ -407,6 +336,14 @@ export function registerViews(context: ExtensionContext) {
     let robotsTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE, { 'treeDataProvider': treeDataProvider });
     treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_ROBOTS_TREE, robotsTree);
     treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_ROBOTS_TREE, treeDataProvider);
+
+    let robotContentTreeDataProvider = new RobotContentTreeDataProvider();
+    let robotContentTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE, { 'treeDataProvider': robotContentTreeDataProvider });
+    treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE, robotContentTree);
+    treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE, robotContentTreeDataProvider);
+    context.subscriptions.push(robotsTree.onDidChangeSelection(
+        e => robotContentTreeDataProvider.onRobotsTreeSelectionChanged()
+    ));
 
     context.subscriptions.push(robotsTree.onDidChangeSelection(e => {
         let events: RobotEntry[] = e.selection;
