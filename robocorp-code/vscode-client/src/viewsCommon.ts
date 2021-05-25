@@ -35,6 +35,7 @@ export interface RobotEntry {
 
 export interface FSEntry {
     name: string;
+    isDirectory: boolean;
     filePath: string;
 }
 
