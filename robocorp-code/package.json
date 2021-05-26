@@ -432,12 +432,12 @@
                 },
                 {
                     "command": "robocorp.newFileInRobotContentView",
-                    "when": "view == robocorp-robot-content-tree",
+                    "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected",
                     "group": "navigation"
                 },
                 {
                     "command": "robocorp.newFolderInRobotContentView",
-                    "when": "view == robocorp-robot-content-tree",
+                    "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected",
                     "group": "navigation"
                 },
                 {
@@ -486,9 +486,19 @@
                     "when": "view == robocorp-robots-tree && robocorp-code:single-robot-selected"
                 },
                 {
+                    "command": "robocorp.newFileInRobotContentView",
+                    "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected",
+                    "group": "new"
+                },
+                {
+                    "command": "robocorp.newFolderInRobotContentView",
+                    "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected",
+                    "group": "new"
+                },
+                {
                     "command": "robocorp.deleteResourceInRobotContentView",
                     "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected",
-                    "group": "navigation"
+                    "group": "delete"
                 },
                 {
                     "command": "robocorp.copyLocatorToClipboard.internal",

@@ -1,5 +1,5 @@
 import enum
-from typing import Optional
+from typing import Optional, Union
 from robocorp_code.commands import ROBOCORP_CLOUD_LOGIN, ROBOCORP_CLOUD_LOGOUT
 
 
@@ -26,7 +26,10 @@ class MenuGroup(enum.Enum):
 
 class Menu:
     def __init__(
-        self, command_id, group: Optional[MenuGroup] = None, when: Optional[str] = None
+        self,
+        command_id,
+        group: Optional[Union[MenuGroup, str]] = None,
+        when: Optional[str] = None,
     ):
         self.command_id = command_id
         self.group = group
@@ -93,19 +96,33 @@ TREE_VIEW_CONTAINERS = [
                 menus={
                     "view/title": [
                         Menu(
-                            "robocorp.newFileInRobotContentView", MenuGroup.NAVIGATION
+                            "robocorp.newFileInRobotContentView",
+                            MenuGroup.NAVIGATION,
+                            when="robocorp-code:single-robot-selected",
                         ),
                         Menu(
-                            "robocorp.newFolderInRobotContentView", MenuGroup.NAVIGATION
+                            "robocorp.newFolderInRobotContentView",
+                            MenuGroup.NAVIGATION,
+                            when="robocorp-code:single-robot-selected",
                         ),
                         Menu("robocorp.refreshRobotContentView", MenuGroup.NAVIGATION),
                     ],
                     "view/item/context": [
                         Menu(
-                            "robocorp.deleteResourceInRobotContentView",
-                            MenuGroup.NAVIGATION,
+                            "robocorp.newFileInRobotContentView",
+                            "0_new",
                             when="robocorp-code:single-robot-selected",
-                        )
+                        ),
+                        Menu(
+                            "robocorp.newFolderInRobotContentView",
+                            "0_new",
+                            when="robocorp-code:single-robot-selected",
+                        ),
+                        Menu(
+                            "robocorp.deleteResourceInRobotContentView",
+                            "1_delete",
+                            when="robocorp-code:single-robot-selected",
+                        ),
                     ],
                 },
             ),
@@ -206,7 +223,10 @@ def get_menus():
                         when += f" && {menu.when}"
                     item = {"command": menu.command_id, "when": when}
                     if menu.group:
-                        item["group"] = menu.group.value
+                        if isinstance(menu.group, str):
+                            item["group"] = menu.group
+                        else:
+                            item["group"] = menu.group.value
                     menus.setdefault(menu_id, []).append(item)
 
     return menus

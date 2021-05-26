@@ -6,7 +6,7 @@ import { OUTPUT_CHANNEL } from './channel';
 import { runRobotRCC, uploadRobot } from './activities';
 import { createRccTerminal } from './rccTerminal';
 import { RobotContentTreeDataProvider } from './viewsRobotContent';
-import { basename, CloudEntry, getSelectedLocator, getSelectedRobot, LocatorEntry, RobotEntry, RobotEntryType, treeViewIdToTreeDataProvider, treeViewIdToTreeView } from './viewsCommon';
+import { basename, CloudEntry, debounce, getSelectedLocator, getSelectedRobot, LocatorEntry, RobotEntry, RobotEntryType, treeViewIdToTreeDataProvider, treeViewIdToTreeView } from './viewsCommon';
 
 
 function getRobotLabel(robotInfo: LocalRobotMetadataInfo): string {
@@ -312,19 +312,6 @@ export function runSelectedRobot(noDebug: boolean) {
     runRobotRCC(noDebug, element.robot.filePath, element.taskName);
 }
 
-const debounce = (func, wait) => {
-    let timeout;
-
-    return function wrapper(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-};
 
 export function registerViews(context: ExtensionContext) {
     let cloudTreeDataProvider = new CloudTreeDataProvider();

@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { OUTPUT_CHANNEL } from './channel';
 import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from './robocorpViews';
-import { FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeDataProvider, treeViewIdToTreeView } from './viewsCommon';
+import { debounce, FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeDataProvider, treeViewIdToTreeView } from './viewsCommon';
 import { basename, dirname, join } from 'path';
-import { Uri } from 'vscode';
+import { FileSystemWatcher, Uri } from 'vscode';
 import { TreeItemCollapsibleState } from 'vscode';
 
 const fsPromises = fs.promises;
@@ -128,9 +128,32 @@ export class RobotContentTreeDataProvider implements vscode.TreeDataProvider<FSE
     readonly onDidChangeTreeData: vscode.Event<FSEntry | null> = this._onDidChangeTreeData.event;
 
     private lastRobotEntry: RobotEntry = undefined;
+    private lastWatcher: FileSystemWatcher|undefined = undefined;
 
     fireRootChange() {
         this._onDidChangeTreeData.fire(null);
+    }
+
+    robotSelectionChanged(robotEntry: RobotEntry) {
+        // When the robot selection changes, we need to start tracking file-changes at the proper place.
+        if(this.lastWatcher){
+            this.lastWatcher.dispose();
+            this.lastWatcher = undefined;
+        }
+        this.fireRootChange();
+
+        let d = basename(dirname(robotEntry.uri.fsPath));
+        let watcher: FileSystemWatcher = vscode.workspace.createFileSystemWatcher('**/' + d + '/**', false, true, false);
+        this.lastWatcher = watcher;
+
+        let onChangedSomething = debounce(() => {
+            // Note: this doesn't currently work if the parent folder is renamed or removed.
+            // (https://github.com/microsoft/vscode/pull/110858)
+            this.fireRootChange();
+        }, 100);
+    
+        watcher.onDidCreate(onChangedSomething);
+        watcher.onDidDelete(onChangedSomething);
     }
 
     onRobotsTreeSelectionChanged() {
@@ -142,16 +165,16 @@ export class RobotContentTreeDataProvider implements vscode.TreeDataProvider<FSE
 
         if (!this.lastRobotEntry && robotEntry) {
             // i.e.: we didn't have a selection previously: refresh.
-            this.fireRootChange();
+            this.robotSelectionChanged(robotEntry);
             return;
         }
         if (!robotEntry && this.lastRobotEntry) {
-            this.fireRootChange();
+            this.robotSelectionChanged(robotEntry);
             return;
         }
         if (robotEntry.robot.filePath != this.lastRobotEntry.robot.filePath) {
             // i.e.: the selection changed: refresh.
-            this.fireRootChange();
+            this.robotSelectionChanged(robotEntry);
             return;
         }
 
@@ -230,3 +253,4 @@ export class RobotContentTreeDataProvider implements vscode.TreeDataProvider<FSE
         return treeItem;
     }
 }
+

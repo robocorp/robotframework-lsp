@@ -82,3 +82,17 @@ export function getSelectedLocator(noSelectionMessage?: string, moreThanOneSelec
 export function basename(s) {
     return s.split('\\').pop().split('/').pop();
 }
+
+export const debounce = (func, wait) => {
+    let timeout;
+
+    return function wrapper(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+};
