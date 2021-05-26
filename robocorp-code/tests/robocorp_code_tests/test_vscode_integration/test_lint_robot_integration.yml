@@ -18,6 +18,16 @@
       line: 0
   severity: 2
   source: robocorp-code
+- message: Try to avoid multiple channel. They may cause problems with code compatibility.
+  range:
+    end:
+      character: 0
+      line: 1
+    start:
+      character: 0
+      line: 0
+  severity: 2
+  source: robocorp-code
 - message: Try to avoid putting defaults channel as first channel.
   range:
     end:
