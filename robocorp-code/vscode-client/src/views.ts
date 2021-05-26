@@ -331,6 +331,11 @@ export function registerViews(context: ExtensionContext) {
     context.subscriptions.push(robotsTree.onDidChangeSelection(
         e => robotContentTreeDataProvider.onRobotsTreeSelectionChanged()
     ));
+    context.subscriptions.push(robotContentTree.onDidChangeSelection(
+        async function () {
+            await robotContentTreeDataProvider.onRobotContentTreeTreeSelectionChanged(robotContentTree);
+        }
+    ));
 
     context.subscriptions.push(robotsTree.onDidChangeSelection(e => {
         let events: RobotEntry[] = e.selection;

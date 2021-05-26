@@ -128,7 +128,7 @@ export class RobotContentTreeDataProvider implements vscode.TreeDataProvider<FSE
     readonly onDidChangeTreeData: vscode.Event<FSEntry | null> = this._onDidChangeTreeData.event;
 
     private lastRobotEntry: RobotEntry = undefined;
-    private lastWatcher: FileSystemWatcher|undefined = undefined;
+    private lastWatcher: FileSystemWatcher | undefined = undefined;
 
     fireRootChange() {
         this._onDidChangeTreeData.fire(null);
@@ -136,7 +136,7 @@ export class RobotContentTreeDataProvider implements vscode.TreeDataProvider<FSE
 
     robotSelectionChanged(robotEntry: RobotEntry) {
         // When the robot selection changes, we need to start tracking file-changes at the proper place.
-        if(this.lastWatcher){
+        if (this.lastWatcher) {
             this.lastWatcher.dispose();
             this.lastWatcher = undefined;
         }
@@ -151,7 +151,7 @@ export class RobotContentTreeDataProvider implements vscode.TreeDataProvider<FSE
             // (https://github.com/microsoft/vscode/pull/110858)
             this.fireRootChange();
         }, 100);
-    
+
         watcher.onDidCreate(onChangedSomething);
         watcher.onDidDelete(onChangedSomething);
     }
@@ -178,6 +178,20 @@ export class RobotContentTreeDataProvider implements vscode.TreeDataProvider<FSE
             return;
         }
 
+    }
+
+    async onRobotContentTreeTreeSelectionChanged(robotContentTree: vscode.TreeView<FSEntry>) {
+        let selection = robotContentTree.selection;
+        if (selection.length == 1) {
+            let entry: FSEntry = selection[0];
+            if(entry.filePath && !entry.isDirectory){
+                let uri = Uri.file(entry.filePath);
+                let document = await vscode.workspace.openTextDocument(uri);
+                if(document){
+                    await vscode.window.showTextDocument(document);
+                }
+            }
+        }
     }
 
     async getChildren(element?: FSEntry): Promise<FSEntry[]> {
