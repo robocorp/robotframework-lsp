@@ -1,4 +1,4 @@
-__version__ = "0.10.0"
+__version__ = "0.11.0"
 from typing import Union, List
 
 version_info: List[int] = [int(x) for x in __version__.split(".")]

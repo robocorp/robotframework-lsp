@@ -1,8 +1,16 @@
+New in 0.11.0 (2021-05-26)
+-----------------------------
+
+- The Robocorp view now has a tree showing the contents of the currently selected robot.
+- RCC upgraded to 9.16.0.
+
+  
 New in 0.10.0 (2021-05-12)
 -----------------------------
 
 - Support to create a terminal with access to the environment of a `Robot`.
   - It's accessible in the Robot tree view or by executing the `Robocorp: Terminal with Robot environment` action.
+
 
 New in 0.9.2 (2021-04-21)
 -----------------------------
