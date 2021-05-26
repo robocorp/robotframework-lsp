@@ -31,6 +31,7 @@ ROBOCORP_REFRESH_ROBOTS_VIEW = "robocorp.refreshRobotsView"  # Refresh Robots vi
 ROBOCORP_REFRESH_ROBOT_CONTENT_VIEW = "robocorp.refreshRobotContentView"  # Refresh Robot Content view
 ROBOCORP_NEW_FILE_IN_ROBOT_CONTENT_VIEW = "robocorp.newFileInRobotContentView"  # New File
 ROBOCORP_NEW_FOLDER_IN_ROBOT_CONTENT_VIEW = "robocorp.newFolderInRobotContentView"  # New Folder
+ROBOCORP_DELETE_RESOURCE_IN_ROBOT_CONTENT_VIEW = "robocorp.deleteResourceInRobotContentView"  # Delete
 ROBOCORP_REFRESH_CLOUD_VIEW = "robocorp.refreshCloudView"  # Refresh Cloud view
 ROBOCORP_START_BROWSER_LOCATOR = "robocorp.startBrowserLocator"  # Start browser to create Locators
 ROBOCORP_START_BROWSER_LOCATOR_INTERNAL = "robocorp.startBrowserLocator.internal"  # Start browser to create Locators. Requires the robot where the locators should be saved

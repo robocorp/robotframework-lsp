@@ -235,6 +235,14 @@ COMMANDS = [
         hide_from_command_palette=True,
     ),
     Command(
+        "robocorp.deleteResourceInRobotContentView",
+        "Delete",
+        add_to_package_json=True,
+        server_handled=False,
+        icon="$(close)",
+        hide_from_command_palette=True,
+    ),
+    Command(
         "robocorp.refreshCloudView",
         "Refresh Cloud view",
         add_to_package_json=True,

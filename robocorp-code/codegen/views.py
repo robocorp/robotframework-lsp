@@ -99,7 +99,14 @@ TREE_VIEW_CONTAINERS = [
                             "robocorp.newFolderInRobotContentView", MenuGroup.NAVIGATION
                         ),
                         Menu("robocorp.refreshRobotContentView", MenuGroup.NAVIGATION),
-                    ]
+                    ],
+                    "view/item/context": [
+                        Menu(
+                            "robocorp.deleteResourceInRobotContentView",
+                            MenuGroup.NAVIGATION,
+                            when="robocorp-code:single-robot-selected",
+                        )
+                    ],
                 },
             ),
             TreeView(

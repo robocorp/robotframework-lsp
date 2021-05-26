@@ -67,6 +67,41 @@ export async function newFileInRobotContentTree() {
     }
 }
 
+export async function deleteResourceInRobotContentTree() {
+    let robotContentTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE);
+    if (!robotContentTree) {
+        return undefined;
+    }
+
+    let selection: FSEntry[] = robotContentTree.selection;
+    if (!selection) {
+        await vscode.window.showInformationMessage("No resources selected for deletion.")
+        return;
+    }
+
+    for (const entry of selection) {
+        let uri = Uri.file(entry.filePath);
+        let stat;
+        try {
+            stat = await vscode.workspace.fs.stat(uri);
+        } catch (err) {
+            // unable to get stat (file may have been removed in the meanwhile).
+        }
+        if (stat) {
+            try {
+                await vscode.workspace.fs.delete(uri, { recursive: true, useTrash: true });
+            } catch (err) {
+                let msg = await vscode.window.showErrorMessage("Unable to move to trash: " + entry.filePath + ". How to proceed?", "Delete permanently", "Cancel")
+                if (msg == "Delete permanently") {
+                    await vscode.workspace.fs.delete(uri, { recursive: true, useTrash: false });
+                } else {
+                    return;
+                }
+            }
+        }
+    }
+}
+
 export async function newFolderInRobotContentTree() {
     let currTreeDir: FSEntry | undefined = await getCurrRobotTreeContentDir();
     if (!currTreeDir) {

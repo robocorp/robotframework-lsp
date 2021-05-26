@@ -50,6 +50,7 @@
         "onCommand:robocorp.refreshRobotContentView",
         "onCommand:robocorp.newFileInRobotContentView",
         "onCommand:robocorp.newFolderInRobotContentView",
+        "onCommand:robocorp.deleteResourceInRobotContentView",
         "onCommand:robocorp.refreshCloudView",
         "onCommand:robocorp.startBrowserLocator",
         "onCommand:robocorp.startBrowserLocator.internal",
@@ -294,6 +295,12 @@
                 "icon": "$(new-folder)"
             },
             {
+                "command": "robocorp.deleteResourceInRobotContentView",
+                "title": "Delete",
+                "category": "Robocorp",
+                "icon": "$(close)"
+            },
+            {
                 "command": "robocorp.refreshCloudView",
                 "title": "Refresh Cloud view",
                 "category": "Robocorp",
@@ -479,6 +486,11 @@
                     "when": "view == robocorp-robots-tree && robocorp-code:single-robot-selected"
                 },
                 {
+                    "command": "robocorp.deleteResourceInRobotContentView",
+                    "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected",
+                    "group": "navigation"
+                },
+                {
                     "command": "robocorp.copyLocatorToClipboard.internal",
                     "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected"
                 },
@@ -498,6 +510,10 @@
                 },
                 {
                     "command": "robocorp.newFolderInRobotContentView",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.deleteResourceInRobotContentView",
                     "when": "false"
                 },
                 {
