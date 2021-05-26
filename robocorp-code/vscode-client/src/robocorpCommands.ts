@@ -32,6 +32,7 @@ export const ROBOCORP_REFRESH_ROBOT_CONTENT_VIEW = "robocorp.refreshRobotContent
 export const ROBOCORP_NEW_FILE_IN_ROBOT_CONTENT_VIEW = "robocorp.newFileInRobotContentView";  // New File
 export const ROBOCORP_NEW_FOLDER_IN_ROBOT_CONTENT_VIEW = "robocorp.newFolderInRobotContentView";  // New Folder
 export const ROBOCORP_DELETE_RESOURCE_IN_ROBOT_CONTENT_VIEW = "robocorp.deleteResourceInRobotContentView";  // Delete
+export const ROBOCORP_RENAME_RESOURCE_IN_ROBOT_CONTENT_VIEW = "robocorp.renameResourceInRobotContentView";  // Rename
 export const ROBOCORP_REFRESH_CLOUD_VIEW = "robocorp.refreshCloudView";  // Refresh Cloud view
 export const ROBOCORP_START_BROWSER_LOCATOR = "robocorp.startBrowserLocator";  // Start browser to create Locators
 export const ROBOCORP_START_BROWSER_LOCATOR_INTERNAL = "robocorp.startBrowserLocator.internal";  // Start browser to create Locators. Requires the robot where the locators should be saved

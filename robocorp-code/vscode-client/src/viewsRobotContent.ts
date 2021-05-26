@@ -67,6 +67,48 @@ export async function newFileInRobotContentTree() {
     }
 }
 
+export async function renameResourceInRobotContentTree() {
+    let robotContentTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE);
+    if (!robotContentTree) {
+        return undefined;
+    }
+
+    let selection: FSEntry[] = robotContentTree.selection;
+    if (!selection) {
+        await vscode.window.showInformationMessage("No resources selected for rename.")
+        return;
+    }
+    if (selection.length != 1) {
+        await vscode.window.showInformationMessage("Please select a single resource for rename.")
+        return;
+    }
+
+    let entry = selection[0];
+    let uri = Uri.file(entry.filePath);
+    let stat;
+    try {
+        stat = await vscode.workspace.fs.stat(uri);
+    } catch (err) {
+        // unable to get stat (file may have been removed in the meanwhile).
+        await vscode.window.showErrorMessage("Unable to stat resource during rename.")
+    }
+    if (stat) {
+        try {
+            let newName: string = await vscode.window.showInputBox({
+                'prompt': 'Please provide new name for: ' + basename(entry.filePath) + ' (at: ' + dirname(entry.filePath) + ')',
+                'ignoreFocusOut': true,
+            });
+            if (!newName) {
+                return;
+            }
+            let target = Uri.file(join(dirname(entry.filePath), newName));
+            await vscode.workspace.fs.rename(uri, target, { overwrite: false });
+        } catch (err) {
+            let msg = await vscode.window.showErrorMessage("Error renaming resource: " + entry.filePath);
+        }
+    }
+}
+
 export async function deleteResourceInRobotContentTree() {
     let robotContentTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE);
     if (!robotContentTree) {
@@ -184,10 +226,10 @@ export class RobotContentTreeDataProvider implements vscode.TreeDataProvider<FSE
         let selection = robotContentTree.selection;
         if (selection.length == 1) {
             let entry: FSEntry = selection[0];
-            if(entry.filePath && !entry.isDirectory){
+            if (entry.filePath && !entry.isDirectory) {
                 let uri = Uri.file(entry.filePath);
                 let document = await vscode.workspace.openTextDocument(uri);
-                if(document){
+                if (document) {
                     await vscode.window.showTextDocument(document);
                 }
             }

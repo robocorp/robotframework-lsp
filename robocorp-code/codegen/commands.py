@@ -243,6 +243,14 @@ COMMANDS = [
         hide_from_command_palette=True,
     ),
     Command(
+        "robocorp.renameResourceInRobotContentView",
+        "Rename",
+        add_to_package_json=True,
+        server_handled=False,
+        icon="$(edit)",
+        hide_from_command_palette=True,
+    ),
+    Command(
         "robocorp.refreshCloudView",
         "Refresh Cloud view",
         add_to_package_json=True,

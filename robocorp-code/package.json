@@ -51,6 +51,7 @@
         "onCommand:robocorp.newFileInRobotContentView",
         "onCommand:robocorp.newFolderInRobotContentView",
         "onCommand:robocorp.deleteResourceInRobotContentView",
+        "onCommand:robocorp.renameResourceInRobotContentView",
         "onCommand:robocorp.refreshCloudView",
         "onCommand:robocorp.startBrowserLocator",
         "onCommand:robocorp.startBrowserLocator.internal",
@@ -301,6 +302,12 @@
                 "icon": "$(close)"
             },
             {
+                "command": "robocorp.renameResourceInRobotContentView",
+                "title": "Rename",
+                "category": "Robocorp",
+                "icon": "$(edit)"
+            },
+            {
                 "command": "robocorp.refreshCloudView",
                 "title": "Refresh Cloud view",
                 "category": "Robocorp",
@@ -488,17 +495,22 @@
                 {
                     "command": "robocorp.newFileInRobotContentView",
                     "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected",
-                    "group": "new"
+                    "group": "0_new"
                 },
                 {
                     "command": "robocorp.newFolderInRobotContentView",
                     "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected",
-                    "group": "new"
+                    "group": "0_new"
+                },
+                {
+                    "command": "robocorp.renameResourceInRobotContentView",
+                    "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected",
+                    "group": "1_change"
                 },
                 {
                     "command": "robocorp.deleteResourceInRobotContentView",
                     "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected",
-                    "group": "delete"
+                    "group": "1_change"
                 },
                 {
                     "command": "robocorp.copyLocatorToClipboard.internal",
@@ -524,6 +536,10 @@
                 },
                 {
                     "command": "robocorp.deleteResourceInRobotContentView",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.renameResourceInRobotContentView",
                     "when": "false"
                 },
                 {

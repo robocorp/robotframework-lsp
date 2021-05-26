@@ -119,8 +119,13 @@ TREE_VIEW_CONTAINERS = [
                             when="robocorp-code:single-robot-selected",
                         ),
                         Menu(
+                            "robocorp.renameResourceInRobotContentView",
+                            "1_change",
+                            when="robocorp-code:single-robot-selected",
+                        ),
+                        Menu(
                             "robocorp.deleteResourceInRobotContentView",
-                            "1_delete",
+                            "1_change",
                             when="robocorp-code:single-robot-selected",
                         ),
                     ],
