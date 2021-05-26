@@ -2,13 +2,90 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { OUTPUT_CHANNEL } from './channel';
 import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from './robocorpViews';
-import { FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeView } from './viewsCommon';
-import { dirname, join } from 'path';
+import { FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeDataProvider, treeViewIdToTreeView } from './viewsCommon';
+import { basename, dirname, join } from 'path';
 import { Uri } from 'vscode';
 import { TreeItemCollapsibleState } from 'vscode';
 
 const fsPromises = fs.promises;
 
+export async function getCurrRobotTreeContentDir(): Promise<FSEntry | undefined> {
+    let robotContentTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE);
+    if (!robotContentTree) {
+        return undefined;
+    }
+
+    let parentEntry: FSEntry | undefined = undefined;
+    let selection: FSEntry[] = robotContentTree.selection;
+    if (selection.length > 0) {
+        parentEntry = selection[0];
+        if (!parentEntry.filePath) {
+            parentEntry = undefined;
+        }
+    }
+    if (!parentEntry) {
+        let robot: RobotEntry | undefined = getSelectedRobot();
+        if (!robot) {
+            await vscode.window.showInformationMessage('Unable to create file in Robot (Robot not selected).')
+            return undefined;
+        }
+        parentEntry = {
+            filePath: dirname(robot.uri.fsPath),
+            isDirectory: true,
+            name: basename(robot.uri.fsPath)
+        }
+    }
+
+    if (!parentEntry.isDirectory) {
+        parentEntry = {
+            filePath: dirname(parentEntry.filePath),
+            isDirectory: true,
+            name: basename(parentEntry.filePath)
+        }
+    }
+
+    return parentEntry;
+}
+
+export async function newFileInRobotContentTree() {
+    let currTreeDir: FSEntry | undefined = await getCurrRobotTreeContentDir();
+    if (!currTreeDir) {
+        return;
+    }
+    let filename: string = await vscode.window.showInputBox({
+        'prompt': 'Please provide file name. Current dir: ' + currTreeDir.filePath,
+        'ignoreFocusOut': true,
+    });
+    if (!filename) {
+        return;
+    }
+    let targetFile = join(currTreeDir.filePath, filename);
+    try {
+        await vscode.workspace.fs.writeFile(Uri.file(targetFile), new Uint8Array());
+    } catch (err) {
+        vscode.window.showErrorMessage('Unable to create file. Error: ' + err);
+    }
+}
+
+export async function newFolderInRobotContentTree() {
+    let currTreeDir: FSEntry | undefined = await getCurrRobotTreeContentDir();
+    if (!currTreeDir) {
+        return;
+    }
+    let directoryName: string = await vscode.window.showInputBox({
+        'prompt': 'Please provide dir name. Current dir: ' + currTreeDir.filePath,
+        'ignoreFocusOut': true,
+    });
+    if (!directoryName) {
+        return;
+    }
+    let targetFile = join(currTreeDir.filePath, directoryName);
+    try {
+        await vscode.workspace.fs.createDirectory(Uri.file(targetFile));
+    } catch (err) {
+        vscode.window.showErrorMessage('Unable to create directory. Error: ' + err);
+    }
+}
 
 export class RobotContentTreeDataProvider implements vscode.TreeDataProvider<FSEntry> {
 

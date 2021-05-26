@@ -40,6 +40,7 @@ import { sleep } from './time';
 import { handleProgressMessage, ProgressReport } from './progress';
 import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from './robocorpViews';
 import { askAndCreateRccTerminal } from './rccTerminal';
+import { newFileInRobotContentTree, newFolderInRobotContentTree } from './viewsRobotContent';
 
 
 const clientOptions: LanguageClientOptions = {
@@ -323,7 +324,6 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_DEBUG_ROBOT_RCC, () => askAndRunRobotRCC(false));
         commands.registerCommand(roboCommands.ROBOCORP_SET_PYTHON_INTERPRETER, () => setPythonInterpreterFromRobotYaml());
         commands.registerCommand(roboCommands.ROBOCORP_REFRESH_ROBOTS_VIEW, () => views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE));
-        commands.registerCommand(roboCommands.ROBOCORP_REFRESH_ROBOT_CONTENT_VIEW, () => views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE));
         commands.registerCommand(roboCommands.ROBOCORP_REFRESH_CLOUD_VIEW, () => views.refreshCloudTreeView());
         commands.registerCommand(roboCommands.ROBOCORP_ROBOTS_VIEW_TASK_RUN, () => views.runSelectedRobot(true));
         commands.registerCommand(roboCommands.ROBOCORP_ROBOTS_VIEW_TASK_DEBUG, () => views.runSelectedRobot(false));
@@ -338,6 +338,10 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_OPEN_LOCATOR_TREE_SELECTION, () => views.openLocatorTreeSelection());
         commands.registerCommand(roboCommands.ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION, () => views.createRccTerminalTreeSelection());
         commands.registerCommand(roboCommands.ROBOCORP_RCC_TERMINAL_NEW, () => askAndCreateRccTerminal());
+
+        commands.registerCommand(roboCommands.ROBOCORP_REFRESH_ROBOT_CONTENT_VIEW, () => views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE));
+        commands.registerCommand(roboCommands.ROBOCORP_NEW_FILE_IN_ROBOT_CONTENT_VIEW, newFileInRobotContentTree);
+        commands.registerCommand(roboCommands.ROBOCORP_NEW_FOLDER_IN_ROBOT_CONTENT_VIEW, newFolderInRobotContentTree);
         async function cloudLoginShowConfirmation() {
             let loggedIn = await cloudLogin();
             if (loggedIn) {

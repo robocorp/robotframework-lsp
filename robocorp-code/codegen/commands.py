@@ -216,6 +216,23 @@ COMMANDS = [
         add_to_package_json=True,
         server_handled=False,
         icon={"light": "images/light/refresh.svg", "dark": "images/dark/refresh.svg"},
+        hide_from_command_palette=True,
+    ),
+    Command(
+        "robocorp.newFileInRobotContentView",
+        "New File",
+        add_to_package_json=True,
+        server_handled=False,
+        icon="$(new-file)",
+        hide_from_command_palette=True,
+    ),
+    Command(
+        "robocorp.newFolderInRobotContentView",
+        "New Folder",
+        add_to_package_json=True,
+        server_handled=False,
+        icon="$(new-folder)",
+        hide_from_command_palette=True,
     ),
     Command(
         "robocorp.refreshCloudView",

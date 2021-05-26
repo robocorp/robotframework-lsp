@@ -48,6 +48,8 @@
         "onCommand:robocorp.cloudLogout.internal",
         "onCommand:robocorp.refreshRobotsView",
         "onCommand:robocorp.refreshRobotContentView",
+        "onCommand:robocorp.newFileInRobotContentView",
+        "onCommand:robocorp.newFolderInRobotContentView",
         "onCommand:robocorp.refreshCloudView",
         "onCommand:robocorp.startBrowserLocator",
         "onCommand:robocorp.startBrowserLocator.internal",
@@ -280,6 +282,18 @@
                 }
             },
             {
+                "command": "robocorp.newFileInRobotContentView",
+                "title": "New File",
+                "category": "Robocorp",
+                "icon": "$(new-file)"
+            },
+            {
+                "command": "robocorp.newFolderInRobotContentView",
+                "title": "New Folder",
+                "category": "Robocorp",
+                "icon": "$(new-folder)"
+            },
+            {
                 "command": "robocorp.refreshCloudView",
                 "title": "Refresh Cloud view",
                 "category": "Robocorp",
@@ -410,6 +424,16 @@
                     "group": "navigation"
                 },
                 {
+                    "command": "robocorp.newFileInRobotContentView",
+                    "when": "view == robocorp-robot-content-tree",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.newFolderInRobotContentView",
+                    "when": "view == robocorp-robot-content-tree",
+                    "group": "navigation"
+                },
+                {
                     "command": "robocorp.refreshRobotContentView",
                     "when": "view == robocorp-robot-content-tree",
                     "group": "navigation"
@@ -464,6 +488,18 @@
                 }
             ],
             "commandPalette": [
+                {
+                    "command": "robocorp.refreshRobotContentView",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.newFileInRobotContentView",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.newFolderInRobotContentView",
+                    "when": "false"
+                },
                 {
                     "command": "robocorp.newLocatorUI.tree.internal",
                     "when": "false"

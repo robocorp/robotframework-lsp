@@ -92,7 +92,13 @@ TREE_VIEW_CONTAINERS = [
                 contextual_title="Robot Content",
                 menus={
                     "view/title": [
-                        Menu("robocorp.refreshRobotContentView", MenuGroup.NAVIGATION)
+                        Menu(
+                            "robocorp.newFileInRobotContentView", MenuGroup.NAVIGATION
+                        ),
+                        Menu(
+                            "robocorp.newFolderInRobotContentView", MenuGroup.NAVIGATION
+                        ),
+                        Menu("robocorp.refreshRobotContentView", MenuGroup.NAVIGATION),
                     ]
                 },
             ),
