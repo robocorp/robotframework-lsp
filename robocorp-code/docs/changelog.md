@@ -1,3 +1,9 @@
+New in 0.11.1 (2021-05-27)
+-----------------------------
+
+- Fixed issue where the Robot environment wasn't being properly forwarded when debugging a plain python Robot.
+
+
 New in 0.11.0 (2021-05-26)
 -----------------------------
 
