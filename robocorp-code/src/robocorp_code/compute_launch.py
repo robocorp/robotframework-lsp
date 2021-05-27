@@ -18,8 +18,6 @@ def compute_robot_launch_from_robocorp_code_launch(
     python_exe: Optional[str],
 ) -> ActionResultDictRobotLaunch:
 
-    import sys
-
     if not name:
         return {
             "success": False,
@@ -268,6 +266,9 @@ def compute_robot_launch_from_robocorp_code_launch(
                 "message": f"Unable to detect module or program to be launched (unexpected error).",
                 "result": None,
             }
+
+        if env:
+            result["env"] = env
 
         return {"success": True, "message": None, "result": result}
 

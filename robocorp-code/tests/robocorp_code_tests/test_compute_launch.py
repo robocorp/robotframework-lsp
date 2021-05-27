@@ -362,9 +362,9 @@ ignoreFiles:
 
 
 def test_compute_launch_05(tmpdir):
-    import os
     from robocorp_code import compute_launch
 
+    env = {"some_key": "some_value"}
     robot_yaml = tmpdir.join("robot.yaml")
     tmpdir.join("task.py").write("foo")
     robot_yaml.write(
@@ -396,7 +396,7 @@ ignoreFiles:
         "",  # Don't provide task name: should be ok if only 1 task is there.
         str(robot_yaml),
         additional_pythonpath_entries,
-        None,
+        env,
         "python_executable.exe",
     )
 
@@ -414,5 +414,6 @@ ignoreFiles:
             "console": "internalConsole",
             "module": "module_name",
             "pythonPath": "python_executable.exe",
+            "env": {"some_key": "some_value"},
         },
     }
