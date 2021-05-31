@@ -300,7 +300,8 @@ class CompletionContext(object):
         ast = self.get_ast()
         ret = []
         for library_import in ast_utils.iter_library_imports(ast):
-            ret.append(library_import.node)
+            if library_import.node.name:
+                ret.append(library_import.node)
         return tuple(ret)
 
     @instance_cache
@@ -310,7 +311,8 @@ class CompletionContext(object):
         ast = self.get_ast()
         ret = []
         for resource in ast_utils.iter_resource_imports(ast):
-            ret.append(resource.node)
+            if resource.node.name:
+                ret.append(resource.node)
         return tuple(ret)
 
     def token_value_resolving_variables(self, token):

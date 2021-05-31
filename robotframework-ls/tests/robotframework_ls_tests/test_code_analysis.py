@@ -31,6 +31,21 @@ Test Template    this is not there"""
     _collect_errors(workspace, doc, data_regression)
 
 
+def test_no_lib_name(workspace, libspec_manager, data_regression):
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """*** Settings ***
+Library
+Resource
+
+*** Keywords ***
+I check ${cmd}
+    Log    ${cmd}
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
 def test_keywords_with_vars_no_error(workspace, libspec_manager, data_regression):
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
