@@ -104,7 +104,7 @@ def semantic_tokens_range(context, range):
     return []
 
 
-def tokenize_variables(initial_token):
+def tokenize_variables(node, initial_token):
     try:
 
         iter_in = initial_token.tokenize_variables()
@@ -116,6 +116,30 @@ def tokenize_variables(initial_token):
         if initial_token.type == ARGUMENT:
             first_token = next(iter_in)
             equals_pos = first_token.value.find("=")
+            if equals_pos != -1:
+                # Found an equals... let's check if it's not a 'catenate', which
+                # doesn't really accept parameters and just concatenates all...
+                value = node.get_value(initial_token.KEYWORD)
+                if value and value.strip().lower() == "catenate":
+                    equals_pos = -1
+
+                    # Note: the best way to actually do this would be finding the
+                    # reference to the keyword and then validating whether the
+                    # keyword arguments match the expected name.
+                    #
+                    # For instance, a keyword call such as:
+                    # Some Call     some arg = 22
+                    #
+                    # Should color `some arg =` differently only if the argument
+                    # of `Some Call` is `some arg`, otherwise it should not color
+                    # the argument as `same arg = 22` will be passed as a string
+                    # to the positional argument 0 and not really a keyword parameter
+                    # where `same arg` is set with value 22.
+                    #
+                    # Now, this requires a bit more tinkering with keyword caches
+                    # and possibly semantic highlighting deltas to make sure the
+                    # performance isn't negatively impacted by it.
+
             if equals_pos != -1:
                 tok = _DummyToken()
                 tok.type = "parameterName"
@@ -243,7 +267,7 @@ def semantic_tokens_full(context: ICompletionContext):
         tokens = getattr(node, "tokens", None)
         if tokens:
             for token in tokens:
-                for token_part, token_type_index in tokenize_variables(token):
+                for token_part, token_type_index in tokenize_variables(node, token):
                     lineno = token_part.lineno - 1
                     if lineno < 0:
                         lineno = 0
