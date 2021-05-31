@@ -59,6 +59,8 @@ public class EditorLanguageServerConnection {
         semanticTokensProvider = serverCapabilities.getSemanticTokensProvider();
 
         documentListener = new DocumentListener() {
+            private boolean doFullSync = true;
+
             @Override
             public void documentChanged(@NotNull DocumentEvent event) {
 
@@ -68,53 +70,67 @@ public class EditorLanguageServerConnection {
                         return;
                     }
                     TextDocumentContentChangeEvent changeEvent = new TextDocumentContentChangeEvent();
-                    DidChangeTextDocumentParams changesParams = new DidChangeTextDocumentParams(new VersionedTextDocumentIdentifier(),
-                            Collections.singletonList(changeEvent));
-                    changesParams.getTextDocument().setUri(identifier.getUri());
-                    changesParams.getTextDocument().setVersion(version.incrementAndGet());
+                    DidChangeTextDocumentParams changesParams = createChangesParams(changeEvent);
 
-                    TextDocumentSyncKind syncKind;
-                    try {
-                        syncKind = comm.getServerCapabilitySyncKind();
-                    } catch (LanguageServerUnavailableException e) {
-                        // If it's not available, just bail out.
-                        return;
-                    }
-
-                    if (syncKind == TextDocumentSyncKind.Incremental) {
-                        CharSequence newText = event.getNewFragment();
-                        int offset = event.getOffset();
-                        int newTextLength = event.getNewLength();
-                        Position lspPosition = editor.offsetToLSPPos(offset);
-                        int startLine = lspPosition.getLine();
-                        int startColumn = lspPosition.getCharacter();
-                        CharSequence oldText = event.getOldFragment();
-
-                        //if text was deleted/replaced, calculate the end position of inserted/deleted text
-                        int endLine, endColumn;
-                        if (oldText.length() > 0) {
-                            endLine = startLine + StringUtil.countNewLines(oldText);
-                            String content = oldText.toString();
-                            String[] oldLines = content.split("\n");
-                            int oldTextLength = oldLines.length == 0 ? 0 : oldLines[oldLines.length - 1].length();
-                            endColumn = content.endsWith("\n") ? 0 : oldLines.length == 1 ? startColumn + oldTextLength : oldTextLength;
-                        } else { //if insert or no text change, the end position is the same
-                            endLine = startLine;
-                            endColumn = startColumn;
-                        }
-                        Range range = new Range(new Position(startLine, startColumn), new Position(endLine, endColumn));
-                        changeEvent.setRange(range);
-                        changeEvent.setRangeLength(newTextLength);
-                        changeEvent.setText(newText.toString());
-                    } else if (syncKind == TextDocumentSyncKind.Full) {
+                    if (doFullSync) {
                         changeEvent.setText(editor.getText());
+                    } else {
+                        TextDocumentSyncKind syncKind;
+                        try {
+                            syncKind = comm.getServerCapabilitySyncKind();
+                        } catch (LanguageServerUnavailableException e) {
+                            // If it's not available, just bail out.
+                            return;
+                        }
+
+                        if (syncKind == TextDocumentSyncKind.Incremental) {
+                            CharSequence newText = event.getNewFragment();
+                            int offset = event.getOffset();
+                            int newTextLength = event.getNewLength();
+                            Position lspPosition = editor.offsetToLSPPos(offset);
+                            int startLine = lspPosition.getLine();
+                            int startColumn = lspPosition.getCharacter();
+                            CharSequence oldText = event.getOldFragment();
+
+                            //if text was deleted/replaced, calculate the end position of inserted/deleted text
+                            int endLine, endColumn;
+                            if (oldText.length() > 0) {
+                                endLine = startLine + StringUtil.countNewLines(oldText);
+                                String content = oldText.toString();
+                                String[] oldLines = content.split("\n");
+                                int oldTextLength = oldLines.length == 0 ? 0 : oldLines[oldLines.length - 1].length();
+                                endColumn = content.endsWith("\n") ? 0 : oldLines.length == 1 ? startColumn + oldTextLength : oldTextLength;
+                            } else { //if insert or no text change, the end position is the same
+                                endLine = startLine;
+                                endColumn = startColumn;
+                            }
+                            Range range = new Range(new Position(startLine, startColumn), new Position(endLine, endColumn));
+                            changeEvent.setRange(range);
+                            changeEvent.setRangeLength(newTextLength);
+                            changeEvent.setText(newText.toString());
+                        } else if (syncKind == TextDocumentSyncKind.Full) {
+                            changeEvent.setText(editor.getText());
+                        }
                     }
+                    doFullSync = false;
                     comm.didChange(changesParams);
                 } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException | TimeoutException e) {
                     // If it was cancelled, just ignore it (don't log).
+                    doFullSync = true; // Next time we'll have to do a full sync!
+                    LOG.error("When sending document changes to the language server a message timed out (a full document sync will be done on the next change).", e);
                 } catch (Exception e) {
-                    LOG.error(e);
+                    doFullSync = true; // Next time we'll have to do a full sync!
+                    LOG.error("When sending document changes to the language server an error occurred (a full document sync will be done on the next change).", e);
                 }
+            }
+
+            @NotNull
+            private DidChangeTextDocumentParams createChangesParams(TextDocumentContentChangeEvent changeEvent) {
+                DidChangeTextDocumentParams changesParams = new DidChangeTextDocumentParams(new VersionedTextDocumentIdentifier(),
+                        Collections.singletonList(changeEvent));
+                changesParams.getTextDocument().setUri(identifier.getUri());
+                changesParams.getTextDocument().setVersion(version.incrementAndGet());
+                return changesParams;
             }
         };
         Document document = editor.getDocument();

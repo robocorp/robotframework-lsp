@@ -478,11 +478,7 @@ public class LanguageServerCommunication {
             LOG.info("Unable forward change: disconnected.");
             return;
         }
-        try {
-            languageServer.getTextDocumentService().didChange(params);
-        } catch (Exception e) {
-            LOG.error(e);
-        }
+        languageServer.getTextDocumentService().didChange(params);
     }
 
     public @Nullable CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams params) {
