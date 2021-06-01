@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Interesting:
@@ -119,6 +121,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
 
         String robotLanguageServerPython = projectPreferences != null ? projectPreferences.getRobotLanguageServerPython().trim() : "";
         if (!robotLanguageServerPython.isEmpty()) {
+            robotLanguageServerPython = replaceVariables(project, robotLanguageServerPython);
             foundPythonInPreferences = true;
             String msg;
             if ((msg = isValidPython(robotLanguageServerPython)) == null) {
@@ -133,6 +136,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         if (!foundValidPythonInPreferences) {
             robotLanguageServerPython = robotAppPreferences != null ? robotAppPreferences.getRobotLanguageServerPython().trim() : "";
             if (!robotLanguageServerPython.isEmpty()) {
+                robotLanguageServerPython = replaceVariables(project, robotLanguageServerPython);
                 foundPythonInPreferences = true;
                 String msg;
                 if ((msg = isValidPython(robotLanguageServerPython)) == null) {
@@ -182,7 +186,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
 
         if (robotLanguageServerArgs != null) {
             for (JsonElement e : robotLanguageServerArgs) {
-                commands.add(e.getAsString());
+                commands.add(replaceVariables(project, e.getAsString()));
             }
         }
 
@@ -212,6 +216,27 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         }
         environment.put("PYTHONPATH", pythonpath);
         return builder;
+    }
+
+    private static final Pattern VARIABLES_PATTERN = Pattern.compile("\\$\\{([^\\{\\}]*)\\}");
+
+    private String replaceVariables(Project project, String robotLanguageServerPython) {
+        Matcher matcher = VARIABLES_PATTERN.matcher(robotLanguageServerPython);
+        return matcher.replaceAll((matchResult -> {
+            String s = matchResult.group(1);
+            String value = null;
+            if (s.startsWith("env.")) {
+                value = System.getenv(s.substring(4));
+            } else {
+                if (s.equals("workspace") || s.equals("workspaceRoot")) {
+                    value = project.getBasePath();
+                }
+            }
+            if (value == null) {
+                value = matchResult.group(0);
+            }
+            return value;
+        }));
     }
 
     private JBTextArea createJTextArea(String text) {
