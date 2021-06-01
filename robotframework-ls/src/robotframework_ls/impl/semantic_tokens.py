@@ -113,7 +113,11 @@ def tokenize_variables(node, initial_token):
         if token_type_index is not None:
             yield initial_token, token_type_index
     else:
-        if initial_token.type == ARGUMENT:
+        if (
+            initial_token.type == ARGUMENT
+            and node.__class__.__name__ != "Documentation"
+        ):
+
             first_token = next(iter_in)
             equals_pos = first_token.value.find("=")
             if equals_pos != -1:

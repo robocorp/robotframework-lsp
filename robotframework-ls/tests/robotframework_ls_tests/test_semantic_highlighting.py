@@ -108,6 +108,32 @@ Some Test
     )
 
 
+def test_semantic_highlighting_arguments_in_doc(workspace):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
+
+    workspace.set_root("case1")
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """
+*** Settings ***
+Documentation    Some = eq
+""".replace(
+        "\r\n", "\n"
+    ).replace(
+        "\r", "\n"
+    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    semantic_tokens = semantic_tokens_full(context)
+    check(
+        (semantic_tokens, doc),
+        [
+            ("*** Settings ***", "header"),
+            ("Documentation", "setting"),
+            ("Some = eq", "argumentValue"),
+        ],
+    )
+
+
 def test_semantic_highlighting_keyword(workspace):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
