@@ -685,7 +685,7 @@ class LibspecManager(object):
         self.synchronize_additional_pythonpath_folders()
         self.synchronize_internal_libspec_folders()
 
-    def iter_lib_info(self):
+    def iter_lib_info(self, builtin=False):
         """
         :rtype: generator(_LibInfo)
         """
@@ -704,9 +704,14 @@ class LibspecManager(object):
             if info.libspec_canonical_filename_to_info:
                 iter_in.append((info.libspec_canonical_filename_to_info, False))
 
-        for (_uri, info) in self._internal_folder_to_folder_info.items():
+        if builtin:
+            info = self._internal_folder_to_folder_info[self._builtins_libspec_dir]
             if info.libspec_canonical_filename_to_info:
                 iter_in.append((info.libspec_canonical_filename_to_info, True))
+        else:
+            for (_uri, info) in self._internal_folder_to_folder_info.items():
+                if info.libspec_canonical_filename_to_info:
+                    iter_in.append((info.libspec_canonical_filename_to_info, True))
 
         for canonical_filename_to_info, can_regenerate in iter_in:
             for canonical_spec_filename, info in list(
@@ -990,7 +995,11 @@ class LibspecManager(object):
         return target_file
 
     def get_library_info(
-        self, libname: str, create: bool = True, current_doc_uri: Optional[str] = None
+        self,
+        libname: str,
+        create: bool = True,
+        current_doc_uri: Optional[str] = None,
+        builtin: bool = False,
     ) -> Optional[ILibraryDoc]:
         """
         :param libname:
@@ -1001,15 +1010,19 @@ class LibspecManager(object):
         """
 
         libname_lower = libname.lower()
-        target_file = self._get_library_target_filename(libname, current_doc_uri)
+        target_file: str = ""
+        normalized_target_file: str = ""
 
-        if target_file:
-            normalized_target_file = os.path.normcase(os.path.normpath(target_file))
-        else:
-            normalized_target_file = ""
+        if not builtin:
+            found_target_filename = self._get_library_target_filename(
+                libname, current_doc_uri
+            )
+            if found_target_filename:
+                target_file = found_target_filename
+                normalized_target_file = os.path.normcase(os.path.normpath(target_file))
 
         lib_info: _LibInfo
-        for lib_info in self.iter_lib_info():
+        for lib_info in self.iter_lib_info(builtin=builtin):
             library_doc = lib_info.library_doc
 
             # If it maps to a file in the filesystem, that's what we need to match,
@@ -1050,7 +1063,10 @@ class LibspecManager(object):
                         # Note: get even if it if was not created (we may match
                         # a lower priority library).
                         return self.get_library_info(
-                            libname, create=False, current_doc_uri=current_doc_uri
+                            libname,
+                            create=False,
+                            current_doc_uri=current_doc_uri,
+                            builtin=builtin,
                         )
                     else:
                         # Not in sync and it should not be created, just skip it.
@@ -1061,7 +1077,10 @@ class LibspecManager(object):
         if create:
             if self._do_create_libspec_on_get(libname, target_file):
                 return self.get_library_info(
-                    libname, create=False, current_doc_uri=current_doc_uri
+                    libname,
+                    create=False,
+                    current_doc_uri=current_doc_uri,
+                    builtin=builtin,
                 )
 
         log.debug("Unable to find library named: %s", libname)

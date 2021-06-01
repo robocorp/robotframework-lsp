@@ -111,10 +111,11 @@ class LanguageServerClient(LanguageServerClientBase):
             {"uri": uris.from_fs_path(s), "name": os.path.basename(s)}
             for s in removed_folders
         ]
-        self.write(
+        self.request(
             {
                 "jsonrpc": "2.0",
                 "method": "workspace/didChangeWorkspaceFolders",
+                "id": self.next_id(),
                 "params": {
                     "event": {
                         "added": added_folders_uri_name,
@@ -126,10 +127,11 @@ class LanguageServerClient(LanguageServerClientBase):
 
     @implements(ILanguageServerClient.open_doc)
     def open_doc(self, uri: str, version: int = 1, text: Optional[str] = None):
-        self.write(
+        self.request(
             {
                 "jsonrpc": "2.0",
                 "method": "textDocument/didOpen",
+                "id": self.next_id(),
                 "params": {
                     "textDocument": {
                         "uri": uri,
@@ -138,6 +140,17 @@ class LanguageServerClient(LanguageServerClientBase):
                         "text": text,
                     }
                 },
+            }
+        )
+
+    @implements(ILanguageServerClient.close_doc)
+    def close_doc(self, uri: str):
+        self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "textDocument/didClose",
+                "params": {"textDocument": {"uri": uri}},
             }
         )
 
@@ -157,9 +170,10 @@ class LanguageServerClient(LanguageServerClientBase):
 
     @implements(ILanguageServerClient.change_doc)
     def change_doc(self, uri: str, version: int, text: str):
-        self.write(
+        return self.request(
             {
                 "jsonrpc": "2.0",
+                "id": self.next_id(),
                 "method": "textDocument/didChange",
                 "params": {
                     "textDocument": {"uri": uri, "version": version},

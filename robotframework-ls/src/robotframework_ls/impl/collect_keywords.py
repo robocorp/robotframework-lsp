@@ -250,7 +250,7 @@ def _collect_current_doc_keywords(
     _collect_completions_from_ast(ast, completion_context, collector)
 
 
-_LibInfo = namedtuple("_LibInfo", "name, alias")
+_LibInfo = namedtuple("_LibInfo", "name, alias, builtin")
 
 
 def _collect_libraries_keywords(
@@ -269,10 +269,11 @@ def _collect_libraries_keywords(
         _LibInfo(
             completion_context.token_value_resolving_variables(library.name),
             library.alias,
+            False,
         )
         for library in libraries
     )
-    library_infos.add(_LibInfo(BUILTIN_LIB, None))
+    library_infos.add(_LibInfo(BUILTIN_LIB, None, True))
     libspec_manager = completion_context.workspace.libspec_manager
 
     for library_info in library_infos:
@@ -281,7 +282,10 @@ def _collect_libraries_keywords(
             continue
 
         library_doc = libspec_manager.get_library_info(
-            library_info.name, create=True, current_doc_uri=completion_context.doc.uri
+            library_info.name,
+            create=True,
+            current_doc_uri=completion_context.doc.uri,
+            builtin=library_info.builtin,
         )
         if library_doc is not None:
             #: :type keyword: KeywordDoc

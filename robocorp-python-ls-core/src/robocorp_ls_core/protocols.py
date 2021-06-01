@@ -344,6 +344,9 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
             If None (default), the contents will be loaded from the disk.
         """
 
+    def close_doc(self, uri: str):
+        pass
+
     def change_doc(self, uri: str, version: int, text: str):
         pass
 

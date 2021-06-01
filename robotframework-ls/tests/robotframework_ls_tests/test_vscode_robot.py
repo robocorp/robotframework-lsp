@@ -786,3 +786,69 @@ Log It2
     ret = language_server.request_document_symbol(uri)
     found = ret["result"]
     data_regression.check(found)
+
+
+def test_shadowing_libraries(language_server_io: ILanguageServerClient, workspace_dir):
+    from robocorp_ls_core import uris
+    from pathlib import Path
+    from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
+
+    language_server = language_server_io
+
+    os.makedirs(workspace_dir, exist_ok=True)
+    builtin_lib = Path(workspace_dir) / "builtin.py"
+    case1_lib = Path(workspace_dir) / "case1.robot"
+    case2_lib = Path(workspace_dir) / "case2.robot"
+
+    builtin_lib.write_text(
+        """
+def something():
+    pass
+"""
+    )
+
+    case1_lib.write_text(
+        """
+*** Settings ***
+Library           builtin
+
+*** Test Cases ***
+User can call builtin
+    Something
+"""
+    )
+
+    case2_lib.write_text(
+        """
+*** Test Cases ***
+User can call builtin 2
+    Log  Task executed
+"""
+    )
+
+    language_server.initialize(workspace_dir, process_id=os.getpid())
+
+    uri1 = uris.from_fs_path(str(case1_lib))
+    uri2 = uris.from_fs_path(str(case2_lib))
+
+    for _i in range(2):
+        message_matcher = language_server.obtain_pattern_message_matcher(
+            {"method": "textDocument/publishDiagnostics"}
+        )
+
+        language_server.open_doc(uri1, 1, text=None)
+        assert message_matcher.event.wait(TIMEOUT)
+        assert message_matcher.msg["params"]["uri"] == uri1
+        assert message_matcher.msg["params"]["diagnostics"] == []
+
+        message_matcher = language_server.obtain_pattern_message_matcher(
+            {"method": "textDocument/publishDiagnostics"}
+        )
+
+        language_server.open_doc(uri2, 1, text=None)
+        assert message_matcher.event.wait(TIMEOUT)
+        assert message_matcher.msg["params"]["uri"] == uri2
+        assert message_matcher.msg["params"]["diagnostics"] == []
+
+        language_server.close_doc(uri2)
+        language_server.close_doc(uri1)
