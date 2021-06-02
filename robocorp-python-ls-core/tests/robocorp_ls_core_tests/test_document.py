@@ -210,3 +210,41 @@ def test_offset_to_line_col_2():
     # Note: block below is out of bounds
     assert d.offset_to_line_col(3) == (3, 0)
     assert d.offset_to_line_col(4) == (3, 1)
+
+
+def test_get_document_range():
+    d = Document(uri="", source="aa\nbb\ncc")
+
+    assert d.get_range(0, 0, 0, 1) == "a"
+    assert d.get_range(0, 1, 0, 2) == "a"
+    assert d.get_range(0, 2, 0, 3) == ""
+    assert d.get_range(0, 1, 0, 3) == "a"
+    assert d.get_range(0, 0, 0, 3) == "aa"
+
+    assert d.get_range(1, 0, 1, 1) == "b"
+    assert d.get_range(1, 1, 1, 2) == "b"
+    assert d.get_range(1, 2, 1, 3) == ""
+    assert d.get_range(1, 1, 1, 3) == "b"
+    assert d.get_range(1, 0, 1, 3) == "bb"
+
+    assert d.get_range(2, 0, 2, 1) == "c"
+    assert d.get_range(2, 1, 2, 2) == "c"
+    assert d.get_range(2, 2, 2, 3) == ""
+    assert d.get_range(2, 1, 2, 3) == "c"
+    assert d.get_range(2, 0, 2, 3) == "cc"
+
+    assert d.get_range(3, 0, 3, 1) == ""
+    assert d.get_range(3, 1, 3, 2) == ""
+    assert d.get_range(3, 2, 3, 3) == ""
+    assert d.get_range(3, 1, 3, 3) == ""
+    assert d.get_range(3, 0, 3, 3) == ""
+
+    assert d.get_range(0, 0, 1, 1) == "aa\nb"
+    assert d.get_range(0, 0, 1, 2) == "aa\nbb"
+    assert d.get_range(0, 0, 1, 3) == "aa\nbb\n"
+    assert d.get_range(0, 0, 1, 4) == "aa\nbb\n"
+    assert d.get_range(0, 0, 2, 1) == "aa\nbb\nc"
+    assert d.get_range(0, 0, 2, 2) == "aa\nbb\ncc"
+    assert d.get_range(0, 0, 3, 1) == "aa\nbb\ncc"
+    assert d.get_range(0, 0, 4, 1) == "aa\nbb\ncc"
+    assert d.get_range(0, 0, 4, 0) == "aa\nbb\ncc"

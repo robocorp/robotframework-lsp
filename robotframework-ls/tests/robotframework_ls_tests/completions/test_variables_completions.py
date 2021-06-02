@@ -331,3 +331,25 @@ Resource           ${some_d"""
         CompletionContext(doc, workspace=workspace.ws)
     )
     data_regression.check(completions)
+
+
+def test_variables_completions_in_variable_files(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import variable_completions
+
+    workspace.set_root("case_vars_file", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case_vars_file.robot")
+    doc.source = """
+*** Settings ***
+Variables    ./robotvars.py
+
+
+*** Test Cases ***
+Test
+    Log    ${VARIAB"""
+    completions = variable_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    data_regression.check(completions)

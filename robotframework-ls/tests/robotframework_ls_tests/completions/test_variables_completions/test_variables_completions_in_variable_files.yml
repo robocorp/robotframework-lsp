@@ -1,0 +1,34 @@
+- deprecated: false
+  documentation: '10'
+  documentationFormat: plaintext
+  insertText: ${VARIABLE_1}
+  insertTextFormat: 2
+  kind: 6
+  label: ${VARIABLE_1}
+  preselect: false
+  textEdit:
+    newText: \${VARIABLE_1}
+    range:
+      end:
+        character: 19
+        line: 7
+      start:
+        character: 11
+        line: 7
+- deprecated: false
+  documentation: '20'
+  documentationFormat: plaintext
+  insertText: ${VARIABLE_2}
+  insertTextFormat: 2
+  kind: 6
+  label: ${VARIABLE_2}
+  preselect: false
+  textEdit:
+    newText: \${VARIABLE_2}
+    range:
+      end:
+        character: 19
+        line: 7
+      start:
+        character: 11
+        line: 7

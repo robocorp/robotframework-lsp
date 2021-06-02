@@ -368,6 +368,11 @@ def iter_resource_imports(ast) -> Iterator[NodeInfo]:
         yield NodeInfo(tuple(stack), node)
 
 
+def iter_variable_imports(ast) -> Iterator[NodeInfo]:
+    for stack, node in _iter_nodes_filtered(ast, accept_class="VariablesImport"):
+        yield NodeInfo(tuple(stack), node)
+
+
 def iter_keywords(ast) -> Iterator[NodeInfo]:
     for stack, node in _iter_nodes_filtered(ast, accept_class="Keyword"):
         yield NodeInfo(tuple(stack), node)

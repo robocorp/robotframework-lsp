@@ -88,6 +88,9 @@ class IRobotDocument(IDocument, Protocol):
     def get_ast(self) -> Any:
         pass
 
+    def get_python_ast(self) -> Optional[Any]:
+        pass
+
     symbols_cache: Optional["ISymbolsCache"]
 
 
@@ -324,6 +327,9 @@ class ICompletionContext(Protocol):
         pass
 
     def get_resource_imports_as_docs(self) -> Tuple[IRobotDocument, ...]:
+        pass
+
+    def get_variable_imports_as_docs(self) -> Tuple[IRobotDocument, ...]:
         pass
 
     def get_imported_libraries(self) -> Tuple[ILibraryImportNode, ...]:

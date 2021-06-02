@@ -562,6 +562,9 @@ class IDocument(Protocol):
     def get_line(self, line: int) -> str:
         pass
 
+    def get_range(self, line: int, col: int, endline: int, endcol: int) -> str:
+        pass
+
     def get_last_line(self) -> str:
         pass
 

@@ -315,6 +315,17 @@ class CompletionContext(object):
                 ret.append(resource.node)
         return tuple(ret)
 
+    @instance_cache
+    def get_variable_imports(self):
+        from robotframework_ls.impl import ast_utils
+
+        ast = self.get_ast()
+        ret = []
+        for resource in ast_utils.iter_variable_imports(ast):
+            if resource.node.name:
+                ret.append(resource.node)
+        return tuple(ret)
+
     def token_value_resolving_variables(self, token):
         from robotframework_ls.impl import ast_utils
 
@@ -414,6 +425,18 @@ class CompletionContext(object):
             resource_doc = self.get_resource_import_as_doc(resource_import)
             if resource_doc is not None:
                 ret.append(resource_doc)
+
+        return tuple(ret)
+
+    @instance_cache
+    def get_variable_imports_as_docs(self) -> Tuple[IRobotDocument, ...]:
+        ret: List[IRobotDocument] = []
+
+        variable_imports = self.get_variable_imports()
+        for variable_import in variable_imports:
+            variable_doc = self.get_variable_import_as_doc(variable_import)
+            if variable_doc is not None:
+                ret.append(variable_doc)
 
         return tuple(ret)
 

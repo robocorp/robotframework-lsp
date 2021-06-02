@@ -615,6 +615,28 @@ class Document(object):
         line_start_offset = line_start_offset_to_info[i_line]
         return (i_line, offset - line_start_offset)
 
+    def get_range(self, line: int, col: int, endline: int, endcol: int) -> str:
+        if line >= self.get_line_count():
+            return ""
+
+        if line == endline:
+            if endcol <= col:
+                return ""
+
+            line_contents = self.get_line(line)
+            return line_contents[col:endcol]
+
+        full_contents = []
+        for i_line in range(line, min(endline + 1, self.get_line_count())):
+            line_contents = self.get_line(i_line)
+            if i_line == line:
+                full_contents.append(self._lines[i_line][col:])
+            elif i_line == endline:
+                full_contents.append(self._lines[i_line][:endcol])
+            else:
+                full_contents.append(self._lines[i_line])
+        return "".join(full_contents)
+
     def _load_source(self, mtime=None):
         self._check_in_mutate_thread()
         if mtime is None:

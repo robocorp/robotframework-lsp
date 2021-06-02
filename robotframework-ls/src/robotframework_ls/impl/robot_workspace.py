@@ -61,6 +61,7 @@ class RobotDocument(Document):
         Document._clear_caches(self)
         self._symbols_cache = None
         self.get_ast.cache_clear(self)  # noqa (clear the instance_cache).
+        self.get_python_ast.cache_clear(self)  # noqa (clear the instance_cache).
 
     def get_type(self):
         path = self.path
@@ -117,6 +118,27 @@ class RobotDocument(Document):
             ast = get_model(f"*** Unable to parse: {self.uri} ***")
             ast.source = self.path
             return ast
+
+    @instance_cache
+    def get_python_ast(self):
+        if not self._generate_ast:
+            raise AssertionError(
+                "The AST can only be accessed in the RobotFrameworkServerApi, not in the RobotFrameworkLanguageServer."
+            )
+
+        try:
+            source = self.source
+        except:
+            log.exception("Error getting source for: %s" % (self.uri,))
+            return None
+
+        try:
+            import ast as ast_module
+
+            return ast_module.parse(source)
+        except:
+            log.critical(f"Error parsing python file: {self.uri}")
+            return None
 
     def find_line_with_contents(self, contents: str) -> int:
         """
