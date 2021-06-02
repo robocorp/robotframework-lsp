@@ -43,7 +43,7 @@ class ParsingErrorChecker(VisitorChecker):
 
 
 class TwoSpacesAfterSettingsChecker(VisitorChecker):
-    """ Checker for not enough whitespace after [Setting] header. """
+    """ Checker for not enough whitespaces after [Setting] header. """
     rules = {
         "0402": (
             "missing-whitespace-after-setting",
@@ -52,13 +52,16 @@ class TwoSpacesAfterSettingsChecker(VisitorChecker):
         )
     }
 
-    def __init__(self, *args):
+    def __init__(self):
         self.headers = {'arguments', 'documentation', 'setup', 'timeout', 'teardown', 'template', 'tags'}
         self.setting_pattern = re.compile(r'\[\s?(\w+)\s?\]')
-        super().__init__(*args)
+        super().__init__()
 
     def visit_KeywordCall(self, node):  # noqa
         """ Invalid settings like '[Arguments] ${var}' will be parsed as keyword call """
+        if not node.keyword:
+            return
+
         match = self.setting_pattern.match(node.keyword)
         if not match:
             return

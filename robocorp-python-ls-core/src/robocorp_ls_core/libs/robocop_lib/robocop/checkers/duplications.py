@@ -49,7 +49,7 @@ class DuplicationsChecker(VisitorChecker):
         )
     }
 
-    def __init__(self, *args):
+    def __init__(self):
         self.test_cases = defaultdict(list)
         self.keywords = defaultdict(list)
         self.variables = defaultdict(list)
@@ -57,7 +57,7 @@ class DuplicationsChecker(VisitorChecker):
         self.libraries = defaultdict(list)
         self.metadata = defaultdict(list)
         self.variable_imports = defaultdict(list)
-        super().__init__(*args)
+        super().__init__()
 
     def visit_File(self, node):
         self.test_cases = defaultdict(list)
@@ -120,7 +120,7 @@ class DuplicationsChecker(VisitorChecker):
             self.variable_imports[node.name].append(node)
 
 
-class DuplicatedOrOutOfOrderSectionChecker(VisitorChecker):
+class SectionHeadersChecker(VisitorChecker):
     """ Checker for duplicated or out of order section headers. """
     rules = {
         "0808": (
@@ -130,7 +130,8 @@ class DuplicatedOrOutOfOrderSectionChecker(VisitorChecker):
         ),
         "0809": (
             "section-out-of-order",
-            "'%s' section header is defined in wrong order: Setting(s) > Variable(s) > Test Case(s) / Task(s) > Keyword(s)",
+            "'%s' section header is defined in wrong order: "
+            "Setting(s) > Variable(s) > Test Case(s) / Task(s) > Keyword(s)",
             RuleSeverity.WARNING
         ),
         "0810": (
@@ -140,7 +141,7 @@ class DuplicatedOrOutOfOrderSectionChecker(VisitorChecker):
         )
     }
 
-    def __init__(self, *args):
+    def __init__(self):
         self.sections_order = {
             Token.SETTING_HEADER: 0,
             Token.VARIABLE_HEADER: 1,
@@ -150,7 +151,7 @@ class DuplicatedOrOutOfOrderSectionChecker(VisitorChecker):
         }
         self.sections_by_order = []
         self.sections_by_existence = set()
-        super().__init__(*args)
+        super().__init__()
 
     def visit_File(self, node):
         self.sections_by_order = []

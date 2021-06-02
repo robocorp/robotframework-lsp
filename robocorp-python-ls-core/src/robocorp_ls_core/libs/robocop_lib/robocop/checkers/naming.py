@@ -23,18 +23,23 @@ class InvalidCharactersInNameChecker(VisitorChecker):
             "invalid-char-in-name",
             "Invalid character %s in %s name",
             RuleSeverity.WARNING,
-            ('invalid_chars', 'invalid_chars', set)
+            (
+                'invalid_chars',
+                'invalid_chars',
+                set,
+                'set of characters not allowed in a name'
+            )
         )
     }
 
-    def __init__(self, *args):
+    def __init__(self):
         self.invalid_chars = ('.', '?')
         self.node_names_map = {
             'KEYWORD_NAME': 'keyword',
             'TESTCASE_NAME': 'test case',
             'SUITE': 'suite'
         }
-        super().__init__(*args)
+        super().__init__()
 
     def visit_File(self, node):
         source = node.source if node.source else self.source
@@ -112,10 +117,10 @@ class KeywordNamingChecker(VisitorChecker):
         'else if'
     }
 
-    def __init__(self, *args):
-        self.letter_pattern = re.compile('[^a-zA-Z0-9]')
+    def __init__(self):
+        self.letter_pattern = re.compile(r'\W|_', re.UNICODE)
         self.var_pattern = re.compile(r'[$@%&]{.+}')
-        super().__init__(*args)
+        super().__init__()
 
     def visit_SuiteSetup(self, node):  # noqa
         self.check_keyword_naming(node.name, node)
@@ -197,6 +202,7 @@ class KeywordNamingChecker(VisitorChecker):
 
 
 class SettingsNamingChecker(VisitorChecker):
+    """ Checker for section naming violations. """
     rules = {
         "0306": (
             "setting-name-not-capitalized",
@@ -205,14 +211,14 @@ class SettingsNamingChecker(VisitorChecker):
         ),
         "0307": (
             "section-name-invalid",
-            "Section name should should be in format '*** Capitalized ***' or '*** UPPERCASE ***'",
+            "Section name should should be in format `*** Capitalized ***` or `*** UPPERCASE ***`",
             RuleSeverity.WARNING
         )
     }
 
-    def __init__(self, *args):
+    def __init__(self):
         self.section_name_pattern = re.compile(r'\*\*\*\s.+\s\*\*\*')
-        super().__init__(*args)
+        super().__init__()
 
     def visit_SectionHeader(self, node):  # noqa
         name = node.data_tokens[0].value
@@ -286,11 +292,12 @@ class TestCaseNamingChecker(VisitorChecker):
     }
 
     def visit_TestCase(self, node):  # noqa
-        if not node.name[0].isupper():
+        if node.name and not node.name[0].isupper():
             self.report("not-capitalized-test-case-title", node=node)
 
 
 class VariableNamingChecker(VisitorChecker):
+    """ Checker for variable naming violations. """
     rules = {
         "0309": (
             "section-variable-not-uppercase",
@@ -304,12 +311,12 @@ class VariableNamingChecker(VisitorChecker):
         )
     }
 
-    def __init__(self, *args):
+    def __init__(self):
         self.set_variable_variants = {'settaskvariable',
                                       'settestvariable',
                                       'setsuitevariable',
                                       'setglobalvariable'}
-        super().__init__(*args)
+        super().__init__()
 
     def visit_VariableSection(self, node):  # noqa
         for child in node.body:

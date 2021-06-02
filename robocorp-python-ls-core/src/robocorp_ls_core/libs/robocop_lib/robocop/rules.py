@@ -2,22 +2,24 @@
 Every issue is reported as ``robocop.rules.Message`` object. It can be later printed or used by
 post-run reports.
 
-Format output message
+Output message format
 ---------------------
 
-Output rule message can be defined with ``-f`` / ``--format`` argument. Default value::
+Output message of rules can be defined with ``-f`` / ``--format`` argument. Default value::
 
     "{source}:{line}:{col} [{severity}] {rule_id} {desc}"
 
 Available formats:
-  * source: path to file where is the issue
-  * source_rel: path to file where is the issue, relative to execution directory
-  * line: line number
-  * col: column number
-  * severity: severity of the message. Value of enum ``robocop.rules.RuleSeverity``
-  * rule_id: rule id (ie. 0501)
-  * rule_name: rule name (ie. line-too-long)
-  * desc: description of rule
+  * ``source``:     path to the file where the issue occurred
+  * ``source_rel``: path to the file where the issue occurred, relative to execution directory
+  * ``line``:       line number where the issue starts
+  * ``end_line``:   line number where the issue ends
+  * ``col``:        column number where the issue starts
+  * ``end_col``:    column number where the issue ends
+  * ``severity``:   severity of the issue, value of ``robocop.rules.RuleSeverity`` enum
+  * ``rule_id``:    rule id (e.g. 0501)
+  * ``rule_name``:  rule name (e.g. ``line-too-long`)
+  * ``desc``:       description of the rule
 """
 from enum import Enum
 from functools import total_ordering
@@ -28,13 +30,13 @@ import robocop.exceptions
 class RuleSeverity(Enum):
     """
     Rule severity.
-    It can be configured with ``-c / --configure id_or_msg_name:severity:value``
-    Where value can be first letter of severity value or whole name, case insensitive.
+    It can be configured with ``--configure id_or_msg_name:severity:value``
+    where value can be first letter of severity value or whole name, case insensitive.
     For example ::
 
         -c line-too-long:severity:e
 
-    Will change `line-too-long` message severity to error.
+    will change `line-too-long` rule severity to error.
 
     You can filter out all rules below given severity value by using following option::
 
@@ -44,7 +46,7 @@ class RuleSeverity(Enum):
 
         --threshold E
 
-    Will only report rules with severity E and above.
+    will only report rules with severity E and above.
     """
     INFO = "I"
     WARNING = "W"
@@ -89,10 +91,27 @@ class Rule:
                 return configurable
         return None
 
-    def available_configurables(self):
-        configurables = ['severity'] + [conf[0] for conf in self.configurable]
-        names = '\n        '.join(configurables)
-        return f"Available configurable(s) for this rule:\n        {names}"
+    @staticmethod
+    def get_configurable_desc(conf, default=None):
+        s = f'{conf[0]} = {default}\n' \
+            f'        type: {conf[2].__name__}'
+        if len(conf) == 4:
+            s += '\n' \
+                 f'        info: {conf[3]}'
+        return s
+
+    @staticmethod
+    def get_default_value(param, checker):
+        return None if checker is None else checker.__dict__.get(param, None)
+
+    def available_configurables(self, include_severity=True, checker=None):
+        configurables = ['severity'] if include_severity else []
+        for conf in self.configurable:
+            default = self.get_default_value(conf[1], checker)
+            configurables.append(self.get_configurable_desc(conf, default))
+        if not configurables:
+            return ''
+        return '\n    '.join(configurables)
 
     def parse_body(self, body):
         if isinstance(body, tuple) and len(body) >= 3:
@@ -100,11 +119,20 @@ class Rule:
         else:
             raise robocop.exceptions.InvalidRuleBodyError(self.rule_id, body)
         for configurable in self.configurable:
-            if not isinstance(configurable, tuple) or len(configurable) != 3:
+            if not isinstance(configurable, tuple) or len(configurable) not in (3, 4):
                 raise robocop.exceptions.InvalidRuleConfigurableError(self.rule_id, body)
 
-    def prepare_message(self, *args, source, node, lineno, col):
-        return Message(*args, rule=self, source=source, node=node, lineno=lineno, col=col)
+    def prepare_message(self, *args, source, node, lineno, col, end_lineno, end_col):
+        return Message(
+            *args,
+            rule=self,
+            source=source,
+            node=node,
+            lineno=lineno,
+            col=col,
+            end_col=end_col,
+            end_lineno=end_lineno
+        )
 
     def matches_pattern(self, pattern):
         """ check if this rule matches given pattern """
@@ -114,7 +142,7 @@ class Rule:
 
 
 class Message:
-    def __init__(self, *args, rule, source, node, lineno, col):
+    def __init__(self, *args, rule, source, node, lineno, col, end_lineno, end_col):
         self.enabled = rule.enabled
         self.rule_id = rule.rule_id
         self.name = rule.name
@@ -125,12 +153,14 @@ class Message:
         except TypeError as err:
             raise robocop.exceptions.InvalidRuleUsageError(rule.rule_id, err)
         self.source = source
-        if lineno is None and node is not None:
-            lineno = node.lineno if node.lineno > -1 else 0
-        self.line = lineno
-        if col is None:
-            col = 0
-        self.col = col
+        self.line = 0
+        if node is not None and node.lineno > -1:
+            self.line = node.lineno
+        if lineno is not None:
+            self.line = lineno
+        self.col = 0 if col is None else col
+        self.end_line = self.line if end_lineno is None else end_lineno
+        self.end_col = self.col if end_col is None else end_col
 
     def __lt__(self, other):
         return (self.line, self.col, self.rule_id) < (other.line, other.col, other.rule_id)

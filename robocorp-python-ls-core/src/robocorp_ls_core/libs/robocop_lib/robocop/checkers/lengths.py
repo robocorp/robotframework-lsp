@@ -1,8 +1,11 @@
 """
 Lengths checkers
 """
+import re
+
 from robot.parsing.model.blocks import CommentSection
 from robot.parsing.model.statements import KeywordCall, Comment, EmptyLine, Arguments
+
 from robocop.checkers import VisitorChecker, RawFileChecker
 from robocop.rules import RuleSeverity
 from robocop.utils import normalize_robot_name
@@ -17,55 +20,90 @@ class LengthChecker(VisitorChecker):
             "too-long-keyword",
             "Keyword is too long (%d/%d)",
             RuleSeverity.WARNING,
-            ('max_len', 'keyword_max_len', int)
+            (
+                'max_len',
+                'keyword_max_len',
+                int,
+                'number of lines allowed in a keyword'
+            )
         ),
         "0502": (
             "too-few-calls-in-keyword",
-            "Keyword have too few keywords inside (%d/%d)",
+            "Keyword has too few keywords inside (%d/%d)",
             RuleSeverity.WARNING,
-            ('min_calls', 'keyword_min_calls', int)
+            (
+                'min_calls',
+                'keyword_min_calls',
+                int,
+                'number of keyword calls required in a keyword'
+            )
         ),
         "0503": (
             "too-many-calls-in-keyword",
-            "Keyword have too many keywords inside (%d/%d)",
+            "Keyword has too many keywords inside (%d/%d)",
             RuleSeverity.WARNING,
-            ('max_calls', 'keyword_max_calls', int)
+            (
+                'max_calls',
+                'keyword_max_calls',
+                int,
+                'number of keyword calls allowed in a keyword'
+            )
         ),
         "0504": (
             "too-long-test-case",
             "Test case is too long (%d/%d)",
             RuleSeverity.WARNING,
-            ('max_len', 'testcase_max_len', int)
+            (
+                'max_len',
+                'testcase_max_len',
+                int,
+                'number of lines allowed in a test case'
+            )
         ),
         "0505": (
             "too-many-calls-in-test-case",
-            "Test case have too many keywords inside (%d/%d)",
+            "Test case has too many keywords inside (%d/%d)",
             RuleSeverity.WARNING,
-            ('max_calls', 'testcase_max_calls', int)
+            (
+                'max_calls',
+                'testcase_max_calls',
+                int,
+                'number of keyword calls allowed in a test case'
+            )
         ),
         "0506": (
             "file-too-long",
             "File has too many lines (%d/%d)",
             RuleSeverity.WARNING,
-            ('max_lines', 'file_max_lines', int)
+            (
+                'max_lines',
+                'file_max_lines',
+                int,
+                'number of lines allowed in a file'
+            )
         ),
         "0507": (
             "too-many-arguments",
             "Keyword has too many arguments (%d/%d)",
             RuleSeverity.WARNING,
-            ('max_args', 'keyword_max_args', int)
+            (
+                'max_args',
+                'keyword_max_args',
+                int,
+                'number of arguments a keyword can take'
+            )
         )
     }
 
-    def __init__(self, *args):
+    def __init__(self):
         self.keyword_max_len = 40
         self.testcase_max_len = 20
-        self.keyword_max_calls = 8
-        self.keyword_min_calls = 2
-        self.testcase_max_calls = 8
+        self.keyword_max_calls = 10
+        self.keyword_min_calls = 1
+        self.testcase_max_calls = 10
         self.file_max_lines = 400
         self.keyword_max_args = 5
-        super().__init__(*args)
+        super().__init__()
 
     def visit_File(self, node):
         if node.end_lineno > self.file_max_lines:
@@ -139,27 +177,36 @@ class LengthChecker(VisitorChecker):
 
 
 class LineLengthChecker(RawFileChecker):
-    """ Checker for max length of line. """
+    """ Checker for maximum length of a line. """
     rules = {
         "0508": (
             "line-too-long",
             "Line is too long (%d/%d)",
             RuleSeverity.WARNING,
-            ("line_length", "max_line_length", int)
+            (
+                "line_length",
+                "max_line_length",
+                int,
+                'number of characters allowed in one line'
+            )
         )
     }
 
-    def __init__(self, *args):
+    def __init__(self):
         self.max_line_length = 120
-        super().__init__(*args)
+        # replace # noqa or # robocop, # robocop: enable, # robocop: disable=optional,rule,names
+        self.disabler_pattern = re.compile(r'(# )+(noqa|robocop: ?(?P<disabler>disable|enable)=?(?P<rules>[\w\-,]*))')
+        super().__init__()
 
     def check_line(self, line, lineno):
+        line = self.disabler_pattern.sub('', line)
+        line = line.rstrip().expandtabs(4)
         if len(line) > self.max_line_length:
             self.report("line-too-long", len(line), self.max_line_length, lineno=lineno)
 
 
 class EmptySectionChecker(VisitorChecker):
-    """ Checker for empty section. """
+    """ Checker for detecting empty sections. """
     rules = {
         "0509": (
             "empty-section",
@@ -190,19 +237,24 @@ class EmptySectionChecker(VisitorChecker):
 
 
 class NumberOfReturnedArgsChecker(VisitorChecker):
-    """ Checker for number of returned values from keyword. """
+    """ Checker for number of returned values from a keyword. """
     rules = {
         "0510": (
             "number-of-returned-values",
             "Too many return values (%d/%d)",
             RuleSeverity.WARNING,
-            ("max_returns", "max_returns", int)
+            (
+                'max_returns',
+                'max_returns',
+                int,
+                'allowed number of returned values from a keyword'
+            )
         )
     }
 
-    def __init__(self, *args):
+    def __init__(self):
         self.max_returns = 4
-        super().__init__(*args)
+        super().__init__()
 
     def visit_Keyword(self, node):  # noqa
         self.generic_visit(node)
@@ -217,6 +269,9 @@ class NumberOfReturnedArgsChecker(VisitorChecker):
         self.check_node_returns(len(node.values), node)
 
     def visit_KeywordCall(self, node):  # noqa
+        if not node.keyword:
+            return
+
         normalized_name = normalize_robot_name(node.keyword)
         if normalized_name == 'returnfromkeyword':
             self.check_node_returns(len(node.args), node)
@@ -229,7 +284,7 @@ class NumberOfReturnedArgsChecker(VisitorChecker):
 
 
 class EmptySettingsChecker(VisitorChecker):
-    """ Checker for empty settings. """
+    """ Checker for detecting empty settings. """
     rules = {
         "0511": (
             "empty-metadata",

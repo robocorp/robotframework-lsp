@@ -1,5 +1,5 @@
 """
-Main class of Robocop module. Gather files for scan, checkers and parse cli arguments and scan files.
+Main class of Robocop module. Gathers files to be scanned, checkers, parses CLI arguments and scans files.
 """
 import inspect
 import sys
@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 
 from robot.api import get_resource_model
+from robot.errors import DataError
 
 import robocop.exceptions
 from robocop import checkers
@@ -49,6 +50,11 @@ class Robocop:
         if not from_cli:
             self.config.reports.add('json_report')
         self.out = self.set_output()
+        if from_cli:
+            print("### DEPRECATION WARNING: The rule '0906' (redundant-equal-sign) is "
+                  "deprecated starting from Robocop 1.7.0 and is replaced by 0909 (inconsistent-assignment) and "
+                  "0910 (inconsistent-assignment-in-variables). "
+                  "Rule '0906' will be removed in the next release - update your configuration. ###\n")
 
     def set_output(self):
         """ Set output for printing to file if configured. Else use standard output """
@@ -96,9 +102,12 @@ class Robocop:
             else:
                 file_type = FileType.GENERAL
             file_type_checker.source = file
-            model = file_type.get_parser()(str(file))
-            file_type_checker.visit(model)
-            self.files[file] = (file_type, model)
+            try:
+                model = file_type.get_parser()(str(file))
+                file_type_checker.visit(model)
+                self.files[file] = (file_type, model)
+            except DataError:
+                print(f"Failed to decode {file}. Default supported encoding by Robot Framework is UTF-8. Skipping file")
 
         for resource in file_type_checker.resource_files:
             if resource in self.files and self.files[resource][0].value != FileType.RESOURCE:
@@ -106,6 +115,8 @@ class Robocop:
 
     def run_checks(self):
         for file in self.files:
+            if self.config.verbose:
+                print(f"Scanning file: {file}")
             model = self.files[file][1]
             found_issues = self.run_check(model, str(file))
             issues_to_lsp_diagnostic(found_issues)
@@ -142,10 +153,12 @@ class Robocop:
                          source_rel=source_rel,
                          line=rule_msg.line,
                          col=rule_msg.col,
+                         end_line=rule_msg.end_line,
+                         end_col=rule_msg.end_col,
                          severity=rule_msg.severity.value,
                          rule_id=rule_msg.rule_id,
                          desc=rule_msg.desc,
-                         msg_name=rule_msg.name)
+                         name=rule_msg.name)
 
     def log_message(self, **kwargs):
         self.write_line(self.config.format.format(**kwargs))
@@ -158,17 +171,23 @@ class Robocop:
     def list_checkers(self):
         if not (self.config.list or self.config.list_configurables):
             return
-        rule_by_id = {msg.rule_id: msg for checker in self.checkers for msg in checker.rules_map.values()}
+        if self.config.list_configurables:
+            print("All rules have configurable parameter 'severity'. Allowed values are:"
+                  "\n    E / error\n    W / warning\n    I / info")
+        rule_by_id = {msg.rule_id: (msg, checker) for checker in self.checkers for msg in checker.rules_map.values()}
         rule_ids = sorted([key for key in rule_by_id])
         for rule_id in rule_ids:
+            rule_def, checker = rule_by_id[rule_id]
             if self.config.list:
-                if not rule_by_id[rule_id].matches_pattern(self.config.list):
-                    continue
-                print(rule_by_id[rule_id])
+                if rule_def.matches_pattern(self.config.list):
+                    print(rule_def)
             else:
-                if not rule_by_id[rule_id].matches_pattern(self.config.list_configurables):
+                if not rule_def.matches_pattern(self.config.list_configurables):
                     continue
-                print(f"{rule_by_id[rule_id]}\n    {rule_by_id[rule_id].available_configurables()}")
+                configurables = rule_def.available_configurables(include_severity=False, checker=checker)
+                if configurables:
+                    print(f"{rule_def}\n"
+                          f"    {configurables}")
         sys.exit()
 
     def load_reports(self):
@@ -183,9 +202,9 @@ class Robocop:
                 continue
             if 'all' in self.config.reports or report.name in self.config.reports:
                 self.reports[report.name] = report
-            available_reports += f'{report.name} - {report.description}\n'
+            available_reports += f'{report.name:20} - {report.description}\n'
         if self.config.list_reports:
-            available_reports += 'all - Turns on all available reports'
+            available_reports += 'all' + ' ' * 18 + '- Turns on all available reports'
             print(available_reports)
             sys.exit()
 
@@ -250,9 +269,12 @@ class Robocop:
                 else:
                     configurable = msg.get_configurable(param)
                     if configurable is None:
-                        available_conf = msg.available_configurables()
+                        available_conf = msg.available_configurables(checker=checker)
                         raise robocop.exceptions.ConfigGeneralError(
-                            f"Provided param '{param}' for rule '{rule_or_report}' does not exist. {available_conf}")
+                            f"Provided param '{param}' for rule '{rule_or_report}' does not exist. "
+                            f"Available configurable(s) for this rule:\n"
+                            f"    {available_conf}"
+                            )
                     checker.configure(configurable[1], configurable[2](value))
             elif rule_or_report in self.reports:
                 self.reports[rule_or_report].configure(param, value, *values)

@@ -1,6 +1,6 @@
 """
-Reports are configurable summaries after lint scan. For example it could be total number of issues discovered.
-They are dynamically loaded during setup according to command line configuration.
+Reports are configurable summaries after Robocop scan. For example, it can be a total number of issues discovered.
+They are dynamically loaded during setup according to a command line configuration.
 
 Each report class collects rules messages from linter and parses it. At the end of the scan it will print the report.
 
@@ -51,7 +51,7 @@ class RulesByIdReport(Report):
                                          key=itemgetter(1), reverse=True)
         report = '\nIssues by IDs:\n'
         if not message_counter_ordered:
-            report += "No issues found\n"
+            report += "No issues found"
             return report
         longest_name = max(len(msg[0]) for msg in message_counter_ordered)
         report += '\n'.join(f"{message:{longest_name}} : {count}" for message, count in message_counter_ordered)
@@ -79,7 +79,7 @@ class RulesBySeverityReport(Report):
     def get_report(self):
         issues_count = sum(self.severity_counter.values())
         if not issues_count:
-            return 'Found 0 issues'
+            return '\nFound 0 issues'
         report = f'\nFound {issues_count} issue(s): '
         report += ', '.join(f"{count} {severity.name}(s)" for severity, count in self.severity_counter.items())
         report += '.'
@@ -91,7 +91,7 @@ class ReturnStatusReport(Report):
     Report name: ``return_status``
 
     Report that checks if number of returned rules messages for given severity value does not exceed preset threshold.
-    That information is later used as return status from Robocop.
+    That information is later used as a return status from Robocop.
     """
     def __init__(self):
         self.name = 'return_status'
@@ -100,19 +100,19 @@ class ReturnStatusReport(Report):
         self.counter = RulesBySeverityReport()
         self.quality_gate = {
             'E': 0,
-            'W': 100,
+            'W': 0,
             'I': -1
         }
 
     def configure(self, name, value, *values):
-        if name != 'quality_gate':
+        if name not in ['quality_gate', 'quality_gates']:
             super().configure(name, value, *values)
         values = [value] + list(values)
         for val in values:
             try:
                 name, count = val.split('=', maxsplit=1)
-                if name in self.quality_gate:
-                    self.quality_gate[name] = int(count)
+                if name.upper() in self.quality_gate:
+                    self.quality_gate[name.upper()] = int(count)
             except ValueError:
                 continue
 
@@ -123,8 +123,9 @@ class ReturnStatusReport(Report):
         for severity, count in self.counter.severity_counter.items():
             threshold = self.quality_gate.get(severity.value, 0)
             if -1 < threshold < count:
-                self.return_status = 1
-                break
+                self.return_status += count - threshold
+        if self.return_status > 255:
+            self.return_status = 255
 
 
 class TimeTakenReport(Report):
@@ -149,7 +150,7 @@ class JsonReport(Report):
     """
     Report name: ``json_report``
 
-    Report that return lists of issues in json format.
+    Report that returns list of found issues in JSON format.
     """
     def __init__(self):
         self.name = 'json_report'
@@ -180,10 +181,10 @@ class FileStatsReport(Report):
 
     def get_report(self):
         if not self.files_count:
-            return 'No files were processed'
+            return '\nNo files were processed'
         else:
             if not self.files_with_issues:
-                return f'Processed {self.files_count} file(s) but no issues were found'
+                return f'\nProcessed {self.files_count} file(s) but no issues were found'
 
-            return f'Processed {self.files_count} file(s) from which {len(self.files_with_issues)} ' \
+            return f'\nProcessed {self.files_count} file(s) from which {len(self.files_with_issues)} ' \
                    f'file(s) contained issues'

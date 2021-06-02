@@ -5,6 +5,12 @@ import os
 import re
 import sys
 
+try:
+    import toml
+    TOML_SUPPORT = True
+except ImportError:
+    TOML_SUPPORT = False
+
 from robocop.exceptions import ArgumentFileNotFoundError, NestedArgumentFileError, InvalidArgumentError
 from robocop.rules import RuleSeverity
 from robocop.version import __version__
@@ -12,6 +18,39 @@ from robocop.version import __version__
 
 def translate_pattern(pattern):
     return re.compile(fnmatch.translate(pattern))
+
+
+def parse_toml_to_config(toml_data, config):
+    if not toml_data:
+        return
+    assign_type = {'paths', 'format', 'configure'}
+    set_type = {'include', 'exclude', 'reports', 'ignore', 'ext_rules'}
+    toml_data = {key.replace('-', '_'): value for key, value in toml_data.items()}
+    for key, value in toml_data.items():
+        if key in assign_type:
+            config.__dict__[key] = value
+        elif key in set_type:
+            config.__dict__[key].update(set(value))
+        elif key == 'filetypes':
+            for filetype in toml_data['filetypes']:
+                config.filetypes.add(filetype if filetype.startswith('.') else '.' + filetype)
+        elif key == 'threshold':
+            config.threshold = find_severity_value(value)
+        elif key == 'output':
+            config.output = open(value, 'w')
+        elif key == 'no_recursive':
+            config.recursive = not value
+        elif key == 'verbose':
+            config.verbose = value
+        else:
+            raise InvalidArgumentError(f"Option '{key}' is not supported in pyproject.toml configuration file.")
+
+
+def find_severity_value(severity):
+    for sev in RuleSeverity:
+        if sev.value == severity.upper():
+            return sev
+    return RuleSeverity.INFO
 
 
 class ParseDelimitedArgAction(argparse.Action):  # pylint: disable=too-few-public-methods
@@ -37,12 +76,7 @@ class ParseFileTypes(argparse.Action):  # pylint: disable=too-few-public-methods
 
 class SetRuleThreshold(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        for sev in RuleSeverity:
-            if sev.value == values:
-                break
-        else:
-            sev = RuleSeverity.INFO
-        setattr(namespace, self.dest, sev)
+        setattr(namespace, self.dest, find_severity_value(values))
 
 
 class SetListOption(argparse.Action):
@@ -76,8 +110,8 @@ class Config:
         self.reports = {'return_status'}
         self.threshold = RuleSeverity.INFO
         self.configure = []
-        self.format = "{source}:{line}:{col} [{severity}] {rule_id} {desc}"
-        self.paths = []
+        self.format = "{source}:{line}:{col} [{severity}] {rule_id} {desc} ({name})"
+        self.paths = ['.']
         self.ext_rules = set()
         self.include_patterns = []
         self.exclude_patterns = []
@@ -87,15 +121,17 @@ class Config:
         self.list_reports = False
         self.output = None
         self.recursive = True
+        self.verbose = False
+        self.config_from = ''
         self.parser = self._create_parser()
 
     HELP_MSGS = {
-        'help_paths':        'List of paths (files or directories) to be parsed by Robocop',
+        'help_paths':        'List of paths (files or directories) to be parsed by Robocop.',
         'help_include':      'Run Robocop only with specified rules. You can define rule by its name or id.\n'
-                             'Glob patterns are supported',
+                             'Glob patterns are supported.',
         'help_exclude':      'Ignore specified rules. You can define rule by its name or id.\n'
-                             'Glob patterns are supported',
-        'help_ext_rules':    'List of paths with custom rules',
+                             'Glob patterns are supported.',
+        'help_ext_rules':    'List of paths with custom rules.',
         'help_reports':      'Generate reports after scan. You can enable reports by listing them in comma\n'
                              'separated list:\n'
                              '--reports rules_by_id,rules_by_error_type,scan_timer\n'
@@ -103,25 +139,28 @@ class Config:
                              '--report all',
         'help_format':       'Format of output message. '
                              'You can use placeholders to change the way an issue is reported.\n'
-                             'Default: {source}:{line}:{col} [{severity}] {rule_id} {desc}',
+                             'Default: {source}:{line}:{col} [{severity}] {rule_id} {desc} ({name})',
         'help_configure':    'Configure checker with parameter value. Usage:\n'
                              '-c message_name_or_id:param_name:param_value\nExample:\n'
                              '-c line-too-long:line_length:150\n'
                              '--configure 0101:severity:E',
-        'help_list':         'List all available rules. You can use optional pattern argument',
+        'help_list':         'List all available rules. You can use optional pattern argument.',
         'help_list_confs':   'List all available rules with configurable parameters. '
-                             'You can use optional pattern argument',
-        'help_list_reports': 'List all available reports',
-        'help_output':       'Path to output file',
+                             'You can use optional pattern argument.',
+        'help_list_reports': 'List all available reports.',
+        'help_output':       'Path to output file.',
         'help_filetypes':    'Comma separated list of file extensions to be scanned by Robocop',
         'help_threshold':     f'Disable rules below given threshold. Available message levels: '
                               f'{" < ".join(sev.value for sev in RuleSeverity)}',
-        'help_recursive':    'Use this flag to stop scanning directories recursively',
-        'help_argfile':      'Path to file with arguments',
-        'help_ignore':       'Ignore file(s) and path(s) provided. Glob patterns are supported',
-        'help_info':         'Print this help message and exit',
-        'help_version':      'Display Robocop version',
-        'directives':        '1. Serve the public trust\n2. Protect the innocent\n3. Uphold the law\n4. [ACCESS DENIED]'
+        'help_recursive':    'Use this flag to stop scanning directories recursively.',
+        'help_argfile':      'Path to file with arguments.',
+        'help_ignore':       'Ignore file(s) and path(s) provided. Glob patterns are supported.',
+        'help_info':         'Print this help message and exit.',
+        'help_version':      'Display Robocop version.',
+        'help_verbose':      'Display extra information.',
+        'directives':        '1. Serve the public trust\n2. Protect the innocent\n3. Uphold the law\n4. [ACCESS '
+                             'DENIED]',
+        'epilog':            'For full documentation visit: https://github.com/MarketSquare/robotframework-robocop'
     }
 
     def _translate_patterns(self, pattern_list):
@@ -156,38 +195,36 @@ class Config:
                 parsed_args.append(arg)
         return parsed_args
 
-    @staticmethod
-    def load_args_from_file(argfile):
+    def load_args_from_file(self, argfile):
         try:
             with open(argfile) as arg_f:
                 args = [arg for line in arg_f for arg in line.split()]
                 if '-A' in args or '--argumentfile' in args:
                     raise NestedArgumentFileError(argfile)
+                self.config_from = argfile
                 return args
         except FileNotFoundError:
             raise ArgumentFileNotFoundError(argfile)
 
     def _create_parser(self):
-        # below will throw error in Pycharm, it's bug https://youtrack.jetbrains.com/issue/PY-41806
         parser = CustomArgParser(prog='robocop',
                                  formatter_class=argparse.RawTextHelpFormatter,
                                  description='Static code analysis tool for Robot Framework',
-                                 epilog='For full documentation visit: '
-                                        'https://github.com/MarketSquare/robotframework-robocop',
+                                 epilog=self.HELP_MSGS['epilog'],
                                  add_help=False,
                                  from_cli=self.from_cli)
         required = parser.add_argument_group(title='Required parameters')
         optional = parser.add_argument_group(title='Optional parameters')
 
-        required.add_argument('paths', metavar='paths', type=str, nargs='*', default=['.'],
+        required.add_argument('paths', metavar='paths', type=str, nargs='*', default=self.paths,
                               help=self.HELP_MSGS['help_paths'])
         optional.add_argument('-i', '--include', action=ParseDelimitedArgAction, default=self.include,
                               metavar='RULES', help=self.HELP_MSGS['help_include'])
         optional.add_argument('-e', '--exclude', action=ParseDelimitedArgAction, default=self.exclude,
                               metavar='RULES', help=self.HELP_MSGS['help_exclude'])
-        optional.add_argument('-rules', '--ext_rules', action=ParseDelimitedArgAction, default=self.ext_rules,
+        optional.add_argument('-rules', '--ext-rules', action=ParseDelimitedArgAction, default=self.ext_rules,
                               help=self.HELP_MSGS['help_ext_rules'])
-        optional.add_argument('--no-recursive', dest='recursive', action='store_false',
+        optional.add_argument('-nr', '--no-recursive', dest='recursive', action='store_false',
                               help=self.HELP_MSGS['help_recursive'])
         optional.add_argument('-r', '--reports', action=ParseDelimitedArgAction, default=self.reports,
                               help=self.HELP_MSGS['help_reports'])
@@ -196,23 +233,24 @@ class Config:
                               metavar='CONFIGURABLE', help=self.HELP_MSGS['help_configure'])
         optional.add_argument('-l', '--list', action=SetListOption, nargs='?', const='', default=self.list,
                               metavar='PATTERN', help=self.HELP_MSGS['help_list'])
-        optional.add_argument('--list-configurables', action=SetListOption, nargs='?', const='',
+        optional.add_argument('-lc', '--list-configurables', action=SetListOption, nargs='?', const='',
                               default=self.list_configurables, metavar='PATTERN',
                               help=self.HELP_MSGS['help_list_confs'])
-        optional.add_argument('--list-reports', action='store_true', default=self.list_reports,
+        optional.add_argument('-lr', '--list-reports', action='store_true', default=self.list_reports,
                               help=self.HELP_MSGS['help_list_reports'])
         optional.add_argument('-o', '--output', type=argparse.FileType('w'), default=self.output,
                               metavar='PATH', help=self.HELP_MSGS['help_output'])
-        optional.add_argument('--filetypes', action=ParseFileTypes, default=self.filetypes,
+        optional.add_argument('-ft', '--filetypes', action=ParseFileTypes, default=self.filetypes,
                               help=self.HELP_MSGS['help_filetypes'])
         optional.add_argument('-t', '--threshold', action=SetRuleThreshold, default=self.threshold,
                               help=self.HELP_MSGS['help_threshold'])
         optional.add_argument('-A', '--argumentfile', metavar='PATH', help=self.HELP_MSGS['help_argfile'])
-        optional.add_argument('--ignore', action=ParseDelimitedArgAction, default=self.ignore,
+        optional.add_argument('-g', '--ignore', action=ParseDelimitedArgAction, default=self.ignore,
                               metavar='PATH', help=self.HELP_MSGS['help_ignore'])
         optional.add_argument('-h', '--help', action='help', help=self.HELP_MSGS['help_info'])
         optional.add_argument('-v', '--version', action='version', version=__version__,
                               help=self.HELP_MSGS['help_version'])
+        optional.add_argument('-vv', '--verbose', action='store_true', help=self.HELP_MSGS['help_verbose'])
         optional.add_argument('--directives', action='version', version=self.HELP_MSGS['directives'],
                               help=argparse.SUPPRESS)
 
@@ -220,33 +258,53 @@ class Config:
 
     def parse_opts(self, args=None, from_cli=True):
         args = self.preparse(args) if from_cli else None
-        if not args:
-            args = self.load_default_config_file()
-        if not args and not from_cli:
-            return args
-        parsed_args = self.parser.parse_args(args)
-        self.__dict__.update(**vars(parsed_args))
+        if not args or args == ['--verbose'] or args == ['-vv']:
+            loaded_args = self.load_default_config_file()
+            if loaded_args is None:
+                self.load_pyproject_file()
+            else:
+                # thanks for this we can have config file together with some cli options like --verbose
+                args = [*args, *loaded_args] if args is not None else loaded_args
+        if args:
+            args = self.parser.parse_args(args)
+            for key, value in dict(**vars(args)).items():
+                if key in self.__dict__:
+                    self.__dict__[key] = value
         self.remove_severity()
         self.translate_patterns()
+        if self.verbose:
+            if self.config_from:
+                print(f"Loaded configuration from {self.config_from}")
+            else:
+                print("No config file found. Using default configuration")
 
-        return parsed_args
+        return args
 
     def load_default_config_file(self):
-        project_root = self.find_project_root()
-        config_path = project_root / '.robocop'
-        if not config_path.is_file():
-            return None
-        # print(f"Loaded default configuration file from '{config_path}'") TODO: Enable in verbose mode
-        return self.load_args_from_file(config_path)
+        robocop_path = self.find_file_in_project_root('.robocop')
+        if robocop_path.is_file():
+            return self.load_args_from_file(robocop_path)
 
-    def find_project_root(self):
+    def find_file_in_project_root(self, config_name):
         root = self.root or Path.cwd()
         for parent in (root, *root.parents):
-            if (parent / '.git').exists():
-                return parent
-            if (parent / '.robocop').is_file():
-                return parent
-        return parent
+            if (parent / '.git').exists() or (parent / config_name).is_file():
+                return parent / config_name
+        return parent / config_name
+
+    def load_pyproject_file(self):
+        if not TOML_SUPPORT:
+            return
+        pyproject_path = self.find_file_in_project_root('pyproject.toml')
+        if not pyproject_path.is_file():
+            return
+        try:
+            config = toml.load(str(pyproject_path))
+        except toml.TomlDecodeError as e:
+            raise InvalidArgumentError(f'Failed to decode {str(pyproject_path)}: {e}')
+        config = config.get("tool", {}).get("robocop", {})
+        parse_toml_to_config(config, self)
+        self.config_from = pyproject_path
 
     def is_rule_enabled(self, rule):
         if self.is_rule_disabled(rule):
