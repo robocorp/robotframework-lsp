@@ -285,6 +285,23 @@ Resource    case4resource.txt"""
     assert definition.source.endswith("case4resource.txt")
 
 
+def test_find_definition_variables_file(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case_vars_file", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case_vars_file.robot")
+    line_contents = "Variables    ./robotvars.py"
+    line = doc.find_line_with_contents(line_contents)
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=len(line_contents) - 1
+    )
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("robotvars.py")
+
+
 def _definitions_to_data_regression(definitions):
     """
     :param IDefinition definition:

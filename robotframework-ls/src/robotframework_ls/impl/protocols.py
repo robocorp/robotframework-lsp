@@ -317,6 +317,9 @@ class ICompletionContext(Protocol):
     def get_resource_import_as_doc(self, resource_import) -> Optional[IRobotDocument]:
         pass
 
+    def get_variable_import_as_doc(self, variables_import) -> Optional[IRobotDocument]:
+        pass
+
     def get_current_keyword_definition(self) -> Optional[IKeywordDefinition]:
         pass
 

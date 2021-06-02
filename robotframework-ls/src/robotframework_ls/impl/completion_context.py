@@ -401,6 +401,9 @@ class CompletionContext(object):
 
         return None
 
+    def get_variable_import_as_doc(self, variables_import) -> Optional[IRobotDocument]:
+        return self.get_resource_import_as_doc(variables_import)
+
     @instance_cache
     def get_resource_imports_as_docs(self) -> Tuple[IRobotDocument, ...]:
         ret: List[IRobotDocument] = []

@@ -82,6 +82,31 @@ class _DefinitionFromResource(object):
         _: IDefinition = check_implements(self)
 
 
+class _DefinitionFromVariableImport(object):
+    def __init__(self, variables_doc):
+        """
+        :param RobotDocument variables_doc:
+        """
+        from robocorp_ls_core import uris
+
+        self.keyword_name = ""
+        self.variables_doc = variables_doc
+        self.source = uris.to_fs_path(variables_doc.uri)
+        # Note: line/offsets 0-based.
+        self.lineno = 0
+        self.end_lineno = 0
+        self.col_offset = 0
+        self.end_col_offset = 0
+
+    def __str__(self):
+        return "DefinitionFromVariableImport[%s]" % (self.source,)
+
+    __repr__ = __str__
+
+    def __typecheckself__(self) -> None:
+        _: IDefinition = check_implements(self)
+
+
 class _DefinitionFromVariable(object):
     def __init__(self, variable_found):
         """
@@ -224,6 +249,17 @@ def find_definition(completion_context: ICompletionContext) -> Sequence[IDefinit
             )
             if resource_import_as_doc is not None:
                 return [_DefinitionFromResource(resource_import_as_doc)]
+
+        token = ast_utils.get_variables_import_name_token(
+            token_info.node, token_info.token
+        )
+        if token is not None:
+            completion_context.check_cancelled()
+            variable_import_as_doc = completion_context.get_variable_import_as_doc(
+                token_info.node
+            )
+            if variable_import_as_doc is not None:
+                return [_DefinitionFromVariableImport(variable_import_as_doc)]
 
     token_info = completion_context.get_current_variable()
     if token_info is not None:

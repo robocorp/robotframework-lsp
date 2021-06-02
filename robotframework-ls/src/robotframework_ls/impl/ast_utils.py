@@ -521,6 +521,22 @@ def get_resource_import_name_token(ast, token):
     return None
 
 
+def get_variables_import_name_token(ast, token):
+    """
+    If the given ast node is a variables import and the token is its name, return
+    the name token, otherwise, return None.
+    """
+    from robocorp_ls_core.basic import isinstance_name
+
+    if (
+        token.type == token.NAME
+        and isinstance_name(ast, "VariablesImport")
+        and ast.name == token.value  # I.e.: match the name, not the alias.
+    ):
+        return token
+    return None
+
+
 def _copy_of_node_replacing_token(node, token, token_type):
     """
     Workaround to create a new version of the same node but with the first
