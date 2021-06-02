@@ -6,6 +6,7 @@ from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.protocols import IRobotWorkspace, IRobotDocument
 from robocorp_ls_core.protocols import check_implements, IWorkspaceFolder
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
+from typing import Optional, Any
 
 log = get_logger(__name__)
 
@@ -62,6 +63,7 @@ class RobotDocument(Document):
         self._symbols_cache = None
         self.get_ast.cache_clear(self)  # noqa (clear the instance_cache).
         self.get_python_ast.cache_clear(self)  # noqa (clear the instance_cache).
+        self.get_yaml_contents.cache_clear(self)  # noqa (clear the instance_cache).
 
     def get_type(self):
         path = self.path
@@ -138,6 +140,26 @@ class RobotDocument(Document):
             return ast_module.parse(source)
         except:
             log.critical(f"Error parsing python file: {self.uri}")
+            return None
+
+    @instance_cache
+    def get_yaml_contents(self) -> Optional[Any]:
+        try:
+            source = self.source
+        except:
+            log.exception("Error getting source for: %s" % (self.uri,))
+            return None
+
+        try:
+            from robocorp_ls_core import yaml_wrapper
+            from io import StringIO
+
+            s = StringIO()
+            s.write(source)
+            s.seek(0)
+            return yaml_wrapper.load(s)
+        except:
+            log.critical(f"Error parsing yaml file: {self.uri}")
             return None
 
     def find_line_with_contents(self, contents: str) -> int:

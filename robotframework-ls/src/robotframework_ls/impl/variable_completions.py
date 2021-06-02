@@ -132,6 +132,10 @@ class _VariableFoundFromBuiltins(_VariableFoundFromSettings):
     pass
 
 
+class _VariableFoundFromYaml(_VariableFoundFromSettings):
+    pass
+
+
 class _Collector(object):
     def __init__(self, selection, token, matcher):
         self.matcher = matcher
@@ -240,50 +244,60 @@ def _collect_variable_imports_variables(
     variable_import_doc: IRobotDocument
     for variable_import_doc in completion_context.get_variable_imports_as_docs():
         try:
-            python_ast = variable_import_doc.get_python_ast()
-            if python_ast is not None:
-                import ast as ast_module
+            if variable_import_doc.path.lower().endswith(".py"):
+                python_ast = variable_import_doc.get_python_ast()
+                if python_ast is not None:
+                    import ast as ast_module
 
-                for node in python_ast.body:
-                    if isinstance(node, ast_module.Assign):
-                        for target in node.targets:
-                            if isinstance(target, ast_module.Name):
-                                varname = "${%s}" % (target.id,)
-                                if collector.accepts(varname):
-                                    value = ""
-                                    try:
-                                        # Only available for Python 3.8 onwards...
-                                        end_lineno = getattr(
-                                            node.value, "end_lineno", None
-                                        )
-                                        if end_lineno is None:
-                                            end_lineno = node.value.lineno
+                    for node in python_ast.body:
+                        if isinstance(node, ast_module.Assign):
+                            for target in node.targets:
+                                if isinstance(target, ast_module.Name):
+                                    varname = "${%s}" % (target.id,)
+                                    if collector.accepts(varname):
+                                        value = ""
+                                        try:
+                                            # Only available for Python 3.8 onwards...
+                                            end_lineno = getattr(
+                                                node.value, "end_lineno", None
+                                            )
+                                            if end_lineno is None:
+                                                end_lineno = node.value.lineno
 
-                                        # Only available for Python 3.8 onwards...
-                                        end_col_offset = getattr(
-                                            node.value, "end_col_offset", None
-                                        )
-                                        if end_col_offset is None:
-                                            end_col_offset = 99999999
-                                        value = variable_import_doc.get_range(
-                                            node.value.lineno - 1,
-                                            node.value.col_offset,
-                                            end_lineno - 1,
-                                            end_col_offset,
-                                        )
-                                    except:
-                                        log.exception()
+                                            # Only available for Python 3.8 onwards...
+                                            end_col_offset = getattr(
+                                                node.value, "end_col_offset", None
+                                            )
+                                            if end_col_offset is None:
+                                                end_col_offset = 99999999
+                                            value = variable_import_doc.get_range(
+                                                node.value.lineno - 1,
+                                                node.value.col_offset,
+                                                end_lineno - 1,
+                                                end_col_offset,
+                                            )
+                                        except:
+                                            log.exception()
 
-                                    variable_found = _VariableFoundFromPythonAst(
-                                        variable_import_doc.path,
-                                        target.lineno - 1,
-                                        target.col_offset,
-                                        target.lineno - 1,
-                                        target.col_offset + len(target.id),
-                                        value,
-                                        variable_name=varname,
-                                    )
-                                    collector.on_variable(variable_found)
+                                        variable_found = _VariableFoundFromPythonAst(
+                                            variable_import_doc.path,
+                                            target.lineno - 1,
+                                            target.col_offset,
+                                            target.lineno - 1,
+                                            target.col_offset + len(target.id),
+                                            value,
+                                            variable_name=varname,
+                                        )
+                                        collector.on_variable(variable_found)
+
+            elif variable_import_doc.path.lower().endswith(".yaml"):
+                contents = variable_import_doc.get_yaml_contents()
+                if isinstance(contents, dict):
+                    for key, val in contents.items():
+                        key = "${%s}" % (key,)
+                        if collector.accepts(key):
+                            collector.on_variable(_VariableFoundFromYaml(key, str(val)))
+
         except:
             log.exception()
 
