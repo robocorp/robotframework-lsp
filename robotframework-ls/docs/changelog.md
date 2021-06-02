@@ -1,3 +1,14 @@
+New in 0.18.0 (2021-06-02)
+-----------------------------
+
+- Support for variables import:
+  - Loads variables from `.py` and `.yaml` files.
+- Semantic highlighting: equals sign no longer causes incorrect coloring on `catenate` keyword and `documentation` section.
+- A module shadowing `builtin.py` no longer causes the default `Builtin` module not to be found anymore.
+- Code analysis no longer throws error when dealing with a `Library` without a name declared. 
+- Robocop updated to 1.7.1.
+
+
 New in 0.17.0 (2021-05-24)
 -----------------------------
 
@@ -14,7 +25,6 @@ New in 0.17.0 (2021-05-24)
   - A file-observer is started as a separate process and multiple clients communicate with it.
   
  
-
 New in 0.16.0 (2021-05-12)
 -----------------------------
 

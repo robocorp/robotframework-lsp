@@ -1,3 +1,15 @@
+New in 0.18.0 (2021-06-02)
+-----------------------------
+
+- Support for variables import:
+  - Loads variables from `.py` and `.yaml` files.
+- Semantic highlighting: equals sign no longer causes incorrect coloring on `catenate` keyword and `documentation` section.
+- A module shadowing `builtin.py` no longer causes the default `Builtin` module not to be found anymore.
+- Code analysis no longer throws error when dealing with a `Library` without a name declared. 
+- Robocop updated to 1.7.1.
+- [Intellij] `${workspace}` and `{env.SOME_VAR}` properly replaced for the language server python executable specified in the settings.
+
+
 New in 0.17.0 (2021-05-24)
 -----------------------------
 

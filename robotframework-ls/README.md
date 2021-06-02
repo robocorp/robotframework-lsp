@@ -31,7 +31,7 @@ See: [Config](docs/config.md) for details.
 See: [FAQ](docs/faq.md) for common issues encountered while configuring the language server.
   
 
-Features (0.17.0)
+Features (0.18.0)
 -----------------
 
 - Code analysis: checks if keywords are properly imported/defined.

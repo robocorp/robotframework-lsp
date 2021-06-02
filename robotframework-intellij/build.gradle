@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.17.0'
+version '0.18.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,24 +51,20 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.17.0
+    Release 0.18.0
     </p>
     <ul>
 
-    <li>Variables may be used in settings. See the <a href="https://github.com/robocorp/robotframework-lsp/blob/master/robotframework-ls/docs/faq.md#how-to-use-variables-in-settings">related FAQ</a> for details.</li>
-    <li>Semantic highlighting was improved to differentiate the parameter (name) from the argument (value).</li>
-    <li>Variables are now shown in the structure view.</li>
-    <li>When launching a `.robot`, if a `__init__.robot` is present in the same directory, a `--suite` is done by default.</li>
-    <li>Breakpoints are properly hit on `__init__.robot` files.</li>
-    <li>[Intellij] Fixed exception related to code-folding during initializing.</li>
-    <li>Fixed issue which could lead to high-cpu due to filesystem polling.</li>
-      <ul>
-      <li>It's now possible to set an environment variable `ROBOTFRAMEWORK_LS_POLL_TIME=&lt;poll time in seconds&gt;` to change the filesystem target poll time.</li>
-      <li>When possible, it's recommended to set an environment variable `ROBOTFRAMEWORK_LS_WATCH_IMPL=watchdog` to use native watches on Linux and MacOS (already default on Windows).</li>
-      <li>A file-observer is started as a separate process and multiple clients communicate with it.</li>
-      </ul>
+    <li>Support for variables import:</li>
+    <ul>
+        <li>Loads variables from `.py` and `.yaml` files.</li>
     </ul>
-    
+    <li>Semantic highlighting: equals sign no longer causes incorrect coloring on `catenate` keyword and `documentation` section.</li>
+    <li>A module shadowing `builtin.py` no longer causes the default `Builtin` module not to be found anymore.</li>
+    <li>Code analysis no longer throws error when dealing with a `Library` without a name declared.</li> 
+    <li>Robocop updated to 1.7.1.</li> 
+    <li>[Intellij] `\${workspace}` and `\${env.SOME_VAR}` properly replaced for the language server python executable specified in the settings.</li>
+
     <br>
     Current feature set:<br>
     <ul>
