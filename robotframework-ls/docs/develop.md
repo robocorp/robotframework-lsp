@@ -46,7 +46,6 @@ To release a new version:
 
 Hi @channel, `RobotFramework Language Server 0.18.0` is now available.
 
-
 Changes in this release:
 
 ...
