@@ -41,11 +41,9 @@ There is already a project which provides an interpreter:
     between section evaluations.
 """
 from robotframework_interactive.callbacks import Callback
-from robot.model.itemlist import ItemList  # noqa
-from robot.api import get_model, TestSuite, Token  # noqa
-from robot.errors import DataError  # noqa
 import traceback
 from ast import NodeVisitor
+from robotframework_interactive.robotfacade import RobotFrameworkFacade
 
 
 class IOnOutput(object):
@@ -72,6 +70,10 @@ class _CustomErrorReporter(NodeVisitor):
         self.source = source
 
     def visit_Error(self, node):
+        facade = RobotFrameworkFacade()
+        Token = facade.Token
+        DataError = facade.DataError
+
         # All errors raise here!
         fatal = node.get_token(Token.FATAL_ERROR)
         if fatal:
@@ -96,7 +98,10 @@ class RobotFrameworkInterpreter(object):
     def __init__(self):
         from robotframework_interactive import main_loop
 
-        main_loop.interpreter_main_loop = self.interpreter_main_loop
+        main_loop.MainLoopCallbackHolder.ON_MAIN_LOOP = self.interpreter_main_loop
+        facade = RobotFrameworkFacade()
+        get_model = facade.get_model
+        TestSuite = facade.TestSuite
 
         model = get_model(
             """
@@ -140,17 +145,17 @@ Default Test
                     self.on_stderr(line)
 
     def _evaluate(self, code: str):
-        from robot.running.context import EXECUTION_CONTEXTS  # noqa
-
         # Compile AST
         from io import StringIO
         import os
-        from robot.running.builder.parsers import ErrorReporter  # noqa
-        from robot.running.builder.transformers import (  # noqa
-            SettingsBuilder,
-            SuiteBuilder,
-        )
-        from robot.running.builder.testsettings import TestDefaults  # noqa
+
+        facade = RobotFrameworkFacade()
+        get_model = facade.get_model
+        TestSuite = facade.TestSuite
+        TestDefaults = facade.TestDefaults
+        SettingsBuilder = facade.SettingsBuilder
+        EXECUTION_CONTEXTS = facade.EXECUTION_CONTEXTS
+        SuiteBuilder = facade.SuiteBuilder
 
         model = get_model(
             StringIO(code),

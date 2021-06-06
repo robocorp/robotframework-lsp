@@ -1,4 +1,7 @@
 import pytest
+from robotframework_interactive.interpreter import RobotFrameworkInterpreter
+import threading
+from io import StringIO
 
 
 @pytest.fixture(scope="function")
@@ -11,11 +14,24 @@ def change_test_dir(tmpdir):
     os.chdir(cwd)
 
 
-def test_basic(change_test_dir):
-    from robotframework_interactive.interpreter import RobotFrameworkInterpreter
-    from io import StringIO
-    from robot.running.context import EXECUTION_CONTEXTS
+from dataclasses import dataclass
 
+
+@dataclass
+class _InterpreterInfo:
+    interpreter: RobotFrameworkInterpreter
+    stream_stdout: StringIO
+    stream_stderr: StringIO
+
+
+@pytest.fixture
+def interpreter(change_test_dir):
+    """
+    Note: we rely on callbacks as we can't yield from the main loop (because the
+    APIs on robot framework are blocking), so, we start up in a thread and then
+    when the interpreter is in the main loop we return from that paused state
+    and at tear-down we stop that thread.
+    """
     interpreter = RobotFrameworkInterpreter()
 
     stream_stdout = StringIO()
@@ -30,39 +46,48 @@ def test_basic(change_test_dir):
     interpreter.on_stdout.register(on_stdout)
     interpreter.on_stderr.register(on_stderr)
 
-    class _info(object):
-        on_main_loop_called = False
+    started_main_loop_event = threading.Event()
+    finish_main_loop_event = threading.Event()
 
-    def on_main_loop(interpreter: RobotFrameworkInterpreter):
-        _info.on_main_loop_called = True
-        assert "Default test suite" in stream_stdout.getvalue()
-        assert "Output:" not in stream_stdout.getvalue()
+    def run_on_thread():
+        def on_main_loop(interpreter: RobotFrameworkInterpreter):
+            started_main_loop_event.set()
+            finish_main_loop_event.wait()
 
-        assert (
-            "Collections"
-            not in EXECUTION_CONTEXTS.current.namespace._kw_store.libraries
-        )
-        interpreter.evaluate("""*** Settings ***\nLibrary    Collections""")
-        assert "Collections" in EXECUTION_CONTEXTS.current.namespace._kw_store.libraries
+        interpreter.initialize(on_main_loop)
+        assert "Output:" in stream_stdout.getvalue()
 
-        # Reimport is ok...
-        interpreter.evaluate("""*** Settings ***\nLibrary    Collections""")
+    t = threading.Thread(target=run_on_thread)
+    t.start()
+    assert started_main_loop_event.wait(5)
+    yield _InterpreterInfo(interpreter, stream_stdout, stream_stderr)
+    finish_main_loop_event.set()
 
-        # Error if library does not exist.
-        interpreter.evaluate("""*** Settings ***\nLibrary    ErrorNotThere""")
-        assert "No module named 'ErrorNotThere'" in stream_stderr.getvalue()
 
-    interpreter.initialize(on_main_loop)
+def test_basic(interpreter):
+    from robotframework_interactive.robotfacade import RobotFrameworkFacade
 
-    assert _info.on_main_loop_called
-    assert "Output:" in stream_stdout.getvalue()
-    # print(stream_stdout.getvalue())
+    facade = RobotFrameworkFacade()
+    EXECUTION_CONTEXTS = facade.EXECUTION_CONTEXTS
+
+    assert "Default test suite" in interpreter.stream_stdout.getvalue()
+    assert "Output:" not in interpreter.stream_stdout.getvalue()
+
+    assert "Collections" not in EXECUTION_CONTEXTS.current.namespace._kw_store.libraries
+    interpreter.interpreter.evaluate("""*** Settings ***\nLibrary    Collections""")
+    assert "Collections" in EXECUTION_CONTEXTS.current.namespace._kw_store.libraries
+
+    # Reimport is ok...
+    interpreter.interpreter.evaluate("""*** Settings ***\nLibrary    Collections""")
+
+    # Error if library does not exist.
+    interpreter.interpreter.evaluate("""*** Settings ***\nLibrary    ErrorNotThere""")
+    assert "No module named 'ErrorNotThere'" in interpreter.stream_stderr.getvalue()
 
 
 def test_robotframework_api(change_test_dir):
     from robot.api import TestSuite, get_model  # noqa
     import os
-    from io import StringIO
 
     model = get_model(
         """
