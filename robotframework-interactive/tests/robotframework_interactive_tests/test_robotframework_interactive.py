@@ -148,6 +148,20 @@ ${NAME}         MyNameToPrint
     assert "2ndName" in interpreter.stream_stdout.getvalue()
 
 
+def test_keyword_section(interpreter):
+    interpreter.interpreter.evaluate(
+        """
+*** Keywords ***
+MyKeyword
+    Log    RunningMyKeyword    console=True
+"""
+    )
+
+    interpreter.interpreter.evaluate("*** Test Case ***")
+    interpreter.interpreter.evaluate("MyKeyword")
+    assert "RunningMyKeyword" in interpreter.stream_stdout.getvalue()
+
+
 def test_reuse_block_on_line(interpreter):
     from robotframework_interactive.robotfacade import RobotFrameworkFacade
 

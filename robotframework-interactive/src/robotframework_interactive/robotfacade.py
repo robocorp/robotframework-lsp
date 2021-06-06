@@ -69,3 +69,9 @@ class RobotFrameworkFacade(object):
             from robot.running.steprunner import StepRunner  # noqa
 
             StepRunner(context, False).run_steps(test.keywords.normal)
+
+    @property
+    def EmbeddedArgumentsHandler(self):
+        from robot.running.userkeyword import EmbeddedArgumentsHandler  # type:ignore
+
+        return EmbeddedArgumentsHandler

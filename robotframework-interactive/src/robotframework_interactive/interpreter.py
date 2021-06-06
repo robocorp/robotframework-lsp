@@ -201,6 +201,7 @@ class RobotFrameworkInterpreter(object):
         _CustomErrorReporter(code).visit(model)
 
         SettingsBuilder(new_suite, defaults).visit(model)
+        SuiteBuilder(new_suite, defaults).visit(model)
 
         # ---------------------- handle what was loaded in the settings builder.
         current_context = EXECUTION_CONTEXTS.current
@@ -213,9 +214,6 @@ class RobotFrameworkInterpreter(object):
             # Actually do the import (library, resource, variable)
             namespace._import(new_import)
 
-        # --------------------------------------- Actually run any test content.
-        SuiteBuilder(new_suite, defaults).visit(model)
-
         if new_suite.resource.variables:
             # Handle variables defined in the current test.
             for variable in new_suite.resource.variables:
@@ -223,6 +221,17 @@ class RobotFrameworkInterpreter(object):
 
             namespace.variables.set_from_variable_table(new_suite.resource.variables)
 
+        if new_suite.resource.keywords:
+            # It'd be really nice to have a better API for this...
+            user_keywords = namespace._kw_store.user_keywords
+            for kw in new_suite.resource.keywords:
+                kw.actual_source = source
+                handler = user_keywords._create_handler(kw)
+
+                embedded = isinstance(handler, facade.EmbeddedArgumentsHandler)
+                user_keywords.handlers.add(handler, embedded)
+
+        # --------------------------------------- Actually run any test content.
         for test in new_suite.tests:
             context = EXECUTION_CONTEXTS.current
             facade.run_test_body(context, test)

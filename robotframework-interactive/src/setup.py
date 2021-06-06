@@ -23,6 +23,28 @@ for path in [_thirdparty, _license, _copyright]:
     if _origin.exists():
         shutil.copy2(_origin, path)
 
+
+def collect_vendored_files():
+    """Provides interpreter_robot.robot.
+    """
+    import os
+
+    VENDORED_ROOT = os.path.dirname(os.path.abspath(__file__))
+    VENDORED_ROOT = os.path.join(VENDORED_ROOT, "robotframework_interactive")
+    ret = []
+    for dir_, _, files in os.walk(VENDORED_ROOT):
+        for file_name in files:
+            if file_name.lower().endswith((".robot",)):
+                rel_dir = os.path.relpath(dir_, VENDORED_ROOT)
+                rel_file = os.path.join(rel_dir, file_name)
+                ret.append(rel_file)
+
+    assert (
+        len(ret) == 1
+    ), "Did not collect interpreter_robot.robot file properly. Found: %s" % (ret,)
+    return ret
+
+
 setup(
     name="robotframework-interactive",
     version="0.0.1",
@@ -55,6 +77,7 @@ setup(
             "pytest-timeout",
         ],
     },
+    package_data={"robotframework_interactive": collect_vendored_files()},
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
