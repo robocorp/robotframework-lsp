@@ -36,12 +36,6 @@ class RobotFrameworkFacade(object):
         return EXECUTION_CONTEXTS
 
     @property
-    def ErrorReporter(self):
-        from robot.running.builder.parsers import ErrorReporter  # type:ignore
-
-        return ErrorReporter
-
-    @property
     def SettingsBuilder(self):
         from robot.running.builder.transformers import SettingsBuilder  # type:ignore
 
@@ -58,3 +52,20 @@ class RobotFrameworkFacade(object):
         from robot.running.builder.testsettings import TestDefaults  # type:ignore
 
         return TestDefaults
+
+    def get_libraries_imported_in_namespace(self):
+        EXECUTION_CONTEXTS = self.EXECUTION_CONTEXTS
+        return set(EXECUTION_CONTEXTS.current.namespace._kw_store.libraries)
+
+    def run_test_body(self, context, test):
+        from robot import version
+
+        IS_ROBOT_4_ONWARDS = not version.get_version().startswith("3.")
+        if IS_ROBOT_4_ONWARDS:
+            from robot.running.bodyrunner import BodyRunner  # noqa
+
+            BodyRunner(context, templated=False).run(test.body)
+        else:
+            from robot.running.steprunner import StepRunner  # noqa
+
+            StepRunner(context, False).run_steps(test.keywords.normal)

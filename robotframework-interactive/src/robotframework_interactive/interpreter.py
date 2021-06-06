@@ -44,6 +44,7 @@ from robotframework_interactive.callbacks import Callback
 import traceback
 from ast import NodeVisitor
 from robotframework_interactive.robotfacade import RobotFrameworkFacade
+import sys
 
 
 class IOnOutput(object):
@@ -120,6 +121,15 @@ Default Test
         self._stderr = _CustomStream(self.on_stderr)
         self._on_main_loop = None
 
+        self._last_block_mode = "*** Task ***"
+        self._settings_section_name_to_block_mode = {
+            "SettingSection": "*** Settings ***\n",
+            "VariableSection": "*** Variables ***\n",
+            "TestCaseSection": "*** Test Case ***\nDefault Test\n    ",
+            "KeywordSection": "*** Keyword ***\n",
+            "CommentSection": "*** Comment ***\n",
+        }
+
     def initialize(self, on_main_loop: IOnReadyCall):
         self._on_main_loop = on_main_loop
         import os
@@ -136,13 +146,22 @@ Default Test
         self._on_main_loop(self)
 
     def evaluate(self, code: str):
+        original_stdout = sys.__stdout__
+        original_stderr = sys.__stderr__
         try:
+            # When writing to the console, RF uses sys.__stdout__, so, we
+            # need to hijack it too...
+            sys.__stdout__ = self._stdout
+            sys.__stderr__ = self._stderr
             self._evaluate(code)
         except Exception:
             s = traceback.format_exc()
             if s:
                 for line in s.splitlines(keepends=True):
                     self.on_stderr(line)
+        finally:
+            sys.__stdout__ = original_stdout
+            sys.__stderr__ = original_stderr
 
     def _evaluate(self, code: str):
         # Compile AST
@@ -157,11 +176,30 @@ Default Test
         EXECUTION_CONTEXTS = facade.EXECUTION_CONTEXTS
         SuiteBuilder = facade.SuiteBuilder
 
+        if not code.strip().startswith("***"):
+            code = self._last_block_mode + code
+
         model = get_model(
             StringIO(code),
             data_only=False,
             curdir=os.path.abspath(os.getcwd()).replace("\\", "\\\\"),
         )
+
+        if not model.sections:
+            self.on_stderr("Unable to interpret: no sections found.")
+            return
+
+        last_section = model.sections[-1]
+        last_section_name = last_section.__class__.__name__
+        block_mode = self._settings_section_name_to_block_mode.get(last_section_name)
+        if block_mode is None:
+            self.on_stderr(
+                f"Unable to find block mode for: {last_section.__class__.__name__}"
+            )
+
+        else:
+            self._last_block_mode = block_mode
+
         new_suite = TestSuite(name="Default test suite")
         defaults = TestDefaults()
 
@@ -179,3 +217,6 @@ Default Test
             namespace._import(new_import)
 
         SuiteBuilder(new_suite, defaults).visit(model)
+        for test in new_suite.tests:
+            context = EXECUTION_CONTEXTS.current
+            facade.run_test_body(context, test)
