@@ -45,6 +45,11 @@ import traceback
 from ast import NodeVisitor
 from robotframework_interactive.robotfacade import RobotFrameworkFacade
 import sys
+import os
+
+__file__ = os.path.abspath(__file__)
+if __file__.endswith((".pyc", ".pyo")):
+    __file__ = __file__[:-1]
 
 
 class IOnOutput(object):
@@ -101,20 +106,11 @@ class RobotFrameworkInterpreter(object):
 
         main_loop.MainLoopCallbackHolder.ON_MAIN_LOOP = self.interpreter_main_loop
         facade = RobotFrameworkFacade()
-        get_model = facade.get_model
         TestSuite = facade.TestSuite
 
-        model = get_model(
-            """
-*** Settings ***
-Library    robotframework_interactive.main_loop    WITH NAME     MainLoop
-
-*** Test Case ***
-Default Test
-    MainLoop.Interpreter Main Loop
-"""
+        self._test_suite = TestSuite.from_file_system(
+            os.path.join(os.path.dirname(__file__), "interpreter_robot.robot")
         )
-        self._test_suite = TestSuite.from_model(model, name="Default test suite")
         self.on_stdout = Callback()
         self.on_stderr = Callback()
         self._stdout = _CustomStream(self.on_stdout)
@@ -132,7 +128,6 @@ Default Test
 
     def initialize(self, on_main_loop: IOnReadyCall):
         self._on_main_loop = on_main_loop
-        import os
 
         stdout = self._stdout
         stderr = self._stderr
@@ -166,7 +161,6 @@ Default Test
     def _evaluate(self, code: str):
         # Compile AST
         from io import StringIO
-        import os
 
         facade = RobotFrameworkFacade()
         get_model = facade.get_model
@@ -208,15 +202,27 @@ Default Test
 
         SettingsBuilder(new_suite, defaults).visit(model)
 
-        # Now, handle what was loaded in the settings builder.
+        # ---------------------- handle what was loaded in the settings builder.
+        current_context = EXECUTION_CONTEXTS.current
+        namespace = current_context.namespace
+        source = os.path.join(
+            os.path.abspath(os.getcwd()), "in_memory_interpreter.robot"
+        )
         for new_import in new_suite.resource.imports:
-            new_import.source = self._test_suite.source
-            # Actually do the import
-            current_context = EXECUTION_CONTEXTS.current
-            namespace = current_context.namespace
+            new_import.source = source
+            # Actually do the import (library, resource, variable)
             namespace._import(new_import)
 
+        # --------------------------------------- Actually run any test content.
         SuiteBuilder(new_suite, defaults).visit(model)
+
+        if new_suite.resource.variables:
+            # Handle variables defined in the current test.
+            for variable in new_suite.resource.variables:
+                variable.source = source
+
+            namespace.variables.set_from_variable_table(new_suite.resource.variables)
+
         for test in new_suite.tests:
             context = EXECUTION_CONTEXTS.current
             facade.run_test_body(context, test)

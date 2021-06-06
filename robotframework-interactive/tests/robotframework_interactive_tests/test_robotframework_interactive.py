@@ -31,7 +31,7 @@ class _InterpreterInfo:
 
 
 @pytest.fixture
-def interpreter(change_test_dir):
+def interpreter(change_test_dir, request):
     """
     Note: we rely on callbacks as we can't yield from the main loop (because the
     APIs on robot framework are blocking), so, we start up in a thread and then
@@ -74,15 +74,22 @@ def interpreter(change_test_dir):
 
     finish_main_loop_event.set()
     finished_main_loop_event.wait(5 if USE_TIMEOUTS else None)
-    # print(stream_stdout.getvalue())
-    # print(stream_stderr.getvalue())
+
+    if request.node.rep_call.failed:
+        # Note info made available on conftest.pytest_runtest_makereport.
+        print("executing test failed", request.node.nodeid)
+        print("============ Interpreter stdout ============")
+        print(stream_stdout.getvalue())
+        print("============ Interpreter stderr ============")
+        print(stream_stderr.getvalue())
+        print("============================================")
 
 
-def test_basic(interpreter):
+def test_library_import(interpreter):
     from robotframework_interactive.robotfacade import RobotFrameworkFacade
 
     facade = RobotFrameworkFacade()
-    assert "Default test suite" in interpreter.stream_stdout.getvalue()
+    assert "Interpreter Robot" in interpreter.stream_stdout.getvalue()
     assert "Output:" not in interpreter.stream_stdout.getvalue()
 
     assert "Collections" not in facade.get_libraries_imported_in_namespace()
@@ -95,6 +102,50 @@ def test_basic(interpreter):
     # Error if library does not exist.
     interpreter.interpreter.evaluate("""*** Settings ***\nLibrary    ErrorNotThere""")
     assert "No module named 'ErrorNotThere'" in interpreter.stream_stderr.getvalue()
+
+
+def test_resource_import(interpreter, tmpdir):
+    tmpdir.join("my_robot.robot").write_text(
+        """
+*** Keyword ***
+My Keyword
+    Log    MyKeywordCalled    console=True
+""",
+        encoding="utf-8",
+    )
+    interpreter.interpreter.evaluate("*** Settings ***\nResource    ./my_robot.robot")
+    interpreter.interpreter.evaluate("*** Test Case ***")
+    interpreter.interpreter.evaluate("My Keyword")
+    assert "MyKeywordCalled" in interpreter.stream_stdout.getvalue()
+
+
+def test_variables_import(interpreter, tmpdir):
+    tmpdir.join("my_vars.py").write_text(
+        """
+MY_NAME = "MyNameToPrint"
+""",
+        encoding="utf-8",
+    )
+    interpreter.interpreter.evaluate("*** Settings ***\nVariables    ./my_vars.py")
+    interpreter.interpreter.evaluate("*** Test Case ***")
+    interpreter.interpreter.evaluate("Log    ${MY_NAME}    console=True")
+    assert "MyNameToPrint" in interpreter.stream_stdout.getvalue()
+
+
+def test_variables_section(interpreter, tmpdir):
+    interpreter.interpreter.evaluate(
+        """
+*** Variables ***
+${NAME}         MyNameToPrint
+"""
+    )
+
+    interpreter.interpreter.evaluate("${NAME2}    2ndName")
+
+    interpreter.interpreter.evaluate("*** Test Case ***")
+    interpreter.interpreter.evaluate("Log    ${NAME} ${NAME2}    console=True")
+    assert "MyNameToPrint" in interpreter.stream_stdout.getvalue()
+    assert "2ndName" in interpreter.stream_stdout.getvalue()
 
 
 def test_reuse_block_on_line(interpreter):
