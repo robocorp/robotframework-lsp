@@ -37,7 +37,8 @@
         "onCommand:robot.runTest",
         "onCommand:robot.debugTest",
         "onCommand:robot.runSuite",
-        "onCommand:robot.debugSuite"
+        "onCommand:robot.debugSuite",
+        "onCommand:robot.interactiveShell"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -68,6 +69,12 @@
                 "title": "Debug Tests/Tasks Suite",
                 "category": "Robot Framework",
                 "icon": "$(debug-alt)"
+            },
+            {
+                "command": "robot.interactiveShell",
+                "title": "Start Robot Interactive Shell",
+                "category": "Robot Framework",
+                "icon": "$(terminal-powershell)"
             }
         ],
         "menus": {

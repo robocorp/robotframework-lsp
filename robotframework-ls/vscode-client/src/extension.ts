@@ -31,6 +31,7 @@ import { Timing } from './time';
 import { registerRunCommands } from './run';
 import { registerLinkProviders } from './linkProvider';
 import { expandVars, getArrayStrFromConfigExpandingVars, getStrFromConfigExpandingVars } from './expandVars';
+import { registerInteractiveCommands } from './interactive/rfInteractive';
 
 const OUTPUT_CHANNEL_NAME = "Robot Framework";
 export const OUTPUT_CHANNEL = window.createOutputChannel(OUTPUT_CHANNEL_NAME);
@@ -393,6 +394,7 @@ export async function activate(context: ExtensionContext) {
 		registerDebugger(executableAndMessage.executable);
 		await registerRunCommands(context);
 		await registerLinkProviders(context);
+		await registerInteractiveCommands(context);
 		context.subscriptions.push(disposable);
 
 		// i.e.: if we return before it's ready, the language server commands

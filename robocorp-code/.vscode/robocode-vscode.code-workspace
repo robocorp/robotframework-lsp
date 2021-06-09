@@ -10,6 +10,9 @@
 			"path": "../../robotframework-ls"
 		},
 		{
+			"path": "../../robotframework-interactive"
+		},
+		{
 			"path": "../../example-vscode"
 		}
 	],

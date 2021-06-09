@@ -57,6 +57,12 @@ COMMANDS: List[Command] = [
         icon="$(debug-alt)",
         server_handled=False,
     ),
+    Command(
+        "robot.interactiveShell",
+        "Start Robot Interactive Shell",
+        icon="$(terminal-powershell)",
+        server_handled=False,
+    ),
 ]
 
 

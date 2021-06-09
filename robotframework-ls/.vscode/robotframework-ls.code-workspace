@@ -4,7 +4,10 @@
 			"path": ".."
 		},
 		{
-			"path": "..\\..\\robocorp-python-ls-core"
+			"path": "../../robocorp-python-ls-core"
+		},
+		{
+			"path": "../../robotframework-interactive"
 		}
 	],
 	"settings": {}
