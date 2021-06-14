@@ -28,14 +28,29 @@ function getWebviewOptions(localResourceRoot: vscode.Uri): vscode.WebviewOptions
     };
 }
 
+let _consoleId = 0;
+function nextConsoleId() {
+    _consoleId += 1;
+    return _consoleId;
+}
+
+
 class InteractiveShellPanel {
     // public static currentPanel: InteractiveShellPanel | undefined;
 
     public static readonly viewType = 'InteractiveShellPanel';
 
     private readonly _panel: vscode.WebviewPanel;
+    private readonly _consoleId: number;
     private readonly _localResourceRoot: vscode.Uri;
     private _disposables: vscode.Disposable[] = [];
+
+    private _lastMessageId: number = 0;
+
+    nextMessageSeq(): number {
+        this._lastMessageId += 1;
+        return this._lastMessageId;
+    }
 
     public static async createOrShow(extensionUri: vscode.Uri) {
         const column = vscode.window.activeTextEditor
@@ -49,10 +64,10 @@ class InteractiveShellPanel {
         // }
 
         let localResourceRoot = extensionUri;
-        if(DEV){
+        if (DEV) {
             localResourceRoot = vscode.Uri.file("X:/vscode-robot/robotframework-lsp/robotframework-interactive/vscode-interpreter-webview/dist")
         }
-    
+
         // Otherwise, create a new panel.
         const panel = vscode.window.createWebviewPanel(
             InteractiveShellPanel.viewType,
@@ -68,6 +83,7 @@ class InteractiveShellPanel {
     private constructor(panel: vscode.WebviewPanel, localResourceRoot: vscode.Uri) {
         this._panel = panel;
         this._localResourceRoot = localResourceRoot;
+        this._consoleId = nextConsoleId();
 
         // Set the webview's initial html content
         this._update();
@@ -80,8 +96,16 @@ class InteractiveShellPanel {
         this._panel.webview.onDidReceiveMessage(
             message => {
                 switch (message.command) {
-                    case 'alert':
-                        vscode.window.showErrorMessage(message.text);
+                    case 'evaluate':
+                        // TODO: Actually handle on language server.
+                        let response = {
+                            type: 'response',
+                            seq: this.nextMessageSeq(),
+                            command: message.command,
+                            request_seq: message.seq,
+                            body: 'from vscode'
+                        }
+                        this._panel.webview.postMessage(response);
                         return;
                 }
             },
@@ -90,12 +114,6 @@ class InteractiveShellPanel {
         );
     }
 
-
-    public doRefactor() {
-        // Send a message to the webview webview.
-        // You can send any JSON serializable data.
-        this._panel.webview.postMessage({ command: 'refactor' });
-    }
 
     public dispose() {
         // InteractiveShellPanel.currentPanel = undefined;
@@ -126,6 +144,9 @@ class InteractiveShellPanel {
 				<meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
                 <title>Robot Interactive Interpreter</title>
+                <script>
+                const vscode = acquireVsCodeApi();
+                </script>
                 <script defer src="${scriptUri}"></script>
             </head>
 			<body style="overflow: hidden">

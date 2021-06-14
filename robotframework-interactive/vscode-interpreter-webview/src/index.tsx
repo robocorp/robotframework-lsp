@@ -7,9 +7,7 @@ import SplitPane from 'react-split-pane';
 import './style.css';
 import { detectBaseTheme } from './themeDetector';
 import spinner from "./spinner.svg";
-
-const e = document.createElement("div");
-document.body.appendChild(e);
+import { IEvaluateMessage, nextMessageSeq, sendMessageToClient } from './protocol';
 
 interface ICellInfo {
     id: number
@@ -45,10 +43,10 @@ class Cell extends React.Component<ICellProps> {
 }
 
 
-let _lastId: number = 0;
-function nextId(): number {
-    _lastId += 1;
-    return _lastId;
+let _lastCellId: number = 0;
+function nextCellId(): number {
+    _lastCellId += 1;
+    return _lastCellId;
 }
 
 class History extends React.Component<IHistoryProps> {
@@ -151,8 +149,6 @@ function sleep(ms) {
 
 
 class App extends React.Component<object, IAppState> {
-    consoleId: number
-
     constructor(props) {
         super(props);
         this.state = {
@@ -160,7 +156,6 @@ class App extends React.Component<object, IAppState> {
             showProgress: 0
         };
         this.handleEvaluate = this.handleEvaluate.bind(this);
-        this.consoleId = nextId();
     }
 
     async handleEvaluate(code: string) {
@@ -169,7 +164,7 @@ class App extends React.Component<object, IAppState> {
         }
         this.setState((prevState, props) => {
             let newCell: ICellInfo = {
-                id: nextId(),
+                id: nextCellId(),
                 cellCode: code
             };
 
@@ -179,8 +174,17 @@ class App extends React.Component<object, IAppState> {
             };
         });
 
-        // TODO: Send the contents to the shell.
-        await sleep(2000);
+        let msg: IEvaluateMessage = {
+            'type': 'request',
+            'command': 'evaluate',
+            'seq': nextMessageSeq(),
+            'arguments': {
+                'expression': code, 
+                'context': 'repl'
+            }
+        };
+        let response = await sendMessageToClient(msg);
+        console.log('response', response);
 
         this.setState((prevState, props) => {
             return {
@@ -194,11 +198,15 @@ class App extends React.Component<object, IAppState> {
         return (
             <SplitPane split="horizontal" minSize={50} defaultSize={250} allowResize={true} primary='second'>
                 <History cells={this.state.cells} showProgress={this.state.showProgress} />
-                <Console key={this.consoleId} handleEvaluate={this.handleEvaluate} />
+                <Console handleEvaluate={this.handleEvaluate} />
             </SplitPane>
         );
     }
 }
+
+// Create our initial div and render everything inside it.
+const e = document.createElement("div");
+document.body.appendChild(e);
 
 ReactDOM.render(
     <App />,
