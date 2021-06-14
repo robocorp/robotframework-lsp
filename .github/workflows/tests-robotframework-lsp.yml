@@ -59,6 +59,10 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python }}
+    - name: Setup node
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12.x
     - name: Upgrade pip
       run: python -m pip install --upgrade pip
     - name: Install robotframework from master
@@ -70,11 +74,12 @@ jobs:
     - name: Install robotframework from pip
       run: python -W ignore -m pip install "robotframework>=4.0"
       if: contains(matrix.name, '-pip-v4')
-    - name: Vendor robocorp_ls_core
+    - name: Vendor robocorp_ls_core/robotframework_interactive
       working-directory: ./robotframework-ls
       run: |
         pip install fire
         python -m dev vendor-robocorp-ls-core
+        python -m dev vendor-robotframework-interactive
     - name: setup.py install
       working-directory: ./robotframework-ls
       run: |

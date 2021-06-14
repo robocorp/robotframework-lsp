@@ -10,3 +10,4 @@ added the PYTHONPATH instead).
 To vendor the proper contents, use:
 
 python -m dev vendor-robocorp-ls-core
+python -m dev vendor-robotframework-interactive

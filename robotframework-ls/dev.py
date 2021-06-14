@@ -158,6 +158,62 @@ class Dev(object):
         shutil.copytree(src_core, vendored_dir)
         print("Finished vendoring.")
 
+    def remove_robotframework_interactive(self):
+        import time
+        import shutil
+
+        vendored_dir = os.path.join(
+            os.path.dirname(__file__), "src", "robotframework_ls", "vendored"
+        )
+        found = []
+        for path in ("robotframework_interactive", "vscode-interpreter-webview"):
+            target = os.path.join(vendored_dir, path)
+            try:
+                shutil.rmtree(target)
+            except:
+                if os.path.exists(target):
+                    traceback.print_exc()
+
+            found.append(target)
+
+        time.sleep(0.5)
+        return found
+
+    def vendor_robotframework_interactive(self):
+        """
+        Vendors robotframework_interactive into robotframework_ls/vendored.
+        """
+        import shutil
+        import subprocess
+
+        vendored_src, vendored_webview = self.remove_robotframework_interactive()
+
+        src_core = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "robotframework-interactive",
+            "src",
+            "robotframework_interactive",
+        )
+        print("Copying from: %s to %s" % (src_core, vendored_src))
+
+        shutil.copytree(src_core, vendored_src)
+
+        src_webview = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "robotframework-interactive",
+            "vscode-interpreter-webview",
+        )
+        subprocess.check_call(["yarn", "install"], cwd=src_webview, shell=True)
+        subprocess.check_call(
+            ["yarn", "build-prod", "--env", f"target={vendored_webview}"],
+            cwd=src_webview,
+            shell=True,
+        )
+        print("Building with webpack in: %s" % (vendored_webview,))
+        print("Finished vendoring.")
+
     def fix_readme(self):
         """
         Updates the links in the README.md to match the current tagged version.

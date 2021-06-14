@@ -5,6 +5,7 @@
 	<projects>
 		<project>robocorp-python-ls-core</project>
 		<project>robotframework</project>
+		<project>robotframework-interactive</project>
 		<project>robotframework-ls</project>
 	</projects>
 	<buildSpec>

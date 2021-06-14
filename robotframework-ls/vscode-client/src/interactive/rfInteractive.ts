@@ -29,7 +29,7 @@ function getWebviewOptions(localResourceRoot: vscode.Uri): vscode.WebviewOptions
 }
 
 class InteractiveShellPanel {
-    public static currentPanel: InteractiveShellPanel | undefined;
+    // public static currentPanel: InteractiveShellPanel | undefined;
 
     public static readonly viewType = 'InteractiveShellPanel';
 
@@ -43,10 +43,10 @@ class InteractiveShellPanel {
             : undefined;
 
         // If we already have a panel, show it.
-        if (InteractiveShellPanel.currentPanel) {
-            InteractiveShellPanel.currentPanel._panel.reveal(column);
-            return;
-        }
+        // if (InteractiveShellPanel.currentPanel) {
+        //     InteractiveShellPanel.currentPanel._panel.reveal(column);
+        //     return;
+        // }
 
         let localResourceRoot = extensionUri;
         if(DEV){
@@ -61,7 +61,8 @@ class InteractiveShellPanel {
             getWebviewOptions(localResourceRoot),
         );
 
-        InteractiveShellPanel.currentPanel = new InteractiveShellPanel(panel, localResourceRoot);
+        // InteractiveShellPanel.currentPanel = new InteractiveShellPanel(panel, localResourceRoot);
+        new InteractiveShellPanel(panel, localResourceRoot);
     }
 
     private constructor(panel: vscode.WebviewPanel, localResourceRoot: vscode.Uri) {
@@ -97,7 +98,7 @@ class InteractiveShellPanel {
     }
 
     public dispose() {
-        InteractiveShellPanel.currentPanel = undefined;
+        // InteractiveShellPanel.currentPanel = undefined;
 
         // Clean up our resources
         this._panel.dispose();
@@ -116,8 +117,9 @@ class InteractiveShellPanel {
     }
 
     private _getHtmlForWebview(webview: vscode.Webview) {
+        // Note: we can't really load from file://
+        // See: https://github.com/microsoft/vscode/issues/87282
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._localResourceRoot, 'bundle.js'));
-
         return `<!DOCTYPE html>
 			<html lang="en">
 			<head>

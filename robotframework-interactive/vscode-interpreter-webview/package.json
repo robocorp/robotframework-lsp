@@ -2,9 +2,12 @@
   "name": "vscode-robot-interpreter-webview",
   "version": "0.0.1",
   "description": "A RobotFramework interpreter to be used in RobotFramework Language Server.",
-  "private": "true",
+  "private": true,
   "scripts": {
-    "build": "webpack"
+    "build-prod": "webpack --env production",
+    "build-dev": "webpack --env development",
+    "build": "webpack",
+    "start": "webpack serve --hot --inline --progress --port 8886"
   },
   "keywords": [],
   "author": "Fabio Zadrozny",
@@ -20,7 +23,8 @@
     "ts-loader": "^9.2.3",
     "typescript": "^4.3.2",
     "webpack": "^5.38.1",
-    "webpack-cli": "^4.7.2"
+    "webpack-cli": "^4.7.2",
+    "webpack-dev-server": "^3.11.2"
   },
   "dependencies": {
     "react": "^17.0.2",

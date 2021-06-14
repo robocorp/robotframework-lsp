@@ -38,8 +38,10 @@ jobs:
     # Build Python version
     - name: Install deps
       run: pip install --upgrade pip fire twine wheel setuptools
-    - name: Vendor robocorp_ls_core
-      run: python -m dev vendor-robocorp-ls-core
+    - name: Vendor robocorp_ls_core/robotframework_interactive
+      run: |
+        python -m dev vendor-robocorp-ls-core
+        python -m dev vendor-robotframework-interactive
     - name: Fix README references
       run: python -m dev fix-readme
     - name: Build wheel
