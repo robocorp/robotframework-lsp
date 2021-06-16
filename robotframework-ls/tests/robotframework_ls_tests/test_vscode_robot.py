@@ -852,3 +852,72 @@ User can call builtin 2
 
         language_server.close_doc(uri2)
         language_server.close_doc(uri1)
+
+
+def test_rf_interactive_integrated(
+    language_server_io: ILanguageServerClient, ws_root_path, data_regression
+):
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_START
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_STOP
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE
+
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+
+    ret1 = language_server.execute_command(ROBOT_INTERNAL_RFINTERACTIVE_START, [])
+    assert ret1["result"] == {
+        "success": True,
+        "message": None,
+        "result": {"interpreter_id": 0},
+    }
+
+    ret2 = language_server.execute_command(ROBOT_INTERNAL_RFINTERACTIVE_START, [])
+    assert ret2["result"] == {
+        "success": True,
+        "message": None,
+        "result": {"interpreter_id": 1},
+    }
+
+    stop1 = language_server.execute_command(
+        ROBOT_INTERNAL_RFINTERACTIVE_STOP, [{"interpreter_id": 0}]
+    )
+    assert stop1["result"] == {"success": True, "message": None, "result": None}
+
+    stop_inexistant = language_server.execute_command(
+        ROBOT_INTERNAL_RFINTERACTIVE_STOP, [{"interpreter_id": 22}]
+    )
+    assert stop_inexistant["result"] == {
+        "success": False,
+        "message": "Did not find interpreter with id: 22",
+        "result": None,
+    }
+
+    message_matcher = language_server.obtain_pattern_message_matcher(
+        {"method": "interpreter/output"}
+    )
+    eval2 = language_server.execute_command(
+        ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE,
+        [
+            {
+                "interpreter_id": 1,
+                "code": """
+*** Task ***
+Some task
+    Log    Something     console=True
+""",
+            }
+        ],
+    )
+    assert eval2["result"] == {"success": True, "message": None, "result": None}
+    assert message_matcher.event.wait(10)
+    assert message_matcher.msg == {
+        "jsonrpc": "2.0",
+        "method": "interpreter/output",
+        "params": {"output": "Something\n", "category": "stdout", "interpreter_id": 1},
+    }
+
+    stop2 = language_server.execute_command(
+        ROBOT_INTERNAL_RFINTERACTIVE_STOP, [{"interpreter_id": 1}]
+    )
+    assert stop2["result"] == {"success": True, "message": None, "result": None}

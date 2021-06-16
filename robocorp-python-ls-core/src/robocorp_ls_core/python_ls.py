@@ -29,6 +29,7 @@ from robocorp_ls_core.jsonrpc.streams import JsonRpcStreamReader, JsonRpcStreamW
 
 from robocorp_ls_core import uris
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
+from robocorp_ls_core.options import DEFAULT_TIMEOUT, USE_TIMEOUTS, NO_TIMEOUT
 
 log = get_logger(__name__)
 
@@ -112,6 +113,56 @@ def binary_stdio():
     sys.stdin, sys.stdout = (_DummyStdin(), open(os.devnull, "w"))
 
     return stdin, stdout
+
+
+def start_tcp_lang_client(host, port, handler_class):
+    import socket as socket_module
+
+    if not issubclass(handler_class, MethodDispatcher):
+        raise ValueError("Handler class must be an instance of MethodDispatcher")
+
+    log.info("Connecting to %s:%s", host, port)
+
+    s = socket_module.socket(socket_module.AF_INET, socket_module.SOCK_STREAM)
+
+    #  Set TCP keepalive on an open socket.
+    #  It activates after 1 second (TCP_KEEPIDLE,) of idleness,
+    #  then sends a keepalive ping once every 3 seconds (TCP_KEEPINTVL),
+    #  and closes the connection after 5 failed ping (TCP_KEEPCNT), or 15 seconds
+    try:
+        s.setsockopt(socket_module.SOL_SOCKET, socket_module.SO_KEEPALIVE, 1)
+    except (AttributeError, OSError):
+        pass  # May not be available everywhere.
+    try:
+        s.setsockopt(socket_module.IPPROTO_TCP, socket_module.TCP_KEEPIDLE, 1)
+    except (AttributeError, OSError):
+        pass  # May not be available everywhere.
+    try:
+        s.setsockopt(socket_module.IPPROTO_TCP, socket_module.TCP_KEEPINTVL, 3)
+    except (AttributeError, OSError):
+        pass  # May not be available everywhere.
+    try:
+        s.setsockopt(socket_module.IPPROTO_TCP, socket_module.TCP_KEEPCNT, 5)
+    except (AttributeError, OSError):
+        pass  # May not be available everywhere.
+
+    try:
+        # 10 seconds default timeout
+        s.settimeout(DEFAULT_TIMEOUT if USE_TIMEOUTS else NO_TIMEOUT)
+        s.connect((host, port))
+        s.settimeout(None)  # no timeout after connected
+        log.info("Connected.")
+    except:
+        log.exception("Could not connect to %s: %s", host, port)
+        raise
+
+    log.info(
+        "Starting %s IO language server. pid: %s", handler_class.__name__, os.getpid()
+    )
+    rfile = s.makefile("rb")
+    wfile = s.makefile("wb")
+    server = handler_class(rfile, wfile)
+    server.start()
 
 
 def start_tcp_lang_server(

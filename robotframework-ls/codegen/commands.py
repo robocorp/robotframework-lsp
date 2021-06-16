@@ -63,6 +63,24 @@ COMMANDS: List[Command] = [
         icon="$(terminal-powershell)",
         server_handled=False,
     ),
+    Command(
+        "robot.internal.rfinteractive.start",
+        "Create a Robot Framework interactive shell",
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
+    Command(
+        "robot.internal.rfinteractive.evaluate",
+        "Evaluate something in the Robot Framework interactive shell",
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
+    Command(
+        "robot.internal.rfinteractive.stop",
+        "Stop a Robot Framework interactive shell",
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
 ]
 
 

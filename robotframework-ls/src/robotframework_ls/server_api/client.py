@@ -60,10 +60,7 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             }
         )
 
-    def get_version(self):
-        """
-        :return:
-        """
+    def get_version(self) -> str:
         if self._version is None:
             self._check_process_alive()
             msg_id = self.next_id()

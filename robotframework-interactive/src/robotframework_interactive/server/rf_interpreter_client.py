@@ -1,17 +1,36 @@
 from robocorp_ls_core.client_base import LanguageServerClientBase
-from robocorp_code.protocols import ActionResultDict
+from robocorp_ls_core.protocols import ActionResultDict
 
 
 class SubprocessDiedError(Exception):
     pass
 
 
-class LocatorsApiClient(LanguageServerClientBase):
-    def __init__(self, writer, reader, server_process):
-        LanguageServerClientBase.__init__(self, writer, reader)
+class RfInterpreterApiClient(LanguageServerClientBase):
+    def __init__(self, writer, reader, server_process, on_interpreter_message=None):
+        LanguageServerClientBase.__init__(
+            self, writer, reader, on_received_message=self._on_received_message
+        )
         self.server_process = server_process
         self._check_process_alive()
         self._version = None
+        self._on_interpreter_message = on_interpreter_message
+
+    def _on_received_message(self, msg):
+        if isinstance(msg, dict):
+            if msg.get("method") == "interpreter/output":
+                # Something as:
+                # {
+                #     "jsonrpc": "2.0",
+                #     "method": "interpreter/output",
+                #     "params": {
+                #         "output": "Some output\n",
+                #         "category": "stdout",
+                #     },
+                # }
+                on_interpreter_message = self._on_interpreter_message
+                if on_interpreter_message is not None:
+                    on_interpreter_message(msg)
 
     def _check_process_alive(self, raise_exception=True):
         returncode = self.server_process.poll()
@@ -59,7 +78,7 @@ class LocatorsApiClient(LanguageServerClientBase):
                 return {"success": False, "message": str(error), "result": None}
             return {"success": False, "message": str(result), "result": None}
 
-    def browser_locator_start(self, headless=False) -> ActionResultDict:
+    def interpreter_start(self) -> ActionResultDict:
         self._check_process_alive()
         msg_id = self.next_id()
         return self._unpack_result_as_action_result_dict(
@@ -67,39 +86,39 @@ class LocatorsApiClient(LanguageServerClientBase):
                 {
                     "jsonrpc": "2.0",
                     "id": msg_id,
-                    "method": "browserLocator/start",
-                    "params": {"headless": headless},
+                    "method": "interpreter/start",
+                    "params": {},
                 },
                 timeout=None,
             )
         )
 
-    def browser_locator_stop(self) -> ActionResultDict:
+    def interpreter_evaluate(self, code: str) -> ActionResultDict:
         self._check_process_alive()
         msg_id = self.next_id()
         return self._unpack_result_as_action_result_dict(
             self.request(
-                {"jsonrpc": "2.0", "id": msg_id, "method": "browserLocator/stop"},
+                {
+                    "jsonrpc": "2.0",
+                    "id": msg_id,
+                    "method": "interpreter/evaluate",
+                    "params": {"code": code},
+                },
                 timeout=None,
             )
         )
 
-    def browser_locator_pick(self) -> ActionResultDict:
+    def interpreter_stop(self) -> ActionResultDict:
         self._check_process_alive()
         msg_id = self.next_id()
         return self._unpack_result_as_action_result_dict(
             self.request(
-                {"jsonrpc": "2.0", "id": msg_id, "method": "browserLocator/pick"},
-                timeout=None,
-            )
-        )
-
-    def image_locator_pick(self) -> ActionResultDict:
-        self._check_process_alive()
-        msg_id = self.next_id()
-        return self._unpack_result_as_action_result_dict(
-            self.request(
-                {"jsonrpc": "2.0", "id": msg_id, "method": "imageLocator/pick"},
+                {
+                    "jsonrpc": "2.0",
+                    "id": msg_id,
+                    "method": "interpreter/stop",
+                    "params": {},
+                },
                 timeout=None,
             )
         )

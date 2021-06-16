@@ -38,7 +38,10 @@
         "onCommand:robot.debugTest",
         "onCommand:robot.runSuite",
         "onCommand:robot.debugSuite",
-        "onCommand:robot.interactiveShell"
+        "onCommand:robot.interactiveShell",
+        "onCommand:robot.internal.rfinteractive.start",
+        "onCommand:robot.internal.rfinteractive.evaluate",
+        "onCommand:robot.internal.rfinteractive.stop"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -75,6 +78,21 @@
                 "title": "Start Robot Interactive Shell",
                 "category": "Robot Framework",
                 "icon": "$(terminal-powershell)"
+            },
+            {
+                "command": "robot.internal.rfinteractive.start",
+                "title": "Create a Robot Framework interactive shell",
+                "category": "Robot Framework"
+            },
+            {
+                "command": "robot.internal.rfinteractive.evaluate",
+                "title": "Evaluate something in the Robot Framework interactive shell",
+                "category": "Robot Framework"
+            },
+            {
+                "command": "robot.internal.rfinteractive.stop",
+                "title": "Stop a Robot Framework interactive shell",
+                "category": "Robot Framework"
             }
         ],
         "menus": {

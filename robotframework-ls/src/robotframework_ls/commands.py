@@ -6,7 +6,12 @@ ROBOT_DEBUG_TEST = "robot.debugTest"  # Debug Test/Task
 ROBOT_RUN_SUITE = "robot.runSuite"  # Run Tests/Tasks Suite
 ROBOT_DEBUG_SUITE = "robot.debugSuite"  # Debug Tests/Tasks Suite
 ROBOT_INTERACTIVE_SHELL = "robot.interactiveShell"  # Start Robot Interactive Shell
+ROBOT_INTERNAL_RFINTERACTIVE_START = "robot.internal.rfinteractive.start"  # Create a Robot Framework interactive shell
+ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE = "robot.internal.rfinteractive.evaluate"  # Evaluate something in the Robot Framework interactive shell
+ROBOT_INTERNAL_RFINTERACTIVE_STOP = "robot.internal.rfinteractive.stop"  # Stop a Robot Framework interactive shell
 
 ALL_SERVER_COMMANDS: List[str] = [
-    
+    ROBOT_INTERNAL_RFINTERACTIVE_START,
+    ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE,
+    ROBOT_INTERNAL_RFINTERACTIVE_STOP,
 ]

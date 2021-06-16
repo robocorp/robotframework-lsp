@@ -162,7 +162,7 @@ def wait_for_message_matchers(
 
 
 class _ReaderThread(threading.Thread):
-    def __init__(self, reader):
+    def __init__(self, reader, on_received_message=None):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.reader = reader
@@ -172,6 +172,7 @@ class _ReaderThread(threading.Thread):
         # Message matchers.
         self._id_message_matchers = {}  # msg id-> matcher
         self._pattern_message_matchers = {}  # id(matcher) -> matcher
+        self._on_received_message = on_received_message
 
     def run(self):
         try:
@@ -192,6 +193,13 @@ class _ReaderThread(threading.Thread):
                 message_matcher.notify(None)
 
     def _on_message(self, msg):
+        on_received_message = self._on_received_message
+        if on_received_message is not None:
+            try:
+                on_received_message(msg)
+            except:
+                log.exception("Error processing: %s", msg)
+
         from robocorp_ls_core.options import Setup
 
         notify_matchers = []
@@ -220,7 +228,10 @@ class _ReaderThread(threading.Thread):
                 )
 
         for message_matcher in notify_matchers:
-            message_matcher.notify(msg)
+            try:
+                message_matcher.notify(msg)
+            except:
+                log.exception("Error processing: %s", msg)
 
     def obtain_pattern_message_matcher(self, message_pattern):
         """
@@ -265,7 +276,7 @@ class LanguageServerClientBase(object):
         int
     ] = None  # The default if not redefined is not having a timeout.
 
-    def __init__(self, writer, reader):
+    def __init__(self, writer, reader, on_received_message=None):
         """
         
         :param JsonRpcStreamWriter writer:
@@ -274,7 +285,7 @@ class LanguageServerClientBase(object):
         self.writer = writer
         self.reader = reader
 
-        t = _ReaderThread(reader)
+        t = _ReaderThread(reader, on_received_message=on_received_message)
         self._reader_thread = t
         t.start()
         self.require_exit_messages = True

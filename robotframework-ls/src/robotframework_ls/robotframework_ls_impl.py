@@ -12,6 +12,9 @@ from robocorp_ls_core.protocols import (
     IRobotFrameworkApiClient,
     IMonitor,
     ActionResultDict,
+    ActionResult,
+    Sentinel,
+    IEndPoint,
 )
 from pathlib import Path
 from robotframework_ls.ep_providers import (
@@ -125,6 +128,128 @@ class _LintManager(object):
             curr_info.cancel()
 
 
+class _RfInterpretersManager:
+    def __init__(self, endpoint: IEndPoint):
+        self._interpreter_id_to_rf_interpreter_server_manager: dict = {}
+        self._next_interpreter_id = partial(next, itertools.count(0))
+        self._endpoint = endpoint
+
+    def interpreter_start(self, arguments, config: IConfig) -> ActionResultDict:
+        from robocorp_ls_core.options import Setup
+
+        try:
+            from robotframework_interactive.server.rf_interpreter_server_manager import (
+                RfInterpreterServerManager,
+            )
+
+            interpreter_id = self._next_interpreter_id()
+
+            def on_interpreter_message(interpreter_message: dict):
+                """
+                :param interpreter_message:
+                Something as:
+                {
+                    "jsonrpc": "2.0",
+                    "method": "interpreter/output",
+                    "params": {
+                        "output": "Some output\n",
+                        "category": "stdout",
+                    },
+                }
+                """
+
+                params = interpreter_message["params"]
+                params["interpreter_id"] = interpreter_id
+                self._endpoint.notify(interpreter_message["method"], params)
+
+            rf_interpreter_server_manager = RfInterpreterServerManager(
+                verbose=Setup.options.verbose,
+                base_log_file=Setup.options.log_file,
+                on_interpreter_message=on_interpreter_message,
+            )
+            rf_interpreter_server_manager.config = config
+            rf_interpreter_server_manager.interpreter_start()
+            self._interpreter_id_to_rf_interpreter_server_manager[
+                interpreter_id
+            ] = rf_interpreter_server_manager
+
+        except Exception as e:
+            log.exception("Error starting interpreter.")
+            return ActionResult(False, message=str(e)).as_dict()
+        else:
+            return ActionResult(
+                True, result={"interpreter_id": interpreter_id}
+            ).as_dict()
+
+    def interpreter_evaluate(self, arguments):
+        from robotframework_interactive.server.rf_interpreter_server_manager import (
+            RfInterpreterServerManager,
+        )
+
+        if not arguments:
+            return ActionResult(
+                False, message="Expected arguments ([{'interpreter_id': <id>}])"
+            ).as_dict()
+        if not isinstance(arguments, (list, dict)):
+            return ActionResult(
+                False, message=f"Arguments should be a Tuple[Dict]. Found: {arguments}"
+            ).as_dict()
+
+        args: dict = arguments[0]
+        interpreter_id = args.get("interpreter_id", Sentinel.SENTINEL)
+        if interpreter_id is Sentinel.SENTINEL:
+            return ActionResult(
+                False, message=f"Did not find 'interpreter_id' in {args}"
+            ).as_dict()
+
+        code = args.get("code", Sentinel.SENTINEL)
+        if code is Sentinel.SENTINEL:
+            return ActionResult(
+                False, message=f"Did not find 'code' in {args}"
+            ).as_dict()
+
+        interpreter: RfInterpreterServerManager = self._interpreter_id_to_rf_interpreter_server_manager.get(
+            interpreter_id
+        )
+        if interpreter is None:
+            return ActionResult(
+                False, message=f"Did not find interpreter with id: {interpreter_id}"
+            ).as_dict()
+
+        return interpreter.interpreter_evaluate(code)
+
+    def interpreter_stop(self, arguments):
+        from robotframework_interactive.server.rf_interpreter_server_manager import (
+            RfInterpreterServerManager,
+        )
+
+        if not arguments:
+            return ActionResult(
+                False, message="Expected arguments ([{'interpreter_id': <id>}])"
+            ).as_dict()
+        if not isinstance(arguments, (list, dict)):
+            return ActionResult(
+                False, message=f"Arguments should be a Tuple[Dict]. Found: {arguments}"
+            ).as_dict()
+
+        args: dict = arguments[0]
+        interpreter_id = args.get("interpreter_id", Sentinel.SENTINEL)
+        if interpreter_id is Sentinel.SENTINEL:
+            return ActionResult(
+                False, message=f"Did not find 'interpreter_id' in {args}"
+            ).as_dict()
+
+        interpreter: RfInterpreterServerManager = self._interpreter_id_to_rf_interpreter_server_manager.get(
+            interpreter_id
+        )
+        if interpreter is None:
+            return ActionResult(
+                False, message=f"Did not find interpreter with id: {interpreter_id}"
+            ).as_dict()
+
+        return interpreter.interpreter_stop()
+
+
 class RobotFrameworkLanguageServer(PythonLanguageServer):
     def __init__(self, rx, tx) -> None:
         from robocorp_ls_core.pluginmanager import PluginManager
@@ -158,6 +283,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         self._pm.set_instance(
             EPEndPointProvider, DefaultEndPointProvider(self._endpoint)
         )
+        self._rf_interpreters_manager = _RfInterpretersManager(self._endpoint)
 
         watch_impl = os.environ.get("ROBOTFRAMEWORK_LS_WATCH_IMPL", "auto")
         if watch_impl not in ("watchdog", "fsnotify", "auto"):
@@ -326,6 +452,12 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         return server_capabilities
 
     def m_workspace__execute_command(self, command=None, arguments=()) -> Any:
+        from robotframework_ls.commands import (
+            ROBOT_INTERNAL_RFINTERACTIVE_START,
+            ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE,
+            ROBOT_INTERNAL_RFINTERACTIVE_STOP,
+        )
+
         if command == "robot.addPluginsDir":
             directory: str = arguments[0]
             assert os.path.isdir(directory), f"Expected: {directory} to be a directory."
@@ -369,6 +501,17 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         elif command == "robot.getLanguageServerVersion":
             return __version__
+
+        elif command == ROBOT_INTERNAL_RFINTERACTIVE_START:
+            return self._rf_interpreters_manager.interpreter_start(
+                arguments, self.config
+            )
+
+        elif command == ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE:
+            return self._rf_interpreters_manager.interpreter_evaluate(arguments)
+
+        elif command == ROBOT_INTERNAL_RFINTERACTIVE_STOP:
+            return self._rf_interpreters_manager.interpreter_stop(arguments)
 
         elif command == "robot.listTests":
             doc_uri = arguments[0]["uri"]

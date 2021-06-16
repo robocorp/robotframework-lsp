@@ -3,6 +3,7 @@
 	<name>robotframework-interactive</name>
 	<comment></comment>
 	<projects>
+		<project>robocorp-python-ls-core</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

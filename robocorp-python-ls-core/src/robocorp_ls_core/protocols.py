@@ -128,7 +128,10 @@ class IEndPoint(Protocol):
 
 
 class CommunicationDropped(object):
-    pass
+    def __str__(self):
+        return "CommunicationDropped"
+
+    __repr__ = __str__
 
 
 class IMessageMatcher(Generic[T], Protocol):
@@ -221,7 +224,7 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
     ):
         pass
 
-    def get_version(self):
+    def get_version(self) -> str:
         pass
 
     def lint(self, doc_uri: str) -> "ResponseTypedDict":
@@ -644,6 +647,14 @@ class IMonitor(Protocol):
         """
 
 
+class ActionResultDict(TypedDict):
+    success: bool
+    message: Optional[
+        str
+    ]  # if success == False, this can be some message to show to the user
+    result: Any
+
+
 class ActionResult(Generic[T]):
 
     success: bool
@@ -659,18 +670,10 @@ class ActionResult(Generic[T]):
         self.message = message
         self.result = result
 
-    def as_dict(self):
+    def as_dict(self) -> ActionResultDict:
         return {"success": self.success, "message": self.message, "result": self.result}
 
     def __str__(self):
         return f"ActionResult(success={self.success!r}, message={self.message!r}, result={self.result!r})"
 
     __repr__ = __str__
-
-
-class ActionResultDict(TypedDict):
-    success: bool
-    message: Optional[
-        str
-    ]  # if success == False, this can be some message to show to the user
-    result: Any

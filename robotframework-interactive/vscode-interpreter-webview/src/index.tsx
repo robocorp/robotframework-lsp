@@ -143,10 +143,6 @@ class Console extends React.Component<IConsoleProps> {
     }
 }
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 
 class App extends React.Component<object, IAppState> {
     constructor(props) {

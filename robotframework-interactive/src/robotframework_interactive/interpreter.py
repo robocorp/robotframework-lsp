@@ -46,6 +46,7 @@ from ast import NodeVisitor
 from robotframework_interactive.robotfacade import RobotFrameworkFacade
 import sys
 import os
+from robotframework_interactive.protocols import IOnReadyCall
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
@@ -93,11 +94,6 @@ class _CustomErrorReporter(NodeVisitor):
             token.lineno,
             token.error,
         )
-
-
-class IOnReadyCall(object):
-    def __call__(self, interpreter: "RobotFrameworkInterpreter"):
-        pass
 
 
 class RobotFrameworkInterpreter(object):

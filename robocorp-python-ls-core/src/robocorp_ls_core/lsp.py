@@ -552,6 +552,10 @@ class LSPMessages(object):
     def __init__(self, endpoint: IEndPoint):
         self._endpoint = endpoint
 
+    @property
+    def endpoint(self) -> IEndPoint:
+        return self._endpoint
+
     def apply_edit(self, edit):
         return self._endpoint.request(self.M_APPLY_EDIT, {"edit": edit})
 
