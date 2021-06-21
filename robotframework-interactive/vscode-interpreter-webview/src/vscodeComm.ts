@@ -23,7 +23,12 @@ export interface IResponseMessage {
 export interface IEventMessage {
     type: 'event'
     seq: number
-    event: number
+    event: string
+}
+
+export interface IOutputEvent extends IEventMessage {
+    category: string
+    output: string
 }
 
 export interface IEvaluateMessage extends IRequestMessage {
@@ -62,6 +67,10 @@ export function sendMessageToClient(message: IRequestMessage): Promise<any> {
     }
 }
 
+export let eventToHandler = {
+    'output': undefined
+}
+
 // i.e.: Receive message from client
 window.addEventListener('message', event => {
     let msg = event.data;
@@ -78,12 +87,11 @@ window.addEventListener('message', event => {
                 break;
             case 'event':
                 // Process some event
-                switch (msg.event) {
-                    case 'output':
-                        console.log('Received output', msg);
-                        break
-                    default:
-                        console.log('Unhandled: ', msg);
+                let handler = eventToHandler[msg.event];
+                if (handler) {
+                    handler(msg);
+                } else {
+                    console.log('Unhandled: ', msg);
                 }
                 break;
 

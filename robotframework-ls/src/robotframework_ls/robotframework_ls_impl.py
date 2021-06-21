@@ -135,6 +135,10 @@ class _RfInterpretersManager:
         self._endpoint = endpoint
 
     def interpreter_start(self, arguments, config: IConfig) -> ActionResultDict:
+        from robotframework_ls import import_rf_interactive
+
+        import_rf_interactive()
+
         from robocorp_ls_core.options import Setup
 
         try:
@@ -182,6 +186,9 @@ class _RfInterpretersManager:
             ).as_dict()
 
     def interpreter_evaluate(self, arguments):
+        from robotframework_ls import import_rf_interactive
+
+        import_rf_interactive()
         from robotframework_interactive.server.rf_interpreter_server_manager import (
             RfInterpreterServerManager,
         )
@@ -219,6 +226,9 @@ class _RfInterpretersManager:
         return interpreter.interpreter_evaluate(code)
 
     def interpreter_stop(self, arguments):
+        from robotframework_ls import import_rf_interactive
+
+        import_rf_interactive()
         from robotframework_interactive.server.rf_interpreter_server_manager import (
             RfInterpreterServerManager,
         )

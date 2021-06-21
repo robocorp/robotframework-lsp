@@ -117,7 +117,7 @@ class RobotFrameworkInterpreter(object):
         self._settings_section_name_to_block_mode = {
             "SettingSection": "*** Settings ***\n",
             "VariableSection": "*** Variables ***\n",
-            "TestCaseSection": "*** Test Case ***\nDefault Test\n    ",
+            "TestCaseSection": "*** Test Case ***\nDefault Task/Test\n    ",
             "KeywordSection": "*** Keyword ***\n",
             "CommentSection": "*** Comment ***\n",
         }

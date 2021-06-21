@@ -394,7 +394,7 @@ export async function activate(context: ExtensionContext) {
 		registerDebugger(executableAndMessage.executable);
 		await registerRunCommands(context);
 		await registerLinkProviders(context);
-		await registerInteractiveCommands(context);
+		await registerInteractiveCommands(context, langServer);
 		context.subscriptions.push(disposable);
 
 		// i.e.: if we return before it's ready, the language server commands

@@ -855,7 +855,7 @@ User can call builtin 2
 
 
 def test_rf_interactive_integrated(
-    language_server_io: ILanguageServerClient, ws_root_path, data_regression
+    language_server_io: ILanguageServerClient, ws_root_path
 ):
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_START
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_STOP

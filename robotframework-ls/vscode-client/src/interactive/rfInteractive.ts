@@ -13,8 +13,10 @@
 
 import { commands, ExtensionContext, WebviewPanel, window } from "vscode";
 import * as vscode from 'vscode';
+import { LanguageClient } from "vscode-languageclient/node";
 
-let DEV = 1;
+const DEV = false;
+
 function getWebviewOptions(localResourceRoot: vscode.Uri): vscode.WebviewOptions & vscode.WebviewPanelOptions {
     return {
         // Enable javascript in the webview
@@ -28,22 +30,14 @@ function getWebviewOptions(localResourceRoot: vscode.Uri): vscode.WebviewOptions
     };
 }
 
-let _consoleId = 0;
-function nextConsoleId() {
-    _consoleId += 1;
-    return _consoleId;
-}
-
-
 class InteractiveShellPanel {
     // public static currentPanel: InteractiveShellPanel | undefined;
 
     public static readonly viewType = 'InteractiveShellPanel';
 
     private readonly _panel: vscode.WebviewPanel;
-    private readonly _consoleId: number;
     private readonly _localResourceRoot: vscode.Uri;
-    private _disposables: vscode.Disposable[] = [];
+    public readonly disposables: vscode.Disposable[] = [];
 
     private _lastMessageId: number = 0;
 
@@ -52,18 +46,12 @@ class InteractiveShellPanel {
         return this._lastMessageId;
     }
 
-    public static async createOrShow(extensionUri: vscode.Uri) {
+    public static async create(extensionUri: vscode.Uri): Promise<InteractiveShellPanel> {
         const column = vscode.window.activeTextEditor
             ? vscode.window.activeTextEditor.viewColumn
             : undefined;
 
-        // If we already have a panel, show it.
-        // if (InteractiveShellPanel.currentPanel) {
-        //     InteractiveShellPanel.currentPanel._panel.reveal(column);
-        //     return;
-        // }
-
-        let localResourceRoot = extensionUri;
+        let localResourceRoot = vscode.Uri.joinPath(extensionUri, 'src', 'robotframework_ls', 'vendored', 'vscode-interpreter-webview');
         if (DEV) {
             localResourceRoot = vscode.Uri.file("X:/vscode-robot/robotframework-lsp/robotframework-interactive/vscode-interpreter-webview/dist")
         }
@@ -76,28 +64,25 @@ class InteractiveShellPanel {
             getWebviewOptions(localResourceRoot),
         );
 
-        // InteractiveShellPanel.currentPanel = new InteractiveShellPanel(panel, localResourceRoot);
-        new InteractiveShellPanel(panel, localResourceRoot);
+        return new InteractiveShellPanel(panel, localResourceRoot);
     }
 
     private constructor(panel: vscode.WebviewPanel, localResourceRoot: vscode.Uri) {
         this._panel = panel;
         this._localResourceRoot = localResourceRoot;
-        this._consoleId = nextConsoleId();
 
         // Set the webview's initial html content
         this._update();
 
         // Listen for when the panel is disposed
         // This happens when the user closes the panel or when the panel is closed programmatically
-        this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+        this._panel.onDidDispose(() => this.dispose(), null, this.disposables);
 
         // Handle messages from the webview
         this._panel.webview.onDidReceiveMessage(
             message => {
                 switch (message.command) {
                     case 'evaluate':
-                        // TODO: Actually handle on language server.
                         let response = {
                             type: 'response',
                             seq: this.nextMessageSeq(),
@@ -110,19 +95,26 @@ class InteractiveShellPanel {
                 }
             },
             null,
-            this._disposables
+            this.disposables
         );
     }
 
+    public onOutput(category: string, output: string) {
+        this._panel.webview.postMessage({
+            'type': 'event',
+            'seq': this.nextMessageSeq(),
+            'event': 'output',
+            'category': category,
+            'output': output
+        });
+    }
 
     public dispose() {
-        // InteractiveShellPanel.currentPanel = undefined;
-
         // Clean up our resources
         this._panel.dispose();
 
-        while (this._disposables.length) {
-            const x = this._disposables.pop();
+        while (this.disposables.length) {
+            const x = this.disposables.pop();
             if (x) {
                 x.dispose();
             }
@@ -155,12 +147,49 @@ class InteractiveShellPanel {
     }
 }
 
-export async function registerInteractiveCommands(context: ExtensionContext) {
+export async function registerInteractiveCommands(context: ExtensionContext, languageClient: LanguageClient) {
     let extensionUri = context.extensionUri;
 
     async function createInteractiveShell() {
-        // If we already have a panel, show it.
-        await InteractiveShellPanel.createOrShow(extensionUri);
+        let interpreterId = -1;
+        let buffered: string[] = new Array();
+        let interactiveShellPanel: undefined | InteractiveShellPanel = undefined;
+        async function onOutput(args) {
+            if (args['interpreter_id'] === interpreterId) {
+                let category: string = args['category'];
+                let output: string = args['output'];
+                interactiveShellPanel?.onOutput(category, output);
+            }
+        }
+
+        let disposeNotification = languageClient.onNotification("interpreter/output", (args) => {
+            if (buffered !== undefined) {
+                buffered.push(args);
+            } else {
+                onOutput(args);
+            }
+        });
+        context.subscriptions.push(disposeNotification);
+
+        // Note that during the creation, it's possible that we already have output, so, we
+        // need to buffer anything up to the point where we actually have the interpreter.
+        let result = await commands.executeCommand("robot.internal.rfinteractive.start");
+        if (!result['success']) {
+            window.showErrorMessage('Error creating interactive console: ' + result['message'])
+            return;
+        }
+        interactiveShellPanel = await InteractiveShellPanel.create(extensionUri);
+        interactiveShellPanel.disposables.push(disposeNotification);
+        interpreterId = result['result']['interpreter_id'];
+        while (buffered.length) {
+            buffered.splice(0, buffered.length).forEach((el) => {
+                onOutput(el);
+            });
+        }
+
+        // Start sending contents directly to the interactive shell now that we processed the 
+        // output backlog from the startup.
+        buffered = undefined;
     }
     context.subscriptions.push(commands.registerCommand('robot.interactiveShell', createInteractiveShell));
 }

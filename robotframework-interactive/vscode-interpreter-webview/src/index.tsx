@@ -7,7 +7,7 @@ import SplitPane from 'react-split-pane';
 import './style.css';
 import { detectBaseTheme } from './themeDetector';
 import spinner from "./spinner.svg";
-import { IEvaluateMessage, nextMessageSeq, sendMessageToClient } from './protocol';
+import { IEvaluateMessage, nextMessageSeq, sendMessageToClient, eventToHandler, IOutputEvent } from './vscodeComm';
 
 interface ICellInfo {
     id: number
@@ -152,6 +152,20 @@ class App extends React.Component<object, IAppState> {
             showProgress: 0
         };
         this.handleEvaluate = this.handleEvaluate.bind(this);
+        eventToHandler['output'] = this.onOutput.bind(this)
+    }
+
+    async onOutput(msg: IOutputEvent) {
+        this.setState((prevState, props) => {
+            let newCell: ICellInfo = {
+                id: nextCellId(),
+                cellCode: msg.output
+            };
+
+            return {
+                'cells': prevState.cells.concat([newCell]),
+            };
+        });
     }
 
     async handleEvaluate(code: string) {
