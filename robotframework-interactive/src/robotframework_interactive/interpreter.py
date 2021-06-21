@@ -113,7 +113,6 @@ class RobotFrameworkInterpreter(object):
         self._stderr = _CustomStream(self.on_stderr)
         self._on_main_loop = None
 
-        self._last_block_mode = "*** Task ***"
         self._settings_section_name_to_block_mode = {
             "SettingSection": "*** Settings ***\n",
             "VariableSection": "*** Variables ***\n",
@@ -121,6 +120,9 @@ class RobotFrameworkInterpreter(object):
             "KeywordSection": "*** Keyword ***\n",
             "CommentSection": "*** Comment ***\n",
         }
+        self._last_block_mode = self._settings_section_name_to_block_mode[
+            "TestCaseSection"
+        ]
 
     def initialize(self, on_main_loop: IOnReadyCall):
         self._on_main_loop = on_main_loop
@@ -179,6 +181,9 @@ class RobotFrameworkInterpreter(object):
             self.on_stderr("Unable to interpret: no sections found.")
             return
 
+        # Raise an error if there's anything wrong in the model that was parsed.
+        _CustomErrorReporter(code).visit(model)
+
         last_section = model.sections[-1]
         last_section_name = last_section.__class__.__name__
         block_mode = self._settings_section_name_to_block_mode.get(last_section_name)
@@ -192,9 +197,6 @@ class RobotFrameworkInterpreter(object):
 
         new_suite = TestSuite(name="Default test suite")
         defaults = TestDefaults()
-
-        # Raise an error if there's anything wrong in the model that was parsed.
-        _CustomErrorReporter(code).visit(model)
 
         SettingsBuilder(new_suite, defaults).visit(model)
         SuiteBuilder(new_suite, defaults).visit(model)

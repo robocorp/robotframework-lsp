@@ -14,6 +14,7 @@
 import { commands, ExtensionContext, WebviewPanel, window } from "vscode";
 import * as vscode from 'vscode';
 import { LanguageClient } from "vscode-languageclient/node";
+import { OUTPUT_CHANNEL } from "../extension";
 
 const DEV = false;
 
@@ -36,8 +37,12 @@ class InteractiveShellPanel {
     public static readonly viewType = 'InteractiveShellPanel';
 
     private readonly _panel: vscode.WebviewPanel;
+    private readonly _interpreterId: number;
     private readonly _localResourceRoot: vscode.Uri;
     public readonly disposables: vscode.Disposable[] = [];
+
+    private _finishInitialized;
+    public readonly initialized: Promise<boolean>;
 
     private _lastMessageId: number = 0;
 
@@ -46,7 +51,7 @@ class InteractiveShellPanel {
         return this._lastMessageId;
     }
 
-    public static async create(extensionUri: vscode.Uri): Promise<InteractiveShellPanel> {
+    public static async create(extensionUri: vscode.Uri, interpreterId: number): Promise<InteractiveShellPanel> {
         const column = vscode.window.activeTextEditor
             ? vscode.window.activeTextEditor.viewColumn
             : undefined;
@@ -64,15 +69,22 @@ class InteractiveShellPanel {
             getWebviewOptions(localResourceRoot),
         );
 
-        return new InteractiveShellPanel(panel, localResourceRoot);
+        return new InteractiveShellPanel(panel, localResourceRoot, interpreterId);
     }
 
-    private constructor(panel: vscode.WebviewPanel, localResourceRoot: vscode.Uri) {
+    private constructor(panel: vscode.WebviewPanel, localResourceRoot: vscode.Uri, interpreterId: number) {
         this._panel = panel;
         this._localResourceRoot = localResourceRoot;
+        this._interpreterId = interpreterId;
+
+        let interactiveShell = this;
+        this.initialized = new Promise((resolve, reject) => {
+            interactiveShell._finishInitialized = resolve;
+        });
 
         // Set the webview's initial html content
         this._update();
+
 
         // Listen for when the panel is disposed
         // This happens when the user closes the panel or when the panel is closed programmatically
@@ -80,18 +92,33 @@ class InteractiveShellPanel {
 
         // Handle messages from the webview
         this._panel.webview.onDidReceiveMessage(
-            message => {
-                switch (message.command) {
-                    case 'evaluate':
-                        let response = {
-                            type: 'response',
-                            seq: this.nextMessageSeq(),
-                            command: message.command,
-                            request_seq: message.seq,
-                            body: 'from vscode'
-                        }
-                        this._panel.webview.postMessage(response);
-                        return;
+            async message => {
+                if (message.type == 'request') {
+                    switch (message.command) {
+                        case 'evaluate':
+                            let code = message.arguments['expression'];
+                            let result = await commands.executeCommand("robot.internal.rfinteractive.evaluate", {
+                                'interpreter_id': interpreterId,
+                                'code': code
+                            });
+                            if (!result['success']) {
+                                window.showErrorMessage('Error creating interactive console: ' + result['message'])
+                                return;
+                            }
+                            let response = {
+                                type: 'response',
+                                seq: this.nextMessageSeq(),
+                                command: message.command,
+                                request_seq: message.seq,
+                                body: '<evaluated from vscode>'
+                            }
+                            this._panel.webview.postMessage(response);
+                            return;
+                    }
+                } else if (message.type == 'event') {
+                    if (message.event == 'initialized') {
+                        interactiveShell._finishInitialized();
+                    }
                 }
             },
             null,
@@ -141,7 +168,7 @@ class InteractiveShellPanel {
                 </script>
                 <script defer src="${scriptUri}"></script>
             </head>
-			<body style="overflow: hidden">
+			<body style="padding: 0 0 0 0">
 			</body>
 			</html>`;
     }
@@ -178,9 +205,13 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
             window.showErrorMessage('Error creating interactive console: ' + result['message'])
             return;
         }
-        interactiveShellPanel = await InteractiveShellPanel.create(extensionUri);
-        interactiveShellPanel.disposables.push(disposeNotification);
         interpreterId = result['result']['interpreter_id'];
+        interactiveShellPanel = await InteractiveShellPanel.create(extensionUri, interpreterId);
+        interactiveShellPanel.disposables.push(disposeNotification);
+
+        OUTPUT_CHANNEL.appendLine('Waiting for Robot Framework Interactive Shell UI (id: ' + interpreterId + ') initialization.');
+        await interactiveShellPanel.initialized;
+        OUTPUT_CHANNEL.appendLine('Robot Framework Interactive Shell UI (id: ' + interpreterId + ') initialized.');
         while (buffered.length) {
             buffered.splice(0, buffered.length).forEach((el) => {
                 onOutput(el);

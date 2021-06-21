@@ -203,3 +203,17 @@ Some Test
 
     stdout = StringIO()
     test_suite.run(output=os.path.abspath("output.xml"), stdout=stdout)
+
+
+def test_output_and_errors(interpreter):
+    from robotframework_interactive.robotfacade import RobotFrameworkFacade
+
+    facade = RobotFrameworkFacade()
+    assert "Interpreter Robot" in interpreter.stream_stdout.getvalue()
+    assert "Output:" not in interpreter.stream_stdout.getvalue()
+
+    interpreter.interpreter.evaluate("""error here""")
+    assert interpreter.stream_stderr.getvalue().count("robot.errors.DataError") == 1
+
+    interpreter.interpreter.evaluate("""error here""")
+    assert interpreter.stream_stderr.getvalue().count("robot.errors.DataError") == 2

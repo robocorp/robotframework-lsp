@@ -37,7 +37,7 @@ export interface IEvaluateMessage extends IRequestMessage {
 
 let msgIdToSeq = {};
 
-export function sendMessageToClient(message: IRequestMessage): Promise<any> {
+export function sendRequestToClient(message: IRequestMessage): Promise<any> {
     let vscodeRef = undefined;
     try {
         vscodeRef = vscode;
@@ -64,6 +64,20 @@ export function sendMessageToClient(message: IRequestMessage): Promise<any> {
             }
             resolve(response);
         });
+    }
+}
+
+
+export function sendEventToClient(message: IEventMessage): void {
+    let vscodeRef = undefined;
+    try {
+        vscodeRef = vscode;
+    } catch (err) {
+        // ignore
+    }
+
+    if (vscodeRef) {
+        vscodeRef.postMessage(message);
     }
 }
 
