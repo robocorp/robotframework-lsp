@@ -58,11 +58,12 @@ jobs:
     - name: Install robotframework from pip
       run: python -W ignore -m pip install "robotframework>=4.0"
       if: contains(matrix.name, '-pip-v4')
-#     - name: Vendor robocorp_ls_core
-#       working-directory: ./robotframework-interactive
-#       run: |
-#         pip install fire
-#         python -m dev vendor-robocorp-ls-core
+    - name: setup.py install (robocorp-pytho-ls-core)
+      working-directory: ./robocorp-python-ls-core
+      run: |
+        cd src
+        python setup.py install
+        cd ..
     - name: setup.py install
       working-directory: ./robotframework-interactive
       run: |
