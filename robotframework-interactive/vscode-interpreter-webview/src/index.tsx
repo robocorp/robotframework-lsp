@@ -8,6 +8,7 @@ import './style.css';
 import { detectBaseTheme } from './themeDetector';
 import spinner from "./spinner.svg";
 import { IEvaluateMessage, nextMessageSeq, sendRequestToClient, eventToHandler, IOutputEvent, sendEventToClient } from './vscodeComm';
+import { configureMonacoEditor } from './monacoConf';
 
 interface ICellInfo {
     id: number
@@ -133,7 +134,7 @@ class Console extends React.Component<IConsoleProps> {
         // See: https://github.com/microsoft/monaco-editor/issues/1833 for info on adding custom coloring later on...
         return (
             <MonacoEditor
-                language="json"
+                language="robotframework-ls"
                 theme={theme}
                 value={null} // This will prevent any automatic update of the code.
                 options={options}
@@ -223,6 +224,8 @@ class App extends React.Component<object, IAppState> {
 // Create our initial div and render everything inside it.
 const e = document.createElement("div");
 document.body.appendChild(e);
+
+configureMonacoEditor();
 
 ReactDOM.render(
     <App />,
