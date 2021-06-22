@@ -53,6 +53,7 @@ def collect_vendored_files():
                     ".pxd",
                     ".pyx",
                     ".md",
+                    ".robot",
                     "makefile",
                     "license",
                 )
