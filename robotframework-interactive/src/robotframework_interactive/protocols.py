@@ -26,12 +26,20 @@ class ActionResultDict(TypedDict):
     result: Any
 
 
+class EvaluateTextTypedDict(TypedDict):
+    prefix: str  # The prefix added to the evaluation
+    full_code: str  # The final code to be evaluated
+
+
 class IOnReadyCall(object):
     def __call__(self, interpreter: "IRobotFrameworkInterpreter"):
         pass
 
 
 class IRobotFrameworkInterpreter(Protocol):
+    def compute_evaluate_text(self, code: str) -> EvaluateTextTypedDict:
+        pass
+
     def evaluate(self, code: str):
         pass
 

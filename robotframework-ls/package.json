@@ -41,7 +41,8 @@
         "onCommand:robot.interactiveShell",
         "onCommand:robot.internal.rfinteractive.start",
         "onCommand:robot.internal.rfinteractive.evaluate",
-        "onCommand:robot.internal.rfinteractive.stop"
+        "onCommand:robot.internal.rfinteractive.stop",
+        "onCommand:robot.internal.rfinteractive.semanticTokens"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -92,6 +93,11 @@
             {
                 "command": "robot.internal.rfinteractive.stop",
                 "title": "Stop a Robot Framework interactive shell",
+                "category": "Robot Framework"
+            },
+            {
+                "command": "robot.internal.rfinteractive.semanticTokens",
+                "title": "Get the semantic tokens based on the code entered.",
                 "category": "Robot Framework"
             }
         ],

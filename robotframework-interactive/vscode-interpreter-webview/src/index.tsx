@@ -8,7 +8,7 @@ import './style.css';
 import { detectBaseTheme } from './themeDetector';
 import spinner from "./spinner.svg";
 import { IEvaluateMessage, nextMessageSeq, sendRequestToClient, eventToHandler, IOutputEvent, sendEventToClient } from './vscodeComm';
-import { configureMonacoEditor } from './monacoConf';
+import { configureMonacoLanguage } from './monacoConf';
 
 interface ICellInfo {
     id: number
@@ -129,7 +129,8 @@ class Console extends React.Component<IConsoleProps> {
             scrollBeyondLastLine: false,
             automaticLayout: true,
             lineNumbers: lineNumbers,
-            scrollbar: { alwaysConsumeMouseWheel: false }
+            scrollbar: { alwaysConsumeMouseWheel: false },
+            'semanticHighlighting.enabled': true
         };
         // See: https://github.com/microsoft/monaco-editor/issues/1833 for info on adding custom coloring later on...
         return (
@@ -196,7 +197,7 @@ class App extends React.Component<object, IAppState> {
             'command': 'evaluate',
             'seq': nextMessageSeq(),
             'arguments': {
-                'expression': code, 
+                'expression': code,
                 'context': 'repl'
             }
         };
@@ -225,7 +226,7 @@ class App extends React.Component<object, IAppState> {
 const e = document.createElement("div");
 document.body.appendChild(e);
 
-configureMonacoEditor();
+configureMonacoLanguage();
 
 ReactDOM.render(
     <App />,

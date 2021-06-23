@@ -60,7 +60,7 @@ export function sendRequestToClient(message: IRequestMessage): Promise<any> {
                 seq: nextMessageSeq(),
                 command: message.command,
                 request_seq: message.seq,
-                body: '<n/a: vscode api not available>'
+                body: undefined
             }
             resolve(response);
         });

@@ -37,6 +37,20 @@ Some task
 
     assert result["success"], f"Found: {result}"
 
+    result = rf_interpreter_server_manager.interpreter_compute_evaluate_text(
+        """
+Log    Foo     console=True
+"""
+    )
+    assert result == {
+        "success": True,
+        "message": None,
+        "result": {
+            "prefix": "*** Test Case ***\nDefault Task/Test\n    ",
+            "full_code": "*** Test Case ***\nDefault Task/Test\n    \nLog    Foo     console=True\n",
+        },
+    }
+
     result = rf_interpreter_server_manager.interpreter_stop()
 
     assert result["success"], f"Found: {result}"

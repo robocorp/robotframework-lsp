@@ -5,6 +5,7 @@ from robocorp_ls_core.robotframework_log import get_logger
 import threading
 from robotframework_interactive.protocols import IMessage, IRobotFrameworkInterpreter
 from robocorp_ls_core.options import DEFAULT_TIMEOUT, USE_TIMEOUTS, NO_TIMEOUT
+from typing import Optional
 
 log = get_logger(__name__)
 
@@ -21,6 +22,7 @@ class RfInterpreterServerApi(PythonLanguageServer):
         self._interpreter_queue: "Queue[IMessage]" = Queue()
         self._interpreter_initialized = False
         self._interpreter_disposed = False
+        self._interpreter: Optional[IRobotFrameworkInterpreter]
         self._finished_event = threading.Event()
 
     @overrides(PythonLanguageServer._create_config)
@@ -47,6 +49,7 @@ class RfInterpreterServerApi(PythonLanguageServer):
             from robotframework_interactive.interpreter import RobotFrameworkInterpreter
 
             interpreter = RobotFrameworkInterpreter()
+            self._interpreter = interpreter
 
             def on_stdout(msg: str):
                 if not self._interpreter_disposed:
@@ -95,6 +98,7 @@ class RfInterpreterServerApi(PythonLanguageServer):
                     interpreter.initialize(on_main_loop)
                 finally:
                     self._finished_event.set()
+                    self._interpreter = None
 
             t = threading.Thread(target=run_on_thread)
             t.start()
@@ -127,6 +131,27 @@ class RfInterpreterServerApi(PythonLanguageServer):
         self._interpreter_queue.put(evaluate)
         evaluate.processed_event.wait()
         return evaluate.action_result_dict
+
+    def m_interpreter__compute_evaluate_text(self, code: str) -> ActionResultDict:
+        if not self._interpreter_initialized:
+            return {
+                "success": False,
+                "message": "Interpreter still not initialized.",
+                "result": None,
+            }
+        if self._interpreter_disposed:
+            return {
+                "success": False,
+                "message": "Interpreter already disposed",
+                "result": None,
+            }
+
+        interpreter = self._interpreter
+        if not interpreter:
+            return {"success": False, "message": "Interpreter is None", "result": None}
+
+        evaluate_text = interpreter.compute_evaluate_text(code)
+        return {"success": True, "message": None, "result": evaluate_text}
 
     def m_interpreter__stop(self) -> ActionResultDict:
         stop = _Stop()

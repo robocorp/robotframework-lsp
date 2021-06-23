@@ -15,6 +15,7 @@ from robocorp_ls_core.lsp import (
 )
 from robotframework_ls.impl.protocols import IKeywordFound
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
+import itertools
 
 
 log = get_logger(__name__)
@@ -46,6 +47,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         self.libspec_manager = libspec_manager
         PythonLanguageServer.__init__(self, read_from, write_to)
         self._version = None
+        self._next_time = partial(next, itertools.count(0))
 
     @overrides(PythonLanguageServer._create_config)
     def _create_config(self) -> IConfig:
@@ -508,6 +510,94 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if context is None:
             return {"resultId": None, "data": []}
         return {"resultId": None, "data": semantic_tokens_full(context)}
+
+    def m_semantic_tokens_from_code_full(self, prefix: str = "", full_code: str = ""):
+        func = partial(
+            self.threaded_semantic_tokens_from_code_full,
+            prefix=prefix,
+            full_code=full_code,
+        )
+        func = require_monitor(func)
+        return func
+
+    def threaded_semantic_tokens_from_code_full(
+        self, prefix: str, full_code: str, monitor: Optional[IMonitor] = None
+    ):
+        from robotframework_ls.impl.semantic_tokens import semantic_tokens_full_from_ast
+
+        try:
+            from robotframework_ls.impl.robot_workspace import RobotDocument
+
+            doc = RobotDocument("")
+            doc.source = full_code
+            ast = doc.get_ast()
+            data = semantic_tokens_full_from_ast(ast, monitor)
+            if not prefix:
+                return {"resultId": None, "data": data}
+
+            # We have to exclude the prefix from the coloring...
+
+            # debug info...
+            # import io
+            # from robotframework_ls.impl.semantic_tokens import decode_semantic_tokens
+            # stream = io.StringIO()
+            # decode_semantic_tokens(data, doc, stream)
+            # found = stream.getvalue()
+
+            prefix_doc = RobotDocument("")
+            prefix_doc.source = prefix
+            last_line, last_col = prefix_doc.get_last_line_col()
+
+            # Now we have the data from the full code, but we need to remove whatever
+            # we have in the prefix from the result...
+            ints_iter = iter(data)
+            line = 0
+            col = 0
+            new_data = []
+            while True:
+                try:
+                    line_delta = next(ints_iter)
+                except StopIteration:
+                    break
+                col_delta = next(ints_iter)
+                token_len = next(ints_iter)
+                token_type = next(ints_iter)
+                token_modifier = next(ints_iter)
+                line += line_delta
+                if line_delta == 0:
+                    col += col_delta
+                else:
+                    col = col_delta
+
+                if line > last_line:
+                    new_data.append(line - last_line)
+                    new_data.append(col_delta)
+                    new_data.append(token_len)
+                    new_data.append(token_type)
+                    new_data.append(token_modifier)
+                    new_data.extend(ints_iter)
+                    break
+
+                elif line == last_line and col >= last_col:
+                    new_data.append(0)
+                    new_data.append(col - last_col)
+                    new_data.append(token_len)
+                    new_data.append(token_type)
+                    new_data.append(token_modifier)
+                    new_data.extend(ints_iter)
+                    break
+
+            # debug info...
+            # temp_stream = io.StringIO()
+            # temp_doc = RobotDocument("")
+            # temp_doc.source = full_code[len(prefix) :]
+            # decode_semantic_tokens(new_data, temp_doc, temp_stream)
+            # temp_found = temp_stream.getvalue()
+
+            return {"resultId": None, "data": new_data}
+        except:
+            log.exception("Error computing semantic tokens from code.")
+            return {"resultId": None, "data": []}
 
     def m_shutdown(self, **_kwargs):
         PythonLanguageServer.m_shutdown(self, **_kwargs)

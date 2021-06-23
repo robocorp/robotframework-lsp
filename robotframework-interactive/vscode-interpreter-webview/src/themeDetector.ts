@@ -6,20 +6,20 @@
 // Based on:
 // https://stackoverflow.com/questions/37257911/detect-light-dark-theme-programatically-in-visual-studio-code
 // Note: converts the name to the one expected by monaco.
-export function detectBaseTheme(): 'vs' | 'vs-dark' | 'hc-black' {
+export function detectBaseTheme(): 'my-light' | 'my-dark' | 'my-hc' {
     const body = document.body;
 
     if (body) {
         switch (body.className) {
             default:
             case 'vscode-light':
-                return 'vs';
+                return 'my-light';
             case 'vscode-dark':
-                return 'vs-dark';
+                return 'my-dark';
             case 'vscode-high-contrast':
-                return 'hc-black';
+                return 'my-hc';
         }
     }
 
-    return 'vs-dark';
+    return 'my-dark';
 }

@@ -46,7 +46,7 @@ from ast import NodeVisitor
 from robotframework_interactive.robotfacade import RobotFrameworkFacade
 import sys
 import os
-from robotframework_interactive.protocols import IOnReadyCall
+from robotframework_interactive.protocols import IOnReadyCall, EvaluateTextTypedDict
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
@@ -137,6 +137,15 @@ class RobotFrameworkInterpreter(object):
 
     def interpreter_main_loop(self, *args, **kwargs):
         self._on_main_loop(self)
+
+    def compute_evaluate_text(self, code: str) -> EvaluateTextTypedDict:
+        ret = {"prefix": "", "full_code": code}
+
+        if not code.strip().startswith("***"):
+            code = self._last_block_mode + code
+            ret = {"prefix": self._last_block_mode, "full_code": code}
+
+        return ret
 
     def evaluate(self, code: str):
         original_stdout = sys.__stdout__

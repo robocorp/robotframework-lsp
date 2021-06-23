@@ -1,6 +1,6 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import itertools
-from robocorp_ls_core.protocols import IDocument
+from robocorp_ls_core.protocols import IDocument, IMonitor
 from robotframework_ls.impl.protocols import ICompletionContext
 
 
@@ -254,12 +254,15 @@ def tokenize_variables(node, initial_token):
 
 
 def semantic_tokens_full(context: ICompletionContext):
-    from robotframework_ls.impl import ast_utils
-
     try:
         ast = context.doc.get_ast()
     except:
         return []
+    return semantic_tokens_full_from_ast(ast, context.monitor)
+
+
+def semantic_tokens_full_from_ast(ast, monitor: Optional[IMonitor]):
+    from robotframework_ls.impl import ast_utils
 
     ret: List[int] = []
     append = ret.append
@@ -267,7 +270,8 @@ def semantic_tokens_full(context: ICompletionContext):
     last_line = 0
     last_column = 0
     for _stack, node in ast_utils._iter_nodes(ast, recursive=True):
-        context.check_cancelled()
+        if monitor:
+            monitor.check_cancelled()
         tokens = getattr(node, "tokens", None)
         if tokens:
             for token in tokens:

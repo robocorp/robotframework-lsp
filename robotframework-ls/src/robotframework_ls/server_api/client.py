@@ -108,6 +108,18 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             )
         )
 
+    def request_semantic_tokens_from_code_full(
+        self, prefix: str, full_code: str
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(
+            self._build_msg(
+                "semanticTokensFromCodeFull", prefix=prefix, full_code=full_code
+            )
+        )
+
     def forward(self, method_name, params):
         self._check_process_alive()
         msg_id = self.next_id()

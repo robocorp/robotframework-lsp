@@ -860,6 +860,8 @@ def test_rf_interactive_integrated(
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_START
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_STOP
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS
+    from robotframework_ls.impl.semantic_tokens import decode_semantic_tokens
 
     language_server = language_server_io
 
@@ -916,6 +918,40 @@ Some task
         "method": "interpreter/output",
         "params": {"output": "Something\n", "category": "stdout", "interpreter_id": 1},
     }
+
+    semantic_tokens = language_server.execute_command(
+        ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS,
+        [{"interpreter_id": 1, "code": "Log    Something     console=True"}],
+    )
+
+    data = semantic_tokens["result"]["data"]
+    assert data == [
+        0,
+        0,
+        3,
+        7,
+        0,
+        0,
+        7,
+        9,
+        12,
+        0,
+        0,
+        14,
+        7,
+        11,
+        0,
+        0,
+        7,
+        1,
+        6,
+        0,
+        0,
+        1,
+        4,
+        12,
+        0,
+    ]
 
     stop2 = language_server.execute_command(
         ROBOT_INTERNAL_RFINTERACTIVE_STOP, [{"interpreter_id": 1}]

@@ -108,6 +108,21 @@ class RfInterpreterApiClient(LanguageServerClientBase):
             )
         )
 
+    def interpreter_compute_evaluate_text(self, code: str) -> ActionResultDict:
+        self._check_process_alive()
+        msg_id = self.next_id()
+        return self._unpack_result_as_action_result_dict(
+            self.request(
+                {
+                    "jsonrpc": "2.0",
+                    "id": msg_id,
+                    "method": "interpreter/computeEvaluateText",
+                    "params": {"code": code},
+                },
+                timeout=None,
+            )
+        )
+
     def interpreter_stop(self) -> ActionResultDict:
         self._check_process_alive()
         msg_id = self.next_id()

@@ -31,6 +31,18 @@ function getWebviewOptions(localResourceRoot: vscode.Uri): vscode.WebviewOptions
     };
 }
 
+async function executeCheckedCommand(commandId: string, args: any) {
+    try {
+        return await commands.executeCommand(commandId, args);
+    } catch (err) {
+        return {
+            'success': false,
+            'message': '' + err,
+            'result': undefined
+        }
+    }
+}
+
 class InteractiveShellPanel {
     // public static currentPanel: InteractiveShellPanel | undefined;
 
@@ -89,30 +101,70 @@ class InteractiveShellPanel {
         // Listen for when the panel is disposed
         // This happens when the user closes the panel or when the panel is closed programmatically
         this._panel.onDidDispose(() => this.dispose(), null, this.disposables);
+        let webview = this._panel.webview;
+        let nextMessageSeq = this.nextMessageSeq.bind(this);
+
+        async function handleEvaluate(message) {
+            let result: any = { 'success': false, 'message': '<error evaluating>', 'result': undefined };
+
+            try {
+                let code = message.arguments['expression'];
+                result = await executeCheckedCommand("robot.internal.rfinteractive.evaluate", {
+                    'interpreter_id': interpreterId,
+                    'code': code
+                });
+            } catch (err) {
+                OUTPUT_CHANNEL.appendLine('Error in evaluation: ' + err);
+            } finally {
+                let response: any = {
+                    type: 'response',
+                    seq: nextMessageSeq(),
+                    command: message.command,
+                    request_seq: message.seq,
+                    body: '<evaluated from vscode>'
+                }
+                webview.postMessage(response); // Send the response, even if it was an error.
+            }
+            if (!result['success']) {
+                window.showErrorMessage('Error evaluating in interactive console: ' + result['message'])
+            }
+        }
+
+        async function handleSemanticTokens(message) {
+            let result = undefined;
+            try {
+                let code = message.arguments['code'];
+                // result is {'data': [...], 'resultId': ...}
+                result = await commands.executeCommand("robot.internal.rfinteractive.semanticTokens", {
+                    'interpreter_id': interpreterId,
+                    'code': code
+                });
+            } catch (err) {
+                OUTPUT_CHANNEL.appendLine('Error getting semantic tokens: ' + err);
+            } finally {
+                let response: any = {
+                    type: 'response',
+                    seq: nextMessageSeq(),
+                    command: message.command,
+                    request_seq: message.seq,
+                    body: result
+                }
+                webview.postMessage(response);
+            }
+        }
 
         // Handle messages from the webview
         this._panel.webview.onDidReceiveMessage(
             async message => {
                 if (message.type == 'request') {
+                    let result = undefined;
                     switch (message.command) {
                         case 'evaluate':
-                            let code = message.arguments['expression'];
-                            let result = await commands.executeCommand("robot.internal.rfinteractive.evaluate", {
-                                'interpreter_id': interpreterId,
-                                'code': code
-                            });
-                            if (!result['success']) {
-                                window.showErrorMessage('Error creating interactive console: ' + result['message'])
-                                return;
-                            }
-                            let response = {
-                                type: 'response',
-                                seq: this.nextMessageSeq(),
-                                command: message.command,
-                                request_seq: message.seq,
-                                body: '<evaluated from vscode>'
-                            }
-                            this._panel.webview.postMessage(response);
+                            await handleEvaluate(message);
+                            return;
+
+                        case 'semanticTokens':
+                            await handleSemanticTokens(message);
                             return;
                     }
                 } else if (message.type == 'event') {

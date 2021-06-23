@@ -4,7 +4,7 @@ import os
 import time
 from robotframework_ls.constants import DEFAULT_COMPLETIONS_TIMEOUT
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Any, Optional, List, Dict
+from typing import Any, Optional, List, Dict, Union
 from robocorp_ls_core.protocols import (
     IConfig,
     IWorkspace,
@@ -185,7 +185,7 @@ class _RfInterpretersManager:
                 True, result={"interpreter_id": interpreter_id}
             ).as_dict()
 
-    def interpreter_evaluate(self, arguments):
+    def _get_interpreter_from_arguments(self, arguments):
         from robotframework_ls import import_rf_interactive
 
         import_rf_interactive()
@@ -209,54 +209,82 @@ class _RfInterpretersManager:
                 False, message=f"Did not find 'interpreter_id' in {args}"
             ).as_dict()
 
+        interpreter: RfInterpreterServerManager = self._interpreter_id_to_rf_interpreter_server_manager.get(
+            interpreter_id
+        )
+        if interpreter is None:
+            return ActionResult(
+                False, message=f"Did not find interpreter with id: {interpreter_id}"
+            ).as_dict()
+        return interpreter
+
+    def interpreter_evaluate(self, arguments):
+        from robotframework_ls import import_rf_interactive
+
+        import_rf_interactive()
+
+        from robotframework_interactive.server.rf_interpreter_server_manager import (
+            RfInterpreterServerManager,
+        )
+
+        interpreter_or_dict_error: Union[
+            RfInterpreterServerManager, dict
+        ] = self._get_interpreter_from_arguments(arguments)
+        if isinstance(interpreter_or_dict_error, dict):
+            return interpreter_or_dict_error
+
+        interpreter: RfInterpreterServerManager = interpreter_or_dict_error
+
+        args: dict = arguments[0]
         code = args.get("code", Sentinel.SENTINEL)
         if code is Sentinel.SENTINEL:
             return ActionResult(
                 False, message=f"Did not find 'code' in {args}"
             ).as_dict()
 
-        interpreter: RfInterpreterServerManager = self._interpreter_id_to_rf_interpreter_server_manager.get(
-            interpreter_id
+        return interpreter.interpreter_evaluate(code)
+
+    def interpreter_compute_evaluate_text(self, arguments) -> ActionResultDict:
+        from robotframework_ls import import_rf_interactive
+
+        import_rf_interactive()
+
+        from robotframework_interactive.server.rf_interpreter_server_manager import (
+            RfInterpreterServerManager,
         )
-        if interpreter is None:
+
+        interpreter_or_dict_error: Union[
+            RfInterpreterServerManager, dict
+        ] = self._get_interpreter_from_arguments(arguments)
+        if isinstance(interpreter_or_dict_error, dict):
+            return interpreter_or_dict_error
+
+        interpreter: RfInterpreterServerManager = interpreter_or_dict_error
+        args: dict = arguments[0]
+        code = args.get("code", Sentinel.SENTINEL)
+        if code is Sentinel.SENTINEL:
             return ActionResult(
-                False, message=f"Did not find interpreter with id: {interpreter_id}"
+                False, message=f"Did not find 'code' in {args}"
             ).as_dict()
 
-        return interpreter.interpreter_evaluate(code)
+        return interpreter.interpreter_compute_evaluate_text(code)
 
     def interpreter_stop(self, arguments):
         from robotframework_ls import import_rf_interactive
 
         import_rf_interactive()
+
         from robotframework_interactive.server.rf_interpreter_server_manager import (
             RfInterpreterServerManager,
         )
 
-        if not arguments:
-            return ActionResult(
-                False, message="Expected arguments ([{'interpreter_id': <id>}])"
-            ).as_dict()
-        if not isinstance(arguments, (list, dict)):
-            return ActionResult(
-                False, message=f"Arguments should be a Tuple[Dict]. Found: {arguments}"
-            ).as_dict()
+        interpreter_or_dict_error: Union[
+            RfInterpreterServerManager, dict
+        ] = self._get_interpreter_from_arguments(arguments)
+        if isinstance(interpreter_or_dict_error, dict):
+            return interpreter_or_dict_error
 
-        args: dict = arguments[0]
-        interpreter_id = args.get("interpreter_id", Sentinel.SENTINEL)
-        if interpreter_id is Sentinel.SENTINEL:
-            return ActionResult(
-                False, message=f"Did not find 'interpreter_id' in {args}"
-            ).as_dict()
-
-        interpreter: RfInterpreterServerManager = self._interpreter_id_to_rf_interpreter_server_manager.get(
-            interpreter_id
-        )
-        if interpreter is None:
-            return ActionResult(
-                False, message=f"Did not find interpreter with id: {interpreter_id}"
-            ).as_dict()
-
+        interpreter: RfInterpreterServerManager = interpreter_or_dict_error
         return interpreter.interpreter_stop()
 
 
@@ -466,6 +494,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             ROBOT_INTERNAL_RFINTERACTIVE_START,
             ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE,
             ROBOT_INTERNAL_RFINTERACTIVE_STOP,
+            ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS,
         )
 
         if command == "robot.addPluginsDir":
@@ -522,6 +551,39 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         elif command == ROBOT_INTERNAL_RFINTERACTIVE_STOP:
             return self._rf_interpreters_manager.interpreter_stop(arguments)
+
+        elif command == ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS:
+            # When the user is entering text in the interpreter, the text
+            # may not be the full text or it may be based on the text previously
+            # entered, so, we need to ask the interpreter to compute the full
+            # text so that we can get the semantic tokens based on the full
+            # text that'll actually be evaluated.
+            evaluate_text_result = self._rf_interpreters_manager.interpreter_compute_evaluate_text(
+                arguments
+            )
+            if not evaluate_text_result["success"]:
+                log.info(
+                    "Unable to get code to evaluate semantic tokens (for interactive usage)."
+                )
+                return {"resultId": None, "data": []}
+            else:
+                code = evaluate_text_result["result"]
+                api = self._server_manager.get_others_api_client("")
+                if api is None:
+                    log.info(
+                        "Unable to get api client when computing semantic tokens (for interactive usage)."
+                    )
+                    return {"resultId": None, "data": []}
+
+                func = partial(
+                    self._async_api_request_no_doc,
+                    api,
+                    "request_semantic_tokens_from_code_full",
+                    prefix=code["prefix"],
+                    full_code=code["full_code"],
+                )
+                func = require_monitor(func)
+                return func
 
         elif command == "robot.listTests":
             doc_uri = arguments[0]["uri"]

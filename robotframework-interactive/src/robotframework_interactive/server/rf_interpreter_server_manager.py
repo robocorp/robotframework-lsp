@@ -297,6 +297,16 @@ class RfInterpreterServerManager:
             "result": None,
         }
 
+    def interpreter_compute_evaluate_text(self, code) -> ActionResultDict:
+        api = self._get_api_client()
+        if api is not None:
+            return api.interpreter_compute_evaluate_text(code)
+        return {
+            "success": False,
+            "message": "Robot Framework Interpreter server api not available.",
+            "result": None,
+        }
+
     def interpreter_stop(self):
         api = self._get_api_client()
         if api is not None:
