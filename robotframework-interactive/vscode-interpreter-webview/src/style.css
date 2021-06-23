@@ -1,3 +1,30 @@
+.cell_code{
+  border-left: 2px solid var(--vscode-scrollbarSlider-background);
+  margin-left: 1em;
+  padding-left: 1em;
+  margin-bottom: 0.8em;
+}
+
+.cell_stdout{
+  color: var(--vscode-foreground);
+  border-left: 2px solid var(--vscode-foreground);
+  margin-left: 1em;
+  padding-left: 1em;
+  margin-bottom: 0.8em;
+}
+
+.cell_stderr{
+  color: var(--vscode-errorForeground);
+  border-left: 2px solid var(--vscode-errorForeground);
+  margin-left: 1em;
+  padding-left: 1em;
+  margin-bottom: 0.8em;
+}
+
+.cell_output_content{
+  margin: 0px;
+}
+
 .history {
   padding-top: 2em;
 }

@@ -77,7 +77,7 @@ class InteractiveShellPanel {
         const panel = vscode.window.createWebviewPanel(
             InteractiveShellPanel.viewType,
             'Robot Framework Interpreter',
-            column || vscode.ViewColumn.One,
+            (column || vscode.ViewColumn.One) + 1,
             getWebviewOptions(localResourceRoot),
         );
 

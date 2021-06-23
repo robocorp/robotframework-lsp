@@ -12,7 +12,9 @@ import { configureMonacoLanguage } from './monacoConf';
 
 interface ICellInfo {
     id: number
+    type: 'code' | 'stdout' | 'stderr'
     cellCode: string
+    cellCodeHtml: string
 }
 
 interface ICellsContainer {
@@ -33,13 +35,16 @@ interface ICellProps {
 
 class Cell extends React.Component<ICellProps> {
     render() {
-        return (
-            <div className="cell">
-                <pre>
+        let className = "cell_" + this.props.cellInfo.type;
+        if (this.props.cellInfo.cellCodeHtml) {
+            return <div className={className} dangerouslySetInnerHTML={{ __html: this.props.cellInfo.cellCodeHtml }}></div>;
+        } else {
+            return <div className={className}>
+                <pre className="cell_output_content">
                     {this.props.cellInfo.cellCode}
                 </pre>
             </div>
-        );
+        }
     }
 }
 
@@ -86,7 +91,7 @@ class History extends React.Component<IHistoryProps> {
 }
 
 class IConsoleProps {
-    handleEvaluate: (code: string) => Promise<void>
+    handleEvaluate: (code: string, codeAsHtml: string) => Promise<void>
 }
 
 class Console extends React.Component<IConsoleProps> {
@@ -116,8 +121,10 @@ class Console extends React.Component<IConsoleProps> {
                     // Note: this will also destroy the undo-redo stack.
                     // We could keep it, but this seems fine (an arrow
                     // up on the first char should restore history entries).
+                    let x: any = editor; // hack to get access to the _modelData.
+                    let codeAsHtml = x._modelData.viewModel.getRichTextToCopy([editor.getModel().getFullModelRange()], false)
                     editor.setValue("");
-                    await handleEvaluate(value);
+                    await handleEvaluate(value, codeAsHtml.html);
                 }
             });
         }
@@ -165,25 +172,43 @@ class App extends React.Component<object, IAppState> {
 
     async onOutput(msg: IOutputEvent) {
         this.setState((prevState, props) => {
+            let type: 'stdout' | 'stderr' = 'stdout';
+            if (msg.category == 'stderr') {
+                type = 'stderr';
+            }
+            if (prevState.cells.length > 0) {
+                // Let's see if it should be joined to the last one...
+                let lastCell: ICellInfo = prevState.cells[prevState.cells.length - 1];
+                if (lastCell.type == type) {
+                    lastCell.cellCode += msg.output;
+                    return {
+                        'cells': prevState.cells
+                    };
+                }
+            }
             let newCell: ICellInfo = {
                 id: nextCellId(),
-                cellCode: msg.output
+                type: type,
+                cellCode: msg.output,
+                cellCodeHtml: undefined
             };
-
             return {
                 'cells': prevState.cells.concat([newCell]),
             };
+
         });
     }
 
-    async handleEvaluate(code: string) {
+    async handleEvaluate(code: string, codeAsHtml: string) {
         if (!code) {
             return;
         }
         this.setState((prevState, props) => {
             let newCell: ICellInfo = {
                 id: nextCellId(),
-                cellCode: code
+                type: 'code',
+                cellCode: code,
+                cellCodeHtml: codeAsHtml,
             };
 
             return {
@@ -214,7 +239,7 @@ class App extends React.Component<object, IAppState> {
 
     render() {
         return (
-            <SplitPane split="horizontal" minSize={50} defaultSize={250} allowResize={true} primary='second'>
+            <SplitPane split="horizontal" minSize={50} defaultSize={50} allowResize={true} primary='second'>
                 <History cells={this.state.cells} showProgress={this.state.showProgress} />
                 <Console handleEvaluate={this.handleEvaluate} />
             </SplitPane>
