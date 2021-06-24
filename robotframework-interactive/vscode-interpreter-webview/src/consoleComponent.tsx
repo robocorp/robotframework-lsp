@@ -25,30 +25,49 @@ class _History {
         this.position = this.entries.length;
     }
 
-    public getPrev(): string | undefined {
+    public getPrev(prefix: string): string | undefined {
         if (this.entries.length === 0) {
             return undefined;
         }
         if (this.position === 0) {
             return undefined;
         }
-        this.position -= 1;
-        return this.entries[this.position];
+        let pos = this.position - 1;
+        while (pos >= 0) {
+            let value = this.entries[pos];
+            if (value.startsWith(prefix)) {
+                this.position = pos;
+                return value;
+            }
+            pos -= 1;
+        }
+        return undefined;
     }
 
-    public getNext(): string | undefined {
+    public getNext(prefix: string): string | undefined {
         if (this.entries.length === 0) {
             return undefined;
         }
         if (this.position >= this.entries.length) {
             return undefined;
         }
-        this.position += 1;
-        if (this.position >= this.entries.length) {
-            return undefined;
+
+        let pos = this.position + 1;
+        while (pos < this.entries.length) {
+            let value = this.entries[pos];
+            if (value.startsWith(prefix)) {
+                this.position = pos;
+                return value;
+            }
+            pos += 1;
         }
-        return this.entries[this.position];
+        return undefined;
     }
+
+    public resetPos() {
+        this.position = this.entries.length;
+    }
+
 }
 
 export class ConsoleComponent extends React.Component<IConsoleProps> {
@@ -68,12 +87,17 @@ export class ConsoleComponent extends React.Component<IConsoleProps> {
         }
 
         function editorDidMount(editor: monaco.editor.IStandaloneCodeEditor) {
-            function replaceAllInEditor(text: string) {
+            function replaceAllInEditor(text: string, keepSelectionUnchanged: boolean) {
                 editor.pushUndoStop();
                 let model = editor.getModel();
+                let endCursorState = undefined;
+                if (keepSelectionUnchanged) {
+                    endCursorState = [editor.getSelection()];
+                }
                 editor.executeEdits(
                     undefined,
                     [{ 'range': model.getFullModelRange(), 'text': text, 'forceMoveMarkers': true }],
+                    endCursorState
                 )
                 editor.pushUndoStop();
             }
@@ -93,6 +117,18 @@ export class ConsoleComponent extends React.Component<IConsoleProps> {
                 contextKey.set(pos.lineNumber == 1);
             });
 
+            function getTextToCursor() {
+                let selection = editor.getSelection();
+                let pos = selection.getPosition();
+                let range = {
+                    startLineNumber: 1,
+                    startColumn: 1,
+                    endLineNumber: pos.lineNumber,
+                    endColumn: pos.column
+                }
+                return editor.getModel().getValueInRange(range);
+            }
+
             editor.addAction({
                 id: 'Evaluate',
                 label: 'Evaluate',
@@ -106,7 +142,7 @@ export class ConsoleComponent extends React.Component<IConsoleProps> {
                     let x: any = editor; // hack to get access to the _modelData.
                     let codeAsHtml = x._modelData.viewModel.getRichTextToCopy([editor.getModel().getFullModelRange()], false)
                     history.push(value);
-                    replaceAllInEditor('');
+                    replaceAllInEditor('', false);
                     await handleEvaluate(value, codeAsHtml.html);
                 }
             });
@@ -121,20 +157,26 @@ export class ConsoleComponent extends React.Component<IConsoleProps> {
             }, 'editorTextFocus && !editorTabMovesFocus && !editorHasSelection && !inSnippetMode && !suggestWidgetVisible');
 
             editor.addCommand(monaco.KeyCode.UpArrow, () => {
-                let prev = history.getPrev();
+                let prev = history.getPrev(getTextToCursor());
                 if (prev === undefined) {
                     return;
                 }
-                replaceAllInEditor(prev);
+                replaceAllInEditor(prev, true);
             }, 'editorTextFocus && !editorHasSelection && inFirstLine');
 
             editor.addCommand(monaco.KeyCode.DownArrow, () => {
-                let next = history.getNext();
+                let next = history.getNext(getTextToCursor());
                 if (next === undefined) {
                     return;
                 }
-                replaceAllInEditor(next);
+                replaceAllInEditor(next, true);
             }, 'editorTextFocus && !editorHasSelection && inFirstLine');
+
+            editor.addCommand(monaco.KeyCode.Escape, () => {
+                // Esc clears the editor and resets the history position.
+                replaceAllInEditor('', false);
+                history.resetPos();
+            }, 'editorTextFocus');
         }
 
         let theme: string = detectBaseTheme();
