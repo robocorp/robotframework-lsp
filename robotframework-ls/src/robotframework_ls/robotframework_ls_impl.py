@@ -15,6 +15,7 @@ from robocorp_ls_core.protocols import (
     ActionResult,
     Sentinel,
     IEndPoint,
+    IFuture,
 )
 from pathlib import Path
 from robotframework_ls.ep_providers import (
@@ -30,6 +31,7 @@ from robotframework_ls import __version__
 import typing
 import sys
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
+from concurrent import futures
 
 
 log = get_logger(__name__)
@@ -128,70 +130,86 @@ class _LintManager(object):
             curr_info.cancel()
 
 
-class _RfInterpretersManager:
-    def __init__(self, endpoint: IEndPoint):
-        self._interpreter_id_to_rf_interpreter_server_manager: dict = {}
-        self._next_interpreter_id = partial(next, itertools.count(0))
-        self._endpoint = endpoint
-
-    def interpreter_start(self, arguments, config: IConfig) -> ActionResultDict:
-        from robotframework_ls import import_rf_interactive
-
-        import_rf_interactive()
-
-        from robocorp_ls_core.options import Setup
-
-        try:
-            from robotframework_interactive.server.rf_interpreter_server_manager import (
-                RfInterpreterServerManager,
-            )
-
-            interpreter_id = self._next_interpreter_id()
-
-            def on_interpreter_message(interpreter_message: dict):
-                """
-                :param interpreter_message:
-                Something as:
-                {
-                    "jsonrpc": "2.0",
-                    "method": "interpreter/output",
-                    "params": {
-                        "output": "Some output\n",
-                        "category": "stdout",
-                    },
-                }
-                """
-
-                params = interpreter_message["params"]
-                params["interpreter_id"] = interpreter_id
-                self._endpoint.notify(interpreter_message["method"], params)
-
-            rf_interpreter_server_manager = RfInterpreterServerManager(
-                verbose=Setup.options.verbose,
-                base_log_file=Setup.options.log_file,
-                on_interpreter_message=on_interpreter_message,
-            )
-            rf_interpreter_server_manager.config = config
-            rf_interpreter_server_manager.interpreter_start()
-            self._interpreter_id_to_rf_interpreter_server_manager[
-                interpreter_id
-            ] = rf_interpreter_server_manager
-
-        except Exception as e:
-            log.exception("Error starting interpreter.")
-            return ActionResult(False, message=str(e)).as_dict()
-        else:
-            return ActionResult(
-                True, result={"interpreter_id": interpreter_id}
-            ).as_dict()
-
-    def _get_interpreter_from_arguments(self, arguments):
-        from robotframework_ls import import_rf_interactive
-
-        import_rf_interactive()
+class _RfInfo:
+    def __init__(
+        self, rf_interpreter_server_manager, thread_pool: futures.ThreadPoolExecutor
+    ):
         from robotframework_interactive.server.rf_interpreter_server_manager import (
             RfInterpreterServerManager,
         )
+
+        self.interpreter: RfInterpreterServerManager = rf_interpreter_server_manager
+        self.thread_pool = thread_pool
+
+
+class _RfInterpretersManager:
+    def __init__(self, endpoint: IEndPoint):
+        self._interpreter_id_to_rf_info: Dict[int, _RfInfo] = {}
+        self._next_interpreter_id = partial(next, itertools.count(0))
+        self._endpoint = endpoint
+
+    def interpreter_start(
+        self, arguments, config: IConfig, thread_pool: futures.ThreadPoolExecutor
+    ) -> IFuture[ActionResultDict]:
+        def run():
+            from robotframework_ls import import_rf_interactive
+
+            import_rf_interactive()
+
+            from robocorp_ls_core.options import Setup
+
+            try:
+                from robotframework_interactive.server.rf_interpreter_server_manager import (
+                    RfInterpreterServerManager,
+                )
+
+                interpreter_id = self._next_interpreter_id()
+
+                def on_interpreter_message(interpreter_message: dict):
+                    """
+                    :param interpreter_message:
+                    Something as:
+                    {
+                        "jsonrpc": "2.0",
+                        "method": "interpreter/output",
+                        "params": {
+                            "output": "Some output\n",
+                            "category": "stdout",
+                        },
+                    }
+                    """
+
+                    params = interpreter_message["params"]
+                    params["interpreter_id"] = interpreter_id
+                    self._endpoint.notify(interpreter_message["method"], params)
+
+                rf_interpreter_server_manager = RfInterpreterServerManager(
+                    verbose=Setup.options.verbose,
+                    base_log_file=Setup.options.log_file,
+                    on_interpreter_message=on_interpreter_message,
+                )
+                rf_interpreter_server_manager.config = config
+                rf_interpreter_server_manager.interpreter_start()
+                self._interpreter_id_to_rf_info[interpreter_id] = _RfInfo(
+                    rf_interpreter_server_manager, thread_pool
+                )
+
+            except Exception as e:
+                log.exception("Error starting interpreter.")
+                return ActionResult(False, message=str(e)).as_dict()
+            else:
+                return ActionResult(
+                    True, result={"interpreter_id": interpreter_id}
+                ).as_dict()
+
+        return thread_pool.submit(run)
+
+    def get_interpreter_from_arguments(
+        self, arguments
+    ) -> Union[_RfInfo, ActionResultDict]:
+        from robotframework_ls import import_rf_interactive
+
+        import_rf_interactive()
 
         if not arguments:
             return ActionResult(
@@ -209,16 +227,16 @@ class _RfInterpretersManager:
                 False, message=f"Did not find 'interpreter_id' in {args}"
             ).as_dict()
 
-        interpreter: RfInterpreterServerManager = self._interpreter_id_to_rf_interpreter_server_manager.get(
-            interpreter_id
-        )
-        if interpreter is None:
+        rf_info = self._interpreter_id_to_rf_info.get(interpreter_id)
+        if rf_info is None:
             return ActionResult(
                 False, message=f"Did not find interpreter with id: {interpreter_id}"
             ).as_dict()
-        return interpreter
+        return rf_info
 
-    def interpreter_evaluate(self, arguments):
+    def interpreter_evaluate(
+        self, arguments
+    ) -> Union[IFuture[ActionResultDict], ActionResultDict]:
         from robotframework_ls import import_rf_interactive
 
         import_rf_interactive()
@@ -227,39 +245,30 @@ class _RfInterpretersManager:
             RfInterpreterServerManager,
         )
 
-        interpreter_or_dict_error: Union[
-            RfInterpreterServerManager, dict
-        ] = self._get_interpreter_from_arguments(arguments)
-        if isinstance(interpreter_or_dict_error, dict):
-            return interpreter_or_dict_error
+        rf_info_or_dict_error: Union[
+            _RfInfo, ActionResultDict
+        ] = self.get_interpreter_from_arguments(arguments)
+        if isinstance(rf_info_or_dict_error, dict):
+            return rf_info_or_dict_error
 
-        interpreter: RfInterpreterServerManager = interpreter_or_dict_error
+        def run():
+            interpreter: RfInterpreterServerManager = rf_info_or_dict_error.interpreter
 
-        args: dict = arguments[0]
-        code = args.get("code", Sentinel.SENTINEL)
-        if code is Sentinel.SENTINEL:
-            return ActionResult(
-                False, message=f"Did not find 'code' in {args}"
-            ).as_dict()
+            args: dict = arguments[0]
+            code = args.get("code", Sentinel.SENTINEL)
+            if code is Sentinel.SENTINEL:
+                return ActionResult(
+                    False, message=f"Did not find 'code' in {args}"
+                ).as_dict()
 
-        return interpreter.interpreter_evaluate(code)
+            return interpreter.interpreter_evaluate(code)
 
-    def interpreter_compute_evaluate_text(self, arguments) -> ActionResultDict:
-        from robotframework_ls import import_rf_interactive
+        return rf_info_or_dict_error.thread_pool.submit(run)
 
-        import_rf_interactive()
-
-        from robotframework_interactive.server.rf_interpreter_server_manager import (
-            RfInterpreterServerManager,
-        )
-
-        interpreter_or_dict_error: Union[
-            RfInterpreterServerManager, dict
-        ] = self._get_interpreter_from_arguments(arguments)
-        if isinstance(interpreter_or_dict_error, dict):
-            return interpreter_or_dict_error
-
-        interpreter: RfInterpreterServerManager = interpreter_or_dict_error
+    def interpreter_compute_evaluate_text(
+        self, arguments, rf_info: _RfInfo
+    ) -> ActionResultDict:
+        interpreter = rf_info.interpreter
         args: dict = arguments[0]
         code = args.get("code", Sentinel.SENTINEL)
         if code is Sentinel.SENTINEL:
@@ -269,23 +278,31 @@ class _RfInterpretersManager:
 
         return interpreter.interpreter_compute_evaluate_text(code)
 
-    def interpreter_stop(self, arguments):
+    def interpreter_stop(
+        self, arguments
+    ) -> Union[IFuture[ActionResultDict], ActionResultDict]:
         from robotframework_ls import import_rf_interactive
 
         import_rf_interactive()
 
-        from robotframework_interactive.server.rf_interpreter_server_manager import (
-            RfInterpreterServerManager,
-        )
+        rf_info_or_dict_error: Union[
+            _RfInfo, ActionResultDict
+        ] = self.get_interpreter_from_arguments(arguments)
+        if isinstance(rf_info_or_dict_error, dict):
+            return rf_info_or_dict_error
 
-        interpreter_or_dict_error: Union[
-            RfInterpreterServerManager, dict
-        ] = self._get_interpreter_from_arguments(arguments)
-        if isinstance(interpreter_or_dict_error, dict):
-            return interpreter_or_dict_error
+        rf_info: _RfInfo = rf_info_or_dict_error
 
-        interpreter: RfInterpreterServerManager = interpreter_or_dict_error
-        return interpreter.interpreter_stop()
+        def run():
+            try:
+                return rf_info.interpreter.interpreter_stop()
+            finally:
+                try:
+                    rf_info.thread_pool.shutdown(wait=False)
+                except:
+                    log.exception("Error shutting down thread pool.")
+
+        return rf_info_or_dict_error.thread_pool.submit(run)
 
 
 class RobotFrameworkLanguageServer(PythonLanguageServer):
@@ -542,8 +559,11 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             return __version__
 
         elif command == ROBOT_INTERNAL_RFINTERACTIVE_START:
+            # Thread pool with 1 worker (so, we're mostly sequentializing the
+            # work to be done to another thread).
+            thread_pool = futures.ThreadPoolExecutor(max_workers=1)
             return self._rf_interpreters_manager.interpreter_start(
-                arguments, self.config
+                arguments, self.config, thread_pool
             )
 
         elif command == ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE:
@@ -558,32 +578,41 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             # entered, so, we need to ask the interpreter to compute the full
             # text so that we can get the semantic tokens based on the full
             # text that'll actually be evaluated.
-            evaluate_text_result = self._rf_interpreters_manager.interpreter_compute_evaluate_text(
-                arguments
-            )
-            if not evaluate_text_result["success"]:
+
+            rf_info_or_dict_error: Union[
+                _RfInfo, ActionResultDict
+            ] = self._rf_interpreters_manager.get_interpreter_from_arguments(arguments)
+            if isinstance(rf_info_or_dict_error, dict):
+                return {"resultId": None, "data": []}
+
+            api = self._server_manager.get_others_api_client("")
+            if api is None:
                 log.info(
-                    "Unable to get code to evaluate semantic tokens (for interactive usage)."
+                    "Unable to get api client when computing semantic tokens (for interactive usage)."
                 )
                 return {"resultId": None, "data": []}
-            else:
-                code = evaluate_text_result["result"]
-                api = self._server_manager.get_others_api_client("")
-                if api is None:
+
+            def run():
+                evaluate_text_result = self._rf_interpreters_manager.interpreter_compute_evaluate_text(
+                    arguments, rf_info_or_dict_error
+                )
+                if not evaluate_text_result["success"]:
                     log.info(
-                        "Unable to get api client when computing semantic tokens (for interactive usage)."
+                        "Unable to get code to evaluate semantic tokens (for interactive usage)."
                     )
                     return {"resultId": None, "data": []}
+                else:
+                    code = evaluate_text_result["result"]
 
-                func = partial(
-                    self._async_api_request_no_doc,
-                    api,
-                    "request_semantic_tokens_from_code_full",
-                    prefix=code["prefix"],
-                    full_code=code["full_code"],
-                )
-                func = require_monitor(func)
-                return func
+                    return self._async_api_request_no_doc(
+                        api,
+                        "request_semantic_tokens_from_code_full",
+                        prefix=code["prefix"],
+                        full_code=code["full_code"],
+                        monitor=None,
+                    )
+
+            return rf_info_or_dict_error.thread_pool.submit(run)
 
         elif command == "robot.listTests":
             doc_uri = arguments[0]["uri"]
@@ -843,7 +872,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         self,
         rf_api_client: IRobotFrameworkApiClient,
         request_method_name: str,
-        monitor: IMonitor,
+        monitor: Optional[IMonitor],
         **kwargs,
     ):
         from robocorp_ls_core.client_base import wait_for_message_matcher

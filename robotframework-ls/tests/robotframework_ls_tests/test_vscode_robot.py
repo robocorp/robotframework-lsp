@@ -861,7 +861,6 @@ def test_rf_interactive_integrated(
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_STOP
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS
-    from robotframework_ls.impl.semantic_tokens import decode_semantic_tokens
 
     language_server = language_server_io
 
