@@ -1,11 +1,9 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import * as monaco from 'monaco-editor';
-import MonacoEditor from 'react-monaco-editor';
 import SplitPane from 'react-split-pane';
+import {ConsoleComponent} from './consoleComponent';
 
 import './style.css';
-import { detectBaseTheme } from './themeDetector';
 import spinner from "./spinner.svg";
 import { IEvaluateMessage, nextMessageSeq, sendRequestToClient, eventToHandler, IOutputEvent, sendEventToClient } from './vscodeComm';
 import { configureMonacoLanguage } from './monacoConf';
@@ -33,7 +31,7 @@ interface ICellProps {
     cellInfo: ICellInfo
 }
 
-class Cell extends React.Component<ICellProps> {
+class CellComponent extends React.Component<ICellProps> {
     render() {
         let className = "cell_" + this.props.cellInfo.type;
         if (this.props.cellInfo.cellCodeHtml) {
@@ -55,7 +53,7 @@ function nextCellId(): number {
     return _lastCellId;
 }
 
-class History extends React.Component<IHistoryProps> {
+class HistoryComponent extends React.Component<IHistoryProps> {
 
     progressRef: any
 
@@ -66,7 +64,7 @@ class History extends React.Component<IHistoryProps> {
 
     render() {
         const cells = this.props.cells.map((cellInfo: ICellInfo) => (
-            <Cell key={cellInfo.id} cellInfo={cellInfo} />
+            <CellComponent key={cellInfo.id} cellInfo={cellInfo} />
         ));
         return (
             <div className="history">
@@ -90,79 +88,8 @@ class History extends React.Component<IHistoryProps> {
     }
 }
 
-class IConsoleProps {
-    handleEvaluate: (code: string, codeAsHtml: string) => Promise<void>
-}
 
-class Console extends React.Component<IConsoleProps> {
-
-    constructor(props) {
-        super(props);
-    }
-
-    render() {
-        let handleEvaluate = this.props.handleEvaluate;
-
-        function lineNumbers(line: number) {
-            return '>';
-        }
-
-        function editorDidMount(editor: monaco.editor.IStandaloneCodeEditor) {
-            // let contextKey = editor.createContextKey('on_first_line', false);
-            editor.addAction({
-                id: 'Evaluate',
-                label: 'Evaluate',
-                precondition: null,
-                keybindingContext: null,
-                contextMenuGroupId: 'navigation',
-                // keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
-                keybindings: [monaco.KeyCode.Enter],
-                run: async () => {
-                    let value = editor.getValue();
-                    // Note: this will also destroy the undo-redo stack.
-                    // We could keep it, but this seems fine (an arrow
-                    // up on the first char should restore history entries).
-                    let x: any = editor; // hack to get access to the _modelData.
-                    let codeAsHtml = x._modelData.viewModel.getRichTextToCopy([editor.getModel().getFullModelRange()], false)
-                    editor.setValue("");
-                    await handleEvaluate(value, codeAsHtml.html);
-                }
-            });
-
-            function add4spaces() {
-                let selection = editor.getSelection();
-                editor.executeEdits(undefined,
-                    [{ 'range': selection, 'text': '    ', 'forceMoveMarkers': true }],
-                )
-            }
-            editor.addCommand(monaco.KeyCode.Tab, add4spaces, 'editorTextFocus && !editorTabMovesFocus && !editorHasSelection && !inSnippetMode && !suggestWidgetVisible');
-        }
-
-        let theme: string = detectBaseTheme();
-        const options = {
-            selectOnLineNumbers: true,
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-            automaticLayout: true,
-            lineNumbers: lineNumbers,
-            scrollbar: { alwaysConsumeMouseWheel: false },
-            'semanticHighlighting.enabled': true
-        };
-        // See: https://github.com/microsoft/monaco-editor/issues/1833 for info on adding custom coloring later on...
-        return (
-            <MonacoEditor
-                language="robotframework-ls"
-                theme={theme}
-                value={null} // This will prevent any automatic update of the code.
-                options={options}
-                editorDidMount={editorDidMount}
-            />
-        );
-    }
-}
-
-
-class App extends React.Component<object, IAppState> {
+class AppComponent extends React.Component<object, IAppState> {
     constructor(props) {
         super(props);
         this.state = {
@@ -249,8 +176,8 @@ class App extends React.Component<object, IAppState> {
     render() {
         return (
             <SplitPane split="horizontal" minSize={50} defaultSize={50} allowResize={true} primary='second'>
-                <History cells={this.state.cells} showProgress={this.state.showProgress} />
-                <Console handleEvaluate={this.handleEvaluate} />
+                <HistoryComponent cells={this.state.cells} showProgress={this.state.showProgress} />
+                <ConsoleComponent handleEvaluate={this.handleEvaluate} />
             </SplitPane>
         );
     }
@@ -263,6 +190,6 @@ document.body.appendChild(e);
 configureMonacoLanguage();
 
 ReactDOM.render(
-    <App />,
+    <AppComponent />,
     e
 );
