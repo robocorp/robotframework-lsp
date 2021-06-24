@@ -115,7 +115,8 @@ class Console extends React.Component<IConsoleProps> {
                 precondition: null,
                 keybindingContext: null,
                 contextMenuGroupId: 'navigation',
-                keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+                // keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+                keybindings: [monaco.KeyCode.Enter],
                 run: async () => {
                     let value = editor.getValue();
                     // Note: this will also destroy the undo-redo stack.
@@ -127,6 +128,14 @@ class Console extends React.Component<IConsoleProps> {
                     await handleEvaluate(value, codeAsHtml.html);
                 }
             });
+
+            function add4spaces() {
+                let selection = editor.getSelection();
+                editor.executeEdits(undefined,
+                    [{ 'range': selection, 'text': '    ', 'forceMoveMarkers': true }],
+                )
+            }
+            editor.addCommand(monaco.KeyCode.Tab, add4spaces, 'editorTextFocus && !editorTabMovesFocus && !editorHasSelection && !inSnippetMode && !suggestWidgetVisible');
         }
 
         let theme: string = detectBaseTheme();
