@@ -260,6 +260,14 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
         interpreterId = result['result']['interpreter_id'];
         interactiveShellPanel = await InteractiveShellPanel.create(extensionUri, interpreterId);
         interactiveShellPanel.disposables.push(disposeNotification);
+        function disposeInterpreter(){
+            executeCheckedCommand("robot.internal.rfinteractive.stop", {
+                'interpreter_id': interpreterId,
+            });
+        }
+        interactiveShellPanel.disposables.push({
+            'dispose': disposeInterpreter
+        });
 
         OUTPUT_CHANNEL.appendLine('Waiting for Robot Framework Interactive Shell UI (id: ' + interpreterId + ') initialization.');
         await interactiveShellPanel.initialized;
