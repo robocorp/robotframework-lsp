@@ -10,10 +10,12 @@ ROBOT_INTERNAL_RFINTERACTIVE_START = "robot.internal.rfinteractive.start"  # Cre
 ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE = "robot.internal.rfinteractive.evaluate"  # Evaluate something in the Robot Framework interactive shell
 ROBOT_INTERNAL_RFINTERACTIVE_STOP = "robot.internal.rfinteractive.stop"  # Stop a Robot Framework interactive shell
 ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS = "robot.internal.rfinteractive.semanticTokens"  # Get the semantic tokens based on the code entered.
+ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS = "robot.internal.rfinteractive.completions"  # Get the completions based on the code entered.
 
 ALL_SERVER_COMMANDS: List[str] = [
     ROBOT_INTERNAL_RFINTERACTIVE_START,
     ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE,
     ROBOT_INTERNAL_RFINTERACTIVE_STOP,
     ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS,
+    ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS,
 ]

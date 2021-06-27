@@ -1,3 +1,5 @@
+import * as monaco from 'monaco-editor';
+
 interface IVSCode {
     postMessage(message: any): void;
 }

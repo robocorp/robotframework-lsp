@@ -1,6 +1,4 @@
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-import SplitPane from 'react-split-pane';
 import * as monaco from 'monaco-editor';
 import MonacoEditor from 'react-monaco-editor';
 import { detectBaseTheme } from './themeDetector';

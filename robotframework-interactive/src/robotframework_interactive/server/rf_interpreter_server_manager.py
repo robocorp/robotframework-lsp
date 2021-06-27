@@ -43,7 +43,7 @@ class RfInterpreterServerManager:
             RfInterpreterRobotConfig,
         )
 
-        self._curr_thread = threading.current_thread()
+        self._lock_api_client = threading.RLock()
         self._server_process = None
         self._log_extension = ".rf_interpreter"
         self._disposed = False
@@ -54,228 +54,216 @@ class RfInterpreterServerManager:
         self._base_log_file = base_log_file
         self._on_interpreter_message = on_interpreter_message
 
-    def _check_in_main_thread(self):
-        curr_thread = threading.current_thread()
-        if self._curr_thread is not curr_thread:
-            raise AssertionError(
-                f"This may only be called at the thread: {self._curr_thread}. Current thread: {curr_thread}"
-            )
-
     @property
     def config(self) -> IConfig:
         return self._config
 
     @config.setter
     def config(self, config: IConfig):
-        self._check_in_main_thread()
-        self._config.update(config.get_full_settings())
+        with self._lock_api_client:
+            self._config.update(config.get_full_settings())
 
     def _get_python_executable(self) -> str:
-        from robotframework_interactive.server.rf_interpreter_ls_config import (
-            OPTION_ROBOT_PYTHON_EXECUTABLE,
-        )
-
-        self._check_in_main_thread()
-
-        config = self._config
-        python_exe = sys.executable
-        if config is not None:
-            python_exe = config.get_setting(
-                OPTION_ROBOT_PYTHON_EXECUTABLE, str, default=python_exe
+        with self._lock_api_client:
+            from robotframework_interactive.server.rf_interpreter_ls_config import (
+                OPTION_ROBOT_PYTHON_EXECUTABLE,
             )
-        else:
-            log.warning(f"self._config not set in {self.__class__}")
-        return python_exe
+
+            config = self._config
+            python_exe = sys.executable
+            if config is not None:
+                python_exe = config.get_setting(
+                    OPTION_ROBOT_PYTHON_EXECUTABLE, str, default=python_exe
+                )
+            else:
+                log.warning(f"self._config not set in {self.__class__}")
+            return python_exe
 
     def _get_environ(self) -> Dict[str, str]:
         from robotframework_interactive.server.rf_interpreter_ls_config import (
             OPTION_ROBOT_PYTHON_ENV,
         )
 
-        self._check_in_main_thread()
+        with self._lock_api_client:
+            config = self._config
+            env = os.environ.copy()
 
-        config = self._config
-        env = os.environ.copy()
+            env.pop("PYTHONPATH", "")
+            env.pop("PYTHONHOME", "")
+            env.pop("VIRTUAL_ENV", "")
 
-        env.pop("PYTHONPATH", "")
-        env.pop("PYTHONHOME", "")
-        env.pop("VIRTUAL_ENV", "")
-
-        if config is not None:
-            env_in_settings = config.get_setting(
-                OPTION_ROBOT_PYTHON_ENV, dict, default={}
-            )
-            for key, val in env_in_settings.items():
-                env[str(key)] = str(val)
-        else:
-            log.warning("self._config not set in %s" % (self.__class__,))
-        return env
-
-    def _check_thread(self):
-        curr_thread = threading.current_thread()
-        if self._curr_thread is not curr_thread:
-            raise AssertionError(
-                f"This may only be called at the thread: {self._curr_thread}. Current thread: {curr_thread}"
-            )
+            if config is not None:
+                env_in_settings = config.get_setting(
+                    OPTION_ROBOT_PYTHON_ENV, dict, default={}
+                )
+                for key, val in env_in_settings.items():
+                    env[str(key)] = str(val)
+            else:
+                log.warning("self._config not set in %s" % (self.__class__,))
+            return env
 
     def _get_api_client(self) -> Any:
-        self._check_thread()
-        server_process = self._server_process
+        with self._lock_api_client:
+            server_process = self._server_process
 
-        if server_process is not None:
-            # If someone killed it, dispose of internal references
-            # and create a new process.
-            if not is_process_alive(server_process.pid):
-                self._dispose_server_process()
+            if server_process is not None:
+                # If someone killed it, dispose of internal references
+                # and create a new process.
+                if not is_process_alive(server_process.pid):
+                    self._dispose_server_process()
 
-        if self._disposed:
-            log.info("Robot Framework Interpreter server already disposed.")
-            return None
+            if self._disposed:
+                log.info("Robot Framework Interpreter server already disposed.")
+                return None
 
-        if server_process is None:
-            try:
-                from robotframework_interactive.server.rf_interpreter__main__ import (
-                    start_server_process,
-                )
-                from robocorp_ls_core.jsonrpc.streams import (
-                    JsonRpcStreamWriter,
-                    JsonRpcStreamReader,
-                )
-                from robotframework_interactive.server.rf_interpreter_client import (
-                    RfInterpreterApiClient,
-                )
-
-                args = []
-                if self._verbose:
-                    args.append("-" + "v" * int(self._verbose))
-                if self._base_log_file:
-                    log_id = _next_id()
-                    # i.e.: use a log id in case we create more than one in the
-                    # same session.
-                    if log_id == 0:
-                        args.append(
-                            "--log-file=" + self._base_log_file + self._log_extension
-                        )
-                    else:
-                        args.append(
-                            "--log-file="
-                            + self._base_log_file
-                            + (".%s" % (log_id,))
-                            + self._log_extension
-                        )
-
-                python_exe = self._get_python_executable()
-                environ = self._get_environ()
-                connect_event = threading.Event()
-
-                s = create_server_socket(host="127.0.0.1", port=0)
-                import socket as socket_module
-
-                new_socket: Optional[socket_module.socket] = None
-                connect_event = threading.Event()
-
-                def wait_for_connection():
-                    nonlocal new_socket
-                    try:
-                        s.settimeout(DEFAULT_TIMEOUT if USE_TIMEOUTS else NO_TIMEOUT)
-                        s.listen(1)
-                        new_socket, _addr = s.accept()
-                        log.info("Connection accepted")
-                    except:
-                        log.exception("Server did not connect.")
-                    finally:
-                        connect_event.set()
-                        s.close()
-
-                t = threading.Thread(target=wait_for_connection)
-                t.start()
-
-                # Now, we're listening, let's start up the interpreter to connect back.
-                _, port = s.getsockname()
-                args.append("--tcp")
-                args.append("--host")
-                args.append("127.0.0.1")
-                args.append("--port")
-                args.append(str(port))
-
-                server_process = start_server_process(
-                    args=args, python_exe=python_exe, env=environ
-                )
-
-                self._server_process = server_process
-
-                connect_event.wait()
-                if new_socket is None:
-                    raise RuntimeError(
-                        "Timed out while waiting for interpreter server to connect."
+            if server_process is None:
+                try:
+                    from robotframework_interactive.server.rf_interpreter__main__ import (
+                        start_server_process,
+                    )
+                    from robocorp_ls_core.jsonrpc.streams import (
+                        JsonRpcStreamWriter,
+                        JsonRpcStreamReader,
+                    )
+                    from robotframework_interactive.server.rf_interpreter_client import (
+                        RfInterpreterApiClient,
                     )
 
-                read_from = new_socket.makefile("rb")
-                write_to = new_socket.makefile("wb")
+                    args = []
+                    if self._verbose:
+                        args.append("-" + "v" * int(self._verbose))
+                    if self._base_log_file:
+                        log_id = _next_id()
+                        # i.e.: use a log id in case we create more than one in the
+                        # same session.
+                        if log_id == 0:
+                            args.append(
+                                "--log-file="
+                                + self._base_log_file
+                                + self._log_extension
+                            )
+                        else:
+                            args.append(
+                                "--log-file="
+                                + self._base_log_file
+                                + (".%s" % (log_id,))
+                                + self._log_extension
+                            )
 
-                w = JsonRpcStreamWriter(write_to, sort_keys=True)
-                r = JsonRpcStreamReader(read_from)
+                    python_exe = self._get_python_executable()
+                    environ = self._get_environ()
+                    connect_event = threading.Event()
 
-                api = self._rf_interpreter_api_client = RfInterpreterApiClient(
-                    w,
-                    r,
-                    server_process,
-                    on_interpreter_message=self._on_interpreter_message,
-                )
+                    s = create_server_socket(host="127.0.0.1", port=0)
+                    import socket as socket_module
 
-                log.debug(
-                    "Initializing rf interpreter api... (this pid: %s, api pid: %s).",
-                    os.getpid(),
-                    server_process.pid,
-                )
-                api.initialize(process_id=os.getpid())
+                    new_socket: Optional[socket_module.socket] = None
+                    connect_event = threading.Event()
 
-            except Exception as e:
-                if server_process is None:
-                    log.exception(
-                        "Error starting rf interpreter server api (server_process=None)."
+                    def wait_for_connection():
+                        nonlocal new_socket
+                        try:
+                            s.settimeout(
+                                DEFAULT_TIMEOUT if USE_TIMEOUTS else NO_TIMEOUT
+                            )
+                            s.listen(1)
+                            new_socket, _addr = s.accept()
+                            log.info("Connection accepted")
+                        except:
+                            log.exception("Server did not connect.")
+                        finally:
+                            connect_event.set()
+                            s.close()
+
+                    t = threading.Thread(target=wait_for_connection)
+                    t.start()
+
+                    # Now, we're listening, let's start up the interpreter to connect back.
+                    _, port = s.getsockname()
+                    args.append("--tcp")
+                    args.append("--host")
+                    args.append("127.0.0.1")
+                    args.append("--port")
+                    args.append(str(port))
+
+                    server_process = start_server_process(
+                        args=args, python_exe=python_exe, env=environ
                     )
-                else:
-                    exitcode = server_process.poll()
-                    if exitcode is not None:
-                        # Note: only read() if the process exited.
-                        log.exception(
-                            "Error starting rf interpreter server api. Exit code: %s Base exception: %s. Stderr: %s",
-                            exitcode,
-                            e,
-                            server_process.stderr.read(),
+
+                    self._server_process = server_process
+
+                    connect_event.wait()
+                    if new_socket is None:
+                        raise RuntimeError(
+                            "Timed out while waiting for interpreter server to connect."
                         )
-                    else:
-                        log.exception(
-                            "Error (%s) starting rf interpreter server api (still running). Base exception: %s.",
-                            exitcode,
-                            e,
-                        )
-                self._dispose_server_process()
-            finally:
-                if server_process is not None:
+
+                    read_from = new_socket.makefile("rb")
+                    write_to = new_socket.makefile("wb")
+
+                    w = JsonRpcStreamWriter(write_to, sort_keys=True)
+                    r = JsonRpcStreamReader(read_from)
+
+                    api = self._rf_interpreter_api_client = RfInterpreterApiClient(
+                        w,
+                        r,
+                        server_process,
+                        on_interpreter_message=self._on_interpreter_message,
+                    )
+
                     log.debug(
-                        "Server api (%s) created pid: %s", self, server_process.pid
+                        "Initializing rf interpreter api... (this pid: %s, api pid: %s).",
+                        os.getpid(),
+                        server_process.pid,
                     )
-                else:
-                    log.debug("server_process == None in _get_api_client()")
+                    api.initialize(process_id=os.getpid())
 
-        return self._rf_interpreter_api_client
+                except Exception as e:
+                    if server_process is None:
+                        log.exception(
+                            "Error starting rf interpreter server api (server_process=None)."
+                        )
+                    else:
+                        exitcode = server_process.poll()
+                        if exitcode is not None:
+                            # Note: only read() if the process exited.
+                            log.exception(
+                                "Error starting rf interpreter server api. Exit code: %s Base exception: %s. Stderr: %s",
+                                exitcode,
+                                e,
+                                server_process.stderr.read(),
+                            )
+                        else:
+                            log.exception(
+                                "Error (%s) starting rf interpreter server api (still running). Base exception: %s.",
+                                exitcode,
+                                e,
+                            )
+                    self._dispose_server_process()
+                finally:
+                    if server_process is not None:
+                        log.debug(
+                            "Server api (%s) created pid: %s", self, server_process.pid
+                        )
+                    else:
+                        log.debug("server_process == None in _get_api_client()")
+
+            return self._rf_interpreter_api_client
 
     @log_and_silence_errors(log)
     def _dispose_server_process(self):
         from robocorp_ls_core.basic import kill_process_and_subprocesses
 
-        self._check_thread()
-        try:
-            log.debug("Dispose server process.")
-            if self._server_process is not None:
-                if is_process_alive(self._server_process.pid):
-                    kill_process_and_subprocesses(self._server_process.pid)
-        finally:
-            self._disposed = True
-            self._server_process = None
-            self._rf_interpreter_api_client = None
+        with self._lock_api_client:
+            try:
+                log.debug("Dispose server process.")
+                if self._server_process is not None:
+                    if is_process_alive(self._server_process.pid):
+                        kill_process_and_subprocesses(self._server_process.pid)
+            finally:
+                self._disposed = True
+                self._server_process = None
+                self._rf_interpreter_api_client = None
 
     def interpreter_start(self) -> ActionResultDict:
         api = self._get_api_client()

@@ -42,7 +42,8 @@
         "onCommand:robot.internal.rfinteractive.start",
         "onCommand:robot.internal.rfinteractive.evaluate",
         "onCommand:robot.internal.rfinteractive.stop",
-        "onCommand:robot.internal.rfinteractive.semanticTokens"
+        "onCommand:robot.internal.rfinteractive.semanticTokens",
+        "onCommand:robot.internal.rfinteractive.completions"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -98,6 +99,11 @@
             {
                 "command": "robot.internal.rfinteractive.semanticTokens",
                 "title": "Get the semantic tokens based on the code entered.",
+                "category": "Robot Framework"
+            },
+            {
+                "command": "robot.internal.rfinteractive.completions",
+                "title": "Get the completions based on the code entered.",
                 "category": "Robot Framework"
             }
         ],

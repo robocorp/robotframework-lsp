@@ -153,6 +153,33 @@ class InteractiveShellPanel {
             }
         }
 
+        async function handleCompletions(message) {
+            let result = undefined;
+            try {
+                let code = message.arguments['code'];
+                let position = message.arguments['position'];
+                let context = message.arguments['context'];
+                // result is {'suggestions': [...], ...}
+                result = await commands.executeCommand("robot.internal.rfinteractive.completions", {
+                    'interpreter_id': interpreterId,
+                    'code': code,
+                    'position': position,
+                    'context': context,
+                });
+            } catch (err) {
+                OUTPUT_CHANNEL.appendLine('Error getting completions: ' + err);
+            } finally {
+                let response: any = {
+                    type: 'response',
+                    seq: nextMessageSeq(),
+                    command: message.command,
+                    request_seq: message.seq,
+                    body: result
+                }
+                webview.postMessage(response);
+            }
+        }
+
         // Handle messages from the webview
         this._panel.webview.onDidReceiveMessage(
             async message => {
@@ -165,6 +192,10 @@ class InteractiveShellPanel {
 
                         case 'semanticTokens':
                             await handleSemanticTokens(message);
+                            return;
+
+                        case 'completions':
+                            await handleCompletions(message);
                             return;
                     }
                 } else if (message.type == 'event') {
@@ -260,7 +291,7 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
         interpreterId = result['result']['interpreter_id'];
         interactiveShellPanel = await InteractiveShellPanel.create(extensionUri, interpreterId);
         interactiveShellPanel.disposables.push(disposeNotification);
-        function disposeInterpreter(){
+        function disposeInterpreter() {
             executeCheckedCommand("robot.internal.rfinteractive.stop", {
                 'interpreter_id': interpreterId,
             });

@@ -38,6 +38,37 @@ export function configureMonacoLanguage() {
         ignoreCase: true,
     });
 
+
+    monaco.languages.registerCompletionItemProvider(LANGUAGE_ID, {
+        async provideCompletionItems(
+            model: monaco.editor.ITextModel,
+            position: monaco.Position,
+            context: monaco.languages.CompletionContext,
+            token: monaco.CancellationToken): Promise<monaco.languages.CompletionList> {
+
+            let code = model.getValue();
+            let msg: IRequestMessage = {
+                'type': 'request',
+                'seq': nextMessageSeq(),
+                'command': 'completions',
+            };
+            msg['arguments'] = {
+                'code': code,
+                'position': position,
+                'context': context,
+            }
+            let response = await sendRequestToClient(msg);
+            if (!response.body) {
+                let lst: monaco.languages.CompletionList = {
+                    suggestions: [],
+                }
+                return lst;
+            }
+            let lst: monaco.languages.CompletionList = response.body;
+            return lst;
+        }
+    });
+
     monaco.languages.registerDocumentSemanticTokensProvider(LANGUAGE_ID, {
         getLegend: function () {
             return {
@@ -115,7 +146,7 @@ export function configureMonacoLanguage() {
             { token: 'parameterName', foreground: '098658' },
             { token: 'argumentValue', foreground: 'A31515' },
         ],
-        colors:{}
+        colors: {}
     });
 
     monaco.editor.defineTheme('my-hc', {
@@ -136,6 +167,6 @@ export function configureMonacoLanguage() {
             { token: 'parameterName', foreground: '9CDCFE' },
             { token: 'argumentValue', foreground: 'CE9178' },
         ],
-        colors:{}
+        colors: {}
     });
 }

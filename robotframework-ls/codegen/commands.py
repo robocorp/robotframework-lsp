@@ -87,6 +87,12 @@ COMMANDS: List[Command] = [
         server_handled=True,
         hide_from_command_palette=True,
     ),
+    Command(
+        "robot.internal.rfinteractive.completions",
+        "Get the completions based on the code entered.",
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
 ]
 
 
