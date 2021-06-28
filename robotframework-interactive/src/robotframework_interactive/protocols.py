@@ -37,10 +37,22 @@ class IOnReadyCall(object):
 
 
 class IRobotFrameworkInterpreter(Protocol):
-    def compute_evaluate_text(self, code: str) -> EvaluateTextTypedDict:
-        pass
+    def compute_evaluate_text(
+        self, code: str, target_type: str = "evaluate"
+    ) -> EvaluateTextTypedDict:
+        """
+        :param target_type:
+            'evaluate': means that the target is an evaluation with the given code.
+                This implies that the current code must be changed to make sense
+                in the given context.
+                
+            'completions': means that the target is a code-completion
+                This implies that the current code must be changed to include
+                all previous evaluation so that the code-completion contains
+                the full information up to the current point.
+        """
 
-    def evaluate(self, code: str):
+    def evaluate(self, code: str) -> ActionResultDict:
         pass
 
     def initialize(self, on_main_loop: IOnReadyCall):

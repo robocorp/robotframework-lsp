@@ -861,6 +861,7 @@ def test_rf_interactive_integrated(
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_STOP
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS
 
     language_server = language_server_io
 
@@ -951,6 +952,12 @@ Some task
         12,
         0,
     ]
+
+    completions = language_server.execute_command(
+        ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS, [{"interpreter_id": 1, "code": "Lo"}]
+    )
+
+    # assert len(completions["result"]["suggestions"]) > 0
 
     stop2 = language_server.execute_command(
         ROBOT_INTERNAL_RFINTERACTIVE_STOP, [{"interpreter_id": 1}]

@@ -285,10 +285,23 @@ class RfInterpreterServerManager:
             "result": None,
         }
 
-    def interpreter_compute_evaluate_text(self, code) -> ActionResultDict:
+    def interpreter_compute_evaluate_text(
+        self, code: str, target_type: str = "evaluate"
+    ) -> ActionResultDict:
+        """
+        :param target_type:
+            'evaluate': means that the target is an evaluation with the given code.
+                This implies that the current code must be changed to make sense
+                in the given context.
+                
+            'completions': means that the target is a code-completion
+                This implies that the current code must be changed to include
+                all previous successful evaluations so that the code-completion
+                contains the full information up to the current point.
+        """
         api = self._get_api_client()
         if api is not None:
-            return api.interpreter_compute_evaluate_text(code)
+            return api.interpreter_compute_evaluate_text(code, target_type)
         return {
             "success": False,
             "message": "Robot Framework Interpreter server api not available.",

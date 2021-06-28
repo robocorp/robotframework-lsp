@@ -108,7 +108,20 @@ class RfInterpreterApiClient(LanguageServerClientBase):
             )
         )
 
-    def interpreter_compute_evaluate_text(self, code: str) -> ActionResultDict:
+    def interpreter_compute_evaluate_text(
+        self, code: str, target_type: str = "evaluate"
+    ) -> ActionResultDict:
+        """
+        :param target_type:
+            'evaluate': means that the target is an evaluation with the given code.
+                This implies that the current code must be changed to make sense
+                in the given context.
+                
+            'completions': means that the target is a code-completion
+                This implies that the current code must be changed to include
+                all previous successful evaluations so that the code-completion
+                contains the full information up to the current point.
+        """
         self._check_process_alive()
         msg_id = self.next_id()
         return self._unpack_result_as_action_result_dict(
@@ -117,7 +130,7 @@ class RfInterpreterApiClient(LanguageServerClientBase):
                     "jsonrpc": "2.0",
                     "id": msg_id,
                     "method": "interpreter/computeEvaluateText",
-                    "params": {"code": code},
+                    "params": {"code": code, "target_type": target_type},
                 },
                 timeout=None,
             )

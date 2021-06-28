@@ -162,19 +162,6 @@ class _RfInterpretersManager:
 
         return rf_info_or_dict_error.commands_thread_pool.submit(run)
 
-    def interpreter_compute_evaluate_text(
-        self, arguments, rf_info: _RfInfo
-    ) -> ActionResultDict:
-        interpreter = rf_info.interpreter
-        args: dict = arguments[0]
-        code = args.get("code", Sentinel.SENTINEL)
-        if code is Sentinel.SENTINEL:
-            return ActionResult(
-                False, message=f"Did not find 'code' in {args}"
-            ).as_dict()
-
-        return interpreter.interpreter_compute_evaluate_text(code)
-
     def interpreter_stop(
         self, arguments
     ) -> Union[IFuture[ActionResultDict], ActionResultDict]:
@@ -206,6 +193,132 @@ class _RfInterpretersManager:
         return rf_info_or_dict_error.commands_thread_pool.submit(run)
 
 
+def _handle_semantic_tokens(
+    language_server_impl, rf_interpreters_manager: _RfInterpretersManager, arguments
+):
+    # When the user is entering text in the interpreter, the text
+    # may not be the full text or it may be based on the text previously
+    # entered, so, we need to ask the interpreter to compute the full
+    # text so that we can get the semantic tokens based on the full
+    # text that'll actually be evaluated.
+
+    rf_info_or_dict_error: Union[
+        _RfInfo, ActionResultDict
+    ] = rf_interpreters_manager.get_interpreter_from_arguments(arguments)
+    if isinstance(rf_info_or_dict_error, dict):
+        msg = rf_info_or_dict_error.get("message")
+        if msg:
+            log.info(msg)
+        return {"resultId": None, "data": []}
+
+    api = language_server_impl._server_manager.get_others_api_client("")
+    if api is None:
+        log.info(
+            "Unable to get api client when computing semantic tokens (for interactive usage)."
+        )
+        return {"resultId": None, "data": []}
+
+    if not arguments or not isinstance(arguments, (list, tuple)) or len(arguments) != 1:
+        log.info(f"Expected arguments to be a list of size 1. Found: {arguments}")
+        return {"resultId": None, "data": []}
+
+    def run():
+        try:
+            args: dict = arguments[0]
+            code = args.get("code", Sentinel.SENTINEL)
+            if code is Sentinel.SENTINEL:
+                log.info(f"Did not find 'code' in {args}")
+                return {"resultId": None, "data": []}
+
+            evaluate_text_result = rf_info_or_dict_error.interpreter.interpreter_compute_evaluate_text(
+                code
+            )
+            if not evaluate_text_result["success"]:
+                log.info(
+                    "Unable to get code to evaluate semantic tokens (for interactive usage)."
+                )
+                return {"resultId": None, "data": []}
+            else:
+                code = evaluate_text_result["result"]
+
+                return language_server_impl._async_api_request_no_doc(
+                    api,
+                    "request_semantic_tokens_from_code_full",
+                    prefix=code["prefix"],
+                    full_code=code["full_code"],
+                    monitor=None,
+                )
+        except:
+            log.exception(f"Error computing semantic tokens for arguments: {arguments}")
+            return {"resultId": None, "data": []}
+
+    return rf_info_or_dict_error.ls_thread_pool.submit(run)
+
+
+def _handle_completions(language_server_impl, rf_interpreters_manager, arguments):
+    rf_info_or_dict_error: Union[
+        _RfInfo, ActionResultDict
+    ] = rf_interpreters_manager.get_interpreter_from_arguments(arguments)
+    if isinstance(rf_info_or_dict_error, dict):
+        msg = rf_info_or_dict_error.get("message")
+        if msg:
+            log.info(msg)
+        return {"suggestions": []}
+
+    api = language_server_impl._server_manager.get_others_api_client("")
+    if api is None:
+        log.info(
+            "Unable to get api client when computing completions (for interactive usage)."
+        )
+        return {"suggestions": []}
+
+    if not arguments or not isinstance(arguments, (list, tuple)) or len(arguments) != 1:
+        log.info(f"Expected arguments to be a list of size 1. Found: {arguments}")
+        return {"suggestions": []}
+
+    def run():
+        try:
+            args: dict = arguments[0]
+            code = args.get("code", Sentinel.SENTINEL)
+            if code is Sentinel.SENTINEL:
+                log.info(f"Did not find 'code' in {args}")
+                return {"suggestions": []}
+
+            position = args.get("position", Sentinel.SENTINEL)
+            if position is Sentinel.SENTINEL:
+                log.info(f"Did not find 'position' in {args}")
+                return {"suggestions": []}
+
+            context = args.get("context", Sentinel.SENTINEL)
+            if context is Sentinel.SENTINEL:
+                log.info(f"Did not find 'context' in {args}")
+                return {"suggestions": []}
+
+            evaluate_text_result = rf_info_or_dict_error.interpreter.interpreter_compute_evaluate_text(
+                code
+            )
+            if not evaluate_text_result["success"]:
+                log.info(
+                    "Unable to get code to evaluate completions (for interactive usage)."
+                )
+                return {"suggestions": []}
+            else:
+                code = evaluate_text_result["result"]
+
+                return language_server_impl._async_api_request_no_doc(
+                    api,
+                    "request_completions_from_code",
+                    prefix=code["prefix"],
+                    full_code=code["full_code"],
+                    monitor=None,
+                )
+        except:
+            log.exception(f"Error computing semantic tokens for arguments: {arguments}")
+            return {"suggestions": []}
+
+    return rf_info_or_dict_error.ls_thread_pool.submit(run)
+
+
 def execute_command(
     command,
     language_server_impl,
@@ -231,46 +344,11 @@ def execute_command(
         return rf_interpreters_manager.interpreter_stop(arguments)
 
     elif command == ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS:
-        # When the user is entering text in the interpreter, the text
-        # may not be the full text or it may be based on the text previously
-        # entered, so, we need to ask the interpreter to compute the full
-        # text so that we can get the semantic tokens based on the full
-        # text that'll actually be evaluated.
-
-        rf_info_or_dict_error: Union[
-            _RfInfo, ActionResultDict
-        ] = rf_interpreters_manager.get_interpreter_from_arguments(arguments)
-        if isinstance(rf_info_or_dict_error, dict):
-            return {"resultId": None, "data": []}
-
-        api = language_server_impl._server_manager.get_others_api_client("")
-        if api is None:
-            log.info(
-                "Unable to get api client when computing semantic tokens (for interactive usage)."
-            )
-            return {"resultId": None, "data": []}
-
-        def run():
-            evaluate_text_result = rf_interpreters_manager.interpreter_compute_evaluate_text(
-                arguments, rf_info_or_dict_error
-            )
-            if not evaluate_text_result["success"]:
-                log.info(
-                    "Unable to get code to evaluate semantic tokens (for interactive usage)."
-                )
-                return {"resultId": None, "data": []}
-            else:
-                code = evaluate_text_result["result"]
-
-                return language_server_impl._async_api_request_no_doc(
-                    api,
-                    "request_semantic_tokens_from_code_full",
-                    prefix=code["prefix"],
-                    full_code=code["full_code"],
-                    monitor=None,
-                )
-
-        return rf_info_or_dict_error.ls_thread_pool.submit(run)
+        return _handle_semantic_tokens(
+            language_server_impl, rf_interpreters_manager, arguments
+        )
 
     elif command == ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS:
-        return {"suggestions": []}
+        return _handle_completions(
+            language_server_impl, rf_interpreters_manager, arguments
+        )

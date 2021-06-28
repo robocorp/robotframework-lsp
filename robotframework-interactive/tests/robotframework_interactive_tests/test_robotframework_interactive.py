@@ -137,10 +137,9 @@ def test_variables_section(interpreter, tmpdir):
         """
 *** Variables ***
 ${NAME}         MyNameToPrint
+${NAME2}    2ndName
 """
     )
-
-    interpreter.interpreter.evaluate("${NAME2}    2ndName")
 
     interpreter.interpreter.evaluate("*** Test Case ***")
     interpreter.interpreter.evaluate("Log    ${NAME} ${NAME2}    console=True")
@@ -167,9 +166,7 @@ def test_reuse_block_on_line(interpreter):
 
     facade = RobotFrameworkFacade()
     assert "Collections" not in facade.get_libraries_imported_in_namespace()
-    interpreter.interpreter.evaluate("*** Settings ***")
-    assert "Collections" not in facade.get_libraries_imported_in_namespace()
-    interpreter.interpreter.evaluate("Library    Collections")
+    interpreter.interpreter.evaluate("*** Settings ***\nLibrary    Collections")
     assert "Collections" in facade.get_libraries_imported_in_namespace()
 
     interpreter.interpreter.evaluate("*** Task ***")
@@ -219,4 +216,62 @@ def test_output_and_errors(interpreter):
     assert (
         interpreter.stream_stderr.getvalue().count("robot.errors.ExecutionFailures")
         == 2
+    )
+
+
+def test_full_doc_basic(interpreter):
+    evaluate = interpreter.interpreter.evaluate
+    contents = (
+        ("*** Settings ***\nLibrary    Collections\nLibrary    Process\n"),
+        "*** Task ***",
+        "Log    Something    console=True",
+        "Log    Else    console=True",
+    )
+    for c in contents:
+        evaluate(c)
+
+    full_doc = interpreter.interpreter.full_doc
+    assert (
+        full_doc == "*** Settings ***\n"
+        "Library    Collections\n"
+        "Library    Process\n"
+        "*** Test Case ***\n"
+        "Default Task/Test\n"
+        "    Log    Something    console=True\n"
+        "    Log    Else    console=True"
+    )
+
+
+def test_full_doc_multiple(interpreter):
+    evaluate = interpreter.interpreter.evaluate
+    contents = [
+        "*** Settings ***\nLibrary    Collections\nLibrary    Process",
+        (
+            "*** Task ***\n"
+            "Task Name\n"
+            "    Log    Something    console=True\n"
+            "    Log    Else    console=True"
+        ),
+        "Log    Foo    console=True",
+        (
+            "*** Task ***\n"
+            "Any task name ignored here\n"
+            "    Log    Else    console=True"
+        ),
+    ]
+
+    for c in contents:
+        evaluate(c)
+
+    full_doc = interpreter.interpreter.full_doc
+    assert (
+        full_doc == "*** Settings ***\n"
+        "Library    Collections\n"
+        "Library    Process\n"
+        "*** Task ***\n"
+        "Task Name\n"
+        "    Log    Something    console=True\n"
+        "    Log    Else    console=True\n"
+        "    Log    Foo    console=True\n"
+        "    Log    Else    console=True"
     )

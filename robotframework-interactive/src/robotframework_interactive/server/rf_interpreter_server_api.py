@@ -92,7 +92,7 @@ class RfInterpreterServerApi(PythonLanguageServer):
                                 "result": None,
                             }
                         finally:
-                            msg.processed_event.set()
+                            msg.event.set()
 
                 try:
                     interpreter.initialize(on_main_loop)
@@ -129,10 +129,23 @@ class RfInterpreterServerApi(PythonLanguageServer):
 
         evaluate = _Evaluate(code)
         self._interpreter_queue.put(evaluate)
-        evaluate.processed_event.wait()
+        evaluate.event.wait()
         return evaluate.action_result_dict
 
-    def m_interpreter__compute_evaluate_text(self, code: str) -> ActionResultDict:
+    def m_interpreter__compute_evaluate_text(
+        self, code: str, target_type: str
+    ) -> ActionResultDict:
+        """
+        :param target_type:
+            'evaluate': means that the target is an evaluation with the given code.
+                This implies that the current code must be changed to make sense
+                in the given context.
+                
+            'completions': means that the target is a code-completion
+                This implies that the current code must be changed to include
+                all previous evaluation so that the code-completion contains
+                the full information up to the current point.
+        """
         if not self._interpreter_initialized:
             return {
                 "success": False,
@@ -150,7 +163,7 @@ class RfInterpreterServerApi(PythonLanguageServer):
         if not interpreter:
             return {"success": False, "message": "Interpreter is None", "result": None}
 
-        evaluate_text = interpreter.compute_evaluate_text(code)
+        evaluate_text = interpreter.compute_evaluate_text(code, target_type=target_type)
         return {"success": True, "message": None, "result": evaluate_text}
 
     def m_interpreter__stop(self) -> ActionResultDict:
@@ -162,7 +175,7 @@ class RfInterpreterServerApi(PythonLanguageServer):
                 "result": None,
             }
         self._interpreter_queue.put(stop)
-        stop.processed_event.wait()
+        stop.event.wait()
         self._finished_event.wait(DEFAULT_TIMEOUT if USE_TIMEOUTS else NO_TIMEOUT)
         return stop.action_result_dict
 
@@ -170,8 +183,8 @@ class RfInterpreterServerApi(PythonLanguageServer):
 class _Evaluate(object):
     def __init__(self, code: str):
         self.code = code
-        self.processed_event = threading.Event()
-        self.action_result_dict = {
+        self.event = threading.Event()
+        self.action_result_dict: ActionResultDict = {
             "success": False,
             "message": "Code not evaluated.",
             "result": None,
@@ -179,13 +192,13 @@ class _Evaluate(object):
 
     def __call__(self, interpreter: IRobotFrameworkInterpreter):
         result = interpreter.evaluate(self.code)
-        self.action_result_dict = {"success": True, "message": None, "result": result}
+        self.action_result_dict = result
 
 
 class _Stop(object):
     def __init__(self):
-        self.processed_event = threading.Event()
-        self.action_result_dict = {
+        self.event = threading.Event()
+        self.action_result_dict: ActionResultDict = {
             "success": False,
             "message": "Stop not executed.",
             "result": None,

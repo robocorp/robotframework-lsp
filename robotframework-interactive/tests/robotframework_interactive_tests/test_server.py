@@ -1,4 +1,19 @@
-def test_server():
+import pytest
+from typing import Dict, List
+
+
+class _Setup:
+    def __init__(self, rf_interpreter_server_manager, received_messages):
+        from robotframework_interactive.server.rf_interpreter_server_manager import (
+            RfInterpreterServerManager,
+        )
+
+        self.rf_interpreter_server_manager: RfInterpreterServerManager = rf_interpreter_server_manager
+        self.received_messages: List[Dict] = received_messages
+
+
+@pytest.fixture
+def setup():
     from robotframework_interactive.server.rf_interpreter_server_manager import (
         RfInterpreterServerManager,
     )
@@ -11,6 +26,14 @@ def test_server():
     rf_interpreter_server_manager = RfInterpreterServerManager(
         on_interpreter_message=on_interpreter_message
     )
+    yield _Setup(rf_interpreter_server_manager, received_messages)
+    rf_interpreter_server_manager.interpreter_stop()
+
+
+def test_server_basic(setup: _Setup):
+    received_messages = setup.received_messages
+    rf_interpreter_server_manager = setup.rf_interpreter_server_manager
+
     result = rf_interpreter_server_manager.interpreter_start()
     assert result["success"], f"Found: {result}"
 
@@ -38,16 +61,14 @@ Some task
     assert result["success"], f"Found: {result}"
 
     result = rf_interpreter_server_manager.interpreter_compute_evaluate_text(
-        """
-Log    Foo     console=True
-"""
+        """Log    Foo     console=True"""
     )
     assert result == {
         "success": True,
         "message": None,
         "result": {
             "prefix": "*** Test Case ***\nDefault Task/Test\n    ",
-            "full_code": "*** Test Case ***\nDefault Task/Test\n    \nLog    Foo     console=True\n",
+            "full_code": "*** Test Case ***\nDefault Task/Test\n    Log    Foo     console=True",
         },
     }
 
@@ -59,3 +80,54 @@ Log    Foo     console=True
     assert not result[
         "success"
     ], f"Found: {result}"  # i.e.: already initialized (cannot reinitialize)
+
+
+def test_server_full_code_01(setup: _Setup):
+    rf_interpreter_server_manager = setup.rf_interpreter_server_manager
+
+    result = rf_interpreter_server_manager.interpreter_start()
+    assert result["success"], f"Found: {result}"
+
+    result = rf_interpreter_server_manager.interpreter_evaluate(
+        """
+*** Task ***
+Some task
+    Log    Something     console=True
+"""
+    )
+
+    result = rf_interpreter_server_manager.interpreter_evaluate(
+        "Log    Else     console=True"
+    )
+
+    result = rf_interpreter_server_manager.interpreter_compute_evaluate_text(
+        "Log    Foo     console=True", target_type="completions"
+    )
+    assert result == {
+        "success": True,
+        "message": None,
+        "result": {
+            "prefix": "*** Task ***\nSome task\n    Log    Something     console=True\n\n    Log    Else     console=True\n    ",
+            "full_code": "*** Task ***\nSome task\n    Log    Something     console=True\n\n    Log    Else     console=True\n    Log    Foo     console=True",
+        },
+    }
+
+
+def test_server_full_code_02(setup: _Setup):
+    rf_interpreter_server_manager = setup.rf_interpreter_server_manager
+
+    result = rf_interpreter_server_manager.interpreter_start()
+    assert result["success"], f"Found: {result}"
+
+    # Before first evaluation
+    result = rf_interpreter_server_manager.interpreter_compute_evaluate_text(
+        "Log    Foo     console=True", target_type="completions"
+    )
+    assert result == {
+        "success": True,
+        "message": None,
+        "result": {
+            "prefix": "\n*** Test Case ***\nDefault Task/Test\n    ",
+            "full_code": "\n*** Test Case ***\nDefault Task/Test\n    Log    Foo     console=True",
+        },
+    }
