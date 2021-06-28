@@ -1,10 +1,18 @@
-from robot.api.parsing import ModelVisitor, Token
+from robot.parsing.model.statements import Statement
+import ast
 
 
-class _Visitor(ModelVisitor):
+class _Visitor(ast.NodeVisitor):
     def __init__(self, model):
         self.text = []
         self.visit(model)
+
+    def visit(self, node):
+        if isinstance(node, Statement):
+            visitor = self.visit_Statement
+        else:
+            visitor = self.generic_visit
+        visitor(node)
 
     def visit_Statement(self, node):  # noqa
         for token in node.tokens:
