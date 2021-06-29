@@ -289,13 +289,12 @@ def _handle_completions(language_server_impl, rf_interpreters_manager, arguments
                 log.info(f"Did not find 'position' in {args}")
                 return {"suggestions": []}
 
-            context = args.get("context", Sentinel.SENTINEL)
-            if context is Sentinel.SENTINEL:
-                log.info(f"Did not find 'context' in {args}")
-                return {"suggestions": []}
+            # context = args.get("context", Sentinel.SENTINEL)
+            # if context is Sentinel.SENTINEL:
+            #     pass
 
             evaluate_text_result = rf_info_or_dict_error.interpreter.interpreter_compute_evaluate_text(
-                code
+                code, "completions"
             )
             if not evaluate_text_result["success"]:
                 log.info(
@@ -310,6 +309,7 @@ def _handle_completions(language_server_impl, rf_interpreters_manager, arguments
                     "request_completions_from_code",
                     prefix=code["prefix"],
                     full_code=code["full_code"],
+                    position=position,
                     monitor=None,
                 )
         except:

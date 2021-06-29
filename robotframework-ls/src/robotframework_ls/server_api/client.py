@@ -2,7 +2,11 @@ from typing import Optional, Dict
 
 from robocorp_ls_core.client_base import LanguageServerClientBase
 from robocorp_ls_core.protocols import IIdMessageMatcher, IRobotFrameworkApiClient
-from robocorp_ls_core.lsp import TextDocumentTypedDict, ResponseTypedDict
+from robocorp_ls_core.lsp import (
+    TextDocumentTypedDict,
+    ResponseTypedDict,
+    PositionTypedDict,
+)
 from robocorp_ls_core.basic import implements
 
 
@@ -117,6 +121,21 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         return self.request_async(
             self._build_msg(
                 "semanticTokensFromCodeFull", prefix=prefix, full_code=full_code
+            )
+        )
+
+    def request_completions_from_code(
+        self, prefix: str, full_code: str, position: PositionTypedDict
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(
+            self._build_msg(
+                "completionsFromCodeFull",
+                prefix=prefix,
+                full_code=full_code,
+                position=position,
             )
         )
 

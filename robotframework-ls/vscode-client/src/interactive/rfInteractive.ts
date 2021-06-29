@@ -163,7 +163,10 @@ class InteractiveShellPanel {
                 result = await commands.executeCommand("robot.internal.rfinteractive.completions", {
                     'interpreter_id': interpreterId,
                     'code': code,
-                    'position': position,
+                    'position': {
+                        'line': position['lineNumber'] - 1,
+                        'character': position['column'] - 1
+                    },
                     'context': context,
                 });
             } catch (err) {

@@ -862,6 +862,7 @@ def test_rf_interactive_integrated(
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS
+    from robocorp_ls_core.lsp import Position
 
     language_server = language_server_io
 
@@ -954,10 +955,15 @@ Some task
     ]
 
     completions = language_server.execute_command(
-        ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS, [{"interpreter_id": 1, "code": "Lo"}]
+        ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS,
+        [{"interpreter_id": 1, "code": "Lo", "position": Position(0, 2).to_dict()}],
     )
 
-    # assert len(completions["result"]["suggestions"]) > 0
+    for completion in completions["result"]["suggestions"]:
+        if completion["label"] == "Log":
+            break
+    else:
+        raise AssertionError('Did not find "Log" in the suggestions.')
 
     stop2 = language_server.execute_command(
         ROBOT_INTERNAL_RFINTERACTIVE_STOP, [{"interpreter_id": 1}]

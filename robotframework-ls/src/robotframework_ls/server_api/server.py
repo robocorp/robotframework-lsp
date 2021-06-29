@@ -12,6 +12,7 @@ from robocorp_ls_core.lsp import (
     TextDocumentTypedDict,
     CodeLensTypedDict,
     DocumentSymbolTypedDict,
+    PositionTypedDict,
 )
 from robotframework_ls.impl.protocols import IKeywordFound
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
@@ -198,6 +199,15 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         return func
 
     def _threaded_complete_all(self, doc_uri, line, col, monitor: IMonitor):
+        completion_context = self._create_completion_context(
+            doc_uri, line, col, monitor
+        )
+        if completion_context is None:
+            return []
+
+        return self._complete_from_completion_context(completion_context)
+
+    def _complete_from_completion_context(self, completion_context):
         from robotframework_ls.impl import section_name_completions
         from robotframework_ls.impl import keyword_completions
         from robotframework_ls.impl import variable_completions
@@ -208,12 +218,6 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             collect_keyword_name_to_keyword_found,
         )
         from robotframework_ls.impl import ast_utils
-
-        completion_context = self._create_completion_context(
-            doc_uri, line, col, monitor
-        )
-        if completion_context is None:
-            return []
 
         ret = section_name_completions.complete(completion_context)
         if not ret:
@@ -510,6 +514,50 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if context is None:
             return {"resultId": None, "data": []}
         return {"resultId": None, "data": semantic_tokens_full(context)}
+
+    def m_completions_from_code_full(
+        self, prefix: str = "", full_code: str = "", position=PositionTypedDict
+    ):
+        func = partial(
+            self.threaded_completions_from_code_full,
+            prefix=prefix,
+            full_code=full_code,
+            position=position,
+        )
+        func = require_monitor(func)
+        return func
+
+    def threaded_completions_from_code_full(
+        self,
+        prefix: str,
+        full_code: str,
+        position: PositionTypedDict,
+        monitor: Optional[IMonitor] = None,
+    ):
+        from robotframework_ls.impl.robot_workspace import RobotDocument
+        from robotframework_ls.impl.completion_context import CompletionContext
+        from robocorp_ls_core.workspace import Document
+
+        d = Document("~unnamed", prefix)
+        last_line, last_col = d.get_last_line_col()
+        line = last_line + position["line"]
+
+        col = position["character"]
+        if line == last_line:
+            col += last_col
+
+        document = RobotDocument("~unnamed", full_code)
+        completion_context = CompletionContext(
+            document,
+            line,
+            col,
+            config=self.config,
+            monitor=monitor,
+            workspace=self.workspace,
+        )
+        return {
+            "suggestions": self._complete_from_completion_context(completion_context)
+        }
 
     def m_semantic_tokens_from_code_full(self, prefix: str = "", full_code: str = ""):
         func = partial(
