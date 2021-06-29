@@ -265,10 +265,10 @@ class RfInterpreterServerManager:
                 self._server_process = None
                 self._rf_interpreter_api_client = None
 
-    def interpreter_start(self) -> ActionResultDict:
+    def interpreter_start(self, uri: str) -> ActionResultDict:
         api = self._get_api_client()
         if api is not None:
-            return api.interpreter_start()
+            return api.interpreter_start(uri)
         return {
             "success": False,
             "message": "Unable to start Robot Framework Interpreter server api.",

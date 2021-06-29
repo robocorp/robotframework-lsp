@@ -1,5 +1,5 @@
 /**
- * The idea is doing an interactive shell for Robot Framework inside of VSCode.
+ * The idea is doing a Scratchpad for Robot Framework inside of VSCode.
  *
  * There is previous work on this in https://github.com/microsoft/vscode-jupyter.
  * 
@@ -265,6 +265,13 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
     let extensionUri = context.extensionUri;
 
     async function createInteractiveShell() {
+        let activeFile = vscode.window.activeTextEditor?.document;
+        let currUri = activeFile?.uri;
+        if(!currUri){
+            window.showErrorMessage('Unable to create Robot Framework Scratchpad. Please open the related .robot file to provide the path used to create the Scratchpad.')
+            return;
+        }
+
         let interpreterId = -1;
         let buffered: string[] = new Array();
         let interactiveShellPanel: undefined | InteractiveShellPanel = undefined;
@@ -287,7 +294,7 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
 
         // Note that during the creation, it's possible that we already have output, so, we
         // need to buffer anything up to the point where we actually have the interpreter.
-        let result = await commands.executeCommand("robot.internal.rfinteractive.start");
+        let result = await commands.executeCommand("robot.internal.rfinteractive.start", {'uri': currUri});
         if (!result['success']) {
             window.showErrorMessage('Error creating interactive console: ' + result['message'])
             return;
@@ -304,9 +311,9 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
             'dispose': disposeInterpreter
         });
 
-        OUTPUT_CHANNEL.appendLine('Waiting for Robot Framework Interactive Shell UI (id: ' + interpreterId + ') initialization.');
+        OUTPUT_CHANNEL.appendLine('Waiting for Robot Framework Scratchpad UI (id: ' + interpreterId + ') initialization.');
         await interactiveShellPanel.initialized;
-        OUTPUT_CHANNEL.appendLine('Robot Framework Interactive Shell UI (id: ' + interpreterId + ') initialized.');
+        OUTPUT_CHANNEL.appendLine('Robot Framework Scratchpad UI (id: ' + interpreterId + ') initialized.');
         while (buffered.length) {
             buffered.splice(0, buffered.length).forEach((el) => {
                 onOutput(el);

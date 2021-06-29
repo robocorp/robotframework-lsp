@@ -78,7 +78,7 @@ class RfInterpreterApiClient(LanguageServerClientBase):
                 return {"success": False, "message": str(error), "result": None}
             return {"success": False, "message": str(result), "result": None}
 
-    def interpreter_start(self) -> ActionResultDict:
+    def interpreter_start(self, uri: str) -> ActionResultDict:
         self._check_process_alive()
         msg_id = self.next_id()
         return self._unpack_result_as_action_result_dict(
@@ -87,7 +87,7 @@ class RfInterpreterApiClient(LanguageServerClientBase):
                     "jsonrpc": "2.0",
                     "id": msg_id,
                     "method": "interpreter/start",
-                    "params": {},
+                    "params": {"uri": uri},
                 },
                 timeout=None,
             )

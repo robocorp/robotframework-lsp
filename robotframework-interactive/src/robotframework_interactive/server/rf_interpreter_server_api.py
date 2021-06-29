@@ -31,7 +31,7 @@ class RfInterpreterServerApi(PythonLanguageServer):
 
         return Config()
 
-    def m_interpreter__start(self) -> ActionResultDict:
+    def m_interpreter__start(self, uri: str) -> ActionResultDict:
         if self._interpreter_initialized:
             return {
                 "success": False,

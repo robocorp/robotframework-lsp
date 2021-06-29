@@ -3,20 +3,22 @@ from typing import Dict, List
 
 
 class _Setup:
-    def __init__(self, rf_interpreter_server_manager, received_messages):
+    def __init__(self, rf_interpreter_server_manager, received_messages, uri):
         from robotframework_interactive.server.rf_interpreter_server_manager import (
             RfInterpreterServerManager,
         )
 
         self.rf_interpreter_server_manager: RfInterpreterServerManager = rf_interpreter_server_manager
         self.received_messages: List[Dict] = received_messages
+        self.uri = uri
 
 
 @pytest.fixture
-def setup():
+def setup(tmpdir):
     from robotframework_interactive.server.rf_interpreter_server_manager import (
         RfInterpreterServerManager,
     )
+    from robocorp_ls_core import uris
 
     received_messages = []
 
@@ -26,7 +28,8 @@ def setup():
     rf_interpreter_server_manager = RfInterpreterServerManager(
         on_interpreter_message=on_interpreter_message
     )
-    yield _Setup(rf_interpreter_server_manager, received_messages)
+    uri = uris.from_fs_path(str(tmpdir.join("my.robot")))
+    yield _Setup(rf_interpreter_server_manager, received_messages, uri)
     rf_interpreter_server_manager.interpreter_stop()
 
 
@@ -34,10 +37,10 @@ def test_server_basic(setup: _Setup):
     received_messages = setup.received_messages
     rf_interpreter_server_manager = setup.rf_interpreter_server_manager
 
-    result = rf_interpreter_server_manager.interpreter_start()
+    result = rf_interpreter_server_manager.interpreter_start(setup.uri)
     assert result["success"], f"Found: {result}"
 
-    result = rf_interpreter_server_manager.interpreter_start()
+    result = rf_interpreter_server_manager.interpreter_start(setup.uri)
     assert not result["success"], f"Found: {result}"  # i.e.: already initialized
 
     del received_messages[:]
@@ -76,7 +79,7 @@ Some task
 
     assert result["success"], f"Found: {result}"
 
-    result = rf_interpreter_server_manager.interpreter_start()
+    result = rf_interpreter_server_manager.interpreter_start(setup.uri)
     assert not result[
         "success"
     ], f"Found: {result}"  # i.e.: already initialized (cannot reinitialize)
@@ -85,7 +88,7 @@ Some task
 def test_server_full_code_01(setup: _Setup):
     rf_interpreter_server_manager = setup.rf_interpreter_server_manager
 
-    result = rf_interpreter_server_manager.interpreter_start()
+    result = rf_interpreter_server_manager.interpreter_start(setup.uri)
     assert result["success"], f"Found: {result}"
 
     result = rf_interpreter_server_manager.interpreter_evaluate(
@@ -116,7 +119,7 @@ Some task
 def test_server_full_code_02(setup: _Setup):
     rf_interpreter_server_manager = setup.rf_interpreter_server_manager
 
-    result = rf_interpreter_server_manager.interpreter_start()
+    result = rf_interpreter_server_manager.interpreter_start(setup.uri)
     assert result["success"], f"Found: {result}"
 
     # Before first evaluation

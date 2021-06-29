@@ -867,15 +867,20 @@ def test_rf_interactive_integrated(
     language_server = language_server_io
 
     language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = os.path.join(ws_root_path, "my.robot")
 
-    ret1 = language_server.execute_command(ROBOT_INTERNAL_RFINTERACTIVE_START, [])
+    ret1 = language_server.execute_command(
+        ROBOT_INTERNAL_RFINTERACTIVE_START, [{"uri": uri}]
+    )
     assert ret1["result"] == {
         "success": True,
         "message": None,
         "result": {"interpreter_id": 0},
     }
 
-    ret2 = language_server.execute_command(ROBOT_INTERNAL_RFINTERACTIVE_START, [])
+    ret2 = language_server.execute_command(
+        ROBOT_INTERNAL_RFINTERACTIVE_START, [{"uri": uri}]
+    )
     assert ret2["result"] == {
         "success": True,
         "message": None,

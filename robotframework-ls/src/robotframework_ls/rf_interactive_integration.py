@@ -43,6 +43,22 @@ class _RfInterpretersManager:
         self, arguments, config: IConfig
     ) -> IFuture[ActionResultDict]:
 
+        if not arguments:
+            return ActionResult(
+                False, message="Expected arguments ([{'uri': <uri>}])"
+            ).as_dict()
+        if not isinstance(arguments, (list, tuple)):
+            return ActionResult(
+                False, message=f"Arguments should be a Tuple[Dict]. Found: {arguments}"
+            ).as_dict()
+
+        args: dict = arguments[0]
+        uri = args.get("uri", Sentinel.SENTINEL)
+        if uri is Sentinel.SENTINEL:
+            return ActionResult(
+                False, message=f"Did not find 'uri' in {args}"
+            ).as_dict()
+
         # Thread pool with 1 worker (so, we're mostly sequentializing the
         # work to be done to another thread).
         commands_thread_pool = futures.ThreadPoolExecutor(max_workers=1)
@@ -85,7 +101,7 @@ class _RfInterpretersManager:
                     on_interpreter_message=on_interpreter_message,
                 )
                 rf_interpreter_server_manager.config = config
-                rf_interpreter_server_manager.interpreter_start()
+                rf_interpreter_server_manager.interpreter_start(uri)
                 ls_thread_pool = futures.ThreadPoolExecutor(max_workers=2)
                 self._interpreter_id_to_rf_info[interpreter_id] = _RfInfo(
                     rf_interpreter_server_manager, commands_thread_pool, ls_thread_pool
@@ -112,7 +128,7 @@ class _RfInterpretersManager:
             return ActionResult(
                 False, message="Expected arguments ([{'interpreter_id': <id>}])"
             ).as_dict()
-        if not isinstance(arguments, (list, dict)):
+        if not isinstance(arguments, (list, tuple)):
             return ActionResult(
                 False, message=f"Arguments should be a Tuple[Dict]. Found: {arguments}"
             ).as_dict()
