@@ -130,7 +130,7 @@ export class ConsoleComponent extends React.Component<IConsoleProps> {
             editor.addAction({
                 id: 'Evaluate',
                 label: 'Evaluate',
-                precondition: null,
+                precondition: 'editorTextFocus && !inSnippetMode && !suggestWidgetVisible',
                 keybindingContext: null,
                 contextMenuGroupId: 'navigation',
                 // keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
@@ -160,7 +160,7 @@ export class ConsoleComponent extends React.Component<IConsoleProps> {
                     return;
                 }
                 replaceAllInEditor(prev, true);
-            }, 'editorTextFocus && !editorHasSelection && inFirstLine');
+            }, 'editorTextFocus && !editorHasSelection && inFirstLine && !suggestWidgetVisible');
 
             editor.addCommand(monaco.KeyCode.DownArrow, () => {
                 let next = history.getNext(getTextToCursor());
@@ -168,13 +168,13 @@ export class ConsoleComponent extends React.Component<IConsoleProps> {
                     return;
                 }
                 replaceAllInEditor(next, true);
-            }, 'editorTextFocus && !editorHasSelection && inFirstLine');
+            }, 'editorTextFocus && !editorHasSelection && inFirstLine && !suggestWidgetVisible');
 
             editor.addCommand(monaco.KeyCode.Escape, () => {
                 // Esc clears the editor and resets the history position.
                 replaceAllInEditor('', false);
                 history.resetPos();
-            }, 'editorTextFocus');
+            }, 'editorTextFocus && !inSnippetMode && !suggestWidgetVisible');
         }
 
         let theme: string = detectBaseTheme();

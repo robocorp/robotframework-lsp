@@ -65,6 +65,13 @@ export function configureMonacoLanguage() {
                 return lst;
             }
             let lst: monaco.languages.CompletionList = response.body;
+            let suggestions = lst['suggestions'];
+            if(suggestions){
+                for (let index = 0; index < suggestions.length; index++) {
+                    const element = suggestions[index];
+                    element.insertTextRules = monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet;
+                }
+            }
             return lst;
         }
     });

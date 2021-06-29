@@ -125,9 +125,10 @@ class InteractiveShellPanel {
                 }
                 webview.postMessage(response); // Send the response, even if it was an error.
             }
-            if (!result['success']) {
-                window.showErrorMessage('Error evaluating in interactive console: ' + result['message'])
-            }
+            // Errors should be shown in the console already...
+            // if (!result['success']) {
+            //     window.showErrorMessage('Error evaluating in interactive console: ' + result['message'])
+            // }
         }
 
         async function handleSemanticTokens(message) {
