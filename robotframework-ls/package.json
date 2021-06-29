@@ -77,23 +77,23 @@
             },
             {
                 "command": "robot.interactiveShell",
-                "title": "Start Robot Interactive Shell",
+                "title": "Start Scratchpad",
                 "category": "Robot Framework",
                 "icon": "$(terminal-powershell)"
             },
             {
                 "command": "robot.internal.rfinteractive.start",
-                "title": "Create a Robot Framework interactive shell",
+                "title": "Create Scratchpad",
                 "category": "Robot Framework"
             },
             {
                 "command": "robot.internal.rfinteractive.evaluate",
-                "title": "Evaluate something in the Robot Framework interactive shell",
+                "title": "Evaluate in Scratchpad",
                 "category": "Robot Framework"
             },
             {
                 "command": "robot.internal.rfinteractive.stop",
-                "title": "Stop a Robot Framework interactive shell",
+                "title": "Stop Scratchpad",
                 "category": "Robot Framework"
             },
             {
@@ -134,6 +134,28 @@
                     "title": "Debug Tests/Tasks Suite",
                     "group": "9_robot_run@2",
                     "when": "resourceExtname == .robot || explorerResourceIsFolder"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "robot.internal.rfinteractive.start",
+                    "when": "false"
+                },
+                {
+                    "command": "robot.internal.rfinteractive.evaluate",
+                    "when": "false"
+                },
+                {
+                    "command": "robot.internal.rfinteractive.stop",
+                    "when": "false"
+                },
+                {
+                    "command": "robot.internal.rfinteractive.semanticTokens",
+                    "when": "false"
+                },
+                {
+                    "command": "robot.internal.rfinteractive.completions",
+                    "when": "false"
                 }
             ]
         },

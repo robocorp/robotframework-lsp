@@ -1,6 +1,48 @@
 import os.path
 
 
+def get_menus():
+    from commands import COMMANDS
+
+    ret = {
+        "editor/title/run": [
+            {
+                "command": "robot.runSuite",
+                "title": "Run Tests/Tasks Suite",
+                "group": "1_run@robot_run1",
+                "when": "resourceExtname == .robot && !isInDiffEditor",
+            },
+            {
+                "command": "robot.debugSuite",
+                "title": "Debug Tests/Tasks Suite",
+                "group": "1_run@robot_run2",
+                "when": "resourceExtname == .robot && !isInDiffEditor",
+            },
+        ],
+        "explorer/context": [
+            {
+                "command": "robot.runSuite",
+                "title": "Run Tests/Tasks Suite",
+                "group": "9_robot_run@1",
+                "when": "resourceExtname == .robot || explorerResourceIsFolder",
+            },
+            {
+                "command": "robot.debugSuite",
+                "title": "Debug Tests/Tasks Suite",
+                "group": "9_robot_run@2",
+                "when": "resourceExtname == .robot || explorerResourceIsFolder",
+            },
+        ],
+    }
+    commands_palette_entry = []
+    for command in COMMANDS:
+        if command.hide_from_command_palette:
+            commands_palette_entry.append({"command": command.name, "when": "false"})
+    if commands_palette_entry:
+        ret["commandPalette"] = commands_palette_entry
+    return ret
+
+
 def get_json_contents():
     from robotframework_ls import __version__
     from commands import get_commands_for_json
@@ -27,36 +69,7 @@ def get_json_contents():
         "galleryBanner": {"theme": "dark", "color": "#000000"},
         "contributes": {
             "commands": get_commands_for_json(),
-            "menus": {
-                "editor/title/run": [
-                    {
-                        "command": "robot.runSuite",
-                        "title": "Run Tests/Tasks Suite",
-                        "group": "1_run@robot_run1",
-                        "when": "resourceExtname == .robot && !isInDiffEditor",
-                    },
-                    {
-                        "command": "robot.debugSuite",
-                        "title": "Debug Tests/Tasks Suite",
-                        "group": "1_run@robot_run2",
-                        "when": "resourceExtname == .robot && !isInDiffEditor",
-                    },
-                ],
-                "explorer/context": [
-                    {
-                        "command": "robot.runSuite",
-                        "title": "Run Tests/Tasks Suite",
-                        "group": "9_robot_run@1",
-                        "when": "resourceExtname == .robot || explorerResourceIsFolder",
-                    },
-                    {
-                        "command": "robot.debugSuite",
-                        "title": "Debug Tests/Tasks Suite",
-                        "group": "9_robot_run@2",
-                        "when": "resourceExtname == .robot || explorerResourceIsFolder",
-                    },
-                ],
-            },
+            "menus": get_menus(),
             "semanticTokenScopes": [
                 {
                     "scopes": {

@@ -11,7 +11,7 @@
  * https://github.com/leocll/vscode-extension-webview-template
  */
 
-import { commands, ExtensionContext, WebviewPanel, window } from "vscode";
+import { commands, ExtensionContext, window } from "vscode";
 import * as vscode from 'vscode';
 import { LanguageClient } from "vscode-languageclient/node";
 import { OUTPUT_CHANNEL } from "../extension";
@@ -76,7 +76,7 @@ class InteractiveShellPanel {
         // Otherwise, create a new panel.
         const panel = vscode.window.createWebviewPanel(
             InteractiveShellPanel.viewType,
-            'Robot Framework Interpreter',
+            'Robot Framework Scratchpad',
             (column || vscode.ViewColumn.One) + 1,
             getWebviewOptions(localResourceRoot),
         );
@@ -249,7 +249,7 @@ class InteractiveShellPanel {
 			<head>
 				<meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
-                <title>Robot Interactive Interpreter</title>
+                <title>Robot Framework Scratchpad</title>
                 <script>
                 const vscode = acquireVsCodeApi();
                 </script>
