@@ -13,6 +13,7 @@ from robocorp_ls_core.protocols import (
 )
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS
+from robocorp_ls_core.pluginmanager import PluginManager
 
 log = get_logger(__name__)
 
@@ -34,10 +35,11 @@ class _RfInfo:
 
 
 class _RfInterpretersManager:
-    def __init__(self, endpoint: IEndPoint):
+    def __init__(self, endpoint: IEndPoint, pm: PluginManager):
         self._interpreter_id_to_rf_info: Dict[int, _RfInfo] = {}
         self._next_interpreter_id = partial(next, itertools.count(0))
         self._endpoint = endpoint
+        self._pm = pm
 
     def interpreter_start(
         self, arguments, config: IConfig
@@ -65,6 +67,10 @@ class _RfInterpretersManager:
 
         def run():
             from robotframework_ls import import_rf_interactive
+            from robotframework_ls.config_extension import (
+                apply_interpreter_info_to_config,
+            )
+            from robocorp_ls_core.ep_resolve_interpreter import EPResolveInterpreter
 
             import_rf_interactive()
 
@@ -99,8 +105,31 @@ class _RfInterpretersManager:
                     verbose=Setup.options.verbose,
                     base_log_file=Setup.options.log_file,
                     on_interpreter_message=on_interpreter_message,
+                    uri=uri,
                 )
                 rf_interpreter_server_manager.config = config
+                rf_config = rf_interpreter_server_manager.config
+
+                # Just making sure that it has its own private copy before
+                # mutating it...
+                assert rf_config is not config
+
+                for ep in self._pm.get_implementations(EPResolveInterpreter):
+                    interpreter_info = ep.get_interpreter_info_for_doc_uri(uri)
+                    if interpreter_info is not None:
+                        on_interpreter_message(
+                            {
+                                "jsonrpc": "2.0",
+                                "method": "interpreter/output",
+                                "params": {
+                                    "output": f"Target: {interpreter_info.get_interpreter_id()}\n",
+                                    "category": "info",
+                                },
+                            }
+                        )
+                        apply_interpreter_info_to_config(rf_config, interpreter_info)
+                        break
+
                 rf_interpreter_server_manager.interpreter_start(uri)
                 ls_thread_pool = futures.ThreadPoolExecutor(max_workers=2)
                 self._interpreter_id_to_rf_info[interpreter_id] = _RfInfo(

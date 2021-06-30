@@ -21,6 +21,14 @@
   margin-bottom: 0.8em;
 }
 
+.cell_info{
+  color: var(--vscode-editorWarning-foreground);
+  border-left: 2px solid var(--vscode-editorWarning-foreground);
+  margin-left: 1em;
+  padding-left: 1em;
+  margin-bottom: 0.8em;
+}
+
 .cell_output_content{
   margin: 0px;
 }

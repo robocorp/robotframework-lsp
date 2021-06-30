@@ -10,7 +10,7 @@ import { configureMonacoLanguage } from './monacoConf';
 
 interface ICellInfo {
     id: number
-    type: 'code' | 'stdout' | 'stderr'
+    type: 'code' | 'stdout' | 'stderr' | 'info'
     cellCode: string
     cellCodeHtml: string
 }
@@ -108,9 +108,12 @@ class AppComponent extends React.Component<object, IAppState> {
 
     async onOutput(msg: IOutputEvent) {
         this.setState((prevState, props) => {
-            let type: 'stdout' | 'stderr' = 'stdout';
-            if (msg.category == 'stderr') {
-                type = 'stderr';
+            let type: 'stdout' | 'stderr' | 'info' = 'stdout';
+            switch(msg.category){
+                case 'stderr':
+                case 'stdout':
+                case 'info':
+                    type = msg.category;
             }
             if (prevState.cells.length > 0) {
                 // Let's see if it should be joined to the last one...

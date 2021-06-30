@@ -37,12 +37,17 @@ def create_server_socket(host, port):
 
 class RfInterpreterServerManager:
     def __init__(
-        self, verbose: int = 0, base_log_file: str = "", on_interpreter_message=None
+        self,
+        verbose: int = 0,
+        base_log_file: str = "",
+        on_interpreter_message=None,
+        uri: str = "",
     ):
         from robotframework_interactive.server.rf_interpreter_ls_config import (
             RfInterpreterRobotConfig,
         )
 
+        self._uri = uri
         self._lock_api_client = threading.RLock()
         self._server_process = None
         self._log_extension = ".rf_interpreter"

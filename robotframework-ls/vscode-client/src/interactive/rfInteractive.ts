@@ -294,7 +294,7 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
 
         // Note that during the creation, it's possible that we already have output, so, we
         // need to buffer anything up to the point where we actually have the interpreter.
-        let result = await commands.executeCommand("robot.internal.rfinteractive.start", {'uri': currUri});
+        let result = await commands.executeCommand("robot.internal.rfinteractive.start", {'uri': currUri.toString()});
         if (!result['success']) {
             window.showErrorMessage('Error creating interactive console: ' + result['message'])
             return;

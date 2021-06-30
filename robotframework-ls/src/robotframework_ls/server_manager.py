@@ -91,36 +91,11 @@ class _ServerApi(object):
         self._check_reinitialize_and_forward_settings_if_needed()
 
     def set_interpreter_info(self, interpreter_info: IInterpreterInfo) -> None:
+        from robotframework_ls.config_extension import apply_interpreter_info_to_config
+
         self._check_in_main_thread()
-        from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHON_ENV
-        from robotframework_ls.impl.robot_lsp_constants import (
-            OPTION_ROBOT_PYTHON_EXECUTABLE,
-        )
-        from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
-
         self._interpreter_info = interpreter_info
-
-        if interpreter_info is not None:
-            overridden_settings: dict = {}
-            python_exe = interpreter_info.get_python_exe()
-            if python_exe:
-                overridden_settings[OPTION_ROBOT_PYTHON_EXECUTABLE] = python_exe
-
-            environ = interpreter_info.get_environ()
-            if environ:
-                overridden_settings[OPTION_ROBOT_PYTHON_ENV] = environ
-
-            additional_pythonpath_entries = (
-                interpreter_info.get_additional_pythonpath_entries()
-            )
-            if additional_pythonpath_entries:
-                overridden_settings[
-                    OPTION_ROBOT_PYTHONPATH
-                ] = additional_pythonpath_entries
-
-            self._config.set_override_settings(overridden_settings)
-        else:
-            self._config.set_override_settings({})
+        apply_interpreter_info_to_config(self._config, interpreter_info)
 
         self._check_reinitialize_and_forward_settings_if_needed()
 

@@ -26,7 +26,6 @@ from robotframework_ls import __version__, rf_interactive_integration
 import typing
 import sys
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
-from robotframework_ls.rf_interactive_integration import _RfInterpretersManager
 
 
 log = get_logger(__name__)
@@ -128,6 +127,7 @@ class _LintManager(object):
 class RobotFrameworkLanguageServer(PythonLanguageServer):
     def __init__(self, rx, tx) -> None:
         from robocorp_ls_core.pluginmanager import PluginManager
+        from robotframework_ls.rf_interactive_integration import _RfInterpretersManager
         from robotframework_ls.server_manager import ServerManager
         from robotframework_ls.ep_providers import DefaultConfigurationProvider
         from robotframework_ls.ep_providers import DefaultEndPointProvider
@@ -158,7 +158,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         self._pm.set_instance(
             EPEndPointProvider, DefaultEndPointProvider(self._endpoint)
         )
-        self._rf_interpreters_manager = _RfInterpretersManager(self._endpoint)
+        self._rf_interpreters_manager = _RfInterpretersManager(self._endpoint, self._pm)
 
         watch_impl = os.environ.get("ROBOTFRAMEWORK_LS_WATCH_IMPL", "auto")
         if watch_impl not in ("watchdog", "fsnotify", "auto"):
