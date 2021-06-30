@@ -4,14 +4,13 @@ import os
 import time
 from robotframework_ls.constants import DEFAULT_COMPLETIONS_TIMEOUT
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Any, Optional, List, Dict, Union
+from typing import Any, Optional, List, Dict
 from robocorp_ls_core.protocols import (
     IConfig,
     IWorkspace,
     IIdMessageMatcher,
     IRobotFrameworkApiClient,
     IMonitor,
-    ActionResultDict,
 )
 from pathlib import Path
 from robotframework_ls.ep_providers import (
@@ -27,8 +26,7 @@ from robotframework_ls import __version__, rf_interactive_integration
 import typing
 import sys
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
-from concurrent import futures
-from robotframework_ls.rf_interactive_integration import _RfInterpretersManager, _RfInfo
+from robotframework_ls.rf_interactive_integration import _RfInterpretersManager
 
 
 log = get_logger(__name__)

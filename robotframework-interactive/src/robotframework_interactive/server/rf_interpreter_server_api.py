@@ -6,6 +6,7 @@ import threading
 from robotframework_interactive.protocols import IMessage, IRobotFrameworkInterpreter
 from robocorp_ls_core.options import DEFAULT_TIMEOUT, USE_TIMEOUTS, NO_TIMEOUT
 from typing import Optional
+import sys
 
 log = get_logger(__name__)
 
@@ -72,6 +73,10 @@ class RfInterpreterServerApi(PythonLanguageServer):
 
             def run_on_thread():
                 def on_main_loop(interpreter: IRobotFrameworkInterpreter):
+                    on_stdout(f"\nPython: {sys.version}\n{sys.executable}")
+                    import robot
+
+                    on_stdout(f"\nRobot Framework: {robot.get_version()}\n")
                     started_main_loop_event.set()
 
                     # Ok, we'll be stopped at this point receiving events and
