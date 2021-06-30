@@ -130,7 +130,7 @@ export class ConsoleComponent extends React.Component<IConsoleProps> {
             editor.addAction({
                 id: 'Evaluate',
                 label: 'Evaluate',
-                precondition: 'editorTextFocus && !inSnippetMode && !suggestWidgetVisible',
+                precondition: 'editorTextFocus && !suggestWidgetVisible',
                 keybindingContext: null,
                 contextMenuGroupId: 'navigation',
                 // keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
