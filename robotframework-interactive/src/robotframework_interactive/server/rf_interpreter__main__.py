@@ -28,7 +28,7 @@ def _stderr_reader(stream):
         log.debug("Finished reading from server api process stream.")
 
 
-def start_server_process(args=(), python_exe=None, env=None):
+def start_server_process(args=(), python_exe=None, env=None, cwd=None):
     """
     Calls this __main__ in another process.
 
@@ -67,6 +67,7 @@ def start_server_process(args=(), python_exe=None, env=None):
         stdin=subprocess.PIPE,
         env=environ,
         bufsize=0,
+        cwd=cwd,
     )
 
     t = threading.Thread(target=_stderr_reader, args=(language_server_process.stderr,))

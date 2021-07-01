@@ -515,38 +515,51 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return {"resultId": None, "data": []}
         return {"resultId": None, "data": semantic_tokens_full(context)}
 
-    def m_completions_from_code_full(
-        self, prefix: str = "", full_code: str = "", position=PositionTypedDict
+    def m_monaco_completions_from_code_full(
+        self,
+        prefix: str = "",
+        full_code: str = "",
+        position=PositionTypedDict,
+        uri: str = "",
+        indent: str = "",
     ):
         func = partial(
-            self.threaded_completions_from_code_full,
+            self.threaded_monaco_completions_from_code_full,
             prefix=prefix,
             full_code=full_code,
             position=position,
+            uri=uri,
+            indent=indent,
         )
         func = require_monitor(func)
         return func
 
-    def threaded_completions_from_code_full(
+    def threaded_monaco_completions_from_code_full(
         self,
         prefix: str,
         full_code: str,
         position: PositionTypedDict,
+        uri: str,
+        indent: str,
         monitor: Optional[IMonitor] = None,
     ):
         from robotframework_ls.impl.robot_workspace import RobotDocument
         from robotframework_ls.impl.completion_context import CompletionContext
         from robocorp_ls_core.workspace import Document
+        from robotframework_ls.impl import section_completions
+        from robotframework_ls.impl import snippets_completions
+        from robotframework_ls.server_api.monaco_conversions import (
+            convert_to_monaco_completion,
+        )
 
-        d = Document("~unnamed", prefix)
-        last_line, last_col = d.get_last_line_col()
+        d = Document(uri, prefix)
+        last_line, _last_col = d.get_last_line_col()
         line = last_line + position["line"]
 
         col = position["character"]
-        if line == last_line:
-            col += last_col
+        col += len(indent)
 
-        document = RobotDocument("~unnamed", full_code)
+        document = RobotDocument(uri, full_code)
         completion_context = CompletionContext(
             document,
             line,
@@ -555,21 +568,37 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             monitor=monitor,
             workspace=self.workspace,
         )
+        completions = self._complete_from_completion_context(completion_context)
+        completions.extend(section_completions.complete(completion_context))
+        completions.extend(snippets_completions.complete(completion_context))
+
         return {
-            "suggestions": self._complete_from_completion_context(completion_context)
+            "suggestions": [
+                convert_to_monaco_completion(
+                    c, line_delta=last_line, col_delta=len(indent)
+                )
+                for c in completions
+            ]
         }
 
-    def m_semantic_tokens_from_code_full(self, prefix: str = "", full_code: str = ""):
+    def m_semantic_tokens_from_code_full(
+        self, prefix: str = "", full_code: str = "", indent: str = ""
+    ):
         func = partial(
             self.threaded_semantic_tokens_from_code_full,
             prefix=prefix,
             full_code=full_code,
+            indent=indent,
         )
         func = require_monitor(func)
         return func
 
     def threaded_semantic_tokens_from_code_full(
-        self, prefix: str, full_code: str, monitor: Optional[IMonitor] = None
+        self,
+        prefix: str,
+        full_code: str,
+        indent: str,
+        monitor: Optional[IMonitor] = None,
     ):
         from robotframework_ls.impl.semantic_tokens import semantic_tokens_full_from_ast
 
@@ -602,6 +631,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             line = 0
             col = 0
             new_data = []
+            indent_len = len(indent)
             while True:
                 try:
                     line_delta = next(ints_iter)
@@ -617,23 +647,49 @@ class RobotFrameworkServerApi(PythonLanguageServer):
                 else:
                     col = col_delta
 
-                if line > last_line:
+                if line >= last_line:
                     new_data.append(line - last_line)
-                    new_data.append(col_delta)
+                    new_data.append(col_delta - indent_len)
                     new_data.append(token_len)
                     new_data.append(token_type)
                     new_data.append(token_modifier)
-                    new_data.extend(ints_iter)
+
+                    # Ok, now, we have to add the indent_len to all the
+                    # next lines
+                    while True:
+                        try:
+                            line_delta = next(ints_iter)
+                        except StopIteration:
+                            break
+                        col_delta = next(ints_iter)
+                        token_len = next(ints_iter)
+                        token_type = next(ints_iter)
+                        token_modifier = next(ints_iter)
+
+                        new_data.append(line_delta)
+                        if line_delta > 0:
+                            new_data.append(col_delta - indent_len)
+                        else:
+                            new_data.append(col_delta)
+                        new_data.append(token_len)
+                        new_data.append(token_type)
+                        new_data.append(token_modifier)
+
                     break
 
-                elif line == last_line and col >= last_col:
-                    new_data.append(0)
-                    new_data.append(col - last_col)
-                    new_data.append(token_len)
-                    new_data.append(token_type)
-                    new_data.append(token_modifier)
-                    new_data.extend(ints_iter)
-                    break
+                # Approach changed so that we always have a new line
+                # i.e.:
+                # \n<indent><code>
+                #
+                # so, the condition below no longer applies.
+                # elif line == last_line and col >= last_col:
+                #     new_data.append(0)
+                #     new_data.append(col - last_col)
+                #     new_data.append(token_len)
+                #     new_data.append(token_type)
+                #     new_data.append(token_modifier)
+                #     new_data.extend(ints_iter)
+                #     break
 
             # debug info...
             # temp_stream = io.StringIO()

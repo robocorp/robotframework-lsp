@@ -46,8 +46,11 @@ class RfInterpreterServerManager:
         from robotframework_interactive.server.rf_interpreter_ls_config import (
             RfInterpreterRobotConfig,
         )
+        from robocorp_ls_core import uris
 
+        assert uri
         self._uri = uri
+        self._filename = uris.to_fs_path(uri)
         self._lock_api_client = threading.RLock()
         self._server_process = None
         self._log_extension = ".rf_interpreter"
@@ -58,6 +61,14 @@ class RfInterpreterServerManager:
         self._verbose = verbose
         self._base_log_file = base_log_file
         self._on_interpreter_message = on_interpreter_message
+
+    @property
+    def uri(self) -> str:
+        return self._uri
+
+    @property
+    def filename(self) -> str:
+        return self._filename
 
     @property
     def config(self) -> IConfig:
@@ -191,8 +202,12 @@ class RfInterpreterServerManager:
                     args.append("--port")
                     args.append(str(port))
 
+                    cwd = os.path.dirname(self._filename)
+                    if not os.path.isdir(cwd):
+                        raise AssertionError(f"CWD passed is not a directory: {cwd}")
+
                     server_process = start_server_process(
-                        args=args, python_exe=python_exe, env=environ
+                        args=args, python_exe=python_exe, env=environ, cwd=cwd
                     )
 
                     self._server_process = server_process

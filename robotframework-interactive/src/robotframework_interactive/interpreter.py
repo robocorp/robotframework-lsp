@@ -118,14 +118,14 @@ class RobotFrameworkInterpreter(object):
         self._on_main_loop = None
 
         self._settings_section_name_to_block_mode = {
-            "SettingSection": "*** Settings ***\n",
-            "VariableSection": "*** Variables ***\n",
-            "TestCaseSection": "*** Test Case ***\nDefault Task/Test\n    ",
-            "KeywordSection": "*** Keyword ***\n",
-            "CommentSection": "*** Comment ***\n",
+            "SettingSection": ("*** Settings ***\n", ""),
+            "VariableSection": ("*** Variables ***\n", ""),
+            "TestCaseSection": ("*** Test Case ***\nDefault Task/Test\n", "    "),
+            "KeywordSection": ("*** Keyword ***\n", ""),
+            "CommentSection": ("*** Comment ***\n", ""),
         }
         self._last_section_name = "TestCaseSection"
-        self._last_block_mode = self._settings_section_name_to_block_mode[
+        self._last_block_mode_and_indent = self._settings_section_name_to_block_mode[
             self._last_section_name
         ]
         # the section we're tracking -> section ast
@@ -200,13 +200,13 @@ class RobotFrameworkInterpreter(object):
                 all previous evaluation so that the code-completion contains
                 the full information up to the current point.
         """
-        ret: EvaluateTextTypedDict = {"prefix": "", "full_code": code}
+        ret: EvaluateTextTypedDict = {"prefix": "", "full_code": code, "indent": ""}
 
         if target_type == "completions":
-            if code.strip().startswith("***"):
+            if code.strip().startswith("*"):
                 # easy mode, just get the full doc and concatenate it with the code.
                 prefix = self.full_doc + "\n"
-                ret = {"prefix": prefix, "full_code": prefix + code}
+                ret = {"prefix": prefix, "full_code": prefix + code, "indent": ""}
             else:
                 # Ok, we need to see how the current code would fit in with the
                 # existing code.
@@ -223,21 +223,60 @@ class RobotFrameworkInterpreter(object):
                             else:
                                 break
                         indent = "".join(whitespaces)
-                        prefix = first_part + delimiter + last_line + "\n" + indent
-                        ret = {"prefix": prefix, "full_code": prefix + code}
+
+                        if not indent:
+                            # Corner case: the user entered:
+                            # *** Tasks ***
+                            # Task name
+                            #
+                            # but didn't add any keyword call -- we have to
+                            # indent ourselves here.
+                            _last_mode, indent = self._last_block_mode_and_indent
+                            prefix = self.full_doc + "\n"
+                            indented_code = indent + ("\n" + indent).join(
+                                code.split("\n")
+                            )
+                            return {
+                                "prefix": prefix,
+                                "full_code": prefix + indented_code,
+                                "indent": indent,
+                            }
+
+                        prefix = first_part + delimiter + last_line + "\n"
+                        indented_code = indent + ("\n" + indent).join(code.split("\n"))
+                        ret = {
+                            "prefix": prefix,
+                            "full_code": prefix + indented_code,
+                            "indent": indent,
+                        }
 
                     else:
-                        ret = {"prefix": prefix, "full_code": prefix + "\n" + code}
+                        ret = {
+                            "prefix": prefix,
+                            "full_code": prefix + "\n" + code,
+                            "indent": indent,
+                        }
                 else:
                     # There's no entry for this kind of section so far, so, we
                     # need to get the full block mode.
-                    prefix = self.full_doc + "\n" + self._last_block_mode
-                    ret = {"prefix": prefix, "full_code": prefix + code}
+                    last_mode, indent = self._last_block_mode_and_indent
+                    prefix = self.full_doc + "\n" + last_mode
+                    indented_code = indent + ("\n" + indent).join(code.split("\n"))
+                    ret = {
+                        "prefix": prefix,
+                        "full_code": prefix + indented_code,
+                        "indent": indent,
+                    }
 
         else:
-            if not code.strip().startswith("***"):
-                code = self._last_block_mode + code
-                ret = {"prefix": self._last_block_mode, "full_code": code}
+            if not code.strip().startswith("*"):
+                last_mode, indent = self._last_block_mode_and_indent
+                indented_code = indent.join(code.split("\n"))
+                ret = {
+                    "prefix": last_mode,
+                    "indent": indent,
+                    "full_code": last_mode + indent + indented_code,
+                }
 
         return ret
 
@@ -277,8 +316,7 @@ class RobotFrameworkInterpreter(object):
         EXECUTION_CONTEXTS = facade.EXECUTION_CONTEXTS
         SuiteBuilder = facade.SuiteBuilder
 
-        if not code.strip().startswith("***"):
-            code = self._last_block_mode + code
+        code = self.compute_evaluate_text(code)["full_code"]
 
         model = get_model(
             StringIO(code),
@@ -306,14 +344,14 @@ class RobotFrameworkInterpreter(object):
         #
         # last_section = model.sections[-1]
         # last_section_name = last_section.__class__.__name__
-        last_section_name = "TestCaseSection"
-        block_mode = self._settings_section_name_to_block_mode.get(last_section_name)
-        if block_mode is None:
-            self.on_stderr(f"Unable to find block mode for: {last_section_name}")
-
-        else:
-            self._last_block_mode = block_mode
-            self._last_section_name = last_section_name
+        # last_section_name = "TestCaseSection"
+        # block_mode = self._settings_section_name_to_block_mode.get(last_section_name)
+        # if block_mode is None:
+        #     self.on_stderr(f"Unable to find block mode for: {last_section_name}")
+        #
+        # else:
+        #     self._last_block_mode_and_indent = block_mode
+        #     self._last_section_name = last_section_name
 
         new_suite = TestSuite(name="Default test suite")
         defaults = TestDefaults()
@@ -364,7 +402,14 @@ class RobotFrameworkInterpreter(object):
 
                 current = self._doc_parts[section_name]
                 if not current:
-                    current = self._doc_parts[section_name] = section
+                    add = True
+                    if section.__class__.__name__ == "TestCaseSection" and (
+                        not section.body
+                        or (len(section.body) == 1 and not section.body[0].body)
+                    ):
+                        add = False
+                    if add:
+                        current = self._doc_parts[section_name] = section
                 else:
                     if current.__class__.__name__ == "TestCaseSection":
                         current = current.body[-1]
@@ -373,18 +418,19 @@ class RobotFrameworkInterpreter(object):
                     else:
                         current.body.extend(section.body)
 
-                # Make sure that there is a '\n' as the last EOL.
-                last_in_body = current.body[-1]
-                while not hasattr(last_in_body, "tokens"):
-                    last_in_body = last_in_body.body[-1]
-                tokens = last_in_body.tokens
-                last_token = tokens[-1]
-                found_new_line = False
-                if last_token.type == Token.EOL:
-                    if not last_token.value:
-                        last_token.value = "\n"
-                        found_new_line = True
-                if not found_new_line:
-                    last_in_body.tokens += (Token("EOL", "\n"),)
+                if current is not None:
+                    # Make sure that there is a '\n' as the last EOL.
+                    last_in_body = current.body[-1]
+                    while not hasattr(last_in_body, "tokens"):
+                        last_in_body = last_in_body.body[-1]
+                    tokens = last_in_body.tokens
+                    last_token = tokens[-1]
+                    found_new_line = False
+                    if last_token.type == Token.EOL:
+                        if not last_token.value:
+                            last_token.value = "\n"
+                            found_new_line = True
+                    if not found_new_line:
+                        last_in_body.tokens += (Token("EOL", "\n"),)
 
         return {"success": True, "message": None, "result": None}

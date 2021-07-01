@@ -1,6 +1,7 @@
 import logging
 import os
 from robocorp_ls_core.protocols import ILanguageServerClient
+import pytest
 
 
 log = logging.getLogger(__name__)
@@ -854,20 +855,22 @@ User can call builtin 2
         language_server.close_doc(uri1)
 
 
-def test_rf_interactive_integrated(
-    language_server_io: ILanguageServerClient, ws_root_path
-):
+class _RfInterpreterInfo:
+    def __init__(self, interpreter_id):
+        self.interpreter_id = interpreter_id
+
+
+@pytest.fixture
+def rf_interpreter_startup(language_server_io: ILanguageServerClient, ws_root_path):
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_START
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_STOP
-    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE
-    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS
-    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS
-    from robocorp_ls_core.lsp import Position
+    from robocorp_ls_core import uris
 
     language_server = language_server_io
 
     language_server.initialize(ws_root_path, process_id=os.getpid())
-    uri = os.path.join(ws_root_path, "my.robot")
+    os.makedirs(ws_root_path, exist_ok=True)
+    uri = uris.from_fs_path(os.path.join(ws_root_path, "my.robot"))
 
     ret1 = language_server.execute_command(
         ROBOT_INTERNAL_RFINTERACTIVE_START, [{"uri": uri}]
@@ -877,6 +880,28 @@ def test_rf_interactive_integrated(
         "message": None,
         "result": {"interpreter_id": 0},
     }
+    yield _RfInterpreterInfo(interpreter_id=0)
+    # Note: success could be False if it was stopped in the test...
+    language_server.execute_command(
+        ROBOT_INTERNAL_RFINTERACTIVE_STOP, [{"interpreter_id": 0}]
+    )
+
+
+def test_rf_interactive_integrated_basic(
+    language_server_io: ILanguageServerClient,
+    ws_root_path,
+    rf_interpreter_startup: _RfInterpreterInfo,
+):
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_START
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_STOP
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS
+    from robocorp_ls_core.lsp import Position
+    from robocorp_ls_core import uris
+
+    language_server = language_server_io
+    uri = uris.from_fs_path(os.path.join(ws_root_path, "my.robot"))
 
     ret2 = language_server.execute_command(
         ROBOT_INTERNAL_RFINTERACTIVE_START, [{"uri": uri}]
@@ -974,3 +999,47 @@ Some task
         ROBOT_INTERNAL_RFINTERACTIVE_STOP, [{"interpreter_id": 1}]
     )
     assert stop2["result"] == {"success": True, "message": None, "result": None}
+
+
+def test_rf_interactive_integrated_completions(
+    language_server_io: ILanguageServerClient,
+    ws_root_path,
+    rf_interpreter_startup: _RfInterpreterInfo,
+):
+
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS
+    from robocorp_ls_core.lsp import Position
+
+    language_server = language_server_io
+    completions = language_server.execute_command(
+        ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS,
+        [
+            {
+                "interpreter_id": rf_interpreter_startup.interpreter_id,
+                "code": "\n\nLo",
+                "position": Position(2, 2).to_dict(),
+            }
+        ],
+    )
+
+    for completion in completions["result"]["suggestions"]:
+        if completion["label"] == "Log":
+            assert completion == {
+                "label": "Log",
+                "kind": 0,
+                "insertText": "Log    ${1:message}",
+                "insertTextRules": 4,
+                "documentation": "Log(message, level=INFO, html=False, console=False, repr=False, formatter=str)\n\nLogs the given message with the given level.\n\n Valid levels are TRACE, DEBUG, INFO (default), HTML, WARN, and ERROR. Messages below the current active log level are ignored. See [Set Log Level](#Set%20Log%20Level) keyword and --loglevel command line option for more details about setting the level.\n\n Messages logged with the WARN or ERROR levels will be automatically visible also in the console and in the Test Execution Errors section in the log file.\n\n If the html argument is given a true value (see [Boolean arguments](#Boolean%20arguments)), the message will be considered HTML and special characters such as < are not escaped. For example, logging <img src=\"image.png\"> creates an image when html is true, but otherwise the message is that exact string. An alternative to using the html argument is using the HTML pseudo log level. It logs the message as HTML using the INFO level.\n\n If the console argument is true, the message will be written to the console where test execution was started from in addition to the log file. This keyword always uses the standard output stream and adds a newline after the written message. Use [Log To Console](#Log%20To%20Console) instead if either of these is undesirable,\n\n The formatter argument controls how to format the string representation of the message. Possible values are str (default), repr and ascii, and they work similarly to Python built-in functions with same names. When using repr, bigger lists, dictionaries and other containers are also pretty-printed so that there is one item per row. For more details see [String representations](#String%20representations). This is a new feature in Robot Framework 3.1.2.\n\n The old way to control string representation was using the repr argument, and repr=True is still equivalent to using formatter=repr. The repr argument will be deprecated in the future, though, and using formatter is thus recommended.\n\n Examples:\n\n   Log\t Hello, world!\t \t \t \\# Normal INFO message.\t \n  Log\t Warning, world!\t WARN\t \t \\# Warning.\t \n  Log\t <b>Hello</b>, world!\t html=yes\t \t \\# INFO message as HTML.\t \n  Log\t <b>Hello</b>, world!\t HTML\t \t \\# Same as above.\t \n  Log\t <b>Hello</b>, world!\t DEBUG\t html=true\t \\# DEBUG as HTML.\t \n  Log\t Hello, console!\t console=yes\t \t \\# Log also to the console.\t \n  Log\t Null is \\x00\t formatter=repr\t \t \\# Log 'Null is \\x00'.\t \n \n See [Log Many](#Log%20Many) if you want to log multiple messages in one go, and [Log To Console](#Log%20To%20Console) if you only want to write to the console.\n\n",
+                "range": {
+                    "start": {"line": 5, "character": 4},
+                    "end": {"line": 5, "character": 6},
+                    "startLineNumber": 3,
+                    "startColumn": 1,
+                    "endLineNumber": 3,
+                    "endColumn": 3,
+                },
+                "preselect": False,
+            }
+            break
+    else:
+        raise AssertionError('Did not find "Log" in the suggestions.')

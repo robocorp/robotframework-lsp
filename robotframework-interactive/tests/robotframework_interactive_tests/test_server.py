@@ -25,10 +25,10 @@ def setup(tmpdir):
     def on_interpreter_message(msg):
         received_messages.append(msg)
 
-    rf_interpreter_server_manager = RfInterpreterServerManager(
-        on_interpreter_message=on_interpreter_message
-    )
     uri = uris.from_fs_path(str(tmpdir.join("my.robot")))
+    rf_interpreter_server_manager = RfInterpreterServerManager(
+        on_interpreter_message=on_interpreter_message, uri=uri
+    )
     yield _Setup(rf_interpreter_server_manager, received_messages, uri)
     rf_interpreter_server_manager.interpreter_stop()
 
@@ -70,7 +70,8 @@ Some task
         "success": True,
         "message": None,
         "result": {
-            "prefix": "*** Test Case ***\nDefault Task/Test\n    ",
+            "prefix": "*** Test Case ***\nDefault Task/Test\n",
+            "indent": "    ",
             "full_code": "*** Test Case ***\nDefault Task/Test\n    Log    Foo     console=True",
         },
     }
@@ -110,8 +111,22 @@ Some task
         "success": True,
         "message": None,
         "result": {
-            "prefix": "*** Task ***\nSome task\n    Log    Something     console=True\n\n    Log    Else     console=True\n    ",
+            "prefix": "*** Task ***\nSome task\n    Log    Something     console=True\n\n    Log    Else     console=True\n",
+            "indent": "    ",
             "full_code": "*** Task ***\nSome task\n    Log    Something     console=True\n\n    Log    Else     console=True\n    Log    Foo     console=True",
+        },
+    }
+
+    result = rf_interpreter_server_manager.interpreter_compute_evaluate_text(
+        "Log    Bar\nLog    Foo     console=True", target_type="completions"
+    )
+    assert result == {
+        "success": True,
+        "message": None,
+        "result": {
+            "prefix": "*** Task ***\nSome task\n    Log    Something     console=True\n\n    Log    Else     console=True\n",
+            "indent": "    ",
+            "full_code": "*** Task ***\nSome task\n    Log    Something     console=True\n\n    Log    Else     console=True\n    Log    Bar\n    Log    Foo     console=True",
         },
     }
 
@@ -130,7 +145,79 @@ def test_server_full_code_02(setup: _Setup):
         "success": True,
         "message": None,
         "result": {
-            "prefix": "\n*** Test Case ***\nDefault Task/Test\n    ",
+            "prefix": "\n*** Test Case ***\nDefault Task/Test\n",
+            "indent": "    ",
             "full_code": "\n*** Test Case ***\nDefault Task/Test\n    Log    Foo     console=True",
+        },
+    }
+
+
+def test_server_full_code_03(setup: _Setup):
+    rf_interpreter_server_manager = setup.rf_interpreter_server_manager
+
+    result = rf_interpreter_server_manager.interpreter_start(setup.uri)
+    assert result["success"], f"Found: {result}"
+
+    # Before first evaluation
+    result = rf_interpreter_server_manager.interpreter_compute_evaluate_text(
+        "\n\nLog    Foo     console=True", target_type="completions"
+    )
+    assert result == {
+        "success": True,
+        "message": None,
+        "result": {
+            "prefix": "\n*** Test Case ***\nDefault Task/Test\n",
+            "indent": "    ",
+            "full_code": "\n*** Test Case ***\nDefault Task/Test\n    \n    \n    Log    Foo     console=True",
+        },
+    }
+
+
+def test_server_full_code_04(setup: _Setup):
+    rf_interpreter_server_manager = setup.rf_interpreter_server_manager
+
+    result = rf_interpreter_server_manager.interpreter_start(setup.uri)
+    assert result["success"], f"Found: {result}"
+
+    # This does nothing in practice
+    result = rf_interpreter_server_manager.interpreter_evaluate(
+        "*** Task ***\nTask name"
+    )
+
+    result = rf_interpreter_server_manager.interpreter_compute_evaluate_text(
+        "\n\nLog    Foo     console=True", target_type="completions"
+    )
+    assert result == {
+        "success": True,
+        "message": None,
+        "result": {
+            "prefix": "\n*** Test Case ***\nDefault Task/Test\n",
+            "indent": "    ",
+            "full_code": "\n*** Test Case ***\nDefault Task/Test\n    \n    \n    Log    Foo     console=True",
+        },
+    }
+
+
+def test_server_full_code_05(setup: _Setup):
+    rf_interpreter_server_manager = setup.rf_interpreter_server_manager
+
+    result = rf_interpreter_server_manager.interpreter_start(setup.uri)
+    assert result["success"], f"Found: {result}"
+
+    # This does nothing in practice
+    result = rf_interpreter_server_manager.interpreter_evaluate(
+        "*** Task ***\nTask name"
+    )
+
+    result = rf_interpreter_server_manager.interpreter_compute_evaluate_text(
+        "\n\nLog    Foo     console=True", target_type="completions"
+    )
+    assert result == {
+        "success": True,
+        "message": None,
+        "result": {
+            "prefix": "\n*** Test Case ***\nDefault Task/Test\n",
+            "indent": "    ",
+            "full_code": "\n*** Test Case ***\nDefault Task/Test\n    \n    \n    Log    Foo     console=True",
         },
     }

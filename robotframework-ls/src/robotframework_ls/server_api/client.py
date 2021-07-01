@@ -113,29 +113,39 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         )
 
     def request_semantic_tokens_from_code_full(
-        self, prefix: str, full_code: str
+        self, prefix: str, full_code: str, indent: str
     ) -> Optional[IIdMessageMatcher]:
         """
         :Note: async complete.
         """
         return self.request_async(
             self._build_msg(
-                "semanticTokensFromCodeFull", prefix=prefix, full_code=full_code
+                "semanticTokensFromCodeFull",
+                prefix=prefix,
+                full_code=full_code,
+                indent=indent,
             )
         )
 
-    def request_completions_from_code(
-        self, prefix: str, full_code: str, position: PositionTypedDict
+    def request_monaco_completions_from_code(
+        self,
+        prefix: str,
+        full_code: str,
+        position: PositionTypedDict,
+        uri: str,
+        indent: str,
     ) -> Optional[IIdMessageMatcher]:
         """
         :Note: async complete.
         """
         return self.request_async(
             self._build_msg(
-                "completionsFromCodeFull",
+                "monacoCompletionsFromCodeFull",
                 prefix=prefix,
                 full_code=full_code,
                 position=position,
+                uri=uri,
+                indent=indent,
             )
         )
 

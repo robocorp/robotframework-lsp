@@ -43,7 +43,7 @@ class _RfInterpretersManager:
 
     def interpreter_start(
         self, arguments, config: IConfig
-    ) -> IFuture[ActionResultDict]:
+    ) -> Union[IFuture[ActionResultDict], ActionResultDict]:
 
         if not arguments:
             return ActionResult(
@@ -291,6 +291,7 @@ def _handle_semantic_tokens(
                     "request_semantic_tokens_from_code_full",
                     prefix=code["prefix"],
                     full_code=code["full_code"],
+                    indent=code["indent"],
                     monitor=None,
                 )
         except:
@@ -322,6 +323,10 @@ def _handle_completions(language_server_impl, rf_interpreters_manager, arguments
         return {"suggestions": []}
 
     def run():
+        from robotframework_interactive.server.rf_interpreter_server_manager import (
+            RfInterpreterServerManager,
+        )
+
         try:
             args: dict = arguments[0]
             code = args.get("code", Sentinel.SENTINEL)
@@ -338,7 +343,9 @@ def _handle_completions(language_server_impl, rf_interpreters_manager, arguments
             # if context is Sentinel.SENTINEL:
             #     pass
 
-            evaluate_text_result = rf_info_or_dict_error.interpreter.interpreter_compute_evaluate_text(
+            interpreter: RfInterpreterServerManager = rf_info_or_dict_error.interpreter
+            uri = interpreter.uri
+            evaluate_text_result = interpreter.interpreter_compute_evaluate_text(
                 code, "completions"
             )
             if not evaluate_text_result["success"]:
@@ -351,9 +358,11 @@ def _handle_completions(language_server_impl, rf_interpreters_manager, arguments
 
                 return language_server_impl._async_api_request_no_doc(
                     api,
-                    "request_completions_from_code",
+                    "request_monaco_completions_from_code",
                     prefix=code["prefix"],
                     full_code=code["full_code"],
+                    indent=code["indent"],
+                    uri=uri,
                     position=position,
                     monitor=None,
                 )
