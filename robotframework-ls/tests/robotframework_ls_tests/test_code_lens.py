@@ -1,4 +1,4 @@
-def test_run_code_lens_basic(workspace, libspec_manager, data_regression):
+def test_code_lens_run_basic(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.code_lens import code_lens
     import os

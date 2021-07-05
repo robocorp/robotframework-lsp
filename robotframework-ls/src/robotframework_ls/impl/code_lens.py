@@ -44,7 +44,6 @@ def list_tests(completion_context: ICompletionContext) -> List[ITestInfoTypedDic
 
 
 def code_lens(completion_context: ICompletionContext) -> List[CodeLensTypedDict]:
-    from robotframework_ls.impl import ast_utils
     from robocorp_ls_core.lsp import CommandTypedDict
     from robot.api import Token  # noqa
     from robocorp_ls_core.lsp import PositionTypedDict
@@ -55,13 +54,16 @@ def code_lens(completion_context: ICompletionContext) -> List[CodeLensTypedDict]
     completion_context.check_cancelled()
 
     ret: List[CodeLensTypedDict] = []
-    node_info: NodeInfo
 
     start: PositionTypedDict = {"line": 0, "character": 0}
     end: PositionTypedDict = {"line": 0, "character": 0}
     code_lens_range: RangeTypedDict = {"start": start, "end": end}
 
-    test_case_sections = list(ast_utils.iter_test_case_sections(ast))
+    sections = ast.sections
+
+    test_case_sections = [
+        x for x in sections if x.__class__.__name__ == "TestCaseSection"
+    ]
 
     if len(test_case_sections) > 0:
         # Run Test command
@@ -94,9 +96,9 @@ def code_lens(completion_context: ICompletionContext) -> List[CodeLensTypedDict]
 
         ret.append({"range": code_lens_range, "command": command})
 
-    for node_info in test_case_sections:
+    for test_case in test_case_sections:
         try:
-            for test_node in node_info.node.body:
+            for test_node in test_case.body:
                 test_case_name_token = test_node.header.get_token(Token.TESTCASE_NAME)
                 completion_context.check_cancelled()
 
