@@ -856,8 +856,9 @@ User can call builtin 2
 
 
 class _RfInterpreterInfo:
-    def __init__(self, interpreter_id):
+    def __init__(self, interpreter_id: int, uri: str):
         self.interpreter_id = interpreter_id
+        self.uri = uri
 
 
 @pytest.fixture
@@ -880,7 +881,7 @@ def rf_interpreter_startup(language_server_io: ILanguageServerClient, ws_root_pa
         "message": None,
         "result": {"interpreter_id": 0},
     }
-    yield _RfInterpreterInfo(interpreter_id=0)
+    yield _RfInterpreterInfo(interpreter_id=0, uri=uri)
     # Note: success could be False if it was stopped in the test...
     language_server.execute_command(
         ROBOT_INTERNAL_RFINTERACTIVE_STOP, [{"interpreter_id": 0}]
@@ -889,7 +890,6 @@ def rf_interpreter_startup(language_server_io: ILanguageServerClient, ws_root_pa
 
 def test_rf_interactive_integrated_basic(
     language_server_io: ILanguageServerClient,
-    ws_root_path,
     rf_interpreter_startup: _RfInterpreterInfo,
 ):
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_START
@@ -898,10 +898,9 @@ def test_rf_interactive_integrated_basic(
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS
     from robocorp_ls_core.lsp import Position
-    from robocorp_ls_core import uris
 
     language_server = language_server_io
-    uri = uris.from_fs_path(os.path.join(ws_root_path, "my.robot"))
+    uri = rf_interpreter_startup.uri
 
     ret2 = language_server.execute_command(
         ROBOT_INTERNAL_RFINTERACTIVE_START, [{"uri": uri}]
@@ -1003,7 +1002,6 @@ Some task
 
 def test_rf_interactive_integrated_completions(
     language_server_io: ILanguageServerClient,
-    ws_root_path,
     rf_interpreter_startup: _RfInterpreterInfo,
 ):
 
@@ -1043,3 +1041,45 @@ def test_rf_interactive_integrated_completions(
             break
     else:
         raise AssertionError('Did not find "Log" in the suggestions.')
+
+
+def test_rf_interactive_integrated_fs_completions(
+    language_server_io: ILanguageServerClient,
+    rf_interpreter_startup: _RfInterpreterInfo,
+    data_regression,
+):
+    from robocorp_ls_core import uris
+    from robocorp_ls_core.workspace import Document
+
+    # Check that we're able to get completions based on the current dir.
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS
+    from robocorp_ls_core.lsp import Position
+
+    uri = rf_interpreter_startup.uri
+    fs_path = uris.to_fs_path(uri)
+    dirname = os.path.dirname(fs_path)
+    with open(os.path.join(dirname, "my_lib_03.py"), "w") as stream:
+        stream.write(
+            """
+def some_method():
+    pass
+"""
+        )
+
+    language_server = language_server_io
+    code = "*** Settings ***\nLibrary    ./my_"
+    doc = Document(uri, code)
+    completions = language_server.execute_command(
+        ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS,
+        [
+            {
+                "interpreter_id": rf_interpreter_startup.interpreter_id,
+                "code": code,
+                "position": Position(*doc.get_last_line_col()).to_dict(),
+            }
+        ],
+    )
+
+    suggestions = completions["result"]["suggestions"]
+    assert suggestions
+    data_regression.check(suggestions)

@@ -1,0 +1,17 @@
+- documentation: ''
+  insertText: my_lib_03.py
+  insertTextRules: 4
+  kind: 8
+  label: my_lib_03.py
+  preselect: false
+  range:
+    end:
+      character: 16
+      line: 2
+    endColumn: 17
+    endLineNumber: 2
+    start:
+      character: 13
+      line: 2
+    startColumn: 14
+    startLineNumber: 2

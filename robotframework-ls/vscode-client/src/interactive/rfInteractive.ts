@@ -267,8 +267,13 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
     async function createInteractiveShell() {
         let activeFile = vscode.window.activeTextEditor?.document;
         let currUri = activeFile?.uri;
+        let msg = 'Unable to create Robot Framework Scratchpad. Please open the related .robot file to provide the path used to create the Scratchpad.';
         if(!currUri){
-            window.showErrorMessage('Unable to create Robot Framework Scratchpad. Please open the related .robot file to provide the path used to create the Scratchpad.')
+            window.showErrorMessage(msg)
+            return;
+        }
+        if(!currUri.fsPath.endsWith(".robot")){
+            window.showErrorMessage(msg)
             return;
         }
 

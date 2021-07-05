@@ -71,6 +71,7 @@ class _RfInterpretersManager:
                 apply_interpreter_info_to_config,
             )
             from robocorp_ls_core.ep_resolve_interpreter import EPResolveInterpreter
+            from robocorp_ls_core import uris
 
             import_rf_interactive()
 
@@ -107,6 +108,7 @@ class _RfInterpretersManager:
                     on_interpreter_message=on_interpreter_message,
                     uri=uri,
                 )
+                fs_path = uris.to_fs_path(uri)
                 rf_interpreter_server_manager.config = config
                 rf_config = rf_interpreter_server_manager.config
 
@@ -130,6 +132,13 @@ class _RfInterpretersManager:
                         apply_interpreter_info_to_config(rf_config, interpreter_info)
                         break
 
+                on_interpreter_message(
+                    {
+                        "jsonrpc": "2.0",
+                        "method": "interpreter/output",
+                        "params": {"output": f"Path: {fs_path}\n", "category": "info"},
+                    }
+                )
                 rf_interpreter_server_manager.interpreter_start(uri)
                 ls_thread_pool = futures.ThreadPoolExecutor(max_workers=2)
                 self._interpreter_id_to_rf_info[interpreter_id] = _RfInfo(
