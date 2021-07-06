@@ -87,6 +87,10 @@ export let eventToHandler = {
     'output': undefined
 }
 
+export let requestToHandler = {
+    'evaluate': undefined
+}
+
 // i.e.: Receive message from client
 window.addEventListener('message', event => {
     let msg = event.data;
@@ -107,10 +111,18 @@ window.addEventListener('message', event => {
                 if (handler) {
                     handler(msg);
                 } else {
-                    console.log('Unhandled: ', msg);
+                    console.log('Unhandled event: ', msg);
                 }
                 break;
-
+            case 'request':
+                // Process some request
+                let requestHandler = requestToHandler[msg.command];
+                if (requestHandler) {
+                    requestHandler(msg);
+                } else {
+                    console.log('Unhandled request: ', msg);
+                }
+                break;
         }
     }
 })

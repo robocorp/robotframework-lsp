@@ -1,0 +1,11 @@
+command: null
+data:
+  type: scratchpad
+  uri: untitled:Untitled-1
+range:
+  end:
+    character: 6
+    line: 2
+  start:
+    character: 0
+    line: 2

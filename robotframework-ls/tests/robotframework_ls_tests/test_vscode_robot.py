@@ -1083,3 +1083,30 @@ def some_method():
     suggestions = completions["result"]["suggestions"]
     assert suggestions
     data_regression.check(suggestions)
+
+
+def test_code_lens_integrated_rf_interactive(
+    language_server_io: ILanguageServerClient, ws_root_path, data_regression
+):
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    txt = """
+*** Task ***
+Log It
+    Log    
+"""
+    language_server.open_doc(uri, 1, txt)
+
+    ret = language_server.request_code_lens(uri)
+    found = ret["result"]
+    for code_lens in found:
+        if code_lens.get("data", {}).get("type") == "scratchpad":
+            break
+    else:
+        raise AssertionError(f"Unable to find Scratchpad code lens in: {ret}")
+    data_regression.check(code_lens, basename="code_lens_before_resolve")
+
+    resolved_code_lens = language_server.request_resolve_code_lens(code_lens)
+    data_regression.check(resolved_code_lens, basename="code_lens_after_resolve")

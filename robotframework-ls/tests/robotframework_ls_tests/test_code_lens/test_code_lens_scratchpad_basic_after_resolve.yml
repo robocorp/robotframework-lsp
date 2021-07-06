@@ -1,0 +1,17 @@
+- command:
+    arguments:
+    - code: "*** Test Case ***\nSome Test\n    [Documentation]      Docs\n    Some\
+        \ Keyword\n    \n"
+      uri: case4.robot
+    command: robot.interactiveShell
+    title: Scratchpad
+  data:
+    type: scratchpad
+    uri: case4.robot
+  range:
+    end:
+      character: 9
+      line: 7
+    start:
+      character: 0
+      line: 7

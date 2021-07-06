@@ -422,6 +422,27 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
         return code_lens(completion_context)
 
+    def m_resolve_code_lens(self, **code_lens: CodeLensTypedDict):
+        func = partial(self._threaded_resolve_code_lens, code_lens)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_resolve_code_lens(
+        self, code_lens: CodeLensTypedDict, monitor: IMonitor
+    ) -> CodeLensTypedDict:
+        from robotframework_ls.impl.code_lens import code_lens_resolve
+
+        data = code_lens.get("data")
+        if not isinstance(data, dict):
+            return code_lens
+
+        doc_uri = data.get("uri")
+        completion_context = self._create_completion_context(doc_uri, 0, 0, monitor)
+        if completion_context is None:
+            return code_lens
+
+        return code_lens_resolve(completion_context, code_lens)
+
     def m_document_symbol(self, doc_uri: str):
         func = partial(self._threaded_document_symbol, doc_uri)
         func = require_monitor(func)

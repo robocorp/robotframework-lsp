@@ -5,8 +5,9 @@ import {ConsoleComponent} from './consoleComponent';
 
 import './style.css';
 import spinner from "./spinner.svg";
-import { IEvaluateMessage, nextMessageSeq, sendRequestToClient, eventToHandler, IOutputEvent, sendEventToClient } from './vscodeComm';
+import { IEvaluateMessage, nextMessageSeq, sendRequestToClient, eventToHandler, IOutputEvent, sendEventToClient, requestToHandler } from './vscodeComm';
 import { configureMonacoLanguage } from './monacoConf';
+import { monaco } from 'react-monaco-editor';
 
 interface ICellInfo {
     id: number
@@ -29,6 +30,11 @@ interface IHistoryProps extends ICellsContainer {
 
 interface ICellProps {
     cellInfo: ICellInfo
+}
+
+interface IEvaluateRequest {
+    uri: string
+    code: string
 }
 
 class CellComponent extends React.Component<ICellProps> {
@@ -97,7 +103,8 @@ class AppComponent extends React.Component<object, IAppState> {
             showProgress: 0
         };
         this.handleEvaluate = this.handleEvaluate.bind(this);
-        eventToHandler['output'] = this.onOutput.bind(this)
+        eventToHandler['output'] = this.onEventOutput.bind(this);
+        requestToHandler['evaluate'] = this.onRequestEvaluate.bind(this);
 
         sendEventToClient({
             type: 'event',
@@ -106,7 +113,7 @@ class AppComponent extends React.Component<object, IAppState> {
         });
     }
 
-    async onOutput(msg: IOutputEvent) {
+    async onEventOutput(msg: IOutputEvent) {
         this.setState((prevState, props) => {
             let type: 'stdout' | 'stderr' | 'info' = 'stdout';
             switch(msg.category){
@@ -136,6 +143,14 @@ class AppComponent extends React.Component<object, IAppState> {
             };
 
         });
+    }
+
+    // i.e.: VSCode can send something to be evaluated in the webview.
+    async onRequestEvaluate(msg: IEvaluateRequest){
+        const LANGUAGE_ID = 'robotframework-ls';
+        let code = msg['body'].code;
+        let colorized = await monaco.editor.colorize(code, LANGUAGE_ID, {});
+        await this.handleEvaluate(code, colorized);
     }
 
     async handleEvaluate(code: string, codeAsHtml: string) {

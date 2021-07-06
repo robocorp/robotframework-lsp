@@ -43,9 +43,9 @@ async function executeCheckedCommand(commandId: string, args: any) {
     }
 }
 
-class InteractiveShellPanel {
-    // public static currentPanel: InteractiveShellPanel | undefined;
+let _lastActive: InteractiveShellPanel | undefined = undefined;
 
+class InteractiveShellPanel {
     public static readonly viewType = 'InteractiveShellPanel';
 
     private readonly _panel: vscode.WebviewPanel;
@@ -73,7 +73,6 @@ class InteractiveShellPanel {
             localResourceRoot = vscode.Uri.file("X:/vscode-robot/robotframework-lsp/robotframework-interactive/vscode-interpreter-webview/dist")
         }
 
-        // Otherwise, create a new panel.
         const panel = vscode.window.createWebviewPanel(
             InteractiveShellPanel.viewType,
             'Robot Framework Scratchpad',
@@ -81,7 +80,20 @@ class InteractiveShellPanel {
             getWebviewOptions(localResourceRoot),
         );
 
-        return new InteractiveShellPanel(panel, localResourceRoot, interpreterId);
+        let interactiveShellPanel = new InteractiveShellPanel(panel, localResourceRoot, interpreterId);
+        _lastActive = interactiveShellPanel;
+        panel.onDidChangeViewState(() => {
+            if (panel.active) {
+                OUTPUT_CHANNEL.appendLine('Changed active: ' + interactiveShellPanel._interpreterId);
+                _lastActive = interactiveShellPanel;
+            }
+        });
+        panel.onDidDispose(() => {
+            if (_lastActive === interactiveShellPanel) {
+                _lastActive = undefined;
+            }
+        });
+        return interactiveShellPanel;
     }
 
     private constructor(panel: vscode.WebviewPanel, localResourceRoot: vscode.Uri, interpreterId: number) {
@@ -95,13 +107,12 @@ class InteractiveShellPanel {
         });
 
         // Set the webview's initial html content
-        this._update();
-
+        const webview = this._panel.webview;
+        this._panel.webview.html = this._getHtmlForWebview(webview);
 
         // Listen for when the panel is disposed
         // This happens when the user closes the panel or when the panel is closed programmatically
         this._panel.onDidDispose(() => this.dispose(), null, this.disposables);
-        let webview = this._panel.webview;
         let nextMessageSeq = this.nextMessageSeq.bind(this);
 
         async function handleEvaluate(message) {
@@ -235,10 +246,6 @@ class InteractiveShellPanel {
         }
     }
 
-    private _update() {
-        const webview = this._panel.webview;
-        this._panel.webview.html = this._getHtmlForWebview(webview);
-    }
 
     private _getHtmlForWebview(webview: vscode.Webview) {
         // Note: we can't really load from file://
@@ -259,23 +266,54 @@ class InteractiveShellPanel {
 			</body>
 			</html>`;
     }
+
+    evaluate(args: _InteractiveShellEvaluateArgs) {
+        const webview = this._panel.webview;
+        let request: any = {
+            type: 'request',
+            seq: this.nextMessageSeq(),
+            command: 'evaluate',
+            body: args
+        }
+        // We have to ask the UI to evaluate it (to add it to the UI and
+        // then actually do the work in the backend).
+        webview.postMessage(request);
+    }
+
+}
+
+interface _InteractiveShellEvaluateArgs {
+    uri: string
+    code: string
 }
 
 export async function registerInteractiveCommands(context: ExtensionContext, languageClient: LanguageClient) {
     let extensionUri = context.extensionUri;
 
-    async function createInteractiveShell() {
-        let activeFile = vscode.window.activeTextEditor?.document;
-        let currUri = activeFile?.uri;
-        let msg = 'Unable to create Robot Framework Scratchpad. Please open the related .robot file to provide the path used to create the Scratchpad.';
-        if(!currUri){
-            window.showErrorMessage(msg)
-            return;
+    async function interactiveShellCreateOrSendContentToEvaluate(args: undefined | _InteractiveShellEvaluateArgs) {
+        let uri: string;
+        if (args) {
+            // If we have an active window, use it.
+            if (_lastActive) {
+                _lastActive.evaluate(args);
+                return;
+            }
+            uri = args.uri;
+        } else {
+            let activeFile = vscode.window.activeTextEditor?.document;
+            let currUri = activeFile?.uri;
+            let msg = 'Unable to create Robot Framework Scratchpad. Please open the related .robot file to provide the path used to create the Scratchpad.';
+            if (!currUri) {
+                window.showErrorMessage(msg)
+                return;
+            }
+            if (!currUri.fsPath.endsWith(".robot")) {
+                window.showErrorMessage(msg)
+                return;
+            }
+            uri = currUri.toString();
         }
-        if(!currUri.fsPath.endsWith(".robot")){
-            window.showErrorMessage(msg)
-            return;
-        }
+
 
         let interpreterId = -1;
         let buffered: string[] = new Array();
@@ -299,7 +337,7 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
 
         // Note that during the creation, it's possible that we already have output, so, we
         // need to buffer anything up to the point where we actually have the interpreter.
-        let result = await commands.executeCommand("robot.internal.rfinteractive.start", {'uri': currUri.toString()});
+        let result = await commands.executeCommand("robot.internal.rfinteractive.start", { 'uri': uri });
         if (!result['success']) {
             window.showErrorMessage('Error creating interactive console: ' + result['message'])
             return;
@@ -328,6 +366,10 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
         // Start sending contents directly to the interactive shell now that we processed the 
         // output backlog from the startup.
         buffered = undefined;
+
+        if (args) {
+            interactiveShellPanel.evaluate(args);
+        }
     }
-    context.subscriptions.push(commands.registerCommand('robot.interactiveShell', createInteractiveShell));
+    context.subscriptions.push(commands.registerCommand('robot.interactiveShell', interactiveShellCreateOrSendContentToEvaluate));
 }

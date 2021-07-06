@@ -1,9 +1,10 @@
 from typing import List
 
-from robocorp_ls_core.lsp import CodeLensTypedDict
+from robocorp_ls_core.lsp import CodeLensTypedDict, RangeTypedDict, PositionTypedDict
 from robotframework_ls.impl.protocols import ICompletionContext, NodeInfo
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.protocols import ITestInfoTypedDict
+from robocorp_ls_core.lsp import CommandTypedDict
 
 log = get_logger(__name__)
 
@@ -43,11 +44,8 @@ def list_tests(completion_context: ICompletionContext) -> List[ITestInfoTypedDic
     return ret
 
 
-def code_lens(completion_context: ICompletionContext) -> List[CodeLensTypedDict]:
-    from robocorp_ls_core.lsp import CommandTypedDict
+def code_lens_runs(completion_context: ICompletionContext) -> List[CodeLensTypedDict]:
     from robot.api import Token  # noqa
-    from robocorp_ls_core.lsp import PositionTypedDict
-    from robocorp_ls_core.lsp import RangeTypedDict
     from robotframework_ls.impl.ast_utils import create_range_from_token
 
     ast = completion_context.get_ast()
@@ -142,3 +140,87 @@ def code_lens(completion_context: ICompletionContext) -> List[CodeLensTypedDict]
             log.exception("Error computing code lens")
 
     return ret
+
+
+def _iter_scratchpad_items(ast):
+    from robot.api import Token  # noqa
+
+    sections = ast.sections
+
+    for section in sections:
+        if section.__class__.__name__ == "TestCaseSection":
+            for test_node in section.body:
+                test_case_name_token = test_node.header.get_token(Token.TESTCASE_NAME)
+                yield test_case_name_token, "*** Test Case ***\n", test_node
+
+
+def code_lens_scratchpad(
+    completion_context: ICompletionContext
+) -> List[CodeLensTypedDict]:
+    from robot.api import Token  # noqa
+
+    ast = completion_context.get_ast()
+    completion_context.check_cancelled()
+
+    ret: List[CodeLensTypedDict] = []
+
+    for name_token, _header, _node in _iter_scratchpad_items(ast):
+        completion_context.check_cancelled()
+        ret.append(_create_scratchpad_code_lens(completion_context, name_token))
+
+    return ret
+
+
+def _create_scratchpad_code_lens(completion_context, token) -> CodeLensTypedDict:
+    from robotframework_ls.impl.ast_utils import create_range_from_token
+
+    code_lens_range = create_range_from_token(token)
+
+    code_lens_dct: CodeLensTypedDict = {
+        "range": code_lens_range,
+        "command": None,  # to be resolved
+        "data": {"uri": completion_context.doc.uri, "type": "scratchpad"},
+    }
+    return code_lens_dct
+
+
+def code_lens_resolve(
+    completion_context: ICompletionContext, code_lens: CodeLensTypedDict
+):
+    # Fill in the command arguments
+    command = code_lens.get("command")
+    data = code_lens.get("data")
+    if command is None and isinstance(data, dict) and data.get("type") == "scratchpad":
+        code_lens_range: RangeTypedDict = code_lens["range"]
+        code_lens_line = code_lens_range["start"]["line"]
+
+        ast = completion_context.get_ast()
+        for name_token, header, node in _iter_scratchpad_items(ast):
+            if name_token.lineno - 1 == code_lens_line:
+                from robotframework_ls import import_rf_interactive
+
+                import_rf_interactive()
+
+                from robotframework_interactive.ast_to_code import ast_to_code
+
+                code_lens_command: CommandTypedDict = {
+                    "title": "Scratchpad",
+                    "command": "robot.interactiveShell",
+                    "arguments": [
+                        {"code": header + ast_to_code(node), "uri": data["uri"]}
+                    ],
+                }
+                code_lens["command"] = code_lens_command
+                break
+        else:
+            # Unable to resolve
+            log.info("Unable to resolve code lens.")
+            return code_lens
+
+    return code_lens
+
+
+def code_lens(completion_context: ICompletionContext) -> List[CodeLensTypedDict]:
+    code_lenses = code_lens_runs(completion_context)
+    code_lenses.extend(code_lens_scratchpad(completion_context))
+    return code_lenses

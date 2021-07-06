@@ -6,6 +6,7 @@ from robocorp_ls_core.lsp import (
     TextDocumentTypedDict,
     ResponseTypedDict,
     PositionTypedDict,
+    CodeLensTypedDict,
 )
 from robocorp_ls_core.basic import implements
 
@@ -245,6 +246,14 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         :Note: async complete.
         """
         return self.request_async(self._build_msg("codeLens", doc_uri=doc_uri))
+
+    def request_resolve_code_lens(
+        self, code_lens: CodeLensTypedDict
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(self._build_msg("resolveCodeLens", **code_lens))
 
     def request_document_symbol(self, doc_uri) -> Optional[IIdMessageMatcher]:
         """

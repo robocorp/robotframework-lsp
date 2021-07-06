@@ -26,6 +26,7 @@ from robotframework_ls import __version__, rf_interactive_integration
 import typing
 import sys
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
+from robocorp_ls_core.lsp import CodeLensTypedDict
 
 
 log = get_logger(__name__)
@@ -274,9 +275,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         server_capabilities = {
             "codeActionProvider": False,
-            "codeLensProvider": {
-                "resolveProvider": False  # We may need to make this configurable
-            },
+            "codeLensProvider": {"resolveProvider": True},
             "completionProvider": {
                 "resolveProvider": False  # We know everything ahead of time
             },
@@ -756,6 +755,30 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         log.info("Unable to get code lens (no api available).")
         return []
+
+    def m_code_lens__resolve(self, **kwargs):
+        code_lens: CodeLensTypedDict = kwargs
+
+        code_lens_command = code_lens.get("command")
+        data = code_lens.get("data")
+        if code_lens_command is None and isinstance(data, dict):
+            # For the interactive shell we need to resolve the arguments.
+            uri = data.get("uri")
+
+            rf_api_client = self._server_manager.get_others_api_client(uri)
+            if rf_api_client is not None:
+                func = partial(
+                    self._async_api_request_no_doc,
+                    rf_api_client,
+                    "request_resolve_code_lens",
+                    code_lens=code_lens,
+                )
+                func = require_monitor(func)
+                return func
+
+            log.info("Unable to resolve code lens (no api available).")
+
+        return code_lens
 
     def m_text_document__document_symbol(self, **kwargs):
         doc_uri = kwargs["textDocument"]["uri"]

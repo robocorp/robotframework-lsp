@@ -25,6 +25,7 @@ if typing.TYPE_CHECKING:
     from robocorp_ls_core.lsp import HoverResponseTypedDict
     from robocorp_ls_core.lsp import TextDocumentTypedDict
     from robocorp_ls_core.lsp import ResponseTypedDict
+    from robocorp_ls_core.lsp import CodeLensTypedDict
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -397,6 +398,9 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
         pass
 
     def request_code_lens(self, uri: str):
+        pass
+
+    def request_resolve_code_lens(self, code_lens: "CodeLensTypedDict"):
         pass
 
     def request_document_symbol(self, uri: str):

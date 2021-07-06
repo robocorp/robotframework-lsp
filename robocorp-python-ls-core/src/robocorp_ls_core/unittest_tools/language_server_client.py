@@ -4,6 +4,7 @@ from typing import Mapping, Any, List, Optional, Dict
 from robocorp_ls_core.basic import implements
 from robocorp_ls_core.client_base import LanguageServerClientBase
 from robocorp_ls_core.protocols import ILanguageServerClient, IIdMessageMatcher
+from robocorp_ls_core.lsp import CodeLensTypedDict
 
 
 log = logging.getLogger(__name__)
@@ -254,6 +255,17 @@ class LanguageServerClient(LanguageServerClientBase):
                 "id": self.next_id(),
                 "method": "textDocument/codeLens",
                 "params": {"textDocument": {"uri": uri}},
+            }
+        )
+
+    @implements(ILanguageServerClient.request_resolve_code_lens)
+    def request_resolve_code_lens(self, code_lens: CodeLensTypedDict):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "codeLens/resolve",
+                "params": code_lens,
             }
         )
 
