@@ -19,6 +19,7 @@
             "env": {
                 // "SERVER_PORT": "8787",
                 // "SERVER_HOME_EXPORTED": "C:/export/pydev_lsp/eclipse"
+                // "RF_INTERACTIVE_LOCAL_RESOURCE_ROOT": "X:/vscode-robot/robotframework-lsp/robotframework-interactive/vscode-interpreter-webview/dist"
             }
         }
     ]

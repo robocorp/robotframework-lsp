@@ -16,7 +16,7 @@ import * as vscode from 'vscode';
 import { LanguageClient } from "vscode-languageclient/node";
 import { OUTPUT_CHANNEL } from "../extension";
 
-const DEV = false;
+const RF_INTERACTIVE_LOCAL_RESOURCE_ROOT = process.env.RF_INTERACTIVE_LOCAL_RESOURCE_ROOT;
 
 function getWebviewOptions(localResourceRoot: vscode.Uri): vscode.WebviewOptions & vscode.WebviewPanelOptions {
     return {
@@ -69,8 +69,8 @@ class InteractiveShellPanel {
             : undefined;
 
         let localResourceRoot = vscode.Uri.joinPath(extensionUri, 'src', 'robotframework_ls', 'vendored', 'vscode-interpreter-webview');
-        if (DEV) {
-            localResourceRoot = vscode.Uri.file("X:/vscode-robot/robotframework-lsp/robotframework-interactive/vscode-interpreter-webview/dist")
+        if (RF_INTERACTIVE_LOCAL_RESOURCE_ROOT) {
+            localResourceRoot = vscode.Uri.file(RF_INTERACTIVE_LOCAL_RESOURCE_ROOT);
         }
 
         const panel = vscode.window.createWebviewPanel(

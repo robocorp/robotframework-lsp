@@ -68,6 +68,9 @@ class _History {
 
 }
 
+// Set when the editor is mounted.
+export let FONT_INFO: monaco.editor.FontInfo | undefined = undefined;
+
 export class ConsoleComponent extends React.Component<IConsoleProps> {
 
     private history: _History = new _History();
@@ -85,6 +88,9 @@ export class ConsoleComponent extends React.Component<IConsoleProps> {
         }
 
         function editorDidMount(editor: monaco.editor.IStandaloneCodeEditor) {
+            // Get the font info from options using the fontInfo option id
+            FONT_INFO = editor.getOption(monaco.editor.EditorOption.fontInfo);
+
             function replaceAllInEditor(text: string, keepSelectionUnchanged: boolean) {
                 editor.pushUndoStop();
                 let model = editor.getModel();
