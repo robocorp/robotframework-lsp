@@ -76,6 +76,9 @@ Some Test
 *** Keyword ***
 Some Keyword
     Log    Something    console=True
+    
+*** Variables ***
+${foo}      1
 """
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)

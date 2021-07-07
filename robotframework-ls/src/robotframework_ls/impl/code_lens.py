@@ -149,39 +149,90 @@ def _iter_scratchpad_items(ast):
 
     for section in sections:
         if section.__class__.__name__ == "TestCaseSection":
-            for test_node in section.body:
-                test_case_name_token = test_node.header.get_token(Token.TESTCASE_NAME)
-                yield test_case_name_token, "*** Test Case ***\n", test_node
+            for node in section.body:
+                name_token = node.header.get_token(Token.TESTCASE_NAME)
+                yield name_token, "*** Test Case ***\n", node
+
+        elif section.__class__.__name__ == "KeywordSection":
+            for node in section.body:
+                name_token = node.header.get_token(Token.KEYWORD_NAME)
+                yield name_token, "*** Keyword ***\n", node
+
+        elif section.__class__.__name__ == "SettingSection":
+            name_token = section.header.get_token(Token.SETTING_HEADER)
+            # The header is not needed since it's already a part of its tokens
+            # (unlike test cases/keywords)
+            yield name_token, "", section
+
+        elif section.__class__.__name__ == "VariableSection":
+            name_token = section.header.get_token(Token.VARIABLE_HEADER)
+            # The header is not needed since it's already a part of its tokens
+            # (unlike test cases/keywords)
+            yield name_token, "", section
 
 
 def code_lens_scratchpad(
     completion_context: ICompletionContext
 ) -> List[CodeLensTypedDict]:
     from robot.api import Token  # noqa
+    from robotframework_ls import import_rf_interactive
+
+    import_rf_interactive()
 
     ast = completion_context.get_ast()
     completion_context.check_cancelled()
 
     ret: List[CodeLensTypedDict] = []
 
-    for name_token, _header, _node in _iter_scratchpad_items(ast):
+    for name_token, header, node in _iter_scratchpad_items(ast):
         completion_context.check_cancelled()
-        ret.append(_create_scratchpad_code_lens(completion_context, name_token))
+        ret.append(
+            _create_scratchpad_code_lens(completion_context, name_token, header, node)
+        )
 
     return ret
 
 
-def _create_scratchpad_code_lens(completion_context, token) -> CodeLensTypedDict:
+def _create_scratchpad_code_lens(
+    completion_context, token, header, node
+) -> CodeLensTypedDict:
     from robotframework_ls.impl.ast_utils import create_range_from_token
 
     code_lens_range = create_range_from_token(token)
 
     code_lens_dct: CodeLensTypedDict = {
         "range": code_lens_range,
-        "command": None,  # to be resolved
+        # Note: initially the command was None and would be resolved later on,
+        # but the experience on VSCode appeared sluggish, so, it was changed to
+        # always return the command from the start.
+        #
+        # i.e.: VSCode took too much time to actually do the resolve in some
+        # background thread and in the meanwhile it wouldn't show (which makes
+        # for a bad experience -- I thought it'd always be there and would
+        # resolve just when clicked, but that's not the case).
+        # This makes our code-lenses messages bigger, but the processing itself
+        # isn't such a big problem and the final experience is better.
+        #
+        # The code that did the resolution is still there, so, if VSCode
+        # improves we can just not return the command here so that it's
+        # lazily computed.
+        "command": _code_lens_scratchpad_command(
+            header, node, completion_context.doc.uri
+        ),
         "data": {"uri": completion_context.doc.uri, "type": "scratchpad"},
     }
     return code_lens_dct
+
+
+def _code_lens_scratchpad_command(header, node, uri) -> CommandTypedDict:
+    from robotframework_interactive.ast_to_code import ast_to_code
+
+    code_lens_command: CommandTypedDict = {
+        "title": "Scratchpad",
+        "command": "robot.interactiveShell",
+        "arguments": [{"code": header + ast_to_code(node), "uri": uri}],
+    }
+    return code_lens_command
 
 
 def code_lens_resolve(
@@ -191,26 +242,20 @@ def code_lens_resolve(
     command = code_lens.get("command")
     data = code_lens.get("data")
     if command is None and isinstance(data, dict) and data.get("type") == "scratchpad":
+        from robotframework_ls import import_rf_interactive
+
+        import_rf_interactive()
+
         code_lens_range: RangeTypedDict = code_lens["range"]
         code_lens_line = code_lens_range["start"]["line"]
 
         ast = completion_context.get_ast()
         for name_token, header, node in _iter_scratchpad_items(ast):
             if name_token.lineno - 1 == code_lens_line:
-                from robotframework_ls import import_rf_interactive
 
-                import_rf_interactive()
-
-                from robotframework_interactive.ast_to_code import ast_to_code
-
-                code_lens_command: CommandTypedDict = {
-                    "title": "Scratchpad",
-                    "command": "robot.interactiveShell",
-                    "arguments": [
-                        {"code": header + ast_to_code(node), "uri": data["uri"]}
-                    ],
-                }
-                code_lens["command"] = code_lens_command
+                code_lens["command"] = _code_lens_scratchpad_command(
+                    header, node, data["uri"]
+                )
                 break
         else:
             # Unable to resolve

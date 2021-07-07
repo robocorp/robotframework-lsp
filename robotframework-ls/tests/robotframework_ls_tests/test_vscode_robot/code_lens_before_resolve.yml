@@ -1,4 +1,9 @@
-command: null
+command:
+  arguments:
+  - code: "*** Test Case ***\nLog It\n    Log    \n"
+    uri: untitled:Untitled-1
+  command: robot.interactiveShell
+  title: Scratchpad
 data:
   type: scratchpad
   uri: untitled:Untitled-1

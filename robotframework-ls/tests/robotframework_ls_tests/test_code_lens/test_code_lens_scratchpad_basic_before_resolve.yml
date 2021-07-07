@@ -1,4 +1,33 @@
-- command: null
+- command:
+    arguments:
+    - code: '*** Settings ***
+
+        Library     my_lib.py
+
+        Resource    my_resource.robot
+
+
+        '
+      uri: case4.robot
+    command: robot.interactiveShell
+    title: Scratchpad
+  data:
+    type: scratchpad
+    uri: case4.robot
+  range:
+    end:
+      character: 16
+      line: 2
+    start:
+      character: 0
+      line: 2
+- command:
+    arguments:
+    - code: "*** Test Case ***\nSome Test\n    [Documentation]      Docs\n    Some\
+        \ Keyword\n    \n"
+      uri: case4.robot
+    command: robot.interactiveShell
+    title: Scratchpad
   data:
     type: scratchpad
     uri: case4.robot
@@ -9,3 +38,40 @@
     start:
       character: 0
       line: 7
+- command:
+    arguments:
+    - code: "*** Keyword ***\nSome Keyword\n    Log    Something    console=True\n\
+        \    \n"
+      uri: case4.robot
+    command: robot.interactiveShell
+    title: Scratchpad
+  data:
+    type: scratchpad
+    uri: case4.robot
+  range:
+    end:
+      character: 12
+      line: 12
+    start:
+      character: 0
+      line: 12
+- command:
+    arguments:
+    - code: '*** Variables ***
+
+        ${foo}      1
+
+        '
+      uri: case4.robot
+    command: robot.interactiveShell
+    title: Scratchpad
+  data:
+    type: scratchpad
+    uri: case4.robot
+  range:
+    end:
+      character: 17
+      line: 15
+    start:
+      character: 0
+      line: 15
