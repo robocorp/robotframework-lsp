@@ -290,3 +290,30 @@ def sort_diagnostics(diagnostics):
         )
 
     return sorted(diagnostics, key=key)
+
+
+def check_code_lens_data_regression(data_regression, found, basename=None):
+    import copy
+
+    # For checking the test we need to make the uri/path the same among runs.
+    found = copy.deepcopy(found)  # we don't want to change the initial data
+    for c in found:
+        command = c["command"]
+        if command:
+            arguments = command["arguments"]
+            if arguments:
+                arg0 = arguments[0]
+                uri = arg0.get("uri")
+                if uri:
+                    arg0["uri"] = uri.split("/")[-1]
+
+                path = arg0.get("path")
+                if path:
+                    arg0["path"] = os.path.basename(path)
+
+        data = c.get("data")
+        if data:
+            uri = data.get("uri")
+            if uri:
+                data["uri"] = uri.split("/")[-1]
+    data_regression.check(found, basename=basename)

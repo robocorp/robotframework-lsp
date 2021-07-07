@@ -1,15 +1,12 @@
-id: 3
-jsonrpc: '2.0'
-result:
-  command:
+- command:
     arguments:
-    - code: "*** Test Case ***\nLog It\n    Log    \n"
-      uri: untitled:Untitled-1
+    - code: "*** Test Case ***\nLog It\n    Log\n"
+      uri: my.robot
     command: robot.interactiveShell
     title: Scratchpad
   data:
     type: scratchpad
-    uri: untitled:Untitled-1
+    uri: my.robot
   range:
     end:
       character: 6

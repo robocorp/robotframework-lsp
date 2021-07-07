@@ -302,18 +302,17 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
         } else {
             let activeFile = vscode.window.activeTextEditor?.document;
             let currUri = activeFile?.uri;
-            let msg = 'Unable to create Robot Framework Scratchpad. Please open the related .robot file to provide the path used to create the Scratchpad.';
+            let msg = 'Unable to create Robot Framework Scratchpad. Please open the related .robot/.resource file to provide the path used to create the Scratchpad.';
             if (!currUri) {
                 window.showErrorMessage(msg)
                 return;
             }
-            if (!currUri.fsPath.endsWith(".robot")) {
+            if (!currUri.fsPath.endsWith(".robot") && !currUri.fsPath.endsWith(".resource")) {
                 window.showErrorMessage(msg)
                 return;
             }
             uri = currUri.toString();
         }
-
 
         let interpreterId = -1;
         let buffered: string[] = new Array();

@@ -1,8 +1,8 @@
 - command:
     arguments:
     - name: '*'
-      path: Untitled-1
-      uri: untitled:Untitled-1
+      path: my.robot
+      uri: my.robot
     command: robot.runTest
     title: Run Suite
   range:
@@ -15,8 +15,8 @@
 - command:
     arguments:
     - name: '*'
-      path: Untitled-1
-      uri: untitled:Untitled-1
+      path: my.robot
+      uri: my.robot
     command: robot.debugTest
     title: Debug Suite
   range:
@@ -29,8 +29,8 @@
 - command:
     arguments:
     - name: Log It
-      path: Untitled-1
-      uri: untitled:Untitled-1
+      path: my.robot
+      uri: my.robot
     command: robot.runTest
     title: Run
   range:
@@ -43,8 +43,8 @@
 - command:
     arguments:
     - name: Log It
-      path: Untitled-1
-      uri: untitled:Untitled-1
+      path: my.robot
+      uri: my.robot
     command: robot.debugTest
     title: Debug
   range:
@@ -57,8 +57,8 @@
 - command:
     arguments:
     - name: Log It2
-      path: Untitled-1
-      uri: untitled:Untitled-1
+      path: my.robot
+      uri: my.robot
     command: robot.runTest
     title: Run
   range:
@@ -71,8 +71,8 @@
 - command:
     arguments:
     - name: Log It2
-      path: Untitled-1
-      uri: untitled:Untitled-1
+      path: my.robot
+      uri: my.robot
     command: robot.debugTest
     title: Debug
   range:
@@ -85,12 +85,12 @@
 - command:
     arguments:
     - code: "*** Test Case ***\nLog It\n    Log    \n\n"
-      uri: untitled:Untitled-1
+      uri: my.robot
     command: robot.interactiveShell
     title: Scratchpad
   data:
     type: scratchpad
-    uri: untitled:Untitled-1
+    uri: my.robot
   range:
     end:
       character: 6
@@ -101,12 +101,12 @@
 - command:
     arguments:
     - code: "*** Test Case ***\nLog It2\n    Log    \n\n"
-      uri: untitled:Untitled-1
+      uri: my.robot
     command: robot.interactiveShell
     title: Scratchpad
   data:
     type: scratchpad
-    uri: untitled:Untitled-1
+    uri: my.robot
   range:
     end:
       character: 7

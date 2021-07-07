@@ -698,10 +698,15 @@ Log It2
 def test_code_lens_integrated(
     language_server_io: ILanguageServerClient, ws_root_path, data_regression
 ):
+    from robocorp_ls_core import uris
+    from robotframework_ls_tests.fixtures import check_code_lens_data_regression
+
     language_server = language_server_io
 
     language_server.initialize(ws_root_path, process_id=os.getpid())
-    uri = "untitled:Untitled-1"
+    os.makedirs(ws_root_path, exist_ok=True)
+    uri = uris.from_fs_path(os.path.join(ws_root_path, "my.robot"))
+
     txt = """
 *** Test Case ***
 Log It
@@ -716,16 +721,20 @@ Log It2
 
     ret = language_server.request_code_lens(uri)
     found = ret["result"]
-    data_regression.check(found)
+    check_code_lens_data_regression(data_regression, found)
 
 
 def test_code_lens_integrated_suites(
     language_server_io: ILanguageServerClient, ws_root_path, data_regression
 ):
+    from robocorp_ls_core import uris
+    from robotframework_ls_tests.fixtures import check_code_lens_data_regression
+
     language_server = language_server_io
 
     language_server.initialize(ws_root_path, process_id=os.getpid())
-    uri = "untitled:Untitled-1"
+    os.makedirs(ws_root_path, exist_ok=True)
+    uri = uris.from_fs_path(os.path.join(ws_root_path, "my.robot"))
     txt = """
 *** Task ***
 Log It
@@ -739,7 +748,7 @@ Log It2
 
     ret = language_server.request_code_lens(uri)
     found = ret["result"]
-    data_regression.check(found)
+    check_code_lens_data_regression(data_regression, found)
 
 
 def test_list_tests_integrated(
@@ -1088,14 +1097,29 @@ def some_method():
 def test_code_lens_integrated_rf_interactive(
     language_server_io: ILanguageServerClient, ws_root_path, data_regression
 ):
+    from robocorp_ls_core import uris
+    from robotframework_ls_tests.fixtures import check_code_lens_data_regression
+
     language_server = language_server_io
 
     language_server.initialize(ws_root_path, process_id=os.getpid())
-    uri = "untitled:Untitled-1"
+    uri_untitled = "~untitled"
     txt = """
 *** Task ***
 Log It
-    Log    
+    Log
+"""
+    language_server.open_doc(uri_untitled, 1, txt)
+    ret = language_server.request_code_lens(uri_untitled)
+    found = ret["result"]
+    assert not found  # when unable to resolve path, we can't create it.
+
+    os.makedirs(ws_root_path, exist_ok=True)
+    uri = uris.from_fs_path(os.path.join(ws_root_path, "my.robot"))
+    txt = """
+*** Task ***
+Log It
+    Log
 """
     language_server.open_doc(uri, 1, txt)
 
@@ -1106,7 +1130,12 @@ Log It
             break
     else:
         raise AssertionError(f"Unable to find Scratchpad code lens in: {ret}")
-    data_regression.check(code_lens, basename="code_lens_before_resolve")
+    check_code_lens_data_regression(
+        data_regression, [code_lens], basename="code_lens_before_resolve"
+    )
 
-    resolved_code_lens = language_server.request_resolve_code_lens(code_lens)
-    data_regression.check(resolved_code_lens, basename="code_lens_after_resolve")
+    ret = language_server.request_resolve_code_lens(code_lens)
+    resolved_code_lens = ret["result"]
+    check_code_lens_data_regression(
+        data_regression, [resolved_code_lens], basename="code_lens_after_resolve"
+    )

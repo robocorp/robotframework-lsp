@@ -1,16 +1,16 @@
-command:
-  arguments:
-  - code: "*** Test Case ***\nLog It\n    Log    \n"
-    uri: untitled:Untitled-1
-  command: robot.interactiveShell
-  title: Scratchpad
-data:
-  type: scratchpad
-  uri: untitled:Untitled-1
-range:
-  end:
-    character: 6
-    line: 2
-  start:
-    character: 0
-    line: 2
+- command:
+    arguments:
+    - code: "*** Test Case ***\nLog It\n    Log\n"
+      uri: my.robot
+    command: robot.interactiveShell
+    title: Scratchpad
+  data:
+    type: scratchpad
+    uri: my.robot
+  range:
+    end:
+      character: 6
+      line: 2
+    start:
+      character: 0
+      line: 2

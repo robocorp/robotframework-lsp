@@ -266,6 +266,15 @@ def code_lens_resolve(
 
 
 def code_lens(completion_context: ICompletionContext) -> List[CodeLensTypedDict]:
+    import os
+
+    path = completion_context.doc.path
+    if not path or not os.path.exists(os.path.dirname(path)):
+        # The cwd must exist.
+        return []
+    if not path.endswith((".robot", ".resource")):
+        return []
+
     code_lenses = code_lens_runs(completion_context)
     code_lenses.extend(code_lens_scratchpad(completion_context))
     return code_lenses
