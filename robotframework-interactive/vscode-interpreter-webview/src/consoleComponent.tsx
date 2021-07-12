@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as monaco from 'monaco-editor';
 import MonacoEditor from 'react-monaco-editor';
 import { detectBaseTheme } from './themeDetector';
+import { codeAsHtml } from './vscodeComm';
 
 class IConsoleProps {
     handleEvaluate: (code: string, codeAsHtml: string) => Promise<void>
@@ -204,6 +205,14 @@ export class ConsoleComponent extends React.Component<IConsoleProps> {
                 history.resetPos();
                 contextKeyIsHistoryTop.set(history.computeInTop());
             }, 'editorTextFocus && !inSnippetMode && !suggestWidgetVisible');
+
+            // Hack. See:
+            // https://github.com/microsoft/monaco-editor/issues/1857#issuecomment-594457013
+            const CommandsRegistry = require('monaco-editor/esm/vs/platform/commands/common/commands').CommandsRegistry;
+            CommandsRegistry.registerCommand('robot.completion.additionalTextEdit', async (accessor, args) => {
+                let code = args['code'];
+                await handleEvaluate(code, await codeAsHtml(code));
+            });
         }
 
         let theme: string = detectBaseTheme();

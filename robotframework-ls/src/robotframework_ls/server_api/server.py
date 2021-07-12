@@ -572,6 +572,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         from robotframework_ls.server_api.monaco_conversions import (
             convert_to_monaco_completion,
         )
+        from robotframework_ls.impl.completion_context import CompletionType
 
         d = Document(uri, prefix)
         last_line, _last_col = d.get_last_line_col()
@@ -589,6 +590,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             monitor=monitor,
             workspace=self.workspace,
         )
+        completion_context.type = CompletionType.shell
         completions = self._complete_from_completion_context(completion_context)
         completions.extend(section_completions.complete(completion_context))
         completions.extend(snippets_completions.complete(completion_context))
@@ -596,7 +598,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         return {
             "suggestions": [
                 convert_to_monaco_completion(
-                    c, line_delta=last_line, col_delta=len(indent)
+                    c, line_delta=last_line, col_delta=len(indent), uri=uri
                 )
                 for c in completions
             ]

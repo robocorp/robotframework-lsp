@@ -10,6 +10,7 @@ from robocorp_ls_core.protocols import (
 )
 from robocorp_ls_core.constants import NULL
 from collections import namedtuple
+import enum
 
 if sys.version_info[:2] < (3, 8):
 
@@ -233,6 +234,11 @@ class IBaseCompletionContext(Protocol):
         pass
 
 
+class CompletionType(enum.Enum):
+    regular = 1
+    shell = 2
+
+
 class ICompletionContext(Protocol):
     def __init__(
         self,
@@ -252,6 +258,10 @@ class ICompletionContext(Protocol):
         :param robocorp_ls_core.config.Config config:
         :param _Memo memo:
         """
+
+    @property
+    def type(self) -> CompletionType:
+        pass
 
     @property
     def monitor(self) -> IMonitor:

@@ -1,0 +1,27 @@
+- command:
+    arguments:
+    - code: '*** Settings ***
+
+        Library    Collections
+
+        '
+      uri: my.robot
+    id: robot.completion.additionalTextEdit
+    title: Scratchpad
+  documentation: ''
+  insertText: Append To List
+  insertTextRules: 4
+  kind: 21
+  label: Append To List (Collections)
+  preselect: false
+  range:
+    end:
+      character: 17
+      line: 3
+    endColumn: 14
+    endLineNumber: 1
+    start:
+      character: 4
+      line: 3
+    startColumn: 1
+    startLineNumber: 1

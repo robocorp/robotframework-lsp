@@ -12,6 +12,7 @@ from robotframework_ls.impl.protocols import (
     IKeywordDefinition,
     ILibraryImportNode,
     KeywordUsageInfo,
+    CompletionType,
 )
 
 
@@ -126,6 +127,7 @@ class CompletionContext(object):
         self._memo = memo
         self._original_ctx: Optional[CompletionContext] = None
         self._monitor = monitor or NULL
+        self.type = CompletionType.regular
 
     @property
     def monitor(self) -> IMonitor:

@@ -1,4 +1,5 @@
 import * as monaco from 'monaco-editor';
+import { FONT_INFO } from './consoleComponent';
 
 interface IVSCode {
     postMessage(message: any): void;
@@ -132,4 +133,39 @@ let _lastMessageId: number = 0;
 export function nextMessageSeq(): number {
     _lastMessageId += 1;
     return _lastMessageId;
+}
+
+function getMassaged(setting: string): string {
+    if (/[,"']/.test(setting)) {
+        // Looks like the font family might be already escaped
+        return setting;
+    }
+    if (/[+ ]/.test(setting)) {
+        // Wrap a font family using + or <space> with quotes
+        return `"${setting}"`;
+    }
+
+    return setting;
+}
+
+function escaped(setting: string): string {
+    return setting.replace(/"/g, '&quot;');
+}
+
+export async function codeAsHtml(code: string): Promise<string> {
+    const LANGUAGE_ID = 'robotframework-ls';
+    let colorized = await monaco.editor.colorize(code, LANGUAGE_ID, {});
+    if (FONT_INFO) {
+        colorized = '<div style="' +
+            'font-family:' + escaped(getMassaged(FONT_INFO.fontFamily)) + ';' +
+            'font-size:' + FONT_INFO.fontSize + 'px;' +
+            'line-height:' + FONT_INFO.lineHeight + 'px;' +
+            'letter-spacing:' + FONT_INFO.letterSpacing + 'px;' +
+            'font-weight: ' + escaped(FONT_INFO.fontWeight) + ';' +
+            'font-feature-settings:' + escaped(FONT_INFO.fontFeatureSettings) + ';' +
+            '">' +
+            colorized +
+            '</div>';
+    }
+    return colorized;
 }

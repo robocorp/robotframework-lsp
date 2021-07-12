@@ -5,7 +5,7 @@ import { ConsoleComponent, FONT_INFO } from './consoleComponent';
 
 import './style.css';
 import spinner from "./spinner.svg";
-import { IEvaluateMessage, nextMessageSeq, sendRequestToClient, eventToHandler, IOutputEvent, sendEventToClient, requestToHandler } from './vscodeComm';
+import { IEvaluateMessage, nextMessageSeq, sendRequestToClient, eventToHandler, IOutputEvent, sendEventToClient, requestToHandler, codeAsHtml } from './vscodeComm';
 import { configureMonacoLanguage } from './monacoConf';
 import { monaco } from 'react-monaco-editor';
 
@@ -145,41 +145,10 @@ class AppComponent extends React.Component<object, IAppState> {
         });
     }
 
-    getMassaged(setting: string): string {
-        if (/[,"']/.test(setting)) {
-            // Looks like the font family might be already escaped
-            return setting;
-        }
-        if (/[+ ]/.test(setting)) {
-            // Wrap a font family using + or <space> with quotes
-            return `"${setting}"`;
-        }
-
-        return setting;
-    }
-
-    escaped(setting: string): string {
-        return setting.replace(/"/g, '&quot;');
-    }
-
     // i.e.: VSCode can send something to be evaluated in the webview.
     async onRequestEvaluate(msg: IEvaluateRequest) {
-        const LANGUAGE_ID = 'robotframework-ls';
         let code = msg['body'].code;
-        let colorized = await monaco.editor.colorize(code, LANGUAGE_ID, {});
-        if (FONT_INFO) {
-            colorized = '<div style="' +
-                'font-family:' + this.escaped(this.getMassaged(FONT_INFO.fontFamily)) + ';' +
-                'font-size:' + FONT_INFO.fontSize + 'px;' +
-                'line-height:' + FONT_INFO.lineHeight + 'px;' +
-                'letter-spacing:' + FONT_INFO.letterSpacing + 'px;' +
-                'font-weight: ' + this.escaped(FONT_INFO.fontWeight) + ';' +
-                'font-feature-settings:' + this.escaped(FONT_INFO.fontFeatureSettings) + ';' +
-                '">' +
-                colorized +
-                '</div>';
-        }
-        await this.handleEvaluate(code, colorized);
+        await this.handleEvaluate(code, await codeAsHtml(code));
     }
 
     async handleEvaluate(code: string, codeAsHtml: string) {

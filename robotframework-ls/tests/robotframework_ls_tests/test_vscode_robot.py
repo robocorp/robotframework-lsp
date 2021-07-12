@@ -1094,6 +1094,39 @@ def some_method():
     data_regression.check(suggestions)
 
 
+def test_rf_interactive_integrated_auto_import_completions(
+    language_server_io: ILanguageServerClient,
+    rf_interpreter_startup: _RfInterpreterInfo,
+    data_regression,
+):
+    from robocorp_ls_core.workspace import Document
+    from robotframework_ls_tests.fixtures import check_code_lens_data_regression
+
+    # Check that we're able to get completions based on the current dir.
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS
+    from robocorp_ls_core.lsp import Position
+
+    uri = rf_interpreter_startup.uri
+
+    language_server = language_server_io
+    code = "append to lis"
+    doc = Document(uri, code)
+    completions = language_server.execute_command(
+        ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS,
+        [
+            {
+                "interpreter_id": rf_interpreter_startup.interpreter_id,
+                "code": code,
+                "position": Position(*doc.get_last_line_col()).to_dict(),
+            }
+        ],
+    )
+
+    suggestions = completions["result"]["suggestions"]
+    assert suggestions
+    check_code_lens_data_regression(data_regression, suggestions)
+
+
 def test_code_lens_integrated_rf_interactive(
     language_server_io: ILanguageServerClient, ws_root_path, data_regression
 ):

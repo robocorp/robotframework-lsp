@@ -65,6 +65,13 @@ _lsp_completion_item_kind_to_monaco = {
 }
 
 
+class MonacoCommandTypedDict(TypedDict, total=False):
+    id: str
+    title: str
+    tooltip: Optional[str]
+    arguments: Optional[list]
+
+
 class MonacoCompletionItemTypedDict(TypedDict, total=False):
     #
     # The label of this completion item. By default
@@ -145,7 +152,7 @@ class MonacoCompletionItemTypedDict(TypedDict, total=False):
     #
     # A command that should be run upon acceptance of this item.
     #
-    command: Optional[Any]  # Command
+    command: Optional[MonacoCommandTypedDict]
 
 
 class CompletionItemInsertTextRule:
@@ -160,7 +167,7 @@ class CompletionItemInsertTextRule:
 
 
 def convert_to_monaco_completion(
-    lsp_completion: CompletionItemTypedDict, line_delta: int, col_delta: int
+    lsp_completion: CompletionItemTypedDict, line_delta: int, col_delta: int, uri: str
 ) -> MonacoCompletionItemTypedDict:
     """
     Completions from monaco are different from the completions in the language
@@ -226,4 +233,22 @@ def convert_to_monaco_completion(
     detail = lsp_completion.get("detail")
     if detail is not None:
         ret["detail"] = detail
+
+    additional_text_edits = lsp_completion.get("additionalTextEdits")
+    if additional_text_edits is not None:
+        # Ok, it seems we have some auto-import. Changing the console contents
+        # is actually pretty tricky if the user was editing a task as it'd need
+        # to actually create a *** Settings *** and a *** Tasks *** and reindent.
+        # all the contents (it may not actually be all that difficult, but then
+        # the final result to the user may be a bit surprising).
+        # So, instead of doing that, a command is issued to add the
+        # related import directly to the console.
+        if additional_text_edits and len(additional_text_edits) == 1:
+            text_edit = additional_text_edits[0]
+            command: MonacoCommandTypedDict = {
+                "title": "Scratchpad",
+                "id": "robot.completion.additionalTextEdit",
+                "arguments": [{"code": text_edit["newText"], "uri": uri}],
+            }
+            ret["command"] = command
     return ret

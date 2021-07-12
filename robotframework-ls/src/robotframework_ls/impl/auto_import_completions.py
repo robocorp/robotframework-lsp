@@ -63,6 +63,7 @@ class _Collector(object):
 
     def create_completion_item(
         self,
+        completion_context: ICompletionContext,
         keyword_name,
         selection,
         token,
@@ -87,6 +88,7 @@ class _Collector(object):
             TextEdit,
         )
         from robocorp_ls_core.lsp import MarkupKind
+        from robotframework_ls.impl.protocols import CompletionType
 
         label = f"{keyword_name} ({lib_import or resource_path})"
         if label in memo:
@@ -95,16 +97,20 @@ class _Collector(object):
 
         prefix = ""
         import_line = -1
-        if lib_import is not None:
-            import_line = self.import_location_info.get_library_import_line()
-        elif resource_path is not None:
-            import_line = self.import_location_info.get_resource_import_line()
+        if completion_context.type != CompletionType.shell:
+            if lib_import is not None:
+                import_line = self.import_location_info.get_library_import_line()
+            elif resource_path is not None:
+                import_line = self.import_location_info.get_resource_import_line()
 
         if import_line == -1:
             # There's no existing import, so, let's see if we have a *** Settings *** section.
             # If we don't we have to create the whole settings, otherwise, we'll add the statement
             # as the first thing in the existing *** Settings *** section.
-            if self.import_location_info.setting_section_node_info is None:
+            if completion_context.type == CompletionType.shell:
+                import_line = 0
+                prefix = "*** Settings ***\n"
+            elif self.import_location_info.setting_section_node_info is None:
                 import_line = 0
                 prefix = "*** Settings ***\n"
             else:
@@ -244,6 +250,7 @@ def _collect_auto_import_completions(
         for entry in json_list:
             if collector.accepts(entry):
                 collector.create_completion_item(
+                    completion_context,
                     convert_keyword_format(entry["name"]),
                     selection,
                     token,
