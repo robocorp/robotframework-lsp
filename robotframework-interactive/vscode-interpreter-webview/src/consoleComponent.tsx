@@ -11,6 +11,10 @@ class _History {
     private readonly entries: string[] = [];
     private position: number = 0;
 
+    // If the user was entering something and pressed up, make down
+    // restore that "temporary" string.
+    private tempTop: string = '';
+
     public push(code: string) {
         if (this.entries.length > 0) {
             if (code === this.entries[this.entries.length - 1]) {
@@ -21,9 +25,10 @@ class _History {
         }
         this.entries.push(code);
         this.position = this.entries.length;
+        this.tempTop = '';
     }
 
-    public getPrev(prefix: string): string | undefined {
+    public getPrev(prefix: string, full: string): string | undefined {
         if (this.entries.length === 0) {
             return undefined;
         }
@@ -31,6 +36,9 @@ class _History {
             return undefined;
         }
         let pos = this.position - 1;
+        if(this.position == this.entries.length){
+            this.tempTop = full;
+        }
         while (pos >= 0) {
             let value = this.entries[pos];
             if (value.startsWith(prefix)) {
@@ -58,6 +66,12 @@ class _History {
                 return value;
             }
             pos += 1;
+        }
+        if(this.tempTop){
+            if (this.tempTop.startsWith(prefix)) {
+                this.position = this.entries.length;
+                return this.tempTop;
+            }
         }
         return undefined;
     }
@@ -161,7 +175,7 @@ export class ConsoleComponent extends React.Component<IConsoleProps> {
             }, 'editorTextFocus && !editorTabMovesFocus && !editorHasSelection && !inSnippetMode && !suggestWidgetVisible');
 
             editor.addCommand(monaco.KeyCode.UpArrow, () => {
-                let prev = history.getPrev(getTextToCursor());
+                let prev = history.getPrev(getTextToCursor(), editor.getValue());
                 if (prev === undefined) {
                     return;
                 }
