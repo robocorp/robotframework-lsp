@@ -265,7 +265,14 @@ def _handle_semantic_tokens(
             log.info(msg)
         return {"resultId": None, "data": []}
 
-    api = language_server_impl._server_manager.get_others_api_client("")
+    from robotframework_interactive.server.rf_interpreter_server_manager import (
+        RfInterpreterServerManager,
+    )
+
+    interpreter: RfInterpreterServerManager = rf_info_or_dict_error.interpreter
+    uri = interpreter.uri
+
+    api = language_server_impl._server_manager.get_others_api_client(uri)
     if api is None:
         log.info(
             "Unable to get api client when computing semantic tokens (for interactive usage)."
@@ -320,7 +327,14 @@ def _handle_completions(language_server_impl, rf_interpreters_manager, arguments
             log.info(msg)
         return {"suggestions": []}
 
-    api = language_server_impl._server_manager.get_others_api_client("")
+    from robotframework_interactive.server.rf_interpreter_server_manager import (
+        RfInterpreterServerManager,
+    )
+
+    interpreter: RfInterpreterServerManager = rf_info_or_dict_error.interpreter
+    uri = interpreter.uri
+
+    api = language_server_impl._server_manager.get_others_api_client(uri)
     if api is None:
         log.info(
             "Unable to get api client when computing completions (for interactive usage)."
@@ -332,9 +346,6 @@ def _handle_completions(language_server_impl, rf_interpreters_manager, arguments
         return {"suggestions": []}
 
     def run():
-        from robotframework_interactive.server.rf_interpreter_server_manager import (
-            RfInterpreterServerManager,
-        )
 
         try:
             args: dict = arguments[0]
@@ -352,8 +363,6 @@ def _handle_completions(language_server_impl, rf_interpreters_manager, arguments
             # if context is Sentinel.SENTINEL:
             #     pass
 
-            interpreter: RfInterpreterServerManager = rf_info_or_dict_error.interpreter
-            uri = interpreter.uri
             evaluate_text_result = interpreter.interpreter_compute_evaluate_text(
                 code, "completions"
             )
