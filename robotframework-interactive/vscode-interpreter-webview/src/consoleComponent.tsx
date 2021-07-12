@@ -80,6 +80,10 @@ class _History {
         this.position = this.entries.length;
     }
 
+    public computeInTop(){
+        return this.position == this.entries.length;
+    }
+
 }
 
 // Set when the editor is mounted.
@@ -127,12 +131,13 @@ export class ConsoleComponent extends React.Component<IConsoleProps> {
             // https://github.com/microsoft/vscode/search?q=RawContextKey
             // for some default context keys.
 
-            let contextKey = editor.createContextKey('inFirstLine', false);
+            let contextKeyFirstLine = editor.createContextKey('inFirstLine', false);
+            let contextKeyIsHistoryTop = editor.createContextKey('isHistoryTop', false);
 
             editor.onDidChangeCursorSelection(() => {
                 let selection = editor.getSelection();
                 let pos = selection.getPosition();
-                contextKey.set(pos.lineNumber == 1);
+                contextKeyFirstLine.set(pos.lineNumber == 1);
             });
 
             function getTextToCursor() {
@@ -160,6 +165,7 @@ export class ConsoleComponent extends React.Component<IConsoleProps> {
                     let x: any = editor; // hack to get access to the _modelData.
                     let codeAsHtml = x._modelData.viewModel.getRichTextToCopy([editor.getModel().getFullModelRange()], false)
                     history.push(value);
+                    contextKeyIsHistoryTop.set(history.computeInTop());
                     replaceAllInEditor('', false);
                     await handleEvaluate(value, codeAsHtml.html);
                 }
@@ -176,6 +182,7 @@ export class ConsoleComponent extends React.Component<IConsoleProps> {
 
             editor.addCommand(monaco.KeyCode.UpArrow, () => {
                 let prev = history.getPrev(getTextToCursor(), editor.getValue());
+                contextKeyIsHistoryTop.set(history.computeInTop());
                 if (prev === undefined) {
                     return;
                 }
@@ -184,16 +191,18 @@ export class ConsoleComponent extends React.Component<IConsoleProps> {
 
             editor.addCommand(monaco.KeyCode.DownArrow, () => {
                 let next = history.getNext(getTextToCursor());
+                contextKeyIsHistoryTop.set(history.computeInTop());
                 if (next === undefined) {
                     return;
                 }
                 replaceAllInEditor(next, true);
-            }, 'editorTextFocus && !editorHasSelection && inFirstLine && !suggestWidgetVisible');
+            }, 'editorTextFocus && !editorHasSelection && inFirstLine && !suggestWidgetVisible && !isHistoryTop');
 
             editor.addCommand(monaco.KeyCode.Escape, () => {
                 // Esc clears the editor and resets the history position.
                 replaceAllInEditor('', false);
                 history.resetPos();
+                contextKeyIsHistoryTop.set(history.computeInTop());
             }, 'editorTextFocus && !inSnippetMode && !suggestWidgetVisible');
         }
 
