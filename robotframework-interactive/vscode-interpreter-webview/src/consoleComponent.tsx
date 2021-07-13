@@ -37,7 +37,7 @@ class _History {
             return undefined;
         }
         let pos = this.position - 1;
-        if(this.position == this.entries.length){
+        if (this.position == this.entries.length) {
             this.tempTop = full;
         }
         while (pos >= 0) {
@@ -68,7 +68,7 @@ class _History {
             }
             pos += 1;
         }
-        if(this.tempTop){
+        if (this.tempTop) {
             if (this.tempTop.startsWith(prefix)) {
                 this.position = this.entries.length;
                 return this.tempTop;
@@ -81,7 +81,7 @@ class _History {
         this.position = this.entries.length;
     }
 
-    public computeInTop(){
+    public computeInTop() {
         return this.position == this.entries.length;
     }
 
@@ -89,6 +89,116 @@ class _History {
 
 // Set when the editor is mounted.
 export let FONT_INFO: monaco.editor.FontInfo | undefined = undefined;
+
+function configEditor(editor: monaco.editor.IStandaloneCodeEditor, history, handleEvaluate) {
+    // Get the font info from options using the fontInfo option id
+    FONT_INFO = editor.getOption(monaco.editor.EditorOption.fontInfo);
+
+    function replaceAllInEditor(text: string, keepSelectionUnchanged: boolean) {
+        editor.pushUndoStop();
+        let model = editor.getModel();
+        let endCursorState = undefined;
+        if (keepSelectionUnchanged) {
+            endCursorState = [editor.getSelection()];
+        }
+        editor.executeEdits(
+            undefined,
+            [{ 'range': model.getFullModelRange(), 'text': text, 'forceMoveMarkers': true }],
+            endCursorState
+        )
+        editor.pushUndoStop();
+    }
+
+    // See: 
+    // https://github.com/microsoft/vscode/blob/2f5fb0fe0ccca4fe2076b1ed16643895d14cdb98/src/vs/editor/common/editorContextKeys.ts
+    // https://github.com/microsoft/vscode/blob/a2c4a0ca8ca8b86e8dd32e20e596a2e00bfdeaf9/src/vs/editor/contrib/suggest/suggest.ts
+    // https://github.com/microsoft/vscode/blob/bfccdcb958130748419e6df1693c0f99d636dccf/src/vs/platform/contextkey/common/contextkeys.ts   
+    // https://github.com/microsoft/vscode/search?q=RawContextKey
+    // for some default context keys.
+
+    let contextKeyFirstLine = editor.createContextKey('inFirstLine', false);
+    let contextKeyIsHistoryTop = editor.createContextKey('isHistoryTop', false);
+
+    editor.onDidChangeCursorSelection(() => {
+        let selection = editor.getSelection();
+        let pos = selection.getPosition();
+        contextKeyFirstLine.set(pos.lineNumber == 1);
+    });
+
+    function getTextToCursor() {
+        let selection = editor.getSelection();
+        let pos = selection.getPosition();
+        let range = {
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: pos.lineNumber,
+            endColumn: pos.column
+        }
+        return editor.getModel().getValueInRange(range);
+    }
+
+    editor.addAction({
+        id: 'Evaluate',
+        label: 'Evaluate',
+        precondition: 'editorTextFocus && !suggestWidgetVisible',
+        keybindingContext: null,
+        contextMenuGroupId: 'navigation',
+        // keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+        keybindings: [monaco.KeyCode.Enter],
+        run: async () => {
+            let value = editor.getValue();
+            let x: any = editor; // hack to get access to the _modelData.
+            let codeAsHtml = x._modelData.viewModel.getRichTextToCopy([editor.getModel().getFullModelRange()], false)
+            history.push(value);
+            contextKeyIsHistoryTop.set(history.computeInTop());
+            replaceAllInEditor('', false);
+            await handleEvaluate(value, codeAsHtml.html);
+        }
+    });
+
+    editor.addCommand(monaco.KeyCode.Tab, () => {
+        // Add 4 spaces on tab.
+        let selection = editor.getSelection();
+        editor.executeEdits(
+            undefined,
+            [{ 'range': selection, 'text': '    ', 'forceMoveMarkers': true }],
+        )
+    }, 'editorTextFocus && !editorTabMovesFocus && !editorHasSelection && !inSnippetMode && !suggestWidgetVisible');
+
+    editor.addCommand(monaco.KeyCode.UpArrow, () => {
+        let prev = history.getPrev(getTextToCursor(), editor.getValue());
+        contextKeyIsHistoryTop.set(history.computeInTop());
+        if (prev === undefined) {
+            return;
+        }
+        replaceAllInEditor(prev, true);
+    }, 'editorTextFocus && !editorHasSelection && inFirstLine && !suggestWidgetVisible');
+
+    editor.addCommand(monaco.KeyCode.DownArrow, () => {
+        let next = history.getNext(getTextToCursor());
+        contextKeyIsHistoryTop.set(history.computeInTop());
+        if (next === undefined) {
+            return;
+        }
+        replaceAllInEditor(next, true);
+    }, 'editorTextFocus && !editorHasSelection && inFirstLine && !suggestWidgetVisible && !isHistoryTop');
+
+    editor.addCommand(monaco.KeyCode.Escape, () => {
+        // Esc clears the editor and resets the history position.
+        replaceAllInEditor('', false);
+        history.resetPos();
+        contextKeyIsHistoryTop.set(history.computeInTop());
+    }, 'editorTextFocus && !inSnippetMode && !suggestWidgetVisible');
+
+    // Hack. See:
+    // https://github.com/microsoft/monaco-editor/issues/1857#issuecomment-594457013
+    const CommandsRegistry = require('monaco-editor/esm/vs/platform/commands/common/commands').CommandsRegistry;
+    CommandsRegistry.registerCommand('robot.completion.additionalTextEdit', async (accessor, args) => {
+        let code = args['code'];
+        await handleEvaluate(code, await codeAsHtml(code));
+    });
+
+}
 
 export class ConsoleComponent extends React.Component<IConsoleProps> {
 
@@ -107,112 +217,7 @@ export class ConsoleComponent extends React.Component<IConsoleProps> {
         }
 
         function editorDidMount(editor: monaco.editor.IStandaloneCodeEditor) {
-            // Get the font info from options using the fontInfo option id
-            FONT_INFO = editor.getOption(monaco.editor.EditorOption.fontInfo);
-
-            function replaceAllInEditor(text: string, keepSelectionUnchanged: boolean) {
-                editor.pushUndoStop();
-                let model = editor.getModel();
-                let endCursorState = undefined;
-                if (keepSelectionUnchanged) {
-                    endCursorState = [editor.getSelection()];
-                }
-                editor.executeEdits(
-                    undefined,
-                    [{ 'range': model.getFullModelRange(), 'text': text, 'forceMoveMarkers': true }],
-                    endCursorState
-                )
-                editor.pushUndoStop();
-            }
-
-            // See: 
-            // https://github.com/microsoft/vscode/blob/2f5fb0fe0ccca4fe2076b1ed16643895d14cdb98/src/vs/editor/common/editorContextKeys.ts
-            // https://github.com/microsoft/vscode/blob/a2c4a0ca8ca8b86e8dd32e20e596a2e00bfdeaf9/src/vs/editor/contrib/suggest/suggest.ts
-            // https://github.com/microsoft/vscode/blob/bfccdcb958130748419e6df1693c0f99d636dccf/src/vs/platform/contextkey/common/contextkeys.ts   
-            // https://github.com/microsoft/vscode/search?q=RawContextKey
-            // for some default context keys.
-
-            let contextKeyFirstLine = editor.createContextKey('inFirstLine', false);
-            let contextKeyIsHistoryTop = editor.createContextKey('isHistoryTop', false);
-
-            editor.onDidChangeCursorSelection(() => {
-                let selection = editor.getSelection();
-                let pos = selection.getPosition();
-                contextKeyFirstLine.set(pos.lineNumber == 1);
-            });
-
-            function getTextToCursor() {
-                let selection = editor.getSelection();
-                let pos = selection.getPosition();
-                let range = {
-                    startLineNumber: 1,
-                    startColumn: 1,
-                    endLineNumber: pos.lineNumber,
-                    endColumn: pos.column
-                }
-                return editor.getModel().getValueInRange(range);
-            }
-
-            editor.addAction({
-                id: 'Evaluate',
-                label: 'Evaluate',
-                precondition: 'editorTextFocus && !suggestWidgetVisible',
-                keybindingContext: null,
-                contextMenuGroupId: 'navigation',
-                // keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
-                keybindings: [monaco.KeyCode.Enter],
-                run: async () => {
-                    let value = editor.getValue();
-                    let x: any = editor; // hack to get access to the _modelData.
-                    let codeAsHtml = x._modelData.viewModel.getRichTextToCopy([editor.getModel().getFullModelRange()], false)
-                    history.push(value);
-                    contextKeyIsHistoryTop.set(history.computeInTop());
-                    replaceAllInEditor('', false);
-                    await handleEvaluate(value, codeAsHtml.html);
-                }
-            });
-
-            editor.addCommand(monaco.KeyCode.Tab, () => {
-                // Add 4 spaces on tab.
-                let selection = editor.getSelection();
-                editor.executeEdits(
-                    undefined,
-                    [{ 'range': selection, 'text': '    ', 'forceMoveMarkers': true }],
-                )
-            }, 'editorTextFocus && !editorTabMovesFocus && !editorHasSelection && !inSnippetMode && !suggestWidgetVisible');
-
-            editor.addCommand(monaco.KeyCode.UpArrow, () => {
-                let prev = history.getPrev(getTextToCursor(), editor.getValue());
-                contextKeyIsHistoryTop.set(history.computeInTop());
-                if (prev === undefined) {
-                    return;
-                }
-                replaceAllInEditor(prev, true);
-            }, 'editorTextFocus && !editorHasSelection && inFirstLine && !suggestWidgetVisible');
-
-            editor.addCommand(monaco.KeyCode.DownArrow, () => {
-                let next = history.getNext(getTextToCursor());
-                contextKeyIsHistoryTop.set(history.computeInTop());
-                if (next === undefined) {
-                    return;
-                }
-                replaceAllInEditor(next, true);
-            }, 'editorTextFocus && !editorHasSelection && inFirstLine && !suggestWidgetVisible && !isHistoryTop');
-
-            editor.addCommand(monaco.KeyCode.Escape, () => {
-                // Esc clears the editor and resets the history position.
-                replaceAllInEditor('', false);
-                history.resetPos();
-                contextKeyIsHistoryTop.set(history.computeInTop());
-            }, 'editorTextFocus && !inSnippetMode && !suggestWidgetVisible');
-
-            // Hack. See:
-            // https://github.com/microsoft/monaco-editor/issues/1857#issuecomment-594457013
-            const CommandsRegistry = require('monaco-editor/esm/vs/platform/commands/common/commands').CommandsRegistry;
-            CommandsRegistry.registerCommand('robot.completion.additionalTextEdit', async (accessor, args) => {
-                let code = args['code'];
-                await handleEvaluate(code, await codeAsHtml(code));
-            });
+            configEditor(editor, history, handleEvaluate);
         }
 
         let theme: string = detectBaseTheme();
