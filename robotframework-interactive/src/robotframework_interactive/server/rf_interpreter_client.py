@@ -1,5 +1,6 @@
 from robocorp_ls_core.client_base import LanguageServerClientBase
 from robocorp_ls_core.protocols import ActionResultDict
+from robocorp_ls_core.options import DEFAULT_TIMEOUT
 
 
 class SubprocessDiedError(Exception):
@@ -15,10 +16,12 @@ class RfInterpreterApiClient(LanguageServerClientBase):
         self._check_process_alive()
         self._version = None
         self._on_interpreter_message = on_interpreter_message
+        self._waiting_input = 0
 
     def _on_received_message(self, msg):
         if isinstance(msg, dict):
-            if msg.get("method") == "interpreter/output":
+            method = msg.get("method")
+            if method == "interpreter/output":
                 # Something as:
                 # {
                 #     "jsonrpc": "2.0",
@@ -31,6 +34,16 @@ class RfInterpreterApiClient(LanguageServerClientBase):
                 on_interpreter_message = self._on_interpreter_message
                 if on_interpreter_message is not None:
                     on_interpreter_message(msg)
+
+            elif method == "interpreter/beforeRead":
+                self._waiting_input += 1
+
+            elif method == "interpreter/afterRead":
+                self._waiting_input -= 1
+
+    @property
+    def waiting_input(self):
+        return bool(self._waiting_input)
 
     def _check_process_alive(self, raise_exception=True):
         returncode = self.server_process.poll()
@@ -95,6 +108,13 @@ class RfInterpreterApiClient(LanguageServerClientBase):
 
     def interpreter_evaluate(self, code: str) -> ActionResultDict:
         self._check_process_alive()
+        if self._waiting_input:
+            self.server_process.stdin.write(code.encode("utf-8", errors="replace"))
+            if not code.endswith(("\r", "\n")):
+                self.server_process.stdin.write(b"\n")
+            self.server_process.stdin.flush()
+            return {"success": True, "message": None, "result": None}
+
         msg_id = self.next_id()
         return self._unpack_result_as_action_result_dict(
             self.request(
@@ -147,6 +167,6 @@ class RfInterpreterApiClient(LanguageServerClientBase):
                     "method": "interpreter/stop",
                     "params": {},
                 },
-                timeout=None,
+                timeout=DEFAULT_TIMEOUT,
             )
         )

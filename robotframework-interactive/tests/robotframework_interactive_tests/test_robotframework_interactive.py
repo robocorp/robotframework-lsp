@@ -85,7 +85,7 @@ def interpreter(change_test_dir, request):
         print("============================================")
 
 
-def test_library_import(interpreter):
+def test_library_import(interpreter: _InterpreterInfo):
     from robotframework_interactive.robotfacade import RobotFrameworkFacade
 
     facade = RobotFrameworkFacade()
@@ -104,7 +104,7 @@ def test_library_import(interpreter):
     assert "No module named 'ErrorNotThere'" in interpreter.stream_stderr.getvalue()
 
 
-def test_resource_import(interpreter, tmpdir):
+def test_resource_import(interpreter: _InterpreterInfo, tmpdir):
     tmpdir.join("my_robot.robot").write_text(
         """
 *** Keyword ***
@@ -119,7 +119,7 @@ My Keyword
     assert "MyKeywordCalled" in interpreter.stream_stdout.getvalue()
 
 
-def test_variables_import(interpreter, tmpdir):
+def test_variables_import(interpreter: _InterpreterInfo, tmpdir):
     tmpdir.join("my_vars.py").write_text(
         """
 MY_NAME = "MyNameToPrint"
@@ -132,7 +132,7 @@ MY_NAME = "MyNameToPrint"
     assert "MyNameToPrint" in interpreter.stream_stdout.getvalue()
 
 
-def test_variables_section(interpreter, tmpdir):
+def test_variables_section(interpreter: _InterpreterInfo, tmpdir):
     interpreter.interpreter.evaluate(
         """
 *** Variables ***
@@ -147,7 +147,7 @@ ${NAME2}    2ndName
     assert "2ndName" in interpreter.stream_stdout.getvalue()
 
 
-def test_keyword_section(interpreter):
+def test_keyword_section(interpreter: _InterpreterInfo):
     interpreter.interpreter.evaluate(
         """
 *** Keywords ***
@@ -161,7 +161,7 @@ MyKeyword
     assert "RunningMyKeyword" in interpreter.stream_stdout.getvalue()
 
 
-def test_reuse_block_on_line(interpreter):
+def test_reuse_block_on_line(interpreter: _InterpreterInfo):
     from robotframework_interactive.robotfacade import RobotFrameworkFacade
 
     facade = RobotFrameworkFacade()
@@ -202,7 +202,7 @@ Some Test
     test_suite.run(output=os.path.abspath("output.xml"), stdout=stdout)
 
 
-def test_output_and_errors(interpreter):
+def test_output_and_errors(interpreter: _InterpreterInfo):
     assert "Robot Scratchpad" in interpreter.stream_stdout.getvalue()
     assert "Output:" not in interpreter.stream_stdout.getvalue()
 
@@ -219,7 +219,7 @@ def test_output_and_errors(interpreter):
     )
 
 
-def test_full_doc_basic(interpreter):
+def test_full_doc_basic(interpreter: _InterpreterInfo):
     evaluate = interpreter.interpreter.evaluate
     contents = (
         ("*** Settings ***\nLibrary    Collections\nLibrary    Process\n"),
@@ -242,7 +242,7 @@ def test_full_doc_basic(interpreter):
     )
 
 
-def test_full_doc_multiple(interpreter):
+def test_full_doc_multiple(interpreter: _InterpreterInfo):
     evaluate = interpreter.interpreter.evaluate
     contents = [
         "*** Settings ***\nLibrary    Collections\nLibrary    Process",

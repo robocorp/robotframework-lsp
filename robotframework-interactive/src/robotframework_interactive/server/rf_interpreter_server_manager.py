@@ -295,6 +295,13 @@ class RfInterpreterServerManager:
             "result": None,
         }
 
+    @property
+    def waiting_input(self):
+        api = self._get_api_client()
+        if api is not None:
+            return api.waiting_input
+        return False
+
     def interpreter_evaluate(self, code: str) -> ActionResultDict:
         api = self._get_api_client()
         if api is not None:

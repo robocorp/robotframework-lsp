@@ -66,8 +66,20 @@ class RfInterpreterServerApi(PythonLanguageServer):
                         "interpreter/output", {"output": msg, "category": "stderr"}
                     )
 
+            def on_before_read():
+                if not self._interpreter_disposed:
+                    endpoint = self._lsp_messages.endpoint
+                    endpoint.notify("interpreter/beforeRead", {})
+
+            def on_after_read():
+                if not self._interpreter_disposed:
+                    endpoint = self._lsp_messages.endpoint
+                    endpoint.notify("interpreter/afterRead", {})
+
             interpreter.on_stdout.register(on_stdout)
             interpreter.on_stderr.register(on_stderr)
+            interpreter.on_before_read.register(on_before_read)
+            interpreter.on_after_read.register(on_after_read)
 
             started_main_loop_event = threading.Event()
 

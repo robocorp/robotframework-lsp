@@ -2,6 +2,7 @@ import logging
 import os
 from robocorp_ls_core.protocols import ILanguageServerClient
 import pytest
+import threading
 
 
 log = logging.getLogger(__name__)
@@ -1007,6 +1008,84 @@ Some task
         ROBOT_INTERNAL_RFINTERACTIVE_STOP, [{"interpreter_id": 1}]
     )
     assert stop2["result"] == {"success": True, "message": None, "result": None}
+
+
+def test_rf_interactive_integrated_input_request(
+    language_server_io: ILanguageServerClient,
+    rf_interpreter_startup: _RfInterpreterInfo,
+):
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE
+    from robocorp_ls_core import uris
+
+    language_server = language_server_io
+    uri = rf_interpreter_startup.uri
+    robot_file = uris.to_fs_path(uri)
+    lib_file = os.path.join(os.path.dirname(robot_file), "my_lib.py")
+    with open(lib_file, "w", encoding="utf-8") as stream:
+        stream.write(
+            r"""
+def check_input():
+    import sys
+    sys.__stdout__.write('Enter something\n')
+    return input()
+"""
+        )
+
+    message_matcher = language_server.obtain_pattern_message_matcher(
+        {"method": "interpreter/output"}
+    )
+    language_server.execute_command(
+        ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE,
+        [{"interpreter_id": 0, "code": "*** Settings ***\nLibrary    ./my_lib.py"}],
+    )
+
+    def run_in_thread():
+        language_server.execute_command(
+            ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE,
+            [
+                {
+                    "interpreter_id": 0,
+                    "code": """
+*** Test Case ***
+Test
+    ${var}=  Check Input
+    Log    ${var}     console=True
+""",
+                }
+            ],
+        )
+
+    t = threading.Thread(target=run_in_thread)
+    t.start()
+
+    assert message_matcher.event.wait(10)
+    assert message_matcher.msg == {
+        "jsonrpc": "2.0",
+        "method": "interpreter/output",
+        "params": {
+            "output": "Enter something\n",
+            "category": "stdout",
+            "interpreter_id": 0,
+        },
+    }
+
+    message_matcher = language_server.obtain_pattern_message_matcher(
+        {"method": "interpreter/output"}
+    )
+
+    language_server.execute_command(
+        ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE,
+        [{"interpreter_id": 0, "code": "EnterThis"}],
+    )
+    assert message_matcher.event.wait(10)
+    assert message_matcher.msg == {
+        "jsonrpc": "2.0",
+        "method": "interpreter/output",
+        "params": {"output": "EnterThis\n", "category": "stdout", "interpreter_id": 0},
+    }
+
+    t.join(10)
+    assert not t.is_alive()
 
 
 def test_rf_interactive_integrated_completions(

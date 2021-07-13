@@ -1,5 +1,7 @@
 import pytest
 from typing import Dict, List
+import threading
+from robocorp_ls_core.basic import wait_for_condition
 
 
 class _Setup:
@@ -84,6 +86,50 @@ Some task
     assert not result[
         "success"
     ], f"Found: {result}"  # i.e.: already initialized (cannot reinitialize)
+
+
+def test_server_stdin(setup: _Setup):
+    from robocorp_ls_core import uris
+    import os
+
+    received_messages = setup.received_messages
+    rf_interpreter_server_manager = setup.rf_interpreter_server_manager
+
+    result = rf_interpreter_server_manager.interpreter_start(setup.uri)
+    assert result["success"], f"Found: {result}"
+    uri = setup.uri
+    robot_file = uris.to_fs_path(uri)
+    lib_file = os.path.join(os.path.dirname(robot_file), "my_lib.py")
+    with open(lib_file, "w", encoding="utf-8") as stream:
+        stream.write(
+            r"""
+def check_input():
+    import sys
+    sys.__stdout__.write('Enter something\n')
+    return input()
+"""
+        )
+    rf_interpreter_server_manager.interpreter_evaluate(
+        "*** Settings ***\nLibrary    ./my_lib.py"
+    )
+
+    def check_input_in_thread():
+        rf_interpreter_server_manager.interpreter_evaluate("Check Input")
+
+    threading.Thread(target=check_input_in_thread).start()
+
+    def wait_for_enter_something_output():
+        for msg in received_messages:
+            if (
+                msg["method"] == "interpreter/output"
+                and "Enter something" in msg["params"]["output"]
+            ):
+                return True
+        return False
+
+    wait_for_condition(wait_for_enter_something_output)
+    assert rf_interpreter_server_manager._get_api_client().waiting_input
+    rf_interpreter_server_manager.interpreter_evaluate("Something\n")
 
 
 def test_server_full_code_01(setup: _Setup):

@@ -29,6 +29,7 @@ class ActionResultDict(TypedDict):
 class EvaluateTextTypedDict(TypedDict):
     prefix: str  # The prefix added to the evaluation
     full_code: str  # The final code to be evaluated
+    indent: str
 
 
 class IOnReadyCall(object):

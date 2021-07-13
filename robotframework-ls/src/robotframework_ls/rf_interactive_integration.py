@@ -202,19 +202,23 @@ class _RfInterpretersManager:
         if isinstance(rf_info_or_dict_error, dict):
             return rf_info_or_dict_error
 
-        def run():
-            interpreter: RfInterpreterServerManager = rf_info_or_dict_error.interpreter
+        interpreter: RfInterpreterServerManager = rf_info_or_dict_error.interpreter
+        args: dict = arguments[0]
+        code = args.get("code", Sentinel.SENTINEL)
+        if code is Sentinel.SENTINEL:
+            return ActionResult(
+                False, message=f"Did not find 'code' in {args}"
+            ).as_dict()
 
-            args: dict = arguments[0]
-            code = args.get("code", Sentinel.SENTINEL)
-            if code is Sentinel.SENTINEL:
-                return ActionResult(
-                    False, message=f"Did not find 'code' in {args}"
-                ).as_dict()
-
+        if interpreter.waiting_input:
             return interpreter.interpreter_evaluate(code)
 
-        return rf_info_or_dict_error.commands_thread_pool.submit(run)
+        else:
+
+            def run():
+                return interpreter.interpreter_evaluate(code)
+
+            return rf_info_or_dict_error.commands_thread_pool.submit(run)
 
     def interpreter_stop(
         self, arguments

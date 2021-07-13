@@ -51,6 +51,7 @@ from robotframework_interactive.protocols import (
     EvaluateTextTypedDict,
     ActionResultDict,
 )
+import weakref
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
@@ -74,6 +75,62 @@ class _CustomStream(object):
 
     def isatty(self):
         return False
+
+
+class _CustomStdIn:
+    def __init__(self, interpreter, original_stdin=sys.stdin):
+        self._interpreter = weakref.ref(interpreter)
+        try:
+            self.encoding = sys.stdin.encoding
+        except:
+            pass
+        self.original_stdin = original_stdin
+
+        try:
+            self.errors = (
+                sys.stdin.errors
+            )  # Who knew? sys streams have an errors attribute!
+        except:
+            # Not sure if it's available in all Python versions...
+            pass
+
+    def readline(self, *args, **kwargs):
+        interpreter = self._interpreter()
+        if interpreter is not None:
+            interpreter.on_before_read()
+
+        try:
+            return self.original_stdin.readline(*args, **kwargs)
+        except KeyboardInterrupt:
+            raise  # Let KeyboardInterrupt go through
+        except:
+            return "\n"
+        finally:
+            if interpreter is not None:
+                interpreter.on_after_read()
+
+    def write(self, *args, **kwargs):
+        pass  # not available _CustomStdIn (but it can be expected to be in the stream interface)
+
+    def flush(self, *args, **kwargs):
+        pass  # not available _CustomStdIn (but it can be expected to be in the stream interface)
+
+    def read(self, *args, **kwargs):
+        # in the interactive interpreter, a read and a readline are the same.
+        return self.readline()
+
+    def close(self, *args, **kwargs):
+        pass  # expected in _CustomStdIn
+
+    def __iter__(self):
+        # _CustomStdIn would not be considered as Iterable in Python 3 without explicit `__iter__` implementation
+        return self.original_stdin.__iter__()
+
+    def __getattr__(self, item):
+        # it's called if the attribute wasn't found
+        if hasattr(self.original_stdin, item):
+            return getattr(self.original_stdin, item)
+        raise AttributeError("%s has no attribute %s" % (self.original_stdin, item))
 
 
 class _CustomErrorReporter(NodeVisitor):
@@ -115,6 +172,26 @@ class RobotFrameworkInterpreter(object):
         self.on_stderr = Callback()
         self._stdout = _CustomStream(self.on_stdout)
         self._stderr = _CustomStream(self.on_stderr)
+
+        self._waiting_for_input = 0
+        weak_self = weakref.ref(self)
+
+        def before_read():
+            s = weak_self()
+            if s is not None:
+                s._waiting_for_input += 1
+
+        def after_read():
+            s = weak_self()
+            if s is not None:
+                s._waiting_for_input -= 1
+
+        self.on_before_read = Callback()
+        self.on_before_read.register(before_read)
+
+        self.on_after_read = Callback()
+        self.on_after_read.register(after_read)
+
         self._on_main_loop = None
 
         self._settings_section_name_to_block_mode = {
@@ -136,6 +213,12 @@ class RobotFrameworkInterpreter(object):
             "TestCaseSection": None,
             "KeywordSection": None,
         }
+
+        sys.stdin = _CustomStdIn(self)
+
+    @property
+    def waiting_for_input(self):
+        return bool(self._waiting_for_input)
 
     @property
     def full_doc(self) -> str:
