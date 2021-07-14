@@ -172,13 +172,14 @@ class InternalConnection {
             this.lifecycleFuture = launcher.startListening();
             CompletableFuture<InitializeResult> initializeResultFuture = languageServer.initialize(getInitParams(projectRootPath));
             InitializeResult tempResult = null;
-            for (int i = 0; i < 10; i++) {
+            int timeoutInSeconds = 15;
+            for (int i = 0; i < timeoutInSeconds; i++) {
                 try {
                     tempResult = initializeResultFuture.get(1, TimeUnit.SECONDS);
                     break;
                 } catch (InterruptedException | ExecutionException | TimeoutException e) {
                     languageServerStreams.verifyProcess();
-                    if (!this.isConnected() || i == 9) {
+                    if (!this.isConnected() || i == timeoutInSeconds - 1) {
                         throw e;
                     }
                 }

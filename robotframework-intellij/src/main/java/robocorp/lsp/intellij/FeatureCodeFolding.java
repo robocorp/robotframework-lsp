@@ -21,10 +21,7 @@ import robocorp.robot.intellij.RobotElementType;
 import robocorp.robot.intellij.RobotPsiFile;
 
 import java.util.List;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class FeatureCodeFolding extends CustomFoldingBuilder {
 
@@ -84,7 +81,7 @@ public class FeatureCodeFolding extends CustomFoldingBuilder {
                     if (foldingRangeList == null) {
                         return;
                     }
-                } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException ignored) {
+                } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException | TimeoutException ignored) {
                     // Cancelled (InterruptedException is thrown when completion.cancel(true) is called from another thread).
                     return;
                 }

@@ -23,10 +23,7 @@ import robocorp.robot.intellij.RobotFrameworkSyntaxHighlightingFactory;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class FeatureSemanticHighlighting extends ExternalAnnotator<EditorLanguageServerConnection, Pair<SemanticTokens, EditorLanguageServerConnection>> {
 
@@ -68,7 +65,7 @@ public class FeatureSemanticHighlighting extends ExternalAnnotator<EditorLanguag
                     return null;
                 }
                 return Pair.create(tokens, connection);
-            } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException ignored) {
+            } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException | TimeoutException ignored) {
                 // Cancelled (InterruptedException is thrown when completion.cancel(true) is called from another thread).
                 return null;
             } finally {
