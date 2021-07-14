@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.18.0'
+version '0.19.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,19 +51,11 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.18.0
+    Release 0.19.0
     </p>
     <ul>
 
-    <li>Support for variables import:</li>
-    <ul>
-        <li>Loads variables from `.py` and `.yaml` files.</li>
-    </ul>
-    <li>Semantic highlighting: equals sign no longer causes incorrect coloring on `catenate` keyword and `documentation` section.</li>
-    <li>A module shadowing `builtin.py` no longer causes the default `Builtin` module not to be found anymore.</li>
-    <li>Code analysis no longer throws error when dealing with a `Library` without a name declared.</li> 
-    <li>Robocop updated to 1.7.1.</li> 
-    <li>[Intellij] `\${workspace}` and `\${env.SOME_VAR}` properly replaced for the language server python executable specified in the settings.</li>
+    <li>Bugfixes related to timeouts.</li>
 
     <br>
     Current feature set:<br>

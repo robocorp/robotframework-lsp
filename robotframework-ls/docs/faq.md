@@ -233,3 +233,29 @@ If even after upgrading you have a Python process with high-cpu related to the
 `Robot Framework Language Server`, please create an issue with the related
 `pstats` files following the steps provided in 
 https://github.com/robocorp/robotframework-lsp/issues/350#issuecomment-842506969 
+
+
+How to use the Scratchpad?
+---------------------------
+
+Note: only available for VSCode.
+
+The `Scratchpad` may be started using the `Robot Framework: Start Scratchpad` action.
+Note that its scope will be based on the currently opened `.robot` or `.resource`
+file (if a `.robot` or `.resource` is not opened, the `Scratchpad` will not be opened).
+
+Alternatively it's also possible to start the `Scratchpad` and send the contents of
+a given section to it using the `Scratchpad` code-lens, which should automatically 
+open it and send the initial contents for execution.
+
+When the `Scratchpad` is opened, an initial task will be considered running. At this
+point, it's possible to either send full sections (such as `*** Settings ***` or
+`*** Keyword ***`) or evaluate Keywords line by line.
+
+-- note: it's also possible to send the contents of `*** Test Case ***` or `*** Task ***`,
+but a new task won't actually be started, instead, the keyword calls in this case 
+will be executed as a block in the context of the `Test/Task` that is already running.
+
+-- note: to add a library/resource import it must be sent along with the `*** Settings ***` header.
+
+-- note: To print some variable, use the `Log` keyword with `console=True`. i.e.: `Log    ${var}    console=True`

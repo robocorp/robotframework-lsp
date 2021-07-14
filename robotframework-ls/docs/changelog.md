@@ -1,3 +1,11 @@
+New in 0.19.0 (2021-07-14)
+-----------------------------
+
+Scratchpad (REPL for `Robot Framework`) available for VSCode.
+
+See the [related FAQ](https://github.com/robocorp/robotframework-lsp/blob/master/robotframework-ls/docs/faq.md#how-to-use-the-scratchpad) for details.
+
+
 New in 0.18.0 (2021-06-02)
 -----------------------------
 

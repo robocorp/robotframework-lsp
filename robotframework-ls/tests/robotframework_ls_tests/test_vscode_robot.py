@@ -1068,6 +1068,9 @@ Test
             "interpreter_id": 0,
         },
     }
+    import time
+
+    time.sleep(0.5)
 
     message_matcher = language_server.obtain_pattern_message_matcher(
         {"method": "interpreter/output"}

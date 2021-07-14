@@ -195,24 +195,37 @@ class Dev(object):
             "src",
             "robotframework_interactive",
         )
-        print("Copying from: %s to %s" % (src_core, vendored_src))
+        print("=== Copying from: %s to %s" % (src_core, vendored_src))
 
         shutil.copytree(src_core, vendored_src)
 
-        src_webview = os.path.join(
-            os.path.dirname(__file__),
-            "..",
-            "robotframework-interactive",
-            "vscode-interpreter-webview",
+        src_webview = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "robotframework-interactive",
+                "vscode-interpreter-webview",
+            )
         )
-        subprocess.check_call(["yarn", "install"], cwd=src_webview, shell=True)
+        print("=== Yarn install")
+        shell = True if sys.platform == "win32" else False
+        subprocess.check_call(["yarn", "install"], cwd=src_webview, shell=shell)
+
+        print("=== Building with webpack in: %s" % (vendored_webview,))
         subprocess.check_call(
             ["yarn", "build-prod", "--env", f"target={vendored_webview}"],
             cwd=src_webview,
-            shell=True,
+            shell=shell,
         )
-        print("Building with webpack in: %s" % (vendored_webview,))
-        print("Finished vendoring.")
+
+        assert os.path.exists(vendored_webview), f"{vendored_webview} does not exist."
+        print(f"Files found in: {vendored_webview}")
+        for f in os.listdir(vendored_webview):
+            print(f)
+
+        bundle_js = os.path.join(vendored_webview, "bundle.js")
+        assert os.path.exists(bundle_js), f"{bundle_js} does not exist."
+        print("=== Finished vendoring.")
 
     def fix_readme(self):
         """
