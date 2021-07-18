@@ -209,7 +209,13 @@ def _collect_completions_from_ast(
         name = token.value
         if name.endswith("="):
             name = name[:-1].rstrip()
-
+        if name.startswith("&"):
+            dict_var = name.replace("&", "$")
+            if collector.accepts(dict_var):
+                variable_found = _VariableFoundFromToken(
+                    completion_context, token, variable_node.value, variable_name=dict_var
+                )
+                collector.on_variable(variable_found)
         if collector.accepts(name):
             variable_found = _VariableFoundFromToken(
                 completion_context, token, variable_node.value, variable_name=name
