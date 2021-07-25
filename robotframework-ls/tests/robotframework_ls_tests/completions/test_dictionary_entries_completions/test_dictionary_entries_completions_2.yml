@@ -1,0 +1,17 @@
+- deprecated: false
+  documentation: '12345'
+  documentationFormat: plaintext
+  insertText: Zip Code
+  insertTextFormat: 2
+  kind: 6
+  label: Zip Code
+  preselect: false
+  textEdit:
+    newText: Zip Code]
+    range:
+      end:
+        character: 45
+        line: 7
+      start:
+        character: 41
+        line: 7

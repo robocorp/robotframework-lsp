@@ -26,8 +26,8 @@ def test_dictionary_entries_completions_2(
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import dictionary_completions
 
-    workspace.set_root("case2", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case2.robot")
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
     doc.source = """
 *** Variables ***
 &{Person}         Address=&{home_address}
@@ -49,8 +49,8 @@ def test_dictionary_entries_completions_3(
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import dictionary_completions
 
-    workspace.set_root("case3", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case3.robot")
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
     doc.source = """
 *** Variables ***
 &{Person}         Address=&{home_address}
