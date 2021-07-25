@@ -383,8 +383,8 @@ def test_dictionary_variables_completions_with_dollar(
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import variable_completions
 
-    workspace.set_root("case10", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case10.robot")
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
     doc.source = """*** Variables ***
 &{ROBOT}   Name=Robot Framework   Version=4.0
 
@@ -404,8 +404,8 @@ def test_dictionary_variables_completions_with_ampersand(
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import variable_completions
 
-    workspace.set_root("case10", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case10.robot")
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
     doc.source = """*** Variables ***
 &{ROBOT}   Name=Robot Framework   Version=4.0
 
