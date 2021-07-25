@@ -40,22 +40,32 @@ def _get_dict_keys(dict_item_access: str):
     return dict_keys
 
 
-def _get_dictionary(variables: List[Tuple[str, List[str]]], dict_name: str, dict_keys: List[str]):
+def _get_dictionary(variables: List[Tuple[str, List[str]]], dict_name: str, dict_items: List[str]):
     """
     Get the dictionary whose keys are the autocompletion options
     ${dict_name}([dict_key])*[<dictionary.keys()>]
     """
     for var_name, var_value in variables:
-        if var_name.startswith(dict_name):
-            dictionary = _as_dictionary(var_value)
-            dict_entry = dict_keys.pop()
-            if dict_entry == '':
-                return dictionary
+        if not var_name.startswith(dict_name):
+            continue
+        dictionary = _as_dictionary(var_value)
+        dict_keys = dictionary.keys()
+        dict_entry = dict_items.pop()
+        if dict_entry == '':
+            return dictionary
+        matching_keys = [key for key in dict_keys if dict_entry in key]
+        if len(matching_keys) == 0:
+            return {}
+        if len(matching_keys) == 1 and dict_entry == matching_keys[0]:
+            dict_value = dictionary[dict_entry]
+            if dict_value.startswith("&"):
+                dict_name = _get_dict_name(dict_value)
+                dict_items += _get_dict_keys(dict_value)
+                return _get_dictionary(variables, dict_name, dict_items)
             else:
-                dict_variable = dictionary[dict_entry]
-                dict_name = _get_dict_name(dict_variable)
-                dict_keys += _get_dict_keys(dict_variable)
-                return _get_dictionary(variables, dict_name, dict_keys)
+                return {}
+        else:
+            return {key: dictionary[key] for key in matching_keys}
     return None
 
 
@@ -87,20 +97,20 @@ def complete(completion_context: ICompletionContext):
     if token_info is None:
         return []
     token = token_info.token
-    if not token.value.endswith("[]"):
-        return []
+    value = token.value
+    last_opening_bracket_column = value[::-1].index("[")
     variables = _get_variables(completion_context)
     for resource_doc in completion_context.get_resource_imports_as_docs():
         new_ctx = completion_context.create_copy(resource_doc)
         variables += _get_variables(new_ctx)
-    dict_name = _get_dict_name(token.value)
-    dict_keys = _get_dict_keys(token.value)
+    dict_name = _get_dict_name(value)
+    dict_keys = _get_dict_keys(value)
     dictionary = _get_dictionary(variables, dict_name, dict_keys)
     if dictionary is None:
         return []
     selection = completion_context.sel
     editor_range = Range(
-        start=Position(selection.line, token.col_offset + len(token.value) - len("]")),
+        start=Position(selection.line, token.col_offset + len(value) - last_opening_bracket_column),
         end=Position(selection.line, token.end_col_offset),
     )
     return _completion_items(dictionary, editor_range)
