@@ -120,6 +120,7 @@ class _CachedInterpreterInfo(object):
 
         result = rcc.get_robot_yaml_environ(
             robot_yaml_file_info.file_path,
+            conda_config_file_info.contents,
             env_json_path_file_info.file_path
             if env_json_path_file_info is not None
             else None,
@@ -203,7 +204,7 @@ class _CacheInfo(object):
     def get_interpreter_info(
         cls,
         robot_yaml_file_info: _CachedFileInfo,
-        conda_config_file_info: Optional[_CachedFileInfo],
+        conda_config_file_info: _CachedFileInfo,
         env_json_path_file_info: Optional[_CachedFileInfo],
         pm: PluginManager,
     ) -> IInterpreterInfo:
@@ -287,21 +288,28 @@ class RobocorpResolveInterpreter(object):
             robot_yaml_file_info = _CacheInfo.get_file_info(robot_yaml)
             yaml_contents = robot_yaml_file_info.yaml_contents
             if not isinstance(yaml_contents, dict):
-                raise AssertionError(f"Expected dict as root in: {robot_yaml}")
+                log.critical(f"Expected dict as root in: {robot_yaml}")
+                return None
 
             conda_config = yaml_contents.get("condaConfigFile")
             conda_config_file_info = None
             env_json_path_file_info = None
 
-            if conda_config:
-                parent: Path = robot_yaml.parent
-                conda_config_path = parent / conda_config
-                if conda_config_path.exists():
-                    conda_config_file_info = _CacheInfo.get_file_info(conda_config_path)
+            if not conda_config:
+                log.critical("Could not find condaConfigFile in %s", robot_yaml)
+                return None
 
-                env_json_path = parent / "devdata" / "env.json"
-                if env_json_path.exists():
-                    env_json_path_file_info = _CacheInfo.get_file_info(env_json_path)
+            parent: Path = robot_yaml.parent
+            conda_config_path = parent / conda_config
+            if not conda_config_path.exists():
+                log.critical("conda.yaml does not exist in %s", conda_config_path)
+                return None
+
+            conda_config_file_info = _CacheInfo.get_file_info(conda_config_path)
+
+            env_json_path = parent / "devdata" / "env.json"
+            if env_json_path.exists():
+                env_json_path_file_info = _CacheInfo.get_file_info(env_json_path)
 
             return _CacheInfo.get_interpreter_info(
                 robot_yaml_file_info,

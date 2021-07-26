@@ -1,8 +1,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import * as crypto from 'crypto';
+import * as roboConfig from './robocorpSettings';
+import * as pathModule from 'path';
 import { XHRResponse, configure as configureXHR, xhr } from './requestLight';
-import { getExtensionRelativeFile } from './files';
+import { fileExists, getExtensionRelativeFile } from './files';
 import { workspace, window, ProgressLocation, CancellationToken, Progress, extensions } from 'vscode';
 import { OUTPUT_CHANNEL } from './channel';
 import { Timing, sleep } from './time';
@@ -205,6 +208,7 @@ export class RCCDiagnostics {
  */
 export async function runConfigDiagnostics(rccLocation: string, robocorpHome: string | undefined): Promise<RCCDiagnostics | undefined> {
     try {
+        let timing = new Timing();
         let env = { ...process.env };
         if (robocorpHome) {
             env['ROBOCORP_HOME'] = robocorpHome;
@@ -213,7 +217,12 @@ export async function runConfigDiagnostics(rccLocation: string, robocorpHome: st
             rccLocation, ['configure', 'diagnostics', '-j', '--controller', 'RobocorpCode'],
             { env: env },
         );
-        OUTPUT_CHANNEL.appendLine('RCC Diagnostics:\nStdout:\n' + configureLongpathsOutput.stdout + '\nStderr:\n' + configureLongpathsOutput.stderr);
+        OUTPUT_CHANNEL.appendLine(
+            'RCC Diagnostics:' +
+            '\nStdout:\n' + configureLongpathsOutput.stdout +
+            '\nStderr:\n' + configureLongpathsOutput.stderr +
+            '\nTook ' + timing.getTotalElapsedAsStr() + ' to obtain diagnostics.');
+
         let outputAsJSON = JSON.parse(configureLongpathsOutput.stdout);
         let checks: CheckDiagnostic[] = outputAsJSON.checks;
         return new RCCDiagnostics(checks);
@@ -317,4 +326,89 @@ export async function submitIssue(
         OUTPUT_CHANNEL.appendLine('Issue sent.');
     }
     return;
+}
+
+interface IEnvInfo {
+    env: { [key: string]: string | null };
+    robocorpHome: string | undefined;
+    rccLocation: string;
+}
+
+export async function computeSpaceName(robotFilePath: string, prefix: string) {
+    const text: string = await fs.promises.readFile(robotFilePath, 'utf-8');
+    const hash = crypto.createHash('sha256').update(text, 'utf8').digest('hex');
+    return prefix + hash.substring(0, 12);
+}
+
+/**
+ * This function won't only collect the environment, it'll also create it if needed and assign
+ * it to the given holotree space.
+ * 
+ * @param robocorpHome usually roboConfig.getHome()
+ */
+export async function collectEnv(robotFilePath: string, spaceNamePrefix: string, robocorpHome: string | undefined, addRccToPath: boolean): Promise<IEnvInfo | undefined> {
+    let spaceName = await computeSpaceName(robotFilePath, spaceNamePrefix);
+    const rccLocation = await getRccLocation();
+    if (!rccLocation) {
+        window.showErrorMessage('Unable to find RCC to create terminal.');
+        return;
+    }
+
+
+    // If the robot is located in a directory that has '/devdata/env.json', we must automatically
+    // add the -e /path/to/devdata/env.json.
+
+    let robotDirName = pathModule.dirname(robotFilePath);
+    let envFilename = pathModule.join(robotDirName, "devdata", "env.json");
+    let args = ['holotree', 'variables', '--space', spaceName, '-r', robotFilePath, '--json'];
+    if (await fileExists(envFilename)) {
+        args.push('-e');
+        args.push(envFilename);
+    }
+    args.push('--controller');
+    args.push('RobocorpCode');
+
+    let env = {};
+    if (process.platform == 'win32') {
+        Object.keys(process.env).forEach(function (key) {
+            // We could have something as `Path` -- convert it to `PATH`.
+            env[key.toUpperCase()] = process.env[key];
+        });
+    } else {
+        env = { ...process.env };
+    }
+
+    if (robocorpHome) {
+        env['ROBOCORP_HOME'] = robocorpHome;
+    }
+
+    let execFileReturn: ExecFileReturn = await execFilePromise(
+        rccLocation, args,
+        { env: env }
+    );
+    if (execFileReturn.stdout) {
+        let envArray = JSON.parse(execFileReturn.stdout);
+        for (let index = 0; index < envArray.length; index++) {
+            const element = envArray[index];
+            let key: string = element['key'];
+            let isPath: boolean = false;
+            if (process.platform == 'win32') {
+                key = key.toUpperCase();
+                if (key == 'PATH') {
+                    isPath = true;
+                }
+            } else {
+                if (key == 'PATH') {
+                    isPath = true;
+                }
+            }
+            if (isPath && addRccToPath) {
+                env[key] = pathModule.dirname(rccLocation) + pathModule.delimiter + element['value'];
+            } else {
+                env[key] = element['value'];
+            }
+        }
+        return { 'env': env, 'robocorpHome': robocorpHome, 'rccLocation': rccLocation };
+    }
+    return undefined;
 }

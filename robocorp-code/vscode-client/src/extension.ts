@@ -32,7 +32,7 @@ import * as roboConfig from './robocorpSettings';
 import * as roboCommands from './robocorpCommands';
 import { OUTPUT_CHANNEL } from './channel';
 import { getExtensionRelativeFile, verifyFileExists } from './files';
-import { getRccLocation, RCCDiagnostics, runConfigDiagnostics, STATUS_FAIL, STATUS_FATAL, STATUS_OK, STATUS_WARNING, submitIssue, submitIssueUI } from './rcc';
+import { collectEnv, getRccLocation, RCCDiagnostics, runConfigDiagnostics, STATUS_FAIL, STATUS_FATAL, STATUS_OK, STATUS_WARNING, submitIssue, submitIssueUI } from './rcc';
 import { Timing } from './time';
 import { execFilePromise, ExecFileReturn } from './subprocess';
 import { createRobot, uploadRobot, cloudLogin, runRobotRCC, cloudLogout, setPythonInterpreterFromRobotYaml, askAndRunRobotRCC, rccConfigurationDiagnostics } from './activities';
@@ -294,6 +294,7 @@ export async function activate(context: ExtensionContext) {
             return;
         }
         OUTPUT_CHANNEL.appendLine("Using python executable: " + executableAndEnv.pythonExe);
+        let startLsTiming = new Timing();
 
         let port: number = roboConfig.getLanguageServerTcpPort();
         if (port) {
@@ -361,6 +362,7 @@ export async function activate(context: ExtensionContext) {
         // may not be available.
         OUTPUT_CHANNEL.appendLine("Waiting for Robocorp Code (python) language server to finish activating...");
         await langServer.onReady();
+        OUTPUT_CHANNEL.appendLine("Took: " + startLsTiming.getTotalElapsedAsStr() + ' to initialize Robocorp Code Language Server.');
         OUTPUT_CHANNEL.appendLine("Robocorp Code extension ready. Took: " + timing.getTotalElapsedAsStr());
 
         langServer.onNotification("$/customProgress", (args: ProgressReport) => {
@@ -560,14 +562,25 @@ async function verifyLongPathSupportOnWindows(rccLocation: string): Promise<bool
 async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | undefined> {
     let rccLocation = await getRccLocation();
     if (!rccLocation) {
+        OUTPUT_CHANNEL.appendLine('Unable to get rcc executable location.');
         return;
     }
 
     let robotYaml = getExtensionRelativeFile('../../bin/create_env/robot.yaml');
     if (!robotYaml) {
+        OUTPUT_CHANNEL.appendLine('Unable to find: ../../bin/create_env/robot.yaml in extension.');
         return;
     }
 
+    let getEnvInfoPy = getExtensionRelativeFile('../../bin/create_env/get_env_info.py');
+    if (!getEnvInfoPy) {
+        OUTPUT_CHANNEL.appendLine('Unable to find: ../../bin/create_env/get_env_info.py in extension.');
+        return;
+    }
+
+    /**
+     * @returns the result of running `get_env_info.py`.
+     */
     async function createDefaultEnv(progress: Progress<{ message?: string; increment?: number }>): Promise<ExecFileReturn> | undefined {
         // Check that the user has long names enabled on windows.
         if (!await verifyLongPathSupportOnWindows(rccLocation)) {
@@ -666,17 +679,14 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
 
         progress.report({ message: 'Update env (may take a few minutes).' });
         // Get information on a base package with our basic dependencies (this can take a while...).
-        let resultPromise: Promise<ExecFileReturn> = execFilePromise(
-            rccLocation, ['task', 'run', '--robot', robotYaml, '--controller', 'RobocorpCode'],
-            { env: { ...process.env, ROBOCORP_HOME: robocorpHome } }
-        );
+        let rccEnvPromise = collectEnv(robotYaml, 'vscode-base-', robocorpHome, false);
         let timing = new Timing();
 
         let finishedCondaRun = false;
         let onFinish = function () {
             finishedCondaRun = true;
         }
-        resultPromise.then(onFinish, onFinish);
+        rccEnvPromise.then(onFinish, onFinish);
 
         // Busy async loop so that we can show the elapsed time.
         while (true) {
@@ -688,9 +698,47 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
                 progress.report({ message: 'Update env (may take a few minutes). ' + timing.getTotalElapsedAsStr() + ' elapsed.' });
             }
         }
-        let result = await resultPromise;
-        OUTPUT_CHANNEL.appendLine('Took ' + timing.getTotalElapsedAsStr() + ' to update conda env.')
-        return result;
+        let envResult = await rccEnvPromise;
+        OUTPUT_CHANNEL.appendLine('Took: ' + timing.getTotalElapsedAsStr() + ' to update conda env.');
+
+        if (!envResult) {
+            OUTPUT_CHANNEL.appendLine('Error creating conda env.');
+            return undefined;
+        }
+        // Ok, we now have the holotree space created and just collected the environment variables. Let's now do
+        // a raw python run with that information to collect information from python.
+
+        let pythonExe = envResult.env['PYTHON_EXE'];
+        if (!pythonExe) {
+            OUTPUT_CHANNEL.appendLine('Error: PYTHON_EXE not available in the holotree environment.');
+            return undefined;
+        }
+
+        let pythonTiming = new Timing();
+        let resultPromise: Promise<ExecFileReturn> = execFilePromise(
+            pythonExe, [getEnvInfoPy],
+            { env: envResult.env }
+        );
+
+        let finishedPythonRun = false;
+        let onFinishPython = function () {
+            finishedPythonRun = true;
+        }
+        resultPromise.then(onFinishPython, onFinishPython);
+
+        // Busy async loop so that we can show the elapsed time.
+        while (true) {
+            await sleep(93); // Strange sleep so it's not always a .0 when showing ;)
+            if (finishedPythonRun) {
+                break;
+            }
+            if (timing.elapsedFromLastMeasurement(5000)) {
+                progress.report({ message: 'Collecting env info. ' + timing.getTotalElapsedAsStr() + ' elapsed.' });
+            }
+        }
+        let ret = await resultPromise;
+        OUTPUT_CHANNEL.appendLine("Took: " + pythonTiming.getTotalElapsedAsStr() + " to collect python info.");
+        return ret;
     }
 
     let result: ExecFileReturn | undefined = await window.withProgress({

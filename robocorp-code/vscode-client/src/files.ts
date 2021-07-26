@@ -27,3 +27,12 @@ export function verifyFileExists(targetFile: string): boolean {
     }
     return true;
 }
+
+export async function fileExists(filename) {
+    try {
+        await fs.promises.stat(filename);
+        return true;
+    } catch (err) {
+        return false;
+    }
+}

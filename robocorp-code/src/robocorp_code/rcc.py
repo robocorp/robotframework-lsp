@@ -613,15 +613,35 @@ class Rcc(object):
 
         return ActionResult(ret.success, None, package_id)
 
+    def compute_space_name(self, prefix: str, conda_yaml_contents: str) -> str:
+        import hashlib
+
+        sha256_hash = hashlib.sha256()
+        sha256_hash.update(conda_yaml_contents.encode("utf-8"))
+        return prefix + sha256_hash.hexdigest()[:12]
+
     @implements(IRcc.get_robot_yaml_environ)
     def get_robot_yaml_environ(
-        self, robot_yaml_path: Path, env_json_path: Optional[Path], timeout=None
+        self,
+        robot_yaml_path: Path,
+        conda_yaml_contents: str,
+        env_json_path: Optional[Path],
+        timeout=None,
     ) -> ActionResult[str]:
-        args = ["env", "variables", "-r", str(robot_yaml_path)]
+        space_name = self.compute_space_name("vscode-user-", conda_yaml_contents)
+
+        args = [
+            "holotree",
+            "variables",
+            "--space",
+            space_name,
+            "-r",
+            str(robot_yaml_path),
+        ]
         if env_json_path:
             args.append("-e")
             args.append(str(env_json_path))
-        args.append("-j")
+        args.append("--json")
         ret = self._run_rcc(
             args,
             mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME,
@@ -630,49 +650,49 @@ class Rcc(object):
         )
         return ret
 
-    @implements(IRcc.run_python_code_robot_yaml)
-    def run_python_code_robot_yaml(
-        self,
-        python_code: str,
-        conda_yaml_str_contents: Optional[str],
-        silent: bool = True,
-        timeout=None,
-    ) -> ActionResult[str]:
-        from robocorp_ls_core import yaml_wrapper
-
-        # The idea is obtaining a temporary directory, creating the needed
-        # python file, robot.yaml and conda file and then executing an activity
-        # that'll execute the python file.
-        directory = make_numbered_in_temp(lock_timeout=60 * 60)
-
-        python_file: Path = directory / "code_to_exec.py"
-        python_file.write_text(python_code, encoding="utf-8")
-
-        # Note that the environ is not set (because the activityRoot cannot be
-        # set to a non-relative directory copying the existing environ leads to
-        # wrong results).
-        robot_yaml: Path = directory / "robot.yaml"
-        p: dict = {
-            "tasks": {"Run Python Command": {"command": ["python", str(python_file)]}},
-            "artifactsDir": "output",
-        }
-        if conda_yaml_str_contents:
-            p["condaConfigFile"] = "conda.yaml"
-            conda_file: Path = directory / "conda.yaml"
-            conda_file.write_text(conda_yaml_str_contents, encoding="utf-8")
-
-        robot_yaml.write_text(yaml_wrapper.dumps(p), encoding="utf-8")
-
-        args = ["task", "run", "-r", str(robot_yaml)]
-        if silent:
-            args.append("--silent")
-        ret = self._run_rcc(
-            args,
-            mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME,
-            cwd=str(directory),
-            timeout=timeout,  # Creating the env may be really slow!
-        )
-        return ret
+    # @implements(IRcc.run_python_code_robot_yaml)
+    # def run_python_code_robot_yaml(
+    #     self,
+    #     python_code: str,
+    #     conda_yaml_str_contents: Optional[str],
+    #     silent: bool = True,
+    #     timeout=None,
+    # ) -> ActionResult[str]:
+    #     from robocorp_ls_core import yaml_wrapper
+    #
+    #     # The idea is obtaining a temporary directory, creating the needed
+    #     # python file, robot.yaml and conda file and then executing an activity
+    #     # that'll execute the python file.
+    #     directory = make_numbered_in_temp(lock_timeout=60 * 60)
+    #
+    #     python_file: Path = directory / "code_to_exec.py"
+    #     python_file.write_text(python_code, encoding="utf-8")
+    #
+    #     # Note that the environ is not set (because the activityRoot cannot be
+    #     # set to a non-relative directory copying the existing environ leads to
+    #     # wrong results).
+    #     robot_yaml: Path = directory / "robot.yaml"
+    #     p: dict = {
+    #         "tasks": {"Run Python Command": {"command": ["python", str(python_file)]}},
+    #         "artifactsDir": "output",
+    #     }
+    #     if conda_yaml_str_contents:
+    #         p["condaConfigFile"] = "conda.yaml"
+    #         conda_file: Path = directory / "conda.yaml"
+    #         conda_file.write_text(conda_yaml_str_contents, encoding="utf-8")
+    #
+    #     robot_yaml.write_text(yaml_wrapper.dumps(p), encoding="utf-8")
+    #
+    #     args = ["task", "run", "-r", str(robot_yaml)]
+    #     if silent:
+    #         args.append("--silent")
+    #     ret = self._run_rcc(
+    #         args,
+    #         mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME,
+    #         cwd=str(directory),
+    #         timeout=timeout,  # Creating the env may be really slow!
+    #     )
+    #     return ret
 
     @implements(IRcc.check_conda_installed)
     def check_conda_installed(self, timeout=None) -> ActionResult[str]:

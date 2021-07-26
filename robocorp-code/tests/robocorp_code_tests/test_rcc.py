@@ -56,25 +56,25 @@ def test_rcc_cloud(rcc: IRcc, ci_credentials: str, tmpdir: py.path.local):
     assert result.success
 
 
-def test_rcc_run_with_conda_yaml(rcc: IRcc, rcc_conda_installed):
-    python_code = """
-import sys
-sys.stdout.write('It worked')
-"""
-
-    conda_yaml_str_contents = """
-channels:
-  - defaults
-  - conda-forge
-dependencies:
-  - python=3.7.5
-"""
-
-    result = rcc.run_python_code_robot_yaml(python_code, conda_yaml_str_contents)
-    assert result.success
-    assert result.result
-    # Note: even in silent mode we may have additional output!
-    assert "It worked" in result.result
+# def test_rcc_run_with_conda_yaml(rcc: IRcc, rcc_conda_installed):
+#     python_code = """
+# import sys
+# sys.stdout.write('It worked')
+# """
+#
+#     conda_yaml_str_contents = """
+# channels:
+#   - defaults
+#   - conda-forge
+# dependencies:
+#   - python=3.7.5
+# """
+#
+#     result = rcc.run_python_code_robot_yaml(python_code, conda_yaml_str_contents)
+#     assert result.success
+#     assert result.result
+#     # Note: even in silent mode we may have additional output!
+#     assert "It worked" in result.result
 
 
 def test_numbered_dir(tmpdir):

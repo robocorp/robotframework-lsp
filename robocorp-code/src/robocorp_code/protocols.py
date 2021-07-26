@@ -213,24 +213,28 @@ class IRcc(Protocol):
         """
 
     def get_robot_yaml_environ(
-        self, robot_yaml_path: Path, env_json_path: Optional[Path], timeout=None
+        self,
+        robot_yaml_path: Path,
+        conda_yaml_contents: str,
+        env_json_path: Optional[Path],
+        timeout=None,
     ) -> ActionResult[str]:
         """
         """
 
-    def run_python_code_robot_yaml(
-        self,
-        python_code: str,
-        conda_yaml_str_contents: Optional[str],
-        silent: bool = True,
-        timeout=None,
-    ) -> ActionResult[str]:
-        """
-        Runs the given code based on an existing robot yaml.
-        
-        IMPORTANT: this can be a really slow operation on the first activation to 
-        create the env.
-        """
+    # def run_python_code_robot_yaml(
+    #     self,
+    #     python_code: str,
+    #     conda_yaml_str_contents: Optional[str],
+    #     silent: bool = True,
+    #     timeout=None,
+    # ) -> ActionResult[str]:
+    #     """
+    #     Runs the given code based on an existing robot yaml.
+    #
+    #     IMPORTANT: this can be a really slow operation on the first activation to
+    #     create the env.
+    #     """
 
     def check_conda_installed(self, timeout=None) -> ActionResult[str]:
         """
