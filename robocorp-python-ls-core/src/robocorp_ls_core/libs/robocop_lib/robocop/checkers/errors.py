@@ -3,8 +3,6 @@ Errors checkers
 """
 import re
 
-from robot.version import VERSION as ROBOT_VERSION
-
 from robocop.checkers import VisitorChecker
 from robocop.rules import RuleSeverity
 from robocop.utils import IS_RF4
@@ -70,5 +68,25 @@ class TwoSpacesAfterSettingsChecker(VisitorChecker):
                 "missing-whitespace-after-setting",
                 match.group(0),
                 node=node,
+                col=node.data_tokens[0].col_offset + 1
+            )
+
+
+class MissingKeywordName(VisitorChecker):
+    """ Checker for missing keyword name. """
+    rules = {
+        "0403": (
+            "missing-keyword-name",
+            "Missing keyword name when calling some values",
+            RuleSeverity.ERROR
+        )
+    }
+
+    def visit_KeywordCall(self, node):  # noqa
+        if node.keyword is None:
+            self.report(
+                "missing-keyword-name",
+                node=node,
+                lineno=node.lineno,
                 col=node.data_tokens[0].col_offset + 1
             )

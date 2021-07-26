@@ -4,6 +4,7 @@ Naming checkers
 import re
 from pathlib import Path
 
+from robot.api import Token
 try:
     from robot.api.parsing import KeywordCall
 except ImportError:
@@ -12,8 +13,6 @@ except ImportError:
 from robocop.checkers import VisitorChecker
 from robocop.rules import RuleSeverity
 from robocop.utils import normalize_robot_name, IS_RF4, keyword_col
-
-from robot.api import Token
 
 
 class InvalidCharactersInNameChecker(VisitorChecker):
@@ -74,9 +73,14 @@ class KeywordNamingChecker(VisitorChecker):
     """ Checker for keyword naming violations. """
     rules = {
         "0302": (
-            "not-capitalized-keyword-name",
-            "Keyword name should be capitalized",
-            RuleSeverity.WARNING
+            "wrong-case-in-keyword-name",
+            "Keyword name should use title case",
+            RuleSeverity.WARNING,
+            (
+                'convention',
+                'convention',
+                str,
+                "possible values: 'each_word_capitalized' (default) or 'first_word_capitalized'")
         ),
         "0303": (
             "keyword-name-is-reserved-word",
@@ -96,6 +100,11 @@ class KeywordNamingChecker(VisitorChecker):
         "0311": (
             "else-not-upper-case",
             "ELSE and ELSE IF should be upper case",
+            RuleSeverity.ERROR
+        ),
+        "0312": (
+            "keyword-name-is-empty",
+            "Keyword name should not be empty",
             RuleSeverity.ERROR
         )
     }
@@ -120,6 +129,7 @@ class KeywordNamingChecker(VisitorChecker):
     def __init__(self):
         self.letter_pattern = re.compile(r'\W|_', re.UNICODE)
         self.var_pattern = re.compile(r'[$@%&]{.+}')
+        self.convention = 'each_word_capitalized'
         super().__init__()
 
     def visit_SuiteSetup(self, node):  # noqa
@@ -144,7 +154,10 @@ class KeywordNamingChecker(VisitorChecker):
         self.generic_visit(node)
 
     def visit_Keyword(self, node):  # noqa
-        self.check_keyword_naming(node.name, node)
+        if not node.name:
+            self.report("keyword-name-is-empty", node=node)
+        else:
+            self.check_keyword_naming(node.name, node)
         self.generic_visit(node)
 
     def visit_KeywordCall(self, node):  # noqa
@@ -182,8 +195,10 @@ class KeywordNamingChecker(VisitorChecker):
         if '_' in keyword_name:
             self.report("underscore-in-keyword-name", node=node)
         words = self.letter_pattern.sub(' ', keyword_name).split(' ')
+        if self.convention == 'first_word_capitalized':
+            words = words[:1]
         if any(word[0].islower() for word in words if word):
-            self.report("not-capitalized-keyword-name", node=node)
+            self.report("wrong-case-in-keyword-name", node=node)
 
     def check_if_keyword_is_reserved(self, keyword_name, node):
         # if there is typo in syntax, it is interpreted as keyword
@@ -205,8 +220,8 @@ class SettingsNamingChecker(VisitorChecker):
     """ Checker for section naming violations. """
     rules = {
         "0306": (
-            "setting-name-not-capitalized",
-            "Setting name should be capitalized or upper case",
+            "setting-name-not-in-title-case",
+            "Setting name should be title or upper case",
             RuleSeverity.WARNING
         ),
         "0307": (
@@ -278,7 +293,7 @@ class SettingsNamingChecker(VisitorChecker):
 
     def check_setting_name(self, name, node):
         if not (name.istitle() or name.isupper()):
-            self.report("setting-name-not-capitalized", node=node)
+            self.report("setting-name-not-in-title-case", node=node)
 
 
 class TestCaseNamingChecker(VisitorChecker):
@@ -288,11 +303,18 @@ class TestCaseNamingChecker(VisitorChecker):
             "not-capitalized-test-case-title",
             "Test case title should start with capital letter",
             RuleSeverity.WARNING
+        ),
+        "0313": (
+            "test-case-name-is-empty",
+            "Test case name should not be empty",
+            RuleSeverity.ERROR
         )
     }
 
     def visit_TestCase(self, node):  # noqa
-        if node.name and not node.name[0].isupper():
+        if not node.name:
+            self.report("test-case-name-is-empty", node=node)
+        elif not node.name[0].isupper():
             self.report("not-capitalized-test-case-title", node=node)
 
 
@@ -323,7 +345,7 @@ class VariableNamingChecker(VisitorChecker):
             if not child.data_tokens:
                 continue
             token = child.data_tokens[0]
-            if token.type == Token.VARIABLE and not token.value.isupper():
+            if token.type == Token.VARIABLE and token.value and not token.value.isupper():
                 self.report("section-variable-not-uppercase", lineno=token.lineno,
                             col=token.col_offset)
 

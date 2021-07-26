@@ -2,11 +2,12 @@
 Duplications checkers
 """
 from collections import defaultdict
+
+from robot.api import Token
+
 from robocop.checkers import VisitorChecker
 from robocop.rules import RuleSeverity
 from robocop.utils import normalize_robot_name
-
-from robot.api import Token
 
 
 class DuplicationsChecker(VisitorChecker):
@@ -84,7 +85,8 @@ class DuplicationsChecker(VisitorChecker):
                 self.report(rule, duplicate.name, node=duplicate)
 
     def visit_TestCase(self, node):  # noqa
-        self.test_cases[node.name].append(node)
+        testcase_name = normalize_robot_name(node.name)
+        self.test_cases[testcase_name].append(node)
 
     def visit_Keyword(self, node):  # noqa
         keyword_name = normalize_robot_name(node.name)
@@ -94,6 +96,8 @@ class DuplicationsChecker(VisitorChecker):
         self.generic_visit(node)
 
     def visit_Variable(self, node):  # noqa
+        if not node.name:
+            return
         var_name = normalize_robot_name(self.replace_chars(node.name, '${}@&'))
         self.variables[var_name].append(node)
 
