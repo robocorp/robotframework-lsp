@@ -13,7 +13,14 @@ import robocop.exceptions
 from robocop import checkers
 from robocop import reports
 from robocop.config import Config
-from robocop.utils import DisablersFinder, FileType, FileTypeChecker, issues_to_lsp_diagnostic
+from robocop.utils import (
+    DisablersFinder,
+    FileType,
+    FileTypeChecker,
+    issues_to_lsp_diagnostic,
+    RecommendationFinder,
+    is_suite_templated
+)
 
 
 class Robocop:
@@ -50,11 +57,6 @@ class Robocop:
         if not from_cli:
             self.config.reports.add('json_report')
         self.out = self.set_output()
-        if from_cli:
-            print("### DEPRECATION WARNING: The rule '0906' (redundant-equal-sign) is "
-                  "deprecated starting from Robocop 1.7.0 and is replaced by 0909 (inconsistent-assignment) and "
-                  "0910 (inconsistent-assignment-in-variables). "
-                  "Rule '0906' will be removed in the next release - update your configuration. ###\n")
 
     def set_output(self):
         """ Set output for printing to file if configured. Else use standard output """
@@ -67,6 +69,7 @@ class Robocop:
     def reload_config(self):
         """ Reload checkers and reports based on current config """
         self.load_checkers()
+        self.config.validate_rule_names(self.rules)
         self.list_checkers()
         self.load_reports()
         self.configure_checkers_or_reports()
@@ -131,10 +134,11 @@ class Robocop:
         self.register_disablers(filename, source)
         if self.disabler.file_disabled:
             return []
+        templated = is_suite_templated(ast_model)
         for checker in self.checkers:
             if checker.disabled:
                 continue
-            found_issues += [issue for issue in checker.scan_file(ast_model, filename, source)
+            found_issues += [issue for issue in checker.scan_file(ast_model, filename, source, templated)
                              if not self.disabler.is_rule_disabled(issue)]
         return found_issues
 
@@ -175,7 +179,7 @@ class Robocop:
             print("All rules have configurable parameter 'severity'. Allowed values are:"
                   "\n    E / error\n    W / warning\n    I / info")
         rule_by_id = {msg.rule_id: (msg, checker) for checker in self.checkers for msg in checker.rules_map.values()}
-        rule_ids = sorted([key for key in rule_by_id])
+        rule_ids = sorted(rule_by_id.keys())
         for rule_id in rule_ids:
             rule_def, checker = rule_by_id[rule_id]
             if self.config.list:
@@ -279,8 +283,9 @@ class Robocop:
             elif rule_or_report in self.reports:
                 self.reports[rule_or_report].configure(param, value, *values)
             else:
+                similiar = RecommendationFinder().find_similar(rule_or_report, self.rules)
                 raise robocop.exceptions.ConfigGeneralError(
-                    f"Provided rule or report '{rule_or_report}' does not exist")
+                    f"Provided rule or report '{rule_or_report}' does not exist.{similiar}")
 
 
 def run_robocop():

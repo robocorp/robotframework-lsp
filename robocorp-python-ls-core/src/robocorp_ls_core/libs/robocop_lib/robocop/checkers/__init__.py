@@ -47,6 +47,7 @@ class BaseChecker:
         self.rules_map = {}
         self.register_rules(self.rules)
         self.issues = []
+        self.templated_suite = False
 
     def register_rules(self, rules):
         for key, value in rules.items():
@@ -73,16 +74,13 @@ class BaseChecker:
     def configure(self, param, value):
         self.__dict__[param] = value
 
-    def scan_file(self, *args):
-        raise NotImplementedError
-
-
 class VisitorChecker(BaseChecker, ModelVisitor):  # noqa
     type = 'visitor_checker'
 
-    def scan_file(self, ast_model, filename, in_memory_content):
+    def scan_file(self, ast_model, filename, in_memory_content, templated=False):
         self.issues = []
         self.source = filename
+        self.templated_suite = templated
         if in_memory_content is not None:
             self.lines = in_memory_content.splitlines(keepends=True)
         else:
@@ -98,9 +96,10 @@ class VisitorChecker(BaseChecker, ModelVisitor):  # noqa
 class RawFileChecker(BaseChecker):  # noqa
     type = 'rawfile_checker'
 
-    def scan_file(self, ast_model, filename, in_memory_content):
+    def scan_file(self, ast_model, filename, in_memory_content, templated=False):
         self.issues = []
         self.source = filename
+        self.templated_suite = templated
         if in_memory_content is not None:
             self.lines = in_memory_content.splitlines(keepends=True)
         else:
@@ -113,7 +112,7 @@ class RawFileChecker(BaseChecker):  # noqa
         if self.lines is not None:
             self._parse_lines(self.lines)
         else:
-            with open(self.source) as file:
+            with open(self.source, encoding='utf-8') as file:
                 self._parse_lines(file)
 
     def _parse_lines(self, lines):

@@ -1,6 +1,7 @@
 import argparse
 import fnmatch
 from pathlib import Path
+from itertools import chain
 import os
 import re
 import sys
@@ -11,9 +12,15 @@ try:
 except ImportError:
     TOML_SUPPORT = False
 
-from robocop.exceptions import ArgumentFileNotFoundError, NestedArgumentFileError, InvalidArgumentError
+from robocop.exceptions import (
+    ArgumentFileNotFoundError,
+    NestedArgumentFileError,
+    InvalidArgumentError,
+    ConfigGeneralError
+)
 from robocop.rules import RuleSeverity
 from robocop.version import __version__
+from robocop.utils import RecommendationFinder
 
 
 def translate_pattern(pattern):
@@ -163,9 +170,6 @@ class Config:
         'epilog':            'For full documentation visit: https://github.com/MarketSquare/robotframework-robocop'
     }
 
-    def _translate_patterns(self, pattern_list):
-        return [translate_pattern(p) for p in pattern_list if '*' in p]
-
     def remove_severity(self):
         self.include = {self.replace_severity_values(rule) for rule in self.include}
         self.exclude = {self.replace_severity_values(rule) for rule in self.exclude}
@@ -176,9 +180,19 @@ class Config:
             message = self.replace_severity_values(message)
             self.configure[index] = f"{message}:{param}:{value}"
 
+    @staticmethod
+    def filter_patterns_from_names(only_names, only_patterns):
+        filtered = set()
+        for rule in only_names:
+            if '*' in rule:
+                only_patterns.append(translate_pattern(rule))
+            else:
+                filtered.add(rule)
+        return filtered
+
     def translate_patterns(self):
-        self.include_patterns = self._translate_patterns(self.include)
-        self.exclude_patterns = self._translate_patterns(self.exclude)
+        self.include = self.filter_patterns_from_names(self.include, self.include_patterns)
+        self.exclude = self.filter_patterns_from_names(self.exclude, self.exclude_patterns)
 
     def preparse(self, args):
         args = sys.argv[1:] if args is None else args
@@ -189,7 +203,7 @@ class Config:
                 try:
                     argfile = next(args)
                 except StopIteration:
-                    raise ArgumentFileNotFoundError('')
+                    raise ArgumentFileNotFoundError('') from None
                 parsed_args += self.load_args_from_file(argfile)
             else:
                 parsed_args.append(arg)
@@ -198,13 +212,13 @@ class Config:
     def load_args_from_file(self, argfile):
         try:
             with open(argfile) as arg_f:
-                args = [arg for line in arg_f for arg in line.split()]
+                args = [arg.strip() for line in arg_f for arg in line.split(' ', 1)]
                 if '-A' in args or '--argumentfile' in args:
                     raise NestedArgumentFileError(argfile)
                 self.config_from = argfile
                 return args
         except FileNotFoundError:
-            raise ArgumentFileNotFoundError(argfile)
+            raise ArgumentFileNotFoundError(argfile) from None
 
     def _create_parser(self):
         parser = CustomArgParser(prog='robocop',
@@ -284,6 +298,7 @@ class Config:
         robocop_path = self.find_file_in_project_root('.robocop')
         if robocop_path.is_file():
             return self.load_args_from_file(robocop_path)
+        return None
 
     def find_file_in_project_root(self, config_name):
         root = self.root or Path.cwd()
@@ -300,11 +315,36 @@ class Config:
             return
         try:
             config = toml.load(str(pyproject_path))
-        except toml.TomlDecodeError as e:
-            raise InvalidArgumentError(f'Failed to decode {str(pyproject_path)}: {e}')
+        except toml.TomlDecodeError as err:
+            raise InvalidArgumentError(f'Failed to decode {str(pyproject_path)}: {err}') from None
         config = config.get("tool", {}).get("robocop", {})
         parse_toml_to_config(config, self)
         self.config_from = pyproject_path
+
+    @staticmethod
+    def replace_in_set(container, old_key, new_key):
+        if old_key not in container:
+            return
+        container.remove(old_key)
+        container.add(new_key)
+
+    def validate_rule_names(self, rules):
+        deprecated = {
+            'setting-name-not-capitalized': 'setting-name-not-in-title-case',
+            'not-capitalized-keyword-name': 'wrong-case-in-keyword-name',
+            'missing-doc-testcase': 'missing-doc-test-case'
+        }
+        for rule in chain(self.include, self.exclude):
+            # TODO: Remove in 1.9.0
+            if rule in deprecated:
+                print(f"### DEPRECATION WARNING: The name of the rule '{rule}' is "
+                      f"renamed to '{deprecated[rule]}' starting from Robocop 1.8.0. "
+                      f"Update your configuration if you're using old name. ###\n")
+                self.replace_in_set(self.include, rule, deprecated[rule])
+                self.replace_in_set(self.exclude, rule, deprecated[rule])
+            elif rule not in rules:
+                similiar = RecommendationFinder().find_similar(rule, rules)
+                raise ConfigGeneralError(f"Provided rule '{rule}' does not exist.{similiar}")
 
     def is_rule_enabled(self, rule):
         if self.is_rule_disabled(rule):
