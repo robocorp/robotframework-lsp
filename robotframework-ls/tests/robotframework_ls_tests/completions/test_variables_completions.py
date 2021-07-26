@@ -375,3 +375,45 @@ Test
         CompletionContext(doc, workspace=workspace.ws)
     )
     data_regression.check(completions)
+
+
+def test_dictionary_variables_completions_with_dollar(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import variable_completions
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """*** Variables ***
+&{ROBOT}   Name=Robot Framework   Version=4.0
+
+***Test Cases***
+Test dictionary variable completion
+   Log to Console   ${ROB"""
+
+    completions = variable_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    data_regression.check(completions)
+
+
+def test_dictionary_variables_completions_with_ampersand(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import variable_completions
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """*** Variables ***
+&{ROBOT}   Name=Robot Framework   Version=4.0
+
+***Test Cases***
+Test dictionary variable completion
+   Log to Console   &{ROB"""
+
+    completions = variable_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    data_regression.check(completions)

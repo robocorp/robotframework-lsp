@@ -1,0 +1,17 @@
+- deprecated: false
+  documentation: ('Name=Robot Framework', 'Version=4.0')
+  documentationFormat: plaintext
+  insertText: '&{ROBOT}'
+  insertTextFormat: 2
+  kind: 6
+  label: '&{ROBOT}'
+  preselect: false
+  textEdit:
+    newText: '&{ROBOT}'
+    range:
+      end:
+        character: 25
+        line: 5
+      start:
+        character: 20
+        line: 5
