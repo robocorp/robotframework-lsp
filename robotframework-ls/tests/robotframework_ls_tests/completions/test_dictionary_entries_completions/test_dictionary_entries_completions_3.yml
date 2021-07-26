@@ -1,0 +1,17 @@
+- deprecated: false
+  documentation: Espoo
+  documentationFormat: plaintext
+  insertText: Home of Aalto University
+  insertTextFormat: 2
+  kind: 6
+  label: Home of Aalto University
+  preselect: false
+  textEdit:
+    newText: Home of Aalto University]
+    range:
+      end:
+        character: 55
+        line: 9
+      start:
+        character: 47
+        line: 9

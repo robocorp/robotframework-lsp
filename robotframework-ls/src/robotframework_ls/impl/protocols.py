@@ -324,6 +324,9 @@ class ICompletionContext(Protocol):
     def get_current_token(self) -> Optional[TokenInfo]:
         pass
 
+    def get_all_variables(self) -> Tuple[NodeInfo, ...]:
+        pass
+
     def get_current_variable(self, section=None) -> Optional[TokenInfo]:
         pass
 

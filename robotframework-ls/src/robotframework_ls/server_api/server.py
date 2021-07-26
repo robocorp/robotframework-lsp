@@ -211,6 +211,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         from robotframework_ls.impl import section_name_completions
         from robotframework_ls.impl import keyword_completions
         from robotframework_ls.impl import variable_completions
+        from robotframework_ls.impl import dictionary_completions
         from robotframework_ls.impl import filesystem_section_completions
         from robotframework_ls.impl import keyword_parameter_completions
         from robotframework_ls.impl import auto_import_completions
@@ -243,6 +244,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
         if not ret:
             ret.extend(variable_completions.complete(completion_context))
+
+        if not ret:
+            ret.extend(dictionary_completions.complete(completion_context))
 
         if not ret:
             ret.extend(keyword_parameter_completions.complete(completion_context))

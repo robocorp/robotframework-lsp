@@ -1,0 +1,17 @@
+- deprecated: false
+  documentation: John
+  documentationFormat: plaintext
+  insertText: First name
+  insertTextFormat: 2
+  kind: 6
+  label: First name
+  preselect: false
+  textEdit:
+    newText: First name]
+    range:
+      end:
+        character: 38
+        line: 6
+      start:
+        character: 32
+        line: 6

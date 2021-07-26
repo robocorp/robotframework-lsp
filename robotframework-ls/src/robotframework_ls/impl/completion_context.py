@@ -285,6 +285,12 @@ class CompletionContext(object):
         return ast_utils.find_token(section, self.sel.line, self.sel.col)
 
     @instance_cache
+    def get_all_variables(self):
+        from robotframework_ls.impl import ast_utils
+        ast = self.get_ast()
+        return tuple(ast_utils.iter_variables(ast))
+
+    @instance_cache
     def get_current_variable(self, section=None) -> Optional[TokenInfo]:
         from robotframework_ls.impl import ast_utils
 
