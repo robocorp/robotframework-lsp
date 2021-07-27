@@ -197,23 +197,31 @@ def _collect_completions_from_ast(
     ast, completion_context: ICompletionContext, collector
 ):
     completion_context.check_cancelled()
-    from robotframework_ls.impl import ast_utils
     from robot.api import Token
 
-    ast = completion_context.get_ast()
-    for variable_node_info in ast_utils.iter_variables(ast):
+    for variable_node_info in completion_context.get_all_variables():
         variable_node = variable_node_info.node
         token = variable_node.get_token(Token.VARIABLE)
         if token is None:
             continue
         name = token.value
+        if not name:
+            continue
+        name = name.strip()
+        if not name:
+            continue
         if name.endswith("="):
             name = name[:-1].rstrip()
-        if name.startswith("&"):
-            dict_var = name.replace("&", "$")
-            if collector.accepts(dict_var):
+
+        if name.startswith(("&", "@")):
+            # Allow referencing dict(&)/list(@) variables as regular ($) variables
+            dict_or_list_var = "$" + name[1:]
+            if collector.accepts(dict_or_list_var):
                 variable_found = _VariableFoundFromToken(
-                    completion_context, token, variable_node.value, variable_name=dict_var
+                    completion_context,
+                    token,
+                    variable_node.value,
+                    variable_name=dict_or_list_var,
                 )
                 collector.on_variable(variable_found)
         if collector.accepts(name):

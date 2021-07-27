@@ -409,9 +409,62 @@ def test_find_definition_variables_arguments(
 *** Keywords ***
 This is the Test
     [Arguments]    ${arg}    ${arg2}
-    Log To Console    ${arg2}"""
+    Log To Console    arg=${arg2}"""
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)
+    data_regression.check(
+        _definitions_to_data_regression(find_definition(completion_context))
+    )
+
+
+def test_find_definition_variables_list(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+    doc.source = """
+*** Variables ***
+@{SOME LIST}    foo    bar    baz
+&{SOME DICT}    string=cat    int=${1}    list=@{SOME LIST}
+
+
+*** Test Cases ***
+Log Global Constants
+    Log    ${SOME LIST}    info"""
+
+    line, col = doc.get_last_line_col()
+    col -= len("ST}    info")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+    data_regression.check(
+        _definitions_to_data_regression(find_definition(completion_context))
+    )
+
+
+def test_find_definition_variables_dict(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+    doc.source = """
+*** Variables ***
+@{SOME LIST}    foo    bar    baz
+&{SOME DICT}    string=cat    int=${1}    list=@{SOME LIST}
+
+
+*** Test Cases ***
+Log Global Constants
+    Log    ${SOME LIST}    info
+    Log    ${SOME DICT}    info"""
+
+    line, col = doc.get_last_line_col()
+    col -= len("CT}    info")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
     data_regression.check(
         _definitions_to_data_regression(find_definition(completion_context))
     )
