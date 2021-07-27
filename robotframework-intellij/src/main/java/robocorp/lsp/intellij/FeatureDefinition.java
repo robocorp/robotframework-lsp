@@ -60,7 +60,12 @@ public class FeatureDefinition {
             if (document == null) {
                 return null;
             }
-            Position pos = EditorUtils.offsetToLSPPos(document, absoluteRange.getStartOffset());
+            int offset = absoluteRange.getStartOffset();
+            // We use +1 because in general, for Intellij, we have to work on the position of things
+            // that the lexer saw, and as we get the start offset, this ends up being outside of the
+            // bounds of a variable (for instance, in some${var}, the start offset would be after 'some' and before '${var}').
+            offset += 1;
+            Position pos = EditorUtils.offsetToLSPPos(document, offset);
             TextDocumentIdentifier textDocumentIdentifier = new TextDocumentIdentifier(uri);
             DefinitionParams params = new DefinitionParams(textDocumentIdentifier, pos);
             CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition = comm.definition(params);

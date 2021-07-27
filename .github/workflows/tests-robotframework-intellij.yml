@@ -4,6 +4,8 @@ on:
   push:
     paths:
     - robotframework-intellij/**
+    - robotframework-ls/**
+    - robocorp-python-ls-core/**
     - .github/**
 
 
