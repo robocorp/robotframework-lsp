@@ -55,23 +55,15 @@ class _VirtualFSThread(threading.Thread):
 
     def __init__(self, virtual_fs):
         from robocorp_ls_core.watchdog_wrapper import IFSWatch
+        from robocorp_ls_core import load_ignored_dirs
 
         threading.Thread.__init__(self)
         self.daemon = True
-        from os.path import basename
 
         self._virtual_fs = weakref.ref(virtual_fs)
         self.root_folder_path = virtual_fs.root_folder_path
 
-        ignored_dirs = {
-            ".git",
-            "__pycache__",
-            ".idea",
-            "node_modules",
-            ".metadata",
-            ".vscode",
-        }
-        self.accept_directory = lambda dir_path: basename(dir_path) not in ignored_dirs
+        self.accept_directory = load_ignored_dirs.create_accept_directory_callable()
         self.accept_file = lambda path_name: path_name.endswith(
             tuple(virtual_fs._extensions)
         )

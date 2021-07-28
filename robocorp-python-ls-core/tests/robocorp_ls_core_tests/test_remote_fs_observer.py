@@ -67,3 +67,92 @@ def test_remote_fs_observer(remote_fs_observer, tmpdir):
         watch.stop_tracking()
         notifier.dispose()
         observer.dispose()
+
+
+def test_glob_matches_path():
+    from robocorp_ls_core.load_ignored_dirs import glob_matches_path
+    import sys
+
+    # Linux
+    for sep, altsep in (("\\", "/"), ("/", None)):
+
+        def build(path):
+            if sep == "/":
+                return path
+            else:
+                return ("c:" + path).replace("/", "\\")
+
+        assert glob_matches_path(build("/a"), r"*", sep, altsep)
+
+        assert not glob_matches_path(
+            build("/a/b/c/some.py"), "/a/**/c/so?.py", sep, altsep
+        )
+
+        assert glob_matches_path("/a/b/c", "/a/b/*")
+        assert not glob_matches_path("/a/b", "/*")
+        assert glob_matches_path("/a/b", "/*/b")
+        assert glob_matches_path("/a/b", "**/*")
+        assert not glob_matches_path("/a/b", "**/a")
+
+        assert glob_matches_path(build("/a/b/c/d"), "**/d", sep, altsep)
+        assert not glob_matches_path(build("/a/b/c/d"), "**/c", sep, altsep)
+        assert glob_matches_path(build("/a/b/c/d"), "**/c/d", sep, altsep)
+        assert glob_matches_path(build("/a/b/c/d"), "**/b/c/d", sep, altsep)
+        assert glob_matches_path(build("/a/b/c/d"), "/*/b/*/d", sep, altsep)
+        assert glob_matches_path(build("/a/b/c/d"), "**/c/*", sep, altsep)
+        assert glob_matches_path(build("/a/b/c/d"), "/a/**/c/*", sep, altsep)
+
+        # I.e. directories are expected to end with '/', so, it'll match
+        # something as **/directory/**
+        assert glob_matches_path(build("/a/b/c/"), "**/c/**", sep, altsep)
+        assert glob_matches_path(build("/a/b/c/"), "**/c/", sep, altsep)
+        # But not something as **/directory (that'd be a file match).
+        assert not glob_matches_path(build("/a/b/c/"), "**/c", sep, altsep)
+        assert not glob_matches_path(build("/a/b/c"), "**/c/", sep, altsep)
+
+        assert glob_matches_path(build("/a/b/c/d.py"), "/a/**/c/*", sep, altsep)
+        assert glob_matches_path(build("/a/b/c/d.py"), "/a/**/c/*.py", sep, altsep)
+        assert glob_matches_path(build("/a/b/c/some.py"), "/a/**/c/so*.py", sep, altsep)
+        assert glob_matches_path(
+            build("/a/b/c/some.py"), "/a/**/c/som?.py", sep, altsep
+        )
+        assert glob_matches_path(build("/a/b/c/d"), "/**", sep, altsep)
+        assert glob_matches_path(build("/a/b/c/d"), "/**/d", sep, altsep)
+        assert glob_matches_path(build("/a/b/c/d.py"), "/**/*.py", sep, altsep)
+        assert glob_matches_path(build("/a/b/c/d.py"), "**/c/*.py", sep, altsep)
+
+        if sys.platform == "win32":
+            assert glob_matches_path(build("/a/b/c/d.py"), "**/C/*.py", sep, altsep)
+            assert glob_matches_path(build("/a/b/C/d.py"), "**/c/*.py", sep, altsep)
+
+        # Expected not to match.
+        assert not glob_matches_path(build("/a/b/c/d"), "/**/d.py", sep, altsep)
+        assert not glob_matches_path(build("/a/b/c/d.pyx"), "/a/**/c/*.py", sep, altsep)
+        assert not glob_matches_path(build("/a/b/c/d"), "/*/d", sep, altsep)
+
+        if sep == "/":
+            assert not glob_matches_path(
+                build("/a/b/c/d"), r"**\d", sep, altsep
+            )  # Match with \ doesn't work on linux...
+            assert not glob_matches_path(
+                build("/a/b/c/d"), r"c:\**\d", sep, altsep
+            )  # Match with drive doesn't work on linux...
+        else:
+            # Works in Windows.
+            assert glob_matches_path(build("/a/b/c/d"), r"**\d", sep, altsep)
+            assert glob_matches_path(build("/a/b/c/d"), r"c:\**\d", sep, altsep)
+
+        # Corner cases
+        assert not glob_matches_path(build("/"), r"", sep, altsep)
+        assert glob_matches_path(build(""), r"", sep, altsep)
+        assert not glob_matches_path(build(""), r"**", sep, altsep)
+        assert glob_matches_path(build("/"), r"**", sep, altsep)
+        assert glob_matches_path(build("/"), r"*", sep, altsep)
+
+
+def test_create_accept_directory_callable():
+    from robocorp_ls_core.load_ignored_dirs import create_accept_directory_callable
+
+    accept_directory = create_accept_directory_callable("")
+    assert not accept_directory("/my/node_modules")
+    assert accept_directory("/my")

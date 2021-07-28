@@ -159,6 +159,14 @@ picks up the new environment variable value.
 
 **Note**: when possible using `watchdog` is recommended.
 
+**Note**: when using `fsnotify` mode, it's possible to specify directories to be ignored with an environment variable
+`ROBOTFRAMEWORK_LS_IGNORE_DIRS` which points to a json list with glob-patterns to ignore.
+
+    i.e.: `ROBOTFRAMEWORK_LS_IGNORE_DIRS=["**/bin", "**/other/project"]`
+
+
+**Note**: The following patterns are always ignored: `["**/.git", "**/__pycache__", "**/.idea", "**/node_modules", "**/.metadata", "**/.vscode"]`
+
 
 How to solve (NO_ROBOT) too old for linting?
 --------------------------------------------

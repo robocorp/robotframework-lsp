@@ -217,6 +217,8 @@ class _FSNotifyWatchList(object):
 
 class _FSNotifyObserver(threading.Thread):
     def __init__(self, extensions):
+        from robocorp_ls_core import load_ignored_dirs
+
         threading.Thread.__init__(self)
         import fsnotify
 
@@ -246,14 +248,7 @@ class _FSNotifyObserver(threading.Thread):
                 watcher.target_time_for_single_scan = poll_time
 
         watcher.accepted_file_extensions = extensions
-        # Could be customizable...
-        watcher.ignored_dirs = {
-            ".git",
-            "__pycache__",
-            ".idea",
-            "node_modules",
-            ".metadata",
-        }
+        watcher.accept_directory = load_ignored_dirs.create_accept_directory_callable()
 
         self._all_paths_to_track = []
         self._lock = threading.Lock()
