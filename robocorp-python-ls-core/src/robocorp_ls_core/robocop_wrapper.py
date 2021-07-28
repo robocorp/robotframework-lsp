@@ -1,7 +1,12 @@
 import os.path
-import sys
 from pathlib import Path
+import sys
 from typing import List, Dict
+
+from robocorp_ls_core.robotframework_log import get_logger
+
+
+log = get_logger(__name__)
 
 
 def _import_robocop():
@@ -14,6 +19,10 @@ def _import_robocop():
             raise RuntimeError("Expected: %s to exist." % (_robocop_dir,))
         sys.path.append(_robocop_dir)
         import robocop  # @UnusedImport
+
+        log.info("Using vendored Robocop")
+
+    log.info("Robocop module: %s", robocop)
 
 
 def collect_robocop_diagnostics(
