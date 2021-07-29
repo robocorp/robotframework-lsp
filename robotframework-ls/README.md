@@ -31,7 +31,7 @@ See: [Config](docs/config.md) for details.
 See: [FAQ](docs/faq.md) for common issues encountered while configuring the language server.
   
 
-Features (0.19.0)
+Features (0.20.0)
 -----------------
 
 - Scratchpad: a REPL for interactively experimenting with Robot Framework (for VSCode).

@@ -25,6 +25,9 @@ def _load_ignored_dirs_patterns(additional_dirs_to_ignore_str: Optional[str] = N
                 additional_dirs_to_ignore_str,
             )
         else:
+            log.info(
+                "Loaded ROBOTFRAMEWORK_LS_IGNORE_DIRS: %s", additional_dirs_to_ignore
+            )
             if isinstance(additional_dirs_to_ignore, list):
                 for entry in additional_dirs_to_ignore:
                     if isinstance(entry, str):

@@ -156,3 +156,9 @@ def test_create_accept_directory_callable():
     accept_directory = create_accept_directory_callable("")
     assert not accept_directory("/my/node_modules")
     assert accept_directory("/my")
+
+    accept_directory = create_accept_directory_callable('["**/bazel_out/**"]')
+    assert accept_directory("/my/foobar")
+    assert not accept_directory(
+        "/Users/ichamberlain/Documents/workspace/bazel_out/execroot/my_org/bazel_out/execroot/my_org/bazel_out/execroot/my_org"
+    )
