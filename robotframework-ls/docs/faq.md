@@ -210,8 +210,8 @@ How to use variables in settings?
 Since `Robot Framework Language Server 0.17.0`, the settings may contain variables
 in the settings.
 
-The variables available are `${workspace}`, which points to the workspace root or
-`${env.ENV_VAR_NAME}`, which will obtain the `ENV_VAR_NAME` from the environment
+The variables available are `${workspaceFolder}`, which points to the first opened folder or
+`${env:ENV_VAR_NAME}`, which will obtain the `ENV_VAR_NAME` from the environment
 variables.
 
 Also, since `0.17.0`, it's also possible to prefix a setting value with `~` so that
@@ -223,11 +223,15 @@ Example:
 {
   "robot.pythonpath": [
       "~/lib/", 
-      "${worskpace}/lib", 
-      "${env.MYROOT}/lib"
+      "${workspaceFolder}/lib", 
+      "${env:MYROOT}/lib"
     ]
 }
 ```
+
+Changes on `0.20.0`:
+- `${workspaceFolder}` was added and is recommended (`${workspace}` and `${workspaceRoot}` are still kept as aliases).
+- The `${env:ENV_VAR_NAME}` was added and is recommended over the `${env.ENV_VAR_NAME}` format (which was available since `0.17.0`).
 
 
 How to debug high-cpu usage in Robot Framework Language Server?
