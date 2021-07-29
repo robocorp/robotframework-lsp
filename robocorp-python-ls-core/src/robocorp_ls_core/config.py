@@ -82,13 +82,13 @@ class Config(object):
 
     def _get_var_value(self, name):
         ret = name
-        if name in ("${workspace}", "${workspaceRoot}"):
+        if name in ("${workspace}", "${workspaceRoot}", "${workspaceFolder}"):
             if self._workspace_dir is not None:
                 ret = self._workspace_dir
             else:
                 log.debug("Unable to make workspace replacement for variable: %s", name)
 
-        elif name.startswith("${env."):
+        elif (name.startswith("${env.") or name.startswith("${env:")) and name.endswith("}"):
             name = name[6:-1]
             ret = os.environ.get(name)  # Note: should be case-insensitive on windows.
         else:

@@ -11,12 +11,12 @@ interface IGetVar {
  */
 export function expandVars(template: string) {
     let getVar: IGetVar = function getVar(name: string) {
-        if (name == "${workspace}" || name == "${workspaceRoot}") {
+        if (name == "${workspace}" || name == "${workspaceRoot}" || name == "${workspaceFolder}") {
             let workspaceFolders = workspace.workspaceFolders;
             if (workspaceFolders && workspaceFolders.length > 0) {
                 return workspaceFolders[0].uri.fsPath;
             }
-        } else if (name.startsWith("${env.")) {
+        } else if ((name.startsWith("${env.") || name.startsWith("${env:")) && name.endsWith("}")) {
             let varName = name.substring(6, name.length - 1);
             let value = process.env[varName];
             if (value) {
