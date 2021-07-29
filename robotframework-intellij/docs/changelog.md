@@ -6,7 +6,7 @@ New in 0.20.0 (2021-07-29)
 - ${workspaceFolder} is accepted when resolving variables. 
 - ${env:VAR_NAME} is accepted when resolving variables.
 - Robocop updated to 1.8.1.
-- When using the poll mode for tracking file changes, it's possible to ignoring directories. [#398](https://github.com/robocorp/robotframework-lsp/issues/398)
+- When using the poll mode for tracking file changes, it's possible to ignore directories. [#398](https://github.com/robocorp/robotframework-lsp/issues/398)
 - dict(&)/list(@) variables can be referenced as regular ($) variables. [#387](https://github.com/robocorp/robotframework-lsp/issues/387)
 - Completion for dictionary items with subscript. Fix by: Marduk Bolaños. [#301](https://github.com/robocorp/robotframework-lsp/issues/301) 
 - Completion for dictionary variable names. Fix by: Marduk Bolaños. [#301](https://github.com/robocorp/robotframework-lsp/issues/301)
