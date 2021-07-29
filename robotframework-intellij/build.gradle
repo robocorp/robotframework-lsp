@@ -57,11 +57,11 @@ patchPluginXml {
 
     <li>[Intellij] Intellij 212 (2021.2) is now supported.</li>
     <li>[Intellij] Properly to go to definition of variables inside of arguments.</li>
-    <li>${workspaceFolder} is accepted when resolving variables.</li> 
-    <li>${env:VAR_NAME} is accepted when resolving variables.</li>
+    <li>\${workspaceFolder} is accepted when resolving variables.</li> 
+    <li>\${env:VAR_NAME} is accepted when resolving variables.</li>
     <li>Robocop updated to 1.8.1.</li>
     <li>When using the poll mode for tracking file changes, it's possible to ignoring directories.</li>
-    <li>dict(&)/list(@) variables can be referenced as regular ($) variables.</li>
+    <li>dict(&)/list(@) variables can be referenced as regular (\$) variables.</li>
     <li>Completion for dictionary items with subscript. Fix by: Marduk Bolaños.</li> 
     <li>Completion for dictionary variable names. Fix by: Marduk Bolaños.</li>
 
