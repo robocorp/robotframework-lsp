@@ -225,10 +225,10 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         return matcher.replaceAll((matchResult -> {
             String s = matchResult.group(1);
             String value = null;
-            if (s.startsWith("env.")) {
+            if (s.startsWith("env.") || s.startsWith("env:")) {
                 value = System.getenv(s.substring(4));
             } else {
-                if (s.equals("workspace") || s.equals("workspaceRoot")) {
+                if (s.equals("workspace") || s.equals("workspaceRoot") || s.equals("workspaceFolder")) {
                     value = project.getBasePath();
                 }
             }
