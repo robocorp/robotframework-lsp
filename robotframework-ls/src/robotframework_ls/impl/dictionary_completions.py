@@ -12,7 +12,7 @@ from robocorp_ls_core.lsp import (CompletionItem,
                                   TextEdit)
 
 log = get_logger(__name__)
-_DICT_VARIABLE_REGEX = re.compile(r"[$|&]{(\w+)}")
+_DICT_VARIABLE_REGEX = re.compile(r"[$|&]{([\w\s]+)}")
 _DICT_KEY_REGEX = re.compile(r"\[([\w\s]*)\]")
 
 
