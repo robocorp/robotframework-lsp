@@ -8,7 +8,7 @@ from robotframework_ls.impl.protocols import (
 from robocorp_ls_core.protocols import check_implements
 from typing import Optional, Sequence
 
-_RF_VARIABLE = re.compile(r"([$|&|@]{\w+})")
+_RF_VARIABLE = re.compile(r"([$|&|@]{[\w\s]+})")
 
 class _DefinitionFromKeyword(object):
     def __init__(self, keyword_found):
@@ -268,7 +268,7 @@ def find_definition(completion_context: ICompletionContext) -> Sequence[IDefinit
 
         token = token_info.token
         value = token.value
-        match = _RF_VARIABLE.findall(value)[0]
+        match = next(iter(_RF_VARIABLE.findall(value)), value)
         collector = _FindDefinitionVariablesCollector(
             completion_context.sel, token, RobotStringMatcher(match)
         )
