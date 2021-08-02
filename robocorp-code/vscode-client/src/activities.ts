@@ -1,7 +1,9 @@
 import { commands, window, WorkspaceFolder, workspace, Uri, QuickPickItem, TextEdit, debug, DebugConfiguration, DebugSessionOptions, env, ConfigurationTarget } from "vscode";
-import { join } from 'path';
+import { join, dirname } from 'path';
 import { OUTPUT_CHANNEL } from './channel';
 import * as roboCommands from './robocorpCommands';
+import * as vscode from 'vscode';
+import * as pythonExtIntegration from './pythonExtIntegration';
 import { QuickPickItemWithAction, sortCaptions, QuickPickItemRobotTask, showSelectOneQuickPick, showSelectOneStrQuickPick } from "./ask";
 
 
@@ -181,9 +183,47 @@ export async function setPythonInterpreterFromRobotYaml() {
             return;
         }
 
+        OUTPUT_CHANNEL.appendLine('Setting the python executable path for vscode-python to be:\n' + interpreter.pythonExe);
+
         let config = workspace.getConfiguration('python');
         await config.update('pythonPath', interpreter.pythonExe, configurationTarget);
-        window.showInformationMessage('Successfully set python.pythonPath set in: ' + selectedItem);
+
+        let resource = Uri.file(dirname(robot.filePath));
+        let pythonExecutableConfigured = await pythonExtIntegration.getPythonExecutable(resource);
+        if (pythonExecutableConfigured == 'config') {
+            window.showInformationMessage('Successfully set python executable path for vscode-python.');
+
+        } else if (!pythonExecutableConfigured) {
+            window.showInformationMessage('Unable to verify if vscode-python executable was properly set. See OUTPUT -> Robocorp Code for more info.');
+
+        } else {
+            if (pythonExecutableConfigured != interpreter.pythonExe) {
+                let opt1 = "Copy python path to clipboard and call vscode-python command to set interpreter";
+                let opt2 = "Open more info/instructions to opt-out of the pythonDeprecadePythonPath experiment";
+                let selectedItem = await window.showQuickPick(
+                    [opt1, opt2, "Cancel"],
+                    {
+                        "canPickMany": false,
+                        'placeHolder': "Unable to set the interpreter (due to pythonDeprecatePythonPath experiment). How to proceed?",
+                        'ignoreFocusOut': true,
+                    }
+                );
+                if (selectedItem == opt1) {
+                    await vscode.env.clipboard.writeText(interpreter.pythonExe);
+                    let result = await window.showInformationMessage(
+                        'Copied python executable path to the clipboard. Press OK to proceed and then paste the path after choosing the option to "Enter interpreter path..."',
+                        'OK', 'Cancel');
+                    if(result == 'OK'){
+                        await commands.executeCommand('python.setInterpreter');
+                    }
+                }else if(selectedItem == opt2){
+                    env.openExternal(Uri.parse('https://github.com/microsoft/vscode-python/wiki/AB-Experiments#pythondeprecatepythonpath'));
+                }
+            } else {
+                window.showInformationMessage('Successfully set python executable path for vscode-python.');
+            }
+        }
+
     } catch (error) {
         window.showWarningMessage('Error setting python.pythonPath configuration: ' + error);
         return;
@@ -212,14 +252,14 @@ export async function rccConfigurationDiagnostics() {
         return;
     }
 
-    let diagnosticsActionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL, {'robotYaml': robot.filePath});
+    let diagnosticsActionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL, { 'robotYaml': robot.filePath });
     if (!diagnosticsActionResult.success) {
         window.showErrorMessage('Error computing diagnostics for Robot: ' + diagnosticsActionResult.message);
         return;
     }
 
     OUTPUT_CHANNEL.appendLine(diagnosticsActionResult.result);
-    workspace.openTextDocument({'content': diagnosticsActionResult.result}).then(document => {
+    workspace.openTextDocument({ 'content': diagnosticsActionResult.result }).then(document => {
         window.showTextDocument(document);
     });
 }
