@@ -1,0 +1,10 @@
+- message: 'Undefined variable: ${undefined}.'
+  range:
+    end:
+      character: 22
+      line: 2
+    start:
+      character: 10
+      line: 2
+  severity: 1
+  source: robotframework

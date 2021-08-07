@@ -232,3 +232,23 @@ def test_code_analysis_lib_with_params(
     doc = workspace.get_doc("case_params_on_lib.robot")
 
     _collect_errors(workspace, doc, data_regression, basename="no_error", config=config)
+
+def test_undefined_variable_in_dictionary(workspace, libspec_manager, data_regression):
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """*** Variables ***
+&{SOME DICT}    cwd=${CURRDIR}
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_undefined_variable_in_keyword_argument(workspace, libspec_manager, data_regression):
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """*** Tasks ***
+Undefined variable in keyword argument
+    Log   ${undefined}
+"""
+
+    _collect_errors(workspace, doc, data_regression)
