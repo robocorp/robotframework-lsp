@@ -47,7 +47,7 @@ class NodeInfo(Generic[Y]):
 
 TokenInfo = namedtuple("TokenInfo", "stack, node, token")
 KeywordUsageInfo = namedtuple("KeywordUsageInfo", "stack, node, token, name")
-
+VariableUsageInfo = namedtuple("VariableUsageInfo", "stack, node, token, name")
 
 class IKeywordArg(Protocol):
     @property

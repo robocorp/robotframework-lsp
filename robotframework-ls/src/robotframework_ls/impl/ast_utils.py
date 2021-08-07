@@ -1,7 +1,8 @@
 import sys
 from typing import Iterator, Optional, List, Tuple, Any, Union
-
+import re
 import ast as ast_module
+from robot.api import Token
 from robocorp_ls_core.lsp import Error
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.protocols import (
@@ -9,9 +10,11 @@ from robotframework_ls.impl.protocols import (
     NodeInfo,
     KeywordUsageInfo,
     ILibraryImportNode,
+    VariableUsageInfo,
 )
 
-
+_RF_VARIABLE = re.compile(r"([$|&|@]{[\w\s]+})")
+_RF_NUM_CONST = re.compile(r"([$]{\d+})")
 log = get_logger(__name__)
 
 
@@ -423,7 +426,7 @@ def get_documentation(ast) -> str:
 def iter_variable_assigns(ast) -> Iterator:
     from robot.api import Token
 
-    for stack, node in _iter_nodes(ast, recursive=False):
+    for stack, node in _iter_nodes(ast, recursive=True):
         if node.__class__.__name__ == "KeywordCall":
             for token in node.get_tokens(Token.ASSIGN):
                 value = token.value
@@ -439,6 +442,12 @@ def iter_variable_assigns(ast) -> Iterator:
                     )
 
                 yield TokenInfo(tuple(stack), node, token)
+
+
+def iter_variable_assigns_as_str(ast) -> Iterator[str]:
+    for token_info in iter_variable_assigns(ast):
+        token = token_info.token
+        yield str(token)
 
 
 def iter_keyword_usage_tokens(ast) -> Iterator[KeywordUsageInfo]:
@@ -477,6 +486,25 @@ def create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
             return KeywordUsageInfo(tuple(stack), node, token, keyword_name)
 
     return None
+
+
+def iter_variable_usage_tokens(ast) -> Iterator[VariableUsageInfo]:
+    """
+    Iterates through all the places where a variable name is being used, providing
+    the stack, node, token and name.
+    """
+    from robot.api import Token
+
+    for stack, node in _iter_nodes(ast, recursive=True):
+        if node.__class__.__name__ in ["KeywordCall", "Variable"]:
+            for token in node.tokens:
+                usage_info = None
+                if token.type == Token.ARGUMENT:
+                    variable_name = _RF_VARIABLE.findall(token.value)
+                    if variable_name and not _RF_NUM_CONST.findall(variable_name[0]):
+                        usage_info = VariableUsageInfo(tuple(stack), node, token, variable_name[0])
+                        if usage_info is not None:
+                            yield usage_info
 
 
 def get_keyword_name_token(ast, token):

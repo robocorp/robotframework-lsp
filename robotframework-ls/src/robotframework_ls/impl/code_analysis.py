@@ -1,5 +1,7 @@
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.ast_utils import MAX_ERRORS
+from robotframework_ls.impl.variable_completions import collect_variables
+import re
 
 log = get_logger(__name__)
 
@@ -101,6 +103,35 @@ class _KeywordsCollector(object):
         return False
 
 
+class _VariableContainer(object):
+    def __init__(self):
+        self._variables = list()
+
+    def add(self, variable):
+        self._variables.append(variable)
+
+    def contains(self, variable_name):
+        if variable_name in [var.variable_name for var in self._variables]:
+            return True
+        else:
+            return False
+
+
+class _VariablesCollector(object):
+    def __init__(self):
+        self._variables_container = _VariableContainer()
+
+    def accepts(self, variable_name):
+        return True
+
+    def on_variable(self, variable):
+        self._variables_container.add(variable)
+
+    def contains_variable(self, variable_name):
+        if self._variables_container.contains(variable_name):
+            return True
+
+
 def collect_analysis_errors(completion_context):
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.ast_utils import create_error_from_node
@@ -130,4 +161,28 @@ def collect_analysis_errors(completion_context):
             if len(errors) >= MAX_ERRORS:
                 # i.e.: Collect at most 100 errors
                 break
+
+    argument_names = list(ast_utils.iter_keyword_arguments_as_str(ast))
+    variable_assigns = list(ast_utils.iter_variable_assigns_as_str(ast))
+    variables_collector = _VariablesCollector()
+    collect_variables(completion_context, variables_collector)
+
+    for variable_usage_info in ast_utils.iter_variable_usage_tokens(ast):
+        variable_name = variable_usage_info.name
+        rf_variable = re.compile(f"([$|&|@]{variable_name[1:]})")
+        arguments_match = [rf_variable.match(arg) for arg in argument_names]
+        assigns_match = [rf_variable.match(name) for name in variable_assigns]
+
+        if not variables_collector.contains_variable(variable_name) and not any(arguments_match) and not any(assigns_match):
+            node = variable_usage_info.node
+            error = create_error_from_node(
+                node,
+                "Undefined variable: %s." % (variable_usage_info.name,),
+                tokens=[variable_usage_info.token],
+            )
+            errors.append(error)
+            if len(errors) >= MAX_ERRORS:
+                # i.e.: Collect at most 100 errors
+                break
+
     return errors
