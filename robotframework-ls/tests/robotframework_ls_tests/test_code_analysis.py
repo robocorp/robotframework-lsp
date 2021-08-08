@@ -232,3 +232,15 @@ def test_code_analysis_lib_with_params(
     doc = workspace.get_doc("case_params_on_lib.robot")
 
     _collect_errors(workspace, doc, data_regression, basename="no_error", config=config)
+
+
+def test_resource_file_not_found(workspace, libspec_manager, data_regression):
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """
+*** Settings ***
+Resource   case2.robot
+"""
+
+    _collect_errors(workspace, doc, data_regression)

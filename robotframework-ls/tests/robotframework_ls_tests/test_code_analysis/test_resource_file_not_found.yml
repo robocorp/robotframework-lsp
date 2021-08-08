@@ -1,0 +1,10 @@
+- message: 'Unknown resource file: case2.robot.'
+  range:
+    end:
+      character: 23
+      line: 2
+    start:
+      character: 0
+      line: 2
+  severity: 1
+  source: robotframework

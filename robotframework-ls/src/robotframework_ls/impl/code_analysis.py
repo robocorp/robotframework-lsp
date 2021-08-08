@@ -1,8 +1,16 @@
+import os
+from pathlib import Path
+from robot.parsing.lexer.tokens import Token
+from robocorp_ls_core import uris
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.ast_utils import MAX_ERRORS
+from robotframework_ls.impl.protocols import ICompletionContext
 
 log = get_logger(__name__)
 
+def _curr_dir(completion_context: ICompletionContext) -> Path:
+    path = uris.to_fs_path(completion_context.doc.uri)
+    return Path(os.path.dirname(os.path.normpath(os.path.normcase(path))))
 
 class _KeywordContainer(object):
     def __init__(self):
@@ -130,4 +138,16 @@ def collect_analysis_errors(completion_context):
             if len(errors) >= MAX_ERRORS:
                 # i.e.: Collect at most 100 errors
                 break
+
+    for resource in ast_utils.iter_resource_imports(ast):
+        resource_file = next(filter(lambda token: token.type == Token.NAME, resource.node.tokens)).value
+        filepath = _curr_dir(completion_context).joinpath(resource_file).resolve()
+        if not filepath.exists():
+            error = create_error_from_node(
+                resource.node,
+                "Unknown resource file: %s." % (resource_file,),
+                tokens=resource.node.tokens,
+            )
+            errors.append(error)
+
     return errors
