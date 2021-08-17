@@ -1,6 +1,6 @@
 import { commands, window, WorkspaceFolder, workspace, Uri, QuickPickItem, TextEdit, debug, DebugConfiguration, DebugSessionOptions, env, ConfigurationTarget } from "vscode";
 import { join, dirname } from 'path';
-import { OUTPUT_CHANNEL } from './channel';
+import { logError, OUTPUT_CHANNEL } from './channel';
 import * as roboCommands from './robocorpCommands';
 import * as vscode from 'vscode';
 import * as pythonExtIntegration from './pythonExtIntegration';
@@ -225,7 +225,8 @@ export async function setPythonInterpreterFromRobotYaml() {
         }
 
     } catch (error) {
-        window.showWarningMessage('Error setting python.pythonPath configuration: ' + error);
+        logError('Error setting python.pythonPath configuration.', error);
+        window.showWarningMessage('Error setting python.pythonPath configuration: ' + error.message);
         return;
     }
 
@@ -633,7 +634,7 @@ export async function createRobot() {
             try {
                 commands.executeCommand('workbench.files.action.refreshFilesExplorer');
             } catch (error) {
-                OUTPUT_CHANNEL.appendLine('Error refreshing file explorer.');
+                logError('Error refreshing file explorer.', error);
             }
             window.showInformationMessage('Robot successfully created in:\n' + join(ws.uri.fsPath, name));
         } else {

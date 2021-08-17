@@ -5,6 +5,8 @@ imports so that we only import what's actually available there!
 
 i.e.: We can import `robocorp_ls_core`, and even `robotframework_ls`, but we
 can't import `robocorp_code` without some additional work.
+
+Also, the required version must be checked in the client (in case imports or APIs change).
 """
 import os.path
 import sys
@@ -27,21 +29,17 @@ from typing import Optional, Dict, List, Tuple
 from robocorp_ls_core.basic import implements
 from robocorp_ls_core.pluginmanager import PluginManager
 
-try:
-    # Kept for backward compatibility
-    from robotframework_ls.ep_resolve_interpreter import (
-        EPResolveInterpreter,
-        IInterpreterInfo,
-    )
-except ImportError:
-    from robocorp_ls_core.ep_resolve_interpreter import (
-        EPResolveInterpreter,
-        IInterpreterInfo,
-    )
+
+from robocorp_ls_core.ep_resolve_interpreter import (
+    EPResolveInterpreter,
+    IInterpreterInfo,
+)
 from robocorp_ls_core import uris
 from robocorp_ls_core.robotframework_log import get_logger
 from pathlib import Path
 import weakref
+from robocorp_code.protocols import IRobotYamlEnvInfo
+
 
 log = get_logger(__name__)
 
@@ -96,19 +94,12 @@ class _CachedInterpreterInfo(object):
     def __init__(
         self,
         robot_yaml_file_info: _CachedFileInfo,
-        conda_config_file_info: Optional[_CachedFileInfo],
+        conda_config_file_info: _CachedFileInfo,
         env_json_path_file_info: Optional[_CachedFileInfo],
         pm: PluginManager,
     ):
-        import json
-
-        try:
-            # Kept for backward compatibility
-            from robotframework_ls.ep_resolve_interpreter import DefaultInterpreterInfo
-            from robotframework_ls.ep_providers import EPConfigurationProvider
-        except ImportError:
-            from robocorp_ls_core.ep_resolve_interpreter import DefaultInterpreterInfo
-            from robocorp_ls_core.ep_providers import EPConfigurationProvider
+        from robocorp_ls_core.ep_resolve_interpreter import DefaultInterpreterInfo
+        from robocorp_ls_core.ep_providers import EPConfigurationProvider
 
         self._mtime: _CachedInterpreterMTime = self._obtain_mtime(
             robot_yaml_file_info, conda_config_file_info, env_json_path_file_info
@@ -118,8 +109,9 @@ class _CachedInterpreterInfo(object):
         rcc = Rcc(configuration_provider)
         interpreter_id = str(robot_yaml_file_info.file_path)
 
-        result = rcc.get_robot_yaml_environ(
+        result = rcc.get_robot_yaml_env_info(
             robot_yaml_file_info.file_path,
+            conda_config_file_info.file_path,
             conda_config_file_info.contents,
             env_json_path_file_info.file_path
             if env_json_path_file_info is not None
@@ -128,25 +120,20 @@ class _CachedInterpreterInfo(object):
         if not result.success:
             raise RuntimeError(f"Unable to get env details. Error: {result.message}.")
 
-        contents: Optional[str] = result.result
-        if not contents:
-            raise RuntimeError(f"Unable to get output when getting environment.")
+        robot_yaml_env_info: Optional[IRobotYamlEnvInfo] = result.result
+        if robot_yaml_env_info is None:
+            raise RuntimeError(f"Unable to get env details. Error: {result.message}.")
+
+        environ = robot_yaml_env_info.env
 
         root = str(robot_yaml_file_info.file_path.parent)
-
-        environ = {}
-        for entry in json.loads(contents):
-            key = entry["key"]
-            value = entry["value"]
-            if key:
-                environ[key] = value
-
         pythonpath_lst = robot_yaml_file_info.yaml_contents.get("PYTHONPATH", [])
         additional_pythonpath_entries: List[str] = []
         if isinstance(pythonpath_lst, list):
             for v in pythonpath_lst:
                 additional_pythonpath_entries.append(os.path.join(root, str(v)))
 
+        self.robot_yaml_env_info: IRobotYamlEnvInfo = robot_yaml_env_info
         self.info: IInterpreterInfo = DefaultInterpreterInfo(
             interpreter_id,
             environ["PYTHON_EXE"],
@@ -208,22 +195,40 @@ class _CacheInfo(object):
         env_json_path_file_info: Optional[_CachedFileInfo],
         pm: PluginManager,
     ) -> IInterpreterInfo:
-        interpreter_info = cls._cached_interpreter_info.get(
-            robot_yaml_file_info.file_path
-        )
+        interpreter_info: Optional[
+            _CachedInterpreterInfo
+        ] = cls._cached_interpreter_info.get(robot_yaml_file_info.file_path)
         if interpreter_info is not None and interpreter_info.is_cache_valid(
             robot_yaml_file_info, conda_config_file_info, env_json_path_file_info
         ):
-            _CacheInfo._cache_hit_interpreter += 1
-            return interpreter_info.info
+
+            space_info = interpreter_info.robot_yaml_env_info.space_info
+            environ = interpreter_info.info.get_environ()
+            if environ is not None:
+                ok = True
+                conda_prefix = environ.get("CONDA_PREFIX")
+                if conda_prefix is None:
+                    log.critical(
+                        f"Expected CONDA_PREFIX to be available in the environ. Found: {environ}."
+                    )
+                    ok = False
+                else:
+                    conda_id = Path(conda_prefix) / "identity.yaml"
+                    space_info = interpreter_info.robot_yaml_env_info.space_info
+                    if not space_info.matches_conda_identity_yaml(conda_id):
+                        log.critical(
+                            f"The conda contents in: {conda_id} no longer not match the contents from {conda_config_file_info.file_path}."
+                        )
+                        ok = False
+
+                if ok:
+                    space_info.update_last_usage()
+                    _CacheInfo._cache_hit_interpreter += 1
+                    return interpreter_info.info
 
         from robocorp_ls_core.progress_report import progress_context
 
-        try:
-            # Kept for backward compatibility
-            from robotframework_ls.ep_providers import EPEndPointProvider
-        except ImportError:
-            from robocorp_ls_core.ep_providers import EPEndPointProvider
+        from robocorp_ls_core.ep_providers import EPEndPointProvider
 
         endpoint = pm[EPEndPointProvider].endpoint
 
@@ -258,17 +263,10 @@ class RobocorpResolveInterpreter(object):
                 log.critical("Did not expect PluginManager to be None at this point.")
                 return None
 
-            try:
-                # Kept for backward compatibility
-                from robotframework_ls.ep_providers import (
-                    EPConfigurationProvider,
-                    EPEndPointProvider,
-                )
-            except ImportError:
-                from robocorp_ls_core.ep_providers import (
-                    EPConfigurationProvider,
-                    EPEndPointProvider,
-                )
+            from robocorp_ls_core.ep_providers import (
+                EPConfigurationProvider,
+                EPEndPointProvider,
+            )
 
             # Check that our requirements are there.
             pm[EPConfigurationProvider]
@@ -285,7 +283,12 @@ class RobocorpResolveInterpreter(object):
                 return None
 
             # Ok, we have the robot_yaml, so, we should be able to run RCC with it.
-            robot_yaml_file_info = _CacheInfo.get_file_info(robot_yaml)
+            try:
+                robot_yaml_file_info = _CacheInfo.get_file_info(robot_yaml)
+            except:
+                log.exception("Error collecting info from: %s", robot_yaml)
+                return None
+
             yaml_contents = robot_yaml_file_info.yaml_contents
             if not isinstance(yaml_contents, dict):
                 log.critical(f"Expected dict as root in: {robot_yaml}")
@@ -305,11 +308,19 @@ class RobocorpResolveInterpreter(object):
                 log.critical("conda.yaml does not exist in %s", conda_config_path)
                 return None
 
-            conda_config_file_info = _CacheInfo.get_file_info(conda_config_path)
+            try:
+                conda_config_file_info = _CacheInfo.get_file_info(conda_config_path)
+            except:
+                log.exception("Error collecting info from: %s", conda_config_path)
+                return None
 
             env_json_path = parent / "devdata" / "env.json"
             if env_json_path.exists():
-                env_json_path_file_info = _CacheInfo.get_file_info(env_json_path)
+                try:
+                    env_json_path_file_info = _CacheInfo.get_file_info(env_json_path)
+                except:
+                    log.exception("Error collecting info from: %s", env_json_path)
+                    return None
 
             return _CacheInfo.get_interpreter_info(
                 robot_yaml_file_info,

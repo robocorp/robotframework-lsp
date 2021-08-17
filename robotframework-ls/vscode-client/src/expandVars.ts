@@ -1,5 +1,5 @@
 import { workspace, WorkspaceConfiguration } from "vscode";
-import { OUTPUT_CHANNEL } from "./extension";
+import { OUTPUT_CHANNEL } from "./channel";
 
 interface IGetVar {
     (name: string): string;

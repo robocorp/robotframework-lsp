@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { OUTPUT_CHANNEL } from './channel';
+import { logError, OUTPUT_CHANNEL } from './channel';
 import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from './robocorpViews';
 import { debounce, FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeDataProvider, treeViewIdToTreeView } from './viewsCommon';
 import { basename, dirname, join } from 'path';
@@ -63,7 +63,8 @@ export async function newFileInRobotContentTree() {
     try {
         await vscode.workspace.fs.writeFile(Uri.file(targetFile), new Uint8Array());
     } catch (err) {
-        vscode.window.showErrorMessage('Unable to create file. Error: ' + err);
+        logError('Unable to create file.', err);
+        vscode.window.showErrorMessage('Unable to create file. Error: ' + err.message);
     }
 }
 
@@ -104,6 +105,7 @@ export async function renameResourceInRobotContentTree() {
             let target = Uri.file(join(dirname(entry.filePath), newName));
             await vscode.workspace.fs.rename(uri, target, { overwrite: false });
         } catch (err) {
+            logError("Error renaming resource: " + entry.filePath, err);
             let msg = await vscode.window.showErrorMessage("Error renaming resource: " + entry.filePath);
         }
     }
@@ -160,7 +162,8 @@ export async function newFolderInRobotContentTree() {
     try {
         await vscode.workspace.fs.createDirectory(Uri.file(targetFile));
     } catch (err) {
-        vscode.window.showErrorMessage('Unable to create directory. Error: ' + err);
+        logError('Unable to create directory: ' + targetFile, err);
+        vscode.window.showErrorMessage('Unable to create directory. Error: ' + err.message);
     }
 }
 
@@ -264,7 +267,7 @@ export class RobotContentTreeDataProvider implements vscode.TreeDataProvider<FSE
                     })
                 }
             } catch (err) {
-                OUTPUT_CHANNEL.appendLine('Error listing dir contents: ' + robotUri);
+                logError('Error listing dir contents: ' + robotUri, err);
             }
             return ret;
         } else {
@@ -282,7 +285,7 @@ export class RobotContentTreeDataProvider implements vscode.TreeDataProvider<FSE
                     })
                 }
             } catch (err) {
-                OUTPUT_CHANNEL.appendLine('Error listing dir contents: ' + element.filePath);
+                logError('Error listing dir contents: ' + element.filePath, err);
             }
             return ret;
         }

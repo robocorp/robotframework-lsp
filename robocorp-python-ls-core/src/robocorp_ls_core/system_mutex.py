@@ -33,6 +33,7 @@ import weakref
 from robocorp_ls_core.constants import NULL
 from robocorp_ls_core.robotframework_log import get_logger
 import threading
+from typing import ContextManager
 
 
 log = get_logger(__name__)
@@ -81,16 +82,20 @@ if sys.platform == "win32":
     import os
 
     class SystemMutex(object):
-        def __init__(self, mutex_name, check_reentrant=True, log_info=False):
+        def __init__(
+            self, mutex_name, check_reentrant=True, log_info=False, base_dir=None
+        ):
             """
             :param check_reentrant:
                 Should only be False if this mutex is expected to be released in
                 a different thread.
             """
+            if base_dir is None:
+                base_dir = tempfile.gettempdir()
             check_valid_mutex_name(mutex_name)
             self.mutex_name = mutex_name
             self.thread_id = get_tid()
-            filename = os.path.join(tempfile.gettempdir(), mutex_name)
+            filename = os.path.join(base_dir, mutex_name)
             try:
                 os.unlink(filename)
             except Exception:
@@ -157,17 +162,20 @@ else:  # Linux
     import fcntl  # @UnresolvedImport
 
     class SystemMutex(object):
-        def __init__(self, mutex_name, check_reentrant=True, log_info=False):
+        def __init__(
+            self, mutex_name, check_reentrant=True, log_info=False, base_dir=None
+        ):
             """
             :param check_reentrant:
                 Should only be False if this mutex is expected to be released in
                 a different thread.
             """
-
+            if base_dir is None:
+                base_dir = tempfile.gettempdir()
             check_valid_mutex_name(mutex_name)
             self.mutex_name = mutex_name
             self.thread_id = get_tid()
-            filename = os.path.join(tempfile.gettempdir(), mutex_name)
+            filename = os.path.join(base_dir, mutex_name)
             try:
                 handle = open(filename, "a+")
                 fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -271,7 +279,9 @@ class _MutexHandle(object):
         # log.info("Released mutex: %s in pid: %s", self._mutex_name, os.getpid())
 
 
-def timed_acquire_mutex(mutex_name, timeout=20, sleep_time=0.15, check_reentrant=True):
+def timed_acquire_mutex(
+    mutex_name, timeout=20, sleep_time=0.15, check_reentrant=True, base_dir=None
+) -> ContextManager:
     """
     Acquires the mutex given its name, a number of attempts and a time to sleep between each attempt.
 
@@ -292,7 +302,10 @@ def timed_acquire_mutex(mutex_name, timeout=20, sleep_time=0.15, check_reentrant
     while True:
         last_attempt = time.time() >= finish_at
         mutex = SystemMutex(
-            mutex_name, check_reentrant=check_reentrant, log_info=last_attempt
+            mutex_name,
+            check_reentrant=check_reentrant,
+            log_info=last_attempt,
+            base_dir=base_dir,
         )
         if not mutex.get_mutex_aquired():
             if last_attempt:
@@ -303,7 +316,7 @@ def timed_acquire_mutex(mutex_name, timeout=20, sleep_time=0.15, check_reentrant
 
             time.sleep(sleep_time)
 
-            mutex = None
+            del mutex
         else:
             return _MutexHandle(mutex, mutex_name)
 

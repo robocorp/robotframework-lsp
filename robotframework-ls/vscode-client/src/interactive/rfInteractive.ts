@@ -14,7 +14,7 @@
 import { commands, ExtensionContext, window } from "vscode";
 import * as vscode from 'vscode';
 import { LanguageClient } from "vscode-languageclient/node";
-import { OUTPUT_CHANNEL } from "../extension";
+import { logError, OUTPUT_CHANNEL } from "../channel";
 
 const RF_INTERACTIVE_LOCAL_RESOURCE_ROOT = process.env.RF_INTERACTIVE_LOCAL_RESOURCE_ROOT;
 
@@ -37,7 +37,7 @@ async function executeCheckedCommand(commandId: string, args: any) {
     } catch (err) {
         return {
             'success': false,
-            'message': '' + err,
+            'message': '' + err.message,
             'result': undefined
         }
     }
@@ -125,7 +125,7 @@ class InteractiveShellPanel {
                     'code': code
                 });
             } catch (err) {
-                OUTPUT_CHANNEL.appendLine('Error in evaluation: ' + err);
+                logError('Error in evaluation.', err);
             } finally {
                 let response: any = {
                     type: 'response',
@@ -152,7 +152,7 @@ class InteractiveShellPanel {
                     'code': code
                 });
             } catch (err) {
-                OUTPUT_CHANNEL.appendLine('Error getting semantic tokens: ' + err);
+                logError('Error getting semantic tokens.', err);
             } finally {
                 let response: any = {
                     type: 'response',
@@ -182,7 +182,7 @@ class InteractiveShellPanel {
                     'context': context,
                 });
             } catch (err) {
-                OUTPUT_CHANNEL.appendLine('Error getting completions: ' + err);
+                logError('Error getting completions.', err);
             } finally {
                 let response: any = {
                     type: 'response',

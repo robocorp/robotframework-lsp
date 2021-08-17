@@ -1,5 +1,5 @@
 import { commands, debug, DebugConfiguration, DebugSessionOptions, ExtensionContext, TextEditor, Uri, window, workspace, WorkspaceFolder } from "vscode";
-import { OUTPUT_CHANNEL } from "./extension";
+import { logError, OUTPUT_CHANNEL } from "./channel";
 import * as path from 'path';
 import { parse } from 'jsonc-parser';
 import * as fs from 'fs';
@@ -14,7 +14,7 @@ export async function robotRun(params?: ITestInfo) {
     try {
         await _debug(params, true);
     } catch (error) {
-        OUTPUT_CHANNEL.appendLine(error)
+        logError('Error running robot.', error)
     }
 }
 
@@ -22,7 +22,7 @@ export async function robotDebug(params?: ITestInfo) {
     try {
         await _debug(params, false);
     } catch (error) {
-        OUTPUT_CHANNEL.appendLine(error)
+        logError('Error debugging robot.', error)
     }
 }
 
@@ -60,7 +60,7 @@ async function readAllDebugConfigs(workspaceFolder: WorkspaceFolder): Promise<De
         // We do not bother ensuring each item is a DebugConfiguration...
         return parsed.configurations;
     } catch (exc) {
-        OUTPUT_CHANNEL.appendLine('Error reading debug configurations to find the code-lens template.\nError: ' + exc + "\nlaunch.json target: " + filename);
+        logError('Error reading debug configurations to find the code-lens template.\nlaunch.json target: ' + filename, exc);
         return [];
     }
 }
@@ -88,7 +88,7 @@ async function _debugSuite(resource: Uri | undefined, noDebug: boolean) {
         }
         await _debug({ 'uri': resource.toString(), 'path': resource.fsPath, 'name': '*' }, noDebug);
     } catch (error) {
-        OUTPUT_CHANNEL.appendLine(error)
+        logError('Error debugging suite.', error)
     }
 }
 

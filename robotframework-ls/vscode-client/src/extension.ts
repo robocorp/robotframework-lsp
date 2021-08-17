@@ -32,9 +32,8 @@ import { registerRunCommands } from './run';
 import { registerLinkProviders } from './linkProvider';
 import { expandVars, getArrayStrFromConfigExpandingVars, getStrFromConfigExpandingVars } from './expandVars';
 import { registerInteractiveCommands } from './interactive/rfInteractive';
+import { logError, OUTPUT_CHANNEL } from './channel';
 
-const OUTPUT_CHANNEL_NAME = "Robot Framework";
-export const OUTPUT_CHANNEL = window.createOutputChannel(OUTPUT_CHANNEL_NAME);
 
 function createClientOptions(initializationOptions: object): LanguageClientOptions {
 	const clientOptions: LanguageClientOptions = {
@@ -215,7 +214,7 @@ function registerDebugger(languageServerExecutable: string) {
 		});
 	} catch (error) {
 		// i.e.: https://github.com/microsoft/vscode/issues/118562
-		OUTPUT_CHANNEL.appendLine('Error registering debugger: ' + error);
+		logError('Error registering debugger.', error);
 	}
 
 
@@ -327,8 +326,8 @@ export async function activate(context: ExtensionContext) {
 				try {
 					config.update("language-server.python", onfulfilled[0].fsPath, configurationTarget);
 				} catch (err) {
-					let errorMessage = "Error persisting python to start the language server.\nError: " + err;
-					OUTPUT_CHANNEL.appendLine(errorMessage);
+					let errorMessage = "Error persisting python to start the language server.\nError: " + err.message;
+					logError('Error persisting python to start the language server.', err);
 
 					if (configurationTarget == ConfigurationTarget.Workspace) {
 						try {
@@ -364,7 +363,7 @@ export async function activate(context: ExtensionContext) {
 					initializationOptions['pluginsDir'] = pluginsDir;
 				}
 			} catch (error) {
-				OUTPUT_CHANNEL.appendLine(error);
+				logError('Error setting pluginsDir.', error);
 			}
 		} catch (error) {
 			// The command may not be available.
@@ -410,7 +409,9 @@ export async function activate(context: ExtensionContext) {
 					' Please uninstall the older version from the python environment.')
 			}
 		} catch (err) {
-			window.showErrorMessage('Error: robotframework-lsp version mismatch. Please uninstall the older version from the python environment.')
+			let msg = 'Error: robotframework-lsp version mismatch. Please uninstall the older version from the python environment.';
+			logError(msg, err);
+			window.showErrorMessage(msg);
 		}
 
 		langServer.onNotification("$/customProgress", (args: ProgressReport) => {

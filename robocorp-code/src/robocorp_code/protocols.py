@@ -1,5 +1,5 @@
 import sys
-from typing import Optional, List, Any, Generic, TypeVar, Dict
+from typing import Optional, List, Any, Generic, TypeVar, Dict, ContextManager
 from pathlib import Path
 
 # Backward-compatibility imports:
@@ -146,6 +146,39 @@ class IRccRobotMetadata(Protocol):
         pass
 
 
+class IRCCSpaceInfo(Protocol):
+    def load_last_usage(self, none_if_not_found: bool = False) -> Optional[float]:
+        pass
+
+    def update_last_usage(self) -> float:
+        pass
+
+    def load_requested_pid(self) -> str:
+        pass
+
+    def has_timeout_elapsed(self, timeout_to_reuse_space: float) -> bool:
+        pass
+
+    def acquire_lock(self) -> ContextManager:
+        pass
+
+    def conda_contents_match(self, conda_yaml_contents: str) -> bool:
+        pass
+
+    def matches_conda_identity_yaml(self, conda_id: Path) -> bool:
+        pass
+
+
+class IRobotYamlEnvInfo(Protocol):
+    @property
+    def env(self) -> Dict[str, str]:
+        pass
+
+    @property
+    def space_info(self) -> IRCCSpaceInfo:
+        pass
+
+
 class IRcc(Protocol):
     @property
     def endpoint(self) -> Optional[str]:
@@ -161,6 +194,12 @@ class IRcc(Protocol):
 
     def get_rcc_location(self) -> str:
         pass
+
+    def get_robocorp_home_from_settings(self) -> Optional[str]:
+        """
+        If ROBOCORP_HOME is defined from the settings, its location is returned,
+        otherwise it returns None.
+        """
 
     def get_template_names(self) -> ActionResult[List[str]]:
         pass
@@ -212,29 +251,20 @@ class IRcc(Protocol):
         :returns an action result with the robot id created.
         """
 
-    def get_robot_yaml_environ(
+    def get_robot_yaml_env_info(
         self,
         robot_yaml_path: Path,
+        conda_yaml_path: Path,
         conda_yaml_contents: str,
         env_json_path: Optional[Path],
         timeout=None,
-    ) -> ActionResult[str]:
+        holotree_manager=None,
+    ) -> ActionResult[IRobotYamlEnvInfo]:
         """
+        :returns: the result of getting the robot environment. It's expected that
+                  the dict contains a 'PYTHON_EXE' with the python executable
+                  to be used.
         """
-
-    # def run_python_code_robot_yaml(
-    #     self,
-    #     python_code: str,
-    #     conda_yaml_str_contents: Optional[str],
-    #     silent: bool = True,
-    #     timeout=None,
-    # ) -> ActionResult[str]:
-    #     """
-    #     Runs the given code based on an existing robot yaml.
-    #
-    #     IMPORTANT: this can be a really slow operation on the first activation to
-    #     create the env.
-    #     """
 
     def check_conda_installed(self, timeout=None) -> ActionResult[str]:
         """

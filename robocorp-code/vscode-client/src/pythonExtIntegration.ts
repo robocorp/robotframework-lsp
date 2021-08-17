@@ -1,5 +1,5 @@
 import { extensions, Uri } from "vscode";
-import { OUTPUT_CHANNEL } from "./channel";
+import { logError, OUTPUT_CHANNEL } from "./channel";
 import { handleProgressMessage } from "./progress";
 
 export async function getPythonExecutable(resource: Uri = null): Promise<string | undefined | 'config'> {
@@ -44,7 +44,7 @@ export async function getPythonExecutable(resource: Uri = null): Promise<string 
             return 'config';
         }
     } catch (error) {
-        OUTPUT_CHANNEL.appendLine('Error when querying about python executable path from vscode-python: ' + error);
+        logError('Error when querying about python executable path from vscode-python.', error);
         return undefined;
     }
 }

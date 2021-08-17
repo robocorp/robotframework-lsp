@@ -681,3 +681,8 @@ class ActionResult(Generic[T]):
         return f"ActionResult(success={self.success!r}, message={self.message!r}, result={self.result!r})"
 
     __repr__ = __str__
+
+
+class EnvEntry(TypedDict):
+    key: str
+    value: str

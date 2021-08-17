@@ -1,17 +1,25 @@
 from subprocess import CalledProcessError
 import sys
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Dict
 import weakref
 
-from robocorp_ls_core.basic import implements, as_str
+from robocorp_ls_core.basic import implements, as_str, is_process_alive
 from robocorp_ls_core.constants import NULL
 from robocorp_ls_core.protocols import IConfig, IConfigProvider, Sentinel
 from robocorp_ls_core.robotframework_log import get_logger
-from robocorp_code.protocols import IRcc, IRccWorkspace, IRccRobotMetadata, ActionResult
+from robocorp_code.protocols import (
+    IRcc,
+    IRccWorkspace,
+    IRccRobotMetadata,
+    ActionResult,
+    IRobotYamlEnvInfo,
+)
 from pathlib import Path
 import os.path
 from robocorp_ls_core.protocols import check_implements
 from dataclasses import dataclass
+import time
+from robocorp_code.rcc_space_info import RCCSpaceInfo, SpaceState
 
 
 log = get_logger(__name__)
@@ -58,7 +66,7 @@ def download_rcc(location: str, force: bool = False) -> None:
                     else:
                         relative_path = "/linux32/rcc"
 
-                RCC_VERSION = "v10.3.3"
+                RCC_VERSION = "v10.7.0"
                 prefix = f"https://downloads.robocorp.com/rcc/releases/{RCC_VERSION}"
                 url = prefix + relative_path
 
@@ -95,6 +103,15 @@ def get_default_rcc_location() -> str:
     else:
         location = get_extension_relative_path("bin", "rcc")
     return location
+
+
+def get_default_robocorp_home_location() -> Path:
+    if sys.platform == "win32":
+        path = r"$LOCALAPPDATA\robocorp"
+    else:
+        path = r"$HOME/.robocorp"
+    robocorp_home_str = os.path.expandvars(path)
+    return Path(robocorp_home_str)
 
 
 class RccRobotMetadata(object):
@@ -139,6 +156,15 @@ class AccountInfo:
     fullname: str
 
 
+class RobotInfoEnv(object):
+    def __init__(self, env: Dict[str, str], space_info: RCCSpaceInfo):
+        self.env = env
+        self.space_info = space_info
+
+    def __typecheckself__(self) -> None:
+        _: IRobotYamlEnvInfo = check_implements(self)
+
+
 class Rcc(object):
     def __init__(self, config_provider: IConfigProvider) -> None:
         self._config_provider = weakref.ref(config_provider)
@@ -159,7 +185,7 @@ class Rcc(object):
             return config.get_setting(setting_name, str, None)
         return None
 
-    def _get_robocorp_home(self) -> Optional[str]:
+    def get_robocorp_home_from_settings(self) -> Optional[str]:
         from robocorp_code.settings import ROBOCORP_HOME
 
         return self._get_str_optional_setting(ROBOCORP_HOME)
@@ -229,7 +255,7 @@ class Rcc(object):
         env["PYTHONIOENCODING"] = "utf-8"
         env["PYTHONUNBUFFERED"] = "1"
 
-        robocorp_home = self._get_robocorp_home()
+        robocorp_home = self.get_robocorp_home_from_settings()
         if robocorp_home:
             env["ROBOCORP_HOME"] = robocorp_home
 
@@ -243,6 +269,8 @@ class Rcc(object):
             else:
                 timed_acquire_mutex = NULL
             with timed_acquire_mutex(mutex_name, timeout=15):
+                log.debug("Running: %s", cmdline)
+                curtime = time.time()
                 boutput: bytes = check_output(args, timeout=timeout, **kwargs)
 
         except CalledProcessError as e:
@@ -280,7 +308,9 @@ class Rcc(object):
 
         output = boutput.decode("utf-8", "replace")
 
-        log.debug("Output from: %s:\n%s", cmdline, output)
+        log.debug(
+            "Output from: %s (took: %.2fs):\n%s", cmdline, time.time() - curtime, output
+        )
         return ActionResult(success=True, message=None, result=output)
 
     _TEMPLATES = {
@@ -613,34 +643,109 @@ class Rcc(object):
 
         return ActionResult(ret.success, None, package_id)
 
-    def compute_space_name(self, prefix: str, conda_yaml_contents: str) -> str:
-        import hashlib
-
-        sha256_hash = hashlib.sha256()
-        sha256_hash.update(conda_yaml_contents.encode("utf-8"))
-        return prefix + sha256_hash.hexdigest()[:12]
-
-    @implements(IRcc.get_robot_yaml_environ)
-    def get_robot_yaml_environ(
+    @implements(IRcc.get_robot_yaml_env_info)
+    def get_robot_yaml_env_info(
         self,
         robot_yaml_path: Path,
+        conda_yaml_path: Path,
         conda_yaml_contents: str,
         env_json_path: Optional[Path],
         timeout=None,
-    ) -> ActionResult[str]:
-        space_name = self.compute_space_name("vscode-user-", conda_yaml_contents)
+        holotree_manager=None,
+    ) -> ActionResult[IRobotYamlEnvInfo]:
+        from robocorp_code.holetree_manager import HolotreeManager
+        import json
 
+        if holotree_manager is None:
+            holotree_manager = HolotreeManager(self)
+        space_info: RCCSpaceInfo = holotree_manager.compute_valid_space_info(
+            conda_yaml_path, conda_yaml_contents
+        )
+
+        environ: Dict[str, str]
+
+        proceed_to_create_env = False
+        with space_info.acquire_lock():
+            space_state = SpaceState(space_info.state_path.read_text("utf-8"))
+            if space_state == SpaceState.CREATED:
+                space_info.requested_pid_path.write_text(str(os.getpid()))
+                space_info.state_path.write_text(
+                    SpaceState.ENV_REQUESTED.value, "utf-8"
+                )
+                proceed_to_create_env = True
+
+        if space_state in (SpaceState.ENV_REQUESTED, SpaceState.ENV_READY):
+            # Someone has already requested this state to be created, let's
+            # wait for it.
+            timeout = 60 * 60  # Wait up to 1 hour for the env...
+            timeout_at = time.time() + timeout
+            failures = 0
+            while time.time() < timeout_at:
+                try:
+                    space_state = SpaceState(space_info.state_path.read_text("utf-8"))
+                    if space_state == SpaceState.ENV_REQUESTED:
+                        pid = space_info.load_requested_pid()
+                        if not pid or not is_process_alive(pid):
+                            with space_info.acquire_lock():
+                                # Check again with a lock in place. If it's still not valid (the
+                                # pid could've exited and not finished its job), we'll become the
+                                # space creators ourselves.
+                                space_state = SpaceState(
+                                    space_info.state_path.read_text("utf-8")
+                                )
+                                if space_state == SpaceState.ENV_REQUESTED:
+                                    pid = space_info.load_requested_pid()
+                                    if not pid or not is_process_alive(pid):
+                                        space_info.requested_pid_path.write_text(
+                                            str(os.getpid())
+                                        )
+                                        proceed_to_create_env = True
+                                        break
+
+                    if space_state == SpaceState.ENV_READY:
+                        with space_info.acquire_lock():
+                            environ = json.loads(
+                                space_info.env_json_path.read_text("utf-8", "replace")
+                            )
+                            space_info.update_last_usage()
+
+                        if env_json_path:
+                            env_json_contents = json.loads(
+                                env_json_path.read_text("utf-8", "replace")
+                            )
+                            environ.update(env_json_contents)
+                        return ActionResult(
+                            True, None, RobotInfoEnv(environ, space_info)
+                        )
+                except:
+                    log.exception(
+                        "Error when waiting for space_info creation to finish (handled and still waiting)."
+                    )
+                    failures += 1
+
+                if failures > 5:
+                    return ActionResult(
+                        False,
+                        f"Unable to get environment for space_info: {space_info.space_name}. Unable to collect env.",
+                        None,
+                    )
+                time.sleep(2)
+
+            if not proceed_to_create_env:
+                return ActionResult(
+                    False,
+                    f"Environment for space_info: {space_info.space_name} not ready after waiting for {timeout/60} minutes.",
+                    None,
+                )
+
+        # It was just created, let's get the env info and save it as needed.
         args = [
             "holotree",
             "variables",
             "--space",
-            space_name,
-            "-r",
-            str(robot_yaml_path),
+            space_info.space_name,
+            str(conda_yaml_path),
         ]
-        if env_json_path:
-            args.append("-e")
-            args.append(str(env_json_path))
         args.append("--json")
         ret = self._run_rcc(
             args,
@@ -648,51 +753,53 @@ class Rcc(object):
             cwd=str(robot_yaml_path.parent),
             timeout=timeout,  # Creating the env may be really slow!
         )
-        return ret
 
-    # @implements(IRcc.run_python_code_robot_yaml)
-    # def run_python_code_robot_yaml(
-    #     self,
-    #     python_code: str,
-    #     conda_yaml_str_contents: Optional[str],
-    #     silent: bool = True,
-    #     timeout=None,
-    # ) -> ActionResult[str]:
-    #     from robocorp_ls_core import yaml_wrapper
-    #
-    #     # The idea is obtaining a temporary directory, creating the needed
-    #     # python file, robot.yaml and conda file and then executing an activity
-    #     # that'll execute the python file.
-    #     directory = make_numbered_in_temp(lock_timeout=60 * 60)
-    #
-    #     python_file: Path = directory / "code_to_exec.py"
-    #     python_file.write_text(python_code, encoding="utf-8")
-    #
-    #     # Note that the environ is not set (because the activityRoot cannot be
-    #     # set to a non-relative directory copying the existing environ leads to
-    #     # wrong results).
-    #     robot_yaml: Path = directory / "robot.yaml"
-    #     p: dict = {
-    #         "tasks": {"Run Python Command": {"command": ["python", str(python_file)]}},
-    #         "artifactsDir": "output",
-    #     }
-    #     if conda_yaml_str_contents:
-    #         p["condaConfigFile"] = "conda.yaml"
-    #         conda_file: Path = directory / "conda.yaml"
-    #         conda_file.write_text(conda_yaml_str_contents, encoding="utf-8")
-    #
-    #     robot_yaml.write_text(yaml_wrapper.dumps(p), encoding="utf-8")
-    #
-    #     args = ["task", "run", "-r", str(robot_yaml)]
-    #     if silent:
-    #         args.append("--silent")
-    #     ret = self._run_rcc(
-    #         args,
-    #         mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME,
-    #         cwd=str(directory),
-    #         timeout=timeout,  # Creating the env may be really slow!
-    #     )
-    #     return ret
+        if not ret.success:
+            return ActionResult(ret.success, ret.message, None)
+
+        contents: Optional[str] = ret.result
+        if not contents:
+            return ActionResult(
+                False, "Unable to get output when getting environment.", None
+            )
+
+        environ = {}
+        for entry in json.loads(contents):
+            key = entry["key"]
+            value = entry["value"]
+            if key:
+                environ[key] = value
+
+        if "CONDA_PREFIX" not in environ:
+            msg = f"Did not find CONDA_PREFIX in {environ}"
+            log.critical(msg)
+            return ActionResult(False, msg, None)
+
+        if "PYTHON_EXE" not in environ:
+            msg = f"Did not find PYTHON_EXE in {environ}"
+            log.critical(msg)
+            return ActionResult(False, msg, None)
+
+        with space_info.acquire_lock():
+            space_info.env_json_path.write_text(json.dumps(environ), "utf-8")
+            space_info.state_path.write_text(SpaceState.ENV_READY.value, "utf-8")
+            space_info.update_last_usage()
+
+        if not space_info.conda_prefix_identity_yaml_still_matches_cached_space():
+            msg = "Right after creating env, the environment does NOT match the conda yaml!"
+            log.critical(msg)
+            return ActionResult(False, msg, None)
+
+        if env_json_path:
+            try:
+                env_json_contents = json.loads(
+                    env_json_path.read_text("utf-8", "replace")
+                )
+                environ.update(env_json_contents)
+            except:
+                log.exception(f"Error loading json from: {env_json_path}")
+
+        return ActionResult(True, None, RobotInfoEnv(environ, space_info))
 
     @implements(IRcc.check_conda_installed)
     def check_conda_installed(self, timeout=None) -> ActionResult[str]:

@@ -6,6 +6,9 @@ from robocorp_ls_core.protocols import IConfigProvider
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 from robocorp_code.protocols import IRcc, ActionResult
+import sys
+from typing import Any
+from pathlib import Path
 
 
 log = get_logger(__name__)
@@ -82,8 +85,17 @@ def cases(tmpdir_factory) -> CasesFixture:
 
 
 @pytest.fixture
+def robocorp_home(tmpdir) -> str:
+    return str(tmpdir.join(".robocorp_home"))
+
+
+@pytest.fixture
 def config_provider(
-    ws_root_path: str, rcc_location: str, ci_endpoint: str, rcc_config_location: str
+    ws_root_path: str,
+    rcc_location: str,
+    ci_endpoint: str,
+    rcc_config_location: str,
+    robocorp_home: str,
 ):
     from robocorp_code.robocorp_config import RobocorpConfig
     from robocorp_ls_core.ep_providers import DefaultConfigurationProvider
@@ -93,11 +105,12 @@ def config_provider(
     config.update(
         {
             "robocorp": {
+                "home": robocorp_home,
                 "rcc": {
                     "location": rcc_location,
                     "endpoint": ci_endpoint,
                     "config_location": rcc_config_location,
-                }
+                },
             }
         }
     )
@@ -127,6 +140,7 @@ def rcc(config_provider: IConfigProvider, rcc_config_location: str) -> IRcc:
 def rcc_conda_installed(rcc: IRcc):
     result = rcc.check_conda_installed()
     assert result.success, r"Error: {result}"
+    return rcc
 
 
 _WS_INFO = (
@@ -163,14 +177,15 @@ _PACKAGE_INFO_WS_1: dict = {
 
 
 class RccPatch(object):
-    def __init__(self, monkeypatch):
+    def __init__(self, monkeypatch, tmpdir):
         from robocorp_code.rcc import Rcc
 
         self.monkeypatch = monkeypatch
         self._current_mock = self.mock_run_rcc_default
         self._original = Rcc._run_rcc
         self._package_info_ws_1 = _PACKAGE_INFO_WS_1
-        self.custom_handler = None
+        self.custom_handler: Any = None
+        self.tmpdir = tmpdir
 
     def mock_run_rcc(self, args, *starargs, **kwargs) -> ActionResult:
         return self._current_mock(args, *starargs, **kwargs)
@@ -179,6 +194,7 @@ class RccPatch(object):
         import json
         import copy
         from robocorp_code.rcc import ACCOUNT_NAME
+        import shutil
 
         if self.custom_handler is not None:
             ret = self.custom_handler(args, *sargs, **kwargs)
@@ -239,6 +255,27 @@ class RccPatch(object):
                 ),
             )
 
+        if args[:3] == ["holotree", "variables", "--space"]:
+            space_name = args[3]
+            conda_prefix = Path(self.tmpdir.join(f"conda_prefix_{space_name}"))
+            conda_prefix.mkdir()
+
+            conda_yaml = args[-2]
+            assert conda_yaml.endswith("conda.yaml")
+            shutil.copyfile(conda_yaml, conda_prefix / "identity.yaml")
+
+            return ActionResult(
+                success=True,
+                message=None,
+                result=json.dumps(
+                    [
+                        {"key": "PYTHON_EXE", "value": sys.executable},
+                        {"key": "SPACE_NAME", "value": args[3]},
+                        {"key": "CONDA_PREFIX", "value": str(conda_prefix)},
+                    ]
+                ),
+            )
+
         raise AssertionError(f"Unexpected args: {args}")
 
     def mock_run_rcc_should_not_be_called(self, args, *sargs, **kwargs):
@@ -256,5 +293,5 @@ class RccPatch(object):
 
 
 @pytest.fixture
-def rcc_patch(monkeypatch):
-    return RccPatch(monkeypatch)
+def rcc_patch(monkeypatch, tmpdir):
+    return RccPatch(monkeypatch, tmpdir)

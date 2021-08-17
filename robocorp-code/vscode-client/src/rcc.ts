@@ -7,7 +7,7 @@ import * as pathModule from 'path';
 import { XHRResponse, configure as configureXHR, xhr } from './requestLight';
 import { fileExists, getExtensionRelativeFile } from './files';
 import { workspace, window, ProgressLocation, CancellationToken, Progress, extensions } from 'vscode';
-import { OUTPUT_CHANNEL } from './channel';
+import { logError, OUTPUT_CHANNEL } from './channel';
 import { Timing, sleep } from './time';
 import { execFilePromise, ExecFileReturn } from './subprocess';
 
@@ -39,7 +39,7 @@ async function downloadRcc(progress: Progress<{ message?: string; increment?: nu
             relativePath = '/linux32/rcc';
         }
     }
-    const RCC_VERSION = "v10.3.3";
+    const RCC_VERSION = "v10.7.0";
     const prefix = "https://downloads.robocorp.com/rcc/releases/" + RCC_VERSION;
     const url: string = prefix + relativePath;
 
@@ -95,7 +95,7 @@ async function downloadRcc(progress: Progress<{ message?: string; increment?: nu
                 throw Error('Unable to download from ' + url + '. Response status: ' + response.status + 'Response message: ' + response.responseText);
             }
         } catch (error) {
-            OUTPUT_CHANNEL.appendLine('Error downloading (' + i + ' of ' + maxTries + '). Error: ' + error);
+            OUTPUT_CHANNEL.appendLine('Error downloading (' + i + ' of ' + maxTries + '). Error: ' + error.message);
             if (i == maxTries - 1) {
                 return undefined;
             }
@@ -227,11 +227,7 @@ export async function runConfigDiagnostics(rccLocation: string, robocorpHome: st
         let checks: CheckDiagnostic[] = outputAsJSON.checks;
         return new RCCDiagnostics(checks);
     } catch (error) {
-        let errorMSg: string = ('' + error).trim();
-        if (errorMSg == '[object Object]') {
-            errorMSg = JSON.stringify(error);
-        }
-        OUTPUT_CHANNEL.appendLine('Error getting RCC diagnostics: ' + errorMSg);
+        logError('Error getting RCC diagnostics.', error);
         return undefined;
     }
 }
@@ -320,7 +316,7 @@ export async function submitIssue(
         }
     } catch (err) {
         errored = true;
-        OUTPUT_CHANNEL.appendLine('Error sending issue: ' + err);
+        logError('Error sending issue.', err);
     }
     if (!errored) {
         OUTPUT_CHANNEL.appendLine('Issue sent.');
@@ -334,33 +330,30 @@ interface IEnvInfo {
     rccLocation: string;
 }
 
-export async function computeSpaceName(robotFilePath: string, prefix: string) {
-    const text: string = await fs.promises.readFile(robotFilePath, 'utf-8');
-    const hash = crypto.createHash('sha256').update(text, 'utf8').digest('hex');
-    return prefix + hash.substring(0, 12);
-}
 
 /**
- * This function won't only collect the environment, it'll also create it if needed and assign
- * it to the given holotree space.
+ * This function creates the base holotree space with RCC and then returns its info
+ * to start up the language server.
  * 
  * @param robocorpHome usually roboConfig.getHome()
  */
-export async function collectEnv(robotFilePath: string, spaceNamePrefix: string, robocorpHome: string | undefined, addRccToPath: boolean): Promise<IEnvInfo | undefined> {
-    let spaceName = await computeSpaceName(robotFilePath, spaceNamePrefix);
+export async function collectBaseEnv(condaFilePath: string, robocorpHome: string | undefined): Promise<IEnvInfo | undefined> {
+    const text: string = (await fs.promises.readFile(condaFilePath, 'utf-8')).replace(/(?:\r\n|\r)/g, '\n');
+    const hash = crypto.createHash('sha256').update(text, 'utf8').digest('hex');
+    let spaceName = 'vscode-base-v01-' + hash.substring(0, 6);
+
     const rccLocation = await getRccLocation();
     if (!rccLocation) {
-        window.showErrorMessage('Unable to find RCC to create terminal.');
+        window.showErrorMessage('Unable to find RCC.');
         return;
     }
-
 
     // If the robot is located in a directory that has '/devdata/env.json', we must automatically
     // add the -e /path/to/devdata/env.json.
 
-    let robotDirName = pathModule.dirname(robotFilePath);
+    let robotDirName = pathModule.dirname(condaFilePath);
     let envFilename = pathModule.join(robotDirName, "devdata", "env.json");
-    let args = ['holotree', 'variables', '--space', spaceName, '-r', robotFilePath, '--json'];
+    let args = ['holotree', 'variables', '--space', spaceName, '--json', condaFilePath];
     if (await fileExists(envFilename)) {
         args.push('-e');
         args.push(envFilename);
@@ -386,28 +379,44 @@ export async function collectEnv(robotFilePath: string, spaceNamePrefix: string,
         rccLocation, args,
         { env: env }
     );
+
     if (execFileReturn.stdout) {
         let envArray = JSON.parse(execFileReturn.stdout);
         for (let index = 0; index < envArray.length; index++) {
             const element = envArray[index];
             let key: string = element['key'];
-            let isPath: boolean = false;
             if (process.platform == 'win32') {
                 key = key.toUpperCase();
-                if (key == 'PATH') {
-                    isPath = true;
-                }
-            } else {
-                if (key == 'PATH') {
-                    isPath = true;
-                }
             }
-            if (isPath && addRccToPath) {
-                env[key] = pathModule.dirname(rccLocation) + pathModule.delimiter + element['value'];
-            } else {
-                env[key] = element['value'];
-            }
+            env[key] = element['value'];
         }
+        robocorpHome = env['ROBOCORP_HOME'];
+
+        let robocorpCodePath = path.join(robocorpHome, '.robocorp_code');
+        try {
+            if (!fs.existsSync(robocorpCodePath)) {
+                fs.mkdirSync(robocorpCodePath);
+            }
+        } catch (err) {
+            logError('Error creating directory: ' + robocorpCodePath, err);
+        }
+
+        let spaceInfoPath = path.join(robocorpCodePath, spaceName);
+        try {
+            if (!fs.existsSync(spaceInfoPath)) {
+                fs.mkdirSync(spaceInfoPath);
+            }
+        } catch (err) {
+            logError('Error creating directory: ' + spaceInfoPath, err);
+        }
+
+        let timestampPath = path.join(spaceInfoPath, 'last_usage');
+        try {
+            fs.writeFileSync(timestampPath, '' + Date.now());
+        } catch (err) {
+            logError('Error writing last usage time to: ' + timestampPath, err);
+        }
+
         return { 'env': env, 'robocorpHome': robocorpHome, 'rccLocation': rccLocation };
     }
     return undefined;

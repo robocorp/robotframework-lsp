@@ -30,9 +30,9 @@ import * as locators from './locators';
 import * as views from './views';
 import * as roboConfig from './robocorpSettings';
 import * as roboCommands from './robocorpCommands';
-import { OUTPUT_CHANNEL } from './channel';
+import { logError, OUTPUT_CHANNEL } from './channel';
 import { getExtensionRelativeFile, verifyFileExists } from './files';
-import { collectEnv, getRccLocation, RCCDiagnostics, runConfigDiagnostics, STATUS_FAIL, STATUS_FATAL, STATUS_OK, STATUS_WARNING, submitIssue, submitIssueUI } from './rcc';
+import { collectBaseEnv, getRccLocation, RCCDiagnostics, runConfigDiagnostics, STATUS_FAIL, STATUS_FATAL, STATUS_OK, STATUS_WARNING, submitIssue, submitIssueUI } from './rcc';
 import { Timing } from './time';
 import { execFilePromise, ExecFileReturn } from './subprocess';
 import { createRobot, uploadRobot, cloudLogin, runRobotRCC, cloudLogout, setPythonInterpreterFromRobotYaml, askAndRunRobotRCC, rccConfigurationDiagnostics } from './activities';
@@ -146,7 +146,8 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
         try {
             interpreter = await commands.executeCommand('robot.resolveInterpreter', debugConfiguration.robot);
         } catch (error) {
-            window.showWarningMessage('Error resolving interpreter info: ' + error);
+            logError('Error resolving interpreter info.', error);
+            window.showWarningMessage('Error resolving interpreter info: ' + error.message);
             return;
         }
 
@@ -267,6 +268,32 @@ export async function activate(context: ExtensionContext) {
         let timing = new Timing();
         // The first thing we need is the python executable.
         OUTPUT_CHANNEL.appendLine("Activating Robocorp Code extension.");
+
+
+        const extension = extensions.getExtension("robocorp.robotframework-lsp");
+        if (extension) {
+            // If the Robot Framework Language server is present, make sure it is compatible with this
+            // version.
+            try {
+                const version: string = extension.packageJSON.version;
+                const splitted = version.split('.');
+                const major = parseInt(splitted[0]);
+                const minor = parseInt(splitted[1]);
+                if(major == 0 && minor <= 20){
+                    const msg = 'Unable to initialize the Robocorp Code extension because the Robot Framework Language Server version (' +
+                        version +
+                        ') is not compatible with this version of Robocorp Code. Robot Framework Language Server 0.21.0 or newer is required. Please update to proceed. ';
+                    OUTPUT_CHANNEL.appendLine(msg);
+                    window.showErrorMessage(msg);
+                    return;
+                }
+            } catch (err) {
+                logError('Error verifying Robot Framework Language Server version.', err);
+            }
+        }
+
+
+
         // Note: register the submit issue actions early on so that we can later actually
         // report startup errors.
         let logPath: string = context.logPath;
@@ -572,6 +599,12 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
         return;
     }
 
+    let robotConda = getExtensionRelativeFile('../../bin/create_env/conda.yaml');
+    if (!robotConda) {
+        OUTPUT_CHANNEL.appendLine('Unable to find: ../../bin/create_env/conda.yaml in extension.');
+        return;
+    }
+
     let getEnvInfoPy = getExtensionRelativeFile('../../bin/create_env/get_env_info.py');
     if (!getEnvInfoPy) {
         OUTPUT_CHANNEL.appendLine('Unable to find: ../../bin/create_env/get_env_info.py in extension.');
@@ -679,7 +712,7 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
 
         progress.report({ message: 'Update env (may take a few minutes).' });
         // Get information on a base package with our basic dependencies (this can take a while...).
-        let rccEnvPromise = collectEnv(robotYaml, 'vscode-base-', robocorpHome, false);
+        let rccEnvPromise = collectBaseEnv(robotConda, robocorpHome);
         let timing = new Timing();
 
         let finishedCondaRun = false;
