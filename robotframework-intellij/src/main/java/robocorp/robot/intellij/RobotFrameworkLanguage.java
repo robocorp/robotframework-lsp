@@ -321,7 +321,8 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
                     errorLabel.setText(errorMsg);
                     return false;
                 }
-                String validPython = isValidPython(robotLanguageServerPython.getText());
+                String pythonWithReplacedVars = replaceVariables(project, robotLanguageServerPython.getText());
+                String validPython = isValidPython(pythonWithReplacedVars);
                 if (validPython != null) {
                     errorLabel.setText(validPython);
                     return false;
