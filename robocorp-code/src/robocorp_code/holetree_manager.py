@@ -148,10 +148,11 @@ class HolotreeManager:
                         return space_info
 
                     if space_info.conda_contents_match(conda_yaml_contents):
+                        env_written = space_info.env_json_path.exists()
                         if (
-                            space_info.env_json_path.exists()
+                            env_written
                             and space_info.conda_prefix_identity_yaml_still_matches_cached_space()
-                        ):
+                        ) or not env_written:
                             space_info.update_last_usage()
                             write_text(conda_path, str(conda_yaml_path), "utf-8")
                             space_info.curr_status = CurrentSpaceStatus.CAN_USE
