@@ -42,7 +42,6 @@ from robocorp_ls_core.robotframework_log import get_logger
 
 from pathlib import Path
 from typing import List, Optional, Iterable
-import time
 from robocorp_code.rcc_space_info import (
     RCCSpaceInfo,
     CurrentSpaceStatus,
@@ -53,11 +52,11 @@ from robocorp_code.rcc_space_info import (
 log = get_logger(__name__)
 
 
+_TWO_HOURS_IN_SECONDS = 60 * 60 * 2
+
+
 class UnableToGetSpaceName(RuntimeError):
     pass
-
-
-_TWO_HOURS_IN_SECONDS = 60 * 60 * 2
 
 
 class HolotreeManager:
@@ -210,17 +209,20 @@ class HolotreeManager:
         return False
 
     def _can_reuse_simple(
-        self, conda_yaml_contents: str, conda_yaml_path: Path, space_info: RCCSpaceInfo
+        self,
+        conda_yaml_contents: str,
+        conda_yaml_path: Path,
+        space_info: RCCSpaceInfo,
+        check_timeout: bool = True,
     ) -> bool:
         """
         Used to check reuse targets we found previously.
         """
-        assert space_info.curr_status == CurrentSpaceStatus.REUSE_TARGET
         with space_info.acquire_lock():
             has_timeout_elapsed = space_info.has_timeout_elapsed(
                 self._timeout_to_reuse_space
             )
-            if has_timeout_elapsed:
+            if has_timeout_elapsed or not check_timeout:
                 # Ok, good to reuse, let's write the new info and proceed to use
                 # this one.
                 log.info("Reusing space after timeout: %s", space_info.space_name)
@@ -239,7 +241,10 @@ class HolotreeManager:
                 yield space_info
 
     def compute_valid_space_info(
-        self, conda_yaml_path: Path, conda_yaml_contents: str
+        self,
+        conda_yaml_path: Path,
+        conda_yaml_contents: str,
+        require_timeout: bool = False,
     ) -> RCCSpaceInfo:
         checked: List[str] = []
         can_reuse: List[RCCSpaceInfo] = []
@@ -270,6 +275,25 @@ class HolotreeManager:
                 ):
                     return space_info
 
-        msg = f"Unable to compute space name (checked: {checked})"
-        log.critical(msg)
-        raise UnableToGetSpaceName(msg)
+        if not require_timeout:
+            log.critical(
+                f"Timeout hasn't passed for any env. Picking just based on LRU."
+            )
+            # Ok, we haven't found any readily available, so, reuse just based on LRU.
+            all_envs = sorted(
+                can_reuse + not_available,
+                key=lambda status: (
+                    not status.damaged_path.exists(),
+                    -status.last_usage,
+                ),
+            )
+            for space_info in all_envs:
+                if self._can_reuse_simple(
+                    conda_yaml_contents,
+                    conda_yaml_path,
+                    space_info,
+                    check_timeout=False,
+                ):
+                    return space_info
+
+        raise UnableToGetSpaceName("Unable to collect valid space info.")

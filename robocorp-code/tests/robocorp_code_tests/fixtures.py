@@ -86,6 +86,7 @@ def cases(tmpdir_factory) -> CasesFixture:
 
 @pytest.fixture
 def robocorp_home(tmpdir) -> str:
+    # return "c:/temp/with spaces"
     return str(tmpdir.join(".robocorp_home"))
 
 

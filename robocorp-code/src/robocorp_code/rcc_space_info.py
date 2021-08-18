@@ -190,14 +190,19 @@ class RCCSpaceInfo:
         return _format(contents) == _format(conda_yaml_contents)
 
     def matches_conda_identity_yaml(self, conda_id: Path) -> bool:
+        from robocorp_ls_core import yaml_wrapper
+
         contents = self.conda_contents_path.read_text("utf-8")
 
-        def _format(s):
-            # Note: we could potentially parse the yaml for the comparison,
-            # but lets keep it simple for now.
-            return s.replace("\r\n", "\n").replace("\r", "\n").strip()
+        load_yaml = yaml_wrapper.load
 
-        return _format(contents) == _format(conda_id.read_text("utf-8", "replace"))
+        try:
+            return load_yaml(contents) == load_yaml(
+                conda_id.read_text("utf-8", "replace")
+            )
+        except:
+            log.error("Error when loading yaml to verify conda identity match.")
+            return False
 
     def conda_prefix_identity_yaml_still_matches_cached_space(self):
         try:
