@@ -48,11 +48,7 @@ public class LanguageServerEditorListener implements EditorFactoryListener {
         }
 
         try {
-            String extension = editor.getExtension();
-            if (extension == null) {
-                return;
-            }
-            LanguageServerManager manager = LanguageServerManager.start(definition, extension, projectPath, project);
+            LanguageServerManager manager = LanguageServerManager.start(definition, definition.ext.iterator().next(), projectPath, project);
             EditorLanguageServerConnection.editorCreated(manager, editor);
         } catch (Exception e) {
             LOG.error(e);

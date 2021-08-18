@@ -15,10 +15,13 @@ import org.eclipse.lsp4j.Position;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 public class EditorToLSPEditor {
     private static final Logger LOG = Logger.getInstance(EditorToLSPEditor.class);
@@ -28,7 +31,7 @@ public class EditorToLSPEditor {
         private final WeakReference<Editor> editor;
         private final LanguageServerDefinition definition;
         private final String uri;
-        private final String extension;
+        private final String extensionForLanguageServerQuery;
         private final String projectPath;
         private final Project project;
         private volatile List<Diagnostic> diagnostics = new ArrayList<>();
@@ -39,20 +42,26 @@ public class EditorToLSPEditor {
             if (file == null) {
                 definition = null;
                 uri = null;
-                extension = null;
+                extensionForLanguageServerQuery = null;
                 projectPath = null;
                 project = null;
                 return;
             }
             uri = Uris.toUri(file);
-            extension = "." + file.getExtension();
             project = editor.getProject();
 
             // loads to project
             if (project != null) {
                 definition = EditorUtils.getLanguageDefinition(file, project);
-                projectPath = project.getBasePath();
+                if (definition != null) {
+                    extensionForLanguageServerQuery = definition.ext.iterator().next();
+                    projectPath = project.getBasePath();
+                } else {
+                    extensionForLanguageServerQuery = null;
+                    projectPath = null;
+                }
             } else {
+                extensionForLanguageServerQuery = null;
                 definition = null;
                 projectPath = null;
             }
@@ -66,11 +75,6 @@ public class EditorToLSPEditor {
         @Override
         public @Nullable String getURI() {
             return uri;
-        }
-
-        @Override
-        public @Nullable String getExtension() {
-            return extension;
         }
 
         @Override
@@ -159,6 +163,15 @@ public class EditorToLSPEditor {
                 return;
             }
             editor.putUserData(key, value);
+        }
+
+        @Override
+        public LanguageServerCommunication getLanguageServerCommunication(LanguageServerManager languageServerManager) throws InterruptedException, ExecutionException, TimeoutException, IOException {
+            if (definition == null || extensionForLanguageServerQuery == null) {
+                return null;
+            }
+            LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(extensionForLanguageServerQuery, getProjectPath(), project);
+            return comm;
         }
     }
 

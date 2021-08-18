@@ -58,13 +58,10 @@ public class FeatureCodeFolding extends CustomFoldingBuilder {
             if (virtualFile == null) {
                 return;
             }
-            String extension = virtualFile.getExtension();
-            if (extension == null) {
-                return;
-            }
 
             try {
-                LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication("." + extension, projectRoot, project);
+                // We don't have the related editor, so, use it based on the extension.
+                LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(languageDefinition.ext.iterator().next(), projectRoot, project);
                 if (comm == null) {
                     return;
                 }

@@ -40,9 +40,13 @@ public class EditorLanguageServerConnection {
         this.projectRoot = editor.getProjectPath();
         this.identifier = new TextDocumentIdentifier(editor.getURI());
 
-        LanguageServerCommunication comm = manager.getLanguageServerCommunication(editor.getExtension(), projectRoot, editor.getProject());
+        LanguageServerCommunication comm = editor.getLanguageServerCommunication(manager);
         if (comm == null) {
-            throw new LanguageServerUnavailableException("Unable to get language server communication for: " + projectRoot);
+            throw new LanguageServerUnavailableException("Unable to get language server communication for:\n" +
+                    "URI: " + editor.getURI() + "\n" +
+                    "Language definition: " + editor.getLanguageDefinition() + "\n" +
+                    "Project root: " + projectRoot + "\n"
+            );
         }
 
         diagnosticsListener = params -> {
@@ -65,7 +69,11 @@ public class EditorLanguageServerConnection {
             public void documentChanged(@NotNull DocumentEvent event) {
 
                 try {
-                    LanguageServerCommunication comm = manager.getLanguageServerCommunication(editor.getExtension(), projectRoot, editor.getProject());
+                    LanguageServerDefinition languageDefinition = editor.getLanguageDefinition();
+                    if (languageDefinition == null) {
+                        return;
+                    }
+                    LanguageServerCommunication comm = editor.getLanguageServerCommunication(manager);
                     if (comm == null) {
                         return;
                     }
@@ -173,12 +181,14 @@ public class EditorLanguageServerConnection {
         }
         if (userData == this) {
             // I.e.: closes the connection.
-            LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot, editor.getProject());
-            if (comm != null) {
-                comm.didClose(this);
-                comm.removeDiagnosticsListener(editor.getURI(), diagnosticsListener);
+            LanguageServerDefinition languageDefinition = editor.getLanguageDefinition();
+            if (languageDefinition != null) {
+                LanguageServerCommunication comm = editor.getLanguageServerCommunication(languageServerManager);
+                if (comm != null) {
+                    comm.didClose(this);
+                    comm.removeDiagnosticsListener(editor.getURI(), diagnosticsListener);
+                }
             }
-
             editor.getDocument().removeDocumentListener(documentListener);
             editor.putUserData(KEY_IN_USER_DATA, null);
         } else {
@@ -203,7 +213,7 @@ public class EditorLanguageServerConnection {
 
     public @Nullable CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(int offset) {
         try {
-            LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot, editor.getProject());
+            LanguageServerCommunication comm = editor.getLanguageServerCommunication(languageServerManager);
             if (comm == null) {
                 return null;
             }
@@ -222,7 +232,7 @@ public class EditorLanguageServerConnection {
 
     public @Nullable ServerCapabilities getServerCapabilities() {
         try {
-            LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot, editor.getProject());
+            LanguageServerCommunication comm = editor.getLanguageServerCommunication(languageServerManager);
             if (comm == null) {
                 return null;
             }
@@ -237,7 +247,10 @@ public class EditorLanguageServerConnection {
 
     public @Nullable LanguageServerCommunication getLanguageServerCommunication() {
         try {
-            return languageServerManager.getLanguageServerCommunication(editor.getExtension(), projectRoot, editor.getProject());
+            LanguageServerDefinition languageDefinition = editor.getLanguageDefinition();
+            if (languageDefinition != null) {
+                return editor.getLanguageServerCommunication(languageServerManager);
+            }
         } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException | TimeoutException e) {
             // If it was cancelled, just ignore it (don't log).
         } catch (Exception e) {

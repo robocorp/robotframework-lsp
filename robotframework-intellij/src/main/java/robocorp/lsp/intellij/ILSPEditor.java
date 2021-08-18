@@ -8,17 +8,15 @@ import org.eclipse.lsp4j.Position;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 public interface ILSPEditor extends UserDataHolder {
     @Nullable LanguageServerDefinition getLanguageDefinition();
 
     @Nullable String getURI();
-
-    /**
-     * @return the extension (starting with a dot).
-     */
-    @Nullable String getExtension();
 
     @Nullable String getProjectPath();
 
@@ -38,4 +36,6 @@ public interface ILSPEditor extends UserDataHolder {
     void setDiagnostics(@NotNull List<Diagnostic> diagnostics);
 
     @NotNull List<Diagnostic> getDiagnostics();
+
+    LanguageServerCommunication getLanguageServerCommunication(LanguageServerManager languageServerManager) throws InterruptedException, ExecutionException, TimeoutException, IOException;
 }
