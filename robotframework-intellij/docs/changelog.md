@@ -1,3 +1,12 @@
+New in 0.21.0 (2021-08-18)
+-----------------------------
+
+- [Intellij] Dialog to select Python executable now accepting ~ and variables. [#418](https://github.com/robocorp/robotframework-lsp/issues/418)
+- [Intellij] Fix internal issue getting language server communication. [#421](https://github.com/robocorp/robotframework-lsp/issues/421)
+- Find definition properly works for dictionary variables. Fix by: Marduk Bolaños. [#407](https://github.com/robocorp/robotframework-lsp/issues/407)
+- Complete dictionary items when the variable name includes spaces. Fix by: Marduk Bolaños.
+
+
 New in 0.20.0 (2021-07-29)
 -----------------------------
 

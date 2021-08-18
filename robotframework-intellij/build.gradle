@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.20.0'
+version '0.21.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,19 +51,14 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.20.0
+    Release 0.21.0
     </p>
     <ul>
 
-    <li>[Intellij] Intellij 212 (2021.2) is now supported.</li>
-    <li>[Intellij] Properly to go to definition of variables inside of arguments.</li>
-    <li>\${workspaceFolder} is accepted when resolving variables.</li> 
-    <li>\${env:VAR_NAME} is accepted when resolving variables.</li>
-    <li>Robocop updated to 1.8.1.</li>
-    <li>When using the poll mode for tracking file changes, it's possible to ignore directories.</li>
-    <li>dict(&)/list(@) variables can be referenced as regular (\$) variables.</li>
-    <li>Completion for dictionary items with subscript. Fix by: Marduk Bolaños.</li> 
-    <li>Completion for dictionary variable names. Fix by: Marduk Bolaños.</li>
+    <li>[Intellij] Dialog to select Python executable now accepting ~ and variables.</li>
+    <li>[Intellij] Fix internal issue getting language server communication.</li>
+    <li>Find definition properly works for dictionary variables.</li>
+    <li>Complete dictionary items when the variable name includes spaces.</li>
 
     <br>
     Current feature set:<br>
