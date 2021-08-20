@@ -28,6 +28,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -114,9 +115,27 @@ public abstract class LanguageServerDefinition {
                 this.socketStreamProvider = new SocketStreamProvider("127.0.0.1", port);
             } else {
                 if (this.builder == null) {
-                    throw new IOException("Unable to start language server: " + this.toString() + " python executable must be set.");
+                    String message = "Unable to start language server: " + this.toString() + " python executable must be set.";
+                    LOG.error(message);
+                    throw new IOException(message);
                 }
-                process = builder.start();
+                try {
+                    process = builder.start();
+                } catch (IOException e) {
+                    StringBuilder stringBuilder = new StringBuilder();
+                    stringBuilder.append("Command:\n");
+                    stringBuilder.append(builder.command());
+                    stringBuilder.append("\nPYTHONPATH:\n");
+                    Map<String, String> env = builder.environment();
+                    if (env == null) {
+                        stringBuilder.append("<error: env not available.>");
+                    } else {
+                        stringBuilder.append(env.get("PYTHONPATH"));
+                    }
+
+                    LOG.error("Error starting language server.\n" + stringBuilder, e);
+                    throw e;
+                }
                 String property = System.getProperty("user.home");
                 File dir = new File(property, ".robotframework-ls");
                 dir.mkdirs();
@@ -269,6 +288,7 @@ public abstract class LanguageServerDefinition {
      */
     public @Nullable LanguageServerStreams createConnectionProvider() {
         if (processBuilder == null && port <= 0) {
+            LOG.error("processBuilder == null && port <= 0 (in createConnectionProvider).");
             return null;
         }
         return new LanguageServerStreams(processBuilder, port);

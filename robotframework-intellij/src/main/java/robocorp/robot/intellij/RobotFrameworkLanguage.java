@@ -215,6 +215,15 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
             pythonpath = main.getParentFile().getParentFile().getAbsolutePath() + File.pathSeparator + pythonpath;
         }
         environment.put("PYTHONPATH", pythonpath);
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Command:\n");
+        stringBuilder.append(builder.command());
+        stringBuilder.append("\nPYTHONPATH:\n");
+        stringBuilder.append(environment.get("PYTHONPATH"));
+        stringBuilder.append("\nROBOTFRAMEWORK_LS_USER_HOME:\n");
+        stringBuilder.append(environment.get("ROBOTFRAMEWORK_LS_USER_HOME"));
+
+        LOG.info(stringBuilder.toString());
         return builder;
     }
 
