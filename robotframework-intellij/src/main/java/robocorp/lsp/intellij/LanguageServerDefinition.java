@@ -288,7 +288,7 @@ public abstract class LanguageServerDefinition {
      */
     public @Nullable LanguageServerStreams createConnectionProvider() {
         if (processBuilder == null && port <= 0) {
-            LOG.error("processBuilder == null && port <= 0 (in createConnectionProvider).");
+            LOG.info("processBuilder == null && port <= 0 (in createConnectionProvider).");
             return null;
         }
         return new LanguageServerStreams(processBuilder, port);
