@@ -159,17 +159,20 @@ class InternalConnection {
             LanguageServerDefinition.LanguageServerStreams languageServerStreams = languageServerDefinition.createConnectionProvider();
             if (languageServerStreams == null) {
                 // Configuration is not valid. Bail out.
+                LOG.info("languageServerDefinition.createConnectionProvider() returned null, marking as crashed.");
                 state = State.crashed;
                 return;
             }
             languageServerStreams.start();
             InputStream inputStream = languageServerStreams.getInputStream();
             OutputStream outputStream = languageServerStreams.getOutputStream();
+            LOG.info("Setting up language server communication.");
             Launcher<LanguageServer> launcher = LSPLauncher.createClientLauncher(
                     client, inputStream, outputStream);
 
             this.languageServer = launcher.getRemoteProxy();
             this.lifecycleFuture = launcher.startListening();
+            LOG.info("Sending initialize message to language server.");
             CompletableFuture<InitializeResult> initializeResultFuture = languageServer.initialize(getInitParams(projectRootPath));
             InitializeResult tempResult = null;
             int timeoutInSeconds = 15;
@@ -180,10 +183,12 @@ class InternalConnection {
                 } catch (InterruptedException | ExecutionException | TimeoutException e) {
                     languageServerStreams.verifyProcess();
                     if (!this.isConnected() || i == timeoutInSeconds - 1) {
+                        LOG.info("Initialize was not received from the language server in the expected timeout.");
                         throw e;
                     }
                 }
             }
+            LOG.info("Initialize properly received from the language server.");
             initializeResult = tempResult;
             this.languageServerStreams = languageServerStreams;
 
@@ -194,7 +199,7 @@ class InternalConnection {
                 try {
                     languageServer.getTextDocumentService().didOpen(editorLanguageServerConnection.getDidOpenTextDocumentParams());
                 } catch (Exception e) {
-                    LOG.error(e);
+                    EditorUtils.logError(LOG, e);
                 }
             }
 
@@ -202,6 +207,7 @@ class InternalConnection {
             state = State.initialized;
 
         } catch (Exception e) {
+            LOG.info("Exception while initializing. Marking as crashed.");
             EditorUtils.logError(LOG, e);
             state = State.crashed;
         }

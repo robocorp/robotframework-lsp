@@ -26,8 +26,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -137,17 +141,47 @@ public abstract class LanguageServerDefinition {
                     throw e;
                 }
                 String property = System.getProperty("user.home");
-                File dir = new File(property, ".robotframework-ls");
-                dir.mkdirs();
+                File logsDir = new File(property, ".robotframework-ls");
+                final String logsPrefixName = ".intellij-rf-ls-";
+                final String logsPrefixToday = logsPrefixName + DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDateTime.now());
 
-                DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH_mm");
-                File file = new File(dir, ".intellij-rf-ls-" + dtf.format(LocalDateTime.now()) + ".log");
+                if (!logsDir.exists()) {
+                    logsDir.mkdirs();
+                } else {
+                    removeOldEmptyLogFiles(logsDir, logsPrefixName, logsPrefixToday);
+                }
+
+                File file = new File(logsDir, logsPrefixToday + "-" + process.pid() + ".log");
                 this.file = file;
 
                 StreamRedirectorThread thread = new StreamRedirectorThread(process.getErrorStream(), new FileOutputStream(file, true));
                 thread.start();
                 verifyProcess();
                 LOG.info("Server process started " + process + ".\nStderr may be seen at:\n" + file);
+            }
+        }
+
+        private void removeOldEmptyLogFiles(File logsDir, String logsPrefixName, String logsPrefixToday) {
+            try {
+                // When starting up, delete empty log files which aren't from today.
+                for (Path p : logsDir.toPath()) {
+                    String name = p.getFileName().toString();
+                    if (name.startsWith(logsPrefixName)) {
+                        if (!name.startsWith(logsPrefixToday)) {
+                            try {
+                                if (Files.size(p) == 0) {
+                                    Files.delete(p);
+                                }
+                            } catch (IOException e) {
+                                // If Intellij was kept alive for a long time, this is expected as we may have
+                                // opened files.
+                                LOG.info("Error trying to delete: " + p);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LOG.error("Error listing existing logs in: " + logsDir);
             }
         }
 
@@ -160,7 +194,9 @@ public abstract class LanguageServerDefinition {
                     } else {
                         msg = "" + builder.command();
                     }
-                    throw new IOException("Language server process exited.\nCommand line: " + msg + ".\nStderr may be seen at:\n" + file + "\nContents (last " + LEN_TO_READ + " chars):\n" + readFileContents());
+                    String errorMessage = "Language server process exited.\nCommand line: " + msg + ".\nStderr may be seen at:\n" + file + "\nContents (last " + LEN_TO_READ + " chars):\n" + readFileContents();
+                    LOG.info(errorMessage);
+                    throw new IOException(errorMessage);
                 }
             }
         }
