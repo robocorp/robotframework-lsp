@@ -685,7 +685,7 @@ class Rcc(object):
                     space_state = SpaceState(space_info.state_path.read_text("utf-8"))
                     if space_state == SpaceState.ENV_REQUESTED:
                         pid = space_info.load_requested_pid()
-                        if not pid or not is_process_alive(pid):
+                        if not pid or not is_process_alive(int(pid)):
                             with space_info.acquire_lock():
                                 # Check again with a lock in place. If it's still not valid (the
                                 # pid could've exited and not finished its job), we'll become the
@@ -695,7 +695,7 @@ class Rcc(object):
                                 )
                                 if space_state == SpaceState.ENV_REQUESTED:
                                     pid = space_info.load_requested_pid()
-                                    if not pid or not is_process_alive(pid):
+                                    if not pid or not is_process_alive(int(pid)):
                                         space_info.requested_pid_path.write_text(
                                             str(os.getpid())
                                         )

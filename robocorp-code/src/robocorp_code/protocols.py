@@ -147,6 +147,8 @@ class IRccRobotMetadata(Protocol):
 
 
 class IRCCSpaceInfo(Protocol):
+    space_name: str
+
     def load_last_usage(self, none_if_not_found: bool = False) -> Optional[float]:
         pass
 

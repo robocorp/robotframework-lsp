@@ -88,7 +88,7 @@ class LaunchProcess(object):
         launch_response,
         debug_adapter_comm,
         rcc_config_location: Optional[str],
-    ):
+    ) -> None:
         """
         :param LaunchRequest request:
         :param LaunchResponse launch_response:
@@ -101,6 +101,11 @@ class LaunchProcess(object):
         from robocorp_code.rcc import Rcc
         from robocorp_ls_core.config import Config
         from pathlib import Path
+        from robocorp_ls_core import yaml_wrapper
+        from robocorp_ls_core.protocols import ActionResult
+        from robocorp_code.protocols import IRobotYamlEnvInfo
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEvent
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEventBody
 
         self._weak_debug_adapter_comm = weakref.ref(debug_adapter_comm)
         self._valid = True
@@ -191,8 +196,73 @@ class LaunchProcess(object):
                 task_args.append("--task")
                 task_args.append(task_name)
 
+            env_json_path = Path(robot_yaml).parent / "devdata" / "env.json"
+            exists_env_json = env_json_path.exists()
+
+            # Compute the space name
+            try:
+                with open(robot_yaml, "r") as stream:
+                    yaml_contents = yaml_wrapper.load(stream)
+            except:
+                log.exception(f"Error loading {robot_yaml} as yaml.")
+                return mark_invalid(f"Error loading {robot_yaml} as yaml.")
+
+            if not isinstance(yaml_contents, dict):
+                return mark_invalid(f"Expected dict as root in: {robot_yaml}.")
+
+            conda_config = yaml_contents.get("condaConfigFile")
+            if not conda_config:
+                return mark_invalid(f"Could not find condaConfigFile in {robot_yaml}")
+            parent: Path = Path(robot_yaml).parent
+            conda_yaml_path = parent / conda_config
+            if not conda_yaml_path.exists():
+                return mark_invalid(f"conda.yaml does not exist in {conda_yaml_path}")
+
+            try:
+                conda_yaml_contents = conda_yaml_path.read_text("utf-8", "replace")
+            except:
+                log.exception(f"Error loading {conda_yaml_path} contents.")
+                return mark_invalid(f"Error loading {conda_yaml_path} contents.")
+
+            output_event = OutputEvent(
+                OutputEventBody(
+                    "Computing holotree space (this can take a while)...\n",
+                    category="stderr",
+                )
+            )
+            debug_adapter_comm.write_to_client_message(output_event)
+
+            robot_yaml_env_info: ActionResult[
+                IRobotYamlEnvInfo
+            ] = rcc.get_robot_yaml_env_info(
+                Path(robot_yaml),
+                conda_yaml_path,
+                conda_yaml_contents,
+                env_json_path if exists_env_json else None,
+            )
+
+            if not robot_yaml_env_info.success:
+                return mark_invalid(robot_yaml_env_info.message)
+            robot_yaml_env_info_result: Optional[
+                IRobotYamlEnvInfo
+            ] = robot_yaml_env_info.result
+            if not robot_yaml_env_info_result:
+                return mark_invalid(
+                    "Internal error: robot_yaml_env_info_result not available."
+                )
+
+            space_name = robot_yaml_env_info_result.space_info.space_name
+
             cmdline = (
-                [rcc_executable, "task", "run", "--robot", robot_yaml]
+                [
+                    rcc_executable,
+                    "task",
+                    "run",
+                    "--robot",
+                    robot_yaml,
+                    "--space",
+                    space_name,
+                ]
                 + task_args
                 + args
             )
@@ -200,8 +270,7 @@ class LaunchProcess(object):
                 cmdline.append("--config")
                 cmdline.append(self._rcc_config_location)
 
-            env_json_path = Path(robot_yaml).parent / "devdata" / "env.json"
-            if env_json_path.exists():
+            if exists_env_json:
                 cmdline.append("-e")
                 cmdline.append(str(env_json_path))
 

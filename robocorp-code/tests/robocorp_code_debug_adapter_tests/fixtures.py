@@ -249,7 +249,7 @@ class _DebuggerAPI(object):
         if success:
             # Initialized is sent just before the launch response (at which
             # point it's possible to send breakpoints).
-            event = self.read(InitializedEvent)
+            event = self.read(InitializedEvent, timeout=10 * 60)
             assert isinstance(event, InitializedEvent)
 
         if success:

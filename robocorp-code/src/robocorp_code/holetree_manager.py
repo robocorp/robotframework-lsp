@@ -91,7 +91,7 @@ class HolotreeManager:
 
             directory = robocorp_home / ".robocorp_code"
 
-        directory.mkdir(exist_ok=True)
+        directory.mkdir(parents=True, exist_ok=True)
 
         self._directory = directory
         self._max_number_of_spaces = max_number_of_spaces
@@ -122,7 +122,7 @@ class HolotreeManager:
         conda_path = space_info.conda_path
 
         try:
-            space_info.space_path.mkdir(exist_ok=False)
+            space_info.space_path.mkdir(parents=True, exist_ok=False)
             lock = space_info.acquire_lock()
         except:
             # Ok, there's already a folder with that name, which means that
