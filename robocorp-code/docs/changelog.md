@@ -1,3 +1,12 @@
+New in 0.12.1 (2021-08-23)
+-----------------------------
+
+- At most 10 environment are created, using Holotree from RCC (environments are now recycled).
+- Upgraded to RCC 10.7.0.
+- Deal with `pythonDeprecatePythonPath` when setting the python executable path for vscode-python from a Robot.
+- If the Robot Framework Language Server extension is installed in VSCode, at least 0.21.0 is now required. 
+
+
 New in 0.11.1 (2021-05-27)
 -----------------------------
 

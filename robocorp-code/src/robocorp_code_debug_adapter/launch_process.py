@@ -224,22 +224,51 @@ class LaunchProcess(object):
                 log.exception(f"Error loading {conda_yaml_path} contents.")
                 return mark_invalid(f"Error loading {conda_yaml_path} contents.")
 
-            output_event = OutputEvent(
-                OutputEventBody(
-                    "Computing holotree space (this can take a while)...\n",
-                    category="stderr",
-                )
-            )
-            debug_adapter_comm.write_to_client_message(output_event)
+            notify_event = threading.Event()
 
-            robot_yaml_env_info: ActionResult[
-                IRobotYamlEnvInfo
-            ] = rcc.get_robot_yaml_env_info(
-                Path(robot_yaml),
-                conda_yaml_path,
-                conda_yaml_contents,
-                env_json_path if exists_env_json else None,
-            )
+            import time
+
+            def notify_elapsed_time():
+                initial_time = time.time()
+
+                notify_event.wait(5)
+                if notify_event.is_set():
+                    return
+
+                output_event = OutputEvent(
+                    OutputEventBody(
+                        "Computing holotree space (this can take some minutes)...\n",
+                        category="stderr",
+                    )
+                )
+                debug_adapter_comm.write_to_client_message(output_event)
+
+                while True:
+                    notify_event.wait(9.33)
+                    elapsed = time.time() - initial_time
+                    if not notify_event.is_set():
+                        output_event = OutputEvent(
+                            OutputEventBody(
+                                "Elapsed: %.1fs\n" % (elapsed,), category="stderr"
+                            )
+                        )
+                        debug_adapter_comm.write_to_client_message(output_event)
+
+            t = threading.Thread(target=notify_elapsed_time)
+            t.daemon = True
+            t.start()
+
+            try:
+                robot_yaml_env_info: ActionResult[
+                    IRobotYamlEnvInfo
+                ] = rcc.get_robot_yaml_env_info(
+                    Path(robot_yaml),
+                    conda_yaml_path,
+                    conda_yaml_contents,
+                    env_json_path if exists_env_json else None,
+                )
+            finally:
+                notify_event.set()
 
             if not robot_yaml_env_info.success:
                 return mark_invalid(robot_yaml_env_info.message)
