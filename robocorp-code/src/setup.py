@@ -8,29 +8,6 @@ if not os.path.exists(_readme_filename):
     raise AssertionError("Expected: %s to exist." % (_readme_filename,))
 README = open(_readme_filename, "r").read()
 
-data_files = []
-
-
-def accept_file(f):
-    f = f.lower()
-    if f.endswith(".js"):
-        return True
-    return False
-
-
-for root, dirs, files in os.walk("robocorp_code"):
-    for d in dirs:
-        accepted_files = [
-            os.path.join(root, d, f)
-            for f in os.listdir(os.path.join(root, d))
-            if accept_file(f)
-        ]
-        if accepted_files:
-            data_files.append((os.path.join(root, d), accepted_files))
-
-if not data_files:
-    raise AssertionError("Expected .js files to be found.")
-
 
 class BinaryDistribution(Distribution):
     def is_pure(self):
@@ -47,7 +24,6 @@ setup(
     license="Apache License, Version 2.0",
     copyright="Robocorp Technologies, Inc.",
     packages=find_packages(),
-    data_files=data_files,
     include_package_data=True,
     zip_safe=False,
     distclass=BinaryDistribution,
