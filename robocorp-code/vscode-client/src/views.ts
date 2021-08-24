@@ -255,6 +255,7 @@ export class LocatorsTreeDataProvider implements vscode.TreeDataProvider<Locator
 
         }
         treeItem.iconPath = new vscode.ThemeIcon(iconPath);
+        treeItem.contextValue = "locatorEntry";
         return treeItem;
     }
 }

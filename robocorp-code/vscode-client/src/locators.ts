@@ -1,9 +1,9 @@
-import { env } from "vscode";
+import * as vscode from "vscode";
 import { getSelectedLocator, LocatorEntry } from './viewsCommon';
 
-export async function copySelectedToClipboard() {
-    let locatorSelected: LocatorEntry | undefined = getSelectedLocator();
+export async function copySelectedToClipboard(locator?: LocatorEntry) {
+    let locatorSelected: LocatorEntry | undefined = locator || getSelectedLocator();
     if (locatorSelected) {
-        env.clipboard.writeText(locatorSelected.name);
+        vscode.env.clipboard.writeText(locatorSelected.name);
     }
 }

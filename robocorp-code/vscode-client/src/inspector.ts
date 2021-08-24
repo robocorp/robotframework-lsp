@@ -24,7 +24,7 @@ interface InterpreterInfo {
 
 let _cachedInspectorPythonInfo: InterpreterInfo;
 
-export async function openRobocorpInspector(locatorType?: string): Promise<void> {
+export async function openRobocorpInspector(locatorType?: string, locator?: LocatorEntry): Promise<void> {
     let locatorJson;
     const args: string[] = [];
     let robot: LocalRobotMetadataInfo | undefined = getSelectedRobot('Please select a robot first.')?.robot;
@@ -53,7 +53,7 @@ export async function openRobocorpInspector(locatorType?: string): Promise<void>
         args.push("add");
         args.push(locatorType)
     } else {
-        const locatorSelected: LocatorEntry | undefined = getSelectedLocator(
+        const locatorSelected: LocatorEntry | undefined = locator || getSelectedLocator(
           "Please select a locator first.",
           "Please select only one locator.",
         );

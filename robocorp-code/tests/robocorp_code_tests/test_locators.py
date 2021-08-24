@@ -2,32 +2,6 @@ import pytest
 from pathlib import Path
 
 
-def test_locators_webdriver_basic():
-    from robocorp_code.locators.locator_webdriver import Webdriver
-    from robocorp_ls_core.robotframework_log import get_logger
-    from robocorp_code_tests.fixtures import IMAGE_IN_BASE64
-
-    w = Webdriver(get_logger=get_logger, headless=True)
-    w.start()
-    w.navigate("http://google.com")
-
-    # i.e.: Uncomment to manually click the element instead of hard-coding
-    # value.
-    # dct = w.pick_as_browser_locator_dict()
-    # print(dct)
-    dct = {
-        "strategy": "name",
-        "value": "q",
-        "source": "https://www.google.com/?gws_rd=ssl",
-        "screenshot": IMAGE_IN_BASE64,
-    }
-    assert dct["value"] == "q"
-    assert dct["strategy"] == "name"
-    result = w.validate_dict_info(dct)
-    assert result["matches"] == 1
-    w.stop()
-
-
 @pytest.fixture
 def config_options_log(log_file: str):
     from robocorp_code.options import Setup
@@ -41,23 +15,6 @@ def config_options_log(log_file: str):
     yield
     Setup.options.log_file = prev_log_file
     Setup.options.verbose = prev_verbose
-
-
-def test_locators_server(config_options_log):
-
-    from robocorp_code.locators.server.locator_server_manager import (
-        LocatorServerManager,
-    )
-    from robocorp_code.protocols import ActionResultDict
-
-    locator_server_manager = LocatorServerManager()
-    browser_locator_start: ActionResultDict = locator_server_manager.browser_locator_start(
-        headless=True
-    )
-    assert browser_locator_start["success"]
-
-    browser_locator_stop: ActionResultDict = locator_server_manager.browser_locator_stop()
-    assert browser_locator_stop["success"]
 
 
 def test_locators_db_browser(tmpdir):

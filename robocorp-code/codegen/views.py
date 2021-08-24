@@ -22,6 +22,7 @@ class TreeViewContainer:
 class MenuGroup(enum.Enum):
     # https://code.visualstudio.com/api/references/contribution-points#contributes.menus
     NAVIGATION = "navigation"
+    INLINE = "inline"
 
 
 class Menu:
@@ -151,10 +152,12 @@ TREE_VIEW_CONTAINERS = [
                     "view/item/context": [
                         Menu(
                             "robocorp.editRobocorpInspectorLocator",
+                            MenuGroup.INLINE,
                             when="robocorp-code:single-robot-selected",
                         ),
                         Menu(
                             "robocorp.copyLocatorToClipboard.internal",
+                            MenuGroup.INLINE,
                             when="robocorp-code:single-robot-selected",
                         ),
                     ],
