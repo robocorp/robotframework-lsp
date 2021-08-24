@@ -81,6 +81,7 @@ class RemoteFSObserver(object):
         assert self.port is None, "RemoteFSObserver already initialized."
         import subprocess
         from robocorp_ls_core import remote_fs_observer__main__
+        import time
 
         args = [sys.executable, "-u", remote_fs_observer__main__.__file__]
         if log_file:
@@ -96,9 +97,25 @@ class RemoteFSObserver(object):
         stdout = process.stdout
         assert stdout
         contents = stdout.readline().strip()
+
+        def read_fs_observer_stderr():
+            while True:
+                line = process.stderr.readline()
+                if not line:
+                    break
+                line = line.decode("utf-8", "replace")
+                sys.stderr.write(line)
+                log.info("Remote FS observer stderr: %s", line)
+
+        t = threading.Thread(target=read_fs_observer_stderr)
+        t.daemon = True
+        t.start()
+
         if not contents.startswith(b"port:"):
+            # Just give some time for the stderr contents to appear.
+            time.sleep(0.15)
             raise AssertionError(
-                f'Expected the read contents to start with "port:". Found: {contents!r}'
+                f'Expected the read contents from Remote FS Observer to start with "port:". Found: {contents!r}'
             )
         contents = contents[5:].strip()
 
