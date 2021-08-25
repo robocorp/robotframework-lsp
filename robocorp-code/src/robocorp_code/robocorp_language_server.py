@@ -3,6 +3,7 @@ import os
 import sys
 from pathlib import Path
 from typing import List, Any, Optional, Dict, Union
+from base64 import b64encode
 
 from robocorp_code import commands
 from concurrent.futures import Future
@@ -943,8 +944,10 @@ class RobocorpLanguageServer(PythonLanguageServer):
             if found.endswith(".png"):
                 check = p / found
                 if check.exists():
-                    as_uri = uris.from_fs_path(str(check))
-                    s = f"![Screenshot]({as_uri})"
+                    with check.open("rb") as image_content:
+                        image_base64 = b64encode(image_content.read()).decode("utf-8")
+                    image_path = f"data:image/png;base64,{image_base64}"
+                    s = f"![Screenshot]({image_path})"
                     return {
                         "contents": MarkupContent(MarkupKind.Markdown, s).to_dict(),
                         "range": Range((line, col), (line, col)).to_dict(),
