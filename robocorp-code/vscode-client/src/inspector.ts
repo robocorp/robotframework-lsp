@@ -53,7 +53,7 @@ export async function openRobocorpInspector(locatorType?: string, locator?: Loca
         args.push("add");
         args.push(locatorType)
     } else {
-        const locatorSelected: LocatorEntry | undefined = locator || getSelectedLocator(
+        const locatorSelected: LocatorEntry | undefined = locator ?? getSelectedLocator(
           "Please select a locator first.",
           "Please select only one locator.",
         );
