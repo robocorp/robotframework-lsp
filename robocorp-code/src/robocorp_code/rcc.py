@@ -1,6 +1,6 @@
 from subprocess import CalledProcessError
 import sys
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any, Dict, Set
 import weakref
 
 from robocorp_ls_core.basic import implements, as_str, is_process_alive
@@ -13,6 +13,7 @@ from robocorp_code.protocols import (
     IRccRobotMetadata,
     ActionResult,
     IRobotYamlEnvInfo,
+    IRccListener,
 )
 from pathlib import Path
 import os.path
@@ -166,10 +167,18 @@ class RobotInfoEnv(object):
 
 
 class Rcc(object):
+
+    # Note that this is stored in the class, not in the instance.
+    # It should store the contents of conda which couldn't be resolved.
+    # After being stored once here, it'll only be tried again when
+    # the user restarts the language server (or changes the conda config).
+    broken_conda_configs: Set[str] = set()
+
     def __init__(self, config_provider: IConfigProvider) -> None:
         self._config_provider = weakref.ref(config_provider)
 
         self._last_verified_account_info: Optional[AccountInfo] = None
+        self.rcc_listeners: List[IRccListener] = []
 
     @property
     def last_verified_account_info(self) -> Optional[AccountInfo]:
@@ -271,6 +280,8 @@ class Rcc(object):
             with timed_acquire_mutex(mutex_name, timeout=15):
                 log.debug("Running: %s", cmdline)
                 curtime = time.time()
+                for listener in self.rcc_listeners:
+                    listener.before_command(args)
                 boutput: bytes = check_output(args, timeout=timeout, **kwargs)
 
         except CalledProcessError as e:
@@ -655,9 +666,20 @@ class Rcc(object):
     ) -> ActionResult[IRobotYamlEnvInfo]:
         from robocorp_code.holetree_manager import HolotreeManager
         import json
+        from robocorp_code.rcc_space_info import format_conda_contents_to_compare
 
         if holotree_manager is None:
             holotree_manager = HolotreeManager(self)
+
+        formatted_conda_yaml_contents = format_conda_contents_to_compare(
+            conda_yaml_contents
+        )
+
+        if formatted_conda_yaml_contents in self.broken_conda_configs:
+            msg = f"Environment from broken conda.yaml requested: {conda_yaml_path}"
+            log.critical(msg)
+            return ActionResult(False, msg, None)
+
         space_info: RCCSpaceInfo = holotree_manager.compute_valid_space_info(
             conda_yaml_path, conda_yaml_contents
         )
@@ -739,6 +761,32 @@ class Rcc(object):
                 )
 
         # It was just created, let's get the env info and save it as needed.
+        def return_failure(msg: Optional[str]) -> ActionResult[IRobotYamlEnvInfo]:
+            self.broken_conda_configs.add(formatted_conda_yaml_contents)
+
+            with space_info.acquire_lock():
+                # If some failure happened, mark this as just created (so, it
+                # can be reused).
+                # But still, mark this conda yaml explicitly as invalid (i.e.:
+                # it's expected that trying to resolve it again won't work, so,
+                # the user must either restart vscode or change the conda yaml
+                # for it to be requested again).
+                space_info.state_path.write_text(SpaceState.CREATED.value, "utf-8")
+
+            log.critical(
+                (
+                    "Unable to create environment from:\n%s\n"
+                    "To recreate the environment, please change the related conda yaml\n"
+                    "or restart VSCode to retry with the same conda yaml contents."
+                ),
+                conda_yaml_path,
+            )
+
+            if not msg:
+                msg = "<unknown reason>"
+            log.critical(msg)
+            return ActionResult(False, msg, None)
+
         args = [
             "holotree",
             "variables",
@@ -747,59 +795,59 @@ class Rcc(object):
             str(conda_yaml_path),
         ]
         args.append("--json")
-        ret = self._run_rcc(
-            args,
-            mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME,
-            cwd=str(robot_yaml_path.parent),
-            timeout=timeout,  # Creating the env may be really slow!
-        )
-
-        if not ret.success:
-            return ActionResult(ret.success, ret.message, None)
-
-        contents: Optional[str] = ret.result
-        if not contents:
-            return ActionResult(
-                False, "Unable to get output when getting environment.", None
+        try:
+            ret = self._run_rcc(
+                args,
+                mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME,
+                cwd=str(robot_yaml_path.parent),
+                timeout=timeout,  # Creating the env may be really slow!
             )
 
-        environ = {}
-        for entry in json.loads(contents):
-            key = entry["key"]
-            value = entry["value"]
-            if key:
-                environ[key] = value
+            if not ret.success:
+                return return_failure(ret.message)
 
-        if "CONDA_PREFIX" not in environ:
-            msg = f"Did not find CONDA_PREFIX in {environ}"
-            log.critical(msg)
-            return ActionResult(False, msg, None)
+            contents: Optional[str] = ret.result
+            if not contents:
+                return return_failure("Unable to get output when getting environment.")
 
-        if "PYTHON_EXE" not in environ:
-            msg = f"Did not find PYTHON_EXE in {environ}"
-            log.critical(msg)
-            return ActionResult(False, msg, None)
+            environ = {}
+            for entry in json.loads(contents):
+                key = entry["key"]
+                value = entry["value"]
+                if key:
+                    environ[key] = value
 
-        with space_info.acquire_lock():
-            space_info.env_json_path.write_text(json.dumps(environ), "utf-8")
-            space_info.state_path.write_text(SpaceState.ENV_READY.value, "utf-8")
-            space_info.update_last_usage()
+            if "CONDA_PREFIX" not in environ:
+                msg = f"Did not find CONDA_PREFIX in {environ}"
+                return return_failure(msg)
 
-        if not space_info.conda_prefix_identity_yaml_still_matches_cached_space():
-            msg = "Right after creating env, the environment does NOT match the conda yaml!"
-            log.critical(msg)
-            return ActionResult(False, msg, None)
+            if "PYTHON_EXE" not in environ:
+                msg = f"Did not find PYTHON_EXE in {environ}"
+                return return_failure(msg)
 
-        if env_json_path:
-            try:
-                env_json_contents = json.loads(
-                    env_json_path.read_text("utf-8", "replace")
+            with space_info.acquire_lock():
+                space_info.env_json_path.write_text(json.dumps(environ), "utf-8")
+                space_info.state_path.write_text(SpaceState.ENV_READY.value, "utf-8")
+                space_info.update_last_usage()
+
+            if not space_info.conda_prefix_identity_yaml_still_matches_cached_space():
+                return return_failure(
+                    "Right after creating env, the environment does NOT match the conda yaml!"
                 )
-                environ.update(env_json_contents)
-            except:
-                log.exception(f"Error loading json from: {env_json_path}")
 
-        return ActionResult(True, None, RobotInfoEnv(environ, space_info))
+            if env_json_path:
+                try:
+                    env_json_contents = json.loads(
+                        env_json_path.read_text("utf-8", "replace")
+                    )
+                    environ.update(env_json_contents)
+                except:
+                    log.exception(f"Error loading json from: {env_json_path}")
+
+            return ActionResult(True, None, RobotInfoEnv(environ, space_info))
+        except Exception as e:
+            log.exception("Error creating environment from: %s", conda_yaml_path)
+            return return_failure(str(e))
 
     @implements(IRcc.check_conda_installed)
     def check_conda_installed(self, timeout=None) -> ActionResult[str]:

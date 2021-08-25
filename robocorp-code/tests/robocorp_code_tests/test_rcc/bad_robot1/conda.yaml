@@ -1,0 +1,6 @@
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.9
+  - _this_does_not_exist_=3.33

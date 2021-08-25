@@ -182,12 +182,8 @@ class RCCSpaceInfo:
     def conda_contents_match(self, conda_yaml_contents: str) -> bool:
         contents = self.conda_contents_path.read_text("utf-8")
 
-        def _format(s):
-            # Note: we could potentially parse the yaml for the comparison,
-            # but lets keep it simple for now.
-            return s.replace("\r\n", "\n").replace("\r", "\n").strip()
-
-        return _format(contents) == _format(conda_yaml_contents)
+        formatted = format_conda_contents_to_compare(contents)
+        return formatted == format_conda_contents_to_compare(conda_yaml_contents)
 
     def matches_conda_identity_yaml(self, conda_id: Path) -> bool:
         from robocorp_ls_core import yaml_wrapper
@@ -233,3 +229,13 @@ class RCCSpaceInfo:
 
     def __typecheckself__(self) -> None:
         _: IRCCSpaceInfo = check_implements(self)
+
+
+def format_conda_contents_to_compare(s: str) -> str:
+    contents = []
+    for line in s.splitlines(keepends=False):
+        line = line.strip()
+        if not line:
+            continue
+        contents.append(line)
+    return "".join(contents)

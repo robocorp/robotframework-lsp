@@ -181,7 +181,14 @@ class IRobotYamlEnvInfo(Protocol):
         pass
 
 
+class IRccListener(Protocol):
+    def before_command(self, args: List[str]):
+        pass
+
+
 class IRcc(Protocol):
+    rcc_listeners: List[IRccListener]
+
     @property
     def endpoint(self) -> Optional[str]:
         """

@@ -6,6 +6,8 @@ from pathlib import Path
 import os
 from robocorp_code.holetree_manager import UnableToGetSpaceName
 import time
+from dataclasses import dataclass
+from typing import List
 
 TIMEOUT_FOR_UPDATES_IN_SECONDS = 1
 TIMEOUT_TO_REUSE_SPACE = 3
@@ -150,45 +152,49 @@ def test_convert_robot_env_to_shell(tmpdir):
         raise
 
 
+@dataclass
+class _RobotInfo:
+    robot_yaml: Path
+    conda_yaml: Path
+
+    def __init__(self, datadir, robot_name):
+        self.robot_yaml = datadir / robot_name / "robot.yaml"
+        self.conda_yaml = datadir / robot_name / "conda.yaml"
+        assert self.robot_yaml.exists()
+
+    @property
+    def conda_yaml_contents(self):
+        return self.conda_yaml.read_text("utf-8")
+
+
 def test_get_robot_yaml_environ(rcc: IRcc, datadir, holotree_manager):
     from robocorp_code.protocols import IRobotYamlEnvInfo
     from robocorp_ls_core.protocols import ActionResult
     from robocorp_code.protocols import IRCCSpaceInfo
 
-    robot_1_yaml = datadir / "robot1" / "robot.yaml"
-    conda_1_yaml = datadir / "robot1" / "conda.yaml"
-    assert robot_1_yaml.exists()
-    conda_1_yaml_contents = conda_1_yaml.read_text("utf-8")
-
-    robot_2_yaml = datadir / "robot2" / "robot.yaml"
-    conda_2_yaml = datadir / "robot2" / "conda.yaml"
-    conda_2_yaml_contents = conda_2_yaml.read_text("utf-8")
-    assert robot_2_yaml.exists()
-
-    robot_3_yaml = datadir / "robot3" / "robot.yaml"
-    conda_3_yaml = datadir / "robot3" / "conda.yaml"
-    conda_3_yaml_contents = conda_3_yaml.read_text("utf-8")
-    assert robot_3_yaml.exists()
+    robot1 = _RobotInfo(datadir, "robot1")
+    robot2 = _RobotInfo(datadir, "robot2")
+    robot3 = _RobotInfo(datadir, "robot3")
 
     space = holotree_manager.compute_valid_space_info(
-        conda_1_yaml, conda_1_yaml_contents
+        robot1.conda_yaml, robot1.conda_yaml_contents
     )
     assert space.space_name == "vscode-01"
 
     space = holotree_manager.compute_valid_space_info(
-        conda_2_yaml, conda_2_yaml_contents
+        robot2.conda_yaml, robot2.conda_yaml_contents
     )
     assert space.space_name == "vscode-02"
 
     space = holotree_manager.compute_valid_space_info(
-        conda_1_yaml, conda_1_yaml_contents
+        robot1.conda_yaml, robot1.conda_yaml_contents
     )
     assert space.space_name == "vscode-01"
 
     space_path_vscode01_conda: Path = holotree_manager._directory / "vscode-01" / "conda.yaml"
     space_path_vscode02_conda: Path = holotree_manager._directory / "vscode-02" / "conda.yaml"
-    assert space_path_vscode01_conda.read_text("utf-8") == conda_1_yaml_contents
-    assert space_path_vscode02_conda.read_text("utf-8") == conda_2_yaml_contents
+    assert space_path_vscode01_conda.read_text("utf-8") == robot1.conda_yaml_contents
+    assert space_path_vscode02_conda.read_text("utf-8") == robot2.conda_yaml_contents
 
     assert (holotree_manager._directory / "vscode-01" / "state").read_text(
         "utf-8"
@@ -203,18 +209,18 @@ def test_get_robot_yaml_environ(rcc: IRcc, datadir, holotree_manager):
     # and the needed timeout to reuse hasn't elapsed.
     with pytest.raises(UnableToGetSpaceName):
         holotree_manager.compute_valid_space_info(
-            conda_1_yaml, conda_1_yaml_contents, require_timeout=True
+            robot1.conda_yaml, robot1.conda_yaml_contents, require_timeout=True
         )
 
-    # assert space_path_vscode01_conda.read_text("utf-8") == conda_1_yaml_contents
-    assert space_path_vscode02_conda.read_text("utf-8") == conda_2_yaml_contents
+    # assert space_path_vscode01_conda.read_text("utf-8") == robot1.conda_yaml_contents
+    assert space_path_vscode02_conda.read_text("utf-8") == robot2.conda_yaml_contents
 
     assert (holotree_manager._directory / "vscode-01" / "damaged").exists()
 
     # After the given timeout we can reuse the damaged one.
     time.sleep(TIMEOUT_TO_REUSE_SPACE + 0.01)
     space = holotree_manager.compute_valid_space_info(
-        conda_1_yaml, conda_1_yaml_contents
+        robot1.conda_yaml, robot1.conda_yaml_contents
     )
     assert space.space_name == "vscode-01"
     assert (holotree_manager._directory / "vscode-01" / "state").read_text(
@@ -223,9 +229,9 @@ def test_get_robot_yaml_environ(rcc: IRcc, datadir, holotree_manager):
 
     for _ in range(2):
         result: ActionResult[IRobotYamlEnvInfo] = rcc.get_robot_yaml_env_info(
-            robot_1_yaml,
-            conda_1_yaml,
-            conda_1_yaml_contents,
+            robot1.robot_yaml,
+            robot1.conda_yaml,
+            robot1.conda_yaml_contents,
             None,
             holotree_manager=holotree_manager,
         )
@@ -236,13 +242,13 @@ def test_get_robot_yaml_environ(rcc: IRcc, datadir, holotree_manager):
 
         space_info: IRCCSpaceInfo = robot_yaml_env_info.space_info
         with space_info.acquire_lock():
-            assert space_info.conda_contents_match(conda_1_yaml_contents)
+            assert space_info.conda_contents_match(robot1.conda_yaml_contents)
 
     # Load robot 2 (without any timeout).
     result = rcc.get_robot_yaml_env_info(
-        robot_2_yaml,
-        conda_2_yaml,
-        conda_2_yaml_contents,
+        robot2.robot_yaml,
+        robot2.conda_yaml,
+        robot2.conda_yaml_contents,
         None,
         holotree_manager=holotree_manager,
     )
@@ -253,13 +259,13 @@ def test_get_robot_yaml_environ(rcc: IRcc, datadir, holotree_manager):
 
     space_info = robot_yaml_env_info.space_info
     with space_info.acquire_lock():
-        assert space_info.conda_contents_match(conda_2_yaml_contents)
+        assert space_info.conda_contents_match(robot2.conda_yaml_contents)
 
     # Load robot 3 (without any timeout: will pick up the least recently used).
     result = rcc.get_robot_yaml_env_info(
-        robot_3_yaml,
-        conda_3_yaml,
-        conda_3_yaml_contents,
+        robot3.robot_yaml,
+        robot3.conda_yaml,
+        robot3.conda_yaml_contents,
         None,
         holotree_manager=holotree_manager,
     )
@@ -270,4 +276,50 @@ def test_get_robot_yaml_environ(rcc: IRcc, datadir, holotree_manager):
 
     space_info = robot_yaml_env_info.space_info
     with space_info.acquire_lock():
-        assert space_info.conda_contents_match(conda_3_yaml_contents)
+        assert space_info.conda_contents_match(robot3.conda_yaml_contents)
+
+
+def test_get_robot_yaml_environ_not_ok(rcc: IRcc, datadir, holotree_manager):
+    # Test what happens when things go don't go as planned (i.e.: an environment
+    # cannot be created).
+    commands = []
+
+    class RccListener:
+        def before_command(self, args: List[str]):
+            commands.append(args)
+
+    listener = RccListener()
+
+    rcc.rcc_listeners.append(listener)
+    from robocorp_code.protocols import IRobotYamlEnvInfo
+    from robocorp_ls_core.protocols import ActionResult
+
+    bad_robot1 = _RobotInfo(datadir, "bad_robot1")
+    result: ActionResult[IRobotYamlEnvInfo] = rcc.get_robot_yaml_env_info(
+        bad_robot1.robot_yaml,
+        bad_robot1.conda_yaml,
+        bad_robot1.conda_yaml_contents,
+        None,
+        holotree_manager=holotree_manager,
+    )
+
+    assert not result.success
+    assert len(commands) == 1
+    command = commands[0]
+    del commands[:]
+    assert command[1:5] == ["holotree", "variables", "--space", "vscode-01"]
+
+    # Calling it a 2nd time after the first one didn't work shouldn't even
+    # call rcc (it'll only be called if the yaml is changed).
+    result = rcc.get_robot_yaml_env_info(
+        bad_robot1.robot_yaml,
+        bad_robot1.conda_yaml,
+        bad_robot1.conda_yaml_contents,
+        None,
+        holotree_manager=holotree_manager,
+    )
+
+    assert not result.success
+    assert result.message
+    assert not commands
+    assert "Environment from broken conda.yaml requested" in result.message
