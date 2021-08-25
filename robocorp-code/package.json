@@ -483,12 +483,12 @@
                 },
                 {
                     "command": "robocorp.editRobocorpInspectorLocator",
-                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
+                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected && viewItem == locatorEntry",
                     "group": "inline"
                 },
                 {
                     "command": "robocorp.copyLocatorToClipboard.internal",
-                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
+                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected && viewItem == locatorEntry",
                     "group": "inline"
                 }
             ],

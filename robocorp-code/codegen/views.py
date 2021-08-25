@@ -153,12 +153,12 @@ TREE_VIEW_CONTAINERS = [
                         Menu(
                             "robocorp.editRobocorpInspectorLocator",
                             MenuGroup.INLINE,
-                            when="robocorp-code:single-robot-selected",
+                            when="robocorp-code:single-robot-selected && viewItem == locatorEntry",
                         ),
                         Menu(
                             "robocorp.copyLocatorToClipboard.internal",
                             MenuGroup.INLINE,
-                            when="robocorp-code:single-robot-selected",
+                            when="robocorp-code:single-robot-selected && viewItem == locatorEntry",
                         ),
                     ],
                 },

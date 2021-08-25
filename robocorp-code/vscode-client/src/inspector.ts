@@ -57,6 +57,10 @@ export async function openRobocorpInspector(locatorType?: string, locator?: Loca
           "Please select a locator first.",
           "Please select only one locator.",
         );
+        if (locatorSelected.type === "error") {
+            OUTPUT_CHANNEL.appendLine("Trying to edit non-existing locator.");
+            return;
+        }
         if (locatorSelected) args.push("edit", locatorSelected.name)
         else {
             OUTPUT_CHANNEL.appendLine("Unable to open Robocorp Inspector. Select a locator first.");
