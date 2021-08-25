@@ -1,6 +1,6 @@
 import * as path from 'path';
-import { commands, ProgressLocation, window } from 'vscode'
-import { ROBOCORP_GET_LANGUAGE_SERVER_PYTHON_INFO } from './robocorpCommands';
+import { ProgressLocation, window } from 'vscode'
+import { getLanguageServerPythonInfo } from './extension';
 import { verifyFileExists } from './files'
 import { listAndAskRobotSelection } from './activities'
 import { getSelectedLocator, getSelectedRobot, LocatorEntry } from './viewsCommon';
@@ -22,7 +22,7 @@ export async function openRobocorpInspector(locatorType?: string, locator?: Loca
     }
     locatorJson = path.join(robot.directory, "locators.json")
     locatorJson = verifyFileExists(locatorJson, false) ? locatorJson : undefined;
-    let inspectorLaunchInfo = await commands.executeCommand(ROBOCORP_GET_LANGUAGE_SERVER_PYTHON_INFO) as InterpreterInfo | undefined;
+    const inspectorLaunchInfo = await getLanguageServerPythonInfo();
     if (!inspectorLaunchInfo) {
             OUTPUT_CHANNEL.appendLine("Unable to get Robocorp Inspector launch info.");
             return;

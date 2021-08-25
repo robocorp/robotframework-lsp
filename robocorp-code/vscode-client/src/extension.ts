@@ -443,7 +443,7 @@ async function getLanguageServerPython(): Promise<string | undefined> {
 }
 
 
-async function getLanguageServerPythonInfo(): Promise<InterpreterInfo | undefined> {
+export async function getLanguageServerPythonInfo(): Promise<InterpreterInfo | undefined> {
     if (_cachedPythonInfo) {
         return _cachedPythonInfo;
     }
