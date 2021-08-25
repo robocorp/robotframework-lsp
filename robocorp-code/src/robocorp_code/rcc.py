@@ -796,6 +796,9 @@ class Rcc(object):
         ]
         args.append("--json")
         try:
+            sys.stderr.write(
+                f"Collecting environment info for {conda_yaml_path} in space: {space_info.space_name}\n"
+            )
             ret = self._run_rcc(
                 args,
                 mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME,

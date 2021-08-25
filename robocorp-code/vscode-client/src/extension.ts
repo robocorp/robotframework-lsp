@@ -24,7 +24,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder, ProgressLocation, Progress, DebugAdapterExecutable, debug, DebugConfiguration, DebugConfigurationProvider, CancellationToken, ProviderResult, extensions, ConfigurationTarget, env, Uri } from 'vscode';
-import { LanguageClientOptions } from 'vscode-languageclient';
+import { LanguageClientOptions, State } from 'vscode-languageclient';
 import { LanguageClient, ServerOptions } from 'vscode-languageclient/node';
 import * as locators from './locators';
 import * as views from './views';
@@ -279,7 +279,7 @@ export async function activate(context: ExtensionContext) {
                 const splitted = version.split('.');
                 const major = parseInt(splitted[0]);
                 const minor = parseInt(splitted[1]);
-                if(major == 0 && minor <= 20){
+                if (major == 0 && minor <= 20) {
                     const msg = 'Unable to initialize the Robocorp Code extension because the Robot Framework Language Server version (' +
                         version +
                         ') is not compatible with this version of Robocorp Code. Robot Framework Language Server 0.21.0 or newer is required. Please update to proceed. ';
@@ -342,6 +342,21 @@ export async function activate(context: ExtensionContext) {
             langServer = startLangServerIO(executableAndEnv.pythonExe, args, executableAndEnv.environ);
         }
 
+        let stopListeningOnDidChangeState = langServer.onDidChangeState((event) => {
+            if (event.newState == State.Running) {
+                // i.e.: We need to register the customProgress as soon as it's running (we can't wait for onReady)
+                // because at that point if there are open documents, lots of things may've happened already, in
+                // which case the progress won't be shown on some cases where it should be shown.
+                context.subscriptions.push(langServer.onNotification("$/customProgress", (args: ProgressReport) => {
+                    // OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
+                    handleProgressMessage(args)
+                }));
+                context.subscriptions.push(langServer.onNotification("$/linkedAccountChanged", () => {
+                    views.refreshCloudTreeView();
+                }));
+                stopListeningOnDidChangeState.dispose();
+            }
+        });
         let disposable: Disposable = langServer.start();
         commands.registerCommand(roboCommands.ROBOCORP_GET_LANGUAGE_SERVER_PYTHON, () => getLanguageServerPython());
         commands.registerCommand(roboCommands.ROBOCORP_GET_LANGUAGE_SERVER_PYTHON_INFO, () => getLanguageServerPythonInfo());
@@ -391,14 +406,6 @@ export async function activate(context: ExtensionContext) {
         await langServer.onReady();
         OUTPUT_CHANNEL.appendLine("Took: " + startLsTiming.getTotalElapsedAsStr() + ' to initialize Robocorp Code Language Server.');
         OUTPUT_CHANNEL.appendLine("Robocorp Code extension ready. Took: " + timing.getTotalElapsedAsStr());
-
-        langServer.onNotification("$/customProgress", (args: ProgressReport) => {
-            // OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
-            handleProgressMessage(args)
-        });
-        langServer.onNotification("$/linkedAccountChanged", () => {
-            views.refreshCloudTreeView();
-        });
 
         verifyRobotFrameworkInstalled();
 

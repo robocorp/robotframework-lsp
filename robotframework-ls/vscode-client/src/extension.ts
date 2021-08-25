@@ -24,7 +24,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 import { workspace, Disposable, ExtensionContext, window, commands, ConfigurationTarget, debug, DebugAdapterExecutable, ProviderResult, DebugConfiguration, WorkspaceFolder, CancellationToken, DebugConfigurationProvider, extensions } from 'vscode';
-import { LanguageClientOptions } from 'vscode-languageclient';
+import { LanguageClientOptions, State } from 'vscode-languageclient';
 import { LanguageClient, ServerOptions } from 'vscode-languageclient/node';
 import { ProgressReport, handleProgressMessage } from './progress';
 import { Timing } from './time';
@@ -389,6 +389,18 @@ export async function activate(context: ExtensionContext) {
 			OUTPUT_CHANNEL.appendLine("Starting RobotFramework Language Server with args: " + executableAndMessage.executable + "," + args);
 			langServer = startLangServerIO(executableAndMessage.executable, args, initializationOptions);
 		}
+		let stopListeningOnDidChangeState = langServer.onDidChangeState((event) => {
+			if (event.newState == State.Running) {
+				// i.e.: We need to register the customProgress as soon as it's running (we can't wait for onReady)
+				// because at that point if there are open documents, lots of things may've happened already, in
+				// which case the progress won't be shown on some cases where it should be shown.
+				context.subscriptions.push(langServer.onNotification("$/customProgress", (args: ProgressReport) => {
+					// OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
+					handleProgressMessage(args)
+				}));
+				stopListeningOnDidChangeState.dispose();
+			}
+		});
 		let disposable: Disposable = langServer.start();
 		registerDebugger(executableAndMessage.executable);
 		await registerRunCommands(context);
@@ -413,11 +425,6 @@ export async function activate(context: ExtensionContext) {
 			logError(msg, err);
 			window.showErrorMessage(msg);
 		}
-
-		langServer.onNotification("$/customProgress", (args: ProgressReport) => {
-			// OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
-			handleProgressMessage(args)
-		});
 
 		OUTPUT_CHANNEL.appendLine("RobotFramework Language Server ready. Took: " + timing.getTotalElapsedAsStr());
 
