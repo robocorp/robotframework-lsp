@@ -362,7 +362,6 @@ export async function activate(context: ExtensionContext) {
         let disposable: Disposable = langServer.start();
         commands.registerCommand(roboCommands.ROBOCORP_GET_LANGUAGE_SERVER_PYTHON, () => getLanguageServerPython());
         commands.registerCommand(roboCommands.ROBOCORP_GET_LANGUAGE_SERVER_PYTHON_INFO, () => getLanguageServerPythonInfo());
-        commands.registerCommand(roboCommands.ROBOCORP_GET_INSPECTOR_PYTHON_INFO, () => inspector.getInspectorPythonInfo());
         commands.registerCommand(roboCommands.ROBOCORP_CREATE_ROBOT, () => createRobot());
         commands.registerCommand(roboCommands.ROBOCORP_UPLOAD_ROBOT_TO_CLOUD, () => uploadRobot());
         commands.registerCommand(roboCommands.ROBOCORP_CONFIGURATION_DIAGNOSTICS, () => rccConfigurationDiagnostics());

@@ -2,7 +2,6 @@
 
 ROBOCORP_GET_LANGUAGE_SERVER_PYTHON = "robocorp.getLanguageServerPython"  # Get a python executable suitable to start the language server
 ROBOCORP_GET_LANGUAGE_SERVER_PYTHON_INFO = "robocorp.getLanguageServerPythonInfo"  # Get info suitable to start the language server {pythonExe, environ}
-ROBOCORP_GET_INSPECTOR_PYTHON_INFO = "robocorp.getInspectorPythonInfo"  # Get info suitable to start the Robocorp inspector {pythonExe, environ}
 ROBOCORP_GET_PLUGINS_DIR = "robocorp.getPluginsDir"  # Get the directory for plugins
 ROBOCORP_CREATE_ROBOT = "robocorp.createRobot"  # Create Robot
 ROBOCORP_LIST_ROBOT_TEMPLATES_INTERNAL = "robocorp.listRobotTemplates.internal"  # Provides a list with the available robot templates

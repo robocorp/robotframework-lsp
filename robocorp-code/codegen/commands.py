@@ -51,12 +51,6 @@ COMMANDS = [
         server_handled=False,
     ),
     Command(
-        "robocorp.getInspectorPythonInfo",
-        "Get info suitable to start the Robocorp inspector {pythonExe, environ}",
-        add_to_package_json=False,
-        server_handled=False,
-    ),
-    Command(
         "robocorp.getPluginsDir",
         "Get the directory for plugins",
         add_to_package_json=False,
