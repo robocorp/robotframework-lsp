@@ -628,13 +628,13 @@ def test_hover_image_integration(
     ret = client.hover(uri, line, col)
     result = ret["result"]
     value = result["contents"].pop("value")
-    assert value.startswith("![Screenshot](file://")
-    assert value.endswith("/.images/img1.png)")
+    assert value.startswith("![Screenshot](data:image/png;base64,iVBORw0KGgo")
+    assert value.endswith(")")
 
     assert ret["result"] == {
         "contents": {
             "kind": "markdown",
-            # "value": "![Screenshot](file:///c:/Users/fabio/AppData/Local/Temp/pytest-of-fabio/pytest-5202/test_hover_image_integration0/.images/img1.png)",
+            # "value": "![Screenshot](data:image/png;base64,iVBORw0KGgo...)",
         },
         "range": {
             "start": {"line": 3, "character": 37},
