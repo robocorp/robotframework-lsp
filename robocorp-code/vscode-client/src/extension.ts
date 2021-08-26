@@ -27,7 +27,7 @@ import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFol
 import { LanguageClientOptions, State } from 'vscode-languageclient';
 import { LanguageClient, ServerOptions } from 'vscode-languageclient/node';
 import * as inspector from './inspector';
-import { copySelectedToClipboard } from './locators';
+import { copySelectedToClipboard, removeLocator } from './locators';
 import * as views from './views';
 import * as roboConfig from './robocorpSettings';
 import * as roboCommands from './robocorpCommands';
@@ -376,6 +376,7 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER, () => inspector.openRobocorpInspector("browser"));
         commands.registerCommand(roboCommands.ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE, () => inspector.openRobocorpInspector("image"));
         commands.registerCommand(roboCommands.ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL, (locator?: LocatorEntry) => copySelectedToClipboard(locator));
+        commands.registerCommand(roboCommands.ROBOCORP_REMOVE_LOCATOR_FROM_JSON, (locator?: LocatorEntry) => removeLocator(locator));
         commands.registerCommand(roboCommands.ROBOCORP_OPEN_ROBOT_TREE_SELECTION, () => views.openRobotTreeSelection());
         commands.registerCommand(roboCommands.ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION, () => views.cloudUploadRobotTreeSelection());
         commands.registerCommand(roboCommands.ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION, () => views.createRccTerminalTreeSelection());

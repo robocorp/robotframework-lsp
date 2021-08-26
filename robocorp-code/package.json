@@ -54,6 +54,8 @@
         "onCommand:robocorp.renameResourceInRobotContentView",
         "onCommand:robocorp.refreshCloudView",
         "onCommand:robocorp.getLocatorsJsonInfo",
+        "onCommand:robocorp.removeLocatorFromJson.internal",
+        "onCommand:robocorp.removeLocatorFromJson",
         "onCommand:robocorp.newRobocorpInspectorBrowser",
         "onCommand:robocorp.newRobocorpInspectorImage",
         "onCommand:robocorp.editRobocorpInspectorLocator",
@@ -310,6 +312,12 @@
                 }
             },
             {
+                "command": "robocorp.removeLocatorFromJson",
+                "title": "Remove Locator",
+                "category": "Robocorp",
+                "icon": "$(trash)"
+            },
+            {
                 "command": "robocorp.newRobocorpInspectorBrowser",
                 "title": "Add Browser Locator",
                 "category": "Robocorp",
@@ -489,6 +497,10 @@
                     "command": "robocorp.copyLocatorToClipboard.internal",
                     "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected && viewItem == locatorEntry",
                     "group": "inline"
+                },
+                {
+                    "command": "robocorp.removeLocatorFromJson",
+                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected && viewItem == locatorEntry"
                 }
             ],
             "commandPalette": [
@@ -510,6 +522,10 @@
                 },
                 {
                     "command": "robocorp.renameResourceInRobotContentView",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.removeLocatorFromJson",
                     "when": "false"
                 },
                 {

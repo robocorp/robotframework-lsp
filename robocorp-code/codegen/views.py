@@ -160,6 +160,11 @@ TREE_VIEW_CONTAINERS = [
                             MenuGroup.INLINE,
                             when="robocorp-code:single-robot-selected && viewItem == locatorEntry",
                         ),
+                        Menu(
+                            "robocorp.removeLocatorFromJson",
+                            when="robocorp-code:single-robot-selected && viewItem == locatorEntry",
+                        ),
+
                     ],
                 },
             ),

@@ -263,6 +263,20 @@ COMMANDS = [
         add_to_package_json=False,
         server_handled=True,
     ),
+    Command(
+        "robocorp.removeLocatorFromJson.internal",
+        "Remove a named locator from locators.json",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
+    Command(
+        "robocorp.removeLocatorFromJson",
+        "Remove Locator",
+        add_to_package_json=True,
+        hide_from_command_palette=True,
+        server_handled=False,
+        icon="$(trash)",
+    ),
     # This is the same as the one above, but it won't ask what's the robot, it'll
     # just use the one selected in the robots tree.
     Command(

@@ -1031,3 +1031,45 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 return {"success": False, "message": str(e), "result": None}
 
         return {"success": True, "message": None, "result": locators_json_info}
+
+    @command_dispatcher(commands.ROBOCORP_REMOVE_LOCATOR_FROM_JSON_INTERNAL)
+    def _remove_locator_from_json_internal(
+            self, params: dict = None
+    ) -> ActionResultDict:
+        from RPA.core.locators.database import LocatorsDatabase
+        from RPA.core.locators.containers import Locator
+
+        if not params or "robotYaml" not in params or "name" not in params:
+            return {
+                "success": False,
+                "message": "robot.yaml filename or locator name not passed",
+                "result": None,
+            }
+
+        path = Path(params["robotYaml"])
+        name = params["name"]
+        locators_json = path.parent / "locators.json"
+        locator: Locator
+        if locators_json.exists():
+            try:
+                db = LocatorsDatabase(str(locators_json))
+                db.load()
+                if not db.locators.items():
+                    error = db.error
+                    if not isinstance(error, str):
+                        if isinstance(error, tuple) and len(error) == 2:
+                            try:
+                                error = error[0] % error[1]
+                            except:
+                                error = str(error)
+                        else:
+                            error = str(error)
+
+                    return {"success": False, "message": error, "result": None}
+                del db.locators[name]
+                db.save()
+            except Exception as e:
+                log.exception(f'Error removing locator "{name}" from: {locators_json}')
+                return {"success": False, "message": str(e), "result": None}
+
+        return {"success": True, "message": None, "result": None}
