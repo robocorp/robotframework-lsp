@@ -53,20 +53,15 @@
         "onCommand:robocorp.deleteResourceInRobotContentView",
         "onCommand:robocorp.renameResourceInRobotContentView",
         "onCommand:robocorp.refreshCloudView",
-        "onCommand:robocorp.startBrowserLocator",
-        "onCommand:robocorp.startBrowserLocator.internal",
-        "onCommand:robocorp.createLocatorFromBrowserPick",
-        "onCommand:robocorp.createLocatorFromScreenRegion",
-        "onCommand:robocorp.createLocatorFromScreenRegion.internal",
-        "onCommand:robocorp.createLocatorFromBrowserPick.internal",
-        "onCommand:robocorp.stopBrowserLocator",
         "onCommand:robocorp.getLocatorsJsonInfo",
-        "onCommand:robocorp.newLocatorUI",
-        "onCommand:robocorp.newLocatorUI.tree.internal",
+        "onCommand:robocorp.removeLocatorFromJson.internal",
+        "onCommand:robocorp.removeLocatorFromJson",
+        "onCommand:robocorp.newRobocorpInspectorBrowser",
+        "onCommand:robocorp.newRobocorpInspectorImage",
+        "onCommand:robocorp.editRobocorpInspectorLocator",
         "onCommand:robocorp.copyLocatorToClipboard.internal",
         "onCommand:robocorp.openRobotTreeSelection",
         "onCommand:robocorp.cloudUploadRobotTreeSelection",
-        "onCommand:robocorp.openLocatorTreeSelection",
         "onCommand:robocorp.rccTerminalCreateRobotTreeSelection",
         "onCommand:robocorp.sendMetric",
         "onCommand:robocorp.submitIssue.internal",
@@ -317,36 +312,28 @@
                 }
             },
             {
-                "command": "robocorp.startBrowserLocator",
-                "title": "Start browser to create Locators",
-                "category": "Robocorp"
-            },
-            {
-                "command": "robocorp.createLocatorFromBrowserPick",
-                "title": "Create Locator from browser pick",
-                "category": "Robocorp"
-            },
-            {
-                "command": "robocorp.createLocatorFromScreenRegion",
-                "title": "Create Image Locator from screen region",
-                "category": "Robocorp"
-            },
-            {
-                "command": "robocorp.stopBrowserLocator",
-                "title": "Stop browser used to create Locators",
-                "category": "Robocorp"
-            },
-            {
-                "command": "robocorp.newLocatorUI",
-                "title": "Create locator",
+                "command": "robocorp.removeLocatorFromJson",
+                "title": "Remove Locator",
                 "category": "Robocorp",
-                "icon": "$(plus)"
+                "icon": "$(trash)"
             },
             {
-                "command": "robocorp.newLocatorUI.tree.internal",
-                "title": "New locator",
+                "command": "robocorp.newRobocorpInspectorBrowser",
+                "title": "Add Browser Locator",
                 "category": "Robocorp",
-                "icon": "$(plus)"
+                "icon": "$(globe)"
+            },
+            {
+                "command": "robocorp.newRobocorpInspectorImage",
+                "title": "Add Image Locator",
+                "category": "Robocorp",
+                "icon": "$(desktop-download)"
+            },
+            {
+                "command": "robocorp.editRobocorpInspectorLocator",
+                "title": "Edit locator",
+                "category": "Robocorp",
+                "icon": "$(edit)"
             },
             {
                 "command": "robocorp.copyLocatorToClipboard.internal",
@@ -365,12 +352,6 @@
                 "title": "Upload Robot to Robocorp Cloud",
                 "category": "Robocorp",
                 "icon": "$(cloud-upload)"
-            },
-            {
-                "command": "robocorp.openLocatorTreeSelection",
-                "title": "Open locators.json",
-                "category": "Robocorp",
-                "icon": "$(go-to-file)"
             },
             {
                 "command": "robocorp.rccTerminalCreateRobotTreeSelection",
@@ -453,17 +434,12 @@
                     "group": "navigation"
                 },
                 {
-                    "command": "robocorp.copyLocatorToClipboard.internal",
+                    "command": "robocorp.newRobocorpInspectorBrowser",
                     "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
                     "group": "navigation"
                 },
                 {
-                    "command": "robocorp.openLocatorTreeSelection",
-                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
-                    "group": "navigation"
-                },
-                {
-                    "command": "robocorp.newLocatorUI.tree.internal",
+                    "command": "robocorp.newRobocorpInspectorImage",
                     "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
                     "group": "navigation"
                 },
@@ -513,12 +489,18 @@
                     "group": "1_change"
                 },
                 {
-                    "command": "robocorp.copyLocatorToClipboard.internal",
-                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected"
+                    "command": "robocorp.editRobocorpInspectorLocator",
+                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected && viewItem == locatorEntry",
+                    "group": "inline"
                 },
                 {
-                    "command": "robocorp.openLocatorTreeSelection",
-                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected"
+                    "command": "robocorp.copyLocatorToClipboard.internal",
+                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected && viewItem == locatorEntry",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.removeLocatorFromJson",
+                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected && viewItem == locatorEntry"
                 }
             ],
             "commandPalette": [
@@ -543,7 +525,11 @@
                     "when": "false"
                 },
                 {
-                    "command": "robocorp.newLocatorUI.tree.internal",
+                    "command": "robocorp.removeLocatorFromJson",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.editRobocorpInspectorLocator",
                     "when": "false"
                 },
                 {
@@ -556,10 +542,6 @@
                 },
                 {
                     "command": "robocorp.cloudUploadRobotTreeSelection",
-                    "when": "false"
-                },
-                {
-                    "command": "robocorp.openLocatorTreeSelection",
                     "when": "false"
                 },
                 {

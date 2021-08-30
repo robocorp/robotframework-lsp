@@ -1,3 +1,4 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { TREE_VIEW_ROBOCORP_LOCATORS_TREE, TREE_VIEW_ROBOCORP_ROBOTS_TREE } from './robocorpViews';
 
@@ -70,12 +71,20 @@ export function getSingleTreeSelection(treeId: string, noSelectionMessage?: stri
  * If the messages are passed as a parameter, a warning is shown with that message if the selection is invalid.
  */
 export function getSelectedRobot(noSelectionMessage?: string, moreThanOneSelectionMessage?: string): RobotEntry | undefined {
-    return getSingleTreeSelection(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
+    return getSingleTreeSelection(
+      TREE_VIEW_ROBOCORP_ROBOTS_TREE,
+      noSelectionMessage,
+      moreThanOneSelectionMessage,
+    );
 }
 
 
 export function getSelectedLocator(noSelectionMessage?: string, moreThanOneSelectionMessage?: string): LocatorEntry | undefined {
-    return getSingleTreeSelection(TREE_VIEW_ROBOCORP_LOCATORS_TREE);
+    return getSingleTreeSelection(
+      TREE_VIEW_ROBOCORP_LOCATORS_TREE,
+      noSelectionMessage,
+      moreThanOneSelectionMessage,
+    );
 }
 
 

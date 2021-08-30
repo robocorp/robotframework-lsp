@@ -22,6 +22,7 @@ class TreeViewContainer:
 class MenuGroup(enum.Enum):
     # https://code.visualstudio.com/api/references/contribution-points#contributes.menus
     NAVIGATION = "navigation"
+    INLINE = "inline"
 
 
 class Menu:
@@ -138,30 +139,32 @@ TREE_VIEW_CONTAINERS = [
                 menus={
                     "view/title": [
                         Menu(
-                            "robocorp.copyLocatorToClipboard.internal",
+                            "robocorp.newRobocorpInspectorBrowser",
                             MenuGroup.NAVIGATION,
                             "robocorp-code:single-robot-selected",
                         ),
                         Menu(
-                            "robocorp.openLocatorTreeSelection",
-                            MenuGroup.NAVIGATION,
-                            when="robocorp-code:single-robot-selected",
-                        ),
-                        Menu(
-                            "robocorp.newLocatorUI.tree.internal",
+                            "robocorp.newRobocorpInspectorImage",
                             MenuGroup.NAVIGATION,
                             "robocorp-code:single-robot-selected",
                         ),
                     ],
                     "view/item/context": [
                         Menu(
-                            "robocorp.copyLocatorToClipboard.internal",
-                            when="robocorp-code:single-robot-selected",
+                            "robocorp.editRobocorpInspectorLocator",
+                            MenuGroup.INLINE,
+                            when="robocorp-code:single-robot-selected && viewItem == locatorEntry",
                         ),
                         Menu(
-                            "robocorp.openLocatorTreeSelection",
-                            when="robocorp-code:single-robot-selected",
+                            "robocorp.copyLocatorToClipboard.internal",
+                            MenuGroup.INLINE,
+                            when="robocorp-code:single-robot-selected && viewItem == locatorEntry",
                         ),
+                        Menu(
+                            "robocorp.removeLocatorFromJson",
+                            when="robocorp-code:single-robot-selected && viewItem == locatorEntry",
+                        ),
+
                     ],
                 },
             ),

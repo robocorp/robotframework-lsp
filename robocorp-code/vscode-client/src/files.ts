@@ -18,10 +18,10 @@ export function getExtensionRelativeFile(relativeLocation: string, mustExist: bo
     return targetFile;
 }
 
-export function verifyFileExists(targetFile: string): boolean {
+export function verifyFileExists(targetFile: string, warnUser: boolean = true): boolean {
     if (!fs.existsSync(targetFile)) {
         let msg = 'Error. Expected: ' + targetFile + " to exist.";
-        window.showWarningMessage(msg);
+        if (warnUser) window.showWarningMessage(msg);
         OUTPUT_CHANNEL.appendLine(msg);
         return false;
     }

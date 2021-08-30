@@ -34,20 +34,15 @@ ROBOCORP_NEW_FOLDER_IN_ROBOT_CONTENT_VIEW = "robocorp.newFolderInRobotContentVie
 ROBOCORP_DELETE_RESOURCE_IN_ROBOT_CONTENT_VIEW = "robocorp.deleteResourceInRobotContentView"  # Delete
 ROBOCORP_RENAME_RESOURCE_IN_ROBOT_CONTENT_VIEW = "robocorp.renameResourceInRobotContentView"  # Rename
 ROBOCORP_REFRESH_CLOUD_VIEW = "robocorp.refreshCloudView"  # Refresh Cloud view
-ROBOCORP_START_BROWSER_LOCATOR = "robocorp.startBrowserLocator"  # Start browser to create Locators
-ROBOCORP_START_BROWSER_LOCATOR_INTERNAL = "robocorp.startBrowserLocator.internal"  # Start browser to create Locators. Requires the robot where the locators should be saved
-ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK = "robocorp.createLocatorFromBrowserPick"  # Create Locator from browser pick
-ROBOCORP_CREATE_LOCATOR_FROM_SCREEN_REGION = "robocorp.createLocatorFromScreenRegion"  # Create Image Locator from screen region
-ROBOCORP_CREATE_LOCATOR_FROM_SCREEN_REGION_INTERNAL = "robocorp.createLocatorFromScreenRegion.internal"  # Create Image Locator from screen region (internal)
-ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK_INTERNAL = "robocorp.createLocatorFromBrowserPick.internal"  # Create Locator from browser pick (internal: provides no UI in case of errors)
-ROBOCORP_STOP_BROWSER_LOCATOR = "robocorp.stopBrowserLocator"  # Stop browser used to create Locators
 ROBOCORP_GET_LOCATORS_JSON_INFO = "robocorp.getLocatorsJsonInfo"  # Obtain information from the locators.json given a robot.yaml
-ROBOCORP_NEW_LOCATOR_UI = "robocorp.newLocatorUI"  # Create locator
-ROBOCORP_NEW_LOCATOR_UI_TREE_INTERNAL = "robocorp.newLocatorUI.tree.internal"  # New locator
+ROBOCORP_REMOVE_LOCATOR_FROM_JSON_INTERNAL = "robocorp.removeLocatorFromJson.internal"  # Remove a named locator from locators.json
+ROBOCORP_REMOVE_LOCATOR_FROM_JSON = "robocorp.removeLocatorFromJson"  # Remove Locator
+ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER = "robocorp.newRobocorpInspectorBrowser"  # Add Browser Locator
+ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE = "robocorp.newRobocorpInspectorImage"  # Add Image Locator
+ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR = "robocorp.editRobocorpInspectorLocator"  # Edit locator
 ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL = "robocorp.copyLocatorToClipboard.internal"  # Copy locator name to clipboard
 ROBOCORP_OPEN_ROBOT_TREE_SELECTION = "robocorp.openRobotTreeSelection"  # Open robot.yaml
 ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION = "robocorp.cloudUploadRobotTreeSelection"  # Upload Robot to Robocorp Cloud
-ROBOCORP_OPEN_LOCATOR_TREE_SELECTION = "robocorp.openLocatorTreeSelection"  # Open locators.json
 ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION = "robocorp.rccTerminalCreateRobotTreeSelection"  # Open terminal with Robot environment
 ROBOCORP_SEND_METRIC = "robocorp.sendMetric"  # Send metric
 ROBOCORP_SUBMIT_ISSUE_INTERNAL = "robocorp.submitIssue.internal"  # Submit issue (internal)
@@ -73,11 +68,8 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH,
     ROBOCORP_RESOLVE_INTERPRETER,
     ROBOCORP_CLOUD_LOGOUT_INTERNAL,
-    ROBOCORP_START_BROWSER_LOCATOR_INTERNAL,
-    ROBOCORP_CREATE_LOCATOR_FROM_SCREEN_REGION_INTERNAL,
-    ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK_INTERNAL,
-    ROBOCORP_STOP_BROWSER_LOCATOR,
     ROBOCORP_GET_LOCATORS_JSON_INFO,
+    ROBOCORP_REMOVE_LOCATOR_FROM_JSON_INTERNAL,
     ROBOCORP_SEND_METRIC,
     ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL,
 ]

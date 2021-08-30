@@ -26,7 +26,8 @@ import * as path from 'path';
 import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder, ProgressLocation, Progress, DebugAdapterExecutable, debug, DebugConfiguration, DebugConfigurationProvider, CancellationToken, ProviderResult, extensions, ConfigurationTarget, env, Uri } from 'vscode';
 import { LanguageClientOptions, State } from 'vscode-languageclient';
 import { LanguageClient, ServerOptions } from 'vscode-languageclient/node';
-import * as locators from './locators';
+import * as inspector from './inspector';
+import { copySelectedToClipboard, removeLocator } from './locators';
 import * as views from './views';
 import * as roboConfig from './robocorpSettings';
 import * as roboCommands from './robocorpCommands';
@@ -41,6 +42,7 @@ import { handleProgressMessage, ProgressReport } from './progress';
 import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from './robocorpViews';
 import { askAndCreateRccTerminal } from './rccTerminal';
 import { deleteResourceInRobotContentTree, newFileInRobotContentTree, newFolderInRobotContentTree, renameResourceInRobotContentTree } from './viewsRobotContent';
+import { LocatorEntry } from './viewsCommon';
 
 
 const clientOptions: LanguageClientOptions = {
@@ -370,18 +372,15 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_REFRESH_CLOUD_VIEW, () => views.refreshCloudTreeView());
         commands.registerCommand(roboCommands.ROBOCORP_ROBOTS_VIEW_TASK_RUN, () => views.runSelectedRobot(true));
         commands.registerCommand(roboCommands.ROBOCORP_ROBOTS_VIEW_TASK_DEBUG, () => views.runSelectedRobot(false));
-        commands.registerCommand(roboCommands.ROBOCORP_START_BROWSER_LOCATOR, () => locators.startBrowserLocator());
-        commands.registerCommand(roboCommands.ROBOCORP_CREATE_LOCATOR_FROM_BROWSER_PICK, () => locators.pickBrowserLocator());
-        commands.registerCommand(roboCommands.ROBOCORP_CREATE_LOCATOR_FROM_SCREEN_REGION, () => locators.pickImageLocator());
-        commands.registerCommand(roboCommands.ROBOCORP_NEW_LOCATOR_UI, () => locators.newLocatorUI());
-        commands.registerCommand(roboCommands.ROBOCORP_NEW_LOCATOR_UI_TREE_INTERNAL, () => locators.newLocatorUITreeInternal());
-        commands.registerCommand(roboCommands.ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL, () => locators.copySelectedToClipboard());
+        commands.registerCommand(roboCommands.ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR, (locator?: LocatorEntry) => inspector.openRobocorpInspector(undefined, locator));
+        commands.registerCommand(roboCommands.ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER, () => inspector.openRobocorpInspector("browser"));
+        commands.registerCommand(roboCommands.ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE, () => inspector.openRobocorpInspector("image"));
+        commands.registerCommand(roboCommands.ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL, (locator?: LocatorEntry) => copySelectedToClipboard(locator));
+        commands.registerCommand(roboCommands.ROBOCORP_REMOVE_LOCATOR_FROM_JSON, (locator?: LocatorEntry) => removeLocator(locator));
         commands.registerCommand(roboCommands.ROBOCORP_OPEN_ROBOT_TREE_SELECTION, () => views.openRobotTreeSelection());
         commands.registerCommand(roboCommands.ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION, () => views.cloudUploadRobotTreeSelection());
-        commands.registerCommand(roboCommands.ROBOCORP_OPEN_LOCATOR_TREE_SELECTION, () => views.openLocatorTreeSelection());
         commands.registerCommand(roboCommands.ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION, () => views.createRccTerminalTreeSelection());
         commands.registerCommand(roboCommands.ROBOCORP_RCC_TERMINAL_NEW, () => askAndCreateRccTerminal());
-
         commands.registerCommand(roboCommands.ROBOCORP_REFRESH_ROBOT_CONTENT_VIEW, () => views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE));
         commands.registerCommand(roboCommands.ROBOCORP_NEW_FILE_IN_ROBOT_CONTENT_VIEW, newFileInRobotContentTree);
         commands.registerCommand(roboCommands.ROBOCORP_NEW_FOLDER_IN_ROBOT_CONTENT_VIEW, newFolderInRobotContentTree);
@@ -445,7 +444,7 @@ async function getLanguageServerPython(): Promise<string | undefined> {
 }
 
 
-async function getLanguageServerPythonInfo(): Promise<InterpreterInfo | undefined> {
+export async function getLanguageServerPythonInfo(): Promise<InterpreterInfo | undefined> {
     if (_cachedPythonInfo) {
         return _cachedPythonInfo;
     }

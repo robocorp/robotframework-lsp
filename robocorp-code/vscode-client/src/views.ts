@@ -248,12 +248,14 @@ export class LocatorsTreeDataProvider implements vscode.TreeDataProvider<Locator
 
         // https://microsoft.github.io/vscode-codicons/dist/codicon.html
         let iconPath = "file-media";
-        if (element.type == "browser") {
+        if (element.type === "browser") {
             iconPath = "browser";
-        } else if (element.type == "error") {
+        } else if (element.type === "error") {
             iconPath = "error";
 
         }
+        // Only add context to actual locator items
+        if (element.type !== "error") treeItem.contextValue = "locatorEntry";
         treeItem.iconPath = new vscode.ThemeIcon(iconPath);
         return treeItem;
     }
@@ -286,13 +288,6 @@ export function cloudUploadRobotTreeSelection() {
     let robot: RobotEntry = getSelectedRobot();
     if (robot) {
         uploadRobot(robot.robot);
-    }
-}
-
-export function openLocatorTreeSelection() {
-    let locator: LocatorEntry = getSelectedLocator();
-    if (locator) {
-        vscode.window.showTextDocument(vscode.Uri.file(locator.filePath));
     }
 }
 
