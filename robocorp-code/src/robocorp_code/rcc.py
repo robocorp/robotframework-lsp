@@ -831,6 +831,10 @@ class Rcc(object):
             with space_info.acquire_lock():
                 space_info.env_json_path.write_text(json.dumps(environ), "utf-8")
                 space_info.state_path.write_text(SpaceState.ENV_READY.value, "utf-8")
+                try:
+                    os.remove(space_info.damaged_path)
+                except:
+                    pass
                 space_info.update_last_usage()
 
             if not space_info.conda_prefix_identity_yaml_still_matches_cached_space():

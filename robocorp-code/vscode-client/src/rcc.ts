@@ -342,6 +342,17 @@ export async function collectBaseEnv(condaFilePath: string, robocorpHome: string
     const hash = crypto.createHash('sha256').update(text, 'utf8').digest('hex');
     let spaceName = 'vscode-base-v01-' + hash.substring(0, 6);
 
+    let robocorpCodePath = path.join(robocorpHome, '.robocorp_code');
+    let spaceInfoPath = path.join(robocorpCodePath, spaceName);
+    let rccEnvInfoCachePath = path.join(spaceInfoPath, 'rcc_env_info.json');
+    try {
+        if (!fs.existsSync(spaceInfoPath)) {
+            fs.mkdirSync(spaceInfoPath, { 'recursive': true });
+        }
+    } catch (err) {
+        logError('Error creating directory: ' + spaceInfoPath, err);
+    }
+
     const rccLocation = await getRccLocation();
     if (!rccLocation) {
         window.showErrorMessage('Unable to find RCC.');
@@ -375,49 +386,58 @@ export async function collectBaseEnv(condaFilePath: string, robocorpHome: string
         env['ROBOCORP_HOME'] = robocorpHome;
     }
 
-    let execFileReturn: ExecFileReturn = await execFilePromise(
-        rccLocation, args,
-        { env: env }
-    );
-
-    if (execFileReturn.stdout) {
-        let envArray = JSON.parse(execFileReturn.stdout);
-        for (let index = 0; index < envArray.length; index++) {
-            const element = envArray[index];
-            let key: string = element['key'];
-            if (process.platform == 'win32') {
-                key = key.toUpperCase();
-            }
-            env[key] = element['value'];
+    let envArray = undefined;
+    try {
+        if (fs.existsSync(rccEnvInfoCachePath)) {
+            let contents = fs.readFileSync(rccEnvInfoCachePath, { 'encoding': 'utf-8' });
+            envArray = JSON.parse(contents);
+            OUTPUT_CHANNEL.appendLine("Loading base environment from: " + rccEnvInfoCachePath);
         }
-        robocorpHome = env['ROBOCORP_HOME'];
-
-        let robocorpCodePath = path.join(robocorpHome, '.robocorp_code');
-        try {
-            if (!fs.existsSync(robocorpCodePath)) {
-                fs.mkdirSync(robocorpCodePath);
-            }
-        } catch (err) {
-            logError('Error creating directory: ' + robocorpCodePath, err);
-        }
-
-        let spaceInfoPath = path.join(robocorpCodePath, spaceName);
-        try {
-            if (!fs.existsSync(spaceInfoPath)) {
-                fs.mkdirSync(spaceInfoPath);
-            }
-        } catch (err) {
-            logError('Error creating directory: ' + spaceInfoPath, err);
-        }
-
-        let timestampPath = path.join(spaceInfoPath, 'last_usage');
-        try {
-            fs.writeFileSync(timestampPath, '' + Date.now());
-        } catch (err) {
-            logError('Error writing last usage time to: ' + timestampPath, err);
-        }
-
-        return { 'env': env, 'robocorpHome': robocorpHome, 'rccLocation': rccLocation };
+    } catch (err) {
+        // ignore if unable to read.
     }
-    return undefined;
+
+    if (!envArray) {
+        let execFileReturn: ExecFileReturn = await execFilePromise(
+            rccLocation, args,
+            { env: env }
+        );
+        if (!execFileReturn.stdout) {
+            OUTPUT_CHANNEL.appendLine("Error: Unable to collect environment from RCC.");
+            return undefined;
+        }
+        try {
+            envArray = JSON.parse(execFileReturn.stdout);
+        } catch (error) {
+            logError("Error parsing env from RCC: " + execFileReturn.stdout, error);
+        }
+        if (!envArray) {
+            OUTPUT_CHANNEL.appendLine("Error: Unable to collect env array.");
+            return undefined;
+        }
+        try {
+            fs.writeFileSync(rccEnvInfoCachePath, JSON.stringify(envArray));
+        } catch (err) {
+            logError("Error writing environment cache.", err);
+        }
+    }
+
+    for (let index = 0; index < envArray.length; index++) {
+        const element = envArray[index];
+        let key: string = element['key'];
+        if (process.platform == 'win32') {
+            key = key.toUpperCase();
+        }
+        env[key] = element['value'];
+    }
+
+    let timestampPath = path.join(spaceInfoPath, 'last_usage');
+    try {
+        fs.writeFileSync(timestampPath, '' + Date.now());
+    } catch (err) {
+        logError('Error writing last usage time to: ' + timestampPath, err);
+    }
+
+    let ret = { 'env': env, 'robocorpHome': robocorpHome, 'rccLocation': rccLocation };
+    return ret;
 }
