@@ -229,13 +229,7 @@ export class LocatorsTreeDataProvider implements vscode.TreeDataProvider<Locator
             roboCommands.ROBOCORP_GET_LOCATORS_JSON_INFO, { 'robotYaml': robotEntry.robot.filePath });
         if (!actionResult['success']) {
             this.lastRobotEntry = undefined;
-            return [{
-                name: actionResult.message,
-                type: "error",
-                line: 0,
-                column: 0,
-                filePath: robotEntry.robot.filePath,
-            }];
+            return [];
         }
 
         this.lastRobotEntry = robotEntry;

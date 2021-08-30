@@ -1,5 +1,5 @@
 import sys
-from typing import Optional, List, Any, Generic, TypeVar, Dict, ContextManager
+from typing import Optional, List, Any, Generic, TypeVar, Dict, ContextManager, Tuple
 from pathlib import Path
 
 # Backward-compatibility imports:
@@ -66,6 +66,14 @@ class ActionResultDictRobotLaunch(TypedDict):
         str
     ]  # if success == False, this can be some message to show to the user
     result: Optional[dict]
+
+
+class ActionResultDictLocatorsJson(TypedDict):
+    success: bool
+    message: Optional[
+        str
+    ]  # if success == False, this can be some message to show to the user
+    result: Optional[Tuple[Any, Path]]
 
 
 class ActionResultDictLocatorsJsonInfo(TypedDict):
