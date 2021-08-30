@@ -1,3 +1,10 @@
+New in 0.13.0 (2021-08-30)
+-----------------------------
+
+- Improved UI is now used to create and edit browser and image locators.
+- If it was not possible to create some environment, it won't be retried until the `conda.yaml` is changed or `VSCode` is restarted.
+- The language server environment is no longer refreshed on startup (so startup is faster).
+
 New in 0.12.1 (2021-08-23)
 -----------------------------
 
