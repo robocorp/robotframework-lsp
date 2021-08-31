@@ -976,7 +976,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
     def _load_locators_db(robot_yaml_path) -> ActionResultDictLocatorsJson:
         from RPA.core.locators.database import LocatorsDatabase
 
-        locators_json = robot_yaml_path.parent / "locators.json"
+        locators_json = Path(robot_yaml_path).parent / "locators.json"
         if locators_json.exists():
             db = LocatorsDatabase(str(locators_json))
             db.load()
