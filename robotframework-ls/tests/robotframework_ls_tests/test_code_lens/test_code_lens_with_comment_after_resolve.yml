@@ -1,0 +1,72 @@
+- command:
+    arguments:
+    - name: '*'
+      path: case4.robot
+      uri: case4.robot
+    command: robot.runTest
+    title: Run Suite
+  range:
+    end:
+      character: 0
+      line: 0
+    start:
+      character: 0
+      line: 0
+- command:
+    arguments:
+    - name: '*'
+      path: case4.robot
+      uri: case4.robot
+    command: robot.debugTest
+    title: Debug Suite
+  range:
+    end:
+      character: 0
+      line: 0
+    start:
+      character: 0
+      line: 0
+- command:
+    arguments:
+    - name: Foo
+      path: case4.robot
+      uri: case4.robot
+    command: robot.runTest
+    title: Run
+  range:
+    end:
+      character: 3
+      line: 3
+    start:
+      character: 0
+      line: 3
+- command:
+    arguments:
+    - name: Foo
+      path: case4.robot
+      uri: case4.robot
+    command: robot.debugTest
+    title: Debug
+  range:
+    end:
+      character: 3
+      line: 3
+    start:
+      character: 0
+      line: 3
+- command:
+    arguments:
+    - code: "*** Test Case ***\nFoo\n    BuiltIn.Log To Console    bar\n"
+      uri: case4.robot
+    command: robot.interactiveShell
+    title: Scratchpad
+  data:
+    type: scratchpad
+    uri: case4.robot
+  range:
+    end:
+      character: 3
+      line: 3
+    start:
+      character: 0
+      line: 3

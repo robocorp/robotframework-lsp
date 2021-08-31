@@ -10,8 +10,8 @@ log = get_logger(__name__)
 
 
 def list_tests(completion_context: ICompletionContext) -> List[ITestInfoTypedDict]:
+    from robot.api import Token  # noqa
     from robotframework_ls.impl import ast_utils
-    from robotframework_ls.impl import robot_constants
 
     ast = completion_context.get_ast()
     completion_context.check_cancelled()
@@ -22,14 +22,9 @@ def list_tests(completion_context: ICompletionContext) -> List[ITestInfoTypedDic
         completion_context.check_cancelled()
         try:
 
-            test_case_name_token = node.node.header.get_token(
-                robot_constants.TESTCASE_NAME
-            )
-            if test_case_name_token is None:
-                # Old versions have slashes and not spaces as a separator.
-                test_case_name_token = node.node.header.get_token(
-                    robot_constants.TESTCASE_NAME.replace(" ", "_")
-                )
+            test_case_name_token = node.node.header.get_token(Token.TESTCASE_NAME)
+            if not test_case_name_token:
+                continue
 
             ret.append(
                 {
@@ -97,7 +92,13 @@ def code_lens_runs(completion_context: ICompletionContext) -> List[CodeLensTyped
     for test_case in test_case_sections:
         try:
             for test_node in test_case.body:
-                test_case_name_token = test_node.header.get_token(Token.TESTCASE_NAME)
+                header = getattr(test_node, "header", None)
+                if not header:
+                    continue
+                test_case_name_token = header.get_token(Token.TESTCASE_NAME)
+                if not test_case_name_token:
+                    continue
+
                 completion_context.check_cancelled()
 
                 code_lens_range = create_range_from_token(test_case_name_token)
@@ -150,25 +151,37 @@ def _iter_scratchpad_items(ast):
     for section in sections:
         if section.__class__.__name__ == "TestCaseSection":
             for node in section.body:
-                name_token = node.header.get_token(Token.TESTCASE_NAME)
-                yield name_token, "*** Test Case ***\n", node
+                header = getattr(node, "header", None)
+                if header:
+                    name_token = header.get_token(Token.TESTCASE_NAME)
+                    if name_token:
+                        yield name_token, "*** Test Case ***\n", node
 
         elif section.__class__.__name__ == "KeywordSection":
             for node in section.body:
-                name_token = node.header.get_token(Token.KEYWORD_NAME)
-                yield name_token, "*** Keyword ***\n", node
+                header = getattr(node, "header", None)
+                if header:
+                    name_token = header.get_token(Token.KEYWORD_NAME)
+                    if name_token:
+                        yield name_token, "*** Keyword ***\n", node
 
         elif section.__class__.__name__ == "SettingSection":
-            name_token = section.header.get_token(Token.SETTING_HEADER)
-            # The header is not needed since it's already a part of its tokens
-            # (unlike test cases/keywords)
-            yield name_token, "", section
+            header = getattr(section, "header", None)
+            if header:
+                name_token = header.get_token(Token.SETTING_HEADER)
+                # The header is not needed since it's already a part of its tokens
+                # (unlike test cases/keywords)
+                if name_token:
+                    yield name_token, "", section
 
         elif section.__class__.__name__ == "VariableSection":
-            name_token = section.header.get_token(Token.VARIABLE_HEADER)
-            # The header is not needed since it's already a part of its tokens
-            # (unlike test cases/keywords)
-            yield name_token, "", section
+            header = getattr(section, "header", None)
+            if header:
+                name_token = header.get_token(Token.VARIABLE_HEADER)
+                # The header is not needed since it's already a part of its tokens
+                # (unlike test cases/keywords)
+                if name_token:
+                    yield name_token, "", section
 
 
 def code_lens_scratchpad(
