@@ -391,7 +391,19 @@ export async function collectBaseEnv(condaFilePath: string, robocorpHome: string
         if (fs.existsSync(rccEnvInfoCachePath)) {
             let contents = fs.readFileSync(rccEnvInfoCachePath, { 'encoding': 'utf-8' });
             envArray = JSON.parse(contents);
-            OUTPUT_CHANNEL.appendLine("Loading base environment from: " + rccEnvInfoCachePath);
+            for (let index = 0; index < envArray.length; index++) {
+                const element = envArray[index];
+                let key: string = element['key'];
+                if(key === "PYTHON_EXE"){
+                    if(!fs.existsSync(element['value'])){
+                        envArray = undefined;
+                        break;
+                    }
+                }
+            }
+            if(envArray){
+                OUTPUT_CHANNEL.appendLine("Loading base environment from: " + rccEnvInfoCachePath);
+            }
         }
     } catch (err) {
         // ignore if unable to read.

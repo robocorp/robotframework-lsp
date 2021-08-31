@@ -1,3 +1,9 @@
+New in 0.13.1 (2021-08-31)
+-----------------------------
+
+- Critical fix: if the base environment was removed the extension could fail to initialize. 
+
+
 New in 0.13.0 (2021-08-30)
 -----------------------------
 
