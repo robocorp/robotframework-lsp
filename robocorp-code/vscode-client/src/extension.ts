@@ -605,7 +605,22 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
         return;
     }
 
-    let robotConda = getExtensionRelativeFile('../../bin/create_env/conda.yaml');
+    let robotConda: string;
+    switch (process.platform) {
+        case "darwin":
+            robotConda = getExtensionRelativeFile('../../bin/create_env/environment_darwin_amd64_freeze.yaml');
+            break;
+        case "linux":
+            robotConda = getExtensionRelativeFile('../../bin/create_env/environment_linux_amd64_freeze.yaml');
+            break;
+        case "win32":
+            robotConda = getExtensionRelativeFile('../../bin/create_env/environment_windows_amd64_freeze.yaml');
+            break;
+        default:
+            robotConda = getExtensionRelativeFile('../../bin/create_env/conda.yaml');
+            break;
+    }
+
     if (!robotConda) {
         OUTPUT_CHANNEL.appendLine('Unable to find: ../../bin/create_env/conda.yaml in extension.');
         return;
