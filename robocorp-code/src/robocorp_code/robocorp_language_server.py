@@ -25,6 +25,7 @@ from robocorp_code.protocols import (
     ActionResultDictLocalRobotMetadata,
     ActionResultDictRobotLaunch,
     TypedDict,
+    ActionResultDictLocatorsJson,
     ActionResultDictLocatorsJsonInfo,
     LocatorEntryInfoDict,
     ConfigurationDiagnosticsDict,
@@ -36,7 +37,6 @@ from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 from robocorp_ls_core import watchdog_wrapper
-
 
 log = get_logger(__name__)
 
@@ -107,7 +107,6 @@ class ListWorkspaceCachedInfoDict(TypedDict):
 
 
 class RobocorpLanguageServer(PythonLanguageServer):
-
     # V2: save the account info along to validate user.
     CLOUD_LIST_WORKSPACE_CACHE_KEY = "CLOUD_LIST_WORKSPACE_CACHE_V2"
     PACKAGE_ACCESS_LRU_CACHE_KEY = "PACKAGE_ACCESS_LRU_CACHE"
@@ -575,7 +574,6 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
                 workspace_activities = activities_result.result
                 for activity_package in workspace_activities:
-
                     key = (ws.workspace_id, activity_package.robot_id)
                     sort_key = "%05d%s" % (
                         ws_id_and_pack_id_to_lru_index.get(key, DEFAULT_SORT_KEY),
@@ -775,7 +773,6 @@ class RobocorpLanguageServer(PythonLanguageServer):
         with progress_context(
             self._endpoint, "Uploading to existing robot", self._dir_cache
         ):
-
             result = self._rcc.cloud_set_robot_contents(
                 directory, workspace_id, robot_id
             )
@@ -975,11 +972,30 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
         return 0, 0  # I.e.: unable to find
 
+    @staticmethod
+    def _load_locators_db(robot_yaml_path) -> ActionResultDictLocatorsJson:
+        from RPA.core.locators.database import LocatorsDatabase
+
+        locators_json = Path(robot_yaml_path).parent / "locators.json"
+        db = LocatorsDatabase(str(locators_json))
+        db.load()
+        if db.error:
+            error = db.error
+            if not isinstance(error, str):
+                if isinstance(error, tuple) and len(error) == 2:
+                    try:
+                        error = error[0] % error[1]
+                    except:
+                        error = str(error)
+                else:
+                    error = str(error)
+            return {"success": False, "message": error, "result": None}
+        return {"success": True, "message": None, "result": (db, locators_json)}
+
     @command_dispatcher(commands.ROBOCORP_GET_LOCATORS_JSON_INFO)
     def _get_locators_json_info(
         self, params: dict = None
     ) -> ActionResultDictLocatorsJsonInfo:
-        from RPA.core.locators.database import LocatorsDatabase
         from RPA.core.locators.containers import Locator
 
         if not params or "robotYaml" not in params:
@@ -990,55 +1006,43 @@ class RobocorpLanguageServer(PythonLanguageServer):
             }
 
         path = Path(params["robotYaml"])
-        locators_json = path.parent / "locators.json"
         locators_json_info: List[LocatorEntryInfoDict] = []
         locator: Locator
-        if locators_json.exists():
-            with locators_json.open("r") as stream:
-                contents = stream.read()
-            content_lines = contents.splitlines()
+        try:
+            action_result: ActionResultDictLocatorsJson = self._load_locators_db(path)
+            if action_result["success"]:
+                db, locators_json = action_result["result"]
+            else:
+                return {"success": False, "message": str(action_result["message"]), "result": None}
 
-            try:
-                db = LocatorsDatabase(str(locators_json))
-                db.load()
-                if not db.locators.items():
-                    error = db.error
-                    if not isinstance(error, str):
-                        if isinstance(error, tuple) and len(error) == 2:
-                            try:
-                                error = error[0] % error[1]
-                            except:
-                                error = str(error)
-                        else:
-                            error = str(error)
+            content_lines = []
+            if Path(locators_json).exists():
+                with locators_json.open("r") as stream:
+                    contents = stream.read()
+                content_lines = contents.splitlines()
 
-                    return {"success": False, "message": error, "result": None}
-
-                for name, locator in db.locators.items():
-                    as_dict = locator.to_dict()
-                    line, col = self._get_line_col(name, content_lines)
-                    locators_json_info.append(
-                        {
-                            "name": name,
-                            "line": line,
-                            "column": col,
-                            "type": as_dict["type"],
-                            "filePath": str(locators_json),
-                        }
-                    )
-            except Exception as e:
-                log.exception(f"Error loading locators from: {locators_json}")
-                return {"success": False, "message": str(e), "result": None}
+            for name, locator in db.locators.items():
+                as_dict = locator.to_dict()
+                line, col = self._get_line_col(name, content_lines)
+                locators_json_info.append(
+                    {
+                        "name": name,
+                        "line": line,
+                        "column": col,
+                        "type": as_dict["type"],
+                        "filePath": str(locators_json),
+                    }
+                )
+        except Exception as e:
+            log.exception(f"Error loading locators")
+            return {"success": False, "message": str(e), "result": None}
 
         return {"success": True, "message": None, "result": locators_json_info}
 
     @command_dispatcher(commands.ROBOCORP_REMOVE_LOCATOR_FROM_JSON_INTERNAL)
     def _remove_locator_from_json_internal(
-            self, params: dict = None
+        self, params: dict = None
     ) -> ActionResultDict:
-        from RPA.core.locators.database import LocatorsDatabase
-        from RPA.core.locators.containers import Locator
-
         if not params or "robotYaml" not in params or "name" not in params:
             return {
                 "success": False,
@@ -1048,28 +1052,18 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
         path = Path(params["robotYaml"])
         name = params["name"]
-        locators_json = path.parent / "locators.json"
-        locator: Locator
-        if locators_json.exists():
-            try:
-                db = LocatorsDatabase(str(locators_json))
-                db.load()
-                if not db.locators.items():
-                    error = db.error
-                    if not isinstance(error, str):
-                        if isinstance(error, tuple) and len(error) == 2:
-                            try:
-                                error = error[0] % error[1]
-                            except:
-                                error = str(error)
-                        else:
-                            error = str(error)
-
-                    return {"success": False, "message": error, "result": None}
+        db, locators_json = None, None
+        try:
+            action_result: ActionResultDictLocatorsJson = self._load_locators_db(path)
+            if action_result["success"]:
+                db, locators_json = action_result["result"]
+            else:
+                return {"success": False, "message": str(action_result["message"]), "result": None}
+            if not db.error:
                 del db.locators[name]
                 db.save()
-            except Exception as e:
-                log.exception(f'Error removing locator "{name}" from: {locators_json}')
-                return {"success": False, "message": str(e), "result": None}
+        except Exception as e:
+            log.exception(f'Error removing locator "{name}" from: {locators_json}')
+            return {"success": False, "message": str(e), "result": None}
 
         return {"success": True, "message": None, "result": None}

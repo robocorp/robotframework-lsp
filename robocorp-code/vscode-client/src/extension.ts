@@ -23,26 +23,70 @@ import * as net from 'net';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { workspace, Disposable, ExtensionContext, window, commands, WorkspaceFolder, ProgressLocation, Progress, DebugAdapterExecutable, debug, DebugConfiguration, DebugConfigurationProvider, CancellationToken, ProviderResult, extensions, ConfigurationTarget, env, Uri } from 'vscode';
-import { LanguageClientOptions, State } from 'vscode-languageclient';
-import { LanguageClient, ServerOptions } from 'vscode-languageclient/node';
+import {
+    workspace,
+    Disposable,
+    ExtensionContext,
+    window,
+    commands,
+    WorkspaceFolder,
+    ProgressLocation,
+    Progress,
+    DebugAdapterExecutable,
+    debug,
+    DebugConfiguration,
+    DebugConfigurationProvider,
+    CancellationToken,
+    ProviderResult,
+    extensions,
+    ConfigurationTarget,
+    env,
+    Uri,
+} from 'vscode';
+import {LanguageClientOptions, State} from 'vscode-languageclient';
+import {LanguageClient, ServerOptions} from 'vscode-languageclient/node';
 import * as inspector from './inspector';
-import { copySelectedToClipboard, removeLocator } from './locators';
+import {copySelectedToClipboard, removeLocator} from './locators';
 import * as views from './views';
 import * as roboConfig from './robocorpSettings';
 import * as roboCommands from './robocorpCommands';
-import { logError, OUTPUT_CHANNEL } from './channel';
-import { getExtensionRelativeFile, verifyFileExists } from './files';
-import { collectBaseEnv, getRccLocation, RCCDiagnostics, runConfigDiagnostics, STATUS_FAIL, STATUS_FATAL, STATUS_OK, STATUS_WARNING, submitIssue, submitIssueUI } from './rcc';
-import { Timing } from './time';
-import { execFilePromise, ExecFileReturn } from './subprocess';
-import { createRobot, uploadRobot, cloudLogin, runRobotRCC, cloudLogout, setPythonInterpreterFromRobotYaml, askAndRunRobotRCC, rccConfigurationDiagnostics } from './activities';
-import { sleep } from './time';
-import { handleProgressMessage, ProgressReport } from './progress';
-import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from './robocorpViews';
-import { askAndCreateRccTerminal } from './rccTerminal';
-import { deleteResourceInRobotContentTree, newFileInRobotContentTree, newFolderInRobotContentTree, renameResourceInRobotContentTree } from './viewsRobotContent';
-import { LocatorEntry } from './viewsCommon';
+import {logError, OUTPUT_CHANNEL} from './channel';
+import {getExtensionRelativeFile, verifyFileExists} from './files';
+import {
+    collectBaseEnv,
+    getRccLocation,
+    RCCDiagnostics,
+    runConfigDiagnostics,
+    STATUS_FAIL,
+    STATUS_FATAL,
+    STATUS_OK,
+    STATUS_WARNING,
+    submitIssue,
+    submitIssueUI,
+} from './rcc';
+import {Timing} from './time';
+import {execFilePromise, ExecFileReturn} from './subprocess';
+import {
+    createRobot,
+    uploadRobot,
+    cloudLogin,
+    runRobotRCC,
+    cloudLogout,
+    setPythonInterpreterFromRobotYaml,
+    askAndRunRobotRCC,
+    rccConfigurationDiagnostics,
+} from './activities';
+import {sleep} from './time';
+import {handleProgressMessage, ProgressReport} from './progress';
+import {TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE} from './robocorpViews';
+import {askAndCreateRccTerminal} from './rccTerminal';
+import {
+    deleteResourceInRobotContentTree,
+    newFileInRobotContentTree,
+    newFolderInRobotContentTree,
+    renameResourceInRobotContentTree,
+} from './viewsRobotContent';
+import {LocatorEntry} from './viewsCommon';
 
 
 const clientOptions: LanguageClientOptions = {
@@ -605,7 +649,22 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
         return;
     }
 
-    let robotConda = getExtensionRelativeFile('../../bin/create_env/conda.yaml');
+    let robotConda: string;
+    switch (process.platform) {
+        case "darwin":
+            robotConda = getExtensionRelativeFile('../../bin/create_env/environment_darwin_amd64_freeze.yaml');
+            break;
+        case "linux":
+            robotConda = getExtensionRelativeFile('../../bin/create_env/environment_linux_amd64_freeze.yaml');
+            break;
+        case "win32":
+            robotConda = getExtensionRelativeFile('../../bin/create_env/environment_windows_amd64_freeze.yaml');
+            break;
+        default:
+            robotConda = getExtensionRelativeFile('../../bin/create_env/conda.yaml');
+            break;
+    }
+
     if (!robotConda) {
         OUTPUT_CHANNEL.appendLine('Unable to find: ../../bin/create_env/conda.yaml in extension.');
         return;

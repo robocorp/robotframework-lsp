@@ -63,8 +63,14 @@ export async function openRobocorpInspector(locatorType?: string, locator?: Loca
               }, 3000);
           })
       });
+
+    // Required due to how conda packages python, and MacOS requiring
+    // a signed package for displaying windows (supplied through python.app)
+    const pythonExecutablePath = process.platform === 'darwin'
+      ? path.join(path.dirname(inspectorLaunchInfo.pythonExe), 'pythonw')
+      : inspectorLaunchInfo.pythonExe;
     const launchResult: ExecFileReturn = await startInspectorCLI(
-      inspectorLaunchInfo.pythonExe,
+      pythonExecutablePath,
       args,
       robot.directory,
       inspectorLaunchInfo.environ,
