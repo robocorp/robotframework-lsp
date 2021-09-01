@@ -246,6 +246,36 @@ Test Case
     )
 
 
+def test_semantic_highlighting_on_keyword_argument(workspace):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
+
+    workspace.set_root("case1")
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """*** Test Case ***
+Test Case
+    Run Keyword If    ${var}    Should Be Empty
+""".replace(
+        "\r\n", "\n"
+    ).replace(
+        "\r", "\n"
+    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    semantic_tokens = semantic_tokens_full(context)
+    check(
+        (semantic_tokens, doc),
+        [
+            ("*** Test Case ***", "header"),
+            ("Test Case", "testCaseName"),
+            ("Run Keyword If", "keywordNameCall"),
+            ("${", "variableOperator"),
+            ("var", "variable"),
+            ("}", "variableOperator"),
+            ("Should Be Empty", "keywordNameCall"),
+        ],
+    )
+
+
 @pytest.mark.skipif(
     robot.get_version().startswith("3."), reason="Requires RF 4 onwards"
 )

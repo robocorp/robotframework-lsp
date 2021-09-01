@@ -287,6 +287,7 @@ class CompletionContext(object):
     @instance_cache
     def get_all_variables(self):
         from robotframework_ls.impl import ast_utils
+
         ast = self.get_ast()
         return tuple(ast_utils.iter_variables(ast))
 
@@ -551,8 +552,8 @@ class CompletionContext(object):
                 else:
                     break
 
-            usage_info = ast_utils.create_keyword_usage_info(
-                token_info.stack, token_info.node
+            usage_info = ast_utils.create_keyword_usage_info_from_token(
+                token_info.stack, token_info.node, token_info.token
             )
             if usage_info is not None:
                 token = usage_info.token

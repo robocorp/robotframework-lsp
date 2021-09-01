@@ -475,7 +475,9 @@ Evaluation
             self.expression,
         )
         model = get_model(s)
-        usage_info = list(ast_utils.iter_keyword_usage_tokens(model))
+        usage_info = list(
+            ast_utils.iter_keyword_usage_tokens(model, collect_args_as_keywords=False)
+        )
         if len(usage_info) == 1:
             _stack, node, _token, name = next(iter(usage_info))
 

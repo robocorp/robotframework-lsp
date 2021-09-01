@@ -104,12 +104,21 @@ def semantic_tokens_range(context, range):
     return []
 
 
-def tokenize_variables(node, initial_token):
-    try:
+def _tokenize_token(node, initial_token):
+    from robotframework_ls.impl.ast_utils import is_argument_keyword_name
 
+    if initial_token.type == ARGUMENT:
+        if is_argument_keyword_name(node, initial_token):
+            token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[KEYWORD]
+            yield initial_token, token_type_index
+            return
+
+    try:
         iter_in = initial_token.tokenize_variables()
     except:
-        token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.get(initial_token.type)
+        token_type = initial_token.type
+
+        token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.get(token_type)
         if token_type_index is not None:
             yield initial_token, token_type_index
     else:
@@ -178,7 +187,6 @@ def tokenize_variables(node, initial_token):
                 iter_in = itertools.chain(iter((first_token,)), iter_in)
 
         for token in iter_in:
-
             token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.get(token.type)
             if token_type_index is not None:
                 if (
@@ -275,7 +283,7 @@ def semantic_tokens_full_from_ast(ast, monitor: Optional[IMonitor]):
         tokens = getattr(node, "tokens", None)
         if tokens:
             for token in tokens:
-                for token_part, token_type_index in tokenize_variables(node, token):
+                for token_part, token_type_index in _tokenize_token(node, token):
                     lineno = token_part.lineno - 1
                     if lineno < 0:
                         lineno = 0
