@@ -1053,12 +1053,12 @@ class RobocorpLanguageServer(PythonLanguageServer):
         path = Path(params["robotYaml"])
         name = params["name"]
         db, locators_json = None, None
-        action_result: ActionResultDictLocatorsJson = self._load_locators_db(path)
         try:
+            action_result: ActionResultDictLocatorsJson = self._load_locators_db(path)
             if action_result["success"]:
                 db, locators_json = action_result["result"]
             else:
-                raise Exception(action_result["message"])
+                return {"success": False, "message": str(action_result["message"]), "result": None}
             if not db.error:
                 del db.locators[name]
                 db.save()
