@@ -181,7 +181,10 @@
                         "entity.name.function.robot"
                     ],
                     "keywordNameCall": [
-                        "meta.keyword.call.robot"
+                        "meta.keyword.call.robot",
+                        "meta.support.function.robot",
+                        "entity.name.label.robot",
+                        "support.function.robot"
                     ],
                     "control": [
                         "keyword.control.flow.robot"

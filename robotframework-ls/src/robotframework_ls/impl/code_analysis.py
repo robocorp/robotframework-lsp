@@ -112,7 +112,9 @@ def collect_analysis_errors(completion_context):
     collect_keywords(completion_context, collector)
 
     ast = completion_context.get_ast()
-    for keyword_usage_info in ast_utils.iter_keyword_usage_tokens(ast):
+    for keyword_usage_info in ast_utils.iter_keyword_usage_tokens(
+        ast, collect_args_as_keywords=True
+    ):
         completion_context.check_cancelled()
         normalized_name = normalize_robot_name(keyword_usage_info.name)
         if not collector.contains_keyword(normalized_name):

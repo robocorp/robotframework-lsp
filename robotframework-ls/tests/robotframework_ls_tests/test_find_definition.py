@@ -470,7 +470,9 @@ Log Global Constants
     )
 
 
-def test_find_definition_variables_dict_access(workspace, libspec_manager, data_regression):
+def test_find_definition_variables_dict_access(
+    workspace, libspec_manager, data_regression
+):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.find_definition import find_definition
 
@@ -645,3 +647,42 @@ def test_find_definition_in_pythonpath(workspace, libspec_manager, cases):
     def1 = find_definition(completion_context)
     assert len(def1) == 1
     assert def1[0].source.endswith("lib_in_pythonpath.py")
+
+
+def test_find_definition_on_keyword_argument(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = doc.source + "\n    Run Keyword If    ${var}    Should Be Empty"
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("BuiltIn.py")
+    assert definition.lineno > 0
+
+
+def test_find_definition_on_keyword_argument_variable(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = doc.source + (
+        "\n    ${variable_x} =    Get Some Variable"
+        "\n    Run Keyword If    ${var}    ${variable_x}"
+    )
+
+    line, col = doc.get_last_line_col()
+    col -= 1
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("case1.robot")
+    assert definition.lineno == line - 1

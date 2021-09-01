@@ -669,3 +669,25 @@ def test_simple(workspace, libspec_manager, cases):
         CompletionContext(doc, workspace=workspace.ws)
     )
     assert sorted([comp["label"] for comp in completions]) == ["Some Method"]
+
+
+def test_keyword_completions_on_keyword_arguments(workspace, libspec_manager):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = doc.source + "\n    Run keyword if    ${var}    Should Be"
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+
+    completions = keyword_completions.complete(completion_context)
+    assert sorted([comp["label"] for comp in completions]) == [
+        "Length Should Be",
+        "Should Be Empty",
+        "Should Be Equal",
+        "Should Be Equal As Integers",
+        "Should Be Equal As Numbers",
+        "Should Be Equal As Strings",
+        "Should Be True",
+    ]

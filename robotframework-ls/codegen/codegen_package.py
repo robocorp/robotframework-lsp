@@ -79,7 +79,12 @@ def get_json_contents():
                         "variableOperator": ["keyword.operator.variable.robot"],
                         "settingOperator": ["keyword.operator.setting.robot"],
                         "keywordNameDefinition": ["entity.name.function.robot"],
-                        "keywordNameCall": ["meta.keyword.call.robot"],
+                        "keywordNameCall": [
+                            "meta.keyword.call.robot",
+                            "meta.support.function.robot",
+                            "entity.name.label.robot",
+                            "support.function.robot",
+                        ],
                         "control": ["keyword.control.flow.robot"],
                         "testCaseName": ["entity.name.function.robot"],
                         "parameterName": ["variable.parameter.robot"],

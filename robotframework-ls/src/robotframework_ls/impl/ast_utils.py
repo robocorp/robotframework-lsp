@@ -10,6 +10,9 @@ from robotframework_ls.impl.protocols import (
     KeywordUsageInfo,
     ILibraryImportNode,
 )
+from robotframework_ls.impl.text_utilities import normalize_robot_name
+from robocorp_ls_core.basic import isinstance_name
+from robotframework_ls.impl.keywords_in_args import KEYWORD_NAME_TO_KEYWORD_INDEX
 
 
 log = get_logger(__name__)
@@ -441,19 +444,28 @@ def iter_variable_assigns(ast) -> Iterator:
                 yield TokenInfo(tuple(stack), node, token)
 
 
-def iter_keyword_usage_tokens(ast) -> Iterator[KeywordUsageInfo]:
+def iter_keyword_usage_tokens(
+    ast, collect_args_as_keywords: bool
+) -> Iterator[KeywordUsageInfo]:
     """
     Iterates through all the places where a keyword name is being used, providing
     the stack, node, token and name.
     """
 
     for stack, node in _iter_nodes(ast, recursive=True):
-        usage_info = create_keyword_usage_info(stack, node)
+        usage_info = _create_keyword_usage_info(stack, node)
         if usage_info is not None:
             yield usage_info
 
+            if collect_args_as_keywords:
+                for token in usage_info.node.tokens:
+                    if is_argument_keyword_name(usage_info.node, token):
+                        yield KeywordUsageInfo(
+                            usage_info.stack, usage_info.node, token, token.value
+                        )
 
-def create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
+
+def _create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
     """
     If this is a keyword usage node, return information on it, otherwise, 
     returns None.
@@ -461,7 +473,6 @@ def create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
     :note: this goes hand-in-hand with get_keyword_name_token.
     """
     from robot.api import Token
-    from robocorp_ls_core.basic import isinstance_name
 
     if node.__class__.__name__ == "KeywordCall":
         token = _strip_token_bdd_prefix(node.get_token(Token.KEYWORD))
@@ -479,18 +490,52 @@ def create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
     return None
 
 
+def create_keyword_usage_info_from_token(
+    stack, node, token
+) -> Optional[KeywordUsageInfo]:
+    """
+    If this is a keyword usage node, return information on it, otherwise, 
+    returns None.
+    
+    :note: this goes hand-in-hand with get_keyword_name_token.
+    """
+    if is_argument_keyword_name(node, token):
+        return KeywordUsageInfo(tuple(stack), node, token, token.value)
+
+    return _create_keyword_usage_info(stack, node)
+
+
+def is_argument_keyword_name(node, token) -> bool:
+    if isinstance_name(node, "KeywordCall"):
+        consider_keyword_at_index = KEYWORD_NAME_TO_KEYWORD_INDEX.get(
+            normalize_robot_name(node.keyword)
+        )
+        if consider_keyword_at_index is not None:
+            i_arg = 0
+            for arg in node.tokens:
+                if arg.type == token.ARGUMENT:
+                    i_arg += 1
+                    if arg is token:
+                        if i_arg == consider_keyword_at_index:
+                            return True
+    return False
+
+
 def get_keyword_name_token(ast, token):
     """
     If the given token is a keyword, return the token, otherwise return None.
     
     :note: this goes hand-in-hand with iter_keyword_usage_tokens.
     """
-    from robocorp_ls_core.basic import isinstance_name
-
     if token.type == token.KEYWORD or (
         token.type == token.NAME and isinstance_name(ast, ("Fixture", "TestTemplate"))
     ):
         return _strip_token_bdd_prefix(token)
+
+    if token.type == token.ARGUMENT and not token.value.strip().endswith("}"):
+        if is_argument_keyword_name(ast, token):
+            return token
+
     return None
 
 
@@ -499,7 +544,6 @@ def get_library_import_name_token(ast, token):
     If the given ast node is a library import and the token is its name, return
     the name token, otherwise, return None.
     """
-    from robocorp_ls_core.basic import isinstance_name
 
     if (
         token.type == token.NAME
@@ -515,7 +559,6 @@ def get_resource_import_name_token(ast, token):
     If the given ast node is a library import and the token is its name, return
     the name token, otherwise, return None.
     """
-    from robocorp_ls_core.basic import isinstance_name
 
     if (
         token.type == token.NAME
@@ -531,7 +574,6 @@ def get_variables_import_name_token(ast, token):
     If the given ast node is a variables import and the token is its name, return
     the name token, otherwise, return None.
     """
-    from robocorp_ls_core.basic import isinstance_name
 
     if (
         token.type == token.NAME
