@@ -977,28 +977,19 @@ class RobocorpLanguageServer(PythonLanguageServer):
         from RPA.core.locators.database import LocatorsDatabase
 
         locators_json = Path(robot_yaml_path).parent / "locators.json"
-        if locators_json.exists():
-            db = LocatorsDatabase(str(locators_json))
-            db.load()
-            if not db.locators:
-                error = db.error
-                if not isinstance(error, str):
-                    if isinstance(error, tuple) and len(error) == 2:
-                        try:
-                            error = error[0] % error[1]
-                        except:
-                            error = str(error)
-                    else:
+        db = LocatorsDatabase(str(locators_json))
+        db.load()
+        if db.error:
+            error = db.error
+            if not isinstance(error, str):
+                if isinstance(error, tuple) and len(error) == 2:
+                    try:
+                        error = error[0] % error[1]
+                    except:
                         error = str(error)
-
-                return {"success": False, "message": error, "result": None}
-        else:
-            return {
-                "success": False,
-                "message": f"Locators.json file does not exist: {str(locators_json)}",
-                "result": None,
-            }
-
+                else:
+                    error = str(error)
+            return {"success": False, "message": error, "result": None}
         return {"success": True, "message": None, "result": (db, locators_json)}
 
     @command_dispatcher(commands.ROBOCORP_GET_LOCATORS_JSON_INFO)
@@ -1017,17 +1008,18 @@ class RobocorpLanguageServer(PythonLanguageServer):
         path = Path(params["robotYaml"])
         locators_json_info: List[LocatorEntryInfoDict] = []
         locator: Locator
-        db, locators_json = None, None
         try:
             action_result: ActionResultDictLocatorsJson = self._load_locators_db(path)
             if action_result["success"]:
                 db, locators_json = action_result["result"]
             else:
-                raise Exception(action_result["message"])
+                return {"success": False, "message": str(action_result["message"]), "result": None}
 
-            with locators_json.open("r") as stream:
-                contents = stream.read()
-            content_lines = contents.splitlines()
+            content_lines = []
+            if Path(locators_json).exists():
+                with locators_json.open("r") as stream:
+                    contents = stream.read()
+                content_lines = contents.splitlines()
 
             for name, locator in db.locators.items():
                 as_dict = locator.to_dict()
@@ -1042,6 +1034,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
                     }
                 )
         except Exception as e:
+            log.exception(f"Error loading locators")
             return {"success": False, "message": str(e), "result": None}
 
         return {"success": True, "message": None, "result": locators_json_info}
@@ -1066,7 +1059,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 db, locators_json = action_result["result"]
             else:
                 raise Exception(action_result["message"])
-            if db:
+            if not db.error:
                 del db.locators[name]
                 db.save()
         except Exception as e:

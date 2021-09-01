@@ -500,7 +500,8 @@
                 },
                 {
                     "command": "robocorp.removeLocatorFromJson",
-                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected && viewItem == locatorEntry"
+                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected && viewItem == locatorEntry",
+                    "group": "inline"
                 }
             ],
             "commandPalette": [

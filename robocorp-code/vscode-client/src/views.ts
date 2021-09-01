@@ -1,12 +1,27 @@
-import { TREE_VIEW_ROBOCORP_CLOUD_TREE, TREE_VIEW_ROBOCORP_LOCATORS_TREE, TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from './robocorpViews';
+import {
+    TREE_VIEW_ROBOCORP_CLOUD_TREE,
+    TREE_VIEW_ROBOCORP_LOCATORS_TREE,
+    TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE,
+    TREE_VIEW_ROBOCORP_ROBOTS_TREE
+} from './robocorpViews';
 import * as vscode from 'vscode';
+import {ExtensionContext} from 'vscode';
 import * as roboCommands from './robocorpCommands';
-import { ExtensionContext } from 'vscode';
-import { OUTPUT_CHANNEL } from './channel';
-import { runRobotRCC, uploadRobot } from './activities';
-import { createRccTerminal } from './rccTerminal';
-import { RobotContentTreeDataProvider } from './viewsRobotContent';
-import { basename, CloudEntry, debounce, getSelectedLocator, getSelectedRobot, LocatorEntry, RobotEntry, RobotEntryType, treeViewIdToTreeDataProvider, treeViewIdToTreeView } from './viewsCommon';
+import {OUTPUT_CHANNEL} from './channel';
+import {runRobotRCC, uploadRobot} from './activities';
+import {createRccTerminal} from './rccTerminal';
+import {RobotContentTreeDataProvider} from './viewsRobotContent';
+import {
+    basename,
+    CloudEntry,
+    debounce,
+    getSelectedRobot,
+    LocatorEntry,
+    RobotEntry,
+    RobotEntryType,
+    treeViewIdToTreeDataProvider,
+    treeViewIdToTreeView,
+} from './viewsCommon';
 
 
 function getRobotLabel(robotInfo: LocalRobotMetadataInfo): string {
@@ -229,12 +244,17 @@ export class LocatorsTreeDataProvider implements vscode.TreeDataProvider<Locator
             roboCommands.ROBOCORP_GET_LOCATORS_JSON_INFO, { 'robotYaml': robotEntry.robot.filePath });
         if (!actionResult['success']) {
             this.lastRobotEntry = undefined;
-            return [];
+            return [{
+                name: actionResult.message,
+                type: "error",
+                line: 0,
+                column: 0,
+                filePath: robotEntry.robot.filePath,
+            }];
         }
 
         this.lastRobotEntry = robotEntry;
-        let locatorInfo: LocatorEntry[] = actionResult['result'];
-        return locatorInfo;
+        return actionResult['result'];
     }
 
     getTreeItem(element: LocatorEntry): vscode.TreeItem {

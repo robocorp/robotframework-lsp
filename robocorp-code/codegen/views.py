@@ -162,6 +162,7 @@ TREE_VIEW_CONTAINERS = [
                         ),
                         Menu(
                             "robocorp.removeLocatorFromJson",
+                            MenuGroup.INLINE,
                             when="robocorp-code:single-robot-selected && viewItem == locatorEntry",
                         ),
 
