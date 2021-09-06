@@ -1,3 +1,10 @@
+New in 0.13.2 (2021-09-06)
+-----------------------------
+
+- Improved detection of whether an environment is corrupt to regenerate it when starting the extension.
+- Fixes in inspector integration.
+
+
 New in 0.13.1 (2021-08-31)
 -----------------------------
 
