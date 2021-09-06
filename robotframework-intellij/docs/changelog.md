@@ -1,3 +1,10 @@
+New in 0.22.0 (2021-09-06)
+-----------------------------
+
+- [Intellij] Additional logging to diagnose startup issues.
+- Recognize keywords when used as arguments of other keywords (for BuiltIn library). [#291](https://github.com/robocorp/robotframework-lsp/issues/291)
+
+
 New in 0.21.0 (2021-08-18)
 -----------------------------
 
