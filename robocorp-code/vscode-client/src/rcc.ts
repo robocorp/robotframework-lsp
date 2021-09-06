@@ -2,7 +2,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import * as crypto from 'crypto';
-import * as roboConfig from './robocorpSettings';
 import * as pathModule from 'path';
 import { XHRResponse, configure as configureXHR, xhr } from './requestLight';
 import { fileExists, getExtensionRelativeFile } from './files';
@@ -10,6 +9,75 @@ import { workspace, window, ProgressLocation, CancellationToken, Progress, exten
 import { logError, OUTPUT_CHANNEL } from './channel';
 import { Timing, sleep } from './time';
 import { execFilePromise, ExecFileReturn } from './subprocess';
+
+
+function createBaseEnv(robocorpHome: string): { [key: string]: string | null } {
+    let env: { [key: string]: string | null } = {};
+    if (process.platform == 'win32') {
+        Object.keys(process.env).forEach(function (key) {
+            // We could have something as `Path` -- convert it to `PATH`.
+            env[key.toUpperCase()] = process.env[key];
+        });
+    } else {
+        env = { ...process.env };
+    }
+
+    if (robocorpHome) {
+        env['ROBOCORP_HOME'] = robocorpHome;
+    }
+    return env;
+}
+
+
+function envArrayToEnvMap(envArray: [], robocorpHome: string): { [key: string]: string | null } {
+    let env = createBaseEnv(robocorpHome);
+    for (let index = 0; index < envArray.length; index++) {
+        const element = envArray[index];
+        let key: string = element['key'];
+        if (process.platform == 'win32') {
+            key = key.toUpperCase();
+        }
+        env[key] = element['value'];
+    }
+    return env;
+}
+
+async function checkCachedEnvValid(env): Promise<boolean> {
+    let pythonExe = env['PYTHON_EXE'];
+
+    if (!pythonExe || !fs.existsSync(pythonExe)) {
+        OUTPUT_CHANNEL.appendLine("Error. PYTHON_EXE not valid in env cache.");
+        return false;
+    }
+    let condaPrefix = env['CONDA_PREFIX'];
+    if (!condaPrefix || !fs.existsSync(condaPrefix)) {
+        OUTPUT_CHANNEL.appendLine("Error. CONDA_PREFIX not valid in env cache.");
+        return false;
+    }
+    let condaPrefixIdentityYaml = path.join(condaPrefix, 'identity.yaml');
+    if (!fs.existsSync(condaPrefixIdentityYaml)) {
+        OUTPUT_CHANNEL.appendLine("Error. " + condaPrefixIdentityYaml + " no longer exists.");
+        return false;
+    }
+
+    let execFileReturn: ExecFileReturn = await execFilePromise(
+        pythonExe, ['-c', 'import threading;print("OK")'],
+        { env: env }
+    );
+    if (execFileReturn.stderr) {
+        OUTPUT_CHANNEL.appendLine("Expected no output in stderr from cached python (" + pythonExe + "). Found:\n" + execFileReturn.stderr);
+        return false;
+    }
+    if (!execFileReturn.stdout) {
+        OUTPUT_CHANNEL.appendLine("No output received when checking cached python (" + pythonExe + ").");
+        return false;
+    }
+    if (!execFileReturn.stdout.includes("OK")) {
+        OUTPUT_CHANNEL.appendLine("Expected 'OK' in output from cached python (" + pythonExe + "). Found:\n" + execFileReturn.stdout);
+        return false;
+    }
+    return true;
+}
 
 async function downloadRcc(progress: Progress<{ message?: string; increment?: number }>, token: CancellationToken): Promise<string | undefined> {
 
@@ -39,7 +107,7 @@ async function downloadRcc(progress: Progress<{ message?: string; increment?: nu
             relativePath = '/linux32/rcc';
         }
     }
-    const RCC_VERSION = "v10.7.0";
+    const RCC_VERSION = "v10.9.4";
     const prefix = "https://downloads.robocorp.com/rcc/releases/" + RCC_VERSION;
     const url: string = prefix + relativePath;
 
@@ -372,47 +440,37 @@ export async function collectBaseEnv(condaFilePath: string, robocorpHome: string
     args.push('--controller');
     args.push('RobocorpCode');
 
-    let env = {};
-    if (process.platform == 'win32') {
-        Object.keys(process.env).forEach(function (key) {
-            // We could have something as `Path` -- convert it to `PATH`.
-            env[key.toUpperCase()] = process.env[key];
-        });
-    } else {
-        env = { ...process.env };
-    }
-
-    if (robocorpHome) {
-        env['ROBOCORP_HOME'] = robocorpHome;
-    }
-
     let envArray = undefined;
     try {
         if (fs.existsSync(rccEnvInfoCachePath)) {
             let contents = fs.readFileSync(rccEnvInfoCachePath, { 'encoding': 'utf-8' });
             envArray = JSON.parse(contents);
-            for (let index = 0; index < envArray.length; index++) {
-                const element = envArray[index];
-                let key: string = element['key'];
-                if(key === "PYTHON_EXE"){
-                    if(!fs.existsSync(element['value'])){
-                        envArray = undefined;
-                        break;
-                    }
+            let cachedEnv = envArrayToEnvMap(envArray, robocorpHome);
+            try {
+                // Ok, we have the python exe and the env seems valid. Let's make sure it actually works.
+                let cachedPythonOk: boolean = await checkCachedEnvValid(cachedEnv);
+                if (!cachedPythonOk) {
+                    envArray = undefined;
                 }
+            } catch (error) {
+                logError("Error: error verifying if env is still valid.", error);
+                envArray = undefined;
             }
-            if(envArray){
+
+            if (envArray) {
                 OUTPUT_CHANNEL.appendLine("Loading base environment from: " + rccEnvInfoCachePath);
             }
         }
     } catch (err) {
-        // ignore if unable to read.
+        logError("Unable to use cached environment info (recomputing)...", err);
+        envArray = undefined;
     }
 
+    // If the env array is undefined, compute it now and cache the info to be reused later.
     if (!envArray) {
         let execFileReturn: ExecFileReturn = await execFilePromise(
             rccLocation, args,
-            { env: env }
+            { env: createBaseEnv(robocorpHome) }
         );
         if (!execFileReturn.stdout) {
             OUTPUT_CHANNEL.appendLine("Error: Unable to collect environment from RCC.");
@@ -434,15 +492,6 @@ export async function collectBaseEnv(condaFilePath: string, robocorpHome: string
         }
     }
 
-    for (let index = 0; index < envArray.length; index++) {
-        const element = envArray[index];
-        let key: string = element['key'];
-        if (process.platform == 'win32') {
-            key = key.toUpperCase();
-        }
-        env[key] = element['value'];
-    }
-
     let timestampPath = path.join(spaceInfoPath, 'last_usage');
     try {
         fs.writeFileSync(timestampPath, '' + Date.now());
@@ -450,6 +499,6 @@ export async function collectBaseEnv(condaFilePath: string, robocorpHome: string
         logError('Error writing last usage time to: ' + timestampPath, err);
     }
 
-    let ret = { 'env': env, 'robocorpHome': robocorpHome, 'rccLocation': rccLocation };
+    let ret = { 'env': envArrayToEnvMap(envArray, robocorpHome), 'robocorpHome': robocorpHome, 'rccLocation': rccLocation };
     return ret;
 }
