@@ -499,6 +499,21 @@ export async function collectBaseEnv(condaFilePath: string, robocorpHome: string
         logError('Error writing last usage time to: ' + timestampPath, err);
     }
 
-    let ret = { 'env': envArrayToEnvMap(envArray, robocorpHome), 'robocorpHome': robocorpHome, 'rccLocation': rccLocation };
-    return ret;
+    let finalEnv: { [key: string]: string | null } = envArrayToEnvMap(envArray, robocorpHome);
+    let tempDir = finalEnv['TEMP'];
+    if (tempDir) {
+        try {
+            // Try to remove the file related to recycling this dir (we don't want to
+            // recycle the TEMP dir of this particular env).
+            fs.unlink(path.join(tempDir, 'recycle.now'), (err) => { });
+        } catch (err) {
+        }
+        try {
+            // Create the temp dir (if not there)
+            fs.mkdir(tempDir, { 'recursive': true }, (err) => { });
+        } catch (err) {
+        }
+    }
+
+    return { 'env': finalEnv, 'robocorpHome': robocorpHome, 'rccLocation': rccLocation };
 }
