@@ -652,13 +652,13 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
     let robotConda: string;
     switch (process.platform) {
         case "darwin":
-            robotConda = getExtensionRelativeFile('../../bin/create_env/environment_darwin_amd64_freeze.yaml');
+            robotConda = getExtensionRelativeFile('../../bin/create_env/conda_vscode_darwin_amd64.yaml');
             break;
         case "linux":
-            robotConda = getExtensionRelativeFile('../../bin/create_env/environment_linux_amd64_freeze.yaml');
+            robotConda = getExtensionRelativeFile('../../bin/create_env/conda_vscode_linux_amd64.yaml');
             break;
         case "win32":
-            robotConda = getExtensionRelativeFile('../../bin/create_env/environment_windows_amd64_freeze.yaml');
+            robotConda = getExtensionRelativeFile('../../bin/create_env/conda_vscode_windows_amd64.yaml');
             break;
         default:
             robotConda = getExtensionRelativeFile('../../bin/create_env/conda.yaml');

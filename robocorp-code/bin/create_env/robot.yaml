@@ -8,7 +8,7 @@ artifactsDir: output
 
 condaConfigFile: conda.yaml
 environmentConfigs:
-  - environment_windows_amd64_freeze.yaml
-  - environment_darwin_amd64_freeze.yaml
-  - environment_linux_amd64_freeze.yaml
+  - conda_vscode_windows_amd64.yaml
+  - conda_vscode_darwin_amd64.yaml
+  - conda_vscode_linux_amd64.yaml
   - conda.yaml
