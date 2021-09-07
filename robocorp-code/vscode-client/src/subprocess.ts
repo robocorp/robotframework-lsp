@@ -2,6 +2,7 @@
 
 import { OUTPUT_CHANNEL } from './channel';
 import { execFile, ExecException, ExecFileOptions } from 'child_process';
+import { getExtensionRelativeFile } from './files';
 
 export interface ExecFileError {
     error: ExecException;
@@ -26,12 +27,20 @@ async function _execFileAsPromise(command: string, args: string[], options: Exec
     });
 }
 
+
+function getDefaultCwd(): string {
+    return getExtensionRelativeFile('../../bin', false);
+}
+
 /**
  * @param options may be something as: { env: { ...process.env, ENV_VAR: 'test' } }
  */
 export async function execFilePromise(command: string, args: string[], options: ExecFileOptions): Promise<ExecFileReturn> {
     OUTPUT_CHANNEL.appendLine('Executing: ' + command + ',' + args);
     try {
+        if (!options.cwd) {
+            options.cwd = getDefaultCwd();
+        }
         return await _execFileAsPromise(command, args, options);
     } catch (exc) {
         let errorInfo: ExecFileError = exc;
