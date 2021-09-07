@@ -88,3 +88,18 @@ def test_resolve_interpreter(
         new_last_usage = status.load_last_usage(none_if_not_found=True)
         assert new_last_usage is not None
         assert last_usage < new_last_usage
+
+    environ = interpreter_info.get_environ()
+    assert environ
+    temp_dir = Path(environ["TEMP"])
+    assert temp_dir.exists()
+    recycle_file = temp_dir / "recycle.now"
+    assert recycle_file.exists()
+
+    stat = recycle_file.stat()
+    time.sleep(1)
+    touch_info = getattr(interpreter_info, "__touch_info__")
+    touch_info.touch(interpreter_info, force=True)
+
+    stat2 = recycle_file.stat()
+    assert stat.st_mtime < stat2.st_mtime

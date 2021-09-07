@@ -10,7 +10,6 @@ Also, the required version must be checked in the client (in case imports or API
 """
 import os.path
 import sys
-from collections import namedtuple
 
 try:
     from robocorp_code.rcc import Rcc  # noqa
@@ -25,6 +24,8 @@ except:
 
 
 from typing import Optional, Dict, List, Tuple
+from collections import namedtuple
+import time
 
 from robocorp_ls_core.basic import implements
 from robocorp_ls_core.pluginmanager import PluginManager
@@ -224,6 +225,7 @@ class _CacheInfo(object):
                 if ok:
                     space_info.update_last_usage()
                     _CacheInfo._cache_hit_interpreter += 1
+                    _touch_temp(interpreter_info.info)
                     return interpreter_info.info
 
         from robocorp_ls_core.progress_report import progress_context
@@ -244,7 +246,49 @@ class _CacheInfo(object):
                 pm,
             )
 
+            _touch_temp(interpreter_info.info)
             return interpreter_info.info
+
+
+class _TouchInfo(object):
+    def __init__(self):
+        self._last_touch = 0
+
+    def touch(self, info: IInterpreterInfo, force: bool = False):
+        curr_time = time.time()
+        diff = curr_time - self._last_touch
+
+        one_hour_in_seconds = 60 * 60
+
+        if diff > one_hour_in_seconds or force:  # i.e.: verify it at most once/hour.
+            self._last_touch = curr_time
+            environ = info.get_environ()
+            if environ:
+                temp_dir: Optional[str] = environ.get("TEMP")
+                if temp_dir:
+                    temp_dir_path = Path(temp_dir)
+                    try:
+                        temp_dir_path.mkdir(exist_ok=True)
+                    except:
+                        log.exception(f"Error making dir: {temp_dir_path}")
+
+                    try:
+                        recycle_path: Path = temp_dir_path / "recycle.now"
+                        recycle_path.touch()
+                    except:
+                        log.exception(f"Error touching: {recycle_path}")
+
+
+def _touch_temp(info: IInterpreterInfo):
+    # When reusing some space, account that the cached TEMP folder we have
+    # may be removed and refresh its time accordingly.
+
+    # Dynamically assign a _TouchInfo to this instance to manage doing the actual touch.
+    touch_info = getattr(info, "__touch_info__", None)
+    if touch_info is None:
+        touch_info = _TouchInfo()
+        setattr(info, "__touch_info__", touch_info)
+    touch_info.touch(info)
 
 
 class RobocorpResolveInterpreter(object):

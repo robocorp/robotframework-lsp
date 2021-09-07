@@ -273,6 +273,7 @@ class RccPatch(object):
                         {"key": "PYTHON_EXE", "value": sys.executable},
                         {"key": "SPACE_NAME", "value": args[3]},
                         {"key": "CONDA_PREFIX", "value": str(conda_prefix)},
+                        {"key": "TEMP", "value": str(self.tmpdir.join("_temp_dir_"))},
                     ]
                 ),
             )
