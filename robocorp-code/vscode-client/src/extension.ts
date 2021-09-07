@@ -111,7 +111,7 @@ function startLangServerIO(command: string, args: string[], environ?: { [key: st
         environ = process.env;
     }
     let src: string = path.resolve(__dirname, '../../src');
-    serverOptions.options = { env: { ...environ, PYTHONPATH: src } };
+    serverOptions.options = { env: { ...environ, PYTHONPATH: src }, cwd: path.dirname(command) };
 
     // See: https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
     return new LanguageClient(command, serverOptions, clientOptions);

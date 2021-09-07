@@ -237,7 +237,7 @@ class LaunchProcess(object):
 
                 output_event = OutputEvent(
                     OutputEventBody(
-                        "Computing holotree space (this can take some minutes)...\n",
+                        "Computing and creating environment (this can take some minutes)...\n",
                         category="stderr",
                     )
                 )

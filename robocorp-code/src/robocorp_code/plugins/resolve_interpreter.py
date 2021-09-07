@@ -217,7 +217,7 @@ class _CacheInfo(object):
                     space_info = interpreter_info.robot_yaml_env_info.space_info
                     if not space_info.matches_conda_identity_yaml(conda_id):
                         log.critical(
-                            f"The conda contents in: {conda_id} no longer not match the contents from {conda_config_file_info.file_path}."
+                            f"The conda contents in: {conda_id} no longer match the contents from {conda_config_file_info.file_path}."
                         )
                         ok = False
 
