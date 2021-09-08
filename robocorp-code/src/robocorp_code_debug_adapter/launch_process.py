@@ -303,6 +303,9 @@ class LaunchProcess(object):
                 cmdline.append("-e")
                 cmdline.append(str(env_json_path))
 
+            cmdline.append("--controller")
+            cmdline.append("RobocorpCode")
+
         self._cmdline = cmdline
 
     @property
