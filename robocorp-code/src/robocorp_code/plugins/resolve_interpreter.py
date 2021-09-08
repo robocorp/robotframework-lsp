@@ -10,6 +10,7 @@ Also, the required version must be checked in the client (in case imports or API
 """
 import os.path
 import sys
+import itertools
 
 try:
     from robocorp_code.rcc import Rcc  # noqa
@@ -317,7 +318,9 @@ class RobocorpResolveInterpreter(object):
             pm[EPEndPointProvider]
 
             fs_path = Path(uris.to_fs_path(doc_uri))
-            for path in fs_path.parents:
+            # Note: there's a use-case where a directory may be passed to
+            # compute as the doc_uri, so, handle that too.
+            for path in itertools.chain(iter([fs_path]), fs_path.parents):
                 robot_yaml: Path = path / "robot.yaml"
                 if robot_yaml.exists():
                     break

@@ -174,6 +174,10 @@ function registerDebugger(languageServerExecutable: string) {
 					}
 				}
 			}
+		} else if (!dapPythonExecutable) {
+			// If a `PYTHON_EXE` is specified in the env, give it priority vs using the language server
+			// executable.
+			dapPythonExecutable = env['PYTHON_EXE'];
 		}
 
 		if (!dapPythonExecutable) {
