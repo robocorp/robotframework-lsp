@@ -1,3 +1,13 @@
+New in 0.13.3 (2021-09-08)
+-----------------------------
+
+- Fix case where the python used in debug did not match the one used in the environment.
+- Two different `conda.yaml` files with only cosmetic changes (such as comments) now map to the same environment. 
+- Fixes related to `TEMP` directories managed in the environment.
+- The default `cwd` when resolving environments is now properly managed so that conflicts don't arise due to having a `robot.yaml` in the `cwd`. 
+- `--controller` is properly set when making an `rcc` run.
+
+
 New in 0.13.2 (2021-09-06)
 -----------------------------
 

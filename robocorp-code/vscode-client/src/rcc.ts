@@ -107,7 +107,7 @@ async function downloadRcc(progress: Progress<{ message?: string; increment?: nu
             relativePath = '/linux32/rcc';
         }
     }
-    const RCC_VERSION = "v10.9.4";
+    const RCC_VERSION = "v10.10.0";
     const prefix = "https://downloads.robocorp.com/rcc/releases/" + RCC_VERSION;
     const url: string = prefix + relativePath;
 
