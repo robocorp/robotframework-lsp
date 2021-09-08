@@ -7,7 +7,7 @@
         '
       uri: my.robot
     id: robot.completion.additionalTextEdit
-    title: Scratchpad
+    title: Interactive Console
   documentation: ''
   insertText: Append To List
   insertTextRules: 4

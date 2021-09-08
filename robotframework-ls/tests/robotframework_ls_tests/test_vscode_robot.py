@@ -1241,10 +1241,10 @@ Log It
     ret = language_server.request_code_lens(uri)
     found = ret["result"]
     for code_lens in found:
-        if code_lens.get("data", {}).get("type") == "scratchpad":
+        if code_lens.get("data", {}).get("type") == "rf_interactive":
             break
     else:
-        raise AssertionError(f"Unable to find Scratchpad code lens in: {ret}")
+        raise AssertionError(f"Unable to find 'rf_interactive' code lens in: {ret}")
     check_code_lens_data_regression(
         data_regression, [code_lens], basename="code_lens_before_resolve"
     )

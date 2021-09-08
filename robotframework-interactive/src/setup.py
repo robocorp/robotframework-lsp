@@ -25,7 +25,7 @@ for path in [_thirdparty, _license, _copyright]:
 
 
 def collect_vendored_files():
-    """Provides robot_scratchpad.robot.
+    """Provides robot_rf_interactive.robot.
     """
     import os
 
@@ -41,7 +41,7 @@ def collect_vendored_files():
 
     assert (
         len(ret) == 1
-    ), "Did not collect robot_scratchpad.robot file properly. Found: %s" % (ret,)
+    ), "Did not collect robot_rf_interactive.robot file properly. Found: %s" % (ret,)
     return ret
 
 

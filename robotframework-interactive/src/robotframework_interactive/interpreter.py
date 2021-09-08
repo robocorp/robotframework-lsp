@@ -166,7 +166,7 @@ class RobotFrameworkInterpreter(object):
         TestSuite = facade.TestSuite
 
         self._test_suite = TestSuite.from_file_system(
-            os.path.join(os.path.dirname(__file__), "robot_scratchpad.robot")
+            os.path.join(os.path.dirname(__file__), "robot_rf_interactive.robot")
         )
         self.on_stdout = Callback()
         self.on_stderr = Callback()

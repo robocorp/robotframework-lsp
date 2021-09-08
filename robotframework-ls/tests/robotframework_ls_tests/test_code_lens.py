@@ -31,7 +31,7 @@ def test_code_lens_with_comment(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.code_lens import code_lens_runs
     from robotframework_ls.impl.code_lens import code_lens_resolve
-    from robotframework_ls.impl.code_lens import code_lens_scratchpad
+    from robotframework_ls.impl.code_lens import code_lens_rf_interactive
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case4.robot")
@@ -45,7 +45,7 @@ Foo
     completion_context = CompletionContext(doc, workspace=workspace.ws)
 
     found = code_lens_runs(completion_context)
-    found.extend(code_lens_scratchpad(completion_context))
+    found.extend(code_lens_rf_interactive(completion_context))
     check_code_lens_data_regression(data_regression, found)
     new_found = [code_lens_resolve(completion_context, c) for c in found]
     check_code_lens_data_regression(
@@ -56,7 +56,7 @@ Foo
 def test_code_lens_scratchpad_basic(workspace, libspec_manager, data_regression):
     from robotframework_ls_tests.fixtures import check_code_lens_data_regression
     from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.code_lens import code_lens_scratchpad
+    from robotframework_ls.impl.code_lens import code_lens_rf_interactive
     from robotframework_ls.impl.code_lens import code_lens_resolve
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
@@ -82,7 +82,7 @@ ${foo}      1
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)
 
-    found = code_lens_scratchpad(completion_context)
+    found = code_lens_rf_interactive(completion_context)
     check_code_lens_data_regression(
         data_regression,
         found,

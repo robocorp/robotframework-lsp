@@ -77,23 +77,23 @@
             },
             {
                 "command": "robot.interactiveShell",
-                "title": "Start Scratchpad",
+                "title": "Start Interactive Console",
                 "category": "Robot Framework",
                 "icon": "$(terminal-powershell)"
             },
             {
                 "command": "robot.internal.rfinteractive.start",
-                "title": "Create Scratchpad",
+                "title": "Create Interactive Console",
                 "category": "Robot Framework"
             },
             {
                 "command": "robot.internal.rfinteractive.evaluate",
-                "title": "Evaluate in Scratchpad",
+                "title": "Evaluate in Interactive Console",
                 "category": "Robot Framework"
             },
             {
                 "command": "robot.internal.rfinteractive.stop",
-                "title": "Stop Scratchpad",
+                "title": "Stop Interactive Console",
                 "category": "Robot Framework"
             },
             {

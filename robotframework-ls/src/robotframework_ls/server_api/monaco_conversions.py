@@ -246,7 +246,7 @@ def convert_to_monaco_completion(
         if additional_text_edits and len(additional_text_edits) == 1:
             text_edit = additional_text_edits[0]
             command: MonacoCommandTypedDict = {
-                "title": "Scratchpad",
+                "title": "Interactive Console",
                 "id": "robot.completion.additionalTextEdit",
                 "arguments": [{"code": text_edit["newText"], "uri": uri}],
             }

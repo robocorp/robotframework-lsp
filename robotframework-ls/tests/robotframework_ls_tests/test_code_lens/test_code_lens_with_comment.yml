@@ -59,9 +59,9 @@
     - code: "*** Test Case ***\nFoo\n    BuiltIn.Log To Console    bar\n"
       uri: case4.robot
     command: robot.interactiveShell
-    title: Scratchpad
+    title: Run in Interactive Console
   data:
-    type: scratchpad
+    type: rf_interactive
     uri: case4.robot
   range:
     end:

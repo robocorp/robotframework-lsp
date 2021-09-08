@@ -247,20 +247,20 @@ If even after upgrading you have a Python process with high-cpu related to the
 https://github.com/robocorp/robotframework-lsp/issues/350#issuecomment-842506969 
 
 
-How to use the Scratchpad?
+How to use the Interactive Console?
 ---------------------------
 
 Note: only available for VSCode.
 
-The `Scratchpad` may be started using the `Robot Framework: Start Scratchpad` action.
+The `Interactive Console` may be started using the `Robot Framework: Start Interactive Console` action.
 Note that its scope will be based on the currently opened `.robot` or `.resource`
-file (if a `.robot` or `.resource` is not opened, the `Scratchpad` will not be opened).
+file (if a `.robot` or `.resource` is not opened, the `Interactive Console` will not be opened).
 
-Alternatively it's also possible to start the `Scratchpad` and send the contents of
-a given section to it using the `Scratchpad` code-lens, which should automatically 
+Alternatively it's also possible to start the `Interactive Console` and send the contents of
+a given section to it using the `Run in Interactive Console` code-lens, which should automatically 
 open it and send the initial contents for execution.
 
-When the `Scratchpad` is opened, an initial task will be considered running. At this
+When the `Interactive Console` is opened, an initial task will be considered running. At this
 point, it's possible to either send full sections (such as `*** Settings ***` or
 `*** Keyword ***`) or evaluate Keywords line by line.
 

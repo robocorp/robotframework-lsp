@@ -34,7 +34,7 @@ See: [FAQ](docs/faq.md) for common issues encountered while configuring the lang
 Features (0.22.0)
 -----------------
 
-- Scratchpad: a REPL for interactively experimenting with Robot Framework (for VSCode).
+- Interactive Console: a REPL for interactively experimenting with Robot Framework (for VSCode).
 - Code analysis: checks if keywords are properly imported/defined.
 - Linting with [Robocop](https://robocop.readthedocs.io/en/latest/).
 - Code completion for keywords, keyword parameters, section headers, section settings, variables, resource imports and library imports.

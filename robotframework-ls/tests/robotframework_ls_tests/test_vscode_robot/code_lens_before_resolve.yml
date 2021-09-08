@@ -3,9 +3,9 @@
     - code: "*** Test Case ***\nLog It\n    Log\n"
       uri: my.robot
     command: robot.interactiveShell
-    title: Scratchpad
+    title: Run in Interactive Console
   data:
-    type: scratchpad
+    type: rf_interactive
     uri: my.robot
   range:
     end:

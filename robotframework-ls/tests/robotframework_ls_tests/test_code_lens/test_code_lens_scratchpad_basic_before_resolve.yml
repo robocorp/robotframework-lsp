@@ -10,9 +10,9 @@
         '
       uri: case4.robot
     command: robot.interactiveShell
-    title: Scratchpad
+    title: Run in Interactive Console
   data:
-    type: scratchpad
+    type: rf_interactive
     uri: case4.robot
   range:
     end:
@@ -27,9 +27,9 @@
         \ Keyword\n    \n"
       uri: case4.robot
     command: robot.interactiveShell
-    title: Scratchpad
+    title: Run in Interactive Console
   data:
-    type: scratchpad
+    type: rf_interactive
     uri: case4.robot
   range:
     end:
@@ -44,9 +44,9 @@
         \    \n"
       uri: case4.robot
     command: robot.interactiveShell
-    title: Scratchpad
+    title: Run in Interactive Console
   data:
-    type: scratchpad
+    type: rf_interactive
     uri: case4.robot
   range:
     end:
@@ -64,9 +64,9 @@
         '
       uri: case4.robot
     command: robot.interactiveShell
-    title: Scratchpad
+    title: Run in Interactive Console
   data:
-    type: scratchpad
+    type: rf_interactive
     uri: case4.robot
   range:
     end:

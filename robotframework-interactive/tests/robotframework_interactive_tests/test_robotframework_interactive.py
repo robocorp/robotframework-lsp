@@ -89,7 +89,7 @@ def test_library_import(interpreter: _InterpreterInfo):
     from robotframework_interactive.robotfacade import RobotFrameworkFacade
 
     facade = RobotFrameworkFacade()
-    assert "Robot Scratchpad" in interpreter.stream_stdout.getvalue()
+    assert "Robot Interactive Console" in interpreter.stream_stdout.getvalue()
     assert "Output:" not in interpreter.stream_stdout.getvalue()
 
     assert "Collections" not in facade.get_libraries_imported_in_namespace()
@@ -203,7 +203,7 @@ Some Test
 
 
 def test_output_and_errors(interpreter: _InterpreterInfo):
-    assert "Robot Scratchpad" in interpreter.stream_stdout.getvalue()
+    assert "Robot Interactive Console" in interpreter.stream_stdout.getvalue()
     assert "Output:" not in interpreter.stream_stdout.getvalue()
 
     interpreter.interpreter.evaluate("""error here""")

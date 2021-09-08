@@ -5,10 +5,10 @@ ROBOT_RUN_TEST = "robot.runTest"  # Run Test/Task
 ROBOT_DEBUG_TEST = "robot.debugTest"  # Debug Test/Task
 ROBOT_RUN_SUITE = "robot.runSuite"  # Run Tests/Tasks Suite
 ROBOT_DEBUG_SUITE = "robot.debugSuite"  # Debug Tests/Tasks Suite
-ROBOT_INTERACTIVE_SHELL = "robot.interactiveShell"  # Start Scratchpad
-ROBOT_INTERNAL_RFINTERACTIVE_START = "robot.internal.rfinteractive.start"  # Create Scratchpad
-ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE = "robot.internal.rfinteractive.evaluate"  # Evaluate in Scratchpad
-ROBOT_INTERNAL_RFINTERACTIVE_STOP = "robot.internal.rfinteractive.stop"  # Stop Scratchpad
+ROBOT_INTERACTIVE_SHELL = "robot.interactiveShell"  # Start Interactive Console
+ROBOT_INTERNAL_RFINTERACTIVE_START = "robot.internal.rfinteractive.start"  # Create Interactive Console
+ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE = "robot.internal.rfinteractive.evaluate"  # Evaluate in Interactive Console
+ROBOT_INTERNAL_RFINTERACTIVE_STOP = "robot.internal.rfinteractive.stop"  # Stop Interactive Console
 ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS = "robot.internal.rfinteractive.semanticTokens"  # Get the semantic tokens based on the code entered.
 ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS = "robot.internal.rfinteractive.completions"  # Get the completions based on the code entered.
 
