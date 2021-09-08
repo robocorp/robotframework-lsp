@@ -8,6 +8,7 @@ from typing import Optional, ContextManager
 import os
 from robocorp_code.protocols import IRCCSpaceInfo
 from robocorp_ls_core.protocols import check_implements
+from functools import lru_cache
 
 
 log = get_logger(__name__)
@@ -187,12 +188,10 @@ class RCCSpaceInfo:
 
     def matches_conda_identity_yaml(self, conda_id: Path) -> bool:
         try:
-            from robocorp_ls_core import yaml_wrapper
-
             contents = self.conda_contents_path.read_text("utf-8")
-            load_yaml = yaml_wrapper.load
-
-            return load_yaml(contents) == load_yaml(
+            return format_conda_contents_to_compare(
+                contents
+            ) == format_conda_contents_to_compare(
                 conda_id.read_text("utf-8", "replace")
             )
         except:
@@ -230,11 +229,20 @@ class RCCSpaceInfo:
         _: IRCCSpaceInfo = check_implements(self)
 
 
-def format_conda_contents_to_compare(s: str) -> str:
-    contents = []
-    for line in s.splitlines(keepends=False):
-        line = line.strip()
-        if not line:
-            continue
-        contents.append(line)
-    return "".join(contents)
+@lru_cache(maxsize=50)
+def format_conda_contents_to_compare(contents: str) -> str:
+    try:
+        from robocorp_ls_core import yaml_wrapper
+
+        load_yaml = yaml_wrapper.load
+        loaded = load_yaml(contents)
+        return repr(loaded)
+    except:
+        log.info("Unable to parse yaml: %s", contents)
+        lst = []
+        for line in contents.splitlines(keepends=False):
+            line = line.strip()
+            if not line:
+                continue
+            lst.append(line)
+        return "".join(lst)

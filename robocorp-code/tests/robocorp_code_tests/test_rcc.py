@@ -175,6 +175,7 @@ def test_get_robot_yaml_environ(rcc: IRcc, datadir, holotree_manager):
     robot1 = _RobotInfo(datadir, "robot1")
     robot2 = _RobotInfo(datadir, "robot2")
     robot3 = _RobotInfo(datadir, "robot3")
+    robot3_new_comment = _RobotInfo(datadir, "robot3_new_comment")
 
     space = holotree_manager.compute_valid_space_info(
         robot1.conda_yaml, robot1.conda_yaml_contents
@@ -277,6 +278,24 @@ def test_get_robot_yaml_environ(rcc: IRcc, datadir, holotree_manager):
     space_info = robot_yaml_env_info.space_info
     with space_info.acquire_lock():
         assert space_info.conda_contents_match(robot3.conda_yaml_contents)
+
+    # Load robot 3 new comment: should be the same as robot3 as the contents
+    # are the same.
+    result_robot_3_new_comment = rcc.get_robot_yaml_env_info(
+        robot3_new_comment.robot_yaml,
+        robot3_new_comment.conda_yaml,
+        robot3_new_comment.conda_yaml_contents,
+        None,
+        holotree_manager=holotree_manager,
+    )
+    assert result_robot_3_new_comment.success
+    assert result_robot_3_new_comment.result is not None
+
+    # i.e.: it must remain the same as the only difference is a comment (which
+    # should be removed for the comparison).
+    assert (
+        result_robot_3_new_comment.result.space_info.space_name == space_info.space_name
+    )
 
 
 def test_get_robot_yaml_environ_not_ok(rcc: IRcc, datadir, holotree_manager):

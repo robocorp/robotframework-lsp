@@ -86,8 +86,13 @@ def cases(tmpdir_factory) -> CasesFixture:
 
 @pytest.fixture
 def robocorp_home(tmpdir) -> str:
-    # return "c:/temp/with spaces"
-    return str(tmpdir.join(".robocorp_home"))
+    # import shutil
+    #
+    # ret = "c:/temp/tests_robohome"
+    # shutil.rmtree(os.path.join(ret, ".robocorp_code"))
+    # return ret
+
+    return str(tmpdir.join("robocorp_home"))
 
 
 @pytest.fixture
