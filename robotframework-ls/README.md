@@ -17,7 +17,7 @@ To get a `.vsix`, download the latest `Deploy - RobotFramework Language Server E
 
 See: [Install from a vsix](https://code.visualstudio.com/docs/editor/extension-gallery#_install-from-a-vsix) for details installing a `.vsix` into VSCode.
 
-See: [Getting Started](https://hub.robocorp.com/development/best-practices/language-server-protocol-for-robot-framework/) for a tutorial with some screenshots.
+See: [Getting Started](https://robocorp.com/docs/developer-tools/visual-studio-code/lsp-extension#what-is-the-language-server-protocol-lsp-and-why-is-it-useful) for a tutorial with some screenshots.
 
 
 Configuration
