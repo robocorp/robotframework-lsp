@@ -52,19 +52,18 @@ class RfInterpreterServerApi(PythonLanguageServer):
             interpreter = RobotFrameworkInterpreter()
             self._interpreter = interpreter
 
-            def on_stdout(msg: str):
+            def on_output(msg: str, category: str):
                 if not self._interpreter_disposed:
                     endpoint = self._lsp_messages.endpoint
                     endpoint.notify(
-                        "interpreter/output", {"output": msg, "category": "stdout"}
+                        "interpreter/output", {"output": msg, "category": category}
                     )
 
+            def on_stdout(msg: str):
+                on_output(msg, "stdout")
+
             def on_stderr(msg: str):
-                if not self._interpreter_disposed:
-                    endpoint = self._lsp_messages.endpoint
-                    endpoint.notify(
-                        "interpreter/output", {"output": msg, "category": "stderr"}
-                    )
+                on_output(msg, "stderr")
 
             def on_before_read():
                 if not self._interpreter_disposed:
@@ -85,10 +84,18 @@ class RfInterpreterServerApi(PythonLanguageServer):
 
             def run_on_thread():
                 def on_main_loop(interpreter: IRobotFrameworkInterpreter):
-                    on_stdout(f"\nPython: {sys.version}\n{sys.executable}")
                     import robot
 
-                    on_stdout(f"\nRobot Framework: {robot.get_version()}\n")
+                    info = {
+                        "sys.version": sys.version,
+                        "sys.executable": sys.executable,
+                        "robot.version": robot.get_version(),
+                        "initialization.finished": True,
+                    }
+                    import json
+
+                    on_output(json.dumps(info), "json_info")
+
                     started_main_loop_event.set()
 
                     # Ok, we'll be stopped at this point receiving events and

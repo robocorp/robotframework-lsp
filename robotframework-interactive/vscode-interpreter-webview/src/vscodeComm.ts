@@ -5,7 +5,7 @@ interface IVSCode {
     postMessage(message: any): void;
 }
 
-declare const vscode: IVSCode;
+declare const vscode: IVSCode; // Set by rfinteractive.ts (in _getHtmlForWebview).
 
 // Note how request/response/event follows the same patterns from the 
 // DAP (debug adapter protocol).

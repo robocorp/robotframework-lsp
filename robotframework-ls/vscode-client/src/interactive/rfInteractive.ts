@@ -45,12 +45,18 @@ async function executeCheckedCommand(commandId: string, args: any) {
 
 let _lastActive: InteractiveShellPanel | undefined = undefined;
 
+interface IPersistable {
+    setState(state: object): void
+    getState(): object | undefined
+}
+
 class InteractiveShellPanel {
     public static readonly viewType = 'InteractiveShellPanel';
 
     private readonly _panel: vscode.WebviewPanel;
     private readonly _interpreterId: number;
     private readonly _localResourceRoot: vscode.Uri;
+    private readonly _persistable: IPersistable;
     public readonly disposables: vscode.Disposable[] = [];
 
     private _finishInitialized;
@@ -63,7 +69,7 @@ class InteractiveShellPanel {
         return this._lastMessageId;
     }
 
-    public static async create(extensionUri: vscode.Uri, interpreterId: number): Promise<InteractiveShellPanel> {
+    public static async create(extensionUri: vscode.Uri, interpreterId: number, persistable: IPersistable): Promise<InteractiveShellPanel> {
         const column = vscode.window.activeTextEditor
             ? vscode.window.activeTextEditor.viewColumn
             : undefined;
@@ -80,7 +86,7 @@ class InteractiveShellPanel {
             getWebviewOptions(localResourceRoot),
         );
 
-        let interactiveShellPanel = new InteractiveShellPanel(panel, localResourceRoot, interpreterId);
+        let interactiveShellPanel = new InteractiveShellPanel(panel, localResourceRoot, interpreterId, persistable);
         _lastActive = interactiveShellPanel;
         panel.onDidChangeViewState(() => {
             if (panel.active) {
@@ -96,10 +102,11 @@ class InteractiveShellPanel {
         return interactiveShellPanel;
     }
 
-    private constructor(panel: vscode.WebviewPanel, localResourceRoot: vscode.Uri, interpreterId: number) {
+    private constructor(panel: vscode.WebviewPanel, localResourceRoot: vscode.Uri, interpreterId: number, persistable: IPersistable) {
         this._panel = panel;
         this._localResourceRoot = localResourceRoot;
         this._interpreterId = interpreterId;
+        this._persistable = persistable;
 
         let interactiveShell = this;
         this.initialized = new Promise((resolve, reject) => {
@@ -195,6 +202,25 @@ class InteractiveShellPanel {
             }
         }
 
+        async function handlePersistState(message) {
+            let result = undefined;
+            try {
+                let stateToPersist = message.arguments['state'];
+                persistable.setState(stateToPersist);
+            } catch (err) {
+                logError('Error persisting state.', err);
+            } finally {
+                let response: any = {
+                    type: 'response',
+                    seq: nextMessageSeq(),
+                    command: message.command,
+                    request_seq: message.seq,
+                    body: result
+                }
+                webview.postMessage(response);
+            }
+        }
+
         // Handle messages from the webview
         this._panel.webview.onDidReceiveMessage(
             async message => {
@@ -211,6 +237,10 @@ class InteractiveShellPanel {
 
                         case 'completions':
                             await handleCompletions(message);
+                            return;
+
+                        case 'persistState':
+                            await handlePersistState(message);
                             return;
                     }
                 } else if (message.type == 'event') {
@@ -251,6 +281,7 @@ class InteractiveShellPanel {
         // Note: we can't really load from file://
         // See: https://github.com/microsoft/vscode/issues/87282
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._localResourceRoot, 'bundle.js'));
+        const initialState = JSON.stringify(this._persistable.getState());
         return `<!DOCTYPE html>
 			<html lang="en">
 			<head>
@@ -259,6 +290,7 @@ class InteractiveShellPanel {
                 <title>Robot Framework Interactive Console</title>
                 <script>
                 const vscode = acquireVsCodeApi();
+                const initialState = ${initialState};
                 </script>
                 <script defer src="${scriptUri}"></script>
             </head>
@@ -342,7 +374,26 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
             return;
         }
         interpreterId = result['result']['interpreter_id'];
-        interactiveShellPanel = await InteractiveShellPanel.create(extensionUri, interpreterId);
+        const SAVE_IN_KEY = 'interactiveConsoleState';
+        let persistable: IPersistable = {
+            setState: (state: object) => {
+                let currState = persistable.getState();
+                if (!currState) {
+                    context.globalState.update(SAVE_IN_KEY, state);
+                } else {
+                    // Note: merge the keys in the existing state.
+                    Object.entries(state).forEach(
+                        ([key, value]) => currState[key] = value
+                    );
+                    context.globalState.update(SAVE_IN_KEY, currState);
+                }
+
+            },
+            getState: () => {
+                return context.globalState.get(SAVE_IN_KEY);
+            }
+        }
+        interactiveShellPanel = await InteractiveShellPanel.create(extensionUri, interpreterId, persistable);
         interactiveShellPanel.disposables.push(disposeNotification);
         function disposeInterpreter() {
             executeCheckedCommand("robot.internal.rfinteractive.stop", {

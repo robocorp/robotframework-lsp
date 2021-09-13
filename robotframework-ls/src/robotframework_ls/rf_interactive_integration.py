@@ -116,27 +116,22 @@ class _RfInterpretersManager:
                 # mutating it...
                 assert rf_config is not config
 
+                info = {}
                 for ep in self._pm.get_implementations(EPResolveInterpreter):
                     interpreter_info = ep.get_interpreter_info_for_doc_uri(uri)
                     if interpreter_info is not None:
-                        on_interpreter_message(
-                            {
-                                "jsonrpc": "2.0",
-                                "method": "interpreter/output",
-                                "params": {
-                                    "output": f"Target: {interpreter_info.get_interpreter_id()}\n",
-                                    "category": "info",
-                                },
-                            }
-                        )
+                        info["target"] = str(interpreter_info.get_interpreter_id())
                         apply_interpreter_info_to_config(rf_config, interpreter_info)
                         break
+
+                info["path"] = str(fs_path)
+                import json
 
                 on_interpreter_message(
                     {
                         "jsonrpc": "2.0",
                         "method": "interpreter/output",
-                        "params": {"output": f"Path: {fs_path}\n", "category": "info"},
+                        "params": {"output": json.dumps(info), "category": "json_info"},
                     }
                 )
                 rf_interpreter_server_manager.interpreter_start(uri)
