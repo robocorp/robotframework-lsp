@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import SplitPane from 'react-split-pane';
 import { ConsoleComponent, FONT_INFO } from './consoleComponent';
+import { escaped } from './vscodeComm';
 
 import './style.css';
 import spinner from "./spinner.svg";
@@ -10,11 +11,18 @@ import { configureMonacoLanguage } from './monacoConf';
 
 declare const initialState: object;  // Set by rfinteractive.ts (in _getHtmlForWebview).
 
+interface IExceptionInfo {
+    type: string
+    description: string
+    traceback: string
+}
+
 interface ICellInfo {
     id: number
-    type: 'code' | 'stdout' | 'stderr' | 'info'
+    type: 'code' | 'stdout' | 'stderr' | 'info' | 'exception'
     cellCode: string
     cellCodeHtml: string
+    exceptionInfo?: IExceptionInfo
 }
 
 interface IJsonInfo {
@@ -55,6 +63,10 @@ interface ICellProps {
     cellInfo: ICellInfo
 }
 
+interface IExceptionCellState {
+    showTraceback: boolean
+}
+
 interface IEvaluateRequest {
     uri: string
     code: string
@@ -75,11 +87,62 @@ class CellComponent extends React.Component<ICellProps> {
     }
 }
 
+class ExceptionCellComponent extends React.Component<ICellProps, IExceptionCellState> {
+    constructor(props) {
+        super(props);
+        this.state = {
+            showTraceback: false,
+        };
+        this.onClick = this.onClick.bind(this);
+    }
+
+    onClick(e) {
+        this.setState((prevState, props) => {
+            return { 'showTraceback': !prevState.showTraceback };
+        });
+    }
+
+    render() {
+        let exceptionInfo = this.props.cellInfo.exceptionInfo;
+        let traceback: string = exceptionInfo.traceback;
+        let lines: string[] = traceback.split(/\r?\n/);
+
+        let tracebackContent = '';
+        for (const line of lines) {
+            // TODO: Create links for traceback (group1 = file, group2 = line)
+            // Regexp: File\s\"([^"]+)\",\s+line\s+(\d+),\s+
+            tracebackContent += escaped(line);
+            tracebackContent += '<br/>'
+        }
+
+        let showLabel = "[+]";
+        if(this.state.showTraceback){
+            showLabel = "[-]";
+        }
+
+        return <div>
+            <div className="cell_exception_title">
+                <span className="cell_exception_error_bt">Error</span> 
+                {exceptionInfo.description}&nbsp;
+                <a href="#" onClick={this.onClick}>{showLabel}</a></div>
+            {this.state.showTraceback ?
+                <pre className="cell_exception cell_output_content" dangerouslySetInnerHTML={{ __html: tracebackContent }}>
+                </pre> : undefined}
+        </div>
+    }
+}
+
 
 let _lastCellId: number = 0;
 function nextCellId(): number {
     _lastCellId += 1;
     return _lastCellId;
+}
+
+let _lastTracebackId: number = 0;
+function nextTracebackId(): number {
+    _lastTracebackId += 1;
+    return _lastTracebackId;
 }
 
 class HelpComponent extends React.Component<IHelpComponent> {
@@ -142,7 +205,12 @@ class HistoryComponent extends React.Component<IHistoryProps> {
 
     render() {
         const cells = this.props.cells.map((cellInfo: ICellInfo) => (
-            <CellComponent key={cellInfo.id} cellInfo={cellInfo} />
+            (
+                cellInfo.type === 'exception' ?
+                    <ExceptionCellComponent key={cellInfo.id} cellInfo={cellInfo} />
+                    :
+                    <CellComponent key={cellInfo.id} cellInfo={cellInfo} />
+            )
         ));
         return (
             <div className="history">
@@ -166,6 +234,17 @@ class HistoryComponent extends React.Component<IHistoryProps> {
     }
 }
 
+
+function createExceptionCell(exceptionInfo: IExceptionInfo): ICellInfo {
+    let newCell: ICellInfo = {
+        id: nextCellId(),
+        type: 'exception',
+        cellCode: undefined,
+        cellCodeHtml: undefined,
+        exceptionInfo: exceptionInfo
+    };
+    return newCell;
+}
 
 class AppComponent extends React.Component<object, IAppState> {
 
@@ -207,11 +286,19 @@ class AppComponent extends React.Component<object, IAppState> {
                 return { 'jsonInfo': jsonInfo, 'cells': prevState.cells }
             }
 
+            if (msg.category == 'exception') {
+                let exceptionInfo: IExceptionInfo = JSON.parse(msg.output);
+                return {
+                    'jsonInfo': prevState.jsonInfo,
+                    'cells': prevState.cells.concat([createExceptionCell(exceptionInfo)]),
+                };
+            }
+
             if (!prevState.jsonInfo['initialization.finished']) {
                 return; // Ignore any output until the initialization did actually finish
             }
 
-            let type: 'stdout' | 'stderr' | 'info' = 'stdout';
+            let type: 'stdout' | 'stderr' | 'info' | 'exception' = 'stdout';
             switch (msg.category) {
                 case 'stderr':
                 case 'stdout':

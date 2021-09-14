@@ -40,7 +40,7 @@ There is already a project which provides an interpreter:
     section and then execute it, copying back and forth the imports/variables/keywords
     between section evaluations.
 """
-from robotframework_interactive.callbacks import Callback
+from robotframework_interactive.callbacks import Callback, CallbackWithReturn
 import traceback
 from ast import NodeVisitor
 from robotframework_interactive.robotfacade import RobotFrameworkFacade
@@ -170,6 +170,7 @@ class RobotFrameworkInterpreter(object):
         )
         self.on_stdout = Callback()
         self.on_stderr = Callback()
+        self.on_exception_handled = CallbackWithReturn()
         self._stdout = _CustomStream(self.on_stdout)
         self._stderr = _CustomStream(self.on_stderr)
 
@@ -373,10 +374,12 @@ class RobotFrameworkInterpreter(object):
             sys.__stderr__ = self._stderr
             return self._evaluate(code)
         except Exception as e:
-            s = traceback.format_exc()
-            if s:
-                for line in s.splitlines(keepends=True):
-                    self.on_stderr(line)
+            if not self.on_exception_handled(e):
+                # If it's not handled by some client, print it to stderr.
+                s = traceback.format_exc()
+                if s:
+                    for line in s.splitlines(keepends=True):
+                        self.on_stderr(line)
             return {
                 "success": False,
                 "message": f"Error while evaluating: {e}",

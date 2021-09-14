@@ -206,13 +206,25 @@ def test_output_and_errors(interpreter: _InterpreterInfo):
     assert "Robot Interactive Console" in interpreter.stream_stdout.getvalue()
     assert "Output:" not in interpreter.stream_stdout.getvalue()
 
-    interpreter.interpreter.evaluate("""error here""")
+    def on_exception_handled(e):
+        if "ignore this error" in str(e):
+            return True
+        return None
+
+    interpreter.interpreter.on_exception_handled.register(on_exception_handled)
+    interpreter.interpreter.evaluate("error here")
     assert (
         interpreter.stream_stderr.getvalue().count("robot.errors.ExecutionFailures")
         == 1
     )
+    interpreter.interpreter.evaluate("error here")
+    assert (
+        interpreter.stream_stderr.getvalue().count("robot.errors.ExecutionFailures")
+        == 2
+    )
 
-    interpreter.interpreter.evaluate("""error here""")
+    # Ignored in on_exception_handled
+    interpreter.interpreter.evaluate("ignore this error")
     assert (
         interpreter.stream_stderr.getvalue().count("robot.errors.ExecutionFailures")
         == 2

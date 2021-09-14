@@ -64,6 +64,33 @@
   margin-bottom: 0.8em;
 }
 
+.cell_exception{
+  color: var(--vscode-errorForeground);
+  border-left: 0.3em solid var(--vscode-errorForeground);
+  border-radius: 0.1em;
+  margin-left: 1em;
+  padding-left: 1em;
+  margin-bottom: 0.8em;
+}
+
+.cell_exception_title{
+  color: var(--vscode-errorForeground);
+  font-family: var(--vscode-editor-font-family);
+  font-weight: var(--vscode-editor-font-weight);
+  font-size: var(--vscode-editor-font-size);
+  margin-bottom: 0.5em;
+  padding-left: 0.4em;
+}
+
+.cell_exception_error_bt{
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+  background-color: var(--vscode-inputValidation-errorBorder);
+  color: var(--vscode-inputOption-activeForeground);
+  border: .2em solid var(--vscode-inputValidation-errorBorder);
+  border-radius: 0.5em;
+}
+
 .cell_info{
   color: var(--vscode-editorWarning-foreground);
   border-left: 0.3em solid var(--vscode-editorWarning-foreground);

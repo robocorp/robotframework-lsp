@@ -148,8 +148,13 @@ function getMassaged(setting: string): string {
     return setting;
 }
 
-function escaped(setting: string): string {
-    return setting.replace(/"/g, '&quot;');
+export function escaped(unsafe: string): string {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 export async function codeAsHtml(code: string): Promise<string> {

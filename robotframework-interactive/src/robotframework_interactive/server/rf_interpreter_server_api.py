@@ -7,6 +7,8 @@ from robotframework_interactive.protocols import IMessage, IRobotFrameworkInterp
 from robocorp_ls_core.options import DEFAULT_TIMEOUT, USE_TIMEOUTS, NO_TIMEOUT
 from typing import Optional
 import sys
+import traceback
+import json
 
 log = get_logger(__name__)
 
@@ -75,8 +77,28 @@ class RfInterpreterServerApi(PythonLanguageServer):
                     endpoint = self._lsp_messages.endpoint
                     endpoint.notify("interpreter/afterRead", {})
 
+            def on_exception_handled(e):
+                err_as_string = traceback.format_exc()
+                try:
+                    classname = e.__class__.__name__
+                except:
+                    classname = str(type(e))
+
+                on_output(
+                    json.dumps(
+                        {
+                            "description": str(e),
+                            "traceback": err_as_string,
+                            "type": classname,
+                        }
+                    ),
+                    "exception",
+                )
+                return True
+
             interpreter.on_stdout.register(on_stdout)
             interpreter.on_stderr.register(on_stderr)
+            interpreter.on_exception_handled.register(on_exception_handled)
             interpreter.on_before_read.register(on_before_read)
             interpreter.on_after_read.register(on_after_read)
 
@@ -92,8 +114,6 @@ class RfInterpreterServerApi(PythonLanguageServer):
                         "robot.version": robot.get_version(),
                         "initialization.finished": True,
                     }
-                    import json
-
                     on_output(json.dumps(info), "json_info")
 
                     started_main_loop_event.set()
