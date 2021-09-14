@@ -85,10 +85,11 @@
 .cell_exception_error_bt{
   margin-left: 0.5em;
   margin-right: 0.5em;
-  background-color: var(--vscode-inputValidation-errorBorder);
+  background-color: var(--vscode-errorForeground);
   color: var(--vscode-inputOption-activeForeground);
-  border: .2em solid var(--vscode-inputValidation-errorBorder);
-  border-radius: 0.5em;
+  border: .2em solid var(--vscode-errorForeground);
+  border-radius: 0.1em;
+  font-weight: bold;
 }
 
 .cell_info{

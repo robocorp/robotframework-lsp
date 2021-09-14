@@ -116,13 +116,13 @@ class ExceptionCellComponent extends React.Component<ICellProps, IExceptionCellS
         }
 
         let showLabel = "[+]";
-        if(this.state.showTraceback){
+        if (this.state.showTraceback) {
             showLabel = "[-]";
         }
 
         return <div>
             <div className="cell_exception_title">
-                <span className="cell_exception_error_bt">Error</span> 
+                <span className="cell_exception_error_bt">Error</span>
                 {exceptionInfo.description}&nbsp;
                 <a href="#" onClick={this.onClick}>{showLabel}</a></div>
             {this.state.showTraceback ?
@@ -137,12 +137,6 @@ let _lastCellId: number = 0;
 function nextCellId(): number {
     _lastCellId += 1;
     return _lastCellId;
-}
-
-let _lastTracebackId: number = 0;
-function nextTracebackId(): number {
-    _lastTracebackId += 1;
-    return _lastTracebackId;
 }
 
 class HelpComponent extends React.Component<IHelpComponent> {
