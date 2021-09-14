@@ -213,23 +213,31 @@ export class ConsoleComponent extends React.Component<IConsoleProps> {
         let history = this.history;
 
         function lineNumbers(line: number) {
-            return '>';
+            return line === 1 ? "»" : "";
         }
 
         function editorDidMount(editor: monaco.editor.IStandaloneCodeEditor) {
             configEditor(editor, history, handleEvaluate);
+            editor.focus();
         }
 
         let theme: string = detectBaseTheme();
+        let renderLineHighlight: 'none' | 'gutter' | 'line' | 'all' = 'none' ;
         const options = {
             selectOnLineNumbers: true,
             minimap: { enabled: false },
             scrollBeyondLastLine: false,
             automaticLayout: true,
-            lineNumbers: lineNumbers,
             scrollbar: { alwaysConsumeMouseWheel: false },
-            'semanticHighlighting.enabled': true
+            'semanticHighlighting.enabled': true,
+            "glyphMargin": false,
+            "folding": false,
+            "lineNumbers": lineNumbers,
+            // "lineDecorationsWidth": 0, // undocumented
+            "lineNumbersMinChars": 2,  // undocumented
+            renderLineHighlight: renderLineHighlight
         };
+
 
         return (
             <MonacoEditor
