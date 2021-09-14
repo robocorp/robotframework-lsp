@@ -126,8 +126,8 @@ class ExceptionCellComponent extends React.Component<ICellProps, IExceptionCellS
                 {exceptionInfo.description}&nbsp;
                 <a href="#" onClick={this.onClick}>{showLabel}</a></div>
             {this.state.showTraceback ?
-                <pre className="cell_exception cell_output_content" dangerouslySetInnerHTML={{ __html: tracebackContent }}>
-                </pre> : undefined}
+                <div className="cell_exception"><pre className="cell_output_content" dangerouslySetInnerHTML={{ __html: tracebackContent }}>
+                </pre></div> : undefined}
         </div>
     }
 }

@@ -1,4 +1,4 @@
-def test_ast_print():
+def test_ast_to_code():
     from robotframework_interactive.ast_to_code import ast_to_code
     from robot.api import get_model
 
@@ -21,3 +21,21 @@ def test_ast_print():
     )
     model = get_model(code)
     assert ast_to_code(model) == code
+
+
+def test_ast_to_code_trim_lines_at_end():
+    from robotframework_interactive.ast_to_code import ast_to_code
+    from robot.api import get_model
+
+    code = (
+        "*** Test Cases ***\n"
+        "Test\n"
+        "    Keyword Call\n"
+        "    \n"
+        "    \n"
+        "    \n"
+        "    \n"
+    )
+    expected_code = "*** Test Cases ***\n" "Test\n" "    Keyword Call\n"
+    model = get_model(code)
+    assert ast_to_code(model) == expected_code
