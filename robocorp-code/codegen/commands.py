@@ -195,7 +195,7 @@ COMMANDS = [
         "Unlink and remove credentials from Robocorp Cloud",
         add_to_package_json=True,
         server_handled=False,
-        icon="$(circle-slash)",
+        icon="$(debug-disconnect)",
     ),
     Command(
         "robocorp.cloudLogout.internal",
@@ -276,6 +276,14 @@ COMMANDS = [
         hide_from_command_palette=True,
         server_handled=False,
         icon="$(trash)",
+    ),
+    Command(
+        "robocorp.openCloudHome",
+        "Open cloud home",
+        add_to_package_json=True,
+        hide_from_command_palette=True,
+        server_handled=False,
+        icon="$(cloud)",
     ),
     # This is the same as the one above, but it won't ask what's the robot, it'll
     # just use the one selected in the robots tree.

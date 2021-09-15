@@ -37,6 +37,7 @@ ROBOCORP_REFRESH_CLOUD_VIEW = "robocorp.refreshCloudView"  # Refresh Cloud view
 ROBOCORP_GET_LOCATORS_JSON_INFO = "robocorp.getLocatorsJsonInfo"  # Obtain information from the locators.json given a robot.yaml
 ROBOCORP_REMOVE_LOCATOR_FROM_JSON_INTERNAL = "robocorp.removeLocatorFromJson.internal"  # Remove a named locator from locators.json
 ROBOCORP_REMOVE_LOCATOR_FROM_JSON = "robocorp.removeLocatorFromJson"  # Remove Locator
+ROBOCORP_OPEN_CLOUD_HOME = "robocorp.openCloudHome"  # Open cloud home
 ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER = "robocorp.newRobocorpInspectorBrowser"  # Add Browser Locator
 ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE = "robocorp.newRobocorpInspectorImage"  # Add Image Locator
 ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR = "robocorp.editRobocorpInspectorLocator"  # Edit locator

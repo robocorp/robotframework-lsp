@@ -1,6 +1,10 @@
 import enum
 from typing import Optional, Union
-from robocorp_code.commands import ROBOCORP_CLOUD_LOGIN, ROBOCORP_CLOUD_LOGOUT
+from robocorp_code.commands import (
+    ROBOCORP_CLOUD_LOGIN,
+    ROBOCORP_CLOUD_LOGOUT,
+    ROBOCORP_OPEN_CLOUD_HOME,
+)
 
 
 class TreeView:
@@ -165,19 +169,30 @@ TREE_VIEW_CONTAINERS = [
                             MenuGroup.INLINE,
                             when="robocorp-code:single-robot-selected && viewItem == locatorEntry",
                         ),
-
                     ],
                 },
             ),
             TreeView(
                 id="robocorp-cloud-tree",
-                name="Robocorp Cloud",
-                contextual_title="Robocorp Cloud",
+                name="Robocorp",
+                contextual_title="Robocorp",
                 menus={
-                    "view/title": [
-                        Menu(ROBOCORP_CLOUD_LOGIN, MenuGroup.NAVIGATION),
-                        Menu(ROBOCORP_CLOUD_LOGOUT, MenuGroup.NAVIGATION),
-                        Menu("robocorp.refreshCloudView", MenuGroup.NAVIGATION),
+                    "view/item/context": [
+                        Menu(
+                            ROBOCORP_CLOUD_LOGIN,
+                            MenuGroup.INLINE,
+                            when="viewItem == cloudLoginItem",
+                        ),
+                        Menu(
+                            ROBOCORP_CLOUD_LOGOUT,
+                            MenuGroup.INLINE,
+                            when="viewItem == cloudLogoutItem",
+                        ),
+                        Menu(
+                            ROBOCORP_OPEN_CLOUD_HOME,
+                            MenuGroup.INLINE,
+                            when="viewItem == cloudLogoutItem",
+                        ),
                     ]
                 },
             ),
