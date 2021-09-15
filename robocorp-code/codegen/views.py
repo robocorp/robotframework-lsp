@@ -165,19 +165,25 @@ TREE_VIEW_CONTAINERS = [
                             MenuGroup.INLINE,
                             when="robocorp-code:single-robot-selected && viewItem == locatorEntry",
                         ),
-
                     ],
                 },
             ),
             TreeView(
                 id="robocorp-cloud-tree",
-                name="Robocorp Cloud",
-                contextual_title="Robocorp Cloud",
+                name="Robocorp",
+                contextual_title="Robocorp",
                 menus={
-                    "view/title": [
-                        Menu(ROBOCORP_CLOUD_LOGIN, MenuGroup.NAVIGATION),
-                        Menu(ROBOCORP_CLOUD_LOGOUT, MenuGroup.NAVIGATION),
-                        Menu("robocorp.refreshCloudView", MenuGroup.NAVIGATION),
+                    "view/item/context": [
+                        Menu(
+                            ROBOCORP_CLOUD_LOGIN,
+                            MenuGroup.INLINE,
+                            when="viewItem == cloudLoginItem",
+                        ),
+                        Menu(
+                            ROBOCORP_CLOUD_LOGOUT,
+                            MenuGroup.INLINE,
+                            when="viewItem == cloudLogoutItem",
+                        ),
                     ]
                 },
             ),

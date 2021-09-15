@@ -5,12 +5,12 @@ import {
     TREE_VIEW_ROBOCORP_ROBOTS_TREE
 } from './robocorpViews';
 import * as vscode from 'vscode';
-import {ExtensionContext} from 'vscode';
+import { ExtensionContext } from 'vscode';
 import * as roboCommands from './robocorpCommands';
-import {OUTPUT_CHANNEL} from './channel';
-import {runRobotRCC, uploadRobot} from './activities';
-import {createRccTerminal} from './rccTerminal';
-import {RobotContentTreeDataProvider} from './viewsRobotContent';
+import { OUTPUT_CHANNEL } from './channel';
+import { runRobotRCC, uploadRobot } from './activities';
+import { createRccTerminal } from './rccTerminal';
+import { RobotContentTreeDataProvider } from './viewsRobotContent';
 import {
     basename,
     CloudEntry,
@@ -56,45 +56,38 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
     async getChildren(element?: CloudEntry): Promise<CloudEntry[]> {
         if (!element) {
             let accountInfoResult: ActionResult = await vscode.commands.executeCommand(roboCommands.ROBOCORP_GET_LINKED_ACCOUNT_INFO_INTERNAL);
+            let ret: CloudEntry[] = [];
             if (!accountInfoResult.success) {
-                return [{
-                    'label': 'Account not linked. Click to link account.',
+                ret.push({
+                    'label': 'Link to Robocorp Cloud',
                     'iconPath': 'link',
+                    'viewItemContextValue': 'cloudLoginItem',
                     'command': {
                         'title': 'Link to Robocorp Cloud',
                         'command': roboCommands.ROBOCORP_CLOUD_LOGIN,
-                    }
-                }];
+                    },
+                });
+            } else {
+                let accountInfo = accountInfoResult.result;
+                ret.push({
+                    'label': 'Linked: ' + accountInfo['fullname'] + ' (' + accountInfo['email'] + ')',
+                    'iconPath': 'link',
+                    'viewItemContextValue': 'cloudLogoutItem'
+                });
             }
-            let accountInfo = accountInfoResult.result;
-            let ret: CloudEntry[] = [{
-                'label': 'Account: ' + accountInfo['fullname'] + ' (' + accountInfo['email'] + ')',
-            }];
+            ret.push({
+                'label': 'Robot Developer Guide',
+                'iconPath': 'book',
+            });
+            ret.push({
+                'label': 'RPA Framework Library',
+                'iconPath': 'notebook',
+            });
+            ret.push({
+                'label': 'Submit Issue',
+                'iconPath': 'report',
+            });
 
-
-            let refresh: boolean = this.refreshOnce;
-            this.refreshOnce = false;
-            let actionResult: ListWorkspacesActionResult = await vscode.commands.executeCommand(
-                roboCommands.ROBOCORP_CLOUD_LIST_WORKSPACES_INTERNAL, { 'refresh': refresh }
-            );
-            if (actionResult.success) {
-                let workspaceInfo: WorkspaceInfo[] = actionResult.result;
-                for (let i = 0; i < workspaceInfo.length; i++) {
-                    const element = workspaceInfo[i];
-                    let children: CloudEntry[] = [];
-
-                    let packages: PackageInfo[] = element.packages;
-                    for (let j = 0; j < packages.length; j++) {
-                        const p = packages[j];
-                        children.push({ 'label': p.name });
-                    }
-
-                    ret.push({
-                        'label': element.workspaceName,
-                        'children': children
-                    });
-                }
-            }
 
             return ret;
         }
@@ -108,6 +101,9 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
         const treeItem = new vscode.TreeItem(element.label, element.children ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
         treeItem.command = element.command;
         treeItem.iconPath = new vscode.ThemeIcon(element.iconPath);
+        if (element.viewItemContextValue) {
+            treeItem.contextValue = element.viewItemContextValue;
+        }
         return treeItem;
     }
 }

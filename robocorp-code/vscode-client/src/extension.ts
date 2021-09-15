@@ -43,15 +43,15 @@ import {
     env,
     Uri,
 } from 'vscode';
-import {LanguageClientOptions, State} from 'vscode-languageclient';
-import {LanguageClient, ServerOptions} from 'vscode-languageclient/node';
+import { LanguageClientOptions, State } from 'vscode-languageclient';
+import { LanguageClient, ServerOptions } from 'vscode-languageclient/node';
 import * as inspector from './inspector';
-import {copySelectedToClipboard, removeLocator} from './locators';
+import { copySelectedToClipboard, removeLocator } from './locators';
 import * as views from './views';
 import * as roboConfig from './robocorpSettings';
 import * as roboCommands from './robocorpCommands';
-import {logError, OUTPUT_CHANNEL} from './channel';
-import {getExtensionRelativeFile, verifyFileExists} from './files';
+import { logError, OUTPUT_CHANNEL } from './channel';
+import { getExtensionRelativeFile, verifyFileExists } from './files';
 import {
     collectBaseEnv,
     getRccLocation,
@@ -64,8 +64,8 @@ import {
     submitIssue,
     submitIssueUI,
 } from './rcc';
-import {Timing} from './time';
-import {execFilePromise, ExecFileReturn} from './subprocess';
+import { Timing } from './time';
+import { execFilePromise, ExecFileReturn } from './subprocess';
 import {
     createRobot,
     uploadRobot,
@@ -76,17 +76,17 @@ import {
     askAndRunRobotRCC,
     rccConfigurationDiagnostics,
 } from './activities';
-import {sleep} from './time';
-import {handleProgressMessage, ProgressReport} from './progress';
-import {TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE} from './robocorpViews';
-import {askAndCreateRccTerminal} from './rccTerminal';
+import { sleep } from './time';
+import { handleProgressMessage, ProgressReport } from './progress';
+import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from './robocorpViews';
+import { askAndCreateRccTerminal } from './rccTerminal';
 import {
     deleteResourceInRobotContentTree,
     newFileInRobotContentTree,
     newFolderInRobotContentTree,
     renameResourceInRobotContentTree,
 } from './viewsRobotContent';
-import {LocatorEntry} from './viewsCommon';
+import { LocatorEntry } from './viewsCommon';
 
 
 const clientOptions: LanguageClientOptions = {
@@ -430,14 +430,19 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_NEW_FOLDER_IN_ROBOT_CONTENT_VIEW, newFolderInRobotContentTree);
         commands.registerCommand(roboCommands.ROBOCORP_DELETE_RESOURCE_IN_ROBOT_CONTENT_VIEW, deleteResourceInRobotContentTree);
         commands.registerCommand(roboCommands.ROBOCORP_RENAME_RESOURCE_IN_ROBOT_CONTENT_VIEW, renameResourceInRobotContentTree);
-        async function cloudLoginShowConfirmation() {
+        async function cloudLoginShowConfirmationAndRefresh() {
             let loggedIn = await cloudLogin();
             if (loggedIn) {
                 window.showInformationMessage("Successfully logged in Robocorp Cloud.")
             }
+            views.refreshCloudTreeView();
         }
-        commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGIN, () => cloudLoginShowConfirmation());
-        commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGOUT, () => cloudLogout());
+        async function cloudLogoutAndRefresh() {
+            await cloudLogout();
+            views.refreshCloudTreeView();
+        }
+        commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGIN, () => cloudLoginShowConfirmationAndRefresh());
+        commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGOUT, () => cloudLogoutAndRefresh());
         views.registerViews(context);
         registerDebugger(executableAndEnv.pythonExe);
         context.subscriptions.push(disposable);

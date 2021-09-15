@@ -195,7 +195,7 @@ COMMANDS = [
         "Unlink and remove credentials from Robocorp Cloud",
         add_to_package_json=True,
         server_handled=False,
-        icon="$(circle-slash)",
+        icon="$(debug-disconnect)",
     ),
     Command(
         "robocorp.cloudLogout.internal",

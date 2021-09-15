@@ -153,8 +153,8 @@
                 },
                 {
                     "id": "robocorp-cloud-tree",
-                    "name": "Robocorp Cloud",
-                    "contextualTitle": "Robocorp Cloud"
+                    "name": "Robocorp",
+                    "contextualTitle": "Robocorp"
                 }
             ]
         },
@@ -258,7 +258,7 @@
                 "command": "robocorp.cloudLogout",
                 "title": "Unlink and remove credentials from Robocorp Cloud",
                 "category": "Robocorp",
-                "icon": "$(circle-slash)"
+                "icon": "$(debug-disconnect)"
             },
             {
                 "command": "robocorp.refreshRobotsView",
@@ -442,21 +442,6 @@
                     "command": "robocorp.newRobocorpInspectorImage",
                     "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
                     "group": "navigation"
-                },
-                {
-                    "command": "robocorp.cloudLogin",
-                    "when": "view == robocorp-cloud-tree",
-                    "group": "navigation"
-                },
-                {
-                    "command": "robocorp.cloudLogout",
-                    "when": "view == robocorp-cloud-tree",
-                    "group": "navigation"
-                },
-                {
-                    "command": "robocorp.refreshCloudView",
-                    "when": "view == robocorp-cloud-tree",
-                    "group": "navigation"
                 }
             ],
             "view/item/context": [
@@ -501,6 +486,16 @@
                 {
                     "command": "robocorp.removeLocatorFromJson",
                     "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected && viewItem == locatorEntry",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.cloudLogin",
+                    "when": "view == robocorp-cloud-tree && viewItem == cloudLoginItem",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.cloudLogout",
+                    "when": "view == robocorp-cloud-tree && viewItem == cloudLogoutItem",
                     "group": "inline"
                 }
             ],

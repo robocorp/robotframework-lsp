@@ -5,6 +5,7 @@ import * as roboCommands from './robocorpCommands';
 import * as vscode from 'vscode';
 import * as pythonExtIntegration from './pythonExtIntegration';
 import { QuickPickItemWithAction, sortCaptions, QuickPickItemRobotTask, showSelectOneQuickPick, showSelectOneStrQuickPick } from "./ask";
+import { refreshCloudTreeView } from "./views";
 
 
 export async function cloudLogin(): Promise<boolean> {
@@ -22,9 +23,14 @@ export async function cloudLogin(): Promise<boolean> {
             env.openExternal(Uri.parse('https://cloud.robocorp.com/settings/access-credentials'));
             continue;
         }
-        loggedIn = await commands.executeCommand(
+        let commandResult: ActionResult = await commands.executeCommand(
             roboCommands.ROBOCORP_CLOUD_LOGIN_INTERNAL, { 'credentials': credentials }
         );
+        if (!commandResult) {
+            loggedIn = false;
+        } else {
+            loggedIn = commandResult.success
+        }
         if (!loggedIn) {
             let retry = "Retry with new credentials";
             let selectedItem = await window.showWarningMessage('Unable to log in with the provided credentials.', { 'modal': true }, retry);
@@ -33,29 +39,40 @@ export async function cloudLogin(): Promise<boolean> {
             }
         }
     } while (!loggedIn);
+
     return true;
 }
 
 export async function cloudLogout(): Promise<void> {
     let loggedOut: ActionResult;
 
-    let isLoginNeeded: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_IS_LOGIN_NEEDED_INTERNAL);
-    if (!isLoginNeeded) {
+    let isLoginNeededActionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_IS_LOGIN_NEEDED_INTERNAL);
+    if (!isLoginNeededActionResult) {
         window.showInformationMessage('Error getting information if already linked in.');
         return;
     }
 
-    if (isLoginNeeded.result) {
-        window.showInformationMessage('Unable to unlink and remove credentials from Robocorp Cloud. Not linked with valid cloud credentials.');
+    if (isLoginNeededActionResult.result) {
+        window.showInformationMessage('Unable to unlink and remove credentials from Robocorp Cloud. Current cloud credentials are not valid.');
+        refreshCloudTreeView();
+        return;
+    }
+    let YES = 'Unlink';
+    const result = await window.showWarningMessage(
+        `Are you sure you want to unlink and remove credentials from Robocorp Cloud?`,
+        { 'modal': true },
+        YES
+    );
+    if (result !== YES) {
         return;
     }
     loggedOut = await commands.executeCommand(roboCommands.ROBOCORP_CLOUD_LOGOUT_INTERNAL);
     if (!loggedOut) {
-        window.showInformationMessage('Error with unlinking Robocorp Cloud credentials.');
+        window.showInformationMessage('Error unlinking and removing Robocorp Cloud credentials.');
         return;
     }
     if (!loggedOut.success) {
-        window.showInformationMessage('Unable to unlink Robocorp Cloud credentials.');
+        window.showInformationMessage('Unable to unlink and remove Robocorp Cloud credentials.');
         return;
     }
     window.showInformationMessage('Robocorp Cloud credentials successfully unlinked and removed.');
@@ -213,10 +230,10 @@ export async function setPythonInterpreterFromRobotYaml() {
                     let result = await window.showInformationMessage(
                         'Copied python executable path to the clipboard. Press OK to proceed and then paste the path after choosing the option to "Enter interpreter path..."',
                         'OK', 'Cancel');
-                    if(result == 'OK'){
+                    if (result == 'OK') {
                         await commands.executeCommand('python.setInterpreter');
                     }
-                }else if(selectedItem == opt2){
+                } else if (selectedItem == opt2) {
                     env.openExternal(Uri.parse('https://github.com/microsoft/vscode-python/wiki/AB-Experiments#pythondeprecatepythonpath'));
                 }
             } else {
@@ -289,13 +306,13 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
         return;
     }
 
-    let isLoginNeeded: ActionResult = await isLoginNeededPromise;
-    if (!isLoginNeeded) {
+    let isLoginNeededActionResult: ActionResult = await isLoginNeededPromise;
+    if (!isLoginNeededActionResult) {
         window.showInformationMessage('Error getting if login is needed.');
         return;
     }
 
-    if (isLoginNeeded.result) {
+    if (isLoginNeededActionResult.result) {
         let loggedIn: boolean = await cloudLogin();
         if (!loggedIn) {
             return;

@@ -23,6 +23,7 @@ export interface CloudEntry {
     iconPath?: string;
     command?: vscode.Command;
     children?: CloudEntry[];
+    viewItemContextValue?: string;
 }
 
 export interface RobotEntry {
