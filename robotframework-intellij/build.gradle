@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.22.0'
+version '0.23.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,12 +51,11 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.22.0
+    Release 0.23.0
     </p>
     <ul>
 
-    <li>[Intellij] Additional logging to diagnose startup issues.</li>
-    <li>Recognize keywords when used as arguments of other keywords (for BuiltIn library).</li>
+    <li>Minor bugfixes.</li>
 
     <br>
     Current feature set:<br>

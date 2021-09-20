@@ -6,7 +6,6 @@
 
         Resource    my_resource.robot
 
-
         '
       uri: case4.robot
     command: robot.interactiveShell
@@ -24,7 +23,7 @@
 - command:
     arguments:
     - code: "*** Test Case ***\nSome Test\n    [Documentation]      Docs\n    Some\
-        \ Keyword\n    \n"
+        \ Keyword\n"
       uri: case4.robot
     command: robot.interactiveShell
     title: Run in Interactive Console
@@ -40,8 +39,7 @@
       line: 7
 - command:
     arguments:
-    - code: "*** Keyword ***\nSome Keyword\n    Log    Something    console=True\n\
-        \    \n"
+    - code: "*** Keyword ***\nSome Keyword\n    Log    Something    console=True\n"
       uri: case4.robot
     command: robot.interactiveShell
     title: Run in Interactive Console

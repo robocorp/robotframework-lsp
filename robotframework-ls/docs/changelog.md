@@ -1,3 +1,14 @@
+New in 0.23.0 (2021-09-20)
+-----------------------------
+
+- Interactive Console
+  - The `Scratchpad` was renamed to `Interactive Console`.
+  - It should be easier to distinguish between input and output.
+  - Errors are collapsed by default and it's possible to expand to see the full traceback.
+  - When using code lens multiple whitespace lines in the end of a block is not sent to the Interactive Console.
+  - An introductory text is shown with more information on how to use the Interactive Console.
+
+
 New in 0.22.0 (2021-09-06)
 -----------------------------
 

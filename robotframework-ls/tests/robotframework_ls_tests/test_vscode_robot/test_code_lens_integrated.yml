@@ -84,7 +84,7 @@
       line: 6
 - command:
     arguments:
-    - code: "*** Test Case ***\nLog It\n    Log    \n\n"
+    - code: "*** Test Case ***\nLog It\n    Log\n"
       uri: my.robot
     command: robot.interactiveShell
     title: Run in Interactive Console
@@ -100,7 +100,7 @@
       line: 2
 - command:
     arguments:
-    - code: "*** Test Case ***\nLog It2\n    Log    \n\n"
+    - code: "*** Test Case ***\nLog It2\n    Log\n"
       uri: my.robot
     command: robot.interactiveShell
     title: Run in Interactive Console
