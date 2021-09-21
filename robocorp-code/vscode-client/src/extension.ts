@@ -436,7 +436,7 @@ export async function activate(context: ExtensionContext) {
         async function cloudLoginShowConfirmationAndRefresh() {
             let loggedIn = await cloudLogin();
             if (loggedIn) {
-                window.showInformationMessage("Successfully logged in Robocorp Cloud.")
+                window.showInformationMessage("Successfully logged in Control Room.")
             }
             views.refreshCloudTreeView();
         }

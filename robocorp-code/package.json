@@ -1,7 +1,7 @@
 {
     "name": "robocorp-code",
     "displayName": "Robocorp Code",
-    "description": "Extension for Robot development in VSCode using Robocorp Cloud",
+    "description": "Extension for Robot development in VSCode using Robocorp",
     "author": "Fabio Zadrozny",
     "homepage": "https://github.com/robocorp/robotframework-lsp/blob/master/robocorp-code/README.md",
     "repository": {
@@ -213,12 +213,12 @@
             },
             {
                 "command": "robocorp.uploadRobotToCloud",
-                "title": "Upload Robot to the Robocorp Cloud",
+                "title": "Upload Robot to the Control Room",
                 "category": "Robocorp"
             },
             {
                 "command": "robocorp.cloudLogin",
-                "title": "Link to Robocorp Cloud",
+                "title": "Link to Control Room",
                 "category": "Robocorp",
                 "icon": "$(link)"
             },
@@ -257,7 +257,7 @@
             },
             {
                 "command": "robocorp.cloudLogout",
-                "title": "Unlink and remove credentials from Robocorp Cloud",
+                "title": "Unlink and remove credentials from Control Room",
                 "category": "Robocorp",
                 "icon": "$(debug-disconnect)"
             },
@@ -305,7 +305,7 @@
             },
             {
                 "command": "robocorp.refreshCloudView",
-                "title": "Refresh Cloud view",
+                "title": "Refresh Robocorp view",
                 "category": "Robocorp",
                 "icon": {
                     "light": "images/light/refresh.svg",
@@ -356,7 +356,7 @@
             },
             {
                 "command": "robocorp.cloudUploadRobotTreeSelection",
-                "title": "Upload Robot to Robocorp Cloud",
+                "title": "Upload Robot to Control Room",
                 "category": "Robocorp",
                 "icon": "$(cloud-upload)"
             },

@@ -367,7 +367,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         from robocorp_ls_core.progress_report import progress_context
 
         with progress_context(
-            self._endpoint, "Validating cloud credentials", self._dir_cache
+            self._endpoint, "Validating Control Room credentials", self._dir_cache
         ):
             login_needed = not self._rcc.credentials_valid()
         return {"success": login_needed, "message": None, "result": login_needed}
@@ -383,7 +383,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
         credentials = params["credentials"]
         with progress_context(
-            self._endpoint, "Adding cloud credentials", self._dir_cache
+            self._endpoint, "Adding Control Room credentials", self._dir_cache
         ):
             result = self._rcc.add_credentials(credentials)
             self._endpoint.notify("$/linkedAccountChanged")
@@ -403,7 +403,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         self._dir_cache.discard(self.CLOUD_LIST_WORKSPACE_CACHE_KEY)
 
         with progress_context(
-            self._endpoint, "Removing cloud credentials", self._dir_cache
+            self._endpoint, "Removing Control Room credentials", self._dir_cache
         ):
             ret = self._rcc.remove_current_credentials().as_dict()
             self._endpoint.notify("$/linkedAccountChanged")
@@ -549,7 +549,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         last_error_result = None
 
         with progress_context(
-            self._endpoint, "Listing cloud workspaces", self._dir_cache
+            self._endpoint, "Listing Control Room workspaces", self._dir_cache
         ):
             ws: IRccWorkspace
             ret: List[WorkspaceInfoDict] = []
@@ -1013,7 +1013,11 @@ class RobocorpLanguageServer(PythonLanguageServer):
             if action_result["success"]:
                 db, locators_json = action_result["result"]
             else:
-                return {"success": False, "message": str(action_result["message"]), "result": None}
+                return {
+                    "success": False,
+                    "message": str(action_result["message"]),
+                    "result": None,
+                }
 
             content_lines = []
             if Path(locators_json).exists():
@@ -1058,7 +1062,11 @@ class RobocorpLanguageServer(PythonLanguageServer):
             if action_result["success"]:
                 db, locators_json = action_result["result"]
             else:
-                return {"success": False, "message": str(action_result["message"]), "result": None}
+                return {
+                    "success": False,
+                    "message": str(action_result["message"]),
+                    "result": None,
+                }
             if not db.error:
                 del db.locators[name]
                 db.save()

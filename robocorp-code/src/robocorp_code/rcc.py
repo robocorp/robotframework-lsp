@@ -505,7 +505,7 @@ class Rcc(object):
         output = result.result
         if not output:
             return ActionResult(
-                False, "Error listing cloud workspaces (output not available)."
+                False, "Error listing Control Room workspaces (output not available)."
             )
 
         try:
@@ -514,7 +514,7 @@ class Rcc(object):
             log.exception(f"Error parsing json: {output}")
             return ActionResult(
                 False,
-                f"Error loading json obtained while listing cloud workspaces.\n{e}",
+                f"Error loading json obtained while listing Control Room workspaces.\n{e}",
             )
         for workspace_info in lst:
             ret.append(
@@ -547,7 +547,8 @@ class Rcc(object):
         output = result.result
         if not output:
             return ActionResult(
-                False, "Error listing cloud workspace robots (output not available)."
+                False,
+                "Error listing Control Room workspace robots (output not available).",
             )
 
         try:
@@ -556,12 +557,12 @@ class Rcc(object):
             log.exception(f"Error parsing json: {output}")
             return ActionResult(
                 False,
-                f"Error loading json obtained while listing cloud workspaces activities.\n{e}",
+                f"Error loading json obtained while listing Control Room workspaces activities.\n{e}",
             )
 
         if not isinstance(workspace_info, dict):
             log.critical(f"Expected dict as top-level from json: {output}")
-            msg = f"Unexpected type of cloud workspace activity json (expected dict, found: {type(workspace_info)}"
+            msg = f"Unexpected type of Control Room workspace activity json (expected dict, found: {type(workspace_info)}"
             return ActionResult(False, msg)
 
         for activity_info in workspace_info.get("activities", []):
@@ -579,12 +580,12 @@ class Rcc(object):
 
         if not os.path.exists(directory):
             return ActionResult(
-                False, f"Expected: {directory} to exist to upload to the cloud."
+                False, f"Expected: {directory} to exist to upload to the Control Room."
             )
         if not os.path.isdir(directory):
             return ActionResult(
                 False,
-                f"Expected: {directory} to be a directory to upload to the cloud.",
+                f"Expected: {directory} to be a directory to upload to the Control Room.",
             )
 
         args = ["cloud", "push"]
@@ -626,7 +627,7 @@ class Rcc(object):
             stdout = ret.result
             if not stdout:
                 return ActionResult(
-                    False, f"No process stdout when creating new cloud package."
+                    False, f"No process stdout when creating new Control Room package."
                 )
             stdout = stdout.strip()
 

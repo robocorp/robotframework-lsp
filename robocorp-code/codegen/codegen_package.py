@@ -28,7 +28,7 @@ def get_json_contents():
     base_package_contents = {
         "name": "robocorp-code",
         "displayName": "Robocorp Code",
-        "description": "Extension for Robot development in VSCode using Robocorp Cloud",
+        "description": "Extension for Robot development in VSCode using Robocorp",
         "author": "Fabio Zadrozny",
         "homepage": "https://github.com/robocorp/robotframework-lsp/blob/master/robocorp-code/README.md",
         "repository": {

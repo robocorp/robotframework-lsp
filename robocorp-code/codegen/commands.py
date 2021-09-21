@@ -75,7 +75,7 @@ COMMANDS = [
     # Started from the client due to needing UI actions.
     Command(
         "robocorp.uploadRobotToCloud",
-        "Upload Robot to the Robocorp Cloud",
+        "Upload Robot to the Control Room",
         add_to_package_json=True,
         server_handled=False,
     ),
@@ -99,32 +99,32 @@ COMMANDS = [
     ),
     Command(
         "robocorp.cloudLogin",
-        "Link to Robocorp Cloud",
+        "Link to Control Room",
         add_to_package_json=True,
         server_handled=False,
         icon="$(link)",
     ),
     Command(
         "robocorp.cloudLogin.internal",
-        "Link to Robocorp Cloud (receives credentials)",
+        "Link to Control Room (receives credentials)",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
         "robocorp.cloudListWorkspaces.internal",
-        "Lists the workspaces available for the user (in the Robocorp Cloud)",
+        "Lists the workspaces available for the user (in the Control Room)",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
         "robocorp.uploadToNewRobot.internal",
-        "Uploads a Robot as a new Robot in the Robocorp Cloud",
+        "Uploads a Robot as a new Robot in the Control Room",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
         "robocorp.uploadToExistingRobot.internal",
-        "Uploads a Robot as an existing Robot in the Robocorp Cloud",
+        "Uploads a Robot as an existing Robot in the Control Room",
         add_to_package_json=False,
         server_handled=True,
     ),
@@ -192,14 +192,14 @@ COMMANDS = [
     ),
     Command(
         "robocorp.cloudLogout",
-        "Unlink and remove credentials from Robocorp Cloud",
+        "Unlink and remove credentials from Control Room",
         add_to_package_json=True,
         server_handled=False,
         icon="$(debug-disconnect)",
     ),
     Command(
         "robocorp.cloudLogout.internal",
-        "Unlink and remove credentials from Robocorp Cloud internal",
+        "Unlink and remove credentials from Control Room internal",
         add_to_package_json=False,
         server_handled=True,
     ),
@@ -252,7 +252,7 @@ COMMANDS = [
     ),
     Command(
         "robocorp.refreshCloudView",
-        "Refresh Cloud view",
+        "Refresh Robocorp view",
         add_to_package_json=True,
         server_handled=False,
         icon={"light": "images/light/refresh.svg", "dark": "images/dark/refresh.svg"},
@@ -327,7 +327,7 @@ COMMANDS = [
     ),
     Command(
         "robocorp.cloudUploadRobotTreeSelection",
-        "Upload Robot to Robocorp Cloud",
+        "Upload Robot to Control Room",
         add_to_package_json=True,
         server_handled=False,
         hide_from_command_palette=True,

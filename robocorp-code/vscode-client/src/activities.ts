@@ -53,13 +53,13 @@ export async function cloudLogout(): Promise<void> {
     }
 
     if (isLoginNeededActionResult.result) {
-        window.showInformationMessage('Unable to unlink and remove credentials from Robocorp Cloud. Current cloud credentials are not valid.');
+        window.showInformationMessage('Unable to unlink and remove credentials from Control Room. Current Control Room credentials are not valid.');
         refreshCloudTreeView();
         return;
     }
     let YES = 'Unlink';
     const result = await window.showWarningMessage(
-        `Are you sure you want to unlink and remove credentials from Robocorp Cloud?`,
+        `Are you sure you want to unlink and remove credentials from Control Room?`,
         { 'modal': true },
         YES
     );
@@ -68,14 +68,14 @@ export async function cloudLogout(): Promise<void> {
     }
     loggedOut = await commands.executeCommand(roboCommands.ROBOCORP_CLOUD_LOGOUT_INTERNAL);
     if (!loggedOut) {
-        window.showInformationMessage('Error unlinking and removing Robocorp Cloud credentials.');
+        window.showInformationMessage('Error unlinking and removing Control Room credentials.');
         return;
     }
     if (!loggedOut.success) {
-        window.showInformationMessage('Unable to unlink and remove Robocorp Cloud credentials.');
+        window.showInformationMessage('Unable to unlink and remove Control Room credentials.');
         return;
     }
-    window.showInformationMessage('Robocorp Cloud credentials successfully unlinked and removed.');
+    window.showInformationMessage('Control Room credentials successfully unlinked and removed.');
 }
 
 export async function listAndAskRobotSelection(selectionMessage: string, noRobotErrorMessage: string): Promise<LocalRobotMetadataInfo> {
@@ -144,7 +144,7 @@ async function askAndCreateNewRobotAtWorkspace(wsInfo: WorkspaceInfo, directory:
         OUTPUT_CHANNEL.appendLine(msg);
         window.showErrorMessage(msg);
     } else {
-        window.showInformationMessage('Successfully submitted new Robot ' + robotName + ' to the cloud.')
+        window.showInformationMessage('Successfully submitted new Robot ' + robotName + ' to the Control Room.')
     }
 
 }
@@ -296,13 +296,13 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
         roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL
     );
     if (!actionResult.success) {
-        window.showInformationMessage('Error submitting Robot to the cloud: ' + actionResult.message);
+        window.showInformationMessage('Error submitting Robot to the Control Room: ' + actionResult.message);
         return;
     }
     let robotsInfo: LocalRobotMetadataInfo[] = actionResult.result;
 
     if (!robotsInfo || robotsInfo.length == 0) {
-        window.showInformationMessage('Unable to submit Robot to the cloud (no Robot detected in the Workspace).');
+        window.showInformationMessage('Unable to submit Robot to the Control Room (no Robot detected in the Workspace).');
         return;
     }
 
@@ -320,7 +320,7 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
     }
 
     if (!robot) {
-        robot = await askRobotSelection(robotsInfo, 'Please select the Robot to upload to the Cloud.');
+        robot = await askRobotSelection(robotsInfo, 'Please select the Robot to upload to the Control Room.');
         if (!robot) {
             return;
         }
@@ -337,13 +337,13 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
         );
 
         if (!actionResult.success) {
-            window.showErrorMessage('Error listing cloud workspaces: ' + actionResult.message);
+            window.showErrorMessage('Error listing Control Room workspaces: ' + actionResult.message);
             return;
         }
 
         let workspaceInfo: WorkspaceInfo[] = actionResult.result;
         if (!workspaceInfo || workspaceInfo.length == 0) {
-            window.showErrorMessage('A Cloud Workspace must be created to submit a Robot to the cloud.');
+            window.showErrorMessage('A Control Room Workspace must be created to submit a Robot to the Control Room.');
             return;
         }
 

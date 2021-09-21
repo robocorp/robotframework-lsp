@@ -60,11 +60,11 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
             let ret: CloudEntry[] = [];
             if (!accountInfoResult.success) {
                 ret.push({
-                    'label': 'Link to Robocorp Cloud',
+                    'label': 'Link to Control Room',
                     'iconPath': 'link',
                     'viewItemContextValue': 'cloudLoginItem',
                     'command': {
-                        'title': 'Link to Robocorp Cloud',
+                        'title': 'Link to Control Room',
                         'command': roboCommands.ROBOCORP_CLOUD_LOGIN,
                     },
                 });
