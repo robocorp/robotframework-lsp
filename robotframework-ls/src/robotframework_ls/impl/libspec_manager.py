@@ -423,7 +423,7 @@ class LibspecManager(object):
 
             log.info("No observer passed to LibspecManager (creating dummy observer).")
 
-            observer = create_observer("dummy", [])
+            observer = create_observer("dummy", ())
         self._fs_observer = observer
 
         self._file_changes_notifier = watchdog_wrapper.create_notifier(

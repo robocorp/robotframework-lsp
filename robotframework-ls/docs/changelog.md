@@ -1,3 +1,9 @@
+New in 0.23.1 (2021-09-21)
+-----------------------------
+
+- Fixed issue specifying files to be tracked in the filesystem observer. [#450](https://github.com/robocorp/robotframework-lsp/issues/450)
+
+
 New in 0.23.0 (2021-09-20)
 -----------------------------
 

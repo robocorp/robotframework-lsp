@@ -7,7 +7,7 @@ import sys
 import argparse
 import threading
 import socket as socket_module
-from typing import Optional
+from typing import Optional, Tuple
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
@@ -51,7 +51,7 @@ class ObserverProvider(object):
     def observer(self):
         return self._observer
 
-    def initialize_observer(self, backend, extensions):
+    def initialize_observer(self, backend, extensions: Optional[Tuple[str, ...]]):
         from robocorp_ls_core import watchdog_wrapper
 
         assert self._observer is None
@@ -118,6 +118,9 @@ class _RemoteFSServer(threading.Thread):
 
             backend = msg["backend"]
             extensions = msg["extensions"]
+            if extensions is not None:
+                extensions = tuple(extensions)
+
             self._observer_provider.initialize_observer(backend, extensions)
             # initialize requires an acknowledgement.
             self.writer.write({"command": "ack_initialize"})

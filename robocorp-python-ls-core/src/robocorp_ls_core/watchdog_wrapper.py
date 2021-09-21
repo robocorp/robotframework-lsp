@@ -216,7 +216,7 @@ class _FSNotifyWatchList(object):
 
 
 class _FSNotifyObserver(threading.Thread):
-    def __init__(self, extensions):
+    def __init__(self, extensions: Optional[Tuple[str, ...]]):
         from robocorp_ls_core import load_ignored_dirs
 
         threading.Thread.__init__(self)
@@ -229,6 +229,8 @@ class _FSNotifyObserver(threading.Thread):
 
         if extensions is None:
             extensions = ()
+        else:
+            extensions = tuple(extensions)
 
         watcher = self._watcher = fsnotify.Watcher()
         poll_time = os.environ.get("ROBOTFRAMEWORK_LS_POLL_TIME")

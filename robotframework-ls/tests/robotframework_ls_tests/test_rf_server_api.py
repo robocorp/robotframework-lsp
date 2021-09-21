@@ -35,7 +35,7 @@ Some task
     line, col = doc.get_last_line_col()
     workspace = RobotWorkspace(
         str(tmpdir),
-        fs_observer=create_observer("dummy", []),
+        fs_observer=create_observer("dummy", ()),
         libspec_manager=libspec_manager,
     )
     completion_context = CompletionContext(doc, line, col, workspace=workspace)
