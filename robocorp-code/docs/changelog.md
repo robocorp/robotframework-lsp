@@ -1,3 +1,9 @@
+New in 0.14.0 (2021-09-21)
+-----------------------------
+
+- Robocorp panel redesigned.
+- robocorp-inspector updated to 0.3.8.
+
 New in 0.13.3 (2021-09-08)
 -----------------------------
 
