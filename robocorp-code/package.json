@@ -70,6 +70,7 @@
         "onCommand:robocorp.configuration.diagnostics.internal",
         "onCommand:robocorp.configuration.diagnostics",
         "onCommand:robocorp.rccTerminalNew",
+        "onCommand:robocorp.listWorkItems.internal",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -391,6 +392,11 @@
                 "title": "Terminal with Robot environment",
                 "category": "Robocorp",
                 "icon": "$(terminal)"
+            },
+            {
+                "command": "robocorp.listWorkItems.internal",
+                "title": "Lists the work items available for a Robot",
+                "category": "Robocorp"
             }
         ],
         "menus": {
@@ -566,6 +572,10 @@
                 },
                 {
                     "command": "robocorp.configuration.diagnostics.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.listWorkItems.internal",
                     "when": "false"
                 }
             ]

@@ -9,6 +9,7 @@ from robocorp_code.protocols import IRcc, ActionResult
 import sys
 from typing import Any
 from pathlib import Path
+from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
 
 
 log = get_logger(__name__)
@@ -302,3 +303,52 @@ class RccPatch(object):
 @pytest.fixture
 def rcc_patch(monkeypatch, tmpdir):
     return RccPatch(monkeypatch, tmpdir)
+
+
+@pytest.fixture
+def initialization_options():
+    return {"do-not-track": True}
+
+
+@pytest.fixture
+def language_server_initialized(
+    language_server_tcp: IRobocorpLanguageServerClient,
+    ws_root_path: str,
+    rcc_location: str,
+    ci_endpoint: str,
+    rcc_config_location: str,
+    initialization_options,
+):
+    from robocorp_code.commands import ROBOCORP_RUN_IN_RCC_INTERNAL
+
+    language_server = language_server_tcp
+    language_server.initialize(
+        ws_root_path, initialization_options=initialization_options
+    )
+    language_server.settings(
+        {
+            "settings": {
+                "robocorp": {
+                    "rcc": {
+                        "location": rcc_location,
+                        "endpoint": ci_endpoint,
+                        "config_location": rcc_config_location,
+                    }
+                }
+            }
+        }
+    )
+    result = language_server.execute_command(
+        ROBOCORP_RUN_IN_RCC_INTERNAL,
+        [
+            {
+                "args": "configure identity --do-not-track --config".split()
+                + [rcc_config_location]
+            }
+        ],
+    )
+    assert result["result"]["success"]
+    if "disabled" not in result["result"]["result"]:
+        raise AssertionError(f"Unexpected result: {result}")
+
+    return language_server

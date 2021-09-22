@@ -1,0 +1,11 @@
+[
+    {
+        "payload": {
+            "variable1": "a-string-value",
+            "variable2": ["a", "list", "value"]
+        },
+        "files": {
+            "file1": "file.txt"
+        }
+    }
+]

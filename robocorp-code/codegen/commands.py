@@ -372,6 +372,12 @@ COMMANDS = [
         server_handled=False,
         icon="$(terminal)",
     ),
+    Command(
+        "robocorp.listWorkItems.internal",
+        "Lists the work items available for a Robot",
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
 ]
 
 

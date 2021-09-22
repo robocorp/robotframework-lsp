@@ -92,6 +92,36 @@ class ActionResultDictLocalRobotMetadata(TypedDict):
     result: Optional[List[LocalRobotMetadataInfoDict]]
 
 
+class WorkItem(TypedDict):
+    name: str
+    json_path: str  # Full path to the json represented by this work item
+
+
+class WorkItemsInfo(TypedDict):
+    robot_yaml: str  # Full path to the robot which has these work item info
+
+    # Full path to the place where input work items are located
+    input_folder_path: Optional[str]
+
+    # Full path to the place where output work items are located
+    output_folder_path: Optional[str]
+
+    input_work_items: List[WorkItem]
+    output_work_items: List[WorkItem]
+
+
+class ActionResultDictWorkItems(TypedDict):
+    success: bool
+    message: Optional[
+        str
+    ]  # if success == False, this can be some message to show to the user
+    result: Optional[WorkItemsInfo]
+
+
+class ListWorkItemsParams(TypedDict):
+    robot: str  # Path to the robot for which we want the work items (may be just the folder or the yaml).
+
+
 class ListWorkspacesActionResultDict(TypedDict):
     success: bool
     message: Optional[

@@ -2,7 +2,7 @@ from functools import partial
 import os
 import sys
 from pathlib import Path
-from typing import List, Any, Optional, Dict, Union
+from typing import List, Any, Optional, Dict, Union, Iterator
 from base64 import b64encode
 
 from robocorp_code import commands
@@ -29,6 +29,9 @@ from robocorp_code.protocols import (
     ActionResultDictLocatorsJsonInfo,
     LocatorEntryInfoDict,
     ConfigurationDiagnosticsDict,
+    ActionResultDictWorkItems,
+    ListWorkItemsParams,
+    WorkItem,
 )
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.cache import CachedFileInfo
@@ -681,6 +684,95 @@ class RobocorpLanguageServer(PythonLanguageServer):
             log.exception(f"Error running in RCC: {params}.")
             return dict(success=False, message=str(e), result=None)
         return ret.as_dict()
+
+    @command_dispatcher(commands.ROBOCORP_LIST_WORK_ITEMS_INTERNAL)
+    def _local_list_work_items_internal(
+        self, params: Optional[ListWorkItemsParams] = None
+    ) -> ActionResultDictWorkItems:
+        from robocorp_code.protocols import WorkItemsInfo
+
+        if params is None:
+            return dict(
+                success=False,
+                message=f"Parameters not passed for {commands.ROBOCORP_LIST_WORK_ITEMS_INTERNAL}.",
+                result=None,
+            )
+
+        robot = params.get("robot")
+        if not robot:
+            return dict(
+                success=False,
+                message=f"Expected 'robot' to be passed and valid in args.",
+                result=None,
+            )
+
+        path = Path(robot)
+        try:
+            stat = path.stat()
+        except Exception:
+            message = f"Expected {path} to exist."
+            log.exception("message")
+            return dict(success=False, message=message, result=None)
+
+        robot_yaml = self._find_robot_yaml_path_from_path(path, stat)
+        if not robot_yaml:
+            return dict(
+                success=False,
+                message=f"Unable to find robot.yaml from {robot}.",
+                result=None,
+            )
+
+        work_items_in_dir = robot_yaml.parent / "devdata" / "work-items-in"
+        work_items_out_dir = robot_yaml.parent / "devdata" / "work-items-out"
+
+        input_work_items: List[WorkItem] = []
+        output_work_items: List[WorkItem] = []
+
+        if work_items_in_dir.is_dir():
+            input_work_items.extend(self._collect_work_items(work_items_in_dir))
+
+        if work_items_out_dir.is_dir():
+            output_work_items.extend(self._collect_work_items(work_items_out_dir))
+
+        work_items_info: WorkItemsInfo = {
+            "robot_yaml": str(robot_yaml),
+            "input_folder_path": str(work_items_in_dir),
+            "output_folder_path": str(work_items_out_dir),
+            "input_work_items": input_work_items,
+            "output_work_items": output_work_items,
+        }
+        return dict(success=True, message=None, result=work_items_info)
+
+    def _collect_work_items(self, work_items_dir: Path) -> Iterator[WorkItem]:
+        def create_work_item(json_path) -> WorkItem:
+            return {"name": json_path.parent.name, "json_path": str(json_path)}
+
+        for path in work_items_dir.iterdir():
+            json_path = path / "work-items.json"
+            if json_path.is_file():
+                yield create_work_item(json_path)
+            else:
+                json_path = path / "work-items.output.json"
+                if json_path.is_file():
+                    yield create_work_item(json_path)
+
+    def _find_robot_yaml_path_from_path(self, path: Path, stat) -> Optional[Path]:
+        from stat import S_ISDIR
+
+        if not S_ISDIR(stat.st_mode):
+            # If we have the stat it already exists, so, just checking if it's a dir/file.
+            if path.name == "robot.yaml":
+                return path
+            else:
+                path = path.parent
+
+        for _i in range(3):
+            robot_yaml = path / "robot.yaml"
+            if robot_yaml.is_file():
+                return robot_yaml
+            path = path.parent
+
+        return robot_yaml
 
     @command_dispatcher(commands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL)
     def _local_list_robots(self, params=None) -> ActionResultDictLocalRobotMetadata:

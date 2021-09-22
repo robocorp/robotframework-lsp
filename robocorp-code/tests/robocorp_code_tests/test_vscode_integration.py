@@ -1,7 +1,6 @@
 import logging
 import os.path
 import sys
-import pytest
 from robocorp_code.protocols import (
     LocalRobotMetadataInfoDict,
     WorkspaceInfoDict,
@@ -15,11 +14,6 @@ from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 from robocorp_code_tests.fixtures import RccPatch
 
 log = logging.getLogger(__name__)
-
-
-@pytest.fixture
-def initialization_options():
-    return {"do-not-track": True}
 
 
 def test_missing_message(
@@ -84,50 +78,6 @@ def test_exit_with_parent_process_died(
     wait_for_test_condition(lambda: not is_process_alive(dummy_process.pid))
     wait_for_test_condition(lambda: not is_process_alive(language_server_process.pid))
     language_server_io.require_exit_messages = False
-
-
-@pytest.fixture
-def language_server_initialized(
-    language_server_tcp: IRobocorpLanguageServerClient,
-    ws_root_path: str,
-    rcc_location: str,
-    ci_endpoint: str,
-    rcc_config_location: str,
-    initialization_options,
-):
-    from robocorp_code.commands import ROBOCORP_RUN_IN_RCC_INTERNAL
-
-    language_server = language_server_tcp
-    language_server.initialize(
-        ws_root_path, initialization_options=initialization_options
-    )
-    language_server.settings(
-        {
-            "settings": {
-                "robocorp": {
-                    "rcc": {
-                        "location": rcc_location,
-                        "endpoint": ci_endpoint,
-                        "config_location": rcc_config_location,
-                    }
-                }
-            }
-        }
-    )
-    result = language_server.execute_command(
-        ROBOCORP_RUN_IN_RCC_INTERNAL,
-        [
-            {
-                "args": "configure identity --do-not-track --config".split()
-                + [rcc_config_location]
-            }
-        ],
-    )
-    assert result["result"]["success"]
-    if "disabled" not in result["result"]["result"]:
-        raise AssertionError(f"Unexpected result: {result}")
-
-    return language_server
 
 
 def test_list_rcc_robot_templates(
@@ -722,7 +672,8 @@ def test_remove_locator(
     language_server = language_server_initialized
 
     result = language_server.execute_command(
-        commands.ROBOCORP_REMOVE_LOCATOR_FROM_JSON_INTERNAL, [{"robotYaml": str(robot_yaml), "name": "Browser.Locator.00"}]
+        commands.ROBOCORP_REMOVE_LOCATOR_FROM_JSON_INTERNAL,
+        [{"robotYaml": str(robot_yaml), "name": "Browser.Locator.00"}],
     )["result"]
     locators_content = json.loads(locator_file.read())
     assert result["success"]
@@ -761,6 +712,7 @@ def test_internal_load_locators_db(
     )
 
     result = RobocorpLanguageServer._load_locators_db(robot_yaml)
+    assert result["result"]
     db, locators_json_path = result["result"]
     assert result["success"]
     assert result["message"] is None

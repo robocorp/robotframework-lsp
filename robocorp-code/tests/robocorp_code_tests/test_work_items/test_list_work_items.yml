@@ -1,0 +1,11 @@
+input_folder_path: devdata/work-items-in
+input_work_items:
+- json_path: devdata/work-items-in/input-1/work-items.json
+  name: input-1
+- json_path: devdata/work-items-in/input-2/work-items.json
+  name: input-2
+output_folder_path: devdata/work-items-out
+output_work_items:
+- json_path: devdata/work-items-out/run-1/work-items.output.json
+  name: run-1
+robot_yaml: robot.yaml

@@ -51,6 +51,7 @@ ROBOCORP_SUBMIT_ISSUE = "robocorp.submitIssue"  # Submit issue
 ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL = "robocorp.configuration.diagnostics.internal"  # Robot Configuration Diagnostics (internal)
 ROBOCORP_CONFIGURATION_DIAGNOSTICS = "robocorp.configuration.diagnostics"  # Robot Configuration Diagnostics
 ROBOCORP_RCC_TERMINAL_NEW = "robocorp.rccTerminalNew"  # Terminal with Robot environment
+ROBOCORP_LIST_WORK_ITEMS_INTERNAL = "robocorp.listWorkItems.internal"  # Lists the work items available for a Robot
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,
@@ -73,4 +74,5 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_REMOVE_LOCATOR_FROM_JSON_INTERNAL,
     ROBOCORP_SEND_METRIC,
     ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL,
+    ROBOCORP_LIST_WORK_ITEMS_INTERNAL,
 ]
