@@ -52,3 +52,4 @@ export const ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL = "robocorp.configurati
 export const ROBOCORP_CONFIGURATION_DIAGNOSTICS = "robocorp.configuration.diagnostics";  // Robot Configuration Diagnostics
 export const ROBOCORP_RCC_TERMINAL_NEW = "robocorp.rccTerminalNew";  // Terminal with Robot environment
 export const ROBOCORP_LIST_WORK_ITEMS_INTERNAL = "robocorp.listWorkItems.internal";  // Lists the work items available for a Robot
+export const ROBOCORP_UPDATE_LAUNCH_ENV = "robocorp.updateLaunchEnv";  // Updates the environment variables used for some launch (given a Robot)

@@ -75,6 +75,7 @@ import {
     setPythonInterpreterFromRobotYaml,
     askAndRunRobotRCC,
     rccConfigurationDiagnostics,
+    updateLaunchEnvironment,
 } from './activities';
 import { sleep } from './time';
 import { handleProgressMessage, ProgressReport } from './progress';
@@ -238,6 +239,9 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
 function registerDebugger(pythonExecutable: string) {
     async function createDebugAdapterExecutable(config: DebugConfiguration): Promise<DebugAdapterExecutable> {
         let env = config.env;
+        if(!env){
+            env = {};
+        }
         let robotHome = roboConfig.getHome();
         if (robotHome && robotHome.length > 0) {
             if (env) {
@@ -255,6 +259,14 @@ function registerDebugger(pythonExecutable: string) {
             window.showWarningMessage('Error. Expected: ' + pythonExecutable + " to exist.");
             return;
         }
+
+        try {
+            let robot = config.robot;
+            env = await commands.executeCommand("robocorp.updateLaunchEnv", { 'targetRobot': robot, 'env': env });
+        } catch (error) {
+            // The command may not be available.
+        }
+
         if (env) {
             return new DebugAdapterExecutable(pythonExecutable, ['-u', targetMain], { "env": env });
 
@@ -430,7 +442,8 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_NEW_FOLDER_IN_ROBOT_CONTENT_VIEW, newFolderInRobotContentTree);
         commands.registerCommand(roboCommands.ROBOCORP_DELETE_RESOURCE_IN_ROBOT_CONTENT_VIEW, deleteResourceInRobotContentTree);
         commands.registerCommand(roboCommands.ROBOCORP_RENAME_RESOURCE_IN_ROBOT_CONTENT_VIEW, renameResourceInRobotContentTree);
-        commands.registerCommand(roboCommands.ROBOCORP_OPEN_CLOUD_HOME, ()=>{
+        commands.registerCommand(roboCommands.ROBOCORP_UPDATE_LAUNCH_ENV, updateLaunchEnvironment);
+        commands.registerCommand(roboCommands.ROBOCORP_OPEN_CLOUD_HOME, () => {
             commands.executeCommand('vscode.open', Uri.parse('https://cloud.robocorp.com/home'))
         });
         async function cloudLoginShowConfirmationAndRefresh() {

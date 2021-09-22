@@ -27,14 +27,24 @@ def test_list_work_items(
     action_result = ret["result"]
     assert not action_result["success"]
 
-    ret = client.execute_command(ROBOCORP_LIST_WORK_ITEMS_INTERNAL, [{"robot": robot}])
-    action_result = ret["result"]
-    assert action_result["success"]
+    def run_and_check(basename):
+        ret = client.execute_command(
+            ROBOCORP_LIST_WORK_ITEMS_INTERNAL, [{"robot": robot}]
+        )
+        action_result = ret["result"]
+        assert action_result["success"]
 
-    robot_parent = Path(robot).parent
-    work_items_info = action_result["result"]
-    assert work_items_info
-    data_regression.check(make_info_relative(work_items_info, robot_parent))
+        robot_parent = Path(robot).parent
+        work_items_info = action_result["result"]
+        assert work_items_info
+        data_regression.check(
+            make_info_relative(work_items_info, robot_parent), basename=basename
+        )
+
+    run_and_check("test_list_work_items")
+    # Should have a different "new_output_workitem_path" output (even if we didn't explicitly write to the
+    # previous one).
+    run_and_check("test_list_work_items-2")
 
 
 def make_info_relative(work_items_info, robot_parent):
@@ -43,7 +53,12 @@ def make_info_relative(work_items_info, robot_parent):
 
     new = {}
     for key, val in work_items_info.items():
-        if key in ("robot_yaml", "input_folder_path", "output_folder_path"):
+        if key in (
+            "robot_yaml",
+            "input_folder_path",
+            "output_folder_path",
+            "new_output_workitem_path",
+        ):
             new[key] = make_relative(val)
 
         elif key in ("input_work_items", "output_work_items"):

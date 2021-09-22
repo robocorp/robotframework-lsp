@@ -71,6 +71,7 @@
         "onCommand:robocorp.configuration.diagnostics",
         "onCommand:robocorp.rccTerminalNew",
         "onCommand:robocorp.listWorkItems.internal",
+        "onCommand:robocorp.updateLaunchEnv",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -397,6 +398,11 @@
                 "command": "robocorp.listWorkItems.internal",
                 "title": "Lists the work items available for a Robot",
                 "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.updateLaunchEnv",
+                "title": "Updates the environment variables used for some launch (given a Robot)",
+                "category": "Robocorp"
             }
         ],
         "menus": {
@@ -576,6 +582,10 @@
                 },
                 {
                     "command": "robocorp.listWorkItems.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.updateLaunchEnv",
                     "when": "false"
                 }
             ]

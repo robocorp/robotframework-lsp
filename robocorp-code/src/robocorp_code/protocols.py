@@ -106,6 +106,9 @@ class WorkItemsInfo(TypedDict):
     # Full path to the place where output work items are located
     output_folder_path: Optional[str]
 
+    # Full path to the place where new work items should be placed
+    new_output_workitem_path: str
+
     input_work_items: List[WorkItem]
     output_work_items: List[WorkItem]
 

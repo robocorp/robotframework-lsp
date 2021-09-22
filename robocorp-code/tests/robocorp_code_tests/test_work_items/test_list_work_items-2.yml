@@ -4,7 +4,7 @@ input_work_items:
   name: input-1
 - json_path: devdata/work-items-in/input-2/work-items.json
   name: input-2
-new_output_workitem_path: devdata/work-items-out/run-2/work-items.json
+new_output_workitem_path: devdata/work-items-out/run-3/work-items.json
 output_folder_path: devdata/work-items-out
 output_work_items:
 - json_path: devdata/work-items-out/run-1/work-items.output.json

@@ -198,6 +198,13 @@ function registerDebugger(languageServerExecutable: string) {
 			window.showWarningMessage('Error. Expected: ' + dapPythonExecutable + " to exist.");
 			return;
 		}
+
+		try {
+			env = await commands.executeCommand("robocorp.updateLaunchEnv", { 'targetRobot': targetRobot, 'env': env });
+		} catch (error) {
+			// The command may not be available.
+		}
+
 		if (env) {
 			return new DebugAdapterExecutable(dapPythonExecutable, ['-u', targetMain], { "env": env });
 

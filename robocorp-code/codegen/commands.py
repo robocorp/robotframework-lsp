@@ -378,6 +378,12 @@ COMMANDS = [
         server_handled=True,
         hide_from_command_palette=True,
     ),
+    Command(
+        "robocorp.updateLaunchEnv",
+        "Updates the environment variables used for some launch (given a Robot)",
+        server_handled=False,
+        hide_from_command_palette=True,
+    ),
 ]
 
 
