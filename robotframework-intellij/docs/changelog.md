@@ -1,3 +1,9 @@
+New in 0.23.2 (2021-09-22)
+-----------------------------
+
+- Fix issue launching when no environment is provided.
+
+
 New in 0.23.1 (2021-09-21)
 -----------------------------
 
