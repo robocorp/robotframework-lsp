@@ -168,6 +168,12 @@ TREE_VIEW_CONTAINERS = [
                 },
             ),
             TreeView(
+                id="robocorp-work-items-tree",
+                name="Work Items",
+                contextual_title="Work Items",
+                menus={}
+            ),
+            TreeView(
                 id="robocorp-cloud-tree",
                 name="Robocorp",
                 contextual_title="Robocorp",

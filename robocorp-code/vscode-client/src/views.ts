@@ -2,7 +2,8 @@ import {
     TREE_VIEW_ROBOCORP_CLOUD_TREE,
     TREE_VIEW_ROBOCORP_LOCATORS_TREE,
     TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE,
-    TREE_VIEW_ROBOCORP_ROBOTS_TREE
+    TREE_VIEW_ROBOCORP_ROBOTS_TREE,
+    TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE
 } from './robocorpViews';
 import * as vscode from 'vscode';
 import { ExtensionContext } from 'vscode';
@@ -10,7 +11,7 @@ import * as roboCommands from './robocorpCommands';
 import { OUTPUT_CHANNEL } from './channel';
 import { runRobotRCC, uploadRobot } from './activities';
 import { createRccTerminal } from './rccTerminal';
-import { RobotContentTreeDataProvider } from './viewsRobotContent';
+import { RobotContentTreeDataProvider, WorkItemsTreeDataProvider } from './viewsRobotContent';
 import {
     basename,
     CloudEntry,
@@ -377,6 +378,20 @@ export function registerViews(context: ExtensionContext) {
 
     context.subscriptions.push(robotsTree.onDidChangeSelection(
         e => locatorsDataProvider.onRobotsTreeSelectionChanged()
+    ));
+
+    // Work items tree data provider definition
+    const workItemsTreeDataProvider = new WorkItemsTreeDataProvider();
+    const workItemsTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE, { 'treeDataProvider': workItemsTreeDataProvider });
+    treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE, workItemsTree);
+    treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE, workItemsTreeDataProvider);
+    context.subscriptions.push(robotsTree.onDidChangeSelection(
+        e => workItemsTreeDataProvider.onRobotsTreeSelectionChanged()
+    ));
+    context.subscriptions.push(workItemsTree.onDidChangeSelection(
+        async function () {
+            await workItemsTreeDataProvider.onRobotContentTreeTreeSelectionChanged(workItemsTree);
+        }
     ));
 
     let robotsWatcher: vscode.FileSystemWatcher = vscode.workspace.createFileSystemWatcher("**/robot.yaml");
