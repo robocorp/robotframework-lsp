@@ -1,10 +1,5 @@
 import enum
 from typing import Optional, Union
-from robocorp_code.commands import (
-    ROBOCORP_CLOUD_LOGIN,
-    ROBOCORP_CLOUD_LOGOUT,
-    ROBOCORP_OPEN_CLOUD_HOME,
-)
 
 
 class TreeView:
@@ -179,17 +174,17 @@ TREE_VIEW_CONTAINERS = [
                 menus={
                     "view/item/context": [
                         Menu(
-                            ROBOCORP_CLOUD_LOGIN,
+                            'robocorp.cloudLogin',
                             MenuGroup.INLINE,
                             when="viewItem == cloudLoginItem",
                         ),
                         Menu(
-                            ROBOCORP_CLOUD_LOGOUT,
+                            'robocorp.cloudLogout',
                             MenuGroup.INLINE,
                             when="viewItem == cloudLogoutItem",
                         ),
                         Menu(
-                            ROBOCORP_OPEN_CLOUD_HOME,
+                            'robocorp.openCloudHome',
                             MenuGroup.INLINE,
                             when="viewItem == cloudLogoutItem",
                         ),
