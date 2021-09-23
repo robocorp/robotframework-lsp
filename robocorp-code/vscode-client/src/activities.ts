@@ -1,4 +1,4 @@
-import { commands, window, WorkspaceFolder, workspace, Uri, QuickPickItem, TextEdit, debug, DebugConfiguration, DebugSessionOptions, env, ConfigurationTarget } from "vscode";
+import { commands, window, WorkspaceFolder, workspace, Uri, debug, DebugConfiguration, DebugSessionOptions, env, ConfigurationTarget } from "vscode";
 import { join, dirname } from 'path';
 import { logError, OUTPUT_CHANNEL } from './channel';
 import * as roboCommands from './robocorpCommands';
@@ -330,7 +330,7 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
     SELECT_OR_REFRESH:
     do {
         // We ask for the information on the existing workspaces information.
-        // Note that this may be cached from the last time it was asked, 
+        // Note that this may be cached from the last time it was asked,
         // so, we have an option to refresh it (and ask again).
         let actionResult: ListWorkspacesActionResult = await commands.executeCommand(
             roboCommands.ROBOCORP_CLOUD_LIST_WORKSPACES_INTERNAL, { 'refresh': refresh }
@@ -677,7 +677,7 @@ export async function updateLaunchEnvironment(args) {
         return environment
     }
 
-    // If we have found the robot, we should have the result and thus we should always set the 
+    // If we have found the robot, we should have the result and thus we should always set the
     // RPA_OUTPUT_WORKITEM_PATH (even if we don't have any input, we'll set to where we want
     // to save items).
     let newEnv = { ...environment };
@@ -710,6 +710,7 @@ export async function updateLaunchEnvironment(args) {
             return newEnv;
         }
         newEnv['RPA_INPUT_WORKITEM_PATH'] = selectedItem.action;
+        newEnv['RPA_WORKITEMS_ADAPTER'] = 'RPA.Robocloud.Items.FileAdapter';
     }
 
     return newEnv;
