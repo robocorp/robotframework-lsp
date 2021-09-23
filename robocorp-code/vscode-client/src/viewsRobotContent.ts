@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { logError } from './channel';
 import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from './robocorpViews';
-import { debounce, FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeView } from './viewsCommon';
+import { debounce, FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeDataProvider, treeViewIdToTreeView } from './viewsCommon';
 import { basename, dirname, join, resolve } from 'path';
 import { FileSystemWatcher, Uri, commands } from 'vscode';
 import { TreeItemCollapsibleState } from 'vscode';
@@ -312,6 +312,60 @@ export class RobotContentTreeDataProvider implements vscode.TreeDataProvider<FSE
         }
         return treeItem;
     }
+}
+
+const WORK_ITEM_TEMPLATE = `[
+    {
+        "payload": {
+           "message": "Hello World!"
+        },
+        "files": {
+            "orders.xlsx": "orders.xlsx"
+        }
+    }
+]`;
+
+async function getWorkItemInfo(): Promise<WorkItemsInfo | null> {
+    // Would there be a faster way of getting the work item path other than querying the work item info?
+    // The work item tree provider does have it already, but couldn't access it through existing interface.
+    // Would also prefer the keep the static path definition only at the server side.
+    const currTreeDir: FSEntry | undefined = await getCurrRobotTreeContentDir();
+    const workItemsResult: ActionResultWorkItems = await commands.executeCommand(ROBOCORP_LIST_WORK_ITEMS_INTERNAL, { robot: resolve(currTreeDir.filePath) });
+    if (!workItemsResult.success) {
+        return;
+    }
+    return workItemsResult.result;
+}
+
+async function queryNewWorkItemName(): Promise<string> {
+    const filename: string = await vscode.window.showInputBox({
+        'prompt': 'Please provide work item name',
+        'ignoreFocusOut': true,
+    });
+    return filename;
+}
+
+async function createNewWorkItem(workItemInfo: WorkItemsInfo, workItemName: string): Promise<void> {
+    if (!workItemInfo?.input_folder_path || !workItemName) {
+        return;
+    }
+
+    const targetFolder = join(workItemInfo.input_folder_path, workItemName);
+    const targetFile = join(targetFolder, 'work-items.json');
+    try {
+        await vscode.workspace.fs.createDirectory(Uri.file(targetFolder));
+        await vscode.workspace.fs.writeFile(Uri.file(targetFile), Buffer.from(WORK_ITEM_TEMPLATE));
+        vscode.window.showTextDocument(Uri.file(targetFile));
+    } catch (err) {
+        logError('Unable to create file.', err);
+        vscode.window.showErrorMessage('Unable to create file. Error: ' + err.message);
+    }
+}
+
+export async function newWorkItemInWorkItemsTree(): Promise<void> {
+    const workItemInfo = await getWorkItemInfo();
+    const workItemName = await queryNewWorkItemName();
+    await createNewWorkItem(workItemInfo, workItemName);
 }
 
 export class WorkItemsTreeDataProvider extends RobotContentTreeDataProvider {

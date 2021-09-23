@@ -85,6 +85,7 @@ import {
     deleteResourceInRobotContentTree,
     newFileInRobotContentTree,
     newFolderInRobotContentTree,
+    newWorkItemInWorkItemsTree,
     renameResourceInRobotContentTree,
 } from './viewsRobotContent';
 import { LocatorEntry } from './viewsCommon';
@@ -459,6 +460,7 @@ export async function activate(context: ExtensionContext) {
         }
         commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGIN, () => cloudLoginShowConfirmationAndRefresh());
         commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGOUT, () => cloudLogoutAndRefresh());
+        commands.registerCommand(roboCommands.ROBOCORP_NEW_WORK_ITEM_IN_WORK_ITEMS_VIEW, newWorkItemInWorkItemsTree);
         views.registerViews(context);
         registerDebugger(executableAndEnv.pythonExe);
         context.subscriptions.push(disposable);

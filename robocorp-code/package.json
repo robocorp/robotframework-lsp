@@ -72,6 +72,7 @@
         "onCommand:robocorp.rccTerminalNew",
         "onCommand:robocorp.listWorkItems.internal",
         "onCommand:robocorp.updateLaunchEnv",
+        "onCommand:robocorp.newWorkItemInWorkItemsView",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -409,6 +410,12 @@
                 "command": "robocorp.updateLaunchEnv",
                 "title": "Updates the environment variables used for some launch (given a Robot)",
                 "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.newWorkItemInWorkItemsView",
+                "title": "New Work Item",
+                "category": "Robocorp",
+                "icon": "$(new-file)"
             }
         ],
         "menus": {
@@ -466,6 +473,11 @@
                 {
                     "command": "robocorp.newRobocorpInspectorImage",
                     "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.newWorkItemInWorkItemsView",
+                    "when": "view == robocorp-work-items-tree && robocorp-code:single-robot-selected",
                     "group": "navigation"
                 }
             ],
@@ -592,6 +604,10 @@
                 },
                 {
                     "command": "robocorp.updateLaunchEnv",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.newWorkItemInWorkItemsView",
                     "when": "false"
                 }
             ]

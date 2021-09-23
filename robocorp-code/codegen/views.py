@@ -171,7 +171,22 @@ TREE_VIEW_CONTAINERS = [
                 id="robocorp-work-items-tree",
                 name="Work Items",
                 contextual_title="Work Items",
-                menus={}
+                menus={
+                     "view/title": [
+                        Menu(
+                            "robocorp.newWorkItemInWorkItemsView",
+                            MenuGroup.NAVIGATION,
+                            when="robocorp-code:single-robot-selected",
+                        ),
+                    ],
+                    "view/item/context": [
+                        Menu(
+                            "robocorp.newWorkItemInWorkItemsView",
+                            "0_new",
+                            when="robocorp-code:single-robot-selected",
+                        ),
+                    ],
+                }
             ),
             TreeView(
                 id="robocorp-cloud-tree",
