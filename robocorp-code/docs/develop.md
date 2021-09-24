@@ -48,6 +48,37 @@ Adding a new setting
 To add a new setting, add it at the `SETTINGS` in `/robocorp-code/codegen/settings.py` and then execute
 (in a shell in the `/robocorp-code` directory) `python -m dev codegen`.
 
+
+Creating a local environment for python development
+----------------------------------------------------
+
+For local development, it's interesting to run the Python code/tests directly.
+It's suggested that a virtual environment is created with the proper
+libraries and the PYTHONPATH is set accordingly.
+
+To do that, in the command line, make sure you're at the root folder of this project:
+(say, something as: X:\vscode-robot\robotframework-lsp)
+
+Then run the commands below (considering that you have a Python 3 in your path):
+
+Note: the commands below consider you're using Windows 
+(please adjust slashes/path to activate accordingly in OSes).
+
+python -m venv .venv
+.venv/Scripts/activate.bat
+python -m pip install -r robocorp-code/tests/test_requirements.txt
+echo %cd%\robotframework-ls\src > .venv\Lib\site-packages\rf_src.pth
+echo %cd%\robocorp-code\src >> .venv\Lib\site-packages\rf_src.pth
+echo %cd%\robocorp-python-ls-core\src >> .venv\Lib\site-packages\rf_src.pth
+echo %cd%\robotframework-ls\tests >> .venv\Lib\site-packages\rf_src.pth
+echo %cd%\robocorp-code\tests >> .venv\Lib\site-packages\rf_src.pth
+echo %cd%\robocorp-python-ls-core\tests >> .venv\Lib\site-packages\rf_src.pth
+
+If everything went well, just pointing your IDE to use the python executable
+at .venv/Scripts/python should suffice.
+
+-- in VSCode that'd be using the `Python: Select Interpreter` command.
+
 New version release
 --------------------
 
