@@ -736,38 +736,14 @@ class RobocorpLanguageServer(PythonLanguageServer):
         if work_items_out_dir.is_dir():
             output_work_items.extend(self._collect_work_items(work_items_out_dir))
 
-        new_output_workitem_path = self._compute_new_output_workitem_path(
-            work_items_out_dir, output_work_items
-        )
-
         work_items_info: WorkItemsInfo = {
             "robot_yaml": str(robot_yaml),
             "input_folder_path": str(work_items_in_dir),
             "output_folder_path": str(work_items_out_dir),
             "input_work_items": input_work_items,
             "output_work_items": output_work_items,
-            "new_output_workitem_path": str(new_output_workitem_path),
         }
         return dict(success=True, message=None, result=work_items_info)
-
-    def _compute_new_output_workitem_path(
-        self, work_items_out_dir: Path, output_work_items: List[WorkItem]
-    ):
-        max_run = self._last_run_number
-        for work_item in output_work_items:
-            name = work_item["name"]
-            if name.startswith("run-"):
-                try:
-                    run_number = int(name[4:])
-                except:
-                    pass  # Just ignore (it wouldn't clash anyways)
-                else:
-                    if run_number > max_run:
-                        max_run = run_number
-
-        next_run = max_run + 1
-        self._last_run_number = next_run
-        return work_items_out_dir / f"run-{next_run}" / "work-items.json"
 
     def _collect_work_items(self, work_items_dir: Path) -> Iterator[WorkItem]:
         def create_work_item(json_path) -> WorkItem:

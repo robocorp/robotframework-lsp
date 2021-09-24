@@ -263,7 +263,7 @@ function registerDebugger(pythonExecutable: string) {
 
         try {
             let robot = config.robot;
-            env = await commands.executeCommand("robocorp.updateLaunchEnv", { 'targetRobot': robot, 'env': env });
+            env = await commands.executeCommand("robocorp.updateLaunchEnv", { 'targetRobot': robot, 'env': env, task: config.task });
         } catch (error) {
             // The command may not be available.
         }

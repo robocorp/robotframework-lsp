@@ -664,6 +664,7 @@ export async function createRobot() {
 export async function updateLaunchEnvironment(args) {
     let robot = args['targetRobot'];
     let environment = args['env'];
+    let task = args['task'] || 'latest-run';
     let work_items_action_result: ActionResultWorkItems = await commands.executeCommand(
         roboCommands.ROBOCORP_LIST_WORK_ITEMS_INTERNAL, { 'robot': robot });
 
@@ -682,10 +683,11 @@ export async function updateLaunchEnvironment(args) {
     // to save items).
     let newEnv = { ...environment };
 
-    newEnv['RPA_OUTPUT_WORKITEM_PATH'] = result.new_output_workitem_path;
+    newEnv['RPA_OUTPUT_WORKITEM_PATH'] = join(work_items_action_result.result.output_folder_path, task, 'work-items.json');
 
-    let input_work_items = result.input_work_items
-    if (input_work_items.length > 0) {
+    const input_work_items = result.input_work_items
+    const output_work_items = result.output_work_items
+    if (input_work_items.length > 0 || output_work_items.length > 0) {
         // If we have any input for this Robot, present it to the user.
 
         let items: QuickPickItemWithAction[] = []; // Note: just use the action as a 'data'.
@@ -701,6 +703,14 @@ export async function updateLaunchEnvironment(args) {
                 'detail': it.json_path,
                 'action': it.json_path,
             });
+        }
+
+        for (const it of output_work_items) {
+            items.push({
+                'label': it.name,
+                'detail': it.json_path,
+                'action': it.json_path,
+            })
         }
 
         let selectedItem = await showSelectOneQuickPick(
