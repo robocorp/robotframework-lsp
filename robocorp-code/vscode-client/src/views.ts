@@ -11,7 +11,8 @@ import * as roboCommands from './robocorpCommands';
 import { OUTPUT_CHANNEL } from './channel';
 import { runRobotRCC, uploadRobot } from './activities';
 import { createRccTerminal } from './rccTerminal';
-import { RobotContentTreeDataProvider, WorkItemsTreeDataProvider } from './viewsRobotContent';
+import { RobotContentTreeDataProvider } from './viewsRobotContent';
+import { WorkItemsTreeDataProvider } from './viewsWorkItems';
 import {
     basename,
     CloudEntry,
@@ -354,7 +355,7 @@ export function registerViews(context: ExtensionContext) {
     ));
     context.subscriptions.push(robotContentTree.onDidChangeSelection(
         async function () {
-            await robotContentTreeDataProvider.onRobotContentTreeTreeSelectionChanged(robotContentTree);
+            await robotContentTreeDataProvider.onTreeSelectionChanged(robotContentTree);
         }
     ));
 
@@ -390,7 +391,7 @@ export function registerViews(context: ExtensionContext) {
     ));
     context.subscriptions.push(workItemsTree.onDidChangeSelection(
         async function () {
-            await workItemsTreeDataProvider.onRobotContentTreeTreeSelectionChanged(workItemsTree);
+            await workItemsTreeDataProvider.onTreeSelectionChanged(workItemsTree);
         }
     ));
 

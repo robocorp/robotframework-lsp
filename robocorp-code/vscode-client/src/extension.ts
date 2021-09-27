@@ -83,12 +83,11 @@ import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE }
 import { askAndCreateRccTerminal } from './rccTerminal';
 import {
     deleteResourceInRobotContentTree,
-    deleteWorkItemInWorkItemsTree,
     newFileInRobotContentTree,
     newFolderInRobotContentTree,
-    newWorkItemInWorkItemsTree,
     renameResourceInRobotContentTree,
 } from './viewsRobotContent';
+import { deleteWorkItemInWorkItemsTree, newWorkItemInWorkItemsTree } from './viewsWorkItems';
 import { LocatorEntry } from './viewsCommon';
 
 
