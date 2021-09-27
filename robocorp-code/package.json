@@ -429,7 +429,7 @@
                 "command": "robocorp.helpWorkItems",
                 "title": "Work Items Help",
                 "category": "Robocorp",
-                "icon": "$(info)"
+                "icon": "$(question)"
             }
         ],
         "menus": {

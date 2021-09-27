@@ -664,7 +664,9 @@ export async function createRobot() {
 export async function updateLaunchEnvironment(args) {
     let robot = args['targetRobot'];
     let environment = args['env'];
-    let task = args['task'] || 'latest-run';
+    if (!robot) {
+        throw new Error('robot argument is required.');
+    }
     let work_items_action_result: ActionResultWorkItems = await commands.executeCommand(
         roboCommands.ROBOCORP_LIST_WORK_ITEMS_INTERNAL, { 'robot': robot });
 
@@ -683,7 +685,7 @@ export async function updateLaunchEnvironment(args) {
     // to save items).
     let newEnv = { ...environment };
 
-    newEnv['RPA_OUTPUT_WORKITEM_PATH'] = join(work_items_action_result.result.output_folder_path, task, 'work-items.json');
+    newEnv['RPA_OUTPUT_WORKITEM_PATH'] = join(work_items_action_result.result.output_folder_path, 'latest-run', 'work-items.json');
 
     const input_work_items = result.input_work_items
     const output_work_items = result.output_work_items

@@ -202,7 +202,10 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
         // Resolve environment
         let env = interpreter.environ;
         try {
-            env = await commands.executeCommand(roboCommands.ROBOCORP_UPDATE_LAUNCH_ENV, { 'targetRobot': debugConfiguration.robot, 'env': env, task: debugConfiguration.task });
+            env = await commands.executeCommand(roboCommands.ROBOCORP_UPDATE_LAUNCH_ENV, {
+                'targetRobot': debugConfiguration.robot,
+                'env': env,
+            });
         } catch (error) {
             // The command may not be available.
         }
@@ -248,7 +251,7 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
 function registerDebugger(pythonExecutable: string) {
     async function createDebugAdapterExecutable(config: DebugConfiguration): Promise<DebugAdapterExecutable> {
         let env = config.env;
-        if(!env){
+        if (!env) {
             env = {};
         }
         let robotHome = roboConfig.getHome();
@@ -271,7 +274,10 @@ function registerDebugger(pythonExecutable: string) {
 
         try {
             let robot = config.robot;
-            env = await commands.executeCommand(roboCommands.ROBOCORP_UPDATE_LAUNCH_ENV, { 'targetRobot': robot, 'env': env, task: config.task });
+            env = await commands.executeCommand(roboCommands.ROBOCORP_UPDATE_LAUNCH_ENV, {
+                'targetRobot': robot,
+                'env': env,
+            });
         } catch (error) {
             // The command may not be available.
         }

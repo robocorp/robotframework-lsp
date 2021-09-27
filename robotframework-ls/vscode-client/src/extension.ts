@@ -200,7 +200,10 @@ function registerDebugger(languageServerExecutable: string) {
 		}
 
 		try {
-			env = await commands.executeCommand("robocorp.updateLaunchEnv", { 'targetRobot': targetRobot, 'env': env });
+			env = await commands.executeCommand("robocorp.updateLaunchEnv", {
+				'targetRobot': targetRobot,
+				'env': env
+			});
 		} catch (error) {
 			// The command may not be available.
 		}
