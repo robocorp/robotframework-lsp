@@ -133,3 +133,6 @@ robotframework-ls/src/ThirdPartyNotices.txt
 robotframework-ls/src/robotframework_ls/vendored/robocode_ls_core/
 
 robotframework-intellij/.gradle
+
+# virtual environment
+.venv/
