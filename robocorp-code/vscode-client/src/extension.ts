@@ -199,6 +199,14 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
             return;
         }
 
+        // Resolve environment
+        let env = interpreter.environ;
+        try {
+            env = await commands.executeCommand(roboCommands.ROBOCORP_UPDATE_LAUNCH_ENV, { 'targetRobot': debugConfiguration.robot, 'env': env, task: debugConfiguration.task });
+        } catch (error) {
+            // The command may not be available.
+        }
+
         if (!interpreter) {
             window.showErrorMessage("Unable to resolve robot.yaml based on: " + debugConfiguration.robot)
             return;
@@ -210,7 +218,7 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
             'robot': debugConfiguration.robot,
             'task': debugConfiguration.task,
             'additionalPythonpathEntries': interpreter.additionalPythonpathEntries,
-            'env': interpreter.environ,
+            'env': env,
             'pythonExe': interpreter.pythonExe,
         });
 
@@ -263,7 +271,7 @@ function registerDebugger(pythonExecutable: string) {
 
         try {
             let robot = config.robot;
-            env = await commands.executeCommand("robocorp.updateLaunchEnv", { 'targetRobot': robot, 'env': env, task: config.task });
+            env = await commands.executeCommand(roboCommands.ROBOCORP_UPDATE_LAUNCH_ENV, { 'targetRobot': robot, 'env': env, task: config.task });
         } catch (error) {
             // The command may not be available.
         }
