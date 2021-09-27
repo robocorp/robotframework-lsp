@@ -185,6 +185,11 @@ TREE_VIEW_CONTAINERS = [
                             "0_new",
                             when="robocorp-code:single-robot-selected",
                         ),
+                        Menu(
+                            "robocorp.deleteWorkItemInWorkItemsView",
+                            "1_change",
+                            when="robocorp-code:single-robot-selected",
+                        ),
                     ],
                 }
             ),

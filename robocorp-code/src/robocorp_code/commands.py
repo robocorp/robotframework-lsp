@@ -54,6 +54,7 @@ ROBOCORP_RCC_TERMINAL_NEW = "robocorp.rccTerminalNew"  # Terminal with Robot env
 ROBOCORP_LIST_WORK_ITEMS_INTERNAL = "robocorp.listWorkItems.internal"  # Lists the work items available for a Robot
 ROBOCORP_UPDATE_LAUNCH_ENV = "robocorp.updateLaunchEnv"  # Updates the environment variables used for some launch (given a Robot)
 ROBOCORP_NEW_WORK_ITEM_IN_WORK_ITEMS_VIEW = "robocorp.newWorkItemInWorkItemsView"  # New Work Item
+ROBOCORP_DELETE_WORK_ITEM_IN_WORK_ITEMS_VIEW = "robocorp.deleteWorkItemInWorkItemsView"  # Delete Work Item
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,

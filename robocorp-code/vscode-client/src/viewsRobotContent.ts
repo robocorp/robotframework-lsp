@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { logError } from './channel';
-import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from './robocorpViews';
-import { debounce, FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeDataProvider, treeViewIdToTreeView } from './viewsCommon';
+import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE, TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE } from './robocorpViews';
+import { debounce, FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeView } from './viewsCommon';
 import { basename, dirname, join, resolve } from 'path';
 import { FileSystemWatcher, Uri, commands } from 'vscode';
 import { TreeItemCollapsibleState } from 'vscode';
@@ -366,6 +366,45 @@ export async function newWorkItemInWorkItemsTree(): Promise<void> {
     const workItemInfo = await getWorkItemInfo();
     const workItemName = await queryNewWorkItemName();
     await createNewWorkItem(workItemInfo, workItemName);
+}
+
+export async function deleteWorkItemInWorkItemsTree(): Promise<void> {
+    let robotContentTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE);
+    if (!robotContentTree) {
+        return undefined;
+    }
+
+    let selection: FSEntry[] = robotContentTree.selection;
+    if (!selection) {
+        await vscode.window.showInformationMessage("No work item selected for deletion.")
+        return;
+    }
+
+    for (const entry of selection) {
+        let uri = Uri.file(entry.filePath);
+        let stat: vscode.FileStat;
+        try {
+            stat = await vscode.workspace.fs.stat(uri);
+        } catch (err) {
+            // unable to get stat (file may have been removed in the meanwhile).
+        }
+        if (stat) {
+            // Remove the whole work item directory and it's contents if file is selected
+            if (stat.type === vscode.FileType.File) {
+                uri = Uri.file(dirname(uri.fsPath));
+            }
+            try {
+                await vscode.workspace.fs.delete(uri, { recursive: true, useTrash: true });
+            } catch (err) {
+                let msg = await vscode.window.showErrorMessage("Unable to move to trash: " + entry.filePath + ". How to proceed?", "Delete permanently", "Cancel")
+                if (msg == "Delete permanently") {
+                    await vscode.workspace.fs.delete(uri, { recursive: true, useTrash: false });
+                } else {
+                    return;
+                }
+            }
+        }
+    }
 }
 
 export class WorkItemsTreeDataProvider extends RobotContentTreeDataProvider {

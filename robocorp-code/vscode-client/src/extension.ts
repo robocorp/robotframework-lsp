@@ -83,6 +83,7 @@ import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE }
 import { askAndCreateRccTerminal } from './rccTerminal';
 import {
     deleteResourceInRobotContentTree,
+    deleteWorkItemInWorkItemsTree,
     newFileInRobotContentTree,
     newFolderInRobotContentTree,
     newWorkItemInWorkItemsTree,
@@ -469,6 +470,7 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGIN, () => cloudLoginShowConfirmationAndRefresh());
         commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGOUT, () => cloudLogoutAndRefresh());
         commands.registerCommand(roboCommands.ROBOCORP_NEW_WORK_ITEM_IN_WORK_ITEMS_VIEW, newWorkItemInWorkItemsTree);
+        commands.registerCommand(roboCommands.ROBOCORP_DELETE_WORK_ITEM_IN_WORK_ITEMS_VIEW, deleteWorkItemInWorkItemsTree);
         views.registerViews(context);
         registerDebugger(executableAndEnv.pythonExe);
         context.subscriptions.push(disposable);

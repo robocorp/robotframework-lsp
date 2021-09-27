@@ -73,6 +73,7 @@
         "onCommand:robocorp.listWorkItems.internal",
         "onCommand:robocorp.updateLaunchEnv",
         "onCommand:robocorp.newWorkItemInWorkItemsView",
+        "onCommand:robocorp.deleteWorkItemInWorkItemsView",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -416,6 +417,12 @@
                 "title": "New Work Item",
                 "category": "Robocorp",
                 "icon": "$(new-file)"
+            },
+            {
+                "command": "robocorp.deleteWorkItemInWorkItemsView",
+                "title": "Delete Work Item",
+                "category": "Robocorp",
+                "icon": "$(close)"
             }
         ],
         "menus": {
@@ -526,6 +533,16 @@
                     "group": "inline"
                 },
                 {
+                    "command": "robocorp.newWorkItemInWorkItemsView",
+                    "when": "view == robocorp-work-items-tree && robocorp-code:single-robot-selected",
+                    "group": "0_new"
+                },
+                {
+                    "command": "robocorp.deleteWorkItemInWorkItemsView",
+                    "when": "view == robocorp-work-items-tree && robocorp-code:single-robot-selected",
+                    "group": "1_change"
+                },
+                {
                     "command": "robocorp.cloudLogin",
                     "when": "view == robocorp-cloud-tree && viewItem == cloudLoginItem",
                     "group": "inline"
@@ -608,6 +625,10 @@
                 },
                 {
                     "command": "robocorp.newWorkItemInWorkItemsView",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.deleteWorkItemInWorkItemsView",
                     "when": "false"
                 }
             ]
