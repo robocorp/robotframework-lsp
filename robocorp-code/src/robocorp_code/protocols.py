@@ -106,9 +106,6 @@ class WorkItemsInfo(TypedDict):
     # Full path to the place where output work items are located
     output_folder_path: Optional[str]
 
-    # Full path to the place where new work items should be placed
-    new_output_workitem_path: str
-
     input_work_items: List[WorkItem]
     output_work_items: List[WorkItem]
 
@@ -297,7 +294,7 @@ class IRcc(Protocol):
     ) -> ActionResult[str]:
         """
         Note: needs connection to the cloud.
-        
+
         :returns an action result with the robot id created.
         """
 
@@ -319,8 +316,8 @@ class IRcc(Protocol):
     def check_conda_installed(self, timeout=None) -> ActionResult[str]:
         """
         Makes sure that conda is installed (i.e.: rcc conda check -i).
-        
-        Note: this can be a really slow operation on the first activation to 
+
+        Note: this can be a really slow operation on the first activation to
         download conda.
         """
 

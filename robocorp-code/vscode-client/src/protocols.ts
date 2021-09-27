@@ -53,8 +53,6 @@ interface WorkItemsInfo {
 
     input_work_items: WorkItem[]
     output_work_items: WorkItem[]
-
-    new_output_workitem_path: string
 }
 
 interface ActionResultWorkItems {

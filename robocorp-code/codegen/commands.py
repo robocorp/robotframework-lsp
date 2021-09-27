@@ -384,6 +384,30 @@ COMMANDS = [
         server_handled=False,
         hide_from_command_palette=True,
     ),
+    Command(
+        "robocorp.newWorkItemInWorkItemsView",
+        "New Work Item",
+        add_to_package_json=True,
+        server_handled=False,
+        icon="$(new-file)",
+        hide_from_command_palette=True,
+    ),
+    Command(
+        'robocorp.deleteWorkItemInWorkItemsView',
+        'Delete Work Item',
+        add_to_package_json=True,
+        server_handled=False,
+        icon="$(close)",
+        hide_from_command_palette=True,
+    ),
+    Command(
+        'robocorp.helpWorkItems',
+        'Work Items Help',
+        add_to_package_json=True,
+        server_handled=False,
+        icon="$(info)",
+        hide_from_command_palette=True,
+    ),
 ]
 
 

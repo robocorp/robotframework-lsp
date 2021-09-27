@@ -1,10 +1,5 @@
 import enum
 from typing import Optional, Union
-from robocorp_code.commands import (
-    ROBOCORP_CLOUD_LOGIN,
-    ROBOCORP_CLOUD_LOGOUT,
-    ROBOCORP_OPEN_CLOUD_HOME,
-)
 
 
 class TreeView:
@@ -173,23 +168,54 @@ TREE_VIEW_CONTAINERS = [
                 },
             ),
             TreeView(
+                id="robocorp-work-items-tree",
+                name="Work Items",
+                contextual_title="Work Items",
+                menus={
+                     "view/title": [
+                        Menu(
+                            "robocorp.newWorkItemInWorkItemsView",
+                            MenuGroup.NAVIGATION,
+                            when="robocorp-code:single-robot-selected",
+                        ),
+                        Menu(
+                            "robocorp.helpWorkItems",
+                            MenuGroup.NAVIGATION,
+                            when="robocorp-code:single-robot-selected"
+                        ),
+                    ],
+                    "view/item/context": [
+                        Menu(
+                            "robocorp.newWorkItemInWorkItemsView",
+                            "0_new",
+                            when="robocorp-code:single-robot-selected",
+                        ),
+                        Menu(
+                            "robocorp.deleteWorkItemInWorkItemsView",
+                            "1_change",
+                            when="robocorp-code:single-robot-selected",
+                        ),
+                    ],
+                }
+            ),
+            TreeView(
                 id="robocorp-cloud-tree",
                 name="Robocorp",
                 contextual_title="Robocorp",
                 menus={
                     "view/item/context": [
                         Menu(
-                            ROBOCORP_CLOUD_LOGIN,
+                            'robocorp.cloudLogin',
                             MenuGroup.INLINE,
                             when="viewItem == cloudLoginItem",
                         ),
                         Menu(
-                            ROBOCORP_CLOUD_LOGOUT,
+                            'robocorp.cloudLogout',
                             MenuGroup.INLINE,
                             when="viewItem == cloudLogoutItem",
                         ),
                         Menu(
-                            ROBOCORP_OPEN_CLOUD_HOME,
+                            'robocorp.openCloudHome',
                             MenuGroup.INLINE,
                             when="viewItem == cloudLogoutItem",
                         ),

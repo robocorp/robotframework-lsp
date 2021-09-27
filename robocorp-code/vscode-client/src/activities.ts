@@ -1,4 +1,4 @@
-import { commands, window, WorkspaceFolder, workspace, Uri, QuickPickItem, TextEdit, debug, DebugConfiguration, DebugSessionOptions, env, ConfigurationTarget } from "vscode";
+import { commands, window, WorkspaceFolder, workspace, Uri, debug, DebugConfiguration, DebugSessionOptions, env, ConfigurationTarget } from "vscode";
 import { join, dirname } from 'path';
 import { logError, OUTPUT_CHANNEL } from './channel';
 import * as roboCommands from './robocorpCommands';
@@ -330,7 +330,7 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
     SELECT_OR_REFRESH:
     do {
         // We ask for the information on the existing workspaces information.
-        // Note that this may be cached from the last time it was asked, 
+        // Note that this may be cached from the last time it was asked,
         // so, we have an option to refresh it (and ask again).
         let actionResult: ListWorkspacesActionResult = await commands.executeCommand(
             roboCommands.ROBOCORP_CLOUD_LIST_WORKSPACES_INTERNAL, { 'refresh': refresh }
@@ -664,6 +664,7 @@ export async function createRobot() {
 export async function updateLaunchEnvironment(args) {
     let robot = args['targetRobot'];
     let environment = args['env'];
+    let task = args['task'] || 'latest-run';
     let work_items_action_result: ActionResultWorkItems = await commands.executeCommand(
         roboCommands.ROBOCORP_LIST_WORK_ITEMS_INTERNAL, { 'robot': robot });
 
@@ -677,15 +678,16 @@ export async function updateLaunchEnvironment(args) {
         return environment
     }
 
-    // If we have found the robot, we should have the result and thus we should always set the 
+    // If we have found the robot, we should have the result and thus we should always set the
     // RPA_OUTPUT_WORKITEM_PATH (even if we don't have any input, we'll set to where we want
     // to save items).
     let newEnv = { ...environment };
 
-    newEnv['RPA_OUTPUT_WORKITEM_PATH'] = result.new_output_workitem_path;
+    newEnv['RPA_OUTPUT_WORKITEM_PATH'] = join(work_items_action_result.result.output_folder_path, task, 'work-items.json');
 
-    let input_work_items = result.input_work_items
-    if (input_work_items.length > 0) {
+    const input_work_items = result.input_work_items
+    const output_work_items = result.output_work_items
+    if (input_work_items.length > 0 || output_work_items.length > 0) {
         // If we have any input for this Robot, present it to the user.
 
         let items: QuickPickItemWithAction[] = []; // Note: just use the action as a 'data'.
@@ -703,6 +705,14 @@ export async function updateLaunchEnvironment(args) {
             });
         }
 
+        for (const it of output_work_items) {
+            items.push({
+                'label': it.name,
+                'detail': it.json_path,
+                'action': it.json_path,
+            })
+        }
+
         let selectedItem = await showSelectOneQuickPick(
             items, 'Please select the work item input to be used by RPA.Robocorp.WorkItems.'
         );
@@ -710,6 +720,7 @@ export async function updateLaunchEnvironment(args) {
             return newEnv;
         }
         newEnv['RPA_INPUT_WORKITEM_PATH'] = selectedItem.action;
+        newEnv['RPA_WORKITEMS_ADAPTER'] = 'RPA.Robocloud.Items.FileAdapter';
     }
 
     return newEnv;

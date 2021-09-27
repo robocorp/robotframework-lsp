@@ -87,6 +87,7 @@ import {
     newFolderInRobotContentTree,
     renameResourceInRobotContentTree,
 } from './viewsRobotContent';
+import { deleteWorkItemInWorkItemsTree, newWorkItemInWorkItemsTree, openWorkItemHelp } from './viewsWorkItems';
 import { LocatorEntry } from './viewsCommon';
 
 
@@ -198,6 +199,14 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
             return;
         }
 
+        // Resolve environment
+        let env = interpreter.environ;
+        try {
+            env = await commands.executeCommand(roboCommands.ROBOCORP_UPDATE_LAUNCH_ENV, { 'targetRobot': debugConfiguration.robot, 'env': env, task: debugConfiguration.task });
+        } catch (error) {
+            // The command may not be available.
+        }
+
         if (!interpreter) {
             window.showErrorMessage("Unable to resolve robot.yaml based on: " + debugConfiguration.robot)
             return;
@@ -209,7 +218,7 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
             'robot': debugConfiguration.robot,
             'task': debugConfiguration.task,
             'additionalPythonpathEntries': interpreter.additionalPythonpathEntries,
-            'env': interpreter.environ,
+            'env': env,
             'pythonExe': interpreter.pythonExe,
         });
 
@@ -262,7 +271,7 @@ function registerDebugger(pythonExecutable: string) {
 
         try {
             let robot = config.robot;
-            env = await commands.executeCommand("robocorp.updateLaunchEnv", { 'targetRobot': robot, 'env': env });
+            env = await commands.executeCommand(roboCommands.ROBOCORP_UPDATE_LAUNCH_ENV, { 'targetRobot': robot, 'env': env, task: config.task });
         } catch (error) {
             // The command may not be available.
         }
@@ -459,6 +468,9 @@ export async function activate(context: ExtensionContext) {
         }
         commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGIN, () => cloudLoginShowConfirmationAndRefresh());
         commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGOUT, () => cloudLogoutAndRefresh());
+        commands.registerCommand(roboCommands.ROBOCORP_NEW_WORK_ITEM_IN_WORK_ITEMS_VIEW, newWorkItemInWorkItemsTree);
+        commands.registerCommand(roboCommands.ROBOCORP_DELETE_WORK_ITEM_IN_WORK_ITEMS_VIEW, deleteWorkItemInWorkItemsTree);
+        commands.registerCommand(roboCommands.ROBOCORP_HELP_WORK_ITEMS, openWorkItemHelp);
         views.registerViews(context);
         registerDebugger(executableAndEnv.pythonExe);
         context.subscriptions.push(disposable);

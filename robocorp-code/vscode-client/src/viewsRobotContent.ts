@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { logError, OUTPUT_CHANNEL } from './channel';
+import { logError } from './channel';
 import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from './robocorpViews';
-import { debounce, FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeDataProvider, treeViewIdToTreeView } from './viewsCommon';
+import { FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeView } from './viewsCommon';
 import { basename, dirname, join } from 'path';
-import { FileSystemWatcher, Uri } from 'vscode';
+import { Uri } from 'vscode';
 import { TreeItemCollapsibleState } from 'vscode';
+import { RobotSelectionTreeDataProviderBase } from './viewsRobotSelection';
 
 const fsPromises = fs.promises;
 
@@ -167,78 +168,7 @@ export async function newFolderInRobotContentTree() {
     }
 }
 
-export class RobotContentTreeDataProvider implements vscode.TreeDataProvider<FSEntry> {
-
-    private _onDidChangeTreeData: vscode.EventEmitter<FSEntry | null> = new vscode.EventEmitter<FSEntry | null>();
-    readonly onDidChangeTreeData: vscode.Event<FSEntry | null> = this._onDidChangeTreeData.event;
-
-    private lastRobotEntry: RobotEntry = undefined;
-    private lastWatcher: FileSystemWatcher | undefined = undefined;
-
-    fireRootChange() {
-        this._onDidChangeTreeData.fire(null);
-    }
-
-    robotSelectionChanged(robotEntry: RobotEntry) {
-        // When the robot selection changes, we need to start tracking file-changes at the proper place.
-        if (this.lastWatcher) {
-            this.lastWatcher.dispose();
-            this.lastWatcher = undefined;
-        }
-        this.fireRootChange();
-
-        let d = basename(dirname(robotEntry.uri.fsPath));
-        let watcher: FileSystemWatcher = vscode.workspace.createFileSystemWatcher('**/' + d + '/**', false, true, false);
-        this.lastWatcher = watcher;
-
-        let onChangedSomething = debounce(() => {
-            // Note: this doesn't currently work if the parent folder is renamed or removed.
-            // (https://github.com/microsoft/vscode/pull/110858)
-            this.fireRootChange();
-        }, 100);
-
-        watcher.onDidCreate(onChangedSomething);
-        watcher.onDidDelete(onChangedSomething);
-    }
-
-    onRobotsTreeSelectionChanged() {
-        let robotEntry: RobotEntry = getSelectedRobot();
-        if (!this.lastRobotEntry && !robotEntry) {
-            // nothing changed
-            return;
-        }
-
-        if (!this.lastRobotEntry && robotEntry) {
-            // i.e.: we didn't have a selection previously: refresh.
-            this.robotSelectionChanged(robotEntry);
-            return;
-        }
-        if (!robotEntry && this.lastRobotEntry) {
-            this.robotSelectionChanged(robotEntry);
-            return;
-        }
-        if (robotEntry.robot.filePath != this.lastRobotEntry.robot.filePath) {
-            // i.e.: the selection changed: refresh.
-            this.robotSelectionChanged(robotEntry);
-            return;
-        }
-
-    }
-
-    async onRobotContentTreeTreeSelectionChanged(robotContentTree: vscode.TreeView<FSEntry>) {
-        let selection = robotContentTree.selection;
-        if (selection.length == 1) {
-            let entry: FSEntry = selection[0];
-            if (entry.filePath && !entry.isDirectory) {
-                let uri = Uri.file(entry.filePath);
-                let document = await vscode.workspace.openTextDocument(uri);
-                if (document) {
-                    await vscode.window.showTextDocument(document);
-                }
-            }
-        }
-    }
-
+export class RobotContentTreeDataProvider extends RobotSelectionTreeDataProviderBase {
     async getChildren(element?: FSEntry): Promise<FSEntry[]> {
         let ret: FSEntry[] = [];
         if (!element) {
@@ -290,26 +220,4 @@ export class RobotContentTreeDataProvider implements vscode.TreeDataProvider<FSE
             return ret;
         }
     }
-
-    getTreeItem(element: FSEntry): vscode.TreeItem {
-        const treeItem = new vscode.TreeItem(element.name);
-        if (element.isDirectory) {
-            treeItem.collapsibleState = TreeItemCollapsibleState.Collapsed;
-        } else {
-            treeItem.collapsibleState = TreeItemCollapsibleState.None;
-        }
-
-        if (element.filePath === undefined) {
-            // https://microsoft.github.io/vscode-codicons/dist/codicon.html
-            treeItem.iconPath = new vscode.ThemeIcon("error");
-        } else if (element.isDirectory) {
-            treeItem.iconPath = vscode.ThemeIcon.Folder;
-            treeItem.resourceUri = Uri.file(element.filePath);
-        } else {
-            treeItem.iconPath = vscode.ThemeIcon.File;
-            treeItem.resourceUri = Uri.file(element.filePath);
-        }
-        return treeItem;
-    }
 }
-
