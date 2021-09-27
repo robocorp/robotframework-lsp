@@ -74,6 +74,7 @@
         "onCommand:robocorp.updateLaunchEnv",
         "onCommand:robocorp.newWorkItemInWorkItemsView",
         "onCommand:robocorp.deleteWorkItemInWorkItemsView",
+        "onCommand:robocorp.helpWorkItems",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -423,6 +424,12 @@
                 "title": "Delete Work Item",
                 "category": "Robocorp",
                 "icon": "$(close)"
+            },
+            {
+                "command": "robocorp.helpWorkItems",
+                "title": "Work Items Help",
+                "category": "Robocorp",
+                "icon": "$(info)"
             }
         ],
         "menus": {
@@ -484,6 +491,11 @@
                 },
                 {
                     "command": "robocorp.newWorkItemInWorkItemsView",
+                    "when": "view == robocorp-work-items-tree && robocorp-code:single-robot-selected",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.helpWorkItems",
                     "when": "view == robocorp-work-items-tree && robocorp-code:single-robot-selected",
                     "group": "navigation"
                 }
@@ -629,6 +641,10 @@
                 },
                 {
                     "command": "robocorp.deleteWorkItemInWorkItemsView",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.helpWorkItems",
                     "when": "false"
                 }
             ]

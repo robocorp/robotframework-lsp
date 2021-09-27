@@ -100,6 +100,10 @@ export async function deleteWorkItemInWorkItemsTree(): Promise<void> {
   }
 }
 
+export function openWorkItemHelp() {
+  vscode.env.openExternal(vscode.Uri.parse('https://robocorp.com/docs/development-guide/control-room/data-pipeline#what-is-a-work-item'));
+}
+
 export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBase {
   private workItemsInfo: WorkItemsInfo = undefined;
 

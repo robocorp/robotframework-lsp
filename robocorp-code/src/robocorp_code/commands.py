@@ -55,6 +55,7 @@ ROBOCORP_LIST_WORK_ITEMS_INTERNAL = "robocorp.listWorkItems.internal"  # Lists t
 ROBOCORP_UPDATE_LAUNCH_ENV = "robocorp.updateLaunchEnv"  # Updates the environment variables used for some launch (given a Robot)
 ROBOCORP_NEW_WORK_ITEM_IN_WORK_ITEMS_VIEW = "robocorp.newWorkItemInWorkItemsView"  # New Work Item
 ROBOCORP_DELETE_WORK_ITEM_IN_WORK_ITEMS_VIEW = "robocorp.deleteWorkItemInWorkItemsView"  # Delete Work Item
+ROBOCORP_HELP_WORK_ITEMS = "robocorp.helpWorkItems"  # Work Items Help
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,
