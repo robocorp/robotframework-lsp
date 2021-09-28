@@ -267,7 +267,7 @@ F = TypeVar("F", bound=Callable[..., Any])
 def overrides(method: Any) -> Callable[[F], F]:
     """
     Meant to be used as
-    
+
     class B:
         @overrides(A.m1)
         def m1(self):
@@ -355,10 +355,10 @@ def check_min_version(version, min_version):
     """
     :param version:
         This is the version of robotframework.
-        
+
     :param min_version:
         This is the minimum version to match.
-        
+
     :return bool:
         True if version >= min_versiond and False otherwise.
     """

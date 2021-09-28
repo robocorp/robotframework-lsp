@@ -224,10 +224,10 @@ class RobotFrameworkInterpreter(object):
     @property
     def full_doc(self) -> str:
         """
-        :return: 
+        :return:
             The full document as seen by the interpreter from what it was
             able to evaluate so far.
-            
+
             Note that it should be logically consistent but not necessarily
             equal to what the user entered as statements.
         """
@@ -278,7 +278,7 @@ class RobotFrameworkInterpreter(object):
             'evaluate': means that the target is an evaluation with the given code.
                 This implies that the current code must be changed to make sense
                 in the given context.
-                
+
             'completions': means that the target is a code-completion
                 This implies that the current code must be changed to include
                 all previous evaluation so that the code-completion contains

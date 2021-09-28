@@ -55,10 +55,10 @@ class IRobotDebugger(Protocol):
     def evaluate(self, frame_id: int, expression: str) -> IEvaluationInfo:
         """
         Asks something to be evaluated.
-        
+
         This is an asynchronous operation and returns an _EvaluationInfo (to get
         the result, access _EvaluationInfo.future.result())
-        
+
         :param frame_id:
         :param expression:
         """

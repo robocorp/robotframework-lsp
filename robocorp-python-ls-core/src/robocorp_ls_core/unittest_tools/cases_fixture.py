@@ -6,18 +6,18 @@ class CasesFixture(object):
         """
         Upon initialization copies the `original_resources_dir` to
         `copy_to_dir`.
-        
-        So, for instance, we may copy the contents from 
-        
+
+        So, for instance, we may copy the contents from
+
         /my/test/resource
-        
+
         to
-        
+
         /temp/pytest-101/folder with spaces/resource
-        
+
         Subsequent requests to get the path will access it in the
         place we copied it to.
-        
+
         Note: it should usually be bound to a session scope so that
         the copy isn't done at each call.
         """
@@ -39,7 +39,7 @@ class CasesFixture(object):
     def copy_to(self, case: str, dest_dir: str):
         """
         Helper to copy a given path to a given directory.
-        
+
         To be used if a given path should be within another structure or
         if its contents should be mutated.
         """

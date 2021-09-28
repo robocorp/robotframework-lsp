@@ -17,7 +17,7 @@ DEFAULT_TIMEOUT = 10
 def is_true_in_env(env_key):
     """
     :param str env_key:
-    
+
     :return bool:
         True if the given key is to be considered to have a value which is to be
         considered True and False otherwise.

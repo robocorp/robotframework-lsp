@@ -71,7 +71,7 @@ def create_section_doc_symbol(
 
 
 def document_symbol(
-    completion_context: ICompletionContext
+    completion_context: ICompletionContext,
 ) -> List[DocumentSymbolTypedDict]:
     from robotframework_ls.impl import ast_utils
     from robot.api import Token  # noqa

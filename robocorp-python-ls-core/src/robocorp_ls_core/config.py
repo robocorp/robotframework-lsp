@@ -88,7 +88,9 @@ class Config(object):
             else:
                 log.debug("Unable to make workspace replacement for variable: %s", name)
 
-        elif (name.startswith("${env.") or name.startswith("${env:")) and name.endswith("}"):
+        elif (name.startswith("${env.") or name.startswith("${env:")) and name.endswith(
+            "}"
+        ):
             name = name[6:-1]
             ret = os.environ.get(name)  # Note: should be case-insensitive on windows.
         else:
@@ -125,7 +127,7 @@ class Config(object):
         :param settings:
             The settings where the variables should be replaced.
             Note that this instance is unchanged.
-            
+
         :return dict:
             Returns a new dict with the variables replaced.
         """

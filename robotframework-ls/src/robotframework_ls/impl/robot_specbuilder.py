@@ -25,7 +25,7 @@ from robotframework_ls.impl.protocols import ISymbolsCache
 
 def markdown_doc(obj):
     """
-    
+
     :type obj: LibraryDoc|KeywordDoc
     """
     if obj is None:

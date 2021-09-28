@@ -16,22 +16,22 @@ log = get_logger(__name__)
 def instance_cache(func):
     """
     Use as decorator:
-    
+
     class MyClass(object):
 
         @instance_cache
         def cache_this(self):
             ...
-            
+
     Clear the cache with:
-    
+
     instance = MyClass()
     instance.cache_this()
     instance.cache_this.cache_clear(instance)
-    
+
     # set_lock(instance, lock) can be used to make the cache thread-safe.
     # i.e.:
-    instance.cache_this.set_lock(instance, lock) 
+    instance.cache_this.set_lock(instance, lock)
 
     """
     cache_key = "__cache__%s" % (func.__name__,)
@@ -99,16 +99,16 @@ def instance_cache(func):
 class DirCache(object):
     """
     To be used as:
-    
+
     dir_cache = DirCache(cache_directory)
     dir_cache.store("some_key", 1)
     value = dir_cache.load("some_key", int) # Ok
-    
+
     try:
         value = dir_cache.load("some_key", dict)
     except KeyError:
         ... error: value is not a dict
-    
+
     try:
         dir_cache.load("key does not exist", dict)
     except KeyError:

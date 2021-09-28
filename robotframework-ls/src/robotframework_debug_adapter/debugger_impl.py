@@ -70,15 +70,15 @@ class RobotBreakpoint(object):
         """
         :param lineno:
             1-based line for the breakpoint.
-            
+
         :param condition:
             If specified, the breakpoint will only be hit if the condition
             evaluates to True.
-            
+
         :param hit_condition:
             If specified, the breakpoint will only be hit after it hits the
             specified number of times.
-            
+
         :param log_message:
             If specified, the breakpoint will not actually break, it'll just
             print the given message instead of breaking.
@@ -692,10 +692,10 @@ class _RobotDebuggerImpl(object):
     def evaluate(self, frame_id, expression) -> IEvaluationInfo:
         """
         Asks something to be evaluated.
-        
+
         This is an asynchronous operation and returns an _EvaluationInfo (to get
         the result, access _EvaluationInfo.future.result())
-        
+
         :param frame_id:
         :param expression:
         :return _EvaluationInfo:

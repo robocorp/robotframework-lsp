@@ -82,7 +82,7 @@ def not_supported_test_launch_in_external_terminal(
     """
     This is an integrated test of the debug adapter. It communicates with it as if it was
     VSCode.
-    
+
     Note: we don't currently support launching in an external terminal because there's
     no easy way to get the pid (it'd be possible to do that by creating a wrapper script
     which would then really launch rcc and then it'd connect back to some port and

@@ -153,8 +153,7 @@ def extract_suffixes(iter: Iterable[PurePath], prefix: str) -> Iterator[str]:
 
 
 def find_suffixes(root: Path, prefix: str) -> Iterator[str]:
-    """combines find_prefixes and extract_suffixes
-    """
+    """combines find_prefixes and extract_suffixes"""
     return extract_suffixes(find_prefixed(root, prefix), prefix)
 
 

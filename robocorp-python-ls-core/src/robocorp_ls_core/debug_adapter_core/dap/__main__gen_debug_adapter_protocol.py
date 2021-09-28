@@ -310,9 +310,7 @@ def extract_prop_name_and_prop(class_to_generate):
         key = x[0]
         if key in required:
             if key == "seq":
-                return (
-                    0.5
-                )  # seq when required is after the other required keys (to have a default of -1).
+                return 0.5  # seq when required is after the other required keys (to have a default of -1).
             return 0
         return 1
 

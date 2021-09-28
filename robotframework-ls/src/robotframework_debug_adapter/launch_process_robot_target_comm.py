@@ -29,14 +29,14 @@ log = get_logger(__name__)
 class LaunchProcessDebugAdapterRobotTargetComm(BaseLaunchProcessTargetComm):
     """
     This class is used so intermediate talking to the server.
-    
+
     It's the middle ground between the `DebugAdapterComm` and `_RobotTargetComm`.
         - `DebugAdapterComm`:
             It's used to talk with the client (in this process) and accessed
             through the _weak_debug_adapter_comm attribute.
-             
+
         - `_RobotTargetComm`
-            It's actually in the target process. We communicate with it by 
+            It's actually in the target process. We communicate with it by
             calling the `write_to_robot_message` method and receive messages
             from it in the `_from_robot` method in this class.
     """

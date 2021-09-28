@@ -16,7 +16,7 @@ class IVariableFound(object):
     :ivar source:
         Source where the variable was found.
     :ivar lineno:
-        Line where it was found (0-based). 
+        Line where it was found (0-based).
     """
 
     variable_name = ""

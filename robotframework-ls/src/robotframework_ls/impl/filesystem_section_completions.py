@@ -173,7 +173,7 @@ def _get_library_completions(completion_context, token):
 def complete(completion_context):
     """
     Provides the completions for 'Library' and 'Resource' imports.
-    
+
     :param CompletionContext completion_context:
     """
     from robotframework_ls.impl import ast_utils

@@ -290,8 +290,10 @@ def _handle_semantic_tokens(
                 log.info(f"Did not find 'code' in {args}")
                 return {"resultId": None, "data": []}
 
-            evaluate_text_result = rf_info_or_dict_error.interpreter.interpreter_compute_evaluate_text(
-                code
+            evaluate_text_result = (
+                rf_info_or_dict_error.interpreter.interpreter_compute_evaluate_text(
+                    code
+                )
             )
             if not evaluate_text_result["success"]:
                 log.info(

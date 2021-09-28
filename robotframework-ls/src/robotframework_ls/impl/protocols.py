@@ -124,7 +124,7 @@ class IKeywordFound(Protocol):
     :ivar source:
         Source where the keyword was found.
     :ivar lineno:
-        Line where it was found (0-based). 
+        Line where it was found (0-based).
     """
 
     @property

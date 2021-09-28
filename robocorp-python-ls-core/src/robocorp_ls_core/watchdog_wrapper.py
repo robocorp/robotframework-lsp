@@ -384,11 +384,11 @@ class _WatchdogObserver(object):
     ) -> IFSWatch:
         """
         To be used as:
-        
+
         notifier = create_notifier(callback=on_file_change, timeout=0.5)
-        
-        observer = create_observer() 
-        
+
+        observer = create_observer()
+
         watch = observer.notify_on_any_change(
             [PathInfo('a', recursive=True)],
             notifier.on_change,
@@ -396,13 +396,13 @@ class _WatchdogObserver(object):
         )
         ...
         watch.stop_tracking()
-        
+
         notifier.dispose()
         observer.dispose()
-        
+
         Multiple changes on the same file will be sent as a single change (if
         the changes occur during the available timeout).
-        
+
         :param list(PathInfo) paths:
         :param list(str) extensions:
             The file extensions that should be tracked.
@@ -413,7 +413,9 @@ class _WatchdogObserver(object):
             extensions = self._extensions
 
         class _Handler(FileSystemEventHandler):
-            def __init__(self,):
+            def __init__(
+                self,
+            ):
                 FileSystemEventHandler.__init__(self)
 
             def on_any_event(self, event):

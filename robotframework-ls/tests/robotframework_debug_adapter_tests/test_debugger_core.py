@@ -70,7 +70,7 @@ def run_robot_cli(dap_logs_dir):
 
 
 def stack_frames_repr(
-    stack_lst: Iterable[Optional[List[StackFrame]]]
+    stack_lst: Iterable[Optional[List[StackFrame]]],
 ) -> Dict[str, List[str]]:
     dct = {}
 

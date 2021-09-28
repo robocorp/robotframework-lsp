@@ -72,8 +72,8 @@ class HolotreeManager:
         """
         :param directory:
             This is the directory where the holotree manager can store/load
-            info. 
-            
+            info.
+
             Usually it should not be passed and it defaults to something
             as ROBOCORP_HOME/.vscode (but a different path can be used for
             tests).

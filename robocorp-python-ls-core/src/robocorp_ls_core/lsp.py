@@ -346,15 +346,15 @@ class LocationLink(_Base):
             Span of the origin of this link.
             Used as the underlined span for mouse interaction. Defaults to the word range at
             the mouse position.
-            
+
         :param target_uri:
             The target resource identifier of this link.
-            
+
         :param target_range:
             The full target range of this link. If the target for example is a symbol then target range is the
             range enclosing this symbol not including leading/trailing whitespace but everything else
             like comments. This information is typically used to highlight the range in the editor.
-            
+
         :param target_selection_range:
             The range that should be selected and revealed when this link is being followed, e.g the name of a function.
             Must be contained by the the `targetRange`. See also `DocumentSymbol#range`
@@ -396,12 +396,12 @@ class SymbolInformationTypedDict(TypedDict, total=False):
         tool the range's start information is used to position the cursor. So
         the range usually spans more then the actual symbol's name and does
         normally include things like visibility modifiers.
-        
+
         The range doesn't have to denote a node range in the sense of a abstract
         syntax tree. It can therefore not be used to re-construct a hierarchy of
         the symbols.
 
-    :ivar containerName: 
+    :ivar containerName:
         The name of the symbol containing this symbol. This information is for
         user interface purposes (e.g. to render a qualifier in the user interface
         if necessary). It can't be used to re-infer a hierarchy for the document

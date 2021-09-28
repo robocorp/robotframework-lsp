@@ -198,8 +198,8 @@ class LaunchProcess(object):
         if DEBUG:
             log.debug("Run in debug mode: %s\n" % (self._run_in_debug_mode,))
 
-        self._debug_adapter_robot_target_comm = LaunchProcessDebugAdapterRobotTargetComm(
-            debug_adapter_comm
+        self._debug_adapter_robot_target_comm = (
+            LaunchProcessDebugAdapterRobotTargetComm(debug_adapter_comm)
         )
 
         port, server_socket = self._debug_adapter_robot_target_comm.start_listening(

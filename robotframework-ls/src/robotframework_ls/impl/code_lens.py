@@ -185,7 +185,7 @@ def _iter_rf_interactive_items(ast):
 
 
 def code_lens_rf_interactive(
-    completion_context: ICompletionContext
+    completion_context: ICompletionContext,
 ) -> List[CodeLensTypedDict]:
     from robot.api import Token  # noqa
     from robotframework_ls import import_rf_interactive

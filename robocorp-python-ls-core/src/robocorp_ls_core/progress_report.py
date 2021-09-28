@@ -121,13 +121,13 @@ def progress_context(
     """
     Creates a progress context which submits $/customProgress notifications to the
     client.
-    
+
     Automatically updates the progress based on a previous invocation for some
     action with the same title (stores the elapsed time at the dir_cache).
-    
+
     :param dir_cache:
         If None, an estimate for the task is not loaded/saved.
-        
+
     :param elapsed_time_key:
         If None, the default is using the title as an entry in the dir cache,
         otherwise, the given key is used to load/save the time taken in the

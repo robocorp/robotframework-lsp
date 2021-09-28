@@ -347,7 +347,7 @@ class _CollectKeywordNameToKeywordFound:
 
 
 def collect_keyword_name_to_keyword_found(
-    completion_context: ICompletionContext
+    completion_context: ICompletionContext,
 ) -> Dict[str, List[IKeywordFound]]:
     completion_context.memo.clear()
     collector = _CollectKeywordNameToKeywordFound()

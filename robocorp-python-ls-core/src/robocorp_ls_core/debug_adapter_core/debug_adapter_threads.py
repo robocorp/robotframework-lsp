@@ -164,7 +164,7 @@ def writer_thread_no_auto_seq(
 ):
     """
     Same as writer_thread but does not set the message 'seq' automatically
-    (meant to be used when responses, which need the seq id set need to be handled). 
+    (meant to be used when responses, which need the seq id set need to be handled).
     """
     try:
         while True:

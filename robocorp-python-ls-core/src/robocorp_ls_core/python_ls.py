@@ -229,9 +229,9 @@ def start_io_lang_server(rfile, wfile, handler_class):
 
 
 class PythonLanguageServer(MethodDispatcher):
-    """ Implementation of the Microsoft VSCode Language Server Protocol
+    """Implementation of the Microsoft VSCode Language Server Protocol
     https://github.com/Microsoft/language-server-protocol/blob/master/versions/protocol-1-x.md
-    
+
     Based on: https://github.com/palantir/python-language-server/blob/develop/pyls/python_ls.py
     """
 

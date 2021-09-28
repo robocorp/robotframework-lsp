@@ -192,8 +192,12 @@ def test_get_robot_yaml_environ(rcc: IRcc, datadir, holotree_manager):
     )
     assert space.space_name == "vscode-01"
 
-    space_path_vscode01_conda: Path = holotree_manager._directory / "vscode-01" / "conda.yaml"
-    space_path_vscode02_conda: Path = holotree_manager._directory / "vscode-02" / "conda.yaml"
+    space_path_vscode01_conda: Path = (
+        holotree_manager._directory / "vscode-01" / "conda.yaml"
+    )
+    space_path_vscode02_conda: Path = (
+        holotree_manager._directory / "vscode-02" / "conda.yaml"
+    )
     assert space_path_vscode01_conda.read_text("utf-8") == robot1.conda_yaml_contents
     assert space_path_vscode02_conda.read_text("utf-8") == robot2.conda_yaml_contents
 

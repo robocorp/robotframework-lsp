@@ -3,13 +3,15 @@ from typing import Dict, List, Tuple
 from robot.api import Token
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.protocols import ICompletionContext
-from robocorp_ls_core.lsp import (CompletionItem,
-                                  MarkupKind,
-                                  CompletionItemKind,
-                                  InsertTextFormat,
-                                  Position,
-                                  Range,
-                                  TextEdit)
+from robocorp_ls_core.lsp import (
+    CompletionItem,
+    MarkupKind,
+    CompletionItemKind,
+    InsertTextFormat,
+    Position,
+    Range,
+    TextEdit,
+)
 
 log = get_logger(__name__)
 _DICT_VARIABLE_REGEX = re.compile(r"[$|&]{([\w\s]+)}")
@@ -40,7 +42,9 @@ def _get_dict_keys(dict_item_access: str):
     return dict_keys
 
 
-def _get_dictionary(variables: List[Tuple[str, List[str]]], dict_name: str, dict_items: List[str]):
+def _get_dictionary(
+    variables: List[Tuple[str, List[str]]], dict_name: str, dict_items: List[str]
+):
     """
     Get the dictionary whose keys are the autocompletion options
     ${dict_name}([dict_key])*[<dictionary.keys()>]
@@ -51,7 +55,7 @@ def _get_dictionary(variables: List[Tuple[str, List[str]]], dict_name: str, dict
         dictionary = _as_dictionary(var_value)
         dict_keys = dictionary.keys()
         dict_entry = dict_items.pop()
-        if dict_entry == '':
+        if dict_entry == "":
             return dictionary
         matching_keys = [key for key in dict_keys if dict_entry in key]
         if len(matching_keys) == 0:
@@ -81,15 +85,18 @@ def _as_dictionary(dict_tokens: List[str]):
 
 
 def _completion_items(dictionary: Dict[str, str], editor_range: Range):
-    return [CompletionItem(
-             key,
-             kind=CompletionItemKind.Variable,
-             text_edit=TextEdit(editor_range, f"{key}]"),
-             insertText=key,
-             documentation=value,
-             insertTextFormat=InsertTextFormat.Snippet,
-             documentationFormat=MarkupKind.PlainText,
-             ).to_dict() for key, value in dictionary.items()]
+    return [
+        CompletionItem(
+            key,
+            kind=CompletionItemKind.Variable,
+            text_edit=TextEdit(editor_range, f"{key}]"),
+            insertText=key,
+            documentation=value,
+            insertTextFormat=InsertTextFormat.Snippet,
+            documentationFormat=MarkupKind.PlainText,
+        ).to_dict()
+        for key, value in dictionary.items()
+    ]
 
 
 def complete(completion_context: ICompletionContext):
@@ -110,7 +117,9 @@ def complete(completion_context: ICompletionContext):
         return []
     selection = completion_context.sel
     editor_range = Range(
-        start=Position(selection.line, token.col_offset + len(value) - last_opening_bracket_column),
+        start=Position(
+            selection.line, token.col_offset + len(value) - last_opening_bracket_column
+        ),
         end=Position(selection.line, token.end_col_offset),
     )
     return _completion_items(dictionary, editor_range)

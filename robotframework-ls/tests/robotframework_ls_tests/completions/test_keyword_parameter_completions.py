@@ -56,7 +56,7 @@ def test_keyword_completions_params_complete_existing_no_chars(check):
 
 
 def test_keyword_completions_params_complete_existing_no_chars_with_empty_new_line_after(
-    check
+    check,
 ):
     from robocorp_ls_core.workspace import Document
 
