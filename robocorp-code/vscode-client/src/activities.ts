@@ -686,6 +686,7 @@ export async function updateLaunchEnvironment(args) {
     let newEnv = { ...environment };
 
     newEnv['RPA_OUTPUT_WORKITEM_PATH'] = join(work_items_action_result.result.output_folder_path, 'latest-run', 'work-items.json');
+    newEnv['RPA_WORKITEMS_ADAPTER'] = 'RPA.Robocloud.Items.FileAdapter';
 
     const input_work_items = result.input_work_items
     const output_work_items = result.output_work_items
@@ -722,7 +723,6 @@ export async function updateLaunchEnvironment(args) {
             return newEnv;
         }
         newEnv['RPA_INPUT_WORKITEM_PATH'] = selectedItem.action;
-        newEnv['RPA_WORKITEMS_ADAPTER'] = 'RPA.Robocloud.Items.FileAdapter';
     }
 
     return newEnv;
