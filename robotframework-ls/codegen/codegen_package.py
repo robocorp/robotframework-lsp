@@ -258,6 +258,7 @@ def get_json_contents():
             ],
         },
         "main": "./vscode-client/out/extension",
+        "prettier": {"tabWidth": 4, "printWidth": 120, "quoteProps": "preserve"},
         "scripts": {
             "vscode:prepublish": "cd vscode-client && npm run compile && cd ..",
             "compile": "cd vscode-client && tsc -p ./ && cd ..",
@@ -272,6 +273,7 @@ def get_json_contents():
             "@types/mocha": "^2.2.32",
             "@types/node": "^11.0.40",
             "@types/vscode": "1.53.0",
+            "prettier": "2.4.1",
             "vscode-test": "1.5.1",
             "typescript": "^3.8.2",
         },

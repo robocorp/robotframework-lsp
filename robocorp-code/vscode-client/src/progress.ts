@@ -1,21 +1,18 @@
-import { window, ProgressLocation, Progress } from 'vscode';
-
+import { window, ProgressLocation, Progress } from "vscode";
 
 class ProgressReporter {
-
     promise: Thenable<Progress<{ message?: string; increment?: number }>>;
     resolve;
     progress: Progress<{ message?: string; increment?: number }>;
 
     start(args: ProgressReport) {
-        window.withProgress(
-            { location: ProgressLocation.Notification, title: args.title, cancellable: false }, p => {
-                this.progress = p;
-                this.promise = new Promise((resolve, reject) => {
-                    this.resolve = resolve;
-                });
-                return this.promise;
+        window.withProgress({ location: ProgressLocation.Notification, title: args.title, cancellable: false }, (p) => {
+            this.progress = p;
+            this.promise = new Promise((resolve, reject) => {
+                this.resolve = resolve;
             });
+            return this.promise;
+        });
     }
 
     report(args: ProgressReport) {
@@ -46,20 +43,20 @@ export interface ProgressReport {
 
 export function handleProgressMessage(args: ProgressReport) {
     switch (args.kind) {
-        case 'begin':
+        case "begin":
             let reporter: ProgressReporter = new ProgressReporter();
             reporter.start(args);
             id_to_progress[args.id] = reporter;
             break;
 
-        case 'report':
+        case "report":
             let prev: ProgressReporter = id_to_progress[args.id];
             if (prev) {
                 prev.report(args);
             }
             break;
 
-        case 'end':
+        case "end":
             let last: ProgressReporter = id_to_progress[args.id];
             if (last) {
                 last.end();

@@ -31,26 +31,23 @@ export function sortCaptions(captions: QuickPickItemWithAction[]) {
     });
 }
 
-export async function showSelectOneQuickPick(items: QuickPickItemWithAction[], message: string): Promise<QuickPickItemWithAction> {
-    let selectedItem: QuickPickItemWithAction = await window.showQuickPick(
-        items,
-        {
-            "canPickMany": false,
-            'placeHolder': message,
-            'ignoreFocusOut': true,
-        }
-    );
+export async function showSelectOneQuickPick(
+    items: QuickPickItemWithAction[],
+    message: string
+): Promise<QuickPickItemWithAction> {
+    let selectedItem: QuickPickItemWithAction = await window.showQuickPick(items, {
+        "canPickMany": false,
+        "placeHolder": message,
+        "ignoreFocusOut": true,
+    });
     return selectedItem;
 }
 
 export async function showSelectOneStrQuickPick(items: string[], message: string): Promise<string> {
-    let selectedItem: string = await window.showQuickPick(
-        items,
-        {
-            "canPickMany": false,
-            'placeHolder': message,
-            'ignoreFocusOut': true,
-        }
-    );
+    let selectedItem: string = await window.showQuickPick(items, {
+        "canPickMany": false,
+        "placeHolder": message,
+        "ignoreFocusOut": true,
+    });
     return selectedItem;
 }

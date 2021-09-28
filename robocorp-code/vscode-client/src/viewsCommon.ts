@@ -1,11 +1,11 @@
-import * as path from 'path';
-import * as vscode from 'vscode';
-import { TREE_VIEW_ROBOCORP_LOCATORS_TREE, TREE_VIEW_ROBOCORP_ROBOTS_TREE } from './robocorpViews';
+import * as path from "path";
+import * as vscode from "vscode";
+import { TREE_VIEW_ROBOCORP_LOCATORS_TREE, TREE_VIEW_ROBOCORP_ROBOTS_TREE } from "./robocorpViews";
 
 /**
  * Note: if type is error|info the name is the message to be shown.
  */
- export interface LocatorEntry {
+export interface LocatorEntry {
     name: string;
     line: number;
     column: number;
@@ -15,7 +15,7 @@ import { TREE_VIEW_ROBOCORP_LOCATORS_TREE, TREE_VIEW_ROBOCORP_ROBOTS_TREE } from
 
 export enum RobotEntryType {
     Robot,
-    Task
+    Task,
 }
 
 export interface CloudEntry {
@@ -41,12 +41,14 @@ export interface FSEntry {
     filePath: string;
 }
 
-
 export let treeViewIdToTreeView: Map<string, vscode.TreeView<any>> = new Map();
 export let treeViewIdToTreeDataProvider: Map<string, vscode.TreeDataProvider<any>> = new Map();
 
-
-export function getSingleTreeSelection(treeId: string, noSelectionMessage?: string, moreThanOneSelectionMessage?: string) {
+export function getSingleTreeSelection(
+    treeId: string,
+    noSelectionMessage?: string,
+    moreThanOneSelectionMessage?: string
+) {
     const robotsTree = treeViewIdToTreeView.get(treeId);
     if (!robotsTree || robotsTree.selection.length == 0) {
         if (noSelectionMessage) {
@@ -68,29 +70,25 @@ export function getSingleTreeSelection(treeId: string, noSelectionMessage?: stri
 
 /**
  * Returns the selected robot or undefined if there are no robots or if more than one robot is selected.
- * 
+ *
  * If the messages are passed as a parameter, a warning is shown with that message if the selection is invalid.
  */
-export function getSelectedRobot(noSelectionMessage?: string, moreThanOneSelectionMessage?: string): RobotEntry | undefined {
-    return getSingleTreeSelection(
-      TREE_VIEW_ROBOCORP_ROBOTS_TREE,
-      noSelectionMessage,
-      moreThanOneSelectionMessage,
-    );
+export function getSelectedRobot(
+    noSelectionMessage?: string,
+    moreThanOneSelectionMessage?: string
+): RobotEntry | undefined {
+    return getSingleTreeSelection(TREE_VIEW_ROBOCORP_ROBOTS_TREE, noSelectionMessage, moreThanOneSelectionMessage);
 }
 
-
-export function getSelectedLocator(noSelectionMessage?: string, moreThanOneSelectionMessage?: string): LocatorEntry | undefined {
-    return getSingleTreeSelection(
-      TREE_VIEW_ROBOCORP_LOCATORS_TREE,
-      noSelectionMessage,
-      moreThanOneSelectionMessage,
-    );
+export function getSelectedLocator(
+    noSelectionMessage?: string,
+    moreThanOneSelectionMessage?: string
+): LocatorEntry | undefined {
+    return getSingleTreeSelection(TREE_VIEW_ROBOCORP_LOCATORS_TREE, noSelectionMessage, moreThanOneSelectionMessage);
 }
-
 
 export function basename(s) {
-    return s.split('\\').pop().split('/').pop();
+    return s.split("\\").pop().split("/").pop();
 }
 
 export const debounce = (func, wait) => {

@@ -1,9 +1,9 @@
-'use strict';
+"use strict";
 
-import * as path from 'path';
-import * as fs from 'fs';
-import { window } from 'vscode';
-import { OUTPUT_CHANNEL } from './channel';
+import * as path from "path";
+import * as fs from "fs";
+import { window } from "vscode";
+import { OUTPUT_CHANNEL } from "./channel";
 
 /**
  * @param mustExist if true, if the returned file does NOT exist, returns undefined.
@@ -20,7 +20,7 @@ export function getExtensionRelativeFile(relativeLocation: string, mustExist: bo
 
 export function verifyFileExists(targetFile: string, warnUser: boolean = true): boolean {
     if (!fs.existsSync(targetFile)) {
-        let msg = 'Error. Expected: ' + targetFile + " to exist.";
+        let msg = "Error. Expected: " + targetFile + " to exist.";
         if (warnUser) window.showWarningMessage(msg);
         OUTPUT_CHANNEL.appendLine(msg);
         return false;

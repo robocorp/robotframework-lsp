@@ -1,5 +1,5 @@
-import * as monaco from 'monaco-editor';
-import { FONT_INFO } from './consoleComponent';
+import * as monaco from "monaco-editor";
+import { FONT_INFO } from "./consoleComponent";
 
 interface IVSCode {
     postMessage(message: any): void;
@@ -7,35 +7,35 @@ interface IVSCode {
 
 declare const vscode: IVSCode; // Set by rfinteractive.ts (in _getHtmlForWebview).
 
-// Note how request/response/event follows the same patterns from the 
+// Note how request/response/event follows the same patterns from the
 // DAP (debug adapter protocol).
 export interface IRequestMessage {
-    type: 'request'
-    seq: number
-    command: string
+    type: "request";
+    seq: number;
+    command: string;
 }
 
 export interface IResponseMessage {
-    type: 'response'
-    seq: number
-    command: string
-    request_seq: number
-    body?: any
+    type: "response";
+    seq: number;
+    command: string;
+    request_seq: number;
+    body?: any;
 }
 
 export interface IEventMessage {
-    type: 'event'
-    seq: number
-    event: string
+    type: "event";
+    seq: number;
+    event: string;
 }
 
 export interface IOutputEvent extends IEventMessage {
-    category: string
-    output: string
+    category: string;
+    output: string;
 }
 
 export interface IEvaluateMessage extends IRequestMessage {
-    arguments: any
+    arguments: any;
 }
 
 let msgIdToSeq = {};
@@ -51,7 +51,7 @@ export function sendRequestToClient(message: IRequestMessage): Promise<any> {
     if (vscodeRef) {
         let promise = new Promise((resolve, reject) => {
             msgIdToSeq[message.seq] = resolve;
-        })
+        });
         vscodeRef.postMessage(message);
         return promise;
     } else {
@@ -59,17 +59,16 @@ export function sendRequestToClient(message: IRequestMessage): Promise<any> {
         // (case when html is opened directly and not through VSCode).
         return new Promise((resolve, reject) => {
             let response: IResponseMessage = {
-                type: 'response',
+                type: "response",
                 seq: nextMessageSeq(),
                 command: message.command,
                 request_seq: message.seq,
-                body: undefined
-            }
+                body: undefined,
+            };
             resolve(response);
         });
     }
 }
-
 
 export function sendEventToClient(message: IEventMessage): void {
     let vscodeRef = undefined;
@@ -85,19 +84,19 @@ export function sendEventToClient(message: IEventMessage): void {
 }
 
 export let eventToHandler = {
-    'output': undefined
-}
+    "output": undefined,
+};
 
 export let requestToHandler = {
-    'evaluate': undefined
-}
+    "evaluate": undefined,
+};
 
 // i.e.: Receive message from client
-window.addEventListener('message', event => {
+window.addEventListener("message", (event) => {
     let msg = event.data;
     if (msg) {
         switch (msg.type) {
-            case 'response':
+            case "response":
                 // Response to something we posted.
                 let responseMsg: IResponseMessage = msg;
                 let resolvePromise = msgIdToSeq[responseMsg.request_seq];
@@ -106,28 +105,27 @@ window.addEventListener('message', event => {
                     resolvePromise(responseMsg);
                 }
                 break;
-            case 'event':
+            case "event":
                 // Process some event
                 let handler = eventToHandler[msg.event];
                 if (handler) {
                     handler(msg);
                 } else {
-                    console.log('Unhandled event: ', msg);
+                    console.log("Unhandled event: ", msg);
                 }
                 break;
-            case 'request':
+            case "request":
                 // Process some request
                 let requestHandler = requestToHandler[msg.command];
                 if (requestHandler) {
                     requestHandler(msg);
                 } else {
-                    console.log('Unhandled request: ', msg);
+                    console.log("Unhandled request: ", msg);
                 }
                 break;
         }
     }
-})
-
+});
 
 let _lastMessageId: number = 0;
 export function nextMessageSeq(): number {
@@ -158,8 +156,9 @@ export function escaped(unsafe: string): string {
 }
 
 export async function codeAsHtml(code: string): Promise<string> {
-    const LANGUAGE_ID = 'robotframework-ls';
+    const LANGUAGE_ID = "robotframework-ls";
     let colorized = await monaco.editor.colorize(code, LANGUAGE_ID, {});
+    // prettier-ignore
     if (FONT_INFO) {
         colorized = '<div style="' +
             'font-family:' + escaped(getMassaged(FONT_INFO.fontFamily)) + ';' +

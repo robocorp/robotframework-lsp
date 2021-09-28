@@ -2,7 +2,7 @@
  * The idea is doing an Interactive Console for Robot Framework inside of VSCode.
  *
  * There is previous work on this in https://github.com/microsoft/vscode-jupyter.
- * 
+ *
  * Interesting docs related to webviews:
  * https://medium.com/younited-tech-blog/reactception-extending-vs-code-extension-with-webviews-and-react-12be2a5898fd
  * https://github.com/Ciaanh/reactception/
@@ -12,7 +12,7 @@
  */
 
 import { commands, ExtensionContext, window } from "vscode";
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 import { LanguageClient } from "vscode-languageclient/node";
 import { logError, OUTPUT_CHANNEL } from "../channel";
 
@@ -27,7 +27,7 @@ function getWebviewOptions(localResourceRoot: vscode.Uri): vscode.WebviewOptions
         retainContextWhenHidden: true,
 
         // And restrict the webview to only loading content from our extension's directory.
-        localResourceRoots: [localResourceRoot]
+        localResourceRoots: [localResourceRoot],
     };
 }
 
@@ -36,22 +36,22 @@ async function executeCheckedCommand(commandId: string, args: any) {
         return await commands.executeCommand(commandId, args);
     } catch (err) {
         return {
-            'success': false,
-            'message': '' + err.message,
-            'result': undefined
-        }
+            "success": false,
+            "message": "" + err.message,
+            "result": undefined,
+        };
     }
 }
 
 let _lastActive: InteractiveShellPanel | undefined = undefined;
 
 interface IPersistable {
-    setState(state: object): void
-    getState(): object | undefined
+    setState(state: object): void;
+    getState(): object | undefined;
 }
 
 class InteractiveShellPanel {
-    public static readonly viewType = 'InteractiveShellPanel';
+    public static readonly viewType = "InteractiveShellPanel";
 
     private readonly _panel: vscode.WebviewPanel;
     private readonly _interpreterId: number;
@@ -69,28 +69,36 @@ class InteractiveShellPanel {
         return this._lastMessageId;
     }
 
-    public static async create(extensionUri: vscode.Uri, interpreterId: number, persistable: IPersistable): Promise<InteractiveShellPanel> {
-        const column = vscode.window.activeTextEditor
-            ? vscode.window.activeTextEditor.viewColumn
-            : undefined;
+    public static async create(
+        extensionUri: vscode.Uri,
+        interpreterId: number,
+        persistable: IPersistable
+    ): Promise<InteractiveShellPanel> {
+        const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
 
-        let localResourceRoot = vscode.Uri.joinPath(extensionUri, 'src', 'robotframework_ls', 'vendored', 'vscode-interpreter-webview');
+        let localResourceRoot = vscode.Uri.joinPath(
+            extensionUri,
+            "src",
+            "robotframework_ls",
+            "vendored",
+            "vscode-interpreter-webview"
+        );
         if (RF_INTERACTIVE_LOCAL_RESOURCE_ROOT) {
             localResourceRoot = vscode.Uri.file(RF_INTERACTIVE_LOCAL_RESOURCE_ROOT);
         }
 
         const panel = vscode.window.createWebviewPanel(
             InteractiveShellPanel.viewType,
-            'Robot Framework Interactive Console',
+            "Robot Framework Interactive Console",
             (column || vscode.ViewColumn.One) + 1,
-            getWebviewOptions(localResourceRoot),
+            getWebviewOptions(localResourceRoot)
         );
 
         let interactiveShellPanel = new InteractiveShellPanel(panel, localResourceRoot, interpreterId, persistable);
         _lastActive = interactiveShellPanel;
         panel.onDidChangeViewState(() => {
             if (panel.active) {
-                OUTPUT_CHANNEL.appendLine('Changed active: ' + interactiveShellPanel._interpreterId);
+                OUTPUT_CHANNEL.appendLine("Changed active: " + interactiveShellPanel._interpreterId);
                 _lastActive = interactiveShellPanel;
             }
         });
@@ -102,7 +110,12 @@ class InteractiveShellPanel {
         return interactiveShellPanel;
     }
 
-    private constructor(panel: vscode.WebviewPanel, localResourceRoot: vscode.Uri, interpreterId: number, persistable: IPersistable) {
+    private constructor(
+        panel: vscode.WebviewPanel,
+        localResourceRoot: vscode.Uri,
+        interpreterId: number,
+        persistable: IPersistable
+    ) {
         this._panel = panel;
         this._localResourceRoot = localResourceRoot;
         this._interpreterId = interpreterId;
@@ -123,24 +136,24 @@ class InteractiveShellPanel {
         let nextMessageSeq = this.nextMessageSeq.bind(this);
 
         async function handleEvaluate(message) {
-            let result: any = { 'success': false, 'message': '<error evaluating>', 'result': undefined };
+            let result: any = { "success": false, "message": "<error evaluating>", "result": undefined };
 
             try {
-                let code = message.arguments['expression'];
+                let code = message.arguments["expression"];
                 result = await executeCheckedCommand("robot.internal.rfinteractive.evaluate", {
-                    'interpreter_id': interpreterId,
-                    'code': code
+                    "interpreter_id": interpreterId,
+                    "code": code,
                 });
             } catch (err) {
-                logError('Error in evaluation.', err);
+                logError("Error in evaluation.", err);
             } finally {
                 let response: any = {
-                    type: 'response',
+                    type: "response",
                     seq: nextMessageSeq(),
                     command: message.command,
                     request_seq: message.seq,
-                    body: '<evaluated from vscode>'
-                }
+                    body: "<evaluated from vscode>",
+                };
                 webview.postMessage(response); // Send the response, even if it was an error.
             }
             // Errors should be shown in the console already...
@@ -152,22 +165,22 @@ class InteractiveShellPanel {
         async function handleSemanticTokens(message) {
             let result = undefined;
             try {
-                let code = message.arguments['code'];
+                let code = message.arguments["code"];
                 // result is {'data': [...], 'resultId': ...}
                 result = await commands.executeCommand("robot.internal.rfinteractive.semanticTokens", {
-                    'interpreter_id': interpreterId,
-                    'code': code
+                    "interpreter_id": interpreterId,
+                    "code": code,
                 });
             } catch (err) {
-                logError('Error getting semantic tokens.', err);
+                logError("Error getting semantic tokens.", err);
             } finally {
                 let response: any = {
-                    type: 'response',
+                    type: "response",
                     seq: nextMessageSeq(),
                     command: message.command,
                     request_seq: message.seq,
-                    body: result
-                }
+                    body: result,
+                };
                 webview.postMessage(response);
             }
         }
@@ -175,29 +188,29 @@ class InteractiveShellPanel {
         async function handleCompletions(message) {
             let result = undefined;
             try {
-                let code = message.arguments['code'];
-                let position = message.arguments['position'];
-                let context = message.arguments['context'];
+                let code = message.arguments["code"];
+                let position = message.arguments["position"];
+                let context = message.arguments["context"];
                 // result is {'suggestions': [...], ...}
                 result = await commands.executeCommand("robot.internal.rfinteractive.completions", {
-                    'interpreter_id': interpreterId,
-                    'code': code,
-                    'position': {
-                        'line': position['lineNumber'] - 1,
-                        'character': position['column'] - 1
+                    "interpreter_id": interpreterId,
+                    "code": code,
+                    "position": {
+                        "line": position["lineNumber"] - 1,
+                        "character": position["column"] - 1,
                     },
-                    'context': context,
+                    "context": context,
                 });
             } catch (err) {
-                logError('Error getting completions.', err);
+                logError("Error getting completions.", err);
             } finally {
                 let response: any = {
-                    type: 'response',
+                    type: "response",
                     seq: nextMessageSeq(),
                     command: message.command,
                     request_seq: message.seq,
-                    body: result
-                }
+                    body: result,
+                };
                 webview.postMessage(response);
             }
         }
@@ -205,46 +218,46 @@ class InteractiveShellPanel {
         async function handlePersistState(message) {
             let result = undefined;
             try {
-                let stateToPersist = message.arguments['state'];
+                let stateToPersist = message.arguments["state"];
                 persistable.setState(stateToPersist);
             } catch (err) {
-                logError('Error persisting state.', err);
+                logError("Error persisting state.", err);
             } finally {
                 let response: any = {
-                    type: 'response',
+                    type: "response",
                     seq: nextMessageSeq(),
                     command: message.command,
                     request_seq: message.seq,
-                    body: result
-                }
+                    body: result,
+                };
                 webview.postMessage(response);
             }
         }
 
         // Handle messages from the webview
         this._panel.webview.onDidReceiveMessage(
-            async message => {
-                if (message.type == 'request') {
+            async (message) => {
+                if (message.type == "request") {
                     let result = undefined;
                     switch (message.command) {
-                        case 'evaluate':
+                        case "evaluate":
                             await handleEvaluate(message);
                             return;
 
-                        case 'semanticTokens':
+                        case "semanticTokens":
                             await handleSemanticTokens(message);
                             return;
 
-                        case 'completions':
+                        case "completions":
                             await handleCompletions(message);
                             return;
 
-                        case 'persistState':
+                        case "persistState":
                             await handlePersistState(message);
                             return;
                     }
-                } else if (message.type == 'event') {
-                    if (message.event == 'initialized') {
+                } else if (message.type == "event") {
+                    if (message.event == "initialized") {
                         interactiveShell._finishInitialized();
                     }
                 }
@@ -256,11 +269,11 @@ class InteractiveShellPanel {
 
     public onOutput(category: string, output: string) {
         this._panel.webview.postMessage({
-            'type': 'event',
-            'seq': this.nextMessageSeq(),
-            'event': 'output',
-            'category': category,
-            'output': output
+            "type": "event",
+            "seq": this.nextMessageSeq(),
+            "event": "output",
+            "category": category,
+            "output": output,
         });
     }
 
@@ -276,11 +289,10 @@ class InteractiveShellPanel {
         }
     }
 
-
     private _getHtmlForWebview(webview: vscode.Webview) {
         // Note: we can't really load from file://
         // See: https://github.com/microsoft/vscode/issues/87282
-        const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._localResourceRoot, 'bundle.js'));
+        const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._localResourceRoot, "bundle.js"));
         const initialState = JSON.stringify(this._persistable.getState());
         return `<!DOCTYPE html>
 			<html lang="en">
@@ -302,21 +314,20 @@ class InteractiveShellPanel {
     evaluate(args: _InteractiveShellEvaluateArgs) {
         const webview = this._panel.webview;
         let request: any = {
-            type: 'request',
+            type: "request",
             seq: this.nextMessageSeq(),
-            command: 'evaluate',
-            body: args
-        }
+            command: "evaluate",
+            body: args,
+        };
         // We have to ask the UI to evaluate it (to add it to the UI and
         // then actually do the work in the backend).
         webview.postMessage(request);
     }
-
 }
 
 interface _InteractiveShellEvaluateArgs {
-    uri: string
-    code: string
+    uri: string;
+    code: string;
 }
 
 export async function registerInteractiveCommands(context: ExtensionContext, languageClient: LanguageClient) {
@@ -334,13 +345,14 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
         } else {
             let activeFile = vscode.window.activeTextEditor?.document;
             let currUri = activeFile?.uri;
-            let msg = 'Unable to create Robot Framework Interactive Console. Please open the related .robot/.resource file to provide the path used to create the Interactive Console.';
+            let msg =
+                "Unable to create Robot Framework Interactive Console. Please open the related .robot/.resource file to provide the path used to create the Interactive Console.";
             if (!currUri) {
-                window.showErrorMessage(msg)
+                window.showErrorMessage(msg);
                 return;
             }
             if (!currUri.fsPath.endsWith(".robot") && !currUri.fsPath.endsWith(".resource")) {
-                window.showErrorMessage(msg)
+                window.showErrorMessage(msg);
                 return;
             }
             uri = currUri.toString();
@@ -350,9 +362,9 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
         let buffered: string[] = new Array();
         let interactiveShellPanel: undefined | InteractiveShellPanel = undefined;
         async function onOutput(args) {
-            if (args['interpreter_id'] === interpreterId) {
-                let category: string = args['category'];
-                let output: string = args['output'];
+            if (args["interpreter_id"] === interpreterId) {
+                let category: string = args["category"];
+                let output: string = args["output"];
                 interactiveShellPanel?.onOutput(category, output);
             }
         }
@@ -368,13 +380,13 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
 
         // Note that during the creation, it's possible that we already have output, so, we
         // need to buffer anything up to the point where we actually have the interpreter.
-        let result = await commands.executeCommand("robot.internal.rfinteractive.start", { 'uri': uri });
-        if (!result['success']) {
-            window.showErrorMessage('Error creating interactive console: ' + result['message'])
+        let result = await commands.executeCommand("robot.internal.rfinteractive.start", { "uri": uri });
+        if (!result["success"]) {
+            window.showErrorMessage("Error creating interactive console: " + result["message"]);
             return;
         }
-        interpreterId = result['result']['interpreter_id'];
-        const SAVE_IN_KEY = 'interactiveConsoleState';
+        interpreterId = result["result"]["interpreter_id"];
+        const SAVE_IN_KEY = "interactiveConsoleState";
         let persistable: IPersistable = {
             setState: (state: object) => {
                 let currState = persistable.getState();
@@ -382,38 +394,37 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
                     context.globalState.update(SAVE_IN_KEY, state);
                 } else {
                     // Note: merge the keys in the existing state.
-                    Object.entries(state).forEach(
-                        ([key, value]) => currState[key] = value
-                    );
+                    Object.entries(state).forEach(([key, value]) => (currState[key] = value));
                     context.globalState.update(SAVE_IN_KEY, currState);
                 }
-
             },
             getState: () => {
                 return context.globalState.get(SAVE_IN_KEY);
-            }
-        }
+            },
+        };
         interactiveShellPanel = await InteractiveShellPanel.create(extensionUri, interpreterId, persistable);
         interactiveShellPanel.disposables.push(disposeNotification);
         function disposeInterpreter() {
             executeCheckedCommand("robot.internal.rfinteractive.stop", {
-                'interpreter_id': interpreterId,
+                "interpreter_id": interpreterId,
             });
         }
         interactiveShellPanel.disposables.push({
-            'dispose': disposeInterpreter
+            "dispose": disposeInterpreter,
         });
 
-        OUTPUT_CHANNEL.appendLine('Waiting for Robot Framework Interactive Console UI (id: ' + interpreterId + ') initialization.');
+        OUTPUT_CHANNEL.appendLine(
+            "Waiting for Robot Framework Interactive Console UI (id: " + interpreterId + ") initialization."
+        );
         await interactiveShellPanel.initialized;
-        OUTPUT_CHANNEL.appendLine('Robot Framework Interactive Console UI (id: ' + interpreterId + ') initialized.');
+        OUTPUT_CHANNEL.appendLine("Robot Framework Interactive Console UI (id: " + interpreterId + ") initialized.");
         while (buffered.length) {
             buffered.splice(0, buffered.length).forEach((el) => {
                 onOutput(el);
             });
         }
 
-        // Start sending contents directly to the interactive shell now that we processed the 
+        // Start sending contents directly to the interactive shell now that we processed the
         // output backlog from the startup.
         buffered = undefined;
 
@@ -421,5 +432,7 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
             interactiveShellPanel.evaluate(args);
         }
     }
-    context.subscriptions.push(commands.registerCommand('robot.interactiveShell', interactiveShellCreateOrSendContentToEvaluate));
+    context.subscriptions.push(
+        commands.registerCommand("robot.interactiveShell", interactiveShellCreateOrSendContentToEvaluate)
+    );
 }

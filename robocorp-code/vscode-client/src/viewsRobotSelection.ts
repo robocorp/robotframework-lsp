@@ -1,8 +1,8 @@
-import * as vscode from 'vscode';
-import { basename, dirname } from 'path';
+import * as vscode from "vscode";
+import { basename, dirname } from "path";
 
-import { debounce, FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeView } from './viewsCommon';
-import { TREE_VIEW_ROBOCORP_ROBOTS_TREE } from './robocorpViews';
+import { debounce, FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeView } from "./viewsCommon";
+import { TREE_VIEW_ROBOCORP_ROBOTS_TREE } from "./robocorpViews";
 
 export async function getCurrRobotDir(): Promise<FSEntry | undefined> {
     let robotContentTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
@@ -26,23 +26,22 @@ export async function getCurrRobotDir(): Promise<FSEntry | undefined> {
         parentEntry = {
             filePath: dirname(robot.uri.fsPath),
             isDirectory: true,
-            name: basename(robot.uri.fsPath)
-        }
+            name: basename(robot.uri.fsPath),
+        };
     }
 
     if (!parentEntry.isDirectory) {
         parentEntry = {
             filePath: dirname(parentEntry.filePath),
             isDirectory: true,
-            name: basename(parentEntry.filePath)
-        }
+            name: basename(parentEntry.filePath),
+        };
     }
 
     return parentEntry;
 }
 
 export class RobotSelectionTreeDataProviderBase implements vscode.TreeDataProvider<FSEntry> {
-
     private _onDidChangeTreeData: vscode.EventEmitter<FSEntry | null> = new vscode.EventEmitter<FSEntry | null>();
     readonly onDidChangeTreeData: vscode.Event<FSEntry | null> = this._onDidChangeTreeData.event;
 
@@ -65,7 +64,11 @@ export class RobotSelectionTreeDataProviderBase implements vscode.TreeDataProvid
 
         let robotDirUri = vscode.Uri.file(dirname(robotEntry.uri.fsPath));
         let watcher: vscode.FileSystemWatcher = vscode.workspace.createFileSystemWatcher(
-            new vscode.RelativePattern(robotDirUri, this.PATTERN_TO_LISTEN), false, true, false);
+            new vscode.RelativePattern(robotDirUri, this.PATTERN_TO_LISTEN),
+            false,
+            true,
+            false
+        );
 
         this.lastWatcher = watcher;
 
@@ -100,7 +103,6 @@ export class RobotSelectionTreeDataProviderBase implements vscode.TreeDataProvid
             this.robotSelectionChanged(robotEntry);
             return;
         }
-
     }
 
     async onTreeSelectionChanged(robotContentTree: vscode.TreeView<FSEntry>) {
@@ -118,8 +120,8 @@ export class RobotSelectionTreeDataProviderBase implements vscode.TreeDataProvid
     }
 
     async getChildren(element: FSEntry): Promise<FSEntry[]> {
-        throw new Error('Not implemented');
-    };
+        throw new Error("Not implemented");
+    }
 
     getTreeItem(element: FSEntry): vscode.TreeItem {
         const treeItem = new vscode.TreeItem(element.name);

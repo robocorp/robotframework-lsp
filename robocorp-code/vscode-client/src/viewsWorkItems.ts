@@ -1,11 +1,11 @@
-import * as vscode from 'vscode';
-import { resolve, join, dirname, basename } from 'path';
+import * as vscode from "vscode";
+import { resolve, join, dirname, basename } from "path";
 
-import { logError } from './channel';
+import { logError } from "./channel";
 import { ROBOCORP_LIST_WORK_ITEMS_INTERNAL } from "./robocorpCommands";
 import { FSEntry, RobotEntry, treeViewIdToTreeDataProvider, treeViewIdToTreeView } from "./viewsCommon";
-import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE } from './robocorpViews';
-import { getCurrRobotDir, RobotSelectionTreeDataProviderBase } from './viewsRobotSelection';
+import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE } from "./robocorpViews";
+import { getCurrRobotDir, RobotSelectionTreeDataProviderBase } from "./viewsRobotSelection";
 
 const WORK_ITEM_TEMPLATE = `[
   {
@@ -19,8 +19,9 @@ const WORK_ITEM_TEMPLATE = `[
 ]`;
 
 async function getWorkItemInfo(): Promise<WorkItemsInfo | null> {
-    let workItemsTreeDataProvider: WorkItemsTreeDataProvider = <WorkItemsTreeDataProvider>treeViewIdToTreeDataProvider.get(
-        TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE);
+    let workItemsTreeDataProvider: WorkItemsTreeDataProvider = <WorkItemsTreeDataProvider>(
+        treeViewIdToTreeDataProvider.get(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE)
+    );
 
     if (workItemsTreeDataProvider) {
         let workItemsInfo = workItemsTreeDataProvider.getWorkItemsInfo();
@@ -38,13 +39,14 @@ async function getWorkItemInfo(): Promise<WorkItemsInfo | null> {
         return;
     }
     const workItemsResult: ActionResultWorkItems = await vscode.commands.executeCommand(
-        ROBOCORP_LIST_WORK_ITEMS_INTERNAL, { robot: resolve(currTreeDir.filePath) });
+        ROBOCORP_LIST_WORK_ITEMS_INTERNAL,
+        { robot: resolve(currTreeDir.filePath) }
+    );
     if (!workItemsResult.success) {
         return;
     }
     return workItemsResult.result;
 }
-
 
 async function createNewWorkItem(workItemInfo: WorkItemsInfo, workItemName: string): Promise<void> {
     if (workItemName) {
@@ -55,7 +57,7 @@ async function createNewWorkItem(workItemInfo: WorkItemsInfo, workItemName: stri
     }
 
     const targetFolder = join(workItemInfo.input_folder_path, workItemName);
-    const targetFile = join(targetFolder, 'work-items.json');
+    const targetFile = join(targetFolder, "work-items.json");
     try {
         let fileUri = vscode.Uri.file(targetFile);
         try {
@@ -63,7 +65,10 @@ async function createNewWorkItem(workItemInfo: WorkItemsInfo, workItemName: stri
 
             let OVERRIDE = "Override";
             let ret = await vscode.window.showInformationMessage(
-                "File " + targetFile + " already exists.", { "modal": true }, OVERRIDE);
+                "File " + targetFile + " already exists.",
+                { "modal": true },
+                OVERRIDE
+            );
             if (ret != OVERRIDE) {
                 return;
             }
@@ -74,8 +79,8 @@ async function createNewWorkItem(workItemInfo: WorkItemsInfo, workItemName: stri
         await vscode.workspace.fs.writeFile(fileUri, Buffer.from(WORK_ITEM_TEMPLATE));
         vscode.window.showTextDocument(fileUri);
     } catch (err) {
-        logError('Unable to create file.', err);
-        vscode.window.showErrorMessage('Unable to create file. Error: ' + err.message);
+        logError("Unable to create file.", err);
+        vscode.window.showErrorMessage("Unable to create file. Error: " + err.message);
     }
 }
 
@@ -83,8 +88,8 @@ export async function newWorkItemInWorkItemsTree(): Promise<void> {
     const workItemInfo = await getWorkItemInfo();
 
     let workItemName: string = await vscode.window.showInputBox({
-        'prompt': 'Please provide work item name',
-        'ignoreFocusOut': true,
+        "prompt": "Please provide work item name",
+        "ignoreFocusOut": true,
     });
     await createNewWorkItem(workItemInfo, workItemName);
 }
@@ -122,7 +127,8 @@ export async function deleteWorkItemInWorkItemsTree(): Promise<void> {
                 let msg = await vscode.window.showErrorMessage(
                     "Unable to move to trash: " + entry.filePath + ". How to proceed?",
                     { "modal": true },
-                    DELETE_PERMANENTLY)
+                    DELETE_PERMANENTLY
+                );
                 if (msg == DELETE_PERMANENTLY) {
                     await vscode.workspace.fs.delete(uri, { recursive: true, useTrash: false });
                 } else {
@@ -134,7 +140,9 @@ export async function deleteWorkItemInWorkItemsTree(): Promise<void> {
 }
 
 export function openWorkItemHelp() {
-    vscode.env.openExternal(vscode.Uri.parse('https://robocorp.com/docs/development-guide/control-room/data-pipeline#what-is-a-work-item'));
+    vscode.env.openExternal(
+        vscode.Uri.parse("https://robocorp.com/docs/development-guide/control-room/data-pipeline#what-is-a-work-item")
+    );
 }
 
 export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBase {
@@ -152,26 +160,32 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
         const robotsTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
         if (!robotsTree || robotsTree.selection.length == 0) {
             this.lastRobotEntry = undefined;
-            return [{
-                name: "<Waiting for Robot Selection...>",
-                isDirectory: false,
-                filePath: undefined,
-            }];
+            return [
+                {
+                    name: "<Waiting for Robot Selection...>",
+                    isDirectory: false,
+                    filePath: undefined,
+                },
+            ];
         }
 
         const robotEntry: RobotEntry = robotsTree.selection[0];
         this.lastRobotEntry = robotEntry;
 
         const workItemsResult: ActionResultWorkItems = await vscode.commands.executeCommand(
-            ROBOCORP_LIST_WORK_ITEMS_INTERNAL, { robot: resolve(this.lastRobotEntry.uri.fsPath) });
+            ROBOCORP_LIST_WORK_ITEMS_INTERNAL,
+            { robot: resolve(this.lastRobotEntry.uri.fsPath) }
+        );
 
         if (!workItemsResult.success) {
             this.workItemsInfo = undefined;
-            return [{
-                name: workItemsResult.message,
-                isDirectory: false,
-                filePath: undefined,
-            }];
+            return [
+                {
+                    name: workItemsResult.message,
+                    isDirectory: false,
+                    filePath: undefined,
+                },
+            ];
         }
 
         this.workItemsInfo = workItemsResult.result;
@@ -181,7 +195,7 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
                 name: basename(workItemsResult.result.input_folder_path),
                 isDirectory: true,
                 filePath: workItemsResult.result.input_folder_path,
-            })
+            });
         }
 
         if (workItemsResult.result?.output_folder_path) {
@@ -189,7 +203,7 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
                 name: basename(workItemsResult.result.output_folder_path),
                 isDirectory: true,
                 filePath: workItemsResult.result.output_folder_path,
-            })
+            });
         }
 
         return elements;
@@ -202,24 +216,24 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
             return elements;
         }
 
-        if (element.name === 'work-items-in') {
+        if (element.name === "work-items-in") {
             elements = this.workItemsInfo.input_work_items.map((work_item) => {
                 return {
                     name: work_item.name,
                     isDirectory: false,
                     filePath: work_item.json_path,
-                }
-            })
+                };
+            });
         }
 
-        if (element.name === 'work-items-out') {
+        if (element.name === "work-items-out") {
             elements = this.workItemsInfo.output_work_items.map((work_item) => {
                 return {
                     name: work_item.name,
                     isDirectory: false,
                     filePath: work_item.json_path,
-                }
-            })
+                };
+            });
         }
 
         return elements;
@@ -240,7 +254,7 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
         if (!element) {
             elements = await this.handleRoot();
         } else {
-            elements = this.handleChild(element)
+            elements = this.handleChild(element);
         }
 
         return elements;
