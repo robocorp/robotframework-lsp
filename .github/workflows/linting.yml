@@ -55,3 +55,13 @@ jobs:
           black --check ./robotframework-ls/src --exclude=vendored
           black --check ./robotframework-ls/tests --exclude=vendored
           black --check ./robotframework-ls/codegen --exclude=vendored
+          
+      - name: Black check robotframework-interactive
+        run: |
+          black --check ./robotframework-interactive/src --exclude=vendored
+          black --check ./robotframework-interactive/tests --exclude=vendored
+          
+      - name: Black check robocorp-python-ls-core
+        run: |
+          black --check ./robocorp-python-ls-core/src --exclude=vendored
+          black --check ./robocorp-python-ls-core/tests --exclude=vendored
