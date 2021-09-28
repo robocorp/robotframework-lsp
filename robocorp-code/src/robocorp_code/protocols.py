@@ -101,13 +101,15 @@ class WorkItemsInfo(TypedDict):
     robot_yaml: str  # Full path to the robot which has these work item info
 
     # Full path to the place where input work items are located
-    input_folder_path: Optional[str]
+    input_folder_path: str
 
     # Full path to the place where output work items are located
-    output_folder_path: Optional[str]
+    output_folder_path: str
 
     input_work_items: List[WorkItem]
     output_work_items: List[WorkItem]
+
+    new_output_workitem_path: str
 
 
 class ActionResultDictWorkItems(TypedDict):
@@ -120,6 +122,7 @@ class ActionResultDictWorkItems(TypedDict):
 
 class ListWorkItemsParams(TypedDict):
     robot: str  # Path to the robot for which we want the work items (may be just the folder or the yaml).
+    output_prefix: str  # Prefix for output folder (such as 'run-' or 'interactive-').
 
 
 class ListWorkspacesActionResultDict(TypedDict):

@@ -2,11 +2,10 @@ from functools import partial
 import os
 import sys
 from pathlib import Path
-from typing import List, Any, Optional, Dict, Union, Iterator
+from typing import List, Any, Optional, Dict, Iterator
 from base64 import b64encode
 
 from robocorp_code import commands
-from concurrent.futures import Future
 from robocorp_code.protocols import (
     IRccWorkspace,
     IRccRobotMetadata,
@@ -40,6 +39,7 @@ from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 from robocorp_ls_core import watchdog_wrapper
+import time
 
 log = get_logger(__name__)
 
@@ -124,6 +124,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         from robocorp_ls_core.ep_providers import EPDirCacheProvider
         from robocorp_ls_core.ep_providers import DefaultEndPointProvider
         from robocorp_ls_core.ep_providers import EPEndPointProvider
+        from queue import Queue
 
         user_home = os.getenv("ROBOCORP_CODE_USER_HOME", None)
         if user_home is None:
@@ -184,9 +185,21 @@ class RobocorpLanguageServer(PythonLanguageServer):
         )
         from robocorp_code.plugins.resolve_interpreter import register_plugins
 
-        self._last_run_number = 0
+        self._prefix_to_last_run_number_and_time = {}
 
+        self._paths_remover = None
+        self._paths_remover_queue = Queue()
         register_plugins(self._pm)
+
+    def _schedule_path_removal(self, path):
+        from robocorp_code.path_operations import PathsRemover
+
+        if self._paths_remover is None:
+            self._paths_remover = PathsRemover(self._paths_remover_queue)
+            self._paths_remover.start()
+
+        log.info("Schedule path removal for: %s", path)
+        self._paths_remover_queue.put(path)
 
     @overrides(PythonLanguageServer.m_initialize)
     def m_initialize(
@@ -708,6 +721,17 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 result=None,
             )
 
+        output_prefix = params.get("output_prefix")
+        if not output_prefix:
+            output_prefix = "run-"
+
+        if not output_prefix.endswith("-"):
+            return dict(
+                success=False,
+                message=f"output-prefix must end with '-'. Found: {output_prefix}",
+                result=None,
+            )
+
         path = Path(robot)
         try:
             stat = path.stat()
@@ -730,11 +754,31 @@ class RobocorpLanguageServer(PythonLanguageServer):
         input_work_items: List[WorkItem] = []
         output_work_items: List[WorkItem] = []
 
+        def sort_by_number_postfix(entry: WorkItem):
+            try:
+                return int(entry["name"].rsplit("-", 1)[-1])
+            except:
+                log.exception(f"Unexpected name collected: {entry['name']}")
+                return 9999999
+
         if work_items_in_dir.is_dir():
             input_work_items.extend(self._collect_work_items(work_items_in_dir))
+            input_work_items.sort(key=sort_by_number_postfix)
 
         if work_items_out_dir.is_dir():
             output_work_items.extend(self._collect_work_items(work_items_out_dir))
+            output_work_items.sort(key=sort_by_number_postfix)
+
+        while len(output_work_items) > self.OUTPUT_ITEMS_TO_KEEP - 1:
+            # Items should be sorted already, so, we can erase the first ones
+            # (and remove them from the list as they should be considered
+            # outdated at this point).
+            remove_item: WorkItem = output_work_items.pop(0)
+            self._schedule_path_removal(Path(remove_item["json_path"]).parent)
+
+        new_output_workitem_path = self._compute_new_output_workitem_path(
+            work_items_out_dir, output_work_items, output_prefix
+        )
 
         work_items_info: WorkItemsInfo = {
             "robot_yaml": str(robot_yaml),
@@ -742,8 +786,49 @@ class RobocorpLanguageServer(PythonLanguageServer):
             "output_folder_path": str(work_items_out_dir),
             "input_work_items": input_work_items,
             "output_work_items": output_work_items,
+            "new_output_workitem_path": str(new_output_workitem_path),
         }
         return dict(success=True, message=None, result=work_items_info)
+
+    TIMEOUT_TO_CONSIDER_LAST_RUN_FRESH = 10.0  # In seconds
+
+    OUTPUT_ITEMS_TO_KEEP = 5
+
+    def _compute_new_output_workitem_path(
+        self,
+        work_items_out_dir: Path,
+        output_work_items: List[WorkItem],
+        output_prefix: str,
+    ):
+        max_run, last_time = self._prefix_to_last_run_number_and_time.get(
+            output_prefix, (0, 0)
+        )
+
+        if max_run > 0:
+            if time.time() - last_time > self.TIMEOUT_TO_CONSIDER_LAST_RUN_FRESH:
+                # If the user does 2 subsequent runs, we will want to provide
+                # different ids (i.e.: run-1 / run-2), but if XX seconds already
+                # elapsed from the last run, we start to consider only the
+                # filesystem entries.
+                max_run = 0
+
+        for work_item in output_work_items:
+            name = work_item["name"]
+            if name.startswith(output_prefix):
+                try:
+                    run_number = int(name[len(output_prefix) :])
+                except:
+                    pass  # Just ignore (it wouldn't clash anyways)
+                else:
+                    if run_number > max_run:
+                        max_run = run_number
+
+        next_run = max_run + 1
+        self._prefix_to_last_run_number_and_time[output_prefix] = (
+            next_run,
+            time.time(),
+        )
+        return work_items_out_dir / f"{output_prefix}{next_run}" / "work-items.json"
 
     def _collect_work_items(self, work_items_dir: Path) -> Iterator[WorkItem]:
         def create_work_item(json_path) -> WorkItem:

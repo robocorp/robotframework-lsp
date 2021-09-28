@@ -27,12 +27,17 @@ import warnings
 from functools import partial
 from typing import Iterable, Iterator, TypeVar, Optional
 
-
 from pathlib import Path, PurePath
 import weakref
-from robocorp_ls_core.protocols import ITimeoutHandle
+import threading
+
+from robocorp_ls_core.protocols import ITimeoutHandle  # noqa
+from queue import Queue  # noqa
+from robocorp_ls_core.robotframework_log import get_logger
 
 __all__ = ["Path", "PurePath"]
+
+log = get_logger(__name__)
 
 
 LOCK_TIMEOUT = 60 * 60 * 3
@@ -353,3 +358,19 @@ def get_user() -> Optional[str]:
         return getpass.getuser()
     except (ImportError, KeyError):
         return None
+
+
+class PathsRemover(threading.Thread):
+    def __init__(self, queue: "Queue[Path]"):
+        threading.Thread.__init__(self)
+        self.name = "PathsRemover"
+        self.daemon = True
+        self.queue = queue
+
+    def run(self):
+        while True:
+            path: Path = self.queue.get()
+            try:
+                rm_rf(path)
+            except:
+                log.exception("Error removing: {path}")

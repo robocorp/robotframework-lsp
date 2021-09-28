@@ -733,11 +733,7 @@ export async function updateLaunchEnvironment(args) {
     // to save items).
     let newEnv = { ...environment };
 
-    newEnv["RPA_OUTPUT_WORKITEM_PATH"] = join(
-        work_items_action_result.result.output_folder_path,
-        "latest-run",
-        "work-items.json"
-    );
+    newEnv["RPA_OUTPUT_WORKITEM_PATH"] = result.new_output_workitem_path;
     newEnv["RPA_WORKITEMS_ADAPTER"] = "RPA.Robocloud.Items.FileAdapter";
 
     const input_work_items = result.input_work_items;
