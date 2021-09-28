@@ -68,11 +68,11 @@ class MatcherWithResourceOrLibraryName(RobotStringMatcher):
 def build_matchers_with_resource_or_library_scope(token_str):
     """
     Given a string such as:
-    
+
     'BuiltIn.Should Contain'
-    
+
     it'll return:
-    
+
     [MatcherWithResourceOrLibraryName('BuiltIn', 'Should Contain')]
     """
     from robotframework_ls.impl.text_utilities import iter_dotted_names

@@ -104,13 +104,17 @@ class CompletionContext(object):
         """
 
         if col is Sentinel.SENTINEL or line is Sentinel.SENTINEL:
-            assert col is Sentinel.SENTINEL, (
-                "Either line and col are not set, or both are set. Found: (%s, %s)"
-                % (line, col)
+            assert (
+                col is Sentinel.SENTINEL
+            ), "Either line and col are not set, or both are set. Found: (%s, %s)" % (
+                line,
+                col,
             )
-            assert line is Sentinel.SENTINEL, (
-                "Either line and col are not set, or both are set. Found: (%s, %s)"
-                % (line, col)
+            assert (
+                line is Sentinel.SENTINEL
+            ), "Either line and col are not set, or both are set. Found: (%s, %s)" % (
+                line,
+                col,
             )
 
             # If both are not set, use the doc len as the selection.
@@ -532,7 +536,7 @@ class CompletionContext(object):
 
     @instance_cache
     def get_current_keyword_definition_and_usage_info(
-        self
+        self,
     ) -> Optional[Tuple[IKeywordDefinition, KeywordUsageInfo]]:
         """
         Provides the current keyword even if we're in its arguments and not actually

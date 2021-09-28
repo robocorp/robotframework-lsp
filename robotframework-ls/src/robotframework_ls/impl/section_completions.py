@@ -55,7 +55,10 @@ def complete(completion_context):
                     # text_edit = None
                     items.append(
                         CompletionItem(
-                            label, kind=CompletionItemKind.Class, text_edit=text_edit, insertText=text_edit.newText
+                            label,
+                            kind=CompletionItemKind.Class,
+                            text_edit=text_edit,
+                            insertText=text_edit.newText,
                         )
                     )
 

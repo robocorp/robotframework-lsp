@@ -109,7 +109,7 @@ def test_simple_debug_launch_stop_on_robot(debugger_api: _DebuggerAPI):
     target = debugger_api.get_dap_case_file("case_log.robot")
 
     debugger_api.launch(target, debug=True)
-    threads_response: ThreadsResponse = (debugger_api.list_threads())
+    threads_response: ThreadsResponse = debugger_api.list_threads()
     assert len(threads_response.body.threads) == 1
     thread = next(iter(threads_response.body.threads))
     debugger_api.set_breakpoints(target, 4)
@@ -156,7 +156,7 @@ def test_simple_debug_launch_stop_on_robot_and_pydevd(debugger_api: _DebuggerAPI
     mypylib = debugger_api.get_dap_case_file("mypylib.py")
 
     debugger_api.launch(target, debug=True)
-    threads_response: ThreadsResponse = (debugger_api.list_threads())
+    threads_response: ThreadsResponse = debugger_api.list_threads()
     assert len(threads_response.body.threads) == 1
     bp_robot = debugger_api.get_line_index_with_content("Some Call")
     bp_pydevd = debugger_api.get_line_index_with_content("break here", filename=mypylib)

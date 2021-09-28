@@ -10,6 +10,7 @@ from typing import Optional, Sequence
 
 _RF_VARIABLE = re.compile(r"([$|&|@]{[\w\s]+})")
 
+
 class _DefinitionFromKeyword(object):
     def __init__(self, keyword_found):
         """
@@ -194,7 +195,7 @@ def find_keyword_definition(
 ) -> Optional[Sequence[IKeywordDefinition]]:
     """
     Find a definition only considering Keywords.
-    
+
     The token info must be already computed and must match the completion
     context location.
     """

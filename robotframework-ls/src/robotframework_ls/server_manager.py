@@ -34,9 +34,9 @@ class _ServerApi(object):
     """
     Note: this is mainly a helper to manage the startup of an IRobotFrameworkApiClient
     and restart it when needed.
-    
+
     This class is not thread-safe and should be accessed only from a single thread.
-    
+
     The provided `IRobotFrameworkApiClient` may later be accessed from any thread.
     """
 
@@ -228,7 +228,9 @@ class _ServerApi(object):
                 self._used_python_executable = python_exe
                 self._used_environ = environ
 
-                robot_framework_language_server: RobotFrameworkLanguageServer = self.robot_framework_language_server
+                robot_framework_language_server: RobotFrameworkLanguageServer = (
+                    self.robot_framework_language_server
+                )
                 remote_fs_observer_port = (
                     robot_framework_language_server.get_remote_fs_observer_port()
                 )
@@ -391,12 +393,12 @@ class _ServerApi(object):
 class _RegularLintAndOthersApi(object):
     """
     This encapsulates 3 different processes (each process is an API).
-    
+
     The default (api) is usually used for requests which are real-time,
     such as code-completion, find definition, signature help and hover.
-    
+
     The lint api is used for linting.
-    
+
     The others api is used for other requests which are a middle ground between
     the lint (slowest) and the default (fastest). It covers requests such as
     document formatting, code folding, semantic tokens and workspace symbols.
@@ -420,9 +422,9 @@ class _RegularLintAndOthersApi(object):
 class ServerManager(object):
     """
     Note: accessing the ServerManager may only be done from a single thread.
-    
+
     The idea is that clients do something as:
-    
+
     rf_api_client = server_manager.get_lint_rf_api_client(doc_uri)
     if rf_api_client is not None:
         ... robotframework_api_client may then be accessed by any thread.

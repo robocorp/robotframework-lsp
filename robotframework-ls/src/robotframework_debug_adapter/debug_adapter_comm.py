@@ -56,7 +56,7 @@ class DebugAdapterComm(object):
     """
     This is the class that actually processes commands from the client (VSCode)
     using the process stdin/stdout.
-    
+
     It's responsible for actually starting the debugger process later on.
 
     It's created in the main thread and then control is passed on to the reader thread so that whenever

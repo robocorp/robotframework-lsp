@@ -467,9 +467,9 @@ def iter_keyword_usage_tokens(
 
 def _create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
     """
-    If this is a keyword usage node, return information on it, otherwise, 
+    If this is a keyword usage node, return information on it, otherwise,
     returns None.
-    
+
     :note: this goes hand-in-hand with get_keyword_name_token.
     """
     from robot.api import Token
@@ -494,9 +494,9 @@ def create_keyword_usage_info_from_token(
     stack, node, token
 ) -> Optional[KeywordUsageInfo]:
     """
-    If this is a keyword usage node, return information on it, otherwise, 
+    If this is a keyword usage node, return information on it, otherwise,
     returns None.
-    
+
     :note: this goes hand-in-hand with get_keyword_name_token.
     """
     if is_argument_keyword_name(node, token):
@@ -524,7 +524,7 @@ def is_argument_keyword_name(node, token) -> bool:
 def get_keyword_name_token(ast, token):
     """
     If the given token is a keyword, return the token, otherwise return None.
-    
+
     :note: this goes hand-in-hand with iter_keyword_usage_tokens.
     """
     if token.type == token.KEYWORD or (
@@ -618,7 +618,7 @@ def _strip_token_bdd_prefix(token):
     This is a workaround because the parsing does not separate a BDD prefix from
     the keyword name. If the parsing is improved to do that separation in the future
     we can stop doing this.
-    
+
     :return Token:
         Returns a new token with the bdd prefix stripped or the original token passed.
     """

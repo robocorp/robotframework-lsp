@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 def test_schema():
     from robocorp_ls_core.debug_adapter_core.dap import dap_base_schema
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (

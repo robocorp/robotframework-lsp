@@ -92,9 +92,7 @@ def __getfilesystemencoding():
 
             env = System.getProperty("os.name").lower()
             if env.find("win") != -1:
-                return (
-                    "ISO-8859-1"
-                )  # mbcs does not work on Jython, so, use a (hopefully) suitable replacement
+                return "ISO-8859-1"  # mbcs does not work on Jython, so, use a (hopefully) suitable replacement
             return "utf-8"
         except:
             pass

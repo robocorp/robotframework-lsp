@@ -37,14 +37,14 @@ def is_variable_text(text):
 
 def matches_robot_keyword(keyword_name_call_text, keyword_name, _re_cache={}):
     """
-    Checks if a given text matches a given keyword. 
-    
+    Checks if a given text matches a given keyword.
+
     Note: both should be already normalized.
     Note: should NOT be called if keyword does not have '{' in it.
-    
+
     :param str keyword_name_call_text:
         The call that has resolved variables.
-        
+
     :param str keyword_name:
         The keyword (which has variables -- i.e.: '{').
     """

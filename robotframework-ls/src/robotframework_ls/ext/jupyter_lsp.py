@@ -3,8 +3,7 @@
 
 
 def spec_v1(app):
-    """ A spec loader for jupyter_lsp
-    """
+    """A spec loader for jupyter_lsp"""
     return {
         "robotframework_ls": dict(
             version=2,
@@ -18,6 +17,6 @@ def spec_v1(app):
             install=dict(
                 pip="pip install robotframework-lsp",
                 conda="conda install -c conda-forge robotframework-lsp",
-            )
+            ),
         )
     }

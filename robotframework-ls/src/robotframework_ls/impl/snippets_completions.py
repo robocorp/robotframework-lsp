@@ -122,7 +122,7 @@ def _create_completion_item_from_snippet(label, snippet, selection, line_to_col)
 def complete(completion_context):
     """
     Collects all the keywords that are available to the given completion_context.
-    
+
     :param CompletionContext completion_context:
     """
     sel = completion_context.sel  #::type sel: DocumentSelection

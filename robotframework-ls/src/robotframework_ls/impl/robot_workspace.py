@@ -166,7 +166,7 @@ class RobotDocument(Document):
         """
         :param contents:
             The contents to be found.
-            
+
         :return:
             The 0-based index of the contents.
         """

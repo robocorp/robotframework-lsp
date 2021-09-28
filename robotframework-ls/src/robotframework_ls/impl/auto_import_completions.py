@@ -76,7 +76,7 @@ class _Collector(object):
         """
         Note: the lib_import and resource_path are the strings to be added
         so that the given library/resource is loaded.
-        
+
         i.e.: It's the name concatenated to the `Library    {lib_import}` or
         `Resource    {resource_path}`.
         """

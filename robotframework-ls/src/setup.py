@@ -25,8 +25,7 @@ for path in [_thirdparty, _license, _copyright]:
 
 
 def collect_pydevd_vendored_files():
-    """Provides pydevd files relative to "robotframework_debug_adapter.vendored".
-    """
+    """Provides pydevd files relative to "robotframework_debug_adapter.vendored"."""
     import os
 
     VENDORED_ROOT = os.path.dirname(os.path.abspath(__file__))

@@ -123,11 +123,11 @@ def test_debug_adapter_threaded(
     """
     This is an example on how to setup the debugger structure in-memory but
     still talking through the DAP instead of using the core APIs.
-    
+
     debugger_api_core: helper to get file to run / compute breakpoint position.
     dap_log_file: a place to store logs.
-    robot_thread: helper run robot in a thread. 
-    dap_logs_dir: another api to store the logs needed. 
+    robot_thread: helper run robot in a thread.
+    dap_logs_dir: another api to store the logs needed.
     """
     import robotframework_ls
     from robotframework_debug_adapter_tests.fixtures import dbg_wait_for

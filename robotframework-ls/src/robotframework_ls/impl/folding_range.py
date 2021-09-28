@@ -8,7 +8,7 @@ log = get_logger(__name__)
 
 
 def folding_range(
-    completion_context: ICompletionContext
+    completion_context: ICompletionContext,
 ) -> List[FoldingRangeTypedDict]:
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.protocols import NodeInfo
