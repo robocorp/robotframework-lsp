@@ -2,11 +2,13 @@ import { extensions, Uri } from "vscode";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import { handleProgressMessage } from "./progress";
 
-export async function getPythonExecutable(resource: Uri = null): Promise<string | undefined | 'config'> {
+export async function getPythonExecutable(resource: Uri = null): Promise<string | undefined | "config"> {
     try {
         const extension = extensions.getExtension("ms-python.python");
         if (!extension) {
-            OUTPUT_CHANNEL.appendLine('Unable to get python executable from vscode-python. ms-python.python extension not found.')
+            OUTPUT_CHANNEL.appendLine(
+                "Unable to get python executable from vscode-python. ms-python.python extension not found."
+            );
             return undefined;
         }
 
@@ -16,24 +18,23 @@ export async function getPythonExecutable(resource: Uri = null): Promise<string 
             // (i.e.: he may not be in the experiment).
             if (!extension.isActive) {
                 handleProgressMessage({
-                    kind: 'begin',
-                    id: 'activate-vscode-python',
-                    title: 'Waiting for vscode-python activation...'
+                    kind: "begin",
+                    id: "activate-vscode-python",
+                    title: "Waiting for vscode-python activation...",
                 });
                 try {
                     await extension.activate();
                 } finally {
                     handleProgressMessage({
-                        kind: 'end',
-                        id: 'activate-vscode-python',
+                        kind: "end",
+                        id: "activate-vscode-python",
                     });
                 }
-
             }
             let execCommand = extension.exports.settings.getExecutionDetails(resource).execCommand;
-            OUTPUT_CHANNEL.appendLine('vscode-python execution details: ' + execCommand);
+            OUTPUT_CHANNEL.appendLine("vscode-python execution details: " + execCommand);
             if (!execCommand) {
-                OUTPUT_CHANNEL.appendLine('vscode-python did not return proper execution details.');
+                OUTPUT_CHANNEL.appendLine("vscode-python did not return proper execution details.");
                 return undefined;
             }
             // It could be some composite command such as conda activate, but that's ok, we don't want to consider those
@@ -41,10 +42,10 @@ export async function getPythonExecutable(resource: Uri = null): Promise<string 
             return execCommand[0];
         } else {
             // Not using new interpreter storage (so, it should be queried from the settings).
-            return 'config';
+            return "config";
         }
     } catch (error) {
-        logError('Error when querying about python executable path from vscode-python.', error);
+        logError("Error when querying about python executable path from vscode-python.", error);
         return undefined;
     }
 }

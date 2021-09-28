@@ -1,5 +1,5 @@
 import { env, ExtensionContext, TerminalLinkContext, Uri, window } from "vscode";
-import * as fs from 'fs';
+import * as fs from "fs";
 
 export async function registerLinkProviders(extensionContext: ExtensionContext) {
     extensionContext.subscriptions.push(
@@ -10,13 +10,10 @@ export async function registerLinkProviders(extensionContext: ExtensionContext) 
                 const FOUND_REPORT = 2;
                 if (context.line.startsWith("Log:")) {
                     found = FOUND_LOG;
-
                 } else if (context.line.startsWith("Report:")) {
                     found = FOUND_REPORT;
-
                 } else {
                     return [];
-
                 }
 
                 if (context.line.endsWith("html")) {
@@ -24,7 +21,7 @@ export async function registerLinkProviders(extensionContext: ExtensionContext) 
 
                     for (; firstNonWhitespaceChar < context.line.length; firstNonWhitespaceChar++) {
                         let ch = context.line.charAt(firstNonWhitespaceChar);
-                        if (ch != ' ' && ch != '\t') {
+                        if (ch != " " && ch != "\t") {
                             break;
                         }
                     }
@@ -36,13 +33,13 @@ export async function registerLinkProviders(extensionContext: ExtensionContext) 
                                 {
                                     startIndex: firstNonWhitespaceChar,
                                     length: path.length,
-                                    tooltip: "Open " + (found == FOUND_LOG ? "Log" : "Report") + " in external Browser.",
+                                    tooltip:
+                                        "Open " + (found == FOUND_LOG ? "Log" : "Report") + " in external Browser.",
                                     path: path,
                                 },
                             ];
                         }
                     }
-
                 }
                 return [];
             },

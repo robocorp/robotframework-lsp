@@ -1,5 +1,5 @@
-import * as monaco from 'monaco-editor';
-import { IRequestMessage, nextMessageSeq, sendRequestToClient } from './vscodeComm';
+import * as monaco from "monaco-editor";
+import { IRequestMessage, nextMessageSeq, sendRequestToClient } from "./vscodeComm";
 
 // Interesting references:
 // https://microsoft.github.io/monaco-editor/playground.html
@@ -22,84 +22,83 @@ const TOKEN_TYPES_FROM_LS = [
     "testCaseName",
     "parameterName",
     "argumentValue",
-]
+];
 
 export function configureMonacoLanguage() {
-    const LANGUAGE_ID = 'robotframework-ls';
+    const LANGUAGE_ID = "robotframework-ls";
     monaco.languages.register({ id: LANGUAGE_ID });
     monaco.languages.setMonarchTokensProvider(LANGUAGE_ID, {
         tokenizer: {
             root: [
                 [/^\*\*\*.*?\*\*\*/, "type"],
-                [/^(\s)*#.*/, 'comment'],
-                [/(\s\s|\t)#.*/, 'comment'],
-            ]
+                [/^(\s)*#.*/, "comment"],
+                [/(\s\s|\t)#.*/, "comment"],
+            ],
         },
         ignoreCase: true,
     });
-
 
     monaco.languages.registerCompletionItemProvider(LANGUAGE_ID, {
         async provideCompletionItems(
             model: monaco.editor.ITextModel,
             position: monaco.Position,
             context: monaco.languages.CompletionContext,
-            token: monaco.CancellationToken): Promise<monaco.languages.CompletionList> {
-
+            token: monaco.CancellationToken
+        ): Promise<monaco.languages.CompletionList> {
             let code = model.getValue();
             let msg: IRequestMessage = {
-                'type': 'request',
-                'seq': nextMessageSeq(),
-                'command': 'completions',
+                "type": "request",
+                "seq": nextMessageSeq(),
+                "command": "completions",
             };
-            msg['arguments'] = {
-                'code': code,
-                'position': position,
-                'context': context,
-            }
+            msg["arguments"] = {
+                "code": code,
+                "position": position,
+                "context": context,
+            };
             let response = await sendRequestToClient(msg);
             if (!response.body) {
                 let lst: monaco.languages.CompletionList = {
                     suggestions: [],
-                }
+                };
                 return lst;
             }
             let lst: monaco.languages.CompletionList = response.body;
-            let suggestions = lst['suggestions'];
-            if(suggestions){
+            let suggestions = lst["suggestions"];
+            if (suggestions) {
                 for (let index = 0; index < suggestions.length; index++) {
                     const element = suggestions[index];
                     element.insertTextRules = monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet;
                 }
             }
             return lst;
-        }
+        },
     });
 
     monaco.languages.registerDocumentSemanticTokensProvider(LANGUAGE_ID, {
         getLegend: function () {
             return {
                 tokenTypes: TOKEN_TYPES_FROM_LS,
-                tokenModifiers: []
+                tokenModifiers: [],
             };
         },
 
         provideDocumentSemanticTokens: async function (model, lastResultId, token) {
             let msg: IRequestMessage = {
-                'type': 'request',
-                'seq': nextMessageSeq(),
-                'command': 'semanticTokens',
+                "type": "request",
+                "seq": nextMessageSeq(),
+                "command": "semanticTokens",
             };
-            let code = model.getValue()
+            let code = model.getValue();
             if (!code) {
                 return {
                     data: new Uint32Array([]),
-                    resultId: null
+                    resultId: null,
                 };
             }
-            msg['arguments'] = {
-                'code': code,
-            }
+            msg["arguments"] = {
+                "code": code,
+            };
             let response = await sendRequestToClient(msg);
             if (response.body) {
                 return response.body;
@@ -107,73 +106,73 @@ export function configureMonacoLanguage() {
 
             return {
                 data: new Uint32Array([]),
-                resultId: null
+                resultId: null,
             };
         },
 
-        releaseDocumentSemanticTokens: function (resultId) { }
+        releaseDocumentSemanticTokens: function (resultId) {},
     });
 
-    monaco.editor.defineTheme('my-dark', {
-        base: 'vs-dark',
+    monaco.editor.defineTheme("my-dark", {
+        base: "vs-dark",
         inherit: true,
         rules: [
-            { token: 'variable', foreground: '9CDCFE' },
-            { token: 'comment', foreground: '6A9955' },
-            { token: 'header', foreground: '4EC9B0' },
-            { token: 'setting', foreground: '569CD6' },
-            { token: 'name', foreground: '4EC9B0' },
-            { token: 'variableOperator', foreground: 'D4D4D4' },
-            { token: 'settingOperator', foreground: 'D4D4D4' },
-            { token: 'keywordNameDefinition', foreground: 'DCDCAA' },
+            { token: "variable", foreground: "9CDCFE" },
+            { token: "comment", foreground: "6A9955" },
+            { token: "header", foreground: "4EC9B0" },
+            { token: "setting", foreground: "569CD6" },
+            { token: "name", foreground: "4EC9B0" },
+            { token: "variableOperator", foreground: "D4D4D4" },
+            { token: "settingOperator", foreground: "D4D4D4" },
+            { token: "keywordNameDefinition", foreground: "DCDCAA" },
             // { token: 'keywordNameCall', foreground: '' }, // default foreground
-            { token: 'control', foreground: 'C586C0' },
-            { token: 'testCaseName', foreground: 'DCDCAA' },
-            { token: 'parameterName', foreground: '9CDCFE' },
-            { token: 'argumentValue', foreground: 'CE9178' },
+            { token: "control", foreground: "C586C0" },
+            { token: "testCaseName", foreground: "DCDCAA" },
+            { token: "parameterName", foreground: "9CDCFE" },
+            { token: "argumentValue", foreground: "CE9178" },
         ],
-        colors: {}
+        colors: {},
     });
 
-    monaco.editor.defineTheme('my-light', {
-        base: 'vs',
+    monaco.editor.defineTheme("my-light", {
+        base: "vs",
         inherit: true,
         rules: [
-            { token: 'variable', foreground: '0000FF' },
-            { token: 'comment', foreground: '008000' },
-            { token: 'header', foreground: '800000', fontStyle: 'bold' },
-            { token: 'setting', foreground: '0000FF' },
-            { token: 'name', foreground: '000080' },
-            { token: 'variableOperator', foreground: '0000FF' },
-            { token: 'settingOperator', foreground: '0000FF' },
-            { token: 'keywordNameDefinition', foreground: '098658' },
+            { token: "variable", foreground: "0000FF" },
+            { token: "comment", foreground: "008000" },
+            { token: "header", foreground: "800000", fontStyle: "bold" },
+            { token: "setting", foreground: "0000FF" },
+            { token: "name", foreground: "000080" },
+            { token: "variableOperator", foreground: "0000FF" },
+            { token: "settingOperator", foreground: "0000FF" },
+            { token: "keywordNameDefinition", foreground: "098658" },
             // { token: 'keywordNameCall', foreground: '' }, // default foreground
-            { token: 'control', foreground: '0000FF' },
-            { token: 'testCaseName', foreground: '0000FF' },
-            { token: 'parameterName', foreground: '098658' },
-            { token: 'argumentValue', foreground: 'A31515' },
+            { token: "control", foreground: "0000FF" },
+            { token: "testCaseName", foreground: "0000FF" },
+            { token: "parameterName", foreground: "098658" },
+            { token: "argumentValue", foreground: "A31515" },
         ],
-        colors: {}
+        colors: {},
     });
 
-    monaco.editor.defineTheme('my-hc', {
-        base: 'hc-black',
+    monaco.editor.defineTheme("my-hc", {
+        base: "hc-black",
         inherit: true,
         rules: [
-            { token: 'variable', foreground: '9CDCFE' },
-            { token: 'comment', foreground: '6A9955' },
-            { token: 'header', foreground: '4EC9B0' },
-            { token: 'setting', foreground: '569CD6' },
-            { token: 'name', foreground: '4EC9B0' },
-            { token: 'variableOperator', foreground: 'D4D4D4' },
-            { token: 'settingOperator', foreground: 'D4D4D4' },
-            { token: 'keywordNameDefinition', foreground: 'DCDCAA' },
+            { token: "variable", foreground: "9CDCFE" },
+            { token: "comment", foreground: "6A9955" },
+            { token: "header", foreground: "4EC9B0" },
+            { token: "setting", foreground: "569CD6" },
+            { token: "name", foreground: "4EC9B0" },
+            { token: "variableOperator", foreground: "D4D4D4" },
+            { token: "settingOperator", foreground: "D4D4D4" },
+            { token: "keywordNameDefinition", foreground: "DCDCAA" },
             // { token: 'keywordNameCall', foreground: '' }, // default foreground
-            { token: 'control', foreground: 'C586C0' },
-            { token: 'testCaseName', foreground: 'DCDCAA' },
-            { token: 'parameterName', foreground: '9CDCFE' },
-            { token: 'argumentValue', foreground: 'CE9178' },
+            { token: "control", foreground: "C586C0" },
+            { token: "testCaseName", foreground: "DCDCAA" },
+            { token: "parameterName", foreground: "9CDCFE" },
+            { token: "argumentValue", foreground: "CE9178" },
         ],
-        colors: {}
+        colors: {},
     });
 }

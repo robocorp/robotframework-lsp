@@ -1,0 +1,58 @@
+name: Lint
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  run-linters:
+    name: Run linters
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+        
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python }}
+          
+      - name: Setup node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+
+      - name: Install black
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install black
+          black --version
+          
+      - name: Install prettier
+        run: |
+          npm install -g prettier@2.4.1
+          
+      - name: TS Format Robot Framework LS (yarn prettier --write vscode-client/**/*.ts to format files locally)
+        working-directory: ./robotframework-ls/
+        run: prettier --check vscode-client/**/*.ts
+        
+      - name: Prettier Robocorp Code (yarn prettier --write vscode-client/**/*.ts to format files locally)
+        working-directory: ./robocorp-code
+        run: prettier --check vscode-client/**/*.ts
+        
+      - name: Prettier RF Interactive (yarn prettier --write src/**/*.{ts,tsx} to format files locally)
+        working-directory: ./robotframework-interactive/vscode-interpreter-webview
+        run: prettier --check src/**/*.{ts,tsx}
+        
+#       - name: Black check robotframework-ls
+#         run: |
+#           black --check ./robotframework-ls/src --exclude=vendored
+#           black --check ./robotframework-ls/tests --exclude=vendored
+#           black --check ./robotframework-ls/codegen --exclude=vendored
+#           
+#       - name: Black check robotframework-ls
+#         run: |
+#           black --check ./robotframework-ls/src --exclude=vendored
+#           black --check ./robotframework-ls/tests --exclude=vendored
+#           black --check ./robotframework-ls/codegen --exclude=vendored

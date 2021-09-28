@@ -1,45 +1,54 @@
 {
-	"folders": [
-		{
-			"path": ".."
-		},
-		{
-			"path": "../../robocorp-python-ls-core"
-		},
-		{
-			"path": "../../robotframework-ls"
-		},
-		{
-			"path": "../../robotframework-interactive"
-		},
-		{
-			"path": "../../example-vscode"
-		}
-	],
-	"settings": {
-		"python.pydev.pythonPath": [
-			"src", 
-			"../robotframework-ls/src", 
-			"../robocorp-python-ls-core/src",
-			"tests", 
-			"../robotframework-ls/tests", 
-			"../robocorp-python-ls-core/tests"
-		],
-		"python.autoComplete.extraPaths": [
-			"src", 
-			"../robotframework-ls/src", 
-			"../robocorp-python-ls-core/src",
-			"tests", 
-			"../robotframework-ls/tests", 
-			"../robocorp-python-ls-core/tests"
-		],
-		"python.analysis.extraPaths": [
-			"src", 
-			"../robotframework-ls/src", 
-			"../robocorp-python-ls-core/src",
-			"tests", 
-			"../robotframework-ls/tests", 
-			"../robocorp-python-ls-core/tests"
-		],
-	}
+    "folders": [
+        {
+            "path": ".."
+        },
+        {
+            "path": "../../robocorp-python-ls-core"
+        },
+        {
+            "path": "../../robotframework-ls"
+        },
+        {
+            "path": "../../robotframework-interactive"
+        },
+        {
+            "path": "../../example-vscode"
+        }
+    ],
+    "settings": {
+        "python.pydev.pythonPath": [
+            "src",
+            "../robotframework-ls/src",
+            "../robocorp-python-ls-core/src",
+            "tests",
+            "../robotframework-ls/tests",
+            "../robocorp-python-ls-core/tests"
+        ],
+        "python.autoComplete.extraPaths": [
+            "src",
+            "../robotframework-ls/src",
+            "../robocorp-python-ls-core/src",
+            "tests",
+            "../robotframework-ls/tests",
+            "../robocorp-python-ls-core/tests"
+        ],
+        "python.analysis.extraPaths": [
+            "src",
+            "../robotframework-ls/src",
+            "../robocorp-python-ls-core/src",
+            "tests",
+            "../robotframework-ls/tests",
+            "../robocorp-python-ls-core/tests"
+        ],
+        "[javascript]": {
+            "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[typescript]": {
+            "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[typescriptreact]": {
+            "editor.defaultFormatter": "esbenp.prettier-vscode"
+        }
+    }
 }

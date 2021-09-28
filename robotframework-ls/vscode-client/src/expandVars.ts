@@ -23,12 +23,12 @@ export function expandVars(template: string) {
                 return value;
             }
         }
-        OUTPUT_CHANNEL.appendLine('Unable to resolve variable: ' + name);
+        OUTPUT_CHANNEL.appendLine("Unable to resolve variable: " + name);
         return name;
-    }
+    };
     let ret = template.replace(/\${([^{}]*)}/g, getVar);
     if (ret.startsWith("~")) {
-        const homedir = require('os').homedir();
+        const homedir = require("os").homedir();
         return homedir + ret.substr(1);
     }
     return ret;
@@ -37,17 +37,20 @@ export function expandVars(template: string) {
 export function getStrFromConfigExpandingVars(config: WorkspaceConfiguration, name: string): string | undefined {
     let value: string = config.get<string>(name);
     if (typeof value !== "string") {
-        OUTPUT_CHANNEL.appendLine('Expected string for configuration: ' + name);
+        OUTPUT_CHANNEL.appendLine("Expected string for configuration: " + name);
         return undefined;
     }
     return expandVars(value);
 }
 
-export function getArrayStrFromConfigExpandingVars(config: WorkspaceConfiguration, name: string): Array<string> | undefined {
+export function getArrayStrFromConfigExpandingVars(
+    config: WorkspaceConfiguration,
+    name: string
+): Array<string> | undefined {
     let array: Array<string> = config.get<Array<string>>(name);
     if (array) {
         if (!Array.isArray(array)) {
-            OUTPUT_CHANNEL.appendLine('Expected string[] for configuration: ' + name);
+            OUTPUT_CHANNEL.appendLine("Expected string[] for configuration: " + name);
             return undefined;
         }
         let ret: Array<string> = [];

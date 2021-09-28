@@ -1,12 +1,12 @@
-import * as vscode from 'vscode';
-import * as fs from 'fs';
-import { logError } from './channel';
-import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from './robocorpViews';
-import { FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeView } from './viewsCommon';
-import { basename, dirname, join } from 'path';
-import { Uri } from 'vscode';
-import { TreeItemCollapsibleState } from 'vscode';
-import { RobotSelectionTreeDataProviderBase } from './viewsRobotSelection';
+import * as vscode from "vscode";
+import * as fs from "fs";
+import { logError } from "./channel";
+import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from "./robocorpViews";
+import { FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeView } from "./viewsCommon";
+import { basename, dirname, join } from "path";
+import { Uri } from "vscode";
+import { TreeItemCollapsibleState } from "vscode";
+import { RobotSelectionTreeDataProviderBase } from "./viewsRobotSelection";
 
 const fsPromises = fs.promises;
 
@@ -27,22 +27,22 @@ export async function getCurrRobotTreeContentDir(): Promise<FSEntry | undefined>
     if (!parentEntry) {
         let robot: RobotEntry | undefined = getSelectedRobot();
         if (!robot) {
-            await vscode.window.showInformationMessage('Unable to create file in Robot (Robot not selected).')
+            await vscode.window.showInformationMessage("Unable to create file in Robot (Robot not selected).");
             return undefined;
         }
         parentEntry = {
             filePath: dirname(robot.uri.fsPath),
             isDirectory: true,
-            name: basename(robot.uri.fsPath)
-        }
+            name: basename(robot.uri.fsPath),
+        };
     }
 
     if (!parentEntry.isDirectory) {
         parentEntry = {
             filePath: dirname(parentEntry.filePath),
             isDirectory: true,
-            name: basename(parentEntry.filePath)
-        }
+            name: basename(parentEntry.filePath),
+        };
     }
 
     return parentEntry;
@@ -54,8 +54,8 @@ export async function newFileInRobotContentTree() {
         return;
     }
     let filename: string = await vscode.window.showInputBox({
-        'prompt': 'Please provide file name. Current dir: ' + currTreeDir.filePath,
-        'ignoreFocusOut': true,
+        "prompt": "Please provide file name. Current dir: " + currTreeDir.filePath,
+        "ignoreFocusOut": true,
     });
     if (!filename) {
         return;
@@ -64,8 +64,8 @@ export async function newFileInRobotContentTree() {
     try {
         await vscode.workspace.fs.writeFile(Uri.file(targetFile), new Uint8Array());
     } catch (err) {
-        logError('Unable to create file.', err);
-        vscode.window.showErrorMessage('Unable to create file. Error: ' + err.message);
+        logError("Unable to create file.", err);
+        vscode.window.showErrorMessage("Unable to create file. Error: " + err.message);
     }
 }
 
@@ -77,11 +77,11 @@ export async function renameResourceInRobotContentTree() {
 
     let selection: FSEntry[] = robotContentTree.selection;
     if (!selection) {
-        await vscode.window.showInformationMessage("No resources selected for rename.")
+        await vscode.window.showInformationMessage("No resources selected for rename.");
         return;
     }
     if (selection.length != 1) {
-        await vscode.window.showInformationMessage("Please select a single resource for rename.")
+        await vscode.window.showInformationMessage("Please select a single resource for rename.");
         return;
     }
 
@@ -92,13 +92,18 @@ export async function renameResourceInRobotContentTree() {
         stat = await vscode.workspace.fs.stat(uri);
     } catch (err) {
         // unable to get stat (file may have been removed in the meanwhile).
-        await vscode.window.showErrorMessage("Unable to stat resource during rename.")
+        await vscode.window.showErrorMessage("Unable to stat resource during rename.");
     }
     if (stat) {
         try {
             let newName: string = await vscode.window.showInputBox({
-                'prompt': 'Please provide new name for: ' + basename(entry.filePath) + ' (at: ' + dirname(entry.filePath) + ')',
-                'ignoreFocusOut': true,
+                "prompt":
+                    "Please provide new name for: " +
+                    basename(entry.filePath) +
+                    " (at: " +
+                    dirname(entry.filePath) +
+                    ")",
+                "ignoreFocusOut": true,
             });
             if (!newName) {
                 return;
@@ -120,7 +125,7 @@ export async function deleteResourceInRobotContentTree() {
 
     let selection: FSEntry[] = robotContentTree.selection;
     if (!selection) {
-        await vscode.window.showInformationMessage("No resources selected for deletion.")
+        await vscode.window.showInformationMessage("No resources selected for deletion.");
         return;
     }
 
@@ -136,7 +141,11 @@ export async function deleteResourceInRobotContentTree() {
             try {
                 await vscode.workspace.fs.delete(uri, { recursive: true, useTrash: true });
             } catch (err) {
-                let msg = await vscode.window.showErrorMessage("Unable to move to trash: " + entry.filePath + ". How to proceed?", "Delete permanently", "Cancel")
+                let msg = await vscode.window.showErrorMessage(
+                    "Unable to move to trash: " + entry.filePath + ". How to proceed?",
+                    "Delete permanently",
+                    "Cancel"
+                );
                 if (msg == "Delete permanently") {
                     await vscode.workspace.fs.delete(uri, { recursive: true, useTrash: false });
                 } else {
@@ -153,8 +162,8 @@ export async function newFolderInRobotContentTree() {
         return;
     }
     let directoryName: string = await vscode.window.showInputBox({
-        'prompt': 'Please provide dir name. Current dir: ' + currTreeDir.filePath,
-        'ignoreFocusOut': true,
+        "prompt": "Please provide dir name. Current dir: " + currTreeDir.filePath,
+        "ignoreFocusOut": true,
     });
     if (!directoryName) {
         return;
@@ -163,8 +172,8 @@ export async function newFolderInRobotContentTree() {
     try {
         await vscode.workspace.fs.createDirectory(Uri.file(targetFile));
     } catch (err) {
-        logError('Unable to create directory: ' + targetFile, err);
-        vscode.window.showErrorMessage('Unable to create directory. Error: ' + err.message);
+        logError("Unable to create directory: " + targetFile, err);
+        vscode.window.showErrorMessage("Unable to create directory. Error: " + err.message);
     }
 }
 
@@ -176,28 +185,30 @@ export class RobotContentTreeDataProvider extends RobotSelectionTreeDataProvider
             const robotsTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
             if (!robotsTree || robotsTree.selection.length == 0) {
                 this.lastRobotEntry = undefined;
-                return [{
-                    name: "<Waiting for Robot Selection...>",
-                    isDirectory: false,
-                    filePath: undefined,
-                }];
+                return [
+                    {
+                        name: "<Waiting for Robot Selection...>",
+                        isDirectory: false,
+                        filePath: undefined,
+                    },
+                ];
             }
             let robotEntry: RobotEntry = robotsTree.selection[0];
             this.lastRobotEntry = robotEntry;
 
             let robotUri = robotEntry.uri;
             try {
-                let robotDir = dirname(robotUri.fsPath)
+                let robotDir = dirname(robotUri.fsPath);
                 let dirContents = await fsPromises.readdir(robotDir, { withFileTypes: true });
                 for (const dirContent of dirContents) {
                     ret.push({
                         name: dirContent.name,
                         isDirectory: dirContent.isDirectory(),
                         filePath: join(robotDir, dirContent.name),
-                    })
+                    });
                 }
             } catch (err) {
-                logError('Error listing dir contents: ' + robotUri, err);
+                logError("Error listing dir contents: " + robotUri, err);
             }
             return ret;
         } else {
@@ -212,10 +223,10 @@ export class RobotContentTreeDataProvider extends RobotSelectionTreeDataProvider
                         name: dirContent.name,
                         isDirectory: dirContent.isDirectory(),
                         filePath: join(element.filePath, dirContent.name),
-                    })
+                    });
                 }
             } catch (err) {
-                logError('Error listing dir contents: ' + element.filePath, err);
+                logError("Error listing dir contents: " + element.filePath, err);
             }
             return ret;
         }
