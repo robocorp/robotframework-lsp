@@ -87,16 +87,50 @@ class RemoteFSObserver(object):
         if log_file:
             args.append(f"--log-file={log_file}")
             args.append(f"-vv")
+
+        log.info("Initializing Remote FS Observer with the following args: %s", args)
         process = self.process = subprocess.Popen(
-            args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE,
-            bufsize=0,
+            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
         )
         stdout = process.stdout
         assert stdout
-        contents = stdout.readline().strip()
+
+        port_out = []
+        read_port_thread_finished = threading.Event()
+
+        def read_port():
+            try:
+                retcode = process.poll()
+
+                while retcode is None:
+                    contents = stdout.readline().strip()
+                    if not contents:
+                        log.info(
+                            "Read empty string from Remote FS Observer process launched with: %s",
+                            args,
+                        )
+                        time.sleep(0.1)
+                        retcode = process.poll()
+                    else:
+                        if not contents.startswith(b"port:"):
+                            log.critical(
+                                f'Expected the read contents from Remote FS Observer to start with "port:". Found: {contents!r}'
+                            )
+                            continue
+
+                        contents = contents[5:].strip()
+                        port = int(contents)
+                        port_out.append(port)
+                        return
+
+                # If it got here the process exited (and we didn't get the port).
+                log.critical(
+                    f"The Remote FS Observer process launched with: {args} exited without providing a port. retcode: {retcode}"
+                )
+            except:
+                log.exception("Error reading port from Remote FS Observer.")
+            finally:
+                read_port_thread_finished.set()
 
         def read_fs_observer_stderr():
             while True:
@@ -111,16 +145,21 @@ class RemoteFSObserver(object):
         t.daemon = True
         t.start()
 
-        if not contents.startswith(b"port:"):
-            # Just give some time for the stderr contents to appear.
-            time.sleep(0.15)
-            raise AssertionError(
-                f'Expected the read contents from Remote FS Observer to start with "port:". Found: {contents!r}'
-            )
-        contents = contents[5:].strip()
+        t = threading.Thread(target=read_port)
+        t.daemon = True
+        t.start()
 
-        port = int(contents)
-        self.port = port
+        if not read_port_thread_finished.wait(15):
+            raise AssertionError(
+                "Unable to read port from Remote FS Observer after 15 seconds."
+            )
+
+        if not port_out:
+            raise AssertionError(
+                "Remote FS Observer finished without providing a port."
+            )
+
+        port = self.port = port_out[0]
         self._initialize_reader_and_writer()
         assert self.writer, "Writer not properly initialized!"
         self.writer.write(
@@ -151,6 +190,23 @@ class RemoteFSObserver(object):
         from robocorp_ls_core.jsonrpc.streams import JsonRpcStreamReader
 
         s = socket_module.socket(socket_module.AF_INET, socket_module.SOCK_STREAM)
+        try:
+            # Configure the socket accordingly so that the connection is
+            # properly kept alive.
+            IPPROTO_TCP, SO_KEEPALIVE, TCP_KEEPIDLE, TCP_KEEPINTVL, TCP_KEEPCNT = (
+                socket_module.IPPROTO_TCP,
+                socket_module.SO_KEEPALIVE,
+                socket_module.TCP_KEEPIDLE,  # @UndefinedVariable
+                socket_module.TCP_KEEPINTVL,  # @UndefinedVariable
+                socket_module.TCP_KEEPCNT,  # @UndefinedVariable
+            )
+            s.setsockopt(socket_module.SOL_SOCKET, SO_KEEPALIVE, 1)
+            s.setsockopt(IPPROTO_TCP, TCP_KEEPIDLE, 1)
+            s.setsockopt(IPPROTO_TCP, TCP_KEEPINTVL, 3)
+            s.setsockopt(IPPROTO_TCP, TCP_KEEPCNT, 5)
+        except AttributeError:
+            pass  # May not be available everywhere.
+
         s.connect(("127.0.0.1", self.port))
         self._socket = s
         write_to = s.makefile("wb")

@@ -196,9 +196,10 @@ def main():
     s.bind(("127.0.0.1", 0))
     s.listen()
 
-    # Print the port where the server is hearing so that clients can connect to it.
-    print(f"port: {s.getsockname()[1]}")
-    sys.stdout.flush()
+    # Print the port where the server is listening so that clients can connect to it.
+    stdout_buffer = sys.__stdout__.buffer
+    stdout_buffer.write(f"port: {s.getsockname()[1]}\n".encode("utf-8"))
+    stdout_buffer.flush()
 
     observer_provider = ObserverProvider()
     while True:
