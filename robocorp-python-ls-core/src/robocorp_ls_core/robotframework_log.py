@@ -235,8 +235,8 @@ def configure_logger(postfix, log_level, log_file):
     :param log_file:
         - If None, get target file from env var.
         - If empty string log to stderr.
-        
-    :note: If used as a context manager it'll revert to the previous 
+
+    :note: If used as a context manager it'll revert to the previous
            configuration on `__exit__`.
     """
 

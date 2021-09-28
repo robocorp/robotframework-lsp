@@ -72,7 +72,7 @@ def start_language_server_tcp(
 ):
     """
     Starts a language server in the same process and communicates through tcp.
-    
+
     Yields a language server client.
     """
     import socket

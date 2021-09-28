@@ -70,10 +70,10 @@ def wait_for_message_matcher(
     """
     Note: in the case where the monitor is cancelled the cancel is automatically
     passed to the api too.
-    
+
     :raises JsonRpcRequestCancelled:
         If the monitor is cancelled.
-        
+
     :return True if the message completed in the available time and False otherwise.
     """
     import time
@@ -122,7 +122,7 @@ def wait_for_message_matchers(
     """
     Note: in the case where the monitor is cancelled the cancel is automatically
     passed to the api too.
-    
+
     :raises JsonRpcRequestCancelled:
         If the monitor is cancelled.
     """
@@ -238,7 +238,7 @@ class _ReaderThread(threading.Thread):
         :param message_pattern:
             Obtains a matcher which will be notified when the given message pattern is
             returned.
-            
+
         :return:
             None if it's already finished or the message matcher otherwise.
         """
@@ -254,7 +254,7 @@ class _ReaderThread(threading.Thread):
         :param message_id:
             Obtains a matcher which will be notified when the given message id is
             returned.
-            
+
         :return:
             None if it's already finished or the message matcher otherwise.
         """
@@ -278,7 +278,7 @@ class LanguageServerClientBase(object):
 
     def __init__(self, writer, reader, on_received_message=None):
         """
-        
+
         :param JsonRpcStreamWriter writer:
         :param JsonRpcStreamReader reader:
         """
@@ -316,7 +316,7 @@ class LanguageServerClientBase(object):
         :return:
             The returned message if everything goes ok.
             `default` if the communication dropped in the meanwhile and timeout was None.
-        
+
         :raises:
             TimeoutError if the timeout was given and no answer was given at the available time
             (including if the communication was dropped).

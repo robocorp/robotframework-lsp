@@ -46,7 +46,7 @@ class IRobotFrameworkInterpreter(Protocol):
             'evaluate': means that the target is an evaluation with the given code.
                 This implies that the current code must be changed to make sense
                 in the given context.
-                
+
             'completions': means that the target is a code-completion
                 This implies that the current code must be changed to include
                 all previous evaluation so that the code-completion contains

@@ -55,7 +55,7 @@ class IInterpreterInfo(Protocol):
         This is an identification and should relate to the place which allows
         to identify this info (it should usually be given by some location --
         for instance, it could be identified by the robot.yaml location).
-        
+
         Note that different interpreter ids can point to the same python
         executable (if they'd have the same robot.yaml contents).
         """
@@ -85,7 +85,7 @@ class EPResolveInterpreter(Protocol):
 
 class DefaultInterpreterInfo(object):
     """
-    A Default implementation for the interpreter info where everything is 
+    A Default implementation for the interpreter info where everything is
     pre-computed.
     """
 

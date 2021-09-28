@@ -10,7 +10,9 @@ class _Setup:
             RfInterpreterServerManager,
         )
 
-        self.rf_interpreter_server_manager: RfInterpreterServerManager = rf_interpreter_server_manager
+        self.rf_interpreter_server_manager: RfInterpreterServerManager = (
+            rf_interpreter_server_manager
+        )
         self.received_messages: List[Dict] = received_messages
         self.uri = uri
 

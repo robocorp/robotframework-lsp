@@ -54,12 +54,12 @@ class Sentinel(Enum):
 
 def check_implements(x: T) -> T:
     """
-    Helper to check if a class implements some protocol. 
+    Helper to check if a class implements some protocol.
 
     :important: It must be the last method in a class due to
                 https://github.com/python/mypy/issues/9266
 
-	Example:
+        Example:
 
     def __typecheckself__(self) -> None:
         _: IExpectedProtocol = check_implements(self)
@@ -104,10 +104,10 @@ class IEndPoint(Protocol):
     def notify(self, method: str, params: Any = None):
         """Send a JSON RPC notification to the client.
 
-         Args:
-             method (str): The method name of the notification to send
-             params (any): The payload of the notification
-         """
+        Args:
+            method (str): The method name of the notification to send
+            params (any): The payload of the notification
+        """
 
     def request(self, method: str, params=None) -> IFuture:
         """Send a JSON RPC request to the client.
@@ -160,7 +160,7 @@ class ILanguageServerClientBase(IRequestCancellable, Protocol):
     def request_async(self, contents: Dict) -> Optional[IIdMessageMatcher]:
         """
         API which allows to wait for the message to complete.
-        
+
         To use:
             message_matcher = client.request_async(contents)
             if message_matcher is not None:
@@ -169,11 +169,11 @@ class ILanguageServerClientBase(IRequestCancellable, Protocol):
                     msg = message_matcher.msg
                 else:
                     # Timed out
-            
+
         :param contents:
             Something as:
             {"jsonrpc": "2.0", "id": msg_id, "method": method_name, "params": params}
-            
+
         :return _MessageMatcher:
         """
 
@@ -189,7 +189,7 @@ class ILanguageServerClientBase(IRequestCancellable, Protocol):
         :return:
             The returned message if everything goes ok.
             `default` if the communication dropped in the meanwhile and timeout was None.
-        
+
         :raises:
             TimeoutError if the timeout was given and no answer was given at the available time
             (including if the communication was dropped).
@@ -200,7 +200,7 @@ class ILanguageServerClientBase(IRequestCancellable, Protocol):
     ) -> IMessageMatcher:
         """
         Can be used as:
-        
+
         message_matcher = language_server.obtain_pattern_message_matcher(
             {"method": "textDocument/publishDiagnostics"}
         )
@@ -328,7 +328,7 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
     def settings(self, settings: Dict):
         """
         :param settings:
-            Something as: 
+            Something as:
             {"settings": {"robot": {"pythonpath": [case4_path]}}}
         """
 
@@ -427,13 +427,13 @@ class IConfig(Protocol):
         """
         :param key:
             The setting to be gotten (i.e.: my.setting.to.get)
-            
+
         :param expected_type:
             The type which we're expecting.
-            
+
         :param default:
             If given, return this value instead of throwing a KeyError.
-            
+
         :raises:
             KeyError if the setting could not be found and default was not provided.
         """
@@ -485,8 +485,7 @@ class ILanguageServer(IConfigProvider):
 
 
 class IDirCache(Protocol):
-    """
-    """
+    """ """
 
     def store(self, key: Any, value: Any) -> None:
         """
@@ -494,8 +493,8 @@ class IDirCache(Protocol):
 
         :param key:
             The key to be persisted. It's repr(key) is used to calculate
-            the key filename on the disk. 
-            
+            the key filename on the disk.
+
         :note that the values do a round-trip with json (so, caveats
         such as saving a tuple and loading a list apply).
         """
@@ -503,10 +502,10 @@ class IDirCache(Protocol):
     def load(self, key: Any, expected_class: Type) -> Any:
         """
         Loads a previously persisted value.
-        
-        If it doesn't exist, there's some error loading or the expected 
-        class doesn't match the loaded value a KeyError is thrown. 
-        
+
+        If it doesn't exist, there's some error loading or the expected
+        class doesn't match the loaded value a KeyError is thrown.
+
         :note: users should check that the cache value is what's expected when it's
            gotten (as the data may become corrupted on disk or may change across
            versions).

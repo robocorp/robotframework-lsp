@@ -111,7 +111,7 @@ def glob_matches_path(path, pattern, sep=os.sep, altsep=os.altsep):
 
 
 def create_accept_directory_callable(
-    additional_dirs_to_ignore_str: Optional[str] = None
+    additional_dirs_to_ignore_str: Optional[str] = None,
 ):
     ignored_dirs = {
         "**/.git",

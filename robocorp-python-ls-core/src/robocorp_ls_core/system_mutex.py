@@ -292,8 +292,8 @@ def timed_acquire_mutex(
     with timed_acquire_mutex('mutex_name'):
         # Do something without any racing condition with other processes
         ...
-        
-        
+
+
     :param check_reentrant:
         Should only be False if this mutex is expected to be released in
         a different thread.

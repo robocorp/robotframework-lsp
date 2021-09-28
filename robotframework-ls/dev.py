@@ -250,7 +250,7 @@ class Dev(object):
 def test_lines():
     """
     Check that the replace matches what we expect.
-    
+
     Things we must match:
 
         version="0.0.1"

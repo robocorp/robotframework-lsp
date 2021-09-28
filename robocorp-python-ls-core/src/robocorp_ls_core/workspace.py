@@ -263,7 +263,7 @@ class _WorkspaceFolderWithVirtualFS(object):
     Walking a big tree may be time consuming, and very wasteful if users have
     things which the language server doesn't need (for instance, having a
     node_modules with thousands of unrelated files in the workspace).
-    
+
     This class helps in keeping a cache just with the files we care about and
     invalidating them as needed.
     """
@@ -498,7 +498,7 @@ class Document(object):
     """
     Note: the doc isn't inherently thread-safe, so, the workspace should create
     a new document instead of mutating the source.
-    
+
     Everything else (apart from changing the source) should be thread-safe
     (even without locks -- sometimes we may end up calculating things more than
     once, but that should not corrupt internal structures).

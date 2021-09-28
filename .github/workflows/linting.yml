@@ -46,22 +46,16 @@ jobs:
         
       - name: Black check robocorp-code
         run: |
-          black --check ./robocorp-code/src --exclude=vendored
-          black --check ./robocorp-code/tests --exclude=vendored
-          black --check ./robocorp-code/codegen --exclude=vendored
+          black --check ./robocorp-code --exclude=vendored
           
       - name: Black check robotframework-ls
         run: |
-          black --check ./robotframework-ls/src --exclude=vendored
-          black --check ./robotframework-ls/tests --exclude=vendored
-          black --check ./robotframework-ls/codegen --exclude=vendored
+          black --check ./robotframework-ls --exclude=vendored
           
       - name: Black check robotframework-interactive
         run: |
-          black --check ./robotframework-interactive/src --exclude=vendored
-          black --check ./robotframework-interactive/tests --exclude=vendored
+          black --check ./robotframework-interactive --exclude=vendored
           
       - name: Black check robocorp-python-ls-core
         run: |
-          black --check ./robocorp-python-ls-core/src --exclude=vendored
-          black --check ./robocorp-python-ls-core/tests --exclude=vendored
+          black --check ./robocorp-python-ls-core --exclude=vendored --exclude=libs

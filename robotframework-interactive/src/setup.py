@@ -25,8 +25,7 @@ for path in [_thirdparty, _license, _copyright]:
 
 
 def collect_vendored_files():
-    """Provides robot_interactive_console.robot.
-    """
+    """Provides robot_interactive_console.robot."""
     import os
 
     VENDORED_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -41,7 +40,9 @@ def collect_vendored_files():
 
     assert (
         len(ret) == 1
-    ), "Did not collect robot_interactive_console.robot file properly. Found: %s" % (ret,)
+    ), "Did not collect robot_interactive_console.robot file properly. Found: %s" % (
+        ret,
+    )
     return ret
 
 

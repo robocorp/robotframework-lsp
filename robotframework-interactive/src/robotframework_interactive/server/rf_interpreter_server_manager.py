@@ -320,7 +320,7 @@ class RfInterpreterServerManager:
             'evaluate': means that the target is an evaluation with the given code.
                 This implies that the current code must be changed to make sense
                 in the given context.
-                
+
             'completions': means that the target is a code-completion
                 This implies that the current code must be changed to include
                 all previous successful evaluations so that the code-completion
