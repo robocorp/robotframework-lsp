@@ -50,9 +50,7 @@ def import_robocorp_ls_core() -> None:
                 use_folder = src_core_folder
 
             else:
-                vendored_folder = os.path.join(
-                    src_folder, "robocorp_code", "vendored"
-                )
+                vendored_folder = os.path.join(src_folder, "robocorp_code", "vendored")
                 log_contents.append(
                     "Using vendored mode. Found: %s" % (vendored_folder,)
                 )

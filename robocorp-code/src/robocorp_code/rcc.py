@@ -33,9 +33,9 @@ ACCOUNT_NAME = "robocorp-code"
 
 def download_rcc(location: str, force: bool = False) -> None:
     """
-    Downloads rcc to the given location. Note that we don't overwrite it if it 
+    Downloads rcc to the given location. Note that we don't overwrite it if it
     already exists (unless force == True).
-    
+
     :param location:
         The location to store the rcc executable in the filesystem.
     :param force:
@@ -243,7 +243,7 @@ class Rcc(object):
     ) -> ActionResult[str]:
         """
         Returns an ActionResult where the result is the stdout of the executed command.
-        
+
         :param log_errors:
             If false, errors won't be logged (i.e.: should be false when errors
             are expected).
@@ -362,7 +362,7 @@ class Rcc(object):
     def _add_account_to_args(self, args: List[str]) -> Optional[ActionResult]:
         """
         Adds the account to the args.
-        
+
         Returns an error ActionResult if unable to get a valid account.
         """
         account_info = self._last_verified_account_info

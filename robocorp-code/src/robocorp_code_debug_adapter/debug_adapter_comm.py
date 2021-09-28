@@ -132,7 +132,7 @@ class DebugAdapterComm(object):
     def on_configurationDone_request(self, request):
         """
         Actually run when the configuration is finished.
-        
+
         :param ConfigurationDoneRequest request:
         """
         from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (

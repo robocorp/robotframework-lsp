@@ -44,11 +44,11 @@ jobs:
         working-directory: ./robotframework-interactive/vscode-interpreter-webview
         run: prettier --check src/**/*.{ts,tsx}
         
-      - name: Black check robotframework-ls
+      - name: Black check robocorp-code
         run: |
-          black --check ./robotframework-ls/src --exclude=vendored
-          black --check ./robotframework-ls/tests --exclude=vendored
-          black --check ./robotframework-ls/codegen --exclude=vendored
+          black --check ./robocorp-code/src --exclude=vendored
+          black --check ./robocorp-code/tests --exclude=vendored
+          black --check ./robocorp-code/codegen --exclude=vendored
           
       - name: Black check robotframework-ls
         run: |
