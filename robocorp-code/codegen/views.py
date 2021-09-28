@@ -172,7 +172,7 @@ TREE_VIEW_CONTAINERS = [
                 name="Work Items",
                 contextual_title="Work Items",
                 menus={
-                     "view/title": [
+                    "view/title": [
                         Menu(
                             "robocorp.newWorkItemInWorkItemsView",
                             MenuGroup.NAVIGATION,
@@ -181,7 +181,7 @@ TREE_VIEW_CONTAINERS = [
                         Menu(
                             "robocorp.helpWorkItems",
                             MenuGroup.NAVIGATION,
-                            when="robocorp-code:single-robot-selected"
+                            when="robocorp-code:single-robot-selected",
                         ),
                     ],
                     "view/item/context": [
@@ -196,7 +196,7 @@ TREE_VIEW_CONTAINERS = [
                             when="robocorp-code:single-robot-selected",
                         ),
                     ],
-                }
+                },
             ),
             TreeView(
                 id="robocorp-cloud-tree",
@@ -205,17 +205,17 @@ TREE_VIEW_CONTAINERS = [
                 menus={
                     "view/item/context": [
                         Menu(
-                            'robocorp.cloudLogin',
+                            "robocorp.cloudLogin",
                             MenuGroup.INLINE,
                             when="viewItem == cloudLoginItem",
                         ),
                         Menu(
-                            'robocorp.cloudLogout',
+                            "robocorp.cloudLogout",
                             MenuGroup.INLINE,
                             when="viewItem == cloudLogoutItem",
                         ),
                         Menu(
-                            'robocorp.openCloudHome',
+                            "robocorp.openCloudHome",
                             MenuGroup.INLINE,
                             when="viewItem == cloudLogoutItem",
                         ),
