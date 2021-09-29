@@ -9,9 +9,9 @@ from robocorp_ls_core.protocols import (
     COMMUNICATION_DROPPED,
     IIdMessageMatcher,
     IMonitor,
-    IRequestCancellable,
+    IRequestHandler,
 )
-from typing import Any, Union, Optional, List, Callable
+from typing import Any, Union, Optional, List, Callable, Dict
 
 log = get_logger(__name__)
 
@@ -173,6 +173,7 @@ class _ReaderThread(threading.Thread):
         self._id_message_matchers = {}  # msg id-> matcher
         self._pattern_message_matchers = {}  # id(matcher) -> matcher
         self._on_received_message = on_received_message
+        self._request_handlers: Dict[str, List[IRequestHandler]] = {}
 
     def run(self):
         try:
@@ -227,6 +228,21 @@ class _ReaderThread(threading.Thread):
                     )
                 )
 
+        if self._request_handlers:
+            method = msg.get("method")
+            msg_id = msg.get("id")
+            if method is not None and msg_id is not None:
+                request_handlers = self._request_handlers.get(method)
+                if request_handlers:
+                    for request_handler in request_handlers:
+                        try:
+                            if request_handler(method, msg_id, msg.get("params")):
+                                break
+                        except:
+                            log.exception(
+                                "Error processing: %s in %s", msg, request_handler
+                            )
+
         for message_matcher in notify_matchers:
             try:
                 message_matcher.notify(msg)
@@ -265,6 +281,9 @@ class _ReaderThread(threading.Thread):
             self._id_message_matchers[message_id] = message_matcher
             return message_matcher
 
+    def register_request_handler(self, request_name: str, handler: IRequestHandler):
+        self._request_handlers.setdefault(request_name, []).append(handler)
+
 
 class LanguageServerClientBase(object):
     """
@@ -290,6 +309,10 @@ class LanguageServerClientBase(object):
         t.start()
         self.require_exit_messages = True
         self.next_id = partial(next, itertools.count())
+
+    @implements(ILanguageServerClientBase.register_request_handler)
+    def register_request_handler(self, message: str, handler: IRequestHandler) -> None:
+        self._reader_thread.register_request_handler(message, handler)
 
     @implements(ILanguageServerClientBase.request_async)
     def request_async(self, contents: dict) -> Optional[IIdMessageMatcher]:

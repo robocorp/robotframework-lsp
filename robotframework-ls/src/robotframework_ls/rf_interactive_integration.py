@@ -72,6 +72,9 @@ class _RfInterpretersManager:
             )
             from robocorp_ls_core.ep_resolve_interpreter import EPResolveInterpreter
             from robocorp_ls_core import uris
+            from robotframework_ls.impl.robot_lsp_constants import (
+                OPTION_ROBOT_PYTHON_ENV,
+            )
 
             import_rf_interactive()
 
@@ -120,8 +123,48 @@ class _RfInterpretersManager:
                 for ep in self._pm.get_implementations(EPResolveInterpreter):
                     interpreter_info = ep.get_interpreter_info_for_doc_uri(uri)
                     if interpreter_info is not None:
-                        info["target"] = str(interpreter_info.get_interpreter_id())
+                        target = str(interpreter_info.get_interpreter_id())
+                        info["target"] = target
                         apply_interpreter_info_to_config(rf_config, interpreter_info)
+
+                        existing_env = rf_config.get_setting(
+                            OPTION_ROBOT_PYTHON_ENV, dict, {}
+                        )
+
+                        # Now, verify whether we have a
+                        # 'robocorp.updateLaunchEnv', which is an additional
+                        # hook that can be called to update the environment for
+                        # launches (only available when we do have a custom
+                        # interpreter set for it).
+                        command_future = self._endpoint.request(
+                            "$/executeWorkspaceCommand",
+                            {
+                                "command": "robocorp.updateLaunchEnv",
+                                "arguments": {
+                                    "targetRobot": target,
+                                    "env": existing_env,
+                                },
+                            },
+                        )
+                        try:
+                            new_env = command_future.result()
+                        except:
+                            log.exception(
+                                "Unable to execute workspace command from the extension."
+                            )
+                        else:
+                            if new_env:
+                                if isinstance(new_env, dict):
+                                    rf_config.update_override_settings(
+                                        {OPTION_ROBOT_PYTHON_ENV: new_env}
+                                    )
+                                else:
+                                    log.critical(
+                                        "Expected robocorp.updateLaunchEnv to return a dict. Returned: %s (%s)",
+                                        new_env,
+                                        type(new_env),
+                                    )
+
                         break
 
                 info["path"] = str(fs_path)

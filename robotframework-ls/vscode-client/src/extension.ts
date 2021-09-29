@@ -49,6 +49,11 @@ import { expandVars, getArrayStrFromConfigExpandingVars, getStrFromConfigExpandi
 import { registerInteractiveCommands } from "./interactive/rfInteractive";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 
+interface ExecuteWorkspaceCommandArgs {
+    command: string;
+    arguments: any;
+}
+
 function createClientOptions(initializationOptions: object): LanguageClientOptions {
     const clientOptions: LanguageClientOptions = {
         documentSelector: ["robotframework"],
@@ -450,6 +455,21 @@ export async function activate(context: ExtensionContext) {
                     langServer.onNotification("$/customProgress", (args: ProgressReport) => {
                         // OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
                         handleProgressMessage(args);
+                    })
+                );
+                context.subscriptions.push(
+                    langServer.onRequest("$/executeWorkspaceCommand", async (args: ExecuteWorkspaceCommandArgs) => {
+                        // OUTPUT_CHANNEL.appendLine(args.command + " - " + args.arguments);
+                        let ret;
+                        try {
+                            ret = await commands.executeCommand(args.command, args.arguments);
+                        } catch (err) {
+                            if (!(err.message && err.message.endsWith("not found"))) {
+                                // Log if the error wasn't that the command wasn't found
+                                logError("Error executing workspace command.", err);
+                            }
+                        }
+                        return ret;
                     })
                 );
                 stopListeningOnDidChangeState.dispose();

@@ -170,6 +170,16 @@ class Config(object):
         self._override_settings = self._replace_variables_in_settings(settings)
         self._update_full_settings()
 
+    @implements(IConfig.update_override_settings)
+    def update_override_settings(self, override_settings):
+        settings = flatten_keys(override_settings, all_options=self.ALL_OPTIONS)
+        original = self._original_override_settings.copy()
+        original.update(settings)
+
+        self._original_override_settings = original
+        self._override_settings = self._replace_variables_in_settings(original)
+        self._update_full_settings()
+
     @implements(IConfig.get_full_settings)
     def get_full_settings(self):
         return self._full_settings

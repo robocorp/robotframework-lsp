@@ -434,6 +434,10 @@ def test_completion_with_auto_handle_unparseable_error(
     from robotframework_ls.impl import auto_import_completions
     import os.path
     from robocorp_ls_core.basic import wait_for_condition
+    import robot
+
+    if robot.get_version().startswith("3."):
+        pytest.skip("Flaky on RF 3")
 
     doc = workspace.get_doc("case1.robot")
     doc.source = """/invalid/file/here ustehous usneothu snteuha usoentuho"""

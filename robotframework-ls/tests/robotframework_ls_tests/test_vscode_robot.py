@@ -3,6 +3,9 @@ import os
 from robocorp_ls_core.protocols import ILanguageServerClient
 import pytest
 import threading
+from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
+from pathlib import Path
+from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_STOP
 
 
 log = logging.getLogger(__name__)
@@ -1089,6 +1092,107 @@ Test
 
     t.join(10)
     assert not t.is_alive()
+
+
+def test_rf_interactive_integrated_hook_robocorp_update_env(
+    language_server_io: ILanguageServerClient, cases: CasesFixture, workspace_dir: str
+):
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE
+    from robocorp_ls_core import uris
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_START
+
+    language_server = language_server_io
+
+    cases.copy_to("custom_env", workspace_dir)
+
+    p = Path(workspace_dir)
+    plugins_path = p / "plugins"
+    assert plugins_path.exists()
+    language_server.initialize(
+        workspace_dir,
+        process_id=os.getpid(),
+        initialization_options={"pluginsDir": str(plugins_path)},
+    )
+
+    p = Path(workspace_dir) / "env1" / "caselib1.robot"
+    assert p.exists()
+
+    uri = uris.from_fs_path(str(p))
+
+    handled_update_launch_env = threading.Event()
+
+    def handle_execute_workspace_command(method, message_id, params):
+        assert method == "$/executeWorkspaceCommand"
+        assert isinstance(params, dict)
+
+        command = params["command"]
+        assert command == "robocorp.updateLaunchEnv"
+
+        arguments = params["arguments"]
+        assert arguments["targetRobot"]
+        env = arguments["env"]
+        env["CUSTOM_VAR_SET_FROM_TEST"] = "EXPECTED VALUE"
+
+        contents = {"jsonrpc": "2.0", "id": message_id, "result": env}
+        language_server.write(contents)
+        handled_update_launch_env.set()
+        return True
+
+    language_server.register_request_handler(
+        "$/executeWorkspaceCommand", handle_execute_workspace_command
+    )
+
+    ret1 = language_server.execute_command(
+        ROBOT_INTERNAL_RFINTERACTIVE_START, [{"uri": uri}]
+    )
+    assert handled_update_launch_env.wait(5)
+    try:
+        assert ret1["result"] == {
+            "success": True,
+            "message": None,
+            "result": {"interpreter_id": 0},
+        }
+
+        message_matcher_interpreter_output = (
+            language_server.obtain_pattern_message_matcher(
+                {"method": "interpreter/output"}
+            )
+        )
+
+        def run_in_thread():
+            language_server.execute_command(
+                ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE,
+                [
+                    {
+                        "interpreter_id": 0,
+                        "code": """
+*** Test Case ***
+Test
+    Log to console   %{CUSTOM_VAR_SET_FROM_TEST}
+""",
+                    }
+                ],
+            )
+
+        t = threading.Thread(target=run_in_thread)
+        t.start()
+
+        assert message_matcher_interpreter_output.event.wait(10)
+        assert message_matcher_interpreter_output.msg == {
+            "jsonrpc": "2.0",
+            "method": "interpreter/output",
+            "params": {
+                "output": "EXPECTED VALUE\n",
+                "category": "stdout",
+                "interpreter_id": 0,
+            },
+        }
+
+    finally:
+        # Note: success could be False if it was stopped in the test...
+        language_server.execute_command(
+            ROBOT_INTERNAL_RFINTERACTIVE_STOP, [{"interpreter_id": 0}]
+        )
 
 
 def test_rf_interactive_integrated_completions(

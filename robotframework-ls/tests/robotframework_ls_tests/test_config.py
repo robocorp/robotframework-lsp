@@ -116,3 +116,29 @@ def test_config_flatten_02():
         "robot.python.value_float": "10.5",
         "robot.variables": {"var1": 10, "var2": 20},
     }
+
+
+def test_config_override_settings():
+    from robotframework_ls.robot_config import RobotConfig
+
+    settings = {
+        "robot": {
+            "python": {"executable": "foobar"},
+            "variables": {"var1": 10, "var2": 20},
+        }
+    }
+
+    config = RobotConfig()
+    config.update(settings)
+    assert config.get_setting("robot.python.executable", str, "") == "foobar"
+    config.set_override_settings({"robot.python.executable": "overridden_python"})
+
+    assert config.get_setting("robot.python.executable", str, "") == "overridden_python"
+
+    config.set_override_settings({"robot.variables": {"var3": 30}})
+    assert config.get_setting("robot.python.executable", str, "") == "foobar"
+    assert config.get_setting("robot.variables", dict, {}) == {"var3": 30}
+
+    config.update_override_settings({"robot.python.executable": "overridden_python"})
+    assert config.get_setting("robot.python.executable", str, "") == "overridden_python"
+    assert config.get_setting("robot.variables", dict, {}) == {"var3": 30}

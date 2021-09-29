@@ -156,6 +156,25 @@ class IRequestCancellable(Protocol):
         """
 
 
+class IRequestHandler(Protocol):
+    def __call__(self, request_name: str, msg_id: Any, params: Any) -> bool:
+        """
+        :param request_name:
+            The name of the request to be handled.
+
+        :param msg_id:
+            The id of the message (to which a response should be generated).
+
+        :param params:
+            The parameters received in the request.
+
+        :return:
+            True if the request was handled (in which case, if multiple request
+            handlers are registered, others aren't processed anymore) and False
+            otherwise.
+        """
+
+
 class ILanguageServerClientBase(IRequestCancellable, Protocol):
     def request_async(self, contents: Dict) -> Optional[IIdMessageMatcher]:
         """
@@ -207,6 +226,9 @@ class ILanguageServerClientBase(IRequestCancellable, Protocol):
         """
 
     def obtain_id_message_matcher(self, message_id) -> IMessageMatcher:
+        pass
+
+    def register_request_handler(self, message: str, handler: IRequestHandler) -> None:
         pass
 
     def write(self, contents):
@@ -445,7 +467,17 @@ class IConfig(Protocol):
         pass
 
     def set_override_settings(self, override_settings: dict) -> None:
-        pass
+        """
+        Used to override settings with the keys given (note: any existing
+        override setting will be removed and all the keys here will be set to
+        override the initial settings -- use update_override_settings to keep
+        other existing overrides).v
+        """
+
+    def update_override_settings(self, override_settings: dict) -> None:
+        """
+        Used to update existing override settings with the keys given.
+        """
 
     def set_workspace_dir(self, workspace: str) -> None:
         pass
