@@ -636,10 +636,6 @@
                     "when": "false"
                 },
                 {
-                    "command": "robocorp.newWorkItemInWorkItemsView",
-                    "when": "false"
-                },
-                {
                     "command": "robocorp.deleteWorkItemInWorkItemsView",
                     "when": "false"
                 },
