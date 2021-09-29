@@ -751,7 +751,7 @@ export async function updateLaunchEnvironment(args) {
         for (const it of input_work_items) {
             items.push({
                 "label": it.name,
-                "detail": it.json_path,
+                "detail": 'Input',
                 "action": it.json_path,
             });
         }
@@ -759,7 +759,7 @@ export async function updateLaunchEnvironment(args) {
         for (const it of output_work_items) {
             items.push({
                 "label": it.name,
-                "detail": it.json_path,
+                "detail": 'Output',
                 "action": it.json_path,
             });
         }
