@@ -167,7 +167,7 @@ TREE_VIEW_CONTAINERS = [
                     ],
                 },
             ),
-            #TreeView(
+            # TreeView(
             #    id="robocorp-work-items-tree",
             #    name="Work Items",
             #    contextual_title="Work Items",
@@ -197,7 +197,7 @@ TREE_VIEW_CONTAINERS = [
             #            ),
             #        ],
             #    },
-            #),
+            # ),
             TreeView(
                 id="robocorp-cloud-tree",
                 name="Robocorp",

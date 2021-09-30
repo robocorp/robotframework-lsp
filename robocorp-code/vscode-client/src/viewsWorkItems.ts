@@ -4,7 +4,7 @@ import { resolve, join, dirname, basename } from "path";
 import { logError } from "./channel";
 import { ROBOCORP_LIST_WORK_ITEMS_INTERNAL } from "./robocorpCommands";
 import { FSEntry, RobotEntry, treeViewIdToTreeDataProvider, treeViewIdToTreeView } from "./viewsCommon";
-import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, /* TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE */ } from "./robocorpViews";
+import { TREE_VIEW_ROBOCORP_ROBOTS_TREE /* TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE */ } from "./robocorpViews";
 import { getCurrRobotDir, RobotSelectionTreeDataProviderBase } from "./viewsRobotSelection";
 
 const WORK_ITEM_TEMPLATE = `[

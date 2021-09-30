@@ -123,6 +123,8 @@ def get_json_contents():
             "watch": "cd vscode-client && tsc -watch -p ./ && cd ..",
             "pretest": "cd vscode-client && tsc -p ./ && cd ..",
             "test": "node ./vscode-client/out/tests/runTests.js",
+            "prettier": "npx prettier -c vscode-client/**/*.ts",
+            "prettier-fix": "npx prettier -w vscode-client/**/*.ts",
         },
         "devDependencies": {
             "@types/mocha": "^2.2.32",
