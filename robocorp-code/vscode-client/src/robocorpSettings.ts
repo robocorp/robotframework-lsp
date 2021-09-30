@@ -27,7 +27,7 @@ export function getLanguageServerTcpPort(): number {
 export async function setLanguageServerTcpPort(value): Promise<void> {
     let key = ROBOCORP_LANGUAGE_SERVER_TCP_PORT;
     let i = key.lastIndexOf('.');
-    
+
     let config = workspace.getConfiguration(key.slice(0, i));
     await config.update(key.slice(i + 1), value, ConfigurationTarget.Global);
 }
@@ -42,7 +42,7 @@ export function getLanguageServerArgs(): string[] {
 export async function setLanguageServerArgs(value): Promise<void> {
     let key = ROBOCORP_LANGUAGE_SERVER_ARGS;
     let i = key.lastIndexOf('.');
-    
+
     let config = workspace.getConfiguration(key.slice(0, i));
     await config.update(key.slice(i + 1), value, ConfigurationTarget.Global);
 }
@@ -57,7 +57,7 @@ export function getLanguageServerPython(): string {
 export async function setLanguageServerPython(value): Promise<void> {
     let key = ROBOCORP_LANGUAGE_SERVER_PYTHON;
     let i = key.lastIndexOf('.');
-    
+
     let config = workspace.getConfiguration(key.slice(0, i));
     await config.update(key.slice(i + 1), value, ConfigurationTarget.Global);
 }
@@ -72,7 +72,7 @@ export function getRccLocation(): string {
 export async function setRccLocation(value): Promise<void> {
     let key = ROBOCORP_RCC_LOCATION;
     let i = key.lastIndexOf('.');
-    
+
     let config = workspace.getConfiguration(key.slice(0, i));
     await config.update(key.slice(i + 1), value, ConfigurationTarget.Global);
 }
@@ -87,7 +87,7 @@ export function getRccEndpoint(): string {
 export async function setRccEndpoint(value): Promise<void> {
     let key = ROBOCORP_RCC_ENDPOINT;
     let i = key.lastIndexOf('.');
-    
+
     let config = workspace.getConfiguration(key.slice(0, i));
     await config.update(key.slice(i + 1), value, ConfigurationTarget.Global);
 }
@@ -102,7 +102,7 @@ export function getRccConfigLocation(): string {
 export async function setRccConfigLocation(value): Promise<void> {
     let key = ROBOCORP_RCC_CONFIG_LOCATION;
     let i = key.lastIndexOf('.');
-    
+
     let config = workspace.getConfiguration(key.slice(0, i));
     await config.update(key.slice(i + 1), value, ConfigurationTarget.Global);
 }
@@ -117,7 +117,7 @@ export function getHome(): string {
 export async function setHome(value): Promise<void> {
     let key = ROBOCORP_HOME;
     let i = key.lastIndexOf('.');
-    
+
     let config = workspace.getConfiguration(key.slice(0, i));
     await config.update(key.slice(i + 1), value, ConfigurationTarget.Global);
 }
@@ -132,7 +132,7 @@ export function getVerifylsp(): boolean {
 export async function setVerifylsp(value): Promise<void> {
     let key = ROBOCORP_VERIFY_LSP;
     let i = key.lastIndexOf('.');
-    
+
     let config = workspace.getConfiguration(key.slice(0, i));
     await config.update(key.slice(i + 1), value, ConfigurationTarget.Global);
 }

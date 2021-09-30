@@ -15,6 +15,8 @@ def get_menus():
     ret = views.get_menus()
     commands_palette_entry = []
     for command in COMMANDS:
+        if not command.add_to_package_json:
+            continue
         if command.hide_from_command_palette:
             commands_palette_entry.append({"command": command.name, "when": "false"})
     if commands_palette_entry:
@@ -51,7 +53,7 @@ def get_json_contents():
                 "properties": get_settings_for_json(),
             },
             "viewsContainers": views.get_views_containers(),
-            "views": views.get_tree_views(),
+            "views": views.get_tree_views_for_package_json(),
             "languages": [],
             "grammars": [],
             "debuggers": [
@@ -324,7 +326,7 @@ export function get%s(): %s {
 export async function set%s(value): Promise<void> {
     let key = %s;
     let i = key.lastIndexOf('.');
-    
+
     let config = workspace.getConfiguration(key.slice(0, i));
     await config.update(key.slice(i + 1), value, ConfigurationTarget.Global);
 }
