@@ -3,11 +3,12 @@ from typing import Optional, Union
 
 
 class TreeView:
-    def __init__(self, id, name, contextual_title, menus):
+    def __init__(self, id, name, contextual_title, menus, add_to_package_json=True):
         self.id = id
         self.name = name
         self.contextual_title = contextual_title
         self.menus = menus
+        self.add_to_package_json = add_to_package_json
 
 
 class TreeViewContainer:
@@ -239,13 +240,14 @@ def get_views_containers():
     return {"activitybar": activity_bar_contents}
 
 
-def get_tree_views():
+def get_tree_views_for_package_json():
     ret = {}
 
     for tree_view_container in TREE_VIEW_CONTAINERS:
         ret[tree_view_container.id] = [
             {"id": tree.id, "name": tree.name, "contextualTitle": tree.contextual_title}
             for tree in tree_view_container.tree_views
+            if tree.add_to_package_json
         ]
     return ret
 
@@ -255,6 +257,8 @@ def get_activation_events_for_json():
 
     for tree_view_container in TREE_VIEW_CONTAINERS:
         for tree_viewer in tree_view_container.tree_views:
+            if not tree_viewer.add_to_package_json:
+                continue
             activation_events.append("onView:" + tree_viewer.id)
 
     return activation_events
@@ -265,6 +269,8 @@ def get_menus():
 
     for tree_view_container in TREE_VIEW_CONTAINERS:
         for tree_viewer in tree_view_container.tree_views:
+            if not tree_viewer.add_to_package_json:
+                continue
             menu: Menu
             for menu_id, menu_lst in tree_viewer.menus.items():
                 for menu in menu_lst:
