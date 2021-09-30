@@ -3,7 +3,7 @@ import {
     TREE_VIEW_ROBOCORP_LOCATORS_TREE,
     TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE,
     TREE_VIEW_ROBOCORP_ROBOTS_TREE,
-    TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE,
+    // TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE,
 } from "./robocorpViews";
 import * as vscode from "vscode";
 import { ExtensionContext } from "vscode";
@@ -396,6 +396,7 @@ export function registerViews(context: ExtensionContext) {
     );
 
     // Work items tree data provider definition
+    /*
     const workItemsTreeDataProvider = new WorkItemsTreeDataProvider();
     const workItemsTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE, {
         "treeDataProvider": workItemsTreeDataProvider,
@@ -410,6 +411,7 @@ export function registerViews(context: ExtensionContext) {
             await workItemsTreeDataProvider.onTreeSelectionChanged(workItemsTree);
         })
     );
+    */
 
     let robotsWatcher: vscode.FileSystemWatcher = vscode.workspace.createFileSystemWatcher("**/robot.yaml");
 

@@ -711,6 +711,7 @@ export async function createRobot() {
 export async function updateLaunchEnvironment(args) {
     let robot = args["targetRobot"];
     let environment = args["env"];
+    return environment;
     if (!robot) {
         throw new Error("robot argument is required.");
     }

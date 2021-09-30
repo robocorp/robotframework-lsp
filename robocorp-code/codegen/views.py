@@ -167,37 +167,37 @@ TREE_VIEW_CONTAINERS = [
                     ],
                 },
             ),
-            TreeView(
-                id="robocorp-work-items-tree",
-                name="Work Items",
-                contextual_title="Work Items",
-                menus={
-                    "view/title": [
-                        Menu(
-                            "robocorp.newWorkItemInWorkItemsView",
-                            MenuGroup.NAVIGATION,
-                            when="robocorp-code:single-robot-selected",
-                        ),
-                        Menu(
-                            "robocorp.helpWorkItems",
-                            MenuGroup.NAVIGATION,
-                            when="robocorp-code:single-robot-selected",
-                        ),
-                    ],
-                    "view/item/context": [
-                        Menu(
-                            "robocorp.newWorkItemInWorkItemsView",
-                            "0_new",
-                            when="robocorp-code:single-robot-selected",
-                        ),
-                        Menu(
-                            "robocorp.deleteWorkItemInWorkItemsView",
-                            "1_change",
-                            when="robocorp-code:single-robot-selected",
-                        ),
-                    ],
-                },
-            ),
+            #TreeView(
+            #    id="robocorp-work-items-tree",
+            #    name="Work Items",
+            #    contextual_title="Work Items",
+            #    menus={
+            #        "view/title": [
+            #            Menu(
+            #                "robocorp.newWorkItemInWorkItemsView",
+            #                MenuGroup.NAVIGATION,
+            #                when="robocorp-code:single-robot-selected",
+            #            ),
+            #            Menu(
+            #                "robocorp.helpWorkItems",
+            #                MenuGroup.NAVIGATION,
+            #                when="robocorp-code:single-robot-selected",
+            #            ),
+            #        ],
+            #        "view/item/context": [
+            #            Menu(
+            #                "robocorp.newWorkItemInWorkItemsView",
+            #                "0_new",
+            #                when="robocorp-code:single-robot-selected",
+            #            ),
+            #            Menu(
+            #                "robocorp.deleteWorkItemInWorkItemsView",
+            #                "1_change",
+            #                when="robocorp-code:single-robot-selected",
+            #            ),
+            #        ],
+            #    },
+            #),
             TreeView(
                 id="robocorp-cloud-tree",
                 name="Robocorp",

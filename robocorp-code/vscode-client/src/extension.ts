@@ -87,7 +87,7 @@ import {
     newFolderInRobotContentTree,
     renameResourceInRobotContentTree,
 } from "./viewsRobotContent";
-import { deleteWorkItemInWorkItemsTree, newWorkItemInWorkItemsTree, openWorkItemHelp } from "./viewsWorkItems";
+// import { deleteWorkItemInWorkItemsTree, newWorkItemInWorkItemsTree, openWorkItemHelp } from "./viewsWorkItems";
 import { LocatorEntry } from "./viewsCommon";
 
 const clientOptions: LanguageClientOptions = {
@@ -500,12 +500,12 @@ export async function activate(context: ExtensionContext) {
         }
         commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGIN, () => cloudLoginShowConfirmationAndRefresh());
         commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGOUT, () => cloudLogoutAndRefresh());
-        commands.registerCommand(roboCommands.ROBOCORP_NEW_WORK_ITEM_IN_WORK_ITEMS_VIEW, newWorkItemInWorkItemsTree);
+        /* commands.registerCommand(roboCommands.ROBOCORP_NEW_WORK_ITEM_IN_WORK_ITEMS_VIEW, newWorkItemInWorkItemsTree);
         commands.registerCommand(
             roboCommands.ROBOCORP_DELETE_WORK_ITEM_IN_WORK_ITEMS_VIEW,
             deleteWorkItemInWorkItemsTree
         );
-        commands.registerCommand(roboCommands.ROBOCORP_HELP_WORK_ITEMS, openWorkItemHelp);
+        commands.registerCommand(roboCommands.ROBOCORP_HELP_WORK_ITEMS, openWorkItemHelp); */
         views.registerViews(context);
         registerDebugger(executableAndEnv.pythonExe);
         context.subscriptions.push(disposable);

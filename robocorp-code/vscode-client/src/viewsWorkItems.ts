@@ -4,7 +4,7 @@ import { resolve, join, dirname, basename } from "path";
 import { logError } from "./channel";
 import { ROBOCORP_LIST_WORK_ITEMS_INTERNAL } from "./robocorpCommands";
 import { FSEntry, RobotEntry, treeViewIdToTreeDataProvider, treeViewIdToTreeView } from "./viewsCommon";
-import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE } from "./robocorpViews";
+import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, /* TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE */ } from "./robocorpViews";
 import { getCurrRobotDir, RobotSelectionTreeDataProviderBase } from "./viewsRobotSelection";
 
 const WORK_ITEM_TEMPLATE = `[
@@ -18,6 +18,7 @@ const WORK_ITEM_TEMPLATE = `[
   }
 ]`;
 
+/*
 async function getWorkItemInfo(): Promise<WorkItemsInfo | null> {
     let workItemsTreeDataProvider: WorkItemsTreeDataProvider = <WorkItemsTreeDataProvider>(
         treeViewIdToTreeDataProvider.get(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE)
@@ -144,6 +145,7 @@ export function openWorkItemHelp() {
         vscode.Uri.parse("https://robocorp.com/docs/development-guide/control-room/data-pipeline#what-is-a-work-item")
     );
 }
+*/
 
 export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBase {
     private workItemsInfo: WorkItemsInfo | undefined = undefined;
