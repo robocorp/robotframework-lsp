@@ -56,24 +56,26 @@ export async function createRccTerminal(robotInfo: LocalRobotMetadataInfo) {
             }
 
             // Update env to contain rcc location.
-            for (let key of Object.keys(interpreter.environ)) {
-                let value = interpreter.environ[key];
-                let isPath = false;
-                if (process.platform == "win32") {
-                    key = key.toUpperCase();
-                    if (key == "PATH") {
-                        isPath = true;
+            if (interpreter.environ) {
+                for (let key of Object.keys(interpreter.environ)) {
+                    let value = interpreter.environ[key];
+                    let isPath = false;
+                    if (process.platform == "win32") {
+                        key = key.toUpperCase();
+                        if (key == "PATH") {
+                            isPath = true;
+                        }
+                    } else {
+                        if (key == "PATH") {
+                            isPath = true;
+                        }
                     }
-                } else {
-                    if (key == "PATH") {
-                        isPath = true;
+                    if (isPath) {
+                        value = pathModule.dirname(rccLocation) + pathModule.delimiter + value;
                     }
-                }
-                if (isPath) {
-                    value = pathModule.dirname(rccLocation) + pathModule.delimiter + value;
-                }
 
-                env[key] = value;
+                    env[key] = value;
+                }
             }
 
             OUTPUT_CHANNEL.appendLine("Create terminal with RCC:" + rccLocation + " for Robot: " + robotInfo.name);
