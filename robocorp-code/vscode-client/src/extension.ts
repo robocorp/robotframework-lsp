@@ -483,7 +483,7 @@ export async function activate(context: ExtensionContext) {
             roboCommands.ROBOCORP_RENAME_RESOURCE_IN_ROBOT_CONTENT_VIEW,
             renameResourceInRobotContentTree
         );
-        commands.registerCommand(roboCommands.ROBOCORP_UPDATE_LAUNCH_ENV, updateLaunchEnvironment);
+        // commands.registerCommand(roboCommands.ROBOCORP_UPDATE_LAUNCH_ENV, updateLaunchEnvironment);
         commands.registerCommand(roboCommands.ROBOCORP_OPEN_CLOUD_HOME, () => {
             commands.executeCommand("vscode.open", Uri.parse("https://cloud.robocorp.com/home"));
         });
