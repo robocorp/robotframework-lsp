@@ -38,7 +38,7 @@ on the client and then call parts of it on the server.
 Note: the code in the extension side (in TypeScript) should be kept to a minimum (as it needs to be
 redone if porting to a different client).
 
-Note: at least one integration test for each action must be added in 
+Note: at least one integration test for each action must be added in
 `/robocorp-code/tests/robocorp_code_tests/test_vscode_integration.py`
 
 
@@ -61,12 +61,13 @@ To do that, in the command line, make sure you're at the root folder of this pro
 
 Then run the commands below (considering that you have a Python 3 in your path):
 
-Note: the commands below consider you're using Windows 
+Note: the commands below consider you're using Windows
 (please adjust slashes/path to activate accordingly in OSes).
 
 python -m venv .venv
 .venv/Scripts/activate.bat
 python -m pip install -r robocorp-code/tests/test_requirements.txt
+python -m pip install -r robocorp-code/dev_requirements.txt
 echo %cd%\robotframework-ls\src > .venv\Lib\site-packages\rf_src.pth
 echo %cd%\robocorp-code\src >> .venv\Lib\site-packages\rf_src.pth
 echo %cd%\robocorp-python-ls-core\src >> .venv\Lib\site-packages\rf_src.pth
