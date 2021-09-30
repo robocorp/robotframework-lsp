@@ -199,6 +199,11 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
             return;
         }
 
+        if (!interpreter) {
+            window.showErrorMessage("Unable to resolve robot.yaml based on: " + debugConfiguration.robot);
+            return;
+        }
+
         // Resolve environment
         let env = interpreter.environ;
         try {
@@ -208,11 +213,6 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
             });
         } catch (error) {
             // The command may not be available.
-        }
-
-        if (!interpreter) {
-            window.showErrorMessage("Unable to resolve robot.yaml based on: " + debugConfiguration.robot);
-            return;
         }
 
         let actionResult: ActionResult = await commands.executeCommand(
