@@ -395,7 +395,6 @@ export function registerViews(context: ExtensionContext) {
         robotsTree.onDidChangeSelection((e) => locatorsDataProvider.onRobotsTreeSelectionChanged())
     );
 
-    /* Disable the view until proper RCC version is available to release the feature
     // Work items tree data provider definition
     const workItemsTreeDataProvider = new WorkItemsTreeDataProvider();
     const workItemsTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE, {
@@ -411,7 +410,6 @@ export function registerViews(context: ExtensionContext) {
             await workItemsTreeDataProvider.onTreeSelectionChanged(workItemsTree);
         })
     );
-    */
 
     let robotsWatcher: vscode.FileSystemWatcher = vscode.workspace.createFileSystemWatcher("**/robot.yaml");
 

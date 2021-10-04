@@ -198,7 +198,6 @@ TREE_VIEW_CONTAINERS = [
                         ),
                     ],
                 },
-                add_to_package_json=False,
             ),
             TreeView(
                 id="robocorp-cloud-tree",

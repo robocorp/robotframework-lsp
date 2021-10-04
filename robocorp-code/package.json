@@ -80,6 +80,7 @@
         "onView:robocorp-robots-tree",
         "onView:robocorp-robot-content-tree",
         "onView:robocorp-locators-tree",
+        "onView:robocorp-work-items-tree",
         "onView:robocorp-cloud-tree",
         "onLanguage:json",
         "onLanguage:yaml"
@@ -156,6 +157,11 @@
                     "id": "robocorp-locators-tree",
                     "name": "Locators",
                     "contextualTitle": "Locators"
+                },
+                {
+                    "id": "robocorp-work-items-tree",
+                    "name": "Work Items",
+                    "contextualTitle": "Work Items"
                 },
                 {
                     "id": "robocorp-cloud-tree",
@@ -406,6 +412,24 @@
                 "command": "robocorp.updateLaunchEnv",
                 "title": "Updates the environment variables used for some launch (given a Robot)",
                 "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.newWorkItemInWorkItemsView",
+                "title": "New Work Item",
+                "category": "Robocorp",
+                "icon": "$(new-file)"
+            },
+            {
+                "command": "robocorp.deleteWorkItemInWorkItemsView",
+                "title": "Delete Work Item",
+                "category": "Robocorp",
+                "icon": "$(close)"
+            },
+            {
+                "command": "robocorp.helpWorkItems",
+                "title": "Work Items Help",
+                "category": "Robocorp",
+                "icon": "$(question)"
             }
         ],
         "menus": {
@@ -464,6 +488,16 @@
                     "command": "robocorp.newRobocorpInspectorImage",
                     "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
                     "group": "navigation"
+                },
+                {
+                    "command": "robocorp.newWorkItemInWorkItemsView",
+                    "when": "view == robocorp-work-items-tree && robocorp-code:single-robot-selected",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.helpWorkItems",
+                    "when": "view == robocorp-work-items-tree && robocorp-code:single-robot-selected",
+                    "group": "navigation"
                 }
             ],
             "view/item/context": [
@@ -509,6 +543,16 @@
                     "command": "robocorp.removeLocatorFromJson",
                     "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected && viewItem == locatorEntry",
                     "group": "inline"
+                },
+                {
+                    "command": "robocorp.newWorkItemInWorkItemsView",
+                    "when": "view == robocorp-work-items-tree && robocorp-code:single-robot-selected",
+                    "group": "0_new"
+                },
+                {
+                    "command": "robocorp.deleteWorkItemInWorkItemsView",
+                    "when": "view == robocorp-work-items-tree && robocorp-code:single-robot-selected",
+                    "group": "1_change"
                 },
                 {
                     "command": "robocorp.cloudLogin",
@@ -589,6 +633,14 @@
                 },
                 {
                     "command": "robocorp.updateLaunchEnv",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.deleteWorkItemInWorkItemsView",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.helpWorkItems",
                     "when": "false"
                 }
             ]
