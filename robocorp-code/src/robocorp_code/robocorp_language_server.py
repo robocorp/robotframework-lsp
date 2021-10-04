@@ -859,12 +859,15 @@ class RobocorpLanguageServer(PythonLanguageServer):
         self, output_work_items: List[WorkItem], output_prefix: str
     ) -> List[WorkItem]:
         # Find the amount of work items that match the output prefix
-        pattern = f"^{output_prefix}\d+$"
-        recyclable_output_work_items = [
-            output_work_item
-            for output_work_item in output_work_items
-            if bool(re.match(pattern, output_work_item["name"]))
-        ]
+        pattern = f"^{re.escape(output_prefix)}\d+$"
+        non_recyclable_output_work_items = []
+        recyclable_output_work_items = []
+
+        for output_work_item in output_work_items:
+            if re.match(pattern, output_work_item["name"]):
+                recyclable_output_work_items.append(output_work_item)
+            else:
+                non_recyclable_output_work_items.append(output_work_item)
 
         while len(recyclable_output_work_items) > self.OUTPUT_ITEMS_TO_KEEP:
             # Items should be sorted already, so, we can erase the first ones
@@ -873,7 +876,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
             remove_item: WorkItem = recyclable_output_work_items.pop(0)
             self._schedule_path_removal(Path(remove_item["json_path"]).parent)
 
-        return output_work_items
+        return recyclable_output_work_items + non_recyclable_output_work_items
 
     def _find_robot_yaml_path_from_path(self, path: Path, stat) -> Optional[Path]:
         from stat import S_ISDIR
