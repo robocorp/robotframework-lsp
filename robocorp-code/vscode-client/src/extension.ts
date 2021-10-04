@@ -88,7 +88,12 @@ import {
     newFolderInRobotContentTree,
     renameResourceInRobotContentTree,
 } from "./viewsRobotContent";
-import { convertOutputWorkItemToInput, deleteWorkItemInWorkItemsTree, newWorkItemInWorkItemsTree, openWorkItemHelp } from "./viewsWorkItems";
+import {
+    convertOutputWorkItemToInput,
+    deleteWorkItemInWorkItemsTree,
+    newWorkItemInWorkItemsTree,
+    openWorkItemHelp,
+} from "./viewsWorkItems";
 import { LocatorEntry } from "./viewsCommon";
 
 const clientOptions: LanguageClientOptions = {
