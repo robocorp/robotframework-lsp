@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 from typing import List, Any, Optional, Dict, Iterator
 from base64 import b64encode
+import re
 
 from robocorp_code import commands
 from robocorp_code.protocols import (
@@ -844,11 +845,12 @@ class RobocorpLanguageServer(PythonLanguageServer):
         self, output_work_items: List[WorkItem], output_prefix: str
     ) -> List[WorkItem]:
         # Find the amount of work items that match the output prefix
+        pattern = f"^{output_prefix}\d+$"
         total_recycled_output_work_items = len(
             [
                 output_work_item
                 for output_work_item in output_work_items
-                if output_work_item["name"].startswith(output_prefix)
+                if bool(re.match(pattern, output_work_item["name"]))
             ]
         )
 
