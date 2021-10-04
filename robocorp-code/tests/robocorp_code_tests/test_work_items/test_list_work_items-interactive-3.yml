@@ -9,6 +9,8 @@ output_folder_path: devdata/work-items-out
 output_work_items:
 - json_path: devdata/work-items-out/interactive-1/work-items.json
   name: interactive-1
-- json_path: devdata/work-items-out/run-1/work-items.output.json
+- json_path: devdata/work-items-out/run-1/work-items.json
   name: run-1
+- json_path: devdata/work-items-out/latest-run/work-items.json
+  name: latest-run
 robot_yaml: robot.yaml

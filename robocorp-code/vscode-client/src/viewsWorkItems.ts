@@ -40,7 +40,7 @@ async function getWorkItemInfo(): Promise<WorkItemsInfo | null> {
     }
     const workItemsResult: ActionResultWorkItems = await vscode.commands.executeCommand(
         ROBOCORP_LIST_WORK_ITEMS_INTERNAL,
-        { robot: resolve(currTreeDir.filePath) }
+        { robot: resolve(currTreeDir.filePath), "increment_output": false }
     );
     if (!workItemsResult.success) {
         return;
@@ -174,7 +174,7 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
 
         const workItemsResult: ActionResultWorkItems = await vscode.commands.executeCommand(
             ROBOCORP_LIST_WORK_ITEMS_INTERNAL,
-            { robot: resolve(this.lastRobotEntry.uri.fsPath) }
+            { "robot": resolve(this.lastRobotEntry.uri.fsPath), "increment_output": false }
         );
 
         if (!workItemsResult.success) {

@@ -761,7 +761,7 @@ export async function updateLaunchEnvironment(args) {
     }
     let work_items_action_result: ActionResultWorkItems = await commands.executeCommand(
         roboCommands.ROBOCORP_LIST_WORK_ITEMS_INTERNAL,
-        { "robot": robot }
+        { "robot": robot, "increment_output": true }
     );
 
     if (!work_items_action_result || !work_items_action_result.success) {

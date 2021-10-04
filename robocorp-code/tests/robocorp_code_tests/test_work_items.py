@@ -25,15 +25,20 @@ def test_list_work_items(
 
     # Fail: robot does not exist
     ret = client.execute_command(
-        ROBOCORP_LIST_WORK_ITEMS_INTERNAL, [{"robot": "does not exist"}]
+        ROBOCORP_LIST_WORK_ITEMS_INTERNAL,
+        [{"robot": "does not exist", "increment_output": True}],
     )
     action_result = ret["result"]
     assert not action_result["success"]
 
-    def run_and_check(basename, output_prefix=None) -> WorkItemsInfo:
-        dct = {"robot": robot}
+    def run_and_check(
+        basename, output_prefix=None, increment_output: bool = True
+    ) -> WorkItemsInfo:
+        dct: dict = {"robot": robot}
         if output_prefix:
             dct["output_prefix"] = output_prefix
+        dct["increment_output"] = increment_output
+
         ret = client.execute_command(ROBOCORP_LIST_WORK_ITEMS_INTERNAL, [dct])
         action_result = ret["result"]
         assert action_result["success"]
@@ -48,6 +53,10 @@ def test_list_work_items(
         return work_items_info
 
     run_and_check("test_list_work_items")
+
+    # new_output_workitem_path is empty now.
+    run_and_check("test_list_work_items-1-no-increment", increment_output=False)
+
     # Should have a different "new_output_workitem_path" output (even if we
     # didn't explicitly write to the previous one).
     run_and_check("test_list_work_items-2")
@@ -80,6 +89,8 @@ def test_list_work_items(
 
 def make_info_relative(work_items_info, robot_parent):
     def make_relative(val: str) -> str:
+        if not val:
+            return val
         return str(Path(val).relative_to(robot_parent)).replace("\\", "/")
 
     new = {}
@@ -123,7 +134,8 @@ def test_work_items_removal(
 
     def run():
         ret = client.execute_command(
-            ROBOCORP_LIST_WORK_ITEMS_INTERNAL, [{"robot": robot}]
+            ROBOCORP_LIST_WORK_ITEMS_INTERNAL,
+            [{"robot": robot, "increment_output": True}],
         )
         action_result = ret["result"]
         assert action_result["success"]
@@ -142,11 +154,20 @@ def test_work_items_removal(
     assert len(paths) == 10
 
     def condition():
-        found = 0
+        found = set()
         for p in paths:
             if p.exists():
-                found += 1
-        return found == 5
+                found.add(p.parent.name)
+
+        # 6 items are kept (the last 5 + latest run).
+        return found == {
+            "run-6",
+            "run-7",
+            "run-8",
+            "run-9",
+            "run-10",
+            "run-11",
+        }
 
     def msg():
         exists = ""

@@ -123,6 +123,7 @@ class ActionResultDictWorkItems(TypedDict):
 class ListWorkItemsParams(TypedDict):
     robot: str  # Path to the robot for which we want the work items (may be just the folder or the yaml).
     output_prefix: str  # Prefix for output folder (such as 'run-' or 'interactive-').
+    increment_output: bool  # Whether a new output folder should be generated (and older ones should be collected).
 
 
 class ListWorkspacesActionResultDict(TypedDict):
