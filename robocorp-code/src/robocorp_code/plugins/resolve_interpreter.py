@@ -1,12 +1,11 @@
 """
 Note: this code will actually run as a plugin in the RobotFramework Language
-Server, not in the Robocorp Code environment, so, we need to be careful on the
-imports so that we only import what's actually available there!
+Server, or in the Robocorp Code environment, so, we need to be careful on the
+imports so that it works on both cases.
 
-i.e.: We can import `robocorp_ls_core`, and even `robotframework_ls`, but we
-can't import `robocorp_code` without some additional work.
-
-Also, the required version must be checked in the client (in case imports or APIs change).
+Also, the required version must be checked in the client (in case imports or APIs 
+change in `robocorp_ls_core` we need a compatible version both on robotframework-ls
+as well as robocorp-code).
 """
 import os.path
 import sys
