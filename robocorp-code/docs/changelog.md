@@ -1,3 +1,10 @@
+New in 0.15.0 (2021-10-04)
+-----------------------------
+
+- Update to RCC v11.2.0.
+- If the Robot Framework Language Server is not installed, python debug launches can still resolve the interpreter.
+
+
 New in 0.14.0 (2021-09-21)
 -----------------------------
 
