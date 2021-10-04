@@ -768,13 +768,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         if work_items_out_dir.is_dir():
             output_work_items.extend(self._collect_work_items(work_items_out_dir))
             output_work_items.sort(key=sort_by_number_postfix)
-
-        while len(output_work_items) > self.OUTPUT_ITEMS_TO_KEEP - 1:
-            # Items should be sorted already, so, we can erase the first ones
-            # (and remove them from the list as they should be considered
-            # outdated at this point).
-            remove_item: WorkItem = output_work_items.pop(0)
-            self._schedule_path_removal(Path(remove_item["json_path"]).parent)
+            output_work_items = self._schedule_output_work_item_removal(output_work_items, output_prefix)
 
         new_output_workitem_path = self._compute_new_output_workitem_path(
             work_items_out_dir, output_work_items, output_prefix
@@ -825,7 +819,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
         next_run = max_run + 1
         self._prefix_to_last_run_number_and_time[output_prefix] = (
-            next_run,
+            max_run,
             time.time(),
         )
         return work_items_out_dir / f"{output_prefix}{next_run}" / "work-items.json"
@@ -842,6 +836,21 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 json_path = path / "work-items.output.json"
                 if json_path.is_file():
                     yield create_work_item(json_path)
+
+    # Automatically schedule a removal of work item that matches the output prefix
+    def _schedule_output_work_item_removal(self, output_work_items: List[WorkItem], output_prefix: str) -> List[WorkItem]:
+        # Find the amount of work items that match the output prefix
+        total_recycled_output_work_items = len([output_work_item for output_work_item in output_work_items if output_work_item["name"].startswith(output_prefix)])
+
+        while total_recycled_output_work_items > self.OUTPUT_ITEMS_TO_KEEP:
+            # Items should be sorted already, so, we can erase the first ones
+            # (and remove them from the list as they should be considered
+            # outdated at this point).
+            remove_item: WorkItem = output_work_items.pop(0)
+            self._schedule_path_removal(Path(remove_item["json_path"]).parent)
+            total_recycled_output_work_items -= 1
+
+        return output_work_items
 
     def _find_robot_yaml_path_from_path(self, path: Path, stat) -> Optional[Path]:
         from stat import S_ISDIR

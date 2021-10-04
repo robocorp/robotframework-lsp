@@ -146,7 +146,8 @@ def test_work_items_removal(
         for p in paths:
             if p.exists():
                 found += 1
-        return found == 5
+        # Expect to find 5 work items with with recycled names and one that doesn't match the output prefix
+        return found == 6
 
     def msg():
         exists = ""
