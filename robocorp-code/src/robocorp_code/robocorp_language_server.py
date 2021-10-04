@@ -768,7 +768,9 @@ class RobocorpLanguageServer(PythonLanguageServer):
         if work_items_out_dir.is_dir():
             output_work_items.extend(self._collect_work_items(work_items_out_dir))
             output_work_items.sort(key=sort_by_number_postfix)
-            output_work_items = self._schedule_output_work_item_removal(output_work_items, output_prefix)
+            output_work_items = self._schedule_output_work_item_removal(
+                output_work_items, output_prefix
+            )
 
         new_output_workitem_path = self._compute_new_output_workitem_path(
             work_items_out_dir, output_work_items, output_prefix
@@ -838,9 +840,17 @@ class RobocorpLanguageServer(PythonLanguageServer):
                     yield create_work_item(json_path)
 
     # Automatically schedule a removal of work item that matches the output prefix
-    def _schedule_output_work_item_removal(self, output_work_items: List[WorkItem], output_prefix: str) -> List[WorkItem]:
+    def _schedule_output_work_item_removal(
+        self, output_work_items: List[WorkItem], output_prefix: str
+    ) -> List[WorkItem]:
         # Find the amount of work items that match the output prefix
-        total_recycled_output_work_items = len([output_work_item for output_work_item in output_work_items if output_work_item["name"].startswith(output_prefix)])
+        total_recycled_output_work_items = len(
+            [
+                output_work_item
+                for output_work_item in output_work_items
+                if output_work_item["name"].startswith(output_prefix)
+            ]
+        )
 
         while total_recycled_output_work_items > self.OUTPUT_ITEMS_TO_KEEP:
             # Items should be sorted already, so, we can erase the first ones
