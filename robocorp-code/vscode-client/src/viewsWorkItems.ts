@@ -18,6 +18,14 @@ const WORK_ITEM_TEMPLATE = `[
   }
 ]`;
 
+export interface WorkItemFSEntry extends FSEntry {
+    name: string;
+    isDirectory: boolean;
+    filePath: string;
+    kind: "outputWorkItem" | "inputWorkItem" | "outputWorkItemDir" | "inputWorkItemDir" | undefined;
+    workItem?: WorkItem; // Only available for outputWorkItem and inputWorkItem
+}
+
 async function getWorkItemInfo(): Promise<WorkItemsInfo | null> {
     let workItemsTreeDataProvider: WorkItemsTreeDataProvider = <WorkItemsTreeDataProvider>(
         treeViewIdToTreeDataProvider.get(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE)
@@ -84,6 +92,61 @@ async function createNewWorkItem(workItemInfo: WorkItemsInfo, workItemName: stri
     }
 }
 
+export async function convertOutputWorkItemToInput(item: WorkItemFSEntry): Promise<void> {
+    if (item && item.kind == "outputWorkItem" && item.workItem) {
+        let workItemInfo = await getWorkItemInfo();
+        if (!workItemInfo?.input_folder_path) {
+            vscode.window.showErrorMessage(
+                "Unable to convert output work item to input because input folder could not be found."
+            );
+            return;
+        }
+
+        let workItemName: string = await vscode.window.showInputBox({
+            "prompt": "Please provide name for converted input work item",
+            "ignoreFocusOut": true,
+        });
+
+        if (!workItemName) {
+            return;
+        }
+        let target = join(workItemInfo.input_folder_path, workItemName);
+        try {
+            let stat = await vscode.workspace.fs.stat(vscode.Uri.file(target));
+            // Target already exists...
+            let OVERRIDE = "Override";
+            let ret = await vscode.window.showInformationMessage(
+                "File " + target + " already exists.",
+                { "modal": true },
+                OVERRIDE
+            );
+            if (ret != OVERRIDE) {
+                return;
+            }
+        } catch (error) {
+            // Ok, does not exist
+        }
+
+        try {
+            let workItem: WorkItem = item.workItem;
+
+            // Call to make sure that it exists.
+            await vscode.workspace.fs.createDirectory(vscode.Uri.file(workItemInfo.input_folder_path));
+
+            await vscode.workspace.fs.copy(
+                vscode.Uri.file(dirname(workItem.json_path)), // src
+                vscode.Uri.file(target), // dest
+                { "overwrite": true }
+            );
+            vscode.window.showInformationMessage("Finished converting output work item to input work item.");
+        } catch (error) {
+            let msg = "Error converting output work item to input.";
+            logError(msg, error);
+            vscode.window.showErrorMessage(msg);
+        }
+    }
+}
+
 export async function newWorkItemInWorkItemsTree(): Promise<void> {
     const workItemInfo = await getWorkItemInfo();
 
@@ -101,7 +164,7 @@ export async function deleteWorkItemInWorkItemsTree(): Promise<void> {
         return undefined;
     }
 
-    let selection: FSEntry[] = workItemsTree.selection;
+    let selection: WorkItemFSEntry[] = workItemsTree.selection;
     if (!selection || selection.length === 0) {
         await vscode.window.showInformationMessage("No work item selected for deletion.");
         return;
@@ -154,8 +217,8 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
         return this.workItemsInfo;
     }
 
-    private async handleRoot(): Promise<FSEntry[]> {
-        const elements: FSEntry[] = [];
+    private async handleRoot(): Promise<WorkItemFSEntry[]> {
+        const elements: WorkItemFSEntry[] = [];
 
         const robotsTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
         if (!robotsTree || robotsTree.selection.length == 0) {
@@ -165,6 +228,7 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
                     name: "<Waiting for Robot Selection...>",
                     isDirectory: false,
                     filePath: undefined,
+                    kind: undefined,
                 },
             ];
         }
@@ -184,6 +248,7 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
                     name: workItemsResult.message,
                     isDirectory: false,
                     filePath: undefined,
+                    kind: undefined,
                 },
             ];
         }
@@ -195,6 +260,7 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
                 name: basename(workItemsResult.result.input_folder_path),
                 isDirectory: true,
                 filePath: workItemsResult.result.input_folder_path,
+                kind: "inputWorkItemDir",
             });
         }
 
@@ -203,35 +269,40 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
                 name: basename(workItemsResult.result.output_folder_path),
                 isDirectory: true,
                 filePath: workItemsResult.result.output_folder_path,
+                kind: "outputWorkItemDir",
             });
         }
 
         return elements;
     }
 
-    private handleChild(element: FSEntry): FSEntry[] {
-        let elements: FSEntry[] = [];
+    private handleChild(element: WorkItemFSEntry): WorkItemFSEntry[] {
+        let elements: WorkItemFSEntry[] = [];
 
         if (!this.workItemsInfo) {
             return elements;
         }
 
         if (element.name === "work-items-in") {
-            elements = this.workItemsInfo.input_work_items.map((work_item) => {
+            elements = this.workItemsInfo.input_work_items.map((workItem) => {
                 return {
-                    name: work_item.name,
+                    name: workItem.name,
                     isDirectory: false,
-                    filePath: work_item.json_path,
+                    filePath: workItem.json_path,
+                    kind: "inputWorkItem",
+                    workItem: workItem,
                 };
             });
         }
 
         if (element.name === "work-items-out") {
-            elements = this.workItemsInfo.output_work_items.map((work_item) => {
+            elements = this.workItemsInfo.output_work_items.map((workItem) => {
                 return {
-                    name: work_item.name,
+                    name: workItem.name,
                     isDirectory: false,
-                    filePath: work_item.json_path,
+                    filePath: workItem.json_path,
+                    kind: "outputWorkItem",
+                    workItem: workItem,
                 };
             });
         }
@@ -248,8 +319,8 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
      *
      * @param element
      */
-    async getChildren(element?: FSEntry): Promise<FSEntry[]> {
-        let elements: FSEntry[] = [];
+    async getChildren(element?: WorkItemFSEntry): Promise<WorkItemFSEntry[]> {
+        let elements: WorkItemFSEntry[] = [];
 
         if (!element) {
             elements = await this.handleRoot();
@@ -260,12 +331,15 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
         return elements;
     }
 
-    getTreeItem(element: FSEntry): vscode.TreeItem {
+    getTreeItem(element: WorkItemFSEntry): vscode.TreeItem {
         let treeItem = super.getTreeItem(element);
 
         if (element.isDirectory) {
             // Make directory expanded by default.
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+        }
+        if (element.kind) {
+            treeItem.contextValue = element.kind;
         }
         return treeItem;
     }

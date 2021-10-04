@@ -284,7 +284,9 @@ export class LocatorsTreeDataProvider implements vscode.TreeDataProvider<Locator
             iconPath = "error";
         }
         // Only add context to actual locator items
-        if (element.type !== "error") treeItem.contextValue = "locatorEntry";
+        if (element.type !== "error") {
+            treeItem.contextValue = "locatorEntry";
+        }
         treeItem.iconPath = new vscode.ThemeIcon(iconPath);
         return treeItem;
     }
@@ -399,6 +401,7 @@ export function registerViews(context: ExtensionContext) {
     const workItemsTreeDataProvider = new WorkItemsTreeDataProvider();
     const workItemsTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE, {
         "treeDataProvider": workItemsTreeDataProvider,
+        "canSelectMany": true,
     });
     treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE, workItemsTree);
     treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE, workItemsTreeDataProvider);

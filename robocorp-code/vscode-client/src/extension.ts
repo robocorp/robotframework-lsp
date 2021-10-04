@@ -88,7 +88,7 @@ import {
     newFolderInRobotContentTree,
     renameResourceInRobotContentTree,
 } from "./viewsRobotContent";
-import { deleteWorkItemInWorkItemsTree, newWorkItemInWorkItemsTree, openWorkItemHelp } from "./viewsWorkItems";
+import { convertOutputWorkItemToInput, deleteWorkItemInWorkItemsTree, newWorkItemInWorkItemsTree, openWorkItemHelp } from "./viewsWorkItems";
 import { LocatorEntry } from "./viewsCommon";
 
 const clientOptions: LanguageClientOptions = {
@@ -490,6 +490,7 @@ export async function activate(context: ExtensionContext) {
         commands.registerCommand(roboCommands.ROBOCORP_OPEN_CLOUD_HOME, () => {
             commands.executeCommand("vscode.open", Uri.parse("https://cloud.robocorp.com/home"));
         });
+        commands.registerCommand(roboCommands.ROBOCORP_CONVERT_OUTPUT_WORK_ITEM_TO_INPUT, convertOutputWorkItemToInput);
         async function cloudLoginShowConfirmationAndRefresh() {
             let loggedIn = await cloudLogin();
             if (loggedIn) {

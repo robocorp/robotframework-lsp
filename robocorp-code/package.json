@@ -75,6 +75,7 @@
         "onCommand:robocorp.newWorkItemInWorkItemsView",
         "onCommand:robocorp.deleteWorkItemInWorkItemsView",
         "onCommand:robocorp.helpWorkItems",
+        "onCommand:robocorp.convertOutputWorkItemToInput",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -430,6 +431,12 @@
                 "title": "Work Items Help",
                 "category": "Robocorp",
                 "icon": "$(question)"
+            },
+            {
+                "command": "robocorp.convertOutputWorkItemToInput",
+                "title": "Convert output work item to input",
+                "category": "Robocorp",
+                "icon": "$(fold-up)"
             }
         ],
         "menus": {
@@ -551,8 +558,13 @@
                 },
                 {
                     "command": "robocorp.deleteWorkItemInWorkItemsView",
-                    "when": "view == robocorp-work-items-tree && robocorp-code:single-robot-selected",
+                    "when": "view == robocorp-work-items-tree && viewItem == outputWorkItem || viewItem == inputWorkItem",
                     "group": "1_change"
+                },
+                {
+                    "command": "robocorp.convertOutputWorkItemToInput",
+                    "when": "view == robocorp-work-items-tree && robocorp-code:single-robot-selected && viewItem == outputWorkItem",
+                    "group": "inline"
                 },
                 {
                     "command": "robocorp.cloudLogin",
@@ -641,6 +653,10 @@
                 },
                 {
                     "command": "robocorp.helpWorkItems",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.convertOutputWorkItemToInput",
                     "when": "false"
                 }
             ]

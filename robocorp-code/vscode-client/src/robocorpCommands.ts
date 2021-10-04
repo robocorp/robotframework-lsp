@@ -56,3 +56,4 @@ export const ROBOCORP_UPDATE_LAUNCH_ENV = "robocorp.updateLaunchEnv";  // Update
 export const ROBOCORP_NEW_WORK_ITEM_IN_WORK_ITEMS_VIEW = "robocorp.newWorkItemInWorkItemsView";  // New Work Item
 export const ROBOCORP_DELETE_WORK_ITEM_IN_WORK_ITEMS_VIEW = "robocorp.deleteWorkItemInWorkItemsView";  // Delete Work Item
 export const ROBOCORP_HELP_WORK_ITEMS = "robocorp.helpWorkItems";  // Work Items Help
+export const ROBOCORP_CONVERT_OUTPUT_WORK_ITEM_TO_INPUT = "robocorp.convertOutputWorkItemToInput";  // Convert output work item to input

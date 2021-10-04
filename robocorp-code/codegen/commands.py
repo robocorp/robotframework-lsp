@@ -408,6 +408,14 @@ COMMANDS = [
         icon="$(question)",
         hide_from_command_palette=True,
     ),
+    Command(
+        "robocorp.convertOutputWorkItemToInput",
+        "Convert output work item to input",
+        add_to_package_json=True,
+        server_handled=False,
+        icon="$(fold-up)",
+        hide_from_command_palette=True,
+    ),
 ]
 
 

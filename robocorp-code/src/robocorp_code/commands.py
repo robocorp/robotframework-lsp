@@ -57,6 +57,7 @@ ROBOCORP_UPDATE_LAUNCH_ENV = "robocorp.updateLaunchEnv"  # Updates the environme
 ROBOCORP_NEW_WORK_ITEM_IN_WORK_ITEMS_VIEW = "robocorp.newWorkItemInWorkItemsView"  # New Work Item
 ROBOCORP_DELETE_WORK_ITEM_IN_WORK_ITEMS_VIEW = "robocorp.deleteWorkItemInWorkItemsView"  # Delete Work Item
 ROBOCORP_HELP_WORK_ITEMS = "robocorp.helpWorkItems"  # Work Items Help
+ROBOCORP_CONVERT_OUTPUT_WORK_ITEM_TO_INPUT = "robocorp.convertOutputWorkItemToInput"  # Convert output work item to input
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,
