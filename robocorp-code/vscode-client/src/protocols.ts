@@ -19,10 +19,10 @@ interface PackageInfo {
     sortKey: string;
 }
 
-interface ActionResult {
+interface ActionResult<T> {
     success: boolean;
     message: string;
-    result: any;
+    result: T;
 }
 
 interface InterpreterInfo {

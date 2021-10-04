@@ -15,7 +15,7 @@ suite("Robocorp Code Extension Test Suite", () => {
         let workspaceFolders: ReadonlyArray<WorkspaceFolder> = vscode.workspace.workspaceFolders;
         assert.strictEqual(workspaceFolders.length, 1);
 
-        let actionResult: ActionResult;
+        let actionResult: ActionResult<LocalRobotMetadataInfo[]>;
         actionResult = await vscode.commands.executeCommand(ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL);
         assert.strictEqual(actionResult.success, true);
         let robotsInfo: LocalRobotMetadataInfo[] = actionResult.result;

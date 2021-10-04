@@ -76,6 +76,7 @@ import {
     askAndRunRobotRCC,
     rccConfigurationDiagnostics,
     updateLaunchEnvironment,
+    resolveInterpreter,
 } from "./activities";
 import { sleep } from "./time";
 import { handleProgressMessage, ProgressReport } from "./progress";
@@ -189,13 +190,15 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
             return;
         }
 
-        // Note: this will also activate robotframework-lsp if it's still not activated.
-        let interpreter: InterpreterInfo = undefined;
-        try {
-            interpreter = await commands.executeCommand("robot.resolveInterpreter", debugConfiguration.robot);
-        } catch (error) {
-            logError("Error resolving interpreter info.", error);
-            window.showWarningMessage("Error resolving interpreter info: " + error.message);
+        let interpreter: InterpreterInfo | undefined = undefined;
+        let interpreterResult = await resolveInterpreter(debugConfiguration.robot);
+        if (!interpreterResult.success) {
+            window.showWarningMessage("Error resolving interpreter info: " + interpreterResult.success);
+            return;
+        }
+        interpreter = interpreterResult.result;
+        if (!interpreter) {
+            window.showWarningMessage("Unable to resolve interpreter for: " + debugConfiguration.robot);
             return;
         }
 

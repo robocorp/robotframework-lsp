@@ -37,17 +37,19 @@ export async function removeLocator(locator?: LocatorEntry) {
         DELETE
     );
     if (result === DELETE) {
-        const actionResult: ActionResult = await commands.executeCommand(
+        const actionResult: ActionResult<any> = await commands.executeCommand(
             roboCommands.ROBOCORP_REMOVE_LOCATOR_FROM_JSON_INTERNAL,
             {
                 robotYaml: robot.filePath,
                 name: locatorSelected?.name,
             }
         );
-        if (actionResult.success) OUTPUT_CHANNEL.appendLine(`Locator "${locatorSelected?.name} removed successfully`);
-        else
+        if (actionResult.success) {
+            OUTPUT_CHANNEL.appendLine(`Locator "${locatorSelected?.name} removed successfully`);
+        } else {
             OUTPUT_CHANNEL.appendLine(
                 `Unable to remove Locator "${locatorSelected?.name}, because of:\n${actionResult.message}`
             );
+        }
     }
 }

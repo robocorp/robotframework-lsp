@@ -40,9 +40,12 @@ export async function cloudLogin(): Promise<boolean> {
             env.openExternal(Uri.parse("https://cloud.robocorp.com/settings/access-credentials"));
             continue;
         }
-        let commandResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_CLOUD_LOGIN_INTERNAL, {
-            "credentials": credentials,
-        });
+        let commandResult: ActionResult<any> = await commands.executeCommand(
+            roboCommands.ROBOCORP_CLOUD_LOGIN_INTERNAL,
+            {
+                "credentials": credentials,
+            }
+        );
         if (!commandResult) {
             loggedIn = false;
         } else {
@@ -65,9 +68,9 @@ export async function cloudLogin(): Promise<boolean> {
 }
 
 export async function cloudLogout(): Promise<void> {
-    let loggedOut: ActionResult;
+    let loggedOut: ActionResult<boolean>;
 
-    let isLoginNeededActionResult: ActionResult = await commands.executeCommand(
+    let isLoginNeededActionResult: ActionResult<boolean> = await commands.executeCommand(
         roboCommands.ROBOCORP_IS_LOGIN_NEEDED_INTERNAL
     );
     if (!isLoginNeededActionResult) {
@@ -103,11 +106,42 @@ export async function cloudLogout(): Promise<void> {
     window.showInformationMessage("Control Room credentials successfully unlinked and removed.");
 }
 
+/**
+ * Note that callers need to check both whether it was successful as well as if the interpreter was resolved.
+ */
+export async function resolveInterpreter(targetRobot: string): Promise<ActionResult<InterpreterInfo | undefined>> {
+    // Note: this may also activate robotframework-lsp if it's still not activated
+    // (so, it cannot be used during startup as there'd be a cyclic dependency).
+    try {
+        let interpreter: InterpreterInfo | undefined = await commands.executeCommand(
+            "robot.resolveInterpreter",
+            targetRobot
+        );
+        return { "success": true, "message": "", "result": interpreter };
+    } catch (error) {
+        // We couldn't resolve with the robotframework language server command, fallback to the robocorp code command.
+        try {
+            let result: ActionResult<InterpreterInfo | undefined> = await commands.executeCommand(
+                roboCommands.ROBOCORP_RESOLVE_INTERPRETER,
+                {
+                    "target_robot": targetRobot,
+                }
+            );
+            return result;
+        } catch (error) {
+            logError("Error resolving interpreter.", error);
+            return { "success": false, "message": "Unable to resolve interpreter.", "result": undefined };
+        }
+    }
+}
+
 export async function listAndAskRobotSelection(
     selectionMessage: string,
     noRobotErrorMessage: string
 ): Promise<LocalRobotMetadataInfo> {
-    let actionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL);
+    let actionResult: ActionResult<LocalRobotMetadataInfo[]> = await commands.executeCommand(
+        roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL
+    );
 
     if (!actionResult.success) {
         window.showInformationMessage("Error listing robots: " + actionResult.message);
@@ -164,11 +198,14 @@ async function askAndCreateNewRobotAtWorkspace(wsInfo: WorkspaceInfo, directory:
         return;
     }
 
-    let actionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_UPLOAD_TO_NEW_ROBOT_INTERNAL, {
-        "workspaceId": wsInfo.workspaceId,
-        "directory": directory,
-        "robotName": robotName,
-    });
+    let actionResult: ActionResult<any> = await commands.executeCommand(
+        roboCommands.ROBOCORP_UPLOAD_TO_NEW_ROBOT_INTERNAL,
+        {
+            "workspaceId": wsInfo.workspaceId,
+            "directory": directory,
+            "robotName": robotName,
+        }
+    );
     if (!actionResult.success) {
         let msg: string = "Error uploading to new Robot: " + actionResult.message;
         OUTPUT_CHANNEL.appendLine(msg);
@@ -179,7 +216,9 @@ async function askAndCreateNewRobotAtWorkspace(wsInfo: WorkspaceInfo, directory:
 }
 
 export async function setPythonInterpreterFromRobotYaml() {
-    let actionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL);
+    let actionResult: ActionResult<LocalRobotMetadataInfo[]> = await commands.executeCommand(
+        roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL
+    );
     if (!actionResult.success) {
         window.showInformationMessage("Error listing existing robots: " + actionResult.message);
         return;
@@ -202,9 +241,7 @@ export async function setPythonInterpreterFromRobotYaml() {
     }
 
     try {
-        let result: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_RESOLVE_INTERPRETER, {
-            "target_robot": robot.filePath,
-        });
+        let result: ActionResult<InterpreterInfo | undefined> = await resolveInterpreter(robot.filePath);
         if (!result.success) {
             window.showWarningMessage("Error resolving interpreter info: " + result.message);
             return;
@@ -289,7 +326,9 @@ export async function setPythonInterpreterFromRobotYaml() {
 }
 
 export async function rccConfigurationDiagnostics() {
-    let actionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL);
+    let actionResult: ActionResult<LocalRobotMetadataInfo[]> = await commands.executeCommand(
+        roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL
+    );
     if (!actionResult.success) {
         window.showInformationMessage("Error listing robots: " + actionResult.message);
         return;
@@ -308,7 +347,7 @@ export async function rccConfigurationDiagnostics() {
         return;
     }
 
-    let diagnosticsActionResult: ActionResult = await commands.executeCommand(
+    let diagnosticsActionResult: ActionResult<string> = await commands.executeCommand(
         roboCommands.ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL,
         { "robotYaml": robot.filePath }
     );
@@ -325,7 +364,7 @@ export async function rccConfigurationDiagnostics() {
 
 export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
     // Start this in parallel while we ask the user for info.
-    let isLoginNeededPromise: Thenable<ActionResult> = commands.executeCommand(
+    let isLoginNeededPromise: Thenable<ActionResult<boolean>> = commands.executeCommand(
         roboCommands.ROBOCORP_IS_LOGIN_NEEDED_INTERNAL
     );
 
@@ -333,7 +372,9 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
     if (window.activeTextEditor && window.activeTextEditor.document) {
         currentUri = window.activeTextEditor.document.uri;
     }
-    let actionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL);
+    let actionResult: ActionResult<LocalRobotMetadataInfo[]> = await commands.executeCommand(
+        roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL
+    );
     if (!actionResult.success) {
         window.showInformationMessage("Error submitting Robot to the Control Room: " + actionResult.message);
         return;
@@ -347,7 +388,7 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
         return;
     }
 
-    let isLoginNeededActionResult: ActionResult = await isLoginNeededPromise;
+    let isLoginNeededActionResult: ActionResult<boolean> = await isLoginNeededPromise;
     if (!isLoginNeededActionResult) {
         window.showInformationMessage("Error getting if login is needed.");
         return;
@@ -526,7 +567,7 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
                 return;
             }
             // selectedItem == yesOverride.
-            let actionResult: ActionResult = await commands.executeCommand(
+            let actionResult: ActionResult<any> = await commands.executeCommand(
                 roboCommands.ROBOCORP_UPLOAD_TO_EXISTING_ROBOT_INTERNAL,
                 { "workspaceId": robotInfo.workspaceId, "robotId": robotInfo.id, "directory": robot.directory }
             );
@@ -556,7 +597,9 @@ export async function askAndRunRobotRCC(noDebug: boolean) {
         "name": RUN_IN_RCC_LRU_CACHE_NAME,
     });
 
-    let actionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL);
+    let actionResult: ActionResult<LocalRobotMetadataInfo[]> = await commands.executeCommand(
+        roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL
+    );
     if (!actionResult.success) {
         window.showErrorMessage("Error listing Robots: " + actionResult.message);
         return;
@@ -640,7 +683,9 @@ export async function runRobotRCC(noDebug: boolean, robotYaml: string, taskName:
 export async function createRobot() {
     // Unfortunately vscode does not have a good way to request multiple inputs at once,
     // so, for now we're asking each at a separate step.
-    let actionResult: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_LIST_ROBOT_TEMPLATES_INTERNAL);
+    let actionResult: ActionResult<string[]> = await commands.executeCommand(
+        roboCommands.ROBOCORP_LIST_ROBOT_TEMPLATES_INTERNAL
+    );
     if (!actionResult.success) {
         window.showErrorMessage("Unable to list Robot templates: " + actionResult.message);
         return;
@@ -689,7 +734,7 @@ export async function createRobot() {
         }
 
         OUTPUT_CHANNEL.appendLine("Creating Robot at: " + ws.uri.fsPath);
-        let createRobotResult: ActionResult = await commands.executeCommand(
+        let createRobotResult: ActionResult<any> = await commands.executeCommand(
             roboCommands.ROBOCORP_CREATE_ROBOT_INTERNAL,
             { "directory": ws.uri.fsPath, "template": selectedItem, "name": name }
         );

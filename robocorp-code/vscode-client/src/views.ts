@@ -56,7 +56,7 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
 
     async getChildren(element?: CloudEntry): Promise<CloudEntry[]> {
         if (!element) {
-            let accountInfoResult: ActionResult = await vscode.commands.executeCommand(
+            let accountInfoResult: ActionResult<any> = await vscode.commands.executeCommand(
                 roboCommands.ROBOCORP_GET_LINKED_ACCOUNT_INFO_INTERNAL
             );
             let ret: CloudEntry[] = [];
@@ -170,7 +170,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
         }
 
         // Get root elements.
-        let actionResult: ActionResult = await vscode.commands.executeCommand(
+        let actionResult: ActionResult<LocalRobotMetadataInfo[]> = await vscode.commands.executeCommand(
             roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL
         );
         if (!actionResult.success) {
@@ -252,7 +252,7 @@ export class LocatorsTreeDataProvider implements vscode.TreeDataProvider<Locator
             ];
         }
         let robotEntry: RobotEntry = robotsTree.selection[0];
-        let actionResult: ActionResult = await vscode.commands.executeCommand(
+        let actionResult: ActionResult<LocatorEntry[]> = await vscode.commands.executeCommand(
             roboCommands.ROBOCORP_GET_LOCATORS_JSON_INFO,
             { "robotYaml": robotEntry.robot.filePath }
         );

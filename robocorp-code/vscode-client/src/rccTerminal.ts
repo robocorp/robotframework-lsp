@@ -1,7 +1,7 @@
 import { commands, Progress, ProgressLocation, window } from "vscode";
 import { OUTPUT_CHANNEL } from "./channel";
 import * as pathModule from "path";
-import { listAndAskRobotSelection } from "./activities";
+import { listAndAskRobotSelection, resolveInterpreter } from "./activities";
 import * as roboCommands from "./robocorpCommands";
 import { getRccLocation } from "./rcc";
 
@@ -31,9 +31,7 @@ export async function createRccTerminal(robotInfo: LocalRobotMetadataInfo) {
                 return;
             }
 
-            let result: ActionResult = await commands.executeCommand(roboCommands.ROBOCORP_RESOLVE_INTERPRETER, {
-                "target_robot": robotInfo.filePath,
-            });
+            let result: ActionResult<InterpreterInfo | undefined> = await resolveInterpreter(robotInfo.filePath);
             if (!result.success) {
                 window.showWarningMessage("Error resolving interpreter info: " + result.message);
                 return;
