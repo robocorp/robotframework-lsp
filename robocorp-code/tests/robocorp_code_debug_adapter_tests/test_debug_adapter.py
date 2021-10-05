@@ -76,6 +76,65 @@ def test_simple_launch(debugger_api: _DebuggerAPI, rcc: Rcc, rcc_config_location
         )
 
 
+@pytest.mark.parametrize("override", [True, False])
+def test_work_item_variables_not_overridden(
+    debugger_api: _DebuggerAPI, rcc: Rcc, rcc_config_location: str, override: bool
+):
+    """
+    Verifies that variables from env.json don't override variables related
+    to work items set by Robocorp Code:
+        - RPA_INPUT_WORKITEM_PATH
+        - RPA_OUTPUT_WORKITEM_PATH
+        - RPA_WORKITEMS_ADAPTER
+    """
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEvent
+
+    rcc.check_conda_installed()
+
+    debugger_api.initialize(rcc_config_location=rcc_config_location)
+
+    robot = debugger_api.get_dap_case_file("project_with_env/robot.yaml")
+    environ = {}
+    if override:
+        environ = {
+            "RPA_INPUT_WORKITEM_PATH": "input workitem path",
+            "RPA_OUTPUT_WORKITEM_PATH": "output workitem path",
+            "RPA_WORKITEMS_ADAPTER": "workitems adapter",
+        }
+    debugger_api.launch(
+        robot,
+        "task1",
+        debug=False,
+        environ=environ,
+    )
+    debugger_api.configuration_done()
+
+    # i.e.: Big timeout because creating the environment may be slow.
+    debugger_api.read(TerminatedEvent, timeout=360)
+
+    debugger_api.assert_message_found(
+        OutputEvent,
+        lambda msg: "SOME_OTHER_VAR: some other variable" in msg.body.output,
+    )
+    if override:
+        with pytest.raises(AssertionError):
+            # The environment variables from env.json were overridden and shouldn't be printed to stdout.
+            debugger_api.assert_message_found(
+                OutputEvent, lambda msg: "Will be ignored" in msg.body.output
+            )
+
+        for val in environ.values():
+            debugger_api.assert_message_found(
+                OutputEvent, lambda msg: val in msg.body.output
+            )
+    else:
+        # Variables used will be the ones in env.json.
+        debugger_api.assert_message_found(
+            OutputEvent, lambda msg: "Will be ignored" in msg.body.output
+        )
+
+
 def not_supported_test_launch_in_external_terminal(
     debugger_api: _DebuggerAPI, rcc_config_location: str
 ):

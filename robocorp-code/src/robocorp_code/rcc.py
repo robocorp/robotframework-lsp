@@ -733,10 +733,15 @@ class Rcc(object):
                             space_info.update_last_usage()
 
                         if env_json_path:
-                            env_json_contents = json.loads(
-                                env_json_path.read_text("utf-8", "replace")
-                            )
-                            environ.update(env_json_contents)
+                            try:
+                                env_json_contents = json.loads(
+                                    env_json_path.read_text("utf-8", "replace")
+                                )
+                                environ.update(env_json_contents)
+                            except:
+                                log.exception(
+                                    f"Unable to load environment information from {env_json_path}."
+                                )
                         return ActionResult(
                             True, None, RobotInfoEnv(environ, space_info)
                         )

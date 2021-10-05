@@ -220,6 +220,7 @@ class _DebuggerAPI(object):
         success=True,
         terminal="none",
         args: Optional[Iterable[str]] = None,
+        environ: Optional[dict] = None,
     ):
         """
         :param args:
@@ -244,6 +245,8 @@ class _DebuggerAPI(object):
         )
         if args:
             launch_args.kwargs["args"] = args
+        if environ:
+            launch_args.kwargs["env"] = environ
         self.write(LaunchRequest(launch_args))
 
         if success:

@@ -21,7 +21,8 @@ import itertools
 import os.path
 import threading
 from robocorp_ls_core.protocols import IConfig
-from typing import Optional
+from typing import Optional, List, Callable
+from pathlib import Path
 
 log = get_logger(__name__)
 
@@ -80,9 +81,10 @@ class LaunchProcess(object):
         "_sent_terminated",
         "_env",
         "_rcc_config_location",
+        "_on_exit_callbacks",
     ]
 
-    def __init__(
+    def __init__(  # pylint: disable=return-in-init
         self,
         request,
         launch_response,
@@ -100,7 +102,6 @@ class LaunchProcess(object):
         from robocorp_ls_core.robotframework_log import get_log_level
         from robocorp_code.rcc import Rcc
         from robocorp_ls_core.config import Config
-        from pathlib import Path
         from robocorp_ls_core import yaml_wrapper
         from robocorp_ls_core.protocols import ActionResult
         from robocorp_code.protocols import IRobotYamlEnvInfo
@@ -116,6 +117,7 @@ class LaunchProcess(object):
         self._track_process_pid = None
         self._sent_terminated = threading.Event()
         self._rcc_config_location = rcc_config_location
+        self._on_exit_callbacks: List[Callable] = []
 
         def mark_invalid(message):
             launch_response.success = False
@@ -300,13 +302,73 @@ class LaunchProcess(object):
                 cmdline.append(self._rcc_config_location)
 
             if exists_env_json:
+                use_path: str = str(env_json_path)
+
+                for var_name in self.MANAGED_ENV_VARIABLES:
+                    if var_name in self._env:
+                        try:
+                            use_path = self._collect_env_json_without_managed_vars(
+                                env_json_path
+                            )
+                        except:
+                            log.exception("Error collecting managed env json.")
+                        break
+
                 cmdline.append("-e")
-                cmdline.append(str(env_json_path))
+                cmdline.append(use_path)
 
             cmdline.append("--controller")
             cmdline.append("RobocorpCode")
 
         self._cmdline = cmdline
+
+    MANAGED_ENV_VARIABLES = [
+        "RPA_OUTPUT_WORKITEM_PATH",
+        "RPA_INPUT_WORKITEM_PATH",
+        "RPA_WORKITEMS_ADAPTER",
+    ]
+
+    def _collect_env_json_without_managed_vars(self, env_json_path: Path) -> str:
+        """
+        If the existing env.json has some managed environment variable, a new
+        env.json without those variables is created and returned to be used for
+        the RCC launch (otherwise the original is returned).
+        """
+        import json
+
+        changed = False
+
+        current_env_contents = json.loads(env_json_path.read_text("utf-8"))
+        if not isinstance(current_env_contents, dict):
+            raise RuntimeError(f"Expected {env_json_path} contents to be a json dict.")
+        # Ok, let's update the file if there are work-item related
+        # variables in the env.json.
+        from tempfile import NamedTemporaryFile
+
+        temp_file = NamedTemporaryFile(delete=False)
+
+        # Environment variables managed by the extension should
+        # be removed from the base env.json.
+        for env_name in self.MANAGED_ENV_VARIABLES:
+            if env_name in current_env_contents:
+                changed = True
+                del current_env_contents[env_name]
+
+        if changed:
+            temp_file.write(json.dumps(current_env_contents).encode("utf-8"))
+            temp_file.close()
+
+            def on_exit():
+                try:
+                    os.remove(temp_file.name)
+                except:
+                    # If it was already removed, that's ok.
+                    pass
+
+            self._on_exit_callbacks.append(on_exit)
+            return str(temp_file.name)
+
+        return str(env_json_path)
 
     @property
     def valid(self):
@@ -319,19 +381,28 @@ class LaunchProcess(object):
     def notify_exit(self):
         if self._sent_terminated.is_set():
             return
-        self._sent_terminated.set()
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
-            TerminatedEventBody,
-        )
-
-        debug_adapter_comm = self._weak_debug_adapter_comm()
-        if debug_adapter_comm is not None:
-            restart = False
-            terminated_event = TerminatedEvent(
-                body=TerminatedEventBody(restart=restart)
+        try:
+            self._sent_terminated.set()
+            from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+                TerminatedEvent,
             )
-            debug_adapter_comm.write_to_client_message(terminated_event)
+            from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+                TerminatedEventBody,
+            )
+
+            debug_adapter_comm = self._weak_debug_adapter_comm()
+            if debug_adapter_comm is not None:
+                restart = False
+                terminated_event = TerminatedEvent(
+                    body=TerminatedEventBody(restart=restart)
+                )
+                debug_adapter_comm.write_to_client_message(terminated_event)
+        finally:
+            for c in self._on_exit_callbacks:
+                try:
+                    c()
+                except:
+                    log.exception("Error on exit callback.")
 
     def launch(self):
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
