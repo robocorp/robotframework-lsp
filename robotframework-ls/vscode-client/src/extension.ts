@@ -152,6 +152,15 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
                     }
                 }
             }
+            // Also, overridde env variables in the launch config.
+            try {
+                debugConfiguration.env = await commands.executeCommand("robocorp.updateLaunchEnv", {
+                    "targetRobot": targetRobot,
+                    "env": debugConfiguration.env,
+                });
+            } catch (error) {
+                // The command may not be available.
+            }
         }
 
         let newArgs = [];
@@ -230,15 +239,6 @@ function registerDebugger(languageServerExecutable: string) {
         if (!fs.existsSync(dapPythonExecutable)) {
             window.showWarningMessage("Error. Expected: " + dapPythonExecutable + " to exist.");
             return;
-        }
-
-        try {
-            env = await commands.executeCommand("robocorp.updateLaunchEnv", {
-                "targetRobot": targetRobot,
-                "env": env,
-            });
-        } catch (error) {
-            // The command may not be available.
         }
 
         if (env) {

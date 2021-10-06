@@ -169,27 +169,6 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
         debugConfiguration: DebugConfiguration,
         token?: CancellationToken
     ): Promise<DebugConfiguration> {
-        if (debugConfiguration.noDebug) {
-            // Not running with debug: just use rcc to launch.
-            return debugConfiguration;
-        }
-        // If it's a debug run, we need to get the input contents -- something as:
-        // "type": "robocorp-code",
-        // "name": "Robocorp Code: Launch task from current robot.yaml",
-        // "request": "launch",
-        // "robot": "c:/robot.yaml",
-        // "task": "entrypoint",
-        //
-        // and convert it to the contents expected by robotframework-lsp:
-        //
-        // "type": "robotframework-lsp",
-        // "name": "Robot: Current File",
-        // "request": "launch",
-        // "cwd": "${workspaceFolder}",
-        // "target": "c:/task.robot",
-        //
-        // (making sure that we can actually do this and it's a robot launch for the task)
-
         if (!fs.existsSync(debugConfiguration.robot)) {
             window.showWarningMessage('Error. Expected: specified "robot": ' + debugConfiguration.robot + " to exist.");
             return;
@@ -222,6 +201,28 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
         } catch (error) {
             // The command may not be available.
         }
+
+        if (debugConfiguration.noDebug) {
+            // Not running with debug: just use rcc to launch.
+            debugConfiguration.env = env;
+            return debugConfiguration;
+        }
+        // If it's a debug run, we need to get the input contents -- something as:
+        // "type": "robocorp-code",
+        // "name": "Robocorp Code: Launch task from current robot.yaml",
+        // "request": "launch",
+        // "robot": "c:/robot.yaml",
+        // "task": "entrypoint",
+        //
+        // and convert it to the contents expected by robotframework-lsp:
+        //
+        // "type": "robotframework-lsp",
+        // "name": "Robot: Current File",
+        // "request": "launch",
+        // "cwd": "${workspaceFolder}",
+        // "target": "c:/task.robot",
+        //
+        // (making sure that we can actually do this and it's a robot launch for the task)
 
         let actionResult: ActionResult = await commands.executeCommand(
             roboCommands.ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH,
@@ -279,16 +280,6 @@ function registerDebugger(pythonExecutable: string) {
         if (!fs.existsSync(pythonExecutable)) {
             window.showWarningMessage("Error. Expected: " + pythonExecutable + " to exist.");
             return;
-        }
-
-        try {
-            let robot = config.robot;
-            env = await commands.executeCommand(roboCommands.ROBOCORP_UPDATE_LAUNCH_ENV, {
-                "targetRobot": robot,
-                "env": env,
-            });
-        } catch (error) {
-            // The command may not be available.
         }
 
         if (env) {
