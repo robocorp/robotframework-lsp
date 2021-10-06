@@ -753,12 +753,26 @@ export async function createRobot() {
     }
 }
 
-export async function updateLaunchEnvironment(args) {
+export async function updateLaunchEnvironment(args): Promise<Map<string, string>> {
     let robot = args["targetRobot"];
-    let environment = args["env"];
+    let environment: Map<string, string> = args["env"];
     if (!robot) {
         throw new Error("robot argument is required.");
     }
+
+    if (environment === undefined) {
+        throw new Error("env argument is required.");
+    }
+
+    let condaPrefix = environment["CONDA_PREFIX"];
+    if (!condaPrefix) {
+        OUTPUT_CHANNEL.appendLine(
+            "Unable to update launch environment for work items because CONDA_PREFIX is not available in the environment:\n" +
+                JSON.stringify(environment)
+        );
+        return environment;
+    }
+
     let work_items_action_result: ActionResultWorkItems = await commands.executeCommand(
         roboCommands.ROBOCORP_LIST_WORK_ITEMS_INTERNAL,
         { "robot": robot, "increment_output": true }
@@ -773,10 +787,33 @@ export async function updateLaunchEnvironment(args) {
         return environment;
     }
 
+    // Let's verify that the library is available and has the version we expect.
+    let libraryVersionInfoActionResult: LibraryVersionInfoDict;
+    try {
+        libraryVersionInfoActionResult = await commands.executeCommand(
+            roboCommands.ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL,
+            {
+                "conda_prefix": condaPrefix,
+                "library": "rpaframework",
+                "version": "11.3",
+            }
+        );
+    } catch (error) {
+        logError("Error updating launch environment.", error);
+        return environment;
+    }
+
+    if (!libraryVersionInfoActionResult["success"]) {
+        OUTPUT_CHANNEL.appendLine(
+            "Launch environment for work items not updated. Reason: " + libraryVersionInfoActionResult.message
+        );
+        return environment;
+    }
+
     // If we have found the robot, we should have the result and thus we should always set the
     // RPA_OUTPUT_WORKITEM_PATH (even if we don't have any input, we'll set to where we want
     // to save items).
-    let newEnv = { ...environment };
+    let newEnv: Map<string, string> = { ...environment };
 
     newEnv["RPA_OUTPUT_WORKITEM_PATH"] = result.new_output_workitem_path;
     newEnv["RPA_WORKITEMS_ADAPTER"] = "RPA.Robocorp.WorkItems.FileAdapter";

@@ -76,6 +76,7 @@
         "onCommand:robocorp.deleteWorkItemInWorkItemsView",
         "onCommand:robocorp.helpWorkItems",
         "onCommand:robocorp.convertOutputWorkItemToInput",
+        "onCommand:robocorp.verifyLibraryVersion.internal",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",

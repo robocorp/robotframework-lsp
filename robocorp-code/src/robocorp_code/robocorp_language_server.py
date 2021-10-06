@@ -4,7 +4,6 @@ import sys
 from pathlib import Path
 from typing import List, Any, Optional, Dict, Iterator
 from base64 import b64encode
-import re
 
 from robocorp_code import commands
 from robocorp_code.protocols import (
@@ -35,7 +34,7 @@ from robocorp_code.protocols import (
 )
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.cache import CachedFileInfo
-from robocorp_ls_core.protocols import IConfig
+from robocorp_ls_core.protocols import IConfig, LibraryVersionInfoDict
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
@@ -58,6 +57,21 @@ class _RegisteredCommand(object):
         self.command_name = command_name
         self.expected_return_type = expected_return_cls
         self.func = None
+
+
+def _parse_version(version) -> tuple:
+    ret = []
+    for v in version.split("."):
+        try:
+            ret.append(int(v))
+        except:
+            ret.append(v)
+    return tuple(ret)
+
+
+def _verify_version(found_version, expected_version):
+    found_version = found_version[: len(expected_version)]
+    return found_version >= expected_version
 
 
 class _CommandDispatcher(object):
@@ -858,6 +872,8 @@ class RobocorpLanguageServer(PythonLanguageServer):
     def _schedule_output_work_item_removal(
         self, output_work_items: List[WorkItem], output_prefix: str
     ) -> List[WorkItem]:
+        import re
+
         # Find the amount of work items that match the output prefix
         pattern = f"^{re.escape(output_prefix)}\d+$"
         non_recyclable_output_work_items = []
@@ -938,8 +954,6 @@ class RobocorpLanguageServer(PythonLanguageServer):
         return None
 
     def _add_package_info_to_access_lru(self, workspace_id, package_id, directory):
-        import time
-
         try:
             lst: List[PackageInfoInLRUDict] = self._dir_cache.load(
                 self.PACKAGE_ACCESS_LRU_CACHE_KEY, list
@@ -1089,6 +1103,69 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
         # i.e.: no error but we couldn't find an interpreter.
         return {"success": True, "message": "", "result": None}
+
+    @command_dispatcher(commands.ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL)
+    def _verify_library_version(self, params: dict) -> LibraryVersionInfoDict:
+        from robocorp_ls_core import yaml_wrapper
+
+        conda_prefix = Path(params["conda_prefix"])
+        library = params["library"]
+        version = params["version"]
+        expected_version = _parse_version(version)
+
+        if not conda_prefix.exists():
+            return {
+                "success": False,
+                "message": f"Expected {conda_prefix} to exist.",
+                "result": None,
+            }
+
+        golden_ee = conda_prefix / "golden-ee.yaml"
+        if not golden_ee.exists():
+            return {
+                "success": False,
+                "message": f"Expected {golden_ee} to exist.",
+                "result": None,
+            }
+
+        try:
+            with golden_ee.open("r", encoding="utf-8") as stream:
+                yaml_contents = yaml_wrapper.load(stream)
+        except:
+            msg = f"Error loading: {golden_ee} as yaml."
+            log.exception(msg)
+            return {"success": False, "message": msg, "result": None}
+
+        if not isinstance(yaml_contents, list):
+            return {
+                "success": False,
+                "message": f"Expected {golden_ee} to have a list of dicts as the root.",
+                "result": None,
+            }
+
+        for entry in yaml_contents:
+            if isinstance(entry, dict):
+                name = entry.get("name")
+                found_version = entry.get("version")
+                if name == library and found_version:
+                    if _verify_version(_parse_version(found_version), expected_version):
+                        return {
+                            "success": True,
+                            "message": "",
+                            "result": {"library": name, "version": found_version},
+                        }
+
+                    return {
+                        "success": False,
+                        "message": f"{name} {found_version} does not match minimum required version ({version}).",
+                        "result": {"library": name, "version": found_version},
+                    }
+
+        return {
+            "success": False,
+            "message": f"{library} not found in environment.",
+            "result": None,
+        }
 
     @command_dispatcher(commands.ROBOCORP_SEND_METRIC)
     def _send_metric(self, params: dict) -> ActionResultDict:

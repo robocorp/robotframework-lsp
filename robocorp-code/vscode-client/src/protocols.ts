@@ -62,3 +62,19 @@ interface ActionResultWorkItems {
     message: string;
     result?: WorkItemsInfo;
 }
+
+interface LibraryVersionDict {
+    library: string;
+    version: string;
+}
+
+interface LibraryVersionInfoDict {
+    success: boolean;
+
+    // if success == False, this can be some message to show to the user
+    message?: string;
+
+    //Note that if the library was found but the version doesn't match, the
+    // result should still be provided.
+    result?: LibraryVersionDict;
+}

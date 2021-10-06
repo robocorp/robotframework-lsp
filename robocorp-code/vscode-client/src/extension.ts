@@ -177,7 +177,7 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
         let interpreter: InterpreterInfo | undefined = undefined;
         let interpreterResult = await resolveInterpreter(debugConfiguration.robot);
         if (!interpreterResult.success) {
-            window.showWarningMessage("Error resolving interpreter info: " + interpreterResult.success);
+            window.showWarningMessage("Error resolving interpreter info: " + interpreterResult.message);
             return;
         }
         interpreter = interpreterResult.result;
@@ -186,8 +186,8 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
             return;
         }
 
-        if (!interpreter) {
-            window.showErrorMessage("Unable to resolve robot.yaml based on: " + debugConfiguration.robot);
+        if (!interpreter.environ) {
+            window.showErrorMessage("Unable to resolve interpreter environment based on: " + debugConfiguration.robot);
             return;
         }
 

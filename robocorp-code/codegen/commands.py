@@ -416,6 +416,12 @@ COMMANDS = [
         icon="$(fold-up)",
         hide_from_command_palette=True,
     ),
+    Command(
+        "robocorp.verifyLibraryVersion.internal",
+        "Collect a library version and verify if it matches some expected version",
+        add_to_package_json=False,
+        server_handled=True,
+    ),
 ]
 
 

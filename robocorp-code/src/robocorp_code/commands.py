@@ -58,6 +58,7 @@ ROBOCORP_NEW_WORK_ITEM_IN_WORK_ITEMS_VIEW = "robocorp.newWorkItemInWorkItemsView
 ROBOCORP_DELETE_WORK_ITEM_IN_WORK_ITEMS_VIEW = "robocorp.deleteWorkItemInWorkItemsView"  # Delete Work Item
 ROBOCORP_HELP_WORK_ITEMS = "robocorp.helpWorkItems"  # Work Items Help
 ROBOCORP_CONVERT_OUTPUT_WORK_ITEM_TO_INPUT = "robocorp.convertOutputWorkItemToInput"  # Convert output work item to input
+ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL = "robocorp.verifyLibraryVersion.internal"  # Collect a library version and verify if it matches some expected version
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,
@@ -81,6 +82,7 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_SEND_METRIC,
     ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL,
     ROBOCORP_LIST_WORK_ITEMS_INTERNAL,
+    ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL,
 ]
 
 # fmt: on

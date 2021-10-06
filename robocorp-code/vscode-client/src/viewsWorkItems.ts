@@ -2,10 +2,11 @@ import * as vscode from "vscode";
 import { resolve, join, dirname, basename } from "path";
 
 import { logError } from "./channel";
-import { ROBOCORP_LIST_WORK_ITEMS_INTERNAL } from "./robocorpCommands";
+import { ROBOCORP_LIST_WORK_ITEMS_INTERNAL, ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL } from "./robocorpCommands";
 import { FSEntry, RobotEntry, treeViewIdToTreeDataProvider, treeViewIdToTreeView } from "./viewsCommon";
 import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE } from "./robocorpViews";
 import { getCurrRobotDir, RobotSelectionTreeDataProviderBase } from "./viewsRobotSelection";
+import { resolveInterpreter } from "./activities";
 
 const WORK_ITEM_TEMPLATE = `[
   {
@@ -236,9 +237,11 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
         const robotEntry: RobotEntry = robotsTree.selection[0];
         this.lastRobotEntry = robotEntry;
 
+        let robot = resolve(this.lastRobotEntry.uri.fsPath);
+
         const workItemsResult: ActionResultWorkItems = await vscode.commands.executeCommand(
             ROBOCORP_LIST_WORK_ITEMS_INTERNAL,
-            { "robot": resolve(this.lastRobotEntry.uri.fsPath), "increment_output": false }
+            { "robot": robot, "increment_output": false }
         );
 
         if (!workItemsResult.success) {
@@ -255,7 +258,22 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
 
         this.workItemsInfo = workItemsResult.result;
 
-        if (workItemsResult.result?.input_folder_path) {
+        let hasInputFolder = workItemsResult.result?.input_folder_path;
+        let hasOutputFolder = workItemsResult.result?.output_folder_path;
+
+        if (hasInputFolder || hasOutputFolder) {
+            let errorMsg = await this.collectRpaFrameworkRequirementsErrorMessage(robot);
+            if (errorMsg) {
+                elements.push({
+                    name: errorMsg,
+                    isDirectory: false,
+                    filePath: undefined,
+                    kind: undefined,
+                });
+            }
+        }
+
+        if (hasInputFolder) {
             elements.push({
                 name: basename(workItemsResult.result.input_folder_path),
                 isDirectory: true,
@@ -264,7 +282,7 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
             });
         }
 
-        if (workItemsResult.result?.output_folder_path) {
+        if (hasOutputFolder) {
             elements.push({
                 name: basename(workItemsResult.result.output_folder_path),
                 isDirectory: true,
@@ -274,6 +292,54 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
         }
 
         return elements;
+    }
+
+    /**
+     *
+     * @returns an error message if something isn't correct with the rpa framework or an empty string otherwise.
+     */
+    private async collectRpaFrameworkRequirementsErrorMessage(robot: string): Promise<string> {
+        let interpreter: InterpreterInfo | undefined = undefined;
+        let interpreterResult = await resolveInterpreter(robot);
+        let msg: string = "";
+
+        if (!interpreterResult.success) {
+            return "Error resolving interpreter info: " + interpreterResult.message;
+        }
+        interpreter = interpreterResult.result;
+        if (!interpreter) {
+            return "Unable to resolve interpreter for: " + robot;
+        }
+        if (!interpreter.environ) {
+            return "Unable to resolve interpreter environment based on: " + robot;
+        }
+
+        let env = interpreter.environ;
+        let condaPrefix = env["CONDA_PREFIX"];
+        if (!condaPrefix) {
+            return "CONDA_PREFIX not available in environment.";
+        }
+
+        let libraryVersionInfoActionResult: LibraryVersionInfoDict;
+        try {
+            libraryVersionInfoActionResult = await vscode.commands.executeCommand(
+                ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL,
+                {
+                    "conda_prefix": condaPrefix,
+                    "library": "rpaframework",
+                    "version": "11.3",
+                }
+            );
+
+            if (!libraryVersionInfoActionResult["success"]) {
+                return libraryVersionInfoActionResult["message"];
+            }
+        } catch (error) {
+            msg = "Error verifying rpaframework version.";
+            logError(msg, error);
+            return msg;
+        }
+        return "";
     }
 
     private handleChild(element: WorkItemFSEntry): WorkItemFSEntry[] {

@@ -180,3 +180,52 @@ def test_work_items_removal(
         return f"Exists:\n{exists}\n\nRemoved:\n{removed}\n"
 
     wait_for_condition(condition, msg, timeout=5)
+
+
+def test_verify_library_version(
+    language_server_initialized: IRobocorpLanguageServerClient, tmpdir
+):
+    from robocorp_code.commands import ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL
+
+    client = language_server_initialized
+
+    ret = client.execute_command(
+        ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL,
+        [{"conda_prefix": str(tmpdir), "library": "rpaframework", "version": "11.1"}],
+    )
+    result = ret["result"]
+    assert not result["success"]
+    assert "golden-ee.yaml to exist" in result["message"]
+
+    golden_ee = tmpdir.join("golden-ee.yaml")
+    golden_ee.write(
+        """
+- name: rpaframework
+  version: 11.1.2
+  origin: pypi
+- name: rpaframework-core
+  version: 6.4.0
+  origin: pypi
+- name: rpaframework-dialogs
+  version: 0.3.2
+  origin: pypi
+"""
+    )
+
+    for v in ("10", "11", "11.1", "11.1.1", "11.1.2"):
+        ret = client.execute_command(
+            ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL,
+            [{"conda_prefix": str(tmpdir), "library": "rpaframework", "version": v}],
+        )
+        result = ret["result"]
+        assert result["success"]
+        assert result["result"] == {"library": "rpaframework", "version": "11.1.2"}
+
+    for v in ("12", "11.2", "11.1.3"):
+        ret = client.execute_command(
+            ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL,
+            [{"conda_prefix": str(tmpdir), "library": "rpaframework", "version": v}],
+        )
+        result = ret["result"]
+        assert not result["success"]
+        assert result["result"] == {"library": "rpaframework", "version": "11.1.2"}

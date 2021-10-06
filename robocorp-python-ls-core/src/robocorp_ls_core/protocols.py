@@ -717,3 +717,19 @@ class ActionResult(Generic[T]):
 class EnvEntry(TypedDict):
     key: str
     value: str
+
+
+class LibraryVersionDict(TypedDict):
+    library: str
+    version: str
+
+
+class LibraryVersionInfoDict(TypedDict):
+    success: bool
+
+    # if success == False, this can be some message to show to the user
+    message: Optional[str]
+
+    # Note that if the library was found but the version doesn't match, the
+    # result should still be provided.
+    result: Optional[LibraryVersionDict]
