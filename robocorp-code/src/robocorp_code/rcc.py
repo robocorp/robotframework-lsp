@@ -332,13 +332,14 @@ class Rcc(object):
         if not result.success:
             return ActionResult(success=False, message=result.message)
 
+        if result.result is None:
+            return ActionResult(success=False, message="Output not available")
+
         output: Dict[str, str] = []
         try:
             output = json.loads(result.result)
         except json.decoder.JSONDecodeError as e:
             return ActionResult(success=False, message=f"Invalid output format: {e}")
-        if output is None:
-            return ActionResult(success=False, message="Output not available")
         templates: List[RobotTemplate] = []
         for name, description in output.items():
             template: RobotTemplate = {"name": name, "description": description}
