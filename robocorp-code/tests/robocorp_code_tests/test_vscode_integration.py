@@ -95,11 +95,9 @@ def test_list_rcc_robot_templates(
         commands.ROBOCORP_LIST_ROBOT_TEMPLATES_INTERNAL, []
     )["result"]
     assert result["success"]
-    assert result["result"] == [
-        "Standard - Robot Framework Robot.",
-        "Python - Python Robot.",
-        "Extended - Robot Framework Robot with additional scaffolding.",
-    ]
+    template_names = [template["name"] for template in result["result"]]
+    assert "standard" in template_names
+    assert "python" in template_names
 
     target = str(tmpdir.join("dest"))
     language_server.change_workspace_folders(added_folders=[target], removed_folders=[])
@@ -110,7 +108,7 @@ def test_list_rcc_robot_templates(
             {
                 "directory": target,
                 "name": "example",
-                "template": "Standard - Robot Framework Robot.",
+                "template": template_names[0],
             }
         ],
     )["result"]
@@ -572,7 +570,7 @@ def test_hover_image_integration(
     uri = uris.from_fs_path(str(locators_json))
     txt = """
     "Image.Locator.01": {
-        "path": ".images/img1.png",    
+        "path": ".images/img1.png",
         "source": ".images/img1.png" """
     doc = Document("", txt)
     client.open_doc(uri, 1, txt)
@@ -763,7 +761,7 @@ def test_lint_robot_integration(
     robot_yaml_text = """
 tasks:
   Obtain environment information:
-    command: 
+    command:
       - python
       - get_env_info.py
 

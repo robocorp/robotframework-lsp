@@ -14,9 +14,11 @@ from robocorp_code.protocols import (
     ActionResult,
     IRobotYamlEnvInfo,
     IRccListener,
+    RobotTemplate,
 )
 from pathlib import Path
 import os.path
+import json
 from robocorp_ls_core.protocols import check_implements
 from dataclasses import dataclass
 import time
@@ -67,7 +69,7 @@ def download_rcc(location: str, force: bool = False) -> None:
                     else:
                         relative_path = "/linux32/rcc"
 
-                RCC_VERSION = "v11.2.0"
+                RCC_VERSION = "v11.3.2"
                 prefix = f"https://downloads.robocorp.com/rcc/releases/{RCC_VERSION}"
                 url = prefix + relative_path
 
@@ -324,33 +326,26 @@ class Rcc(object):
         )
         return ActionResult(success=True, message=None, result=output)
 
-    _TEMPLATES = {
-        "standard": "Standard - Robot Framework Robot.",
-        "python": "Python - Python Robot.",
-        "extended": "Extended - Robot Framework Robot with additional scaffolding.",
-    }
-
     @implements(IRcc.get_template_names)
-    def get_template_names(self) -> ActionResult[List[str]]:
-        result = self._run_rcc("robot initialize -l".split())
+    def get_template_names(self) -> ActionResult[List[RobotTemplate]]:
+        result = self._run_rcc("robot initialize -l --json".split())
         if not result.success:
             return ActionResult(success=False, message=result.message)
 
-        output = result.result
-        if output is None:
+        if result.result is None:
             return ActionResult(success=False, message="Output not available")
-        templates = set()
-        for line in output.splitlines():
-            if line.startswith("- "):
-                template_name = line[2:].strip()
-                templates.add(template_name)
 
-        ret: List[str] = []
-        for key, description in self._TEMPLATES.items():
-            if key in templates:
-                ret.append(description)
+        output: Dict[str, str] = []
+        try:
+            output = json.loads(result.result)
+        except json.decoder.JSONDecodeError as e:
+            return ActionResult(success=False, message=f"Invalid output format: {e}")
+        templates: List[RobotTemplate] = []
+        for name, description in output.items():
+            template: RobotTemplate = {"name": name, "description": description}
+            templates.append(template)
 
-        return ActionResult(success=True, message=None, result=ret)
+        return ActionResult(success=True, message=None, result=templates)
 
     def _add_config_to_args(self, args: List[str]) -> List[str]:
         config_location = self.config_location
@@ -377,13 +372,6 @@ class Rcc(object):
 
     @implements(IRcc.create_robot)
     def create_robot(self, template: str, directory: str) -> ActionResult:
-        if template not in self._TEMPLATES:
-            # Check if we can translate from the description
-            for key, description in self._TEMPLATES.items():
-                if description == template:
-                    template = key
-                    break
-
         args = ["robot", "initialize", "-t", template, "-d", directory]
         args = self._add_config_to_args(args)
         return self._run_rcc(args, error_msg="Error creating robot.")
