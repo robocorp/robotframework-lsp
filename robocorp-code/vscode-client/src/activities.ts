@@ -683,14 +683,14 @@ export async function runRobotRCC(noDebug: boolean, robotYaml: string, taskName:
 export async function createRobot() {
     // Unfortunately vscode does not have a good way to request multiple inputs at once,
     // so, for now we're asking each at a separate step.
-    let actionResult: ActionResult<string[]> = await commands.executeCommand(
+    let actionResult: ActionResult<RobotTemplate[]> = await commands.executeCommand(
         roboCommands.ROBOCORP_LIST_ROBOT_TEMPLATES_INTERNAL
     );
     if (!actionResult.success) {
         window.showErrorMessage("Unable to list Robot templates: " + actionResult.message);
         return;
     }
-    let availableTemplates: string[] = actionResult.result;
+    let availableTemplates: RobotTemplate[] = actionResult.result;
     if (availableTemplates) {
         let wsFolders: ReadonlyArray<WorkspaceFolder> = workspace.workspaceFolders;
         if (!wsFolders) {
@@ -698,15 +698,21 @@ export async function createRobot() {
             return;
         }
 
-        let selectedItem = await window.showQuickPick(availableTemplates, {
-            "canPickMany": false,
-            "placeHolder": "Please select the template for the Robot.",
-            "ignoreFocusOut": true,
-        });
+        let selectedItem = await window.showQuickPick(
+            availableTemplates.map((robotTemplate) => robotTemplate.description),
+            {
+                "canPickMany": false,
+                "placeHolder": "Please select the template for the Robot.",
+                "ignoreFocusOut": true,
+            }
+        );
+        const selectedRobotTemplate = availableTemplates.find(
+            (robotTemplate) => robotTemplate.description === selectedItem
+        );
 
-        OUTPUT_CHANNEL.appendLine("Selected: " + selectedItem);
+        OUTPUT_CHANNEL.appendLine("Selected: " + selectedRobotTemplate?.description);
         let ws: WorkspaceFolder;
-        if (!selectedItem) {
+        if (!selectedRobotTemplate) {
             // Operation cancelled.
             return;
         }
@@ -736,7 +742,7 @@ export async function createRobot() {
         OUTPUT_CHANNEL.appendLine("Creating Robot at: " + ws.uri.fsPath);
         let createRobotResult: ActionResult<any> = await commands.executeCommand(
             roboCommands.ROBOCORP_CREATE_ROBOT_INTERNAL,
-            { "directory": ws.uri.fsPath, "template": selectedItem, "name": name }
+            { "directory": ws.uri.fsPath, "template": selectedRobotTemplate.name, "name": name }
         );
 
         if (createRobotResult.success) {

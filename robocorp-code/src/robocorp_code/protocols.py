@@ -134,6 +134,11 @@ class ListWorkspacesActionResultDict(TypedDict):
     result: Optional[List[WorkspaceInfoDict]]
 
 
+class RobotTemplate(TypedDict):
+    name: str
+    description: str
+
+
 class CloudLoginParamsDict(TypedDict):
     credentials: str
 

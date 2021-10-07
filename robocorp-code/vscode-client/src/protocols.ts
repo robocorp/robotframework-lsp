@@ -37,6 +37,11 @@ interface ListWorkspacesActionResult {
     result: WorkspaceInfo[];
 }
 
+interface RobotTemplate {
+    name: string;
+    description: string;
+}
+
 interface WorkItem {
     name: string;
     json_path: string;
