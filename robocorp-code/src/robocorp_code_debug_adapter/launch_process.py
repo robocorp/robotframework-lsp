@@ -350,7 +350,7 @@ class LaunchProcess(object):
         # Environment variables managed by the extension should
         # be removed from the base env.json.
         for env_name in self.MANAGED_ENV_VARIABLES:
-            if env_name in current_env_contents:
+            if env_name in current_env_contents and env_name in self._env:
                 changed = True
                 del current_env_contents[env_name]
 
