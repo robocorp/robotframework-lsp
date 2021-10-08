@@ -2,6 +2,7 @@ on:
   push:
     branches:
       - "release-robocorp-code"
+      - "matti/test_release"
     tags:
       - "robocorp-code-*"
 name: Deploy - Robocorp Code Extension
