@@ -205,7 +205,9 @@ export async function deleteWorkItemInWorkItemsTree(): Promise<void> {
 
 export function openWorkItemHelp() {
     vscode.env.openExternal(
-        vscode.Uri.parse("https://robocorp.com/docs/development-guide/control-room/data-pipeline#what-is-a-work-item")
+        vscode.Uri.parse(
+            "https://robocorp.com/docs/developer-tools/visual-studio-code/extension-features#using-work-items"
+        )
     );
 }
 
