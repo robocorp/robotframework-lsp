@@ -397,7 +397,7 @@ COMMANDS = [
         "Delete Work Item",
         add_to_package_json=True,
         server_handled=False,
-        icon="$(close)",
+        icon="$(trash)",
         hide_from_command_palette=True,
     ),
     Command(
