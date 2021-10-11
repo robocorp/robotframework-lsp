@@ -81,6 +81,21 @@ def test_keywords_in_args(workspace, libspec_manager, data_regression):
     _collect_errors(workspace, doc, data_regression)
 
 
+def test_keywords_in_args_no_error_with_var(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = (
+        doc.source
+        + """
+    Run Keyword    ${var}
+"""
+    )
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
 def test_keywords_with_prefix_no_error(workspace, libspec_manager, data_regression):
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")

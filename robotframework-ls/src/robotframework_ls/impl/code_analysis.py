@@ -106,6 +106,7 @@ def collect_analysis_errors(completion_context):
     from robotframework_ls.impl.ast_utils import create_error_from_node
     from robotframework_ls.impl.collect_keywords import collect_keywords
     from robotframework_ls.impl.text_utilities import normalize_robot_name
+    from robotframework_ls.impl.text_utilities import is_variable_text
 
     errors = []
     collector = _KeywordsCollector()
@@ -116,6 +117,8 @@ def collect_analysis_errors(completion_context):
         ast, collect_args_as_keywords=True
     ):
         completion_context.check_cancelled()
+        if is_variable_text(keyword_usage_info.name):
+            continue
         normalized_name = normalize_robot_name(keyword_usage_info.name)
         if not collector.contains_keyword(normalized_name):
 
