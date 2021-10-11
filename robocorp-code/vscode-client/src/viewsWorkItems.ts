@@ -158,46 +158,34 @@ export async function newWorkItemInWorkItemsTree(): Promise<void> {
     await createNewWorkItem(workItemInfo, workItemName);
 }
 
-export async function deleteWorkItemInWorkItemsTree(): Promise<void> {
-    let workItemsTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE);
-    if (!workItemsTree) {
+export async function deleteWorkItemInWorkItemsTree(item: WorkItemFSEntry): Promise<void> {
+    if (!item || !item.filePath) {
         await vscode.window.showInformationMessage("No robot selected for work item deletion.");
         return undefined;
     }
 
-    let selection: WorkItemFSEntry[] = workItemsTree.selection;
-    if (!selection || selection.length === 0) {
-        await vscode.window.showInformationMessage("No work item selected for deletion.");
-        return;
+    const workItemPath = dirname(item.filePath);
+    let uri = vscode.Uri.file(workItemPath);
+    let stat: vscode.FileStat;
+    try {
+        stat = await vscode.workspace.fs.stat(uri);
+    } catch (err) {
+        // unable to get stat (file may have been removed in the meanwhile).
     }
-
-    for (const entry of selection) {
-        let uri = vscode.Uri.file(entry.filePath);
-        let stat: vscode.FileStat;
+    if (stat) {
         try {
-            stat = await vscode.workspace.fs.stat(uri);
+            await vscode.workspace.fs.delete(uri, { recursive: true, useTrash: true });
         } catch (err) {
-            // unable to get stat (file may have been removed in the meanwhile).
-        }
-        if (stat) {
-            // Remove the whole work item directory and it's contents if file is selected
-            if (stat.type === vscode.FileType.File) {
-                uri = vscode.Uri.file(dirname(uri.fsPath));
-            }
-            try {
-                await vscode.workspace.fs.delete(uri, { recursive: true, useTrash: true });
-            } catch (err) {
-                let DELETE_PERMANENTLY = "Delete permanently";
-                let msg = await vscode.window.showErrorMessage(
-                    "Unable to move to trash: " + entry.filePath + ". How to proceed?",
-                    { "modal": true },
-                    DELETE_PERMANENTLY
-                );
-                if (msg == DELETE_PERMANENTLY) {
-                    await vscode.workspace.fs.delete(uri, { recursive: true, useTrash: false });
-                } else {
-                    return;
-                }
+            let DELETE_PERMANENTLY = "Delete permanently";
+            let msg = await vscode.window.showErrorMessage(
+                "Unable to move to trash: " + workItemPath + ". How to proceed?",
+                { "modal": true },
+                DELETE_PERMANENTLY
+            );
+            if (msg == DELETE_PERMANENTLY) {
+                await vscode.workspace.fs.delete(uri, { recursive: true, useTrash: false });
+            } else {
+                return;
             }
         }
     }

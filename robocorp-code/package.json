@@ -425,7 +425,7 @@
                 "command": "robocorp.deleteWorkItemInWorkItemsView",
                 "title": "Delete Work Item",
                 "category": "Robocorp",
-                "icon": "$(close)"
+                "icon": "$(trash)"
             },
             {
                 "command": "robocorp.helpWorkItems",
@@ -563,8 +563,13 @@
                     "group": "1_change"
                 },
                 {
+                    "command": "robocorp.deleteWorkItemInWorkItemsView",
+                    "when": "view == robocorp-work-items-tree && viewItem == outputWorkItem || viewItem == inputWorkItem",
+                    "group": "inline"
+                },
+                {
                     "command": "robocorp.convertOutputWorkItemToInput",
-                    "when": "view == robocorp-work-items-tree && robocorp-code:single-robot-selected && viewItem == outputWorkItem",
+                    "when": "view == robocorp-work-items-tree && viewItem == outputWorkItem",
                     "group": "inline"
                 },
                 {

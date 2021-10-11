@@ -197,9 +197,14 @@ TREE_VIEW_CONTAINERS = [
                             when="viewItem == outputWorkItem || viewItem == inputWorkItem",
                         ),
                         Menu(
+                            "robocorp.deleteWorkItemInWorkItemsView",
+                            MenuGroup.INLINE,
+                            when="viewItem == outputWorkItem || viewItem == inputWorkItem",
+                        ),
+                        Menu(
                             "robocorp.convertOutputWorkItemToInput",
                             MenuGroup.INLINE,
-                            when="robocorp-code:single-robot-selected && viewItem == outputWorkItem",
+                            when="viewItem == outputWorkItem",
                         ),
                     ],
                 },
