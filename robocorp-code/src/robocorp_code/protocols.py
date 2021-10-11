@@ -1,5 +1,5 @@
 import sys
-from typing import Optional, List, Any, Generic, TypeVar, Dict, ContextManager, Tuple
+from typing import Optional, List, Any, TypeVar, Dict, ContextManager, Tuple
 from pathlib import Path
 
 # Backward-compatibility imports:
@@ -65,7 +65,7 @@ class ActionResultDictRobotLaunch(TypedDict):
     message: Optional[
         str
     ]  # if success == False, this can be some message to show to the user
-    result: Optional[dict]
+    result: Optional[Dict[str, Any]]
 
 
 class ActionResultDictLocatorsJson(TypedDict):
@@ -257,7 +257,7 @@ class IRcc(Protocol):
         otherwise it returns None.
         """
 
-    def get_template_names(self) -> ActionResult[List[str]]:
+    def get_template_names(self) -> ActionResult[List[RobotTemplate]]:
         pass
 
     def create_robot(self, template: str, directory: str) -> ActionResult:

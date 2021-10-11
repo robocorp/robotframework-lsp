@@ -59,10 +59,9 @@ libraries and the PYTHONPATH is set accordingly.
 To do that, in the command line, make sure you're at the root folder of this project:
 (say, something as: X:\vscode-robot\robotframework-lsp)
 
-Then run the commands below (considering that you have a Python 3 in your path):
+Then run the commands below (considering that you have a Python 3.8 in your path):
 
-Note: the commands below consider you're using Windows
-(please adjust slashes/path to activate accordingly in OSes).
+In Windows:
 
 python -m venv .venv
 .venv/Scripts/activate.bat
@@ -74,6 +73,20 @@ echo %cd%\robocorp-python-ls-core\src >> .venv\Lib\site-packages\rf_src.pth
 echo %cd%\robotframework-ls\tests >> .venv\Lib\site-packages\rf_src.pth
 echo %cd%\robocorp-code\tests >> .venv\Lib\site-packages\rf_src.pth
 echo %cd%\robocorp-python-ls-core\tests >> .venv\Lib\site-packages\rf_src.pth
+
+In Linux:
+
+python -m venv .venv
+source ./.venv/bin/activate
+python -m pip install -r robocorp-code/tests/test_requirements.txt
+python -m pip install -r robocorp-code/dev_requirements.txt
+echo $PWD/robotframework-ls/src > .venv/lib/python3.8/site-packages/rf_src.pth
+echo $PWD/robocorp-code/src >> .venv/lib/python3.8/site-packages/rf_src.pth
+echo $PWD/robocorp-python-ls-core/src >> .venv/lib/python3.8/site-packages/rf_src.pth
+echo $PWD/robotframework-ls/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
+echo $PWD/robocorp-code/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
+echo $PWD/robocorp-python-ls-core/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
+
 
 If everything went well, just pointing your IDE to use the python executable
 at .venv/Scripts/python should suffice.

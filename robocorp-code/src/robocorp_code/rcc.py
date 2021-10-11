@@ -335,7 +335,7 @@ class Rcc(object):
         if result.result is None:
             return ActionResult(success=False, message="Output not available")
 
-        output: Dict[str, str] = []
+        output: Dict[str, str] = {}
         try:
             output = json.loads(result.result)
         except json.decoder.JSONDecodeError as e:

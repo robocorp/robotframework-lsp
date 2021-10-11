@@ -1,5 +1,5 @@
 import os
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 
 from robocorp_code.protocols import ActionResultDictRobotLaunch
 from robocorp_ls_core.robotframework_log import get_logger
@@ -142,6 +142,8 @@ def compute_robot_launch_from_robocorp_code_launch(
 
     command = [str(c) for c in command]
     cwd = os.path.dirname(robot)
+
+    result: Dict[str, Any]
 
     if command[:3] == ["python", "-m", "robot"]:
         args: List[str] = command[3:]

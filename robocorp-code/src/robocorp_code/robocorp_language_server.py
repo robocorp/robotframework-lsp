@@ -1302,7 +1302,15 @@ class RobocorpLanguageServer(PythonLanguageServer):
         try:
             action_result: ActionResultDictLocatorsJson = self._load_locators_db(path)
             if action_result["success"]:
-                db, locators_json = action_result["result"]
+                result = action_result["result"]
+                if not result:
+                    return {
+                        "success": False,
+                        "message": f"Expected result to be a tuple(db, locators_json). Found {result}",
+                        "result": None,
+                    }
+
+                db, locators_json = result
             else:
                 return {
                     "success": False,
@@ -1310,7 +1318,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
                     "result": None,
                 }
 
-            content_lines = []
+            content_lines: list = []
             if Path(locators_json).exists():
                 with locators_json.open("r") as stream:
                     contents = stream.read()
@@ -1351,7 +1359,15 @@ class RobocorpLanguageServer(PythonLanguageServer):
         try:
             action_result: ActionResultDictLocatorsJson = self._load_locators_db(path)
             if action_result["success"]:
-                db, locators_json = action_result["result"]
+                result = action_result["result"]
+                if not result:
+                    return {
+                        "success": False,
+                        "message": f"Expected result to be a tuple(db, locators_json). Found {result}",
+                        "result": None,
+                    }
+
+                db, locators_json = result
             else:
                 return {
                     "success": False,
