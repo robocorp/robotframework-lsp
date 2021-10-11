@@ -10,7 +10,7 @@ import {
     workspace,
     WorkspaceFolder,
 } from "vscode";
-import { logError, OUTPUT_CHANNEL } from "./channel";
+import { logError } from "./channel";
 import * as path from "path";
 import { parse } from "jsonc-parser";
 import * as fs from "fs";
@@ -207,6 +207,7 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
             debugConfiguration.args = debugConfiguration.args.concat(launchTemplate.args);
         }
     }
+
     let debugSessionOptions: DebugSessionOptions = { "noDebug": noDebug };
     debug.startDebugging(workspaceFolder, debugConfiguration, debugSessionOptions);
 }

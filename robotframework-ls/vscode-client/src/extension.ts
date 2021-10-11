@@ -22,6 +22,7 @@ limitations under the License.
 import * as net from "net";
 import * as path from "path";
 import * as fs from "fs";
+import * as vscode from "vscode";
 
 import {
     workspace,
@@ -181,6 +182,26 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
             args = newArgs;
         }
         debugConfiguration.args = args;
+
+        if (debugConfiguration.cwd) {
+            let stat: vscode.FileStat;
+            try {
+                stat = await vscode.workspace.fs.stat(vscode.Uri.file(debugConfiguration.cwd));
+            } catch (err) {
+                window.showErrorMessage(
+                    "Unable to launch. Reason: the cwd: " + debugConfiguration.cwd + " does not exist."
+                );
+                return undefined;
+            }
+            if ((stat.type | vscode.FileType.File) == 1) {
+                window.showErrorMessage(
+                    "Unable to launch. Reason: the cwd: " +
+                        debugConfiguration.cwd +
+                        " seems to be a file and not a directory."
+                );
+                return undefined;
+            }
+        }
         return debugConfiguration;
     }
 }
