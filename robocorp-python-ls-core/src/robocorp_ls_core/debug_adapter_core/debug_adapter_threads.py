@@ -153,6 +153,9 @@ def reader_thread(
                         "message": "Error processing message: %s" % (e,),
                     }
                     write_queue.put(error_msg)
+    except ConnectionError:
+        if get_log_level() > 2:
+            log.exception("ConnectionError (ignored).")
     except:
         log.exception("Error reading message.")
     finally:
