@@ -20,7 +20,7 @@ from functools import partial
 import itertools
 import os.path
 import threading
-from typing import Optional
+from typing import Optional, List
 import typing
 
 from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import BaseSchema
@@ -125,7 +125,7 @@ class LaunchProcess(object):
 
         self._weak_debug_adapter_comm = weakref.ref(debug_adapter_comm)
         self._valid = True
-        self._cmdline = []
+        self._cmdline: List[str] = []
         self._popen = None
         self._launch_response = launch_response
         self._next_seq = partial(next, itertools.count(0))

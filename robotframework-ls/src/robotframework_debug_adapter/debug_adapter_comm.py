@@ -179,7 +179,7 @@ class DebugAdapterComm(object):
             if launch_process is not None:
                 launch_process.after_launch_response_sent()
 
-        if run_in_debug_mode and launch_process:
+        if run_in_debug_mode and launch_process and launch_process.valid:
             # We must configure/attach to pydevd
             launch_process.write_to_pydevd(
                 SetDebuggerPropertyRequest(
