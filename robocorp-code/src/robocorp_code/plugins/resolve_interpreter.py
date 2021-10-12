@@ -34,6 +34,7 @@ from robocorp_ls_core.pluginmanager import PluginManager
 from robocorp_ls_core.ep_resolve_interpreter import (
     EPResolveInterpreter,
     IInterpreterInfo,
+    DefaultInterpreterInfo,
 )
 from robocorp_ls_core import uris
 from robocorp_ls_core.robotframework_log import get_logger
@@ -99,7 +100,6 @@ class _CachedInterpreterInfo(object):
         env_json_path_file_info: Optional[_CachedFileInfo],
         pm: PluginManager,
     ):
-        from robocorp_ls_core.ep_resolve_interpreter import DefaultInterpreterInfo
         from robocorp_ls_core.ep_providers import EPConfigurationProvider
 
         self._mtime: _CachedInterpreterMTime = self._obtain_mtime(
@@ -301,6 +301,79 @@ class RobocorpResolveInterpreter(object):
 
     @implements(EPResolveInterpreter.get_interpreter_info_for_doc_uri)
     def get_interpreter_info_for_doc_uri(self, doc_uri) -> Optional[IInterpreterInfo]:
+        info = self._compute_base_interpreter_info_for_doc_uri(doc_uri)
+        if info is None:
+            return info
+
+        return self._relocate_robot_root(info)
+
+    def _relocate_robot_root(self, interpreter_info: IInterpreterInfo):
+        environ = interpreter_info.get_environ()
+        if not environ:
+            return interpreter_info
+
+        robot_yaml = interpreter_info.get_interpreter_id()
+
+        existing_robot_root = environ.get("ROBOT_ROOT")
+        if existing_robot_root is None:
+            return interpreter_info
+
+        new_robot_root = self._fix_path(os.path.dirname(robot_yaml))
+        existing_robot_root = self._fix_path(existing_robot_root)
+
+        if new_robot_root.endswith(("/", "\\")):
+            new_robot_root = new_robot_root[:-1]
+
+        if existing_robot_root.endswith(("/", "\\")):
+            existing_robot_root = existing_robot_root[:-1]
+
+        fix_entry = self._fix_entry
+
+        new_environ = {}
+        for key, val in environ.items():
+            new_environ[key] = os.pathsep.join(
+                fix_entry(entry, existing_robot_root, new_robot_root)
+                for entry in val.split(os.pathsep)
+            )
+
+        new_additional_pythonpath_entries: List[str] = []
+        for entry in new_additional_pythonpath_entries:
+            new_additional_pythonpath_entries.append(
+                fix_entry(entry, existing_robot_root, new_robot_root)
+            )
+
+        return DefaultInterpreterInfo(
+            robot_yaml,
+            interpreter_info.get_python_exe(),
+            new_environ,
+            new_additional_pythonpath_entries,
+        )
+
+    @classmethod
+    def _fix_entry(cls, entry: str, existing_robot_root: str, new_robot_root: str):
+        if existing_robot_root == new_robot_root:
+            # Nothing to do.
+            return entry
+        entry = cls._fix_path(entry)
+        return entry.replace(existing_robot_root, new_robot_root)
+
+    @classmethod
+    def _fix_path(cls, path: str) -> str:
+        if sys.platform == "win32":
+            # On windows we need to fix the drive letter as we want to
+            # replace 'C:' and 'c:'.
+            if len(path) > 2 and path[1] == ":":
+                drive_letter = path[0]
+                if drive_letter.lower() == drive_letter:
+                    return path
+
+                return drive_letter.lower() + path[1:]
+
+        return path
+
+    def _compute_base_interpreter_info_for_doc_uri(
+        self, doc_uri
+    ) -> Optional[IInterpreterInfo]:
         try:
             pm = self._pm()
             if pm is None:

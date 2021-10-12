@@ -90,7 +90,7 @@ def robocorp_home(tmpdir) -> str:
     # import shutil
     #
     # ret = "c:/temp/tests_robohome"
-    # shutil.rmtree(os.path.join(ret, ".robocorp_code"))
+    # shutil.rmtree(os.path.join(ret, ".robocorp_code"), ignore_errors=True)
     # return ret
 
     return str(tmpdir.join("robocorp_home"))

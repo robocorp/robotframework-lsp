@@ -1,0 +1,7 @@
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.7
+  # Same as robot3 but with a comment!
+  - pip=20.1
