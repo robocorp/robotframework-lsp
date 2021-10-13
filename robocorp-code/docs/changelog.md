@@ -1,3 +1,24 @@
+New in 0.16.0 (2021-10-13)
+-----------------------------
+
+- Notify of errors during initialization of extension.
+- Fix `ROBOT_ROOT` when environment is reused.
+- Update RCC to v11.3.2 .
+- Improved Robot Template selection from RCC.
+- Work items support:
+  - See: [Using Work Items](https://robocorp.com/docs/developer-tools/visual-studio-code/extension-features#using-work-items) for details.
+  - Variables should not be defined in `env.json` anymore and the support is simplified to only accept items in `devdata/work-items-in` and `devdata/work-items-out`.
+  - `devdata/work-items-in` is expected to be added to source conrtol (i.e.: `git`), whereas `devdata/work-items-out` is expected to be ignored.
+  - The `RPA_OUTPUT_WORKITEM_PATH` is now set automatically to a new folder in `work-items-out`
+    - Later it's possible to convert this folder into an input by using the button which appears in the item in the work items view.
+  - When a run is made, it should present a dialog which allows the input selection (to set to `RPA_INPUT_WORKITEM_PATH`)
+    - Note that it's possible to use some output in `devdata/work-items-out` as the input for the next run.
+  - Only the last 5 runs are kept in the output. To keep older items, rename the folder or move it to `devdata/work-items-in`.
+  - For previously existing items, those should be moved to `devdata/work-items-in` so that they are shown.
+  - Changing `env.json` should not be needed anymore (in fact, changes to the related variables will be ignored to avoid clashes with other tools).
+  - The latest `rpaframework` is required for the integration.  
+
+
 New in 0.15.0 (2021-10-04)
 -----------------------------
 
