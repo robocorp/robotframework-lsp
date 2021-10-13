@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.23.2'
+version '0.24.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,11 +51,12 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.23.2
+    Release 0.24.0
     </p>
     <ul>
 
-    <li>Fixed issue launching when no environment is provided.</li>
+    <li>Variable in run keyword argument should not be considered error.</li>
+    <li>Fix crash during startup: Improving port collection from Remote FS Observer.</li>
 
     <br>
     Current feature set:<br>

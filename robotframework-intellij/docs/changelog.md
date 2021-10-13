@@ -1,3 +1,10 @@
+New in 0.24.0 (2021-10-13)
+-----------------------------
+
+- Variable in run keyword argument should not be considered error. [#468](https://github.com/robocorp/robotframework-lsp/issues/468)
+- Fix crash during startup: Improving port collection from Remote FS Observer. [#434](https://github.com/robocorp/robotframework-lsp/issues/434)
+
+
 New in 0.23.2 (2021-09-22)
 -----------------------------
 
