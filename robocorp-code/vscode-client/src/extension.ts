@@ -49,7 +49,6 @@ import * as inspector from "./inspector";
 import { copySelectedToClipboard, removeLocator } from "./locators";
 import * as views from "./views";
 import * as roboConfig from "./robocorpSettings";
-import * as roboCommands from "./robocorpCommands";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import { getExtensionRelativeFile, verifyFileExists } from "./files";
 import {
@@ -95,6 +94,45 @@ import {
     openWorkItemHelp,
 } from "./viewsWorkItems";
 import { LocatorEntry } from "./viewsCommon";
+import {
+    ROBOCORP_CLOUD_LOGIN,
+    ROBOCORP_CLOUD_LOGOUT,
+    ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION,
+    ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH,
+    ROBOCORP_CONFIGURATION_DIAGNOSTICS,
+    ROBOCORP_CONVERT_OUTPUT_WORK_ITEM_TO_INPUT,
+    ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL,
+    ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION,
+    ROBOCORP_CREATE_ROBOT,
+    ROBOCORP_DEBUG_ROBOT_RCC,
+    ROBOCORP_DELETE_RESOURCE_IN_ROBOT_CONTENT_VIEW,
+    ROBOCORP_DELETE_WORK_ITEM_IN_WORK_ITEMS_VIEW,
+    ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR,
+    ROBOCORP_GET_LANGUAGE_SERVER_PYTHON,
+    ROBOCORP_GET_LANGUAGE_SERVER_PYTHON_INFO,
+    ROBOCORP_HELP_WORK_ITEMS,
+    ROBOCORP_NEW_FILE_IN_ROBOT_CONTENT_VIEW,
+    ROBOCORP_NEW_FOLDER_IN_ROBOT_CONTENT_VIEW,
+    ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER,
+    ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE,
+    ROBOCORP_NEW_WORK_ITEM_IN_WORK_ITEMS_VIEW,
+    ROBOCORP_OPEN_CLOUD_HOME,
+    ROBOCORP_OPEN_ROBOT_TREE_SELECTION,
+    ROBOCORP_RCC_TERMINAL_NEW,
+    ROBOCORP_REFRESH_CLOUD_VIEW,
+    ROBOCORP_REFRESH_ROBOTS_VIEW,
+    ROBOCORP_REFRESH_ROBOT_CONTENT_VIEW,
+    ROBOCORP_REMOVE_LOCATOR_FROM_JSON,
+    ROBOCORP_RENAME_RESOURCE_IN_ROBOT_CONTENT_VIEW,
+    ROBOCORP_ROBOTS_VIEW_TASK_DEBUG,
+    ROBOCORP_ROBOTS_VIEW_TASK_RUN,
+    ROBOCORP_RUN_ROBOT_RCC,
+    ROBOCORP_SET_PYTHON_INTERPRETER,
+    ROBOCORP_SUBMIT_ISSUE,
+    ROBOCORP_SUBMIT_ISSUE_INTERNAL,
+    ROBOCORP_UPDATE_LAUNCH_ENV,
+    ROBOCORP_UPLOAD_ROBOT_TO_CLOUD,
+} from "./robocorpCommands";
 
 const clientOptions: LanguageClientOptions = {
     documentSelector: [
@@ -151,6 +189,35 @@ interface ActionResult {
     result: any;
 }
 
+function notifyOfInitializationErrorShowOutputTab(msg?: string) {
+    OUTPUT_CHANNEL.show();
+    if (!msg) {
+        msg = "Unable to activate Robocorp Code extension. Please see: Output > Robocorp Code for more details.";
+    }
+    window.showErrorMessage(msg);
+}
+
+class CommandRegistry {
+    private context: ExtensionContext;
+    public registerErrorStubs: boolean = false;
+
+    public constructor(context: ExtensionContext) {
+        this.context = context;
+    }
+
+    public register(command: string, callback: (...args: any[]) => any, thisArg?: any): void {
+        if (this.registerErrorStubs) {
+            this.context.subscriptions.push(
+                commands.registerCommand(command, () => {
+                    notifyOfInitializationErrorShowOutputTab();
+                })
+            );
+        } else {
+            this.context.subscriptions.push(commands.registerCommand(command, callback));
+        }
+    }
+}
+
 class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvider {
     provideDebugConfigurations?(folder: WorkspaceFolder | undefined, token?: CancellationToken): DebugConfiguration[] {
         let configurations: DebugConfiguration[] = [];
@@ -194,7 +261,7 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
         // Resolve environment
         let env = interpreter.environ;
         try {
-            env = await commands.executeCommand(roboCommands.ROBOCORP_UPDATE_LAUNCH_ENV, {
+            env = await commands.executeCommand(ROBOCORP_UPDATE_LAUNCH_ENV, {
                 "targetRobot": debugConfiguration.robot,
                 "env": env,
             });
@@ -225,7 +292,7 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
         // (making sure that we can actually do this and it's a robot launch for the task)
 
         let actionResult: ActionResult = await commands.executeCommand(
-            roboCommands.ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH,
+            ROBOCORP_COMPUTE_ROBOT_LAUNCH_FROM_ROBOCORP_CODE_LAUNCH,
             {
                 "name": debugConfiguration.name,
                 "request": debugConfiguration.request,
@@ -330,219 +397,212 @@ async function verifyRobotFrameworkInstalled() {
     }
 }
 
+async function cloudLoginShowConfirmationAndRefresh() {
+    let loggedIn = await cloudLogin();
+    if (loggedIn) {
+        window.showInformationMessage("Successfully logged in Control Room.");
+    }
+    views.refreshCloudTreeView();
+}
+async function cloudLogoutAndRefresh() {
+    await cloudLogout();
+    views.refreshCloudTreeView();
+}
+
+interface RobocorpCodeCommandsOpts {
+    installErrorStubs: boolean;
+}
+function registerRobocorpCodeCommands(C: CommandRegistry, opts?: RobocorpCodeCommandsOpts) {
+    if (opts && opts.installErrorStubs) {
+        C.registerErrorStubs = true;
+    }
+    C.register(ROBOCORP_GET_LANGUAGE_SERVER_PYTHON, () => getLanguageServerPython());
+    C.register(ROBOCORP_GET_LANGUAGE_SERVER_PYTHON_INFO, () => getLanguageServerPythonInfo());
+    C.register(ROBOCORP_CREATE_ROBOT, () => createRobot());
+    C.register(ROBOCORP_UPLOAD_ROBOT_TO_CLOUD, () => uploadRobot());
+    C.register(ROBOCORP_CONFIGURATION_DIAGNOSTICS, () => rccConfigurationDiagnostics());
+    C.register(ROBOCORP_RUN_ROBOT_RCC, () => askAndRunRobotRCC(true));
+    C.register(ROBOCORP_DEBUG_ROBOT_RCC, () => askAndRunRobotRCC(false));
+    C.register(ROBOCORP_SET_PYTHON_INTERPRETER, () => setPythonInterpreterFromRobotYaml());
+    C.register(ROBOCORP_REFRESH_ROBOTS_VIEW, () => views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE));
+    C.register(ROBOCORP_REFRESH_CLOUD_VIEW, () => views.refreshCloudTreeView());
+    C.register(ROBOCORP_ROBOTS_VIEW_TASK_RUN, () => views.runSelectedRobot(true));
+    C.register(ROBOCORP_ROBOTS_VIEW_TASK_DEBUG, () => views.runSelectedRobot(false));
+    C.register(ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR, (locator?: LocatorEntry) =>
+        inspector.openRobocorpInspector(undefined, locator)
+    );
+    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER, () => inspector.openRobocorpInspector("browser"));
+    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE, () => inspector.openRobocorpInspector("image"));
+    C.register(ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL, (locator?: LocatorEntry) =>
+        copySelectedToClipboard(locator)
+    );
+    C.register(ROBOCORP_REMOVE_LOCATOR_FROM_JSON, (locator?: LocatorEntry) => removeLocator(locator));
+    C.register(ROBOCORP_OPEN_ROBOT_TREE_SELECTION, () => views.openRobotTreeSelection());
+    C.register(ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION, () => views.cloudUploadRobotTreeSelection());
+    C.register(ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION, () => views.createRccTerminalTreeSelection());
+    C.register(ROBOCORP_RCC_TERMINAL_NEW, () => askAndCreateRccTerminal());
+    C.register(ROBOCORP_REFRESH_ROBOT_CONTENT_VIEW, () => views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE));
+    C.register(ROBOCORP_NEW_FILE_IN_ROBOT_CONTENT_VIEW, newFileInRobotContentTree);
+    C.register(ROBOCORP_NEW_FOLDER_IN_ROBOT_CONTENT_VIEW, newFolderInRobotContentTree);
+    C.register(ROBOCORP_DELETE_RESOURCE_IN_ROBOT_CONTENT_VIEW, deleteResourceInRobotContentTree);
+    C.register(ROBOCORP_RENAME_RESOURCE_IN_ROBOT_CONTENT_VIEW, renameResourceInRobotContentTree);
+    C.register(ROBOCORP_UPDATE_LAUNCH_ENV, updateLaunchEnvironment);
+    C.register(ROBOCORP_OPEN_CLOUD_HOME, () => {
+        commands.executeCommand("vscode.open", Uri.parse("https://cloud.robocorp.com/home"));
+    });
+    C.register(ROBOCORP_CONVERT_OUTPUT_WORK_ITEM_TO_INPUT, convertOutputWorkItemToInput);
+    C.register(ROBOCORP_CLOUD_LOGIN, () => cloudLoginShowConfirmationAndRefresh());
+    C.register(ROBOCORP_CLOUD_LOGOUT, () => cloudLogoutAndRefresh());
+    C.register(ROBOCORP_NEW_WORK_ITEM_IN_WORK_ITEMS_VIEW, newWorkItemInWorkItemsTree);
+    C.register(ROBOCORP_DELETE_WORK_ITEM_IN_WORK_ITEMS_VIEW, deleteWorkItemInWorkItemsTree);
+    C.register(ROBOCORP_HELP_WORK_ITEMS, openWorkItemHelp);
+}
+
 let langServer: LanguageClient;
 
 export async function activate(context: ExtensionContext) {
-    try {
-        let timing = new Timing();
-        // The first thing we need is the python executable.
-        OUTPUT_CHANNEL.appendLine("Activating Robocorp Code extension.");
+    let timing = new Timing();
+    // The first thing we need is the python executable.
+    OUTPUT_CHANNEL.appendLine("Activating Robocorp Code extension.");
+    let C = new CommandRegistry(context);
 
-        const extension = extensions.getExtension("robocorp.robotframework-lsp");
-        if (extension) {
-            // If the Robot Framework Language server is present, make sure it is compatible with this
-            // version.
-            try {
-                const version: string = extension.packageJSON.version;
-                const splitted = version.split(".");
-                const major = parseInt(splitted[0]);
-                const minor = parseInt(splitted[1]);
-                if (major == 0 && minor <= 20) {
-                    const msg =
-                        "Unable to initialize the Robocorp Code extension because the Robot Framework Language Server version (" +
-                        version +
-                        ") is not compatible with this version of Robocorp Code. Robot Framework Language Server 0.21.0 or newer is required. Please update to proceed. ";
-                    OUTPUT_CHANNEL.appendLine(msg);
-                    window.showErrorMessage(msg);
-                    return;
-                }
-            } catch (err) {
-                logError("Error verifying Robot Framework Language Server version.", err);
-            }
-        }
+    // Note: register the submit issue actions early on so that we can later actually
+    // report startup errors.
+    let logPath: string = context.logPath;
+    C.register(ROBOCORP_SUBMIT_ISSUE, () => {
+        submitIssueUI(logPath);
+    });
 
-        // Note: register the submit issue actions early on so that we can later actually
-        // report startup errors.
-        let logPath: string = context.logPath;
-        commands.registerCommand(roboCommands.ROBOCORP_SUBMIT_ISSUE, () => {
-            submitIssueUI(logPath);
-        });
+    // i.e.: allow other extensions to also use our submit issue api.
+    C.register(
+        ROBOCORP_SUBMIT_ISSUE_INTERNAL,
+        (dialogMessage: string, email: string, errorName: string, errorCode: string, errorMessage: string) =>
+            submitIssue(
+                logPath, // gotten from plugin context
+                dialogMessage,
+                email,
+                errorName,
+                errorCode,
+                errorMessage
+            )
+    );
 
-        // i.e.: allow other extensions to also use our submit issue api.
-        commands.registerCommand(
-            roboCommands.ROBOCORP_SUBMIT_ISSUE_INTERNAL,
-            (dialogMessage: string, email: string, errorName: string, errorCode: string, errorMessage: string) =>
-                submitIssue(
-                    logPath, // gotten from plugin context
-                    dialogMessage,
-                    email,
-                    errorName,
-                    errorCode,
-                    errorMessage
-                )
-        );
-
-        let executableAndEnv = await getLanguageServerPythonInfo();
-        if (!executableAndEnv) {
-            OUTPUT_CHANNEL.appendLine("Unable to activate Robocorp Code extension (unable to get python executable).");
-            return;
-        }
-        OUTPUT_CHANNEL.appendLine("Using python executable: " + executableAndEnv.pythonExe);
-        let startLsTiming = new Timing();
-
-        let port: number = roboConfig.getLanguageServerTcpPort();
-        if (port) {
-            // For TCP server needs to be started seperately
-            langServer = startLangServerTCP(port);
-        } else {
-            let targetFile: string = getExtensionRelativeFile("../../src/robocorp_code/__main__.py");
-            if (!targetFile) {
+    const extension = extensions.getExtension("robocorp.robotframework-lsp");
+    if (extension) {
+        // If the Robot Framework Language server is present, make sure it is compatible with this
+        // version.
+        try {
+            const version: string = extension.packageJSON.version;
+            const splitted = version.split(".");
+            const major = parseInt(splitted[0]);
+            const minor = parseInt(splitted[1]);
+            if (major == 0 && minor <= 20) {
+                const msg =
+                    "Unable to initialize the Robocorp Code extension because the Robot Framework Language Server version (" +
+                    version +
+                    ") is not compatible with this version of Robocorp Code. Robot Framework Language Server 0.21.0 or newer is required. Please update to proceed. ";
+                OUTPUT_CHANNEL.appendLine(msg);
+                registerRobocorpCodeCommands(C, { installErrorStubs: true });
+                notifyOfInitializationErrorShowOutputTab(msg);
                 return;
             }
-
-            let args: Array<string> = ["-u", targetFile];
-            let lsArgs = roboConfig.getLanguageServerArgs();
-            if (lsArgs) {
-                args = args.concat(lsArgs);
-            }
-            langServer = startLangServerIO(executableAndEnv.pythonExe, args, executableAndEnv.environ);
+        } catch (err) {
+            logError("Error verifying Robot Framework Language Server version.", err);
         }
-
-        let stopListeningOnDidChangeState = langServer.onDidChangeState((event) => {
-            if (event.newState == State.Running) {
-                // i.e.: We need to register the customProgress as soon as it's running (we can't wait for onReady)
-                // because at that point if there are open documents, lots of things may've happened already, in
-                // which case the progress won't be shown on some cases where it should be shown.
-                context.subscriptions.push(
-                    langServer.onNotification("$/customProgress", (args: ProgressReport) => {
-                        // OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
-                        handleProgressMessage(args);
-                    })
-                );
-                context.subscriptions.push(
-                    langServer.onNotification("$/linkedAccountChanged", () => {
-                        views.refreshCloudTreeView();
-                    })
-                );
-                stopListeningOnDidChangeState.dispose();
-            }
-        });
-        let disposable: Disposable = langServer.start();
-        commands.registerCommand(roboCommands.ROBOCORP_GET_LANGUAGE_SERVER_PYTHON, () => getLanguageServerPython());
-        commands.registerCommand(roboCommands.ROBOCORP_GET_LANGUAGE_SERVER_PYTHON_INFO, () =>
-            getLanguageServerPythonInfo()
-        );
-        commands.registerCommand(roboCommands.ROBOCORP_CREATE_ROBOT, () => createRobot());
-        commands.registerCommand(roboCommands.ROBOCORP_UPLOAD_ROBOT_TO_CLOUD, () => uploadRobot());
-        commands.registerCommand(roboCommands.ROBOCORP_CONFIGURATION_DIAGNOSTICS, () => rccConfigurationDiagnostics());
-        commands.registerCommand(roboCommands.ROBOCORP_RUN_ROBOT_RCC, () => askAndRunRobotRCC(true));
-        commands.registerCommand(roboCommands.ROBOCORP_DEBUG_ROBOT_RCC, () => askAndRunRobotRCC(false));
-        commands.registerCommand(roboCommands.ROBOCORP_SET_PYTHON_INTERPRETER, () =>
-            setPythonInterpreterFromRobotYaml()
-        );
-        commands.registerCommand(roboCommands.ROBOCORP_REFRESH_ROBOTS_VIEW, () =>
-            views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE)
-        );
-        commands.registerCommand(roboCommands.ROBOCORP_REFRESH_CLOUD_VIEW, () => views.refreshCloudTreeView());
-        commands.registerCommand(roboCommands.ROBOCORP_ROBOTS_VIEW_TASK_RUN, () => views.runSelectedRobot(true));
-        commands.registerCommand(roboCommands.ROBOCORP_ROBOTS_VIEW_TASK_DEBUG, () => views.runSelectedRobot(false));
-        commands.registerCommand(roboCommands.ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR, (locator?: LocatorEntry) =>
-            inspector.openRobocorpInspector(undefined, locator)
-        );
-        commands.registerCommand(roboCommands.ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER, () =>
-            inspector.openRobocorpInspector("browser")
-        );
-        commands.registerCommand(roboCommands.ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE, () =>
-            inspector.openRobocorpInspector("image")
-        );
-        commands.registerCommand(roboCommands.ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL, (locator?: LocatorEntry) =>
-            copySelectedToClipboard(locator)
-        );
-        commands.registerCommand(roboCommands.ROBOCORP_REMOVE_LOCATOR_FROM_JSON, (locator?: LocatorEntry) =>
-            removeLocator(locator)
-        );
-        commands.registerCommand(roboCommands.ROBOCORP_OPEN_ROBOT_TREE_SELECTION, () => views.openRobotTreeSelection());
-        commands.registerCommand(roboCommands.ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION, () =>
-            views.cloudUploadRobotTreeSelection()
-        );
-        commands.registerCommand(roboCommands.ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION, () =>
-            views.createRccTerminalTreeSelection()
-        );
-        commands.registerCommand(roboCommands.ROBOCORP_RCC_TERMINAL_NEW, () => askAndCreateRccTerminal());
-        commands.registerCommand(roboCommands.ROBOCORP_REFRESH_ROBOT_CONTENT_VIEW, () =>
-            views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE)
-        );
-        commands.registerCommand(roboCommands.ROBOCORP_NEW_FILE_IN_ROBOT_CONTENT_VIEW, newFileInRobotContentTree);
-        commands.registerCommand(roboCommands.ROBOCORP_NEW_FOLDER_IN_ROBOT_CONTENT_VIEW, newFolderInRobotContentTree);
-        commands.registerCommand(
-            roboCommands.ROBOCORP_DELETE_RESOURCE_IN_ROBOT_CONTENT_VIEW,
-            deleteResourceInRobotContentTree
-        );
-        commands.registerCommand(
-            roboCommands.ROBOCORP_RENAME_RESOURCE_IN_ROBOT_CONTENT_VIEW,
-            renameResourceInRobotContentTree
-        );
-        commands.registerCommand(roboCommands.ROBOCORP_UPDATE_LAUNCH_ENV, updateLaunchEnvironment);
-        commands.registerCommand(roboCommands.ROBOCORP_OPEN_CLOUD_HOME, () => {
-            commands.executeCommand("vscode.open", Uri.parse("https://cloud.robocorp.com/home"));
-        });
-        commands.registerCommand(roboCommands.ROBOCORP_CONVERT_OUTPUT_WORK_ITEM_TO_INPUT, convertOutputWorkItemToInput);
-        async function cloudLoginShowConfirmationAndRefresh() {
-            let loggedIn = await cloudLogin();
-            if (loggedIn) {
-                window.showInformationMessage("Successfully logged in Control Room.");
-            }
-            views.refreshCloudTreeView();
-        }
-        async function cloudLogoutAndRefresh() {
-            await cloudLogout();
-            views.refreshCloudTreeView();
-        }
-        commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGIN, () => cloudLoginShowConfirmationAndRefresh());
-        commands.registerCommand(roboCommands.ROBOCORP_CLOUD_LOGOUT, () => cloudLogoutAndRefresh());
-        commands.registerCommand(roboCommands.ROBOCORP_NEW_WORK_ITEM_IN_WORK_ITEMS_VIEW, newWorkItemInWorkItemsTree);
-        commands.registerCommand(
-            roboCommands.ROBOCORP_DELETE_WORK_ITEM_IN_WORK_ITEMS_VIEW,
-            deleteWorkItemInWorkItemsTree
-        );
-        commands.registerCommand(roboCommands.ROBOCORP_HELP_WORK_ITEMS, openWorkItemHelp);
-        views.registerViews(context);
-        registerDebugger(executableAndEnv.pythonExe);
-        context.subscriptions.push(disposable);
-
-        // i.e.: if we return before it's ready, the language server commands
-        // may not be available.
-        OUTPUT_CHANNEL.appendLine("Waiting for Robocorp Code (python) language server to finish activating...");
-        await langServer.onReady();
-        OUTPUT_CHANNEL.appendLine(
-            "Took: " + startLsTiming.getTotalElapsedAsStr() + " to initialize Robocorp Code Language Server."
-        );
-        OUTPUT_CHANNEL.appendLine("Robocorp Code extension ready. Took: " + timing.getTotalElapsedAsStr());
-
-        verifyRobotFrameworkInstalled();
-    } finally {
-        workspace.onDidChangeConfiguration((event) => {
-            for (let s of [
-                roboConfig.ROBOCORP_LANGUAGE_SERVER_ARGS,
-                roboConfig.ROBOCORP_LANGUAGE_SERVER_PYTHON,
-                roboConfig.ROBOCORP_LANGUAGE_SERVER_TCP_PORT,
-            ]) {
-                if (event.affectsConfiguration(s)) {
-                    window
-                        .showWarningMessage(
-                            'Please use the "Reload Window" action for changes in ' + s + " to take effect.",
-                            ...["Reload Window"]
-                        )
-                        .then((selection) => {
-                            if (selection === "Reload Window") {
-                                commands.executeCommand("workbench.action.reloadWindow");
-                            }
-                        });
-                    return;
-                }
-            }
-        });
     }
+
+    workspace.onDidChangeConfiguration((event) => {
+        for (let s of [
+            roboConfig.ROBOCORP_LANGUAGE_SERVER_ARGS,
+            roboConfig.ROBOCORP_LANGUAGE_SERVER_PYTHON,
+            roboConfig.ROBOCORP_LANGUAGE_SERVER_TCP_PORT,
+        ]) {
+            if (event.affectsConfiguration(s)) {
+                window
+                    .showWarningMessage(
+                        'Please use the "Reload Window" action for changes in ' + s + " to take effect.",
+                        ...["Reload Window"]
+                    )
+                    .then((selection) => {
+                        if (selection === "Reload Window") {
+                            commands.executeCommand("workbench.action.reloadWindow");
+                        }
+                    });
+                return;
+            }
+        }
+    });
+
+    let executableAndEnv = await getLanguageServerPythonInfo();
+    if (!executableAndEnv) {
+        OUTPUT_CHANNEL.appendLine(
+            "Unable to activate Robocorp Code extension because python executable from RCC environment was not provided.\n" +
+                " -- Most common reason is that the environment couldn't be created due to network connectivity issues."
+        );
+        registerRobocorpCodeCommands(C, { installErrorStubs: true });
+        notifyOfInitializationErrorShowOutputTab();
+        return;
+    }
+    OUTPUT_CHANNEL.appendLine("Using python executable: " + executableAndEnv.pythonExe);
+    let startLsTiming = new Timing();
+
+    let port: number = roboConfig.getLanguageServerTcpPort();
+    if (port) {
+        // For TCP server needs to be started seperately
+        OUTPUT_CHANNEL.appendLine("Connecting to language server in port: " + port);
+        langServer = startLangServerTCP(port);
+    } else {
+        let targetFile: string = getExtensionRelativeFile("../../src/robocorp_code/__main__.py");
+        if (!targetFile) {
+            OUTPUT_CHANNEL.appendLine("Error resolving ../../src/robocorp_code/__main__.py");
+            registerRobocorpCodeCommands(C, { installErrorStubs: true });
+            notifyOfInitializationErrorShowOutputTab();
+            return;
+        }
+
+        let args: Array<string> = ["-u", targetFile];
+        let lsArgs = roboConfig.getLanguageServerArgs();
+        if (lsArgs) {
+            args = args.concat(lsArgs);
+        }
+        langServer = startLangServerIO(executableAndEnv.pythonExe, args, executableAndEnv.environ);
+    }
+
+    let stopListeningOnDidChangeState = langServer.onDidChangeState((event) => {
+        if (event.newState == State.Running) {
+            // i.e.: We need to register the customProgress as soon as it's running (we can't wait for onReady)
+            // because at that point if there are open documents, lots of things may've happened already, in
+            // which case the progress won't be shown on some cases where it should be shown.
+            context.subscriptions.push(
+                langServer.onNotification("$/customProgress", (args: ProgressReport) => {
+                    // OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
+                    handleProgressMessage(args);
+                })
+            );
+            context.subscriptions.push(
+                langServer.onNotification("$/linkedAccountChanged", () => {
+                    views.refreshCloudTreeView();
+                })
+            );
+            stopListeningOnDidChangeState.dispose();
+        }
+    });
+    let disposable: Disposable = langServer.start();
+    registerRobocorpCodeCommands(C, { installErrorStubs: true });
+    views.registerViews(context);
+    registerDebugger(executableAndEnv.pythonExe);
+    context.subscriptions.push(disposable);
+
+    // i.e.: if we return before it's ready, the language server commands
+    // may not be available.
+    OUTPUT_CHANNEL.appendLine("Waiting for Robocorp Code (python) language server to finish activating...");
+    await langServer.onReady();
+    OUTPUT_CHANNEL.appendLine(
+        "Took: " + startLsTiming.getTotalElapsedAsStr() + " to initialize Robocorp Code Language Server."
+    );
+    OUTPUT_CHANNEL.appendLine("Robocorp Code extension ready. Took: " + timing.getTotalElapsedAsStr());
+
+    verifyRobotFrameworkInstalled();
 }
 
 export function deactivate(): Thenable<void> | undefined {
