@@ -412,6 +412,7 @@ async function cloudLogoutAndRefresh() {
 interface RobocorpCodeCommandsOpts {
     installErrorStubs: boolean;
 }
+
 function registerRobocorpCodeCommands(C: CommandRegistry, opts?: RobocorpCodeCommandsOpts) {
     if (opts && opts.installErrorStubs) {
         C.registerErrorStubs = true;
@@ -588,7 +589,7 @@ export async function activate(context: ExtensionContext) {
         }
     });
     let disposable: Disposable = langServer.start();
-    registerRobocorpCodeCommands(C, { installErrorStubs: true });
+    registerRobocorpCodeCommands(C);
     views.registerViews(context);
     registerDebugger(executableAndEnv.pythonExe);
     context.subscriptions.push(disposable);
