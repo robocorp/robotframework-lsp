@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <?eclipse-pydev version="1.0"?><pydev_project>
-        
+            
+    
     
     <pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python interpreter</pydev_property>
-        
+            
+    
     
     <pydev_property name="org.python.pydev.PYTHON_PROJECT_INTERPRETER">Default</pydev_property>
-        
+            
+    
     
     <pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
         <path>/${PROJECT_DIR_NAME}/src</path>
@@ -15,10 +18,13 @@
         <path>/${PROJECT_DIR_NAME}/src/robocorp_ls_core/libs/yaml_lib</path>
         <path>/${PROJECT_DIR_NAME}/src/robocorp_ls_core/libs/fsnotify_lib</path>
         <path>/${PROJECT_DIR_NAME}/src/robocorp_ls_core/libs/robocop_lib</path>
+        <path>/${PROJECT_DIR_NAME}/src/robocorp_ls_core/libs/robotidy_lib</path>
     </pydev_pathproperty>
-        
+            
+    
     
     <pydev_property name="org.python.pydev.PYTHON_ADDITIONAL_GRAMMAR_VALIDATION">3.7</pydev_property>
-        
+            
+
 
 </pydev_project>

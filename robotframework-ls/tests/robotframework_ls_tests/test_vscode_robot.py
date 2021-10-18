@@ -1,11 +1,17 @@
 import logging
 import os
-from robocorp_ls_core.protocols import ILanguageServerClient
-import pytest
-import threading
-from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 from pathlib import Path
+import threading
+
+import pytest
+
+from robocorp_ls_core.protocols import ILanguageServerClient
+from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_STOP
+from robotframework_ls.impl.robot_lsp_constants import (
+    OPTION_ROBOT_CODE_FORMATTER_ROBOTIDY,
+    OPTION_ROBOT_CODE_FORMATTER_BUILTIN_TIDY,
+)
 
 
 log = logging.getLogger(__name__)
@@ -548,13 +554,22 @@ def test_exit_with_parent_process_died(
     language_server_io.require_exit_messages = False
 
 
-def test_code_format_integrated(language_server, ws_root_path, data_regression):
+@pytest.mark.parametrize(
+    "formatter",
+    [OPTION_ROBOT_CODE_FORMATTER_ROBOTIDY, OPTION_ROBOT_CODE_FORMATTER_BUILTIN_TIDY],
+)
+def test_code_format_integrated(
+    language_server, ws_root_path, data_regression, formatter
+):
     language_server.initialize(ws_root_path, process_id=os.getpid())
     uri = "untitled:Untitled-1"
     language_server.open_doc(uri, 1)
+    language_server.settings({"settings": {"robot.codeFormatter": formatter}})
     language_server.change_doc(uri, 2, "***settings***\nDocumentation  Some doc")
     ret = language_server.request_source_format(uri)
-    data_regression.check(ret, basename="test_code_format_integrated_text_edits")
+    data_regression.check(
+        ret, basename="test_code_format_integrated_text_edits_" + formatter
+    )
 
     language_server.change_doc(uri, 3, "[Documentation]\n")
     ret = language_server.request_source_format(uri)

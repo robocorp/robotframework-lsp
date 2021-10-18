@@ -335,9 +335,18 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         return func
 
     def _threaded_code_format(self, text_document, options, monitor: IMonitor):
-        from robotframework_ls.impl.formatting import robot_source_format
         from robotframework_ls.impl.formatting import create_text_edit_from_diff
         from robocorp_ls_core.lsp import TextDocumentItem
+        import os.path
+        from robotframework_ls.impl.robot_lsp_constants import (
+            OPTION_ROBOT_CODE_FORMATTER,
+        )
+        from robotframework_ls.impl.robot_lsp_constants import (
+            OPTION_ROBOT_CODE_FORMATTER_ROBOTIDY,
+        )
+        from robotframework_ls.impl.robot_lsp_constants import (
+            OPTION_ROBOT_CODE_FORMATTER_BUILTIN_TIDY,
+        )
 
         text_document_item = TextDocumentItem(**text_document)
         text = text_document_item.text
@@ -356,7 +365,42 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             options = {}
         tab_size = options.get("tabSize", 4)
 
-        new_contents = robot_source_format(text, space_count=tab_size)
+        # Default for now is the builtin. This will probably be changed in the future.
+        formatter = self._config.get_setting(
+            OPTION_ROBOT_CODE_FORMATTER, str, OPTION_ROBOT_CODE_FORMATTER_BUILTIN_TIDY
+        )
+        if formatter not in (
+            OPTION_ROBOT_CODE_FORMATTER_ROBOTIDY,
+            OPTION_ROBOT_CODE_FORMATTER_BUILTIN_TIDY,
+        ):
+            log.critical(
+                f"Code formatter invalid: {formatter}. Please select one of: {OPTION_ROBOT_CODE_FORMATTER_ROBOTIDY}, {OPTION_ROBOT_CODE_FORMATTER_BUILTIN_TIDY}."
+            )
+            return []
+
+        if formatter == OPTION_ROBOT_CODE_FORMATTER_BUILTIN_TIDY:
+            from robotframework_ls.impl.formatting import robot_source_format
+
+            new_contents = robot_source_format(text, space_count=tab_size)
+
+        else:
+            from robocorp_ls_core.robotidy_wrapper import robot_tidy_source_format
+
+            ast = completion_context.get_ast()
+            path = completion_context.doc.path
+            dirname = "."
+            try:
+                os.stat(path)
+            except:
+                # It doesn't exist
+                ws = self._workspace
+                if ws is not None:
+                    dirname = ws.root_path
+            else:
+                dirname = os.path.dirname(path)
+
+            new_contents = robot_tidy_source_format(ast, dirname)
+
         if new_contents is None or new_contents == text:
             return []
         return [x.to_dict() for x in create_text_edit_from_diff(text, new_contents)]

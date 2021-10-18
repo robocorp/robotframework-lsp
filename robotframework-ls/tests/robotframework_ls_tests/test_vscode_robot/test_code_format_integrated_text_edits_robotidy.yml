@@ -1,0 +1,37 @@
+id: 4
+jsonrpc: '2.0'
+result:
+- newText: ' S'
+  range:
+    end:
+      character: 4
+      line: 0
+    start:
+      character: 3
+      line: 0
+- newText: ' '
+  range:
+    end:
+      character: 11
+      line: 0
+    start:
+      character: 11
+      line: 0
+- newText: '     '
+  range:
+    end:
+      character: 15
+      line: 1
+    start:
+      character: 15
+      line: 1
+- newText: '
+
+    '
+  range:
+    end:
+      character: 23
+      line: 1
+    start:
+      character: 23
+      line: 1
