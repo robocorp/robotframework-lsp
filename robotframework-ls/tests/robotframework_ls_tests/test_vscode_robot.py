@@ -567,8 +567,17 @@ def test_code_format_integrated(
     language_server.settings({"settings": {"robot.codeFormatter": formatter}})
     language_server.change_doc(uri, 2, "***settings***\nDocumentation  Some doc")
     ret = language_server.request_source_format(uri)
+
+    from robot import get_version
+
+    version = get_version(naked=True).split(".")[0]
+
+    basename = "test_code_format_integrated_text_edits_" + formatter
+    if formatter == OPTION_ROBOT_CODE_FORMATTER_ROBOTIDY:
+        basename += "_" + version
     data_regression.check(
-        ret, basename="test_code_format_integrated_text_edits_" + formatter
+        ret,
+        basename=basename,
     )
 
     language_server.change_doc(uri, 3, "[Documentation]\n")

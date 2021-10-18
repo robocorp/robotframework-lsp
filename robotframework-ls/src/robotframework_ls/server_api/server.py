@@ -384,6 +384,12 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             new_contents = robot_source_format(text, space_count=tab_size)
 
         else:
+            if not self._check_min_version((4, 0)):
+                log.critical(
+                    f"To use the robotidy formatter, at least Robot Framework 4 is needed. Found: {self.m_version()}"
+                )
+                return []
+
             from robocorp_ls_core.robotidy_wrapper import robot_tidy_source_format
 
             ast = completion_context.get_ast()
