@@ -1,0 +1,5 @@
+- col_offset: 0
+  end_col_offset: 37
+  end_lineno: 2
+  lineno: 1
+  source: my.resource

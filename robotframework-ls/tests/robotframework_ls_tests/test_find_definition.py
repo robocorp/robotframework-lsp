@@ -492,6 +492,19 @@ Dictionary Variable
     )
 
 
+def test_find_definition_curdir(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case_curdir", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("main.robot")
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    data_regression.check(
+        _definitions_to_data_regression(find_definition(completion_context))
+    )
+
+
 def test_variables_completions_recursive(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.find_definition import find_definition

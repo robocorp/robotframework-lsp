@@ -458,6 +458,10 @@ class CompletionContext(object):
 
         ret = BUILTIN_VARIABLES_RESOLVED.get(var_name, Sentinel.SENTINEL)
         if ret is Sentinel.SENTINEL:
+            if var_name == "CURDIR":
+                import os
+
+                return os.path.dirname(self._doc.path)
             log.info(*log_info)
             return value_if_not_found
         return ret
