@@ -84,9 +84,9 @@ def test_server(server_api_process_io: IRobotFrameworkApiClient, data_regression
 
     assert server_api_process_io.get_version() >= "3.2"
 
-    server_api_process_io.open("untitled", 1, "*** foo bar ***")
+    server_api_process_io.open("untitled.resource", 1, "*** foo bar ***")
 
-    diag = server_api_process_io.lint("untitled")["result"]
+    diag = server_api_process_io.lint("untitled.resource")["result"]
     data_regression.check(sort_diagnostics(diag), basename="errors")
 
 

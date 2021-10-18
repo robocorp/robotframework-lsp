@@ -11,8 +11,7 @@
   source: robocop
 - code: '0401'
   message: 'Robot Framework syntax error: Unrecognized section header ''*** Invalid
-    Invalid ***''. Valid sections: ''Settings'', ''Variables'', ''Test Cases'', ''Tasks'',
-    ''Keywords'' and ''Comments''.'
+    Invalid ***''. Valid sections: ''Settings'', ''Variables'', ''Keywords'' and ''Comments''.'
   range:
     end:
       character: 0
@@ -34,7 +33,7 @@
   severity: 2
   source: robocop
 - message: 'Unrecognized section header ''*** Invalid Invalid ***''. Valid sections:
-    ''Settings'', ''Variables'', ''Test Cases'', ''Tasks'', ''Keywords'' and ''Comments''.'
+    ''Settings'', ''Variables'', ''Keywords'' and ''Comments''.'
   range:
     end:
       character: 23

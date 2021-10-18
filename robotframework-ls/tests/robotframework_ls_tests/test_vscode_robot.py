@@ -15,7 +15,7 @@ def check_diagnostics(language_server, data_regression):
     from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
     from robotframework_ls_tests.fixtures import sort_diagnostics
 
-    uri = "untitled:Untitled-1"
+    uri = "untitled:Untitled-1.resource"
     message_matcher = language_server.obtain_pattern_message_matcher(
         {"method": "textDocument/publishDiagnostics"}
     )
@@ -95,7 +95,7 @@ def test_diagnostics_robocop_configuration_file(
     with open(config_file, "w") as stream:
         stream.write(
             """
---exclude missing-doc-testcase
+--exclude missing-doc-test-case
 --include missing-doc-suite
 """
         )

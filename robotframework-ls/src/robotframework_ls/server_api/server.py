@@ -133,6 +133,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             OPTION_ROBOT_LINT_ROBOCOP_ENABLED,
         )
         from robocorp_ls_core import uris
+        from robocorp_ls_core.lsp import Error
 
         try:
             from robotframework_ls.impl.ast_utils import collect_errors
@@ -181,17 +182,27 @@ class RobotFrameworkServerApi(PythonLanguageServer):
                             project_root, ast, uris.to_fs_path(doc_uri), source
                         )
                     )
-            except Exception:
+            except Exception as e:
                 log.exception(
                     "Error collecting Robocop errors (possibly an unsupported Robocop version is installed)."
+                )
+                lsp_diagnostics.append(
+                    Error(
+                        f"Error collecting Robocop errors: {e}", (0, 0), (1, 0)
+                    ).to_lsp_diagnostic()
                 )
 
             return lsp_diagnostics
         except JsonRpcRequestCancelled:
             raise JsonRpcRequestCancelled("Lint cancelled (inside lint)")
-        except:
+        except Exception as e:
             log.exception("Error collecting errors.")
-            return []
+            ret = [
+                Error(
+                    f"Error collecting Robocop errors: {e}", (0, 0), (1, 0)
+                ).to_lsp_diagnostic()
+            ]
+            return ret
 
     def m_complete_all(self, doc_uri, line, col):
         func = partial(self._threaded_complete_all, doc_uri, line, col)

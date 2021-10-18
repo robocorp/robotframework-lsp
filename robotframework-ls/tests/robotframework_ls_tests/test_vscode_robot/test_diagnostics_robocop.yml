@@ -42,25 +42,14 @@
       line: 2
   severity: 2
   source: robocop
-- code: 0801
-  message: Multiple test cases with name "Test" in suite
-  range:
-    end:
-      character: 0
-      line: 2
-    start:
-      character: 0
-      line: 2
-  severity: 1
-  source: robocop
 - code: '1001'
   message: Trailing whitespace at the end of line
   range:
     end:
-      character: 4
+      character: 3
       line: 4
     start:
-      character: 4
+      character: 3
       line: 4
   severity: 2
   source: robocop
@@ -76,7 +65,7 @@
   severity: 2
   source: robocop
 - code: 0801
-  message: Multiple test cases with name "Test" in suite
+  message: Multiple test cases with name "Test" (first occurrence in line 3)
   range:
     end:
       character: 0

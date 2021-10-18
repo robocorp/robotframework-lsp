@@ -28,13 +28,16 @@ Every rule has a `unique id` made of 4 digits where first 2 are `checker id` whi
 configurations etc.). You can optionally configure rule severity or other parameters.
 """
 import inspect
-from robocop.rules import Rule
-from robocop.exceptions import DuplicatedRuleError
-from robocop.utils import modules_in_current_dir, modules_from_paths
+
 try:
     from robot.api.parsing import ModelVisitor
 except ImportError:
     from robot.parsing.model.visitor import ModelVisitor
+from robot.utils import FileReader
+
+from robocop.exceptions import DuplicatedRuleError
+from robocop.rules import Rule
+from robocop.utils import modules_in_current_dir, modules_from_paths
 
 
 class BaseChecker:
@@ -53,10 +56,20 @@ class BaseChecker:
         for key, value in rules.items():
             rule = Rule(key, value)
             if rule.name in self.rules_map:
-                raise DuplicatedRuleError('name', rule.name, self, self)
+                raise DuplicatedRuleError("name", rule.name, self, self)
             self.rules_map[rule.name] = rule
 
-    def report(self, rule, *args, node=None, lineno=None, col=None, end_lineno=None, end_col=None):
+    def report(
+        self,
+        rule,
+        *args,
+        node=None,
+        lineno=None,
+        col=None,
+        end_lineno=None,
+        end_col=None,
+        ext_disablers=None,
+    ):
         if rule not in self.rules_map:
             raise ValueError(f"Missing definition for message with name {rule}")
         message = self.rules_map[rule].prepare_message(
@@ -66,7 +79,8 @@ class BaseChecker:
             lineno=lineno,
             col=col,
             end_lineno=end_lineno,
-            end_col=end_col
+            end_col=end_col,
+            ext_disablers=ext_disablers,
         )
         if message.enabled:
             self.issues.append(message)
@@ -74,8 +88,9 @@ class BaseChecker:
     def configure(self, param, value):
         self.__dict__[param] = value
 
+
 class VisitorChecker(BaseChecker, ModelVisitor):  # noqa
-    type = 'visitor_checker'
+    type = "visitor_checker"
 
     def scan_file(self, ast_model, filename, in_memory_content, templated=False):
         self.issues = []
@@ -89,12 +104,12 @@ class VisitorChecker(BaseChecker, ModelVisitor):  # noqa
         return self.issues
 
     def visit_File(self, node):  # noqa
-        """ Perform generic ast visit on file node. """
+        """Perform generic ast visit on file node."""
         self.generic_visit(node)
 
 
 class RawFileChecker(BaseChecker):  # noqa
-    type = 'rawfile_checker'
+    type = "rawfile_checker"
 
     def scan_file(self, ast_model, filename, in_memory_content, templated=False):
         self.issues = []
@@ -108,16 +123,14 @@ class RawFileChecker(BaseChecker):  # noqa
         return self.issues
 
     def parse_file(self):
-        """ Read file line by line and for each call check_line method. """
+        """Read file line by line and for each call check_line method."""
         if self.lines is not None:
-            self._parse_lines(self.lines)
+            for lineno, line in enumerate(self.lines):
+                self.check_line(line, lineno + 1)
         else:
-            with open(self.source, encoding='utf-8') as file:
-                self._parse_lines(file)
-
-    def _parse_lines(self, lines):
-        for lineno, line in enumerate(lines):
-            self.check_line(line, lineno + 1)
+            with FileReader(self.source) as file_reader:
+                for lineno, line in enumerate(file_reader.readlines()):
+                    self.check_line(line, lineno + 1)
 
     def check_line(self, line, lineno):
         raise NotImplementedError
@@ -132,7 +145,7 @@ def init(linter):
     for module in get_modules(linter):
         classes = inspect.getmembers(module, inspect.isclass)
         for checker in classes:
-            if issubclass(checker[1], BaseChecker) and hasattr(checker[1], 'rules') and checker[1].rules:
+            if issubclass(checker[1], BaseChecker) and hasattr(checker[1], "rules") and checker[1].rules:
                 linter.register_checker(checker[1]())
 
 
@@ -140,16 +153,16 @@ def get_docs():
     for module in modules_in_current_dir(__file__, __name__):
         classes = inspect.getmembers(module, inspect.isclass)
         for checker in classes:
-            if hasattr(checker[1], 'rules') and checker[1].rules:
+            if hasattr(checker[1], "rules") and checker[1].rules:
                 yield checker[1]
 
 
 def get_rules_for_atest():
     for module in modules_in_current_dir(__file__, __name__):
-        module_name = module.__name__.split('.')[-1]
+        module_name = module.__name__.split(".")[-1]
         classes = inspect.getmembers(module, inspect.isclass)
         for checker in classes:
-            if not (hasattr(checker[1], 'rules') and checker[1].rules):
+            if not (hasattr(checker[1], "rules") and checker[1].rules):
                 continue
             for rule_body in checker[1].rules.values():
                 yield module_name, rule_body[0]

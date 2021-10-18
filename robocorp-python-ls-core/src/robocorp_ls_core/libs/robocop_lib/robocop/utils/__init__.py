@@ -8,6 +8,7 @@ from robocop.utils.misc import (
     modules_from_paths,
     modules_in_current_dir,
     normalize_robot_name,
+    normalize_robot_var_name,
     IS_RF4,
     DISABLED_IN_4,
     ENABLED_IN_4,
@@ -17,5 +18,9 @@ from robocop.utils.misc import (
     parse_assignment_sign_type,
     token_col,
     RecommendationFinder,
-    is_suite_templated
+    is_suite_templated,
+    last_non_empty_line,
+    remove_robot_vars,
+    find_robot_vars,
+    pattern_type,
 )
