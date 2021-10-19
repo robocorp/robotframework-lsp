@@ -7,6 +7,7 @@ pip install watchdog==0.10.3 --target .
 Then:
 - Remove bin
 - commit the code
+- Verify if the license brought in from the libraries downloaded are OK
 
 Then, go on to:
 

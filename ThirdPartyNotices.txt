@@ -391,4 +391,6 @@ From: https://github.com/MarketSquare/robotframework-robocop
    See the License for the specific language governing permissions and
    limitations under the License.
    
-20) All third party packages in node_modules folders are licensed under the licenses specified in those packages.
+20) All third party javascript packages in node_modules folders are licensed under the licenses specified in those packages.
+   
+21) All third party python packages in robocorp-python-ls-core/src/robocorp_ls_core/libs folders are licensed under the licenses specified in those packages.
