@@ -7,6 +7,7 @@ import { FSEntry, RobotEntry, treeViewIdToTreeDataProvider, treeViewIdToTreeView
 import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE } from "./robocorpViews";
 import { getCurrRobotDir, RobotSelectionTreeDataProviderBase } from "./viewsRobotSelection";
 import { resolveInterpreter } from "./activities";
+import { feedback } from "./rcc";
 
 const WORK_ITEM_TEMPLATE = `[
   {
@@ -84,6 +85,9 @@ async function createNewWorkItem(workItemInfo: WorkItemsInfo, workItemName: stri
         } catch (err) {
             // ok, file does not exist
         }
+        // No need to await.
+        feedback("vscode.workitem.input.created");
+
         await vscode.workspace.fs.createDirectory(vscode.Uri.file(targetFolder));
         await vscode.workspace.fs.writeFile(fileUri, Buffer.from(WORK_ITEM_TEMPLATE));
         vscode.window.showTextDocument(fileUri);

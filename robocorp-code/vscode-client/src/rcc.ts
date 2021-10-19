@@ -413,6 +413,12 @@ interface IEnvInfo {
     rccLocation: string;
 }
 
+export async function feedback(name: string) {
+    const rccLocation = await getRccLocation();
+    let args: string[] = ["feedback", "metric", "-t", "vscode", "-n", name, "-v", "+1"];
+    await execFilePromise(rccLocation, args, {}, true);
+}
+
 /**
  * This function creates the base holotree space with RCC and then returns its info
  * to start up the language server.

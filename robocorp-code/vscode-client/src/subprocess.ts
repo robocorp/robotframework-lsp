@@ -37,9 +37,12 @@ function getDefaultCwd(): string {
 export async function execFilePromise(
     command: string,
     args: string[],
-    options: ExecFileOptions
+    options: ExecFileOptions,
+    silent?: boolean
 ): Promise<ExecFileReturn> {
-    OUTPUT_CHANNEL.appendLine("Executing: " + command + "," + args);
+    if (!silent) {
+        OUTPUT_CHANNEL.appendLine("Executing: " + command + "," + args);
+    }
     try {
         if (!options.cwd) {
             options.cwd = getDefaultCwd();

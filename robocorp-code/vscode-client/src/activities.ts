@@ -23,6 +23,7 @@ import {
     showSelectOneStrQuickPick,
 } from "./ask";
 import { refreshCloudTreeView } from "./views";
+import { feedback } from "./rcc";
 
 export async function cloudLogin(): Promise<boolean> {
     let loggedIn: boolean;
@@ -859,6 +860,10 @@ export async function updateLaunchEnvironment(args): Promise<Map<string, string>
         if (!selectedItem || selectedItem.label === noWorkItemLabel) {
             return newEnv;
         }
+
+        // No need to await.
+        feedback("vscode.workitem.input.selected");
+
         newEnv["RPA_INPUT_WORKITEM_PATH"] = selectedItem.action;
     }
 
