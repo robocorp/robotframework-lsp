@@ -51,41 +51,33 @@ TREE_VIEW_CONTAINERS = [
                     # See: https://code.visualstudio.com/api/references/contribution-points#contributes.menus
                     # for targets
                     "view/title": [
-                        Menu(
-                            "robocorp.robotsViewTaskRun",
-                            MenuGroup.NAVIGATION,
-                            "robocorp-code:single-task-selected",
-                        ),
-                        Menu(
-                            "robocorp.robotsViewTaskDebug",
-                            MenuGroup.NAVIGATION,
-                            "robocorp-code:single-task-selected",
-                        ),
-                        Menu(
-                            "robocorp.openRobotTreeSelection",
-                            MenuGroup.NAVIGATION,
-                            "robocorp-code:single-robot-selected",
-                        ),
-                        Menu(
-                            "robocorp.cloudUploadRobotTreeSelection",
-                            MenuGroup.NAVIGATION,
-                            "robocorp-code:single-robot-selected",
-                        ),
-                        Menu(
-                            "robocorp.rccTerminalCreateRobotTreeSelection",
-                            MenuGroup.NAVIGATION,
-                            "robocorp-code:single-robot-selected",
-                        ),
                         Menu("robocorp.refreshRobotsView", MenuGroup.NAVIGATION),
                     ],
                     "view/item/context": [
                         Menu(
+                            "robocorp.robotsViewTaskRun",
+                            MenuGroup.INLINE,
+                            "viewItem == taskItem",
+                        ),
+                        Menu(
+                            "robocorp.robotsViewTaskDebug",
+                            MenuGroup.INLINE,
+                            "viewItem == taskItem",
+                        ),
+                        Menu(
                             "robocorp.openRobotTreeSelection",
-                            when="robocorp-code:single-robot-selected",
+                            MenuGroup.INLINE,
+                            "viewItem == robotItem",
                         ),
                         Menu(
                             "robocorp.cloudUploadRobotTreeSelection",
-                            when="robocorp-code:single-robot-selected",
+                            MenuGroup.INLINE,
+                            "viewItem == robotItem",
+                        ),
+                        Menu(
+                            "robocorp.rccTerminalCreateRobotTreeSelection",
+                            MenuGroup.INLINE,
+                            "viewItem == robotItem",
                         ),
                     ],
                 },

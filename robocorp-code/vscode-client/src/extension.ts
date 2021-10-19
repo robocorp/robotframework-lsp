@@ -93,7 +93,7 @@ import {
     newWorkItemInWorkItemsTree,
     openWorkItemHelp,
 } from "./viewsWorkItems";
-import { LocatorEntry } from "./viewsCommon";
+import { LocatorEntry, RobotEntry } from "./viewsCommon";
 import {
     ROBOCORP_CLOUD_LOGIN,
     ROBOCORP_CLOUD_LOGOUT,
@@ -427,8 +427,8 @@ function registerRobocorpCodeCommands(C: CommandRegistry, opts?: RobocorpCodeCom
     C.register(ROBOCORP_SET_PYTHON_INTERPRETER, () => setPythonInterpreterFromRobotYaml());
     C.register(ROBOCORP_REFRESH_ROBOTS_VIEW, () => views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE));
     C.register(ROBOCORP_REFRESH_CLOUD_VIEW, () => views.refreshCloudTreeView());
-    C.register(ROBOCORP_ROBOTS_VIEW_TASK_RUN, () => views.runSelectedRobot(true));
-    C.register(ROBOCORP_ROBOTS_VIEW_TASK_DEBUG, () => views.runSelectedRobot(false));
+    C.register(ROBOCORP_ROBOTS_VIEW_TASK_RUN, (entry: RobotEntry) => views.runSelectedRobot(true, entry));
+    C.register(ROBOCORP_ROBOTS_VIEW_TASK_DEBUG, (entry: RobotEntry) => views.runSelectedRobot(false, entry));
     C.register(ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR, (locator?: LocatorEntry) =>
         inspector.openRobocorpInspector(undefined, locator)
     );
@@ -438,9 +438,13 @@ function registerRobocorpCodeCommands(C: CommandRegistry, opts?: RobocorpCodeCom
         copySelectedToClipboard(locator)
     );
     C.register(ROBOCORP_REMOVE_LOCATOR_FROM_JSON, (locator?: LocatorEntry) => removeLocator(locator));
-    C.register(ROBOCORP_OPEN_ROBOT_TREE_SELECTION, () => views.openRobotTreeSelection());
-    C.register(ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION, () => views.cloudUploadRobotTreeSelection());
-    C.register(ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION, () => views.createRccTerminalTreeSelection());
+    C.register(ROBOCORP_OPEN_ROBOT_TREE_SELECTION, (robot: RobotEntry) => views.openRobotTreeSelection(robot));
+    C.register(ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION, (robot: RobotEntry) =>
+        views.cloudUploadRobotTreeSelection(robot)
+    );
+    C.register(ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION, (robot: RobotEntry) =>
+        views.createRccTerminalTreeSelection(robot)
+    );
     C.register(ROBOCORP_RCC_TERMINAL_NEW, () => askAndCreateRccTerminal());
     C.register(ROBOCORP_REFRESH_ROBOT_CONTENT_VIEW, () => views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE));
     C.register(ROBOCORP_NEW_FILE_IN_ROBOT_CONTENT_VIEW, newFileInRobotContentTree);

@@ -193,10 +193,14 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
     }
 
     getTreeItem(element: RobotEntry): vscode.TreeItem {
-        const treeItem = new vscode.TreeItem(
-            element.label,
-            element.taskName ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed
-        );
+        const isTask: boolean = element.type === RobotEntryType.Task;
+        const treeItem = new vscode.TreeItem(element.label, vscode.TreeItemCollapsibleState.Collapsed);
+        if (element.type === RobotEntryType.Robot) {
+            treeItem.contextValue = "robotItem";
+        } else if (isTask) {
+            treeItem.contextValue = "taskItem";
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        }
         treeItem.iconPath = new vscode.ThemeIcon(element.iconPath);
         return treeItem;
     }
@@ -309,33 +313,41 @@ export function refreshTreeView(treeViewId: string) {
     }
 }
 
-export function openRobotTreeSelection() {
-    let robot: RobotEntry = getSelectedRobot();
+export function openRobotTreeSelection(robot?: RobotEntry) {
+    if (!robot) {
+        robot = getSelectedRobot();
+    }
     if (robot) {
         vscode.window.showTextDocument(robot.uri);
     }
 }
 
-export function cloudUploadRobotTreeSelection() {
-    let robot: RobotEntry = getSelectedRobot();
+export function cloudUploadRobotTreeSelection(robot?: RobotEntry) {
+    if (!robot) {
+        robot = getSelectedRobot();
+    }
     if (robot) {
         uploadRobot(robot.robot);
     }
 }
 
-export async function createRccTerminalTreeSelection() {
-    let robot: RobotEntry = getSelectedRobot();
+export async function createRccTerminalTreeSelection(robot?: RobotEntry) {
+    if (!robot) {
+        robot = getSelectedRobot();
+    }
     if (robot) {
         createRccTerminal(robot.robot);
     }
 }
 
-export function runSelectedRobot(noDebug: boolean) {
-    let element: RobotEntry = getSelectedRobot(
-        "Unable to make launch (Robot task not selected in Robots Tree).",
-        "Unable to make launch -- only 1 task must be selected."
-    );
-    runRobotRCC(noDebug, element.robot.filePath, element.taskName);
+export function runSelectedRobot(noDebug: boolean, taskRobotEntry?: RobotEntry) {
+    if (!taskRobotEntry) {
+        taskRobotEntry = getSelectedRobot(
+            "Unable to make launch (Robot task not selected in Robots Tree).",
+            "Unable to make launch -- only 1 task must be selected."
+        );
+    }
+    runRobotRCC(noDebug, taskRobotEntry.robot.filePath, taskRobotEntry.taskName);
 }
 
 export function registerViews(context: ExtensionContext) {

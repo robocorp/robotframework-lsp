@@ -443,31 +443,6 @@
         "menus": {
             "view/title": [
                 {
-                    "command": "robocorp.robotsViewTaskRun",
-                    "when": "view == robocorp-robots-tree && robocorp-code:single-task-selected",
-                    "group": "navigation"
-                },
-                {
-                    "command": "robocorp.robotsViewTaskDebug",
-                    "when": "view == robocorp-robots-tree && robocorp-code:single-task-selected",
-                    "group": "navigation"
-                },
-                {
-                    "command": "robocorp.openRobotTreeSelection",
-                    "when": "view == robocorp-robots-tree && robocorp-code:single-robot-selected",
-                    "group": "navigation"
-                },
-                {
-                    "command": "robocorp.cloudUploadRobotTreeSelection",
-                    "when": "view == robocorp-robots-tree && robocorp-code:single-robot-selected",
-                    "group": "navigation"
-                },
-                {
-                    "command": "robocorp.rccTerminalCreateRobotTreeSelection",
-                    "when": "view == robocorp-robots-tree && robocorp-code:single-robot-selected",
-                    "group": "navigation"
-                },
-                {
                     "command": "robocorp.refreshRobotsView",
                     "when": "view == robocorp-robots-tree",
                     "group": "navigation"
@@ -510,12 +485,29 @@
             ],
             "view/item/context": [
                 {
+                    "command": "robocorp.robotsViewTaskRun",
+                    "when": "view == robocorp-robots-tree && viewItem == taskItem",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.robotsViewTaskDebug",
+                    "when": "view == robocorp-robots-tree && viewItem == taskItem",
+                    "group": "inline"
+                },
+                {
                     "command": "robocorp.openRobotTreeSelection",
-                    "when": "view == robocorp-robots-tree && robocorp-code:single-robot-selected"
+                    "when": "view == robocorp-robots-tree && viewItem == robotItem",
+                    "group": "inline"
                 },
                 {
                     "command": "robocorp.cloudUploadRobotTreeSelection",
-                    "when": "view == robocorp-robots-tree && robocorp-code:single-robot-selected"
+                    "when": "view == robocorp-robots-tree && viewItem == robotItem",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.rccTerminalCreateRobotTreeSelection",
+                    "when": "view == robocorp-robots-tree && viewItem == robotItem",
+                    "group": "inline"
                 },
                 {
                     "command": "robocorp.newFileInRobotContentView",
