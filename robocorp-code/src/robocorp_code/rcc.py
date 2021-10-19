@@ -730,8 +730,24 @@ class Rcc(object):
                                 log.exception(
                                     f"Unable to load environment information from {env_json_path}."
                                 )
+
+                        if not isinstance(environ, dict):
+                            try:
+                                raise RuntimeError(
+                                    f"Expected environment to be a dict. Found: {type(environ)}"
+                                )
+                            except RuntimeError as e:
+                                log.exception()
+                                proceed_to_create_env = True
+                                break
+
+                        new_env = {}
+                        for key, val in environ.items():
+                            # Just making sure we have a Dict[str, str]
+                            new_env[str(key)] = str(val)
+
                         return ActionResult(
-                            True, None, RobotInfoEnv(environ, space_info)
+                            True, None, RobotInfoEnv(new_env, space_info)
                         )
                 except:
                     log.exception(
@@ -809,8 +825,8 @@ class Rcc(object):
 
             environ = {}
             for entry in json.loads(contents):
-                key = entry["key"]
-                value = entry["value"]
+                key = str(entry["key"])
+                value = str(entry["value"])
                 if key:
                     environ[key] = value
 
@@ -841,7 +857,8 @@ class Rcc(object):
                     env_json_contents = json.loads(
                         env_json_path.read_text("utf-8", "replace")
                     )
-                    environ.update(env_json_contents)
+                    for key, val in env_json_contents.items():
+                        environ[str(key)] = str(val)
                 except:
                     log.exception(f"Error loading json from: {env_json_path}")
 

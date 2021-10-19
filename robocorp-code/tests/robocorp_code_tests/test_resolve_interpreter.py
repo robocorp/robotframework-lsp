@@ -2,6 +2,7 @@ from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 import weakref
 from robocorp_ls_core.protocols import IConfigProvider
 import os.path
+import io
 
 
 def test_resolve_interpreter_relocate_robot_root(
@@ -14,6 +15,7 @@ def test_resolve_interpreter_relocate_robot_root(
     from robocorp_ls_core.constants import NULL
     from robocorp_ls_core import uris
     from pathlib import Path
+    from robocorp_ls_core.robotframework_log import configure_logger
 
     pm = PluginManager()
     pm.set_instance(EPConfigurationProvider, config_provider)
@@ -27,9 +29,14 @@ def test_resolve_interpreter_relocate_robot_root(
     interpreter_info1 = resolve_interpreter.get_interpreter_info_for_doc_uri(
         uris.from_fs_path(str(path1))
     )
-    interpreter_info2 = resolve_interpreter.get_interpreter_info_for_doc_uri(
-        uris.from_fs_path(str(path2))
-    )
+
+    string_io = io.StringIO()
+    with configure_logger("", 0, string_io):
+        # i.e.: Don't show the error loading the broken env.json from robot3a.
+        interpreter_info2 = resolve_interpreter.get_interpreter_info_for_doc_uri(
+            uris.from_fs_path(str(path2))
+        )
+
     assert interpreter_info1
     assert interpreter_info2
 
@@ -37,6 +44,11 @@ def test_resolve_interpreter_relocate_robot_root(
     environ2 = interpreter_info2.get_environ()
     assert environ1
     assert environ2
+
+    assert "SomeIntVar" not in environ2
+    assert environ1["SomeIntVar"] == "1"
+    assert environ1["SomeStrVar"] == "1"
+    assert environ1["SomeListVar"] == "['1']"
 
     assert environ1["ROBOT_ROOT"] != environ2["ROBOT_ROOT"]
     for val in environ2:
