@@ -724,6 +724,11 @@ async function isLongPathSupportEnabledOnWindows(rccLocation: string): Promise<b
 }
 
 async function verifyLongPathSupportOnWindows(rccLocation: string): Promise<boolean> {
+    if (process.env.ROBOCORP_OVERRIDE_SYSTEM_REQUIREMENTS) {
+        // i.e.: When set we do not try to check (this flag makes "rcc configure longpaths"
+        // return an error).
+        return true;
+    }
     if (process.platform == "win32") {
         while (true) {
             let enabled: boolean = await isLongPathSupportEnabledOnWindows(rccLocation);
