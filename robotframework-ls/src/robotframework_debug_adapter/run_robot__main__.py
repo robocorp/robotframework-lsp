@@ -131,7 +131,7 @@ class _RobotTargetComm(threading.Thread):
             args=(write_to, self._write_queue, "write to dap", True),
             name="Write from robot to dap (_RobotTargetComm)",
         )
-        writer.setDaemon(True)
+        writer.daemon = True
 
         reader = self._reader_thread = threading.Thread(
             target=reader_thread,
@@ -144,7 +144,7 @@ class _RobotTargetComm(threading.Thread):
             ),
             name="Read from dap to robot (_RobotTargetComm)",
         )
-        reader.setDaemon(True)
+        reader.daemon = True
 
         if mark_as_pydevd_threads:
             import pydevd

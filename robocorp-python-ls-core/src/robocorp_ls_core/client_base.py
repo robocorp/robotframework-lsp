@@ -164,7 +164,7 @@ def wait_for_message_matchers(
 class _ReaderThread(threading.Thread):
     def __init__(self, reader, on_received_message=None):
         threading.Thread.__init__(self)
-        self.setDaemon(True)
+        self.daemon = True
         self.reader = reader
         self._lock = threading.Lock()
         self._finished = False

@@ -71,8 +71,8 @@ def start_server_process(args=(), python_exe=None, env=None, cwd=None):
     )
 
     t = threading.Thread(target=_stderr_reader, args=(language_server_process.stderr,))
-    t.setName("Stderr from RfInteractiveServerAPI (%s)" % (args,))
-    t.setDaemon(True)
+    t.name = "Stderr from RfInteractiveServerAPI (%s)" % (args,)
+    t.daemon = True
     t.start()
 
     return language_server_process
