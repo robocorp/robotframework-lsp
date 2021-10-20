@@ -760,9 +760,9 @@ export async function createRobot() {
     }
 }
 
-export async function updateLaunchEnvironment(args): Promise<Map<string, string>> {
+export async function updateLaunchEnvironment(args): Promise<{ [key: string]: string } | "cancelled"> {
     let robot = args["targetRobot"];
-    let environment: Map<string, string> = args["env"];
+    let environment: { [key: string]: string } = args["env"];
     if (!robot) {
         throw new Error("robot argument is required.");
     }
@@ -820,7 +820,7 @@ export async function updateLaunchEnvironment(args): Promise<Map<string, string>
     // If we have found the robot, we should have the result and thus we should always set the
     // RPA_OUTPUT_WORKITEM_PATH (even if we don't have any input, we'll set to where we want
     // to save items).
-    let newEnv: Map<string, string> = { ...environment };
+    let newEnv: { [key: string]: string } = { ...environment };
 
     newEnv["RPA_OUTPUT_WORKITEM_PATH"] = result.new_output_workitem_path;
     newEnv["RPA_WORKITEMS_ADAPTER"] = "RPA.Robocorp.WorkItems.FileAdapter";
@@ -857,7 +857,10 @@ export async function updateLaunchEnvironment(args): Promise<Map<string, string>
             items,
             "Please select the work item input to be used by RPA.Robocorp.WorkItems."
         );
-        if (!selectedItem || selectedItem.label === noWorkItemLabel) {
+        if (!selectedItem) {
+            return "cancelled";
+        }
+        if (selectedItem.label === noWorkItemLabel) {
             return newEnv;
         }
 

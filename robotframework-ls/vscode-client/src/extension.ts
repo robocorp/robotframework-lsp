@@ -155,10 +155,16 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
             }
             // Also, overridde env variables in the launch config.
             try {
-                debugConfiguration.env = await commands.executeCommand("robocorp.updateLaunchEnv", {
+                let newEnv: { [key: string]: string } | 'cancelled' = await commands.executeCommand("robocorp.updateLaunchEnv", {
                     "targetRobot": targetRobot,
                     "env": debugConfiguration.env,
                 });
+                if(newEnv == 'cancelled'){
+                    OUTPUT_CHANNEL.appendLine('Launch cancelled');
+                    return undefined;
+                }
+
+                debugConfiguration.env = newEnv;
             } catch (error) {
                 // The command may not be available.
             }

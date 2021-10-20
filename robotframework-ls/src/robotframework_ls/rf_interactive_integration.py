@@ -148,6 +148,10 @@ class _RfInterpretersManager:
                         )
                         try:
                             new_env = command_future.result()
+                            if new_env == "cancelled":
+                                return ActionResult(
+                                    False, message="Launch cancelled"
+                                ).as_dict()
                         except:
                             log.exception(
                                 "Unable to execute workspace command from the extension."
