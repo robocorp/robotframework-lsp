@@ -37,6 +37,58 @@ def setup(tmpdir):
     rf_interpreter_server_manager.interpreter_stop()
 
 
+def test_robot_pythonpath(setup: _Setup, tmpdir):
+    received_messages = setup.received_messages
+    rf_interpreter_server_manager = setup.rf_interpreter_server_manager
+
+    config = rf_interpreter_server_manager.config
+
+    folder = tmpdir.join("some áéíóú folder")
+    folder.mkdir()
+
+    my_module = folder.join("my_module.py")
+    my_module.write_text(
+        """
+def some_method():
+    return 'Some Method Executed'
+""",
+        "utf-8",
+    )
+
+    config.update({"robot.pythonpath": [str(folder)]})
+
+    result = rf_interpreter_server_manager.interpreter_start(setup.uri)
+    assert result["success"], f"Found: {result}"
+
+    del received_messages[:]
+
+    result = rf_interpreter_server_manager.interpreter_evaluate(
+        """
+*** Settings ***
+Library    my_module.py
+"""
+    )
+    assert result["success"], f"Found: {result}"
+    del received_messages[:]
+
+    result = rf_interpreter_server_manager.interpreter_evaluate(
+        """
+*** Task ***
+Some task
+    ${x}=    Some Method
+    Log    ${x}     console=True
+"""
+    )
+    assert result["success"], f"Found: {result}"
+    assert received_messages == [
+        {
+            "jsonrpc": "2.0",
+            "method": "interpreter/output",
+            "params": {"output": "Some Method Executed\n", "category": "stdout"},
+        }
+    ]
+
+
 def test_server_basic(setup: _Setup):
     received_messages = setup.received_messages
     rf_interpreter_server_manager = setup.rf_interpreter_server_manager

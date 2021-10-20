@@ -98,6 +98,7 @@ class RfInterpreterServerManager:
     def _get_environ(self) -> Dict[str, str]:
         from robotframework_interactive.server.rf_interpreter_ls_config import (
             OPTION_ROBOT_PYTHON_ENV,
+            OPTION_ROBOT_PYTHONPATH,
         )
 
         with self._lock_api_client:
@@ -114,6 +115,30 @@ class RfInterpreterServerManager:
                 )
                 for key, val in env_in_settings.items():
                     env[str(key)] = str(val)
+
+                pythonpath_entries = config.get_setting(
+                    OPTION_ROBOT_PYTHONPATH, list, []
+                )
+                if pythonpath_entries:
+                    # if robot.pythonpath is defined, append those entries to
+                    # the PYTHONPATH env variable when starting the interactive
+                    # console.
+                    current_pythonpath = env.get("PYTHONPATH", "")
+                    if not current_pythonpath:
+                        env["PYTHONPATH"] = os.pathsep.join(pythonpath_entries)
+                    else:
+                        existing = set(current_pythonpath.split(os.pathsep))
+                        env["PYTHONPATH"] = (
+                            current_pythonpath
+                            + os.pathsep
+                            + os.pathsep.join(
+                                (
+                                    str(x)
+                                    for x in pythonpath_entries
+                                    if x not in existing
+                                )
+                            )
+                        )
             else:
                 log.warning("self._config not set in %s" % (self.__class__,))
             return env

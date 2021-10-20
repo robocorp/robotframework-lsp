@@ -28,6 +28,10 @@ def apply_interpreter_info_to_config(
         )
         if additional_pythonpath_entries:
             overridden_settings[OPTION_ROBOT_PYTHONPATH] = additional_pythonpath_entries
+        else:
+            # If we're applying the interpreter info, the pythonpath should be given
+            # by it and if not available it should be overridden.
+            overridden_settings[OPTION_ROBOT_PYTHONPATH] = []
 
         config.set_override_settings(overridden_settings)
     else:
