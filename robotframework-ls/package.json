@@ -411,7 +411,9 @@
     "scripts": {
         "vscode:prepublish": "cd vscode-client && npm run compile && cd ..",
         "compile": "cd vscode-client && tsc -p ./ && cd ..",
-        "watch": "cd vscode-client && tsc -watch -p ./ && cd .."
+        "watch": "cd vscode-client && tsc -watch -p ./ && cd ..",
+        "prettier": "npx prettier -c vscode-client/**/*.ts",
+        "prettier-fix": "npx prettier -w vscode-client/**/*.ts"
     },
     "dependencies": {
         "path-exists": "^4.0.0",
