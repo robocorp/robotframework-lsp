@@ -261,14 +261,17 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
         // Resolve environment
         let env = interpreter.environ;
         try {
-            let newEnv: { [key: string]: string } | 'cancelled' = await commands.executeCommand(ROBOCORP_UPDATE_LAUNCH_ENV, {
-                "targetRobot": debugConfiguration.robot,
-                "env": env,
-            });
-            if(newEnv === 'cancelled'){
-                OUTPUT_CHANNEL.appendLine('Launch cancelled');
+            let newEnv: { [key: string]: string } | "cancelled" = await commands.executeCommand(
+                ROBOCORP_UPDATE_LAUNCH_ENV,
+                {
+                    "targetRobot": debugConfiguration.robot,
+                    "env": env,
+                }
+            );
+            if (newEnv === "cancelled") {
+                OUTPUT_CHANNEL.appendLine("Launch cancelled");
                 return;
-            }else{
+            } else {
                 env = newEnv;
             }
         } catch (error) {

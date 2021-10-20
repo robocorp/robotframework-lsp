@@ -160,7 +160,7 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
                     "env": debugConfiguration.env,
                 });
                 if(newEnv == 'cancelled'){
-                    OUTPUT_CHANNEL.appendLine('Launch cancelled');
+                    OUTPUT_CHANNEL.appendLine("Launch cancelled");
                     return undefined;
                 }
 
