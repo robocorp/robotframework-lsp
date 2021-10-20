@@ -18,7 +18,7 @@ from robot.version import VERSION
 from robocop.rules import RuleSeverity
 from robocop.exceptions import InvalidExternalCheckerError
 
-IS_RF4 = VERSION.startswith("4")  # FIXME: We need better version matching - for 5.0.0
+IS_RF4 = int(VERSION.split(".")[0]) >= 4
 DISABLED_IN_4 = frozenset(("nested-for-loop", "invalid-comment"))
 ENABLED_IN_4 = frozenset(
     (
@@ -45,10 +45,16 @@ def modules_from_paths(paths):
         if path_object.exists():
             if path_object.is_dir():
                 yield from modules_from_paths(
-                    [file for file in path_object.iterdir() if "__pycache__" not in str(file)]
+                    [
+                        file
+                        for file in path_object.iterdir()
+                        if "__pycache__" not in str(file)
+                    ]
                 )
             else:
-                spec = importlib.util.spec_from_file_location(path_object.stem, path_object)
+                spec = importlib.util.spec_from_file_location(
+                    path_object.stem, path_object
+                )
                 mod = importlib.util.module_from_spec(spec)
 
                 spec.loader.exec_module(mod)
@@ -107,7 +113,9 @@ def token_col(node, *token_type):
 
 
 def rule_severity_to_diag_sev(severity):
-    return {RuleSeverity.ERROR: 1, RuleSeverity.WARNING: 2, RuleSeverity.INFO: 3}.get(severity, 4)
+    return {RuleSeverity.ERROR: 1, RuleSeverity.WARNING: 2, RuleSeverity.INFO: 3}.get(
+        severity, 4
+    )
 
 
 def issues_to_lsp_diagnostic(issues):
@@ -146,7 +154,9 @@ class AssignmentTypeDetector(ast.NodeVisitor):
         if len(self.keyword_sign_counter) >= 2:
             self.keyword_most_common = self.keyword_sign_counter.most_common(1)[0][0]
         if len(self.variables_sign_counter) >= 2:
-            self.variables_most_common = self.variables_sign_counter.most_common(1)[0][0]
+            self.variables_most_common = self.variables_sign_counter.most_common(1)[0][
+                0
+            ]
 
     def visit_KeywordCall(self, node):  # noqa
         if node.assign:  # if keyword returns any value
@@ -220,7 +230,9 @@ class RecommendationFinder:
     @staticmethod
     def get_original_candidates(candidates, norm_candidates):
         """Map found normalized candidates to unique original candidates."""
-        return sorted(list(set(c for cand in candidates for c in norm_candidates[cand])))
+        return sorted(
+            list(set(c for cand in candidates for c in norm_candidates[cand]))
+        )
 
     def get_normalized_candidates(self, candidates):
         """
@@ -282,7 +294,11 @@ def remove_robot_vars(name):
                 index += 1
                 open_bracket, close_bracket = "[", "]"
         # it looks for $ (or other var starter) and then check if next char is { and previous is not escape \
-        elif name[index] in var_start and next_char_is(name, index, "{") and not (index and name[index - 1] == "\\"):
+        elif (
+            name[index] in var_start
+            and next_char_is(name, index, "{")
+            and not (index and name[index - 1] == "\\")
+        ):
             open_bracket = "{"
             close_bracket = "}"
             brackets += 1
@@ -309,7 +325,11 @@ def find_robot_vars(name):
                 if not brackets:
                     variables.append((start, index + 1))
         # it looks for $ (or other var starter) and then check if next char is { and previous is not escape \
-        elif name[index] in var_start and next_char_is(name, index, "{") and not (index and name[index - 1] == "\\"):
+        elif (
+            name[index] in var_start
+            and next_char_is(name, index, "{")
+            and not (index and name[index - 1] == "\\")
+        ):
             brackets += 1
             start = index
             index += 1
