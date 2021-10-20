@@ -571,6 +571,8 @@ def test_code_format_integrated(
     from robot import get_version
 
     version = get_version(naked=True).split(".")[0]
+    if version == 5:
+        version = 4
 
     basename = "test_code_format_integrated_text_edits_" + formatter
     if formatter == OPTION_ROBOT_CODE_FORMATTER_ROBOTIDY:
