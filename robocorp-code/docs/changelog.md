@@ -1,3 +1,13 @@
+New in 0.17.0 (2021-10-21)
+-----------------------------
+
+- In the Robot view, the commands related to `Robot` and `Task` items are now shown inline.
+- The extension now handles the case where an `env.json` with non-string values is used.
+- RCC updated to 11.4.2
+- When the `work item` selection is cancelled, the related launch is also cancelled.
+- When `ROBOCORP_OVERRIDE_SYSTEM_REQUIREMENTS` is set, it's now possible to initialize the extension.
+ 
+
 New in 0.16.0 (2021-10-13)
 -----------------------------
 

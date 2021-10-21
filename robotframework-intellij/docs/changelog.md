@@ -1,3 +1,12 @@
+New in 0.25.0 (2021-10-21)
+-----------------------------
+
+- The `robotframework-tidy` code formatter is integrated.
+  - Note: `"robot.codeFormatter": "robotidy"` must be set in the settings to use it.
+- The `CURDIR` variable is properly resolved. [#449](https://github.com/robocorp/robotframework-lsp/issues/449)
+- Bundled `Robocop` updated `1.11.2`.
+
+
 New in 0.24.0 (2021-10-13)
 -----------------------------
 

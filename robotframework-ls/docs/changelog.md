@@ -1,3 +1,15 @@
+New in 0.25.0 (2021-10-21)
+-----------------------------
+
+- The `robotframework-tidy` code formatter is integrated.
+  - Note: `"robot.codeFormatter": "robotidy"` must be set in the settings to use it.
+- The `CURDIR` variable is properly resolved. [#449](https://github.com/robocorp/robotframework-lsp/issues/449)
+- If `robot.pythonpath` is set, it's used in the PYTHONPATH for the interactive console. [#475](https://github.com/robocorp/robotframework-lsp/issues/475)
+- The debugger now bundles the latest version of `pydevd` for Python debugging.
+- `Thread.daemon` attribute is used instead of `Thread.setDaemon`. [#477](https://github.com/robocorp/robotframework-lsp/issues/477)
+- Bundled `Robocop` updated `1.11.2`.
+
+
 New in 0.24.0 (2021-10-13)
 -----------------------------
 

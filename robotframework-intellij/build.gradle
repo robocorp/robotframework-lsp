@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.24.0'
+version '0.25.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,9 +51,16 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.24.0
+    Release 0.25.0
     </p>
     <ul>
+
+    <li>The `robotframework-tidy` code formatter is integrated.</li>
+    <ul>
+      <li>Note: `"robot.codeFormatter": "robotidy"` must be set in the settings to use it.</li>
+    </ul>
+    <li>The `CURDIR` variable is properly resolved.</li>
+    <li>Bundled `Robocop` updated `1.11.2`.</li>
 
     <li>Variable in run keyword argument should not be considered error.</li>
     <li>Fix crash during startup: Improving port collection from Remote FS Observer.</li>

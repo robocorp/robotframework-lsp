@@ -22,6 +22,8 @@ Configuration settings
 
 - `robot.completions.keywords.format`: used to configure how keywords from libraries will be applied during code-completion.
 
+- `robot.codeFormatter`: used to configure the code-formatter to be used.
+
 
 Development/debug settings
 ---------------------------
