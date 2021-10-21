@@ -27,6 +27,7 @@ class RobotProjectPreferencesComponent {
     private final JBTextField robotPythonEnv = new JBTextField();
     private final JBTextField robotVariables = new JBTextField();
     private final JBTextField robotPythonpath = new JBTextField();
+    private final JBTextField robotCodeFormatter = new JBTextField();
     private final JBTextField robotLintRobocopEnabled = new JBTextField();
     private final JBTextField robotCompletionsSectionHeadersForm = new JBTextField();
     private final JBTextField robotCompletionsKeywordsFormat = new JBTextField();
@@ -48,6 +49,8 @@ class RobotProjectPreferencesComponent {
                 .addComponent(createJTextArea("Custom variables passed to RobotFramework\n(used when resolving variables and automatically passed to the launch config as --variable entries).\n(i.e.: {\"EXECDIR\": \"c:/my/proj/src\"})\nNote: expected format: JSON Object\n"))
                 .addLabeledComponent(new JBLabel("Pythonpath"), robotPythonpath, 1, false)
                 .addComponent(createJTextArea("Entries to be added to the PYTHONPATH\n(used when resolving resources and imports and automatically passed to the launch config as\n--pythonpath entries).\n(i.e.: [\"c:/my/pro/src\"])\nNote: expected format: JSON Array\n"))
+                .addLabeledComponent(new JBLabel("Code Formatter"), robotCodeFormatter, 1, false)
+                .addComponent(createJTextArea("Allows the configuration of the code-formatter engine to be used. One of: robotidy, builtinTidy.\nNote: expected format: JSON Array\n"))
                 .addLabeledComponent(new JBLabel("Lint Robocop Enabled"), robotLintRobocopEnabled, 1, false)
                 .addComponent(createJTextArea("Specifies whether to lint with Robocop.\nNote: expected 'true' or 'false'\n"))
                 .addLabeledComponent(new JBLabel("Completions Section Headers Form"), robotCompletionsSectionHeadersForm, 1, false)
@@ -141,6 +144,15 @@ class RobotProjectPreferencesComponent {
 
     public void setRobotPythonpath (@NotNull String newText) {
         robotPythonpath.setText(newText);
+    }
+    
+    @NotNull
+    public String getRobotCodeFormatter() {
+        return robotCodeFormatter.getText();
+    }
+
+    public void setRobotCodeFormatter (@NotNull String newText) {
+        robotCodeFormatter.setText(newText);
     }
     
     @NotNull
@@ -244,6 +256,10 @@ public class RobotProjectPreferencesPage implements Configurable {
             return true;
         }
         
+        if(!settings.getRobotCodeFormatter().equals(component.getRobotCodeFormatter())){
+            return true;
+        }
+        
         if(!settings.getRobotLintRobocopEnabled().equals(component.getRobotLintRobocopEnabled())){
             return true;
         }
@@ -274,6 +290,7 @@ public class RobotProjectPreferencesPage implements Configurable {
         component.setRobotPythonEnv(settings.getRobotPythonEnv());
         component.setRobotVariables(settings.getRobotVariables());
         component.setRobotPythonpath(settings.getRobotPythonpath());
+        component.setRobotCodeFormatter(settings.getRobotCodeFormatter());
         component.setRobotLintRobocopEnabled(settings.getRobotLintRobocopEnabled());
         component.setRobotCompletionsSectionHeadersForm(settings.getRobotCompletionsSectionHeadersForm());
         component.setRobotCompletionsKeywordsFormat(settings.getRobotCompletionsKeywordsFormat());
@@ -313,6 +330,10 @@ public class RobotProjectPreferencesPage implements Configurable {
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Pythonpath:\n" + s);
         }
+        s = settings.validateRobotCodeFormatter(component.getRobotCodeFormatter());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Code Formatter:\n" + s);
+        }
         s = settings.validateRobotLintRobocopEnabled(component.getRobotLintRobocopEnabled());
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Lint Robocop Enabled:\n" + s);
@@ -337,6 +358,7 @@ public class RobotProjectPreferencesPage implements Configurable {
         settings.setRobotPythonEnv(component.getRobotPythonEnv());
         settings.setRobotVariables(component.getRobotVariables());
         settings.setRobotPythonpath(component.getRobotPythonpath());
+        settings.setRobotCodeFormatter(component.getRobotCodeFormatter());
         settings.setRobotLintRobocopEnabled(component.getRobotLintRobocopEnabled());
         settings.setRobotCompletionsSectionHeadersForm(component.getRobotCompletionsSectionHeadersForm());
         settings.setRobotCompletionsKeywordsFormat(component.getRobotCompletionsKeywordsFormat());

@@ -24,6 +24,7 @@ class RobotProjectState {
     public String robotPythonEnv = "";
     public String robotVariables = "";
     public String robotPythonpath = "";
+    public String robotCodeFormatter = "";
     public String robotLintRobocopEnabled = "";
     public String robotCompletionsSectionHeadersForm = "";
     public String robotCompletionsKeywordsFormat = "";
@@ -42,6 +43,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
     public static final String ROBOT_PYTHON_ENV = "robot.python.env";
     public static final String ROBOT_VARIABLES = "robot.variables";
     public static final String ROBOT_PYTHONPATH = "robot.pythonpath";
+    public static final String ROBOT_CODE_FORMATTER = "robot.codeFormatter";
     public static final String ROBOT_LINT_ROBOCOP_ENABLED = "robot.lint.robocop.enabled";
     public static final String ROBOT_COMPLETIONS_SECTION_HEADERS_FORM = "robot.completions.section_headers.form";
     public static final String ROBOT_COMPLETIONS_KEYWORDS_FORMAT = "robot.completions.keywords.format";
@@ -62,6 +64,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         robotState.robotPythonEnv = getRobotPythonEnv();
         robotState.robotVariables = getRobotVariables();
         robotState.robotPythonpath = getRobotPythonpath();
+        robotState.robotCodeFormatter = getRobotCodeFormatter();
         robotState.robotLintRobocopEnabled = getRobotLintRobocopEnabled();
         robotState.robotCompletionsSectionHeadersForm = getRobotCompletionsSectionHeadersForm();
         robotState.robotCompletionsKeywordsFormat = getRobotCompletionsKeywordsFormat();
@@ -80,6 +83,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         setRobotPythonEnv(robotState.robotPythonEnv);
         setRobotVariables(robotState.robotVariables);
         setRobotPythonpath(robotState.robotPythonpath);
+        setRobotCodeFormatter(robotState.robotCodeFormatter);
         setRobotLintRobocopEnabled(robotState.robotLintRobocopEnabled);
         setRobotCompletionsSectionHeadersForm(robotState.robotCompletionsSectionHeadersForm);
         setRobotCompletionsKeywordsFormat(robotState.robotCompletionsKeywordsFormat);
@@ -142,6 +146,14 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         if(!robotPythonpath.isEmpty()){
             try {
                 jsonObject.add(ROBOT_PYTHONPATH, g.fromJson(robotPythonpath, JsonArray.class));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotCodeFormatter.isEmpty()){
+            try {
+                jsonObject.add(ROBOT_CODE_FORMATTER, g.fromJson(robotCodeFormatter, JsonArray.class));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -481,6 +493,55 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         robotPythonpath = s;
         for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             listener.onChanged(ROBOT_PYTHONPATH, old, s);
+        }
+    }
+    
+    private String robotCodeFormatter = "";
+
+    public @NotNull String getRobotCodeFormatter() {
+        return robotCodeFormatter;
+    }
+
+    public @Nullable JsonArray getRobotCodeFormatterAsJson() {
+        if(robotCodeFormatter.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return g.fromJson(robotCodeFormatter, JsonArray.class);
+    }
+
+    public @NotNull String validateRobotCodeFormatter(String robotCodeFormatter) {
+        if(robotCodeFormatter.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            g.fromJson(robotCodeFormatter, JsonArray.class);
+             
+            if(robotCodeFormatter.equalsIgnoreCase("robotidy")){
+                return "";
+            }
+            if(robotCodeFormatter.equalsIgnoreCase("builtinTidy")){
+                return "";
+            }
+            return "Unexpected value: " + robotCodeFormatter;
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotCodeFormatter(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotCodeFormatter)) {
+            return;
+        }
+        String old = robotCodeFormatter;
+        robotCodeFormatter = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            listener.onChanged(ROBOT_CODE_FORMATTER, old, s);
         }
     }
     
