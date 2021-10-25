@@ -691,3 +691,25 @@ def test_keyword_completions_on_keyword_arguments(workspace, libspec_manager):
         "Should Be Equal As Strings",
         "Should Be True",
     ]
+
+
+def test_keyword_completions_on_template_name(workspace, libspec_manager):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """
+*** Keyword ***
+Example Keyword
+
+*** Test Cases **
+Normal test case
+    Example keyword    first argument    second argument
+
+Templated test case
+    [Template]    Example ke"""
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+
+    completions = keyword_completions.complete(completion_context)
+    assert [comp["label"] for comp in completions] == ["Example Keyword"]

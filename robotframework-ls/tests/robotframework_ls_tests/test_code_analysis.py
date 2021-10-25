@@ -260,3 +260,24 @@ def test_code_analysis_lib_with_params(
     doc = workspace.get_doc("case_params_on_lib.robot")
 
     _collect_errors(workspace, doc, data_regression, basename="no_error", config=config)
+
+
+def test_code_analysis_template_name_keyword(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """
+*** Keyword ***
+Example Keyword
+
+*** Test Cases **
+Normal test case
+    Example keyword    first argument    second argument
+
+Templated test case
+    [Template]    Example k
+    first argument    second argument
+"""
+
+    _collect_errors(workspace, doc, data_regression)

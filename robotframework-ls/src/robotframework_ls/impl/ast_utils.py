@@ -481,7 +481,7 @@ def _create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
             keyword_name = token.value
             return KeywordUsageInfo(tuple(stack), node, token, keyword_name)
 
-    elif isinstance_name(node, ("Fixture", "TestTemplate")):
+    elif isinstance_name(node, ("Fixture", "TestTemplate", "Template")):
         node, token = _strip_node_and_token_bdd_prefix(node, Token.NAME)
         if token is not None:
             keyword_name = token.value
@@ -528,7 +528,8 @@ def get_keyword_name_token(ast, token):
     :note: this goes hand-in-hand with iter_keyword_usage_tokens.
     """
     if token.type == token.KEYWORD or (
-        token.type == token.NAME and isinstance_name(ast, ("Fixture", "TestTemplate"))
+        token.type == token.NAME
+        and isinstance_name(ast, ("Fixture", "TestTemplate", "Template"))
     ):
         return _strip_token_bdd_prefix(token)
 

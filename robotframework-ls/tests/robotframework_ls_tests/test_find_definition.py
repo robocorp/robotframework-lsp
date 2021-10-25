@@ -699,3 +699,33 @@ def test_find_definition_on_keyword_argument_variable(workspace, libspec_manager
     definition = next(iter(definitions))
     assert definition.source.endswith("case1.robot")
     assert definition.lineno == line - 1
+
+
+def test_find_definition_on_template_keyword(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc.source = """
+*** Keyword ***
+Example Keyword
+
+*** Test Cases **
+Normal test case
+    Example keyword    first argument    second argument
+
+Templated test case
+    [Template]    Example keyword
+    first argument    second argument
+"""
+
+    line, col = doc.get_last_line_col_with_contents("[Template]    Example keyword")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("case1.robot")
+    assert definition.lineno == 2

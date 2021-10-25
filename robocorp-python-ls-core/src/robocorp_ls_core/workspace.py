@@ -568,6 +568,7 @@ class Document(object):
 
     def iter_lines(self, keep_ends=True):
         lines = self._lines
+        line = ""
         for line in lines:
             if keep_ends:
                 yield line
@@ -682,6 +683,15 @@ class Document(object):
             if last_line.endswith("\r") or last_line.endswith("\n"):
                 return len(lines), 0
             return len(lines) - 1, len(last_line)
+
+    def get_last_line_col_with_contents(self, contents) -> Tuple[int, int]:
+        if not contents:
+            raise ValueError("Contents not specified.")
+
+        for i, line_contents in enumerate(self.iter_lines(keep_ends=False)):
+            if contents in line_contents:
+                return i, len(line_contents)
+        raise RuntimeError(f"Unable to find line with contents: {contents}.")
 
     def get_line_count(self) -> int:
         lines = self._lines

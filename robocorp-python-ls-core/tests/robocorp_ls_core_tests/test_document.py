@@ -179,6 +179,19 @@ def test_get_last_line_col():
     assert d.get_last_line_col() == (1, 0)
 
 
+def test_get_last_line_col_with_contents():
+    d = Document(uri="", source="")
+
+    with pytest.raises(RuntimeError):
+        d.get_last_line_col_with_contents("not there")
+
+    d.source = "my"
+    assert d.get_last_line_col_with_contents("m") == (0, 2)
+
+    d.source = "foo\nmy"
+    assert d.get_last_line_col_with_contents("m") == (1, 2)
+
+
 def test_offset_to_line_col_1():
     d = Document(uri="", source="my\nfo\nba")
     assert d.offset_to_line_col(0) == (0, 0)
