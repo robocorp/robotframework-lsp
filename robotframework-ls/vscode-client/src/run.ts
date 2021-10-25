@@ -191,20 +191,17 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
     };
 
     if (launchTemplate) {
-        if (launchTemplate.cwd) {
-            debugConfiguration.cwd = launchTemplate.cwd;
-        }
-        if (launchTemplate.terminal) {
-            debugConfiguration.terminal = launchTemplate.terminal;
-        }
-        if (launchTemplate.env) {
-            debugConfiguration.env = launchTemplate.env;
-        }
-        if (launchTemplate.makeSuite !== undefined) {
-            debugConfiguration.makeSuite = launchTemplate.makeSuite;
-        }
-        if (launchTemplate.args) {
-            debugConfiguration.args = debugConfiguration.args.concat(launchTemplate.args);
+        for (var key of Object.keys(launchTemplate)) {
+            if (key !== "type" && key !== "name" && key !== "request") {
+                let value = launchTemplate[key];
+                if (value !== undefined) {
+                    if (key === "args") {
+                        debugConfiguration.args.concat(value);
+                    } else {
+                        debugConfiguration[key] = value;
+                    }
+                }
+            }
         }
     }
 
