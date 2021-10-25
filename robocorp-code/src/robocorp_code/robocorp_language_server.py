@@ -102,7 +102,6 @@ class _CommandDispatcher(object):
 
             if registered_command.expected_return_type is None:
                 ret: ActionResultDict = func(language_server, *arguments)
-                assert isinstance(ret, dict)
                 assert "success" in ret
                 return ret
             else:

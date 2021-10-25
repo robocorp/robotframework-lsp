@@ -132,7 +132,7 @@ def get_json_contents():
                         "description": 'Entries to be added to the PYTHONPATH (used when resolving resources and imports and automatically passed to the launch config as --pythonpath entries).\n(i.e.: ["c:/my/pro/src"])',
                     },
                     "robot.codeFormatter": {
-                        "type": "array",
+                        "type": "string",
                         "default": "builtinTidy",
                         "description": "Allows the configuration of the code-formatter engine to be used.\nOne of: robotidy, builtinTidy.",
                         "enum": ["robotidy", "builtinTidy"],
