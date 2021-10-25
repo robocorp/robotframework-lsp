@@ -480,10 +480,15 @@ class LaunchProcess(object):
             debug_adapter_comm = weak_debug_adapter_comm()
             cmdline = self._cmdline
             if debug_adapter_comm is not None:
+                if env:
+                    from robocorp_ls_core import run_with_env
+
+                    cmdline, env = run_with_env.update_cmdline_and_env(cmdline, env)
+
                 debug_adapter_comm.write_to_client_message(
                     RunInTerminalRequest(
                         RunInTerminalRequestArguments(
-                            cwd=self._cwd, args=cmdline, kind=kind, env=self._env
+                            cwd=self._cwd, args=cmdline, kind=kind, env=env
                         )
                     )
                 )

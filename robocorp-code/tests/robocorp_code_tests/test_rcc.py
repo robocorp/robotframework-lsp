@@ -123,37 +123,6 @@ def holotree_manager(robocorp_home, rcc):
     return holotree_manager
 
 
-def test_convert_robot_env_to_shell(tmpdir):
-    import sys
-    from robocorp_ls_core.subprocess_wrapper import subprocess
-    from robocorp_code import _script_helpers
-
-    robocorp_home = tmpdir.join("robohome")
-    robo_env = {
-        "PYTHON_EXE": sys.executable,
-        "ROBOCORP_HOME": str(robocorp_home),
-        "SOME_KEY": "SOME_VALUE",
-    }
-    code = _script_helpers.convert_robot_env_to_shell(robo_env)
-    if sys.platform == "win32":
-        shell_script = str(tmpdir.join("my.bat"))
-    else:
-        shell_script = str(tmpdir.join("my.sh"))
-
-    _script_helpers.write_as_script(code, Path(shell_script))
-
-    cmdline = [shell_script, "-c", 'import os;print(os.environ["SOME_KEY"])']
-
-    try:
-        output = subprocess.check_output(cmdline, shell=sys.platform == "win32")
-        assert b"SOME_VALUE" in output
-    except:
-        sys.stderr.write(
-            "Error when running: %s\n" % (" ".join(str(x) for x in cmdline),)
-        )
-        raise
-
-
 @dataclass
 class _RobotInfo:
     robot_yaml: Path
