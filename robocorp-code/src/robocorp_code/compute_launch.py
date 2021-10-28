@@ -200,7 +200,7 @@ def compute_robot_launch_from_robocorp_code_launch(
             "target": target,
             "cwd": cwd,
             "args": args,
-            "terminal": "none",
+            "terminal": "integrated",
         }
         if env:
             result["env"] = env

@@ -105,7 +105,7 @@ def get_json_contents():
                                 "type": "robocorp-code",
                                 "name": "Robocorp Code: Launch task from robot.yaml",
                                 "request": "launch",
-                                # "terminal": "none",
+                                # "terminal": "integrated",
                                 "robot": '^"\\${file}"',
                                 "task": "",
                             },

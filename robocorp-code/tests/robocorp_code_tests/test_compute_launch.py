@@ -45,7 +45,7 @@ ignoreFiles:
             "target": str(tmpdir),
             "cwd": str(tmpdir),
             "args": [],
-            "terminal": "none",
+            "terminal": "integrated",
         },
     }
 
@@ -94,7 +94,7 @@ ignoreFiles:
             "target": d,
             "cwd": str(tmpdir),
             "args": ["task name"],
-            "terminal": "none",
+            "terminal": "integrated",
         },
     }
 
@@ -151,7 +151,7 @@ ignoreFiles:
                 "--task",
                 "my Task",
             ],
-            "terminal": "none",
+            "terminal": "integrated",
         },
     }
 
