@@ -185,7 +185,7 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
         "request": "launch",
         "cwd": cwd,
         "target": executePath,
-        "terminal": "none",
+        "terminal": "integrated",
         "env": {},
         "args": args,
     };

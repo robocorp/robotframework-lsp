@@ -113,7 +113,7 @@ class LaunchProcess(object):
     ) -> None:
         import weakref
         from robotframework_debug_adapter.constants import VALID_TERMINAL_OPTIONS
-        from robotframework_debug_adapter.constants import TERMINAL_NONE
+        from robotframework_debug_adapter.constants import TERMINAL_INTEGRATED
         from robocorp_ls_core.basic import as_str
         import robocorp_ls_core
         from robotframework_debug_adapter.launch_process_robot_target_comm import (
@@ -140,7 +140,7 @@ class LaunchProcess(object):
 
         target = request.arguments.kwargs.get("target")
         self._cwd = request.arguments.kwargs.get("cwd")
-        self._terminal = request.arguments.kwargs.get("terminal", TERMINAL_NONE)
+        self._terminal = request.arguments.kwargs.get("terminal", TERMINAL_INTEGRATED)
         args = request.arguments.kwargs.get("args") or []
         make_suite = request.arguments.kwargs.get("makeSuite", True)
         args = [str(arg) for arg in args]

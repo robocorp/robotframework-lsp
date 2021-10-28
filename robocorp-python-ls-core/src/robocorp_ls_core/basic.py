@@ -129,7 +129,7 @@ else:
                         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
                     )
                 except:
-                    log.exception("Error calling: %s." % (cmd,))
+                    log.exception("Error calling: %s.", " ".join(cmd))
                 else:
                     stdout, _ = process.communicate()
                     stdout = stdout.decode("utf-8", "replace")
@@ -277,8 +277,7 @@ def overrides(method: Any) -> Callable[[F], F]:
     @functools.wraps(method)
     def wrapper(func):
         if func.__name__ != method.__name__:
-            msg = "Wrong @override: %r expected, but overwriting %r."
-            msg = msg % (func.__name__, method.__name__)
+            msg = f"Wrong @override: {func.__name__!r} expected, but overwriting {method.__name__!r}."
             raise AssertionError(msg)
 
         return func
@@ -290,8 +289,7 @@ def implements(method: Any) -> Callable[[F], F]:
     @functools.wraps(method)
     def wrapper(func):
         if func.__name__ != method.__name__:
-            msg = "Wrong @implements: %r expected, but implementing %r."
-            msg = msg % (func.__name__, method.__name__)
+            msg = f"Wrong @implements: {func.__name__!r} expected, but implementing {method.__name__!r}."
             raise AssertionError(msg)
 
         return func
@@ -382,7 +380,7 @@ def wait_for_condition(condition, msg=None, timeout=DEFAULT_TIMEOUT, sleep=1 / 2
         if condition():
             break
         if timeout is not None and (time.time() - curtime > timeout):
-            error_msg = "Condition not reached in %s seconds" % (timeout,)
+            error_msg = f"Condition not reached in {timeout} seconds"
             if msg is not None:
                 error_msg += "\n"
                 if callable(msg):

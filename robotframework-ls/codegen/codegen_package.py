@@ -230,7 +230,7 @@ def get_json_contents():
                                         "External terminal (configured in user settings).",
                                     ],
                                     "description": "The terminal to launch the program.",
-                                    "default": "none",
+                                    "default": "integrated",
                                 },
                             }
                         }
@@ -245,7 +245,7 @@ def get_json_contents():
                                 "request": "launch",
                                 "cwd": '^"\\${workspaceFolder}"',
                                 "target": '^"\\${file}"',
-                                "terminal": "none",
+                                "terminal": "integrated",
                                 "env": {},
                                 "args": [],
                             },

@@ -489,7 +489,7 @@ def test_compute_robot_launch_from_robocorp_code_launch(
         "name": "Launch Name",
         "request": "launch",
         "args": ["-d", "output", "--logtitle", "Task log"],
-        "terminal": "none",
+        "terminal": "integrated",
     }
 
 

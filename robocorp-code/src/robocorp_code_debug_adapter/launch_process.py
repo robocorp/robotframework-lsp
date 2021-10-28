@@ -23,6 +23,7 @@ import threading
 from robocorp_ls_core.protocols import IConfig
 from typing import Optional, List, Callable
 from pathlib import Path
+import traceback
 
 log = get_logger(__name__)
 
@@ -98,7 +99,10 @@ class LaunchProcess(object):
         import weakref
         from robocorp_ls_core.basic import as_str
         from robocorp_code_debug_adapter.constants import VALID_TERMINAL_OPTIONS
-        from robocorp_code_debug_adapter.constants import TERMINAL_NONE
+        from robocorp_code_debug_adapter.constants import (
+            TERMINAL_NONE,
+            TERMINAL_INTEGRATED,
+        )
         from robocorp_ls_core.robotframework_log import get_log_level
         from robocorp_code.rcc import Rcc
         from robocorp_ls_core.config import Config
@@ -125,13 +129,7 @@ class LaunchProcess(object):
             self._valid = False
 
         robot_yaml = request.arguments.kwargs.get("robot")
-        self._terminal = request.arguments.kwargs.get("terminal", TERMINAL_NONE)
-        if self._terminal != TERMINAL_NONE:
-            # We don't currently support the integrated terminal because we don't
-            # have an easy way to get the launched process pid in this way.
-            return mark_invalid(
-                f"Only 'terminal=none' is supported. Found terminal: {self._terminal}"
-            )
+        self._terminal = request.arguments.kwargs.get("terminal", TERMINAL_INTEGRATED)
 
         task_name = request.arguments.kwargs.get("task", "")
         args = request.arguments.kwargs.get("args") or []
@@ -417,6 +415,9 @@ class LaunchProcess(object):
         from robocorp_ls_core.robotframework_log import get_log_level
         from robocorp_code_debug_adapter.constants import TERMINAL_EXTERNAL
         from robocorp_code_debug_adapter.constants import TERMINAL_INTEGRATED
+        from robocorp_ls_core import run_with_env
+        from robocorp_ls_core import run_and_save_pid
+        import tempfile
 
         # Note: using a weak-reference so that callbacks don't keep it alive
         weak_debug_adapter_comm = self._weak_debug_adapter_comm
@@ -424,6 +425,9 @@ class LaunchProcess(object):
         terminal = self._terminal
         if not weak_debug_adapter_comm().supports_run_in_terminal:
             # If the client doesn't support running in the terminal we fallback to using the debug console.
+            terminal = TERMINAL_NONE
+
+        elif run_with_env.disable_launch_env_script():
             terminal = TERMINAL_NONE
 
         threads = []
@@ -480,19 +484,30 @@ class LaunchProcess(object):
             debug_adapter_comm = weak_debug_adapter_comm()
             cmdline = self._cmdline
             if debug_adapter_comm is not None:
-                if env:
-                    from robocorp_ls_core import run_with_env
+                env = self._env
 
-                    cmdline, env = run_with_env.update_cmdline_and_env(cmdline, env)
+                write_pid_to = tempfile.mktemp(".pid", "rf_")
+                try:
+                    cmdline, env = run_with_env.update_cmdline_and_env(
+                        cmdline, env, write_pid_to=write_pid_to
+                    )
 
-                debug_adapter_comm.write_to_client_message(
-                    RunInTerminalRequest(
-                        RunInTerminalRequestArguments(
-                            cwd=self._cwd, args=cmdline, kind=kind, env=env
+                    debug_adapter_comm.write_to_client_message(
+                        RunInTerminalRequest(
+                            RunInTerminalRequestArguments(
+                                cwd=self._cwd, args=cmdline, kind=kind, env=env
+                            )
                         )
                     )
-                )
-                # TODO: Get pid when running with terminal (get from response).
+                    self._track_process_pid = run_and_save_pid.wait_for_pid_in_file(
+                        write_pid_to
+                    )
+                finally:
+                    try:
+                        os.remove(write_pid_to)
+                    except:
+                        # Ignore if it failed (it's possible that it wasn't created at all...).
+                        pass
 
         if self._track_process_pid is None:
             log.debug("Unable to track if pid is alive (pid unavailable).")

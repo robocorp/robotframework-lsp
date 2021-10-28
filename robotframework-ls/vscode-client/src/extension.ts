@@ -120,7 +120,7 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
             "request": "launch",
             "cwd": '^"\\${workspaceFolder}"',
             "target": '^"\\${file}"',
-            "terminal": "none",
+            "terminal": "integrated",
             "env": {},
             "args": [],
         });

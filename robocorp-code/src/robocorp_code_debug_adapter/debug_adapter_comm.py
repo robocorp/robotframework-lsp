@@ -149,9 +149,15 @@ class DebugAdapterComm(object):
             self.write_to_client_message(configuration_done_response)
             return
 
-        self.write_to_client_message(configuration_done_response)  # acknowledge it
         # Actually launch when the configuration is done.
-        launch_process.launch()
+        try:
+            launch_process.launch()
+        except Exception as e:
+            log.exception("Error launching.")
+            configuration_done_response.success = False
+            configuration_done_response.message = str(e)
+
+        self.write_to_client_message(configuration_done_response)  # acknowledge it
 
     def on_disconnect_request(self, request):
         """
