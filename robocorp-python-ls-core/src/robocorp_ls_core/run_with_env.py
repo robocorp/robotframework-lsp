@@ -1,7 +1,14 @@
 import pathlib
-from typing import Dict, Tuple, List, Optional
+from typing import Dict, List, Optional, Tuple
 import sys
 import os
+import itertools
+from functools import partial
+import threading
+import time
+from robocorp_ls_core.robotframework_log import get_logger
+
+log = get_logger(__name__)
 
 
 def create_run_with_env_code(
@@ -32,7 +39,7 @@ def create_run_with_env_code(
         shebang = "@echo off"
         executable_with_args = f"{subprocess.list2cmdline(base_executable_and_args)} %*"
     else:
-        shebang = "#!/bin/sh"
+        shebang = "#!/usr/bin/env bash"
         executable_with_args = (
             f'{subprocess.list2cmdline(base_executable_and_args)} "$@"'
         )
@@ -46,20 +53,51 @@ def create_run_with_env_code(
     return code
 
 
-def compute_path_for_env(code: str) -> pathlib.Path:
+_next_number: "partial[int]" = partial(next, itertools.count())
+
+
+def _compute_path_for_env(temp_dir: Optional[str] = None) -> pathlib.Path:
     import tempfile
 
-    temp_dir = os.path.join(tempfile.gettempdir(), "rf-ls-run")
+    if not temp_dir:
+
+        temp_dir = os.path.join(tempfile.gettempdir(), "rf-ls-run")
 
     os.makedirs(temp_dir, exist_ok=True)
-    import hashlib
-
-    m = hashlib.sha256()
-    m.update(code.encode("utf-8"))
-
-    return pathlib.Path(temp_dir) / (
-        "run_env_" + m.hexdigest()[:14] + (".bat" if sys.platform == "win32" else ".sh")
+    f = tempfile.mktemp(
+        suffix=(".bat" if sys.platform == "win32" else ".sh"),
+        prefix="run_env_%02d_" % _next_number(),
+        dir=temp_dir,
     )
+
+    _delete_in_thread(temp_dir)
+    return pathlib.Path(f)
+
+
+def _delete_in_thread(temp_dir) -> threading.Thread:
+    t = threading.Thread(target=_delete_old, args=(temp_dir,))
+    t.daemon = True
+    t.start()
+    return t
+
+
+def _delete_old(temp_dir: str):
+    try:
+        # Remove files only after 2 days.
+        one_day_in_seconds = 86400
+        delete_older_than = time.time() - (one_day_in_seconds * 2)
+
+        f = pathlib.Path(temp_dir)
+        for entry in os.scandir(f):
+            if entry.name.startswith("run_env_"):
+                if entry.stat().st_mtime < delete_older_than:
+                    remove = f / entry.name
+                    try:
+                        remove.unlink()
+                    except:
+                        log.debug("Unable to remove: %s", remove)
+    except:
+        log.exception("Error removing old launch files.")
 
 
 def write_as_script(code: str, script_path: pathlib.Path):
@@ -88,8 +126,8 @@ def _update_command_line_to_write_pid(cmdline: List[str], env: dict, write_pid_t
 
 
 def update_cmdline_and_env(
-    cmdline: List[str], env: dict, write_pid_to: Optional[str] = None
-) -> Tuple[List[str], dict]:
+    cmdline: List[str], env: Dict[str, str], write_pid_to: Optional[str] = None
+) -> Tuple[List[str], Dict[str, str]]:
     """
     Ideally only this function is actually used from this module.
 
@@ -112,7 +150,7 @@ def update_cmdline_and_env(
 
     set_env_and_run_code = create_run_with_env_code(env, cmdline[:embed_args])
     if len(set_env_and_run_code) > 240:
-        script_path = compute_path_for_env(set_env_and_run_code)
+        script_path = _compute_path_for_env()
         write_as_script(set_env_and_run_code, script_path)
         new_cmdline = [str(script_path)] + cmdline[embed_args:]
 

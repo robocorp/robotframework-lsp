@@ -1,4 +1,5 @@
 import sys
+import pathlib
 
 
 def test_create_run_with_env_code(tmpdir):
@@ -69,6 +70,35 @@ def test_create_run_with_env_code(tmpdir):
 
     finally:
         del os.environ["ROBOTFRAMEWORK_LS_LAUNCH_ENV_SCRIPT"]
+
+
+def test_delete_old(tmpdir):
+    from robocorp_ls_core.run_with_env import _compute_path_for_env
+    from robocorp_ls_core.run_with_env import _delete_in_thread
+    import datetime
+    import os
+    import time
+
+    base_dir = str(tmpdir.join("run"))
+    f0 = pathlib.Path(_compute_path_for_env(base_dir))
+    f1 = pathlib.Path(_compute_path_for_env(base_dir))
+
+    f0.write_text("f0", "utf-8")
+    f1.write_text("f1", "utf-8")
+
+    _delete_in_thread(base_dir).join()
+
+    base_dir_as_path = pathlib.Path(base_dir)
+    assert len(list(base_dir_as_path.iterdir())) == 2
+
+    # Change the file mtime so that it's considered old.
+    date = datetime.datetime.now()
+    date = date - datetime.timedelta(days=2.1)
+    modTime = time.mktime(date.timetuple())
+    os.utime(str(f0), (modTime, modTime))
+
+    _delete_in_thread(base_dir).join()
+    assert list(base_dir_as_path.iterdir()) == [f1]
 
 
 def test_run_and_save_pid_raw(tmpdir):

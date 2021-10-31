@@ -507,7 +507,7 @@ class LaunchProcess(object):
                         os.remove(write_pid_to)
                     except:
                         # Ignore if it failed (it's possible that it wasn't created at all...).
-                        pass
+                        log.debug("Error removing: %s", write_pid_to)
 
         if self._track_process_pid is None:
             log.debug("Unable to track if pid is alive (pid unavailable).")
