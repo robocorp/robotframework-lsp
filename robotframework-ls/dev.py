@@ -208,7 +208,7 @@ class Dev(object):
             )
         )
         print("=== Yarn install")
-        shell = True if sys.platform == "win32" else False
+        shell = sys.platform == "win32"
         subprocess.check_call(["yarn", "install"], cwd=src_webview, shell=shell)
 
         print("=== Building with webpack in: %s" % (vendored_webview,))

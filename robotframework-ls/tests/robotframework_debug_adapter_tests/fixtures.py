@@ -301,14 +301,15 @@ class _DebuggerAPI(object):
             cwd = run_in_terminal_request.arguments.cwd
             popen_args = run_in_terminal_request.arguments.args
 
-            subprocess.Popen(popen_args, cwd=cwd, env=env)
+            subprocess.Popen(
+                popen_args, cwd=cwd, env=env, shell=sys.platform == "win32"
+            )
 
         if success:
             # Initialized is sent just before the launch response (at which
             # point it's possible to send breakpoints).
-            self.read(ProcessEvent)
-            event = self.read(InitializedEvent)
-            assert isinstance(event, InitializedEvent)
+            self.read((ProcessEvent, InitializedEvent))
+            self.read((ProcessEvent, InitializedEvent))
 
         if success:
             launch_response = self.read(LaunchResponse)

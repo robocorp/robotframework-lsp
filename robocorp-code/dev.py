@@ -229,20 +229,20 @@ class Dev(object):
         print("--- installing RobotFramework Language Server")
         curdir = root / "robotframework-ls"
         run("python -m dev vendor_robocorp_ls_core".split())
-        run("vsce package".split(), shell=True)
+        run("vsce package".split(), shell=sys.platform == "win32")
         run(
             f"code --install-extension robotframework-lsp-{get_version()}.vsix".split(),
-            shell=True,
+            shell=sys.platform == "win32",
         )
         run("python -m dev remove_vendor_robocorp_ls_core".split())
 
         print("\n--- installing Robocorp Code")
         curdir = root / "robocorp-code"
         run("python -m dev vendor_robocorp_ls_core".split())
-        run("vsce package".split(), shell=True)
+        run("vsce package".split(), shell=sys.platform == "win32")
         run(
             f"code --install-extension robocorp-code-{get_version()}.vsix".split(),
-            shell=True,
+            shell=sys.platform == "win32",
         )
         run("python -m dev remove_vendor_robocorp_ls_core".split())
 
