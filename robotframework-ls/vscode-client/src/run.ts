@@ -196,9 +196,9 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
                 let value = launchTemplate[key];
                 if (value !== undefined) {
                     if (key === "args") {
-                        try{
+                        try {
                             debugConfiguration.args = debugConfiguration.args.concat(value);
-                        } catch(err){
+                        } catch (err) {
                             logError("Unable to concatenate: " + debugConfiguration.args + " to: " + value, err);
                         }
                     } else {
