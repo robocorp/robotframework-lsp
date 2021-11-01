@@ -1,3 +1,10 @@
+New in 0.18.0 (2021-11-01)
+-----------------------------
+
+- When relocating robot, make sure that the `PYTHONPATH` entries are properly forwarded.
+- Robot Framework Language Server `0.26.0` is now required. 
+ 
+ 
 New in 0.17.0 (2021-10-21)
 -----------------------------
 
