@@ -1,3 +1,9 @@
+New in 0.27.0 (2021-11-01)
+-----------------------------
+
+- Fixed regression concatenating args of code lens launch. [#487](https://github.com/robocorp/robotframework-lsp/issues/487)
+
+
 New in 0.26.0 (2021-11-01)
 -----------------------------
 
