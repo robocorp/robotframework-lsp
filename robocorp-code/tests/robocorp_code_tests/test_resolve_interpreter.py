@@ -29,6 +29,10 @@ def test_resolve_interpreter_relocate_robot_root(
     interpreter_info1 = resolve_interpreter.get_interpreter_info_for_doc_uri(
         uris.from_fs_path(str(path1))
     )
+    assert interpreter_info1
+    entries = interpreter_info1.get_additional_pythonpath_entries()
+    additional_pythonpath_entries = tuple(Path(x) for x in entries)
+    assert additional_pythonpath_entries == (datadir / "robot3" / "path1",)
 
     string_io = io.StringIO()
     with configure_logger("", 0, string_io):
@@ -37,7 +41,6 @@ def test_resolve_interpreter_relocate_robot_root(
             uris.from_fs_path(str(path2))
         )
 
-    assert interpreter_info1
     assert interpreter_info2
 
     environ1 = interpreter_info1.get_environ()

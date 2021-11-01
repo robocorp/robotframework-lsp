@@ -64,7 +64,7 @@ class RemoteFSObserver(object):
         self.writer: Optional[JsonRpcStreamWriter] = None
         self.reader_thread: Optional[threading.Thread] = None
 
-        self._next_id: partial[int] = partial(next, itertools.count())
+        self._next_id: "partial[int]" = partial(next, itertools.count())
         self._change_id_to_fs_watch: Dict[int, _RemoteFSWatch] = {}
 
         self._socket: Optional[socket_module.socket] = None

@@ -662,6 +662,28 @@ def test_find_definition_in_pythonpath(workspace, libspec_manager, cases):
     assert def1[0].source.endswith("lib_in_pythonpath.py")
 
 
+def test_find_definition_resource_in_pythonpath(workspace, libspec_manager, cases):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+    import sys
+
+    add_to_pythonpath = cases.get_path("case_search_pythonpath_resource/resources")
+    sys.path.append(add_to_pythonpath)
+
+    try:
+        workspace.set_root(
+            "case_search_pythonpath_resource", libspec_manager=libspec_manager
+        )
+        doc1 = workspace.get_doc("case_search_pythonpath.robot")
+
+        completion_context = CompletionContext(doc1, workspace=workspace.ws)
+        def1 = find_definition(completion_context)
+        assert len(def1) == 1
+        assert def1[0].source.endswith("resource_in_pythonpath.robot")
+    finally:
+        sys.path.remove(add_to_pythonpath)
+
+
 def test_find_definition_on_keyword_argument(workspace, libspec_manager):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.find_definition import find_definition

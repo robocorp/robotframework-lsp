@@ -337,7 +337,7 @@ class RobocorpResolveInterpreter(object):
             )
 
         new_additional_pythonpath_entries: List[str] = []
-        for entry in new_additional_pythonpath_entries:
+        for entry in interpreter_info.get_additional_pythonpath_entries():
             new_additional_pythonpath_entries.append(
                 fix_entry(entry, existing_robot_root, new_robot_root)
             )

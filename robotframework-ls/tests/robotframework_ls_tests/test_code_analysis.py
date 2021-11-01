@@ -262,6 +262,26 @@ def test_code_analysis_lib_with_params(
     _collect_errors(workspace, doc, data_regression, basename="no_error", config=config)
 
 
+def test_code_analysis_search_pythonpath(
+    workspace, libspec_manager, cases, data_regression
+):
+    import sys
+
+    add_to_pythonpath = cases.get_path("case_search_pythonpath_resource/resources")
+    sys.path.append(add_to_pythonpath)
+
+    try:
+        workspace.set_root(
+            "case_search_pythonpath_resource", libspec_manager=libspec_manager
+        )
+
+        doc = workspace.get_doc("case_search_pythonpath.robot")
+
+        _collect_errors(workspace, doc, data_regression, basename="no_error")
+    finally:
+        sys.path.remove(add_to_pythonpath)
+
+
 def test_code_analysis_template_name_keyword(
     workspace, libspec_manager, data_regression
 ):

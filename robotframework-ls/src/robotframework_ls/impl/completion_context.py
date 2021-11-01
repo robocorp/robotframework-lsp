@@ -3,7 +3,7 @@ from robocorp_ls_core.constants import NULL
 from robocorp_ls_core.protocols import IMonitor, Sentinel, IConfig, IDocumentSelection
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.robot_workspace import RobotDocument
-from typing import Optional, Any, List, Tuple
+from typing import Optional, Any, List, Tuple, Set
 from robotframework_ls.impl.protocols import (
     IRobotDocument,
     ICompletionContext,
@@ -14,6 +14,7 @@ from robotframework_ls.impl.protocols import (
     KeywordUsageInfo,
     CompletionType,
 )
+import sys
 
 
 log = get_logger(__name__)
@@ -406,6 +407,25 @@ class CompletionContext(object):
                                     )
                                 )
                             )
+
+                    for path in sys.path:
+                        check_paths.append(
+                            os.path.normpath(
+                                os.path.join(
+                                    path,
+                                    name_with_resolved_vars,
+                                )
+                            )
+                        )
+
+                    # Make the entries in the list unique (keeping order).
+                    seen: Set[str] = set()
+                    add_it_and_return_none = seen.add
+                    check_paths = [
+                        x
+                        for x in check_paths
+                        if x not in seen and not add_it_and_return_none(x)
+                    ]
 
                 else:
                     check_paths = [name_with_resolved_vars]

@@ -1,0 +1,2 @@
+*** Keyword ***
+Keyword in Pythonpath
