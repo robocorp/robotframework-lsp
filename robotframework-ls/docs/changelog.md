@@ -1,3 +1,12 @@
+New in 0.26.0 (2021-11-01)
+-----------------------------
+
+- Consider `PYTHONPATH` when searching for `Resource` imports. [#486](https://github.com/robocorp/robotframework-lsp/issues/486)
+- Load all fields from `'Robot Framework: Launch template'` for code lens execution. [#447](https://github.com/robocorp/robotframework-lsp/issues/447)
+- Properly consider that `[Template]` has a Keyword target. [#479](https://github.com/robocorp/robotframework-lsp/issues/479)
+- Mark `robot.codeFormatter` as a string and not an array. [#481](https://github.com/robocorp/robotframework-lsp/issues/481)
+
+
 New in 0.25.0 (2021-10-21)
 -----------------------------
 
@@ -17,13 +26,13 @@ New in 0.24.0 (2021-10-13)
 - If a launch is invalid, show actual error and don't try to connect to `pydevd`. [#433](https://github.com/robocorp/robotframework-lsp/issues/433)
 - Give proper error message when launching if `cwd` doesn't exist.
 - Ignore connection errors when connection is dropped in debugger.
-- Fix crash during startup: Improving port collection from Remote FS Observer. [#434](https://github.com/robocorp/robotframework-lsp/issues/434)
+- Fixed crash during startup: Improving port collection from Remote FS Observer. [#434](https://github.com/robocorp/robotframework-lsp/issues/434)
 
 
 New in 0.23.2 (2021-09-22)
 -----------------------------
 
-- Fix issue launching when no environment is provided.
+- Fixed issue launching when no environment is provided.
 
 
 New in 0.23.1 (2021-09-21)

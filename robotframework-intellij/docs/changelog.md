@@ -1,3 +1,11 @@
+New in 0.26.0 (2021-11-01)
+-----------------------------
+
+- Consider `PYTHONPATH` when searching for `Resource` imports. [#486](https://github.com/robocorp/robotframework-lsp/issues/486)
+- Properly consider that `[Template]` has a Keyword target. [#479](https://github.com/robocorp/robotframework-lsp/issues/479)
+- Mark `robot.codeFormatter` as a string and not an array. [#481](https://github.com/robocorp/robotframework-lsp/issues/481)
+
+
 New in 0.25.0 (2021-10-21)
 -----------------------------
 
@@ -11,13 +19,13 @@ New in 0.24.0 (2021-10-13)
 -----------------------------
 
 - Variable in run keyword argument should not be considered error. [#468](https://github.com/robocorp/robotframework-lsp/issues/468)
-- Fix crash during startup: Improving port collection from Remote FS Observer. [#434](https://github.com/robocorp/robotframework-lsp/issues/434)
+- Fixed crash during startup: Improving port collection from Remote FS Observer. [#434](https://github.com/robocorp/robotframework-lsp/issues/434)
 
 
 New in 0.23.2 (2021-09-22)
 -----------------------------
 
-- Fix issue launching when no environment is provided.
+- Fixed issue launching when no environment is provided.
 
 
 New in 0.23.1 (2021-09-21)
