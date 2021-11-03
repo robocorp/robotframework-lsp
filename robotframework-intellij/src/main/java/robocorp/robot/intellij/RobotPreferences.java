@@ -153,7 +153,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         
         if(!robotCodeFormatter.isEmpty()){
             try {
-                jsonObject.add(ROBOT_CODE_FORMATTER, g.fromJson(robotCodeFormatter, JsonArray.class));
+                jsonObject.add(ROBOT_CODE_FORMATTER, new JsonPrimitive(robotCodeFormatter));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -502,12 +502,12 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         return robotCodeFormatter;
     }
 
-    public @Nullable JsonArray getRobotCodeFormatterAsJson() {
+    public @Nullable JsonPrimitive getRobotCodeFormatterAsJson() {
         if(robotCodeFormatter.isEmpty()){
             return null;
         }
         Gson g = new Gson();
-        return g.fromJson(robotCodeFormatter, JsonArray.class);
+        return new JsonPrimitive(robotCodeFormatter);
     }
 
     public @NotNull String validateRobotCodeFormatter(String robotCodeFormatter) {
@@ -516,7 +516,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         }
         try {
             Gson g = new Gson();
-            g.fromJson(robotCodeFormatter, JsonArray.class);
+            new JsonPrimitive(robotCodeFormatter);
              
             if(robotCodeFormatter.equalsIgnoreCase("robotidy")){
                 return "";

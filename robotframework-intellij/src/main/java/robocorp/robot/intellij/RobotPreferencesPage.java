@@ -50,7 +50,7 @@ class RobotPreferencesComponent {
                 .addLabeledComponent(new JBLabel("Pythonpath"), robotPythonpath, 1, false)
                 .addComponent(createJTextArea("Entries to be added to the PYTHONPATH\n(used when resolving resources and imports and automatically passed to the launch config as\n--pythonpath entries).\n(i.e.: [\"c:/my/pro/src\"])\nNote: expected format: JSON Array\n"))
                 .addLabeledComponent(new JBLabel("Code Formatter"), robotCodeFormatter, 1, false)
-                .addComponent(createJTextArea("Allows the configuration of the code-formatter engine to be used. One of: robotidy, builtinTidy.\nNote: expected format: JSON Array\n"))
+                .addComponent(createJTextArea("Allows the configuration of the code-formatter engine to be used. One of: robotidy, builtinTidy.\n"))
                 .addLabeledComponent(new JBLabel("Lint Robocop Enabled"), robotLintRobocopEnabled, 1, false)
                 .addComponent(createJTextArea("Specifies whether to lint with Robocop.\nNote: expected 'true' or 'false'\n"))
                 .addLabeledComponent(new JBLabel("Completions Section Headers Form"), robotCompletionsSectionHeadersForm, 1, false)
