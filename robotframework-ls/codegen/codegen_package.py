@@ -344,10 +344,28 @@ vscode_js_client_src_dir = os.path.join(root_dir, "vscode-client", "src")
 vscode_py_src_dir = os.path.join(root_dir, "src")
 
 
+def run_intellij_codegen():
+    """
+    The Intellij codegen is dependent on the package.json too, so, let's run it
+    too.
+    """
+    import sys
+    from pathlib import Path
+
+    target = Path(root_dir) / ".." / "robotframework-intellij"
+    assert target.exists(), f"{target} does not exist"
+    sys.path.append(str(target))
+    import codegen_intellij  # noqa
+
+    codegen_intellij.main()
+
+
 def main():
     write_to_package_json()
 
     write_py_commands()
+
+    run_intellij_codegen()
 
 
 if __name__ == "__main__":
