@@ -182,7 +182,7 @@ class InternalConnection {
                     break;
                 } catch (InterruptedException | ExecutionException | TimeoutException e) {
                     languageServerStreams.verifyProcess();
-                    if (!this.isConnected() || i == timeoutInSeconds - 1) {
+                    if (i == timeoutInSeconds - 1) {
                         LOG.info("Initialize was not received from the language server in the expected timeout.");
                         throw e;
                     }

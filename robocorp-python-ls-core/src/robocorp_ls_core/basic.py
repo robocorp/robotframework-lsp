@@ -251,7 +251,11 @@ def exit_when_pid_exists(pid):
                     if not is_process_alive(pid):
                         # Note: just exit since the parent process already
                         # exited.
-                        log.info("Force-quit process: %s", os.getpid())
+                        log.info(
+                            f"Force-quit process: %s because parent: %s exited",
+                            os.getpid(),
+                            pid,
+                        )
                         os._exit(0)
 
                 time.sleep(PARENT_PROCESS_WATCH_INTERVAL)
