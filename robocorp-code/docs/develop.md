@@ -63,6 +63,7 @@ Then run the commands below (considering that you have a Python 3.8 in your path
 
 In Windows:
 
+```
 python -m venv .venv
 .venv/Scripts/activate.bat
 python -m pip install -r robocorp-code/tests/test_requirements.txt
@@ -73,9 +74,11 @@ echo %cd%\robocorp-python-ls-core\src >> .venv\Lib\site-packages\rf_src.pth
 echo %cd%\robotframework-ls\tests >> .venv\Lib\site-packages\rf_src.pth
 echo %cd%\robocorp-code\tests >> .venv\Lib\site-packages\rf_src.pth
 echo %cd%\robocorp-python-ls-core\tests >> .venv\Lib\site-packages\rf_src.pth
+```
 
 In Linux:
 
+```
 python -m venv .venv
 source ./.venv/bin/activate
 python -m pip install -r robocorp-code/tests/test_requirements.txt
@@ -86,7 +89,7 @@ echo $PWD/robocorp-python-ls-core/src >> .venv/lib/python3.8/site-packages/rf_sr
 echo $PWD/robotframework-ls/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
 echo $PWD/robocorp-code/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
 echo $PWD/robocorp-python-ls-core/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
-
+```
 
 If everything went well, just pointing your IDE to use the python executable
 at .venv/Scripts/python should suffice.
