@@ -307,6 +307,7 @@ def _obtain_import_location_info(completion_context) -> _ImportLocationInfo:
                     completion_context.token_value_resolving_variables(library_name),
                     create=True,
                     current_doc_uri=completion_context.doc.uri,
+                    args=ast_utils.get_library_arguments_serialized(node_info.node),
                 )
                 if library_doc is not None:
                     if library_doc.source:

@@ -1,5 +1,6 @@
 from typing import Tuple
 import os.path
+import pytest
 
 
 def test_find_definition_builtin(workspace, libspec_manager):
@@ -751,3 +752,30 @@ Templated test case
     definition = next(iter(definitions))
     assert definition.source.endswith("case1.robot")
     assert definition.lineno == 2
+
+
+@pytest.mark.parametrize(
+    "server_port",
+    [
+        8270,
+        0,
+    ],
+)
+def test_find_definition_remote_library(workspace, libspec_manager, remote_library):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case_remote_library", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case_remote.robot")
+    port = remote_library
+    doc.source = (
+        doc.source.replace("${PORT}", str(port))
+        + "\n    a.Verify That Remote is Running"
+    )
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("Remote.py")
+    assert definition.lineno == -2

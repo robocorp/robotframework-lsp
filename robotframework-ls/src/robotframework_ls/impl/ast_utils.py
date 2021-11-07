@@ -667,3 +667,7 @@ def create_range_from_token(token):
     }
     code_lens_range: RangeTypedDict = {"start": start, "end": end}
     return code_lens_range
+
+
+def get_library_arguments_serialized(library) -> Optional[str]:
+    return "::".join(library.args) if library.args else None

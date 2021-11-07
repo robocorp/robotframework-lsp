@@ -30,6 +30,12 @@ def _get_additional_info_filename(spec_filename):
     return additional_info_filename
 
 
+def _get_digest_from_string(string):
+    import hashlib
+
+    return hashlib.sha256(string.encode("utf-8", "replace")).hexdigest()[:8]
+
+
 def _load_library_doc_and_mtime(spec_filename, obtain_mutex=True):
     """
     :param obtain_mutex:
@@ -749,17 +755,24 @@ class LibspecManager(object):
         )
 
     def _create_libspec(
-        self, libname, *, is_builtin=False, target_file: Optional[str] = None
+        self,
+        libname,
+        *,
+        is_builtin=False,
+        target_file: Optional[str] = None,
+        args: Optional[str] = None,
     ):
         """
         :param target_file:
             If given this is the library file (i.e.: c:/foo/bar.py) which is the
             actual library we're creating the spec for.
         """
-        cache_key = (libname, is_builtin, target_file)
+        cache_key = (libname, is_builtin, target_file, args)
         not_created = self._libspec_failures_cache.get(cache_key, Sentinel.SENTINEL)
         if not_created is Sentinel.SENTINEL:
-            created = self._cached_create_libspec(libname, is_builtin, target_file)
+            created = self._cached_create_libspec(
+                libname, is_builtin, target_file, args
+            )
             if not created:
                 # Always set as a whole (to avoid racing conditions).
                 cp = self._libspec_failures_cache.copy()
@@ -779,6 +792,7 @@ class LibspecManager(object):
         libname,
         is_builtin: bool,
         target_file: Optional[str],
+        args: Optional[str],
         *,
         _internal_force_text=False,  # Should only be set from within this function.
     ):
@@ -846,21 +860,22 @@ class LibspecManager(object):
                     if os.path.exists(entry):
                         call.extend(["-P", entry])
 
-                call.append(libname)
+                call.append("::".join([libname, args] if args else [libname]))
                 libspec_dir = self._user_libspec_dir
                 if libname in robot_constants.STDLIBS:
                     libspec_dir = self._builtins_libspec_dir
 
                 if target_file:
-                    import hashlib
-
-                    digest = hashlib.sha256(
-                        target_file.encode("utf-8", "replace")
-                    ).hexdigest()[:8]
+                    digest = _get_digest_from_string(target_file)
 
                     libspec_filename = os.path.join(libspec_dir, digest + ".libspec")
-                else:
+                elif not args:
                     libspec_filename = os.path.join(libspec_dir, libname + ".libspec")
+                else:
+                    digest = _get_digest_from_string(args)
+                    libspec_filename = os.path.join(
+                        libspec_dir, libname + digest + ".libspec"
+                    )
 
                 log.debug(f"Obtaining mutex to generate libspec: {libspec_filename}.")
                 with timed_acquire_mutex(
@@ -922,6 +937,7 @@ class LibspecManager(object):
                                     libname,
                                     is_builtin,
                                     target_file,
+                                    args,
                                     _internal_force_text=True,
                                 )
 
@@ -947,9 +963,11 @@ class LibspecManager(object):
     def dispose(self):
         self._file_changes_notifier.dispose()
 
-    def _do_create_libspec_on_get(self, libname, target_file: Optional[str]):
+    def _do_create_libspec_on_get(
+        self, libname, target_file: Optional[str], args: Optional[str]
+    ):
 
-        if self._create_libspec(libname, target_file=target_file):
+        if self._create_libspec(libname, target_file=target_file, args=args):
             self.synchronize_internal_libspec_folders()
             return True
         return False
@@ -1005,6 +1023,7 @@ class LibspecManager(object):
         create: bool = True,
         current_doc_uri: Optional[str] = None,
         builtin: bool = False,
+        args: Optional[str] = None,
     ) -> Optional[ILibraryDoc]:
         """
         :param libname:
@@ -1055,7 +1074,15 @@ class LibspecManager(object):
 
                 if "/" in libname_lower or "\\" in libname_lower:
                     libname_lower = os.path.basename(libname_lower)
-                found = library_doc.name and library_doc.name.lower() == libname_lower
+                if not args:
+                    found = (
+                        library_doc.name and library_doc.name.lower() == libname_lower
+                    )
+                else:
+                    digest = _get_digest_from_string(args)
+                    found = library_doc.filename.endswith(
+                        os.path.normcase(libname + digest + ".libspec")
+                    )
 
             if found:
                 if not lib_info.verify_sources_sync():
@@ -1063,7 +1090,7 @@ class LibspecManager(object):
                         # Found but it's not in sync. Try to regenerate (don't proceed
                         # because we don't want to match a lower priority item, so,
                         # regenerate and get from the cache without creating).
-                        self._do_create_libspec_on_get(libname, target_file)
+                        self._do_create_libspec_on_get(libname, target_file, args)
 
                         # Note: get even if it if was not created (we may match
                         # a lower priority library).
@@ -1072,6 +1099,7 @@ class LibspecManager(object):
                             create=False,
                             current_doc_uri=current_doc_uri,
                             builtin=builtin,
+                            args=args,
                         )
                     else:
                         # Not in sync and it should not be created, just skip it.
@@ -1080,12 +1108,13 @@ class LibspecManager(object):
                     return library_doc
 
         if create:
-            if self._do_create_libspec_on_get(libname, target_file):
+            if self._do_create_libspec_on_get(libname, target_file, args):
                 return self.get_library_info(
                     libname,
                     create=False,
                     current_doc_uri=current_doc_uri,
                     builtin=builtin,
+                    args=args,
                 )
 
         log.debug("Unable to find library named: %s", libname)
