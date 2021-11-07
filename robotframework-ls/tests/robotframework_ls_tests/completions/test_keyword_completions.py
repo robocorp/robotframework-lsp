@@ -713,3 +713,28 @@ Templated test case
 
     completions = keyword_completions.complete(completion_context)
     assert [comp["label"] for comp in completions] == ["Example Keyword"]
+
+
+@pytest.mark.parametrize(
+    "server_port",
+    [
+        8270,  # default port
+        0,  # let OS decide port
+    ],
+)
+def test_keyword_completions_remote_library(workspace, libspec_manager, remote_library):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    workspace.set_root("case_remote_library", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case_remote.robot")
+    doc.source = doc.source.replace("${PORT}", str(remote_library)) + "\n    a.V"
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+
+    completions = keyword_completions.complete(completion_context)
+    assert sorted([comp["label"] for comp in completions]) == [
+        "Stop Remote Server",
+        "Validate String",
+        "Verify That Remote Is Running",
+    ]

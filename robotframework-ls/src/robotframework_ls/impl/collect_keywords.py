@@ -250,7 +250,7 @@ def _collect_current_doc_keywords(
     _collect_completions_from_ast(ast, completion_context, collector)
 
 
-_LibInfo = namedtuple("_LibInfo", "name, alias, builtin")
+_LibInfo = namedtuple("_LibInfo", "name, alias, builtin, remote")
 
 
 def _collect_libraries_keywords(
@@ -262,18 +262,28 @@ def _collect_libraries_keywords(
     # Get keywords from libraries
     from robotframework_ls.impl.robot_constants import BUILTIN_LIB
     from robocorp_ls_core.lsp import CompletionItemKind
+    from robotframework_ls.impl import ast_utils
 
     libraries = completion_context.get_imported_libraries()
 
     library_infos = set(
         _LibInfo(
-            completion_context.token_value_resolving_variables(library.name),
-            library.alias,
+            completion_context.token_value_resolving_variables(name),
+            alias,
             False,
+            remote,
         )
-        for library in libraries
+        for name, alias, remote in (
+            (
+                ast_utils.get_library_name_from_node(library),
+                library.alias,
+                ast_utils.is_remote_library_node(library),
+            )
+            for library in libraries
+        )
+        if name
     )
-    library_infos.add(_LibInfo(BUILTIN_LIB, None, True))
+    library_infos.add(_LibInfo(BUILTIN_LIB, None, True, False))
     libspec_manager = completion_context.workspace.libspec_manager
 
     for library_info in library_infos:
@@ -286,6 +296,7 @@ def _collect_libraries_keywords(
             create=True,
             current_doc_uri=completion_context.doc.uri,
             builtin=library_info.builtin,
+            remote=library_info.remote,
         )
         if library_doc is not None:
             #: :type keyword: KeywordDoc

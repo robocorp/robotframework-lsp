@@ -25,6 +25,10 @@ def _get_libspec_mutex_name(libspec_filename):
     return generate_mutex_name(libspec_filename, prefix="%s_" % (name,))
 
 
+def _get_remote_libspec_name(libname):
+    return libname.replace(":", "-").replace("/", "_")
+
+
 def _get_additional_info_filename(spec_filename):
     additional_info_filename = os.path.join(spec_filename + ".m")
     return additional_info_filename
@@ -749,7 +753,12 @@ class LibspecManager(object):
         )
 
     def _create_libspec(
-        self, libname, *, is_builtin=False, target_file: Optional[str] = None
+        self,
+        libname,
+        *,
+        is_builtin=False,
+        target_file: Optional[str] = None,
+        remote: bool = False,
     ):
         """
         :param target_file:
@@ -759,7 +768,9 @@ class LibspecManager(object):
         cache_key = (libname, is_builtin, target_file)
         not_created = self._libspec_failures_cache.get(cache_key, Sentinel.SENTINEL)
         if not_created is Sentinel.SENTINEL:
-            created = self._cached_create_libspec(libname, is_builtin, target_file)
+            created = self._cached_create_libspec(
+                libname, is_builtin, target_file, remote
+            )
             if not created:
                 # Always set as a whole (to avoid racing conditions).
                 cp = self._libspec_failures_cache.copy()
@@ -779,6 +790,7 @@ class LibspecManager(object):
         libname,
         is_builtin: bool,
         target_file: Optional[str],
+        remote: bool,
         *,
         _internal_force_text=False,  # Should only be set from within this function.
     ):
@@ -818,7 +830,8 @@ class LibspecManager(object):
                 cwd = additional_path
             if libname.endswith(("/", "\\")):
                 libname = libname[:-1]
-            libname = os.path.basename(libname)
+            if not remote:
+                libname = os.path.basename(libname)
             if libname.lower().endswith((".py", ".class", ".java")):
                 libname = os.path.splitext(libname)[0]
 
@@ -859,8 +872,12 @@ class LibspecManager(object):
                     ).hexdigest()[:8]
 
                     libspec_filename = os.path.join(libspec_dir, digest + ".libspec")
-                else:
+                elif not remote:
                     libspec_filename = os.path.join(libspec_dir, libname + ".libspec")
+                else:
+                    libspec_filename = os.path.join(
+                        libspec_dir, _get_remote_libspec_name(libname + ".libspec")
+                    )
 
                 log.debug(f"Obtaining mutex to generate libspec: {libspec_filename}.")
                 with timed_acquire_mutex(
@@ -922,6 +939,7 @@ class LibspecManager(object):
                                     libname,
                                     is_builtin,
                                     target_file,
+                                    remote,
                                     _internal_force_text=True,
                                 )
 
@@ -947,9 +965,11 @@ class LibspecManager(object):
     def dispose(self):
         self._file_changes_notifier.dispose()
 
-    def _do_create_libspec_on_get(self, libname, target_file: Optional[str]):
+    def _do_create_libspec_on_get(
+        self, libname, target_file: Optional[str], remote: bool
+    ):
 
-        if self._create_libspec(libname, target_file=target_file):
+        if self._create_libspec(libname, target_file=target_file, remote=remote):
             self.synchronize_internal_libspec_folders()
             return True
         return False
@@ -1005,6 +1025,7 @@ class LibspecManager(object):
         create: bool = True,
         current_doc_uri: Optional[str] = None,
         builtin: bool = False,
+        remote: bool = False,
     ) -> Optional[ILibraryDoc]:
         """
         :param libname:
@@ -1055,7 +1076,14 @@ class LibspecManager(object):
 
                 if "/" in libname_lower or "\\" in libname_lower:
                     libname_lower = os.path.basename(libname_lower)
-                found = library_doc.name and library_doc.name.lower() == libname_lower
+                if not remote:
+                    found = (
+                        library_doc.name and library_doc.name.lower() == libname_lower
+                    )
+                else:
+                    found = library_doc.filename.endswith(
+                        os.path.normcase(_get_remote_libspec_name(libname + ".libspec"))
+                    )
 
             if found:
                 if not lib_info.verify_sources_sync():
@@ -1063,7 +1091,7 @@ class LibspecManager(object):
                         # Found but it's not in sync. Try to regenerate (don't proceed
                         # because we don't want to match a lower priority item, so,
                         # regenerate and get from the cache without creating).
-                        self._do_create_libspec_on_get(libname, target_file)
+                        self._do_create_libspec_on_get(libname, target_file, remote)
 
                         # Note: get even if it if was not created (we may match
                         # a lower priority library).
@@ -1072,6 +1100,7 @@ class LibspecManager(object):
                             create=False,
                             current_doc_uri=current_doc_uri,
                             builtin=builtin,
+                            remote=remote,
                         )
                     else:
                         # Not in sync and it should not be created, just skip it.
@@ -1080,12 +1109,13 @@ class LibspecManager(object):
                     return library_doc
 
         if create:
-            if self._do_create_libspec_on_get(libname, target_file):
+            if self._do_create_libspec_on_get(libname, target_file, remote):
                 return self.get_library_info(
                     libname,
                     create=False,
                     current_doc_uri=current_doc_uri,
                     builtin=builtin,
+                    remote=remote,
                 )
 
         log.debug("Unable to find library named: %s", libname)

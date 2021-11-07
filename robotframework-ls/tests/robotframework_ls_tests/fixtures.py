@@ -317,3 +317,29 @@ def check_code_lens_data_regression(data_regression, found, basename=None):
             if uri:
                 data["uri"] = uri.split("/")[-1]
     data_regression.check(found, basename=basename)
+
+
+class RemoteLibraryExample(object):
+    def validate_string(self, string):
+        return True
+
+    def verify_that_remote_is_running(self):
+        return True
+
+
+@pytest.fixture
+def remote_library(server_port):
+    from robotremoteserver import RobotRemoteServer
+    import threading
+
+    server = RobotRemoteServer(
+        RemoteLibraryExample(),
+        port=server_port,
+        serve=False,
+    )
+    server.activate()
+    server_thread = threading.Thread(target=server.serve, args=(False,))
+    server_thread.start()
+    yield server.server_port
+    server.stop()
+    server_thread.join()
