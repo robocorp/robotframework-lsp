@@ -68,6 +68,7 @@ python -m venv .venv
 .venv/Scripts/activate.bat
 python -m pip install -r robocorp-code/tests/test_requirements.txt
 python -m pip install -r robocorp-code/dev_requirements.txt
+python -m pip install robotframework
 echo %cd%\robotframework-ls\src > .venv\Lib\site-packages\rf_src.pth
 echo %cd%\robocorp-code\src >> .venv\Lib\site-packages\rf_src.pth
 echo %cd%\robocorp-python-ls-core\src >> .venv\Lib\site-packages\rf_src.pth
@@ -83,6 +84,7 @@ python -m venv .venv
 source ./.venv/bin/activate
 python -m pip install -r robocorp-code/tests/test_requirements.txt
 python -m pip install -r robocorp-code/dev_requirements.txt
+python -m pip install robotframework
 echo $PWD/robotframework-ls/src > .venv/lib/python3.8/site-packages/rf_src.pth
 echo $PWD/robocorp-code/src >> .venv/lib/python3.8/site-packages/rf_src.pth
 echo $PWD/robocorp-python-ls-core/src >> .venv/lib/python3.8/site-packages/rf_src.pth
