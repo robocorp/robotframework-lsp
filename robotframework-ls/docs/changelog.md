@@ -1,3 +1,10 @@
+New in 0.28.0 (2021-11-08)
+-----------------------------
+
+- When a command line is too big to be launched in the terminal, a wrapper script is used [#394](https://github.com/robocorp/robotframework-lsp/issues/394)
+- The default is now launching in the terminal and not in the debug console.
+
+
 New in 0.27.0 (2021-11-01)
 -----------------------------
 

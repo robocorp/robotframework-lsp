@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.27.0'
+version '0.28.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,13 +51,13 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.26.0
+    Release 0.28.0
     </p>
     <ul>
 
-    <li>Consider <strong>PYTHONPATH</strong> when searching for <strong>Resource</strong> imports.</li>
-    <li>Properly consider that <strong>[Template]</strong> has a Keyword target.</li>
-    <li>Mark <strong>robot.codeFormatter</strong> as a string and not an array.</li>
+    <li>The <strong>code.formatter</strong> setting is now properly recognized as a string. </li>
+    <li>Fixed crash during startup (the timeout expected to startup was too short). </li>
+
 
     <br>
     Current feature set:<br>

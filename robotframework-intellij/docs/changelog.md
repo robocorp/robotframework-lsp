@@ -1,3 +1,16 @@
+New in 0.28.0 (2021-11-08)
+-----------------------------
+
+- The code.formatter setting is now properly recognized as a string. [#490](https://github.com/robocorp/robotframework-lsp/issues/490)
+- Fixed crash during startup (the timeout expected to startup was too short). [#489](https://github.com/robocorp/robotframework-lsp/issues/489)
+
+
+New in 0.27.0 (2021-11-01)
+-----------------------------
+
+- Minors
+
+
 New in 0.26.0 (2021-11-01)
 -----------------------------
 
