@@ -51,7 +51,7 @@ jobs:
         python setup.py sdist bdist_wheel --universal
         
     # VSCode (build)
-    - run: npm install -g vsce@1.103.1
+    - run: npm install -g vsce@1.100.2
     - run: vsce package -o robotframework-lsp.vsix
     - uses: actions/upload-artifact@v1
       with:
