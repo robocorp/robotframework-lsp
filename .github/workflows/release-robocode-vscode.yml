@@ -40,7 +40,7 @@ jobs:
       run: |
         cp ../README.md ./README.md
         python setup.py sdist bdist_wheel --universal
-    - run: npm install -g vsce
+    - run: npm install -g vsce@1.103.1
     - run: vsce package -o robocorp-code.vsix
     - uses: actions/upload-artifact@v1
       with:
