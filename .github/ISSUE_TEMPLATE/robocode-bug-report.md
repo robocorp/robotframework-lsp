@@ -23,6 +23,6 @@ If applicable, add screenshots to help explain your problem.
 
 **Versions:**
  - OS: [e.g. Windows 10]
- - Robot Framework Version [e.g. 3.2]
- - Robot Framework Language Server Version [e.g. 0.2.3]
- - Client Version [e.g.: VSCode 1.46 or PyCharm 2020.1.2]
+ - Robot Framework Version: [e.g. 3.2]
+ - Robot Framework Language Server Version: [e.g. 0.2.3]
+ - Client Version: [e.g.: VSCode 1.46 or PyCharm 2020.1.2]
