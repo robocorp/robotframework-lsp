@@ -872,8 +872,12 @@ class LibspecManager(object):
                 else:
                     import hashlib
 
-                    digest = hashlib.sha256(args.encode("utf-8", "replace")).hexdigest()[:8]
-                    libspec_filename = os.path.join(libspec_dir, libname + digest + ".libspec")
+                    digest = hashlib.sha256(
+                        args.encode("utf-8", "replace")
+                    ).hexdigest()[:8]
+                    libspec_filename = os.path.join(
+                        libspec_dir, libname + digest + ".libspec"
+                    )
 
                 log.debug(f"Obtaining mutex to generate libspec: {libspec_filename}.")
                 with timed_acquire_mutex(
@@ -1079,7 +1083,9 @@ class LibspecManager(object):
                 else:
                     import hashlib
 
-                    digest = hashlib.sha256(args.encode("utf-8", "replace")).hexdigest()[:8]
+                    digest = hashlib.sha256(
+                        args.encode("utf-8", "replace")
+                    ).hexdigest()[:8]
                     found = library_doc.filename.endswith(
                         os.path.normcase(libname + digest + ".libspec")
                     )
