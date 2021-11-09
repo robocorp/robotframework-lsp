@@ -665,7 +665,7 @@ async function enableWindowsLongPathSupport(rccLocation: string) {
                 // seem to resolve substed drives, we do it manually here.
 
                 if (rccLocation.charAt(1) == ":") {
-                    // Check that we're actually have a drive there.
+                    // Check that we actually have a drive there.
                     try {
                         let resolved: string = fs.readlinkSync(rccLocation.charAt(0) + ":");
                         rccLocation = path.join(resolved, rccLocation.slice(2));

@@ -94,17 +94,28 @@ export async function _internalOpenRobocorpInspector(locatorType?: string, locat
     try {
         // Required due to how conda packages python, and MacOS requiring
         // a signed package for displaying windows (supplied through python.app)
+        function replaceNewLines(s) {
+            return s.replace(/(?:\r\n|\r|\n)/g, "\n  i> ");
+        }
+        let first = true;
+        function append(s: string) {
+            if (first) {
+                OUTPUT_CHANNEL.append("  i> ");
+                first = false;
+            }
+            OUTPUT_CHANNEL.append(replaceNewLines(s));
+        }
         const configChildProcess = function (childProcess: ChildProcess) {
             childProcess.stderr.on("data", function (data: any) {
-                const s = "Inspector CLI stderr:" + data;
-                OUTPUT_CHANNEL.appendLine(s);
+                const s = "" + data;
+                append(s);
                 if (s.includes("Starting root window")) {
                     _startingRootWindowNotified = true;
                     resolveProgress();
                 }
             });
             childProcess.stdout.on("data", function (data: any) {
-                OUTPUT_CHANNEL.appendLine("Inspector CLI stdout:" + data);
+                append("" + data);
             });
         };
         const pythonExecutablePath =
@@ -140,7 +151,8 @@ async function startInspectorCLI(
             env: { ...process.env, ...environ },
             cwd,
         },
-        false,
-        configChildProcess
+        {
+            "configChildProcess": configChildProcess,
+        }
     );
 }

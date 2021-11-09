@@ -416,7 +416,7 @@ interface IEnvInfo {
 export async function feedback(name: string) {
     const rccLocation = await getRccLocation();
     let args: string[] = ["feedback", "metric", "-t", "vscode", "-n", name, "-v", "+1"];
-    await execFilePromise(rccLocation, args, {}, true);
+    await execFilePromise(rccLocation, args, {}, { "hideCommandLine": true });
 }
 
 /**
@@ -491,9 +491,12 @@ export async function collectBaseEnv(
 
     // If the env array is undefined, compute it now and cache the info to be reused later.
     if (!envArray) {
-        let execFileReturn: ExecFileReturn = await execFilePromise(rccLocation, args, {
-            env: createBaseEnv(robocorpHome),
-        });
+        let execFileReturn: ExecFileReturn = await execFilePromise(
+            rccLocation,
+            args,
+            { "env": createBaseEnv(robocorpHome) },
+            { "showOutputInteractively": true }
+        );
         if (!execFileReturn.stdout) {
             OUTPUT_CHANNEL.appendLine("Error: Unable to collect environment from RCC.");
             return undefined;
