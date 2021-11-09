@@ -237,7 +237,7 @@ def find_definition(completion_context: ICompletionContext) -> Sequence[IDefinit
                 completion_context.token_value_resolving_variables(token),
                 create=True,
                 current_doc_uri=completion_context.doc.uri,
-                remote=ast_utils.is_remote_library_node(token_info.node),
+                args="::".join(token_info.node.args),
             )
             if library_doc is not None:
                 definition = _DefinitionFromLibrary(library_doc)

@@ -540,20 +540,6 @@ def get_keyword_name_token(ast, token):
     return None
 
 
-def is_remote_library_node(node) -> bool:
-    return node.name and node.name.lower() == "remote"
-
-
-def get_library_name_from_node(node) -> Optional[str]:
-    if not is_remote_library_node(node):
-        return node.name
-
-    if len(node.args) == 0:
-        return None
-
-    return "Remote::" + node.args[0]
-
-
 def get_library_import_name_token(ast, token):
     """
     If the given ast node is a library import and the token is its name, return
@@ -565,11 +551,7 @@ def get_library_import_name_token(ast, token):
         and isinstance_name(ast, "LibraryImport")
         and ast.name == token.value  # I.e.: match the name, not the alias.
     ):
-        token.value = get_library_name_from_node(ast)
-        if (
-            token.value
-        ):  # check if it was not `Library    Remote` without actual arguments
-            return token
+        return token
     return None
 
 

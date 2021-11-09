@@ -301,13 +301,13 @@ def _obtain_import_location_info(completion_context) -> _ImportLocationInfo:
         if ast_utils.is_library_node_info(node_info):
             import_location_info.library_node_info = node_info
 
-            library_name = ast_utils.get_library_name_from_node(node_info.node)
+            library_name = node_info.node.name
             if library_name:
                 library_doc = libspec_manager.get_library_info(
                     completion_context.token_value_resolving_variables(library_name),
                     create=True,
                     current_doc_uri=completion_context.doc.uri,
-                    remote=ast_utils.is_remote_library_node(node_info.node),
+                    args="::".join(node_info.node.args),
                 )
                 if library_doc is not None:
                     if library_doc.source:
