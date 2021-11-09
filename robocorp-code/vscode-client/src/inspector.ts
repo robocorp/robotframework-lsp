@@ -6,8 +6,32 @@ import { listAndAskRobotSelection } from "./activities";
 import { getSelectedLocator, getSelectedRobot, LocatorEntry } from "./viewsCommon";
 import { execFilePromise, ExecFileReturn } from "./subprocess";
 import { OUTPUT_CHANNEL } from "./channel";
+import { ChildProcess } from "child_process";
+import { sleep } from "./time";
+
+let _openingInspector: boolean = false;
+let _startingRootWindowNotified: boolean = false;
 
 export async function openRobocorpInspector(locatorType?: string, locator?: LocatorEntry): Promise<void> {
+    if (_openingInspector) {
+        if (!_startingRootWindowNotified) {
+            return; // We should be showing the progress already, so, don't do anything.
+        }
+        window.showInformationMessage(
+            "The Locators UI is already opened, so, please use the existing UI (or close it/wait for it to be closed)."
+        );
+        return;
+    }
+    try {
+        _openingInspector = true;
+        return await _internalOpenRobocorpInspector(locatorType, locator);
+    } finally {
+        _openingInspector = false;
+        _startingRootWindowNotified = false;
+    }
+}
+
+export async function _internalOpenRobocorpInspector(locatorType?: string, locator?: LocatorEntry): Promise<void> {
     let locatorJson;
     const args: string[] = [];
     let robot: LocalRobotMetadataInfo | undefined = getSelectedRobot("Please select a robot first.")?.robot;
@@ -17,7 +41,9 @@ export async function openRobocorpInspector(locatorType?: string, locator?: Loca
             "Please select the Robot where the locators should be saved.",
             "Unable to create locator (no Robot detected in the Workspace)."
         );
-        if (!robot) return;
+        if (!robot) {
+            return;
+        }
     }
     locatorJson = path.join(robot.directory, "locators.json");
     locatorJson = verifyFileExists(locatorJson, false) ? locatorJson : undefined;
@@ -28,7 +54,9 @@ export async function openRobocorpInspector(locatorType?: string, locator?: Loca
     }
 
     // add locators.json path to args
-    if (locatorJson) args.push("--database", locatorJson);
+    if (locatorJson) {
+        args.push("--database", locatorJson);
+    }
 
     // if locatorType is given prioritize that. Else Ensure that a locator is selected!
     if (locatorType) {
@@ -47,6 +75,8 @@ export async function openRobocorpInspector(locatorType?: string, locator?: Loca
             return;
         }
     }
+
+    let resolveProgress = undefined;
     window.withProgress(
         {
             location: ProgressLocation.Notification,
@@ -56,42 +86,61 @@ export async function openRobocorpInspector(locatorType?: string, locator?: Loca
         (progress) => {
             progress.report({ message: "Opening Inspector..." });
             return new Promise<void>((resolve) => {
-                setTimeout(() => {
-                    resolve();
-                }, 3000);
+                resolveProgress = resolve;
             });
         }
     );
 
-    // Required due to how conda packages python, and MacOS requiring
-    // a signed package for displaying windows (supplied through python.app)
-    const pythonExecutablePath =
-        process.platform === "darwin"
-            ? path.join(path.dirname(inspectorLaunchInfo.pythonExe), "pythonw")
-            : inspectorLaunchInfo.pythonExe;
-    const launchResult: ExecFileReturn = await startInspectorCLI(
-        pythonExecutablePath,
-        args,
-        robot.directory,
-        inspectorLaunchInfo.environ
-    );
-    OUTPUT_CHANNEL.appendLine("Inspector CLI stdout:");
-    OUTPUT_CHANNEL.appendLine(launchResult.stdout);
-    OUTPUT_CHANNEL.appendLine("Inspector CLI stderr:");
-    OUTPUT_CHANNEL.appendLine(launchResult.stderr);
+    try {
+        // Required due to how conda packages python, and MacOS requiring
+        // a signed package for displaying windows (supplied through python.app)
+        const configChildProcess = function (childProcess: ChildProcess) {
+            childProcess.stderr.on("data", function (data: any) {
+                const s = "Inspector CLI stderr:" + data;
+                OUTPUT_CHANNEL.appendLine(s);
+                if (s.includes("Starting root window")) {
+                    _startingRootWindowNotified = true;
+                    resolveProgress();
+                }
+            });
+            childProcess.stdout.on("data", function (data: any) {
+                OUTPUT_CHANNEL.appendLine("Inspector CLI stdout:" + data);
+            });
+        };
+        const pythonExecutablePath =
+            process.platform === "darwin"
+                ? path.join(path.dirname(inspectorLaunchInfo.pythonExe), "pythonw")
+                : inspectorLaunchInfo.pythonExe;
+        const launchResult: ExecFileReturn = await startInspectorCLI(
+            pythonExecutablePath,
+            args,
+            robot.directory,
+            inspectorLaunchInfo.environ,
+            configChildProcess
+        );
+    } finally {
+        resolveProgress();
+    }
 }
 
 async function startInspectorCLI(
     pythonExecutable: string,
     args: string[],
     cwd?: string,
-    environ?: { [key: string]: string }
+    environ?: { [key: string]: string },
+    configChildProcess?: (childProcess: ChildProcess) => void
 ): Promise<ExecFileReturn> {
     const inspectorCmd = ["-m", "inspector.cli"];
     const completeArgs = inspectorCmd.concat(args);
     OUTPUT_CHANNEL.appendLine(`Using cwd root for inspector: "${cwd}"`);
-    return execFilePromise(pythonExecutable, completeArgs, {
-        env: { ...process.env, ...environ },
-        cwd,
-    });
+    return execFilePromise(
+        pythonExecutable,
+        completeArgs,
+        {
+            env: { ...process.env, ...environ },
+            cwd,
+        },
+        false,
+        configChildProcess
+    );
 }

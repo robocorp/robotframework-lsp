@@ -1,7 +1,7 @@
 "use strict";
 
 import { OUTPUT_CHANNEL } from "./channel";
-import { execFile, ExecException, ExecFileOptions } from "child_process";
+import { execFile, ExecException, ExecFileOptions, ChildProcess } from "child_process";
 import { getExtensionRelativeFile } from "./files";
 
 export interface ExecFileError {
@@ -15,15 +15,23 @@ export interface ExecFileReturn {
     stderr: string;
 }
 
-async function _execFileAsPromise(command: string, args: string[], options: ExecFileOptions): Promise<ExecFileReturn> {
+async function _execFileAsPromise(
+    command: string,
+    args: string[],
+    options: ExecFileOptions,
+    configChildProcess?: (childProcess: ChildProcess) => void
+): Promise<ExecFileReturn> {
     return new Promise((resolve, reject) => {
-        execFile(command, args, options, (error, stdout, stderr) => {
+        let childProcess: ChildProcess = execFile(command, args, options, (error, stdout, stderr) => {
             if (error) {
                 reject({ error: "error", "stdout": stdout, "stderr": stderr });
                 return;
             }
             resolve({ "stdout": stdout, "stderr": stderr });
         });
+        if (configChildProcess) {
+            configChildProcess(childProcess);
+        }
     });
 }
 
@@ -38,7 +46,8 @@ export async function execFilePromise(
     command: string,
     args: string[],
     options: ExecFileOptions,
-    silent?: boolean
+    silent?: boolean,
+    configChildProcess?: (childProcess: ChildProcess) => void
 ): Promise<ExecFileReturn> {
     if (!silent) {
         OUTPUT_CHANNEL.appendLine("Executing: " + command + "," + args);
@@ -47,7 +56,7 @@ export async function execFilePromise(
         if (!options.cwd) {
             options.cwd = getDefaultCwd();
         }
-        return await _execFileAsPromise(command, args, options);
+        return await _execFileAsPromise(command, args, options, configChildProcess);
     } catch (exc) {
         let errorInfo: ExecFileError = exc;
         let error: ExecException = errorInfo.error;
