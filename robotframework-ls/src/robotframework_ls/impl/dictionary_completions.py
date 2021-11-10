@@ -105,7 +105,10 @@ def complete(completion_context: ICompletionContext):
         return []
     token = token_info.token
     value = token.value
-    last_opening_bracket_column = value[::-1].index("[")
+    try:
+        last_opening_bracket_column = value[::-1].index("[")
+    except ValueError:
+        return []
     variables = _get_variables(completion_context)
     for resource_doc in completion_context.get_resource_imports_as_docs():
         new_ctx = completion_context.create_copy(resource_doc)
