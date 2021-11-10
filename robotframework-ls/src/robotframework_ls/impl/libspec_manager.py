@@ -30,6 +30,12 @@ def _get_additional_info_filename(spec_filename):
     return additional_info_filename
 
 
+def _get_digest_from_string(string):
+    import hashlib
+
+    return hashlib.sha256(string.encode("utf-8", "replace")).hexdigest()[:8]
+
+
 def _load_library_doc_and_mtime(spec_filename, obtain_mutex=True):
     """
     :param obtain_mutex:
@@ -860,21 +866,13 @@ class LibspecManager(object):
                     libspec_dir = self._builtins_libspec_dir
 
                 if target_file:
-                    import hashlib
-
-                    digest = hashlib.sha256(
-                        target_file.encode("utf-8", "replace")
-                    ).hexdigest()[:8]
+                    digest = _get_digest_from_string(target_file)
 
                     libspec_filename = os.path.join(libspec_dir, digest + ".libspec")
                 elif not args:
                     libspec_filename = os.path.join(libspec_dir, libname + ".libspec")
                 else:
-                    import hashlib
-
-                    digest = hashlib.sha256(
-                        args.encode("utf-8", "replace")
-                    ).hexdigest()[:8]
+                    digest = _get_digest_from_string(args)
                     libspec_filename = os.path.join(
                         libspec_dir, libname + digest + ".libspec"
                     )
@@ -1081,11 +1079,7 @@ class LibspecManager(object):
                         library_doc.name and library_doc.name.lower() == libname_lower
                     )
                 else:
-                    import hashlib
-
-                    digest = hashlib.sha256(
-                        args.encode("utf-8", "replace")
-                    ).hexdigest()[:8]
+                    digest = _get_digest_from_string(args)
                     found = library_doc.filename.endswith(
                         os.path.normcase(libname + digest + ".libspec")
                     )
