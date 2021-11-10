@@ -471,6 +471,9 @@ class RobotFrameworkInterpreter(object):
                 handler = user_keywords._create_handler(kw)
 
                 embedded = isinstance(handler, facade.EmbeddedArgumentsHandler)
+                if not embedded:
+                    if handler.name in user_keywords.handlers._normal:
+                        del user_keywords.handlers._normal[handler.name]
                 user_keywords.handlers.add(handler, embedded)
 
         # --------------------------------------- Actually run any test content.

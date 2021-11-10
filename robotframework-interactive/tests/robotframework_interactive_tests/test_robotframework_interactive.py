@@ -287,3 +287,33 @@ def test_full_doc_multiple(interpreter: _InterpreterInfo):
         "    Log    Foo    console=True\n"
         "    Log    Else    console=True"
     )
+
+
+def test_redefine_keyword(interpreter: _InterpreterInfo):
+    evaluate = interpreter.interpreter.evaluate
+    contents = [
+        ("*** Keyword ***\n" "My Keyword\n" "    Log  XXXX  console=True\n"),
+        "MyKeyword",
+        ("*** Keyword ***\n" "My Keyword\n" "    Log  YYYY  console=True\n"),
+        "MyKeyword",
+    ]
+
+    for c in contents:
+        evaluate(c)
+
+    assert not interpreter.stream_stderr.getvalue()
+    assert interpreter.stream_stdout.getvalue().count("XXXX") == 1
+    assert interpreter.stream_stdout.getvalue().count("YYYY") == 1
+    full_doc = interpreter.interpreter.full_doc
+    assert full_doc == (
+        "*** Keyword ***\n"
+        "My Keyword\n"
+        "    Log  XXXX  console=True\n"
+        "\n"
+        "My Keyword\n"
+        "    Log  YYYY  console=True\n"
+        "*** Test Case ***\n"
+        "Default Task/Test\n"
+        "    MyKeyword\n"
+        "    MyKeyword"
+    )
