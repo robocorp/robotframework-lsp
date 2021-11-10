@@ -242,6 +242,7 @@ class Rcc(object):
         cwd: Optional[str] = None,
         log_errors=True,
         stderr=Sentinel.SENTINEL,
+        show_interactive_output: bool = False,
     ) -> ActionResult[str]:
         """
         Returns an ActionResult where the result is the stdout of the executed command.
@@ -249,6 +250,10 @@ class Rcc(object):
         :param log_errors:
             If false, errors won't be logged (i.e.: should be false when errors
             are expected).
+
+        :param stderr:
+            If given sets the stderr redirection (by default it's subprocess.PIPE,
+            but users could change it to something as subprocess.STDOUT).
         """
         from robocorp_ls_core.basic import build_subprocess_kwargs
         from subprocess import check_output
@@ -284,7 +289,43 @@ class Rcc(object):
                 curtime = time.time()
                 for listener in self.rcc_listeners:
                     listener.before_command(args)
-                boutput: bytes = check_output(args, timeout=timeout, **kwargs)
+
+                boutput: bytes
+                # We have 2 main modes here: one in which we can print the output
+                # interactively while the command is running and another where
+                # we only print if some error happened.
+                if not show_interactive_output:
+                    boutput = check_output(args, timeout=timeout, **kwargs)
+                else:
+                    from robocorp_code.subprocess_check_output_interactive import (
+                        check_output_interactive,
+                    )
+                    from robocorp_ls_core.progress_report import (
+                        get_current_progress_reporter,
+                    )
+
+                    progress_reporter = get_current_progress_reporter()
+
+                    def on_output(content):
+                        try:
+                            sys.stderr.buffer.write(content)
+
+                            # Besides writing it to stderr, let's also add more
+                            # info to our current progress (if any).
+                            if progress_reporter is not None:
+                                progress_reporter.set_additional_info(
+                                    content.decode("utf-8")
+                                )
+                        except:
+                            log.exception("Error reporting interactive output.")
+
+                    boutput = check_output_interactive(
+                        args,
+                        timeout=timeout,
+                        on_stderr=on_output,
+                        on_stdout=on_output,
+                        **kwargs,
+                    )
 
         except CalledProcessError as e:
             stdout = as_str(e.stdout)
@@ -654,7 +695,6 @@ class Rcc(object):
         holotree_manager=None,
     ) -> ActionResult[IRobotYamlEnvInfo]:
         from robocorp_code.holetree_manager import HolotreeManager
-        import json
         from robocorp_code.rcc_space_info import format_conda_contents_to_compare
 
         if holotree_manager is None:
@@ -814,6 +854,7 @@ class Rcc(object):
                 mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME,
                 cwd=str(robot_yaml_path.parent),
                 timeout=timeout,  # Creating the env may be really slow!
+                show_interactive_output=True,
             )
 
             if not ret.success:

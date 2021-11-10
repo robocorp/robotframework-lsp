@@ -5,8 +5,10 @@ import threading
 from robocorp_ls_core.protocols import IEndPoint, IDirCache
 from contextlib import contextmanager
 from typing import Optional
+from robocorp_ls_core.robotframework_log import get_logger
 
 
+log = get_logger(__name__)
 next_id = partial(next, itertools.count(1))
 
 
@@ -35,6 +37,8 @@ class _ProgressReporter(object):
 
         self._expected_time = None
         self._initial_time = time.time()
+
+        self._additional_info: str = ""
 
         self._dir_cache = dir_cache
         self._last_elapsed_time_key = (
@@ -71,7 +75,7 @@ class _ProgressReporter(object):
                     update_time, self._on_recurrent_timeout
                 )
 
-    def _on_recurrent_timeout(self):
+    def _on_recurrent_timeout(self) -> None:
         import time
 
         with self._lock:
@@ -79,10 +83,18 @@ class _ProgressReporter(object):
                 elapsed_time = time.time() - self._initial_time
                 expected_time = self._expected_time
 
+                if not self._additional_info:
+                    msg = "Elapsed: %.1fs" % (elapsed_time,)
+                else:
+                    msg = "Elapsed: %.1fs : %s" % (
+                        elapsed_time,
+                        self._additional_info,
+                    )
+
                 args = {
                     "kind": "report",
                     "id": self._id,
-                    "message": "Elapsed: %.1fs" % (elapsed_time,),
+                    "message": msg,
                 }
                 if expected_time:
                     progress = elapsed_time / expected_time
@@ -94,6 +106,9 @@ class _ProgressReporter(object):
 
                 self.endpoint.notify("$/customProgress", args)
                 self.timeout_tracker.call_on_timeout(0.5, self._on_recurrent_timeout)
+
+    def set_additional_info(self, additional_info: str) -> None:
+        self._additional_info = additional_info
 
     def finish(self) -> None:
         import time
@@ -109,6 +124,25 @@ class _ProgressReporter(object):
                     dir_cache = self._dir_cache
                     if dir_cache:
                         dir_cache.store(self._last_elapsed_time_key, total_elapsed_time)
+
+
+_progress_context = threading.local()
+
+
+def get_current_progress_reporter() -> Optional[_ProgressReporter]:
+    try:
+        try:
+            stack = _progress_context._stack
+        except AttributeError:
+            return None
+        else:
+            try:
+                return stack[-1]
+            except IndexError:
+                return None
+    except Exception:
+        log.exception("Unexpected error getting current progress reporter.")
+        return None
 
 
 @contextmanager
@@ -137,6 +171,13 @@ def progress_context(
         endpoint, title, dir_cache, elapsed_time_key=elapsed_time_key
     )
     try:
+        stack = _progress_context._stack
+    except AttributeError:
+        stack = _progress_context._stack = []
+
+    stack.append(progress_reporter)
+    try:
         yield
     finally:
+        del stack[-1]
         progress_reporter.finish()
