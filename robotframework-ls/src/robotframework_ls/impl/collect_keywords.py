@@ -277,7 +277,7 @@ def _collect_libraries_keywords(
             (
                 library.name,
                 library.alias,
-                "::".join(library.args),
+                ast_utils.get_library_arguments_serialized(library),
             )
             for library in libraries
         )
