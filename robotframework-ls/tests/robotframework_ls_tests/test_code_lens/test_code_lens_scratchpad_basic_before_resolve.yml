@@ -9,7 +9,7 @@
         '
       uri: case4.robot
     command: robot.interactiveShell
-    title: Run in Interactive Console
+    title: Load in Interactive Console
   data:
     type: rf_interactive
     uri: case4.robot
@@ -42,7 +42,7 @@
     - code: "*** Keyword ***\nSome Keyword\n    Log    Something    console=True\n"
       uri: case4.robot
     command: robot.interactiveShell
-    title: Run in Interactive Console
+    title: Load in Interactive Console
   data:
     type: rf_interactive
     uri: case4.robot
@@ -62,7 +62,7 @@
         '
       uri: case4.robot
     command: robot.interactiveShell
-    title: Run in Interactive Console
+    title: Load in Interactive Console
   data:
     type: rf_interactive
     uri: case4.robot

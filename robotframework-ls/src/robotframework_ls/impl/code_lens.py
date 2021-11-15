@@ -143,6 +143,9 @@ def code_lens_runs(completion_context: ICompletionContext) -> List[CodeLensTyped
     return ret
 
 
+TEST_CASE_HEADER = "*** Test Case ***\n"
+
+
 def _iter_rf_interactive_items(ast):
     from robot.api import Token  # noqa
 
@@ -155,7 +158,7 @@ def _iter_rf_interactive_items(ast):
                 if header:
                     name_token = header.get_token(Token.TESTCASE_NAME)
                     if name_token:
-                        yield name_token, "*** Test Case ***\n", node
+                        yield name_token, TEST_CASE_HEADER, node
 
         elif section.__class__.__name__ == "KeywordSection":
             for node in section.body:
@@ -243,7 +246,9 @@ def _code_lens_rf_interactive_command(header, node, uri) -> CommandTypedDict:
     from robotframework_interactive.ast_to_code import ast_to_code
 
     code_lens_command: CommandTypedDict = {
-        "title": "Run in Interactive Console",
+        "title": "Run in Interactive Console"
+        if header == TEST_CASE_HEADER
+        else "Load in Interactive Console",
         "command": "robot.interactiveShell",
         "arguments": [{"code": header + ast_to_code(node), "uri": uri}],
     }
