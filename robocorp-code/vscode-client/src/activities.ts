@@ -9,6 +9,7 @@ import {
     DebugSessionOptions,
     env,
     ConfigurationTarget,
+    FileType,
 } from "vscode";
 import { join, dirname } from "path";
 import { logError, OUTPUT_CHANNEL } from "./channel";
@@ -682,54 +683,127 @@ export async function runRobotRCC(noDebug: boolean, robotYaml: string, taskName:
 }
 
 export async function createRobot() {
-    // Unfortunately vscode does not have a good way to request multiple inputs at once,
-    // so, for now we're asking each at a separate step.
-    let actionResult: ActionResult<RobotTemplate[]> = await commands.executeCommand(
-        roboCommands.ROBOCORP_LIST_ROBOT_TEMPLATES_INTERNAL
-    );
-    if (!actionResult.success) {
-        window.showErrorMessage("Unable to list Robot templates: " + actionResult.message);
+    let wsFolders: ReadonlyArray<WorkspaceFolder> = workspace.workspaceFolders;
+    if (!wsFolders) {
+        window.showErrorMessage("Unable to create Robot (no workspace folder is currently opened).");
         return;
     }
-    let availableTemplates: RobotTemplate[] = actionResult.result;
-    if (availableTemplates) {
-        let wsFolders: ReadonlyArray<WorkspaceFolder> = workspace.workspaceFolders;
-        if (!wsFolders) {
-            window.showErrorMessage("Unable to create Robot (no workspace folder is currently opened).");
-            return;
-        }
 
-        let selectedItem = await window.showQuickPick(
-            availableTemplates.map((robotTemplate) => robotTemplate.description),
+    // Start up async calls.
+    let asyncListRobotTemplates: Thenable<ActionResult<RobotTemplate[]>> = commands.executeCommand(
+        roboCommands.ROBOCORP_LIST_ROBOT_TEMPLATES_INTERNAL
+    );
+
+    let asyncListLocalRobots: Thenable<ActionResult<LocalRobotMetadataInfo[]>> = commands.executeCommand(
+        roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL
+    );
+
+    let ws: WorkspaceFolder;
+    if (wsFolders.length == 1) {
+        ws = wsFolders[0];
+    } else {
+        ws = await window.showWorkspaceFolderPick({
+            "placeHolder": "Please select the workspace folder to create the Robot.",
+            "ignoreFocusOut": true,
+        });
+    }
+    if (!ws) {
+        // Operation cancelled.
+        return;
+    }
+
+    // Check if we still don't have a Robot in this folder (i.e.: if we have a Robot in the workspace
+    // root already, we shouldn't create another Robot inside it).
+    try {
+        let dirContents: [string, FileType][] = await vscode.workspace.fs.readDirectory(ws.uri);
+        for (const element of dirContents) {
+            if (element[0] === "robot.yaml") {
+                window.showErrorMessage(
+                    "It's not possible to create a Robot in: " +
+                        ws.uri.fsPath +
+                        " because this workspace folder is already a Robot (nested Robots are not allowed)."
+                );
+                return;
+            }
+        }
+    } catch (error) {
+        logError("Error reading contents of: " + ws.uri.fsPath, error);
+    }
+
+    let actionResultListLocalRobots: ActionResult<LocalRobotMetadataInfo[]> = await asyncListLocalRobots;
+
+    let robotsInWorkspace = false;
+    if (!actionResultListLocalRobots.success) {
+        window.showErrorMessage(
+            "Error listing robots: " + actionResultListLocalRobots.message + " (Robot creation will proceed)."
+        );
+        // This shouldn't happen, but let's proceed as if there were no Robots in the workspace.
+    } else {
+        let robotsInfo: LocalRobotMetadataInfo[] = actionResultListLocalRobots.result;
+        robotsInWorkspace = robotsInfo && robotsInfo.length > 0;
+    }
+
+    // Unfortunately vscode does not have a good way to request multiple inputs at once,
+    // so, for now we're asking each at a separate step.
+    let actionResultListRobotTemplatesInternal: ActionResult<RobotTemplate[]> = await asyncListRobotTemplates;
+
+    if (!actionResultListRobotTemplatesInternal.success) {
+        window.showErrorMessage("Unable to list Robot templates: " + actionResultListRobotTemplatesInternal.message);
+        return;
+    }
+    let availableTemplates: RobotTemplate[] = actionResultListRobotTemplatesInternal.result;
+    if (!availableTemplates) {
+        window.showErrorMessage("Unable to create Robot (the Robot templates could not be loaded).");
+        return;
+    }
+
+    let selectedItem = await window.showQuickPick(
+        availableTemplates.map((robotTemplate) => robotTemplate.description),
+        {
+            "canPickMany": false,
+            "placeHolder": "Please select the template for the Robot.",
+            "ignoreFocusOut": true,
+        }
+    );
+    const selectedRobotTemplate = availableTemplates.find(
+        (robotTemplate) => robotTemplate.description === selectedItem
+    );
+
+    OUTPUT_CHANNEL.appendLine("Selected: " + selectedRobotTemplate?.description);
+    if (!selectedRobotTemplate) {
+        // Operation cancelled.
+        return;
+    }
+
+    let useWorkspaceFolder: boolean;
+    if (robotsInWorkspace) {
+        // i.e.: if we already have robots, this is a multi-Robot workspace.
+        useWorkspaceFolder = false;
+    } else {
+        const USE_WORKSPACE_FOLDER_LABEL = "Use workspace folder";
+        let target = await window.showQuickPick(
+            [
+                { "label": USE_WORKSPACE_FOLDER_LABEL, "detail": "The workspace will only have a single Robot." },
+                {
+                    "label": "Use child folder in workspace",
+                    "detail": "Multiple Robots can be created in this workspace.",
+                },
+            ],
             {
-                "canPickMany": false,
-                "placeHolder": "Please select the template for the Robot.",
+                "placeHolder": "Where do you want to create the Robot?",
                 "ignoreFocusOut": true,
             }
         );
-        const selectedRobotTemplate = availableTemplates.find(
-            (robotTemplate) => robotTemplate.description === selectedItem
-        );
 
-        OUTPUT_CHANNEL.appendLine("Selected: " + selectedRobotTemplate?.description);
-        let ws: WorkspaceFolder;
-        if (!selectedRobotTemplate) {
+        if (!target) {
             // Operation cancelled.
             return;
         }
-        if (wsFolders.length == 1) {
-            ws = wsFolders[0];
-        } else {
-            ws = await window.showWorkspaceFolderPick({
-                "placeHolder": "Please select the folder to create the Robot.",
-                "ignoreFocusOut": true,
-            });
-        }
-        if (!ws) {
-            // Operation cancelled.
-            return;
-        }
+        useWorkspaceFolder = target["label"] == USE_WORKSPACE_FOLDER_LABEL;
+    }
 
+    let targetDir = ws.uri.fsPath;
+    if (!useWorkspaceFolder) {
         let name: string = await window.showInputBox({
             "value": "Example",
             "prompt": "Please provide the name for the Robot folder name.",
@@ -739,24 +813,88 @@ export async function createRobot() {
             // Operation cancelled.
             return;
         }
+        targetDir = join(targetDir, name);
+    }
 
-        OUTPUT_CHANNEL.appendLine("Creating Robot at: " + ws.uri.fsPath);
-        let createRobotResult: ActionResult<any> = await commands.executeCommand(
-            roboCommands.ROBOCORP_CREATE_ROBOT_INTERNAL,
-            { "directory": ws.uri.fsPath, "template": selectedRobotTemplate.name, "name": name }
-        );
-
-        if (createRobotResult.success) {
-            try {
-                commands.executeCommand("workbench.files.action.refreshFilesExplorer");
-            } catch (error) {
-                logError("Error refreshing file explorer.", error);
-            }
-            window.showInformationMessage("Robot successfully created in:\n" + join(ws.uri.fsPath, name));
-        } else {
-            OUTPUT_CHANNEL.appendLine("Error creating Robot at: " + +ws.uri.fsPath);
-            window.showErrorMessage(createRobotResult.message);
+    // Now, let's validate if we can indeed create a Robot in the given folder.
+    let dirUri = vscode.Uri.file(targetDir);
+    let directoryExists = true;
+    try {
+        let stat = await vscode.workspace.fs.stat(dirUri); // this will raise if the directory doesn't exist.
+        if (stat.type == FileType.File) {
+            window.showErrorMessage(
+                "It's not possible to create a Robot in: " +
+                    ws.uri.fsPath +
+                    " because this points to a file which already exists (please erase this file and retry)."
+            );
+            return;
         }
+    } catch (err) {
+        // ok, directory does not exist
+        directoryExists = false;
+    }
+    let force: boolean = false;
+    if (directoryExists) {
+        let isEmpty: boolean = true;
+        try {
+            // The directory already exists, let's see if it's empty (if it's not we need to check
+            // whether to force the creation of the Robot).
+            let dirContents: [string, FileType][] = await vscode.workspace.fs.readDirectory(dirUri);
+            for (const element of dirContents) {
+                if (element[0] != ".vscode") {
+                    // If there's just a '.vscode', proceed, otherwise,
+                    // we need to ask the user about overwriting it.
+                    isEmpty = false;
+                    break;
+                }
+            }
+        } catch (error) {
+            logError("Error reading contents of directory: " + dirUri, error);
+        }
+        if (!isEmpty) {
+            const CANCEL = "Cancel Robot Creation";
+            // Check if the user wants to override the contents.
+            let target = await window.showQuickPick(
+                [
+                    {
+                        "label": "Create Robot anyways",
+                        "detail": "The Robot will be created and conflicting files will be overwritten.",
+                    },
+                    {
+                        "label": CANCEL,
+                        "detail": "No changes will be done.",
+                    },
+                ],
+                {
+                    "placeHolder": "The directory is not empty. How do you want to proceed?",
+                    "ignoreFocusOut": true,
+                }
+            );
+
+            if (!target || target["label"] == CANCEL) {
+                // Operation cancelled.
+                return;
+            }
+            force = true;
+        }
+    }
+
+    OUTPUT_CHANNEL.appendLine("Creating Robot at: " + targetDir);
+    let createRobotResult: ActionResult<any> = await commands.executeCommand(
+        roboCommands.ROBOCORP_CREATE_ROBOT_INTERNAL,
+        { "directory": targetDir, "template": selectedRobotTemplate.name, "force": force }
+    );
+
+    if (createRobotResult.success) {
+        try {
+            commands.executeCommand("workbench.files.action.refreshFilesExplorer");
+        } catch (error) {
+            logError("Error refreshing file explorer.", error);
+        }
+        window.showInformationMessage("Robot successfully created in:\n" + targetDir);
+    } else {
+        OUTPUT_CHANNEL.appendLine("Error creating Robot at: " + targetDir);
+        window.showErrorMessage(createRobotResult.message);
     }
 }
 

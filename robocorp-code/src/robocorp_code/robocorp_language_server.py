@@ -644,9 +644,16 @@ class RobocorpLanguageServer(PythonLanguageServer):
         self._feedback_metric("vscode.create.robot")
         directory = params["directory"]
         template = params["template"]
-        name = params["name"]
 
-        return self._rcc.create_robot(template, os.path.join(directory, name)).as_dict()
+        name = params.get("name", "").strip()
+        force = params.get("force", False)
+        if name:
+            # If the name is given we join it to the directory, otherwise
+            # we use the directory directly.
+            target_dir = os.path.join(directory, name)
+        else:
+            target_dir = directory
+        return self._rcc.create_robot(template, target_dir, force=force).as_dict()
 
     @command_dispatcher(commands.ROBOCORP_LIST_ROBOT_TEMPLATES_INTERNAL)
     def _list_activity_templates(self, params=None) -> ActionResultDict:

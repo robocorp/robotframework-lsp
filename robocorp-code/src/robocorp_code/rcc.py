@@ -412,8 +412,12 @@ class Rcc(object):
         return None
 
     @implements(IRcc.create_robot)
-    def create_robot(self, template: str, directory: str) -> ActionResult:
+    def create_robot(
+        self, template: str, directory: str, force: bool = False
+    ) -> ActionResult:
         args = ["robot", "initialize", "-t", template, "-d", directory]
+        if force:
+            args.append("-f")
         args = self._add_config_to_args(args)
         return self._run_rcc(args, error_msg="Error creating robot.")
 
