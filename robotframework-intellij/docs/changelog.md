@@ -1,3 +1,9 @@
+New in 0.29.0 (2021-11-16)
+-----------------------------
+
+- Fixed error on dictionary completions. [#503](https://github.com/robocorp/robotframework-lsp/issues/503)
+
+
 New in 0.28.0 (2021-11-08)
 -----------------------------
 

@@ -1,3 +1,11 @@
+New in 0.29.0 (2021-11-16)
+-----------------------------
+
+- Fixed error on dictionary completions. [#503](https://github.com/robocorp/robotframework-lsp/issues/503)
+- Renamed code lens to `Load in Interactive Console` for non `Test`/`Task` sections. [#502](https://github.com/robocorp/robotframework-lsp/issues/502)
+- It's now possible to redefine user keywords in the Interactive Console. [#502](https://github.com/robocorp/robotframework-lsp/issues/502)
+
+
 New in 0.28.0 (2021-11-08)
 -----------------------------
 
