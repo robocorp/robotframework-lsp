@@ -510,11 +510,11 @@ export async function activate(context: ExtensionContext) {
             const splitted = version.split(".");
             const major = parseInt(splitted[0]);
             const minor = parseInt(splitted[1]);
-            if (major == 0 && minor < 28) {
+            if (major == 0 && minor < 29) {
                 const msg =
                     "Unable to initialize the Robocorp Code extension because the Robot Framework Language Server version (" +
                     version +
-                    ") is not compatible with this version of Robocorp Code. Robot Framework Language Server 0.28.0 or newer is required. Please update to proceed. ";
+                    ") is not compatible with this version of Robocorp Code. Robot Framework Language Server 0.29.0 or newer is required. Please update to proceed. ";
                 OUTPUT_CHANNEL.appendLine(msg);
                 registerRobocorpCodeCommands(C, { installErrorStubs: true });
                 notifyOfInitializationErrorShowOutputTab(msg);

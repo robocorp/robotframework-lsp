@@ -1,3 +1,12 @@
+New in 0.20.0 (2021-11-16)
+-----------------------------
+
+- It's now possible to create a Robot in the workspace root folder. [#497](https://github.com/robocorp/robotframework-lsp/issues/497)
+- Clicking on inspector button multiple times no longer opens multiple inspectors. [#493](https://github.com/robocorp/robotframework-lsp/issues/493)
+- When creating an environment, its output is shown in the `Output` tab interactively and the last line is shown in the progress. [#491](https://github.com/robocorp/robotframework-lsp/issues/491)
+- RCC updated to `11.5.5`.
+
+
 New in 0.19.0 (2021-11-08)
 -----------------------------
 
