@@ -711,11 +711,12 @@ def test_internal_load_locators_db(
 }"""
     )
 
-    result = RobocorpLanguageServer._load_locators_db(robot_yaml)
-    assert result["result"]
-    db, locators_json_path = result["result"]
-    assert result["success"]
-    assert result["message"] is None
+    action_result = RobocorpLanguageServer._load_locators_db(robot_yaml)
+    db_and_locators = action_result["result"]
+    assert db_and_locators is not None
+    db, locators_json_path = db_and_locators
+    assert action_result["success"]
+    assert action_result["message"] is None
     assert str(locators_json_path) == str(locator_file)
     assert "Browser.Locator.00" in db.locators
     assert "Browser.Locator.01" in db.locators

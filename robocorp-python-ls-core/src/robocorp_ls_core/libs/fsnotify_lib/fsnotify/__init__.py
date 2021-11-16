@@ -39,6 +39,8 @@ Note: changes are only reported for files (added/modified/deleted), not director
 '''
 import threading
 import sys
+from typing import Tuple
+
 try:
     from os import scandir
 except:
@@ -195,7 +197,7 @@ class Watcher(object):
 
     # By default (if accept_file is not specified), these will be the
     # accepted files.
-    accepted_file_extensions = ()
+    accepted_file_extensions: Tuple[str, ...] = ()
 
     # Set to the target value for doing full scan of all files (adds a sleep inside the poll loop
     # which processes files to reach the target time).
@@ -226,7 +228,7 @@ class Watcher(object):
             Note: if passed it'll override the `accepted_file_extensions`.
         '''
         self._lock = threading.Lock()
-        
+
         self._path_watchers = set()
         self._disposed = threading.Event()
 
@@ -301,8 +303,8 @@ class Watcher(object):
             )
 
             path_watchers.add(path_watcher)
-        
-        with self._lock:    
+
+        with self._lock:
             self._single_visit_info = single_visit_info
             self._path_watchers = path_watchers
 
@@ -321,10 +323,10 @@ class Watcher(object):
                 old_file_to_mtime = old_visit_info.file_to_mtime
                 changes = []
                 append_change = changes.append
-    
+
                 self._single_visit_info = single_visit_info = _SingleVisitInfo()
                 path_watchers = self._path_watchers.copy()
-                
+
             initial_time = time.time()
             for path_watcher in self._path_watchers:
                 path_watcher._check(single_visit_info, append_change, old_file_to_mtime)

@@ -49,7 +49,9 @@ def check_valid_mutex_name(mutex_name):
         raise AssertionError("Mutex name is invalid: %s" % (mutex_name,))
 
 
-_mutex_name_to_info = weakref.WeakValueDictionary()
+_mutex_name_to_info: "weakref.WeakValueDictionary[str, SystemMutex]" = (
+    weakref.WeakValueDictionary()
+)
 _lock = threading.Lock()
 
 

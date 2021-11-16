@@ -327,6 +327,7 @@ class PythonLanguageServer(MethodDispatcher):
         Workspace (_VirtualFS).
         """
         try:
+            self._observer: IFSObserver
             return self._observer
         except AttributeError:
             from robocorp_ls_core import watchdog_wrapper

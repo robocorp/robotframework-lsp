@@ -7,7 +7,7 @@ import sys
 import logging
 import threading
 import weakref
-from typing import List, Tuple, Optional, Set, Sequence
+from typing import List, Tuple, Optional, Set, Sequence, Any
 from robocorp_ls_core.uris import normalize_drive
 
 log = logging.getLogger(__name__)
@@ -233,13 +233,13 @@ class _FSNotifyObserver(threading.Thread):
             extensions = tuple(extensions)
 
         watcher = self._watcher = fsnotify.Watcher()
-        poll_time = os.environ.get("ROBOTFRAMEWORK_LS_POLL_TIME")
+        poll_time_str: Optional[str] = os.environ.get("ROBOTFRAMEWORK_LS_POLL_TIME")
         watcher.target_time_for_notification = 4.0
         watcher.target_time_for_single_scan = 4.0
 
-        if poll_time:
+        if poll_time_str:
             try:
-                poll_time = int(poll_time)
+                poll_time = int(poll_time_str)
             except Exception:
                 log.exception(
                     "Unable to convert ROBOTFRAMEWORK_LS_POLL_TIME (%s) to an int.",
@@ -252,9 +252,9 @@ class _FSNotifyObserver(threading.Thread):
         watcher.accepted_file_extensions = extensions
         watcher.accept_directory = load_ignored_dirs.create_accept_directory_callable()
 
-        self._all_paths_to_track = []
+        self._all_paths_to_track: List[fsnotify.TrackedPath] = []
         self._lock = threading.Lock()
-        self._notifications = []
+        self._notifications: List[Tuple[str, Any, List[Any]]] = []
         self._was_started = False
 
     def dispose(self):

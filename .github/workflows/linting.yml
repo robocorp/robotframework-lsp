@@ -67,6 +67,7 @@ jobs:
           
           python -m pip install -r robocorp-code/tests/test_requirements.txt
           python -m pip install -r robocorp-code/dev_requirements.txt
+          python -m pip install robotframework
           
           echo $PWD/robotframework-ls/src > .venv/lib/python3.8/site-packages/rf_src.pth
           echo $PWD/robocorp-code/src >> .venv/lib/python3.8/site-packages/rf_src.pth
@@ -80,6 +81,18 @@ jobs:
         run: |
           source ./.venv/bin/activate
           export MYPYPATH=$PWD/robotframework-ls/src:$PWD/robocorp-code/src:$PWD/robocorp-python-ls-core/src:$PWD/robotframework-ls/tests:$PWD/robocorp-code/tests:$PWD/robocorp-python-ls-core/tests
-          mypy --follow-imports=silent --show-column-numbers $PWD/robocorp-code/src
+          mypy --follow-imports=silent --show-column-numbers $PWD/robocorp-code/src $PWD/robocorp-code/tests  $PWD/robocorp-code/codegen
+          
+
+      - name: mypy robocorp-python-ls-core
+        run: |
+          source ./.venv/bin/activate
+          export MYPYPATH=$PWD/robotframework-ls/src:$PWD/robocorp-code/src:$PWD/robocorp-python-ls-core/src:$PWD/robotframework-ls/tests:$PWD/robocorp-code/tests:$PWD/robocorp-python-ls-core/tests
+          export MYPYPATH=$MYPYPATH:$PWD/robocorp-python-ls-core/src/robocorp_ls_core/libs/fsnotify_lib
+          export MYPYPATH=$MYPYPATH:$PWD/robocorp-python-ls-core/src/robocorp_ls_core/libs/robocop_lib
+          export MYPYPATH=$MYPYPATH:$PWD/robocorp-python-ls-core/src/robocorp_ls_core/libs/robotidy_lib
+          export MYPYPATH=$MYPYPATH:$PWD/robocorp-python-ls-core/src/robocorp_ls_core/libs/watchdog_lib
+          export MYPYPATH=$MYPYPATH:$PWD/robocorp-python-ls-core/src/robocorp_ls_core/libs/yaml_lib
+          mypy --follow-imports=silent --show-column-numbers $PWD/robocorp-python-ls-core/src $PWD/robocorp-python-ls-core/tests
           
           

@@ -1,5 +1,5 @@
 [tool.mypy]
-
+exclude = "_resources|libs|dap_schema"
 
 [[tool.mypy.overrides]]
 module = "RPA.*"
@@ -8,3 +8,16 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "setuptools.*"
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "requests.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "psutil.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "pytest_timeout.*"
+ignore_missing_imports = true
+
