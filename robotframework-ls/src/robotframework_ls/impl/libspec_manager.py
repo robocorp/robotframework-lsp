@@ -3,11 +3,15 @@ import sys
 from robotframework_ls.constants import NULL
 from robocorp_ls_core.robotframework_log import get_logger
 import threading
-from typing import Optional, Dict
+from typing import Optional, Dict, Set
 from robocorp_ls_core.protocols import Sentinel
 from robotframework_ls.impl.protocols import ILibraryDoc
 import itertools
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
+from robotframework_ls.impl.robot_lsp_constants import (
+    OPTION_ROBOT_LIBRARIES_LIBDOC_NEEDS_ARGS,
+)
+from functools import lru_cache
 
 log = get_logger(__name__)
 
@@ -30,10 +34,11 @@ def _get_additional_info_filename(spec_filename):
     return additional_info_filename
 
 
-def _get_digest_from_string(string):
+@lru_cache(maxsize=250)
+def _get_digest_from_string(s: str) -> str:
     import hashlib
 
-    return hashlib.sha256(string.encode("utf-8", "replace")).hexdigest()[:8]
+    return hashlib.sha256(s.encode("utf-8", "replace")).hexdigest()[:8]
 
 
 def _load_library_doc_and_mtime(spec_filename, obtain_mutex=True):
@@ -1037,6 +1042,27 @@ class LibspecManager(object):
         target_file: str = ""
         normalized_target_file: str = ""
 
+        config = self.config
+        libraries_libdoc_needs_args_lower: Set[str]
+        if config is not None:
+            libraries_libdoc_needs_args_lower = set(
+                str(x).lower()
+                for x in config.get_setting(
+                    OPTION_ROBOT_LIBRARIES_LIBDOC_NEEDS_ARGS,
+                    list,
+                    ["remote", "fakerlib"],
+                )
+            )
+        else:
+            libraries_libdoc_needs_args_lower = {"remote", "fakerlib"}
+
+        # Note that experimentally, using '*' may pass args to all libraries.
+        if (
+            libname_lower not in libraries_libdoc_needs_args_lower
+            and "*" not in libraries_libdoc_needs_args_lower
+        ):
+            args = None
+
         if not builtin:
             found_target_filename = self._get_library_target_filename(
                 libname, current_doc_uri
@@ -1044,6 +1070,12 @@ class LibspecManager(object):
             if found_target_filename:
                 target_file = found_target_filename
                 normalized_target_file = os.path.normcase(os.path.normpath(target_file))
+
+        if libname_lower.endswith((".py", ".class", ".java")):
+            libname_lower = os.path.splitext(libname_lower)[0]
+
+        if "/" in libname_lower or "\\" in libname_lower:
+            libname_lower = os.path.basename(libname_lower)
 
         lib_info: _LibInfo
         for lib_info in self.iter_lib_info(builtin=builtin):
@@ -1069,11 +1101,6 @@ class LibspecManager(object):
                         # raise an exception.
                         found = False
             else:
-                if libname_lower.endswith((".py", ".class", ".java")):
-                    libname_lower = os.path.splitext(libname_lower)[0]
-
-                if "/" in libname_lower or "\\" in libname_lower:
-                    libname_lower = os.path.basename(libname_lower)
                 if not args:
                     found = (
                         library_doc.name and library_doc.name.lower() == libname_lower

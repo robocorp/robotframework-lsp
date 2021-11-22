@@ -637,7 +637,14 @@ def test_keyword_completions_lib_with_params(workspace, libspec_manager, cases):
 
     caseroot = cases.get_path("case_params_on_lib")
     config = RobotConfig()
-    config.update({"robot": {"pythonpath": [caseroot]}})
+    config.update(
+        {
+            "robot": {
+                "pythonpath": [caseroot],
+                "libraries": {"libdoc": {"needsArgs": ["*"]}},
+            }
+        }
+    )
     assert config.get_setting(OPTION_ROBOT_PYTHONPATH, list, []) == [caseroot]
     libspec_manager.config = config
 
@@ -646,10 +653,10 @@ def test_keyword_completions_lib_with_params(workspace, libspec_manager, cases):
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
     )
-    assert sorted([comp["label"] for comp in completions]) == ["Some Method"]
+    assert sorted([comp["label"] for comp in completions]) == ["Foo Method"]
 
 
-def test_simple(workspace, libspec_manager, cases):
+def test_simple_with_params(workspace, libspec_manager, cases):
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.robot_config import RobotConfig
@@ -659,7 +666,14 @@ def test_simple(workspace, libspec_manager, cases):
 
     caseroot = cases.get_path("case_params_on_lib")
     config = RobotConfig()
-    config.update({"robot": {"pythonpath": [caseroot]}})
+    config.update(
+        {
+            "robot": {
+                "pythonpath": [caseroot],
+                "libraries": {"libdoc": {"needsArgs": ["*"]}},
+            }
+        }
+    )
     assert config.get_setting(OPTION_ROBOT_PYTHONPATH, list, []) == [caseroot]
     libspec_manager.config = config
 
@@ -668,7 +682,7 @@ def test_simple(workspace, libspec_manager, cases):
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
     )
-    assert sorted([comp["label"] for comp in completions]) == ["Some Method"]
+    assert sorted([comp["label"] for comp in completions]) == ["Foo Method"]
 
 
 def test_keyword_completions_on_keyword_arguments(workspace, libspec_manager):
@@ -740,22 +754,34 @@ def test_keyword_completions_remote_library(workspace, libspec_manager, remote_l
     ]
 
 
-def test_keyword_completions_lirary_with_params_with_space(workspace, libspec_manager):
+@pytest.mark.parametrize("needs_args", ["LibWithParams", "*", "none"])
+def test_keyword_completions_library_with_params_with_space(
+    workspace, libspec_manager, needs_args
+):
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.robot_config import RobotConfig
+
+    config = RobotConfig()
+    config.update({"robot": {"libraries": {"libdoc": {"needsArgs": [needs_args]}}}})
+    libspec_manager.config = config
 
     workspace.set_root("case_params_on_lib", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case_params_on_lib.robot")
+
     doc.source = """
 *** Settings ***
-Library    LibWithParams    some_param=foo bar    WITH NAME    Lib
+Library    LibWithParams    some_param=foo    WITH NAME    Lib
 
 *** Test Case  ***
 My Test
-    Lib.Some"""
+    Lib.Foo"""
 
-    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    completion_context = CompletionContext(doc, workspace=workspace.ws, config=config)
     completions = keyword_completions.complete(completion_context)
 
-    assert len(completions) == 1
-    assert sorted([comp["label"] for comp in completions]) == ["Some Method"]
+    if needs_args == "none":
+        assert not completions
+    else:
+        assert len(completions) == 1
+        assert sorted([comp["label"] for comp in completions]) == ["Foo Method"]

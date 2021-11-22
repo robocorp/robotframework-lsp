@@ -24,6 +24,7 @@ class RobotState {
     public String robotPythonEnv = "";
     public String robotVariables = "";
     public String robotPythonpath = "";
+    public String robotLibrariesLibdocNeedsArgs = "";
     public String robotCodeFormatter = "";
     public String robotLintRobocopEnabled = "";
     public String robotCompletionsSectionHeadersForm = "";
@@ -43,6 +44,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
     public static final String ROBOT_PYTHON_ENV = "robot.python.env";
     public static final String ROBOT_VARIABLES = "robot.variables";
     public static final String ROBOT_PYTHONPATH = "robot.pythonpath";
+    public static final String ROBOT_LIBRARIES_LIBDOC_NEEDS_ARGS = "robot.libraries.libdoc.needsArgs";
     public static final String ROBOT_CODE_FORMATTER = "robot.codeFormatter";
     public static final String ROBOT_LINT_ROBOCOP_ENABLED = "robot.lint.robocop.enabled";
     public static final String ROBOT_COMPLETIONS_SECTION_HEADERS_FORM = "robot.completions.section_headers.form";
@@ -64,6 +66,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         robotState.robotPythonEnv = getRobotPythonEnv();
         robotState.robotVariables = getRobotVariables();
         robotState.robotPythonpath = getRobotPythonpath();
+        robotState.robotLibrariesLibdocNeedsArgs = getRobotLibrariesLibdocNeedsArgs();
         robotState.robotCodeFormatter = getRobotCodeFormatter();
         robotState.robotLintRobocopEnabled = getRobotLintRobocopEnabled();
         robotState.robotCompletionsSectionHeadersForm = getRobotCompletionsSectionHeadersForm();
@@ -83,6 +86,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         setRobotPythonEnv(robotState.robotPythonEnv);
         setRobotVariables(robotState.robotVariables);
         setRobotPythonpath(robotState.robotPythonpath);
+        setRobotLibrariesLibdocNeedsArgs(robotState.robotLibrariesLibdocNeedsArgs);
         setRobotCodeFormatter(robotState.robotCodeFormatter);
         setRobotLintRobocopEnabled(robotState.robotLintRobocopEnabled);
         setRobotCompletionsSectionHeadersForm(robotState.robotCompletionsSectionHeadersForm);
@@ -146,6 +150,14 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         if(!robotPythonpath.isEmpty()){
             try {
                 jsonObject.add(ROBOT_PYTHONPATH, g.fromJson(robotPythonpath, JsonArray.class));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotLibrariesLibdocNeedsArgs.isEmpty()){
+            try {
+                jsonObject.add(ROBOT_LIBRARIES_LIBDOC_NEEDS_ARGS, g.fromJson(robotLibrariesLibdocNeedsArgs, JsonArray.class));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -493,6 +505,49 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         robotPythonpath = s;
         for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             listener.onChanged(ROBOT_PYTHONPATH, old, s);
+        }
+    }
+    
+    private String robotLibrariesLibdocNeedsArgs = "";
+
+    public @NotNull String getRobotLibrariesLibdocNeedsArgs() {
+        return robotLibrariesLibdocNeedsArgs;
+    }
+
+    public @Nullable JsonArray getRobotLibrariesLibdocNeedsArgsAsJson() {
+        if(robotLibrariesLibdocNeedsArgs.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return g.fromJson(robotLibrariesLibdocNeedsArgs, JsonArray.class);
+    }
+
+    public @NotNull String validateRobotLibrariesLibdocNeedsArgs(String robotLibrariesLibdocNeedsArgs) {
+        if(robotLibrariesLibdocNeedsArgs.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            g.fromJson(robotLibrariesLibdocNeedsArgs, JsonArray.class);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLibrariesLibdocNeedsArgs(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLibrariesLibdocNeedsArgs)) {
+            return;
+        }
+        String old = robotLibrariesLibdocNeedsArgs;
+        robotLibrariesLibdocNeedsArgs = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            listener.onChanged(ROBOT_LIBRARIES_LIBDOC_NEEDS_ARGS, old, s);
         }
     }
     

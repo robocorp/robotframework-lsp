@@ -329,7 +329,7 @@ export async function submitIssue(
         let rccLocation: string | undefined = await getRccLocation();
         if (rccLocation) {
             if (!fs.existsSync(rccLocation)) {
-                let msg = "Unable to send issue report (" + rccLocation + ") does not exist."
+                let msg = "Unable to send issue report (" + rccLocation + ") does not exist.";
                 OUTPUT_CHANNEL.appendLine(msg);
                 window.showErrorMessage(msg);
                 return;
@@ -407,7 +407,9 @@ export async function submitIssue(
     }
     if (!errored) {
         OUTPUT_CHANNEL.appendLine("Issue sent.");
-        window.showInformationMessage("Thank you for your issue report. Please check you e-mail ("+ email + ") for confirmation.")
+        window.showInformationMessage(
+            "Thank you for your issue report. Please check you e-mail (" + email + ") for confirmation."
+        );
     }
     return;
 }

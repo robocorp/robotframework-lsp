@@ -131,6 +131,11 @@ def get_json_contents():
                         "default": [],
                         "description": 'Entries to be added to the PYTHONPATH (used when resolving resources and imports and automatically passed to the launch config as --pythonpath entries).\n(i.e.: ["c:/my/pro/src"])',
                     },
+                    "robot.libraries.libdoc.needsArgs": {
+                        "type": "array",
+                        "default": ["remote", "fakerlib"],
+                        "description": 'Libraries which will generate a different set of keywords based on the arguments provided.\n(i.e.: ["remote", "fakerlib"])',
+                    },
                     "robot.codeFormatter": {
                         "type": "string",
                         "default": "builtinTidy",

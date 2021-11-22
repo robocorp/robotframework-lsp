@@ -253,7 +253,14 @@ def test_code_analysis_lib_with_params(
 
     caseroot = cases.get_path("case_params_on_lib")
     config = RobotConfig()
-    config.update({"robot": {"pythonpath": [caseroot]}})
+    config.update(
+        {
+            "robot": {
+                "pythonpath": [caseroot],
+                "libraries": {"libdoc": {"needsArgs": ["*"]}},
+            }
+        }
+    )
     assert config.get_setting(OPTION_ROBOT_PYTHONPATH, list, []) == [caseroot]
     libspec_manager.config = config
 
