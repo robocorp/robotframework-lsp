@@ -234,7 +234,7 @@ export async function submitIssueUI(logPath: string) {
     } while (email.indexOf("@") == -1);
 
     let issueDescription: string = await window.showInputBox({
-        "prompt": "Please provide a brief description of the issue",
+        "prompt": "Please provide a brief description of the issue (confirming will send the issue)",
         "ignoreFocusOut": true,
     });
     if (!issueDescription) {
@@ -329,7 +329,9 @@ export async function submitIssue(
         let rccLocation: string | undefined = await getRccLocation();
         if (rccLocation) {
             if (!fs.existsSync(rccLocation)) {
-                OUTPUT_CHANNEL.appendLine("Unable to send issue report (" + rccLocation + ") does not exist.");
+                let msg = "Unable to send issue report (" + rccLocation + ") does not exist."
+                OUTPUT_CHANNEL.appendLine(msg);
+                window.showErrorMessage(msg);
                 return;
             }
 
@@ -400,9 +402,12 @@ export async function submitIssue(
     } catch (err) {
         errored = true;
         logError("Error sending issue.", err);
+        window.showErrorMessage("The issue report was not sent. Please see the OUTPUT for more information.");
+        OUTPUT_CHANNEL.show();
     }
     if (!errored) {
         OUTPUT_CHANNEL.appendLine("Issue sent.");
+        window.showInformationMessage("Thank you for your issue report. Please check you e-mail ("+ email + ") for confirmation.")
     }
     return;
 }
