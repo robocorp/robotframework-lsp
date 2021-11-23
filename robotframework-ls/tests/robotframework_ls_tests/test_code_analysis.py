@@ -269,6 +269,61 @@ def test_code_analysis_lib_with_params(
     _collect_errors(workspace, doc, data_regression, basename="no_error", config=config)
 
 
+def test_code_analysis_same_lib_multiple_with_alias(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+
+    doc.source = """*** Settings ***
+Library    Collections    WITH NAME    col1
+Library    Collections    WITH NAME    col2
+
+*** Test Cases ***
+Test
+    col1.Dictionary Should Contain Item
+    col2.Dictionary Should Contain Item
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_code_analysis_same_lib_with_alias_with_params(
+    workspace, libspec_manager, cases, data_regression
+):
+    from robotframework_ls.robot_config import RobotConfig
+    from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
+
+    workspace.set_root("case_params_on_lib", libspec_manager=libspec_manager)
+
+    caseroot = cases.get_path("case_params_on_lib")
+    config = RobotConfig()
+    config.update(
+        {
+            "robot": {
+                "pythonpath": [caseroot],
+                "libraries": {"libdoc": {"needsArgs": ["*"]}},
+            }
+        }
+    )
+    assert config.get_setting(OPTION_ROBOT_PYTHONPATH, list, []) == [caseroot]
+    libspec_manager.config = config
+
+    doc = workspace.get_doc("case_params_on_lib.robot")
+    doc.source = """
+*** Settings ***
+Library   LibWithParams    some_param=foo    WITH NAME   LibFoo
+Library   LibWithParams    some_param=bar    WITH NAME   LibBar
+
+*** Test Case ***
+My Test
+    LibFoo.Foo Method
+    LibBar.Bar Method
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error", config=config)
+
+
 def test_code_analysis_search_pythonpath(
     workspace, libspec_manager, cases, data_regression
 ):

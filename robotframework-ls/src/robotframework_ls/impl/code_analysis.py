@@ -1,15 +1,17 @@
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.ast_utils import MAX_ERRORS
+from typing import Dict, Set
+from robotframework_ls.impl.protocols import IKeywordFound
 
 log = get_logger(__name__)
 
 
 class _KeywordContainer(object):
-    def __init__(self):
-        self._name_to_keyword = {}
-        self._names_with_variables = set()
+    def __init__(self) -> None:
+        self._name_to_keyword: Dict[str, IKeywordFound] = {}
+        self._names_with_variables: Set[str] = set()
 
-    def add_keyword(self, keyword_found):
+    def add_keyword(self, keyword_found: IKeywordFound) -> None:
         from robotframework_ls.impl.text_utilities import normalize_robot_name
 
         normalized_name = normalize_robot_name(keyword_found.keyword_name)
@@ -48,6 +50,9 @@ class _KeywordsCollector(object):
         """
         from robotframework_ls.impl.text_utilities import normalize_robot_name
 
+        # Note: Even if something is imported 'WITH NAME', it's still added
+        # to the global scope (there's just an additional reference with the
+        # new name).
         self._keywords_container.add_keyword(keyword_found)
         library_name = keyword_found.library_name
         library_alias = keyword_found.library_alias
@@ -81,6 +86,9 @@ class _KeywordsCollector(object):
         if self._keywords_container.contains_keyword(normalized_keyword_name):
             return True
 
+        # Note: the name could be something as `alias.keywordname` or
+        # 'libraryname.keywordname`. In this case, we need to verify if there's
+        # a library/alias with that specific name.
         for name, remainder in text_utilities.iter_dotted_names(
             normalized_keyword_name
         ):

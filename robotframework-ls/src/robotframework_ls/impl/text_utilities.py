@@ -1,3 +1,6 @@
+from functools import lru_cache
+
+
 class TextUtilities(object):
     def __init__(self, text):
         self.text = text
@@ -22,6 +25,7 @@ class TextUtilities(object):
         self.text = self.text.strip()
 
 
+@lru_cache(maxsize=1024)
 def normalize_robot_name(text):
     return text.lower().replace("_", "").replace(" ", "")
 

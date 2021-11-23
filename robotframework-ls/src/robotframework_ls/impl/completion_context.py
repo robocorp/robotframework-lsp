@@ -43,9 +43,10 @@ class _Memo(object):
 
         return False
 
-    def complete_for_library(self, library_name: str) -> bool:
-        if library_name not in self._completed_libraries:
-            self._completed_libraries[library_name] = True
+    def complete_for_library(self, library_name: str, alias: Optional[str]) -> bool:
+        key = (library_name, alias)
+        if key not in self._completed_libraries:
+            self._completed_libraries[key] = True
             return True
 
         return False

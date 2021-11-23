@@ -785,3 +785,45 @@ My Test
     else:
         assert len(completions) == 1
         assert sorted([comp["label"] for comp in completions]) == ["Foo Method"]
+
+
+@pytest.mark.parametrize("lib_param", ["bar", "foo"])
+def test_code_analysis_same_lib_with_alias_with_params(
+    workspace, libspec_manager, cases, lib_param
+):
+    from robotframework_ls.robot_config import RobotConfig
+    from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    workspace.set_root("case_params_on_lib", libspec_manager=libspec_manager)
+
+    caseroot = cases.get_path("case_params_on_lib")
+    config = RobotConfig()
+    config.update(
+        {
+            "robot": {
+                "pythonpath": [caseroot],
+                "libraries": {"libdoc": {"needsArgs": ["*"]}},
+            }
+        }
+    )
+    assert config.get_setting(OPTION_ROBOT_PYTHONPATH, list, []) == [caseroot]
+    libspec_manager.config = config
+
+    doc = workspace.get_doc("case_params_on_lib.robot")
+    doc.source = f"""
+*** Settings ***
+Library   LibWithParams    some_param=foo    WITH NAME   LibFoo
+Library   LibWithParams    some_param=bar    WITH NAME   LibBar
+
+*** Test Case ***
+My Test
+    Lib{lib_param.title()}.{lib_param}"""
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws, config=config)
+    completions = keyword_completions.complete(completion_context)
+    assert len(completions) == 1
+    assert sorted([comp["label"] for comp in completions]) == [
+        f"{lib_param.title()} Method"
+    ]

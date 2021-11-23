@@ -871,7 +871,14 @@ class LibspecManager(object):
                     libspec_dir = self._builtins_libspec_dir
 
                 if target_file:
-                    digest = _get_digest_from_string(target_file)
+                    if args:
+                        digest = (
+                            _get_digest_from_string(target_file)
+                            + "_"
+                            + _get_digest_from_string(args)
+                        )
+                    else:
+                        digest = _get_digest_from_string(target_file)
 
                     libspec_filename = os.path.join(libspec_dir, digest + ".libspec")
                 elif not args:
@@ -1086,20 +1093,29 @@ class LibspecManager(object):
             # Note: this is only valid for the cases where we can regenerate the info
             # for cases where this information is builtin, only match by the name.
             if target_file and lib_info._can_regenerate:
-                found = (
-                    library_doc.source
-                    and os.path.normcase(os.path.normpath(library_doc.source))
-                    == normalized_target_file
-                )
-                if not found:
-                    try:
-                        found = library_doc.source and os.path.samefile(
-                            library_doc.source, target_file
-                        )
-                    except:
-                        # os.path.samefile touches the filesystem, so, it can
-                        # raise an exception.
-                        found = False
+                if args:
+                    digest = (
+                        _get_digest_from_string(target_file)
+                        + "_"
+                        + _get_digest_from_string(args)
+                    )
+                    found = library_doc.filename.endswith(digest + ".libspec")
+
+                else:
+                    found = (
+                        library_doc.source
+                        and os.path.normcase(os.path.normpath(library_doc.source))
+                        == normalized_target_file
+                    )
+                    if not found:
+                        try:
+                            found = library_doc.source and os.path.samefile(
+                                library_doc.source, target_file
+                            )
+                        except:
+                            # os.path.samefile touches the filesystem, so, it can
+                            # raise an exception.
+                            found = False
             else:
                 if not args:
                     found = (

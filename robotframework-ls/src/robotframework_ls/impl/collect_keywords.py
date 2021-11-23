@@ -266,29 +266,35 @@ def _collect_libraries_keywords(
 
     libraries = completion_context.get_imported_libraries()
 
-    library_infos = set(
-        _LibInfo(
-            completion_context.token_value_resolving_variables(name),
-            alias,
-            False,
-            args,
+    # Note: using a dict(_LibInfo:bool) where only the keys are meaningful
+    # because we want to keep the order and sets aren't ordered.
+    library_infos = {}
+    for name, alias, args in (
+        (
+            library.name,
+            library.alias,
+            ast_utils.get_library_arguments_serialized(library),
         )
-        for name, alias, args in (
-            (
-                library.name,
-                library.alias,
-                ast_utils.get_library_arguments_serialized(library),
+        for library in libraries
+    ):
+        if name:
+            lib_info = _LibInfo(
+                completion_context.token_value_resolving_variables(name),
+                alias,
+                False,
+                args,
             )
-            for library in libraries
-        )
-        if name
-    )
-    library_infos.add(_LibInfo(BUILTIN_LIB, None, True, None))
+
+            library_infos[lib_info] = True
+
+    library_infos[_LibInfo(BUILTIN_LIB, None, True, None)] = True
     libspec_manager = completion_context.workspace.libspec_manager
 
     for library_info in library_infos:
         completion_context.check_cancelled()
-        if not completion_context.memo.complete_for_library(library_info.name):
+        if not completion_context.memo.complete_for_library(
+            library_info.name, library_info.alias
+        ):
             continue
 
         library_doc = libspec_manager.get_library_info(
