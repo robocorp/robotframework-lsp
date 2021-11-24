@@ -128,6 +128,15 @@ class IEndPoint(Protocol):
         """
 
 
+class IProgressReporter(Protocol):
+    def set_additional_info(self, additional_info: str) -> None:
+        """
+        The progress reporter shows the title and elapsed time automatically.
+
+        With this API it's possible to add additional info for the user to see.
+        """
+
+
 class CommunicationDropped(object):
     def __str__(self):
         return "CommunicationDropped"

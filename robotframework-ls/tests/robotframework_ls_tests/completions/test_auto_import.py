@@ -557,3 +557,38 @@ KeywordInCase1
     )
     for completion in completions:
         assert completion["label"] != "Else If (Reserved)"
+
+
+def test_collect_from_pre_specified_pythonpath(
+    workspace, cases, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import auto_import_completions
+    from robotframework_ls.robot_config import RobotConfig
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+
+    pythonpath = [cases.get_path("case1"), cases.get_path("case_search_pythonpath")]
+    config = RobotConfig()
+    config.update(
+        {
+            "robot": {
+                "pythonpath": pythonpath,
+                "libraries": {
+                    "libdoc": {"preGenerate": ["libraries.lib_in_pythonpath"]}
+                },
+            }
+        }
+    )
+    libspec_manager.config = config
+    doc = workspace.get_doc("case1.robot")
+
+    doc.source = """
+*** Keywords ***
+KeywordInCase1
+    Find in lib"""
+
+    completions = auto_import_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws), {}
+    )
+    data_regression.check(completions)

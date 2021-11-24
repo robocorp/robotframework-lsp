@@ -251,8 +251,16 @@ class _ServerApi(object):
                 w = JsonRpcStreamWriter(write_to, sort_keys=True)
                 r = JsonRpcStreamReader(read_from)
 
+                language_server_ref = self._language_server_ref
+
+                def on_received_message(msg):
+                    if msg.get("method") == "$/customProgress":
+                        robot_framework_language_server = language_server_ref()
+                        if robot_framework_language_server is not None:
+                            robot_framework_language_server.forward_progress_msg(msg)
+
                 api = self._robotframework_api_client = RobotFrameworkApiClient(
-                    w, r, server_process
+                    w, r, server_process, on_received_message=on_received_message
                 )
 
                 log.debug(

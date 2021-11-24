@@ -4,7 +4,7 @@ from robotframework_ls.constants import NULL
 from robocorp_ls_core.robotframework_log import get_logger
 import threading
 from typing import Optional, Dict, Set
-from robocorp_ls_core.protocols import Sentinel
+from robocorp_ls_core.protocols import Sentinel, IEndPoint
 from robotframework_ls.impl.protocols import ILibraryDoc
 import itertools
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
@@ -12,12 +12,13 @@ from robotframework_ls.impl.robot_lsp_constants import (
     OPTION_ROBOT_LIBRARIES_LIBDOC_NEEDS_ARGS,
 )
 from functools import lru_cache
+from robotframework_ls.impl.libspec_warmup import (
+    _norm_filename,
+    _normfile,
+    LibspecWarmup,
+)
 
 log = get_logger(__name__)
-
-
-def _normfile(filename):
-    return os.path.abspath(os.path.normpath(os.path.normcase(filename)))
 
 
 def _get_libspec_mutex_name(libspec_filename):
@@ -238,10 +239,6 @@ class _LibInfo(object):
         return True
 
 
-def _norm_filename(path):
-    return os.path.normcase(os.path.realpath(os.path.abspath(path)))
-
-
 class _FolderInfo(object):
     def __init__(self, folder_path, recursive):
         self.folder_path = folder_path
@@ -415,15 +412,25 @@ class LibspecManager(object):
 
     def __init__(
         self,
-        builtin_libspec_dir=None,
-        user_libspec_dir=None,
+        builtin_libspec_dir: Optional[str] = None,
+        user_libspec_dir: Optional[str] = None,
+        dir_cache_dir: Optional[str] = None,
         observer: Optional[IFSObserver] = None,
+        endpoint: Optional[IEndPoint] = None,
     ):
         """
         :param __internal_libspec_dir__:
             Only to be used in tests (to regenerate the builtins)!
         """
         from robocorp_ls_core import watchdog_wrapper
+        from robocorp_ls_core.cache import DirCache
+        from robotframework_ls import robot_config
+
+        dir_cache = DirCache(
+            dir_cache_dir
+            or os.path.join(robot_config.get_robotframework_ls_home(), ".cache")
+        )
+        self._libspec_warmup = LibspecWarmup(endpoint, dir_cache)
 
         self._libspec_failures_cache: Dict[tuple, bool] = {}
 
@@ -493,7 +500,7 @@ class LibspecManager(object):
         self.config = None
 
         log.debug("Generating builtin libraries.")
-        self._gen_builtin_libraries()
+        self._libspec_warmup.gen_builtin_libraries(self)
         log.debug("Synchronizing internal caches.")
         self._synchronize()
         log.debug("Finished initializing LibspecManager.")
@@ -515,6 +522,11 @@ class LibspecManager(object):
 
     @config.setter
     def config(self, config):
+        from robotframework_ls.impl.robot_lsp_constants import (
+            OPTION_ROBOT_LIBRARIES_LIBDOC_PRE_GENERATE,
+        )
+        from robocorp_ls_core.basic import make_unique
+
         self._check_in_main_thread()
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
 
@@ -530,6 +542,13 @@ class LibspecManager(object):
             for old_entry in existing_entries:
                 if old_entry not in pythonpath_entries:
                     self.remove_additional_pythonpath_folder(old_entry)
+
+            pre_generate = []
+            pre_generate.extend(
+                config.get_setting(OPTION_ROBOT_LIBRARIES_LIBDOC_PRE_GENERATE, list, [])
+            )
+
+            self._libspec_warmup.gen_user_libraries(self, make_unique(pre_generate))
 
         self.synchronize_additional_pythonpath_folders()
 
@@ -610,63 +629,6 @@ class LibspecManager(object):
             self._additional_pythonpath_folder_to_folder_info = cp
         else:
             log.debug("Additional pythonpath folder already removed: %s", folder_path)
-
-    def _gen_builtin_libraries(self):
-        """
-        Generates .libspec files for the libraries builtin (if needed).
-        """
-
-        try:
-            import time
-            from concurrent import futures
-            from robotframework_ls.impl import robot_constants
-            from robocorp_ls_core.system_mutex import timed_acquire_mutex
-            from robocorp_ls_core.system_mutex import generate_mutex_name
-            from robotframework_ls.impl.robot_constants import RESERVED_LIB
-
-            initial_time = time.time()
-            wait_for = []
-
-            max_workers = min(10, (os.cpu_count() or 1) + 4)
-            thread_pool = futures.ThreadPoolExecutor(max_workers=max_workers)
-
-            try:
-                log.debug("Waiting for mutex to generate builtins.")
-                with timed_acquire_mutex(
-                    generate_mutex_name(
-                        _norm_filename(self._builtins_libspec_dir),
-                        prefix="gen_builtins_",
-                    ),
-                    timeout=100,
-                ):
-                    log.debug("Obtained mutex to generate builtins.")
-                    for libname in robot_constants.STDLIBS:
-                        if libname == RESERVED_LIB:
-                            continue
-                        builtins_libspec_dir = self._builtins_libspec_dir
-                        if not os.path.exists(
-                            os.path.join(builtins_libspec_dir, f"{libname}.libspec")
-                        ):
-                            wait_for.append(
-                                thread_pool.submit(
-                                    self._create_libspec, libname, is_builtin=True
-                                )
-                            )
-                    for future in wait_for:
-                        future.result()
-
-                if wait_for:
-                    log.debug(
-                        "Total time to generate builtins: %.2fs"
-                        % (time.time() - initial_time)
-                    )
-                    self.synchronize_internal_libspec_folders()
-            finally:
-                thread_pool.shutdown(wait=False)
-        except:
-            log.exception("Error creating builtin libraries.")
-        finally:
-            log.info("Finished creating builtin libraries.")
 
     def synchronize_workspace_folders(self):
         for folder_info in self._workspace_folder_uri_to_folder_info.values():

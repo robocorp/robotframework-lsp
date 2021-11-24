@@ -192,7 +192,7 @@ def remote_fs_observer(tmpdir, on_timeout):
 
     remote_fsobserver.dispose()
     on_timeout.remove(write_on_finish)
-    write_on_finish()
+    # write_on_finish() -- usually the remote fs observer isn't core to tests, so, don't print by default.
 
 
 @pytest.fixture
@@ -204,7 +204,9 @@ def libspec_manager(tmpdir, remote_fs_observer):
     from robotframework_ls.impl.libspec_manager import LibspecManager
 
     libspec_manager = LibspecManager(
-        user_libspec_dir=str(tmpdir.join("user_libspec")), observer=remote_fs_observer
+        user_libspec_dir=str(tmpdir.join("user_libspec")),
+        observer=remote_fs_observer,
+        dir_cache_dir=str(tmpdir.join(".cache")),
     )
     yield libspec_manager
     libspec_manager.dispose()

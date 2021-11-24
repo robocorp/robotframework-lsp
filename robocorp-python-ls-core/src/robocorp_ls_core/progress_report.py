@@ -1,15 +1,22 @@
-from functools import partial
-import itertools
 import threading
 
-from robocorp_ls_core.protocols import IEndPoint, IDirCache
+from robocorp_ls_core.protocols import IEndPoint, IDirCache, IProgressReporter
 from contextlib import contextmanager
-from typing import Optional
+from typing import Optional, Iterator
 from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.basic import implements
 
 
 log = get_logger(__name__)
-next_id = partial(next, itertools.count(1))
+
+
+def _next_id():
+    # Note: changed to uuid from incremental because multiple processes
+    # may start the progress and it shouldn't conflict from one to the
+    # other.
+    import uuid
+
+    return str(uuid.uuid4())
 
 
 class _ProgressReporter(object):
@@ -33,7 +40,7 @@ class _ProgressReporter(object):
         self._finished = False
 
         self._lock = threading.Lock()
-        self._id = next_id()
+        self._id = _next_id()
 
         self._expected_time = None
         self._initial_time = time.time()
@@ -107,6 +114,7 @@ class _ProgressReporter(object):
                 self.endpoint.notify("$/customProgress", args)
                 self.timeout_tracker.call_on_timeout(0.5, self._on_recurrent_timeout)
 
+    @implements(IProgressReporter.set_additional_info)
     def set_additional_info(self, additional_info: str) -> None:
         self._additional_info = additional_info
 
@@ -124,6 +132,11 @@ class _ProgressReporter(object):
                     dir_cache = self._dir_cache
                     if dir_cache:
                         dir_cache.store(self._last_elapsed_time_key, total_elapsed_time)
+
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
+
+        _: IProgressReporter = check_implements(self)
 
 
 _progress_context = threading.local()
@@ -145,13 +158,56 @@ def get_current_progress_reporter() -> Optional[_ProgressReporter]:
         return None
 
 
+class ProgressWrapperForTotalWork:
+    """
+    Wraps an IProgressReporter to have a quick way to show stes/total steps.
+
+    i.e.:
+
+    with progress_context(...) as progress_reporter:
+        progress_wrapper = ProgressWrapperForTotalWork(progress_reporter)
+
+        # Schedule many steps and at each point call.
+        progress_reporter.increment_total_steps()
+
+        # When a step is done, increment steps done.
+        progress_reporter.increment_step_done()
+    """
+
+    def __init__(
+        self,
+        progress_reporter: IProgressReporter,
+        message: str = "%s of %s",
+    ) -> None:
+        self.progress_reporter = progress_reporter
+        self.message = message
+        self._lock = threading.Lock()
+        self._total_steps = 0
+        self._current_step = 0
+
+    def increment_total_steps(self):
+        with self._lock:
+            self._total_steps += 1
+            self._update_message()
+
+    def increment_step_done(self):
+        with self._lock:
+            self._current_step += 1
+            self._update_message()
+
+    def _update_message(self):
+        self.progress_reporter.set_additional_info(
+            self.message % (self._current_step, self._total_steps)
+        )
+
+
 @contextmanager
 def progress_context(
     endpoint: IEndPoint,
     title: str,
     dir_cache: Optional[IDirCache],
     elapsed_time_key=None,
-):
+) -> Iterator[IProgressReporter]:
     """
     Creates a progress context which submits $/customProgress notifications to the
     client.
@@ -177,7 +233,7 @@ def progress_context(
 
     stack.append(progress_reporter)
     try:
-        yield
+        yield progress_reporter
     finally:
         del stack[-1]
         progress_reporter.finish()

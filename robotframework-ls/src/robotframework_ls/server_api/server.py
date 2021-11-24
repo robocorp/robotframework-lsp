@@ -38,15 +38,18 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     ):
         from robotframework_ls.impl.libspec_manager import LibspecManager
 
+        PythonLanguageServer.__init__(self, read_from, write_to)
+
         if libspec_manager is None:
             try:
-                libspec_manager = LibspecManager(observer=observer)
+                libspec_manager = LibspecManager(
+                    observer=observer, endpoint=self._endpoint
+                )
             except:
                 log.exception("Unable to properly initialize the LibspecManager.")
                 raise
 
         self.libspec_manager = libspec_manager
-        PythonLanguageServer.__init__(self, read_from, write_to)
         self._version = None
         self._next_time = partial(next, itertools.count(0))
 

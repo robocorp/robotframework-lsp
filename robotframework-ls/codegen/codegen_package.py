@@ -136,6 +136,11 @@ def get_json_contents():
                         "default": ["remote", "fakerlib"],
                         "description": 'Libraries which will generate a different set of keywords based on the arguments provided.\n(i.e.: ["remote", "fakerlib"])',
                     },
+                    "robot.libraries.libdoc.preGenerate": {
+                        "type": "array",
+                        "default": [],
+                        "description": "List of libraries which should have the libspec pre-generated.",
+                    },
                     "robot.codeFormatter": {
                         "type": "string",
                         "default": "builtinTidy",

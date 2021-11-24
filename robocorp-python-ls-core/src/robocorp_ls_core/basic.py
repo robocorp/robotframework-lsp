@@ -441,3 +441,8 @@ def build_subprocess_kwargs(cwd, env, **kwargs) -> dict:
         kwargs["env"] = env
     kwargs["startupinfo"] = startupinfo
     return kwargs
+
+
+def make_unique(lst):
+    seen = set()
+    return [x for x in lst if x not in seen and not seen.add(x)]

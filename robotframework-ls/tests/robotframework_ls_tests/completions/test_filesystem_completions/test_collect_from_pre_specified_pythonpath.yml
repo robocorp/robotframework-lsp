@@ -1,0 +1,17 @@
+- deprecated: false
+  documentation: ''
+  documentationFormat: plaintext
+  insertText: libraries.lib_in_pythonpath
+  insertTextFormat: 2
+  kind: 9
+  label: libraries.lib_in_pythonpath
+  preselect: false
+  textEdit:
+    newText: libraries.lib_in_pythonpath
+    range:
+      end:
+        character: 18
+        line: 2
+      start:
+        character: 11
+        line: 2

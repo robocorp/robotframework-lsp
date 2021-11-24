@@ -16,8 +16,10 @@ class SubprocessDiedError(Exception):
 
 
 class RobotFrameworkApiClient(LanguageServerClientBase):
-    def __init__(self, writer, reader, server_process):
-        LanguageServerClientBase.__init__(self, writer, reader)
+    def __init__(self, writer, reader, server_process, on_received_message=None):
+        LanguageServerClientBase.__init__(
+            self, writer, reader, on_received_message=on_received_message
+        )
         self.server_process = server_process
         self._check_process_alive()
         self._version = None

@@ -267,6 +267,11 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         return ret
 
+    def forward_progress_msg(self, msg: dict) -> None:
+        method = msg["method"]
+        assert method == "$/customProgress"
+        self._endpoint.notify(method, msg["params"])
+
     @overrides(PythonLanguageServer.capabilities)
     def capabilities(self):
         from robocorp_ls_core.lsp import TextDocumentSyncKind

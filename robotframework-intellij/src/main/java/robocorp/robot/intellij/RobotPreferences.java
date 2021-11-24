@@ -25,6 +25,7 @@ class RobotState {
     public String robotVariables = "";
     public String robotPythonpath = "";
     public String robotLibrariesLibdocNeedsArgs = "";
+    public String robotLibrariesLibdocPreGenerate = "";
     public String robotCodeFormatter = "";
     public String robotLintRobocopEnabled = "";
     public String robotCompletionsSectionHeadersForm = "";
@@ -45,6 +46,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
     public static final String ROBOT_VARIABLES = "robot.variables";
     public static final String ROBOT_PYTHONPATH = "robot.pythonpath";
     public static final String ROBOT_LIBRARIES_LIBDOC_NEEDS_ARGS = "robot.libraries.libdoc.needsArgs";
+    public static final String ROBOT_LIBRARIES_LIBDOC_PRE_GENERATE = "robot.libraries.libdoc.preGenerate";
     public static final String ROBOT_CODE_FORMATTER = "robot.codeFormatter";
     public static final String ROBOT_LINT_ROBOCOP_ENABLED = "robot.lint.robocop.enabled";
     public static final String ROBOT_COMPLETIONS_SECTION_HEADERS_FORM = "robot.completions.section_headers.form";
@@ -67,6 +69,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         robotState.robotVariables = getRobotVariables();
         robotState.robotPythonpath = getRobotPythonpath();
         robotState.robotLibrariesLibdocNeedsArgs = getRobotLibrariesLibdocNeedsArgs();
+        robotState.robotLibrariesLibdocPreGenerate = getRobotLibrariesLibdocPreGenerate();
         robotState.robotCodeFormatter = getRobotCodeFormatter();
         robotState.robotLintRobocopEnabled = getRobotLintRobocopEnabled();
         robotState.robotCompletionsSectionHeadersForm = getRobotCompletionsSectionHeadersForm();
@@ -87,6 +90,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         setRobotVariables(robotState.robotVariables);
         setRobotPythonpath(robotState.robotPythonpath);
         setRobotLibrariesLibdocNeedsArgs(robotState.robotLibrariesLibdocNeedsArgs);
+        setRobotLibrariesLibdocPreGenerate(robotState.robotLibrariesLibdocPreGenerate);
         setRobotCodeFormatter(robotState.robotCodeFormatter);
         setRobotLintRobocopEnabled(robotState.robotLintRobocopEnabled);
         setRobotCompletionsSectionHeadersForm(robotState.robotCompletionsSectionHeadersForm);
@@ -158,6 +162,14 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         if(!robotLibrariesLibdocNeedsArgs.isEmpty()){
             try {
                 jsonObject.add(ROBOT_LIBRARIES_LIBDOC_NEEDS_ARGS, g.fromJson(robotLibrariesLibdocNeedsArgs, JsonArray.class));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotLibrariesLibdocPreGenerate.isEmpty()){
+            try {
+                jsonObject.add(ROBOT_LIBRARIES_LIBDOC_PRE_GENERATE, g.fromJson(robotLibrariesLibdocPreGenerate, JsonArray.class));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -548,6 +560,49 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         robotLibrariesLibdocNeedsArgs = s;
         for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             listener.onChanged(ROBOT_LIBRARIES_LIBDOC_NEEDS_ARGS, old, s);
+        }
+    }
+    
+    private String robotLibrariesLibdocPreGenerate = "";
+
+    public @NotNull String getRobotLibrariesLibdocPreGenerate() {
+        return robotLibrariesLibdocPreGenerate;
+    }
+
+    public @Nullable JsonArray getRobotLibrariesLibdocPreGenerateAsJson() {
+        if(robotLibrariesLibdocPreGenerate.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return g.fromJson(robotLibrariesLibdocPreGenerate, JsonArray.class);
+    }
+
+    public @NotNull String validateRobotLibrariesLibdocPreGenerate(String robotLibrariesLibdocPreGenerate) {
+        if(robotLibrariesLibdocPreGenerate.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            g.fromJson(robotLibrariesLibdocPreGenerate, JsonArray.class);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLibrariesLibdocPreGenerate(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLibrariesLibdocPreGenerate)) {
+            return;
+        }
+        String old = robotLibrariesLibdocPreGenerate;
+        robotLibrariesLibdocPreGenerate = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            listener.onChanged(ROBOT_LIBRARIES_LIBDOC_PRE_GENERATE, old, s);
         }
     }
     

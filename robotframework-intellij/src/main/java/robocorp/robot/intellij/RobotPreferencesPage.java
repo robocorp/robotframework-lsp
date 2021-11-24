@@ -28,6 +28,7 @@ class RobotPreferencesComponent {
     private final JBTextField robotVariables = new JBTextField();
     private final JBTextField robotPythonpath = new JBTextField();
     private final JBTextField robotLibrariesLibdocNeedsArgs = new JBTextField();
+    private final JBTextField robotLibrariesLibdocPreGenerate = new JBTextField();
     private final JBTextField robotCodeFormatter = new JBTextField();
     private final JBTextField robotLintRobocopEnabled = new JBTextField();
     private final JBTextField robotCompletionsSectionHeadersForm = new JBTextField();
@@ -52,6 +53,8 @@ class RobotPreferencesComponent {
                 .addComponent(createJTextArea("Entries to be added to the PYTHONPATH\n(used when resolving resources and imports and automatically passed to the launch config as\n--pythonpath entries).\n(i.e.: [\"c:/my/pro/src\"])\nNote: expected format: JSON Array\n"))
                 .addLabeledComponent(new JBLabel("Libraries Libdoc Needs Args"), robotLibrariesLibdocNeedsArgs, 1, false)
                 .addComponent(createJTextArea("Libraries which will generate a different set of keywords based on the arguments provided.\n(i.e.: [\"remote\", \"fakerlib\"])\nNote: expected format: JSON Array\n"))
+                .addLabeledComponent(new JBLabel("Libraries Libdoc Pre Generate"), robotLibrariesLibdocPreGenerate, 1, false)
+                .addComponent(createJTextArea("List of libraries which should have the libspec pre-generated.\nNote: expected format: JSON Array\n"))
                 .addLabeledComponent(new JBLabel("Code Formatter"), robotCodeFormatter, 1, false)
                 .addComponent(createJTextArea("Allows the configuration of the code-formatter engine to be used. One of: robotidy, builtinTidy.\n"))
                 .addLabeledComponent(new JBLabel("Lint Robocop Enabled"), robotLintRobocopEnabled, 1, false)
@@ -159,6 +162,15 @@ class RobotPreferencesComponent {
     }
     
     @NotNull
+    public String getRobotLibrariesLibdocPreGenerate() {
+        return robotLibrariesLibdocPreGenerate.getText();
+    }
+
+    public void setRobotLibrariesLibdocPreGenerate (@NotNull String newText) {
+        robotLibrariesLibdocPreGenerate.setText(newText);
+    }
+    
+    @NotNull
     public String getRobotCodeFormatter() {
         return robotCodeFormatter.getText();
     }
@@ -263,6 +275,10 @@ public class RobotPreferencesPage implements Configurable {
             return true;
         }
         
+        if(!settings.getRobotLibrariesLibdocPreGenerate().equals(component.getRobotLibrariesLibdocPreGenerate())){
+            return true;
+        }
+        
         if(!settings.getRobotCodeFormatter().equals(component.getRobotCodeFormatter())){
             return true;
         }
@@ -298,6 +314,7 @@ public class RobotPreferencesPage implements Configurable {
         component.setRobotVariables(settings.getRobotVariables());
         component.setRobotPythonpath(settings.getRobotPythonpath());
         component.setRobotLibrariesLibdocNeedsArgs(settings.getRobotLibrariesLibdocNeedsArgs());
+        component.setRobotLibrariesLibdocPreGenerate(settings.getRobotLibrariesLibdocPreGenerate());
         component.setRobotCodeFormatter(settings.getRobotCodeFormatter());
         component.setRobotLintRobocopEnabled(settings.getRobotLintRobocopEnabled());
         component.setRobotCompletionsSectionHeadersForm(settings.getRobotCompletionsSectionHeadersForm());
@@ -342,6 +359,10 @@ public class RobotPreferencesPage implements Configurable {
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Libraries Libdoc Needs Args:\n" + s);
         }
+        s = settings.validateRobotLibrariesLibdocPreGenerate(component.getRobotLibrariesLibdocPreGenerate());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Libraries Libdoc Pre Generate:\n" + s);
+        }
         s = settings.validateRobotCodeFormatter(component.getRobotCodeFormatter());
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Code Formatter:\n" + s);
@@ -371,6 +392,7 @@ public class RobotPreferencesPage implements Configurable {
         settings.setRobotVariables(component.getRobotVariables());
         settings.setRobotPythonpath(component.getRobotPythonpath());
         settings.setRobotLibrariesLibdocNeedsArgs(component.getRobotLibrariesLibdocNeedsArgs());
+        settings.setRobotLibrariesLibdocPreGenerate(component.getRobotLibrariesLibdocPreGenerate());
         settings.setRobotCodeFormatter(component.getRobotCodeFormatter());
         settings.setRobotLintRobocopEnabled(component.getRobotLintRobocopEnabled());
         settings.setRobotCompletionsSectionHeadersForm(component.getRobotCompletionsSectionHeadersForm());
