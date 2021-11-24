@@ -4,6 +4,7 @@ from robocorp_ls_core.protocols import IEndPoint, IDirCache
 from typing import Optional, List, Any, Tuple, Callable, Iterable
 from robocorp_ls_core.constants import NULL
 from functools import partial
+import threading
 
 log = get_logger(__name__)
 
@@ -139,6 +140,22 @@ class LibspecWarmup(object):
         )
 
     def gen_user_libraries(self, libspec_manager, user_libraries: List[str]):
-        for name in user_libraries:
-            libspec_manager._create_libspec(name)
-        libspec_manager.synchronize_internal_libspec_folders()
+        def provide_args_and_kwargs_to_create_libspec():
+            for libname in user_libraries:
+                libspec_dir = libspec_manager._user_libspec_dir
+                if not os.path.exists(os.path.join(libspec_dir, f"{libname}.libspec")):
+                    yield (libname,), dict()
+
+        def in_thread():
+            self._generate(
+                libspec_manager,
+                progress_title="Generate .libspec for libraries",
+                elapsed_time_key="generate_libspec",
+                mutex_name_prefix="gen_libspec_",
+                on_finish=libspec_manager.synchronize_internal_libspec_folders,
+                provide_args_and_kwargs_to_create_libspec=provide_args_and_kwargs_to_create_libspec,
+            )
+
+        t = threading.Thread(target=in_thread)
+        t.daemon = True
+        t.start()

@@ -565,6 +565,7 @@ def test_collect_from_pre_specified_pythonpath(
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import auto_import_completions
     from robotframework_ls.robot_config import RobotConfig
+    from robocorp_ls_core.basic import wait_for_expected_func_return
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
 
@@ -588,7 +589,14 @@ def test_collect_from_pre_specified_pythonpath(
 KeywordInCase1
     Find in lib"""
 
-    completions = auto_import_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws), {}
+    def check():
+        completions = auto_import_completions.complete(
+            CompletionContext(doc, workspace=workspace.ws), {}
+        )
+        return [c["label"] for c in completions]
+
+    # The libspec generation will run in a thread at startup, thus, we need
+    # to wait for this condition to be reached.
+    wait_for_expected_func_return(
+        check, ["Find In Library (libraries.lib_in_pythonpath)"]
     )
-    data_regression.check(completions)

@@ -176,12 +176,11 @@ Resource           ${ext_folder}/"""
     data_regression.check(completions)
 
 
-def test_collect_from_pre_specified_pythonpath(
-    workspace, cases, libspec_manager, data_regression
-):
+def test_collect_from_pre_specified_pythonpath(workspace, cases, libspec_manager):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import filesystem_section_completions
     from robotframework_ls.robot_config import RobotConfig
+    from robocorp_ls_core.basic import wait_for_expected_func_return
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
 
@@ -204,7 +203,12 @@ def test_collect_from_pre_specified_pythonpath(
 *** Settings ***
 Library    librari"""
 
-    completions = filesystem_section_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws, config=config)
-    )
-    data_regression.check(completions)
+    def check():
+        completions = filesystem_section_completions.complete(
+            CompletionContext(doc, workspace=workspace.ws, config=config)
+        )
+        return [c["label"] for c in completions]
+
+    # The libspec generation will run in a thread at startup, thus, we need
+    # to wait for this condition to be reached.
+    wait_for_expected_func_return(check, ["libraries.lib_in_pythonpath"])

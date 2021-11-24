@@ -396,6 +396,38 @@ def wait_for_condition(condition, msg=None, timeout=DEFAULT_TIMEOUT, sleep=1 / 2
         time.sleep(sleep)
 
 
+def wait_for_non_error_condition(
+    generate_error_or_none, timeout=DEFAULT_TIMEOUT, sleep=1 / 20.0
+):
+    import time
+
+    curtime = time.time()
+
+    while True:
+        error_msg = generate_error_or_none()
+        if error_msg is None:
+            break
+
+        if timeout is not None and (time.time() - curtime > timeout):
+            raise TimeoutError(
+                f"Condition not reached in {timeout} seconds\n{error_msg}"
+            )
+        time.sleep(sleep)
+
+
+def wait_for_expected_func_return(
+    func, expected_return, timeout=DEFAULT_TIMEOUT, sleep=1 / 20.0
+):
+    def check():
+        found = func()
+        if found != expected_return:
+            return "Expected: %s. Found: %s" % (expected_return, found)
+
+        return None
+
+    wait_for_non_error_condition(check, timeout, sleep)
+
+
 def isinstance_name(obj, classname, memo={}):
     """
     Checks if a given object is instance of a class with the given name.
