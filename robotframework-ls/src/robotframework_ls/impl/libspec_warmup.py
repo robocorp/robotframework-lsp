@@ -39,8 +39,8 @@ class LibspecWarmup(object):
         elapsed_time_key: Optional[str],
         mutex_name_prefix: str,
         on_finish: Callable[[], Any],
-        provide_args_and_kwargs_to_create_libspec: Callable[
-            [], Iterable[Tuple[tuple, dict]]
+        provide_libname_and_kwargs_to_create_libspec: Callable[
+            [], Iterable[Tuple[str, dict]]
         ],
     ):
         from robocorp_ls_core.progress_report import progress_context
@@ -83,18 +83,25 @@ class LibspecWarmup(object):
                     ):
                         log.debug(f"Obtained mutex to {progress_title}.")
                         for (
-                            args_and_kwargs
-                        ) in provide_args_and_kwargs_to_create_libspec():
+                            libname,
+                            kwargs,
+                        ) in provide_libname_and_kwargs_to_create_libspec():
+                            libspec_filename = (
+                                libspec_manager._compute_libspec_filename(
+                                    libname, **kwargs
+                                )
+                            )
+                            if os.path.exists(libspec_filename):
+                                continue
                             progress_wrapper.increment_total_steps()
 
-                            def progress_and_create(args_and_kwargs):
-                                args, kwargs = args_and_kwargs
-                                libspec_manager._create_libspec(*args, **kwargs)
+                            def progress_and_create(libname, kwargs):
+                                libspec_manager._create_libspec(libname, **kwargs)
                                 progress_wrapper.increment_step_done()
 
                             wait_for.append(
                                 thread_pool.submit(
-                                    partial(progress_and_create, args_and_kwargs)
+                                    partial(progress_and_create, libname, kwargs)
                                 )
                             )
                         for future in wait_for:
@@ -120,15 +127,11 @@ class LibspecWarmup(object):
         from robotframework_ls.impl import robot_constants
         from robotframework_ls.impl.robot_constants import RESERVED_LIB
 
-        def provide_args_and_kwargs_to_create_libspec():
+        def provide_libname_and_kwargs_to_create_libspec():
             for libname in robot_constants.STDLIBS:
                 if libname == RESERVED_LIB:
                     continue
-                builtins_libspec_dir = libspec_manager._builtins_libspec_dir
-                if not os.path.exists(
-                    os.path.join(builtins_libspec_dir, f"{libname}.libspec")
-                ):
-                    yield (libname,), dict(is_builtin=True)
+                yield libname, dict(is_builtin=True)
 
         self._generate(
             libspec_manager,
@@ -136,15 +139,20 @@ class LibspecWarmup(object):
             elapsed_time_key="generate_builtins_libspec",
             mutex_name_prefix="gen_builtins_",
             on_finish=lambda: None,
-            provide_args_and_kwargs_to_create_libspec=provide_args_and_kwargs_to_create_libspec,
+            provide_libname_and_kwargs_to_create_libspec=provide_libname_and_kwargs_to_create_libspec,
         )
 
     def gen_user_libraries(self, libspec_manager, user_libraries: List[str]):
-        def provide_args_and_kwargs_to_create_libspec():
+        def provide_libname_and_kwargs_to_create_libspec():
             for libname in user_libraries:
                 libspec_dir = libspec_manager._user_libspec_dir
                 if not os.path.exists(os.path.join(libspec_dir, f"{libname}.libspec")):
-                    yield (libname,), dict()
+                    yield libname, {}
+
+                # Now, besides those (specified by the user), we'll also try to find
+                # existing libraries in the PYTHONPATH.
+                # for libname in _CHECK_IF_LIBRARIES_INSTALLED:
+                #   yield libname, {}
 
         def in_thread():
             self._generate(
@@ -153,7 +161,7 @@ class LibspecWarmup(object):
                 elapsed_time_key="generate_libspec",
                 mutex_name_prefix="gen_libspec_",
                 on_finish=libspec_manager.synchronize_internal_libspec_folders,
-                provide_args_and_kwargs_to_create_libspec=provide_args_and_kwargs_to_create_libspec,
+                provide_libname_and_kwargs_to_create_libspec=provide_libname_and_kwargs_to_create_libspec,
             )
 
         t = threading.Thread(target=in_thread)

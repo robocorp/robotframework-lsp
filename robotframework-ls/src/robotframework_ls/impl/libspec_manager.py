@@ -735,8 +735,10 @@ class LibspecManager(object):
             actual library we're creating the spec for.
         """
         cache_key = (libname, is_builtin, target_file, args)
-        not_created = self._libspec_failures_cache.get(cache_key, Sentinel.SENTINEL)
-        if not_created is Sentinel.SENTINEL:
+        failed_to_create_previously = self._libspec_failures_cache.get(
+            cache_key, Sentinel.SENTINEL
+        )
+        if failed_to_create_previously is Sentinel.SENTINEL:
             created = self._cached_create_libspec(
                 libname, is_builtin, target_file, args
             )
@@ -746,7 +748,7 @@ class LibspecManager(object):
                 cp[cache_key] = False
                 self._libspec_failures_cache = cp
 
-        return not_created
+        return failed_to_create_previously
 
     def _subprocess_check_output(self, *args, **kwargs):
         # Only done for mocking.
@@ -756,7 +758,7 @@ class LibspecManager(object):
 
     def _cached_create_libspec(
         self,
-        libname,
+        libname: str,
         is_builtin: bool,
         target_file: Optional[str],
         args: Optional[str],
@@ -768,7 +770,6 @@ class LibspecManager(object):
         :raise Exception: if unable to create the library.
         """
         import time
-        from robotframework_ls.impl import robot_constants
         from robocorp_ls_core.subprocess_wrapper import subprocess
         from robocorp_ls_core.system_mutex import timed_acquire_mutex
         from robocorp_ls_core.robotframework_log import get_log_level
@@ -828,28 +829,9 @@ class LibspecManager(object):
                         call.extend(["-P", entry])
 
                 call.append("::".join([libname, args] if args else [libname]))
-                libspec_dir = self._user_libspec_dir
-                if libname in robot_constants.STDLIBS:
-                    libspec_dir = self._builtins_libspec_dir
-
-                if target_file:
-                    if args:
-                        digest = (
-                            _get_digest_from_string(target_file)
-                            + "_"
-                            + _get_digest_from_string(args)
-                        )
-                    else:
-                        digest = _get_digest_from_string(target_file)
-
-                    libspec_filename = os.path.join(libspec_dir, digest + ".libspec")
-                elif not args:
-                    libspec_filename = os.path.join(libspec_dir, libname + ".libspec")
-                else:
-                    digest = _get_digest_from_string(args)
-                    libspec_filename = os.path.join(
-                        libspec_dir, libname + digest + ".libspec"
-                    )
+                libspec_filename = self._compute_libspec_filename(
+                    libname, is_builtin, target_file, args
+                )
 
                 log.debug(f"Obtaining mutex to generate libspec: {libspec_filename}.")
                 with timed_acquire_mutex(
@@ -936,6 +918,37 @@ class LibspecManager(object):
 
     def dispose(self):
         self._file_changes_notifier.dispose()
+
+    def _compute_libspec_filename(
+        self,
+        libname: str,
+        is_builtin: bool = False,
+        target_file: Optional[str] = None,
+        args: Optional[str] = None,
+    ):
+        from robotframework_ls.impl import robot_constants
+
+        libspec_dir = self._user_libspec_dir
+        if libname in robot_constants.STDLIBS:
+            libspec_dir = self._builtins_libspec_dir
+
+        if target_file:
+            if args:
+                digest = (
+                    _get_digest_from_string(target_file)
+                    + "_"
+                    + _get_digest_from_string(args)
+                )
+            else:
+                digest = _get_digest_from_string(target_file)
+
+            libspec_filename = os.path.join(libspec_dir, digest + ".libspec")
+        elif not args:
+            libspec_filename = os.path.join(libspec_dir, libname + ".libspec")
+        else:
+            digest = _get_digest_from_string(args)
+            libspec_filename = os.path.join(libspec_dir, libname + digest + ".libspec")
+        return libspec_filename
 
     def _do_create_libspec_on_get(
         self, libname, target_file: Optional[str], args: Optional[str]
