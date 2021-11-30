@@ -1,10 +1,21 @@
 from robocorp_ls_core.robotframework_log import get_logger
 import os
 from robocorp_ls_core.protocols import IEndPoint, IDirCache
-from typing import Optional, List, Any, Tuple, Callable, Iterable
+from typing import (
+    Optional,
+    List,
+    Any,
+    Tuple,
+    Callable,
+    Iterable,
+    Dict,
+    Iterator,
+    Set,
+)
 from robocorp_ls_core.constants import NULL
 from functools import partial
 import threading
+from robotframework_ls.impl.robot_lsp_constants import CHECK_IF_LIBRARIES_INSTALLED
 
 log = get_logger(__name__)
 
@@ -15,6 +26,31 @@ def _normfile(filename):
 
 def _norm_filename(path):
     return os.path.normcase(os.path.realpath(os.path.abspath(path)))
+
+
+class _Node(object):
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self._children: Dict[str, _Node] = {}
+        self.is_leaf_libname = False
+        self.full_libname = ""
+
+    def __str__(self):
+        return f"_Node({self.name})"
+
+    __repr__ = __str__
+
+    def add_child(self, name: str) -> "_Node":
+        c = self._children.get(name)
+        if c is None:  # If it exists, just reuse it.
+            c = self._children[name] = _Node(name)
+        return c
+
+    def get_child(self, name: str) -> Optional["_Node"]:
+        return self._children.get(name)
+
+    def has_children(self):
+        return len(self._children) > 0
 
 
 class LibspecWarmup(object):
@@ -81,6 +117,7 @@ class LibspecWarmup(object):
                         ),
                         timeout=100,
                     ):
+                        library_names = set(libspec_manager.get_library_names())
                         log.debug(f"Obtained mutex to {progress_title}.")
                         for (
                             libname,
@@ -91,7 +128,10 @@ class LibspecWarmup(object):
                                     libname, **kwargs
                                 )
                             )
-                            if os.path.exists(libspec_filename):
+                            if (
+                                os.path.exists(libspec_filename)
+                                or libname in library_names
+                            ):
                                 continue
                             progress_wrapper.increment_total_steps()
 
@@ -142,17 +182,86 @@ class LibspecWarmup(object):
             provide_libname_and_kwargs_to_create_libspec=provide_libname_and_kwargs_to_create_libspec,
         )
 
+    def find_rf_libraries(
+        self,
+        libspec_manager,
+        target_libs: Iterable[str] = CHECK_IF_LIBRARIES_INSTALLED,
+        tracked_folders=None,
+    ) -> Set[str]:
+        """
+        Given an input of target libraries, try to discover if those are available
+        in the PYTHONPATH.
+        """
+
+        root = _Node("")
+        for libname in target_libs:
+            splitted = libname.split(".")
+            assert splitted
+            parent = root
+
+            for name in splitted:
+                parent = parent.add_child(name)
+
+            # The last one is marked as being an actual entry.
+            parent.is_leaf_libname = True
+            parent.full_libname = libname
+
+        found_libnames: Set[str] = set()
+        if tracked_folders is None:
+            tracked_folders = libspec_manager.collect_all_tracked_folders()
+        for s in tracked_folders:
+            if os.path.isdir(s):
+                found_libnames.update(self._veriy_tree_match(root, s, True))
+
+        return found_libnames
+
+    def _veriy_tree_match(
+        self, parent: _Node, path: str, is_dir: bool
+    ) -> Iterator[str]:
+        try:
+            if parent.has_children():
+                if is_dir:
+                    for dir_entry in os.scandir(path):
+                        if dir_entry.is_dir():
+                            use_name = dir_entry.name
+                        else:
+                            use_name = dir_entry.name
+                            if not use_name.endswith(".py"):
+                                continue
+                            use_name = os.path.splitext(use_name)[0]
+
+                        child_node = parent.get_child(use_name)
+                        if child_node is not None:
+                            if child_node.is_leaf_libname:
+                                yield child_node.full_libname
+
+                            yield from self._veriy_tree_match(
+                                child_node, dir_entry.path, dir_entry.is_dir()
+                            )
+        except:
+            log.exception(
+                f"Exception handled while computing preinstalled libraries when verifying: {path}"
+            )
+
     def gen_user_libraries(self, libspec_manager, user_libraries: List[str]):
+        """
+        Pre-generate the libspec for user libraries installed (in a thread).
+
+        Note that it'll do it for the libraries that the user pre-specifies as well
+        as those we automatically find in the PYTHONPATH.
+
+        :param user_libraries:
+            The libraries that the user specifies.
+        """
+
         def provide_libname_and_kwargs_to_create_libspec():
             for libname in user_libraries:
-                libspec_dir = libspec_manager._user_libspec_dir
-                if not os.path.exists(os.path.join(libspec_dir, f"{libname}.libspec")):
-                    yield libname, {}
+                yield libname, {}
 
-                # Now, besides those (specified by the user), we'll also try to find
-                # existing libraries in the PYTHONPATH.
-                # for libname in _CHECK_IF_LIBRARIES_INSTALLED:
-                #   yield libname, {}
+            # Now, besides those (specified by the user), we'll also try to find
+            # existing libraries in the PYTHONPATH.
+            for libname in self.find_rf_libraries(libspec_manager):
+                yield libname, {}
 
         def in_thread():
             self._generate(

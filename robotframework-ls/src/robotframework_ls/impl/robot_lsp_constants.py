@@ -1,3 +1,5 @@
+from typing import List
+
 OPTION_ROBOT_PYTHON_EXECUTABLE = "robot.python.executable"
 
 OPTION_ROBOT_PYTHON_ENV = "robot.python.env"
@@ -54,3 +56,59 @@ ALL_ROBOT_OPTIONS = frozenset(
         OPTION_ROBOT_LIBRARIES_LIBDOC_NEEDS_ARGS,
     )
 )
+
+
+CHECK_IF_LIBRARIES_INSTALLED: List[str] = [
+    # robotframework-appiumlibrary
+    "AppiumLibrary",
+    # robotframework-datadriver
+    "DataDriver",
+    # robotframework-mainframe3270
+    "Mainframe3270",
+    # robotframework-sshlibrary
+    "SSHLibrary",
+    # robotframework-whitelibrary
+    "WhiteLibrary",
+    # rpaframework-google
+    "RPA.Cloud.Google",
+    # rpaframework
+    "RPA.Archive",
+    "RPA.Browser",
+    "RPA.Browser.Selenium",
+    "RPA.Cloud.AWS",
+    "RPA.Cloud.Azure",
+    "RPA.Crypto",
+    "RPA.Database",
+    "RPA.Desktop",
+    "RPA.Desktop.Clipboard",
+    "RPA.Desktop.OperatingSystem",
+    "RPA.Desktop.Windows",
+    "RPA.Dialogs",
+    "RPA.Email.Exchange",
+    "RPA.Email.ImapSmtp",
+    "RPA.Excel.Application",
+    "RPA.Excel.Files",
+    "RPA.FileSystem",
+    "RPA.FTP",
+    "RPA.HTTP",
+    "RPA.Images",
+    "RPA.JavaAccessBridge",
+    "RPA.JSON",
+    "RPA.Netsuite",
+    "RPA.Notifier",
+    "RPA.Outlook.Application",
+    "RPA.PDF",
+    "RPA.Robocloud.Items",
+    "RPA.Robocloud.Secrets",
+    "RPA.Robocorp.Process",
+    "RPA.Robocorp.Vault",
+    "RPA.Robocorp.WorkItems",
+    "RPA.RobotLogListener",
+    "RPA.Salesforce",
+    "RPA.SAP",
+    "RPA.Slack",
+    "RPA.Tables",
+    "RPA.Tasks",
+    "RPA.Twitter",
+    "RPA.Word.Application",
+]

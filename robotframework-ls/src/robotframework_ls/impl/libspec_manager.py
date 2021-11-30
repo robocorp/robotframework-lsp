@@ -3,7 +3,7 @@ import sys
 from robotframework_ls.constants import NULL
 from robocorp_ls_core.robotframework_log import get_logger
 import threading
-from typing import Optional, Dict, Set
+from typing import Optional, Dict, Set, Iterator
 from robocorp_ls_core.protocols import Sentinel, IEndPoint
 from robotframework_ls.impl.protocols import ILibraryDoc
 import itertools
@@ -17,6 +17,7 @@ from robotframework_ls.impl.libspec_warmup import (
     _normfile,
     LibspecWarmup,
 )
+from pathlib import Path
 
 log = get_logger(__name__)
 
@@ -477,11 +478,25 @@ class LibspecManager(object):
 
         # Spec info found in the pythonpath
         pythonpath_folder_to_folder_info: Dict[str, _FolderInfo] = {}
+        found = set()
         for path in sys.path:
-            if path and os.path.isdir(path):
-                pythonpath_folder_to_folder_info[path] = _FolderInfo(
-                    path, recursive=False
-                )
+            if path:
+                try:
+                    resolved = Path(path).resolve()  # also solves links.
+                except:
+                    log.exception(
+                        f"Unable to Path.resolve({path!r}) (resolving PYTHONPATH entries)."
+                    )
+                    continue
+
+                if resolved in found:
+                    continue
+                found.add(resolved)
+                if os.path.isdir(path):
+                    pythonpath_folder_to_folder_info[path] = _FolderInfo(
+                        path, recursive=False
+                    )
+
         self._pythonpath_folder_to_folder_info: Dict[
             str, _FolderInfo
         ] = pythonpath_folder_to_folder_info
@@ -662,6 +677,16 @@ class LibspecManager(object):
         self.synchronize_pythonpath_folders()
         self.synchronize_additional_pythonpath_folders()
         self.synchronize_internal_libspec_folders()
+
+    def collect_all_tracked_folders(self) -> Iterator[str]:
+        from robocorp_ls_core import uris
+
+        for uri in self._workspace_folder_uri_to_folder_info.keys():
+            yield uris.to_fs_path(uri)
+
+        yield from self._pythonpath_folder_to_folder_info.keys()
+
+        yield from self._additional_pythonpath_folder_to_folder_info.keys()
 
     def iter_lib_info(self, builtin=False):
         """
