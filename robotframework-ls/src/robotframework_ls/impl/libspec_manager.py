@@ -418,6 +418,7 @@ class LibspecManager(object):
         dir_cache_dir: Optional[str] = None,
         observer: Optional[IFSObserver] = None,
         endpoint: Optional[IEndPoint] = None,
+        pre_generate_libspecs: bool = False,
     ):
         """
         :param __internal_libspec_dir__:
@@ -431,6 +432,7 @@ class LibspecManager(object):
             dir_cache_dir
             or os.path.join(robot_config.get_robotframework_ls_home(), ".cache")
         )
+        self.pre_generate_libspecs = pre_generate_libspecs
         self._libspec_warmup = LibspecWarmup(endpoint, dir_cache)
 
         self._libspec_failures_cache: Dict[tuple, bool] = {}
@@ -514,8 +516,10 @@ class LibspecManager(object):
         # Must be set from the outside world when needed.
         self.config = None
 
-        log.debug("Generating builtin libraries.")
-        self._libspec_warmup.gen_builtin_libraries(self)
+        if self.pre_generate_libspecs:
+            log.debug("Generating builtin libraries libspec.")
+            self._libspec_warmup.gen_builtin_libraries(self)
+
         log.debug("Synchronizing internal caches.")
         self._synchronize()
         log.debug("Finished initializing LibspecManager.")
@@ -563,7 +567,9 @@ class LibspecManager(object):
                 config.get_setting(OPTION_ROBOT_LIBRARIES_LIBDOC_PRE_GENERATE, list, [])
             )
 
-            self._libspec_warmup.gen_user_libraries(self, make_unique(pre_generate))
+            if self.pre_generate_libspecs:
+                log.debug("Generating user/pythonpath libraries libspec.")
+                self._libspec_warmup.gen_user_libraries(self, make_unique(pre_generate))
 
         self.synchronize_additional_pythonpath_folders()
 

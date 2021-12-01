@@ -40,21 +40,24 @@ class _ServerApi(object):
     The provided `IRobotFrameworkApiClient` may later be accessed from any thread.
     """
 
-    def __init__(self, log_extension, language_server_ref):
+    def __init__(
+        self, log_extension, language_server_ref, pre_generate_libspecs: bool = False
+    ) -> None:
         self._main_thread = threading.current_thread()
 
         from robotframework_ls.robot_config import RobotConfig
 
-        self._used_python_executable = None
-        self._used_environ = None
+        self._used_python_executable: Optional[str] = None
+        self._used_environ: Optional[Dict[str, str]] = None
         self._server_process = None
         self._robotframework_api_client: Optional[IRobotFrameworkApiClient] = None
 
         # We have a version of the config with the settings passed overridden
         # by the settings of a given (customized) interpreter.
         self._config: IConfig = RobotConfig()
+        self._pre_generate_libspecs = pre_generate_libspecs
 
-        self.workspace = None
+        self.workspace: Optional[IWorkspace] = None
         self._initializing = False
         self._log_extension = log_extension
         self._language_server_ref = language_server_ref
@@ -72,7 +75,7 @@ class _ServerApi(object):
         return self._language_server_ref()
 
     @property
-    def workspace(self) -> IWorkspace:
+    def workspace(self) -> Optional[IWorkspace]:
         return self._workspace
 
     @workspace.setter
@@ -221,6 +224,9 @@ class _ServerApi(object):
                             + (".%s" % (log_id,))
                             + self._log_extension
                         )
+
+                if self._pre_generate_libspecs:
+                    args.append("--pre-generate-libspecs")
 
                 python_exe = self._get_python_executable()
                 environ = self._get_environ()
@@ -484,7 +490,9 @@ class ServerManager(object):
         self._check_in_main_thread()
         assert api_id not in self._id_to_apis, f"{api_id} already created."
         api = _ServerApi(".api", self._language_server_ref)
-        lint_api = _ServerApi(".lint.api", self._language_server_ref)
+        lint_api = _ServerApi(
+            ".lint.api", self._language_server_ref, pre_generate_libspecs=True
+        )
         others_api = _ServerApi(".others.api", self._language_server_ref)
 
         config = self._config

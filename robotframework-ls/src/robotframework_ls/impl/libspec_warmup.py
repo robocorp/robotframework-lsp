@@ -94,30 +94,33 @@ class LibspecWarmup(object):
             else:
                 ctx = NULL
 
-            with ctx as progress_reporter:
-                import time
-                from concurrent import futures
-                from robocorp_ls_core.system_mutex import timed_acquire_mutex
-                from robocorp_ls_core.system_mutex import generate_mutex_name
+            import time
+            from concurrent import futures
+            from robocorp_ls_core.system_mutex import timed_acquire_mutex
+            from robocorp_ls_core.system_mutex import generate_mutex_name
 
-                progress_wrapper = ProgressWrapperForTotalWork(progress_reporter)
+            initial_time = time.time()
+            wait_for = []
 
-                initial_time = time.time()
-                wait_for = []
+            max_workers = min(10, (os.cpu_count() or 1) + 4)
+            thread_pool = futures.ThreadPoolExecutor(max_workers=max_workers)
 
-                max_workers = min(10, (os.cpu_count() or 1) + 4)
-                thread_pool = futures.ThreadPoolExecutor(max_workers=max_workers)
+            try:
+                log.debug(f"Waiting for mutex to {progress_title}.")
+                with timed_acquire_mutex(
+                    generate_mutex_name(
+                        _norm_filename(libspec_manager._builtins_libspec_dir),
+                        prefix=mutex_name_prefix,
+                    ),
+                    timeout=100,
+                ):
+                    library_names = set(libspec_manager.get_library_names())
 
-                try:
-                    log.debug(f"Waiting for mutex to {progress_title}.")
-                    with timed_acquire_mutex(
-                        generate_mutex_name(
-                            _norm_filename(libspec_manager._builtins_libspec_dir),
-                            prefix=mutex_name_prefix,
-                        ),
-                        timeout=100,
-                    ):
-                        library_names = set(libspec_manager.get_library_names())
+                    with ctx as progress_reporter:
+                        progress_wrapper = ProgressWrapperForTotalWork(
+                            progress_reporter
+                        )
+
                         log.debug(f"Obtained mutex to {progress_title}.")
                         for (
                             libname,
@@ -144,17 +147,18 @@ class LibspecWarmup(object):
                                     partial(progress_and_create, libname, kwargs)
                                 )
                             )
+
                         for future in wait_for:
                             future.result()
 
-                    if wait_for:
-                        log.debug(
-                            "Total time to %s: %.2fs"
-                            % (progress_title, time.time() - initial_time)
-                        )
-                        on_finish()
-                finally:
-                    thread_pool.shutdown(wait=False)
+                        if wait_for:
+                            log.debug(
+                                "Total time to %s: %.2fs"
+                                % (progress_title, time.time() - initial_time)
+                            )
+                            on_finish()
+            finally:
+                thread_pool.shutdown(wait=False)
         except:
             log.exception(f"Error {progress_title}.")
         finally:
@@ -258,10 +262,19 @@ class LibspecWarmup(object):
             for libname in user_libraries:
                 yield libname, {}
 
-            # Now, besides those (specified by the user), we'll also try to find
-            # existing libraries in the PYTHONPATH.
-            for libname in self.find_rf_libraries(libspec_manager):
-                yield libname, {}
+            if os.environ.get(
+                "ROBOTFRAMEWORK_LS_PRE_GENERATE_PYTHONPATH_LIBS", ""
+            ).lower() not in (
+                "0",
+                "false",
+            ):
+                # Now, besides those (specified by the user), we'll also try to find
+                # existing libraries in the PYTHONPATH. Note that it's possible to
+                # set an environment variable such as:
+                # ROBOTFRAMEWORK_LS_PRE_GENERATE_PYTHONPATH_LIBS=0
+                # to skip this process.
+                for libname in self.find_rf_libraries(libspec_manager):
+                    yield libname, {}
 
         def in_thread():
             self._generate(

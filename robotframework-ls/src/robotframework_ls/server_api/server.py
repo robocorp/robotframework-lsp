@@ -35,6 +35,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         write_to,
         libspec_manager=None,
         observer: Optional[IFSObserver] = None,
+        pre_generate_libspecs: bool = False,
     ):
         from robotframework_ls.impl.libspec_manager import LibspecManager
 
@@ -43,7 +44,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if libspec_manager is None:
             try:
                 libspec_manager = LibspecManager(
-                    observer=observer, endpoint=self._endpoint
+                    observer=observer,
+                    endpoint=self._endpoint,
+                    pre_generate_libspecs=pre_generate_libspecs,
                 )
             except:
                 log.exception("Unable to properly initialize the LibspecManager.")

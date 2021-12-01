@@ -560,12 +560,14 @@ KeywordInCase1
 
 
 def test_collect_from_pre_specified_pythonpath(
-    workspace, cases, libspec_manager, data_regression
+    workspace, cases, libspec_manager, monkeypatch
 ):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import auto_import_completions
     from robotframework_ls.robot_config import RobotConfig
     from robocorp_ls_core.basic import wait_for_expected_func_return
+
+    monkeypatch.setenv("ROBOTFRAMEWORK_LS_PRE_GENERATE_PYTHONPATH_LIBS", "1")
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
 
@@ -581,6 +583,7 @@ def test_collect_from_pre_specified_pythonpath(
             }
         }
     )
+    libspec_manager.pre_generate_libspecs = True
     libspec_manager.config = config
     doc = workspace.get_doc("case1.robot")
 

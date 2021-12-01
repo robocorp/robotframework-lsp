@@ -245,7 +245,6 @@ def test_libspec_manager_caches(libspec_manager, workspace_dir):
 
 
 def test_libspec_manager_basic(workspace, libspec_manager):
-    import os
     from robotframework_ls.impl import robot_constants
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
@@ -269,7 +268,7 @@ def test_libspec_manager_basic(workspace, libspec_manager):
     ]
     assert len(dir_contents) == 1
     libspec_manager.synchronize_internal_libspec_folders()
-    assert sorted(libspec_manager.get_library_names()) == sorted(
+    assert set(libspec_manager.get_library_names()).issuperset(
         ["case1_library"] + list(robot_constants.STDLIBS)
     )
 
@@ -286,9 +285,7 @@ def test_libspec_manager_basic(workspace, libspec_manager):
     for d in dir_contents:
         os.remove(os.path.join(libspec_manager.user_libspec_dir, d))
     libspec_manager.synchronize_internal_libspec_folders()
-    assert sorted(libspec_manager.get_library_names()) == sorted(
-        robot_constants.STDLIBS
-    )
+    assert set(libspec_manager.get_library_names()).issuperset(robot_constants.STDLIBS)
 
     assert get_library_info("case1_library", create=False) is None
     assert get_library_info("case1_library") is not None

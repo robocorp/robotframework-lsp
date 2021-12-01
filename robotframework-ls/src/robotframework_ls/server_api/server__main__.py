@@ -108,27 +108,28 @@ def main():
         log.info("Initializing RobotFramework Server api. Args: %s", (sys.argv[1:],))
 
         from robotframework_ls import __main__
-        from robotframework_ls.server_api.server import RobotFrameworkServerApi
 
         args = sys.argv[1:]
         new_args = []
 
         found_remote_fs_obverver_port = False
+        from robocorp_ls_core.remote_fs_observer_impl import RemoteFSObserver
+
+        observer = RemoteFSObserver("<unused>", extensions=None)
+
+        pre_generate_libspecs = False
+
         for arg in args:
             if arg.startswith("--remote-fs-observer-port="):
                 # Now, in this process, we don't own the RemoteFSObserver, we
                 # just expect to connect to an existing one.
                 found_remote_fs_obverver_port = True
                 port = int(arg.split("=")[1].strip())
-                from robocorp_ls_core.remote_fs_observer_impl import RemoteFSObserver
 
-                observer = RemoteFSObserver("<unused>", extensions=None)
                 observer.connect_to_server(port)
 
-                class RobotFrameworkServerApiWithObserver(RobotFrameworkServerApi):
-                    def __init__(self, *args, **kwargs):
-                        kwargs["observer"] = observer
-                        RobotFrameworkServerApi.__init__(self, *args, **kwargs)
+            elif arg == "--pre-generate-libspecs":
+                pre_generate_libspecs = True
 
             else:
                 new_args.append(arg)
@@ -137,6 +138,15 @@ def main():
             raise RuntimeError(
                 'Expected "--remote-fs-observer-port=" to be passed in the arguments.'
             )
+
+        from robotframework_ls.server_api.server import RobotFrameworkServerApi
+
+        class RobotFrameworkServerApiWithObserver(RobotFrameworkServerApi):
+            def __init__(self, *args, **kwargs):
+                kwargs["observer"] = observer
+                kwargs["pre_generate_libspecs"] = pre_generate_libspecs
+                RobotFrameworkServerApi.__init__(self, *args, **kwargs)
+
         __main__.main(
             language_server_class=RobotFrameworkServerApiWithObserver, args=new_args
         )

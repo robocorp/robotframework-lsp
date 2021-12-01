@@ -138,6 +138,7 @@ def sync_builtins(tmpdir_factory):
 
     user_home = str(tmpdir_factory.mktemp("ls_user_home"))
     os.environ["ROBOTFRAMEWORK_LS_USER_HOME"] = user_home
+    os.environ["ROBOTFRAMEWORK_LS_PRE_GENERATE_PYTHONPATH_LIBS"] = "0"
     internal_libspec_dir = LibspecManager.get_internal_builtins_libspec_dir()
     try:
         os.makedirs(internal_libspec_dir)
