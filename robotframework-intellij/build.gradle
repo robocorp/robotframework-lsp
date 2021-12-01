@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.29.0'
+version '0.30.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,11 +51,24 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.29.0
+    Release 0.30.0
     </p>
     <ul>
 
-    <li>Fixed error on dictionary completions.</li>
+    <li>Library arguments can now be used in the libspec generation. Patch by <strong>Jozef Grajciar</strong>.</li>
+      <ul>
+        <li><strong>robot.libraries.libdoc.needsArgs</strong> setting can be used to specify which libraries require arguments in the generation.</li>
+        <li><strong>Remote</strong> and <strong>FakerLib</strong> are set by default.</li>
+      </ul>
+    <li>Libspec files may be pre-generated.</li>
+      <ul>
+        <li><strong>robot.libraries.libdoc.preGenerate</strong> may be used to specify which libraries to pre-generate.</li>
+        <li>Some heuristics cover a few libraries which are always pre-generated if installed.</li>
+      </ul>
+    <li>Fixes related to aliasing libraries.</li>
+    <li>Documentation is shown for keywords still not imported.</li>
+    <li>Module is shown for for keywords already imported.</li>
+
 
     <br>
     Current feature set:<br>
@@ -67,10 +80,10 @@ patchPluginXml {
     <li>Hover</li>
     <li>Code folding</li>
     <li>Browse Keywords (symbols)</li>
-    <li>Syntax highlighting (with `semanticTokens/full` request)</li>
+    <li>Syntax highlighting (with <strong>semanticTokens/full</strong> request)</li>
     <li>Debugger:</li>
     <ul>    
-      <li>Add line breakpoints in `.robot` or `.py` files.</li>
+      <li>Add line breakpoints in <strong>.robot</strong> or <strong>.py</strong> files.</li>
       <li>Evaluate keywords.</li>
       <li>Pause at breakpoints to inspect the stack and see variables.</li>
       <li>Step in.</li>

@@ -24,6 +24,10 @@ Configuration settings
 
 - `robot.codeFormatter`: used to configure the code-formatter to be used.
 
+- `robot.libraries.libdoc.needsArgs`: a list of the libraries for which the arguments need to be passed for the libdoc generation.
+
+- `robot.libraries.libdoc.preGenerate`: a list of the libraries for which the libdoc should be pre-generated.
+
 
 Development/debug settings
 ---------------------------

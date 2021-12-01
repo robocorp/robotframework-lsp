@@ -1,3 +1,17 @@
+New in 0.30.0 (2021-12-01)
+-----------------------------
+
+- Library arguments can now be used in the libspec generation. Patch by `Jozef Grajciar`. [#343](https://github.com/robocorp/robotframework-lsp/issues/343) 
+  - `robot.libraries.libdoc.needsArgs` setting can be used to specify which libraries require arguments in the generation.
+  - `Remote` and `FakerLib` are set by default.
+- Libspec files may be pre-generated. [#163](https://github.com/robocorp/robotframework-lsp/issues/163)
+  - `robot.libraries.libdoc.preGenerate` may be used to specify which libraries to pre-generate.
+  - Some heuristics cover a few libraries which are always pre-generated if installed.
+- Fixes related to aliasing libraries. [#397](https://github.com/robocorp/robotframework-lsp/issues/397)
+- Documentation is shown for keywords still not imported. [#516](https://github.com/robocorp/robotframework-lsp/issues/516)
+- Module is shown for for keywords already imported. [#507](https://github.com/robocorp/robotframework-lsp/issues/507)
+
+
 New in 0.29.0 (2021-11-16)
 -----------------------------
 
