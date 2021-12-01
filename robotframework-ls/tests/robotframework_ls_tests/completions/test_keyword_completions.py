@@ -13,13 +13,13 @@ def test_keyword_completions_builtin(workspace, libspec_manager):
         CompletionContext(doc, workspace=workspace.ws)
     )
     assert sorted([comp["label"] for comp in completions]) == [
-        "Length Should Be",
-        "Should Be Empty",
-        "Should Be Equal",
-        "Should Be Equal As Integers",
-        "Should Be Equal As Numbers",
-        "Should Be Equal As Strings",
-        "Should Be True",
+        "Length Should Be (BuiltIn)",
+        "Should Be Empty (BuiltIn)",
+        "Should Be Equal (BuiltIn)",
+        "Should Be Equal As Integers (BuiltIn)",
+        "Should Be Equal As Numbers (BuiltIn)",
+        "Should Be Equal As Strings (BuiltIn)",
+        "Should Be True (BuiltIn)",
     ]
 
 
@@ -51,13 +51,13 @@ def test_keyword_completions_format(workspace, libspec_manager):
         CompletionContext(doc, workspace=workspace.ws, config=config)
     )
     assert sorted([comp["label"] for comp in completions]) == [
-        "Length should be",
-        "Should be empty",
-        "Should be equal",
-        "Should be equal as integers",
-        "Should be equal as numbers",
-        "Should be equal as strings",
-        "Should be true",
+        "Length should be (BuiltIn)",
+        "Should be empty (BuiltIn)",
+        "Should be equal (BuiltIn)",
+        "Should be equal as integers (BuiltIn)",
+        "Should be equal as numbers (BuiltIn)",
+        "Should be equal as strings (BuiltIn)",
+        "Should be true (BuiltIn)",
     ]
 
 
@@ -94,7 +94,7 @@ Testing Completion Here
         CompletionContext(doc, workspace=workspace.ws, config=config)
     )
     assert sorted([comp["label"] for comp in completions]) == [
-        "Check with keyword at inner"
+        "Check with keyword at inner (case_inner)"
     ]
 
 
@@ -111,13 +111,13 @@ def test_keyword_completions_builtin_after_space(workspace, libspec_manager):
         CompletionContext(doc, workspace=workspace.ws)
     )
     assert sorted([comp["label"] for comp in completions]) == [
-        "Length Should Be",
-        "Should Be Empty",
-        "Should Be Equal",
-        "Should Be Equal As Integers",
-        "Should Be Equal As Numbers",
-        "Should Be Equal As Strings",
-        "Should Be True",
+        "Length Should Be (BuiltIn)",
+        "Should Be Empty (BuiltIn)",
+        "Should Be Equal (BuiltIn)",
+        "Should Be Equal As Integers (BuiltIn)",
+        "Should Be Equal As Numbers (BuiltIn)",
+        "Should Be Equal As Strings (BuiltIn)",
+        "Should Be True (BuiltIn)",
     ]
 
 
@@ -141,13 +141,13 @@ def test_keyword_completions_builtin_after_space_before_newline(
     )
 
     assert sorted([comp["label"] for comp in completions]) == [
-        "Length Should Be",
-        "Should Be Empty",
-        "Should Be Equal",
-        "Should Be Equal As Integers",
-        "Should Be Equal As Numbers",
-        "Should Be Equal As Strings",
-        "Should Be True",
+        "Length Should Be (BuiltIn)",
+        "Should Be Empty (BuiltIn)",
+        "Should Be Equal (BuiltIn)",
+        "Should Be Equal As Integers (BuiltIn)",
+        "Should Be Equal As Numbers (BuiltIn)",
+        "Should Be Equal As Strings (BuiltIn)",
+        "Should Be True (BuiltIn)",
     ]
 
 
@@ -188,9 +188,9 @@ def verify_changes(model=10):
     )
 
     assert sorted(completion["label"] for completion in completions) == [
-        "Verify Another Model",
-        "Verify Changes",
-        "Verify Model",
+        "Verify Another Model (case1_library)",
+        "Verify Changes (case1_library)",
+        "Verify Model (case1_library)",
     ]
 
 
@@ -335,10 +335,10 @@ def test_keyword_completions_builtin_duplicated(workspace, cases, libspec_manage
     found = [
         completion["label"]
         for completion in completions
-        if completion["label"].lower() == "should be equal"
+        if completion["label"].lower() == "should be equal (builtin)"
     ]
 
-    assert len(found) == 1
+    assert len(found) == 1, f'Found: {[x["label"] for x in completions]}'
 
 
 def test_keyword_completions_fixture(workspace, libspec_manager):
@@ -356,10 +356,10 @@ def test_keyword_completions_fixture(workspace, libspec_manager):
     found = [
         completion["label"]
         for completion in completions
-        if completion["label"].lower() == "my equal redefined"
+        if completion["label"].lower() == "my equal redefined (case2)"
     ]
 
-    assert len(found) == 1
+    assert len(found) == 1, f'Found: {[x["label"] for x in completions]}'
 
 
 def test_keyword_completions_settings_fixture(workspace, libspec_manager):
@@ -377,10 +377,10 @@ def test_keyword_completions_settings_fixture(workspace, libspec_manager):
     found = [
         completion["label"]
         for completion in completions
-        if completion["label"].lower() == "my equal redefined"
+        if completion["label"].lower() == "my equal redefined (case2)"
     ]
 
-    assert len(found) == 1
+    assert len(found) == 1, f'Found: {[x["label"] for x in completions]}'
 
 
 def test_keyword_completions_bdd_prefix(workspace, libspec_manager, data_regression):
@@ -398,8 +398,9 @@ def test_keyword_completions_bdd_prefix(workspace, libspec_manager, data_regress
     found = [
         completion
         for completion in completions
-        if completion["label"].lower() == "my equal redefined"
+        if completion["label"].lower() == "my equal redefined (case2)"
     ]
+    assert len(found) == 1, f'Found: {[x["label"] for x in completions]}'
     data_regression.check(found)
 
 
@@ -425,10 +426,10 @@ Test Template    my eq"""
     found = [
         completion["label"]
         for completion in completions
-        if completion["label"].lower() == "my equal redefined"
+        if completion["label"].lower() == "my equal redefined (case2)"
     ]
 
-    assert len(found) == 1
+    assert len(found) == 1, f'Found: {[x["label"] for x in completions]}'
 
 
 def test_keyword_completions_resource_does_not_exist(
@@ -520,7 +521,9 @@ Test
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
     )
-    assert [completion["label"] for completion in completions] == ["Append To List"]
+    assert [completion["label"] for completion in completions] == [
+        "Append To List (Collections)"
+    ]
 
 
 def test_keyword_completions_with_stmt(workspace, libspec_manager):
@@ -540,7 +543,9 @@ Test
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
     )
-    assert [completion["label"] for completion in completions] == ["Append To List"]
+    assert [completion["label"] for completion in completions] == [
+        "Append To List (Collections)"
+    ]
 
 
 def test_keyword_completions_respect_pythonpath(
@@ -622,8 +627,8 @@ def test_keyword_completions_circular_imports(workspace, libspec_manager):
         CompletionContext(doc, workspace=workspace.ws)
     )
     assert sorted([comp["label"] for comp in completions]) == [
-        "My Keyword 1",
-        "My Keyword 2",
+        "My Keyword 1 (keywords1)",
+        "My Keyword 2 (keywords2)",
     ]
 
 
@@ -653,7 +658,9 @@ def test_keyword_completions_lib_with_params(workspace, libspec_manager, cases):
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
     )
-    assert sorted([comp["label"] for comp in completions]) == ["Foo Method"]
+    assert sorted([comp["label"] for comp in completions]) == [
+        "Foo Method (LibWithParams)"
+    ]
 
 
 def test_simple_with_params(workspace, libspec_manager, cases):
@@ -682,7 +689,9 @@ def test_simple_with_params(workspace, libspec_manager, cases):
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
     )
-    assert sorted([comp["label"] for comp in completions]) == ["Foo Method"]
+    assert sorted([comp["label"] for comp in completions]) == [
+        "Foo Method (LibWithParams)"
+    ]
 
 
 def test_keyword_completions_on_keyword_arguments(workspace, libspec_manager):
@@ -697,13 +706,13 @@ def test_keyword_completions_on_keyword_arguments(workspace, libspec_manager):
 
     completions = keyword_completions.complete(completion_context)
     assert sorted([comp["label"] for comp in completions]) == [
-        "Length Should Be",
-        "Should Be Empty",
-        "Should Be Equal",
-        "Should Be Equal As Integers",
-        "Should Be Equal As Numbers",
-        "Should Be Equal As Strings",
-        "Should Be True",
+        "Length Should Be (BuiltIn)",
+        "Should Be Empty (BuiltIn)",
+        "Should Be Equal (BuiltIn)",
+        "Should Be Equal As Integers (BuiltIn)",
+        "Should Be Equal As Numbers (BuiltIn)",
+        "Should Be Equal As Strings (BuiltIn)",
+        "Should Be True (BuiltIn)",
     ]
 
 
@@ -726,7 +735,7 @@ Templated test case
     completion_context = CompletionContext(doc, workspace=workspace.ws)
 
     completions = keyword_completions.complete(completion_context)
-    assert [comp["label"] for comp in completions] == ["Example Keyword"]
+    assert [comp["label"] for comp in completions] == ["Example Keyword (case1)"]
 
 
 @pytest.mark.parametrize(
@@ -748,9 +757,9 @@ def test_keyword_completions_remote_library(workspace, libspec_manager, remote_l
 
     completions = keyword_completions.complete(completion_context)
     assert sorted([comp["label"] for comp in completions]) == [
-        "Stop Remote Server",
-        "Validate String",
-        "Verify That Remote Is Running",
+        "Stop Remote Server (Remote)",
+        "Validate String (Remote)",
+        "Verify That Remote Is Running (Remote)",
     ]
 
 
@@ -784,7 +793,9 @@ My Test
         assert not completions
     else:
         assert len(completions) == 1
-        assert sorted([comp["label"] for comp in completions]) == ["Foo Method"]
+        assert sorted([comp["label"] for comp in completions]) == [
+            "Foo Method (LibWithParams)"
+        ]
 
 
 @pytest.mark.parametrize("lib_param", ["bar", "foo"])
@@ -825,5 +836,5 @@ My Test
     completions = keyword_completions.complete(completion_context)
     assert len(completions) == 1
     assert sorted([comp["label"] for comp in completions]) == [
-        f"{lib_param.title()} Method"
+        f"{lib_param.title()} Method (LibWithParams)"
     ]

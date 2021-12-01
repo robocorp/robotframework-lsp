@@ -601,5 +601,5 @@ KeywordInCase1
     # The libspec generation will run in a thread at startup, thus, we need
     # to wait for this condition to be reached.
     wait_for_expected_func_return(
-        check, ["Find In Library (libraries.lib_in_pythonpath)"]
+        check, ["Find In Library (libraries.lib_in_pythonpath)*"]
     )

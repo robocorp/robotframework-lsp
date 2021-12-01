@@ -12,6 +12,7 @@ from robotframework_ls.impl.robot_lsp_constants import (
     OPTION_ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS,
 )
 from robocorp_ls_core.options import USE_TIMEOUTS
+from robotframework_ls.impl.protocols import ISymbolsJsonListEntry
 
 log = get_logger(__name__)
 
@@ -73,10 +74,17 @@ def _compute_symbols_from_ast(doc: IRobotDocument) -> ISymbolsCache:
     from robocorp_ls_core.lsp import SymbolKind
 
     ast = doc.get_ast()
-    symbols = []
+    symbols: List[ISymbolsJsonListEntry] = []
     uri = doc.uri
 
     for keyword_node_info in ast_utils.iter_keywords(ast):
+        docs = ast_utils.get_documentation(keyword_node_info.node)
+        args = []
+        for arg in ast_utils.iter_keyword_arguments_as_str(keyword_node_info.node):
+            args.append(arg)
+
+        docs = "%s(%s)\n\n%s" % (keyword_node_info.node.name, ", ".join(args), docs)
+
         symbols.append(
             {
                 "name": keyword_node_info.node.name,
@@ -94,6 +102,9 @@ def _compute_symbols_from_ast(doc: IRobotDocument) -> ISymbolsCache:
                         },
                     },
                 },
+                "docs": docs,
+                "docsFormat": "markdown",
+                "containerName": doc.path,
             }
         )
     return SymbolsCache(symbols, None, doc)
@@ -104,7 +115,7 @@ def _compute_symbols_from_library_info(library_name, library_info) -> SymbolsCac
     from robotframework_ls.impl.robot_specbuilder import KeywordDoc
     from robocorp_ls_core import uris
 
-    symbols = []
+    symbols: List[ISymbolsJsonListEntry] = []
     keyword: KeywordDoc
     for keyword in library_info.keywords:
         source = keyword.source
@@ -123,6 +134,18 @@ def _compute_symbols_from_library_info(library_name, library_info) -> SymbolsCac
             continue
 
         lineno -= 1
+
+        keyword_args = ()
+        if keyword.args:
+            keyword_args = keyword.args
+
+        from robotframework_ls.impl.robot_specbuilder import docs_and_format
+
+        docs, docs_format = docs_and_format(keyword)
+        if keyword_args:
+            args = [x.original_arg for x in keyword_args]
+            docs = "%s(%s)\n\n%s" % (keyword.name, ", ".join(args), docs)
+
         symbols.append(
             {
                 "name": keyword.name,
@@ -134,6 +157,8 @@ def _compute_symbols_from_library_info(library_name, library_info) -> SymbolsCac
                         "end": {"line": lineno, "character": 0},
                     },
                 },
+                "docs": docs,
+                "docsFormat": docs_format,
                 "containerName": library_name,
             }
         )

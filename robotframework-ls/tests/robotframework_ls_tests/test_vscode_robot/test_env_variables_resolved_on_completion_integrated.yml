@@ -7,7 +7,7 @@ result:
   insertText: In Lib 2
   insertTextFormat: 2
   kind: 2
-  label: In Lib 2
+  label: In Lib 2 (my_library)
   preselect: false
   textEdit:
     newText: In Lib 2

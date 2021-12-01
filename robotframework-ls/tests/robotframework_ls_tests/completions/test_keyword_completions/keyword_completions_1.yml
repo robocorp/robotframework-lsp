@@ -7,7 +7,7 @@
   insertText: Verify Another Model
   insertTextFormat: 2
   kind: 2
-  label: Verify Another Model
+  label: Verify Another Model (case1_library)
   preselect: false
   textEdit:
     newText: Verify Another Model
@@ -30,7 +30,7 @@
   insertText: Verify Model    ${1:model}
   insertTextFormat: 2
   kind: 2
-  label: Verify Model
+  label: Verify Model (case1_library)
   preselect: false
   textEdit:
     newText: Verify Model    ${1:model}

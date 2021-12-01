@@ -9,8 +9,10 @@ from robocorp_ls_core.protocols import (
     IDocumentSelection,
 )
 from robocorp_ls_core.constants import NULL
+from robocorp_ls_core.protocols import TypedDict
 from collections import namedtuple
 import enum
+from robocorp_ls_core.lsp import SymbolKind, LocationTypedDict
 
 if sys.version_info[:2] < (3, 8):
 
@@ -95,8 +97,17 @@ class IRobotDocument(IDocument, Protocol):
     symbols_cache: Optional["ISymbolsCache"]
 
 
+class ISymbolsJsonListEntry(TypedDict):
+    name: str
+    kind: SymbolKind
+    location: LocationTypedDict
+    docs: str
+    docsFormat: str
+    containerName: str
+
+
 class ISymbolsCache(Protocol):
-    def get_json_list(self) -> list:
+    def get_json_list(self) -> List[ISymbolsJsonListEntry]:
         pass
 
     def get_library_info(self) -> Optional[ILibraryDoc]:

@@ -8,11 +8,12 @@
       uri: my.robot
     id: robot.completion.additionalTextEdit
     title: Interactive Console
-  documentation: ''
+  detail: '* Adds Library Import'
+  documentation: <replaced_for_test>
   insertText: Append To List
   insertTextRules: 4
   kind: 21
-  label: Append To List (Collections)
+  label: Append To List (Collections)*
   preselect: false
   range:
     end:

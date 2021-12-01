@@ -73,6 +73,12 @@ class _Collector(object):
             text,
         )
 
+        if keyword_found.library_name:
+            label = f"{label} ({keyword_found.library_name})"
+
+        elif keyword_found.resource_name:
+            label = f"{label} ({keyword_found.resource_name})"
+
         # text_edit = None
         return CompletionItem(
             label,
