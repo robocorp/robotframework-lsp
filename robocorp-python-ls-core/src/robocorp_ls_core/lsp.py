@@ -186,7 +186,7 @@ class CompletionItem(_Base):
         label,
         kind=None,  # CompletionItemKind
         detail=None,
-        documentation=None,  # str
+        documentation=None,  # str | MarkupContent
         deprecated=False,
         preselect=False,
         sortText=None,  # str
@@ -198,7 +198,6 @@ class CompletionItem(_Base):
         commitCharacters=None,  # List[str]
         command=None,  # Command
         data=None,
-        documentationFormat=None,  # str
     ):
         self.label = label
         self.kind = kind
@@ -215,7 +214,6 @@ class CompletionItem(_Base):
         self.commitCharacters = commitCharacters
         self.command = command
         self.data = data
-        self.documentationFormat = documentationFormat
 
 
 class MarkupContent(_Base):

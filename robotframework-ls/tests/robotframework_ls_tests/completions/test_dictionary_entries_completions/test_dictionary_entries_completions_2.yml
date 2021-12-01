@@ -1,6 +1,5 @@
 - deprecated: false
   documentation: '12345'
-  documentationFormat: plaintext
   insertText: Zip Code
   insertTextFormat: 2
   kind: 6

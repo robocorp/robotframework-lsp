@@ -1,14 +1,15 @@
 jsonrpc: '2.0'
 result:
 - deprecated: false
-  documentation: 'Verify Model(model)
+  documentation:
+    kind: markdown
+    value: 'Verify Model(model)
 
 
-    :type model: int
+      :type model: int
 
 
-    '
-  documentationFormat: markdown
+      '
   insertText: Verify Model    ${1:model}
   insertTextFormat: 2
   kind: 2

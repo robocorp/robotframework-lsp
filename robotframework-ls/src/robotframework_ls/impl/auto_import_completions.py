@@ -167,12 +167,12 @@ class _Collector(object):
                 kind=CompletionItemKind.Reference,
                 text_edit=text_edit,
                 insertText=text_edit.newText,
-                documentation=docs,
-                documentationFormat=(
-                    MarkupKind.Markdown
+                documentation={
+                    "kind": MarkupKind.Markdown
                     if docs_format == "markdown"
-                    else MarkupKind.PlainText
-                ),
+                    else MarkupKind.PlainText,
+                    "value": docs,
+                },
                 insertTextFormat=InsertTextFormat.Snippet,
                 additionalTextEdits=additional_text_edits,
                 data=data,

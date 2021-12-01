@@ -1,11 +1,9 @@
 import re
 from typing import Dict, List, Tuple
-from robot.api import Token
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.protocols import ICompletionContext
 from robocorp_ls_core.lsp import (
     CompletionItem,
-    MarkupKind,
     CompletionItemKind,
     InsertTextFormat,
     Position,
@@ -19,6 +17,8 @@ _DICT_KEY_REGEX = re.compile(r"\[([\w\s]*)\]")
 
 
 def _get_variables(completion_context: ICompletionContext):
+    from robot.api import Token
+
     variables = []
     for node_info in completion_context.get_all_variables():
         node = node_info.node
@@ -93,7 +93,6 @@ def _completion_items(dictionary: Dict[str, str], editor_range: Range):
             insertText=key,
             documentation=value,
             insertTextFormat=InsertTextFormat.Snippet,
-            documentationFormat=MarkupKind.PlainText,
         ).to_dict()
         for key, value in dictionary.items()
     ]

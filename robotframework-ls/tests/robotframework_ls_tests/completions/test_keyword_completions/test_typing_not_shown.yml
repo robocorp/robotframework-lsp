@@ -1,9 +1,10 @@
 - deprecated: false
-  documentation: 'Case Verify Typing(new model:NoneType=10)
+  documentation:
+    kind: plaintext
+    value: 'Case Verify Typing(new model:NoneType=10)
 
 
-    '
-  documentationFormat: plaintext
+      '
   insertText: Case Verify Typing
   insertTextFormat: 2
   kind: 2

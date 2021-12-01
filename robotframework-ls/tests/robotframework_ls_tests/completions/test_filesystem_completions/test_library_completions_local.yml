@@ -1,6 +1,5 @@
 - deprecated: false
   documentation: ''
-  documentationFormat: plaintext
   insertText: case1_library.py
   insertTextFormat: 2
   kind: 9

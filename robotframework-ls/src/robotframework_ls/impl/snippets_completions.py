@@ -93,7 +93,6 @@ def _create_completion_item_from_snippet(label, snippet, selection, line_to_col)
         Range,
         TextEdit,
     )
-    from robocorp_ls_core.lsp import MarkupKind
     from robocorp_ls_core.lsp import CompletionItemKind
 
     current_col = selection.col
@@ -115,7 +114,6 @@ def _create_completion_item_from_snippet(label, snippet, selection, line_to_col)
         insertText=text_edit.newText,
         documentation=snippet["description"] + "\n".join(["", ""] + snippet["body"]),
         insertTextFormat=InsertTextFormat.Snippet,
-        documentationFormat=MarkupKind.Markdown,
     ).to_dict()
 
 

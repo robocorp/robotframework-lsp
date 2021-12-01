@@ -1,6 +1,5 @@
 - deprecated: false
   documentation: Robot Framework
-  documentationFormat: plaintext
   insertText: ${NAME}
   insertTextFormat: 2
   kind: 6

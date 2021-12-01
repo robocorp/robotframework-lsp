@@ -85,13 +85,13 @@ class _Collector(object):
             kind=keyword_found.completion_item_kind,
             text_edit=text_edit,
             insertText=text_edit.newText,
-            documentation=keyword_found.docs,
-            insertTextFormat=InsertTextFormat.Snippet,
-            documentationFormat=(
-                MarkupKind.Markdown
+            documentation={
+                "kind": MarkupKind.Markdown
                 if keyword_found.docs_format == "markdown"
-                else MarkupKind.PlainText
-            ),
+                else MarkupKind.PlainText,
+                "value": keyword_found.docs,
+            },
+            insertTextFormat=InsertTextFormat.Snippet,
         ).to_dict()
 
     def on_keyword(self, keyword_found):

@@ -1,6 +1,5 @@
 - deprecated: false
   documentation: '10'
-  documentationFormat: plaintext
   insertText: ${VARIABLE_YAML_1}
   insertTextFormat: 2
   kind: 6
@@ -17,7 +16,6 @@
         line: 7
 - deprecated: false
   documentation: '20'
-  documentationFormat: plaintext
   insertText: ${VARIABLE_YAML_2}
   insertTextFormat: 2
   kind: 6

@@ -1,6 +1,5 @@
 - deprecated: false
   documentation: c:/foo/bar
-  documentationFormat: plaintext
   insertText: ${SOME_DIR}
   insertTextFormat: 2
   kind: 6

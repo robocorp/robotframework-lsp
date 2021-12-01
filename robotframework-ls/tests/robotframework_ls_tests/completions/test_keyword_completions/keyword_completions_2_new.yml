@@ -1,9 +1,10 @@
 - deprecated: false
-  documentation: 'New Verify Model(new model)
+  documentation:
+    kind: plaintext
+    value: 'New Verify Model(new model)
 
 
-    :type new_model: int'
-  documentationFormat: plaintext
+      :type new_model: int'
   insertText: New Verify Model    ${1:new model}
   insertTextFormat: 2
   kind: 2
@@ -19,11 +20,12 @@
         character: 4
         line: 7
 - deprecated: false
-  documentation: 'new Verify Another Model(new model=10)
+  documentation:
+    kind: plaintext
+    value: 'new Verify Another Model(new model=10)
 
 
-    '
-  documentationFormat: plaintext
+      '
   insertText: new Verify Another Model
   insertTextFormat: 2
   kind: 2

@@ -49,6 +49,10 @@ def docs_and_format(obj):
     doc_format = obj.doc_format
     if doc_format.lower() == "html":
         return markdown_doc(obj), "markdown"
+
+    if doc_format.lower() == "markdown":
+        return obj.doc, "markdown"
+
     return obj.doc, doc_format
 
 

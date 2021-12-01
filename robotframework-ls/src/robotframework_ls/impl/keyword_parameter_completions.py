@@ -19,7 +19,6 @@ def _create_completion_item(
         Range,
         TextEdit,
     )
-    from robocorp_ls_core.lsp import MarkupKind
     from robocorp_ls_core.lsp import CompletionItemKind
 
     text_edit = TextEdit(
@@ -37,7 +36,6 @@ def _create_completion_item(
         insertText=label,
         documentation=documentation,
         insertTextFormat=InsertTextFormat.PlainText,
-        documentationFormat=MarkupKind.PlainText,
     ).to_dict()
 
 

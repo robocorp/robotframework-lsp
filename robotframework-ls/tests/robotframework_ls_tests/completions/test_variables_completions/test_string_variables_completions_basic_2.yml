@@ -1,6 +1,5 @@
 - deprecated: false
   documentation: Robot Framework
-  documentationFormat: plaintext
   insertText: ${NAME}
   insertTextFormat: 2
   kind: 6
@@ -17,7 +16,6 @@
         line: 3
 - deprecated: false
   documentation: None
-  documentationFormat: plaintext
   insertText: ${None}
   insertTextFormat: 2
   kind: 6
@@ -34,7 +32,6 @@
         line: 3
 - deprecated: false
   documentation: None
-  documentationFormat: plaintext
   insertText: ${null}
   insertTextFormat: 2
   kind: 6

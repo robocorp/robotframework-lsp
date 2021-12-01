@@ -1,6 +1,5 @@
 - deprecated: false
   documentation: ('Name=Robot Framework', 'Version=4.0')
-  documentationFormat: plaintext
   insertText: '&{ROBOT}'
   insertTextFormat: 2
   kind: 6

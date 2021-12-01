@@ -4,7 +4,6 @@ result:
   documentation: "Snippet of a FOR IN loop.\n\nA for loop that iterates over a list\
     \ of values and assigns one value to a variable per iteration.\n\nFOR    ${${1:element}}\
     \    IN    @{${2:LIST}}\n    Log    ${${1:element}}\n    $0\nEND"
-  documentationFormat: markdown
   insertText: "FOR    ${${1:element}}    IN    @{${2:LIST}}\n    Log    ${${1:element}}\n\
     \    $0\nEND"
   insertTextFormat: 2
@@ -27,7 +26,6 @@ result:
     \ to the second variable per iteration.\n\nFOR    ${${1:index}}    ${${2:element}}\
     \    IN ENUMERATE    @{${3:LIST}}\n    Log    ${${1:index}}: ${${2:element}}\n\
     \    $0\nEND"
-  documentationFormat: markdown
   insertText: "FOR    ${${1:index}}    ${${2:element}}    IN ENUMERATE    @{${3:LIST}}\n\
     \    Log    ${${1:index}}: ${${2:element}}\n    $0\nEND"
   insertTextFormat: 2
@@ -49,7 +47,6 @@ result:
     \ a range of values with an optional configurable step width.\n\nFOR    ${${1:counter}}\
     \    IN RANGE    ${2:START}    ${3:END}    ${4:opt.STEPS}\n    Log    ${${1:counter}}\n\
     \    $0\nEND"
-  documentationFormat: markdown
   insertText: "FOR    ${${1:counter}}    IN RANGE    ${2:START}    ${3:END}    ${4:opt.STEPS}\n\
     \    Log    ${${1:counter}}\n    $0\nEND"
   insertTextFormat: 2
@@ -72,7 +69,6 @@ result:
     \ from the second list to the second variable per iteration.\n\nFOR    ${${1:l1-element}}\
     \    ${${2:l2-element}}    IN ZIP    ${${3:LIST-1}}    ${${4:LIST-2}}\n    Log\
     \    ${${1:l1-element}} - ${${2:l2-element}}\n    $0\nEND"
-  documentationFormat: markdown
   insertText: "FOR    ${${1:l1-element}}    ${${2:l2-element}}    IN ZIP    ${${3:LIST-1}}\
     \    ${${4:LIST-2}}\n    Log    ${${1:l1-element}} - ${${2:l2-element}}\n    $0\n\
     END"

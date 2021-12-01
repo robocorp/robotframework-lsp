@@ -1,6 +1,5 @@
 - deprecated: false
   documentation: John
-  documentationFormat: plaintext
   insertText: First name
   insertTextFormat: 2
   kind: 6

@@ -12,7 +12,6 @@ def _create_completion_item(library_name, selection, token, start_col_offset=Non
         Range,
         TextEdit,
     )
-    from robocorp_ls_core.lsp import MarkupKind
     from robocorp_ls_core.lsp import CompletionItemKind
 
     text_edit = TextEdit(
@@ -34,7 +33,6 @@ def _create_completion_item(library_name, selection, token, start_col_offset=Non
         insertText=text_edit.newText,
         documentation="",
         insertTextFormat=InsertTextFormat.Snippet,
-        documentationFormat=MarkupKind.PlainText,
     ).to_dict()
 
 

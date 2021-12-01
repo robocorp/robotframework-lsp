@@ -156,7 +156,6 @@ class _Collector(object):
             Range,
             TextEdit,
         )
-        from robocorp_ls_core.lsp import MarkupKind
         from robocorp_ls_core.lsp import CompletionItemKind
 
         label = variable_found.variable_name
@@ -179,7 +178,6 @@ class _Collector(object):
             insertText=label,
             documentation=variable_found.variable_value,
             insertTextFormat=InsertTextFormat.Snippet,
-            documentationFormat=MarkupKind.PlainText,
         ).to_dict()
 
     def accepts(self, variable_name):

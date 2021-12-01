@@ -2,7 +2,6 @@ jsonrpc: '2.0'
 result:
 - deprecated: false
   documentation: Robot Framework
-  documentationFormat: plaintext
   insertText: ${NAME}
   insertTextFormat: 2
   kind: 6
@@ -19,7 +18,6 @@ result:
         line: 9
 - deprecated: false
   documentation: '2.0'
-  documentationFormat: plaintext
   insertText: ${VERSION}
   insertTextFormat: 2
   kind: 6
@@ -36,7 +34,6 @@ result:
         line: 9
 - deprecated: false
   documentation: ${NAME} ${VERSION}
-  documentationFormat: plaintext
   insertText: ${ROBOT}
   insertTextFormat: 2
   kind: 6
@@ -53,7 +50,6 @@ result:
         line: 9
 - deprecated: false
   documentation: abspath(tempfile.gettempdir())
-  documentationFormat: plaintext
   insertText: ${TEMPDIR}
   insertTextFormat: 2
   kind: 6
@@ -70,7 +66,6 @@ result:
         line: 9
 - deprecated: false
   documentation: abspath('.')
-  documentationFormat: plaintext
   insertText: ${EXECDIR}
   insertTextFormat: 2
   kind: 6
@@ -87,7 +82,6 @@ result:
         line: 9
 - deprecated: false
   documentation: abspath('.')
-  documentationFormat: plaintext
   insertText: ${CURDIR}
   insertTextFormat: 2
   kind: 6
@@ -104,7 +98,6 @@ result:
         line: 9
 - deprecated: false
   documentation: os.sep
-  documentationFormat: plaintext
   insertText: ${/}
   insertTextFormat: 2
   kind: 6
@@ -121,7 +114,6 @@ result:
         line: 9
 - deprecated: false
   documentation: os.pathsep
-  documentationFormat: plaintext
   insertText: ${:}
   insertTextFormat: 2
   kind: 6
@@ -138,7 +130,6 @@ result:
         line: 9
 - deprecated: false
   documentation: os.linesep
-  documentationFormat: plaintext
   insertText: ${\n}
   insertTextFormat: 2
   kind: 6
@@ -155,7 +146,6 @@ result:
         line: 9
 - deprecated: false
   documentation: ' '
-  documentationFormat: plaintext
   insertText: ${SPACE}
   insertTextFormat: 2
   kind: 6
@@ -172,7 +162,6 @@ result:
         line: 9
 - deprecated: false
   documentation: 'True'
-  documentationFormat: plaintext
   insertText: ${True}
   insertTextFormat: 2
   kind: 6
@@ -189,7 +178,6 @@ result:
         line: 9
 - deprecated: false
   documentation: 'False'
-  documentationFormat: plaintext
   insertText: ${False}
   insertTextFormat: 2
   kind: 6
@@ -206,7 +194,6 @@ result:
         line: 9
 - deprecated: false
   documentation: None
-  documentationFormat: plaintext
   insertText: ${None}
   insertTextFormat: 2
   kind: 6
@@ -223,7 +210,6 @@ result:
         line: 9
 - deprecated: false
   documentation: None
-  documentationFormat: plaintext
   insertText: ${null}
   insertTextFormat: 2
   kind: 6
@@ -240,7 +226,6 @@ result:
         line: 9
 - deprecated: false
   documentation: settings.output_directory
-  documentationFormat: plaintext
   insertText: ${OUTPUT_DIR}
   insertTextFormat: 2
   kind: 6
@@ -257,7 +242,6 @@ result:
         line: 9
 - deprecated: false
   documentation: settings.output or 'NONE'
-  documentationFormat: plaintext
   insertText: ${OUTPUT_FILE}
   insertTextFormat: 2
   kind: 6
@@ -274,7 +258,6 @@ result:
         line: 9
 - deprecated: false
   documentation: settings.report or 'NONE'
-  documentationFormat: plaintext
   insertText: ${REPORT_FILE}
   insertTextFormat: 2
   kind: 6
@@ -291,7 +274,6 @@ result:
         line: 9
 - deprecated: false
   documentation: settings.log or 'NONE'
-  documentationFormat: plaintext
   insertText: ${LOG_FILE}
   insertTextFormat: 2
   kind: 6
@@ -308,7 +290,6 @@ result:
         line: 9
 - deprecated: false
   documentation: settings.debug_file or 'NONE'
-  documentationFormat: plaintext
   insertText: ${DEBUG_FILE}
   insertTextFormat: 2
   kind: 6
@@ -325,7 +306,6 @@ result:
         line: 9
 - deprecated: false
   documentation: settings.log_level
-  documentationFormat: plaintext
   insertText: ${LOG_LEVEL}
   insertTextFormat: 2
   kind: 6
@@ -342,7 +322,6 @@ result:
         line: 9
 - deprecated: false
   documentation: ''
-  documentationFormat: plaintext
   insertText: ${PREV_TEST_NAME}
   insertTextFormat: 2
   kind: 6
@@ -359,7 +338,6 @@ result:
         line: 9
 - deprecated: false
   documentation: ''
-  documentationFormat: plaintext
   insertText: ${PREV_TEST_STATUS}
   insertTextFormat: 2
   kind: 6
@@ -376,7 +354,6 @@ result:
         line: 9
 - deprecated: false
   documentation: ''
-  documentationFormat: plaintext
   insertText: ${PREV_TEST_MESSAGE}
   insertTextFormat: 2
   kind: 6
@@ -393,7 +370,6 @@ result:
         line: 9
 - deprecated: false
   documentation: ''
-  documentationFormat: plaintext
   insertText: ${SUITE_DOCUMENTATION}
   insertTextFormat: 2
   kind: 6
@@ -410,7 +386,6 @@ result:
         line: 9
 - deprecated: false
   documentation: ''
-  documentationFormat: plaintext
   insertText: ${SUITE_NAME}
   insertTextFormat: 2
   kind: 6
@@ -427,7 +402,6 @@ result:
         line: 9
 - deprecated: false
   documentation: ''
-  documentationFormat: plaintext
   insertText: ${SUITE_SOURCE}
   insertTextFormat: 2
   kind: 6
@@ -444,7 +418,6 @@ result:
         line: 9
 - deprecated: false
   documentation: ''
-  documentationFormat: plaintext
   insertText: ${TEST_DOCUMENTATION}
   insertTextFormat: 2
   kind: 6
@@ -461,7 +434,6 @@ result:
         line: 9
 - deprecated: false
   documentation: ''
-  documentationFormat: plaintext
   insertText: ${TEST_NAME}
   insertTextFormat: 2
   kind: 6

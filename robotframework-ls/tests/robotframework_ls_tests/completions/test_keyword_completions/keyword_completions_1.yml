@@ -1,9 +1,10 @@
 - deprecated: false
-  documentation: 'Verify Another Model(model=10)
+  documentation:
+    kind: markdown
+    value: 'Verify Another Model(model=10)
 
 
-    '
-  documentationFormat: markdown
+      '
   insertText: Verify Another Model
   insertTextFormat: 2
   kind: 2
@@ -19,14 +20,15 @@
         character: 4
         line: 7
 - deprecated: false
-  documentation: 'Verify Model(model)
+  documentation:
+    kind: markdown
+    value: 'Verify Model(model)
 
 
-    :type model: int
+      :type model: int
 
 
-    '
-  documentationFormat: markdown
+      '
   insertText: Verify Model    ${1:model}
   insertTextFormat: 2
   kind: 2
