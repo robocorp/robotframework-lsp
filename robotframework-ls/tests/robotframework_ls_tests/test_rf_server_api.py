@@ -40,8 +40,11 @@ Some task
     )
     completion_context = CompletionContext(doc, line, col, workspace=workspace)
 
-    for completion in api._complete_from_completion_context(completion_context):
-        if completion["label"] == "Log":
+    completions = api._complete_from_completion_context(completion_context)
+    for completion in completions:
+        if completion["label"] == "Log (BuiltIn)":
             break
     else:
-        raise AssertionError('Did not find "Log" entry in completions.')
+        raise AssertionError(
+            f'Did not find "Log" entry in completions. Found: {list(x["label"] for x in completions)}'
+        )

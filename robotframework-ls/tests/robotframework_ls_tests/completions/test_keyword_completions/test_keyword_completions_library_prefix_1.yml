@@ -11,7 +11,7 @@
   insertText: Yet Another Equal Redefined    ${1:\$arg1}    ${2:\$arg2}
   insertTextFormat: 2
   kind: 3
-  label: Yet Another Equal Redefined
+  label: Yet Another Equal Redefined (case4resource3)
   preselect: false
   textEdit:
     newText: Yet Another Equal Redefined    ${1:\$arg1}    ${2:\$arg2}

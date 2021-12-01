@@ -64,7 +64,9 @@ class _Collector(object):
     def create_completion_item(
         self,
         completion_context: ICompletionContext,
-        keyword_name,
+        keyword_name: str,
+        docs: str,
+        docs_format: str,
         selection,
         token,
         col_delta: int,
@@ -96,6 +98,7 @@ class _Collector(object):
         memo.add(label)
 
         prefix = ""
+        detail = ""
         import_line = -1
         if completion_context.type != CompletionType.shell:
             if lib_import is not None:
@@ -146,6 +149,7 @@ class _Collector(object):
                     f"{prefix}Library    {lib_import}\n",
                 )
             )
+            detail = "* Adds Library Import"
         elif resource_path is not None:
             additional_text_edits.append(
                 TextEdit(
@@ -153,17 +157,23 @@ class _Collector(object):
                     f"{prefix}Resource    {resource_path}\n",
                 )
             )
+            detail = "* Adds Resource Import"
 
         # text_edit = None
         self.completion_items.append(
             CompletionItem(
-                label,
+                f"{label}*",
+                detail=detail,
                 kind=CompletionItemKind.Reference,
                 text_edit=text_edit,
                 insertText=text_edit.newText,
-                documentation="",
+                documentation=docs,
+                documentationFormat=(
+                    MarkupKind.Markdown
+                    if docs_format == "markdown"
+                    else MarkupKind.PlainText
+                ),
                 insertTextFormat=InsertTextFormat.Snippet,
-                documentationFormat=MarkupKind.PlainText,
                 additionalTextEdits=additional_text_edits,
                 data=data,
             ).to_dict()
@@ -252,6 +262,8 @@ def _collect_auto_import_completions(
                 collector.create_completion_item(
                     completion_context,
                     convert_keyword_format(entry["name"]),
+                    entry["docs"],
+                    entry["docsFormat"],
                     selection,
                     token,
                     0,

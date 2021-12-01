@@ -1028,7 +1028,7 @@ Some task
     )
 
     for completion in completions["result"]["suggestions"]:
-        if completion["label"] == "Log":
+        if completion["label"] == "Log (BuiltIn)":
             break
     else:
         raise AssertionError('Did not find "Log" in the suggestions.')
@@ -1242,9 +1242,9 @@ def test_rf_interactive_integrated_completions(
     )
 
     for completion in completions["result"]["suggestions"]:
-        if completion["label"] == "Log":
+        if completion["label"] == "Log (BuiltIn)":
             assert completion == {
-                "label": "Log",
+                "label": "Log (BuiltIn)",
                 "kind": 0,
                 "insertText": "Log    ${1:message}",
                 "insertTextRules": 4,
@@ -1336,6 +1336,8 @@ def test_rf_interactive_integrated_auto_import_completions(
 
     suggestions = completions["result"]["suggestions"]
     assert suggestions
+    assert "Adds values to the end of list" in suggestions[0]["documentation"]
+    suggestions[0]["documentation"] = "<replaced_for_test>"
     check_code_lens_data_regression(data_regression, suggestions)
 
 

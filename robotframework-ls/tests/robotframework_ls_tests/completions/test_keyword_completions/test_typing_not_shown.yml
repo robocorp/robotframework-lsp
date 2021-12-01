@@ -7,7 +7,7 @@
   insertText: Case Verify Typing
   insertTextFormat: 2
   kind: 2
-  label: Case Verify Typing
+  label: Case Verify Typing (case3_library)
   preselect: false
   textEdit:
     newText: Case Verify Typing
