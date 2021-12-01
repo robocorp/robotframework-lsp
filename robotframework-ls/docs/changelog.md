@@ -1,3 +1,10 @@
+New in 0.31.0 (2021-12-01)
+-----------------------------
+
+- Properly use `MarkupContent` for `CompletionItem.documentation`.
+- A libspec format of `"markdown"` is supported as documentation format.
+
+
 New in 0.30.0 (2021-12-01)
 -----------------------------
 
