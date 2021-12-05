@@ -18,7 +18,7 @@ from robot.version import VERSION
 from robocop.rules import RuleSeverity
 from robocop.exceptions import InvalidExternalCheckerError
 
-IS_RF4 = VERSION.startswith("4")  # FIXME: We need better version matching - for 5.0.0
+IS_RF4 = int(VERSION.split(".")[0]) >= 4
 DISABLED_IN_4 = frozenset(("nested-for-loop", "invalid-comment"))
 ENABLED_IN_4 = frozenset(
     (

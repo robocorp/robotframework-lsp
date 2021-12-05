@@ -21,6 +21,10 @@ from robocorp_ls_core.cache import instance_cache
 from typing import Optional
 from robocorp_ls_core.protocols import Sentinel
 from robotframework_ls.impl.protocols import ISymbolsCache
+from robocorp_ls_core.robotframework_log import get_logger
+
+
+log = get_logger(__name__)
 
 
 def markdown_doc(obj):
@@ -275,7 +279,14 @@ class SpecDocBuilder(object):
             source=spec.get("source"),
             lineno=int(spec.get("lineno", -1)),
         )
-        if specversion == "3":
+
+        try:
+            specversion = int(specversion)
+        except:
+            log.exception(f"Error converting specversion: {specversion} to an int.")
+            specversion = 0  # Too old?
+
+        if specversion >= 3:
             libdoc.inits = self._create_keywords_v3(
                 weakref.ref(libdoc), spec, "inits/init"
             )

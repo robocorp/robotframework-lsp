@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.31.0'
+version '0.32.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,24 +51,12 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.31.0
+    Release 0.32.0
     </p>
     <ul>
 
-    <li>Library arguments can now be used in the libspec generation. Patch by <strong>Jozef Grajciar</strong>.</li>
-      <ul>
-        <li><strong>robot.libraries.libdoc.needsArgs</strong> setting can be used to specify which libraries require arguments in the generation.</li>
-        <li><strong>Remote</strong> and <strong>FakerLib</strong> are set by default.</li>
-      </ul>
-    <li>Libspec files may be pre-generated.</li>
-      <ul>
-        <li><strong>robot.libraries.libdoc.preGenerate</strong> may be used to specify which libraries to pre-generate.</li>
-        <li>Some heuristics cover a few libraries which are always pre-generated if installed.</li>
-      </ul>
-    <li>Fixes related to aliasing libraries.</li>
-    <li>Documentation is shown for keywords still not imported.</li>
-    <li>Module is shown for for keywords already imported.</li>
-
+    <li>Updated Robocop to 1.12.0 and vendored a TOML implementation.</li>
+    <li>Marked as compatible with Intellij 213.*.</li>
 
     <br>
     Current feature set:<br>

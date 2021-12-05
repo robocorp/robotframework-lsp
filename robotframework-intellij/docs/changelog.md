@@ -1,3 +1,10 @@
+New in 0.32.0 (2021-12-05)
+-----------------------------
+
+- Updated Robocop to 1.12.0 and vendored a TOML implementation.
+- Marked Intellij plugin as being compatible with Intellij 213.*
+
+
 New in 0.31.0 (2021-12-01)
 -----------------------------
 
