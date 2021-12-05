@@ -106,7 +106,7 @@ patchPluginXml {
     // See https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html?from=jetbrains.org#intellij-platform-based-products-of-recent-ide-versions
 
     sinceBuild '203'
-    untilBuild '212.*'
+    untilBuild '213.*'
 }
 
 test {
