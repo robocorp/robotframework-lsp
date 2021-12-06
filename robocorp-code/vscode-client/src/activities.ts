@@ -24,7 +24,7 @@ import {
     showSelectOneStrQuickPick,
 } from "./ask";
 import { refreshCloudTreeView } from "./views";
-import { feedback } from "./rcc";
+import { feedback, feedbackRobocorpCodeError } from "./rcc";
 
 export async function cloudLogin(): Promise<boolean> {
     let loggedIn: boolean;
@@ -131,7 +131,7 @@ export async function resolveInterpreter(targetRobot: string): Promise<ActionRes
             );
             return result;
         } catch (error) {
-            logError("Error resolving interpreter.", error);
+            logError("Error resolving interpreter.", error, "ACT_RESOLVE_INTERPRETER");
             return { "success": false, "message": "Unable to resolve interpreter.", "result": undefined };
         }
     }
@@ -321,7 +321,7 @@ export async function setPythonInterpreterFromRobotYaml() {
             }
         }
     } catch (error) {
-        logError("Error setting python.pythonPath configuration.", error);
+        logError("Error setting python.pythonPath configuration.", error, "ACT_SETTING_PYTHON_PYTHONPATH");
         window.showWarningMessage("Error setting python.pythonPath configuration: " + error.message);
         return;
     }
@@ -727,13 +727,14 @@ export async function createRobot() {
             }
         }
     } catch (error) {
-        logError("Error reading contents of: " + ws.uri.fsPath, error);
+        logError("Error reading contents of: " + ws.uri.fsPath, error, "ACT_CREATE_ROBOT");
     }
 
     let actionResultListLocalRobots: ActionResult<LocalRobotMetadataInfo[]> = await asyncListLocalRobots;
 
     let robotsInWorkspace = false;
     if (!actionResultListLocalRobots.success) {
+        feedbackRobocorpCodeError("ACT_LIST_ROBOT");
         window.showErrorMessage(
             "Error listing robots: " + actionResultListLocalRobots.message + " (Robot creation will proceed)."
         );
@@ -748,11 +749,13 @@ export async function createRobot() {
     let actionResultListRobotTemplatesInternal: ActionResult<RobotTemplate[]> = await asyncListRobotTemplates;
 
     if (!actionResultListRobotTemplatesInternal.success) {
+        feedbackRobocorpCodeError("ACT_LIST_ROBOT_TEMPLATE");
         window.showErrorMessage("Unable to list Robot templates: " + actionResultListRobotTemplatesInternal.message);
         return;
     }
     let availableTemplates: RobotTemplate[] = actionResultListRobotTemplatesInternal.result;
     if (!availableTemplates) {
+        feedbackRobocorpCodeError("ACT_NO_ROBOT_TEMPLATE");
         window.showErrorMessage("Unable to create Robot (the Robot templates could not be loaded).");
         return;
     }
@@ -849,7 +852,7 @@ export async function createRobot() {
                 }
             }
         } catch (error) {
-            logError("Error reading contents of directory: " + dirUri, error);
+            logError("Error reading contents of directory: " + dirUri, error, "ACT_CREATE_ROBOT_LIST_TARGET");
         }
         if (!isEmpty) {
             const CANCEL = "Cancel Robot Creation";
@@ -889,7 +892,7 @@ export async function createRobot() {
         try {
             commands.executeCommand("workbench.files.action.refreshFilesExplorer");
         } catch (error) {
-            logError("Error refreshing file explorer.", error);
+            logError("Error refreshing file explorer.", error, "ACT_REFRESH_FILE_EXPLORER");
         }
         window.showInformationMessage("Robot successfully created in:\n" + targetDir);
     } else {
@@ -944,7 +947,7 @@ export async function updateLaunchEnvironment(args): Promise<{ [key: string]: st
             }
         );
     } catch (error) {
-        logError("Error updating launch environment.", error);
+        logError("Error updating launch environment.", error, "ACT_UPDATE_LAUNCH_ENV");
         return environment;
     }
 

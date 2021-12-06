@@ -356,6 +356,12 @@ COMMANDS = [
     ),
     Command("robocorp.submitIssue", "Submit issue", server_handled=False),
     Command(
+        "robocorp.errorFeedback.internal",
+        "Error feedback(internal)",
+        server_handled=False,
+        hide_from_command_palette=True,
+    ),
+    Command(
         "robocorp.configuration.diagnostics.internal",
         "Robot Configuration Diagnostics (internal)",
         server_handled=True,

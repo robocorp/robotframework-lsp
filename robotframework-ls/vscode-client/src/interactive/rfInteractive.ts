@@ -145,7 +145,7 @@ class InteractiveShellPanel {
                     "code": code,
                 });
             } catch (err) {
-                logError("Error in evaluation.", err);
+                logError("Error in evaluation.", err, "INTERACTIVE_EVAL");
             } finally {
                 let response: any = {
                     type: "response",
@@ -172,7 +172,7 @@ class InteractiveShellPanel {
                     "code": code,
                 });
             } catch (err) {
-                logError("Error getting semantic tokens.", err);
+                logError("Error getting semantic tokens.", err, "INTERACTIVE_SEMANTIC_TOKS");
             } finally {
                 let response: any = {
                     type: "response",
@@ -202,7 +202,7 @@ class InteractiveShellPanel {
                     "context": context,
                 });
             } catch (err) {
-                logError("Error getting completions.", err);
+                logError("Error getting completions.", err, "INTERACTIVE_COMPLETIONS");
             } finally {
                 let response: any = {
                     type: "response",
@@ -221,7 +221,7 @@ class InteractiveShellPanel {
                 let stateToPersist = message.arguments["state"];
                 persistable.setState(stateToPersist);
             } catch (err) {
-                logError("Error persisting state.", err);
+                logError("Error persisting state.", err, "INTERACTIVE_STATE");
             } finally {
                 let response: any = {
                     type: "response",

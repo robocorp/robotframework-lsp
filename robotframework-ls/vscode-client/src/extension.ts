@@ -48,7 +48,7 @@ import { registerRunCommands } from "./run";
 import { registerLinkProviders } from "./linkProvider";
 import { expandVars, getArrayStrFromConfigExpandingVars, getStrFromConfigExpandingVars } from "./expandVars";
 import { registerInteractiveCommands } from "./interactive/rfInteractive";
-import { logError, OUTPUT_CHANNEL } from "./channel";
+import { errorFeedback, logError, OUTPUT_CHANNEL } from "./channel";
 
 interface ExecuteWorkspaceCommandArgs {
     command: string;
@@ -290,7 +290,7 @@ function registerDebugger(languageServerExecutable: string) {
         });
     } catch (error) {
         // i.e.: https://github.com/microsoft/vscode/issues/118562
-        logError("Error registering debugger.", error);
+        logError("Error registering debugger.", error, "EXT_REGISTER_DEBUGGER");
     }
 }
 
@@ -411,7 +411,7 @@ export async function activate(context: ExtensionContext) {
                     config.update("language-server.python", onfulfilled[0].fsPath, configurationTarget);
                 } catch (err) {
                     let errorMessage = "Error persisting python to start the language server.\nError: " + err.message;
-                    logError("Error persisting python to start the language server.", err);
+                    logError("Error persisting python to start the language server.", err, "EXT_SAVE_LS_PYTHON");
 
                     if (configurationTarget == ConfigurationTarget.Workspace) {
                         try {
@@ -433,6 +433,7 @@ export async function activate(context: ExtensionContext) {
                 // There's not much we can do (besides start listening to changes to the related variables
                 // on the finally block so that we start listening and ask for a reload if a related configuration changes).
                 OUTPUT_CHANNEL.appendLine("Unable to start (no python executable specified).");
+                errorFeedback("EXT_NO_PYEXE");
                 return;
             }
         }
@@ -449,7 +450,7 @@ export async function activate(context: ExtensionContext) {
                     initializationOptions["pluginsDir"] = pluginsDir;
                 }
             } catch (error) {
-                logError("Error setting pluginsDir.", error);
+                logError("Error setting pluginsDir.", error, "EXT_PLUGINS_DIR");
             }
         } catch (error) {
             // The command may not be available.
@@ -463,6 +464,7 @@ export async function activate(context: ExtensionContext) {
             let targetMain: string = path.resolve(__dirname, "../../src/robotframework_ls/__main__.py");
             if (!fs.existsSync(targetMain)) {
                 window.showWarningMessage("Error. Expected: " + targetMain + " to exist.");
+                errorFeedback("EXT_NO_MAIN");
                 return;
             }
 
@@ -496,7 +498,7 @@ export async function activate(context: ExtensionContext) {
                         } catch (err) {
                             if (!(err.message && err.message.endsWith("not found"))) {
                                 // Log if the error wasn't that the command wasn't found
-                                logError("Error executing workspace command.", err);
+                                logError("Error executing workspace command.", err, "EXT_EXECUTE_WS_COMMAND");
                             }
                         }
                         return ret;
@@ -533,7 +535,7 @@ export async function activate(context: ExtensionContext) {
         } catch (err) {
             let msg =
                 "Error: robotframework-lsp version mismatch. Please uninstall the older version from the python environment.";
-            logError(msg, err);
+            logError(msg, err, "EXT_VERSION_MISMATCH");
             window.showErrorMessage(msg);
         }
 

@@ -48,6 +48,7 @@ export const ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION = "robocorp.rccTerminal
 export const ROBOCORP_SEND_METRIC = "robocorp.sendMetric";  // Send metric
 export const ROBOCORP_SUBMIT_ISSUE_INTERNAL = "robocorp.submitIssue.internal";  // Submit issue (internal)
 export const ROBOCORP_SUBMIT_ISSUE = "robocorp.submitIssue";  // Submit issue
+export const ROBOCORP_ERROR_FEEDBACK_INTERNAL = "robocorp.errorFeedback.internal";  // Error feedback(internal)
 export const ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL = "robocorp.configuration.diagnostics.internal";  // Robot Configuration Diagnostics (internal)
 export const ROBOCORP_CONFIGURATION_DIAGNOSTICS = "robocorp.configuration.diagnostics";  // Robot Configuration Diagnostics
 export const ROBOCORP_RCC_TERMINAL_NEW = "robocorp.rccTerminalNew";  // Terminal with Robot environment

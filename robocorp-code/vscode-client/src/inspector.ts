@@ -7,7 +7,6 @@ import { getSelectedLocator, getSelectedRobot, LocatorEntry } from "./viewsCommo
 import { execFilePromise, ExecFileReturn } from "./subprocess";
 import { OUTPUT_CHANNEL } from "./channel";
 import { ChildProcess } from "child_process";
-import { sleep } from "./time";
 
 let _openingInspector: boolean = false;
 let _startingRootWindowNotified: boolean = false;
@@ -69,8 +68,9 @@ export async function _internalOpenRobocorpInspector(locatorType?: string, locat
             OUTPUT_CHANNEL.appendLine("Trying to edit non-existing locator.");
             return;
         }
-        if (locatorSelected) args.push("edit", locatorSelected.name);
-        else {
+        if (locatorSelected) {
+            args.push("edit", locatorSelected.name);
+        } else {
             OUTPUT_CHANNEL.appendLine("Unable to open Robocorp Inspector. Select a locator first.");
             return;
         }
