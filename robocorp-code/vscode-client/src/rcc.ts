@@ -427,8 +427,18 @@ export async function feedback(name: string) {
 }
 
 export async function feedbackRobocorpCodeError(errorCode: string) {
+    await feedbackAnyError("vscode.code.error", errorCode);
+}
+
+/**
+ * Submit feedback on some predefined error code.
+ *
+ * @param errorSource Something as "vscode.code.error"
+ * @param errorCode The error code to be shown.
+ */
+export async function feedbackAnyError(errorSource: string, errorCode: string) {
     const rccLocation = await getRccLocation();
-    let args: string[] = ["feedback", "metric", "-t", "vscode", "-n", "vscode.code.error", "-v", errorCode];
+    let args: string[] = ["feedback", "metric", "-t", "vscode", "-n", errorSource, "-v", errorCode];
     await execFilePromise(rccLocation, args, {}, { "hideCommandLine": true });
 }
 

@@ -53,6 +53,7 @@ import { logError, OUTPUT_CHANNEL } from "./channel";
 import { getExtensionRelativeFile, verifyFileExists } from "./files";
 import {
     collectBaseEnv,
+    feedbackAnyError,
     feedbackRobocorpCodeError,
     getRccLocation,
     RCCDiagnostics,
@@ -133,6 +134,7 @@ import {
     ROBOCORP_SUBMIT_ISSUE_INTERNAL,
     ROBOCORP_UPDATE_LAUNCH_ENV,
     ROBOCORP_UPLOAD_ROBOT_TO_CLOUD,
+    ROBOCORP_ERROR_FEEDBACK_INTERNAL,
 } from "./robocorpCommands";
 
 const clientOptions: LanguageClientOptions = {
@@ -500,6 +502,11 @@ export async function activate(context: ExtensionContext) {
                 errorCode,
                 errorMessage
             )
+    );
+
+    // i.e.: allow other extensions to also use our error feedback api.
+    C.register(ROBOCORP_ERROR_FEEDBACK_INTERNAL, (errorSource: string, errorCode: string) =>
+        feedbackAnyError(errorSource, errorCode)
     );
 
     const extension = extensions.getExtension("robocorp.robotframework-lsp");

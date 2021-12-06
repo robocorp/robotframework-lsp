@@ -25,7 +25,7 @@ export async function robotRun(params?: ITestInfo) {
     try {
         await _debug(params, true);
     } catch (error) {
-        logError("Error running robot.", error);
+        logError("Error running robot.", error, "RUN_ROBOT_RUN");
     }
 }
 
@@ -33,7 +33,7 @@ export async function robotDebug(params?: ITestInfo) {
     try {
         await _debug(params, false);
     } catch (error) {
-        logError("Error debugging robot.", error);
+        logError("Error debugging robot.", error, "RUN_ROBOT_DEBUG");
     }
 }
 
@@ -72,7 +72,8 @@ async function readAllDebugConfigs(workspaceFolder: WorkspaceFolder): Promise<De
     } catch (exc) {
         logError(
             "Error reading debug configurations to find the code-lens template.\nlaunch.json target: " + filename,
-            exc
+            exc,
+            "RUN_READ_DEBUG_CONFIG"
         );
         return [];
     }
@@ -105,7 +106,7 @@ async function _debugSuite(resource: Uri | undefined, noDebug: boolean) {
         }
         await _debug({ "uri": resource.toString(), "path": resource.fsPath, "name": "*" }, noDebug);
     } catch (error) {
-        logError("Error debugging suite.", error);
+        logError("Error debugging suite.", error, "RUN_DEBUG_SUITE");
     }
 }
 
@@ -199,7 +200,11 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
                         try {
                             debugConfiguration.args = debugConfiguration.args.concat(value);
                         } catch (err) {
-                            logError("Unable to concatenate: " + debugConfiguration.args + " to: " + value, err);
+                            logError(
+                                "Unable to concatenate: " + debugConfiguration.args + " to: " + value,
+                                err,
+                                "RUN_CONCAT_ARGS"
+                            );
                         }
                     } else {
                         debugConfiguration[key] = value;
