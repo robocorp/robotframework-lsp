@@ -31,6 +31,7 @@ import java.util.Map;
  * This is the class responsible for starting the debug adapter.
  */
 public class RobotRunProfileStateRobotDAPStarter extends CommandLineState {
+
     public RobotRunProfileStateRobotDAPStarter(@NotNull ExecutionEnvironment environment) {
         super(environment);
     }
@@ -52,17 +53,17 @@ public class RobotRunProfileStateRobotDAPStarter extends CommandLineState {
         // Note: the arguments are actually ignored at this point as we'll start the debug adapter
         // and not really the target process.
         commandLine = new GeneralCommandLine();
-        RobotLaunchConfigRunOptions options = runProfile.getOptions();
+        RobotLaunchConfigRunOptions expandedOptions = runProfile.getOptions().getWithVarsExpanded(this.getEnvironment());
 
         // Validate if the target is correct.
-        if (options.target == null || options.target.trim().isEmpty()) {
+        if (expandedOptions.target == null || expandedOptions.target.trim().isEmpty()) {
             throw new ExecutionException("Target not specified.");
         }
 
         Map<String, String> environment = commandLine.getEnvironment();
         environment.clear();
-        if (options.env != null) {
-            environment.putAll(options.env);
+        if (expandedOptions.env != null) {
+            environment.putAll(expandedOptions.env);
         }
 
         Project project = runProfile.getProject();
@@ -103,11 +104,11 @@ public class RobotRunProfileStateRobotDAPStarter extends CommandLineState {
         parametersList.add("-u");
         parametersList.add(dapMainScript.getAbsolutePath());
 
-        String workingDir = options.computeWorkingDir();
+        String workingDir = expandedOptions.computeWorkingDir();
         if (workingDir != null) {
             commandLine.setWorkDirectory(workingDir);
         } else {
-            File targetRobot = new File(options.target);
+            File targetRobot = new File(expandedOptions.target);
             if (targetRobot.isDirectory()) {
                 commandLine.setWorkDirectory(targetRobot);
             } else {
@@ -132,7 +133,7 @@ public class RobotRunProfileStateRobotDAPStarter extends CommandLineState {
 
         String commandLineString = commandLine.getCommandLineString();
         Charset charset = commandLine.getCharset();
-        KillableColoredProcessHandler processHandler = new RobotProcessHandler(process, commandLineString, charset);
+        KillableColoredProcessHandler processHandler = new RobotProcessHandler(process, commandLineString, charset, expandedOptions);
         processHandler.setHasPty(true);
         return processHandler;
     }
@@ -151,8 +152,11 @@ public class RobotRunProfileStateRobotDAPStarter extends CommandLineState {
 
     public class RobotProcessHandler extends KillableColoredProcessHandler {
 
-        public RobotProcessHandler(Process process, String commandLineString, Charset charset) {
+        public final RobotLaunchConfigRunOptions expandedOptions;
+
+        public RobotProcessHandler(Process process, String commandLineString, Charset charset, RobotLaunchConfigRunOptions expandedOptions) {
             super(process, commandLineString, charset);
+            this.expandedOptions = expandedOptions;
         }
 
         @Override

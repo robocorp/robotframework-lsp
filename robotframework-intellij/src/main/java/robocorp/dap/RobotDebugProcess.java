@@ -57,6 +57,8 @@ public class RobotDebugProcess extends XDebugProcess {
 
     private final ExecutorService singleThreadExecutor;
 
+    private final RobotLaunchConfigRunOptions expandedOptions;
+
     public IDebugProtocolServer getRemoteProxy() {
         return remoteProxy;
     }
@@ -190,13 +192,15 @@ public class RobotDebugProcess extends XDebugProcess {
     protected RobotDebugProcess(Executor executor, @NotNull XDebugSession session, ProcessHandler processHandler) throws InterruptedException, ExecutionException, TimeoutException {
         super(session);
         this.processHandler = processHandler;
+        RobotRunProfileStateRobotDAPStarter.RobotProcessHandler baseProcessHandler = (RobotRunProfileStateRobotDAPStarter.RobotProcessHandler) processHandler;
+        expandedOptions = baseProcessHandler.expandedOptions;
+
         session.setPauseActionSupported(false);
 
         // At this point we should've a process which started the debug adapter. Let's proceed and actually do the launch
         // for the target process.
         singleThreadExecutor = Executors.newSingleThreadExecutor();
         dapDebugProtocolClient = new DAPDebugProtocolClient(this, singleThreadExecutor);
-        RobotRunProfileStateRobotDAPStarter.RobotProcessHandler baseProcessHandler = (RobotRunProfileStateRobotDAPStarter.RobotProcessHandler) processHandler;
         InputStream in = baseProcessHandler.getDebugAdapterProcess().getInputStream();
         OutputStream out = baseProcessHandler.getDebugAdapterProcess().getOutputStream();
 
@@ -217,7 +221,6 @@ public class RobotDebugProcess extends XDebugProcess {
         this.capabilities = this.remoteProxy.initialize(arguments).get(15, TimeUnit.SECONDS);
 
         RobotRunProfileOptionsEditionAndPersistence runProfile = (RobotRunProfileOptionsEditionAndPersistence) session.getRunProfile();
-        RobotLaunchConfigRunOptions options = runProfile.getOptions();
 
         String executorId = executor.getId();
 
@@ -225,11 +228,11 @@ public class RobotDebugProcess extends XDebugProcess {
         Map<String, Object> launchArgs = new HashMap<>();
         launchArgs.put("terminal", "none");
 
-        launchArgs.put("target", options.target);
-        launchArgs.put("args", options.args);
-        launchArgs.put("cwd", options.computeWorkingDir());
-        launchArgs.put("env", options.env);
-        launchArgs.put("makeSuite", options.makeSuite);
+        launchArgs.put("target", expandedOptions.target);
+        launchArgs.put("args", expandedOptions.args);
+        launchArgs.put("cwd", expandedOptions.computeWorkingDir());
+        launchArgs.put("env", expandedOptions.env);
+        launchArgs.put("makeSuite", expandedOptions.makeSuite);
 
         launchArgs.put("noDebug", !isDebug);
         launchArgs.put("__sessionId", "sessionId");
@@ -244,8 +247,7 @@ public class RobotDebugProcess extends XDebugProcess {
         super.sessionInitialized();
         ConsoleView consoleView = getSession().getConsoleView();
         if (consoleView != null) {
-            RobotRunProfileOptionsEditionAndPersistence runProfile = (RobotRunProfileOptionsEditionAndPersistence) getSession().getRunProfile();
-            RobotLaunchConfigRunOptions options = runProfile.getOptions();
+            RobotLaunchConfigRunOptions options = expandedOptions;
             consoleView.print("Started: " + options.target + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
         }
         remoteProxy.configurationDone(new ConfigurationDoneArguments());

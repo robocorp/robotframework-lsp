@@ -1,6 +1,7 @@
 package robocorp.dap;
 
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
@@ -14,6 +15,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -157,6 +159,11 @@ public class RobotRunSettingsEditor extends SettingsEditor<RobotRunProfileOption
 
         envVarsComponent = new EnvironmentVariablesComponent();
         panel.add(envVarsComponent, ExternalSystemUiUtil.getFillLineConstraints(0));
+
+        MacrosDialog.addTextFieldExtension((ExtendableTextField) targetRobot.getTextField());
+        MacrosDialog.addTextFieldExtension((ExtendableTextField) argumentsEditor.getTextField());
+        MacrosDialog.addTextFieldExtension((ExtendableTextField) workingDir.getTextField());
+        MacrosDialog.addTextFieldExtension((ExtendableTextField) envVarsComponent.getComponent().getTextField());
 
         return panel;
     }
