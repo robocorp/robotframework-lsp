@@ -1,6 +1,7 @@
 import { extensions, Uri } from "vscode";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import { handleProgressMessage } from "./progress";
+import { feedbackRobocorpCodeError } from "./rcc";
 
 export async function getPythonExecutable(resource: Uri = null): Promise<string | undefined | "config"> {
     try {
@@ -45,7 +46,11 @@ export async function getPythonExecutable(resource: Uri = null): Promise<string 
             return "config";
         }
     } catch (error) {
-        logError("Error when querying about python executable path from vscode-python.", error);
+        logError(
+            "Error when querying about python executable path from vscode-python.",
+            error,
+            "PYTHON_EXT_NO_PYTHON_EXECUTABLE"
+        );
         return undefined;
     }
 }

@@ -204,7 +204,7 @@ function getExpectedRccLocation(): string {
 
 export async function getRccLocation(): Promise<string | undefined> {
     let location = getExpectedRccLocation();
-    if (!fs.existsSync(location)) {
+    if (!(await fileExists(location))) {
         await window.withProgress(
             {
                 location: ProgressLocation.Notification,
@@ -311,7 +311,7 @@ export async function runConfigDiagnostics(
         let checks: CheckDiagnostic[] = outputAsJSON.checks;
         return new RCCDiagnostics(checks);
     } catch (error) {
-        logError("Error getting RCC diagnostics.", error);
+        logError("Error getting RCC diagnostics.", error, "RCC_DIAGNOSTICS");
         return undefined;
     }
 }
@@ -401,7 +401,7 @@ export async function submitIssue(
         }
     } catch (err) {
         errored = true;
-        logError("Error sending issue.", err);
+        logError("Error sending issue.", err, "RCC_SEND_ISSUE");
         window.showErrorMessage("The issue report was not sent. Please see the OUTPUT for more information.");
         OUTPUT_CHANNEL.show();
     }
@@ -423,6 +423,12 @@ interface IEnvInfo {
 export async function feedback(name: string) {
     const rccLocation = await getRccLocation();
     let args: string[] = ["feedback", "metric", "-t", "vscode", "-n", name, "-v", "+1"];
+    await execFilePromise(rccLocation, args, {}, { "hideCommandLine": true });
+}
+
+export async function feedbackRobocorpCodeError(errorCode: string) {
+    const rccLocation = await getRccLocation();
+    let args: string[] = ["feedback", "metric", "-t", "vscode", "-n", "vscode.code.error", "-v", errorCode];
     await execFilePromise(rccLocation, args, {}, { "hideCommandLine": true });
 }
 
@@ -448,7 +454,7 @@ export async function collectBaseEnv(
             fs.mkdirSync(spaceInfoPath, { "recursive": true });
         }
     } catch (err) {
-        logError("Error creating directory: " + spaceInfoPath, err);
+        logError("Error creating directory: " + spaceInfoPath, err, "RCC_COLLECT_BASE_ENV_MKDIR");
     }
 
     const rccLocation = await getRccLocation();
@@ -483,7 +489,7 @@ export async function collectBaseEnv(
                     envArray = undefined;
                 }
             } catch (error) {
-                logError("Error: error verifying if env is still valid.", error);
+                logError("Error: error verifying if env is still valid.", error, "RCC_VERIFY_ENV_STILL_VALID");
                 envArray = undefined;
             }
 
@@ -492,7 +498,7 @@ export async function collectBaseEnv(
             }
         }
     } catch (err) {
-        logError("Unable to use cached environment info (recomputing)...", err);
+        logError("Unable to use cached environment info (recomputing)...", err, "RCC_UNABLE_TO_USE_CACHED");
         envArray = undefined;
     }
 
@@ -505,13 +511,14 @@ export async function collectBaseEnv(
             { "showOutputInteractively": true }
         );
         if (!execFileReturn.stdout) {
+            feedbackRobocorpCodeError("RCC_NO_RCC_ENV_STDOUT");
             OUTPUT_CHANNEL.appendLine("Error: Unable to collect environment from RCC.");
             return undefined;
         }
         try {
             envArray = JSON.parse(execFileReturn.stdout);
         } catch (error) {
-            logError("Error parsing env from RCC: " + execFileReturn.stdout, error);
+            logError("Error parsing env from RCC: " + execFileReturn.stdout, error, "RCC_NO_RCC_ENV_STDOUT");
         }
         if (!envArray) {
             OUTPUT_CHANNEL.appendLine("Error: Unable to collect env array.");
@@ -520,7 +527,7 @@ export async function collectBaseEnv(
         try {
             fs.writeFileSync(rccEnvInfoCachePath, JSON.stringify(envArray));
         } catch (err) {
-            logError("Error writing environment cache.", err);
+            logError("Error writing environment cache.", err, "RCC_ERROR_WRITE_ENV_CACHE");
         }
     }
 
@@ -528,7 +535,7 @@ export async function collectBaseEnv(
     try {
         fs.writeFileSync(timestampPath, "" + Date.now());
     } catch (err) {
-        logError("Error writing last usage time to: " + timestampPath, err);
+        logError("Error writing last usage time to: " + timestampPath, err, "RCC_UPDATE_FILE_USAGE");
     }
 
     let finalEnv: { [key: string]: string | null } = envArrayToEnvMap(envArray, robocorpHome);

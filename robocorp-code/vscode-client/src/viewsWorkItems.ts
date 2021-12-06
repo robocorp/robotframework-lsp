@@ -92,7 +92,7 @@ async function createNewWorkItem(workItemInfo: WorkItemsInfo, workItemName: stri
         await vscode.workspace.fs.writeFile(fileUri, Buffer.from(WORK_ITEM_TEMPLATE));
         vscode.window.showTextDocument(fileUri);
     } catch (err) {
-        logError("Unable to create file.", err);
+        logError("Unable to create file.", err, "WORK_ITEM_CREATE");
         vscode.window.showErrorMessage("Unable to create file. Error: " + err.message);
     }
 }
@@ -146,7 +146,7 @@ export async function convertOutputWorkItemToInput(item: WorkItemFSEntry): Promi
             vscode.window.showInformationMessage("Finished converting output work item to input work item.");
         } catch (error) {
             let msg = "Error converting output work item to input.";
-            logError(msg, error);
+            logError(msg, error, "WORKITEM_CONVERT");
             vscode.window.showErrorMessage(msg);
         }
     }
@@ -330,7 +330,7 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
             }
         } catch (error) {
             msg = "Error verifying rpaframework version.";
-            logError(msg, error);
+            logError(msg, error, "WORKITEM_VERIFY_RPA_VERSION");
             return msg;
         }
         return "";

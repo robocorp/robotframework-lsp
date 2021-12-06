@@ -53,6 +53,7 @@ import { logError, OUTPUT_CHANNEL } from "./channel";
 import { getExtensionRelativeFile, verifyFileExists } from "./files";
 import {
     collectBaseEnv,
+    feedbackRobocorpCodeError,
     getRccLocation,
     RCCDiagnostics,
     runConfigDiagnostics,
@@ -521,7 +522,7 @@ export async function activate(context: ExtensionContext) {
                 return;
             }
         } catch (err) {
-            logError("Error verifying Robot Framework Language Server version.", err);
+            logError("Error verifying Robot Framework Language Server version.", err, "INIT_RF_TOO_OLD");
         }
     }
 
@@ -571,6 +572,7 @@ export async function activate(context: ExtensionContext) {
             OUTPUT_CHANNEL.appendLine("Error resolving ../../src/robocorp_code/__main__.py");
             registerRobocorpCodeCommands(C, { installErrorStubs: true });
             notifyOfInitializationErrorShowOutputTab();
+            feedbackRobocorpCodeError("INIT_MAIN_NOT_FOUND");
             return;
         }
 
@@ -798,12 +800,14 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
     let rccLocation = await getRccLocation();
     if (!rccLocation) {
         OUTPUT_CHANNEL.appendLine("Unable to get rcc executable location.");
+        feedbackRobocorpCodeError("INIT_RCC_NOT_AVAILABLE");
         return;
     }
 
     let robotYaml = getExtensionRelativeFile("../../bin/create_env/robot.yaml");
     if (!robotYaml) {
         OUTPUT_CHANNEL.appendLine("Unable to find: ../../bin/create_env/robot.yaml in extension.");
+        feedbackRobocorpCodeError("INIT_ROBOT_YAML_NOT_AVAILABLE");
         return;
     }
 
@@ -825,12 +829,14 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
 
     if (!robotConda) {
         OUTPUT_CHANNEL.appendLine("Unable to find: ../../bin/create_env/conda.yaml in extension.");
+        feedbackRobocorpCodeError("INIT_CONDA_YAML_NOT_AVAILABLE");
         return;
     }
 
     let getEnvInfoPy = getExtensionRelativeFile("../../bin/create_env/get_env_info.py");
     if (!getEnvInfoPy) {
         OUTPUT_CHANNEL.appendLine("Unable to find: ../../bin/create_env/get_env_info.py in extension.");
+        feedbackRobocorpCodeError("INIT_GET_ENV_INFO_FAIL");
         return;
     }
 
@@ -842,6 +848,7 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
     ): Promise<ExecFileReturn> | undefined {
         // Check that the user has long names enabled on windows.
         if (!(await verifyLongPathSupportOnWindows(rccLocation))) {
+            feedbackRobocorpCodeError("INIT_NO_LONGPATH_SUPPORT");
             return undefined;
         }
         // Check that ROBOCORP_HOME is valid (i.e.: doesn't have any spaces in it).
@@ -864,6 +871,7 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
             let msg = "There was an error getting RCC diagnostics. Robocorp Code will not be started!";
             OUTPUT_CHANNEL.appendLine(msg);
             window.showErrorMessage(msg);
+            feedbackRobocorpCodeError("INIT_NO_RCC_DIAGNOSTICS");
             return undefined;
         }
 
@@ -877,6 +885,7 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
             );
             if (!result || result == CANCEL) {
                 OUTPUT_CHANNEL.appendLine("Cancelled setting new ROBOCORP_HOME.");
+                feedbackRobocorpCodeError("INIT_INVALID_ROBOCORP_HOME");
                 return undefined;
             }
 
@@ -888,10 +897,12 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
             });
             if (!uriResult) {
                 OUTPUT_CHANNEL.appendLine("Cancelled getting ROBOCORP_HOME path.");
+                feedbackRobocorpCodeError("INIT_CANCELLED_ROBOCORP_HOME");
                 return undefined;
             }
             if (uriResult.length != 1) {
                 OUTPUT_CHANNEL.appendLine("Expected 1 path to set as ROBOCORP_HOME. Found: " + uriResult.length);
+                feedbackRobocorpCodeError("INIT_ROBOCORP_HOME_NO_PATH");
                 return undefined;
             }
             robocorpHome = uriResult[0].fsPath;
@@ -900,6 +911,7 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
                 let msg = "There was an error getting RCC diagnostics. Robocorp Code will not be started!";
                 OUTPUT_CHANNEL.appendLine(msg);
                 window.showErrorMessage(msg);
+                feedbackRobocorpCodeError("INIT_NO_RCC_DIAGNOSTICS_2");
                 return undefined;
             }
             if (rccDiagnostics.isRobocorpHomeOk()) {
@@ -932,6 +944,7 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
             }
         }
         if (!canProceed) {
+            feedbackRobocorpCodeError("INIT_RCC_STATUS_FATAL");
             return undefined;
         }
 
@@ -963,6 +976,7 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
 
         if (!envResult) {
             OUTPUT_CHANNEL.appendLine("Error creating conda env.");
+            feedbackRobocorpCodeError("INIT_ERROR_CONDA_ENV");
             return undefined;
         }
         // Ok, we now have the holotree space created and just collected the environment variables. Let's now do
@@ -971,6 +985,7 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
         let pythonExe = envResult.env["PYTHON_EXE"];
         if (!pythonExe) {
             OUTPUT_CHANNEL.appendLine("Error: PYTHON_EXE not available in the holotree environment.");
+            feedbackRobocorpCodeError("INIT_NO_PYTHON_EXE_IN_HOLOTREE");
             return undefined;
         }
 
@@ -1015,6 +1030,7 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
     }
 
     if (!result) {
+        feedbackRobocorpCodeError("INIT_NO_PYTHON_LANGUAGE_SERVER");
         return disabled("Unable to get python to launch language server.");
     }
     try {
@@ -1022,6 +1038,7 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
         let start: number = jsonContents.indexOf("JSON START>>");
         let end: number = jsonContents.indexOf("<<JSON END");
         if (start == -1 || end == -1) {
+            feedbackRobocorpCodeError("INIT_NO_JSON_START_END");
             throw Error("Unable to find JSON START>> or <<JSON END");
         }
         start += "JSON START>>".length;
@@ -1057,8 +1074,10 @@ async function getLanguageServerPythonInfoUncached(): Promise<InterpreterInfo | 
                 additionalPythonpathEntries: [],
             };
         }
+        feedbackRobocorpCodeError("INIT_PYTHON_LS_DOES_NOT_EXIST");
         return disabled("Python executable: " + pythonExe + " does not exist.");
     } catch (error) {
+        feedbackRobocorpCodeError("INIT_UNEXPECTED");
         return disabled(
             "Unable to get python to launch language server.\nStderr: " +
                 result.stderr +

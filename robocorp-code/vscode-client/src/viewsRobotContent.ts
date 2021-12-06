@@ -5,7 +5,6 @@ import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE }
 import { FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeView } from "./viewsCommon";
 import { basename, dirname, join } from "path";
 import { Uri } from "vscode";
-import { TreeItemCollapsibleState } from "vscode";
 import { RobotSelectionTreeDataProviderBase } from "./viewsRobotSelection";
 
 const fsPromises = fs.promises;
@@ -64,7 +63,7 @@ export async function newFileInRobotContentTree() {
     try {
         await vscode.workspace.fs.writeFile(Uri.file(targetFile), new Uint8Array());
     } catch (err) {
-        logError("Unable to create file.", err);
+        logError("Unable to create file.", err, "VIEWS_NEW_FILE_IN_TREE");
         vscode.window.showErrorMessage("Unable to create file. Error: " + err.message);
     }
 }
@@ -111,7 +110,7 @@ export async function renameResourceInRobotContentTree() {
             let target = Uri.file(join(dirname(entry.filePath), newName));
             await vscode.workspace.fs.rename(uri, target, { overwrite: false });
         } catch (err) {
-            logError("Error renaming resource: " + entry.filePath, err);
+            logError("Error renaming resource: " + entry.filePath, err, "VIEWS_RENAME_RESOURCE");
             let msg = await vscode.window.showErrorMessage("Error renaming resource: " + entry.filePath);
         }
     }
@@ -172,7 +171,7 @@ export async function newFolderInRobotContentTree() {
     try {
         await vscode.workspace.fs.createDirectory(Uri.file(targetFile));
     } catch (err) {
-        logError("Unable to create directory: " + targetFile, err);
+        logError("Unable to create directory: " + targetFile, err, "VIEWS_NEW_FOLDER");
         vscode.window.showErrorMessage("Unable to create directory. Error: " + err.message);
     }
 }
@@ -208,7 +207,7 @@ export class RobotContentTreeDataProvider extends RobotSelectionTreeDataProvider
                     });
                 }
             } catch (err) {
-                logError("Error listing dir contents: " + robotUri, err);
+                logError("Error listing dir contents: " + robotUri, err, "VIEWS_LIST_ROOT");
             }
             return ret;
         } else {
@@ -226,7 +225,7 @@ export class RobotContentTreeDataProvider extends RobotSelectionTreeDataProvider
                     });
                 }
             } catch (err) {
-                logError("Error listing dir contents: " + element.filePath, err);
+                logError("Error listing dir contents: " + element.filePath, err, "VIEWS_LIST_CHILDREN");
             }
             return ret;
         }

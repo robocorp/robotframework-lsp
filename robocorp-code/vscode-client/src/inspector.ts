@@ -7,7 +7,6 @@ import { getSelectedLocator, getSelectedRobot, LocatorEntry } from "./viewsCommo
 import { execFilePromise, ExecFileReturn } from "./subprocess";
 import { OUTPUT_CHANNEL } from "./channel";
 import { ChildProcess } from "child_process";
-import { sleep } from "./time";
 
 let _openingInspector: boolean = false;
 let _startingRootWindowNotified: boolean = false;
