@@ -48,7 +48,7 @@ import { registerRunCommands } from "./run";
 import { registerLinkProviders } from "./linkProvider";
 import { expandVars, getArrayStrFromConfigExpandingVars, getStrFromConfigExpandingVars } from "./expandVars";
 import { registerInteractiveCommands } from "./interactive/rfInteractive";
-import { logError, OUTPUT_CHANNEL } from "./channel";
+import { errorFeedback, logError, OUTPUT_CHANNEL } from "./channel";
 
 interface ExecuteWorkspaceCommandArgs {
     command: string;
@@ -433,6 +433,7 @@ export async function activate(context: ExtensionContext) {
                 // There's not much we can do (besides start listening to changes to the related variables
                 // on the finally block so that we start listening and ask for a reload if a related configuration changes).
                 OUTPUT_CHANNEL.appendLine("Unable to start (no python executable specified).");
+                errorFeedback("EXT_NO_PYEXE");
                 return;
             }
         }
@@ -463,6 +464,7 @@ export async function activate(context: ExtensionContext) {
             let targetMain: string = path.resolve(__dirname, "../../src/robotframework_ls/__main__.py");
             if (!fs.existsSync(targetMain)) {
                 window.showWarningMessage("Error. Expected: " + targetMain + " to exist.");
+                errorFeedback("EXT_NO_MAIN");
                 return;
             }
 

@@ -3,12 +3,16 @@ import { commands, window } from "vscode";
 export const OUTPUT_CHANNEL_NAME = "Robot Framework";
 export const OUTPUT_CHANNEL = window.createOutputChannel(OUTPUT_CHANNEL_NAME);
 
-export function logError(msg: string, err: Error, errorCode: string) {
+export async function errorFeedback(errorCode: string) {
     try {
-        commands.executeCommand("robocorp.errorFeedback.internal", "vscode.lsp.error", errorCode);
+        await commands.executeCommand("robocorp.errorFeedback.internal", "vscode.lsp.error", errorCode);
     } catch (err) {
         // that's ok, it may not be there.
     }
+}
+
+export function logError(msg: string, err: Error, errorCode: string) {
+    errorFeedback(errorCode);
     OUTPUT_CHANNEL.appendLine(msg);
     let indent = "    ";
     if (err.message) {
