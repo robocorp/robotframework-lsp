@@ -148,28 +148,48 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
         this._onDidChangeTreeData.fire(null);
     }
 
-    async getCachedOrComputeChildren(element?: RobotEntry): Promise<RobotEntry[]> {
+    /**
+     * Note that we make sure to only return valid entries here (i.e.: no entries
+     * where RobotEntry.type === RobotEntryType.Error).
+     */
+    async getValidCachedOrComputeChildren(element?: RobotEntry): Promise<RobotEntry[]> {
         if (element === undefined) {
-            // We need to check whether entries still exist.
             if (this.lastRoot !== undefined) {
-                let foundAll: boolean = true;
-                for (const entry of this.lastRoot) {
-                    if (!(await uriExists(entry.uri))) {
-                        foundAll = false;
-                        break;
+                let ret: RobotEntry[] = this.lastRoot.filter((e) => {
+                    return e.type !== RobotEntryType.Error;
+                });
+                if (ret.length > 0) {
+                    // We need to check whether entries still exist.
+                    let foundAll: boolean = true;
+                    for (const entry of ret) {
+                        if (!(await uriExists(entry.uri))) {
+                            foundAll = false;
+                            break;
+                        }
                     }
-                }
-                if (foundAll) {
-                    return this.lastRoot;
+                    if (foundAll) {
+                        return ret;
+                    }
                 }
             }
         }
-        return await this.getChildren(element);
+        let ret: RobotEntry[] = await this.getChildren(element);
+        // Remove any "error" entries
+        return ret.filter((e) => {
+            return e.type !== RobotEntryType.Error;
+        });
     }
 
+    /**
+     * This function will compute the children and store the `lastRoot`
+     * cache (if element === undefined).
+     */
     async getChildren(element?: RobotEntry): Promise<RobotEntry[]> {
         let ret = await this.computeChildren(element);
         if (element === undefined) {
+            // i.e.: this is the root entry, so, we've
+            // collected the actual robots here.
+
             let notifySelection = false;
             if (empty(this.lastRoot) && empty(ret)) {
                 // Don't notify of anything, nothing changed...
@@ -206,6 +226,31 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                     this._onForceSelectionFromTreeData.fire(this.lastRoot);
                 }, 50);
             }
+
+            if (ret.length === 0) {
+                // No robot was actually found, so, we'll return a dummy entry
+                // giving more instructions to the user.
+                let added: boolean = false;
+                for (const label of [
+                    "No Robot was found in the workspace. Please",
+                    "open the folder that contains your Robot",
+                    "(the one that has the robot.yaml).",
+                    "Alternatively, open its parent workspace folder",
+                    "containing multiple Robots or create your first",
+                    "Robot using the 'Robocorp: Create Robot' action.",
+                ]) {
+                    ret.push({
+                        "label": label,
+                        "uri": undefined,
+                        "robot": undefined,
+                        "taskName": undefined,
+                        "iconPath": added ? "" : "error",
+                        "type": RobotEntryType.Error,
+                        "parent": element,
+                    });
+                    added = true;
+                }
+            }
         }
         return ret;
     }
@@ -216,8 +261,12 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
 
     async computeChildren(element?: RobotEntry): Promise<RobotEntry[]> {
         if (element) {
+            if (element.type === RobotEntryType.Error) {
+                return [];
+            }
+
             // Get child elements.
-            if (element.type == RobotEntryType.Task) {
+            if (element.type === RobotEntryType.Task) {
                 return []; // Tasks don't have children.
             }
             let yamlContents = element.robot.yamlContents;
@@ -281,8 +330,12 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
         } else if (isTask) {
             treeItem.contextValue = "taskItem";
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        } else if (element.type === RobotEntryType.Error) {
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
         }
-        treeItem.iconPath = new vscode.ThemeIcon(element.iconPath);
+        if (element.iconPath) {
+            treeItem.iconPath = new vscode.ThemeIcon(element.iconPath);
+        }
         return treeItem;
     }
 }
@@ -434,8 +487,16 @@ async function onChangedRobotSelection(
     treeDataProvider: RobotsTreeDataProvider,
     selection: RobotEntry[]
 ) {
+    if (selection === undefined) {
+        selection = [];
+    }
+    // Remove error nodes from the selection.
+    selection = selection.filter((e) => {
+        return e.type != RobotEntryType.Error;
+    });
+
     if (empty(selection)) {
-        let rootChildren: RobotEntry[] = await treeDataProvider.getCachedOrComputeChildren(undefined);
+        let rootChildren: RobotEntry[] = await treeDataProvider.getValidCachedOrComputeChildren(undefined);
         if (empty(rootChildren)) {
             // i.e.: there's nothing to reselect, so, just notify as usual.
             setSelectedRobot(undefined);
@@ -453,7 +514,7 @@ async function onChangedRobotSelection(
         return;
     }
 
-    let rootChildren: RobotEntry[] = await treeDataProvider.getCachedOrComputeChildren(undefined);
+    let rootChildren: RobotEntry[] = await treeDataProvider.getValidCachedOrComputeChildren(undefined);
     if (empty(rootChildren)) {
         // i.e.: there's nothing to reselect, so, just notify as usual.
         setSelectedRobot(undefined);

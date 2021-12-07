@@ -15,6 +15,7 @@ export interface LocatorEntry {
 export enum RobotEntryType {
     Robot,
     Task,
+    Error,
 }
 
 export interface CloudEntry {
@@ -27,8 +28,8 @@ export interface CloudEntry {
 
 export interface RobotEntry {
     label: string;
-    uri: vscode.Uri;
-    robot: LocalRobotMetadataInfo;
+    uri: vscode.Uri | undefined;
+    robot: LocalRobotMetadataInfo | undefined;
     taskName?: string;
     iconPath: string;
     type: RobotEntryType;
