@@ -3,7 +3,7 @@ import { ProgressLocation, window } from "vscode";
 import { getLanguageServerPythonInfo } from "./extension";
 import { verifyFileExists } from "./files";
 import { listAndAskRobotSelection } from "./activities";
-import { getSelectedLocator, getSelectedRobot, LocatorEntry } from "./viewsCommon";
+import { getSelectedLocator, getSelectedRobot, LocatorEntry, RobotEntry } from "./viewsCommon";
 import { execFilePromise, ExecFileReturn } from "./subprocess";
 import { OUTPUT_CHANNEL } from "./channel";
 import { ChildProcess } from "child_process";
@@ -33,7 +33,10 @@ export async function openRobocorpInspector(locatorType?: string, locator?: Loca
 export async function _internalOpenRobocorpInspector(locatorType?: string, locator?: LocatorEntry): Promise<void> {
     let locatorJson;
     const args: string[] = [];
-    let robot: LocalRobotMetadataInfo | undefined = getSelectedRobot("Please select a robot first.")?.robot;
+    let selectedEntry: RobotEntry = getSelectedRobot({
+        noSelectionMessage: "Please select a robot first.",
+    });
+    let robot: LocalRobotMetadataInfo | undefined = selectedEntry?.robot;
     if (!robot) {
         // Ask for the robot to be used and then show dialog with the options.
         robot = await listAndAskRobotSelection(
@@ -63,7 +66,11 @@ export async function _internalOpenRobocorpInspector(locatorType?: string, locat
         args.push(locatorType);
     } else {
         const locatorSelected: LocatorEntry | undefined =
-            locator ?? getSelectedLocator("Please select a locator first.", "Please select only one locator.");
+            locator ??
+            (await getSelectedLocator({
+                noSelectionMessage: "Please select a locator first.",
+                moreThanOneSelectionMessage: "Please select only one locator.",
+            }));
         if (locatorSelected.type === "error") {
             OUTPUT_CHANNEL.appendLine("Trying to edit non-existing locator.");
             return;

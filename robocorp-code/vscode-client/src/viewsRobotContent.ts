@@ -177,12 +177,15 @@ export async function newFolderInRobotContentTree() {
 }
 
 export class RobotContentTreeDataProvider extends RobotSelectionTreeDataProviderBase {
+    private _onForceSelectionFromTreeData: vscode.EventEmitter<RobotEntry[]> = new vscode.EventEmitter<RobotEntry[]>();
+    readonly onForceSelectionFromTreeData: vscode.Event<RobotEntry[]> = this._onForceSelectionFromTreeData.event;
+
     async getChildren(element?: FSEntry): Promise<FSEntry[]> {
         let ret: FSEntry[] = [];
         if (!element) {
             // i.e.: the contents of this tree depend on what's selected in the robots tree.
-            const robotsTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
-            if (!robotsTree || robotsTree.selection.length == 0) {
+            const robotEntry: RobotEntry = getSelectedRobot();
+            if (!robotEntry) {
                 this.lastRobotEntry = undefined;
                 return [
                     {
@@ -192,7 +195,6 @@ export class RobotContentTreeDataProvider extends RobotSelectionTreeDataProvider
                     },
                 ];
             }
-            let robotEntry: RobotEntry = robotsTree.selection[0];
             this.lastRobotEntry = robotEntry;
 
             let robotUri = robotEntry.uri;
@@ -207,7 +209,10 @@ export class RobotContentTreeDataProvider extends RobotSelectionTreeDataProvider
                     });
                 }
             } catch (err) {
-                logError("Error listing dir contents: " + robotUri, err, "VIEWS_LIST_ROOT");
+                // i.e.: this means that the selection is now invalid (directory was deleted).
+                setTimeout(() => {
+                    this._onForceSelectionFromTreeData.fire(undefined);
+                }, 50);
             }
             return ret;
         } else {

@@ -1,4 +1,3 @@
-import * as path from "path";
 import * as vscode from "vscode";
 import { TREE_VIEW_ROBOCORP_LOCATORS_TREE, TREE_VIEW_ROBOCORP_ROBOTS_TREE } from "./robocorpViews";
 
@@ -33,6 +32,7 @@ export interface RobotEntry {
     taskName?: string;
     iconPath: string;
     type: RobotEntryType;
+    parent: RobotEntry | undefined;
 }
 
 export interface FSEntry {
@@ -44,11 +44,15 @@ export interface FSEntry {
 export let treeViewIdToTreeView: Map<string, vscode.TreeView<any>> = new Map();
 export let treeViewIdToTreeDataProvider: Map<string, vscode.TreeDataProvider<any>> = new Map();
 
-export function getSingleTreeSelection(
-    treeId: string,
-    noSelectionMessage?: string,
-    moreThanOneSelectionMessage?: string
-) {
+export interface SingleTreeSelectionOpts {
+    noSelectionMessage?: string;
+    moreThanOneSelectionMessage?: string;
+}
+
+async function getSingleTreeSelection<T>(treeId: string, opts?: any): Promise<T | undefined> {
+    const noSelectionMessage: string | undefined = opts?.noSelectionMessage;
+    const moreThanOneSelectionMessage: string | undefined = opts?.moreThanOneSelectionMessage;
+
     const robotsTree = treeViewIdToTreeView.get(treeId);
     if (!robotsTree || robotsTree.selection.length == 0) {
         if (noSelectionMessage) {
@@ -68,23 +72,32 @@ export function getSingleTreeSelection(
     return element;
 }
 
+let _onSelectedRobotChanged: vscode.EventEmitter<RobotEntry> = new vscode.EventEmitter<RobotEntry>();
+export let onSelectedRobotChanged: vscode.Event<RobotEntry> = _onSelectedRobotChanged.event;
+
+let lastSelectedRobot: RobotEntry | undefined = undefined;
+export function setSelectedRobot(robotEntry: RobotEntry | undefined) {
+    lastSelectedRobot = robotEntry;
+    _onSelectedRobotChanged.fire(robotEntry);
+}
+
 /**
  * Returns the selected robot or undefined if there are no robots or if more than one robot is selected.
  *
  * If the messages are passed as a parameter, a warning is shown with that message if the selection is invalid.
  */
-export function getSelectedRobot(
-    noSelectionMessage?: string,
-    moreThanOneSelectionMessage?: string
-): RobotEntry | undefined {
-    return getSingleTreeSelection(TREE_VIEW_ROBOCORP_ROBOTS_TREE, noSelectionMessage, moreThanOneSelectionMessage);
+export function getSelectedRobot(opts?: SingleTreeSelectionOpts): RobotEntry | undefined {
+    let ret = lastSelectedRobot;
+    if (!ret) {
+        if (opts?.noSelectionMessage) {
+            vscode.window.showWarningMessage(opts.noSelectionMessage);
+        }
+    }
+    return ret;
 }
 
-export function getSelectedLocator(
-    noSelectionMessage?: string,
-    moreThanOneSelectionMessage?: string
-): LocatorEntry | undefined {
-    return getSingleTreeSelection(TREE_VIEW_ROBOCORP_LOCATORS_TREE, noSelectionMessage, moreThanOneSelectionMessage);
+export async function getSelectedLocator(opts?: SingleTreeSelectionOpts): Promise<LocatorEntry | undefined> {
+    return await getSingleTreeSelection<LocatorEntry | undefined>(TREE_VIEW_ROBOCORP_LOCATORS_TREE, opts);
 }
 
 export function basename(s) {

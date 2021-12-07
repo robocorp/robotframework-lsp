@@ -19,12 +19,16 @@ import {
     debounce,
     getSelectedRobot,
     LocatorEntry,
+    onSelectedRobotChanged,
     RobotEntry,
     RobotEntryType,
+    setSelectedRobot,
     treeViewIdToTreeDataProvider,
     treeViewIdToTreeView,
 } from "./viewsCommon";
 import { ROBOCORP_SUBMIT_ISSUE } from "./robocorpCommands";
+import { RobotSelectionTreeDataProviderBase } from "./viewsRobotSelection";
+import { uriExists } from "./files";
 
 function getRobotLabel(robotInfo: LocalRobotMetadataInfo): string {
     let label: string = undefined;
@@ -127,15 +131,90 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
     }
 }
 
+function empty<T>(array: T[]) {
+    return array === undefined || array.length === 0;
+}
+
 export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntry> {
     private _onDidChangeTreeData: vscode.EventEmitter<RobotEntry | null> = new vscode.EventEmitter<RobotEntry | null>();
     readonly onDidChangeTreeData: vscode.Event<RobotEntry | null> = this._onDidChangeTreeData.event;
+
+    private _onForceSelectionFromTreeData: vscode.EventEmitter<RobotEntry[]> = new vscode.EventEmitter<RobotEntry[]>();
+    readonly onForceSelectionFromTreeData: vscode.Event<RobotEntry[]> = this._onForceSelectionFromTreeData.event;
+
+    private lastRoot: RobotEntry[] | undefined = undefined;
 
     fireRootChange() {
         this._onDidChangeTreeData.fire(null);
     }
 
+    async getCachedOrComputeChildren(element?: RobotEntry): Promise<RobotEntry[]> {
+        if (element === undefined) {
+            // We need to check whether entries still exist.
+            if (this.lastRoot !== undefined) {
+                let foundAll: boolean = true;
+                for (const entry of this.lastRoot) {
+                    if (!(await uriExists(entry.uri))) {
+                        foundAll = false;
+                        break;
+                    }
+                }
+                if (foundAll) {
+                    return this.lastRoot;
+                }
+            }
+        }
+        return await this.getChildren(element);
+    }
+
     async getChildren(element?: RobotEntry): Promise<RobotEntry[]> {
+        let ret = await this.computeChildren(element);
+        if (element === undefined) {
+            let notifySelection = false;
+            if (empty(this.lastRoot) && empty(ret)) {
+                // Don't notify of anything, nothing changed...
+            } else if (empty(this.lastRoot)) {
+                // We had nothing and now we have something, notify.
+                if (!empty(ret)) {
+                    notifySelection = true;
+                }
+            } else {
+                // lastRoot is valid
+                // We had something and now we have nothing, notify.
+                if (empty(ret)) {
+                    notifySelection = true;
+                }
+            }
+            if (!empty(ret) && !notifySelection) {
+                // Verify if the last selection is still valid (if it's not we need
+                // to notify).
+                let currentSelectedRobot = getSelectedRobot();
+                let found = false;
+                for (const entry of ret) {
+                    if (currentSelectedRobot == entry) {
+                        found = true;
+                    }
+                }
+                if (!found) {
+                    notifySelection = true;
+                }
+            }
+            this.lastRoot = ret;
+
+            if (notifySelection) {
+                setTimeout(() => {
+                    this._onForceSelectionFromTreeData.fire(this.lastRoot);
+                }, 50);
+            }
+        }
+        return ret;
+    }
+
+    async getParent?(element: RobotEntry): Promise<RobotEntry> {
+        return element.parent;
+    }
+
+    async computeChildren(element?: RobotEntry): Promise<RobotEntry[]> {
         if (element) {
             // Get child elements.
             if (element.type == RobotEntryType.Task) {
@@ -158,6 +237,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                 "taskName": task,
                 "iconPath": "symbol-misc",
                 "type": RobotEntryType.Task,
+                "parent": element,
             }));
         }
 
@@ -179,7 +259,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
         }
         let robotsInfo: LocalRobotMetadataInfo[] = actionResult.result;
 
-        if (!robotsInfo || robotsInfo.length == 0) {
+        if (empty(robotsInfo)) {
             return [];
         }
 
@@ -189,6 +269,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
             "robot": robotInfo,
             "iconPath": "package",
             "type": RobotEntryType.Robot,
+            "parent": element,
         }));
     }
 
@@ -217,8 +298,7 @@ export class LocatorsTreeDataProvider implements vscode.TreeDataProvider<Locator
         this._onDidChangeTreeData.fire(null);
     }
 
-    onRobotsTreeSelectionChanged() {
-        let robotEntry: RobotEntry = getSelectedRobot();
+    async onRobotsTreeSelectionChanged(robotEntry: RobotEntry | undefined) {
         if (!this.lastRobotEntry && !robotEntry) {
             // nothing changed
             return;
@@ -242,8 +322,8 @@ export class LocatorsTreeDataProvider implements vscode.TreeDataProvider<Locator
 
     async getChildren(element?: LocatorEntry): Promise<LocatorEntry[]> {
         // i.e.: the contents of this tree depend on what's selected in the robots tree.
-        const robotsTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
-        if (!robotsTree || robotsTree.selection.length == 0) {
+        const robotEntry: RobotEntry = getSelectedRobot();
+        if (!robotEntry) {
             this.lastRobotEntry = undefined;
             return [
                 {
@@ -255,7 +335,6 @@ export class LocatorsTreeDataProvider implements vscode.TreeDataProvider<Locator
                 },
             ];
         }
-        let robotEntry: RobotEntry = robotsTree.selection[0];
         let actionResult: ActionResult<LocatorEntry[]> = await vscode.commands.executeCommand(
             roboCommands.ROBOCORP_GET_LOCATORS_JSON_INFO,
             { "robotYaml": robotEntry.robot.filePath }
@@ -313,7 +392,7 @@ export function refreshTreeView(treeViewId: string) {
     }
 }
 
-export function openRobotTreeSelection(robot?: RobotEntry) {
+export async function openRobotTreeSelection(robot?: RobotEntry) {
     if (!robot) {
         robot = getSelectedRobot();
     }
@@ -322,7 +401,7 @@ export function openRobotTreeSelection(robot?: RobotEntry) {
     }
 }
 
-export function cloudUploadRobotTreeSelection(robot?: RobotEntry) {
+export async function cloudUploadRobotTreeSelection(robot?: RobotEntry) {
     if (!robot) {
         robot = getSelectedRobot();
     }
@@ -340,17 +419,54 @@ export async function createRccTerminalTreeSelection(robot?: RobotEntry) {
     }
 }
 
-export function runSelectedRobot(noDebug: boolean, taskRobotEntry?: RobotEntry) {
+export async function runSelectedRobot(noDebug: boolean, taskRobotEntry?: RobotEntry) {
     if (!taskRobotEntry) {
-        taskRobotEntry = getSelectedRobot(
-            "Unable to make launch (Robot task not selected in Robots Tree).",
-            "Unable to make launch -- only 1 task must be selected."
-        );
+        taskRobotEntry = await getSelectedRobot({
+            noSelectionMessage: "Unable to make launch (Robot task not selected in Robots Tree).",
+            moreThanOneSelectionMessage: "Unable to make launch -- only 1 task must be selected.",
+        });
     }
     runRobotRCC(noDebug, taskRobotEntry.robot.filePath, taskRobotEntry.taskName);
 }
 
+async function onChangedRobotSelection(
+    robotsTree: vscode.TreeView<RobotEntry>,
+    treeDataProvider: RobotsTreeDataProvider,
+    selection: RobotEntry[]
+) {
+    if (empty(selection)) {
+        let rootChildren: RobotEntry[] = await treeDataProvider.getCachedOrComputeChildren(undefined);
+        if (empty(rootChildren)) {
+            // i.e.: there's nothing to reselect, so, just notify as usual.
+            setSelectedRobot(undefined);
+            return;
+        }
+
+        // Automatically update selection / reselect some item.
+        setSelectedRobot(rootChildren[0]);
+        robotsTree.reveal(rootChildren[0], { "select": true });
+        return;
+    }
+
+    if (!empty(selection)) {
+        setSelectedRobot(selection[0]);
+        return;
+    }
+
+    let rootChildren: RobotEntry[] = await treeDataProvider.getCachedOrComputeChildren(undefined);
+    if (empty(rootChildren)) {
+        // i.e.: there's nothing to reselect, so, just notify as usual.
+        setSelectedRobot(undefined);
+        return;
+    }
+
+    // // Automatically update selection / reselect some item.
+    setSelectedRobot(rootChildren[0]);
+    robotsTree.reveal(rootChildren[0], { "select": true });
+}
+
 export function registerViews(context: ExtensionContext) {
+    // Cloud data
     let cloudTreeDataProvider = new CloudTreeDataProvider();
     let cloudTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_CLOUD_TREE, {
         "treeDataProvider": cloudTreeDataProvider,
@@ -358,37 +474,34 @@ export function registerViews(context: ExtensionContext) {
     treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_CLOUD_TREE, cloudTree);
     treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_CLOUD_TREE, cloudTreeDataProvider);
 
-    let treeDataProvider = new RobotsTreeDataProvider();
+    // Robots (i.e.: list of robots, not its contents)
+    let robotsTreeDataProvider = new RobotsTreeDataProvider();
     let robotsTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE, {
-        "treeDataProvider": treeDataProvider,
+        "treeDataProvider": robotsTreeDataProvider,
     });
     treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_ROBOTS_TREE, robotsTree);
-    treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_ROBOTS_TREE, treeDataProvider);
+    treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_ROBOTS_TREE, robotsTreeDataProvider);
 
-    let robotContentTreeDataProvider = new RobotContentTreeDataProvider();
-    let robotContentTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE, {
-        "treeDataProvider": robotContentTreeDataProvider,
-    });
-    treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE, robotContentTree);
-    treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE, robotContentTreeDataProvider);
     context.subscriptions.push(
-        robotsTree.onDidChangeSelection((e) => robotContentTreeDataProvider.onRobotsTreeSelectionChanged())
-    );
-    context.subscriptions.push(
-        robotContentTree.onDidChangeSelection(async function () {
-            await robotContentTreeDataProvider.onTreeSelectionChanged(robotContentTree);
-        })
+        robotsTree.onDidChangeSelection(
+            async (e) => await onChangedRobotSelection(robotsTree, robotsTreeDataProvider, e.selection)
+        )
     );
 
     context.subscriptions.push(
-        robotsTree.onDidChangeSelection((e) => {
-            let events: RobotEntry[] = e.selection;
-            if (!events || events.length == 0 || events.length > 1) {
+        robotsTreeDataProvider.onForceSelectionFromTreeData(
+            async (e) => await onChangedRobotSelection(robotsTree, robotsTreeDataProvider, robotsTree.selection)
+        )
+    );
+
+    // Update contexts when the current robot changes.
+    context.subscriptions.push(
+        onSelectedRobotChanged(async (robotEntry: RobotEntry | undefined) => {
+            if (!robotEntry) {
                 vscode.commands.executeCommand("setContext", "robocorp-code:single-task-selected", false);
                 vscode.commands.executeCommand("setContext", "robocorp-code:single-robot-selected", false);
                 return;
             }
-            let robotEntry: RobotEntry = events[0];
             vscode.commands.executeCommand(
                 "setContext",
                 "robocorp-code:single-task-selected",
@@ -398,6 +511,29 @@ export function registerViews(context: ExtensionContext) {
         })
     );
 
+    // The contents of a single robot (the one selected in the Robots tree).
+    let robotContentTreeDataProvider = new RobotContentTreeDataProvider();
+    let robotContentTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE, {
+        "treeDataProvider": robotContentTreeDataProvider,
+    });
+    treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE, robotContentTree);
+    treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE, robotContentTreeDataProvider);
+
+    context.subscriptions.push(
+        onSelectedRobotChanged((e) => robotContentTreeDataProvider.onRobotsTreeSelectionChanged(e))
+    );
+    context.subscriptions.push(
+        robotContentTree.onDidChangeSelection(async function () {
+            await robotContentTreeDataProvider.onTreeSelectionChanged(robotContentTree);
+        })
+    );
+    context.subscriptions.push(
+        robotContentTreeDataProvider.onForceSelectionFromTreeData(
+            async (e) => await onChangedRobotSelection(robotsTree, robotsTreeDataProvider, robotsTree.selection)
+        )
+    );
+
+    // Locators
     let locatorsDataProvider = new LocatorsTreeDataProvider();
     let locatorsTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_LOCATORS_TREE, {
         "treeDataProvider": locatorsDataProvider,
@@ -405,9 +541,7 @@ export function registerViews(context: ExtensionContext) {
     treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_LOCATORS_TREE, locatorsTree);
     treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_LOCATORS_TREE, locatorsDataProvider);
 
-    context.subscriptions.push(
-        robotsTree.onDidChangeSelection((e) => locatorsDataProvider.onRobotsTreeSelectionChanged())
-    );
+    context.subscriptions.push(onSelectedRobotChanged((e) => locatorsDataProvider.onRobotsTreeSelectionChanged(e)));
 
     // Work items tree data provider definition
     const workItemsTreeDataProvider = new WorkItemsTreeDataProvider();
@@ -418,8 +552,9 @@ export function registerViews(context: ExtensionContext) {
     treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE, workItemsTree);
     treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE, workItemsTreeDataProvider);
     context.subscriptions.push(
-        robotsTree.onDidChangeSelection((e) => workItemsTreeDataProvider.onRobotsTreeSelectionChanged())
+        onSelectedRobotChanged((e) => workItemsTreeDataProvider.onRobotsTreeSelectionChanged(e))
     );
+
     context.subscriptions.push(
         workItemsTree.onDidChangeSelection(async function () {
             await workItemsTreeDataProvider.onTreeSelectionChanged(workItemsTree);

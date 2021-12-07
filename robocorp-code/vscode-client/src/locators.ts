@@ -1,11 +1,11 @@
 import * as roboCommands from "./robocorpCommands";
 import { commands, env, window, MessageOptions } from "vscode";
 import { listAndAskRobotSelection } from "./activities";
-import { getSelectedLocator, getSelectedRobot, LocatorEntry } from "./viewsCommon";
+import { getSelectedLocator, getSelectedRobot, LocatorEntry, RobotEntry } from "./viewsCommon";
 import { OUTPUT_CHANNEL } from "./channel";
 
 export async function copySelectedToClipboard(locator?: LocatorEntry) {
-    let locatorSelected: LocatorEntry | undefined = locator || getSelectedLocator();
+    let locatorSelected: LocatorEntry | undefined = locator || (await getSelectedLocator());
     if (locatorSelected) {
         env.clipboard.writeText(locatorSelected.name);
     }
@@ -14,12 +14,15 @@ export async function copySelectedToClipboard(locator?: LocatorEntry) {
 export async function removeLocator(locator?: LocatorEntry) {
     // Confirmation dialog button texts
     const DELETE = "Delete";
-    let locatorSelected: LocatorEntry | undefined = locator || getSelectedLocator();
+    let locatorSelected: LocatorEntry | undefined = locator || (await getSelectedLocator());
     if (!locatorSelected) {
         OUTPUT_CHANNEL.appendLine("Warning: Trying to delete locator when there is no locator selected");
         return;
     }
-    let robot: LocalRobotMetadataInfo | undefined = getSelectedRobot("Please select a robot first.")?.robot;
+    let selectedEntry: RobotEntry = getSelectedRobot({
+        noSelectionMessage: "Please select a robot first.",
+    });
+    let robot: LocalRobotMetadataInfo | undefined = selectedEntry?.robot;
     if (!robot) {
         // Ask for the robot to be used and then show dialog with the options.
         robot = await listAndAskRobotSelection(

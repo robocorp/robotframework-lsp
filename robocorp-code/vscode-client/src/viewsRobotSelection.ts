@@ -45,7 +45,7 @@ export class RobotSelectionTreeDataProviderBase implements vscode.TreeDataProvid
     private _onDidChangeTreeData: vscode.EventEmitter<FSEntry | null> = new vscode.EventEmitter<FSEntry | null>();
     readonly onDidChangeTreeData: vscode.Event<FSEntry | null> = this._onDidChangeTreeData.event;
 
-    protected lastRobotEntry: RobotEntry = undefined;
+    protected lastRobotEntry: RobotEntry | undefined = undefined;
     private lastWatcher: vscode.FileSystemWatcher | undefined = undefined;
 
     protected PATTERN_TO_LISTEN: string = "**";
@@ -54,7 +54,7 @@ export class RobotSelectionTreeDataProviderBase implements vscode.TreeDataProvid
         this._onDidChangeTreeData.fire(null);
     }
 
-    robotSelectionChanged(robotEntry: RobotEntry) {
+    robotSelectionChanged(robotEntry: RobotEntry | undefined) {
         // When the robot selection changes, we need to start tracking file-changes at the proper place.
         if (this.lastWatcher) {
             this.lastWatcher.dispose();
@@ -62,28 +62,29 @@ export class RobotSelectionTreeDataProviderBase implements vscode.TreeDataProvid
         }
         this.fireRootChange();
 
-        let robotDirUri = vscode.Uri.file(dirname(robotEntry.uri.fsPath));
-        let watcher: vscode.FileSystemWatcher = vscode.workspace.createFileSystemWatcher(
-            new vscode.RelativePattern(robotDirUri, this.PATTERN_TO_LISTEN),
-            false,
-            true,
-            false
-        );
+        if (robotEntry) {
+            let robotDirUri = vscode.Uri.file(dirname(robotEntry.uri.fsPath));
+            let watcher: vscode.FileSystemWatcher = vscode.workspace.createFileSystemWatcher(
+                new vscode.RelativePattern(robotDirUri, this.PATTERN_TO_LISTEN),
+                false,
+                true,
+                false
+            );
 
-        this.lastWatcher = watcher;
+            this.lastWatcher = watcher;
 
-        let onChangedSomething = debounce(() => {
-            // Note: this doesn't currently work if the parent folder is renamed or removed.
-            // (https://github.com/microsoft/vscode/pull/110858)
-            this.fireRootChange();
-        }, 100);
+            let onChangedSomething = debounce(() => {
+                // Note: this doesn't currently work if the parent folder is renamed or removed.
+                // (https://github.com/microsoft/vscode/pull/110858)
+                this.fireRootChange();
+            }, 100);
 
-        watcher.onDidCreate(onChangedSomething);
-        watcher.onDidDelete(onChangedSomething);
+            watcher.onDidCreate(onChangedSomething);
+            watcher.onDidDelete(onChangedSomething);
+        }
     }
 
-    onRobotsTreeSelectionChanged() {
-        let robotEntry: RobotEntry = getSelectedRobot();
+    async onRobotsTreeSelectionChanged(robotEntry: RobotEntry | undefined) {
         if (!this.lastRobotEntry && !robotEntry) {
             // nothing changed
             return;

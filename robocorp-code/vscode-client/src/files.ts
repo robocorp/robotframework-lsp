@@ -2,7 +2,7 @@
 
 import * as path from "path";
 import * as fs from "fs";
-import { window } from "vscode";
+import { Uri, window, workspace } from "vscode";
 import { OUTPUT_CHANNEL } from "./channel";
 
 /**
@@ -28,9 +28,18 @@ export function verifyFileExists(targetFile: string, warnUser: boolean = true): 
     return true;
 }
 
-export async function fileExists(filename) {
+export async function fileExists(filename: string) {
     try {
         await fs.promises.stat(filename);
+        return true;
+    } catch (err) {
+        return false;
+    }
+}
+
+export async function uriExists(uri: Uri) {
+    try {
+        await workspace.fs.stat(uri);
         return true;
     } catch (err) {
         return false;

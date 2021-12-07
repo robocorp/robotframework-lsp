@@ -3,7 +3,13 @@ import { resolve, join, dirname, basename } from "path";
 
 import { logError } from "./channel";
 import { ROBOCORP_LIST_WORK_ITEMS_INTERNAL, ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL } from "./robocorpCommands";
-import { FSEntry, RobotEntry, treeViewIdToTreeDataProvider, treeViewIdToTreeView } from "./viewsCommon";
+import {
+    FSEntry,
+    getSelectedRobot,
+    RobotEntry,
+    treeViewIdToTreeDataProvider,
+    treeViewIdToTreeView,
+} from "./viewsCommon";
 import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE } from "./robocorpViews";
 import { getCurrRobotDir, RobotSelectionTreeDataProviderBase } from "./viewsRobotSelection";
 import { resolveInterpreter } from "./activities";
@@ -215,8 +221,8 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
     private async handleRoot(): Promise<WorkItemFSEntry[]> {
         const elements: WorkItemFSEntry[] = [];
 
-        const robotsTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
-        if (!robotsTree || robotsTree.selection.length == 0) {
+        const robotEntry: RobotEntry = getSelectedRobot();
+        if (!robotEntry) {
             this.lastRobotEntry = undefined;
             return [
                 {
@@ -228,7 +234,6 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
             ];
         }
 
-        const robotEntry: RobotEntry = robotsTree.selection[0];
         this.lastRobotEntry = robotEntry;
 
         let robot = resolve(this.lastRobotEntry.uri.fsPath);
