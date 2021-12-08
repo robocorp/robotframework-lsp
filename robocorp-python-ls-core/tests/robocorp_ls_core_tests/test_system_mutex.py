@@ -46,7 +46,7 @@ def test_system_mutex():
     with pytest.raises(AssertionError):
         SystemMutex("mutex/")  # Invalid name
 
-    time_to_release_mutex = 1
+    time_to_release_mutex = 2
 
     def release_mutex():
         time.sleep(time_to_release_mutex)
