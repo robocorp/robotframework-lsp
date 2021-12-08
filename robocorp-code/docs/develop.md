@@ -100,6 +100,15 @@ at .venv/Scripts/python should suffice.
 
 -- in VSCode that'd be using the `Python: Select Interpreter` command.
 
+Updating RCC
+--------------------
+
+- Open a shell at the proper place (something as `X:\vscode-robot\robotframework-lsp\robocorp-code`)
+
+- Update version (`python -m dev set-rcc-version 11.6.0`).
+
+- Remove the rcc executable from the `bin` folder to redownload the next time the extension is executed.
+
 New version release
 --------------------
 

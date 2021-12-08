@@ -45,10 +45,24 @@ def _fix_contents_version(contents, version):
     return contents
 
 
+def _fix_rcc_contents_version(contents, version):
+    import re
+
+    assert version.startswith("v"), f'{version} must start with "v"'
+
+    # RCC_VERSION = "v11.5.5"
+    # const RCC_VERSION = "v11.5.5";
+    contents = re.sub(
+        r"(RCC_VERSION\s*=\s*)\"v\d+\.\d+\.\d+", r'\1"%s' % (version,), contents
+    )
+
+    return contents
+
+
 class Dev(object):
     def set_version(self, version):
         """
-        Sets a new version for robotframework-lsp in all the needed files.
+        Sets a new version for robocorp-code in all the needed files.
         """
 
         def update_version(version, filepath):
@@ -56,14 +70,37 @@ class Dev(object):
                 contents = stream.read()
 
             new_contents = _fix_contents_version(contents, version)
-            if contents != new_contents:
-                with open(filepath, "w") as stream:
-                    stream.write(new_contents)
+            assert contents != new_contents
+            with open(filepath, "w") as stream:
+                stream.write(new_contents)
 
         update_version(version, os.path.join(".", "package.json"))
         update_version(version, os.path.join(".", "src", "setup.py"))
         update_version(
             version, os.path.join(".", "src", "robocorp_code", "__init__.py")
+        )
+
+    def set_rcc_version(self, version):
+        """
+        Sets the new RCC version to be used.
+        """
+
+        def update_version(version, filepath):
+            with open(filepath, "r") as stream:
+                contents = stream.read()
+
+            new_contents = _fix_rcc_contents_version(contents, version)
+            assert (
+                contents != new_contents
+            ), "Nothing changed after applying new version."
+            with open(filepath, "w") as stream:
+                stream.write(new_contents)
+
+        update_version(version, os.path.join(".", "src", "robocorp_code", "rcc.py"))
+        update_version(version, os.path.join(".", "vscode-client", "src", "rcc.ts"))
+
+        print(
+            f"New RCC version set.\nErase the rcc executable from {os.path.abspath(os.path.join('.', 'bin'))} to re-download locally."
         )
 
     def get_tag(self):
