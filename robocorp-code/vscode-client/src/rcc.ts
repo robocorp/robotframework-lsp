@@ -234,7 +234,8 @@ export async function submitIssueUI(logPath: string) {
     } while (email.indexOf("@") == -1);
 
     let issueDescription: string = await window.showInputBox({
-        "prompt": "Please provide a brief description of the issue (confirming will send the issue)",
+        "prompt":
+            "Please provide a brief description of the issue (confirming will *SEND* the issue with the collected logs)",
         "ignoreFocusOut": true,
     });
     if (!issueDescription) {

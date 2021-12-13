@@ -32,7 +32,7 @@ export async function cloudLogin(): Promise<boolean> {
         let credentials: string = await window.showInputBox({
             "password": true,
             "prompt":
-                "Please provide the access credentials - Confirm without entering any text to open https://cloud.robocorp.com/settings/access-credentials where credentials may be obtained - ",
+                "1. Press the Enter key to open Control Room and create a new access credential. 2. Paste the access credential in the field above ",
             "ignoreFocusOut": true,
         });
         if (credentials == undefined) {

@@ -83,7 +83,7 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
                 });
             }
             ret.push({
-                "label": "Robot Developer Guide",
+                "label": "Robot Development Guide",
                 "iconPath": "book",
                 "command": {
                     "title": "Open https://robocorp.com/docs/development-guide",
@@ -92,7 +92,7 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
                 },
             });
             ret.push({
-                "label": "RPA Framework Library",
+                "label": "Keyword Libraries Documentation",
                 "iconPath": "notebook",
                 "command": {
                     "title": "Open https://robocorp.com/docs/libraries",
@@ -101,10 +101,10 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
                 },
             });
             ret.push({
-                "label": "Submit Issue",
+                "label": "Submit issue to Robocorp",
                 "iconPath": "report",
                 "command": {
-                    "title": "Submit Issue",
+                    "title": "Submit issue to Robocorp",
                     "command": ROBOCORP_SUBMIT_ISSUE,
                 },
             });

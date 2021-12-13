@@ -393,10 +393,10 @@ COMMANDS = [
         server_handled=False,
         hide_from_command_palette=True,
     ),
-    Command("robocorp.submitIssue", "Submit issue", server_handled=False),
+    Command("robocorp.submitIssue", "Submit issue to Robocorp", server_handled=False),
     Command(
         "robocorp.errorFeedback.internal",
-        "Error feedback(internal)",
+        "Error feedback (internal)",
         server_handled=False,
         hide_from_command_palette=True,
     ),
