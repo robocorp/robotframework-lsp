@@ -4,7 +4,7 @@ import { logError } from "./channel";
 import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from "./robocorpViews";
 import { FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeView } from "./viewsCommon";
 import { basename, dirname, join } from "path";
-import { Uri } from "vscode";
+import { Uri, TreeItem } from "vscode";
 import { RobotSelectionTreeDataProviderBase } from "./viewsRobotSelection";
 
 const fsPromises = fs.promises;
@@ -234,5 +234,17 @@ export class RobotContentTreeDataProvider extends RobotSelectionTreeDataProvider
             }
             return ret;
         }
+    }
+
+    getTreeItem(element: FSEntry): TreeItem {
+        let item = super.getTreeItem(element);
+        if (element?.filePath) {
+            if (element.isDirectory) {
+                item.contextValue = "directoryItem";
+            } else {
+                item.contextValue = "fileItem";
+            }
+        }
+        return item;
     }
 }

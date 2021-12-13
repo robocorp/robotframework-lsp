@@ -50,7 +50,7 @@ import { copySelectedToClipboard, removeLocator } from "./locators";
 import * as views from "./views";
 import * as roboConfig from "./robocorpSettings";
 import { logError, OUTPUT_CHANNEL } from "./channel";
-import { getExtensionRelativeFile, verifyFileExists } from "./files";
+import { fileExists, getExtensionRelativeFile, verifyFileExists } from "./files";
 import {
     collectBaseEnv,
     feedbackAnyError,
@@ -95,7 +95,7 @@ import {
     newWorkItemInWorkItemsTree,
     openWorkItemHelp,
 } from "./viewsWorkItems";
-import { LocatorEntry, RobotEntry } from "./viewsCommon";
+import { FSEntry, LocatorEntry, RobotEntry } from "./viewsCommon";
 import {
     ROBOCORP_CLOUD_LOGIN,
     ROBOCORP_CLOUD_LOGOUT,
@@ -135,6 +135,9 @@ import {
     ROBOCORP_UPDATE_LAUNCH_ENV,
     ROBOCORP_UPLOAD_ROBOT_TO_CLOUD,
     ROBOCORP_ERROR_FEEDBACK_INTERNAL,
+    ROBOCORP_OPEN_EXTERNALLY,
+    ROBOCORP_OPEN_IN_VS_CODE,
+    ROBOCORP_REVEAL_IN_EXPLORER,
 } from "./robocorpCommands";
 
 const clientOptions: LanguageClientOptions = {
@@ -466,6 +469,33 @@ function registerRobocorpCodeCommands(C: CommandRegistry, opts?: RobocorpCodeCom
     C.register(ROBOCORP_UPDATE_LAUNCH_ENV, updateLaunchEnvironment);
     C.register(ROBOCORP_OPEN_CLOUD_HOME, () => {
         commands.executeCommand("vscode.open", Uri.parse("https://cloud.robocorp.com/home"));
+    });
+    C.register(ROBOCORP_OPEN_EXTERNALLY, async (item: FSEntry) => {
+        if (item.filePath) {
+            if (await fileExists(item.filePath)) {
+                env.openExternal(Uri.file(item.filePath));
+                return;
+            }
+        }
+        window.showErrorMessage("Unable to open: " + item.filePath + " (file does not exist).");
+    });
+    C.register(ROBOCORP_OPEN_IN_VS_CODE, async (item: FSEntry) => {
+        if (item.filePath) {
+            if (await fileExists(item.filePath)) {
+                commands.executeCommand("vscode.open", Uri.file(item.filePath));
+                return;
+            }
+        }
+        window.showErrorMessage("Unable to open: " + item.filePath + " (file does not exist).");
+    });
+    C.register(ROBOCORP_REVEAL_IN_EXPLORER, async (item: FSEntry) => {
+        if (item.filePath) {
+            if (await fileExists(item.filePath)) {
+                commands.executeCommand("revealFileInOS", Uri.file(item.filePath));
+                return;
+            }
+        }
+        window.showErrorMessage("Unable to reveal in explorer: " + item.filePath + " (file does not exist).");
     });
     C.register(ROBOCORP_CONVERT_OUTPUT_WORK_ITEM_TO_INPUT, convertOutputWorkItemToInput);
     C.register(ROBOCORP_CLOUD_LOGIN, () => cloudLoginShowConfirmationAndRefresh());

@@ -91,12 +91,12 @@ TREE_VIEW_CONTAINERS = [
                         Menu(
                             "robocorp.newFileInRobotContentView",
                             MenuGroup.NAVIGATION,
-                            when="robocorp-code:single-robot-selected",
+                            when="robocorp-code:single-robot-selected && viewItem == directoryItem",
                         ),
                         Menu(
                             "robocorp.newFolderInRobotContentView",
                             MenuGroup.NAVIGATION,
-                            when="robocorp-code:single-robot-selected",
+                            when="robocorp-code:single-robot-selected && viewItem == directoryItem",
                         ),
                         Menu("robocorp.refreshRobotContentView", MenuGroup.NAVIGATION),
                     ],
@@ -104,21 +104,36 @@ TREE_VIEW_CONTAINERS = [
                         Menu(
                             "robocorp.newFileInRobotContentView",
                             "0_new",
-                            when="robocorp-code:single-robot-selected",
+                            when="robocorp-code:single-robot-selected && viewItem == directoryItem",
                         ),
                         Menu(
                             "robocorp.newFolderInRobotContentView",
                             "0_new",
+                            when="robocorp-code:single-robot-selected && viewItem == directoryItem",
+                        ),
+                        Menu(
+                            "robocorp.openExternally",
+                            "1_open",
+                            when="robocorp-code:single-robot-selected && viewItem == fileItem",
+                        ),
+                        Menu(
+                            "robocorp.openInVSCode",
+                            "1_open",
+                            when="robocorp-code:single-robot-selected && viewItem == fileItem",
+                        ),
+                        Menu(
+                            "robocorp.revealInExplorer",
+                            "1_open",
                             when="robocorp-code:single-robot-selected",
                         ),
                         Menu(
                             "robocorp.renameResourceInRobotContentView",
-                            "1_change",
+                            "2_change",
                             when="robocorp-code:single-robot-selected",
                         ),
                         Menu(
                             "robocorp.deleteResourceInRobotContentView",
-                            "1_change",
+                            "2_change",
                             when="robocorp-code:single-robot-selected",
                         ),
                     ],

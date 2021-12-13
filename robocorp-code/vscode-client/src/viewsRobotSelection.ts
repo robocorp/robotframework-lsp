@@ -112,9 +112,10 @@ export class RobotSelectionTreeDataProviderBase implements vscode.TreeDataProvid
             let entry: FSEntry = selection[0];
             if (entry.filePath && !entry.isDirectory) {
                 let uri = vscode.Uri.file(entry.filePath);
-                let document = await vscode.workspace.openTextDocument(uri);
-                if (document) {
-                    await vscode.window.showTextDocument(document);
+                if (entry.filePath.endsWith(".html")) {
+                    vscode.env.openExternal(uri);
+                } else {
+                    await vscode.commands.executeCommand("vscode.open", uri);
                 }
             }
         }

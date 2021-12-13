@@ -62,6 +62,9 @@
         "onCommand:robocorp.editRobocorpInspectorLocator",
         "onCommand:robocorp.copyLocatorToClipboard.internal",
         "onCommand:robocorp.openRobotTreeSelection",
+        "onCommand:robocorp.openExternally",
+        "onCommand:robocorp.openInVSCode",
+        "onCommand:robocorp.revealInExplorer",
         "onCommand:robocorp.cloudUploadRobotTreeSelection",
         "onCommand:robocorp.rccTerminalCreateRobotTreeSelection",
         "onCommand:robocorp.sendMetric",
@@ -369,6 +372,24 @@
                 "icon": "$(go-to-file)"
             },
             {
+                "command": "robocorp.openExternally",
+                "title": "Open externally",
+                "category": "Robocorp",
+                "icon": "$(go-to-file)"
+            },
+            {
+                "command": "robocorp.openInVSCode",
+                "title": "Open in VSCode",
+                "category": "Robocorp",
+                "icon": "$(file)"
+            },
+            {
+                "command": "robocorp.revealInExplorer",
+                "title": "Reveal in File Explorer",
+                "category": "Robocorp",
+                "icon": "$(file-submodule)"
+            },
+            {
                 "command": "robocorp.cloudUploadRobotTreeSelection",
                 "title": "Upload Robot to Control Room",
                 "category": "Robocorp",
@@ -455,12 +476,12 @@
                 },
                 {
                     "command": "robocorp.newFileInRobotContentView",
-                    "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected",
+                    "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected && viewItem == directoryItem",
                     "group": "navigation"
                 },
                 {
                     "command": "robocorp.newFolderInRobotContentView",
-                    "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected",
+                    "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected && viewItem == directoryItem",
                     "group": "navigation"
                 },
                 {
@@ -517,23 +538,38 @@
                 },
                 {
                     "command": "robocorp.newFileInRobotContentView",
-                    "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected",
+                    "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected && viewItem == directoryItem",
                     "group": "0_new"
                 },
                 {
                     "command": "robocorp.newFolderInRobotContentView",
-                    "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected",
+                    "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected && viewItem == directoryItem",
                     "group": "0_new"
+                },
+                {
+                    "command": "robocorp.openExternally",
+                    "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected && viewItem == fileItem",
+                    "group": "1_open"
+                },
+                {
+                    "command": "robocorp.openInVSCode",
+                    "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected && viewItem == fileItem",
+                    "group": "1_open"
+                },
+                {
+                    "command": "robocorp.revealInExplorer",
+                    "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected",
+                    "group": "1_open"
                 },
                 {
                     "command": "robocorp.renameResourceInRobotContentView",
                     "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected",
-                    "group": "1_change"
+                    "group": "2_change"
                 },
                 {
                     "command": "robocorp.deleteResourceInRobotContentView",
                     "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected",
-                    "group": "1_change"
+                    "group": "2_change"
                 },
                 {
                     "command": "robocorp.editRobocorpInspectorLocator",
@@ -625,6 +661,18 @@
                 },
                 {
                     "command": "robocorp.openRobotTreeSelection",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.openExternally",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.openInVSCode",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.revealInExplorer",
                     "when": "false"
                 },
                 {
