@@ -65,6 +65,7 @@
         "onCommand:robocorp.openExternally",
         "onCommand:robocorp.openInVSCode",
         "onCommand:robocorp.revealInExplorer",
+        "onCommand:robocorp.revealRobotInExplorer",
         "onCommand:robocorp.cloudUploadRobotTreeSelection",
         "onCommand:robocorp.rccTerminalCreateRobotTreeSelection",
         "onCommand:robocorp.sendMetric",
@@ -390,6 +391,12 @@
                 "icon": "$(file-submodule)"
             },
             {
+                "command": "robocorp.revealRobotInExplorer",
+                "title": "Reveal robot.yaml in File Explorer",
+                "category": "Robocorp",
+                "icon": "$(file-submodule)"
+            },
+            {
                 "command": "robocorp.cloudUploadRobotTreeSelection",
                 "title": "Upload Robot to Control Room",
                 "category": "Robocorp",
@@ -537,6 +544,11 @@
                     "group": "inline"
                 },
                 {
+                    "command": "robocorp.revealRobotInExplorer",
+                    "when": "view == robocorp-robots-tree && viewItem == robotItem",
+                    "group": "navigation"
+                },
+                {
                     "command": "robocorp.newFileInRobotContentView",
                     "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected && viewItem == directoryItem",
                     "group": "0_new"
@@ -673,6 +685,10 @@
                 },
                 {
                     "command": "robocorp.revealInExplorer",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.revealRobotInExplorer",
                     "when": "false"
                 },
                 {

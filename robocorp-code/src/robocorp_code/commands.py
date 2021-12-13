@@ -47,6 +47,7 @@ ROBOCORP_OPEN_ROBOT_TREE_SELECTION = "robocorp.openRobotTreeSelection"  # Open r
 ROBOCORP_OPEN_EXTERNALLY = "robocorp.openExternally"  # Open externally
 ROBOCORP_OPEN_IN_VS_CODE = "robocorp.openInVSCode"  # Open in VSCode
 ROBOCORP_REVEAL_IN_EXPLORER = "robocorp.revealInExplorer"  # Reveal in File Explorer
+ROBOCORP_REVEAL_ROBOT_IN_EXPLORER = "robocorp.revealRobotInExplorer"  # Reveal robot.yaml in File Explorer
 ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION = "robocorp.cloudUploadRobotTreeSelection"  # Upload Robot to Control Room
 ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION = "robocorp.rccTerminalCreateRobotTreeSelection"  # Open terminal with Robot environment
 ROBOCORP_SEND_METRIC = "robocorp.sendMetric"  # Send metric

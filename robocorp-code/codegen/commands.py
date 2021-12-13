@@ -350,6 +350,14 @@ COMMANDS = [
         icon="$(file-submodule)",
     ),
     Command(
+        "robocorp.revealRobotInExplorer",
+        "Reveal robot.yaml in File Explorer",
+        add_to_package_json=True,
+        server_handled=False,
+        hide_from_command_palette=True,
+        icon="$(file-submodule)",
+    ),
+    Command(
         "robocorp.cloudUploadRobotTreeSelection",
         "Upload Robot to Control Room",
         add_to_package_json=True,

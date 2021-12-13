@@ -79,6 +79,11 @@ TREE_VIEW_CONTAINERS = [
                             MenuGroup.INLINE,
                             "viewItem == robotItem",
                         ),
+                        Menu(
+                            "robocorp.revealRobotInExplorer",
+                            MenuGroup.NAVIGATION,
+                            when="viewItem == robotItem",
+                        ),
                     ],
                 },
             ),

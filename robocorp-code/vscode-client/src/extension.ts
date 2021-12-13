@@ -50,7 +50,7 @@ import { copySelectedToClipboard, removeLocator } from "./locators";
 import * as views from "./views";
 import * as roboConfig from "./robocorpSettings";
 import { logError, OUTPUT_CHANNEL } from "./channel";
-import { fileExists, getExtensionRelativeFile, verifyFileExists } from "./files";
+import { fileExists, getExtensionRelativeFile, uriExists, verifyFileExists } from "./files";
 import {
     collectBaseEnv,
     feedbackAnyError,
@@ -138,6 +138,7 @@ import {
     ROBOCORP_OPEN_EXTERNALLY,
     ROBOCORP_OPEN_IN_VS_CODE,
     ROBOCORP_REVEAL_IN_EXPLORER,
+    ROBOCORP_REVEAL_ROBOT_IN_EXPLORER,
 } from "./robocorpCommands";
 
 const clientOptions: LanguageClientOptions = {
@@ -496,6 +497,15 @@ function registerRobocorpCodeCommands(C: CommandRegistry, opts?: RobocorpCodeCom
             }
         }
         window.showErrorMessage("Unable to reveal in explorer: " + item.filePath + " (file does not exist).");
+    });
+    C.register(ROBOCORP_REVEAL_ROBOT_IN_EXPLORER, async (item: RobotEntry) => {
+        if (item.uri) {
+            if (await uriExists(item.uri)) {
+                commands.executeCommand("revealFileInOS", item.uri);
+                return;
+            }
+        }
+        window.showErrorMessage("Unable to reveal in explorer: " + item.uri + " (Robot does not exist).");
     });
     C.register(ROBOCORP_CONVERT_OUTPUT_WORK_ITEM_TO_INPUT, convertOutputWorkItemToInput);
     C.register(ROBOCORP_CLOUD_LOGIN, () => cloudLoginShowConfirmationAndRefresh());

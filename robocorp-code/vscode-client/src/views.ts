@@ -232,12 +232,11 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                 // giving more instructions to the user.
                 let added: boolean = false;
                 for (const label of [
-                    "No Robot was found in the workspace. Please",
-                    "open the folder that contains your Robot",
-                    "(the one that has the robot.yaml).",
-                    "Alternatively, open its parent workspace folder",
-                    "containing multiple Robots or create your first",
-                    "Robot using the 'Robocorp: Create Robot' action.",
+                    "No robots found.",
+                    "To get started:",
+                    "➔ Run the “Robocorp: Create Robot” action",
+                    "➔ Open a robot folder (with a “robot.yaml” file)",
+                    "➔ Open a parent folder (with multiple robots)",
                 ]) {
                     ret.push({
                         "label": label,
