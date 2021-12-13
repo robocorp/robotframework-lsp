@@ -227,7 +227,8 @@
             {
                 "command": "robocorp.createRobot",
                 "title": "Create Robot",
-                "category": "Robocorp"
+                "category": "Robocorp",
+                "icon": "$(add)"
             },
             {
                 "command": "robocorp.uploadRobotToCloud",
@@ -252,7 +253,7 @@
             },
             {
                 "command": "robocorp.robotsViewTaskRun",
-                "title": "Launch selected Task in Robots view",
+                "title": "Launch Task",
                 "category": "Robocorp",
                 "icon": {
                     "light": "images/light/run.svg",
@@ -261,7 +262,7 @@
             },
             {
                 "command": "robocorp.robotsViewTaskDebug",
-                "title": "Debug selected Task in Robots view",
+                "title": "Debug Task",
                 "category": "Robocorp",
                 "icon": {
                     "light": "images/light/debug.svg",
@@ -482,6 +483,11 @@
                     "group": "navigation"
                 },
                 {
+                    "command": "robocorp.createRobot",
+                    "when": "view == robocorp-robots-tree",
+                    "group": "navigation"
+                },
+                {
                     "command": "robocorp.newFileInRobotContentView",
                     "when": "view == robocorp-robot-content-tree && robocorp-code:single-robot-selected && viewItem == directoryItem",
                     "group": "navigation"
@@ -544,7 +550,32 @@
                     "group": "inline"
                 },
                 {
+                    "command": "robocorp.robotsViewTaskRun",
+                    "when": "view == robocorp-robots-tree && viewItem == taskItem",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.robotsViewTaskDebug",
+                    "when": "view == robocorp-robots-tree && viewItem == taskItem",
+                    "group": "navigation"
+                },
+                {
                     "command": "robocorp.revealRobotInExplorer",
+                    "when": "view == robocorp-robots-tree && viewItem == robotItem",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.openRobotTreeSelection",
+                    "when": "view == robocorp-robots-tree && viewItem == robotItem",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.rccTerminalCreateRobotTreeSelection",
+                    "when": "view == robocorp-robots-tree && viewItem == robotItem",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.cloudUploadRobotTreeSelection",
                     "when": "view == robocorp-robots-tree && viewItem == robotItem",
                     "group": "navigation"
                 },
@@ -635,6 +666,14 @@
                 }
             ],
             "commandPalette": [
+                {
+                    "command": "robocorp.robotsViewTaskRun",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.robotsViewTaskDebug",
+                    "when": "false"
+                },
                 {
                     "command": "robocorp.refreshRobotContentView",
                     "when": "false"

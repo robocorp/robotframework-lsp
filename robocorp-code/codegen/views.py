@@ -52,6 +52,7 @@ TREE_VIEW_CONTAINERS = [
                     # for targets
                     "view/title": [
                         Menu("robocorp.refreshRobotsView", MenuGroup.NAVIGATION),
+                        Menu("robocorp.createRobot", MenuGroup.NAVIGATION),
                     ],
                     "view/item/context": [
                         Menu(
@@ -79,8 +80,35 @@ TREE_VIEW_CONTAINERS = [
                             MenuGroup.INLINE,
                             "viewItem == robotItem",
                         ),
+                        # Needs right click (duplicating above + new actions)
+                        Menu(
+                            "robocorp.robotsViewTaskRun",
+                            MenuGroup.NAVIGATION,
+                            "viewItem == taskItem",
+                        ),
+                        Menu(
+                            "robocorp.robotsViewTaskDebug",
+                            MenuGroup.NAVIGATION,
+                            "viewItem == taskItem",
+                        ),
+                        # New action: reveal in explorer.
                         Menu(
                             "robocorp.revealRobotInExplorer",
+                            MenuGroup.NAVIGATION,
+                            when="viewItem == robotItem",
+                        ),
+                        Menu(
+                            "robocorp.openRobotTreeSelection",
+                            MenuGroup.NAVIGATION,
+                            when="viewItem == robotItem",
+                        ),
+                        Menu(
+                            "robocorp.rccTerminalCreateRobotTreeSelection",
+                            MenuGroup.NAVIGATION,
+                            when="viewItem == robotItem",
+                        ),
+                        Menu(
+                            "robocorp.cloudUploadRobotTreeSelection",
                             MenuGroup.NAVIGATION,
                             when="viewItem == robotItem",
                         ),

@@ -58,7 +58,12 @@ COMMANDS = [
     ),
     # Note: this command is started from the client (due to needing window.showQuickPick)
     # and the proceeds to ask for the server for the actual implementation.
-    Command("robocorp.createRobot", "Create Robot", server_handled=False),
+    Command(
+        "robocorp.createRobot",
+        "Create Robot",
+        server_handled=False,
+        icon="$(add)",
+    ),
     # Internal commands for robocorp.createRobot.
     Command(
         "robocorp.listRobotTemplates.internal",
@@ -148,16 +153,18 @@ COMMANDS = [
     ),
     Command(
         "robocorp.robotsViewTaskRun",
-        "Launch selected Task in Robots view",
+        "Launch Task",
         add_to_package_json=True,
         server_handled=False,
+        hide_from_command_palette=True,
         icon={"light": "images/light/run.svg", "dark": "images/dark/run.svg"},
     ),
     Command(
         "robocorp.robotsViewTaskDebug",
-        "Debug selected Task in Robots view",
+        "Debug Task",
         add_to_package_json=True,
         server_handled=False,
+        hide_from_command_palette=True,
         icon={"light": "images/light/debug.svg", "dark": "images/dark/debug.svg"},
     ),
     Command(
