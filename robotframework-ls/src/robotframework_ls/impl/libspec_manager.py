@@ -848,7 +848,7 @@ class LibspecManager(object):
                     call.extend("-m robot.libdoc".split())
 
                 if additional_path and additional_path_exists:
-                    call.extend(["-P", additional_path])
+                    call.extend(["-P", os.path.normpath(additional_path)])
 
                 if _internal_force_text:
                     call.append("--docformat")
@@ -857,7 +857,7 @@ class LibspecManager(object):
                 # Note: always set as a whole, so, iterate in generator is thread-safe.
                 for entry in self._additional_pythonpath_folder_to_folder_info:
                     if os.path.exists(entry):
-                        call.extend(["-P", entry])
+                        call.extend(["-P", os.path.normpath(entry)])
 
                 call.append("::".join([libname, args] if args else [libname]))
                 libspec_filename = self._compute_libspec_filename(
