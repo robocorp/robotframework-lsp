@@ -459,7 +459,7 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
 
             let selectedItem: QuickPickItemWithAction = await showSelectOneQuickPick(
                 captions,
-                "Please select Workspace to upload: " + robot.name + " (" + robot.directory + ")" + "."
+                "Please select a Workspace to upload ‘" + robot.name + "’ to."
             );
 
             if (!selectedItem) {
@@ -524,7 +524,7 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
 
         let selectedItem: QuickPickItemWithAction = await showSelectOneQuickPick(
             captions,
-            "Please select target Robot to upload: " + robot.name + " (" + robot.directory + ")."
+            "Update an existing Robot or create a new one."
         );
 
         if (!selectedItem) {
@@ -544,28 +544,45 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
         }
 
         if (action.existingRobotPackage) {
-            let yesOverride: string = "Yes (override existing Robot)";
-            let noChooseDifferentTarget: string = "No (choose different target)";
+            let yesOverride: string = "Yes";
+            let noChooseDifferentTarget: string = "No";
             let cancel: string = "Cancel";
             let robotInfo: PackageInfo = action.existingRobotPackage;
 
-            let selectedItem = await window.showWarningMessage(
-                "Upload of the contents of " +
-                    robot.directory +
-                    " to: " +
-                    robotInfo.name +
-                    " (" +
-                    robotInfo.workspaceName +
-                    ")",
-                ...[yesOverride, noChooseDifferentTarget, cancel]
+            let updateExistingCaptions: QuickPickItemWithAction[] = new Array();
+
+            let caption: QuickPickItemWithAction = {
+                "label": yesOverride,
+                "detail": "Override existing Robot",
+                "action": yesOverride,
+            };
+            updateExistingCaptions.push(caption);
+
+            caption = {
+                "label": noChooseDifferentTarget,
+                "detail": "Go back to choose a different Robot to update",
+                "action": noChooseDifferentTarget,
+            };
+            updateExistingCaptions.push(caption);
+
+            caption = {
+                "label": cancel,
+                "detail": "Cancel the Robot upload",
+                "action": cancel,
+            };
+            updateExistingCaptions.push(caption);
+
+            let selectedItem: QuickPickItemWithAction = await showSelectOneQuickPick(
+                updateExistingCaptions,
+                "This will overwrite the robot ‘" + robotInfo.name + "’ on Control Room. Are you sure? "
             );
 
             // robot.language-server.python
-            if (selectedItem == noChooseDifferentTarget) {
+            if (selectedItem.action == noChooseDifferentTarget) {
                 refresh = false;
                 continue SELECT_OR_REFRESH;
             }
-            if (selectedItem == cancel) {
+            if (selectedItem.action == cancel) {
                 return;
             }
             // selectedItem == yesOverride.
