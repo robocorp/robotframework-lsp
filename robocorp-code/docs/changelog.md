@@ -1,3 +1,33 @@
+New in 0.21.0 (2021-12-14)
+-----------------------------
+
+- RCC updated to v11.6.0.
+
+- robocorp-inspector updated to 0.5.0.
+
+- When sending an issue a confirmation is shown.
+
+- Robots view:
+  - A Robot is always auto-selected if available in the workspace.
+  - A proper message is shown to guide users on the case where there's no Robot in the workspace.
+  - Added option to reveal in explorer.
+  - Added button to create new robot.
+  - Context menu filled with actions.
+  
+- Robot content view:
+  - When an html selected, it's opened in an external browser by default.
+  - Added option to reveal in explorer.
+  - Context menu filled with actions to open file externally or internally.
+  - When clicking an item, it's opened even if already selected.
+  
+- Robocorp view:
+  - Updated labels
+  
+- Improvements in the upload Robot UI.
+  - Labels
+  - Workspaces that the user cannot read are no longer shown.
+   
+
 New in 0.20.0 (2021-11-16)
 -----------------------------
 
