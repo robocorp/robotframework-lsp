@@ -53,6 +53,10 @@ async function checkFileExists(file) {
 }
 
 async function readAllDebugConfigs(workspaceFolder: WorkspaceFolder): Promise<DebugConfiguration[]> {
+    const launch = workspace.getConfiguration("launch");
+    const configs = launch.inspect<DebugConfiguration[]>("configurations")?.globalValue;
+    if (configs) return configs;
+
     const filename = path.join(workspaceFolder.uri.fsPath, ".vscode", "launch.json");
     if (!(await checkFileExists(filename))) {
         return [];
