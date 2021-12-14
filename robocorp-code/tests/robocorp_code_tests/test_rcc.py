@@ -4,10 +4,12 @@ from robocorp_code.protocols import IRcc, IRccRobotMetadata
 import pytest
 from pathlib import Path
 import os
-from robocorp_code.holetree_manager import UnableToGetSpaceName
 import time
 from dataclasses import dataclass
 from typing import List
+from robocorp_code_tests.fixtures import RccPatch
+from robocorp_ls_core.protocols import ActionResult
+import json
 
 TIMEOUT_FOR_UPDATES_IN_SECONDS = 1
 TIMEOUT_TO_REUSE_SPACE = 3
@@ -21,6 +23,87 @@ def test_rcc_template_names(rcc: IRcc):
     template_names = [template["name"] for template in result.result]
     assert "standard" in template_names
     assert "python" in template_names
+
+
+def test_rcc_cloud_issues(
+    rcc: IRcc, ci_credentials: str, tmpdir: py.path.local, rcc_patch: RccPatch
+):
+    def custom_handler(args, *sargs, **kwargs):
+        cp = args[:]
+        # i.e.: cloud_list_workspaces
+        if len(cp) >= 4:
+            if cp[3].endswith("config_test.yaml"):
+                cp.pop(3)
+                if cp == [
+                    "cloud",
+                    "workspace",
+                    "--config",
+                    "--account",
+                    "robocorp-code",
+                ]:
+                    # i.e.: we only list workspaces we can read from when listing.
+                    info = [
+                        {
+                            "id": "ws1",
+                            "name": "Ex1",
+                            "orgId": "org_id",
+                            "orgName": "org_name",
+                            "orgShortName": "shortName",
+                            "permissions": {
+                                "canReadRobots": False,
+                                "canWriteRobots": True,
+                            },
+                            "shortName": "ws1Name",
+                            "state": "active",
+                            "url": "https://ci.robocloud.dev/shortName/ws1Name",
+                        },
+                        {
+                            "hasWorkspaceRole": True,
+                            "id": "ws2",
+                            "name": "Ex2",
+                            "orgId": "org_id",
+                            "orgName": "org_name",
+                            "orgShortName": "shortName",
+                            "permissions": {
+                                "canReadRobots": False,
+                                "canWriteRobots": True,
+                            },
+                            "shortName": "someName",
+                            "state": "active",
+                            "url": "https://ci.robocloud.dev/shortName/someName",
+                        },
+                        {
+                            "hasWorkspaceRole": True,
+                            "id": "ws3",
+                            "name": "Ex3",
+                            "orgId": "org_id",
+                            "orgName": "org_name",
+                            "orgShortName": "shortName",
+                            "permissions": {
+                                "canReadRobots": True,
+                                "canWriteRobots": True,
+                            },
+                            "shortName": "someName",
+                            "state": "active",
+                            "url": "https://ci.robocloud.dev/shortName/someName",
+                        },
+                    ]
+
+                    return ActionResult(
+                        success=True, message=None, result=json.dumps(info)
+                    )
+
+    rcc_patch.custom_handler = custom_handler
+    rcc_patch.apply()
+
+    # result = rcc.add_credentials(ci_credentials)
+    # assert result.success
+
+    result = rcc.cloud_list_workspaces()
+    assert result.success
+    workspaces_listed = result.result
+    assert workspaces_listed
+    assert [ws.workspace_name for ws in workspaces_listed] == ["Ex3"]
 
 
 def test_rcc_cloud(rcc: IRcc, ci_credentials: str, tmpdir: py.path.local):
@@ -183,6 +266,8 @@ def test_get_robot_yaml_environ(rcc: IRcc, datadir, holotree_manager):
 
     # i.e.: vscode-01 is damaged and vscode-02 cannot be used because conda differs
     # and the needed timeout to reuse hasn't elapsed.
+    from robocorp_code.holetree_manager import UnableToGetSpaceName
+
     with pytest.raises(UnableToGetSpaceName):
         holotree_manager.compute_valid_space_info(
             robot1.conda_yaml, robot1.conda_yaml_contents, require_timeout=True

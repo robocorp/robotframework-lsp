@@ -454,7 +454,6 @@ class Rcc(object):
         return account is not None
 
     def get_valid_account_info(self) -> Optional[AccountInfo]:
-        import json
 
         self._last_verified_account_info = None
         args = [
@@ -521,7 +520,6 @@ class Rcc(object):
 
     @implements(IRcc.cloud_list_workspaces)
     def cloud_list_workspaces(self) -> ActionResult[List[IRccWorkspace]]:
-        import json
 
         ret: List[IRccWorkspace] = []
         args = ["cloud", "workspace"]
@@ -550,6 +548,15 @@ class Rcc(object):
                 f"Error loading json obtained while listing Control Room workspaces.\n{e}",
             )
         for workspace_info in lst:
+            permissions = workspace_info.get("permissions")
+            if isinstance(permissions, dict):
+                if not permissions.get("canReadRobots"):
+                    log.info(
+                        "Skipped workspace: %s (no canReadRobots permissions).",
+                        workspace_info,
+                    )
+                    continue
+
             ret.append(
                 RccWorkspace(
                     workspace_id=workspace_info["id"],
@@ -562,7 +569,6 @@ class Rcc(object):
     def cloud_list_workspace_robots(
         self, workspace_id: str
     ) -> ActionResult[List[IRccRobotMetadata]]:
-        import json
 
         ret: List[IRccRobotMetadata] = []
         args = ["cloud", "workspace"]
@@ -599,11 +605,24 @@ class Rcc(object):
             return ActionResult(False, msg)
 
         for activity_info in workspace_info.get("activities", []):
-            ret.append(
-                RccRobotMetadata(
-                    robot_id=activity_info["id"], robot_name=activity_info["name"]
+            try:
+                robot_id = activity_info["id"]
+                robot_name = activity_info["name"]
+            except:
+                log.critical(
+                    f"Error getting robot id/name from {args}:\nOutput:\n{output}"
                 )
-            )
+                continue
+
+            if robot_id is None:
+                log.critical(f"Robot id not available in {args}:\nOutput:\n{output}")
+                continue
+
+            if robot_name is None:
+                log.critical(f"Robot name not available in {args}:\nOutput:\n{output}")
+                robot_name = "Robot name unavailable"
+
+            ret.append(RccRobotMetadata(robot_id=robot_id, robot_name=robot_name))
         return ActionResult(True, None, ret)
 
     @implements(IRcc.cloud_set_robot_contents)
