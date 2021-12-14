@@ -1,3 +1,9 @@
+New in 0.33.0 (2021-12-14)
+-----------------------------
+
+- PYTHONPATH entries passed as -P to libdoc are now normalized (fixes issues passing entries which could end with `/.`).
+
+
 New in 0.32.0 (2021-12-05)
 -----------------------------
 

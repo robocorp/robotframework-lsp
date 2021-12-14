@@ -183,7 +183,7 @@ How to configure the launch from a code lens/shortcut?
 ------------------------------------------------------
 
 To configure the launch from a code lens/shortcut, please create a launch
-configuration named `Robot Framework: Launch template` in `.vscode/launch.json`.
+configuration named `Robot Framework: Launch template`.
 
 i.e.: To configure the terminal to be an `integrated` terminal on all launches
 and to specify all launches to have an additional `--argumentfile /path/to/arguments.txt`,
@@ -203,6 +203,26 @@ it's possible to create a `.vscode/launch.json` such as:
     ]
 }
 ```
+
+Note: alternatively it's also possible to create the `launch` configuration
+in the user or workspace-settings by creating an entry such as the one below
+in (user or workspace) `settings.json`:
+
+
+```
+    "launch": {
+        "configurations": [
+            {
+                "type": "robotframework-lsp",
+                "name": "Robot Framework: Launch Template",
+                "request": "launch",
+                "terminal": "integrated",
+                "args": ["--argumentfile", "/path/to/arguments.txt"]
+            }
+        ],
+    }
+```
+
 
 How to use variables in settings?
 ----------------------------------

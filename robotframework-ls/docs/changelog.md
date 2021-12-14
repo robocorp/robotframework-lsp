@@ -1,3 +1,11 @@
+New in 0.33.0 (2021-12-14)
+-----------------------------
+
+- PYTHONPATH entries passed as -P to libdoc are now normalized (fixes issues passing entries which could end with `/.`).
+
+- Code-lens launch templates may be specified through a `launch` configuration in the settings.
+
+
 New in 0.32.0 (2021-12-05)
 -----------------------------
 
