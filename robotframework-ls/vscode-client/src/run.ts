@@ -52,46 +52,33 @@ async function checkFileExists(file) {
         .catch(() => false);
 }
 
-async function readAllDebugConfigs(workspaceFolder: WorkspaceFolder): Promise<DebugConfiguration[]> {
-    const launch = workspace.getConfiguration("launch");
-    const configs = launch.inspect<DebugConfiguration[]>("configurations")?.globalValue;
-    if (configs) return configs;
-
-    const filename = path.join(workspaceFolder.uri.fsPath, ".vscode", "launch.json");
-    if (!(await checkFileExists(filename))) {
-        return [];
-    }
-
-    try {
-        const text: string = await fs.promises.readFile(filename, "utf-8");
-        const parsed = parse(text, [], { allowTrailingComma: true, disallowComments: false });
-        if (!parsed.configurations || !Array.isArray(parsed.configurations)) {
-            throw Error("Missing field in launch.json: configurations");
-        }
-        if (!parsed.version) {
-            throw Error("Missing field in launch.json: version");
-        }
-        // We do not bother ensuring each item is a DebugConfiguration...
-        return parsed.configurations;
-    } catch (exc) {
-        logError(
-            "Error reading debug configurations to find the code-lens template.\nlaunch.json target: " + filename,
-            exc,
-            "RUN_READ_DEBUG_CONFIG"
-        );
-        return [];
-    }
-}
-
 async function readLaunchTemplate(workspaceFolder: WorkspaceFolder): Promise<DebugConfiguration | undefined> {
-    const configs = await readAllDebugConfigs(workspaceFolder);
-    for (const cfg of configs) {
-        if (
-            cfg.type == "robotframework-lsp" &&
-            cfg.name &&
-            cfg.name.toLowerCase() == "robot framework: launch template"
-        ) {
-            return cfg as DebugConfiguration;
+    const launch = workspace.getConfiguration("launch");
+    const launchConfigurations = launch.inspect<DebugConfiguration[]>("configurations");
+    if (launchConfigurations) {
+        let configs = launchConfigurations.workspaceValue;
+        if (configs) {
+            for (const cfg of configs) {
+                if (
+                    cfg.type == "robotframework-lsp" &&
+                    cfg.name &&
+                    cfg.name.toLowerCase() == "robot framework: launch template"
+                ) {
+                    return cfg as DebugConfiguration;
+                }
+            }
+        }
+        configs = launchConfigurations.globalValue;
+        if (configs) {
+            for (const cfg of configs) {
+                if (
+                    cfg.type == "robotframework-lsp" &&
+                    cfg.name &&
+                    cfg.name.toLowerCase() == "robot framework: launch template"
+                ) {
+                    return cfg as DebugConfiguration;
+                }
+            }
         }
     }
     return undefined;
