@@ -106,21 +106,6 @@ export class RobotSelectionTreeDataProviderBase implements vscode.TreeDataProvid
         }
     }
 
-    async onTreeSelectionChanged(robotContentTree: vscode.TreeView<FSEntry>) {
-        let selection = robotContentTree.selection;
-        if (selection.length == 1) {
-            let entry: FSEntry = selection[0];
-            if (entry.filePath && !entry.isDirectory) {
-                let uri = vscode.Uri.file(entry.filePath);
-                if (entry.filePath.endsWith(".html")) {
-                    vscode.env.openExternal(uri);
-                } else {
-                    await vscode.commands.executeCommand("vscode.open", uri);
-                }
-            }
-        }
-    }
-
     async getChildren(element: FSEntry): Promise<FSEntry[]> {
         throw new Error("Not implemented");
     }
@@ -139,9 +124,28 @@ export class RobotSelectionTreeDataProviderBase implements vscode.TreeDataProvid
         } else if (element.isDirectory) {
             treeItem.iconPath = vscode.ThemeIcon.Folder;
             treeItem.resourceUri = vscode.Uri.file(element.filePath);
+            treeItem.contextValue = "directoryItem";
         } else {
             treeItem.iconPath = vscode.ThemeIcon.File;
             treeItem.resourceUri = vscode.Uri.file(element.filePath);
+            treeItem.contextValue = "fileItem";
+
+            let uri = treeItem.resourceUri;
+            if (element.filePath) {
+                if (element.filePath.endsWith(".html")) {
+                    treeItem.command = {
+                        "title": "Open in external browser",
+                        "command": "robocorp.openCustom",
+                        arguments: [element],
+                    };
+                } else {
+                    treeItem.command = {
+                        "title": "Open in VSCode",
+                        "command": "vscode.open",
+                        arguments: [uri],
+                    };
+                }
+            }
         }
         return treeItem;
     }

@@ -233,7 +233,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                 let added: boolean = false;
                 for (const label of [
                     "No robots found.",
-                    "To get started:",
+                    "Three ways to get started:",
                     "➔ Run the “Robocorp: Create Robot” action",
                     "➔ Open a robot folder (with a “robot.yaml” file)",
                     "➔ Open a parent folder (with multiple robots)",
@@ -583,11 +583,6 @@ export function registerViews(context: ExtensionContext) {
         onSelectedRobotChanged((e) => robotContentTreeDataProvider.onRobotsTreeSelectionChanged(e))
     );
     context.subscriptions.push(
-        robotContentTree.onDidChangeSelection(async function () {
-            await robotContentTreeDataProvider.onTreeSelectionChanged(robotContentTree);
-        })
-    );
-    context.subscriptions.push(
         robotContentTreeDataProvider.onForceSelectionFromTreeData(
             async (e) => await onChangedRobotSelection(robotsTree, robotsTreeDataProvider, robotsTree.selection)
         )
@@ -613,12 +608,6 @@ export function registerViews(context: ExtensionContext) {
     treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE, workItemsTreeDataProvider);
     context.subscriptions.push(
         onSelectedRobotChanged((e) => workItemsTreeDataProvider.onRobotsTreeSelectionChanged(e))
-    );
-
-    context.subscriptions.push(
-        workItemsTree.onDidChangeSelection(async function () {
-            await workItemsTreeDataProvider.onTreeSelectionChanged(workItemsTree);
-        })
     );
 
     let robotsWatcher: vscode.FileSystemWatcher = vscode.workspace.createFileSystemWatcher("**/robot.yaml");

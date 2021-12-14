@@ -235,16 +235,4 @@ export class RobotContentTreeDataProvider extends RobotSelectionTreeDataProvider
             return ret;
         }
     }
-
-    getTreeItem(element: FSEntry): TreeItem {
-        let item = super.getTreeItem(element);
-        if (element?.filePath) {
-            if (element.isDirectory) {
-                item.contextValue = "directoryItem";
-            } else {
-                item.contextValue = "fileItem";
-            }
-        }
-        return item;
-    }
 }
