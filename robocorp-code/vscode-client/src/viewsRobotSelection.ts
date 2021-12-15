@@ -135,7 +135,7 @@ export class RobotSelectionTreeDataProviderBase implements vscode.TreeDataProvid
                 if (element.filePath.endsWith(".html")) {
                     treeItem.command = {
                         "title": "Open in external browser",
-                        "command": "robocorp.openCustom",
+                        "command": "robocorp.openExternally",
                         arguments: [element],
                     };
                 } else {
