@@ -15,7 +15,7 @@ New in 0.21.0 (2021-12-14)
   - Context menu filled with actions.
   
 - Robot content view:
-  - When an html selected, it's opened in an external browser by default.
+  - When an html file is selected, it's opened in an external browser by default.
   - Added option to reveal in explorer.
   - Context menu filled with actions to open file externally or internally.
   - When clicking an item, it's opened even if already selected.
