@@ -15,6 +15,7 @@ import { commands, ExtensionContext, window } from "vscode";
 import * as vscode from "vscode";
 import { LanguageClient } from "vscode-languageclient/node";
 import { logError, OUTPUT_CHANNEL } from "../channel";
+import { languageServerClient } from "../extension";
 
 const RF_INTERACTIVE_LOCAL_RESOURCE_ROOT = process.env.RF_INTERACTIVE_LOCAL_RESOURCE_ROOT;
 
@@ -330,7 +331,7 @@ interface _InteractiveShellEvaluateArgs {
     code: string;
 }
 
-export async function registerInteractiveCommands(context: ExtensionContext, languageClient: LanguageClient) {
+export async function registerInteractiveCommands(context: ExtensionContext) {
     let extensionUri = context.extensionUri;
 
     async function interactiveShellCreateOrSendContentToEvaluate(args: undefined | _InteractiveShellEvaluateArgs) {
@@ -369,7 +370,13 @@ export async function registerInteractiveCommands(context: ExtensionContext, lan
             }
         }
 
-        let disposeNotification = languageClient.onNotification("interpreter/output", (args) => {
+        if (languageServerClient === undefined) {
+            window.showErrorMessage(
+                "Unable to create interactive console because the language server is not currently initialized."
+            );
+            return;
+        }
+        let disposeNotification = languageServerClient.onNotification("interpreter/output", (args) => {
             if (buffered !== undefined) {
                 buffered.push(args);
             } else {

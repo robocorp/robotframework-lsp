@@ -23,17 +23,16 @@ import * as net from "net";
 import * as path from "path";
 import * as fs from "fs";
 import * as vscode from "vscode";
+import * as cp from "child_process";
 
 import {
     workspace,
-    Disposable,
     ExtensionContext,
     window,
     commands,
     ConfigurationTarget,
     debug,
     DebugAdapterExecutable,
-    ProviderResult,
     DebugConfiguration,
     WorkspaceFolder,
     CancellationToken,
@@ -49,6 +48,7 @@ import { registerLinkProviders } from "./linkProvider";
 import { expandVars, getArrayStrFromConfigExpandingVars, getStrFromConfigExpandingVars } from "./expandVars";
 import { registerInteractiveCommands } from "./interactive/rfInteractive";
 import { errorFeedback, logError, OUTPUT_CHANNEL } from "./channel";
+import { Mutex } from "./mutex";
 
 interface ExecuteWorkspaceCommandArgs {
     command: string;
@@ -65,36 +65,6 @@ function createClientOptions(initializationOptions: object): LanguageClientOptio
         initializationOptions: initializationOptions,
     };
     return clientOptions;
-}
-
-function startLangServerIO(command: string, args: string[], initializationOptions: object): LanguageClient {
-    const serverOptions: ServerOptions = {
-        command,
-        args,
-    };
-    let src: string = path.resolve(__dirname, "../../src");
-    serverOptions.options = { env: { ...process.env, PYTHONPATH: src } };
-    // See: https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
-    return new LanguageClient(command, serverOptions, createClientOptions(initializationOptions));
-}
-
-function startLangServerTCP(addr: number, initializationOptions: object): LanguageClient {
-    const serverOptions: ServerOptions = function () {
-        return new Promise((resolve, reject) => {
-            var client = new net.Socket();
-            client.connect(addr, "127.0.0.1", function () {
-                resolve({
-                    reader: client,
-                    writer: client,
-                });
-            });
-        });
-    };
-    return new LanguageClient(
-        `tcp lang server (port ${addr})`,
-        serverOptions,
-        createClientOptions(initializationOptions)
-    );
 }
 
 function findExecutableInPath(executable: string) {
@@ -221,7 +191,7 @@ interface InterpreterInfo {
     additionalPythonpathEntries: string[];
 }
 
-function registerDebugger(languageServerExecutable: string) {
+function registerDebugger() {
     async function createDebugAdapterExecutable(
         env: { [key: string]: string },
         targetRobot: string
@@ -252,13 +222,13 @@ function registerDebugger(languageServerExecutable: string) {
 
         if (!dapPythonExecutable) {
             // If the dapPythonExecutable is not specified, use the default language server executable.
-            if (!languageServerExecutable) {
+            if (!lastLanguageServerExecutable) {
                 window.showWarningMessage(
                     "Error getting language server python executable for creating a debug adapter."
                 );
                 return;
             }
-            dapPythonExecutable = languageServerExecutable;
+            dapPythonExecutable = lastLanguageServerExecutable;
         }
 
         let targetMain: string = path.resolve(__dirname, "../../src/robotframework_debug_adapter/__main__.py");
@@ -371,196 +341,316 @@ async function getDefaultLanguageServerPythonExecutable(): Promise<ExecutableAnd
     }
 }
 
-export async function activate(context: ExtensionContext) {
-    try {
-        // The first thing we need is the python executable.
-        let timing = new Timing();
-        let executableAndMessage = await getDefaultLanguageServerPythonExecutable();
-        if (executableAndMessage.message) {
-            OUTPUT_CHANNEL.appendLine(executableAndMessage.message);
+/**
+ * This function is responsible for collecting the needed settings and then
+ * starting the language server process (or connecting to the specified
+ * tcp port).
+ */
+const serverOptions: ServerOptions = async function () {
+    let executableAndMessage = await getDefaultLanguageServerPythonExecutable();
+    if (executableAndMessage.message) {
+        OUTPUT_CHANNEL.appendLine(executableAndMessage.message);
 
-            let saveInUser: string = "Yes (save in user settings)";
-            let saveInWorkspace: string = "Yes (save in workspace settings)";
+        let saveInUser: string = "Yes (save in user settings)";
+        let saveInWorkspace: string = "Yes (save in workspace settings)";
 
-            let selection = await window.showWarningMessage(
-                executableAndMessage.message,
-                ...[saveInUser, saveInWorkspace, "No"]
-            );
-            // robot.language-server.python
-            if (selection == saveInUser || selection == saveInWorkspace) {
-                let onfulfilled = await window.showOpenDialog({
-                    "canSelectMany": false,
-                    "openLabel": "Select python exe",
-                });
-                if (!onfulfilled || onfulfilled.length == 0) {
-                    // There's not much we can do (besides start listening to changes to the related variables
-                    // on the finally block so that we start listening and ask for a reload if a related configuration changes).
-                    OUTPUT_CHANNEL.appendLine("Unable to start (python selection cancelled).");
-                    return;
-                }
-
-                let configurationTarget: ConfigurationTarget;
-                if (selection == saveInUser) {
-                    configurationTarget = ConfigurationTarget.Global;
-                } else {
-                    configurationTarget = ConfigurationTarget.Workspace;
-                }
-
-                let config = workspace.getConfiguration("robot");
-                try {
-                    config.update("language-server.python", onfulfilled[0].fsPath, configurationTarget);
-                } catch (err) {
-                    let errorMessage = "Error persisting python to start the language server.\nError: " + err.message;
-                    logError("Error persisting python to start the language server.", err, "EXT_SAVE_LS_PYTHON");
-
-                    if (configurationTarget == ConfigurationTarget.Workspace) {
-                        try {
-                            config.update("language-server.python", onfulfilled[0].fsPath, ConfigurationTarget.Global);
-                            window.showInformationMessage(
-                                "It was not possible to save the configuration in the workspace. It was saved in the user settings instead."
-                            );
-                            err = undefined;
-                        } catch (err2) {
-                            // ignore this one (show original error).
-                        }
-                    }
-                    if (err !== undefined) {
-                        window.showErrorMessage(errorMessage);
-                    }
-                }
-                executableAndMessage = { "executable": onfulfilled[0].fsPath, message: undefined };
-            } else {
+        let selection = await window.showWarningMessage(
+            executableAndMessage.message,
+            ...[saveInUser, saveInWorkspace, "No"]
+        );
+        // robot.language-server.python
+        if (selection == saveInUser || selection == saveInWorkspace) {
+            let onfulfilled = await window.showOpenDialog({
+                "canSelectMany": false,
+                "openLabel": "Select python exe",
+            });
+            if (!onfulfilled || onfulfilled.length == 0) {
                 // There's not much we can do (besides start listening to changes to the related variables
                 // on the finally block so that we start listening and ask for a reload if a related configuration changes).
-                OUTPUT_CHANNEL.appendLine("Unable to start (no python executable specified).");
-                errorFeedback("EXT_NO_PYEXE");
-                return;
+                let msg = "Unable to start (python selection cancelled).";
+                OUTPUT_CHANNEL.appendLine(msg);
+                throw new Error(msg);
             }
+
+            let configurationTarget: ConfigurationTarget;
+            if (selection == saveInUser) {
+                configurationTarget = ConfigurationTarget.Global;
+            } else {
+                configurationTarget = ConfigurationTarget.Workspace;
+            }
+
+            let config = workspace.getConfiguration("robot");
+            try {
+                config.update("language-server.python", onfulfilled[0].fsPath, configurationTarget);
+            } catch (err) {
+                let errorMessage = "Error persisting python to start the language server.\nError: " + err.message;
+                logError("Error persisting python to start the language server.", err, "EXT_SAVE_LS_PYTHON");
+
+                if (configurationTarget == ConfigurationTarget.Workspace) {
+                    try {
+                        config.update("language-server.python", onfulfilled[0].fsPath, ConfigurationTarget.Global);
+                        window.showInformationMessage(
+                            "It was not possible to save the configuration in the workspace. It was saved in the user settings instead."
+                        );
+                        err = undefined;
+                    } catch (err2) {
+                        // ignore this one (show original error).
+                    }
+                }
+                if (err !== undefined) {
+                    window.showErrorMessage(errorMessage);
+                }
+            }
+            executableAndMessage = { "executable": onfulfilled[0].fsPath, message: undefined };
+        } else {
+            // There's not much we can do (besides start listening to changes to the related variables
+            // on the finally block so that we start listening and ask for a reload if a related configuration changes).
+            // At this point, already start listening for changes to reload.
+            let msg = "Unable to start (no python executable specified).";
+            OUTPUT_CHANNEL.appendLine(msg);
+            errorFeedback("EXT_NO_PYEXE");
+            throw new Error(msg);
+        }
+    }
+
+    // Note: we need it even in the case we're connecting to a socket (to make launches with the DAP).
+    lastLanguageServerExecutable = executableAndMessage.executable;
+
+    let port: number = workspace.getConfiguration("robot").get<number>("language-server.tcp-port");
+    if (port) {
+        OUTPUT_CHANNEL.appendLine("Connecting to port: " + port);
+        var client = new net.Socket();
+        return await new Promise((resolve, reject) => {
+            client.connect(port, "127.0.0.1", function () {
+                resolve({
+                    reader: client,
+                    writer: client,
+                });
+            });
+        });
+    } else {
+        let targetMain: string = path.resolve(__dirname, "../../src/robotframework_ls/__main__.py");
+        if (!fs.existsSync(targetMain)) {
+            let msg = `Error. Expected: ${targetMain} to exist.`;
+            window.showWarningMessage(msg);
+            errorFeedback("EXT_NO_MAIN");
+            throw new Error(msg);
         }
 
-        let port: number = workspace.getConfiguration("robot").get<number>("language-server.tcp-port");
-        let langServer: LanguageClient;
+        let args: Array<string> = ["-u", targetMain];
+        let lsArgs = workspace.getConfiguration("robot").get<Array<string>>("language-server.args");
+        if (lsArgs) {
+            args = args.concat(lsArgs);
+        }
+        OUTPUT_CHANNEL.appendLine(
+            "Starting RobotFramework Language Server with args: " + executableAndMessage.executable + "," + args
+        );
 
-        let initializationOptions: object = {};
+        let src: string = path.resolve(__dirname, "../../src");
+        const serverProcess = cp.spawn(executableAndMessage.executable, args, {
+            env: { ...process.env, PYTHONPATH: src },
+        });
+        if (!serverProcess || !serverProcess.pid) {
+            throw new Error(
+                `Launching server using command ${executableAndMessage.executable} with args: ${args} failed.`
+            );
+        }
+        return serverProcess;
+    }
+};
+
+/**
+ * Registers listeners which should act on $/customProgress and $/executeWorkspaceCommand.
+ */
+async function registerLanguageServerListeners(langServer: LanguageClient) {
+    let stopListeningOnDidChangeState = langServer.onDidChangeState((event) => {
+        if (event.newState == State.Running) {
+            // i.e.: We need to register the customProgress as soon as it's running (we can't wait for onReady)
+            // because at that point if there are open documents, lots of things may've happened already, in
+            // which case the progress won't be shown on some cases where it should be shown.
+            extensionContext.subscriptions.push(
+                langServer.onNotification("$/customProgress", (args: ProgressReport) => {
+                    // OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
+                    handleProgressMessage(args);
+                })
+            );
+            extensionContext.subscriptions.push(
+                langServer.onRequest("$/executeWorkspaceCommand", async (args: ExecuteWorkspaceCommandArgs) => {
+                    // OUTPUT_CHANNEL.appendLine(args.command + " - " + args.arguments);
+                    let ret;
+                    try {
+                        ret = await commands.executeCommand(args.command, args.arguments);
+                    } catch (err) {
+                        if (!(err.message && err.message.endsWith("not found"))) {
+                            // Log if the error wasn't that the command wasn't found
+                            logError("Error executing workspace command.", err, "EXT_EXECUTE_WS_COMMAND");
+                        }
+                    }
+                    return ret;
+                })
+            );
+            stopListeningOnDidChangeState.dispose();
+        }
+    });
+}
+
+async function startLanguageServer(): Promise<LanguageClient> {
+    let timing = new Timing();
+    let langServer: LanguageClient;
+    let initializationOptions: object = {};
+    try {
+        let pluginsDir: string = await commands.executeCommand<string>("robocorp.getPluginsDir");
         try {
-            let pluginsDir: string = await commands.executeCommand<string>("robocorp.getPluginsDir");
-            try {
-                if (pluginsDir && pluginsDir.length > 0) {
-                    OUTPUT_CHANNEL.appendLine("Plugins dir: " + pluginsDir + ".");
-                    initializationOptions["pluginsDir"] = pluginsDir;
-                }
-            } catch (error) {
-                logError("Error setting pluginsDir.", error, "EXT_PLUGINS_DIR");
+            if (pluginsDir && pluginsDir.length > 0) {
+                OUTPUT_CHANNEL.appendLine("Plugins dir: " + pluginsDir + ".");
+                initializationOptions["pluginsDir"] = pluginsDir;
             }
         } catch (error) {
-            // The command may not be available.
+            logError("Error setting pluginsDir.", error, "EXT_PLUGINS_DIR");
         }
+    } catch (error) {
+        // The command may not be available.
+    }
 
-        if (port) {
-            // For TCP server needs to be started seperately
-            OUTPUT_CHANNEL.appendLine("Connecting to port: " + port);
-            langServer = startLangServerTCP(port, initializationOptions);
-        } else {
-            let targetMain: string = path.resolve(__dirname, "../../src/robotframework_ls/__main__.py");
-            if (!fs.existsSync(targetMain)) {
-                window.showWarningMessage("Error. Expected: " + targetMain + " to exist.");
-                errorFeedback("EXT_NO_MAIN");
-                return;
-            }
+    langServer = new LanguageClient(
+        "Robot Framework Language Server",
+        serverOptions,
+        createClientOptions(initializationOptions)
+    );
 
-            let args: Array<string> = ["-u", targetMain];
-            let lsArgs = workspace.getConfiguration("robot").get<Array<string>>("language-server.args");
-            if (lsArgs) {
-                args = args.concat(lsArgs);
-            }
-            OUTPUT_CHANNEL.appendLine(
-                "Starting RobotFramework Language Server with args: " + executableAndMessage.executable + "," + args
+    // Important: register listeners before starting (otherwise startup progress is not shown).
+    await registerLanguageServerListeners(langServer);
+
+    extensionContext.subscriptions.push(langServer.start());
+
+    // i.e.: if we return before it's ready, the language server commands
+    // may not be available.
+    OUTPUT_CHANNEL.appendLine("Waiting for RobotFramework (python) Language Server to finish activating...");
+    await langServer.onReady();
+
+    let version = extensions.getExtension("robocorp.robotframework-lsp").packageJSON.version;
+    try {
+        let lsVersion = await commands.executeCommand("robot.getLanguageServerVersion");
+        if (lsVersion != version) {
+            window.showErrorMessage(
+                "Error: expected robotframework-lsp version: " +
+                    version +
+                    ". Found: " +
+                    lsVersion +
+                    "." +
+                    " Please uninstall the older version from the python environment."
             );
-            langServer = startLangServerIO(executableAndMessage.executable, args, initializationOptions);
         }
-        let stopListeningOnDidChangeState = langServer.onDidChangeState((event) => {
-            if (event.newState == State.Running) {
-                // i.e.: We need to register the customProgress as soon as it's running (we can't wait for onReady)
-                // because at that point if there are open documents, lots of things may've happened already, in
-                // which case the progress won't be shown on some cases where it should be shown.
-                context.subscriptions.push(
-                    langServer.onNotification("$/customProgress", (args: ProgressReport) => {
-                        // OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
-                        handleProgressMessage(args);
-                    })
-                );
-                context.subscriptions.push(
-                    langServer.onRequest("$/executeWorkspaceCommand", async (args: ExecuteWorkspaceCommandArgs) => {
-                        // OUTPUT_CHANNEL.appendLine(args.command + " - " + args.arguments);
-                        let ret;
+    } catch (err) {
+        let msg =
+            "Error: robotframework-lsp version mismatch. Please uninstall the older version from the python environment.";
+        logError(msg, err, "EXT_VERSION_MISMATCH");
+        window.showErrorMessage(msg);
+    }
+
+    OUTPUT_CHANNEL.appendLine("RobotFramework Language Server ready. Took: " + timing.getTotalElapsedAsStr());
+    return langServer;
+}
+
+export let languageServerClient: LanguageClient | undefined = undefined;
+let languageServerClientMutex: Mutex = new Mutex();
+let extensionContext: ExtensionContext | undefined = undefined;
+let lastLanguageServerExecutable: string | undefined = undefined;
+
+async function restartLanguageServer() {
+    await languageServerClientMutex.dispatch(async () => {
+        let title = "Robot Framework Language Server loading ...";
+        if (languageServerClient !== undefined) {
+            title = "Robot Framework Language Server reloading ...";
+        }
+        await window.withProgress(
+            {
+                location: vscode.ProgressLocation.Window,
+                title: title,
+                cancellable: false,
+            },
+            async () => {
+                if (languageServerClient !== undefined) {
+                    try {
+                        // In this case, just restart (it should get the new settings automatically).
+                        let timing = new Timing();
+                        OUTPUT_CHANNEL.appendLine("Restarting Robot Framework Language Server.");
+
                         try {
-                            ret = await commands.executeCommand(args.command, args.arguments);
+                            await languageServerClient.stop();
                         } catch (err) {
-                            if (!(err.message && err.message.endsWith("not found"))) {
-                                // Log if the error wasn't that the command wasn't found
-                                logError("Error executing workspace command.", err, "EXT_EXECUTE_WS_COMMAND");
-                            }
+                            logError("Error stopping language server.", err, "EXT_STOP_ROBOT_LS");
                         }
-                        return ret;
-                    })
-                );
-                stopListeningOnDidChangeState.dispose();
-            }
-        });
-        let disposable: Disposable = langServer.start();
-        registerDebugger(executableAndMessage.executable);
-        await registerRunCommands(context);
-        await registerLinkProviders(context);
-        await registerInteractiveCommands(context, langServer);
-        context.subscriptions.push(disposable);
+                        languageServerClient.start();
+                        await languageServerClient.onReady();
+                        OUTPUT_CHANNEL.appendLine(
+                            "RobotFramework Language Server restarted. Took: " + timing.getTotalElapsedAsStr()
+                        );
+                    } catch (err) {
+                        logError("Error restarting language server.", err, "EXT_RESTART_ROBOT_LS");
+                        // If it fails once it'll never work again -- it seems it caches our failure :(
+                        // See: https://github.com/microsoft/vscode-languageserver-node/issues/872
+                        window
+                            .showWarningMessage(
+                                'There was an error reloading the Robot Framework Language Server. Please use the "Reload Window" action to apply the new settings.',
+                                ...["Reload Window"]
+                            )
+                            .then((selection) => {
+                                if (selection === "Reload Window") {
+                                    commands.executeCommand("workbench.action.reloadWindow");
+                                }
+                            });
+                        return;
+                    }
 
-        // i.e.: if we return before it's ready, the language server commands
-        // may not be available.
-        OUTPUT_CHANNEL.appendLine("Waiting for RobotFramework (python) Language Server to finish activating...");
-        await langServer.onReady();
-
-        let version = extensions.getExtension("robocorp.robotframework-lsp").packageJSON.version;
-        try {
-            let lsVersion = await commands.executeCommand("robot.getLanguageServerVersion");
-            if (lsVersion != version) {
-                window.showErrorMessage(
-                    "Error: expected robotframework-lsp version: " +
-                        version +
-                        ". Found: " +
-                        lsVersion +
-                        "." +
-                        " Please uninstall the older version from the python environment."
-                );
-            }
-        } catch (err) {
-            let msg =
-                "Error: robotframework-lsp version mismatch. Please uninstall the older version from the python environment.";
-            logError(msg, err, "EXT_VERSION_MISMATCH");
-            window.showErrorMessage(msg);
-        }
-
-        OUTPUT_CHANNEL.appendLine("RobotFramework Language Server ready. Took: " + timing.getTotalElapsedAsStr());
-    } finally {
-        workspace.onDidChangeConfiguration((event) => {
-            for (let s of [
-                "robot.language-server.python",
-                "robot.language-server.tcp-port",
-                "robot.language-server.args",
-            ]) {
-                if (event.affectsConfiguration(s)) {
-                    window
-                        .showWarningMessage(
-                            'Please use the "Reload Window" action for changes in ' + s + " to take effect.",
-                            ...["Reload Window"]
-                        )
-                        .then((selection) => {
-                            if (selection === "Reload Window") {
-                                commands.executeCommand("workbench.action.reloadWindow");
-                            }
-                        });
+                    window.showInformationMessage("Robot Framework Language Server reloaded with new settings.");
                     return;
                 }
+
+                // If we get here, this means it never really did start correctly (hopefully it'll work now with the new settings)...
+                try {
+                    // Note: assign to module variable.
+                    languageServerClient = await startLanguageServer();
+                    window.showInformationMessage("Robot Framework Language Server started with the new settings.");
+                } catch (err) {
+                    const msg =
+                        "It was not possible to start the Robot Framework Language Server. Please update the related `robot.language-server` configurations.";
+                    logError(msg, err, "EXT_UNABLE_TO_START_2");
+                    window.showErrorMessage(msg);
+                }
             }
-        });
+        );
+    });
+}
+
+export async function activate(context: ExtensionContext) {
+    extensionContext = context;
+
+    registerDebugger();
+    await registerRunCommands(context);
+    await registerLinkProviders(context);
+    await registerInteractiveCommands(context);
+
+    workspace.onDidChangeConfiguration((event) => {
+        for (let s of [
+            "robot.language-server.python",
+            "robot.language-server.tcp-port",
+            "robot.language-server.args",
+        ]) {
+            if (event.affectsConfiguration(s)) {
+                restartLanguageServer();
+                break;
+            }
+        }
+    });
+
+    try {
+        // Note: assign to module variable.
+        languageServerClient = await startLanguageServer();
+    } catch (err) {
+        const msg =
+            "It was not possible to start the Robot Framework Language Server. Please update the related `robot.language-server` configurations.";
+        logError(msg, err, "EXT_UNABLE_TO_START");
+        window.showErrorMessage(msg);
     }
 }

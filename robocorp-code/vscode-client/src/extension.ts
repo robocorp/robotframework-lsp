@@ -519,7 +519,6 @@ let langServer: LanguageClient;
 
 export async function activate(context: ExtensionContext) {
     let timing = new Timing();
-    // The first thing we need is the python executable.
     OUTPUT_CHANNEL.appendLine("Activating Robocorp Code extension.");
     let C = new CommandRegistry(context);
 
