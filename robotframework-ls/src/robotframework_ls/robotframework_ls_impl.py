@@ -331,6 +331,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         return server_capabilities
 
     def m_workspace__execute_command(self, command=None, arguments=()) -> Any:
+        from robotframework_ls.commands import ROBOT_GET_RFLS_HOME_DIR
+
         if command == "robot.addPluginsDir":
             directory: str = arguments[0]
             assert os.path.isdir(directory), f"Expected: {directory} to be a directory."
@@ -376,6 +378,11 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         elif command == "robot.getLanguageServerVersion":
             return __version__
+
+        elif command == ROBOT_GET_RFLS_HOME_DIR:
+            from robotframework_ls import robot_config
+
+            return robot_config.get_robotframework_ls_home()
 
         elif command.startswith("robot.internal.rfinteractive."):
             return rf_interactive_integration.execute_command(

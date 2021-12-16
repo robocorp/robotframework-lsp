@@ -43,7 +43,9 @@
         "onCommand:robot.internal.rfinteractive.evaluate",
         "onCommand:robot.internal.rfinteractive.stop",
         "onCommand:robot.internal.rfinteractive.semanticTokens",
-        "onCommand:robot.internal.rfinteractive.completions"
+        "onCommand:robot.internal.rfinteractive.completions",
+        "onCommand:robot.getRFLSHomeDir",
+        "onCommand:robot.clearCachesAndRestartProcesses"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -105,6 +107,16 @@
                 "command": "robot.internal.rfinteractive.completions",
                 "title": "Get the completions based on the code entered.",
                 "category": "Robot Framework"
+            },
+            {
+                "command": "robot.getRFLSHomeDir",
+                "title": "Provides the directory used to store information (usually ~/.robotframework-ls -- may be configured with `ROBOTFRAMEWORK_LS_USER_HOME` environment variable).",
+                "category": "Robot Framework"
+            },
+            {
+                "command": "robot.clearCachesAndRestartProcesses",
+                "title": "Clear caches and restart Robot Framework Language Server processes",
+                "category": "Robot Framework"
             }
         ],
         "menus": {
@@ -155,6 +167,10 @@
                 },
                 {
                     "command": "robot.internal.rfinteractive.completions",
+                    "when": "false"
+                },
+                {
+                    "command": "robot.getRFLSHomeDir",
                     "when": "false"
                 }
             ]

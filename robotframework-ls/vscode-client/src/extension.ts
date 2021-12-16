@@ -49,6 +49,8 @@ import { expandVars, getArrayStrFromConfigExpandingVars, getStrFromConfigExpandi
 import { registerInteractiveCommands } from "./interactive/rfInteractive";
 import { errorFeedback, logError, OUTPUT_CHANNEL } from "./channel";
 import { Mutex } from "./mutex";
+import { fileExists } from "./files";
+import { Stats } from "fs";
 
 interface ExecuteWorkspaceCommandArgs {
     command: string;
@@ -623,9 +625,98 @@ async function restartLanguageServer() {
     });
 }
 
+async function removeCaches(dirPath: string, level: number, removeDirsArray: string[]) {
+    let dirContents = await fs.promises.readdir(dirPath, { withFileTypes: true });
+
+    for await (const dirEnt of dirContents) {
+        var entryPath = path.join(dirPath, dirEnt.name);
+
+        if (dirEnt.isDirectory()) {
+            await removeCaches(entryPath, level + 1, removeDirsArray);
+            removeDirsArray.push(entryPath);
+        } else {
+            try {
+                await fs.promises.unlink(entryPath);
+                OUTPUT_CHANNEL.appendLine(`Removed: ${entryPath}.`);
+            } catch (err) {
+                OUTPUT_CHANNEL.appendLine(`Unable to remove: ${entryPath}. ${err}`);
+            }
+        }
+    }
+
+    if (level === 0) {
+        // Remove the (empty) directories only after all iterations finished.
+        for (const entryPath of removeDirsArray) {
+            try {
+                await fs.promises.rmdir(entryPath);
+                OUTPUT_CHANNEL.appendLine(`Removed dir: ${entryPath}.`);
+            } catch (err) {
+                OUTPUT_CHANNEL.appendLine(`Unable to remove dir: ${entryPath}. ${err}`);
+            }
+        }
+    }
+}
+
+async function clearCachesAndRestartProcesses() {
+    if (languageServerClient === undefined) {
+        window.showErrorMessage(
+            "Unable to clear caches and restart because the language server still hasn't been successfully started."
+        );
+        return;
+    }
+
+    let homeDir: string;
+    try {
+        homeDir = await commands.executeCommand("robot.getRFLSHomeDir");
+    } catch (err) {
+        let msg = "Unable to clear caches and restart because calling robot.getRFLSHomeDir threw an exception.";
+        window.showErrorMessage(msg);
+        logError(msg, err, "EXT_GET_HOMEDIR");
+        return;
+    }
+
+    await window.withProgress(
+        {
+            location: vscode.ProgressLocation.Window,
+            title: "Clearing caches and restarting Robot Framework Language Server.",
+            cancellable: false,
+        },
+        async () => {
+            try {
+                await languageServerClient.stop();
+            } catch (err) {
+                logError("Error stopping language server.", err, "EXT_STOP_LS_ON_CLEAR_RESTART");
+            }
+            if (await fileExists(homeDir)) {
+                await removeCaches(homeDir, 0, []);
+            }
+            try {
+                await languageServerClient.start();
+            } catch (err) {
+                logError("Error starting language server.", err, "EXT_START_LS_ON_CLEAR_RESTART");
+                window
+                    .showWarningMessage(
+                        'There was an error reloading the Robot Framework Language Server. Please use the "Reload Window" action to finish restarting the language server.',
+                        ...["Reload Window"]
+                    )
+                    .then((selection) => {
+                        if (selection === "Reload Window") {
+                            commands.executeCommand("workbench.action.reloadWindow");
+                        }
+                    });
+                return;
+            }
+            window.showInformationMessage("Caches cleared and Robot Framework Language Server restarted.");
+        }
+    );
+}
+
 export async function activate(context: ExtensionContext) {
     extensionContext = context;
 
+    context.subscriptions.push(
+        commands.registerCommand("robot.clearCachesAndRestartProcesses", clearCachesAndRestartProcesses)
+    );
     registerDebugger();
     await registerRunCommands(context);
     await registerLinkProviders(context);
