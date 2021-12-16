@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.33.0'
+version '0.33.1'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
