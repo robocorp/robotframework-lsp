@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.33.1'
+version '0.34.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,11 +51,11 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.33.0
+    Release 0.34.0
     </p>
     <ul>
 
-    <li>PYTHONPATH entries passed as -P to libdoc are now normalized (fixes issues passing entries which could end with `/.`).</li>
+    <li>Minors.</li>
 
     <br>
     Current feature set:<br>

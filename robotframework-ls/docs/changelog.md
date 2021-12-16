@@ -1,3 +1,18 @@
+New in 0.34.0 (2021-12-16)
+-----------------------------
+
+- Created an action to stop the language server, clear caches and restart the language server. [#498](https://github.com/robocorp/robotframework-lsp/issues/498)
+
+- WorkspaceFolder is properly passed as a scope when reading launch configurations. [#526](https://github.com/robocorp/robotframework-lsp/issues/526)
+  i.e.: If the code-lens template wasn't being found in `0.33.0`, this should be fixed in `0.34.0`.
+
+- The Robot Framework Language Server is now automatically restarted if some configuration related to starting it is changed.
+  i.e.: 
+  - `"robot.language-server.python"`
+  - `"robot.language-server.tcp-port"`
+  - `"robot.language-server.args"`
+
+
 New in 0.33.0 (2021-12-14)
 -----------------------------
 
