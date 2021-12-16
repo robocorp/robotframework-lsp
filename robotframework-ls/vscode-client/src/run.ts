@@ -10,7 +10,7 @@ import {
     workspace,
     WorkspaceFolder,
 } from "vscode";
-import { logError } from "./channel";
+import { logError, OUTPUT_CHANNEL } from "./channel";
 import * as path from "path";
 import { parse } from "jsonc-parser";
 import * as fs from "fs";
@@ -53,33 +53,39 @@ async function checkFileExists(file) {
 }
 
 async function readLaunchTemplate(workspaceFolder: WorkspaceFolder): Promise<DebugConfiguration | undefined> {
-    const launch = workspace.getConfiguration("launch");
+    const launch = workspace.getConfiguration("launch", workspaceFolder);
     const launchConfigurations = launch.inspect<DebugConfiguration[]>("configurations");
     if (launchConfigurations) {
-        let configs = launchConfigurations.workspaceValue;
-        if (configs) {
-            for (const cfg of configs) {
-                if (
-                    cfg.type == "robotframework-lsp" &&
-                    cfg.name &&
-                    cfg.name.toLowerCase() == "robot framework: launch template"
-                ) {
-                    return cfg as DebugConfiguration;
+        const entries: [string, DebugConfiguration[] | undefined][] = [
+            ["Workspace Folder Language Value", launchConfigurations.workspaceFolderLanguageValue],
+            ["Workspace Folder Value", launchConfigurations.workspaceFolderValue],
+
+            ["Workspace Language Value", launchConfigurations.workspaceLanguageValue],
+            ["Workspace Value", launchConfigurations.workspaceValue],
+
+            ["Global Language Value", launchConfigurations.globalLanguageValue],
+            ["Global Value", launchConfigurations.globalValue],
+        ];
+        for (const entry of entries) {
+            let configs: DebugConfiguration[] | undefined = entry[1];
+            if (configs) {
+                for (const cfg of configs) {
+                    OUTPUT_CHANNEL.appendLine(`Found ${entry[0]} configuration: ${cfg.type} - ${cfg.name}.`);
+                    if (
+                        cfg.type == "robotframework-lsp" &&
+                        cfg.name &&
+                        cfg.name.toLowerCase() == "robot framework: launch template"
+                    ) {
+                        OUTPUT_CHANNEL.appendLine(`-- matched as launch template.`);
+                        return cfg as DebugConfiguration;
+                    }
                 }
             }
         }
-        configs = launchConfigurations.globalValue;
-        if (configs) {
-            for (const cfg of configs) {
-                if (
-                    cfg.type == "robotframework-lsp" &&
-                    cfg.name &&
-                    cfg.name.toLowerCase() == "robot framework: launch template"
-                ) {
-                    return cfg as DebugConfiguration;
-                }
-            }
-        }
+    } else {
+        OUTPUT_CHANNEL.appendLine(
+            'Did not find any launch configuration when searching for the "Robot Framework: Launch Template".'
+        );
     }
     return undefined;
 }
