@@ -93,6 +93,17 @@ COMMANDS: List[Command] = [
         server_handled=True,
         hide_from_command_palette=True,
     ),
+    Command(
+        "robot.getRFLSHomeDir",
+        "Provides the directory used to store information (usually ~/.robotframework-ls -- may be configured with `ROBOTFRAMEWORK_LS_USER_HOME` environment variable).",
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
+    Command(
+        "robot.clearCachesAndRestartProcesses",
+        "Clear caches and restart Robot Framework Language Server processes",
+        server_handled=False,
+    ),
 ]
 
 

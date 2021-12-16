@@ -1386,3 +1386,9 @@ Log It
     check_code_lens_data_regression(
         data_regression, [resolved_code_lens], basename="code_lens_after_resolve"
     )
+
+
+def test_get_rfls_home_dir(language_server_io: ILanguageServerClient):
+    assert language_server_io.execute_command("robot.getRFLSHomeDir", [])[
+        "result"
+    ].endswith(".robotframework-ls")

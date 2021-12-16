@@ -12,6 +12,8 @@ ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE = "robot.internal.rfinteractive.evaluate" 
 ROBOT_INTERNAL_RFINTERACTIVE_STOP = "robot.internal.rfinteractive.stop"  # Stop Interactive Console
 ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS = "robot.internal.rfinteractive.semanticTokens"  # Get the semantic tokens based on the code entered.
 ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS = "robot.internal.rfinteractive.completions"  # Get the completions based on the code entered.
+ROBOT_GET_RFLS_HOME_DIR = "robot.getRFLSHomeDir"  # Provides the directory used to store information (usually ~/.robotframework-ls -- may be configured with `ROBOTFRAMEWORK_LS_USER_HOME` environment variable).
+ROBOT_CLEAR_CACHES_AND_RESTART_PROCESSES = "robot.clearCachesAndRestartProcesses"  # Clear caches and restart Robot Framework Language Server processes
 
 ALL_SERVER_COMMANDS: List[str] = [
     ROBOT_INTERNAL_RFINTERACTIVE_START,
@@ -19,6 +21,7 @@ ALL_SERVER_COMMANDS: List[str] = [
     ROBOT_INTERNAL_RFINTERACTIVE_STOP,
     ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS,
     ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS,
+    ROBOT_GET_RFLS_HOME_DIR,
 ]
 
 # fmt: on
