@@ -25,14 +25,45 @@ def create_run_with_env_code(
     """
     set_vars = []
     as_dict: Dict[str, str] = {}
+    found_new_line = False
+
     for key, value in robo_env.items():
         if sys.platform == "win32":
-            set_vars.append(f"SET {key}={value}")
+            # Reference (just text, not code): https://stackoverflow.com/a/16018942/110451
+            value = value.replace("^", "^^")
+            value = value.replace("%", "%%")
+            value = value.replace("!", "^!")
+            value = value.replace("|", "^|")
+            value = value.replace("&", "^&")
+            value = value.replace(">", "^>")
+            value = value.replace("<", "^<")
+            value = value.replace("'", "^'")
+
+            if "\n" in value or "\r" in value:
+                found_new_line = True
+                value = value.replace("\r\n", "\n").replace("\r", "\n")
+                value = value.replace("\n", "!__NEW_LINE_IN_ENV__!")
+
+            set_vars.append(f'SET "{key}={value}"')
         else:
+            # Reference (just text, not code): https://stackoverflow.com/a/20053121/110451
+            value = value.replace("'", "'\\''")
+            value = f"'{value}'"
             set_vars.append(f"export {key}={value}")
         as_dict[key] = value
 
     set_vars_as_str = "\n".join(set_vars)
+
+    if found_new_line:
+        if sys.platform == "win32":
+            new_line_preamble = """
+setlocal EnableDelayedExpansion
+(set __NEW_LINE_IN_ENV__=^
+%=Do not remove this line=%
+)
+"""
+            set_vars_as_str = new_line_preamble + set_vars_as_str
+
     import subprocess
 
     if sys.platform == "win32":

@@ -12,7 +12,7 @@ def test_create_run_with_env_code(tmpdir):
     robocorp_home = tmpdir.join("robohome")
     robo_env = {
         "ROBOCORP_HOME": str(robocorp_home),
-        "SOME_KEY": "SOME_VALUE",
+        "SOME_KEY": 'VAL\nWITH\n^NEWLINE^%a% & < > | echo a ^> b ^& !some!another " ra"("`\'',
     }
     code = run_with_env.create_run_with_env_code(robo_env, [sys.executable])
     if sys.platform == "win32":
@@ -22,11 +22,14 @@ def test_create_run_with_env_code(tmpdir):
 
     run_with_env.write_as_script(code, Path(shell_script))
 
-    cmdline = [shell_script, "-c", 'import os;print(os.environ["SOME_KEY"])']
+    cmdline = [shell_script, "-c", 'import os;print(repr(os.environ["SOME_KEY"]))']
 
     try:
         output = subprocess.check_output(cmdline, shell=sys.platform == "win32")
-        assert b"SOME_VALUE" in output
+        assert (
+            b'\'VAL\\nWITH\\n^NEWLINE^%a% & < > | echo a ^> b ^& !some!another " ra"("`\\\''
+            in output
+        )
     except:
         sys.stderr.write(
             "Error when running: %s\n" % (" ".join(str(x) for x in cmdline),)
@@ -34,7 +37,7 @@ def test_create_run_with_env_code(tmpdir):
         raise
 
     cmdline, env = run_with_env.update_cmdline_and_env(
-        ["python", "-c", "foo"], {"some_env_var": "x" * 300}
+        [sys.executable, "-c", "foo"], {"some_env_var": "x" * 300}
     )
     assert cmdline[0].endswith((".sh", ".bat"))
     assert cmdline[1:] == ["-c", "foo"]
@@ -43,14 +46,14 @@ def test_create_run_with_env_code(tmpdir):
     os.environ["ROBOTFRAMEWORK_LS_LAUNCH_ENV_SCRIPT"] = "0"
     try:
         cmdline, env = run_with_env.update_cmdline_and_env(
-            ["python", "-c", "a=2;b=3;a+b"], {"some_env_var": "x" * 300}
+            [sys.executable, "-c", "a=2;b=3;a+b"], {"some_env_var": "x" * 300}
         )
-        assert cmdline == ["python", "-c", "a=2;b=3;a+b"]
+        assert cmdline == [sys.executable, "-c", "a=2;b=3;a+b"]
         assert env == {"some_env_var": "x" * 300}
 
         write_pid_to = tmpdir.join("some_file")
         cmdline, env = run_with_env.update_cmdline_and_env(
-            ["python", "-c", "a=2;b=3;a+b"],
+            [sys.executable, "-c", "a=2;b=3;a+b"],
             {"some_env_var": "x" * 300},
             str(write_pid_to),
         )
@@ -58,7 +61,7 @@ def test_create_run_with_env_code(tmpdir):
             sys.executable,
             run_and_save_pid.__file__,
             str(write_pid_to),
-            "python",
+            sys.executable,
             "-c",
             "a=2;b=3;a+b",
         ]
