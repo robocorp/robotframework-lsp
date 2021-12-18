@@ -66,7 +66,7 @@ public class RobotLaunchConfigRunOptions extends LocatableRunConfigurationOption
 
         if (this.env != null) {
             Map<String, String> env = new HashMap<>(this.env.size());
-            for (Map.Entry<String, String> entry : env.entrySet()) {
+            for (Map.Entry<String, String> entry : this.env.entrySet()) {
                 env.put(entry.getKey(), expandMacrosInStr(executionEnvironment, entry.getValue()));
             }
             options.env = env;
