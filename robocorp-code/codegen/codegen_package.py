@@ -130,11 +130,11 @@ def get_json_contents():
         },
         "devDependencies": {
             "@types/mocha": "^2.2.32",
-            "@types/node": "^11.0.40",
+            "@types/node": "^13.0.00",
             "@types/vscode": "1.61.0",
             "prettier": "2.4.1",
             "vscode-test": "1.5.1",
-            "typescript": "^3.8.2",
+            "typescript": "^4.5.4",
         },
         "dependencies": {
             "vscode-languageclient": "^7.0.0",
