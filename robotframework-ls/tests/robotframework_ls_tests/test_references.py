@@ -6,7 +6,7 @@ def check_data_regression(result, data_regression):
     for item in result:
         as_fs_path = uris.to_fs_path(item.pop("uri"))
 
-        name = basename(as_fs_path)
+        name = basename(as_fs_path.replace("\\", "/"))
         if name.endswith(".py"):
             item = "found_in_py_line_col"
         if name in data:
