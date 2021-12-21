@@ -602,6 +602,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         request_method_name: str,
         doc_uri: str,
         monitor: IMonitor,
+        __timeout__=DEFAULT_COMPLETIONS_TIMEOUT,
         **kwargs,
     ):
         from robocorp_ls_core.client_base import wait_for_message_matcher
@@ -631,7 +632,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         if wait_for_message_matcher(
             message_matcher,
             rf_api_client.request_cancel,
-            DEFAULT_COMPLETIONS_TIMEOUT,
+            __timeout__,
             monitor,
         ):
             msg = message_matcher.msg
@@ -849,6 +850,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                 line=line,
                 col=col,
                 include_declaration=include_declaration,
+                __timeout__=9999999,
             )
             func = require_monitor(func)
             return func

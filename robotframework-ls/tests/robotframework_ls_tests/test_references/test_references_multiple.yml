@@ -1,0 +1,59 @@
+BuiltIn.py:
+- found_in_py_line_col
+case_references.robot:
+- range:
+    end:
+      character: 30
+      line: 1
+    start:
+      character: 18
+      line: 1
+- range:
+    end:
+      character: 30
+      line: 2
+    start:
+      character: 18
+      line: 2
+- range:
+    end:
+      character: 30
+      line: 3
+    start:
+      character: 18
+      line: 3
+- range:
+    end:
+      character: 30
+      line: 4
+    start:
+      character: 18
+      line: 4
+- range:
+    end:
+      character: 16
+      line: 8
+    start:
+      character: 4
+      line: 8
+- range:
+    end:
+      character: 16
+      line: 9
+    start:
+      character: 4
+      line: 9
+- range:
+    end:
+      character: 16
+      line: 12
+    start:
+      character: 4
+      line: 12
+- range:
+    end:
+      character: 16
+      line: 13
+    start:
+      character: 4
+      line: 13

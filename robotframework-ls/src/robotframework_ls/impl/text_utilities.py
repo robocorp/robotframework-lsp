@@ -25,7 +25,9 @@ class TextUtilities(object):
         self.text = self.text.strip()
 
 
-@lru_cache(maxsize=1024)
+# Note: this not only makes it faster, but also makes us use less memory as a
+# way to reuse the same 'interned" strings.
+@lru_cache(maxsize=2000)
 def normalize_robot_name(text):
     return text.lower().replace("_", "").replace(" ", "")
 
