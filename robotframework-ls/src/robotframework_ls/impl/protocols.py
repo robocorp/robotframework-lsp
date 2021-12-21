@@ -361,3 +361,8 @@ class ICompletionContext(Protocol):
 
     def token_value_resolving_variables(self, token) -> str:
         pass
+
+    def get_current_keyword_definition_and_usage_info(
+        self,
+    ) -> Optional[Tuple[IKeywordDefinition, KeywordUsageInfo]]:
+        pass

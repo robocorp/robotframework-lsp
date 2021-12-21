@@ -279,6 +279,22 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             self._build_msg("hover", doc_uri=doc_uri, line=line, col=col)
         )
 
+    def request_references(
+        self, doc_uri: str, line: int, col: int, include_declaration: bool
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(
+            self._build_msg(
+                "references",
+                doc_uri=doc_uri,
+                line=line,
+                col=col,
+                include_declaration=include_declaration,
+            )
+        )
+
     def request_workspace_symbols(
         self, query: Optional[str] = None
     ) -> Optional[IIdMessageMatcher]:

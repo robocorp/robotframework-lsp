@@ -13,6 +13,7 @@ from robocorp_ls_core.lsp import (
     CodeLensTypedDict,
     DocumentSymbolTypedDict,
     PositionTypedDict,
+    LocationTypedDict,
 )
 from robotframework_ls.impl.protocols import IKeywordFound
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
@@ -563,6 +564,28 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return None
 
         return hover(completion_context)
+
+    def m_references(
+        self, doc_uri: str, line: int, col: int, include_declaration: bool
+    ):
+        func = partial(
+            self._threaded_references, doc_uri, line, col, include_declaration
+        )
+        func = require_monitor(func)
+        return func
+
+    def _threaded_references(
+        self, doc_uri: str, line, col, include_declaration: bool, monitor: IMonitor
+    ) -> Optional[List[LocationTypedDict]]:
+        from robotframework_ls.impl.references import references
+
+        completion_context = self._create_completion_context(
+            doc_uri, line, col, monitor
+        )
+        if completion_context is None:
+            return None
+
+        return references(completion_context, include_declaration=include_declaration)
 
     def m_workspace_symbols(self, query: Optional[str] = None):
         func = partial(self._threaded_workspace_symbols, query)

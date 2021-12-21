@@ -300,7 +300,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                 + commands.ALL_SERVER_COMMANDS
             },
             "hoverProvider": True,
-            "referencesProvider": False,
+            "referencesProvider": True,
             "renameProvider": False,
             "foldingRangeProvider": True,
             # Note that there are no auto-trigger characters (there's no good
@@ -829,6 +829,31 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             return func
 
         log.info("Unable to compute hover (no api available).")
+        return []
+
+    def m_text_document__references(self, **kwargs):
+        doc_uri = kwargs["textDocument"]["uri"]
+        # Note: 0-based
+        line, col = kwargs["position"]["line"], kwargs["position"]["character"]
+        include_declaration = kwargs["context"]["includeDeclaration"]
+
+        # Note: we want to use the same one used by m_workspace__symbol (to reuse
+        # the related caches).
+        rf_api_client = self._server_manager.get_others_api_client(doc_uri)
+        if rf_api_client is not None:
+            func = partial(
+                self._async_api_request,
+                rf_api_client,
+                "request_references",
+                doc_uri=doc_uri,
+                line=line,
+                col=col,
+                include_declaration=include_declaration,
+            )
+            func = require_monitor(func)
+            return func
+
+        log.info("Unable to compute references (no api available).")
         return []
 
     def m_text_document__semantic_tokens__range(self, textDocument=None, range=None):

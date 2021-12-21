@@ -23,6 +23,7 @@ if typing.TYPE_CHECKING:
     # This would lead to a circular import, so, do it only when type-checking.
     from robocorp_ls_core.lsp import TextDocumentContentChangeEvent
     from robocorp_ls_core.lsp import HoverResponseTypedDict
+    from robocorp_ls_core.lsp import ReferencesResponseTypedDict
     from robocorp_ls_core.lsp import TextDocumentTypedDict
     from robocorp_ls_core.lsp import ResponseTypedDict
     from robocorp_ls_core.lsp import CodeLensTypedDict
@@ -334,6 +335,13 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
         :Note: async complete.
         """
 
+    def request_references(
+        self, doc_uri: str, line: int, col: int, include_declaration: bool
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+
     def request_workspace_symbols(
         self, query: Optional[str] = None
     ) -> Optional[IIdMessageMatcher]:
@@ -423,6 +431,11 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
         pass
 
     def request_hover(self, uri: str, line: int, col: int) -> "HoverResponseTypedDict":
+        pass
+
+    def request_references(
+        self, uri: str, line: int, col: int, include_declaration: bool
+    ) -> "ReferencesResponseTypedDict":
         pass
 
     def request_folding_range(self, uri: str):

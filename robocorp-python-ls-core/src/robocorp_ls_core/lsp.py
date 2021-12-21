@@ -558,6 +558,12 @@ class HoverResponseTypedDict(TypedDict, total=False):
     error: ResponseErrorTypedDict  # Optional
 
 
+class ReferencesResponseTypedDict(TypedDict, total=False):
+    id: Union[int, str, None]
+    result: List[LocationTypedDict]  # Optional
+    error: ResponseErrorTypedDict  # Optional
+
+
 class CommandTypedDict(TypedDict, total=False):
     # Title of the command, like `save`.
     title: str

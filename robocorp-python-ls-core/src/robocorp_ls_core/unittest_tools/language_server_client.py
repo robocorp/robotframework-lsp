@@ -236,6 +236,23 @@ class LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    @implements(ILanguageServerClient.request_references)
+    def request_references(self, uri, line, col, include_declaration):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "textDocument/references",
+                "params": {
+                    "textDocument": {"uri": uri},
+                    "position": {"line": line, "character": col},
+                    "context": {
+                        "includeDeclaration": include_declaration,
+                    },
+                },
+            }
+        )
+
     @implements(ILanguageServerClient.request_folding_range)
     def request_folding_range(self, uri):
         return self.request(
