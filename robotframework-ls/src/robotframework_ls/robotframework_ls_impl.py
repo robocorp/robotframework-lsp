@@ -27,6 +27,7 @@ import typing
 import sys
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 from robocorp_ls_core.lsp import CodeLensTypedDict
+from robotframework_ls.commands import ROBOT_GET_RFLS_HOME_DIR
 
 
 log = get_logger(__name__)
@@ -123,6 +124,11 @@ class _LintManager(object):
         curr_info = self._doc_id_to_info.pop(doc_uri, None)
         if curr_info is not None:
             curr_info.cancel()
+
+
+from robocorp_ls_core.command_dispatcher import _CommandDispatcher
+
+command_dispatcher = _CommandDispatcher()
 
 
 class RobotFrameworkLanguageServer(PythonLanguageServer):
@@ -330,81 +336,85 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         log.info("Server capabilities: %s", server_capabilities)
         return server_capabilities
 
-    def m_workspace__execute_command(self, command=None, arguments=()) -> Any:
-        from robotframework_ls.commands import ROBOT_GET_RFLS_HOME_DIR
-
-        if command == "robot.addPluginsDir":
-            directory: str = arguments[0]
-            assert os.path.isdir(directory), f"Expected: {directory} to be a directory."
-            self._pm.load_plugins_from(Path(directory))
-            return True
-
-        elif command == "robot.getInternalInfo":
-            in_memory_docs = []
-            workspace = self.workspace
-            if workspace:
-                for doc in workspace.iter_documents():
-                    in_memory_docs.append({"uri": doc.uri})
-            return {
-                "settings": self.config.get_full_settings(),
-                "inMemoryDocs": in_memory_docs,
-                "processId": os.getpid(),
-            }
-
-        elif command == "robot.resolveInterpreter":
-            try:
-                from robocorp_ls_core import uris
-                from robotframework_ls.ep_resolve_interpreter import (
-                    EPResolveInterpreter,
-                )
-                from robotframework_ls.ep_resolve_interpreter import IInterpreterInfo
-
-                target_robot: str = arguments[0]
-
-                for ep in self._pm.get_implementations(EPResolveInterpreter):
-                    interpreter_info: IInterpreterInfo = (
-                        ep.get_interpreter_info_for_doc_uri(
-                            uris.from_fs_path(target_robot)
-                        )
-                    )
-                    if interpreter_info is not None:
-                        return {
-                            "pythonExe": interpreter_info.get_python_exe(),
-                            "environ": interpreter_info.get_environ(),
-                            "additionalPythonpathEntries": interpreter_info.get_additional_pythonpath_entries(),
-                        }
-            except:
-                log.exception(f"Error resolving interpreter. Args: {arguments}")
-
-        elif command == "robot.getLanguageServerVersion":
-            return __version__
-
-        elif command == ROBOT_GET_RFLS_HOME_DIR:
-            from robotframework_ls import robot_config
-
-            return robot_config.get_robotframework_ls_home()
-
-        elif command.startswith("robot.internal.rfinteractive."):
+    def m_workspace__execute_command(self, command: str = "", arguments=()) -> Any:
+        if command.startswith("robot.internal.rfinteractive."):
             return rf_interactive_integration.execute_command(
                 command, self, self._rf_interpreters_manager, arguments
             )
 
-        elif command == "robot.listTests":
-            doc_uri = arguments[0]["uri"]
+        return command_dispatcher.dispatch(self, command, arguments)
 
-            rf_api_client = self._server_manager.get_others_api_client(doc_uri)
-            if rf_api_client is not None:
-                func = partial(
-                    self._async_api_request,
-                    rf_api_client,
-                    "request_list_tests",
-                    doc_uri=doc_uri,
+    @command_dispatcher("robot.addPluginsDir")
+    def _add_plugins_dir(self, *arguments):
+        directory: str = arguments[0]
+        assert os.path.isdir(directory), f"Expected: {directory} to be a directory."
+        self._pm.load_plugins_from(Path(directory))
+        return True
+
+    @command_dispatcher("robot.getInternalInfo")
+    def _get_internal_info(self, *arguments):
+        in_memory_docs = []
+        workspace = self.workspace
+        if workspace:
+            for doc in workspace.iter_documents():
+                in_memory_docs.append({"uri": doc.uri})
+        return {
+            "settings": self.config.get_full_settings(),
+            "inMemoryDocs": in_memory_docs,
+            "processId": os.getpid(),
+        }
+
+    @command_dispatcher("robot.resolveInterpreter")
+    def _resolve_interpreter(self, *arguments):
+        try:
+            from robocorp_ls_core import uris
+            from robotframework_ls.ep_resolve_interpreter import (
+                EPResolveInterpreter,
+            )
+            from robotframework_ls.ep_resolve_interpreter import IInterpreterInfo
+
+            target_robot: str = arguments[0]
+
+            for ep in self._pm.get_implementations(EPResolveInterpreter):
+                interpreter_info: IInterpreterInfo = (
+                    ep.get_interpreter_info_for_doc_uri(uris.from_fs_path(target_robot))
                 )
-                func = require_monitor(func)
-                return func
+                if interpreter_info is not None:
+                    return {
+                        "pythonExe": interpreter_info.get_python_exe(),
+                        "environ": interpreter_info.get_environ(),
+                        "additionalPythonpathEntries": interpreter_info.get_additional_pythonpath_entries(),
+                    }
+        except:
+            log.exception(f"Error resolving interpreter. Args: {arguments}")
 
-            log.info("Unable to list tests (no api available).")
-            return []
+    @command_dispatcher("robot.getLanguageServerVersion")
+    def _get_language_server_version(self, *arguments):
+        return __version__
+
+    @command_dispatcher(ROBOT_GET_RFLS_HOME_DIR)
+    def _get_rfls_home_dir(self, *arguments):
+        from robotframework_ls import robot_config
+
+        return robot_config.get_robotframework_ls_home()
+
+    @command_dispatcher("robot.listTests")
+    def _list_tests(self, *arguments):
+        doc_uri = arguments[0]["uri"]
+
+        rf_api_client = self._server_manager.get_others_api_client(doc_uri)
+        if rf_api_client is not None:
+            func = partial(
+                self._async_api_request,
+                rf_api_client,
+                "request_list_tests",
+                doc_uri=doc_uri,
+            )
+            func = require_monitor(func)
+            return func
+
+        log.info("Unable to list tests (no api available).")
+        return []
 
     @overrides(PythonLanguageServer.m_workspace__did_change_configuration)
     @log_and_silence_errors(log)
