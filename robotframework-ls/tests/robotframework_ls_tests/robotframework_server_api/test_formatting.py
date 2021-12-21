@@ -1,4 +1,12 @@
+import pytest
+
+
 def test_formatting_basic(data_regression):
+    try:
+        from robot.tidy import Tidy
+    except ImportError:
+        pytest.skip("robot.tidy is no longer available.")
+
     from robotframework_ls.impl.formatting import (
         robot_source_format,
         create_text_edit_from_diff,

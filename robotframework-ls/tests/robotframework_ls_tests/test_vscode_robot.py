@@ -572,6 +572,11 @@ def test_code_format_integrated(
 
     version = get_version(naked=True).split(".")[0]
     if version == "5":
+        if formatter == OPTION_ROBOT_CODE_FORMATTER_BUILTIN_TIDY:
+            try:
+                from robot.tidy import Tidy
+            except ImportError:
+                pytest.skip("robot.tidy is no longer available.")
         version = "4"
 
     basename = "test_code_format_integrated_text_edits_" + formatter

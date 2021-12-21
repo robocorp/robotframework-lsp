@@ -386,6 +386,16 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return []
 
         if formatter == OPTION_ROBOT_CODE_FORMATTER_BUILTIN_TIDY:
+            try:
+                from robot.tidy import Tidy
+            except ImportError:
+                # It's not available in newer versions of RobotFramework.
+                from robot import get_version
+
+                if int(get_version(naked=True).split(".")[0]) >= 5:
+                    formatter = OPTION_ROBOT_CODE_FORMATTER_ROBOTIDY
+
+        if formatter == OPTION_ROBOT_CODE_FORMATTER_BUILTIN_TIDY:
             from robotframework_ls.impl.formatting import robot_source_format
 
             new_contents = robot_source_format(text, space_count=tab_size)
@@ -412,7 +422,13 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             else:
                 dirname = os.path.dirname(path)
 
-            new_contents = robot_tidy_source_format(ast, dirname)
+            try:
+                new_contents = robot_tidy_source_format(ast, dirname)
+            except ImportError:
+                log.critical(
+                    "Unable to code-format because robotidy could not be imported."
+                )
+                return []
 
         if new_contents is None or new_contents == text:
             return []
