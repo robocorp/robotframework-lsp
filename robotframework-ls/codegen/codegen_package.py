@@ -284,18 +284,18 @@ def get_json_contents():
         },
         "dependencies": {
             "path-exists": "^4.0.0",
-            "vscode-languageclient": "^7.0.0-next.12",
+            "vscode-languageclient": "^7.0.0",
             "jsonc-parser": "^2.0.3",
         },
         "devDependencies": {
             "@types/mocha": "^2.2.32",
             "@types/node": "^11.0.40",
-            "@types/vscode": "1.53.0",
+            "@types/vscode": "1.61.0",
             "prettier": "2.4.1",
             "vscode-test": "1.5.1",
             "typescript": "^3.8.2",
         },
-        "engines": {"vscode": "^1.53.0"},
+        "engines": {"vscode": "^1.61.0"},
     }
     return base_package_contents
 

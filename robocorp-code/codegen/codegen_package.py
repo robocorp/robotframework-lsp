@@ -41,7 +41,7 @@ def get_json_contents():
         "version": __version__,
         "icon": "images/icon.png",
         "publisher": "robocorp",
-        "engines": {"vscode": "^1.53.0"},
+        "engines": {"vscode": "^1.61.0"},
         "categories": ["Debuggers"],
         "activationEvents": get_activation_events_for_json()
         + views.get_activation_events_for_json()
@@ -131,13 +131,13 @@ def get_json_contents():
         "devDependencies": {
             "@types/mocha": "^2.2.32",
             "@types/node": "^11.0.40",
-            "@types/vscode": "1.53.0",
+            "@types/vscode": "1.61.0",
             "prettier": "2.4.1",
             "vscode-test": "1.5.1",
             "typescript": "^3.8.2",
         },
         "dependencies": {
-            "vscode-languageclient": "^7.0.0-next.12",
+            "vscode-languageclient": "^7.0.0",
             "path-exists": "^4.0.0",
             "http-proxy-agent": "^2.1.0",
             "https-proxy-agent": "^2.2.4",
