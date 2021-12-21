@@ -83,7 +83,7 @@ class _KeywordFoundFromAst(object):
 
     @property
     @instance_cache
-    def source(self):
+    def source(self) -> str:
         from robocorp_ls_core import uris
 
         return uris.to_fs_path(self.completion_context.doc.uri)

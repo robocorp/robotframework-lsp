@@ -107,6 +107,12 @@ class ISymbolsJsonListEntry(TypedDict):
 
 
 class ISymbolsCache(Protocol):
+    def get_uri(self) -> Optional[str]:
+        pass
+
+    def has_keyword_usage(self, normalized_keyword_name: str) -> bool:
+        pass
+
     def get_json_list(self) -> List[ISymbolsJsonListEntry]:
         pass
 
@@ -160,7 +166,9 @@ class IKeywordFound(Protocol):
 
     @property
     def source(self) -> str:
-        pass
+        """
+        Provides the filesystem location where the keyword was found.
+        """
 
     @property
     def lineno(self) -> int:

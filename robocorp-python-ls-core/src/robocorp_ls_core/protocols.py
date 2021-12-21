@@ -643,6 +643,9 @@ class IDocument(Protocol):
         in sync.
         """
 
+    def find_line_with_contents(self, contents: str) -> int:
+        pass
+
 
 class IWorkspaceFolder(Protocol):
     uri: str

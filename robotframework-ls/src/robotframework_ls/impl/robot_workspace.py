@@ -162,19 +162,5 @@ class RobotDocument(Document):
             log.critical(f"Error parsing yaml file: {self.uri}")
             return None
 
-    def find_line_with_contents(self, contents: str) -> int:
-        """
-        :param contents:
-            The contents to be found.
-
-        :return:
-            The 0-based index of the contents.
-        """
-        for i, line in enumerate(self.iter_lines()):
-            if contents in line:
-                return i
-        else:
-            raise AssertionError(f"Did not find >>{contents}<< in doc.")
-
     def __typecheckself__(self) -> None:
         _: IRobotDocument = check_implements(self)

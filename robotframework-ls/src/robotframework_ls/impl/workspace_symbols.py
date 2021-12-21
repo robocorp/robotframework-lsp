@@ -16,7 +16,7 @@ from robotframework_ls.impl.protocols import ISymbolsJsonListEntry
 
 log = get_logger(__name__)
 
-WORKSPACE_SYMBOLS_FIRST_TIMEOUT = 6.0  # The first time it can take a bit longer
+WORKSPACE_SYMBOLS_FIRST_TIMEOUT = 10.0  # The first time it can take a bit longer
 WORKSPACE_SYMBOLS_TIMEOUT = 1.0
 
 if not USE_TIMEOUTS:
@@ -33,7 +33,10 @@ class SymbolsCache:
         json_list,
         library_info: Optional[ILibraryDoc],
         doc: Optional[IRobotDocument],
+        keywords_used: Set[str],
+        uri: Optional[str],  # Always available if generated from doc.
     ):
+        self._uri = uri
         if library_info is not None:
             self._library_info = weakref.ref(library_info)
         else:
@@ -45,6 +48,13 @@ class SymbolsCache:
             self._doc = None
 
         self._json_list = json_list
+        self._keywords_used = keywords_used
+
+    def get_uri(self) -> Optional[str]:
+        return self._uri
+
+    def has_keyword_usage(self, normalized_keyword_name: str) -> bool:
+        return normalized_keyword_name in self._keywords_used
 
     def get_json_list(self) -> list:
         return self._json_list
@@ -61,6 +71,11 @@ class SymbolsCache:
             return None
         return w()
 
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
+
+        _: ISymbolsCache = check_implements(self)
+
 
 def _add_to_ret(ret, symbols_cache: ISymbolsCache, query: Optional[str]):
     # Note that we could filter it here based on the passed query, but
@@ -72,6 +87,7 @@ def _add_to_ret(ret, symbols_cache: ISymbolsCache, query: Optional[str]):
 def _compute_symbols_from_ast(doc: IRobotDocument) -> ISymbolsCache:
     from robotframework_ls.impl import ast_utils
     from robocorp_ls_core.lsp import SymbolKind
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
 
     ast = doc.get_ast()
     symbols: List[ISymbolsJsonListEntry] = []
@@ -107,7 +123,14 @@ def _compute_symbols_from_ast(doc: IRobotDocument) -> ISymbolsCache:
                 "containerName": doc.path,
             }
         )
-    return SymbolsCache(symbols, None, doc)
+
+    keywords_used = set()
+    for keyword_usage_info in ast_utils.iter_keyword_usage_tokens(
+        ast, collect_args_as_keywords=True
+    ):
+        keywords_used.add(normalize_robot_name(keyword_usage_info.name))
+
+    return SymbolsCache(symbols, None, doc, keywords_used, uri=uri)
 
 
 def _compute_symbols_from_library_info(library_name, library_info) -> SymbolsCache:
@@ -162,27 +185,31 @@ def _compute_symbols_from_library_info(library_name, library_info) -> SymbolsCac
                 "containerName": library_name,
             }
         )
-    return SymbolsCache(symbols, library_info, None)
+    return SymbolsCache(symbols, library_info, None, set(), None)
 
 
 def iter_symbols_caches(
     query: Optional[str],
     context: IBaseCompletionContext,
     show_builtins: bool = True,
-    called=[],
+    force_all_docs_in_workspace: bool = False,
+    timeout: Optional[float] = None,
+    _called=[],
 ) -> Iterator[ISymbolsCache]:
-    if not called:
-        TIMEOUT = WORKSPACE_SYMBOLS_FIRST_TIMEOUT
-        called.append(True)
+    if timeout is not None:
+        TIMEOUT = timeout
     else:
-        TIMEOUT = WORKSPACE_SYMBOLS_TIMEOUT
+        if not _called:
+            TIMEOUT = WORKSPACE_SYMBOLS_FIRST_TIMEOUT
+            _called.append(True)
+        else:
+            TIMEOUT = WORKSPACE_SYMBOLS_TIMEOUT
 
     try:
         from robotframework_ls.impl.libspec_manager import LibspecManager
         from robotframework_ls.impl.protocols import IRobotWorkspace
         from typing import cast
         from robotframework_ls.impl.robot_constants import (
-            STDLIBS,
             BUILTIN_LIB,
             RESERVED_LIB,
         )
@@ -191,14 +218,6 @@ def iter_symbols_caches(
         if not workspace:
             return
         libspec_manager: LibspecManager = workspace.libspec_manager
-
-        library_name_and_current_doc: Set[tuple] = set()
-        for name in STDLIBS:
-            if name == RESERVED_LIB:
-                continue
-            if not show_builtins and name == BUILTIN_LIB:
-                continue
-            library_name_and_current_doc.add((name, None))
 
         found = set()
         symbols_cache: Optional[ISymbolsCache]
@@ -214,7 +233,7 @@ def iter_symbols_caches(
 
         initial_time = time.time()
 
-        if workspace_symbols_only_for_open_docs:
+        if workspace_symbols_only_for_open_docs and not force_all_docs_in_workspace:
 
             def iter_in():
                 for doc_uri in workspace.get_open_docs_uris():
