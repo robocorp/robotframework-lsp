@@ -1,3 +1,12 @@
+New in 0.23.0 (2021-12-22)
+-----------------------------
+
+- RCC downgraded to v11.5.5 to avoid regression in v11.6.0
+- Environment variables from env.json are properly escaped (new line chars are now properly handled).
+- Minimun Robot Framework Language Server version required is now 0.35.0
+- Minimun VSCode version required is now 1.61.0
+
+
 New in 0.22.0 (2021-12-15)
 -----------------------------
 
