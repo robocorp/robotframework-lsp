@@ -1,3 +1,10 @@
+New in 0.35.0 (2021-12-22)
+-----------------------------
+
+- Environment variables are properly passed when launching on Intellij. [#529](https://github.com/robocorp/robotframework-lsp/issues/529)
+- On Robot Framework 5, the builtin tidy is no longer available, so, the new robotidy is used automatically.                                  
+
+
 New in 0.34.0 (2021-12-16)
 -----------------------------
 

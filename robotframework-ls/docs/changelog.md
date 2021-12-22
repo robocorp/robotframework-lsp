@@ -1,3 +1,12 @@
+New in 0.35.0 (2021-12-22)
+-----------------------------
+
+- Find references is now implemented. [#396](https://github.com/robocorp/robotframework-lsp/issues/396)
+- Chars are now properly escaped when setting environment variables during launching. [#528](https://github.com/robocorp/robotframework-lsp/issues/528)
+- On Robot Framework 5, the builtin tidy is no longer available, so, the new robotidy is used automatically.                                  
+- The minimum VSCode version is now 1.61.0
+
+
 New in 0.34.0 (2021-12-16)
 -----------------------------
 
