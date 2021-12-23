@@ -1,6 +1,20 @@
 - name: Log It
   path: Untitled-1
+  range:
+    end:
+      character: 6
+      line: 2
+    start:
+      character: 0
+      line: 2
   uri: untitled:Untitled-1
 - name: Log It2
   path: Untitled-1
+  range:
+    end:
+      character: 7
+      line: 6
+    start:
+      character: 0
+      line: 6
   uri: untitled:Untitled-1

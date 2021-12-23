@@ -12,7 +12,6 @@ import {
 } from "vscode";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import * as path from "path";
-import { parse } from "jsonc-parser";
 import * as fs from "fs";
 
 interface ITestInfo {
@@ -45,14 +44,7 @@ export async function robotDebugSuite(resource: Uri) {
     await _debugSuite(resource, false);
 }
 
-async function checkFileExists(file) {
-    return fs.promises
-        .access(file, fs.constants.F_OK)
-        .then(() => true)
-        .catch(() => false);
-}
-
-async function readLaunchTemplate(workspaceFolder: WorkspaceFolder): Promise<DebugConfiguration | undefined> {
+export async function readLaunchTemplate(workspaceFolder: WorkspaceFolder): Promise<DebugConfiguration | undefined> {
     const launch = workspace.getConfiguration("launch", workspaceFolder);
     const launchConfigurations = launch.inspect<DebugConfiguration[]>("configurations");
     if (launchConfigurations) {

@@ -2,17 +2,16 @@ from typing import Optional, List, Set, Iterator
 from robocorp_ls_core.lsp import SymbolInformationTypedDict
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.protocols import (
-    IRobotDocument,
     ISymbolsCache,
     IBaseCompletionContext,
     ILibraryDoc,
 )
-import weakref
 from robotframework_ls.impl.robot_lsp_constants import (
     OPTION_ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS,
 )
 from robocorp_ls_core.options import USE_TIMEOUTS
 from robotframework_ls.impl.protocols import ISymbolsJsonListEntry
+import typing
 
 log = get_logger(__name__)
 
@@ -24,59 +23,6 @@ if not USE_TIMEOUTS:
     WORKSPACE_SYMBOLS_TIMEOUT = 999999.0
 
 
-class SymbolsCache:
-    _library_info: "Optional[weakref.ReferenceType[ILibraryDoc]]"
-    _doc: "Optional[weakref.ReferenceType[IRobotDocument]]"
-
-    def __init__(
-        self,
-        json_list,
-        library_info: Optional[ILibraryDoc],
-        doc: Optional[IRobotDocument],
-        keywords_used: Set[str],
-        uri: Optional[str],  # Always available if generated from doc.
-    ):
-        self._uri = uri
-        if library_info is not None:
-            self._library_info = weakref.ref(library_info)
-        else:
-            self._library_info = None
-
-        if doc is not None:
-            self._doc = weakref.ref(doc)
-        else:
-            self._doc = None
-
-        self._json_list = json_list
-        self._keywords_used = keywords_used
-
-    def get_uri(self) -> Optional[str]:
-        return self._uri
-
-    def has_keyword_usage(self, normalized_keyword_name: str) -> bool:
-        return normalized_keyword_name in self._keywords_used
-
-    def get_json_list(self) -> list:
-        return self._json_list
-
-    def get_library_info(self) -> Optional[ILibraryDoc]:
-        w = self._library_info
-        if w is None:
-            return None
-        return w()
-
-    def get_doc(self) -> Optional[IRobotDocument]:
-        w = self._doc
-        if w is None:
-            return None
-        return w()
-
-    def __typecheckself__(self) -> None:
-        from robocorp_ls_core.protocols import check_implements
-
-        _: ISymbolsCache = check_implements(self)
-
-
 def _add_to_ret(ret, symbols_cache: ISymbolsCache, query: Optional[str]):
     # Note that we could filter it here based on the passed query, but
     # this is not being done for now for simplicity (given that we'd need
@@ -84,59 +30,11 @@ def _add_to_ret(ret, symbols_cache: ISymbolsCache, query: Optional[str]):
     ret.extend(symbols_cache.get_json_list())
 
 
-def _compute_symbols_from_ast(doc: IRobotDocument) -> ISymbolsCache:
-    from robotframework_ls.impl import ast_utils
-    from robocorp_ls_core.lsp import SymbolKind
-    from robotframework_ls.impl.text_utilities import normalize_robot_name
-
-    ast = doc.get_ast()
-    symbols: List[ISymbolsJsonListEntry] = []
-    uri = doc.uri
-
-    for keyword_node_info in ast_utils.iter_keywords(ast):
-        docs = ast_utils.get_documentation(keyword_node_info.node)
-        args = []
-        for arg in ast_utils.iter_keyword_arguments_as_str(keyword_node_info.node):
-            args.append(arg)
-
-        docs = "%s(%s)\n\n%s" % (keyword_node_info.node.name, ", ".join(args), docs)
-
-        symbols.append(
-            {
-                "name": keyword_node_info.node.name,
-                "kind": SymbolKind.Class,
-                "location": {
-                    "uri": uri,
-                    "range": {
-                        "start": {
-                            "line": keyword_node_info.node.lineno - 1,
-                            "character": keyword_node_info.node.col_offset,
-                        },
-                        "end": {
-                            "line": keyword_node_info.node.end_lineno - 1,
-                            "character": keyword_node_info.node.end_col_offset,
-                        },
-                    },
-                },
-                "docs": docs,
-                "docsFormat": "markdown",
-                "containerName": doc.path,
-            }
-        )
-
-    keywords_used = set()
-    for keyword_usage_info in ast_utils.iter_keyword_usage_tokens(
-        ast, collect_args_as_keywords=True
-    ):
-        keywords_used.add(normalize_robot_name(keyword_usage_info.name))
-
-    return SymbolsCache(symbols, None, doc, keywords_used, uri=uri)
-
-
-def _compute_symbols_from_library_info(library_name, library_info) -> SymbolsCache:
+def _compute_symbols_from_library_info(library_name, library_info) -> ISymbolsCache:
+    from robocorp_ls_core import uris
     from robocorp_ls_core.lsp import SymbolKind
     from robotframework_ls.impl.robot_specbuilder import KeywordDoc
-    from robocorp_ls_core import uris
+    from robotframework_ls.impl.robot_workspace import SymbolsCache
 
     symbols: List[ISymbolsJsonListEntry] = []
     keyword: KeywordDoc
@@ -185,7 +83,7 @@ def _compute_symbols_from_library_info(library_name, library_info) -> SymbolsCac
                 "containerName": library_name,
             }
         )
-    return SymbolsCache(symbols, library_info, None, set(), None)
+    return SymbolsCache(symbols, library_info, None, set(), None, None)
 
 
 def iter_symbols_caches(
@@ -207,24 +105,24 @@ def iter_symbols_caches(
 
     try:
         from robotframework_ls.impl.libspec_manager import LibspecManager
-        from robotframework_ls.impl.protocols import IRobotWorkspace
-        from typing import cast
+        from robotframework_ls.impl.robot_workspace import RobotWorkspace
         from robotframework_ls.impl.robot_constants import (
             BUILTIN_LIB,
             RESERVED_LIB,
         )
 
-        workspace: Optional[IRobotWorkspace] = context.workspace
+        workspace: Optional[RobotWorkspace] = typing.cast(
+            Optional[RobotWorkspace], context.workspace
+        )
         if not workspace:
             return
-        libspec_manager: LibspecManager = workspace.libspec_manager
 
-        found = set()
+        found: Set[str] = set()
         symbols_cache: Optional[ISymbolsCache]
 
         config = context.config
         workspace_symbols_only_for_open_docs = False
-        if config:
+        if config and not force_all_docs_in_workspace:
             workspace_symbols_only_for_open_docs = config.get_setting(
                 OPTION_ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS, bool, False
             )
@@ -233,46 +131,23 @@ def iter_symbols_caches(
 
         initial_time = time.time()
 
-        if workspace_symbols_only_for_open_docs and not force_all_docs_in_workspace:
-
-            def iter_in():
-                for doc_uri in workspace.get_open_docs_uris():
-                    yield doc_uri
+        workspace_indexer = workspace.workspace_indexer
+        if workspace_indexer is None:
+            # i.e.: this can happen if this is being asked on a server where we aren't indexing the workspace contents.
+            log.critical(
+                "Error: workspace.workspace_indexer is None in iter_symbols_caches (it seems that the wrong API is being used here)."
+            )
 
         else:
-
-            def iter_in():
-                for uri in workspace.iter_all_doc_uris_in_workspace(
-                    (".robot", ".resource")
-                ):
-                    yield uri
-
-        for uri in iter_in():
-            if not uri:
-                continue
-
-            context.check_cancelled()
-
-            if time.time() - initial_time > TIMEOUT:
-                log.info(
-                    "Timed out gathering information from workspace symbols (only partial information was collected). Consider enabling the 'robot.workspaceSymbolsOnlyForOpenDocs' setting."
-                )
-                break
-
-            doc = cast(
-                Optional[IRobotDocument],
-                workspace.get_document(uri, accept_from_file=True),
+            yield from workspace_indexer.iter_symbols_cache(
+                only_for_open_docs=workspace_symbols_only_for_open_docs,
+                initial_time=initial_time,
+                timeout=TIMEOUT,
+                context=context,
+                found=found,
             )
-            if doc is not None:
-                if uri in found:
-                    continue
-                found.add(uri)
-                symbols_cache = doc.symbols_cache
-                if symbols_cache is None:
-                    symbols_cache = _compute_symbols_from_ast(doc)
-                doc.symbols_cache = symbols_cache
-                yield symbols_cache
 
+        libspec_manager: LibspecManager = workspace.libspec_manager
         already_checked = set()
         library_info: ILibraryDoc
         # I.e.: just iterate over pre-created (don't create any here as it may be slow...

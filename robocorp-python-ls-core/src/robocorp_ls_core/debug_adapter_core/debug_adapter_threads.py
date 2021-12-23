@@ -84,7 +84,10 @@ def read(stream, debug_prefix=b"read") -> Optional[Dict]:
     if get_log_level() > 1:
         log.debug((debug_prefix + b": %s" % (body,)).decode("utf-8", "replace"))
 
-    return json.loads(body.decode("utf-8"))
+    try:
+        return json.loads(body.decode("utf-8"))
+    except:
+        raise RuntimeError(f"Error reading: {body!r}")
 
 
 def _read_len(stream, content_length) -> bytes:

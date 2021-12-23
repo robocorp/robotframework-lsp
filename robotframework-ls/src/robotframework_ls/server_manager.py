@@ -41,7 +41,12 @@ class _ServerApi(object):
     """
 
     def __init__(
-        self, log_extension, language_server_ref, pre_generate_libspecs: bool = False
+        self,
+        log_extension,
+        language_server_ref,
+        pre_generate_libspecs: bool = False,
+        index_workspace: bool = False,
+        collect_tests: bool = False,
     ) -> None:
         self._main_thread = threading.current_thread()
 
@@ -56,6 +61,8 @@ class _ServerApi(object):
         # by the settings of a given (customized) interpreter.
         self._config: IConfig = RobotConfig()
         self._pre_generate_libspecs = pre_generate_libspecs
+        self._index_workspace = index_workspace
+        self._collect_tests = collect_tests
 
         self.workspace: Optional[IWorkspace] = None
         self._initializing = False
@@ -228,6 +235,12 @@ class _ServerApi(object):
                 if self._pre_generate_libspecs:
                     args.append("--pre-generate-libspecs")
 
+                if self._index_workspace:
+                    args.append("--index-workspace")
+
+                if self._collect_tests:
+                    args.append("--collect-tests")
+
                 python_exe = self._get_python_executable()
                 environ = self._get_environ()
 
@@ -260,10 +273,10 @@ class _ServerApi(object):
                 language_server_ref = self._language_server_ref
 
                 def on_received_message(msg):
-                    if msg.get("method") == "$/customProgress":
+                    if msg.get("method") in ("$/customProgress", "$/testsCollected"):
                         robot_framework_language_server = language_server_ref()
                         if robot_framework_language_server is not None:
-                            robot_framework_language_server.forward_progress_msg(msg)
+                            robot_framework_language_server.forward_msg(msg)
 
                 api = self._robotframework_api_client = RobotFrameworkApiClient(
                     w, r, server_process, on_received_message=on_received_message
@@ -483,16 +496,24 @@ class ServerManager(object):
     def set_workspace(self, workspace: IWorkspace) -> None:
         self._check_in_main_thread()
         self._workspace = workspace
+
         for api in self._iter_all_apis():
             api.workspace = workspace
 
-    def _create_apis(self, api_id) -> _RegularLintAndOthersApi:
+    def _create_apis(self, api_id, collect_tests=False) -> _RegularLintAndOthersApi:
         self._check_in_main_thread()
         assert api_id not in self._id_to_apis, f"{api_id} already created."
-        api = _ServerApi(".api", self._language_server_ref)
+        api = _ServerApi(
+            ".api",
+            self._language_server_ref,
+            index_workspace=True,
+            collect_tests=collect_tests,
+        )
+
         lint_api = _ServerApi(
             ".lint.api", self._language_server_ref, pre_generate_libspecs=True
         )
+
         others_api = _ServerApi(".others.api", self._language_server_ref)
 
         config = self._config
@@ -515,7 +536,7 @@ class ServerManager(object):
         self._check_in_main_thread()
         apis = self._id_to_apis.get(DEFAULT_API_ID)
         if not apis:
-            apis = self._create_apis(DEFAULT_API_ID)
+            apis = self._create_apis(DEFAULT_API_ID, collect_tests=True)
         return apis
 
     def _get_apis_for_doc_uri(self, doc_uri: str) -> _RegularLintAndOthersApi:
@@ -590,6 +611,11 @@ class ServerManager(object):
     def get_lint_rf_api_client(
         self, doc_uri: str
     ) -> Optional[IRobotFrameworkApiClient]:
+        """
+        To be used for:
+
+        - linting
+        """
         api = self._get_lint_api(doc_uri)
         if api is not None:
             return api.get_robotframework_api_client()
@@ -598,18 +624,35 @@ class ServerManager(object):
     def get_regular_rf_api_client(
         self, doc_uri: str
     ) -> Optional[IRobotFrameworkApiClient]:
+        """
+        To be used for things that require workspace information (this is the
+        one that indexes the workspace):
+
+        i.e.:
+
+        - auto-import completions
+        - find references
+        - collect tests
+        - workspace tokens
+        - find definition
+        """
         api = self._get_regular_api(doc_uri)
         if api is not None:
             return api.get_robotframework_api_client()
         return None
 
     def get_others_api_client(self, doc_uri) -> Optional[IRobotFrameworkApiClient]:
+        """
+        To be used for assorted things:
+
+        - semantic tokens
+        - list tests for uri
+        - formatting
+        - folding range
+        - code lens
+        - document symbols
+        """
         api = self._get_others_api(doc_uri)
         if api is not None:
             return api.get_robotframework_api_client()
         return None
-
-    def get_workspace_symbols_api_client(self) -> Optional[IRobotFrameworkApiClient]:
-        self._check_in_main_thread()
-        apis = self._get_default_apis()
-        return apis.others_api.get_robotframework_api_client()

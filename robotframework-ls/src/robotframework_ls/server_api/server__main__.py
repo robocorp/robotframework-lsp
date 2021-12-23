@@ -118,6 +118,8 @@ def main():
         observer = RemoteFSObserver("<unused>", extensions=None)
 
         pre_generate_libspecs = False
+        index_workspace = False
+        collect_tests = False
 
         for arg in args:
             if arg.startswith("--remote-fs-observer-port="):
@@ -130,6 +132,12 @@ def main():
 
             elif arg == "--pre-generate-libspecs":
                 pre_generate_libspecs = True
+
+            elif arg == "--index-workspace":
+                index_workspace = True
+
+            elif arg == "--collect-tests":
+                collect_tests = True
 
             else:
                 new_args.append(arg)
@@ -145,6 +153,8 @@ def main():
             def __init__(self, *args, **kwargs):
                 kwargs["observer"] = observer
                 kwargs["pre_generate_libspecs"] = pre_generate_libspecs
+                kwargs["index_workspace"] = index_workspace
+                kwargs["collect_tests"] = collect_tests
                 RobotFrameworkServerApi.__init__(self, *args, **kwargs)
 
         __main__.main(

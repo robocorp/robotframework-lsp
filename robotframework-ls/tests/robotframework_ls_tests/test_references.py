@@ -21,7 +21,9 @@ def test_references_basic(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.references import references
 
-    workspace.set_root("case_inner_keywords", libspec_manager=libspec_manager)
+    workspace.set_root(
+        "case_inner_keywords", libspec_manager=libspec_manager, index_workspace=True
+    )
     doc = workspace.get_doc("case_root.robot")
 
     line = doc.find_line_with_contents("    Should Be Equal     ${arg1}     ${arg2}")
@@ -39,7 +41,9 @@ def test_references_with_name_1(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.references import references
 
-    workspace.set_root("case_with_name", libspec_manager=libspec_manager)
+    workspace.set_root(
+        "case_with_name", libspec_manager=libspec_manager, index_workspace=True
+    )
     doc = workspace.get_doc("case_with_name.robot")
 
     line = doc.find_line_with_contents("    settodictionary    ${dict}    b=20")
@@ -57,7 +61,9 @@ def test_references_with_name_2(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.references import references
 
-    workspace.set_root("case_with_name", libspec_manager=libspec_manager)
+    workspace.set_root(
+        "case_with_name", libspec_manager=libspec_manager, index_workspace=True
+    )
     doc = workspace.get_doc("case_with_name.robot")
 
     line = doc.find_line_with_contents("    Lib.Set to dictionary    ${dict}    a=10")
@@ -75,7 +81,9 @@ def test_references_multiple(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.references import references
 
-    workspace.set_root("case_references", libspec_manager=libspec_manager)
+    workspace.set_root(
+        "case_references", libspec_manager=libspec_manager, index_workspace=True
+    )
     doc = workspace.get_doc("case_references.robot")
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)

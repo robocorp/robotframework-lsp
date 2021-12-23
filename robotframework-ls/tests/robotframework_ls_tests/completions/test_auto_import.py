@@ -162,7 +162,9 @@ def setup_case2_in_dir_doc(workspace, cases, libspec_manager, workspace_dir):
 
     cases.copy_to("case1", workspace_dir)
 
-    workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
+    workspace.set_root(
+        workspace_dir, libspec_manager=libspec_manager, index_workspace=True
+    )
 
     uri = uris.from_fs_path(os.path.join(workspace_dir, "in_dir", "case2.robot"))
     workspace.ws.put_document(
@@ -322,7 +324,7 @@ User can call library
 def test_completion_with_auto_import_resource_import(workspace, setup_case2_in_dir_doc):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import auto_import_completions
-    from robocorp_ls_core.basic import wait_for_condition
+    from robocorp_ls_core.basic import wait_for_expected_func_return
 
     doc = workspace.get_doc("case1.robot")
 
@@ -338,13 +340,13 @@ KeywordInCase1
 User can call library
     KeywordInCa"""
 
-    wait_for_condition(
+    wait_for_expected_func_return(
         lambda: len(
             auto_import_completions.complete(
                 CompletionContext(doc2, workspace=workspace.ws), {}
             )
-        )
-        == 1
+        ),
+        1,
     )
     completions = auto_import_completions.complete(
         CompletionContext(doc2, workspace=workspace.ws), {}

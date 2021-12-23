@@ -7,6 +7,7 @@ from robocorp_ls_core.protocols import (
     IWorkspace,
     IConfig,
     IDocumentSelection,
+    ITestInfoFromSymbolsCacheTypedDict,
 )
 from robocorp_ls_core.constants import NULL
 from robocorp_ls_core.protocols import TypedDict
@@ -120,6 +121,9 @@ class ISymbolsCache(Protocol):
         pass
 
     def get_doc(self) -> Optional[IRobotDocument]:
+        pass
+
+    def get_test_info(self) -> Optional[List[ITestInfoFromSymbolsCacheTypedDict]]:
         pass
 
 

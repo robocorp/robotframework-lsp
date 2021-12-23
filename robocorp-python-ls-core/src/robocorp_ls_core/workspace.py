@@ -345,8 +345,16 @@ class Workspace(object):
                 f"Mutating the workspace can only be done at the thread: {self._main_thread}. Current thread: {curr_thread}"
             )
 
-    def _create_document(self, doc_uri, source=None, version=None):
-        return Document(doc_uri, source=source, version=version)
+    def _create_document(
+        self, doc_uri, source=None, version=None, force_load_source=False
+    ):
+        return Document(
+            doc_uri,
+            source=source,
+            version=version,
+            mutate_thread=self._main_thread,
+            force_load_source=force_load_source,
+        )
 
     def add_folder(self, folder: IWorkspaceFolder):
         """
@@ -413,10 +421,10 @@ class Workspace(object):
                     doc = None
 
             if doc is None:
-                doc = self._create_document(doc_uri)
                 try:
-                    _source = doc.source  # Force loading current contents
+                    doc = self._create_document(doc_uri, force_load_source=True)
                 except:
+                    log.info("Unable to load contents from: %s", doc_uri)
                     # Unable to load contents: file does not exist.
                     doc = None
                 else:
@@ -440,6 +448,9 @@ class Workspace(object):
         try:
             # In case the initial text wasn't passed, try to load it from source.
             # If it doesn't work, set the initial source as empty.
+            # Note that we already checked the thread in this function, so, we
+            # don't need to force it to be gotten in the constructor (which
+            # could raise an exception).
             _source = doc.source
         except:
             doc.source = ""
@@ -488,6 +499,9 @@ class Workspace(object):
         for folder in folders:
             yield from folder._iter_all_doc_uris(extensions)
 
+    def dispose(self):
+        pass
+
     def __typecheckself__(self) -> None:
         from robocorp_ls_core.protocols import check_implements
 
@@ -504,7 +518,16 @@ class Document(object):
     once, but that should not corrupt internal structures).
     """
 
-    def __init__(self, uri: str, source=None, version: Optional[str] = None):
+    def __init__(
+        self,
+        uri: str,
+        source=None,
+        version: Optional[str] = None,
+        *,
+        mutate_thread=None,
+        force_load_source=False,
+    ):
+        # During construction, set the mutate thread to the current thread.
         self._main_thread = threading.current_thread()
 
         self.uri = uri
@@ -516,6 +539,15 @@ class Document(object):
 
         # Only set when the source is read from disk.
         self._source_mtime = -1
+
+        if force_load_source:
+            # Just accessing should be ok to load the source.
+            _ = self.source
+
+        if mutate_thread is not None:
+            # After construction it may only be mutated by the mutate thread if
+            # specified.
+            self._main_thread = mutate_thread
 
     def _check_in_mutate_thread(self):
         curr_thread = threading.current_thread()

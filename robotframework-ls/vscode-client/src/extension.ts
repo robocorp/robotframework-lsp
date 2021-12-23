@@ -51,6 +51,7 @@ import { errorFeedback, logError, OUTPUT_CHANNEL } from "./channel";
 import { Mutex } from "./mutex";
 import { fileExists } from "./files";
 import { Stats } from "fs";
+import { handleTestsCollected, ITestInfoFromUri, setupTestExplorerSupport } from "./testview";
 
 interface ExecuteWorkspaceCommandArgs {
     command: string;
@@ -476,6 +477,12 @@ async function registerLanguageServerListeners(langServer: LanguageClient) {
                     handleProgressMessage(args);
                 })
             );
+
+            extensionContext.subscriptions.push(
+                langServer.onNotification("$/testsCollected", (args: ITestInfoFromUri) => {
+                    handleTestsCollected(args);
+                })
+            );
             extensionContext.subscriptions.push(
                 langServer.onRequest("$/executeWorkspaceCommand", async (args: ExecuteWorkspaceCommandArgs) => {
                     // OUTPUT_CHANNEL.appendLine(args.command + " - " + args.arguments);
@@ -520,6 +527,7 @@ async function startLanguageServer(): Promise<LanguageClient> {
         createClientOptions(initializationOptions)
     );
 
+    await setupTestExplorerSupport();
     // Important: register listeners before starting (otherwise startup progress is not shown).
     await registerLanguageServerListeners(langServer);
 
@@ -529,6 +537,8 @@ async function startLanguageServer(): Promise<LanguageClient> {
     // may not be available.
     OUTPUT_CHANNEL.appendLine("Waiting for RobotFramework (python) Language Server to finish activating...");
     await langServer.onReady();
+    // ask it to start indexing only after ready.
+    commands.executeCommand("robot.startIndexing.internal");
 
     let version = extensions.getExtension("robocorp.robotframework-lsp").packageJSON.version;
     try {
@@ -585,6 +595,8 @@ async function restartLanguageServer() {
                         }
                         languageServerClient.start();
                         await languageServerClient.onReady();
+                        // ask it to start indexing only after ready.
+                        commands.executeCommand("robot.startIndexing.internal");
                         OUTPUT_CHANNEL.appendLine(
                             "RobotFramework Language Server restarted. Took: " + timing.getTotalElapsedAsStr()
                         );

@@ -12,6 +12,7 @@ log = get_logger(__name__)
 def list_tests(completion_context: ICompletionContext) -> List[ITestInfoTypedDict]:
     from robot.api import Token  # noqa
     from robotframework_ls.impl import ast_utils
+    from robotframework_ls.impl.ast_utils import create_range_from_token
 
     ast = completion_context.get_ast()
     completion_context.check_cancelled()
@@ -31,6 +32,7 @@ def list_tests(completion_context: ICompletionContext) -> List[ITestInfoTypedDic
                     "uri": completion_context.doc.uri,
                     "path": completion_context.doc.path,
                     "name": test_case_name_token.value,
+                    "range": create_range_from_token(test_case_name_token),
                 }
             )
         except Exception:

@@ -37,10 +37,14 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         libspec_manager=None,
         observer: Optional[IFSObserver] = None,
         pre_generate_libspecs: bool = False,
+        index_workspace: bool = False,
+        collect_tests: bool = False,
     ):
         from robotframework_ls.impl.libspec_manager import LibspecManager
 
         PythonLanguageServer.__init__(self, read_from, write_to)
+        self._index_workspace = index_workspace
+        self._collect_tests = collect_tests
 
         if libspec_manager is None:
             try:
@@ -111,12 +115,17 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     ) -> IWorkspace:
         from robotframework_ls.impl.robot_workspace import RobotWorkspace
 
-        return RobotWorkspace(
+        robot_workspace = RobotWorkspace(
             root_uri,
             fs_observer,
             workspace_folders,
             libspec_manager=self.libspec_manager,
+            index_workspace=self._index_workspace,
+            collect_tests=self._collect_tests,
+            endpoint=self._endpoint,
         )
+
+        return robot_workspace
 
     def m_lint(self, doc_uri):
         if not self._check_min_version((3, 2)):
@@ -839,7 +848,13 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     def m_shutdown(self, **_kwargs):
         PythonLanguageServer.m_shutdown(self, **_kwargs)
         self.libspec_manager.dispose()
+        workspace = self._workspace
+        if workspace is not None:
+            workspace.dispose()
 
     def m_exit(self, **_kwargs):
         PythonLanguageServer.m_exit(self, **_kwargs)
         self.libspec_manager.dispose()
+        workspace = self._workspace
+        if workspace is not None:
+            workspace.dispose()

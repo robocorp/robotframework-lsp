@@ -45,7 +45,8 @@
         "onCommand:robot.internal.rfinteractive.semanticTokens",
         "onCommand:robot.internal.rfinteractive.completions",
         "onCommand:robot.getRFLSHomeDir",
-        "onCommand:robot.clearCachesAndRestartProcesses"
+        "onCommand:robot.clearCachesAndRestartProcesses",
+        "onCommand:robot.startIndexing.internal"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -117,6 +118,11 @@
                 "command": "robot.clearCachesAndRestartProcesses",
                 "title": "Clear caches and restart Robot Framework Language Server processes",
                 "category": "Robot Framework"
+            },
+            {
+                "command": "robot.startIndexing.internal",
+                "title": "Starts the indexing service",
+                "category": "Robot Framework"
             }
         ],
         "menus": {
@@ -171,6 +177,10 @@
                 },
                 {
                     "command": "robot.getRFLSHomeDir",
+                    "when": "false"
+                },
+                {
+                    "command": "robot.startIndexing.internal",
                     "when": "false"
                 }
             ]

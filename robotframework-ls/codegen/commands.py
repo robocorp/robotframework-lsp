@@ -104,6 +104,12 @@ COMMANDS: List[Command] = [
         "Clear caches and restart Robot Framework Language Server processes",
         server_handled=False,
     ),
+    Command(
+        "robot.startIndexing.internal",
+        "Starts the indexing service",
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
 ]
 
 

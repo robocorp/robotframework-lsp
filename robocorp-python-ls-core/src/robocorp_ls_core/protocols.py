@@ -27,6 +27,7 @@ if typing.TYPE_CHECKING:
     from robocorp_ls_core.lsp import TextDocumentTypedDict
     from robocorp_ls_core.lsp import ResponseTypedDict
     from robocorp_ls_core.lsp import CodeLensTypedDict
+    from robocorp_ls_core.lsp import RangeTypedDict
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -357,6 +358,17 @@ class ITestInfoTypedDict(TypedDict):
     uri: str
     path: str
     name: str
+    range: "RangeTypedDict"
+
+
+class ITestInfoFromSymbolsCacheTypedDict(TypedDict):
+    name: str
+    range: "RangeTypedDict"
+
+
+class ITestInfoFromUriTypedDict(TypedDict):
+    uri: str
+    testInfo: List[ITestInfoFromSymbolsCacheTypedDict]
 
 
 class ILanguageServerClient(ILanguageServerClientBase, Protocol):
@@ -690,6 +702,9 @@ class IWorkspace(Protocol):
         """
         Retuns the folders which are set as workspace folders.
         """
+
+    def dispose(self):
+        pass
 
 
 class ITimeoutHandle(Protocol):

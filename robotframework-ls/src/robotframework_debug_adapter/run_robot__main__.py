@@ -584,6 +584,11 @@ def main():
         )
 
     processor = _RobotTargetComm(s, debug=debug)
+
+    from robotframework_debug_adapter import global_vars
+
+    global_vars.set_global_robot_target_comm(processor)
+
     reader, writer = processor.start_communication_threads(debug)
 
     if not processor.configuration_done.wait(DEFAULT_TIMEOUT):

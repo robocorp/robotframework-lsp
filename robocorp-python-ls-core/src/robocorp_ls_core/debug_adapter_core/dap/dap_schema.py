@@ -13918,6 +13918,356 @@ class DisassembledInstruction(BaseSchema):
         return dct
 
 
+@register_event('startSuite')
+@register
+class StartSuiteEvent(BaseSchema):
+    """
+    Start running a Robot Framework suite.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "event"
+            ]
+        },
+        "event": {
+            "type": "string",
+            "enum": [
+                "startSuite"
+            ]
+        },
+        "body": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the suite."
+                },
+                "source": {
+                    "type": "string",
+                    "description": "The filename that maps to this suite."
+                }
+            },
+            "required": []
+        }
+    }
+    __refs__ = set(['body'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, body, seq=-1, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param string event: 
+        :param StartSuiteEventBody body: 
+        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        """
+        self.type = 'event'
+        self.event = 'startSuite'
+        if body is None:
+            self.body = StartSuiteEventBody()
+        else:
+            self.body = StartSuiteEventBody(update_ids_from_dap=update_ids_from_dap, **body) if body.__class__ !=  StartSuiteEventBody else body
+        self.seq = seq
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        event = self.event
+        body = self.body
+        seq = self.seq
+        dct = {
+            'type': type,
+            'event': event,
+            'body': body.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'seq': seq,
+        }
+        dct.update(self.kwargs)
+        return dct
+
+
+@register_event('startTest')
+@register
+class StartTestEvent(BaseSchema):
+    """
+    Start running a Robot Framework test.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "event"
+            ]
+        },
+        "event": {
+            "type": "string",
+            "enum": [
+                "startTest"
+            ]
+        },
+        "body": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the test."
+                },
+                "source": {
+                    "type": "string",
+                    "description": "The filename that maps to this test."
+                },
+                "lineno": {
+                    "type": "number",
+                    "description": "The line for this test."
+                }
+            },
+            "required": []
+        }
+    }
+    __refs__ = set(['body'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, body, seq=-1, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param string event: 
+        :param StartTestEventBody body: 
+        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        """
+        self.type = 'event'
+        self.event = 'startTest'
+        if body is None:
+            self.body = StartTestEventBody()
+        else:
+            self.body = StartTestEventBody(update_ids_from_dap=update_ids_from_dap, **body) if body.__class__ !=  StartTestEventBody else body
+        self.seq = seq
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        event = self.event
+        body = self.body
+        seq = self.seq
+        dct = {
+            'type': type,
+            'event': event,
+            'body': body.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'seq': seq,
+        }
+        dct.update(self.kwargs)
+        return dct
+
+
+@register_event('endTest')
+@register
+class EndTestEvent(BaseSchema):
+    """
+    End of some Robot Framework test.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "event"
+            ]
+        },
+        "event": {
+            "type": "string",
+            "enum": [
+                "endTest"
+            ]
+        },
+        "body": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name."
+                },
+                "elapsedtime": {
+                    "type": "number",
+                    "description": "Time elapsed (in millis) for the test."
+                },
+                "status": {
+                    "type": "string",
+                    "description": "The status (PASS/FAIL/SKIP)."
+                },
+                "source": {
+                    "type": "string",
+                    "description": "The filename."
+                },
+                "message": {
+                    "type": "string",
+                    "description": "Status message. Normally an error message or an empty string."
+                },
+                "failed_keywords": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of failed keywords."
+                }
+            },
+            "required": []
+        }
+    }
+    __refs__ = set(['body'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, body, seq=-1, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param string event: 
+        :param EndTestEventBody body: 
+        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        """
+        self.type = 'event'
+        self.event = 'endTest'
+        if body is None:
+            self.body = EndTestEventBody()
+        else:
+            self.body = EndTestEventBody(update_ids_from_dap=update_ids_from_dap, **body) if body.__class__ !=  EndTestEventBody else body
+        self.seq = seq
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        event = self.event
+        body = self.body
+        seq = self.seq
+        dct = {
+            'type': type,
+            'event': event,
+            'body': body.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'seq': seq,
+        }
+        dct.update(self.kwargs)
+        return dct
+
+
+@register_event('endSuite')
+@register
+class EndSuiteEvent(BaseSchema):
+    """
+    End of some Robot Framework suite.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "event"
+            ]
+        },
+        "event": {
+            "type": "string",
+            "enum": [
+                "endSuite"
+            ]
+        },
+        "body": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name."
+                },
+                "elapsedtime": {
+                    "type": "number",
+                    "description": "Time elapsed (in millis) for the test."
+                },
+                "status": {
+                    "type": "string",
+                    "description": "The status (PASS/FAIL/SKIP)."
+                },
+                "source": {
+                    "type": "string",
+                    "description": "The filename."
+                },
+                "message": {
+                    "type": "string",
+                    "description": "Error message if suite setup or teardown has failed, empty otherwise."
+                },
+                "failed_keywords": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of failed keywords."
+                }
+            },
+            "required": []
+        }
+    }
+    __refs__ = set(['body'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, body, seq=-1, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param string event: 
+        :param EndSuiteEventBody body: 
+        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        """
+        self.type = 'event'
+        self.event = 'endSuite'
+        if body is None:
+            self.body = EndSuiteEventBody()
+        else:
+            self.body = EndSuiteEventBody(update_ids_from_dap=update_ids_from_dap, **body) if body.__class__ !=  EndSuiteEventBody else body
+        self.seq = seq
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        event = self.event
+        body = self.body
+        seq = self.seq
+        dct = {
+            'type': type,
+            'event': event,
+            'body': body.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'seq': seq,
+        }
+        dct.update(self.kwargs)
+        return dct
+
+
 @register_request('setDebuggerProperty')
 @register
 class SetDebuggerPropertyRequest(BaseSchema):
@@ -17277,6 +17627,277 @@ class MessageVariables(BaseSchema):
 
 
 @register
+class StartSuiteEventBody(BaseSchema):
+    """
+    "body" of StartSuiteEvent
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "name": {
+            "type": "string",
+            "description": "The name of the suite."
+        },
+        "source": {
+            "type": "string",
+            "description": "The filename that maps to this suite."
+        }
+    }
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, name=None, source=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string name: The name of the suite.
+        :param string source: The filename that maps to this suite.
+        """
+        self.name = name
+        self.source = source
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        name = self.name
+        source = self.source
+        dct = {
+        }
+        if name is not None:
+            dct['name'] = name
+        if source is not None:
+            dct['source'] = source
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class StartTestEventBody(BaseSchema):
+    """
+    "body" of StartTestEvent
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "name": {
+            "type": "string",
+            "description": "The name of the test."
+        },
+        "source": {
+            "type": "string",
+            "description": "The filename that maps to this test."
+        },
+        "lineno": {
+            "type": "number",
+            "description": "The line for this test."
+        }
+    }
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, name=None, source=None, lineno=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string name: The name of the test.
+        :param string source: The filename that maps to this test.
+        :param number lineno: The line for this test.
+        """
+        self.name = name
+        self.source = source
+        self.lineno = lineno
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        name = self.name
+        source = self.source
+        lineno = self.lineno
+        dct = {
+        }
+        if name is not None:
+            dct['name'] = name
+        if source is not None:
+            dct['source'] = source
+        if lineno is not None:
+            dct['lineno'] = lineno
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class EndTestEventBody(BaseSchema):
+    """
+    "body" of EndTestEvent
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "name": {
+            "type": "string",
+            "description": "The name."
+        },
+        "elapsedtime": {
+            "type": "number",
+            "description": "Time elapsed (in millis) for the test."
+        },
+        "status": {
+            "type": "string",
+            "description": "The status (PASS/FAIL/SKIP)."
+        },
+        "source": {
+            "type": "string",
+            "description": "The filename."
+        },
+        "message": {
+            "type": "string",
+            "description": "Status message. Normally an error message or an empty string."
+        },
+        "failed_keywords": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "List of failed keywords."
+        }
+    }
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, name=None, elapsedtime=None, status=None, source=None, message=None, failed_keywords=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string name: The name.
+        :param number elapsedtime: Time elapsed (in millis) for the test.
+        :param string status: The status (PASS/FAIL/SKIP).
+        :param string source: The filename.
+        :param string message: Status message. Normally an error message or an empty string.
+        :param array failed_keywords: List of failed keywords.
+        """
+        self.name = name
+        self.elapsedtime = elapsedtime
+        self.status = status
+        self.source = source
+        self.message = message
+        self.failed_keywords = failed_keywords
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        name = self.name
+        elapsedtime = self.elapsedtime
+        status = self.status
+        source = self.source
+        message = self.message
+        failed_keywords = self.failed_keywords
+        if failed_keywords and hasattr(failed_keywords[0], "to_dict"):
+            failed_keywords = [x.to_dict() for x in failed_keywords]
+        dct = {
+        }
+        if name is not None:
+            dct['name'] = name
+        if elapsedtime is not None:
+            dct['elapsedtime'] = elapsedtime
+        if status is not None:
+            dct['status'] = status
+        if source is not None:
+            dct['source'] = source
+        if message is not None:
+            dct['message'] = message
+        if failed_keywords is not None:
+            dct['failed_keywords'] = failed_keywords
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class EndSuiteEventBody(BaseSchema):
+    """
+    "body" of EndSuiteEvent
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "name": {
+            "type": "string",
+            "description": "The name."
+        },
+        "elapsedtime": {
+            "type": "number",
+            "description": "Time elapsed (in millis) for the test."
+        },
+        "status": {
+            "type": "string",
+            "description": "The status (PASS/FAIL/SKIP)."
+        },
+        "source": {
+            "type": "string",
+            "description": "The filename."
+        },
+        "message": {
+            "type": "string",
+            "description": "Error message if suite setup or teardown has failed, empty otherwise."
+        },
+        "failed_keywords": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "List of failed keywords."
+        }
+    }
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, name=None, elapsedtime=None, status=None, source=None, message=None, failed_keywords=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string name: The name.
+        :param number elapsedtime: Time elapsed (in millis) for the test.
+        :param string status: The status (PASS/FAIL/SKIP).
+        :param string source: The filename.
+        :param string message: Error message if suite setup or teardown has failed, empty otherwise.
+        :param array failed_keywords: List of failed keywords.
+        """
+        self.name = name
+        self.elapsedtime = elapsedtime
+        self.status = status
+        self.source = source
+        self.message = message
+        self.failed_keywords = failed_keywords
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        name = self.name
+        elapsedtime = self.elapsedtime
+        status = self.status
+        source = self.source
+        message = self.message
+        failed_keywords = self.failed_keywords
+        if failed_keywords and hasattr(failed_keywords[0], "to_dict"):
+            failed_keywords = [x.to_dict() for x in failed_keywords]
+        dct = {
+        }
+        if name is not None:
+            dct['name'] = name
+        if elapsedtime is not None:
+            dct['elapsedtime'] = elapsedtime
+        if status is not None:
+            dct['status'] = status
+        if source is not None:
+            dct['source'] = source
+        if message is not None:
+            dct['message'] = message
+        if failed_keywords is not None:
+            dct['failed_keywords'] = failed_keywords
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
 class PydevdSystemInfoResponseBody(BaseSchema):
     """
     "body" of PydevdSystemInfoResponse
@@ -17380,4 +18001,5 @@ class PydevdAuthorizeResponseBody(BaseSchema):
         }
         dct.update(self.kwargs)
         return dct
+
 # fmt: on

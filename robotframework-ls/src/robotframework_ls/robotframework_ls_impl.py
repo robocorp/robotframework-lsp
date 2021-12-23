@@ -27,7 +27,10 @@ import typing
 import sys
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 from robocorp_ls_core.lsp import CodeLensTypedDict
-from robotframework_ls.commands import ROBOT_GET_RFLS_HOME_DIR
+from robotframework_ls.commands import (
+    ROBOT_GET_RFLS_HOME_DIR,
+    ROBOT_START_INDEXING_INTERNAL,
+)
 
 
 log = get_logger(__name__)
@@ -273,9 +276,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         return ret
 
-    def forward_progress_msg(self, msg: dict) -> None:
+    def forward_msg(self, msg: dict) -> None:
         method = msg["method"]
-        assert method == "$/customProgress"
         self._endpoint.notify(method, msg["params"])
 
     @overrides(PythonLanguageServer.capabilities)
@@ -350,6 +352,10 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         assert os.path.isdir(directory), f"Expected: {directory} to be a directory."
         self._pm.load_plugins_from(Path(directory))
         return True
+
+    @command_dispatcher(ROBOT_START_INDEXING_INTERNAL)
+    def _start_indexing(self, *arguments):
+        self._server_manager.get_regular_rf_api_client("")
 
     @command_dispatcher("robot.getInternalInfo")
     def _get_internal_info(self, *arguments):
@@ -850,7 +856,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         # Note: we want to use the same one used by m_workspace__symbol (to reuse
         # the related caches).
-        rf_api_client = self._server_manager.get_others_api_client(doc_uri)
+        rf_api_client = self._server_manager.get_regular_rf_api_client(doc_uri)
         if rf_api_client is not None:
             func = partial(
                 self._async_api_request,
@@ -888,7 +894,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         return func
 
     def m_workspace__symbol(self, query: Optional[str] = None) -> Any:
-        api = self._server_manager.get_others_api_client("")
+        api = self._server_manager.get_regular_rf_api_client("")
         if api is None:
             log.info("Unable to search workspace symbols (no api available).")
             return None

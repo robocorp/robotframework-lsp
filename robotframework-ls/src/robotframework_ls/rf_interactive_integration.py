@@ -382,7 +382,7 @@ def _handle_completions(language_server_impl, rf_interpreters_manager, arguments
     interpreter: RfInterpreterServerManager = rf_info_or_dict_error.interpreter
     uri = interpreter.uri
 
-    api = language_server_impl._server_manager.get_others_api_client(uri)
+    api = language_server_impl._server_manager.get_regular_rf_api_client(uri)
     if api is None:
         log.info(
             "Unable to get api client when computing completions (for interactive usage)."

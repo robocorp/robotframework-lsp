@@ -13,7 +13,7 @@ def test_workspace_symbols(workspace, libspec_manager):
     from robocorp_ls_core.constants import NULL
     from robocorp_ls_core.config import Config
 
-    workspace.set_root("case4", libspec_manager=libspec_manager)
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
 
     config = Config()
 

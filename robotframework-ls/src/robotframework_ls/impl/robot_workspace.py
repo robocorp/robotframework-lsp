@@ -3,12 +3,290 @@ from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.cache import instance_cache
 from robotframework_ls.constants import NULL
 from robocorp_ls_core.robotframework_log import get_logger
-from robotframework_ls.impl.protocols import IRobotWorkspace, IRobotDocument
-from robocorp_ls_core.protocols import check_implements, IWorkspaceFolder
+from robotframework_ls.impl.protocols import (
+    IRobotWorkspace,
+    IRobotDocument,
+    IBaseCompletionContext,
+    ILibraryDoc,
+    ISymbolsCache,
+    ISymbolsJsonListEntry,
+    ICompletionContext,
+)
+from robocorp_ls_core.protocols import (
+    check_implements,
+    IWorkspaceFolder,
+    IEndPoint,
+    ITestInfoFromSymbolsCacheTypedDict,
+    ITestInfoFromUriTypedDict,
+)
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
-from typing import Optional, Any
+from typing import Optional, Any, Set, List, Dict, Iterable
+import weakref
+import threading
 
 log = get_logger(__name__)
+
+
+class SymbolsCache:
+    _library_info: "Optional[weakref.ReferenceType[ILibraryDoc]]"
+    _doc: "Optional[weakref.ReferenceType[IRobotDocument]]"
+
+    def __init__(
+        self,
+        json_list,
+        library_info: Optional[ILibraryDoc],
+        doc: Optional[IRobotDocument],
+        keywords_used: Set[str],
+        uri: Optional[str],  # Always available if generated from doc.
+        test_info: Optional[List[ITestInfoFromSymbolsCacheTypedDict]],
+    ):
+        self._uri = uri
+        if library_info is not None:
+            self._library_info = weakref.ref(library_info)
+        else:
+            self._library_info = None
+
+        if doc is not None:
+            self._doc = weakref.ref(doc)
+        else:
+            self._doc = None
+
+        self._json_list = json_list
+        self._keywords_used = keywords_used
+        self._test_info = test_info
+
+    def get_test_info(self) -> Optional[List[ITestInfoFromSymbolsCacheTypedDict]]:
+        return self._test_info
+
+    def get_uri(self) -> Optional[str]:
+        return self._uri
+
+    def has_keyword_usage(self, normalized_keyword_name: str) -> bool:
+        return normalized_keyword_name in self._keywords_used
+
+    def get_json_list(self) -> list:
+        return self._json_list
+
+    def get_library_info(self) -> Optional[ILibraryDoc]:
+        w = self._library_info
+        if w is None:
+            return None
+        return w()
+
+    def get_doc(self) -> Optional[IRobotDocument]:
+        w = self._doc
+        if w is None:
+            return None
+        return w()
+
+    def __typecheckself__(self) -> None:
+        _: ISymbolsCache = check_implements(self)
+
+
+def _compute_symbols_from_ast(completion_context: ICompletionContext) -> ISymbolsCache:
+    from robotframework_ls.impl import ast_utils
+    from robocorp_ls_core.lsp import SymbolKind
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
+    from robotframework_ls.impl.code_lens import list_tests
+
+    doc = completion_context.doc
+
+    ast = completion_context.get_ast()
+    symbols: List[ISymbolsJsonListEntry] = []
+    uri = doc.uri
+
+    for keyword_node_info in ast_utils.iter_keywords(ast):
+        docs = ast_utils.get_documentation(keyword_node_info.node)
+        args = []
+        for arg in ast_utils.iter_keyword_arguments_as_str(keyword_node_info.node):
+            args.append(arg)
+
+        docs = "%s(%s)\n\n%s" % (keyword_node_info.node.name, ", ".join(args), docs)
+
+        symbols.append(
+            {
+                "name": keyword_node_info.node.name,
+                "kind": SymbolKind.Class,
+                "location": {
+                    "uri": uri,
+                    "range": {
+                        "start": {
+                            "line": keyword_node_info.node.lineno - 1,
+                            "character": keyword_node_info.node.col_offset,
+                        },
+                        "end": {
+                            "line": keyword_node_info.node.end_lineno - 1,
+                            "character": keyword_node_info.node.end_col_offset,
+                        },
+                    },
+                },
+                "docs": docs,
+                "docsFormat": "markdown",
+                "containerName": doc.path,
+            }
+        )
+
+    keywords_used = set()
+    for keyword_usage_info in ast_utils.iter_keyword_usage_tokens(
+        ast, collect_args_as_keywords=True
+    ):
+        keywords_used.add(normalize_robot_name(keyword_usage_info.name))
+
+    test_info = list_tests(completion_context)
+    test_info_for_cache: List[ITestInfoFromSymbolsCacheTypedDict] = [
+        {"name": x["name"], "range": x["range"]} for x in test_info
+    ]
+
+    return SymbolsCache(
+        symbols,
+        None,
+        doc,
+        keywords_used,
+        uri=uri,
+        test_info=test_info_for_cache,
+    )
+
+
+class WorkspaceIndexer(object):
+    def __init__(
+        self,
+        robot_workspace,
+        endpoint: Optional[IEndPoint],
+        collect_tests: bool = False,
+    ):
+        self._robot_workspace = weakref.ref(robot_workspace)
+        self._endpoint = endpoint
+        self._collect_tests = collect_tests
+        if collect_tests:
+            assert endpoint is not None
+        t = threading.Thread(target=self._on_thread)
+        self._cached: Dict[str, Any] = {}
+        t.daemon = True
+        t.start()
+
+    def _on_thread(self) -> None:
+        import time
+
+        if not self._collect_tests:
+            for symbols_cache in self.iter_symbols_cache():
+                # Do a single collection at startup, afterwards only
+                # collect again on demand.
+                pass
+        else:
+            endpoint = self._endpoint
+            assert endpoint
+            while True:
+                old_cached = self._cached
+                cached = {}
+                for symbols_cache in self.iter_symbols_cache():
+                    test_info_lst = symbols_cache.get_test_info()
+                    if test_info_lst is None:
+                        test_info_lst = []
+                    uri = symbols_cache.get_uri()
+                    if uri:
+                        test_info_for_uri: ITestInfoFromUriTypedDict = {
+                            "uri": uri,
+                            "testInfo": test_info_lst,
+                        }
+                        cached[uri] = test_info_lst
+                        if old_cached.pop(uri, None) != test_info_lst:
+                            endpoint.notify(
+                                "$/testsCollected",
+                                test_info_for_uri,
+                            )
+                for uri in old_cached.keys():
+                    endpoint.notify(
+                        "$/testsCollected",
+                        {"uri": uri, "testInfo": []},
+                    )
+
+                self._cached = cached
+                time.sleep(0.5)
+
+    def dispose(self):
+        pass
+
+    def iter_symbols_cache(
+        self,
+        only_for_open_docs=False,
+        initial_time: Optional[float] = None,
+        timeout: Optional[float] = None,
+        context: Optional[IBaseCompletionContext] = None,
+        found: Optional[Set[str]] = None,
+    ) -> Iterable[ISymbolsCache]:
+        from typing import cast
+        import time
+
+        if not found:
+            found = set()
+
+        if initial_time is None:
+            initial_time = time.time()
+
+        if timeout is None:
+            timeout = 99999999
+
+        workspace = self._robot_workspace()
+        if not workspace:
+            log.critical("self._robot_workspace already collected in WorkspaceIndexer.")
+            return
+
+        if only_for_open_docs:
+
+            def iter_in():
+                for doc_uri in workspace.get_open_docs_uris():
+                    yield doc_uri
+
+        else:
+
+            def iter_in():
+                for uri in workspace.iter_all_doc_uris_in_workspace(
+                    (".robot", ".resource")
+                ):
+                    yield uri
+
+        for uri in iter_in():
+            if not uri:
+                continue
+
+            if context is not None:
+                context.check_cancelled()
+
+            if time.time() - initial_time > timeout:
+                log.info(
+                    "Timed out gathering information from workspace symbols (only partial information was collected). Consider enabling the 'robot.workspaceSymbolsOnlyForOpenDocs' setting."
+                )
+                break
+
+            doc = cast(
+                Optional[IRobotDocument],
+                workspace.get_document(uri, accept_from_file=True),
+            )
+            if doc is not None:
+                if uri in found:
+                    continue
+                found.add(uri)
+                symbols_cache = doc.symbols_cache
+                if symbols_cache is None:
+                    from robotframework_ls.impl.completion_context import (
+                        CompletionContext,
+                    )
+
+                    if context is not None:
+                        ctx = CompletionContext(
+                            doc,
+                            monitor=context.monitor,
+                            config=context.config,
+                            workspace=workspace,
+                        )
+                    else:
+                        ctx = CompletionContext(
+                            doc,
+                            workspace=workspace,
+                        )
+                    symbols_cache = _compute_symbols_from_ast(ctx)
+                doc.symbols_cache = symbols_cache
+                yield symbols_cache
 
 
 class RobotWorkspace(Workspace):
@@ -19,6 +297,9 @@ class RobotWorkspace(Workspace):
         workspace_folders=None,
         libspec_manager=NULL,
         generate_ast=True,
+        index_workspace=False,
+        collect_tests=False,
+        endpoint: Optional[IEndPoint] = None,
     ):
         self.libspec_manager = libspec_manager
 
@@ -26,6 +307,16 @@ class RobotWorkspace(Workspace):
             self, root_uri, fs_observer, workspace_folders=workspace_folders
         )
         self._generate_ast = generate_ast
+        self.workspace_indexer: Optional[WorkspaceIndexer]
+        if collect_tests:
+            assert endpoint is not None
+
+        if index_workspace:
+            self.workspace_indexer = WorkspaceIndexer(
+                self, endpoint, collect_tests=collect_tests
+            )
+        else:
+            self.workspace_indexer = None
 
     @overrides(Workspace.add_folder)
     def add_folder(self, folder: IWorkspaceFolder):
@@ -37,8 +328,23 @@ class RobotWorkspace(Workspace):
         Workspace.remove_folder(self, folder_uri)
         self.libspec_manager.remove_workspace_folder(folder_uri)
 
-    def _create_document(self, doc_uri, source=None, version=None):
-        return RobotDocument(doc_uri, source, version, generate_ast=self._generate_ast)
+    @overrides(Workspace.dispose)
+    def dispose(self):
+        indexer = self.workspace_indexer
+        if indexer is not None:
+            indexer.dispose()
+
+    def _create_document(
+        self, doc_uri, source=None, version=None, force_load_source=False
+    ):
+        return RobotDocument(
+            doc_uri,
+            source,
+            version,
+            generate_ast=self._generate_ast,
+            mutate_thread=self._main_thread,
+            force_load_source=force_load_source,
+        )
 
     def __typecheckself__(self) -> None:
         _: IRobotWorkspace = check_implements(self)
@@ -50,8 +356,24 @@ class RobotDocument(Document):
     TYPE_INIT = "init"
     TYPE_RESOURCE = "resource"
 
-    def __init__(self, uri, source=None, version=None, generate_ast=True):
-        Document.__init__(self, uri, source=source, version=version)
+    def __init__(
+        self,
+        uri,
+        source=None,
+        version=None,
+        generate_ast=True,
+        *,
+        mutate_thread=None,
+        force_load_source=False,
+    ):
+        Document.__init__(
+            self,
+            uri,
+            source=source,
+            version=version,
+            mutate_thread=mutate_thread,
+            force_load_source=force_load_source,
+        )
 
         self._generate_ast = generate_ast
         self._ast = None
