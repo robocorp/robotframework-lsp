@@ -620,6 +620,8 @@ class IDocument(Protocol):
     version: Optional[str]
     path: str
 
+    immutable: bool
+
     def selection(self, line: int, col: int) -> IDocumentSelection:
         pass
 

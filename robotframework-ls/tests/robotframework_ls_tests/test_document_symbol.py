@@ -3,7 +3,7 @@ def test_document_symbol(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.document_symbol import document_symbol
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
     doc.source = """
     
 *** Settings ***

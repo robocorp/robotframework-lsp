@@ -3,7 +3,7 @@ def test_dictionary_entries_completions_1(workspace, libspec_manager, data_regre
     from robotframework_ls.impl import dictionary_completions
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """
 *** Variables ***
 &{Person}   First name=John   Last name=Smith
@@ -23,7 +23,7 @@ def test_dictionary_entries_completions_2(workspace, libspec_manager, data_regre
     from robotframework_ls.impl import dictionary_completions
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """
 *** Variables ***
 &{Person}         Address=&{home_address}
@@ -44,7 +44,7 @@ def test_dictionary_entries_completions_3(workspace, libspec_manager, data_regre
     from robotframework_ls.impl import dictionary_completions
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """
 *** Variables ***
 &{Person}         Address=&{home_address}
@@ -67,7 +67,7 @@ def test_dictionary_entries_completions_4(workspace, libspec_manager, data_regre
     from robotframework_ls.impl import dictionary_completions
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """
 *** Variables ***
 &{Some Person}         Address=&{home_address}
@@ -90,7 +90,7 @@ def test_dictionary_entries_completions_5(workspace, libspec_manager, data_regre
     from robotframework_ls.impl import dictionary_completions
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """
 *** Variables ***
 &{Some Person}         Address=&{home_address}

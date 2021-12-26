@@ -4,7 +4,10 @@ def test_folding_range_basic(workspace, libspec_manager, data_regression):
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case4.robot")
-    doc.source += """
+    doc = workspace.put_doc(
+        "case4.robot",
+        doc.source
+        + """
 *** Test Cases ***
 Log It
     Log   
@@ -21,7 +24,8 @@ Log It 3
         
     END
 Nothing here  
-"""
+""",
+    )
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)
 

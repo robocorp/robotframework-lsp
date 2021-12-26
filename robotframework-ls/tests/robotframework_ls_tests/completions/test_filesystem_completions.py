@@ -7,7 +7,7 @@ def test_library_completions_basic(
     cases.copy_to("case1", workspace_dir)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """*** Settings ***
 Library           collec"""
 
@@ -27,7 +27,7 @@ def test_library_completions_middle(
     cases.copy_to("case1", workspace_dir)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """*** Settings ***
 Library           collecXXX"""
 
@@ -48,7 +48,7 @@ def test_library_completions_local(
     cases.copy_to("case1", workspace_dir)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """*** Settings ***
 Library           caseXXX"""
 
@@ -70,7 +70,7 @@ def test_library_completions_in_dirs(
     cases.copy_to("case1", workspace_dir)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """*** Settings ***
 Library           dir1/caseXXX"""
 
@@ -106,7 +106,7 @@ def test_library_completions_absolute(
     directory = workspace_dir
     directory = directory.replace(u"\\", u"/")
 
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = u"""*** Settings ***
 Library           %s/""" % (
         directory,
@@ -137,7 +137,7 @@ def test_resource_completions_relative(
     cases.copy_to("case4", workspace_dir)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
     doc.source = """*** Settings ***
 Resource           case"""
 
@@ -165,7 +165,7 @@ def test_resource_completions_resolve_var(
     }
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
     doc.source = """*** Settings ***
 Resource           ${ext_folder}/"""
 
@@ -202,7 +202,7 @@ def test_collect_from_pre_specified_pythonpath(
     )
     libspec_manager.pre_generate_libspecs = True
     libspec_manager.config = config
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
 
     doc.source = """
 *** Settings ***

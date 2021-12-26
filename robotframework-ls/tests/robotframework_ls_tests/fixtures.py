@@ -262,12 +262,24 @@ class _WorkspaceFixture(object):
 
         self._ws = RobotWorkspace(uris.from_fs_path(path), self._fs_observer, **kwargs)
 
-    def get_doc(self, root_relative_path, accept_from_file=True):
+    def get_doc_uri(self, root_relative_path):
         from robocorp_ls_core import uris
 
         path = os.path.join(self._ws.root_path, root_relative_path)
         uri = uris.from_fs_path(path)
-        return self.ws.get_document(uri, accept_from_file=accept_from_file)
+        return uri
+
+    def get_doc(self, root_relative_path, accept_from_file=True):
+        return self.ws.get_document(
+            self.get_doc_uri(root_relative_path), accept_from_file=accept_from_file
+        )
+
+    def put_doc(self, root_relative_path, text=""):
+        from robocorp_ls_core.lsp import TextDocumentItem
+
+        return self.ws.put_document(
+            TextDocumentItem(uri=self.get_doc_uri(root_relative_path), text=text)
+        )
 
 
 @pytest.fixture

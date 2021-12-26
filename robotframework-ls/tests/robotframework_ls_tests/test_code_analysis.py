@@ -15,8 +15,10 @@ def test_keywords_analyzed(workspace, libspec_manager, data_regression):
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
-    doc.source = doc.source + (
-        "\n    This keyword does not exist" "\n    [Teardown]    Also not there"
+    doc = workspace.put_doc(
+        "case1.robot",
+        doc.source
+        + ("\n    This keyword does not exist" "\n    [Teardown]    Also not there"),
     )
 
     _collect_errors(workspace, doc, data_regression)
@@ -24,24 +26,28 @@ def test_keywords_analyzed(workspace, libspec_manager, data_regression):
 
 def test_keywords_analyzed_templates(workspace, libspec_manager, data_regression):
     workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
-    doc.source = """*** Settings ***
-Test Template    this is not there"""
+    doc = workspace.put_doc(
+        "case1.robot",
+        """*** Settings ***
+Test Template    this is not there""",
+    )
 
     _collect_errors(workspace, doc, data_regression)
 
 
 def test_no_lib_name(workspace, libspec_manager, data_regression):
     workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
-    doc.source = """*** Settings ***
+    doc = workspace.put_doc(
+        "case1.robot",
+        """*** Settings ***
 Library
 Resource
 
 *** Keywords ***
 I check ${cmd}
     Log    ${cmd}
-"""
+""",
+    )
 
     _collect_errors(workspace, doc, data_regression)
 
@@ -49,7 +55,8 @@ I check ${cmd}
 def test_keywords_with_vars_no_error(workspace, libspec_manager, data_regression):
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
-    doc.source = (
+    doc = workspace.put_doc(
+        "case1.robot",
         doc.source
         + """
     I check ls
@@ -62,7 +69,7 @@ I check ${cmd}
 I execute "${cmd}" rara "${opts}"
     Log    ${cmd} ${opts}
     
-"""
+""",
     )
 
     _collect_errors(workspace, doc, data_regression)
@@ -71,11 +78,12 @@ I execute "${cmd}" rara "${opts}"
 def test_keywords_in_args(workspace, libspec_manager, data_regression):
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
-    doc.source = (
+    doc = workspace.put_doc(
+        "case1.robot",
         doc.source
         + """
     Run Keyword If    ${var}    This does not exist    
-"""
+""",
     )
 
     _collect_errors(workspace, doc, data_regression)
@@ -86,12 +94,13 @@ def test_keywords_in_args_no_error_with_var(
 ):
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
-    doc.source = (
+    new_source = (
         doc.source
         + """
     Run Keyword    ${var}
 """
     )
+    doc = workspace.put_doc("case1.robot", new_source)
 
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
@@ -100,7 +109,8 @@ def test_keywords_with_prefix_no_error(workspace, libspec_manager, data_regressi
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
     # Ignore bdd-related prefixes (see: robotframework_ls.impl.robot_constants.BDD_PREFIXES)
-    doc.source = (
+    doc = workspace.put_doc(
+        "case1.robot",
         doc.source
         + """
     given I check ls
@@ -112,7 +122,7 @@ I check ${cmd}
 
 I execute
     Log    foo
-"""
+""",
     )
 
     _collect_errors(workspace, doc, data_regression, basename="no_error")
@@ -120,9 +130,9 @@ I execute
 
 def test_keywords_prefixed_by_library(workspace, libspec_manager, data_regression):
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
-
-    doc.source = """*** Settings ***
+    doc = workspace.put_doc(
+        "case4.robot",
+        """*** Settings ***
 Library    String
 Library    Collections
 Resource    case4resource.txt
@@ -133,44 +143,47 @@ Test
     case4resource3.Yet Another Equal Redefined
     String.Should Be Titlecase    Hello World
     ${list}=    BuiltIn.Create List    1    2
-    Collections.Append To List    ${list}    3"""
+    Collections.Append To List    ${list}    3""",
+    )
 
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
 def test_keywords_prefixed_with_alias(workspace, libspec_manager, data_regression):
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
-
-    doc.source = """*** Settings ***
+    doc = workspace.put_doc(
+        "case4.robot",
+        """*** Settings ***
 Library    Collections    WITH NAME    Col1
 
 *** Test Cases ***
 Test
-    Col1.Append To List    ${list}    3"""
+    Col1.Append To List    ${list}    3""",
+    )
 
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
 def test_keywords_name_matches(workspace, libspec_manager, data_regression):
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
-
-    doc.source = """*** Settings ***
+    doc = workspace.put_doc(
+        "case4.robot",
+        """*** Settings ***
 Library    Collections
 
 *** Test Cases ***
 Test
-    AppendToList    ${list}    3"""
+    AppendToList    ${list}    3""",
+    )
 
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
 def test_resource_does_not_exist(workspace, libspec_manager, data_regression):
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
-
-    doc.source = """*** Settings ***
+    doc = workspace.put_doc(
+        "case4.robot",
+        """*** Settings ***
 Library    DoesNotExist
 Library    .
 Library    ..
@@ -186,7 +199,8 @@ Resource    case4resource.txt
 
 *** Test Cases ***
 Test
-    case4resource3.Yet Another Equal Redefined"""
+    case4resource3.Yet Another Equal Redefined""",
+    )
 
     from robotframework_ls.robot_config import RobotConfig
 
@@ -202,7 +216,7 @@ def test_casing_on_filename(workspace, libspec_manager, data_regression):
     # i.e.: Importing a python library with capital letters fails #143
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc: IDocument = workspace.get_doc("case4.robot")
+    doc: IDocument = workspace.put_doc("case4.robot", text="")
     p = Path(doc.path)
     (p.parent / "myPythonKeywords.py").write_text(
         """
@@ -232,7 +246,7 @@ Test
 
 def test_empty_teardown(workspace, libspec_manager, data_regression):
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
 
     doc.source = """
 *** Test Cases ***
@@ -273,7 +287,7 @@ def test_code_analysis_same_lib_multiple_with_alias(
     workspace, libspec_manager, data_regression
 ):
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
 
     doc.source = """*** Settings ***
 Library    Collections    WITH NAME    col1
@@ -309,7 +323,7 @@ def test_code_analysis_same_lib_with_alias_with_params(
     assert config.get_setting(OPTION_ROBOT_PYTHONPATH, list, []) == [caseroot]
     libspec_manager.config = config
 
-    doc = workspace.get_doc("case_params_on_lib.robot")
+    doc = workspace.put_doc("case_params_on_lib.robot")
     doc.source = """
 *** Settings ***
 Library   LibWithParams    some_param=foo    WITH NAME   LibFoo
@@ -348,7 +362,7 @@ def test_code_analysis_template_name_keyword(
     workspace, libspec_manager, data_regression
 ):
     workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """
 *** Keyword ***
 Example Keyword

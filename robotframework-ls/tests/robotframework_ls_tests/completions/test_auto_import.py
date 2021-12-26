@@ -19,7 +19,7 @@ def test_completion_with_auto_import_basic_stdlib(
     cases.copy_to("case1", workspace_dir)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
 
     doc.source = """
 *** Settings ***
@@ -67,7 +67,7 @@ def test_completion_with_auto_import_keyword_format(
     config.update({OPTION_ROBOT_COMPLETION_KEYWORDS_FORMAT: "AlL lowEr"})
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
 
     doc.source = """
 *** Settings ***
@@ -106,15 +106,16 @@ def test_completion_with_auto_import_import_not_duplicated_case1_library(
     cases.copy_to("case1", workspace_dir)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
-
-    doc.source = """
+    doc = workspace.put_doc(
+        "case1.robot",
+        """
 *** Settings ***
 Library    case1_library
 
 *** Test Cases ***
 User can call library
-    Verify another m"""
+    Verify another m""",
+    )
 
     # Needed to pre-generate the information
     workspace.ws.libspec_manager.get_library_info(
@@ -167,7 +168,7 @@ def setup_case2_in_dir_doc(workspace, cases, libspec_manager, workspace_dir):
     )
 
     uri = uris.from_fs_path(os.path.join(workspace_dir, "in_dir", "case2.robot"))
-    workspace.ws.put_document(
+    doc = workspace.ws.put_document(
         TextDocumentItem(
             uri,
             text="""
@@ -176,7 +177,6 @@ User can call library
     Verify another m""",
         )
     )
-    doc = workspace.ws.get_document(uri, accept_from_file=False)
     return doc
 
 
@@ -301,7 +301,7 @@ def test_completion_with_auto_import_import_not_duplicated_stdlib(
     cases.copy_to("case1", workspace_dir)
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
 
     doc.source = """
 *** Settings ***
@@ -326,13 +326,14 @@ def test_completion_with_auto_import_resource_import(workspace, setup_case2_in_d
     from robotframework_ls.impl import auto_import_completions
     from robocorp_ls_core.basic import wait_for_expected_func_return
 
-    doc = workspace.get_doc("case1.robot")
-
-    doc.source = """
+    doc = workspace.put_doc(
+        "case1.robot",
+        """
 *** Keywords ***
 KeywordInCase1
     In Lib 2
-"""
+""",
+    )
 
     doc2 = setup_case2_in_dir_doc
     doc2.source = """
@@ -352,7 +353,11 @@ User can call library
         CompletionContext(doc2, workspace=workspace.ws), {}
     )
 
-    assert len(completions) == 1
+    assert workspace.get_doc("case1.robot") is doc
+
+    assert (
+        len(completions) == 1
+    ), f"No completions found. Symbols cache: {workspace.get_doc('case1.robot').symbols_cache.get_json_list()}"
     apply_completion(doc2, completions[0])
 
     assert (
@@ -375,7 +380,7 @@ def test_completion_with_auto_import_duplicated(workspace, setup_case2_in_dir_do
     )
     from robocorp_ls_core.lsp import TextDocumentItem
 
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
 
     doc.source = """
 *** Keywords ***
@@ -441,7 +446,7 @@ def test_completion_with_auto_handle_unparseable_error(
     if robot.get_version().startswith("3."):
         pytest.skip("Flaky on RF 3")
 
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """/invalid/file/here ustehous usneothu snteuha usoentuho"""
 
     os.makedirs(os.path.join(workspace_dir, "in_dir"), exist_ok=True)
@@ -547,7 +552,7 @@ def test_no_reserved_keywords(workspace, setup_case2_in_dir_doc):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import auto_import_completions
 
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
 
     doc.source = """
 *** Keywords ***
@@ -587,7 +592,7 @@ def test_collect_from_pre_specified_pythonpath(
     )
     libspec_manager.pre_generate_libspecs = True
     libspec_manager.config = config
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
 
     doc.source = """
 *** Keywords ***

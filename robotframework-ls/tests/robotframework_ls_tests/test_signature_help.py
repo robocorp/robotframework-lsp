@@ -4,10 +4,14 @@ def test_signature_help_basic(workspace, libspec_manager, data_regression):
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case4.robot")
-    doc.source += """
+    doc = workspace.put_doc(
+        "case4.robot",
+        doc.source
+        + """
 *** Test Cases ***
 Log It
-    Log    """
+    Log    """,
+    )
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)
     result = signature_help(completion_context)

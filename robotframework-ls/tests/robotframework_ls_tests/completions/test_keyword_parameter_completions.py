@@ -18,7 +18,7 @@ def check(workspace, libspec_manager, data_regression):
         from robotframework_ls.impl import keyword_parameter_completions
 
         workspace.set_root("case2", libspec_manager=libspec_manager)
-        doc = workspace.get_doc("case2.robot")
+        doc = workspace.put_doc("case2.robot")
         doc.source = source
 
         if line_col is not None:

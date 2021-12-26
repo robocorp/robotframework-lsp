@@ -5,7 +5,7 @@ def test_code_lens_run_basic(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.code_lens import code_lens_resolve
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
     doc.source = """
 
 *** Test Cases ***
@@ -34,7 +34,7 @@ def test_code_lens_with_comment(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.code_lens import code_lens_rf_interactive
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
     doc.source = """
 *** Test Cases ***
 # robocop: disable=0505
@@ -60,7 +60,7 @@ def test_code_lens_scratchpad_basic(workspace, libspec_manager, data_regression)
     from robotframework_ls.impl.code_lens import code_lens_resolve
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
     doc.source = """
 
 *** Settings ***

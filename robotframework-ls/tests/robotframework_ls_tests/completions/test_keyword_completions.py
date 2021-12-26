@@ -7,7 +7,7 @@ def test_keyword_completions_builtin(workspace, libspec_manager):
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
-    doc.source = doc.source + "\n    should be"
+    doc = workspace.put_doc("case1.robot", doc.source + "\n    should be")
 
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
@@ -34,7 +34,7 @@ def test_keyword_completions_format(workspace, libspec_manager):
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
-    doc.source = doc.source + "\n    should be"
+    doc = workspace.put_doc("case1.robot", doc.source + "\n    should be")
 
     config = RobotConfig()
     config.update(
@@ -75,7 +75,7 @@ def test_keyword_completions_directory_separator(
         return
 
     workspace.set_root("case_inner_keywords", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case_root.robot")
+    doc = workspace.put_doc("case_root.robot")
     doc.source = f"""
 *** Settings ***
 Resource    inner{separator}case_inner.robot
@@ -105,7 +105,7 @@ def test_keyword_completions_builtin_after_space(workspace, libspec_manager):
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc: IDocument = workspace.get_doc("case1.robot")
-    doc.source = doc.source + "\n    should be "
+    doc = workspace.put_doc("case1.robot", doc.source + "\n    should be ")
 
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
@@ -129,7 +129,7 @@ def test_keyword_completions_builtin_after_space_before_newline(
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
-    doc.source = doc.source + "\n    should be \n"
+    doc = workspace.put_doc("case1.robot", doc.source + "\n    should be \n")
 
     line, _col = doc.get_last_line_col()
     line_contents = doc.get_line(line - 1)
@@ -163,8 +163,7 @@ def test_keyword_completions_changes_user_library(
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
-
-    doc.source = doc.source + "\n    verify"
+    doc = workspace.put_doc("case1.robot", doc.source + "\n    verify")
 
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
@@ -218,8 +217,9 @@ def test_keyword_completions_user_library(
         )
         library_import = case1_py_path
 
-    doc.source = doc.source.replace("case1_library", library_import)
-    doc.source = doc.source + "\n    verify"
+    new_source = doc.source.replace("case1_library", library_import)
+    new_source = new_source + "\n    verify"
+    doc = workspace.put_doc("case1.robot", new_source)
 
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
@@ -248,8 +248,7 @@ def test_keyword_completions_case1(
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
-
-    doc.source = doc.source + "\n    case1_library."
+    doc = workspace.put_doc("case1.robot", doc.source + "\n    case1_library.")
 
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
@@ -265,7 +264,7 @@ def test_keyword_completions_user_in_robot_file(
 
     workspace.set_root(cases.get_path("case2"), libspec_manager=libspec_manager)
     doc = workspace.get_doc("case2.robot")
-    doc.source = doc.source + "\n    my equ"
+    doc = workspace.put_doc("case2.robot", doc.source + "\n    my equ")
 
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
@@ -291,7 +290,7 @@ def test_keyword_completions_from_resource_files(
 
     workspace.set_root(cases.get_path("case3"), libspec_manager=libspec_manager)
     doc = workspace.get_doc("case3.robot")
-    doc.source = doc.source + "\n    equal redef"
+    doc = workspace.put_doc("case3.robot", doc.source + "\n    equal redef")
 
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws, config=config)
@@ -309,7 +308,7 @@ def test_keyword_completions_from_recursively_included_resource_files(
 
     workspace.set_root(cases.get_path("case4"), libspec_manager=libspec_manager)
     doc = workspace.get_doc("case4.robot")
-    doc.source = doc.source + "\n    equal redef"
+    doc = workspace.put_doc("case4.robot", doc.source + "\n    equal redef")
 
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
@@ -326,7 +325,7 @@ def test_keyword_completions_builtin_duplicated(workspace, cases, libspec_manage
 
     workspace.set_root(cases.get_path("case4"), libspec_manager=libspec_manager)
     doc = workspace.get_doc("case4.robot")
-    doc.source = doc.source + "\n    should be equal"
+    doc = workspace.put_doc("case4.robot", doc.source + "\n    should be equal")
 
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
@@ -347,7 +346,9 @@ def test_keyword_completions_fixture(workspace, libspec_manager):
 
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case2.robot")
-    doc.source = doc.source + "\n    [Teardown]    my_Equal red"
+    doc = workspace.put_doc(
+        "case2.robot", doc.source + "\n    [Teardown]    my_Equal red"
+    )
 
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
@@ -368,7 +369,9 @@ def test_keyword_completions_settings_fixture(workspace, libspec_manager):
 
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case2.robot")
-    doc.source = doc.source + "\n*** Keywords ***\nTeardown    my_Equal red"
+    doc = workspace.put_doc(
+        "case2.robot", doc.source + "\n*** Keywords ***\nTeardown    my_Equal red"
+    )
 
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
@@ -389,7 +392,9 @@ def test_keyword_completions_bdd_prefix(workspace, libspec_manager, data_regress
 
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case2.robot")
-    doc.source = doc.source + "\n*** Keywords ***\nTeardown    WHEN my_Equal red"
+    doc = workspace.put_doc(
+        "case2.robot", doc.source + "\n*** Keywords ***\nTeardown    WHEN my_Equal red"
+    )
 
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
@@ -409,7 +414,7 @@ def test_keyword_completions_template(workspace, libspec_manager):
     from robotframework_ls.impl import keyword_completions
 
     workspace.set_root("case2", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case2.robot")
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Keywords ***
 My Equal Redefined
@@ -440,7 +445,7 @@ def test_keyword_completions_resource_does_not_exist(
     from robotframework_ls.impl.completion_context import CompletionContext
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
 
     doc.source = """*** Settings ***
 Library    DoesNotExist
@@ -475,7 +480,7 @@ def test_keyword_completions_library_prefix(
     from robotframework_ls.impl.completion_context import CompletionContext
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
 
     doc.source = """*** Settings ***
 Library    String
@@ -531,7 +536,7 @@ def test_keyword_completions_with_stmt(workspace, libspec_manager):
     from robotframework_ls.impl.completion_context import CompletionContext
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
 
     doc.source = """*** Settings ***
 Library    Collections    WITH NAME    Col1
@@ -566,7 +571,7 @@ def test_keyword_completions_respect_pythonpath(
     libspec_manager.config = config
 
     workspace.set_root(cases.get_path("case3"), libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case3.robot")
+    doc = workspace.put_doc("case3.robot")
     doc.source = """*** Settings ***
 Resource    case4resource.txt
 
@@ -700,7 +705,9 @@ def test_keyword_completions_on_keyword_arguments(workspace, libspec_manager):
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
-    doc.source = doc.source + "\n    Run keyword if    ${var}    Should Be"
+    doc = workspace.put_doc(
+        "case1.robot", doc.source + "\n    Run keyword if    ${var}    Should Be"
+    )
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)
 
@@ -721,7 +728,7 @@ def test_keyword_completions_on_template_name(workspace, libspec_manager):
     from robotframework_ls.impl.completion_context import CompletionContext
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """
 *** Keyword ***
 Example Keyword
@@ -751,7 +758,10 @@ def test_keyword_completions_remote_library(workspace, libspec_manager, remote_l
 
     workspace.set_root("case_remote_library", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case_remote.robot")
-    doc.source = doc.source.replace("${PORT}", str(remote_library)) + "\n    a.V"
+    doc = workspace.put_doc(
+        "case_remote.robot",
+        doc.source.replace("${PORT}", str(remote_library)) + "\n    a.V",
+    )
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)
 
@@ -776,7 +786,7 @@ def test_keyword_completions_library_with_params_with_space(
     libspec_manager.config = config
 
     workspace.set_root("case_params_on_lib", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case_params_on_lib.robot")
+    doc = workspace.put_doc("case_params_on_lib.robot")
 
     doc.source = """
 *** Settings ***
@@ -822,7 +832,7 @@ def test_code_analysis_same_lib_with_alias_with_params(
     assert config.get_setting(OPTION_ROBOT_PYTHONPATH, list, []) == [caseroot]
     libspec_manager.config = config
 
-    doc = workspace.get_doc("case_params_on_lib.robot")
+    doc = workspace.put_doc("case_params_on_lib.robot")
     doc.source = f"""
 *** Settings ***
 Library   LibWithParams    some_param=foo    WITH NAME   LibFoo

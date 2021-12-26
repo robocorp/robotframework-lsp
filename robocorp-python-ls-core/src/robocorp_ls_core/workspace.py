@@ -428,6 +428,7 @@ class Workspace(object):
                     # Unable to load contents: file does not exist.
                     doc = None
                 else:
+                    doc.immutable = True
                     self._filesystem_docs[doc_uri] = doc
 
         return doc
@@ -529,6 +530,7 @@ class Document(object):
     ):
         # During construction, set the mutate thread to the current thread.
         self._main_thread = threading.current_thread()
+        self.immutable = False
 
         self.uri = uri
         self.version = version
@@ -580,6 +582,10 @@ class Document(object):
     def _source(self, source: str) -> None:
         # i.e.: when the source is set, reset the lines.
         self._check_in_mutate_thread()
+        if self.immutable:
+            raise RuntimeError(
+                "This document is immutable, so, its source cannot be changed."
+            )
         self.__source = source
         self._clear_caches()
 

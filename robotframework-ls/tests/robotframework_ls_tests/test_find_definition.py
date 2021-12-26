@@ -9,7 +9,7 @@ def test_find_definition_builtin(workspace, libspec_manager):
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
-    doc.source = doc.source + "\n    Should Be Empty"
+    doc = workspace.put_doc("case1.robot", doc.source + "\n    Should Be Empty")
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)
     definitions = find_definition(completion_context)
@@ -52,7 +52,7 @@ def test_find_definition_keyword_resource_in_pythonpath(
     libspec_manager.config = config
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """
 *** Settings ***
 Resource    case2.robot"""
@@ -71,7 +71,9 @@ def test_find_definition_keyword_fixture(workspace, libspec_manager):
 
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case2.robot")
-    doc.source = doc.source + "\n    [Teardown]    my_Equal redefined"
+    doc = workspace.put_doc(
+        "case2.robot", doc.source + "\n    [Teardown]    my_Equal redefined"
+    )
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)
     definitions = find_definition(completion_context)
@@ -87,7 +89,9 @@ def test_find_definition_keyword_settings_fixture(workspace, libspec_manager):
 
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case2.robot")
-    doc.source = doc.source + "\n*** Keywords ***\nTeardown    my_Equal redefined"
+    doc = workspace.put_doc(
+        "case2.robot", doc.source + "\n*** Keywords ***\nTeardown    my_Equal redefined"
+    )
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)
     definitions = find_definition(completion_context)
@@ -102,7 +106,7 @@ def test_find_definition_keyword_test_template_fixture(workspace, libspec_manage
     from robotframework_ls.impl.find_definition import find_definition
 
     workspace.set_root("case2", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case2.robot")
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Keywords ***
 My Equal Redefined
@@ -125,7 +129,7 @@ def test_find_definition_keyword_embedded_args(workspace, libspec_manager):
     from robotframework_ls.impl.find_definition import find_definition
 
     workspace.set_root("case2", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case2.robot")
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Keywords ***
 I check ${cmd}
@@ -148,7 +152,7 @@ def test_find_definition_keyword_prefix(workspace, libspec_manager):
     from robotframework_ls.impl.find_definition import find_definition
 
     workspace.set_root("case2", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case2.robot")
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Keywords ***
 I check ${cmd}
@@ -171,7 +175,7 @@ def test_find_definition_keyword_prefix2(workspace, libspec_manager):
     from robotframework_ls.impl.find_definition import find_definition
 
     workspace.set_root("case2", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case2.robot")
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Keywords ***
 I check ${cmd}
@@ -194,7 +198,7 @@ def test_find_definition_library_prefix(workspace, libspec_manager):
     from robotframework_ls.impl.find_definition import find_definition
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
     doc.source = """*** Settings ***
 Library    String
 Library    Collections
@@ -218,7 +222,7 @@ def test_find_definition_library_prefix_builtin(workspace, libspec_manager):
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case4.robot")
-    doc.source = doc.source + "\n    BuiltIn.Should Be Empty"
+    doc = workspace.put_doc("case4.robot", doc.source + "\n    BuiltIn.Should Be Empty")
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)
     definitions = find_definition(completion_context)
@@ -233,7 +237,7 @@ def test_find_definition_library_prefix_with_name(workspace, libspec_manager):
     from robotframework_ls.impl.find_definition import find_definition
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
     doc.source = """*** Settings ***
 Library    Collections    WITH NAME    Col1
 
@@ -258,7 +262,7 @@ def test_find_definition_library_itself(workspace, libspec_manager):
     from robotframework_ls.impl.find_definition import find_definition
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
     doc.source = """*** Settings ***
 Library    Collections"""
 
@@ -274,7 +278,7 @@ def test_find_definition_resource_itself(workspace, libspec_manager):
     from robotframework_ls.impl.find_definition import find_definition
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
     doc.source = """*** Settings ***
 
 Resource    case4resource.txt"""
@@ -346,11 +350,15 @@ def test_find_definition_variables_assign(workspace, libspec_manager, data_regre
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case4.robot")
-    doc.source += """
+    doc = workspace.put_doc(
+        "case4.robot",
+        doc.source
+        + """
 *** Test Cases ***
 Returning
     ${variable_x} =    ${variable_y}    @{variable_z}=    Get X    an argument
-    Log    We got ${variable_x}"""
+    Log    We got ${variable_x}""",
+    )
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)
     data_regression.check(
@@ -365,7 +373,7 @@ def test_find_definition_variables_in_section(
     from robotframework_ls.impl.find_definition import find_definition
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
     doc.source = """
 *** Variables ***
 ${SOME_DIR}         c:/foo/bar
@@ -385,7 +393,7 @@ def test_find_definition_variables_builtins(
     from robotframework_ls.impl.find_definition import find_definition
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
     doc.source = """
 *** Keywords ***
 This is the Test
@@ -405,7 +413,7 @@ def test_find_definition_variables_arguments(
     from robotframework_ls.impl.find_definition import find_definition
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
     doc.source = """
 *** Keywords ***
 This is the Test
@@ -423,7 +431,7 @@ def test_find_definition_variables_list(workspace, libspec_manager, data_regress
     from robotframework_ls.impl.find_definition import find_definition
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
     doc.source = """
 *** Variables ***
 @{SOME LIST}    foo    bar    baz
@@ -449,7 +457,7 @@ def test_find_definition_variables_dict(workspace, libspec_manager, data_regress
     from robotframework_ls.impl.find_definition import find_definition
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
     doc.source = """
 *** Variables ***
 @{SOME LIST}    foo    bar    baz
@@ -478,7 +486,7 @@ def test_find_definition_variables_dict_access(
     from robotframework_ls.impl.find_definition import find_definition
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
     doc.source = """
 *** Variables ***
 &{Person}   First name=John   Last name=Smith
@@ -512,11 +520,15 @@ def test_variables_completions_recursive(workspace, libspec_manager, data_regres
 
     workspace.set_root("case5", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case5.robot")
-    doc.source += """
+    doc = workspace.put_doc(
+        "case5.robot",
+        doc.source
+        + """
 
 *** Test Cases ***
 List Variable
-    Log    ${VAR2}"""
+    Log    ${VAR2}""",
+    )
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)
     data_regression.check(
@@ -576,7 +588,7 @@ def test_find_definition_should_not_resolve_link_in_resource(
 
     target_original, target_link = create_case_as_link(cases, tmpdir, "case4")
     workspace.set_absolute_path_root(target_link, libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc("case4.robot")
     doc.source = """*** Settings ***
 Library    String
 Library    Collections
@@ -691,7 +703,9 @@ def test_find_definition_on_keyword_argument(workspace, libspec_manager):
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
-    doc.source = doc.source + "\n    Run Keyword If    ${var}    Should Be Empty"
+    doc = workspace.put_doc(
+        "case1.robot", doc.source + "\n    Run Keyword If    ${var}    Should Be Empty"
+    )
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)
     definitions = find_definition(completion_context)
@@ -707,9 +721,13 @@ def test_find_definition_on_keyword_argument_variable(workspace, libspec_manager
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
-    doc.source = doc.source + (
-        "\n    ${variable_x} =    Get Some Variable"
-        "\n    Run Keyword If    ${var}    ${variable_x}"
+    doc = workspace.put_doc(
+        "case1.robot",
+        doc.source
+        + (
+            "\n    ${variable_x} =    Get Some Variable"
+            "\n    Run Keyword If    ${var}    ${variable_x}"
+        ),
     )
 
     line, col = doc.get_last_line_col()
@@ -729,7 +747,7 @@ def test_find_definition_on_template_keyword(workspace, libspec_manager):
     from robotframework_ls.impl.find_definition import find_definition
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """
 *** Keyword ***
 Example Keyword
@@ -768,9 +786,10 @@ def test_find_definition_remote_library(workspace, libspec_manager, remote_libra
     workspace.set_root("case_remote_library", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case_remote.robot")
     port = remote_library
-    doc.source = (
+    doc = workspace.put_doc(
+        "case_remote.robot",
         doc.source.replace("${PORT}", str(port))
-        + "\n    a.Verify That Remote is Running"
+        + "\n    a.Verify That Remote is Running",
     )
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)

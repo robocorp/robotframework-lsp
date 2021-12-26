@@ -29,7 +29,7 @@ def test_semantic_highlighting_base(workspace):
     from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
 
     workspace.set_root("case1")
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """*** Settings ***
 Library   my.lib
 
@@ -79,7 +79,7 @@ def test_semantic_highlighting_arguments(workspace):
     from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
 
     workspace.set_root("case1")
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """
 *** Test Cases ***
 Some Test
@@ -113,7 +113,7 @@ def test_semantic_highlighting_arguments_in_doc(workspace):
     from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
 
     workspace.set_root("case1")
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """
 *** Settings ***
 Documentation    Some = eq
@@ -139,7 +139,7 @@ def test_semantic_highlighting_keyword(workspace):
     from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
 
     workspace.set_root("case1")
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """*** Keywords ***
 Some Keyword
     [Arguments]     ${arg1}
@@ -175,7 +175,7 @@ def test_semantic_highlighting_task_name(workspace):
     from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
 
     workspace.set_root("case1")
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """*** Task ***
 Some Task
 """.replace(
@@ -196,7 +196,7 @@ def test_semantic_highlighting_comments(workspace):
     from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
 
     workspace.set_root("case1")
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """*** Comments ***
 Comment part 1
 Comment part 2
@@ -222,7 +222,7 @@ def test_semantic_highlighting_catenate(workspace):
     from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
 
     workspace.set_root("case1")
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """*** Test Case ***
 Test Case
     Catenate    FOO
@@ -251,7 +251,7 @@ def test_semantic_highlighting_on_keyword_argument(workspace):
     from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
 
     workspace.set_root("case1")
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """*** Test Case ***
 Test Case
     Run Keyword If    ${var}    Should Be Empty
@@ -284,7 +284,7 @@ def test_semantic_highlighting_for_if(workspace):
     from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
 
     workspace.set_root("case1")
-    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc("case1.robot")
     doc.source = """*** Keywords ***
 Some keyword
     FOR    ${element}    IN       @{LIST}

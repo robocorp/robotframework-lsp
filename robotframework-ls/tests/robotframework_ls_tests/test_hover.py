@@ -4,10 +4,14 @@ def test_hover_basic(workspace, libspec_manager, data_regression):
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case4.robot")
-    doc.source += """
+    doc = workspace.put_doc(
+        "case4.robot",
+        doc.source
+        + """
 *** Test Cases ***
 Log It
-    Log    """
+    Log    """,
+    )
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)
     result = hover(completion_context)
@@ -24,10 +28,14 @@ def test_hover_basic_in_keyword_argument(workspace, libspec_manager, data_regres
 
     workspace.set_root("case4", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case4.robot")
-    doc.source += """
+    doc = workspace.put_doc(
+        "case4.robot",
+        doc.source
+        + """
 *** Test Cases ***
 Log It
-    Run Keyword If    ${var}    Log"""
+    Run Keyword If    ${var}    Log""",
+    )
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)
     result = hover(completion_context)
