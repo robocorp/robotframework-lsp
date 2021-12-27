@@ -32,13 +32,15 @@ class EventsListenerV2:
 
     def start_suite(self, name: str, attributes: Dict[str, Any]) -> None:
         source = attributes.get("source")
-        send_event(StartSuiteEvent(StartSuiteEventBody(name, source)))
+        tests = attributes.get("tests")
+        send_event(StartSuiteEvent(StartSuiteEventBody(name, source, tests)))
 
     def start_test(self, name: str, attributes: Dict[str, Any]) -> None:
         self._failed_keywords = None
 
         source = attributes.get("source")
         lineno = attributes.get("lineno")
+        tests = attributes.get("tests")
         send_event(
             StartTestEvent(
                 StartTestEventBody(

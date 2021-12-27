@@ -13954,6 +13954,13 @@ class StartSuiteEvent(BaseSchema):
                 "source": {
                     "type": "string",
                     "description": "The filename that maps to this suite."
+                },
+                "tests": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of tests names."
                 }
             },
             "required": []
@@ -17642,31 +17649,45 @@ class StartSuiteEventBody(BaseSchema):
         "source": {
             "type": "string",
             "description": "The filename that maps to this suite."
+        },
+        "tests": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "List of tests names."
         }
     }
     __refs__ = set()
 
     __slots__ = list(__props__.keys()) + ['kwargs']
 
-    def __init__(self, name=None, source=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+    def __init__(self, name=None, source=None, tests=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string name: The name of the suite.
         :param string source: The filename that maps to this suite.
+        :param array tests: List of tests names.
         """
         self.name = name
         self.source = source
+        self.tests = tests
         self.kwargs = kwargs
 
 
     def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
         name = self.name
         source = self.source
+        tests = self.tests
+        if tests and hasattr(tests[0], "to_dict"):
+            tests = [x.to_dict() for x in tests]
         dct = {
         }
         if name is not None:
             dct['name'] = name
         if source is not None:
             dct['source'] = source
+        if tests is not None:
+            dct['tests'] = tests
         dct.update(self.kwargs)
         return dct
 

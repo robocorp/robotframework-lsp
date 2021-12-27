@@ -26,6 +26,13 @@
                 "source": {
                   "type": "string",
                   "description": "The filename that maps to this suite."
+                },
+                "tests": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of tests names."
                 }
               },
               "required": []

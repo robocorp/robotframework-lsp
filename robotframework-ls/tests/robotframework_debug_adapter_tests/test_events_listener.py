@@ -23,7 +23,8 @@ def test_events_listener_basic(debugger_api: _DebuggerAPI):
 
     debugger_api.configuration_done()
 
-    assert debugger_api.read(StartSuiteEvent)
+    start_suite_event = debugger_api.read(StartSuiteEvent).body
+    assert start_suite_event.tests == ["Can use resource keywords"]
     assert debugger_api.read(StartTestEvent)
     assert debugger_api.read(EndTestEvent)
     assert debugger_api.read(EndSuiteEvent)

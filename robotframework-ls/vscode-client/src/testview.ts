@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import { readLaunchTemplate } from "./run";
+import { WeakValueMap } from "./weakValueMap";
 
 export interface IPosition {
     // Line position in a document (zero-based).
@@ -48,15 +49,20 @@ interface ITestData {
     testInfo: ITestInfoFromSymbolsCache | undefined;
 }
 
-const testData = new WeakMap<vscode.TestItem, ITestData>();
+const testData = new WeakMap<vscode.TestItem, ITestData>(); // Actually weak key map.
 
 let lastRunId = 0;
 function nextRunId(): string {
     lastRunId += 1;
     return `TestRun: ${lastRunId}`;
 }
+
 const runIdToTestRun = new Map<string, vscode.TestRun>();
 const runIdToDebugSession = new Map<string, vscode.DebugSession>();
+
+// Note: a test item id is uri a string such as:
+// `${uri} [${testName}]`
+const testItemIdToTestItem = new WeakValueMap<string, vscode.TestItem>();
 
 function getType(testItem: vscode.TestItem): ItemType {
     const data = testData.get(testItem);
@@ -78,13 +84,16 @@ export async function handleTestsCollected(testInfo: ITestInfoFromUri) {
     // We actually have tests to add.
     if (file === undefined) {
         file = controller.createTestItem(testInfo.uri, uri.path.split("/").pop()!, uri);
+        testItemIdToTestItem.set(testInfo.uri, file);
         testData.set(file, { type: ItemType.File, testInfo: undefined });
         controller.items.add(file);
     }
 
     const children: vscode.TestItem[] = [];
     for (const test of testInfo.testInfo) {
-        const testItem: vscode.TestItem = controller.createTestItem(`${testInfo.uri} [${test.name}]`, test.name, uri);
+        const testItemId = `${testInfo.uri} [${test.name}]`;
+        const testItem: vscode.TestItem = controller.createTestItem(testItemId, test.name, uri);
+        testItemIdToTestItem.set(testItemId, testItem);
         const start = new vscode.Position(test.range.start.line, test.range.start.character);
         const end = new vscode.Position(test.range.end.line, test.range.end.character);
         testItem.range = new vscode.Range(start, end);
@@ -276,7 +285,18 @@ export async function setupTestExplorerSupport() {
 
     vscode.debug.onDidReceiveDebugSessionCustomEvent((event: vscode.DebugSessionCustomEvent) => {
         if (isRelatedSession(event.session)) {
-            OUTPUT_CHANNEL.appendLine("Received event: " + event.event);
+            OUTPUT_CHANNEL.appendLine("Received event: " + event.event + " -- " + JSON.stringify(event.body));
+            const runId = event.session.configuration.runId;
+            switch (event.event) {
+                case "startSuite":
+                    break;
+                case "endSuite":
+                    break;
+                case "startTest":
+                    break;
+                case "endTest":
+                    break;
+            }
         }
     });
 }
