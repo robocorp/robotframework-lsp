@@ -38,6 +38,7 @@ def test_events_listener_failure(debugger_api: _DebuggerAPI):
         StartSuiteEvent,
         TerminatedEvent,
     )
+    import robot
 
     target = debugger_api.get_dap_case_file("case_failure.robot")
     debugger_api.target = target
@@ -57,8 +58,10 @@ def test_events_listener_failure(debugger_api: _DebuggerAPI):
 
     end_test_body = debugger_api.read(EndTestEvent).body
     assert end_test_body.status == "FAIL"
-    assert len(end_test_body.failed_keywords) == 1
-    assert end_test_body.failed_keywords[0]["lineno"] == 4
+    if int(robot.get_version().split(".")[0]) >= 4:
+        # source is not available on RF 3.
+        assert len(end_test_body.failed_keywords) == 1
+        assert end_test_body.failed_keywords[0]["lineno"] == 4
 
     assert debugger_api.read(EndSuiteEvent)
 
