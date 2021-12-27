@@ -15,6 +15,7 @@ ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS = "robot.internal.rfinteractive.complet
 ROBOT_GET_RFLS_HOME_DIR = "robot.getRFLSHomeDir"  # Provides the directory used to store information (usually ~/.robotframework-ls -- may be configured with `ROBOTFRAMEWORK_LS_USER_HOME` environment variable).
 ROBOT_CLEAR_CACHES_AND_RESTART_PROCESSES = "robot.clearCachesAndRestartProcesses"  # Clear caches and restart Robot Framework Language Server processes
 ROBOT_START_INDEXING_INTERNAL = "robot.startIndexing.internal"  # Starts the indexing service
+ROBOT_WAIT_FIRST_TEST_COLLECTION_INTERNAL = "robot.waitFirstTestCollection.internal"  # Waits for the first test collection
 
 ALL_SERVER_COMMANDS: List[str] = [
     ROBOT_INTERNAL_RFINTERACTIVE_START,
@@ -24,6 +25,7 @@ ALL_SERVER_COMMANDS: List[str] = [
     ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS,
     ROBOT_GET_RFLS_HOME_DIR,
     ROBOT_START_INDEXING_INTERNAL,
+    ROBOT_WAIT_FIRST_TEST_COLLECTION_INTERNAL,
 ]
 
 # fmt: on

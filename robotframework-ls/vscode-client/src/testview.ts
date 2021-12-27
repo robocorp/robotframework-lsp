@@ -31,6 +31,12 @@ export interface ITestInfoFromUri {
 }
 
 const controller = vscode.tests.createTestController("robotframework-lsp.testController", "Robot Framework");
+controller.resolveHandler = async (test) => {
+    if (!test) {
+        // Wait for the first full refresh.
+        await vscode.commands.executeCommand("robot.waitFirstTestCollection.internal");
+    }
+};
 
 enum ItemType {
     File,

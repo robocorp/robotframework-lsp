@@ -30,6 +30,7 @@ from robocorp_ls_core.lsp import CodeLensTypedDict
 from robotframework_ls.commands import (
     ROBOT_GET_RFLS_HOME_DIR,
     ROBOT_START_INDEXING_INTERNAL,
+    ROBOT_WAIT_FIRST_TEST_COLLECTION_INTERNAL,
 )
 
 
@@ -356,6 +357,21 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     @command_dispatcher(ROBOT_START_INDEXING_INTERNAL)
     def _start_indexing(self, *arguments):
         self._server_manager.get_regular_rf_api_client("")
+
+    @command_dispatcher(ROBOT_WAIT_FIRST_TEST_COLLECTION_INTERNAL)
+    def _wait_for_first_test_collection(self, *arguments):
+        rf_api_client = self._server_manager.get_regular_rf_api_client("")
+        if rf_api_client is not None:
+            func = partial(
+                self._async_api_request_no_doc,
+                rf_api_client,
+                "request_wait_for_first_test_collection",
+            )
+            func = require_monitor(func)
+            return func
+
+        log.info("Unable to wait for first test collection (no api available).")
+        return []
 
     @command_dispatcher("robot.getInternalInfo")
     def _get_internal_info(self, *arguments):

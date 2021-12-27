@@ -269,6 +269,12 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         """
         return self.request_async(self._build_msg("listTests", doc_uri=doc_uri))
 
+    def request_wait_for_first_test_collection(self) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(self._build_msg("waitForFirstTestCollection"))
+
     def request_hover(
         self, doc_uri: str, line: int, col: int
     ) -> Optional[IIdMessageMatcher]:

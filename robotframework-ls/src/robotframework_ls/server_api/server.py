@@ -18,6 +18,7 @@ from robocorp_ls_core.lsp import (
 from robotframework_ls.impl.protocols import IKeywordFound
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 import itertools
+import typing
 
 
 log = get_logger(__name__)
@@ -571,6 +572,25 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return []
 
         return list_tests(completion_context)
+
+    def m_wait_for_first_test_collection(self):
+        func = partial(self._threaded_wait_for_first_test_collection)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_wait_for_first_test_collection(self, monitor: IMonitor) -> bool:
+        from robotframework_ls.impl.robot_workspace import RobotWorkspace
+
+        workspace = self.workspace
+        if not workspace:
+            log.info("Workspace still not initialized.")
+            return False
+        ws = typing.cast(RobotWorkspace, workspace)
+        workspace_indexer = ws.workspace_indexer
+        if not workspace_indexer:
+            raise RuntimeError("WorkspaceIndexer not available (None).")
+        workspace_indexer.wait_for_first_test_collection()
+        return True
 
     def m_hover(self, doc_uri: str, line: int, col: int):
         func = partial(self._threaded_hover, doc_uri, line, col)

@@ -46,7 +46,8 @@
         "onCommand:robot.internal.rfinteractive.completions",
         "onCommand:robot.getRFLSHomeDir",
         "onCommand:robot.clearCachesAndRestartProcesses",
-        "onCommand:robot.startIndexing.internal"
+        "onCommand:robot.startIndexing.internal",
+        "onCommand:robot.waitFirstTestCollection.internal"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -123,6 +124,11 @@
                 "command": "robot.startIndexing.internal",
                 "title": "Starts the indexing service",
                 "category": "Robot Framework"
+            },
+            {
+                "command": "robot.waitFirstTestCollection.internal",
+                "title": "Waits for the first test collection",
+                "category": "Robot Framework"
             }
         ],
         "menus": {
@@ -181,6 +187,10 @@
                 },
                 {
                     "command": "robot.startIndexing.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robot.waitFirstTestCollection.internal",
                     "when": "false"
                 }
             ]

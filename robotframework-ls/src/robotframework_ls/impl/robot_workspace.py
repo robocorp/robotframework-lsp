@@ -155,6 +155,7 @@ class WorkspaceIndexer(object):
         collect_tests: bool = False,
     ):
         self._robot_workspace = weakref.ref(robot_workspace)
+        self._first_test_collection = threading.Event()
         self._endpoint = endpoint
         self._collect_tests = collect_tests
         if collect_tests:
@@ -163,6 +164,13 @@ class WorkspaceIndexer(object):
         self._cached: Dict[str, Any] = {}
         t.daemon = True
         t.start()
+
+    def wait_for_first_test_collection(self):
+        assert (
+            self._collect_tests
+        ), "Cannot wait for first test collection if not collecting tests."
+        self._first_test_collection.wait()
+        return True
 
     def _on_thread(self) -> None:
         import time
@@ -176,29 +184,32 @@ class WorkspaceIndexer(object):
             endpoint = self._endpoint
             assert endpoint
             while True:
-                old_cached = self._cached
-                cached = {}
-                for symbols_cache in self.iter_symbols_cache():
-                    test_info_lst = symbols_cache.get_test_info()
-                    if test_info_lst is None:
-                        test_info_lst = []
-                    uri = symbols_cache.get_uri()
-                    if uri:
-                        test_info_for_uri: ITestInfoFromUriTypedDict = {
-                            "uri": uri,
-                            "testInfo": test_info_lst,
-                        }
-                        cached[uri] = test_info_lst
-                        if old_cached.pop(uri, None) != test_info_lst:
-                            endpoint.notify(
-                                "$/testsCollected",
-                                test_info_for_uri,
-                            )
-                for uri in old_cached.keys():
-                    endpoint.notify(
-                        "$/testsCollected",
-                        {"uri": uri, "testInfo": []},
-                    )
+                try:
+                    old_cached = self._cached
+                    cached = {}
+                    for symbols_cache in self.iter_symbols_cache():
+                        test_info_lst = symbols_cache.get_test_info()
+                        if test_info_lst is None:
+                            test_info_lst = []
+                        uri = symbols_cache.get_uri()
+                        if uri:
+                            test_info_for_uri: ITestInfoFromUriTypedDict = {
+                                "uri": uri,
+                                "testInfo": test_info_lst,
+                            }
+                            cached[uri] = test_info_lst
+                            if old_cached.pop(uri, None) != test_info_lst:
+                                endpoint.notify(
+                                    "$/testsCollected",
+                                    test_info_for_uri,
+                                )
+                    for uri in old_cached.keys():
+                        endpoint.notify(
+                            "$/testsCollected",
+                            {"uri": uri, "testInfo": []},
+                        )
+                finally:
+                    self._first_test_collection.set()
 
                 self._cached = cached
                 time.sleep(0.5)

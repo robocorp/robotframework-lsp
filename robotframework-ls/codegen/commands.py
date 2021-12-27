@@ -110,6 +110,12 @@ COMMANDS: List[Command] = [
         server_handled=True,
         hide_from_command_palette=True,
     ),
+    Command(
+        "robot.waitFirstTestCollection.internal",
+        "Waits for the first test collection",
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
 ]
 
 

@@ -353,6 +353,11 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
     def settings(self, settings: Dict):
         pass
 
+    def request_wait_for_first_test_collection(self) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+
 
 class ITestInfoTypedDict(TypedDict):
     uri: str
