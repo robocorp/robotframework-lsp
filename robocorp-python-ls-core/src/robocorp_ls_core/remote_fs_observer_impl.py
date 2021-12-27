@@ -1,6 +1,8 @@
 import itertools
 import socket as socket_module
 import sys
+import time
+import random
 import threading
 from functools import partial
 from typing import Optional, List, Dict, Tuple, Sequence
@@ -21,7 +23,7 @@ class _RemoteFSWatch(object):
     def __init__(
         self,
         remote_fs_observer: "RemoteFSObserver",
-        on_change_id: int,
+        on_change_id: str,
         on_change: IFSCallback,
         call_args=(),
     ):
@@ -64,13 +66,16 @@ class RemoteFSObserver(object):
         self.writer: Optional[JsonRpcStreamWriter] = None
         self.reader_thread: Optional[threading.Thread] = None
 
-        self._next_id: "partial[int]" = partial(next, itertools.count())
-        self._change_id_to_fs_watch: Dict[int, _RemoteFSWatch] = {}
+        self._counter: "partial[int]" = partial(next, itertools.count())
+        self._change_id_to_fs_watch: Dict[str, _RemoteFSWatch] = {}
 
         self._socket: Optional[socket_module.socket] = None
         self._backend = backend
         self._extensions = extensions
         self._initialized_event = threading.Event()
+
+    def _next_id(self) -> str:
+        return f"{os.getpid()} - {self._counter()} - {random.random()}"
 
     def start_server(self, log_file: Optional[str] = None) -> int:
         """
@@ -81,7 +86,6 @@ class RemoteFSObserver(object):
         assert self.port is None, "RemoteFSObserver already initialized."
         import subprocess
         from robocorp_ls_core import remote_fs_observer__main__
-        import time
 
         args = [sys.executable, "-u", remote_fs_observer__main__.__file__]
         if log_file:
@@ -254,7 +258,7 @@ class RemoteFSObserver(object):
                 "Server communication is not initialized. start_server() or connect_to_server() must be called before notifying of changes."
             )
 
-        on_change_id: int = self._next_id()
+        on_change_id: str = self._next_id()
         path_args = [{"path": p.path, "recursive": p.recursive} for p in paths]
 
         remote_fs_watch = _RemoteFSWatch(self, on_change_id, on_change, call_args)
@@ -273,7 +277,7 @@ class RemoteFSObserver(object):
         )
         # Wait for the command to be acknowledged...
         if not remote_fs_watch.acknowledged.wait(5):
-            log.info("Command to notify on change not acknowledged!")
+            log.info(f"Command to notify on change not acknowledged. Paths: {paths}!")
         return remote_fs_watch
 
     def _on_read(self, msg):

@@ -45,6 +45,11 @@ class PathInfo(object):
     def __hash__(self, *args, **kwargs):
         return hash(tuple(self.path, self.recursive))
 
+    def __str__(self):
+        return f"PathInfo[{self.path}, {self.recursive}]"
+
+    __repr__ = __str__
+
 
 class IFSCallback(Protocol):
     def __call__(self, src_path, *call_args):
