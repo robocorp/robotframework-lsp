@@ -64,6 +64,15 @@ const runIdToDebugSession = new Map<string, vscode.DebugSession>();
 // `${uri} [${testName}]`
 const testItemIdToTestItem = new WeakValueMap<string, vscode.TestItem>();
 
+function computeTestIdFromTestInfo(uriAsStr: string, test: ITestInfoFromSymbolsCache): string {
+    OUTPUT_CHANNEL.appendLine('Computed: ' + `${uriAsStr} [${test.name}]`)
+    return `${uriAsStr} [${test.name}]`;
+}
+
+function computeTestId(uri: string, name: string): string {
+    return `${uri} [${name}]`;
+}
+
 function getType(testItem: vscode.TestItem): ItemType {
     const data = testData.get(testItem);
     if (!data) {
@@ -74,24 +83,25 @@ function getType(testItem: vscode.TestItem): ItemType {
 
 export async function handleTestsCollected(testInfo: ITestInfoFromUri) {
     const uri = vscode.Uri.parse(testInfo.uri);
-    let file = controller.items.get(testInfo.uri);
+    const uriAsStr = uri.toString();
+    let file = controller.items.get(uriAsStr);
     if (testInfo.testInfo.length === 0) {
         if (file !== undefined) {
-            controller.items.delete(testInfo.uri);
+            controller.items.delete(uriAsStr);
         }
         return;
     }
     // We actually have tests to add.
     if (file === undefined) {
-        file = controller.createTestItem(testInfo.uri, uri.path.split("/").pop()!, uri);
-        testItemIdToTestItem.set(testInfo.uri, file);
+        file = controller.createTestItem(uri.toString(), uri.path.split("/").pop()!, uri);
+        testItemIdToTestItem.set(uriAsStr, file);
         testData.set(file, { type: ItemType.File, testInfo: undefined });
         controller.items.add(file);
     }
 
     const children: vscode.TestItem[] = [];
     for (const test of testInfo.testInfo) {
-        const testItemId = `${testInfo.uri} [${test.name}]`;
+        const testItemId = computeTestIdFromTestInfo(uriAsStr, test);
         const testItem: vscode.TestItem = controller.createTestItem(testItemId, test.name, uri);
         testItemIdToTestItem.set(testItemId, testItem);
         const start = new vscode.Position(test.range.start.line, test.range.start.character);
@@ -287,16 +297,63 @@ export async function setupTestExplorerSupport() {
         if (isRelatedSession(event.session)) {
             OUTPUT_CHANNEL.appendLine("Received event: " + event.event + " -- " + JSON.stringify(event.body));
             const runId = event.session.configuration.runId;
-            switch (event.event) {
-                case "startSuite":
-                    break;
-                case "endSuite":
-                    break;
-                case "startTest":
-                    break;
-                case "endTest":
-                    break;
+            const testRun = runIdToTestRun.get(runId);
+            if (testRun) {
+                switch (event.event) {
+                    case "startSuite":
+                        handleSuiteStart(testRun, event);
+                        break;
+                    case "endSuite":
+                        break;
+                    case "startTest":
+                        handleTestStart(testRun, event);
+                        break;
+                    case "endTest":
+                        handleTestEnd(testRun, event);
+                        break;
+                }
             }
         }
     });
+}
+
+function handleSuiteStart(testRun: vscode.TestRun, event: vscode.DebugSessionCustomEvent) {
+    const uriStr = vscode.Uri.file(event.body.source).toString();
+    const testNames: string[] = event.body.tests;
+    for (const testName of testNames) {
+        const testId = computeTestId(uriStr, testName);
+        const testItem = testItemIdToTestItem.get(testId);
+        if (!testItem) {
+            OUTPUT_CHANNEL.appendLine("Did not find test item: " + testId);
+            continue;
+        } else {
+            testRun.enqueued(testItem);
+        }
+    }
+
+}
+
+
+function handleTestStart(testRun: vscode.TestRun, event: vscode.DebugSessionCustomEvent) {
+    const testUriStr = vscode.Uri.file(event.body.source).toString();
+    const testName = event.body.name;
+    const testId = computeTestId(testUriStr, testName);
+    const testItem = testItemIdToTestItem.get(testId);
+    if (!testItem) {
+        OUTPUT_CHANNEL.appendLine("Did not find test item: " + testId);
+    } else {
+        testRun.started(testItem);
+    }
+}
+
+function handleTestEnd(testRun: vscode.TestRun, event: vscode.DebugSessionCustomEvent) {
+    const testUriStr = vscode.Uri.file(event.body.source).toString();
+    const testName = event.body.name;
+    const testId = computeTestId(testUriStr, testName);
+    const testItem = testItemIdToTestItem.get(testId);
+    if (!testItem) {
+        OUTPUT_CHANNEL.appendLine("Did not find test item: " + testId);
+    } else {
+        testRun.passed(testItem)
+    }
 }
