@@ -2,12 +2,55 @@
 Developing
 -----------
 
+Clone the sources with git.
+
+Get the submodule contents:
+`git submodule update --init --recursive`
+
 Install NodeJs (https://nodejs.org/en/) -- make sure that `node` and `npm` are in the `PATH`.
 
 Install Yarn (https://yarnpkg.com/) -- make sure that `yarn` is in the `PATH`.
 
-Download the sources, head to the root directory (where `package.json` is located)
-and run: `yarn install`.
+Install Python and create environment:
+
+In Windows:
+
+```
+python -m venv .venv
+.venv/Scripts/activate.bat
+python -m pip install -r robocorp-code/tests/test_requirements.txt
+python -m pip install -r robocorp-code/dev_requirements.txt
+python -m pip install robotframework
+python -m pip install robotremoteserver
+echo %cd%\robotframework-ls\src > .venv\Lib\site-packages\rf_src.pth
+echo %cd%\robocorp-code\src >> .venv\Lib\site-packages\rf_src.pth
+echo %cd%\robocorp-python-ls-core\src >> .venv\Lib\site-packages\rf_src.pth
+echo %cd%\robotframework-ls\tests >> .venv\Lib\site-packages\rf_src.pth
+echo %cd%\robocorp-code\tests >> .venv\Lib\site-packages\rf_src.pth
+echo %cd%\robocorp-python-ls-core\tests >> .venv\Lib\site-packages\rf_src.pth
+```
+
+In Linux:
+
+```
+python -m venv .venv
+source ./.venv/bin/activate
+python -m pip install -r robocorp-code/tests/test_requirements.txt
+python -m pip install -r robocorp-code/dev_requirements.txt
+python -m pip install robotframework
+python -m pip install robotremoteserver
+echo $PWD/robotframework-ls/src > .venv/lib/python3.8/site-packages/rf_src.pth
+echo $PWD/robocorp-code/src >> .venv/lib/python3.8/site-packages/rf_src.pth
+echo $PWD/robocorp-python-ls-core/src >> .venv/lib/python3.8/site-packages/rf_src.pth
+echo $PWD/robotframework-ls/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
+echo $PWD/robocorp-code/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
+echo $PWD/robocorp-python-ls-core/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
+```
+
+Head to the root directory (where `package.json` is located) and run: 
+`yarn install`.
+
+
 
 After this step, it should be possible to open the `roboframework-lsp` folder in VSCode and launch
 `Extension: Roboframework-lsp` to have a new instance of VSCode with the loaded extension.
