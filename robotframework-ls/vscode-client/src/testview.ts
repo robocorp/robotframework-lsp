@@ -311,6 +311,7 @@ export async function setupTestExplorerSupport() {
                         handleSuiteStart(testRun, event);
                         break;
                     case "endSuite":
+                        handleSuiteEnd(testRun, event);
                         break;
                     case "startTest":
                         handleTestStart(testRun, event);
@@ -351,14 +352,86 @@ function handleTestStart(testRun: vscode.TestRun, event: vscode.DebugSessionCust
     }
 }
 
+function failedKeywordsToTestMessage(event: vscode.DebugSessionCustomEvent): vscode.TestMessage[] {
+    let messages: vscode.TestMessage[] = [];
+    let msg = event.body.message;
+    if (!msg) {
+        msg = "";
+    }
+    let failedKeywords = event.body.failed_keywords;
+    if (failedKeywords) {
+        for (const failed of failedKeywords) {
+            // "name": name,
+            // "source": source,
+            // "lineno": lineno,
+            // "failure_messages": self._keyword_failure_messages,
+            let errorMsg = "";
+            for (const s of failed.failure_messages) {
+                errorMsg += s;
+            }
+
+            if (failed.source) {
+                messages.push({
+                    "message": errorMsg,
+                    "location": {
+                        "uri": vscode.Uri.file(failed.source),
+                        "range": new vscode.Range(
+                            new vscode.Position(failed.lineno - 1, 0),
+                            new vscode.Position(failed.lineno - 1, 0)
+                        ),
+                    },
+                });
+            } else {
+                if (msg.length == 0) {
+                    msg += "\n";
+                }
+                msg += errorMsg;
+            }
+        }
+
+    }
+    messages.push({
+        "message": msg,
+    });
+    return messages;
+}
+
+function handleSuiteEnd(testRun: vscode.TestRun, event: vscode.DebugSessionCustomEvent) {
+    const uriStr = vscode.Uri.file(event.body.source).toString();
+    const testItem = testItemIdToTestItem.get(uriStr);
+    markTestRun(testItem, uriStr, testRun, event);
+}
+
 function handleTestEnd(testRun: vscode.TestRun, event: vscode.DebugSessionCustomEvent) {
     const testUriStr = vscode.Uri.file(event.body.source).toString();
     const testName = event.body.name;
     const testId = computeTestId(testUriStr, testName);
     const testItem = testItemIdToTestItem.get(testId);
+    markTestRun(testItem, testId, testRun, event);
+}
+
+function markTestRun(
+    testItem: vscode.TestItem,
+    testId: string,
+    testRun: vscode.TestRun,
+    event: vscode.DebugSessionCustomEvent
+) {
     if (!testItem) {
         OUTPUT_CHANNEL.appendLine("Did not find test item: " + testId);
     } else {
-        testRun.passed(testItem);
+        switch (event.body.status) {
+            case "SKIP":
+                testRun.skipped(testItem);
+                break;
+            case "PASS":
+                testRun.passed(testItem, event.body.elapsedtime);
+                break;
+            case "FAIL":
+                testRun.failed(testItem, failedKeywordsToTestMessage(event), event.body.elapsedtime);
+                break;
+            default:
+                testRun.errored(testItem, failedKeywordsToTestMessage(event), event.body.elapsedtime);
+                break;
+        }
     }
 }

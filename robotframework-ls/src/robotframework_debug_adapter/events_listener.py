@@ -26,7 +26,8 @@ class EventsListenerV2:
 
     def __init__(self) -> None:
         self._failed_keywords: Optional[List[Dict[str, Any]]] = None
-        self._keyword_failure_messages: List[str] = []
+        self._failure_messages: List[str] = []
+        self._add_to_test_failure: str = ""
 
     # start suite/test
 
@@ -36,7 +37,9 @@ class EventsListenerV2:
         send_event(StartSuiteEvent(StartSuiteEventBody(name, source, tests)))
 
     def start_test(self, name: str, attributes: Dict[str, Any]) -> None:
-        self._failed_keywords = None
+        if self._failure_messages:
+            self._add_to_test_failure = "\n".join(self._failure_messages)
+            self._failure_messages = []
 
         source = attributes.get("source")
         lineno = attributes.get("lineno")
@@ -67,6 +70,17 @@ class EventsListenerV2:
         self._failed_keywords = None
 
     def end_test(self, name: str, attributes: Dict[str, Any]) -> None:
+        msg = attributes.get("message", "")
+        if self._add_to_test_failure:
+            msg = self._add_to_test_failure + "\n" + msg
+            self._add_to_test_failure = ""
+
+        if self._failure_messages:
+            if msg:
+                msg += "\n"
+            msg += "\n".join(self._failure_messages)
+            self._failure_messages = []
+
         send_event(
             EndTestEvent(
                 EndTestEventBody(
@@ -74,7 +88,7 @@ class EventsListenerV2:
                     elapsedtime=attributes.get("elapsedtime"),
                     status=attributes.get("status"),
                     source=attributes.get("source"),
-                    message=attributes.get("message"),
+                    message=msg,
                     failed_keywords=self._failed_keywords,
                 )
             )
@@ -98,13 +112,15 @@ class EventsListenerV2:
 
         Not called if the message level is below the current threshold level.
         """
-        if message["level"] == "FAIL":  # FAIL/WARN/INFO/DEBUG/TRACE
-            self._keyword_failure_messages.append(message["message"])
+        if message["level"] in ("DEBUG", "INFO"):
+            return
+        if message["level"] in ("FAIL", "ERROR"):  # FAIL/WARN/INFO/DEBUG/TRACE
+            self._failure_messages.append(message["message"])
 
     message = log_message
 
     def start_keyword(self, name: str, attributes: Dict[str, Any]) -> None:
-        self._keyword_failure_messages = []
+        pass
 
     def end_keyword(self, name: str, attributes: Dict[str, Any]) -> None:
         status = attributes.get("status")
@@ -125,6 +141,7 @@ class EventsListenerV2:
                     "name": name,
                     "source": source,
                     "lineno": lineno,
-                    "failure_messages": self._keyword_failure_messages,
+                    "failure_messages": self._failure_messages,
                 }
             )
+            self._failure_messages = []
