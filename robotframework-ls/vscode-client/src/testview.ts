@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import { readLaunchTemplate } from "./run";
+import { sleep } from "./time";
 import { WeakValueMap } from "./weakValueMap";
 
 export interface IPosition {
@@ -65,7 +66,7 @@ const runIdToDebugSession = new Map<string, vscode.DebugSession>();
 const testItemIdToTestItem = new WeakValueMap<string, vscode.TestItem>();
 
 function computeTestIdFromTestInfo(uriAsStr: string, test: ITestInfoFromSymbolsCache): string {
-    OUTPUT_CHANNEL.appendLine('Computed: ' + `${uriAsStr} [${test.name}]`)
+    OUTPUT_CHANNEL.appendLine("Computed: " + `${uriAsStr} [${test.name}]`);
     return `${uriAsStr} [${test.name}]`;
 }
 
@@ -91,13 +92,19 @@ export async function handleTestsCollected(testInfo: ITestInfoFromUri) {
         }
         return;
     }
+
     // We actually have tests to add.
-    if (file === undefined) {
-        file = controller.createTestItem(uri.toString(), uri.path.split("/").pop()!, uri);
-        testItemIdToTestItem.set(uriAsStr, file);
-        testData.set(file, { type: ItemType.File, testInfo: undefined });
-        controller.items.add(file);
+    if (file !== undefined) {
+        // This is a hack to work around https://github.com/microsoft/vscode/issues/140166
+        // Ideally we wouldn't delete it in this case, just replace the children.
+        controller.items.delete(uriAsStr);
+        await sleep(500);
     }
+
+    file = controller.createTestItem(uriAsStr, uri.path.split("/").pop()!, uri);
+    testItemIdToTestItem.set(uriAsStr, file);
+    testData.set(file, { type: ItemType.File, testInfo: undefined });
+    controller.items.add(file);
 
     const children: vscode.TestItem[] = [];
     for (const test of testInfo.testInfo) {
@@ -330,9 +337,7 @@ function handleSuiteStart(testRun: vscode.TestRun, event: vscode.DebugSessionCus
             testRun.enqueued(testItem);
         }
     }
-
 }
-
 
 function handleTestStart(testRun: vscode.TestRun, event: vscode.DebugSessionCustomEvent) {
     const testUriStr = vscode.Uri.file(event.body.source).toString();
@@ -354,6 +359,6 @@ function handleTestEnd(testRun: vscode.TestRun, event: vscode.DebugSessionCustom
     if (!testItem) {
         OUTPUT_CHANNEL.appendLine("Did not find test item: " + testId);
     } else {
-        testRun.passed(testItem)
+        testRun.passed(testItem);
     }
 }

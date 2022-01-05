@@ -158,6 +158,7 @@ class WorkspaceIndexer(object):
         self._first_test_collection = threading.Event()
         self._endpoint = endpoint
         self._collect_tests = collect_tests
+        self._clear_caches = threading.Event()
         if collect_tests:
             assert endpoint is not None
         t = threading.Thread(target=self._on_thread)
@@ -169,6 +170,7 @@ class WorkspaceIndexer(object):
         assert (
             self._collect_tests
         ), "Cannot wait for first test collection if not collecting tests."
+        self._clear_caches.set()
         self._first_test_collection.wait()
         return True
 
@@ -185,7 +187,11 @@ class WorkspaceIndexer(object):
             assert endpoint
             while True:
                 try:
-                    old_cached = self._cached
+                    if self._clear_caches.is_set():
+                        self._clear_caches.clear()
+                        old_cached = {}
+                    else:
+                        old_cached = self._cached
                     cached = {}
                     for symbols_cache in self.iter_symbols_cache():
                         test_info_lst = symbols_cache.get_test_info()
