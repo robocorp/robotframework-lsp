@@ -475,7 +475,7 @@ class Workspace(object):
 
     def update_document(
         self, text_doc: TextDocumentItem, change: TextDocumentContentChangeEvent
-    ):
+    ) -> IDocument:
         self._check_in_mutate_thread()
         doc_uri = text_doc["uri"]
         doc = self._docs[doc_uri]
@@ -485,6 +485,7 @@ class Workspace(object):
         new_doc = self._create_document(doc_uri, doc.source, text_doc["version"])
         new_doc.apply_change(change)
         self._docs[doc_uri] = new_doc
+        return new_doc
 
     def iter_all_doc_uris_in_workspace(
         self, extensions: Tuple[str, ...]

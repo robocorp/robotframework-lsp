@@ -139,13 +139,15 @@ def iter_symbols_caches(
             )
 
         else:
-            yield from workspace_indexer.iter_symbols_cache(
+            for _uri, symbols_cache in workspace_indexer.iter_uri_and_symbols_cache(
                 only_for_open_docs=workspace_symbols_only_for_open_docs,
                 initial_time=initial_time,
                 timeout=TIMEOUT,
                 context=context,
                 found=found,
-            )
+            ):
+                if symbols_cache is not None:
+                    yield symbols_cache
 
         libspec_manager: LibspecManager = workspace.libspec_manager
         already_checked = set()

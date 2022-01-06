@@ -18,11 +18,13 @@ from robocorp_ls_core.protocols import (
     IEndPoint,
     ITestInfoFromSymbolsCacheTypedDict,
     ITestInfoFromUriTypedDict,
+    IDocument,
 )
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
-from typing import Optional, Any, Set, List, Dict, Iterable
+from typing import Optional, Any, Set, List, Dict, Iterable, Tuple
 import weakref
 import threading
+from robocorp_ls_core.lsp import TextDocumentContentChangeEvent, TextDocumentItem
 
 log = get_logger(__name__)
 
@@ -147,6 +149,51 @@ def _compute_symbols_from_ast(completion_context: ICompletionContext) -> ISymbol
     )
 
 
+class _ReindexInfo(object):
+    def __init__(self):
+        self.uris_to_iter: Set[str] = set()
+        self.full_reindex: bool = False
+
+
+class _ReindexManager(object):
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._disposed = False
+
+        self._reindex_info = _ReindexInfo()
+        self._reindex_event = threading.Event()
+
+        # i.e.: start with a full reindex.
+        self._reindex_info.full_reindex = True
+        self._reindex_event.set()
+
+    def on_updated_document(self, doc_uri: str) -> None:
+        with self._lock:
+            if not self._disposed:
+                self._reindex_info.uris_to_iter.add(doc_uri)
+            self._reindex_event.set()
+
+    def on_updated_folders(self) -> None:
+        with self._lock:
+            if not self._disposed:
+                self._reindex_info.full_reindex = True
+            self._reindex_event.set()
+
+    def wait_for_info_to_reindex(self) -> _ReindexInfo:
+        self._reindex_event.wait()
+        with self._lock:
+            self._reindex_event.clear()
+            ret = self._reindex_info
+            self._reindex_info = _ReindexInfo()
+            return ret
+
+    def dispose(self):
+        with self._lock:
+            self._disposed = True
+            self._reindex_info = _ReindexInfo()
+            self._reindex_event.set()
+
+
 class WorkspaceIndexer(object):
     def __init__(
         self,
@@ -159,6 +206,9 @@ class WorkspaceIndexer(object):
         self._endpoint = endpoint
         self._collect_tests = collect_tests
         self._clear_caches = threading.Event()
+        self._reindex_manager = _ReindexManager()
+        self._disposed = threading.Event()
+
         if collect_tests:
             assert endpoint is not None
         t = threading.Thread(target=self._on_thread)
@@ -170,15 +220,15 @@ class WorkspaceIndexer(object):
         assert (
             self._collect_tests
         ), "Cannot wait for first test collection if not collecting tests."
+
         self._clear_caches.set()
         self._first_test_collection.wait()
+
         return True
 
     def _on_thread(self) -> None:
-        import time
-
         if not self._collect_tests:
-            for symbols_cache in self.iter_symbols_cache():
+            for _uri, symbols_cache in self.iter_uri_and_symbols_cache():
                 # Do a single collection at startup, afterwards only
                 # collect again on demand.
                 pass
@@ -186,51 +236,99 @@ class WorkspaceIndexer(object):
             endpoint = self._endpoint
             assert endpoint
             while True:
+                reindex_info = self._reindex_manager.wait_for_info_to_reindex()
+
+                if self._disposed.is_set():
+                    return
+
                 try:
-                    if self._clear_caches.is_set():
+                    if self._clear_caches.is_set() or reindex_info.full_reindex:
+                        # If clear caches is set, we need to force the notifications.
+                        force_notify = self._clear_caches.is_set()
                         self._clear_caches.clear()
-                        old_cached = {}
-                    else:
+
                         old_cached = self._cached
-                    cached = {}
-                    for symbols_cache in self.iter_symbols_cache():
-                        test_info_lst = symbols_cache.get_test_info()
-                        if test_info_lst is None:
-                            test_info_lst = []
-                        uri = symbols_cache.get_uri()
-                        if uri:
-                            test_info_for_uri: ITestInfoFromUriTypedDict = {
-                                "uri": uri,
-                                "testInfo": test_info_lst,
-                            }
-                            cached[uri] = test_info_lst
-                            if old_cached.pop(uri, None) != test_info_lst:
-                                endpoint.notify(
-                                    "$/testsCollected",
-                                    test_info_for_uri,
-                                )
-                    for uri in old_cached.keys():
-                        endpoint.notify(
-                            "$/testsCollected",
-                            {"uri": uri, "testInfo": []},
-                        )
+                        new_cached = {}
+
+                        for uri, symbols_cache in self.iter_uri_and_symbols_cache():
+                            if symbols_cache is None:
+                                test_info_lst = []
+                            else:
+                                test_info_lst = symbols_cache.get_test_info()
+                                if test_info_lst is None:
+                                    test_info_lst = []
+
+                            if uri:
+                                test_info_for_uri: ITestInfoFromUriTypedDict = {
+                                    "uri": uri,
+                                    "testInfo": test_info_lst,
+                                }
+                                new_cached[uri] = test_info_lst
+                                if (
+                                    old_cached.pop(uri, None) != test_info_lst
+                                    or force_notify
+                                ):
+                                    endpoint.notify(
+                                        "$/testsCollected",
+                                        test_info_for_uri,
+                                    )
+
+                        for uri in old_cached.keys():
+                            endpoint.notify(
+                                "$/testsCollected",
+                                {"uri": uri, "testInfo": []},
+                            )
+                        self._cached = new_cached
+                    else:
+                        # In this case we won't notify about old keys removed
+                        # because they weren't found (although if uris_to_iter
+                        # has removed uris, we'll still do the right thing).
+                        cached = self._cached
+
+                        uris_to_iter = reindex_info.uris_to_iter
+                        for uri, symbols_cache in self.iter_uri_and_symbols_cache(
+                            uris_to_iter=uris_to_iter
+                        ):
+                            if symbols_cache is None:
+                                test_info_lst = []
+                            else:
+                                test_info_lst = symbols_cache.get_test_info()
+                                if test_info_lst is None:
+                                    test_info_lst = []
+
+                            if uri:
+                                test_info_for_uri: ITestInfoFromUriTypedDict = {
+                                    "uri": uri,
+                                    "testInfo": test_info_lst,
+                                }
+                                if cached.get(uri) != test_info_lst:
+                                    cached[uri] = test_info_lst
+                                    endpoint.notify(
+                                        "$/testsCollected",
+                                        test_info_for_uri,
+                                    )
                 finally:
                     self._first_test_collection.set()
 
-                self._cached = cached
-                time.sleep(0.5)
-
     def dispose(self):
-        pass
+        self._disposed.set()
+        self._reindex_manager.dispose()
 
-    def iter_symbols_cache(
+    def on_updated_document(self, doc_uri: str):
+        self._reindex_manager.on_updated_document(doc_uri)
+
+    def on_updated_folders(self):
+        self._reindex_manager.on_updated_folders()
+
+    def iter_uri_and_symbols_cache(
         self,
         only_for_open_docs=False,
         initial_time: Optional[float] = None,
         timeout: Optional[float] = None,
         context: Optional[IBaseCompletionContext] = None,
         found: Optional[Set[str]] = None,
-    ) -> Iterable[ISymbolsCache]:
+        uris_to_iter: Optional[Set[str]] = None,
+    ) -> Iterable[Tuple[str, Optional[ISymbolsCache]]]:
         from typing import cast
         import time
 
@@ -248,19 +346,25 @@ class WorkspaceIndexer(object):
             log.critical("self._robot_workspace already collected in WorkspaceIndexer.")
             return
 
-        if only_for_open_docs:
+        if uris_to_iter is not None:
 
             def iter_in():
-                for doc_uri in workspace.get_open_docs_uris():
-                    yield doc_uri
+                yield iter(uris_to_iter)
 
         else:
+            if only_for_open_docs:
 
-            def iter_in():
-                for uri in workspace.iter_all_doc_uris_in_workspace(
-                    (".robot", ".resource")
-                ):
-                    yield uri
+                def iter_in():
+                    for doc_uri in workspace.get_open_docs_uris():
+                        yield doc_uri
+
+            else:
+
+                def iter_in():
+                    for uri in workspace.iter_all_doc_uris_in_workspace(
+                        (".robot", ".resource")
+                    ):
+                        yield uri
 
         for uri in iter_in():
             if not uri:
@@ -275,35 +379,39 @@ class WorkspaceIndexer(object):
                 )
                 break
 
+            if uri in found:
+                continue
+            found.add(uri)
+
             doc = cast(
                 Optional[IRobotDocument],
                 workspace.get_document(uri, accept_from_file=True),
             )
-            if doc is not None:
-                if uri in found:
-                    continue
-                found.add(uri)
-                symbols_cache = doc.symbols_cache
-                if symbols_cache is None:
-                    from robotframework_ls.impl.completion_context import (
-                        CompletionContext,
-                    )
+            if doc is None:
+                yield uri, None  # i.e.: No longer there...
+                continue
 
-                    if context is not None:
-                        ctx = CompletionContext(
-                            doc,
-                            monitor=context.monitor,
-                            config=context.config,
-                            workspace=workspace,
-                        )
-                    else:
-                        ctx = CompletionContext(
-                            doc,
-                            workspace=workspace,
-                        )
-                    symbols_cache = _compute_symbols_from_ast(ctx)
-                doc.symbols_cache = symbols_cache
-                yield symbols_cache
+            symbols_cache = doc.symbols_cache
+            if symbols_cache is None:
+                from robotframework_ls.impl.completion_context import (
+                    CompletionContext,
+                )
+
+                if context is not None:
+                    ctx = CompletionContext(
+                        doc,
+                        monitor=context.monitor,
+                        config=context.config,
+                        workspace=workspace,
+                    )
+                else:
+                    ctx = CompletionContext(
+                        doc,
+                        workspace=workspace,
+                    )
+                symbols_cache = _compute_symbols_from_ast(ctx)
+            doc.symbols_cache = symbols_cache
+            yield uri, symbols_cache
 
 
 class RobotWorkspace(Workspace):
@@ -320,13 +428,16 @@ class RobotWorkspace(Workspace):
     ):
         self.libspec_manager = libspec_manager
 
+        # It needs to be set to None in the initialization (while we setup folders).
+        self.workspace_indexer: Optional[WorkspaceIndexer] = None
+
         Workspace.__init__(
             self, root_uri, fs_observer, workspace_folders=workspace_folders
         )
         self._generate_ast = generate_ast
-        self.workspace_indexer: Optional[WorkspaceIndexer]
         if collect_tests:
             assert endpoint is not None
+            assert index_workspace
 
         if index_workspace:
             self.workspace_indexer = WorkspaceIndexer(
@@ -335,15 +446,35 @@ class RobotWorkspace(Workspace):
         else:
             self.workspace_indexer = None
 
+    @overrides(Workspace.update_document)
+    def update_document(
+        self, text_doc: TextDocumentItem, change: TextDocumentContentChangeEvent
+    ) -> IDocument:
+        doc = Workspace.update_document(self, text_doc, change)
+        if self.workspace_indexer is not None:
+            self.workspace_indexer.on_updated_document(doc.uri)
+        return doc
+
+    @overrides(Workspace.remove_document)
+    def remove_document(self, uri: str):
+        doc = Workspace.remove_document(self, uri)
+        if self.workspace_indexer is not None:
+            self.workspace_indexer.on_updated_document(uri)
+        return doc
+
     @overrides(Workspace.add_folder)
     def add_folder(self, folder: IWorkspaceFolder):
         Workspace.add_folder(self, folder)
         self.libspec_manager.add_workspace_folder(folder.uri)
+        if self.workspace_indexer is not None:
+            self.workspace_indexer.on_updated_folders()
 
     @overrides(Workspace.remove_folder)
     def remove_folder(self, folder_uri):
         Workspace.remove_folder(self, folder_uri)
         self.libspec_manager.remove_workspace_folder(folder_uri)
+        if self.workspace_indexer is not None:
+            self.workspace_indexer.on_updated_folders()
 
     @overrides(Workspace.dispose)
     def dispose(self):
