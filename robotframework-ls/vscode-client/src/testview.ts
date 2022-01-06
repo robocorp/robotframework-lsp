@@ -107,8 +107,15 @@ export async function handleTestsCollected(testInfo: ITestInfoFromUri) {
     controller.items.add(file);
 
     const children: vscode.TestItem[] = [];
+
+    const found = new Set();
+
     for (const test of testInfo.testInfo) {
         const testItemId = computeTestIdFromTestInfo(uriAsStr, test);
+        if (found.has(testItemId)) {
+            continue;
+        }
+        found.add(testItemId);
         const testItem: vscode.TestItem = controller.createTestItem(testItemId, test.name, uri);
         testItemIdToTestItem.set(testItemId, testItem);
         const start = new vscode.Position(test.range.start.line, test.range.start.character);
@@ -388,7 +395,6 @@ function failedKeywordsToTestMessage(event: vscode.DebugSessionCustomEvent): vsc
                 msg += errorMsg;
             }
         }
-
     }
     messages.push({
         "message": msg,

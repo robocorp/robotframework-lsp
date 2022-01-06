@@ -349,7 +349,7 @@ class WorkspaceIndexer(object):
         if uris_to_iter is not None:
 
             def iter_in():
-                yield iter(uris_to_iter)
+                yield from iter(uris_to_iter)
 
         else:
             if only_for_open_docs:
