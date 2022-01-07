@@ -12,6 +12,7 @@ from robocorp_ls_core.protocols import (
     IRequestHandler,
 )
 from typing import Any, Union, Optional, List, Callable, Dict
+from robocorp_ls_core.callbacks import Callback
 
 log = get_logger(__name__)
 
@@ -172,8 +173,11 @@ class _ReaderThread(threading.Thread):
         # Message matchers.
         self._id_message_matchers = {}  # msg id-> matcher
         self._pattern_message_matchers = {}  # id(matcher) -> matcher
-        self._on_received_message = on_received_message
         self._request_handlers: Dict[str, List[IRequestHandler]] = {}
+
+        self.on_message = Callback()
+        if on_received_message is not None:
+            self.on_message.register(on_received_message)
 
     def run(self):
         try:
@@ -194,12 +198,10 @@ class _ReaderThread(threading.Thread):
                 message_matcher.notify(None)
 
     def _on_message(self, msg):
-        on_received_message = self._on_received_message
-        if on_received_message is not None:
-            try:
-                on_received_message(msg)
-            except:
-                log.exception("Error processing: %s", msg)
+        try:
+            self.on_message(msg)
+        except:
+            log.exception("Error processing: %s", msg)
 
         from robocorp_ls_core.options import Setup
 
@@ -306,6 +308,7 @@ class LanguageServerClientBase(object):
 
         t = _ReaderThread(reader, on_received_message=on_received_message)
         self._reader_thread = t
+        self.on_message = t.on_message
         t.start()
         self.require_exit_messages = True
         self.next_id = partial(next, itertools.count())

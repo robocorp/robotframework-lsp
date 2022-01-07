@@ -17,6 +17,7 @@ from typing import TypeVar
 import typing
 
 from enum import Enum
+from robocorp_ls_core.callbacks import Callback
 
 
 if typing.TYPE_CHECKING:
@@ -187,6 +188,9 @@ class IRequestHandler(Protocol):
 
 
 class ILanguageServerClientBase(IRequestCancellable, Protocol):
+
+    on_message: Callback
+
     def request_async(self, contents: Dict) -> Optional[IIdMessageMatcher]:
         """
         API which allows to wait for the message to complete.
