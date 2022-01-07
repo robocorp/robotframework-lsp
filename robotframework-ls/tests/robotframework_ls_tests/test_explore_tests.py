@@ -5,7 +5,7 @@ from robocorp_ls_core import uris
 
 def test_explore_tests(language_server_io: ILanguageServerClient, workspace_dir, cases):
     from robotframework_ls.commands import ROBOT_START_INDEXING_INTERNAL
-    from robotframework_ls.commands import ROBOT_WAIT_FIRST_TEST_COLLECTION_INTERNAL
+    from robotframework_ls.commands import ROBOT_WAIT_FULL_TEST_COLLECTION_INTERNAL
 
     cases.copy_to("case_multiple_tests", workspace_dir)
     language_server = language_server_io
@@ -24,45 +24,50 @@ def test_explore_tests(language_server_io: ILanguageServerClient, workspace_dir,
     language_server.on_message.register(on_message)
     language_server.execute_command(ROBOT_START_INDEXING_INTERNAL, [])
 
-    for _i in range(2):
-        # In the 2nd it doesn't really do anything...
-        assert language_server.execute_command(
-            ROBOT_WAIT_FIRST_TEST_COLLECTION_INTERNAL, []
-        )
+    assert language_server.execute_command(ROBOT_WAIT_FULL_TEST_COLLECTION_INTERNAL, [])
 
-    assert tests_collected == {
-        "robot1.robot": [
-            {
-                "name": "Can use package",
-                "range": {
-                    "start": {"line": 1, "character": 0},
-                    "end": {"line": 1, "character": 15},
+    def verify_all_tests_collected():
+        assert tests_collected == {
+            "robot1.robot": [
+                {
+                    "name": "Can use package",
+                    "range": {
+                        "start": {"line": 1, "character": 0},
+                        "end": {"line": 1, "character": 15},
+                    },
+                }
+            ],
+            "robot2.robot": [
+                {
+                    "name": "Can use package",
+                    "range": {
+                        "start": {"line": 1, "character": 0},
+                        "end": {"line": 1, "character": 15},
+                    },
+                }
+            ],
+            "robot3.robot": [
+                {
+                    "name": "Test1",
+                    "range": {
+                        "start": {"line": 1, "character": 0},
+                        "end": {"line": 1, "character": 5},
+                    },
                 },
-            }
-        ],
-        "robot2.robot": [
-            {
-                "name": "Can use package",
-                "range": {
-                    "start": {"line": 1, "character": 0},
-                    "end": {"line": 1, "character": 15},
+                {
+                    "name": "Test2",
+                    "range": {
+                        "start": {"line": 4, "character": 0},
+                        "end": {"line": 4, "character": 5},
+                    },
                 },
-            }
-        ],
-        "robot3.robot": [
-            {
-                "name": "Test1",
-                "range": {
-                    "start": {"line": 1, "character": 0},
-                    "end": {"line": 1, "character": 5},
-                },
-            },
-            {
-                "name": "Test2",
-                "range": {
-                    "start": {"line": 4, "character": 0},
-                    "end": {"line": 4, "character": 5},
-                },
-            },
-        ],
-    }
+            ],
+        }
+
+    verify_all_tests_collected()
+    tests_collected.clear()
+
+    # Re-triggers a full test collection.
+    assert language_server.execute_command(ROBOT_WAIT_FULL_TEST_COLLECTION_INTERNAL, [])
+
+    verify_all_tests_collected()

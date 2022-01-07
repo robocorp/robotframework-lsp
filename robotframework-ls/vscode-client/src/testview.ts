@@ -36,7 +36,7 @@ const controller = vscode.tests.createTestController("robotframework-lsp.testCon
 controller.resolveHandler = async (test) => {
     if (!test) {
         // Wait for the first full refresh.
-        await vscode.commands.executeCommand("robot.waitFirstTestCollection.internal");
+        await vscode.commands.executeCommand("robot.waitFullTestCollection.internal");
     }
 };
 

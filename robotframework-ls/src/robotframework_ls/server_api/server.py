@@ -573,12 +573,12 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
         return list_tests(completion_context)
 
-    def m_wait_for_first_test_collection(self):
-        func = partial(self._threaded_wait_for_first_test_collection)
+    def m_wait_for_full_test_collection(self):
+        func = partial(self._threaded_wait_for_full_test_collection)
         func = require_monitor(func)
         return func
 
-    def _threaded_wait_for_first_test_collection(self, monitor: IMonitor) -> bool:
+    def _threaded_wait_for_full_test_collection(self, monitor: IMonitor) -> bool:
         from robotframework_ls.impl.robot_workspace import RobotWorkspace
 
         workspace = self.workspace
@@ -589,7 +589,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         workspace_indexer = ws.workspace_indexer
         if not workspace_indexer:
             raise RuntimeError("WorkspaceIndexer not available (None).")
-        workspace_indexer.wait_for_first_test_collection()
+        workspace_indexer.wait_for_full_test_collection()
         return True
 
     def m_hover(self, doc_uri: str, line: int, col: int):

@@ -153,6 +153,7 @@ class _ReindexInfo(object):
     def __init__(self):
         self.uris_to_iter: Set[str] = set()
         self.full_reindex: bool = False
+        self.finished_collection = threading.Event()
 
 
 class _ReindexManager(object):
@@ -167,21 +168,28 @@ class _ReindexManager(object):
         self._reindex_info.full_reindex = True
         self._reindex_event.set()
 
-    def on_updated_document(self, doc_uri: str) -> None:
+    def request_uri_collection(self, doc_uri: str) -> _ReindexInfo:
         with self._lock:
             if not self._disposed:
                 self._reindex_info.uris_to_iter.add(doc_uri)
-            self._reindex_event.set()
 
-    def on_updated_folders(self) -> None:
+            self._reindex_event.set()
+            return self._reindex_info
+
+    def request_full_collection(self) -> _ReindexInfo:
         with self._lock:
             if not self._disposed:
                 self._reindex_info.full_reindex = True
+
             self._reindex_event.set()
+            return self._reindex_info
 
     def wait_for_info_to_reindex(self) -> _ReindexInfo:
         self._reindex_event.wait()
         with self._lock:
+            if self._disposed:
+                return self._reindex_info
+
             self._reindex_event.clear()
             ret = self._reindex_info
             self._reindex_info = _ReindexInfo()
@@ -190,7 +198,11 @@ class _ReindexManager(object):
     def dispose(self):
         with self._lock:
             self._disposed = True
+            self._reindex_info.finished_collection.set()
+
             self._reindex_info = _ReindexInfo()
+            self._reindex_info.finished_collection.set()
+
             self._reindex_event.set()
 
 
@@ -202,7 +214,6 @@ class WorkspaceIndexer(object):
         collect_tests: bool = False,
     ):
         self._robot_workspace = weakref.ref(robot_workspace)
-        self._first_test_collection = threading.Event()
         self._endpoint = endpoint
         self._collect_tests = collect_tests
         self._clear_caches = threading.Event()
@@ -216,13 +227,14 @@ class WorkspaceIndexer(object):
         t.daemon = True
         t.start()
 
-    def wait_for_first_test_collection(self):
+    def wait_for_full_test_collection(self):
         assert (
             self._collect_tests
         ), "Cannot wait for first test collection if not collecting tests."
 
         self._clear_caches.set()
-        self._first_test_collection.wait()
+        reindex_info = self._reindex_manager.request_full_collection()
+        reindex_info.finished_collection.wait()
 
         return True
 
@@ -239,6 +251,7 @@ class WorkspaceIndexer(object):
                 reindex_info = self._reindex_manager.wait_for_info_to_reindex()
 
                 if self._disposed.is_set():
+                    reindex_info.finished_collection.set()
                     return
 
                 try:
@@ -308,17 +321,17 @@ class WorkspaceIndexer(object):
                                         test_info_for_uri,
                                     )
                 finally:
-                    self._first_test_collection.set()
+                    reindex_info.finished_collection.set()
 
     def dispose(self):
         self._disposed.set()
         self._reindex_manager.dispose()
 
     def on_updated_document(self, doc_uri: str):
-        self._reindex_manager.on_updated_document(doc_uri)
+        self._reindex_manager.request_uri_collection(doc_uri)
 
     def on_updated_folders(self):
-        self._reindex_manager.on_updated_folders()
+        self._reindex_manager.request_full_collection()
 
     def iter_uri_and_symbols_cache(
         self,

@@ -111,8 +111,8 @@ COMMANDS: List[Command] = [
         hide_from_command_palette=True,
     ),
     Command(
-        "robot.waitFirstTestCollection.internal",
-        "Waits for the first test collection",
+        "robot.waitFullTestCollection.internal",
+        "Schedules and Waits for a full test collection",
         server_handled=True,
         hide_from_command_palette=True,
     ),

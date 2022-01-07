@@ -47,7 +47,7 @@
         "onCommand:robot.getRFLSHomeDir",
         "onCommand:robot.clearCachesAndRestartProcesses",
         "onCommand:robot.startIndexing.internal",
-        "onCommand:robot.waitFirstTestCollection.internal"
+        "onCommand:robot.waitFullTestCollection.internal"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -126,8 +126,8 @@
                 "category": "Robot Framework"
             },
             {
-                "command": "robot.waitFirstTestCollection.internal",
-                "title": "Waits for the first test collection",
+                "command": "robot.waitFullTestCollection.internal",
+                "title": "Schedules and Waits for a full test collection",
                 "category": "Robot Framework"
             }
         ],
@@ -190,7 +190,7 @@
                     "when": "false"
                 },
                 {
-                    "command": "robot.waitFirstTestCollection.internal",
+                    "command": "robot.waitFullTestCollection.internal",
                     "when": "false"
                 }
             ]
