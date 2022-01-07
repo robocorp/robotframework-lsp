@@ -1,8 +1,12 @@
+import path = require("path");
 import * as vscode from "vscode";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import { readLaunchTemplate } from "./run";
-import { sleep } from "./time";
 import { WeakValueMap } from "./weakValueMap";
+
+import * as nodePath from "path";
+
+const posixPath = nodePath.posix || nodePath;
 
 export interface IPosition {
     // Line position in a document (zero-based).
@@ -82,33 +86,90 @@ function getType(testItem: vscode.TestItem): ItemType {
     return data.type;
 }
 
+function removeTreeStructure(uri: vscode.Uri, controller: vscode.TestController) {
+    while (true) {
+        const uriAsStr = uri.toString();
+        let testItem = testItemIdToTestItem.get(uriAsStr);
+        if (!testItem) {
+            return;
+        }
+        testItemIdToTestItem.delete(uriAsStr);
+
+        let parentItem = testItem.parent;
+        if (parentItem) {
+            if (parentItem.children.get(uriAsStr) !== undefined) {
+                parentItem.children.delete(uriAsStr);
+                if (parentItem.children.size == 0) {
+                    uri = parentItem.uri;
+                } else {
+                    return;
+                }
+            } else {
+                return;
+            }
+        } else {
+            let file = controller.items.get(uriAsStr);
+            if (file !== undefined) {
+                controller.items.delete(uriAsStr);
+            }
+            return;
+        }
+    }
+}
+
+function addTreeStructure(
+    workspaceFolder: vscode.WorkspaceFolder,
+    uri: vscode.Uri,
+    controller: vscode.TestController
+): vscode.TestItem {
+    const path = posixPath.relative(workspaceFolder.uri.path, uri.path);
+    const parts = path.split("/");
+
+    let prev = workspaceFolder.uri.path;
+    let parentItem: vscode.TestItem | undefined = undefined;
+    let ret: vscode.TestItem | undefined = undefined;
+
+    for (const part of parts) {
+        const next = `${prev}/${part}`;
+        const nextUri = uri.with({ "path": next });
+        const nextUriStr = nextUri.toString();
+
+        ret = testItemIdToTestItem.get(nextUriStr);
+        if (!ret) {
+            // Just create if it still wasn't created (otherwise we'd override
+            // the previously created item/children structure).
+            ret = controller.createTestItem(nextUriStr, part, nextUri);
+            testItemIdToTestItem.set(nextUriStr, ret);
+            testData.set(ret, { type: ItemType.File, testInfo: undefined });
+            if (parentItem === undefined) {
+                controller.items.add(ret);
+            } else {
+                parentItem.children.add(ret);
+            }
+        }
+
+        parentItem = ret;
+        prev = next;
+    }
+
+    return ret;
+}
+
 export async function handleTestsCollected(testInfo: ITestInfoFromUri) {
     const uri = vscode.Uri.parse(testInfo.uri);
-    const uriAsStr = uri.toString();
-    let file = controller.items.get(uriAsStr);
+
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+
     if (testInfo.testInfo.length === 0) {
-        if (file !== undefined) {
-            controller.items.delete(uriAsStr);
-        }
+        removeTreeStructure(uri, controller);
         return;
     }
 
-    // We actually have tests to add.
-    if (file !== undefined) {
-        // This is a hack to work around https://github.com/microsoft/vscode/issues/140166
-        // Ideally we wouldn't delete it in this case, just replace the children.
-        controller.items.delete(uriAsStr);
-        await sleep(500);
-    }
+    const file = addTreeStructure(workspaceFolder, uri, controller);
 
-    file = controller.createTestItem(uriAsStr, uri.path.split("/").pop()!, uri);
-    testItemIdToTestItem.set(uriAsStr, file);
-    testData.set(file, { type: ItemType.File, testInfo: undefined });
-    controller.items.add(file);
-
+    const uriAsStr = uri.toString();
     const children: vscode.TestItem[] = [];
-
-    const found = new Set();
+    const found: Set<string> = new Set();
 
     for (const test of testInfo.testInfo) {
         const testItemId = computeTestIdFromTestInfo(uriAsStr, test);
@@ -124,7 +185,6 @@ export async function handleTestsCollected(testInfo: ITestInfoFromUri) {
         testData.set(testItem, { type: ItemType.TestCase, testInfo: test });
         children.push(testItem);
     }
-
     file.children.replace(children);
 }
 

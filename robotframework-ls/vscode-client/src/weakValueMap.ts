@@ -15,4 +15,8 @@ export class WeakValueMap<K, V extends object> {
         const ref = new WeakRef(value);
         this.map.set(key, ref);
     }
+
+    public delete(key: K) {
+        this.map.delete(key);
+    }
 }
