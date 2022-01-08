@@ -459,6 +459,13 @@ class RobotWorkspace(Workspace):
         else:
             self.workspace_indexer = None
 
+    @overrides(Workspace.put_document)
+    def put_document(self, text_document: TextDocumentItem) -> IDocument:
+        doc = Workspace.put_document(self, text_document)
+        if self.workspace_indexer is not None:
+            self.workspace_indexer.on_updated_document(doc.uri)
+        return doc
+
     @overrides(Workspace.update_document)
     def update_document(
         self, text_doc: TextDocumentItem, change: TextDocumentContentChangeEvent
@@ -495,6 +502,7 @@ class RobotWorkspace(Workspace):
         if indexer is not None:
             indexer.dispose()
 
+    @overrides(Workspace._create_document)
     def _create_document(
         self, doc_uri, source=None, version=None, force_load_source=False
     ):

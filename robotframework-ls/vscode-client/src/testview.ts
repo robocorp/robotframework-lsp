@@ -196,7 +196,6 @@ export async function setupTestExplorerSupport() {
         const run = controller.createTestRun(request);
         const queue: vscode.TestItem[] = [];
 
-        // Loop through all included tests, or all known tests, and add them to our queue
         if (request.include) {
             request.include.forEach((test) => queue.push(test));
         } else {
@@ -204,22 +203,34 @@ export async function setupTestExplorerSupport() {
         }
 
         const testCases: vscode.TestItem[] = [];
-        while (queue.length > 0 && !token.isCancellationRequested) {
-            const test = queue.pop()!;
 
-            // Skip tests the user asked to exclude
-            if (request.exclude?.includes(test)) {
-                continue;
+        if (!request.exclude) {
+            // Easy mode, just run everything included.
+            while (queue.length > 0 && !token.isCancellationRequested) {
+                const test = queue.pop()!;
+                testCases.push(test);
             }
+        } else {
+            // If items are excluded, we have to check exactly what's excluded
+            // up to the test level.
+            while (queue.length > 0 && !token.isCancellationRequested) {
+                const test = queue.pop()!;
 
-            switch (getType(test)) {
-                case ItemType.TestCase:
-                    testCases.push(test);
-                    break;
+                // Skip tests the user asked to exclude
+                if (request.exclude?.includes(test)) {
+                    continue;
+                }
+
+                switch (getType(test)) {
+                    case ItemType.TestCase:
+                        testCases.push(test);
+                        break;
+                }
+
+                test.children.forEach((test) => queue.push(test));
             }
-
-            test.children.forEach((test) => queue.push(test));
         }
+
         if (!testCases) {
             vscode.window.showInformationMessage("Nothing was run because all test cases were filtered out.");
             return;
@@ -283,8 +294,10 @@ export async function setupTestExplorerSupport() {
                 continue;
             }
             targets.add(test.uri.fsPath);
-            args.push("-t");
-            args.push(data.testInfo.name);
+            if (getType(test) == ItemType.TestCase) {
+                args.push("-t");
+                args.push(data.testInfo.name);
+            }
         }
 
         const targetsAsArray = [];
