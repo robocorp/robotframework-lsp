@@ -557,3 +557,34 @@ def test_evaluate(debugger_api: _DebuggerAPI):
     debugger_api.continue_event(json_hit.thread_id)
 
     debugger_api.read(TerminatedEvent)
+
+
+def test_launch_multiple(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ThreadsResponse
+
+    debugger_api.initialize()
+    target1 = debugger_api.get_dap_case_file("case_log.robot")
+    target2 = debugger_api.get_dap_case_file("case_evaluate.robot")
+    targets = [target1, target2]
+
+    debugger_api.launch(targets, debug=True)
+    threads_response: ThreadsResponse = debugger_api.list_threads()
+    assert len(threads_response.body.threads) == 1
+
+    bp1 = debugger_api.get_line_index_with_content("check that log works", target1)
+    debugger_api.set_breakpoints(target1, bp1)
+
+    bp2 = debugger_api.get_line_index_with_content("Break 1", target2)
+    debugger_api.set_breakpoints(target2, bp2)
+
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(file="case_log.robot")
+    debugger_api.continue_event(json_hit.thread_id)
+
+    debugger_api.wait_for_thread_stopped(file="case_evaluate.robot")
+    msg = debugger_api.continue_event(json_hit.thread_id, accept_terminated=True)
+
+    if not isinstance(msg, TerminatedEvent):
+        debugger_api.read(TerminatedEvent)

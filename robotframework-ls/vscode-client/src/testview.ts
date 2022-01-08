@@ -37,12 +37,19 @@ export interface ITestInfoFromUri {
 }
 
 const controller = vscode.tests.createTestController("robotframework-lsp.testController", "Robot Framework");
-controller.resolveHandler = async (test) => {
-    if (!test) {
-        // Wait for the first full refresh.
-        await vscode.commands.executeCommand("robot.waitFullTestCollection.internal");
-    }
-};
+
+// Note: we cannot assign the resolveHandler (if we do that
+// VSCode will clear the existing items, which is not what
+// we want -- with our current approach we start collecting
+// when the extension is started).
+// controller.resolveHandler = async (test) => {
+//     if (!test) {
+//         // Wait for the first full refresh.
+//         controller.items.replace([]);
+//         testItemIdToTestItem.clear();
+//         await vscode.commands.executeCommand("robot.waitFullTestCollection.internal");
+//     }
+// };
 
 enum ItemType {
     File,
@@ -86,7 +93,7 @@ function getType(testItem: vscode.TestItem): ItemType {
     return data.type;
 }
 
-function removeTreeStructure(uri: vscode.Uri, controller: vscode.TestController) {
+function removeTreeStructure(uri: vscode.Uri) {
     while (true) {
         const uriAsStr = uri.toString();
         let testItem = testItemIdToTestItem.get(uriAsStr);
@@ -117,11 +124,7 @@ function removeTreeStructure(uri: vscode.Uri, controller: vscode.TestController)
     }
 }
 
-function addTreeStructure(
-    workspaceFolder: vscode.WorkspaceFolder,
-    uri: vscode.Uri,
-    controller: vscode.TestController
-): vscode.TestItem {
+function addTreeStructure(workspaceFolder: vscode.WorkspaceFolder, uri: vscode.Uri): vscode.TestItem {
     const path = posixPath.relative(workspaceFolder.uri.path, uri.path);
     const parts = path.split("/");
 
@@ -161,11 +164,11 @@ export async function handleTestsCollected(testInfo: ITestInfoFromUri) {
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
 
     if (testInfo.testInfo.length === 0) {
-        removeTreeStructure(uri, controller);
+        removeTreeStructure(uri);
         return;
     }
 
-    const file = addTreeStructure(workspaceFolder, uri, controller);
+    const file = addTreeStructure(workspaceFolder, uri);
 
     const uriAsStr = uri.toString();
     const children: vscode.TestItem[] = [];

@@ -19,4 +19,8 @@ export class WeakValueMap<K, V extends object> {
     public delete(key: K) {
         this.map.delete(key);
     }
+
+    public clear() {
+        this.map.clear();
+    }
 }

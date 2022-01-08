@@ -189,8 +189,13 @@ class LaunchProcess(object):
             if target is None:
                 return mark_invalid("target not provided in launch.")
 
-            if not os.path.exists(target):
-                return mark_invalid("File: %s does not exist." % (target,))
+            if isinstance(target, list):
+                for t in target:
+                    if not os.path.exists(t):
+                        return mark_invalid("File: %s does not exist." % (t,))
+            else:
+                if not os.path.exists(target):
+                    return mark_invalid("File: %s does not exist." % (target,))
         except:
             log.exception("Error")
             return mark_invalid("Error checking if target (%s) exists." % (target,))
@@ -221,13 +226,23 @@ class LaunchProcess(object):
             return mark_invalid("Error checking if run_robot__main__.py exists.")
 
         else:
-            target_args = [target]
+            target_args = target if isinstance(target, list) else [target]
             if make_suite:
-                if os.path.isfile(target):
-                    target_dir = os.path.dirname(target)
-                    if os.path.exists(os.path.join(target_dir, "__init__.robot")):
-                        target_name = os.path.splitext(os.path.basename(target))[0]
-                        target_args = ["--suite", target_name, target_dir]
+                target_lst = target
+                if not isinstance(target_lst, list):
+                    target_lst = [target_lst]
+
+                target_args = []
+                for t in target_lst:
+                    if not os.path.isfile(t):
+                        target_args.append(t)
+                    else:
+                        target_dir = os.path.dirname(t)
+                        if os.path.exists(os.path.join(target_dir, "__init__.robot")):
+                            target_name = os.path.splitext(os.path.basename(t))[0]
+                            target_args.extend(["--suite", target_name, target_dir])
+                        else:
+                            target_args.append(t)
 
             # Note: target must be the last parameter.
             cmdline = (
