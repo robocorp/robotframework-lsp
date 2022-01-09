@@ -25,6 +25,9 @@ from typing import Optional, Any, Set, List, Dict, Iterable, Tuple
 import weakref
 import threading
 from robocorp_ls_core.lsp import TextDocumentContentChangeEvent, TextDocumentItem
+import os
+from robocorp_ls_core.uris import normalize_drive
+from robocorp_ls_core import uris
 
 log = get_logger(__name__)
 
@@ -176,6 +179,23 @@ class _ReindexManager(object):
             self._reindex_event.set()
             return self._reindex_info
 
+    # This isn't ideal because we don't process file removals as we should...
+    # def request_directory_collection(self, directory):
+    #     with self._lock:
+    #         if not self._disposed:
+    #             try:
+    #                 for entry in os.scandir(directory):
+    #                     if entry.path.endswith((".robot", ".resource")):
+    #                         self._reindex_info.uris_to_iter.add(
+    #                             uris.from_fs_path(entry.path)
+    #                         )
+    #             except:
+    #                 # Directory removed: request full collection
+    #                 self._reindex_info.full_reindex = True
+    #
+    #         self._reindex_event.set()
+    #         return self._reindex_info
+
     def request_full_collection(self) -> _ReindexInfo:
         with self._lock:
             if not self._disposed:
@@ -212,8 +232,9 @@ class WorkspaceIndexer(object):
         robot_workspace,
         endpoint: Optional[IEndPoint],
         collect_tests: bool = False,
-    ):
+    ) -> None:
         self._robot_workspace = weakref.ref(robot_workspace)
+        robot_workspace.on_file_changed.register(self._on_file_changed)
         self._endpoint = endpoint
         self._collect_tests = collect_tests
         self._clear_caches = threading.Event()
@@ -226,6 +247,14 @@ class WorkspaceIndexer(object):
         self._cached: Dict[str, Any] = {}
         t.daemon = True
         t.start()
+
+    def _on_file_changed(self, filename: str):
+        # with open("x:/temp/rara.txt", "a+") as stream:
+        #     stream.write("%s\n" % filename)
+
+        if filename and filename.endswith((".resource", ".robot")):
+            uri = uris.from_fs_path(filename)
+            self._reindex_manager.request_uri_collection(uri)
 
     def wait_for_full_test_collection(self):
         assert (

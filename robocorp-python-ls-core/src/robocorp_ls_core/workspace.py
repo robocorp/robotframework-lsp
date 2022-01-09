@@ -36,7 +36,6 @@ from collections import namedtuple
 import time
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 
-
 log = get_logger(__name__)
 
 _FileMTimeInfo = namedtuple("_FileMTimeInfo", "st_mtime, st_size")
@@ -56,6 +55,7 @@ class _VirtualFSThread(threading.Thread):
     def __init__(self, virtual_fs):
         from robocorp_ls_core.watchdog_wrapper import IFSWatch
         from robocorp_ls_core import load_ignored_dirs
+        from robocorp_ls_core.callbacks import Callback
 
         threading.Thread.__init__(self)
         self.daemon = True
@@ -74,6 +74,7 @@ class _VirtualFSThread(threading.Thread):
         self._fs_watch: Optional[IFSWatch] = None
         self._dirs_changed = set()
         self._trigger_loop = threading.Event()
+        self.on_file_changed = Callback()
 
     def _check_need_sleep(self):
         last_sleep = self._last_sleep
@@ -202,6 +203,7 @@ class _VirtualFSThread(threading.Thread):
         changed_dir = os.path.dirname(src_path)
         self._dirs_changed.add(changed_dir)
         self._trigger_loop.set()
+        self.on_file_changed(src_path)
 
     def dispose(self):
         fs_watch = self._fs_watch
@@ -237,6 +239,7 @@ class _VirtualFS(object):
         # Do initial scan and then start tracking changes.
         self._virtual_fsthread = _VirtualFSThread(self)
         self._virtual_fsthread.start()
+        self.on_file_changed = self._virtual_fsthread.on_file_changed
 
     def wait_for_check_done(self, timeout):
         self._virtual_fsthread.wait_for_check_done(timeout)
@@ -276,6 +279,7 @@ class _WorkspaceFolderWithVirtualFS(object):
         self._vs: _VirtualFS = _VirtualFS(
             self.path, track_file_extensions, fs_observer=fs_observer
         )
+        self.on_file_changed = self._vs.on_file_changed
 
     def _iter_all_doc_uris(self, extensions: Tuple[str, ...]) -> Iterable[str]:
         """
@@ -313,6 +317,7 @@ class Workspace(object):
         track_file_extensions=(".robot", ".resource"),
     ) -> None:
         from robocorp_ls_core.lsp import WorkspaceFolder
+        from robocorp_ls_core.callbacks import Callback
 
         self._main_thread = threading.current_thread()
 
@@ -328,6 +333,8 @@ class Workspace(object):
 
         # Contains the docs pointing to the filesystem.
         self._filesystem_docs: Dict[str, IDocument] = {}
+
+        self.on_file_changed = Callback()
 
         if workspace_folders is not None:
             for folder in workspace_folders:
@@ -369,6 +376,7 @@ class Workspace(object):
                 track_file_extensions=self._track_file_extensions,
                 fs_observer=self._fs_observer,
             )
+            folder.on_file_changed.register(self.on_file_changed)
             folders[folder.uri] = folder
             self._folders = folders
 
@@ -377,6 +385,7 @@ class Workspace(object):
         if folder_uri in self._folders:
             folders = self._folders.copy()
             folder = folders.pop(folder_uri)
+            folder.on_file_changed.unregister(self.on_file_changed)
             folder.dispose()
             self._folders = folders
 

@@ -1,3 +1,8 @@
+from robocorp_ls_core.robotframework_log import get_logger
+
+log = get_logger(__name__)
+
+
 class Callback(object):
     """
     Note that it's thread safe to register/unregister callbacks while callbacks
@@ -19,7 +24,10 @@ class Callback(object):
 
     def __call__(self, *args, **kwargs):
         for c in self._callbacks:
-            c(*args, **kwargs)
+            try:
+                c(*args, **kwargs)
+            except:
+                log.exception("Error in callback.")
 
 
 class CallbackWithReturn(Callback):
@@ -30,7 +38,11 @@ class CallbackWithReturn(Callback):
 
     def __call__(self, *args, **kwargs):
         for c in self._callbacks:
-            ret = c(*args, **kwargs)
+            try:
+                ret = c(*args, **kwargs)
+            except:
+                log.exception("Error in callback with return.")
+                continue
             if ret is not None:
                 return ret
         return None

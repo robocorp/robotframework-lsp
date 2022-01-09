@@ -17,7 +17,6 @@ from typing import TypeVar
 import typing
 
 from enum import Enum
-from robocorp_ls_core.callbacks import Callback
 
 
 if typing.TYPE_CHECKING:
@@ -29,6 +28,7 @@ if typing.TYPE_CHECKING:
     from robocorp_ls_core.lsp import ResponseTypedDict
     from robocorp_ls_core.lsp import CodeLensTypedDict
     from robocorp_ls_core.lsp import RangeTypedDict
+    from robocorp_ls_core.callbacks import Callback
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -189,7 +189,7 @@ class IRequestHandler(Protocol):
 
 class ILanguageServerClientBase(IRequestCancellable, Protocol):
 
-    on_message: Callback
+    on_message: "Callback"
 
     def request_async(self, contents: Dict) -> Optional[IIdMessageMatcher]:
         """
@@ -676,6 +676,8 @@ class IWorkspaceFolder(Protocol):
 
 
 class IWorkspace(Protocol):
+    on_file_changed = "Callback"
+
     @property
     def root_path(self):
         pass
