@@ -14,6 +14,7 @@
 # limitations under the License.
 import os.path
 from robotframework_debug_adapter_tests.fixtures import _DebuggerAPI
+import json
 
 
 def test_invalid_launch_1(debugger_api: _DebuggerAPI):
@@ -584,6 +585,45 @@ def test_launch_multiple(debugger_api: _DebuggerAPI):
     debugger_api.continue_event(json_hit.thread_id)
 
     debugger_api.wait_for_thread_stopped(file="case_evaluate.robot")
+    msg = debugger_api.continue_event(json_hit.thread_id, accept_terminated=True)
+
+    if not isinstance(msg, TerminatedEvent):
+        debugger_api.read(TerminatedEvent)
+
+
+def test_launch_ignoring_tests(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+
+    debugger_api.initialize()
+    target1 = debugger_api.get_dap_case_file("case_log.robot")
+    target2 = debugger_api.get_dap_case_file("case_evaluate.robot")
+    target3 = debugger_api.get_dap_case_file(
+        "case_control_flow/case_control_flow_for.robot"
+    )
+    targets = [target1, target2, target3]
+
+    debugger_api.launch(
+        targets,
+        debug=True,
+        args=[
+            "--prerunmodifier=robotframework_debug_adapter.prerun_modifiers.FilteringTestsSuiteVisitor",
+        ],
+        env={
+            "RFLS_PRERUN_FILTER_TESTS": json.dumps(
+                {"include": [[target1, "Check log"]], "exclude": []}
+            )
+        },
+    )
+
+    bp1 = debugger_api.get_line_index_with_content("check that log works", target1)
+    debugger_api.set_breakpoints(target1, bp1)
+
+    bp2 = debugger_api.get_line_index_with_content("Break 1", target2)
+    debugger_api.set_breakpoints(target2, bp2)
+
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(file="case_log.robot")
     msg = debugger_api.continue_event(json_hit.thread_id, accept_terminated=True)
 
     if not isinstance(msg, TerminatedEvent):

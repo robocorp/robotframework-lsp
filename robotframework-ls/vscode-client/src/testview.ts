@@ -203,16 +203,53 @@ export async function setupTestExplorerSupport() {
         }
 
         const testCases: vscode.TestItem[] = [];
+        let includeTests: vscode.TestItem[] = [];
+        let excludeTests: vscode.TestItem[] = [];
 
+        let simpleMode = false;
         if (!request.exclude) {
+            simpleMode = true;
+            if (queue.length !== 1) {
+                // When we have multiple items, we need to verify if simple mode is usable.
+                let allTypesEqual = undefined;
+                for (const test of queue) {
+                    if (allTypesEqual === undefined) {
+                        allTypesEqual = getType(test);
+                    } else {
+                        if (allTypesEqual !== getType(test)) {
+                            allTypesEqual = undefined;
+                            break;
+                        }
+                    }
+                }
+
+                if (allTypesEqual === ItemType.File) {
+                    simpleMode = true;
+                } else if (allTypesEqual === ItemType.TestCase) {
+                    // Only simple if only one uri was used (for multiple files we
+                    // need the non-simple mode).
+                    let found = new Set();
+                    for (const test of queue) {
+                        found.add(test.uri);
+                    }
+                    simpleMode = found.size === 1;
+                } else {
+                    simpleMode = false;
+                }
+            }
+        }
+
+        if (simpleMode) {
             // Easy mode, just run everything included.
             while (queue.length > 0 && !token.isCancellationRequested) {
                 const test = queue.pop()!;
                 testCases.push(test);
             }
         } else {
-            // If items are excluded, we have to check exactly what's excluded
-            // up to the test level.
+            // In non-simple mode we fill test cases with the uris and
+            // filter with the includes (excludes are applied here and
+            // not in the backend).
+            let includesAsSet: Set<vscode.TestItem> = new Set();
             while (queue.length > 0 && !token.isCancellationRequested) {
                 const test = queue.pop()!;
 
@@ -223,14 +260,21 @@ export async function setupTestExplorerSupport() {
 
                 switch (getType(test)) {
                     case ItemType.TestCase:
-                        testCases.push(test);
+                        includesAsSet.add(test.parent); // deduplicate testCases
+                        includeTests.push(test);
                         break;
                 }
 
                 test.children.forEach((test) => queue.push(test));
             }
+            for (const test of includesAsSet) {
+                testCases.push(test);
+            }
         }
 
+        if (token.isCancellationRequested) {
+            return;
+        }
         if (!testCases) {
             vscode.window.showInformationMessage("Nothing was run because all test cases were filtered out.");
             return;
@@ -256,7 +300,7 @@ export async function setupTestExplorerSupport() {
         runIdToTestRun.set(runId, run);
         // Make sure to end the run after all tests have been executed:
 
-        let launched = await launch(workspaceFolder, runId, testCases, shouldDebug);
+        let launched = await launch(workspaceFolder, runId, testCases, includeTests, excludeTests, shouldDebug);
         if (!launched) {
             handleTestRunFinished(runId);
         }
@@ -273,7 +317,11 @@ export async function setupTestExplorerSupport() {
     async function launch(
         workspaceFolder: vscode.WorkspaceFolder,
         runId: string,
+        // in general only this is needed (passes tests with args)
+        // -- if filtering is needed this should include only the files.
         testCases: vscode.TestItem[],
+        includeTests: vscode.TestItem[], // the tests to be included (if specific filtering by test names is needed)
+        excludeTests: vscode.TestItem[], // the tests to be excluded (if specific filtering by test names is needed)
         shouldDebug: boolean
     ): Promise<boolean> {
         let cwd: string;
@@ -286,6 +334,30 @@ export async function setupTestExplorerSupport() {
 
         // We want the events both in run and debug in this case.
         args.push("--listener=robotframework_debug_adapter.events_listener.EventsListenerV2");
+
+        // Exclude tests based on RFLS_PRERUN_FILTERING env variable.
+        let envFiltering: string | undefined = undefined;
+        if (includeTests.length > 0 || excludeTests.length > 0) {
+            args.push("--prerunmodifier=robotframework_debug_adapter.prerun_modifiers.FilteringTestsSuiteVisitor");
+
+            function convertToFiltering(collection: vscode.TestItem[]) {
+                let ret = [];
+                for (const test of collection) {
+                    let data = testData.get(test);
+                    if (!data) {
+                        OUTPUT_CHANNEL.appendLine("Unable to find test data for: " + test.id);
+                        continue;
+                    }
+                    ret.push([test.uri.fsPath, data.testInfo.name]);
+                }
+                return ret;
+            }
+
+            envFiltering = JSON.stringify({
+                "include": convertToFiltering(includeTests),
+                "exclude": convertToFiltering(excludeTests),
+            });
+        }
 
         for (const test of testCases) {
             const data = testData.get(test);
@@ -337,6 +409,14 @@ export async function setupTestExplorerSupport() {
                         }
                     }
                 }
+            }
+        }
+
+        if (envFiltering !== undefined) {
+            if (!debugConfiguration.env) {
+                debugConfiguration.env = { "RFLS_PRERUN_FILTER_TESTS": envFiltering };
+            } else {
+                debugConfiguration.env["RFLS_PRERUN_FILTER_TESTS"] = envFiltering;
             }
         }
 

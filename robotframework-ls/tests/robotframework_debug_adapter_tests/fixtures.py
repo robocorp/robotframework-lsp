@@ -265,6 +265,7 @@ class _DebuggerAPI(object):
         success=True,
         terminal="none",
         args: Optional[Iterable[str]] = None,
+        env: Optional[dict] = None,
     ):
         """
         :param args:
@@ -286,7 +287,11 @@ class _DebuggerAPI(object):
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ProcessEvent
 
         launch_args = LaunchRequestArguments(
-            __sessionId="some_id", noDebug=not debug, target=target, terminal=terminal
+            __sessionId="some_id",
+            noDebug=not debug,
+            target=target,
+            terminal=terminal,
+            env=env,
         )
         if args:
             launch_args.kwargs["args"] = args
@@ -294,15 +299,15 @@ class _DebuggerAPI(object):
 
         if terminal == "external":
             run_in_terminal_request = self.read(RunInTerminalRequest)
-            env = os.environ.copy()
+            external_env = os.environ.copy()
             for key, val in run_in_terminal_request.arguments.env.to_dict().items():
-                env[as_str(key)] = as_str(val)
+                external_env[as_str(key)] = as_str(val)
 
             cwd = run_in_terminal_request.arguments.cwd
             popen_args = run_in_terminal_request.arguments.args
 
             subprocess.Popen(
-                popen_args, cwd=cwd, env=env, shell=sys.platform == "win32"
+                popen_args, cwd=cwd, env=external_env, shell=sys.platform == "win32"
             )
 
         if success:
