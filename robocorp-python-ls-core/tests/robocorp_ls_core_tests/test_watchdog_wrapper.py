@@ -44,6 +44,56 @@ def test_watchdog_macos():
 
 
 @pytest.mark.parametrize("backend", ["watchdog", "fsnotify"])
+def test_watchdog_rename_folder(tmpdir, backend):
+    from robocorp_ls_core import watchdog_wrapper
+    from robocorp_ls_core.watchdog_wrapper import PathInfo
+    from robocorp_ls_core.basic import wait_for_expected_func_return
+    import os
+
+    dir_rec = tmpdir.join("dir_rec")
+    dir_rec.mkdir()
+
+    found = set()
+
+    def on_change(filepath, *args):
+        f = str(filepath)
+        n = str(dir_rec)
+        rel = os.path.relpath(f, n).replace("\\", "/")
+        if rel.endswith(".txt"):
+            found.add(rel)
+
+    notifier = watchdog_wrapper.create_notifier(on_change, timeout=0.1)
+    observer = watchdog_wrapper.create_observer(backend, None)
+
+    watch = observer.notify_on_any_change(
+        [
+            PathInfo(dir_rec, True),
+        ],
+        notifier.on_change,
+    )
+
+    try:
+        folder = dir_rec.join("folder")
+        folder.mkdir()
+
+        time.sleep(1)
+        folder.join("my.txt").write_text("something", encoding="utf-8")
+        wait_for_expected_func_return(lambda: found, {"folder/my.txt"})
+        found.clear()
+        folder.rename(dir_rec.join("renamed"))
+        wait_for_expected_func_return(
+            lambda: found, {"folder/my.txt", "renamed/my.txt"}
+        )
+        found.clear()
+        dir_rec.join("renamed").remove(rec=True)
+        wait_for_expected_func_return(lambda: found, {"renamed/my.txt"})
+    finally:
+        watch.stop_tracking()
+        notifier.dispose()
+        observer.dispose()
+
+
+@pytest.mark.parametrize("backend", ["watchdog", "fsnotify"])
 def test_watchdog_all(tmpdir, backend):
     from robocorp_ls_core import watchdog_wrapper
     from robocorp_ls_core.watchdog_wrapper import PathInfo

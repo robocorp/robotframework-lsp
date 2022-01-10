@@ -432,6 +432,13 @@ class _WatchdogObserver(object):
                         return
                 # Note: notify on directory and file changes.
                 on_change(event.src_path, *call_args)
+                try:
+                    dest_path = event.dest_path
+                except AttributeError:
+                    pass
+                else:
+                    if dest_path:
+                        on_change(dest_path, *call_args)
 
         handler = _Handler()
         watches = []
