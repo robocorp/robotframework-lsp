@@ -207,7 +207,7 @@ export async function setupTestExplorerSupport() {
         let excludeTests: vscode.TestItem[] = [];
 
         let simpleMode = false;
-        if (!request.exclude) {
+        if (!request.exclude || request.exclude.length === 0) {
             simpleMode = true;
             if (queue.length !== 1) {
                 // When we have multiple items, we need to verify if simple mode is usable.
@@ -383,7 +383,7 @@ export async function setupTestExplorerSupport() {
             "name": "Robot Framework: Launch " + runId,
             "request": "launch",
             "cwd": cwd,
-            "target": targetsAsArray[0], // TODO: Handle multiple targets.
+            "target": targetsAsArray,
             "terminal": "integrated",
             "env": {},
             "args": args,
