@@ -676,7 +676,7 @@ class IWorkspaceFolder(Protocol):
 
 
 class IWorkspace(Protocol):
-    on_file_changed = "Callback"
+    on_file_changed: "Callback"
 
     @property
     def root_path(self):
