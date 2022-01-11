@@ -77,11 +77,16 @@ const runIdToDebugSession = new Map<string, vscode.DebugSession>();
 const testItemIdToTestItem = new WeakValueMap<string, vscode.TestItem>();
 
 function computeTestIdFromTestInfo(uriAsStr: string, test: ITestInfoFromSymbolsCache): string {
-    OUTPUT_CHANNEL.appendLine("Computed: " + `${uriAsStr} [${test.name}]`);
+    if (process.platform == "win32") {
+        uriAsStr = uriAsStr.toLowerCase();
+    }
     return `${uriAsStr} [${test.name}]`;
 }
 
 function computeTestId(uri: string, name: string): string {
+    if (process.platform == "win32") {
+        uri = uri.toLowerCase();
+    }
     return `${uri} [${name}]`;
 }
 
@@ -125,7 +130,13 @@ function removeTreeStructure(uri: vscode.Uri) {
 }
 
 function addTreeStructure(workspaceFolder: vscode.WorkspaceFolder, uri: vscode.Uri): vscode.TestItem {
-    const path = posixPath.relative(workspaceFolder.uri.path, uri.path);
+    let workspaceFolderPath = workspaceFolder.uri.path;
+    let uriPath = uri.path;
+    if (process.platform == "win32") {
+        workspaceFolderPath = workspaceFolderPath.toLowerCase();
+        uriPath = uriPath.toLowerCase();
+    }
+    const path = posixPath.relative(workspaceFolderPath, uriPath);
     const parts = path.split("/");
 
     let prev = workspaceFolder.uri.path;
@@ -464,8 +475,8 @@ export async function setupTestExplorerSupport() {
     });
 
     vscode.debug.onDidReceiveDebugSessionCustomEvent((event: vscode.DebugSessionCustomEvent) => {
+        // OUTPUT_CHANNEL.appendLine("Received event: " + event.event + " -- " + JSON.stringify(event.body));
         if (isRelatedSession(event.session)) {
-            OUTPUT_CHANNEL.appendLine("Received event: " + event.event + " -- " + JSON.stringify(event.body));
             const runId = event.session.configuration.runId;
             const testRun = runIdToTestRun.get(runId);
             if (testRun) {
@@ -482,10 +493,65 @@ export async function setupTestExplorerSupport() {
                     case "endTest":
                         handleTestEnd(testRun, event);
                         break;
+                    case "logMessage":
+                        handleLogMessage(testRun, event);
+                        break;
                 }
             }
         }
     });
+}
+
+// Constants to color (we could move this somewhere in the future if
+// we need to use it elsewhere).
+const red = "\u001b[31m";
+const green = "\u001b[32m";
+const yellow = "\u001b[33m";
+const blue = "\u001b[34m";
+const magenta = "\u001b[35m";
+const cyan = "\u001b[36m";
+const white = "\u001b[37m";
+const reset = "\u001b[0m";
+
+function handleLogMessage(testRun: vscode.TestRun, event: vscode.DebugSessionCustomEvent) {
+    let message = event.body.message;
+    let level = event.body.level;
+
+    let testItem = undefined;
+    let location = undefined;
+
+    // If we report this here, VSCode may not show the error messages properly, so, leave it out for now.
+    // if (event.body.source) {
+    //     let testName: string | undefined = event.body.testName;
+    //     let lineno: number | undefined = event.body.lineno - 1;
+    //     let uri = vscode.Uri.file(event.body.source);
+    //     const uriStr = uri.toString();
+
+    //     let testId = uriStr;
+    //     if (testName) {
+    //         testId = computeTestId(uriStr, testName);
+    //     }
+
+    //     testItem = testItemIdToTestItem.get(testId);
+    //     if (lineno !== undefined && testItem !== undefined) {
+    //         let range = new vscode.Position(lineno, 0);
+    //         location = new vscode.Location(uri, range);
+    //     }
+    // }
+
+    message = `[${level}]: ${message.replaceAll(/(?:\r\n|\r|\n)/g, "\r\n")}`;
+
+    switch (level) {
+        case "WARN":
+            message = yellow + message + reset;
+            break;
+        case "FAIL":
+        case "ERROR":
+            message = red + message + reset;
+            break;
+    }
+
+    testRun.appendOutput(message, location, testItem);
 }
 
 function handleSuiteStart(testRun: vscode.TestRun, event: vscode.DebugSessionCustomEvent) {

@@ -17,6 +17,7 @@ class DebugListener(object):
     on_end_suite = _Callback()
     on_start_test = _Callback()
     on_end_test = _Callback()
+    on_log_message = _Callback()
 
     def start_suite(self, data, result):
         self.on_start_suite(data, result)
@@ -29,6 +30,9 @@ class DebugListener(object):
 
     def end_test(self, data, result):
         self.on_end_test(data, result)
+
+    def log_message(self, message):
+        self.on_log_message(message)
 
     # def start_keyword(self, data, result):
     #     # This would be nice, but it's not currently supported.

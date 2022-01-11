@@ -102,6 +102,26 @@ def test_simple_launch(debugger_api: _DebuggerAPI):
     )
 
 
+def test_log_message_in_console_output(debugger_api: _DebuggerAPI):
+    """
+    This is an integrated test of the debug adapter. It communicates with it as if it was
+    VSCode.
+    """
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEvent
+
+    debugger_api.initialize()
+
+    target = debugger_api.get_dap_case_file("case_log_no_console.robot")
+    debugger_api.launch(target, debug=True)
+    debugger_api.configuration_done()
+
+    debugger_api.read(TerminatedEvent)
+    debugger_api.assert_message_found(
+        OutputEvent, lambda msg: "LogNoConsole" in msg.body.output
+    )
+
+
 def test_simple_debug_launch_stop_on_robot(debugger_api: _DebuggerAPI):
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ThreadsResponse

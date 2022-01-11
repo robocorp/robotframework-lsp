@@ -5,6 +5,48 @@
   "type": "object",
 
   "definitions": {
+    "LogMessageEvent": {
+      "allOf": [
+        { "$ref": "#/definitions/Event" },
+        {
+          "type": "object",
+          "description": "Logs a Robot Framework message.",
+          "properties": {
+            "event": {
+              "type": "string",
+              "enum": ["logMessage"]
+            },
+            "body": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "The message logged."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "The source where this was logged."
+                },
+                "testName": {
+                  "type": "string",
+                  "description": "The current test name (if a test is available)."
+                },
+                "lineno": {
+                  "type": "number",
+                  "description": "The lineno where this was logged."
+                },
+                "level": {
+                  "type": "string",
+                  "description": "The level of the message (DEBUG, INFO, WARN, FAIL, ERROR)."
+                }
+              },
+              "required": []
+            }
+          },
+          "required": ["event", "body"]
+        }
+      ]
+    },
     "StartSuiteEvent": {
       "allOf": [
         { "$ref": "#/definitions/Event" },

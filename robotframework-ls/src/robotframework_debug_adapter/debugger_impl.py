@@ -983,6 +983,31 @@ class _RobotDebuggerImpl(object):
     def end_test(self, data, result):
         self._stack_ctx_entries_deque.pop()
 
+    def log_message(self, message):
+        # When debugging show any message in the console (if possible with the
+        # current keyword as the source).
+        source = None
+        lineno = None
+        if self._stack_ctx_entries_deque:
+            lineno = 0
+            step_entry: _StepEntry = self._stack_ctx_entries_deque[-1]
+            source = step_entry.source
+            source = Source(path=source)
+            try:
+                lineno = step_entry.lineno
+            except AttributeError:
+                pass
+        self.write_message(
+            OutputEvent(
+                body=OutputEventBody(
+                    source=source,
+                    line=lineno,
+                    output=f"{message.message}\n",
+                    category="console",
+                )
+            )
+        )
+
 
 def _patch(
     execution_context_cls, impl, method_name, call_before_method, call_after_method
@@ -1084,6 +1109,8 @@ def install_robot_debugger() -> IRobotDebugger:
 
         DebugListener.on_start_test.register(impl.start_test)
         DebugListener.on_end_test.register(impl.end_test)
+
+        DebugListener.on_log_message.register(impl.log_message)
 
         # On RobotFramework 3.x and earlier 4.x dev versions, we do some monkey-patching because
         # the listener was not able to give linenumbers.

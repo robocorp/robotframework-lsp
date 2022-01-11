@@ -142,6 +142,8 @@ class LaunchProcessDebugAdapterRobotTargetComm(BaseLaunchProcessTargetComm):
     on_startTest_event = _forward_event_to_client
     on_endTest_event = _forward_event_to_client
 
+    on_logMessage_event = _forward_event_to_client
+
     def on_terminated_event(self, event: Optional[TerminatedEvent]) -> None:
         with self._terminated_lock:
             if self._terminated_event.is_set():

@@ -13918,6 +13918,95 @@ class DisassembledInstruction(BaseSchema):
         return dct
 
 
+@register_event('logMessage')
+@register
+class LogMessageEvent(BaseSchema):
+    """
+    Logs a Robot Framework message.
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "seq": {
+            "type": "integer",
+            "description": "Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request."
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "event"
+            ]
+        },
+        "event": {
+            "type": "string",
+            "enum": [
+                "logMessage"
+            ]
+        },
+        "body": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "description": "The message logged."
+                },
+                "source": {
+                    "type": "string",
+                    "description": "The source where this was logged."
+                },
+                "testName": {
+                    "type": "string",
+                    "description": "The current test name (if a test is available)."
+                },
+                "lineno": {
+                    "type": "number",
+                    "description": "The lineno where this was logged."
+                },
+                "level": {
+                    "type": "string",
+                    "description": "The level of the message (DEBUG, INFO, WARN, FAIL, ERROR)."
+                }
+            },
+            "required": []
+        }
+    }
+    __refs__ = set(['body'])
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, body, seq=-1, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string type: 
+        :param string event: 
+        :param LogMessageEventBody body: 
+        :param integer seq: Sequence number (also known as message ID). For protocol messages of type 'request' this ID can be used to cancel the request.
+        """
+        self.type = 'event'
+        self.event = 'logMessage'
+        if body is None:
+            self.body = LogMessageEventBody()
+        else:
+            self.body = LogMessageEventBody(update_ids_from_dap=update_ids_from_dap, **body) if body.__class__ !=  LogMessageEventBody else body
+        self.seq = seq
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        type = self.type  # noqa (assign to builtin)
+        event = self.event
+        body = self.body
+        seq = self.seq
+        dct = {
+            'type': type,
+            'event': event,
+            'body': body.to_dict(update_ids_to_dap=update_ids_to_dap),
+            'seq': seq,
+        }
+        dct.update(self.kwargs)
+        return dct
+
+
 @register_event('startSuite')
 @register
 class StartSuiteEvent(BaseSchema):
@@ -17629,6 +17718,78 @@ class MessageVariables(BaseSchema):
     def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
         dct = {
         }
+        dct.update(self.kwargs)
+        return dct
+
+
+@register
+class LogMessageEventBody(BaseSchema):
+    """
+    "body" of LogMessageEvent
+
+    Note: automatically generated code. Do not edit manually.
+    """
+
+    __props__ = {
+        "message": {
+            "type": "string",
+            "description": "The message logged."
+        },
+        "source": {
+            "type": "string",
+            "description": "The source where this was logged."
+        },
+        "testName": {
+            "type": "string",
+            "description": "The current test name (if a test is available)."
+        },
+        "lineno": {
+            "type": "number",
+            "description": "The lineno where this was logged."
+        },
+        "level": {
+            "type": "string",
+            "description": "The level of the message (DEBUG, INFO, WARN, FAIL, ERROR)."
+        }
+    }
+    __refs__ = set()
+
+    __slots__ = list(__props__.keys()) + ['kwargs']
+
+    def __init__(self, message=None, source=None, testName=None, lineno=None, level=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+        """
+        :param string message: The message logged.
+        :param string source: The source where this was logged.
+        :param string testName: The current test name (if a test is available).
+        :param number lineno: The lineno where this was logged.
+        :param string level: The level of the message (DEBUG, INFO, WARN, FAIL, ERROR).
+        """
+        self.message = message
+        self.source = source
+        self.testName = testName
+        self.lineno = lineno
+        self.level = level
+        self.kwargs = kwargs
+
+
+    def to_dict(self, update_ids_to_dap=False):  # noqa (update_ids_to_dap may be unused)
+        message = self.message
+        source = self.source
+        testName = self.testName
+        lineno = self.lineno
+        level = self.level
+        dct = {
+        }
+        if message is not None:
+            dct['message'] = message
+        if source is not None:
+            dct['source'] = source
+        if testName is not None:
+            dct['testName'] = testName
+        if lineno is not None:
+            dct['lineno'] = lineno
+        if level is not None:
+            dct['level'] = level
         dct.update(self.kwargs)
         return dct
 
