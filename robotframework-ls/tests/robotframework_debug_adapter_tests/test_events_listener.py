@@ -40,6 +40,7 @@ def test_events_listener_failure(debugger_api: _DebuggerAPI):
         TerminatedEvent,
     )
     import robot
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import LogMessageEvent
 
     target = debugger_api.get_dap_case_file("case_failure.robot")
     debugger_api.target = target
@@ -56,6 +57,13 @@ def test_events_listener_failure(debugger_api: _DebuggerAPI):
 
     assert debugger_api.read(StartSuiteEvent)
     assert debugger_api.read(StartTestEvent)
+
+    log_message_body = debugger_api.read(LogMessageEvent).body
+    assert "No keyword with name" in log_message_body.message
+    assert log_message_body.level == "FAIL"
+    assert log_message_body.source.endswith("case_failure.robot")
+    assert log_message_body.testName == "Check failure"
+    assert log_message_body.lineno == 4
 
     end_test_body = debugger_api.read(EndTestEvent).body
     assert end_test_body.status == "FAIL"
@@ -77,6 +85,7 @@ def test_events_listener_output(debugger_api: _DebuggerAPI):
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
 
     import robot
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import LogMessageEvent
 
     target = debugger_api.get_dap_case_file("case_log_no_console.robot")
     debugger_api.target = target
@@ -93,6 +102,13 @@ def test_events_listener_output(debugger_api: _DebuggerAPI):
 
     assert debugger_api.read(StartSuiteEvent)
     assert debugger_api.read(StartTestEvent)
+
+    log_message_body = debugger_api.read(LogMessageEvent).body
+    assert log_message_body.message == "LogNoConsole"
+    assert log_message_body.level == "INFO"
+    assert log_message_body.source.endswith("case_log_no_console.robot")
+    assert log_message_body.testName == "Check log"
+    assert log_message_body.lineno == 4
 
     end_test_body = debugger_api.read(EndTestEvent).body
     assert end_test_body.status == "PASS"
