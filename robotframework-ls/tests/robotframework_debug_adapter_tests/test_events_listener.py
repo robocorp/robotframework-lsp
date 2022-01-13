@@ -61,9 +61,12 @@ def test_events_listener_failure(debugger_api: _DebuggerAPI):
     log_message_body = debugger_api.read(LogMessageEvent).body
     assert "No keyword with name" in log_message_body.message
     assert log_message_body.level == "FAIL"
-    assert log_message_body.source.endswith("case_failure.robot")
     assert log_message_body.testName == "Check failure"
-    assert log_message_body.lineno == 4
+
+    if int(robot.get_version().split(".")[0]) >= 4:
+        # source is not available on RF 3.
+        assert log_message_body.source.endswith("case_failure.robot")
+        assert log_message_body.lineno == 4
 
     end_test_body = debugger_api.read(EndTestEvent).body
     assert end_test_body.status == "FAIL"
@@ -106,9 +109,12 @@ def test_events_listener_output(debugger_api: _DebuggerAPI):
     log_message_body = debugger_api.read(LogMessageEvent).body
     assert log_message_body.message == "LogNoConsole"
     assert log_message_body.level == "INFO"
-    assert log_message_body.source.endswith("case_log_no_console.robot")
     assert log_message_body.testName == "Check log"
-    assert log_message_body.lineno == 4
+
+    # Source not available in RF 3.
+    if int(robot.get_version().split(".")[0]) >= 4:
+        assert log_message_body.source.endswith("case_log_no_console.robot")
+        assert log_message_body.lineno == 4
 
     end_test_body = debugger_api.read(EndTestEvent).body
     assert end_test_body.status == "PASS"
