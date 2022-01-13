@@ -51,6 +51,11 @@ const controller = vscode.tests.createTestController("robotframework-lsp.testCon
 //     }
 // };
 
+export async function clearTestItems() {
+    controller.items.replace([]);
+    testItemIdToTestItem.clear();
+}
+
 enum ItemType {
     File,
     TestCase,

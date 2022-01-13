@@ -105,6 +105,18 @@ COMMANDS: List[Command] = [
         server_handled=False,
     ),
     Command(
+        "robot.clearCachesAndRestartProcesses.start.internal",
+        "Stops the RFLS and waits for robot.clearCachesAndRestartProcesses.finish.internal to restart",
+        server_handled=False,
+        hide_from_command_palette=True,
+    ),
+    Command(
+        "robot.clearCachesAndRestartProcesses.finish.internal",
+        "To be used to restart the processes",
+        server_handled=False,
+        hide_from_command_palette=True,
+    ),
+    Command(
         "robot.startIndexing.internal",
         "Starts the indexing service",
         server_handled=True,

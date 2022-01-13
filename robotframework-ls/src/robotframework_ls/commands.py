@@ -14,6 +14,8 @@ ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS = "robot.internal.rfinteractive.sem
 ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS = "robot.internal.rfinteractive.completions"  # Get the completions based on the code entered.
 ROBOT_GET_RFLS_HOME_DIR = "robot.getRFLSHomeDir"  # Provides the directory used to store information (usually ~/.robotframework-ls -- may be configured with `ROBOTFRAMEWORK_LS_USER_HOME` environment variable).
 ROBOT_CLEAR_CACHES_AND_RESTART_PROCESSES = "robot.clearCachesAndRestartProcesses"  # Clear caches and restart Robot Framework Language Server processes
+ROBOT_CLEAR_CACHES_AND_RESTART_PROCESSES_START_INTERNAL = "robot.clearCachesAndRestartProcesses.start.internal"  # Stops the RFLS and waits for robot.clearCachesAndRestartProcesses.finish.internal to restart
+ROBOT_CLEAR_CACHES_AND_RESTART_PROCESSES_FINISH_INTERNAL = "robot.clearCachesAndRestartProcesses.finish.internal"  # To be used to restart the processes
 ROBOT_START_INDEXING_INTERNAL = "robot.startIndexing.internal"  # Starts the indexing service
 ROBOT_WAIT_FULL_TEST_COLLECTION_INTERNAL = "robot.waitFullTestCollection.internal"  # Schedules and Waits for a full test collection
 

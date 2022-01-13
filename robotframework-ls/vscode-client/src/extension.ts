@@ -51,7 +51,7 @@ import { errorFeedback, logError, OUTPUT_CHANNEL } from "./channel";
 import { Mutex } from "./mutex";
 import { fileExists } from "./files";
 import { Stats } from "fs";
-import { handleTestsCollected, ITestInfoFromUri, setupTestExplorerSupport } from "./testview";
+import { clearTestItems, handleTestsCollected, ITestInfoFromUri, setupTestExplorerSupport } from "./testview";
 
 interface ExecuteWorkspaceCommandArgs {
     command: string;
@@ -498,7 +498,8 @@ async function registerLanguageServerListeners(langServer: LanguageClient) {
                     return ret;
                 })
             );
-            stopListeningOnDidChangeState.dispose();
+            // Note: don't dispose (we need to re-register on a restart).
+            // stopListeningOnDidChangeState.dispose();
         }
     });
 }
@@ -669,14 +670,13 @@ async function removeCaches(dirPath: string, level: number, removeDirsArray: str
     }
 }
 
-async function clearCachesAndRestartProcesses() {
+async function clearCachesAndRestartProcessesStart(): Promise<boolean> {
     if (languageServerClient === undefined) {
         window.showErrorMessage(
             "Unable to clear caches and restart because the language server still hasn't been successfully started."
         );
-        return;
+        return false;
     }
-
     let homeDir: string;
     try {
         homeDir = await commands.executeCommand("robot.getRFLSHomeDir");
@@ -684,9 +684,45 @@ async function clearCachesAndRestartProcesses() {
         let msg = "Unable to clear caches and restart because calling robot.getRFLSHomeDir threw an exception.";
         window.showErrorMessage(msg);
         logError(msg, err, "EXT_GET_HOMEDIR");
-        return;
+        return false;
     }
 
+    try {
+        await languageServerClient.stop();
+    } catch (err) {
+        logError("Error stopping language server.", err, "EXT_STOP_LS_ON_CLEAR_RESTART");
+    }
+    await clearTestItems();
+    if (await fileExists(homeDir)) {
+        await removeCaches(homeDir, 0, []);
+    }
+    return true;
+}
+
+async function clearCachesAndRestartProcessesFinish() {
+    try {
+        await languageServerClient.start();
+
+        await languageServerClient.onReady();
+        // ask it to start indexing only after ready.
+        await commands.executeCommand("robot.startIndexing.internal");
+    } catch (err) {
+        logError("Error starting language server.", err, "EXT_START_LS_ON_CLEAR_RESTART");
+        window
+            .showWarningMessage(
+                'There was an error reloading the Robot Framework Language Server. Please use the "Reload Window" action to finish restarting the language server.',
+                ...["Reload Window"]
+            )
+            .then((selection) => {
+                if (selection === "Reload Window") {
+                    commands.executeCommand("workbench.action.reloadWindow");
+                }
+            });
+        return;
+    }
+}
+
+async function clearCachesAndRestartProcesses() {
     await window.withProgress(
         {
             location: vscode.ProgressLocation.Window,
@@ -694,30 +730,11 @@ async function clearCachesAndRestartProcesses() {
             cancellable: false,
         },
         async () => {
-            try {
-                await languageServerClient.stop();
-            } catch (err) {
-                logError("Error stopping language server.", err, "EXT_STOP_LS_ON_CLEAR_RESTART");
-            }
-            if (await fileExists(homeDir)) {
-                await removeCaches(homeDir, 0, []);
-            }
-            try {
-                await languageServerClient.start();
-            } catch (err) {
-                logError("Error starting language server.", err, "EXT_START_LS_ON_CLEAR_RESTART");
-                window
-                    .showWarningMessage(
-                        'There was an error reloading the Robot Framework Language Server. Please use the "Reload Window" action to finish restarting the language server.',
-                        ...["Reload Window"]
-                    )
-                    .then((selection) => {
-                        if (selection === "Reload Window") {
-                            commands.executeCommand("workbench.action.reloadWindow");
-                        }
-                    });
+            let okToRestart = await clearCachesAndRestartProcessesStart();
+            if (!okToRestart) {
                 return;
             }
+            await clearCachesAndRestartProcessesFinish();
             window.showInformationMessage("Caches cleared and Robot Framework Language Server restarted.");
         }
     );
@@ -728,6 +745,18 @@ export async function activate(context: ExtensionContext) {
 
     context.subscriptions.push(
         commands.registerCommand("robot.clearCachesAndRestartProcesses", clearCachesAndRestartProcesses)
+    );
+    context.subscriptions.push(
+        commands.registerCommand(
+            "robot.clearCachesAndRestartProcesses.start.internal",
+            clearCachesAndRestartProcessesStart
+        )
+    );
+    context.subscriptions.push(
+        commands.registerCommand(
+            "robot.clearCachesAndRestartProcesses.finish.internal",
+            clearCachesAndRestartProcessesFinish
+        )
     );
     registerDebugger();
     await registerRunCommands(context);

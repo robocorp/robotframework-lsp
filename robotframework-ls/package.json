@@ -46,6 +46,8 @@
         "onCommand:robot.internal.rfinteractive.completions",
         "onCommand:robot.getRFLSHomeDir",
         "onCommand:robot.clearCachesAndRestartProcesses",
+        "onCommand:robot.clearCachesAndRestartProcesses.start.internal",
+        "onCommand:robot.clearCachesAndRestartProcesses.finish.internal",
         "onCommand:robot.startIndexing.internal",
         "onCommand:robot.waitFullTestCollection.internal"
     ],
@@ -121,6 +123,16 @@
                 "category": "Robot Framework"
             },
             {
+                "command": "robot.clearCachesAndRestartProcesses.start.internal",
+                "title": "Stops the RFLS and waits for robot.clearCachesAndRestartProcesses.finish.internal to restart",
+                "category": "Robot Framework"
+            },
+            {
+                "command": "robot.clearCachesAndRestartProcesses.finish.internal",
+                "title": "To be used to restart the processes",
+                "category": "Robot Framework"
+            },
+            {
                 "command": "robot.startIndexing.internal",
                 "title": "Starts the indexing service",
                 "category": "Robot Framework"
@@ -183,6 +195,14 @@
                 },
                 {
                     "command": "robot.getRFLSHomeDir",
+                    "when": "false"
+                },
+                {
+                    "command": "robot.clearCachesAndRestartProcesses.start.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robot.clearCachesAndRestartProcesses.finish.internal",
                     "when": "false"
                 },
                 {
