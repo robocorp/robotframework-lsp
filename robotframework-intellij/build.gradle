@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.35.0'
+version '0.36.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,12 +51,11 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.35.0
+    Release 0.36.0
     </p>
     <ul>
 
-    <li>Environment variables are properly passed when launching on Intellij.</li>
-    <li>On Robot Framework 5, the builtin tidy is no longer available, so, the new robotidy is used automatically.</li>
+    <li>Fixed an issue which could make file system change notifications be ignored.</li>
 
     <br>
     Current feature set:<br>

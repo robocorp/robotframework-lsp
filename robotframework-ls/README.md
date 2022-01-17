@@ -31,9 +31,10 @@ See: [Config](docs/config.md) for details.
 See: [FAQ](docs/faq.md) for common issues encountered while configuring the language server.
   
 
-Features (0.35.0)
+Features (0.36.0)
 -----------------
 
+- Test Explorer support in VSCode.
 - Interactive Console: a REPL for interactively experimenting with Robot Framework (for VSCode).
 - Code analysis: checks if keywords are properly imported/defined.
 - Linting with [Robocop](https://robocop.readthedocs.io/en/latest/).

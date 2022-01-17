@@ -1,3 +1,9 @@
+New in 0.36.0 (2022-01-17)
+-----------------------------
+
+- Fixed an issue which could make file system change notifications be ignored.
+
+
 New in 0.35.0 (2021-12-22)
 -----------------------------
 

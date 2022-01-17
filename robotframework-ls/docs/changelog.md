@@ -1,3 +1,18 @@
+New in 0.36.0 (2022-01-17)
+-----------------------------
+
+- Support for the VSCode `Test Explorer`:
+  - Run/debug tests from an icon in the editor gutter.
+  - A custom view the test results is shown.
+  - Makes it possible to run only failed tests and filter tests to execute in the UI.
+  - See: [https://code.visualstudio.com/docs/python/testing](https://code.visualstudio.com/docs/python/testing) for docs on how to use it.
+  - Note: the Run/Debug using code lens is still kept, but it may be removed in the future (based on user feedback).
+
+- Fixed an issue which could make file system change notifications be ignored.
+- The extension now runs with `-v` by default (to show info level messages on `OUTPUT > Robot Framework`).
+- Fixed issue starting the extension when python wasn't found at the PATH and it was requested from the user.
+
+
 New in 0.35.0 (2021-12-22)
 -----------------------------
 
