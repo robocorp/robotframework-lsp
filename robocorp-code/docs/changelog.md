@@ -1,10 +1,17 @@
+New in 0.24.0 (2022-01-17)
+-----------------------------
+
+- RCC updated to v11.6.3
+- The extension now runs with `-v` by default (to show info level messages on `OUTPUT > Robocorp Code`).
+
+
 New in 0.23.0 (2021-12-22)
 -----------------------------
 
 - RCC downgraded to v11.5.5 to avoid regression in v11.6.0
 - Environment variables from env.json are properly escaped (new line chars are now properly handled).
-- Minimun Robot Framework Language Server version required is now 0.35.0
-- Minimun VSCode version required is now 1.61.0
+- Minimum Robot Framework Language Server version required is now 0.35.0
+- Minimum VSCode version required is now 1.61.0
 
 
 New in 0.22.0 (2021-12-15)
