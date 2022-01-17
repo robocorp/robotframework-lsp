@@ -740,6 +740,23 @@ async function clearCachesAndRestartProcesses() {
     );
 }
 
+function registerOnDidChangeConfiguration(context: ExtensionContext): void {
+    context.subscriptions.push(
+        workspace.onDidChangeConfiguration((event) => {
+            for (let s of [
+                "robot.language-server.python",
+                "robot.language-server.tcp-port",
+                "robot.language-server.args",
+            ]) {
+                if (event.affectsConfiguration(s)) {
+                    restartLanguageServer();
+                    break;
+                }
+            }
+        })
+    );
+}
+
 export async function activate(context: ExtensionContext) {
     extensionContext = context;
 
@@ -763,19 +780,6 @@ export async function activate(context: ExtensionContext) {
     await registerLinkProviders(context);
     await registerInteractiveCommands(context);
 
-    workspace.onDidChangeConfiguration((event) => {
-        for (let s of [
-            "robot.language-server.python",
-            "robot.language-server.tcp-port",
-            "robot.language-server.args",
-        ]) {
-            if (event.affectsConfiguration(s)) {
-                restartLanguageServer();
-                break;
-            }
-        }
-    });
-
     try {
         // Note: assign to module variable.
         languageServerClient = await startLanguageServer();
@@ -784,5 +788,11 @@ export async function activate(context: ExtensionContext) {
             "It was not possible to start the Robot Framework Language Server. Please update the related `robot.language-server` configurations.";
         logError(msg, err, "EXT_UNABLE_TO_START");
         window.showErrorMessage(msg);
+    } finally {
+        // Note: only register to listen for changes at the end.
+        // If we do it before, we conflict with the case where we
+        // ask for the executable in a dialog (and then we'd go
+        // through the usual start and a restart at the same time).
+        registerOnDidChangeConfiguration(context);
     }
 }
