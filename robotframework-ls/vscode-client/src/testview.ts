@@ -5,6 +5,7 @@ import { readLaunchTemplate } from "./run";
 import { WeakValueMap } from "./weakValueMap";
 
 import * as nodePath from "path";
+import { sleep } from "./time";
 
 const posixPath = nodePath.posix || nodePath;
 
@@ -204,6 +205,14 @@ export async function handleTestsCollected(testInfo: ITestInfoFromUri) {
         testData.set(testItem, { type: ItemType.TestCase, testInfo: test });
         children.push(testItem);
     }
+
+    if (vscode.version.startsWith("1.63.")) {
+        // Intentionally make a flicker to workaround https://github.com/microsoft/vscode/issues/140166.
+        // This is fixed in current insiders (1.64).
+        file.children.replace([]);
+        await sleep(400);
+    }
+
     file.children.replace(children);
 }
 
