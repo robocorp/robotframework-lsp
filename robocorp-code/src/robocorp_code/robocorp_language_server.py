@@ -98,7 +98,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
             user_home = os.path.expanduser("~")
         cache_dir = os.path.join(user_home, ".robocorp-code", ".cache")
 
-        log.debug(f"Cache dir: {cache_dir}")
+        log.info(f"Cache dir: {cache_dir}")
 
         try:
             import ssl
@@ -325,7 +325,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 "workspaceFolders": {"supported": True, "changeNotifications": True}
             },
         }
-        log.info("Server capabilities: %s", server_capabilities)
+        log.debug("Server capabilities: %s", server_capabilities)
         return server_capabilities
 
     def m_text_document__completion(self, **kwargs):

@@ -158,7 +158,9 @@ def main():
                 RobotFrameworkServerApi.__init__(self, *args, **kwargs)
 
         __main__.main(
-            language_server_class=RobotFrameworkServerApiWithObserver, args=new_args
+            language_server_class=RobotFrameworkServerApiWithObserver,
+            args=new_args,
+            log_prefix="server-api",
         )
     except:
         try:

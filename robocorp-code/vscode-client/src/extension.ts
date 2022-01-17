@@ -521,7 +521,18 @@ export async function activate(context: ExtensionContext) {
     let timing = new Timing();
     OUTPUT_CHANNEL.appendLine("Activating Robocorp Code extension.");
     let C = new CommandRegistry(context);
+    try {
+        let ret = await doActivate(context, C);
+        OUTPUT_CHANNEL.appendLine("Robocorp Code initialization finished. Took: " + timing.getTotalElapsedAsStr());
+        return ret;
+    } catch (error) {
+        logError("Error initializing Robocorp Code extension", error, "INIT_ROBOCORP_CODE_ERROR");
+        registerRobocorpCodeCommands(C, { installErrorStubs: true });
+        notifyOfInitializationErrorShowOutputTab();
+    }
+}
 
+export async function doActivate(context: ExtensionContext, C: CommandRegistry) {
     // Note: register the submit issue actions early on so that we can later actually
     // report startup errors.
     let logPath: string = context.logPath;
@@ -594,16 +605,29 @@ export async function activate(context: ExtensionContext) {
         }
     });
 
-    let executableAndEnv = await getLanguageServerPythonInfo();
-    if (!executableAndEnv) {
+    let executableAndEnv;
+    function onNoPython() {
         OUTPUT_CHANNEL.appendLine(
             "Unable to activate Robocorp Code extension because python executable from RCC environment was not provided.\n" +
-                " -- Most common reason is that the environment couldn't be created due to network connectivity issues."
+                " -- Most common reason is that the environment couldn't be created due to network connectivity issues.\n" +
+                " -- Please fix the error and restart VSCode."
         );
         registerRobocorpCodeCommands(C, { installErrorStubs: true });
         notifyOfInitializationErrorShowOutputTab();
+    }
+
+    try {
+        executableAndEnv = await getLanguageServerPythonInfo();
+        if (!executableAndEnv) {
+            onNoPython();
+            return;
+        }
+    } catch (error) {
+        onNoPython();
+        logError("Error getting Python", error, "INIT_PYTHON_ERR");
         return;
     }
+
     OUTPUT_CHANNEL.appendLine("Using python executable: " + executableAndEnv.pythonExe);
     let startLsTiming = new Timing();
 
@@ -624,31 +648,35 @@ export async function activate(context: ExtensionContext) {
 
         let args: Array<string> = ["-u", targetFile];
         let lsArgs = roboConfig.getLanguageServerArgs();
-        if (lsArgs) {
+        if (lsArgs && lsArgs.length >= 1) {
             args = args.concat(lsArgs);
+        } else {
+            // Default is using simple verbose mode (shows critical/info but not debug).
+            args = args.concat(["-v"]);
         }
         langServer = startLangServerIO(executableAndEnv.pythonExe, args, executableAndEnv.environ);
     }
 
-    let stopListeningOnDidChangeState = langServer.onDidChangeState((event) => {
-        if (event.newState == State.Running) {
-            // i.e.: We need to register the customProgress as soon as it's running (we can't wait for onReady)
-            // because at that point if there are open documents, lots of things may've happened already, in
-            // which case the progress won't be shown on some cases where it should be shown.
-            context.subscriptions.push(
-                langServer.onNotification("$/customProgress", (args: ProgressReport) => {
-                    // OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
-                    handleProgressMessage(args);
-                })
-            );
-            context.subscriptions.push(
-                langServer.onNotification("$/linkedAccountChanged", () => {
-                    views.refreshCloudTreeView();
-                })
-            );
-            stopListeningOnDidChangeState.dispose();
-        }
-    });
+    context.subscriptions.push(
+        langServer.onDidChangeState((event) => {
+            if (event.newState == State.Running) {
+                // i.e.: We need to register the customProgress as soon as it's running (we can't wait for onReady)
+                // because at that point if there are open documents, lots of things may've happened already, in
+                // which case the progress won't be shown on some cases where it should be shown.
+                context.subscriptions.push(
+                    langServer.onNotification("$/customProgress", (args: ProgressReport) => {
+                        // OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
+                        handleProgressMessage(args);
+                    })
+                );
+                context.subscriptions.push(
+                    langServer.onNotification("$/linkedAccountChanged", () => {
+                        views.refreshCloudTreeView();
+                    })
+                );
+            }
+        })
+    );
     let disposable: Disposable = langServer.start();
     registerRobocorpCodeCommands(C);
     views.registerViews(context);
@@ -662,8 +690,6 @@ export async function activate(context: ExtensionContext) {
     OUTPUT_CHANNEL.appendLine(
         "Took: " + startLsTiming.getTotalElapsedAsStr() + " to initialize Robocorp Code Language Server."
     );
-    OUTPUT_CHANNEL.appendLine("Robocorp Code extension ready. Took: " + timing.getTotalElapsedAsStr());
-
     verifyRobotFrameworkInstalled();
 }
 

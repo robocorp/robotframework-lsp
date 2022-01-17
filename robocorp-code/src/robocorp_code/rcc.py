@@ -6,7 +6,7 @@ import weakref
 from robocorp_ls_core.basic import implements, as_str, is_process_alive
 from robocorp_ls_core.constants import NULL
 from robocorp_ls_core.protocols import IConfig, IConfigProvider, Sentinel
-from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.robotframework_log import get_logger, get_log_level
 from robocorp_code.protocols import (
     IRcc,
     IRccWorkspace,
@@ -243,6 +243,7 @@ class Rcc(object):
         log_errors=True,
         stderr=Sentinel.SENTINEL,
         show_interactive_output: bool = False,
+        hide_in_log: Optional[str] = None,
     ) -> ActionResult[str]:
         """
         Returns an ActionResult where the result is the stdout of the executed command.
@@ -285,7 +286,13 @@ class Rcc(object):
             else:
                 timed_acquire_mutex = NULL
             with timed_acquire_mutex(mutex_name, timeout=15):
-                log.debug("Running: %s", cmdline)
+                if get_log_level() >= 2:
+                    msg = f"Running: {cmdline}"
+                    if hide_in_log:
+                        msg = msg.replace(hide_in_log, "<HIDDEN_IN_LOG>")
+
+                    log.debug(msg)
+
                 curtime = time.time()
                 for listener in self.rcc_listeners:
                     listener.before_command(args)
@@ -331,6 +338,9 @@ class Rcc(object):
             stdout = as_str(e.stdout)
             stderr = as_str(e.stderr)
             msg = f"Error running: {cmdline}.\nROBOCORP_HOME: {robocorp_home}\n\nStdout: {stdout}\nStderr: {stderr}"
+            if hide_in_log:
+                msg = msg.replace(hide_in_log, "<HIDDEN_IN_LOG>")
+
             if log_errors:
                 log.exception(msg)
             if not error_msg:
@@ -362,9 +372,14 @@ class Rcc(object):
 
         output = boutput.decode("utf-8", "replace")
 
-        log.debug(
-            "Output from: %s (took: %.2fs):\n%s", cmdline, time.time() - curtime, output
-        )
+        do_log_as_info = (log_errors and get_log_level() >= 1) or get_log_level() >= 2
+        if do_log_as_info:
+            elapsed = time.time() - curtime
+            msg = f"Output from: {cmdline} (took: {elapsed:.2f}s): {output}"
+            if hide_in_log:
+                msg = msg.replace(hide_in_log, "<HIDDEN_IN_LOG>")
+            log.info(msg)
+
         return ActionResult(success=True, message=None, result=output)
 
     @implements(IRcc.get_template_names)
@@ -436,7 +451,9 @@ class Rcc(object):
 
         args.append(credential)
 
-        return self._run_rcc(args, mutex_name=RCC_CREDENTIALS_MUTEX_NAME)
+        return self._run_rcc(
+            args, mutex_name=RCC_CREDENTIALS_MUTEX_NAME, hide_in_log=credential
+        )
 
     @implements(IRcc.remove_current_credentials)
     def remove_current_credentials(self) -> ActionResult:

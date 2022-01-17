@@ -188,7 +188,8 @@ def remote_fs_observer(tmpdir, on_timeout):
         "watchdog", (".py", ".libspec", "robot", ".resource")
     )
     log_file = str(tmpdir.join("robotframework_api_tests_api_remote_fs_observer.log"))
-    remote_fsobserver.start_server(log_file=log_file)
+    verbose = 0
+    remote_fsobserver.start_server(log_file=log_file, verbose=verbose)
     yield remote_fsobserver
 
     remote_fsobserver.dispose()

@@ -433,7 +433,7 @@ def _handle_completions(language_server_impl, rf_interpreters_manager, arguments
                     monitor=None,
                 )
         except:
-            log.exception(f"Error computing semantic tokens for arguments: {arguments}")
+            log.exception(f"Error computing completions for arguments: {arguments}")
             return {"suggestions": []}
 
     return rf_info_or_dict_error.ls_thread_pool.submit(run)

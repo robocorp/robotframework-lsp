@@ -442,8 +442,11 @@ const serverOptions: ServerOptions = async function () {
 
         let args: Array<string> = ["-u", targetMain];
         let lsArgs = workspace.getConfiguration("robot").get<Array<string>>("language-server.args");
-        if (lsArgs) {
+        if (lsArgs && lsArgs.length >= 1) {
             args = args.concat(lsArgs);
+        } else {
+            // Default is using simple verbose mode (shows critical/info but not debug).
+            args = args.concat(["-v"]);
         }
         OUTPUT_CHANNEL.appendLine(
             "Starting RobotFramework Language Server with args: " + executableAndMessage.executable + "," + args

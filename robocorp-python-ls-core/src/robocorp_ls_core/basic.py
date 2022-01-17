@@ -112,7 +112,7 @@ else:
             elif e.errno == errno.EPERM:
                 return True  # permission denied.
             else:
-                log.debug("Unexpected errno: %s", e.errno)
+                log.info("Unexpected errno: %s", e.errno)
                 return False
         else:
             return True
@@ -218,7 +218,7 @@ def _kill_process_and_subprocess_linux(pid):
 
 
 def kill_process_and_subprocesses(pid):
-    log.info("Killing process and subprocesses of: %s", pid)
+    log.debug("Killing process and subprocesses of: %s", pid)
     from subprocess import CalledProcessError
 
     if sys.platform == "win32":

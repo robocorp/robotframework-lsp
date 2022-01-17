@@ -268,8 +268,8 @@ def configure_logger(postfix, log_level, log_file):
 
 
 def log_args_and_python(log, argv, module):
-    log.debug("Arguments: %s", argv)
-    log.debug(
+    log.info("Arguments: %s", argv)
+    log.info(
         "Python: %s - lsp: %s (%s) - platform: %s - sys.prefix: %s - sys.executable: %s",
         sys.version,
         getattr(module, "__version__", "<unable to get __version__>"),

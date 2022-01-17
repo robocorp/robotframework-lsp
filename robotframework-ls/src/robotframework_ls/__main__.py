@@ -73,7 +73,12 @@ def add_arguments(parser):
     )
 
 
-def main(args=None, after_bind=lambda server: None, language_server_class=None):
+def main(
+    args=None,
+    after_bind=lambda server: None,
+    language_server_class=None,
+    log_prefix="lsp",
+):
     original_args = args if args is not None else sys.argv[1:]
 
     try:
@@ -129,7 +134,7 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
                 verbose = 2
             Setup.options.verbose = verbose
 
-    configure_logger("lsp", verbose, log_file)
+    configure_logger(log_prefix, verbose, log_file)
     log = get_logger("robotframework_ls.__main__")
     log_args_and_python(log, original_args, robotframework_ls)
 

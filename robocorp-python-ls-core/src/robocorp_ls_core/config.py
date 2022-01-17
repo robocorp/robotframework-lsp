@@ -78,7 +78,7 @@ class Config(object):
         full_settings = self._settings.copy()
         full_settings.update(self._override_settings)
         self._full_settings = full_settings
-        log.info("Updated settings to %s", full_settings)
+        log.debug("Updated settings to %s", full_settings)
 
     def _get_var_value(self, name):
         ret = name
@@ -86,7 +86,7 @@ class Config(object):
             if self._workspace_dir is not None:
                 ret = self._workspace_dir
             else:
-                log.debug("Unable to make workspace replacement for variable: %s", name)
+                log.info("Unable to make workspace replacement for variable: %s", name)
 
         elif (name.startswith("${env.") or name.startswith("${env:")) and name.endswith(
             "}"
@@ -94,7 +94,7 @@ class Config(object):
             name = name[6:-1]
             ret = os.environ.get(name)  # Note: should be case-insensitive on windows.
         else:
-            log.debug("Unable to resolve variable: %s", name)
+            log.info("Unable to resolve variable: %s", name)
 
         return ret
 

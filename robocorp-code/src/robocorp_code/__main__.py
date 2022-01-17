@@ -134,7 +134,7 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
         sys.stdout.flush()
         return
 
-    configure_logger("lsp", verbose, log_file)
+    configure_logger("robocorp code", verbose, log_file)
     log = get_logger("robocorp_code.__main__")
     log_args_and_python(log, original_args, robocorp_code)
 

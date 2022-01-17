@@ -264,7 +264,7 @@ class _FolderInfo(object):
                         )
                     return
 
-                log.info("Tracking folder for changes: %s", self.folder_path)
+                log.debug("Tracking folder for changes: %s", self.folder_path)
                 from robocorp_ls_core.watchdog_wrapper import PathInfo
 
                 folder_path = self.folder_path
@@ -460,8 +460,8 @@ class LibspecManager(object):
             builtin_libspec_dir
             or self.get_internal_builtins_libspec_dir(self._libspec_dir)
         )
-        log.debug("User libspec dir: %s", self._user_libspec_dir)
-        log.debug("Builtins libspec dir: %s", self._builtins_libspec_dir)
+        log.info("User libspec dir: %s", self._user_libspec_dir)
+        log.info("Builtins libspec dir: %s", self._builtins_libspec_dir)
 
         try:
             os.makedirs(self._user_libspec_dir)

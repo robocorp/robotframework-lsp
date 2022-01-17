@@ -192,14 +192,27 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             else:
                 watch_impl = "fsnotify"
 
+        log.info(
+            "Using watch implementation: %s (customize with ROBOTFRAMEWORK_LS_WATCH_IMPL environment variable)",
+            watch_impl,
+        )
+
         self._fs_observer = watchdog_wrapper.create_remote_observer(
             watch_impl, (".py", ".libspec", "robot", ".resource")
         )
         remote_observer = typing.cast(RemoteFSObserver, self._fs_observer)
+
         log_file = Setup.options.log_file
-        if not isinstance(log_file, str):
+        verbose = Setup.options.verbose
+        if not isinstance(log_file, str) and log_file is not None:
+            log.critical("Expected %r to be a str (was: %s)", log_file, type(log_file))
             log_file = None
-        remote_observer.start_server(log_file=log_file)
+
+        if not isinstance(verbose, int) and verbose is not None:
+            log.critical("Expected %r to be an int (was: %s)", verbose, type(verbose))
+            verbose = None
+
+        remote_observer.start_server(log_file=log_file, verbose=verbose)
 
         self._server_manager = ServerManager(self._pm, language_server=self)
         self._lint_manager = _LintManager(self._server_manager, self._lsp_messages)
@@ -336,7 +349,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                 "full": True,
             },
         }
-        log.info("Server capabilities: %s", server_capabilities)
+        log.debug("Server capabilities: %s", server_capabilities)
         return server_capabilities
 
     def m_workspace__execute_command(self, command: str = "", arguments=()) -> Any:

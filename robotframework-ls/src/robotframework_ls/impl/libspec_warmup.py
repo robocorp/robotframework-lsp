@@ -162,7 +162,7 @@ class LibspecWarmup(object):
         except:
             log.exception(f"Error {progress_title}.")
         finally:
-            log.info(f"Finished {progress_title}.")
+            log.debug(f"Finished {progress_title}.")
 
     def gen_builtin_libraries(self, libspec_manager) -> None:
         """

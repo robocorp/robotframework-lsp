@@ -77,7 +77,9 @@ class RemoteFSObserver(object):
     def _next_id(self) -> str:
         return f"{os.getpid()} - {self._counter()} - {random.random()}"
 
-    def start_server(self, log_file: Optional[str] = None) -> int:
+    def start_server(
+        self, log_file: Optional[str] = None, verbose: Optional[int] = None
+    ) -> int:
         """
         :return int:
             The port used by the server (which may later be used to connect
@@ -90,7 +92,9 @@ class RemoteFSObserver(object):
         args = [sys.executable, "-u", remote_fs_observer__main__.__file__]
         if log_file:
             args.append(f"--log-file={log_file}")
-            args.append(f"-vv")
+
+        if verbose:
+            args.append("-" + ("v" * verbose))
 
         log.info("Initializing Remote FS Observer with the following args: %s", args)
         process = self.process = subprocess.Popen(
@@ -143,7 +147,7 @@ class RemoteFSObserver(object):
                     break
                 line = line.decode("utf-8", "replace")
                 sys.stderr.write(line)
-                log.info("Remote FS observer stderr: %s", line)
+                log.debug("Remote FS observer stderr: %s", line)
 
         t = threading.Thread(target=read_fs_observer_stderr)
         t.daemon = True
