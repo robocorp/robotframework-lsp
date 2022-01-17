@@ -11,7 +11,7 @@ if "GITHUB_WORKFLOW" not in os.environ:
 # If USE_TIMEOUTS is None, this timeout should be used.
 NO_TIMEOUT = None
 
-DEFAULT_TIMEOUT = 10
+DEFAULT_TIMEOUT = 15
 
 
 def is_true_in_env(env_key):

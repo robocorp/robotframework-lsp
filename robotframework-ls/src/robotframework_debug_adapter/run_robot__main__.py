@@ -55,7 +55,7 @@ def connect(port):
         log.info("Connected.")
         return s
     except:
-        log.exception("Could not connect to: %s", (port,))
+        log.exception("Could not connect to: %s", port)
         raise
 
 
