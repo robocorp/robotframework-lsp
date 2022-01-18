@@ -80,6 +80,12 @@ SETTINGS = [
         "Verify if the Robot Framework Language Server is installed?",
         setting_type="boolean",
     ),
+    Setting(
+        "robocorp.autoSetPythonExtensionInterpreter",
+        "true",
+        "If a file in a Robot is opened, the python extension interpreter is automatically set to match the Robot interpreter.",
+        setting_type="boolean",
+    ),
 ]
 
 

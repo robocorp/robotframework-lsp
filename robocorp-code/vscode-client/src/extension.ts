@@ -37,7 +37,6 @@ import {
     DebugConfiguration,
     DebugConfigurationProvider,
     CancellationToken,
-    ProviderResult,
     extensions,
     ConfigurationTarget,
     env,
@@ -58,9 +57,7 @@ import {
     getRccLocation,
     RCCDiagnostics,
     runConfigDiagnostics,
-    STATUS_FAIL,
     STATUS_FATAL,
-    STATUS_OK,
     STATUS_WARNING,
     submitIssue,
     submitIssueUI,
@@ -71,7 +68,6 @@ import {
     createRobot,
     uploadRobot,
     cloudLogin,
-    runRobotRCC,
     cloudLogout,
     setPythonInterpreterFromRobotYaml,
     askAndRunRobotRCC,
@@ -140,6 +136,7 @@ import {
     ROBOCORP_REVEAL_IN_EXPLORER,
     ROBOCORP_REVEAL_ROBOT_IN_EXPLORER,
 } from "./robocorpCommands";
+import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 
 const clientOptions: LanguageClientOptions = {
     documentSelector: [
@@ -406,7 +403,7 @@ async function verifyRobotFrameworkInstalled() {
             dontAsk
         );
         if (chosen == install) {
-            commands.executeCommand("workbench.extensions.search", ROBOT_EXTENSION_ID);
+            await commands.executeCommand("workbench.extensions.search", ROBOT_EXTENSION_ID);
         } else if (chosen == dontAsk) {
             roboConfig.setVerifylsp(false);
         }
@@ -690,7 +687,8 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
     OUTPUT_CHANNEL.appendLine(
         "Took: " + startLsTiming.getTotalElapsedAsStr() + " to initialize Robocorp Code Language Server."
     );
-    verifyRobotFrameworkInstalled();
+    await installPythonInterpreterCheck(context);
+    await verifyRobotFrameworkInstalled();
 }
 
 export function deactivate(): Thenable<void> | undefined {

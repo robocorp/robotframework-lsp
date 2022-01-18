@@ -8,6 +8,7 @@ ROBOCORP_RCC_ENDPOINT = "robocorp.rcc.endpoint"
 ROBOCORP_RCC_CONFIG_LOCATION = "robocorp.rcc.config_location"
 ROBOCORP_HOME = "robocorp.home"
 ROBOCORP_VERIFY_LSP = "robocorp.verifyLSP"
+ROBOCORP_AUTO_SET_PYTHON_EXTENSION_INTERPRETER = "robocorp.autoSetPythonExtensionInterpreter"
 
 ALL_ROBOCORP_OPTIONS = frozenset(
     (
@@ -19,5 +20,6 @@ ALL_ROBOCORP_OPTIONS = frozenset(
         ROBOCORP_RCC_CONFIG_LOCATION,
         ROBOCORP_HOME,
         ROBOCORP_VERIFY_LSP,
+        ROBOCORP_AUTO_SET_PYTHON_EXTENSION_INTERPRETER,
     )
 )

@@ -136,6 +136,11 @@
                     "type": "boolean",
                     "default": "true",
                     "description": "Verify if the Robot Framework Language Server is installed?"
+                },
+                "robocorp.autoSetPythonExtensionInterpreter": {
+                    "type": "boolean",
+                    "default": "true",
+                    "description": "If a file in a Robot is opened, the python extension interpreter is automatically set to match the Robot interpreter."
                 }
             }
         },
@@ -790,11 +795,11 @@
     },
     "devDependencies": {
         "@types/mocha": "^2.2.32",
-        "@types/node": "^11.0.40",
+        "@types/node": "^13.0.00",
         "@types/vscode": "1.61.0",
         "prettier": "2.4.1",
         "vscode-test": "1.5.1",
-        "typescript": "^3.8.2"
+        "typescript": "^4.5.4"
     },
     "dependencies": {
         "vscode-languageclient": "^7.0.0",

@@ -8,7 +8,6 @@ import {
     DebugConfiguration,
     DebugSessionOptions,
     env,
-    ConfigurationTarget,
     FileType,
 } from "vscode";
 import { join, dirname } from "path";
@@ -21,7 +20,6 @@ import {
     sortCaptions,
     QuickPickItemRobotTask,
     showSelectOneQuickPick,
-    showSelectOneStrQuickPick,
 } from "./ask";
 import { refreshCloudTreeView } from "./views";
 import { feedback, feedbackRobocorpCodeError } from "./rcc";
@@ -256,22 +254,7 @@ export async function setPythonInterpreterFromRobotYaml() {
 
         // Note: if we got here we have a robot in the workspace.
 
-        // Always set it in the workspace!
-        let configurationTarget: ConfigurationTarget = ConfigurationTarget.Workspace;
-
-        OUTPUT_CHANNEL.appendLine(
-            "Setting the python executable path for vscode-python to be:\n" + interpreter.pythonExe
-        );
-
-        let config = workspace.getConfiguration("python");
-        await config.update("pythonPath", interpreter.pythonExe, configurationTarget);
-        await config.update("defaultInterpreterPath", interpreter.pythonExe, configurationTarget);
-
-        try {
-            await commands.executeCommand("python.clearWorkspaceInterpreter");
-        } catch (err) {
-            logError("Error calling python.clearWorkspaceInterpreter", err, "ACT_CLEAR_PYTHON_WORKSPACE_INTERPRETER");
-        }
+        await pythonExtIntegration.setPythonInterpreterForPythonExtension(interpreter.pythonExe);
 
         let resource = Uri.file(dirname(robot.filePath));
         let pythonExecutableConfigured = await pythonExtIntegration.getPythonExecutable(resource);
