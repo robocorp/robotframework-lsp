@@ -255,24 +255,9 @@ export async function setPythonInterpreterFromRobotYaml() {
         }
 
         // Note: if we got here we have a robot in the workspace.
-        let selectedItem = await showSelectOneStrQuickPick(
-            ["Workspace Settings", "Global Settings"],
-            "Please select where the python.pythonPath configuration should be set."
-        );
 
-        if (!selectedItem) {
-            return;
-        }
-
-        let configurationTarget: ConfigurationTarget = undefined;
-        if (selectedItem == "Global Settings") {
-            configurationTarget = ConfigurationTarget.Global;
-        } else if (selectedItem == "Workspace Settings") {
-            configurationTarget = ConfigurationTarget.Workspace;
-        } else {
-            window.showWarningMessage("Invalid configuration target: " + selectedItem);
-            return;
-        }
+        // Always set it in the workspace!
+        let configurationTarget: ConfigurationTarget = ConfigurationTarget.Workspace;
 
         OUTPUT_CHANNEL.appendLine(
             "Setting the python executable path for vscode-python to be:\n" + interpreter.pythonExe
@@ -280,6 +265,13 @@ export async function setPythonInterpreterFromRobotYaml() {
 
         let config = workspace.getConfiguration("python");
         await config.update("pythonPath", interpreter.pythonExe, configurationTarget);
+        await config.update("defaultInterpreterPath", interpreter.pythonExe, configurationTarget);
+
+        try {
+            await commands.executeCommand("python.clearWorkspaceInterpreter");
+        } catch (err) {
+            logError("Error calling python.clearWorkspaceInterpreter", err, "ACT_CLEAR_PYTHON_WORKSPACE_INTERPRETER");
+        }
 
         let resource = Uri.file(dirname(robot.filePath));
         let pythonExecutableConfigured = await pythonExtIntegration.getPythonExecutable(resource);
@@ -301,14 +293,7 @@ export async function setPythonInterpreterFromRobotYaml() {
                 });
                 if (selectedItem == opt1) {
                     await vscode.env.clipboard.writeText(interpreter.pythonExe);
-                    let result = await window.showInformationMessage(
-                        'Copied python executable path to the clipboard. Press OK to proceed and then paste the path after choosing the option to "Enter interpreter path..."',
-                        "OK",
-                        "Cancel"
-                    );
-                    if (result == "OK") {
-                        await commands.executeCommand("python.setInterpreter");
-                    }
+                    await commands.executeCommand("python.setInterpreter");
                 } else if (selectedItem == opt2) {
                     env.openExternal(
                         Uri.parse(
@@ -321,8 +306,12 @@ export async function setPythonInterpreterFromRobotYaml() {
             }
         }
     } catch (error) {
-        logError("Error setting python.pythonPath configuration.", error, "ACT_SETTING_PYTHON_PYTHONPATH");
-        window.showWarningMessage("Error setting python.pythonPath configuration: " + error.message);
+        logError(
+            "Error setting interpreter in python extension configuration.",
+            error,
+            "ACT_SETTING_PYTHON_PYTHONPATH"
+        );
+        window.showWarningMessage("Error setting interpreter in python extension configuration: " + error.message);
         return;
     }
 }

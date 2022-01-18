@@ -111,7 +111,7 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
         let pythonpath: Array<string> = getArrayStrFromConfigExpandingVars(config, "pythonpath");
         let variables: object = config.get("variables");
         let targetRobot: object = debugConfiguration.target;
-        if(targetRobot instanceof Array && targetRobot.length > 0){
+        if (targetRobot instanceof Array && targetRobot.length > 0) {
             targetRobot = targetRobot[0];
         }
 
