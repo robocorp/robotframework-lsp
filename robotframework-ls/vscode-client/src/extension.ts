@@ -111,6 +111,9 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
         let pythonpath: Array<string> = getArrayStrFromConfigExpandingVars(config, "pythonpath");
         let variables: object = config.get("variables");
         let targetRobot: object = debugConfiguration.target;
+        if(targetRobot instanceof Array && targetRobot.length > 0){
+            targetRobot = targetRobot[0];
+        }
 
         // If it's not specified in the language, let's check if some plugin wants to provide an implementation.
         let interpreter: InterpreterInfo = await commands.executeCommand("robot.resolveInterpreter", targetRobot);
