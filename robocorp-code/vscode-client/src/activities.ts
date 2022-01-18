@@ -15,12 +15,7 @@ import { logError, OUTPUT_CHANNEL } from "./channel";
 import * as roboCommands from "./robocorpCommands";
 import * as vscode from "vscode";
 import * as pythonExtIntegration from "./pythonExtIntegration";
-import {
-    QuickPickItemWithAction,
-    sortCaptions,
-    QuickPickItemRobotTask,
-    showSelectOneQuickPick,
-} from "./ask";
+import { QuickPickItemWithAction, sortCaptions, QuickPickItemRobotTask, showSelectOneQuickPick } from "./ask";
 import { refreshCloudTreeView } from "./views";
 import { feedback, feedbackRobocorpCodeError } from "./rcc";
 
