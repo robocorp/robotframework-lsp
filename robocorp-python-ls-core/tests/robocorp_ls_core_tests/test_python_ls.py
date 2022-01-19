@@ -283,7 +283,7 @@ from robocorp_ls_core.python_ls import PythonLanguageServer
 
 
 class _DummyLanguageServer(PythonLanguageServer):
-    def lint(self, doc_uri, is_saved):
+    def lint(self, doc_uri, is_saved, content_changes=None):
         pass
 
     def cancel_lint(self, doc_uri):

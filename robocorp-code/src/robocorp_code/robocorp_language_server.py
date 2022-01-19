@@ -221,7 +221,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         pass  # no-op (we don't cancel it if the file changes)
 
     @overrides(PythonLanguageServer.lint)
-    def lint(self, doc_uri, is_saved):
+    def lint(self, doc_uri, is_saved, content_changes=None):
         from robocorp_ls_core.lsp import DiagnosticSeverity
         from robocorp_ls_core import uris
         import json

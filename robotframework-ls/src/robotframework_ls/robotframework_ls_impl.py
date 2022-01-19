@@ -36,7 +36,8 @@ from robotframework_ls.commands import (
 
 log = get_logger(__name__)
 
-LINT_DEBOUNCE_S = 0.4  # 400 ms
+_LINT_DEBOUNCE_IN_SECONDS_LOW = 0.2
+_LINT_DEBOUNCE_IN_SECONDS_HIGH = 0.8
 
 
 class _CurrLintInfo(object):
@@ -46,6 +47,7 @@ class _CurrLintInfo(object):
         lsp_messages,
         doc_uri,
         is_saved,
+        on_finish,
     ) -> None:
         from robocorp_ls_core.lsp import LSPMessages
 
@@ -54,6 +56,7 @@ class _CurrLintInfo(object):
         self.doc_uri = doc_uri
         self.is_saved = is_saved
         self._monitor = Monitor()
+        self._on_finish = on_finish
 
     def __call__(self) -> None:
         from robocorp_ls_core.jsonrpc.exceptions import JsonRpcRequestCancelled
@@ -75,15 +78,19 @@ class _CurrLintInfo(object):
                     diagnostics_msg = message_matcher.msg
                     if diagnostics_msg:
                         found = diagnostics_msg.get("result", [])
+                    self._monitor.check_cancelled()
                     self.lsp_messages.publish_diagnostics(doc_uri, found)
         except JsonRpcRequestCancelled:
-            log.info(f"Cancelled linting: {self.doc_uri}.")
+            log.debug("Cancelled linting: %s.", self.doc_uri)
 
         except SubprocessDiedError:
-            log.info(f"Subprocess exited while linting: {self.doc_uri}.")
+            log.debug("Subprocess exited while linting: %s.", self.doc_uri)
 
         except Exception:
-            log.exception("Error linting.")
+            log.exception("Error linting: %s.", self.doc_uri)
+
+        finally:
+            self._on_finish(self)
 
     def cancel(self):
         self._monitor.cancel()
@@ -99,6 +106,7 @@ def run_in_new_thread(func, thread_name):
 
 class _LintManager(object):
     def __init__(self, server_manager, lsp_messages) -> None:
+        import threading
         from robotframework_ls.server_manager import ServerManager
 
         self._server_manager: ServerManager = server_manager
@@ -106,28 +114,50 @@ class _LintManager(object):
 
         self._next_id = partial(next, itertools.count())
         self._doc_id_to_info: Dict[str, _CurrLintInfo] = {}
+        self._lock = threading.Lock()
 
-    def schedule_lint(self, doc_uri: str, is_saved: bool) -> None:
+    def schedule_lint(self, doc_uri: str, is_saved: bool, timeout: float) -> None:
         self.cancel_lint(doc_uri)
         rf_lint_api_client = self._server_manager.get_lint_rf_api_client(doc_uri)
         if rf_lint_api_client is None:
-            log.info(f"Unable to get lint api for: {doc_uri}")
+            log.info("Unable to get lint api for: %s", doc_uri)
             return
 
+        lock = self._lock
+        doc_id_to_info = self._doc_id_to_info
+
+        def on_finish(curr_info: _CurrLintInfo):
+            # When it's finished, remove it from our references (if it's still
+            # the current one...).
+            try:
+                with lock:
+                    if doc_id_to_info.get(curr_info.doc_uri) is curr_info:
+                        del doc_id_to_info[curr_info.doc_uri]
+            except:
+                log.exception("Unhandled error on lint finish.")
+
+        log.debug("Schedule lint for: %s", doc_uri)
         curr_info = _CurrLintInfo(
-            rf_lint_api_client, self._lsp_messages, doc_uri, is_saved
+            rf_lint_api_client, self._lsp_messages, doc_uri, is_saved, on_finish
         )
+        with self._lock:
+            self._doc_id_to_info[doc_uri] = curr_info
+
         from robocorp_ls_core.timeouts import TimeoutTracker
 
         timeout_tracker = TimeoutTracker.get_singleton()
         timeout_tracker.call_on_timeout(
-            LINT_DEBOUNCE_S, partial(run_in_new_thread, curr_info, f"Lint: {doc_uri}")
+            timeout,
+            partial(run_in_new_thread, curr_info, f"Lint: {doc_uri}"),
         )
 
     def cancel_lint(self, doc_uri: str) -> None:
-        curr_info = self._doc_id_to_info.pop(doc_uri, None)
-        if curr_info is not None:
-            curr_info.cancel()
+        with self._lock:
+            curr_info = self._doc_id_to_info.pop(doc_uri, None)
+            if curr_info is not None:
+                log.debug("Cancel lint for: %s", doc_uri)
+
+                curr_info.cancel()
 
 
 from robocorp_ls_core.command_dispatcher import _CommandDispatcher
@@ -567,8 +597,23 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     # --- Customized implementation
 
     @overrides(PythonLanguageServer.lint)
-    def lint(self, doc_uri, is_saved) -> None:
-        self._lint_manager.schedule_lint(doc_uri, is_saved)
+    def lint(self, doc_uri, is_saved, content_changes=None) -> None:
+        # We want the timeout to be shorter if it was saved or if the user
+        # typed a new line.
+        timeout = _LINT_DEBOUNCE_IN_SECONDS_LOW
+        if not is_saved:
+            timeout = _LINT_DEBOUNCE_IN_SECONDS_HIGH
+            for change in content_changes:
+                try:
+                    text = change.get("text", "")
+                    if "\n" in text or "\r" in text:
+                        timeout = _LINT_DEBOUNCE_IN_SECONDS_LOW
+                        break
+                except:
+                    log.exception(
+                        "Error computing lint timeout with: %s", content_changes
+                    )
+        self._lint_manager.schedule_lint(doc_uri, is_saved, timeout)
 
     @overrides(PythonLanguageServer.cancel_lint)
     def cancel_lint(self, doc_uri) -> None:

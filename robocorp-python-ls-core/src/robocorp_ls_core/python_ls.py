@@ -348,7 +348,7 @@ class PythonLanguageServer(MethodDispatcher):
     def m_initialized(self, **_kwargs):
         pass
 
-    def lint(self, doc_uri, is_saved):
+    def lint(self, doc_uri, is_saved, content_changes=None):
         raise NotImplementedError(
             "Subclasses must override (current class: %s)." % (self.__class__,)
         )
@@ -371,7 +371,7 @@ class PythonLanguageServer(MethodDispatcher):
         ws = self.workspace
         if ws is not None:
             ws.put_document(TextDocumentItem(**textDocument))
-        self.lint(textDocument["uri"], is_saved=True)
+        self.lint(textDocument["uri"], is_saved=True, content_changes=None)
 
     def m_text_document__did_change(
         self, contentChanges=None, textDocument=None, **_kwargs
@@ -397,10 +397,10 @@ class PythonLanguageServer(MethodDispatcher):
                         "Error updating document: %s with changes: %s"
                         % (textDocument, contentChanges)
                     )
-        self.lint(textDocument["uri"], is_saved=False)
+        self.lint(textDocument["uri"], is_saved=False, content_changes=contentChanges)
 
     def m_text_document__did_save(self, textDocument=None, **_kwargs):
-        self.lint(textDocument["uri"], is_saved=True)
+        self.lint(textDocument["uri"], is_saved=True, content_changes=None)
 
     def m_workspace__did_change_configuration(self, settings=None) -> None:
         self.config.update(settings or {})

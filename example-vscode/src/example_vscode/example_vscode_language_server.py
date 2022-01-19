@@ -98,7 +98,7 @@ class ExampleVSCodeLanguageServer(PythonLanguageServer):
         # return {"data": [1, 0, 10, 1, 0, 1, 0, 10, 1, 0]}
         return {"data": []}
 
-    def lint(self, doc_uri, is_saved):
+    def lint(self, doc_uri, is_saved, content_changes=None):
         pass
 
     def cancel_lint(self, doc_uri):
