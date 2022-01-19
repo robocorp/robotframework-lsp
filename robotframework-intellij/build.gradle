@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.36.0'
+version '0.37.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,11 +51,14 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.36.0
+    Release 0.37.0
     </p>
     <ul>
 
-    <li>Fixed an issue which could make file system change notifications be ignored.</li>
+    <li>Code analysis will now notify if Library or Resource cannot be resolved.</li>
+    <li>If Run Keyword has a variable concatenated, it's no longer considered an error.</li>
+    <li>Properly resolve variables in arguments in the libspec generation.</li>
+    <li>Improvements related to scheduling the lint after changing the editor.</li>
 
     <br>
     Current feature set:<br>

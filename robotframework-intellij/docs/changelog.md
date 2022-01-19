@@ -1,3 +1,12 @@
+New in 0.37.0 (2022-01-19)
+-----------------------------
+
+- Code analysis will now notify if Library or Resource cannot be resolved. [#542](https://github.com/robocorp/robotframework-lsp/issues/542)
+- If Run Keyword has a variable concatenated, it's no longer considered an error. [#534](https://github.com/robocorp/robotframework-lsp/issues/534)
+- Properly resolve variables in arguments in the libspec generation. [#535](https://github.com/robocorp/robotframework-lsp/issues/535)
+- Improvements related to scheduling the lint after changing the editor.
+
+
 New in 0.36.0 (2022-01-17)
 -----------------------------
 
