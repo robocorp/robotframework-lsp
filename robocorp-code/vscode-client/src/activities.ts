@@ -249,7 +249,10 @@ export async function setPythonInterpreterFromRobotYaml() {
 
         // Note: if we got here we have a robot in the workspace.
 
-        await pythonExtIntegration.setPythonInterpreterForPythonExtension(interpreter.pythonExe);
+        await pythonExtIntegration.setPythonInterpreterForPythonExtension(
+            interpreter.pythonExe,
+            Uri.file(robot.filePath)
+        );
 
         let resource = Uri.file(dirname(robot.filePath));
         let pythonExecutableConfigured = await pythonExtIntegration.getPythonExecutable(resource);

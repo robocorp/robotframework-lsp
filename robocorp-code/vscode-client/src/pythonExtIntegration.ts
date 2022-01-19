@@ -1,4 +1,13 @@
-import { commands, ConfigurationTarget, ExtensionContext, extensions, Uri, window, workspace } from "vscode";
+import {
+    commands,
+    ConfigurationTarget,
+    ExtensionContext,
+    extensions,
+    TextEditor,
+    Uri,
+    window,
+    workspace,
+} from "vscode";
 import { resolveInterpreter } from "./activities";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import { handleProgressMessage } from "./progress";
@@ -20,25 +29,35 @@ export async function autoUpdateInterpreter(docUri: Uri) {
     // Now, set the interpreter.
     let pythonExecutable = await getPythonExecutable(docUri, true, false);
     if (pythonExecutable != interpreter.pythonExe) {
-        setPythonInterpreterForPythonExtension(interpreter.pythonExe);
+        setPythonInterpreterForPythonExtension(interpreter.pythonExe, docUri);
     }
 }
 
 export async function installPythonInterpreterCheck(context: ExtensionContext) {
     context.subscriptions.push(
-        window.onDidChangeActiveTextEditor(async (event) => {
-            // Whenever the active editor changes we update the Python interpreter used (if needed).
-            let docUri = event.document.uri;
-            await autoUpdateInterpreter(docUri);
+        window.onDidChangeActiveTextEditor(async (event: TextEditor) => {
+            try {
+                // Whenever the active editor changes we update the Python interpreter used (if needed).
+                let docUri = event?.document?.uri;
+                if (docUri) {
+                    await autoUpdateInterpreter(docUri);
+                }
+            } catch (error) {
+                logError("Error auto-updating Python interpreter.", error, "PYTHON_SET_INTERPRETER");
+            }
         })
     );
-    let uri = window.activeTextEditor?.document?.uri;
-    if (uri) {
-        await autoUpdateInterpreter(uri);
+    try {
+        let uri = window.activeTextEditor?.document?.uri;
+        if (uri) {
+            await autoUpdateInterpreter(uri);
+        }
+    } catch (error) {
+        logError("Error on initial Python interpreter auto-update.", error, "PYTHON_INITIAL_SET_INTERPRETER");
     }
 }
 
-export async function setPythonInterpreterForPythonExtension(pythonExe: string) {
+export async function setPythonInterpreterForPythonExtension(pythonExe: string, uri: Uri) {
     const extension = extensions.getExtension("ms-python.python");
     if (!extension) {
         return;
@@ -48,15 +67,19 @@ export async function setPythonInterpreterForPythonExtension(pythonExe: string) 
     let configurationTarget: ConfigurationTarget = ConfigurationTarget.Workspace;
 
     OUTPUT_CHANNEL.appendLine("Setting the python executable path for vscode-python to be:\n" + pythonExe);
+    if (extension?.exports?.environment?.setActiveInterpreter !== undefined) {
+        await extension.exports.environment.setActiveInterpreter(pythonExe, uri);
+        // OUTPUT_CHANNEL.appendLine("Is: " + (await extension.exports.environment.getActiveInterpreterPath(uri)));
+    } else {
+        let config = workspace.getConfiguration("python");
+        await config.update("pythonPath", pythonExe, configurationTarget);
+        await config.update("defaultInterpreterPath", pythonExe, configurationTarget);
 
-    let config = workspace.getConfiguration("python");
-    await config.update("pythonPath", pythonExe, configurationTarget);
-    await config.update("defaultInterpreterPath", pythonExe, configurationTarget);
-
-    try {
-        await commands.executeCommand("python.clearWorkspaceInterpreter");
-    } catch (err) {
-        logError("Error calling python.clearWorkspaceInterpreter", err, "ACT_CLEAR_PYTHON_WORKSPACE_INTERPRETER");
+        try {
+            await commands.executeCommand("python.clearWorkspaceInterpreter");
+        } catch (err) {
+            logError("Error calling python.clearWorkspaceInterpreter", err, "ACT_CLEAR_PYTHON_WORKSPACE_INTERPRETER");
+        }
     }
 }
 

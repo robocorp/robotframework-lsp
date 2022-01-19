@@ -687,8 +687,11 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
     OUTPUT_CHANNEL.appendLine(
         "Took: " + startLsTiming.getTotalElapsedAsStr() + " to initialize Robocorp Code Language Server."
     );
-    await installPythonInterpreterCheck(context);
-    await verifyRobotFrameworkInstalled();
+    // Note: start the async ones below but don't await on them (the extension should be considered initialized
+    // regardless of it -- as it may call robot.resolveInterpreter, it may need to activate the language
+    // server extension, which in turn requires robocorp code to be activated already).
+    installPythonInterpreterCheck(context);
+    verifyRobotFrameworkInstalled();
 }
 
 export function deactivate(): Thenable<void> | undefined {
