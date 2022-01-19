@@ -859,7 +859,11 @@ class LibspecManager(object):
                     if os.path.exists(entry):
                         call.extend(["-P", os.path.normpath(entry)])
 
-                call.append("::".join([libname, args] if args else [libname]))
+                if not args:
+                    call.append(libname)
+                else:
+                    call.append("::".join([libname, args]))
+
                 libspec_filename = self._compute_libspec_filename(
                     libname, is_builtin, target_file, args
                 )
@@ -1038,8 +1042,8 @@ class LibspecManager(object):
     def get_library_info(
         self,
         libname: str,
-        create: bool = True,
-        current_doc_uri: Optional[str] = None,
+        create: bool,
+        current_doc_uri: str,
         builtin: bool = False,
         args: Optional[str] = None,
     ) -> Optional[ILibraryDoc]:
@@ -1050,6 +1054,7 @@ class LibspecManager(object):
 
         :rtype: LibraryDoc
         """
+        assert current_doc_uri is not None
 
         libname_lower = libname.lower()
         target_file: str = ""
@@ -1075,6 +1080,19 @@ class LibspecManager(object):
             and "*" not in libraries_libdoc_needs_args_lower
         ):
             args = None
+
+        if args and "{" in args:
+            # We need to resolve the arguments if there are variables in it.
+            from robotframework_ls.impl.completion_context import (
+                CompletionContext,
+            )
+            from robocorp_ls_core.workspace import Document
+
+            # We just need the doc for the CURDIR variable, so create a dummy
+            # doc with that uri.
+            doc = Document(current_doc_uri, "")
+            ctx = CompletionContext(doc, config=self.config)
+            args = ctx.token_value_resolving_variables(args)
 
         if not builtin:
             found_target_filename = self._get_library_target_filename(

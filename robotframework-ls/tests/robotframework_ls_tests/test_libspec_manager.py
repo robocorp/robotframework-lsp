@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from typing import Optional
+from robocorp_ls_core import uris
 
 
 def test_libspec_info(libspec_manager, tmpdir):
@@ -8,7 +9,10 @@ def test_libspec_info(libspec_manager, tmpdir):
     from robotframework_ls.impl.robot_specbuilder import KeywordDoc
 
     assert "BuiltIn" in libspec_manager.get_library_names()
-    lib_info = libspec_manager.get_library_info("BuiltIn", create=False)
+    uri = uris.from_fs_path(str(tmpdir.join("case.robot")))
+    lib_info = libspec_manager.get_library_info(
+        "BuiltIn", create=False, current_doc_uri=uri
+    )
     assert isinstance(lib_info, LibraryDoc)
     assert lib_info.source is not None
     assert lib_info.source.endswith("BuiltIn.py")
@@ -73,7 +77,10 @@ def method6():
 """
     )
 
-    library_info: Optional[LibraryDoc] = libspec_manager.get_library_info("check_lib")
+    uri = uris.from_fs_path(os.path.join(workspace_dir, "case.robot"))
+    library_info: Optional[LibraryDoc] = libspec_manager.get_library_info(
+        "check_lib", True, uri
+    )
     assert library_info is not None
     keywords: List[KeywordDoc] = library_info.keywords
     data_regression.check([keyword_to_dict(k) for k in keywords])
@@ -94,13 +101,18 @@ def test_libspec_cache_no_lib(libspec_manager, workspace_dir):
     def disallow_cached_create_libspec(*args, **kwargs):
         raise AssertionError("Should not be called")
 
-    library_info: Optional[LibraryDoc] = libspec_manager.get_library_info("check_lib")
+    uri = uris.from_fs_path(os.path.join(workspace_dir, "case.robot"))
+    library_info: Optional[LibraryDoc] = libspec_manager.get_library_info(
+        "check_lib", True, uri
+    )
     assert library_info is None
 
     # Make sure that we don't try to create it anymore for the same lib.
     original_cached_create_libspec = libspec_manager._cached_create_libspec
     libspec_manager._cached_create_libspec = disallow_cached_create_libspec
-    library_info: Optional[LibraryDoc] = libspec_manager.get_library_info("check_lib")
+    library_info: Optional[LibraryDoc] = libspec_manager.get_library_info(
+        "check_lib", True, uri
+    )
     assert library_info is None
     libspec_manager._cached_create_libspec = original_cached_create_libspec
 
@@ -119,7 +131,7 @@ def method2(a:int):
     )
     # Check that the cache invalidation is in place!
     wait_for_condition(
-        lambda: libspec_manager.get_library_info("check_lib") is not None,
+        lambda: libspec_manager.get_library_info("check_lib", True, uri) is not None,
         msg="Did not recreate library in the available timeout.",
         timeout=15,
     )
@@ -178,12 +190,14 @@ def my_keyword():
 
         libspec_manager._subprocess_check_output = raise_error
 
-    library_info: Optional[LibraryDoc] = libspec_manager.get_library_info("check_lib")
+    uri = uris.from_fs_path(os.path.join(workspace_dir, "case.robot"))
+    library_info: Optional[LibraryDoc] = libspec_manager.get_library_info(
+        "check_lib", True, uri
+    )
     assert library_info is not None
 
 
 def test_libspec_manager_caches(libspec_manager, workspace_dir):
-    from robocorp_ls_core import uris
     import os.path
     from robotframework_ls_tests.fixtures import LIBSPEC_1
     from robotframework_ls_tests.fixtures import LIBSPEC_2
@@ -196,10 +210,16 @@ def test_libspec_manager_caches(libspec_manager, workspace_dir):
     with open(os.path.join(workspace_dir_a, "my.libspec"), "w") as stream:
         stream.write(LIBSPEC_1)
     libspec_manager.add_workspace_folder(uris.from_fs_path(workspace_dir_a))
-    assert libspec_manager.get_library_info("case1_library", create=False) is not None
+    uri = uris.from_fs_path(os.path.join(workspace_dir, "case.robot"))
+    assert (
+        libspec_manager.get_library_info(
+            "case1_library", create=False, current_doc_uri=uri
+        )
+        is not None
+    )
 
     libspec_manager.remove_workspace_folder(uris.from_fs_path(workspace_dir_a))
-    library_info = libspec_manager.get_library_info("case1_library", create=False)
+    library_info = libspec_manager.get_library_info("case1_library", False, uri)
     if library_info is not None:
         raise AssertionError(
             "Expected: %s to be None after removing %s"
@@ -207,7 +227,7 @@ def test_libspec_manager_caches(libspec_manager, workspace_dir):
         )
 
     libspec_manager.add_workspace_folder(uris.from_fs_path(workspace_dir_a))
-    assert libspec_manager.get_library_info("case1_library", create=False) is not None
+    assert libspec_manager.get_library_info("case1_library", False, uri) is not None
 
     # Give a timeout so that the next write will have at least 1 second
     # difference (1s is the minimum for poll to work).
@@ -216,13 +236,13 @@ def test_libspec_manager_caches(libspec_manager, workspace_dir):
         stream.write(LIBSPEC_2)
 
     def check_spec_found():
-        library_info = libspec_manager.get_library_info("case2_library", create=False)
+        library_info = libspec_manager.get_library_info("case2_library", False, uri)
         return library_info is not None
 
     # Updating is done in a thread.
     wait_for_test_condition(check_spec_found, sleep=1 / 5.0)
 
-    library_info = libspec_manager.get_library_info("case2_library", create=False)
+    library_info = libspec_manager.get_library_info("case2_library", False, uri)
     assert set(x.name for x in library_info.keywords) == set(
         ["Case 2 Verify Another Model", "Case 2 Verify Model"]
     )
@@ -234,7 +254,7 @@ def test_libspec_manager_caches(libspec_manager, workspace_dir):
         stream.write(LIBSPEC_2_A)
 
     def check_spec_2_a():
-        library_info = libspec_manager.get_library_info("case2_library", create=False)
+        library_info = libspec_manager.get_library_info("case2_library", False, uri)
         if library_info:
             return set(x.name for x in library_info.keywords) == set(
                 ["Case 2 A Verify Another Model", "Case 2 A Verify Model"]
@@ -252,6 +272,8 @@ def test_libspec_manager_basic(workspace, libspec_manager):
 
     def get_library_info(*args, **kwargs):
         kwargs["current_doc_uri"] = doc.uri
+        if "create" not in kwargs:
+            kwargs["create"] = True
         return libspec_manager.get_library_info(*args, **kwargs)
 
     assert get_library_info("case1_library") is not None

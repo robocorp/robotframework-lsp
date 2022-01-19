@@ -602,7 +602,14 @@ def test_typing_not_shown(libspec_manager, workspace, data_regression, workspace
     with open(os.path.join(workspace_dir_a, "my.libspec"), "w") as stream:
         stream.write(LIBSPEC_3)
     libspec_manager.add_workspace_folder(uris.from_fs_path(workspace_dir_a))
-    assert libspec_manager.get_library_info("case3_library", create=False) is not None
+    assert (
+        libspec_manager.get_library_info(
+            "case3_library",
+            False,
+            uris.from_fs_path(os.path.join(workspace_dir_a, "my.robot")),
+        )
+        is not None
+    )
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
 
@@ -806,6 +813,42 @@ My Test
         assert sorted([comp["label"] for comp in completions]) == [
             "Foo Method (LibWithParams)"
         ]
+
+
+def test_keyword_completions_library_with_params_resolves_var(
+    workspace, libspec_manager
+):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.robot_config import RobotConfig
+
+    config = RobotConfig()
+    config.update(
+        {
+            "robot.libraries": {"libdoc": {"needsArgs": ["LibWithParams"]}},
+            "robot.variables": {"param_val": "foo"},
+        }
+    )
+    libspec_manager.config = config
+
+    workspace.set_root("case_params_on_lib", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_params_on_lib.robot")
+
+    doc.source = """
+*** Settings ***
+Library    LibWithParams    some_param=${param_val}    WITH NAME    Lib
+
+*** Test Case  ***
+My Test
+    Lib.Foo"""
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws, config=config)
+    completions = keyword_completions.complete(completion_context)
+
+    assert len(completions) == 1
+    assert sorted([comp["label"] for comp in completions]) == [
+        "Foo Method (LibWithParams)"
+    ]
 
 
 @pytest.mark.parametrize("lib_param", ["bar", "foo"])

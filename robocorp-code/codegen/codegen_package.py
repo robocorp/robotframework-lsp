@@ -284,7 +284,9 @@ ALL_ROBOCORP_OPTIONS = frozenset(
     )
 
     with open(settings_py_file, "w") as stream:
+        stream.write("# fmt: off\n")
         stream.write("\n".join(settings_template))
+        stream.write("\n# fmt: on\n")
 
     print("Written: %s" % (settings_py_file,))
 
