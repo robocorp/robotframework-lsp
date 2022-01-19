@@ -98,6 +98,7 @@ def test_keywords_in_args_no_error_with_var(
         doc.source
         + """
     Run Keyword    ${var}
+    Run Keyword    concat with ${var}
 """
     )
     doc = workspace.put_doc("case1.robot", new_source)

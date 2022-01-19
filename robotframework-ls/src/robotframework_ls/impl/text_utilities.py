@@ -1,4 +1,7 @@
 from functools import lru_cache
+from robocorp_ls_core.robotframework_log import get_logger
+
+log = get_logger(__name__)
 
 
 class TextUtilities(object):
@@ -32,12 +35,32 @@ def normalize_robot_name(text):
     return text.lower().replace("_", "").replace(" ", "")
 
 
-def is_variable_text(text):
+def is_variable_text(text: str) -> bool:
     from robotframework_ls.impl import robot_constants
 
     for p in robot_constants.VARIABLE_PREFIXES:
         if text.startswith(p + "{") and text.endswith("}"):
             return True
+    return False
+
+
+def contains_variable_text(text: str) -> bool:
+    if "{" not in text:
+        return False
+
+    from robotframework_ls.impl import ast_utils
+
+    token = ast_utils.create_token(text)
+
+    try:
+        tokenized_vars = ast_utils.tokenize_variables(token)
+        for v in tokenized_vars:
+            if v.type == v.VARIABLE:
+                return True
+
+    except:
+        log.debug("Error tokenizing to variables: %s", text)
+
     return False
 
 
