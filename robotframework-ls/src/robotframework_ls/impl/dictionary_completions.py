@@ -109,7 +109,12 @@ def complete(completion_context: ICompletionContext):
     except ValueError:
         return []
     variables = _get_variables(completion_context)
-    for resource_doc in completion_context.get_resource_imports_as_docs():
+    for (
+        _resource_node,
+        resource_doc,
+    ) in completion_context.get_resource_imports_as_docs():
+        if resource_doc is None:
+            continue
         new_ctx = completion_context.create_copy(resource_doc)
         variables += _get_variables(new_ctx)
     dict_name = _get_dict_name(value)

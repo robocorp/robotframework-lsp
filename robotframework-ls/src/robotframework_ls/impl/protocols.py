@@ -1,5 +1,14 @@
 import sys
-from typing import TypeVar, Any, Optional, List, Sequence, Tuple, Iterable, Generic
+from typing import (
+    TypeVar,
+    Any,
+    Optional,
+    List,
+    Sequence,
+    Tuple,
+    Iterable,
+    Generic,
+)
 from robocorp_ls_core.protocols import (
     Sentinel,
     IMonitor,
@@ -35,6 +44,24 @@ class INode(Protocol):
 class ILibraryImportNode(INode, Protocol):
     name: str
     alias: Optional[str]
+    lineno: int
+    end_lineno: int
+    col_offset: int
+    end_col_offset: int
+
+    def get_token(self, name: str) -> Any:
+        pass
+
+
+class IResourceImportNode(INode, Protocol):
+    name: str
+    lineno: int
+    end_lineno: int
+    col_offset: int
+    end_col_offset: int
+
+    def get_token(self, name: str) -> Any:
+        pass
 
 
 class NodeInfo(Generic[Y]):
@@ -216,6 +243,26 @@ class IKeywordCollector(Protocol):
         :param IKeywordFound keyword_found:
         """
 
+    def on_unresolved_library(
+        self,
+        library_name: str,
+        lineno: int,
+        end_lineno: int,
+        col_offset: int,
+        end_col_offset: int,
+    ):
+        pass
+
+    def on_unresolved_resource(
+        self,
+        resource_name: str,
+        lineno: int,
+        end_lineno: int,
+        col_offset: int,
+        end_col_offset: int,
+    ):
+        pass
+
 
 class IDefinition(Protocol):
 
@@ -362,7 +409,9 @@ class ICompletionContext(Protocol):
     def get_current_keyword_definition(self) -> Optional[IKeywordDefinition]:
         pass
 
-    def get_resource_imports_as_docs(self) -> Tuple[IRobotDocument, ...]:
+    def get_resource_imports_as_docs(
+        self,
+    ) -> Tuple[Tuple[IResourceImportNode, Optional[IRobotDocument]], ...]:
         pass
 
     def get_variable_imports_as_docs(self) -> Tuple[IRobotDocument, ...]:
@@ -377,4 +426,51 @@ class ICompletionContext(Protocol):
     def get_current_keyword_definition_and_usage_info(
         self,
     ) -> Optional[Tuple[IKeywordDefinition, KeywordUsageInfo]]:
+        pass
+
+
+class IVariableFound(Protocol):
+    """
+    :ivar variable_name:
+    :ivar variable_value:
+    :ivar completion_context:
+        This may be a new completion context, created when a new document is
+        being analyzed (the variable was created for that completion context).
+    :ivar source:
+        Source where the variable was found.
+    :ivar lineno:
+        Line where it was found (0-based).
+    """
+
+    variable_name: str = ""
+    variable_value: str = ""
+    completion_context: Optional[ICompletionContext] = None
+
+    @property
+    def source(self) -> str:
+        pass
+
+    # Note: line/offsets 0-based.
+    @property
+    def lineno(self) -> int:
+        pass
+
+    @property
+    def end_lineno(self) -> int:
+        pass
+
+    @property
+    def col_offset(self) -> int:
+        pass
+
+    @property
+    def end_col_offset(self) -> int:
+        pass
+
+
+class IVariablesCollector(Protocol):
+    def accepts(self, variable_name: str) -> bool:
+        pass
+
+    def on_variable(self, variable_found: IVariableFound):
         pass

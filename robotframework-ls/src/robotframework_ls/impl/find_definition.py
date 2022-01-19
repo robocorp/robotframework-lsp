@@ -4,6 +4,8 @@ from robotframework_ls.impl.protocols import (
     IDefinition,
     TokenInfo,
     IKeywordDefinition,
+    IKeywordCollector,
+    IVariablesCollector,
 )
 from robocorp_ls_core.protocols import check_implements
 from typing import Optional, Sequence
@@ -138,15 +140,7 @@ class _DefinitionFromVariable(object):
         _: IDefinition = check_implements(self)
 
 
-class IDefinitionsCollector(object):
-    def accepts(self, keyword_name):
-        pass
-
-    def on_keyword(self, keyword_found):
-        pass
-
-
-class _FindDefinitionKeywordCollector(IDefinitionsCollector):
+class _FindDefinitionKeywordCollector(object):
     def __init__(self, match_name):
         from robotframework_ls.impl.string_matcher import RobotStringMatcher
         from robotframework_ls.impl.string_matcher import (
@@ -174,8 +168,31 @@ class _FindDefinitionKeywordCollector(IDefinitionsCollector):
                 self.matches.append(definition)
                 return
 
+    def on_unresolved_library(
+        self,
+        library_name: str,
+        lineno: int,
+        end_lineno: int,
+        col_offset: int,
+        end_col_offset: int,
+    ):
+        pass
 
-class _FindDefinitionVariablesCollector(IDefinitionsCollector):
+    def on_unresolved_resource(
+        self,
+        resource_name: str,
+        lineno: int,
+        end_lineno: int,
+        col_offset: int,
+        end_col_offset: int,
+    ):
+        pass
+
+    def __typecheckself__(self) -> None:
+        _: IKeywordCollector = check_implements(self)
+
+
+class _FindDefinitionVariablesCollector(object):
     def __init__(self, sel, token, robot_string_matcher):
         self.matches = []
         self.sel = sel
@@ -188,6 +205,9 @@ class _FindDefinitionVariablesCollector(IDefinitionsCollector):
     def on_variable(self, variable_found):
         definition = _DefinitionFromVariable(variable_found)
         self.matches.append(definition)
+
+    def __typecheckself__(self) -> None:
+        _: IVariablesCollector = check_implements(self)
 
 
 def find_keyword_definition(

@@ -1,0 +1,110 @@
+- message: 'Unresolved resource: does_not_exist.txt'
+  range:
+    end:
+      character: 30
+      line: 5
+    start:
+      character: 12
+      line: 5
+  severity: 1
+  source: robotframework
+- message: 'Unresolved resource: ${foo}/does_not_exist.txt'
+  range:
+    end:
+      character: 37
+      line: 6
+    start:
+      character: 12
+      line: 6
+  severity: 1
+  source: robotframework
+- message: 'Unresolved resource: ../does_not_exist.txt'
+  range:
+    end:
+      character: 33
+      line: 7
+    start:
+      character: 12
+      line: 7
+  severity: 1
+  source: robotframework
+- message: 'Unresolved resource: .'
+  range:
+    end:
+      character: 13
+      line: 8
+    start:
+      character: 12
+      line: 8
+  severity: 1
+  source: robotframework
+- message: 'Unresolved resource: ..'
+  range:
+    end:
+      character: 14
+      line: 9
+    start:
+      character: 12
+      line: 9
+  severity: 1
+  source: robotframework
+- message: 'Unresolved resource: ../'
+  range:
+    end:
+      character: 15
+      line: 10
+    start:
+      character: 12
+      line: 10
+  severity: 1
+  source: robotframework
+- message: 'Unresolved resource: ../../does_not_exist.txt'
+  range:
+    end:
+      character: 36
+      line: 11
+    start:
+      character: 12
+      line: 11
+  severity: 1
+  source: robotframework
+- message: 'Unresolved library: DoesNotExist'
+  range:
+    end:
+      character: 23
+      line: 1
+    start:
+      character: 11
+      line: 1
+  severity: 1
+  source: robotframework
+- message: 'Unresolved library: .'
+  range:
+    end:
+      character: 12
+      line: 2
+    start:
+      character: 11
+      line: 2
+  severity: 1
+  source: robotframework
+- message: 'Unresolved library: ..'
+  range:
+    end:
+      character: 13
+      line: 3
+    start:
+      character: 11
+      line: 3
+  severity: 1
+  source: robotframework
+- message: 'Unresolved library: ../'
+  range:
+    end:
+      character: 14
+      line: 4
+    start:
+      character: 11
+      line: 4
+  severity: 1
+  source: robotframework

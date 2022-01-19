@@ -1,7 +1,10 @@
+from typing import Dict, Set
+
+from robocorp_ls_core.protocols import check_implements
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.ast_utils import MAX_ERRORS
-from typing import Dict, Set
-from robotframework_ls.impl.protocols import IKeywordFound
+from robotframework_ls.impl.protocols import IKeywordFound, IKeywordCollector
+
 
 log = get_logger(__name__)
 
@@ -35,11 +38,13 @@ class _KeywordContainer(object):
         return False
 
 
-class _KeywordsCollector(object):
-    def __init__(self):
+class _AnalysisKeywordsCollector(object):
+    def __init__(self, on_unresolved_library, on_unresolved_resource):
         self._keywords_container = _KeywordContainer()
         self._resource_name_to_keywords_container = {}
         self._library_name_to_keywords_container = {}
+        self._on_unresolved_library = on_unresolved_library
+        self._on_unresolved_resource = on_unresolved_resource
 
     def accepts(self, keyword_name):
         return True
@@ -108,6 +113,33 @@ class _KeywordsCollector(object):
 
         return False
 
+    def on_unresolved_library(
+        self,
+        library_name: str,
+        lineno: int,
+        end_lineno: int,
+        col_offset: int,
+        end_col_offset: int,
+    ):
+        self._on_unresolved_library(
+            library_name, lineno, end_lineno, col_offset, end_col_offset
+        )
+
+    def on_unresolved_resource(
+        self,
+        resource_name: str,
+        lineno: int,
+        end_lineno: int,
+        col_offset: int,
+        end_col_offset: int,
+    ):
+        self._on_unresolved_resource(
+            resource_name, lineno, end_lineno, col_offset, end_col_offset
+        )
+
+    def __typecheckself__(self) -> None:
+        _: IKeywordCollector = check_implements(self)
+
 
 def collect_analysis_errors(completion_context):
     from robotframework_ls.impl import ast_utils
@@ -117,7 +149,36 @@ def collect_analysis_errors(completion_context):
     from robotframework_ls.impl.text_utilities import contains_variable_text
 
     errors = []
-    collector = _KeywordsCollector()
+
+    def on_unresolved_library(
+        library_name: str,
+        lineno: int,
+        end_lineno: int,
+        col_offset: int,
+        end_col_offset: int,
+    ):
+        start = (lineno - 1, col_offset)
+        end = (end_lineno - 1, end_col_offset)
+        errors.append(
+            ast_utils.Error(f"Unresolved library: {library_name}", start, end)
+        )
+
+    def on_unresolved_resource(
+        library_name: str,
+        lineno: int,
+        end_lineno: int,
+        col_offset: int,
+        end_col_offset: int,
+    ):
+        start = (lineno - 1, col_offset)
+        end = (end_lineno - 1, end_col_offset)
+        errors.append(
+            ast_utils.Error(f"Unresolved resource: {library_name}", start, end)
+        )
+
+    collector = _AnalysisKeywordsCollector(
+        on_unresolved_library, on_unresolved_resource
+    )
     collect_keywords(completion_context, collector)
 
     ast = completion_context.get_ast()

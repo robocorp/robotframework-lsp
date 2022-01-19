@@ -1,6 +1,13 @@
-from robocorp_ls_core.robotframework_log import get_logger
-from robotframework_ls.impl.protocols import ICompletionContext, IKeywordFound
 from typing import List
+
+from robocorp_ls_core.protocols import check_implements
+from robocorp_ls_core.robotframework_log import get_logger
+from robotframework_ls.impl.protocols import (
+    ICompletionContext,
+    IKeywordFound,
+    IKeywordCollector,
+)
+
 
 log = get_logger(__name__)
 
@@ -110,6 +117,29 @@ class _Collector(object):
         )
 
         self.completion_items.append(item)
+
+    def on_unresolved_library(
+        self,
+        library_name: str,
+        lineno: int,
+        end_lineno: int,
+        col_offset: int,
+        end_col_offset: int,
+    ):
+        pass
+
+    def on_unresolved_resource(
+        self,
+        library_name: str,
+        lineno: int,
+        end_lineno: int,
+        col_offset: int,
+        end_col_offset: int,
+    ):
+        pass
+
+    def __typecheckself__(self) -> None:
+        _: IKeywordCollector = check_implements(self)
 
 
 def complete(completion_context: ICompletionContext) -> List[dict]:

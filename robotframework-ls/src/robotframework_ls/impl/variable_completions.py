@@ -1,34 +1,15 @@
 from robocorp_ls_core.cache import instance_cache
-from robotframework_ls.impl.protocols import ICompletionContext, IRobotDocument
+from robotframework_ls.impl.protocols import (
+    ICompletionContext,
+    IRobotDocument,
+    IVariablesCollector,
+    IVariableFound,
+)
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Any
+from robocorp_ls_core.protocols import check_implements
+from typing import Optional
 
 log = get_logger(__name__)
-
-
-class IVariableFound(object):
-    """
-    :ivar variable_name:
-    :ivar variable_value:
-    :ivar completion_context:
-        This may be a new completion context, created when a new document is
-        being analyzed (the variable was created for that completion context).
-    :ivar source:
-        Source where the variable was found.
-    :ivar lineno:
-        Line where it was found (0-based).
-    """
-
-    variable_name = ""
-    variable_value = ""
-    completion_context = None
-    source = ""
-
-    # Note: line/offsets 0-based.
-    lineno = -1
-    end_lineno = -1
-    col_offset = -1
-    end_col_offset = -1
 
 
 class _VariableFoundFromToken(object):
@@ -72,6 +53,9 @@ class _VariableFoundFromToken(object):
     def end_col_offset(self):
         return self.variable_token.end_col_offset
 
+    def __typecheckself__(self) -> None:
+        _: IVariableFound = check_implements(self)
+
 
 class _VariableFoundFromPythonAst(object):
     def __init__(
@@ -89,7 +73,7 @@ class _VariableFoundFromPythonAst(object):
         self.end_lineno = end_lineno
         self.end_col_offset = end_col
 
-        self.completion_context = None
+        self.completion_context: Optional[ICompletionContext] = None
         self._path = path
         self.variable_name = variable_name
         self.variable_value = variable_value
@@ -98,6 +82,9 @@ class _VariableFoundFromPythonAst(object):
     @instance_cache
     def source(self):
         return self._path
+
+    def __typecheckself__(self) -> None:
+        _: IVariableFound = check_implements(self)
 
 
 class _VariableFoundFromSettings(object):
@@ -126,6 +113,9 @@ class _VariableFoundFromSettings(object):
     @property
     def end_col_offset(self):
         return 0
+
+    def __typecheckself__(self) -> None:
+        _: IVariableFound = check_implements(self)
 
 
 class _VariableFoundFromBuiltins(_VariableFoundFromSettings):
@@ -230,7 +220,7 @@ def _collect_completions_from_ast(
 
 
 def _collect_current_doc_variables(
-    completion_context: ICompletionContext, collector: _Collector
+    completion_context: ICompletionContext, collector: IVariablesCollector
 ):
     """
     :param CompletionContext completion_context:
@@ -242,16 +232,18 @@ def _collect_current_doc_variables(
 
 
 def _collect_resource_imports_variables(
-    completion_context: ICompletionContext, collector: _Collector
+    completion_context: ICompletionContext, collector: IVariablesCollector
 ):
-    resource_doc: IRobotDocument
-    for resource_doc in completion_context.get_resource_imports_as_docs():
+    resource_doc: Optional[IRobotDocument]
+    for _node, resource_doc in completion_context.get_resource_imports_as_docs():
+        if resource_doc is None:
+            continue
         new_ctx = completion_context.create_copy(resource_doc)
         _collect_following_imports(new_ctx, collector)
 
 
 def _collect_variable_imports_variables(
-    completion_context: ICompletionContext, collector: _Collector
+    completion_context: ICompletionContext, collector: IVariablesCollector
 ):
     variable_import_doc: IRobotDocument
     for variable_import_doc in completion_context.get_variable_imports_as_docs():
@@ -315,7 +307,7 @@ def _collect_variable_imports_variables(
 
 
 def _collect_following_imports(
-    completion_context: ICompletionContext, collector: _Collector
+    completion_context: ICompletionContext, collector: IVariablesCollector
 ):
     completion_context.check_cancelled()
     if completion_context.memo.follow_import_variables(completion_context.doc.uri):
@@ -328,7 +320,9 @@ def _collect_following_imports(
         _collect_variable_imports_variables(completion_context, collector)
 
 
-def _collect_arguments(completion_context: ICompletionContext, collector: _Collector):
+def _collect_arguments(
+    completion_context: ICompletionContext, collector: IVariablesCollector
+):
     from robotframework_ls.impl import ast_utils
 
     current_token_info = completion_context.get_current_token()
@@ -352,7 +346,7 @@ def _convert_name_to_var(variable_name):
 
 
 def _collect_from_settings(
-    completion_context: ICompletionContext, collector: _Collector
+    completion_context: ICompletionContext, collector: IVariablesCollector
 ):
     from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_VARIABLES
 
@@ -366,7 +360,7 @@ def _collect_from_settings(
 
 
 def _collect_from_builtins(
-    completion_context: ICompletionContext, collector: _Collector
+    completion_context: ICompletionContext, collector: IVariablesCollector
 ):
     from robotframework_ls.impl.robot_constants import BUILTIN_VARIABLES
 
@@ -376,7 +370,9 @@ def _collect_from_builtins(
             collector.on_variable(_VariableFoundFromBuiltins(key, val))
 
 
-def collect_variables(completion_context: ICompletionContext, collector: _Collector):
+def collect_variables(
+    completion_context: ICompletionContext, collector: IVariablesCollector
+):
     from robotframework_ls.impl import ast_utils
 
     token_info = completion_context.get_current_token()

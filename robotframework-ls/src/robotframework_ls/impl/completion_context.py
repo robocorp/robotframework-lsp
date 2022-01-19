@@ -13,6 +13,8 @@ from robotframework_ls.impl.protocols import (
     ILibraryImportNode,
     KeywordUsageInfo,
     CompletionType,
+    INode,
+    IResourceImportNode,
 )
 import sys
 
@@ -450,15 +452,16 @@ class CompletionContext(object):
         return self.get_resource_import_as_doc(variables_import)
 
     @instance_cache
-    def get_resource_imports_as_docs(self) -> Tuple[IRobotDocument, ...]:
-        ret: List[IRobotDocument] = []
+    def get_resource_imports_as_docs(
+        self,
+    ) -> Tuple[Tuple[IResourceImportNode, Optional[IRobotDocument]], ...]:
+        ret: List[Tuple[IResourceImportNode, Optional[IRobotDocument]]] = []
 
         # Get keywords from resources
         resource_imports = self.get_resource_imports()
         for resource_import in resource_imports:
             resource_doc = self.get_resource_import_as_doc(resource_import)
-            if resource_doc is not None:
-                ret.append(resource_doc)
+            ret.append((resource_import, resource_doc))
 
         return tuple(ret)
 

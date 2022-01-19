@@ -250,7 +250,7 @@ def _collect_current_doc_keywords(
     _collect_completions_from_ast(ast, completion_context, collector)
 
 
-_LibInfo = namedtuple("_LibInfo", "name, alias, builtin, args")
+_LibInfo = namedtuple("_LibInfo", "name, alias, builtin, args, node")
 
 
 def _collect_libraries_keywords(
@@ -269,11 +269,12 @@ def _collect_libraries_keywords(
     # Note: using a dict(_LibInfo:bool) where only the keys are meaningful
     # because we want to keep the order and sets aren't ordered.
     library_infos = {}
-    for name, alias, args in (
+    for name, alias, args, node in (
         (
             library.name,
             library.alias,
             ast_utils.get_library_arguments_serialized(library),
+            library,
         )
         for library in libraries
     ):
@@ -283,11 +284,12 @@ def _collect_libraries_keywords(
                 alias,
                 False,
                 args,
+                node,
             )
 
             library_infos[lib_info] = True
 
-    library_infos[_LibInfo(BUILTIN_LIB, None, True, None)] = True
+    library_infos[_LibInfo(BUILTIN_LIB, None, True, None, None)] = True
     libspec_manager = completion_context.workspace.libspec_manager
 
     for library_info in library_infos:
@@ -325,12 +327,55 @@ def _collect_libraries_keywords(
                             library_alias=library_info.alias,
                         )
                     )
+        else:
+            from robot.api import Token
+
+            node = library_info.node
+            node_name_tok = node.get_token(Token.NAME)
+            if node_name_tok is not None:
+                collector.on_unresolved_library(
+                    node.name,
+                    node_name_tok.lineno,
+                    node_name_tok.lineno,
+                    node_name_tok.col_offset,
+                    node_name_tok.end_col_offset,
+                )
+            else:
+                collector.on_unresolved_library(
+                    library_info.name,
+                    node.lineno,
+                    node.end_lineno,
+                    node.col_offset,
+                    node.end_col_offset,
+                )
 
 
 def _collect_resource_imports_keywords(
     completion_context: ICompletionContext, collector: IKeywordCollector
 ):
-    for resource_doc in completion_context.get_resource_imports_as_docs():
+
+    for node, resource_doc in completion_context.get_resource_imports_as_docs():
+        if resource_doc is None:
+            from robot.api import Token
+
+            node_name_tok = node.get_token(Token.NAME)
+            if node_name_tok is not None:
+                collector.on_unresolved_resource(
+                    node.name,
+                    node_name_tok.lineno,
+                    node_name_tok.lineno,
+                    node_name_tok.col_offset,
+                    node_name_tok.end_col_offset,
+                )
+            else:
+                collector.on_unresolved_resource(
+                    node.name,
+                    node.lineno,
+                    node.end_lineno,
+                    node.col_offset,
+                    node.end_col_offset,
+                )
+            continue
         new_ctx = completion_context.create_copy(resource_doc)
         _collect_following_imports(new_ctx, collector)
 
@@ -361,6 +406,29 @@ class _CollectKeywordNameToKeywordFound:
         if lst is None:
             self.keyword_name_to_keyword_found[keyword_found.keyword_name] = lst = []
         lst.append(keyword_found)
+
+    def on_unresolved_library(
+        self,
+        library_name: str,
+        lineno: int,
+        end_lineno: int,
+        col_offset: int,
+        end_col_offset: int,
+    ):
+        pass
+
+    def on_unresolved_resource(
+        self,
+        resource_name: str,
+        lineno: int,
+        end_lineno: int,
+        col_offset: int,
+        end_col_offset: int,
+    ):
+        pass
+
+    def __typecheckself__(self) -> None:
+        _: IKeywordCollector = check_implements(self)
 
 
 def collect_keyword_name_to_keyword_found(

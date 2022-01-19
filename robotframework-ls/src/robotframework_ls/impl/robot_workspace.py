@@ -25,8 +25,6 @@ from typing import Optional, Any, Set, List, Dict, Iterable, Tuple
 import weakref
 import threading
 from robocorp_ls_core.lsp import TextDocumentContentChangeEvent, TextDocumentItem
-import os
-from robocorp_ls_core.uris import normalize_drive
 from robocorp_ls_core import uris
 
 log = get_logger(__name__)
@@ -292,13 +290,16 @@ class WorkspaceIndexer(object):
                         old_cached = self._cached
                         new_cached = {}
 
+                        test_info_lst: List[ITestInfoFromSymbolsCacheTypedDict]
                         for uri, symbols_cache in self.iter_uri_and_symbols_cache():
                             if symbols_cache is None:
                                 test_info_lst = []
                             else:
-                                test_info_lst = symbols_cache.get_test_info()
-                                if test_info_lst is None:
+                                lst = symbols_cache.get_test_info()
+                                if lst is None:
                                     test_info_lst = []
+                                else:
+                                    test_info_lst = lst
 
                             if uri:
                                 test_info_for_uri: ITestInfoFromUriTypedDict = {
@@ -334,12 +335,14 @@ class WorkspaceIndexer(object):
                             if symbols_cache is None:
                                 test_info_lst = []
                             else:
-                                test_info_lst = symbols_cache.get_test_info()
-                                if test_info_lst is None:
+                                lst = symbols_cache.get_test_info()
+                                if lst is None:
                                     test_info_lst = []
+                                else:
+                                    test_info_lst = lst
 
                             if uri:
-                                test_info_for_uri: ITestInfoFromUriTypedDict = {
+                                test_info_for_uri = {
                                     "uri": uri,
                                     "testInfo": test_info_lst,
                                 }
