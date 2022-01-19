@@ -1,3 +1,13 @@
+New in 0.25.0 (2022-01-19)
+-----------------------------
+
+- The Python extension interpreter is automatically set to use the Robot environment
+  - It's possibly to opt out by setting `robocorp.autoSetPythonExtensionInterpreter` to `false`.
+  - Action now uses `python.defaultInterpreterPath` or the new (unreleased) API to set the interpreter if available.
+- The Robot Framework Language Server `0.37.0` is now required for a critical fix:
+  - Handle the case where the target robot is passed as an array for resolving the interpreter (launching with the test explorer could fail due to this).
+
+
 New in 0.24.0 (2022-01-17)
 -----------------------------
 
