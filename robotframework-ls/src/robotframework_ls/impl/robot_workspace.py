@@ -530,6 +530,7 @@ class RobotWorkspace(Workspace):
 
     @overrides(Workspace.dispose)
     def dispose(self):
+        Workspace.dispose(self)
         indexer = self.workspace_indexer
         if indexer is not None:
             indexer.dispose()

@@ -12,7 +12,6 @@ import {
 } from "vscode";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import * as path from "path";
-import * as fs from "fs";
 
 interface ITestInfo {
     uri: string;
@@ -162,21 +161,14 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
         cwd = path.dirname(executePath);
     }
 
-    let args: string[];
-    if (executeName == "*") {
-        args = [];
-    } else {
-        args = ["-t", executeName];
-    }
+    let args = [];
 
     let debugConfiguration: DebugConfiguration = {
         "type": "robotframework-lsp",
         "name": "Robot Framework: Launch " + executeName,
         "request": "launch",
         "cwd": cwd,
-        "target": executePath,
         "terminal": "integrated",
-        "env": {},
         "args": args,
     };
 
@@ -201,6 +193,24 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
                 }
             }
         }
+    }
+
+    if (debugConfiguration.makeSuite === undefined) {
+        // Not in template (default == true)
+        debugConfiguration.makeSuite = true;
+    }
+
+    // Note that target is unused if RFLS_PRERUN_FILTER_TESTS is specified and makeSuite == true.
+    debugConfiguration.target = executePath;
+
+    let envFiltering = JSON.stringify({
+        "include": [[executePath, executeName]],
+        "exclude": [],
+    });
+    if (debugConfiguration.env) {
+        debugConfiguration.env["RFLS_PRERUN_FILTER_TESTS"] = envFiltering;
+    } else {
+        debugConfiguration.env = { "RFLS_PRERUN_FILTER_TESTS": envFiltering };
     }
 
     let debugSessionOptions: DebugSessionOptions = { "noDebug": noDebug };

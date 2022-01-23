@@ -50,7 +50,6 @@ import { registerInteractiveCommands } from "./interactive/rfInteractive";
 import { errorFeedback, logError, OUTPUT_CHANNEL } from "./channel";
 import { Mutex } from "./mutex";
 import { fileExists } from "./files";
-import { Stats } from "fs";
 import { clearTestItems, handleTestsCollected, ITestInfoFromUri, setupTestExplorerSupport } from "./testview";
 
 interface ExecuteWorkspaceCommandArgs {
@@ -84,6 +83,27 @@ function findExecutableInPath(executable: string) {
     return undefined;
 }
 
+function removeEscaping(s) {
+    if (s instanceof Array) {
+        let ret = [];
+        for (const it of s) {
+            ret.push(removeEscaping(it));
+        }
+        return ret;
+    }
+
+    let str: string = s;
+
+    if (str.startsWith('^"\\') && str.endsWith('"')) {
+        str = str.substring(3, str.length - 1);
+    } else if (str.startsWith('^"') && str.endsWith('"')) {
+        str = str.substring(2, str.length - 1);
+    } else if (str.startsWith('"') && str.endsWith('"')) {
+        str = str.substring(1, str.length - 1);
+    }
+    return str;
+}
+
 class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
     provideDebugConfigurations?(folder: WorkspaceFolder | undefined, token?: CancellationToken): DebugConfiguration[] {
         let configurations: DebugConfiguration[] = [];
@@ -110,7 +130,8 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
         let config = workspace.getConfiguration("robot");
         let pythonpath: Array<string> = getArrayStrFromConfigExpandingVars(config, "pythonpath");
         let variables: object = config.get("variables");
-        let targetRobot: object = debugConfiguration.target;
+        debugConfiguration.target = removeEscaping(debugConfiguration.target);
+        let targetRobot: any = debugConfiguration.target;
         if (targetRobot instanceof Array && targetRobot.length > 0) {
             targetRobot = targetRobot[0];
         }
@@ -168,7 +189,14 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
         }
         debugConfiguration.args = args;
 
+        let uri = vscode.Uri.file(targetRobot);
+        let wsFolder = workspace.getWorkspaceFolder(uri);
+        if (!wsFolder) {
+            wsFolder = folder;
+        }
         if (debugConfiguration.cwd) {
+            debugConfiguration.cwd = removeEscaping(debugConfiguration.cwd);
+
             let stat: vscode.FileStat;
             try {
                 stat = await vscode.workspace.fs.stat(vscode.Uri.file(debugConfiguration.cwd));
@@ -185,6 +213,10 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
                         " seems to be a file and not a directory."
                 );
                 return undefined;
+            }
+        } else {
+            if (wsFolder) {
+                debugConfiguration.cwd = wsFolder?.uri?.fsPath;
             }
         }
         return debugConfiguration;

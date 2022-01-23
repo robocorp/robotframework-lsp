@@ -20,7 +20,7 @@ from functools import partial
 import itertools
 import os.path
 import threading
-from typing import Optional, List
+from typing import Optional, List, Union, Tuple, Set
 import typing
 
 from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import BaseSchema
@@ -76,6 +76,181 @@ def _notify_on_exited_pid(on_exit, pid):
         on_exit()
     except:
         log.exception("Error")
+
+
+def find_init_robot_root(initial_target: str, up_to_dir: str) -> Optional[str]:
+    """
+    Find the root __init__.robot file which should be considered to create a
+    suite based on the initial_target given.
+
+    Returns the folder to be considered the root (which contains the __init__.robot).
+    If an __init__.robot file is not found returns None.
+    """
+    check_dir: str
+
+    if os.path.isdir(initial_target):
+        check_dir = initial_target
+    else:
+        check_dir = os.path.dirname(initial_target)
+
+    found: Optional[str] = None
+    while True:
+        if os.path.exists(os.path.join(check_dir, "__init__.robot")):
+            found = check_dir
+
+        if up_to_dir:
+            if os.path.samefile(check_dir, up_to_dir):
+                return found
+
+        parent = os.path.dirname(check_dir)
+        if not parent or parent == check_dir:
+            return found
+
+        check_dir = parent
+
+    # Never gets here...
+
+
+def _compute_env_filtering(env: dict, target_args: List[str]):
+    import json
+
+    env_filtering = {}
+    if "RFLS_PRERUN_FILTER_TESTS" not in env:
+        # If the RFLS_PRERUN_FILTER_TESTS env var is specified, it means that
+        # the UI chose to have fine grained control of what needs to be run.
+        # If that's not the case, we'll consider that we need to run anything
+        # under the given path.
+        #
+        # Note that this is redundant in the case where makeSuite == False as
+        # we'll just run the file/directories with everything in it (the user
+        # can still filter with '-t' as needed in this case, but the suite will
+        # only include what he added anyways and not more items as is the case
+        # when makeSuite == True).
+        include = [[path, "*"] for path in target_args]
+
+        # We need to compute the filtering based on the target(s)
+        env_filtering["RFLS_PRERUN_FILTER_TESTS"] = json.dumps(
+            {"include": include, "exclude": []}
+        )
+
+    return env_filtering
+
+
+def compute_cmd_line_and_env(
+    run_robot_py: str,
+    target: Union[str, List[str]],
+    make_suite: bool,
+    port: int,
+    args: List[str],
+    run_in_debug_mode: bool,
+    cwd: str,
+    suite_target: Optional[Union[str, List[str]]],
+    env: dict,
+) -> Tuple[List[str], dict]:
+    """
+    Note that cwd and target MUST be absolute at this point.
+    """
+
+    # This will be used if make_suite is not specified.
+    target_args: List[str] = target if isinstance(target, list) else [target]
+    new_target_args: List[str] = target_args[:]
+
+    import sys
+
+    new_env = env.copy()
+    need_env_filtering = False
+
+    suite_filter_args = []
+    if make_suite:
+        if suite_target:
+            new_target_args = (
+                suite_target if isinstance(suite_target, list) else [suite_target]
+            )
+            need_env_filtering = True
+        else:
+            # Ok, suite target hasn't been specified, so, we'll check if we need
+            # to build a suite based on the `__init__.robot` files found in the
+            # parent structure.
+            found_roots: Set[Union[str, None]] = set()
+
+            new_target_args = []
+            for target in target_args:
+                found = find_init_robot_root(target, cwd)
+                found_roots.add(found)
+                if not found:
+                    if target not in new_target_args:
+                        new_target_args.append(target)
+                else:
+                    if found not in new_target_args:
+                        new_target_args.append(found)
+
+            assert len(found_roots) > 0  # Even if it wasn't resolved, None is there ;)
+
+            if len(found_roots) == 1:
+                base_root = next(iter(found_roots))
+                if base_root is None:
+                    # I.e.: no __init__.robot is found anywhere, so, we
+                    # don't need to do anything.
+                    need_env_filtering = False
+                else:
+                    for target in target_args:
+                        target_no_ext = os.path.splitext(target)[0]
+                        relative = os.path.relpath(target_no_ext, base_root)
+                        suite_to_filter = relative.replace("\\", "/").replace("/", ".")
+
+                        suite_filter_args.append("--suite")
+                        if suite_to_filter == ".":
+                            suite_filter_args.append(os.path.basename(base_root))
+                        else:
+                            suite_filter_args.append(
+                                os.path.basename(base_root) + "." + suite_to_filter
+                            )
+
+                    new_target_args = [base_root]
+
+                    # We shouldn't need env filtering as we should've filtered
+                    # for the suites we care about with --suite.
+                    need_env_filtering = False
+
+            else:
+                # We don't have a common ancestor, so, just run all individually
+                # (the new_target_args is already correct as is as we filled it
+                # while computing the robot roots) and let the filtering take
+                # place as needed.
+                #
+                # Note that this means all files will be loaded prior to the
+                # filtering (unlike the case with a single root where we use
+                # --suite which applies filtering prior to loading).
+                need_env_filtering = True
+
+    if need_env_filtering:
+        new_env.update(_compute_env_filtering(env, target_args))
+
+    if "RFLS_PRERUN_FILTER_TESTS" in new_env:
+        found_filter = (
+            "--prerunmodifier=robotframework_debug_adapter.prerun_modifiers.FilteringTestsSuiteVisitor"
+            in args
+        )
+        if not found_filter:
+            args.append(
+                "--prerunmodifier=robotframework_debug_adapter.prerun_modifiers.FilteringTestsSuiteVisitor"
+            )
+
+    # Note: target must be the last parameter.
+    cmdline = (
+        [
+            sys.executable,
+            "-u",
+            run_robot_py,
+            "--port",
+            str(port),
+            "--debug" if run_in_debug_mode else "--no-debug",
+        ]
+        + args
+        + suite_filter_args
+        + new_target_args
+    )
+    return cmdline, new_env
 
 
 class LaunchProcess(object):
@@ -136,13 +311,12 @@ class LaunchProcess(object):
             launch_response.message = message
             self._valid = False
 
-        import sys
-
         target = request.arguments.kwargs.get("target")
         self._cwd = request.arguments.kwargs.get("cwd")
         self._terminal = request.arguments.kwargs.get("terminal", TERMINAL_INTEGRATED)
         args = request.arguments.kwargs.get("args") or []
         make_suite = request.arguments.kwargs.get("makeSuite", True)
+        suite_target = request.arguments.kwargs.get("suiteTarget", "")
         args = [str(arg) for arg in args]
 
         env = {}
@@ -171,34 +345,69 @@ class LaunchProcess(object):
 
         if self._terminal not in VALID_TERMINAL_OPTIONS:
             return mark_invalid(
-                "Invalid terminal option: %s (must be one of: %s)"
-                % (self._terminal, VALID_TERMINAL_OPTIONS)
+                f"Invalid terminal option: {self._terminal} (must be one of: {VALID_TERMINAL_OPTIONS})"
             )
 
         try:
-            if self._cwd is not None:
-                if not os.path.exists(self._cwd):
-                    return mark_invalid(
-                        "cwd specified does not exist: %s" % (self._cwd,)
-                    )
-        except:
-            log.exception("Error")
-            return mark_invalid("Error checking if cwd (%s) exists." % (self._cwd,))
-
-        try:
-            if target is None:
+            if not target:
                 return mark_invalid("target not provided in launch.")
 
-            if isinstance(target, list):
-                for t in target:
-                    if not os.path.exists(t):
-                        return mark_invalid("File: %s does not exist." % (t,))
-            else:
-                if not os.path.exists(target):
-                    return mark_invalid("File: %s does not exist." % (target,))
-        except:
-            log.exception("Error")
-            return mark_invalid("Error checking if target (%s) exists." % (target,))
+            new_target = []
+
+            if not isinstance(target, list):
+                target = [target]
+
+            for t in target:
+                if not os.path.isabs(t):
+                    if not self._cwd:
+                        return mark_invalid(
+                            f"Target: {t} is relative and cwd was not given."
+                        )
+
+                    t = os.path.abspath(os.path.join(self._cwd, t))
+                else:
+                    # This will also normalize
+                    t = os.path.abspath(t)
+
+                if not os.path.exists(t):
+                    return mark_invalid(f"File: {t} does not exist.")
+
+                new_target.append(t)
+
+            target = new_target
+        except Exception as e:
+            msg = f"Error checking if target ({target}) exists:\n{e}"
+            log.exception(msg)
+            return mark_invalid(msg)
+
+        try:
+            if not self._cwd:
+                if isinstance(target, list):
+                    t = target[0]
+                else:
+                    t = target
+
+                if os.path.isdir(t):
+                    dirname = t
+                else:
+                    dirname = os.path.dirname(t)
+
+                base = find_init_robot_root(dirname, "")
+                if base is not None:
+                    dirname = base
+
+                self._cwd = dirname
+
+            if not self._cwd:
+                if not os.path.exists(self._cwd):
+                    return mark_invalid(f"cwd specified does not exist: {self._cwd}")
+
+            # make sure cwd is absolute
+            self._cwd = os.path.abspath(self._cwd)
+        except Exception as e:
+            msg = f"Error checking if cwd ({self._cwd}) exists:\n{e}"
+            log.exception(msg)
+            return mark_invalid(msg)
 
         if DEBUG:
             log.debug("Run in debug mode: %s\n" % (self._run_in_debug_mode,))
@@ -221,44 +430,30 @@ class LaunchProcess(object):
             )
             if not os.path.exists(run_robot_py):
                 return mark_invalid("File: %s does not exist." % (run_robot_py,))
-        except:
-            log.exception("Error")
-            return mark_invalid("Error checking if run_robot__main__.py exists.")
+        except Exception as e:
+            msg = f"Error checking if run_robot__main__.py exists:\n{e}"
+            log.exception(msg)
+            return mark_invalid(msg)
 
         else:
-            target_args = target if isinstance(target, list) else [target]
-            if make_suite:
-                target_lst = target
-                if not isinstance(target_lst, list):
-                    target_lst = [target_lst]
-
-                target_args = []
-                for t in target_lst:
-                    if not os.path.isfile(t):
-                        target_args.append(t)
-                    else:
-                        target_dir = os.path.dirname(t)
-                        if os.path.exists(os.path.join(target_dir, "__init__.robot")):
-                            target_name = os.path.splitext(os.path.basename(t))[0]
-                            target_args.extend(["--suite", target_name, target_dir])
-                        else:
-                            target_args.append(t)
-
-            # Note: target must be the last parameter.
-            cmdline = (
-                [
-                    sys.executable,
-                    "-u",
+            try:
+                cmdline_and_env = compute_cmd_line_and_env(
                     run_robot_py,
-                    "--port",
-                    str(port),
-                    "--debug" if self._run_in_debug_mode else "--no-debug",
-                ]
-                + args
-                + target_args
-            )
+                    target,
+                    make_suite,
+                    port,
+                    args,
+                    self._run_in_debug_mode,
+                    self._cwd,
+                    suite_target,
+                    self._env,
+                )
 
-        self._cmdline = cmdline
+                self._cmdline, self._env = cmdline_and_env
+            except Exception as e:
+                msg = f"Error computing command line and environment:\n{e}"
+                log.exception(msg)
+                return mark_invalid(msg)
 
     @property
     def valid(self) -> bool:

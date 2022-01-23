@@ -209,7 +209,7 @@ def get_json_contents():
                         "launch": {
                             "properties": {
                                 "target": {
-                                    "type": "string",
+                                    "type": ["string", "array"],
                                     "description": "The .robot file or a folder containing .robot files to be launched.",
                                     "default": "${file}",
                                 },
@@ -228,8 +228,13 @@ def get_json_contents():
                                 },
                                 "makeSuite": {
                                     "type": "boolean",
-                                    "description": "When running, always create a suite for the current folder and then filter the target (to automatically load __init__.robot).",
+                                    "description": "If specified, creates a suite from suiteTarget or uses heuristics to create a suite based on __init__.robot found in the structure.",
                                     "default": True,
+                                },
+                                "suiteTarget": {
+                                    "type": ["string", "array"],
+                                    "description": "If specified, a suite will be created from the given target(s).",
+                                    "default": "",
                                 },
                                 "terminal": {
                                     "type": "string",

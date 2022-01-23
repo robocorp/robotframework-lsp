@@ -15,6 +15,7 @@
 import os.path
 from robotframework_debug_adapter_tests.fixtures import _DebuggerAPI
 import json
+import pytest
 
 
 def test_invalid_launch_1(debugger_api: _DebuggerAPI):
@@ -421,10 +422,101 @@ def test_init_auto_loaded(debugger_api: _DebuggerAPI):
     debugger_api.set_breakpoints(target_init, (bp_setup, bp_teardown))
     debugger_api.configuration_done()
 
-    json_hit = debugger_api.wait_for_thread_stopped(file="__init__.robot")
+    json_hit = debugger_api.wait_for_thread_stopped(file="check_init/__init__.robot")
     debugger_api.continue_event(json_hit.thread_id)
 
-    json_hit = debugger_api.wait_for_thread_stopped(file="__init__.robot")
+    json_hit = debugger_api.wait_for_thread_stopped(file="check_init/__init__.robot")
+    debugger_api.continue_event(json_hit.thread_id)
+
+    debugger_api.read(TerminatedEvent)
+
+
+def test_sub_init_auto_loaded(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+
+    debugger_api.initialize()
+    target = debugger_api.get_dap_case_file("check_sub_init/sub1/lsp_test.robot")
+    target_init = debugger_api.get_dap_case_file("check_sub_init/__init__.robot")
+    target_sub_init = debugger_api.get_dap_case_file(
+        "check_sub_init/sub1/__init__.robot"
+    )
+    debugger_api.target = target
+
+    debugger_api.launch(target, debug=True)
+    for target in (target_init, target_sub_init):
+        bp_setup = debugger_api.get_line_index_with_content(
+            "Suite Setup", filename=target
+        )
+        bp_teardown = debugger_api.get_line_index_with_content(
+            "Suite Teardown", filename=target
+        )
+        debugger_api.set_breakpoints(target, (bp_setup, bp_teardown))
+
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(
+        file="check_sub_init/__init__.robot"
+    )
+    debugger_api.continue_event(json_hit.thread_id)
+
+    json_hit = debugger_api.wait_for_thread_stopped(
+        file="check_sub_init/sub1/__init__.robot"
+    )
+    debugger_api.continue_event(json_hit.thread_id)
+
+    json_hit = debugger_api.wait_for_thread_stopped(
+        file="check_sub_init/sub1/__init__.robot"
+    )
+    debugger_api.continue_event(json_hit.thread_id)
+
+    json_hit = debugger_api.wait_for_thread_stopped(
+        file="check_sub_init/__init__.robot"
+    )
+    debugger_api.continue_event(json_hit.thread_id)
+
+    debugger_api.read(TerminatedEvent)
+
+
+@pytest.mark.parametrize("scenario", ["cwd", "suite_target"])
+def test_sub_init_auto_loaded_not_complete(debugger_api: _DebuggerAPI, scenario):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+
+    debugger_api.initialize()
+    target = debugger_api.get_dap_case_file("check_sub_init2/sub1/sub2/lsp_test.robot")
+    should_skip = debugger_api.get_dap_case_file("check_sub_init2/sub1/my.robot")
+    target_init = debugger_api.get_dap_case_file("check_sub_init2/__init__.robot")
+
+    debugger_api.target = target
+    if scenario == "cwd":
+        debugger_api.cwd = debugger_api.get_dap_case_file("check_sub_init2")
+    else:
+        debugger_api.cwd = debugger_api.get_dap_case_file("check_sub_init2/sub1/sub2")
+        debugger_api.suite_target = debugger_api.get_dap_case_file("check_sub_init2")
+
+    debugger_api.launch(target, debug=True)
+    bp_setup = debugger_api.get_line_index_with_content(
+        "Suite Setup", filename=target_init
+    )
+    bp_teardown = debugger_api.get_line_index_with_content(
+        "Suite Teardown", filename=target_init
+    )
+    debugger_api.set_breakpoints(target_init, (bp_setup, bp_teardown))
+
+    bp_to_skip = debugger_api.get_line_index_with_content(
+        "This should not run", filename=should_skip
+    )
+    debugger_api.set_breakpoints(should_skip, bp_to_skip)
+
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(
+        file="check_sub_init2/__init__.robot"
+    )
+    debugger_api.continue_event(json_hit.thread_id)
+
+    json_hit = debugger_api.wait_for_thread_stopped(
+        file="check_sub_init2/__init__.robot"
+    )
     debugger_api.continue_event(json_hit.thread_id)
 
     debugger_api.read(TerminatedEvent)
@@ -625,9 +717,6 @@ def test_launch_ignoring_tests(debugger_api: _DebuggerAPI):
     debugger_api.launch(
         targets,
         debug=True,
-        args=[
-            "--prerunmodifier=robotframework_debug_adapter.prerun_modifiers.FilteringTestsSuiteVisitor",
-        ],
         env={
             "RFLS_PRERUN_FILTER_TESTS": json.dumps(
                 {"include": [[target1, "Check log"]], "exclude": []}

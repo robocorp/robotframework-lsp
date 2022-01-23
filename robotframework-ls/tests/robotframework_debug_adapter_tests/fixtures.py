@@ -112,6 +112,8 @@ class _DebuggerAPI(object):
         self.read_queue = read_queue
         self.all_messages_read = []
         self.target = None
+        self.cwd = None
+        self.suite_target = None
         self.dap_resources_dir = dap_resources_dir
 
     def write(self, msg):
@@ -266,6 +268,7 @@ class _DebuggerAPI(object):
         terminal="none",
         args: Optional[Iterable[str]] = None,
         env: Optional[dict] = None,
+        make_suite: Optional[bool] = None,
     ):
         """
         :param args:
@@ -292,9 +295,15 @@ class _DebuggerAPI(object):
             target=target,
             terminal=terminal,
             env=env,
+            cwd=self.cwd,
+            suiteTarget=self.suite_target,
         )
         if args:
             launch_args.kwargs["args"] = args
+
+        if make_suite is not None:
+            launch_args.kwargs["makeSuite"] = make_suite
+
         self.write(LaunchRequest(launch_args))
 
         if terminal == "external":
@@ -422,7 +431,7 @@ class _DebuggerAPI(object):
         if file is not None:
             path = json_hit.stack_trace_response.body.stackFrames[0]["source"]["path"]
 
-            if not path.endswith(file):
+            if not path.replace("\\", "/").endswith(file.replace("\\", "/")):
                 raise AssertionError("Expected path: %s to end with: %s" % (path, file))
         if name is not None:
             assert json_hit.stack_trace_response.body.stackFrames[0]["name"] == name

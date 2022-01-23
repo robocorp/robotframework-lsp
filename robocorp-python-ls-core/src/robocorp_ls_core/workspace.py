@@ -511,7 +511,14 @@ class Workspace(object):
             yield from folder._iter_all_doc_uris(extensions)
 
     def dispose(self):
-        pass
+        self._check_in_mutate_thread()
+
+        # Stop tracking folders and clear doc references.
+        for folder_uri in list(self._folders.keys()):
+            self.remove_folder(folder_uri)
+
+        self._docs = {}
+        self._filesystem_docs = {}
 
     def __typecheckself__(self) -> None:
         from robocorp_ls_core.protocols import check_implements

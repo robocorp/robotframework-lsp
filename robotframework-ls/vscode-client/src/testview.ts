@@ -227,180 +227,94 @@ export async function setupTestExplorerSupport() {
             controller.items.forEach((test) => queue.push(test));
         }
 
-        const testCases: vscode.TestItem[] = [];
         let includeTests: vscode.TestItem[] = [];
         let excludeTests: vscode.TestItem[] = [];
+        let workspaceFolders = new Set<vscode.WorkspaceFolder>();
 
-        let simpleMode = false;
-        if (!request.exclude || request.exclude.length === 0) {
-            simpleMode = true;
-            if (queue.length !== 1) {
-                // When we have multiple items, we need to verify if simple mode is usable.
-                let allTypesEqual = undefined;
-                for (const test of queue) {
-                    if (allTypesEqual === undefined) {
-                        allTypesEqual = getType(test);
-                    } else {
-                        if (allTypesEqual !== getType(test)) {
-                            allTypesEqual = undefined;
-                            break;
-                        }
-                    }
-                }
-
-                if (allTypesEqual === ItemType.File) {
-                    simpleMode = true;
-                } else if (allTypesEqual === ItemType.TestCase) {
-                    // Only simple if only one uri was used (for multiple files we
-                    // need the non-simple mode).
-                    let found = new Set();
-                    for (const test of queue) {
-                        found.add(test.uri);
-                    }
-                    simpleMode = found.size === 1;
-                } else {
-                    simpleMode = false;
-                }
+        while (queue.length > 0 && !token.isCancellationRequested) {
+            const test = queue.pop()!;
+            let uri = test.uri;
+            let workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+            if (workspaceFolder) {
+                workspaceFolders.add(workspaceFolder);
+            } else {
+                OUTPUT_CHANNEL.appendLine("Could not find workspace folder for uri: " + uri);
             }
+            includeTests.push(test);
         }
 
-        if (simpleMode) {
-            // Easy mode, just run everything included.
-            while (queue.length > 0 && !token.isCancellationRequested) {
-                const test = queue.pop()!;
-                testCases.push(test);
-            }
-        } else {
-            // In non-simple mode we fill test cases with the uris and
-            // filter with the includes (excludes are applied here and
-            // not in the backend).
-            let includesAsSet: Set<vscode.TestItem> = new Set();
-            while (queue.length > 0 && !token.isCancellationRequested) {
-                const test = queue.pop()!;
-
-                // Skip tests the user asked to exclude
-                if (request.exclude?.includes(test)) {
-                    continue;
-                }
-
-                switch (getType(test)) {
-                    case ItemType.TestCase:
-                        includesAsSet.add(test.parent); // deduplicate testCases
-                        includeTests.push(test);
-                        break;
-                }
-
-                test.children.forEach((test) => queue.push(test));
-            }
-            for (const test of includesAsSet) {
-                testCases.push(test);
+        if (request.exclude) {
+            for (const test of request.exclude) {
+                excludeTests.push(test);
             }
         }
 
         if (token.isCancellationRequested) {
             return;
         }
-        if (!testCases) {
-            vscode.window.showInformationMessage("Nothing was run because all test cases were filtered out.");
-            return;
-        }
-        let firstTestCase = testCases[0];
-        let uri = firstTestCase.uri;
 
-        let workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-        if (!workspaceFolder) {
-            let folders = vscode.workspace.workspaceFolders;
-            if (folders) {
-                // Use the currently opened folder.
-                workspaceFolder = folders[0];
-            }
-        }
-
-        if (!workspaceFolder) {
+        if (workspaceFolders.size > 1) {
+            OUTPUT_CHANNEL.appendLine(
+                "Note: tests span more than 1 workspace folder. Launch templates will only take the first one into account."
+            );
+        } else if (workspaceFolders.size == 0) {
             vscode.window.showErrorMessage("Unable to launch because workspace folder is not available.");
             return;
         }
-
+        let wsFoldersAsArray: vscode.WorkspaceFolder[] = [];
+        for (const ws of workspaceFolders) {
+            wsFoldersAsArray.push(ws);
+        }
         const runId = nextRunId();
         runIdToTestRun.set(runId, run);
         // Make sure to end the run after all tests have been executed:
 
-        let launched = await launch(workspaceFolder, runId, testCases, includeTests, excludeTests, shouldDebug);
+        let launched = await launch(wsFoldersAsArray, runId, includeTests, excludeTests, shouldDebug);
         if (!launched) {
             handleTestRunFinished(runId);
         }
-        // For each test we need to call something as:
-        // const start = Date.now();
-        // run.started();
-        // run.passed(test, Date.now() - start);
-        // run.failed(test, new vscode.TestMessage(e.message), Date.now() - start);
-
-        // When finished:
-        // run.end();
     }
 
     async function launch(
-        workspaceFolder: vscode.WorkspaceFolder,
+        workspaceFolders: vscode.WorkspaceFolder[],
         runId: string,
-        // in general only this is needed (passes tests with args)
-        // -- if filtering is needed this should include only the files.
-        testCases: vscode.TestItem[],
-        includeTests: vscode.TestItem[], // the tests to be included (if specific filtering by test names is needed)
-        excludeTests: vscode.TestItem[], // the tests to be excluded (if specific filtering by test names is needed)
+        includeTests: vscode.TestItem[], // the tests to be included
+        excludeTests: vscode.TestItem[], // the tests to be excluded
         shouldDebug: boolean
     ): Promise<boolean> {
         let cwd: string;
         let launchTemplate: vscode.DebugConfiguration = undefined;
-        cwd = workspaceFolder.uri.fsPath;
-        launchTemplate = await readLaunchTemplate(workspaceFolder);
+        cwd = workspaceFolders[0].uri.fsPath;
+        launchTemplate = await readLaunchTemplate(workspaceFolders[0]);
 
         let args: string[] = [];
-        let targets = new Set();
 
         // We want the events both in run and debug in this case.
         args.push("--listener=robotframework_debug_adapter.events_listener.EventsListenerV2");
 
-        // Exclude tests based on RFLS_PRERUN_FILTERING env variable.
+        // Include/exclude tests based on RFLS_PRERUN_FILTERING env variable.
         let envFiltering: string | undefined = undefined;
-        if (includeTests.length > 0 || excludeTests.length > 0) {
-            args.push("--prerunmodifier=robotframework_debug_adapter.prerun_modifiers.FilteringTestsSuiteVisitor");
-
-            function convertToFiltering(collection: vscode.TestItem[]) {
-                let ret = [];
-                for (const test of collection) {
+        function convertToFiltering(collection: vscode.TestItem[]) {
+            let ret = [];
+            for (const test of collection) {
+                if (getType(test) === ItemType.TestCase) {
                     let data = testData.get(test);
                     if (!data) {
                         OUTPUT_CHANNEL.appendLine("Unable to find test data for: " + test.id);
                         continue;
                     }
                     ret.push([test.uri.fsPath, data.testInfo.name]);
+                } else {
+                    ret.push([test.uri.fsPath, "*"]);
                 }
-                return ret;
             }
-
-            envFiltering = JSON.stringify({
-                "include": convertToFiltering(includeTests),
-                "exclude": convertToFiltering(excludeTests),
-            });
+            return ret;
         }
 
-        for (const test of testCases) {
-            const data = testData.get(test);
-            if (data === undefined) {
-                OUTPUT_CHANNEL.appendLine("Unable to get data for: " + test.id);
-                continue;
-            }
-            targets.add(test.uri.fsPath);
-            if (getType(test) == ItemType.TestCase) {
-                args.push("-t");
-                args.push(data.testInfo.name);
-            }
-        }
-
-        const targetsAsArray = [];
-        for (const t of targets) {
-            targetsAsArray.push(t);
-        }
+        envFiltering = JSON.stringify({
+            "include": convertToFiltering(includeTests),
+            "exclude": convertToFiltering(excludeTests),
+        });
 
         let debugConfiguration: vscode.DebugConfiguration = {
             "type": "robotframework-lsp",
@@ -408,7 +322,6 @@ export async function setupTestExplorerSupport() {
             "name": "Robot Framework: Launch " + runId,
             "request": "launch",
             "cwd": cwd,
-            "target": targetsAsArray,
             "terminal": "integrated",
             "env": {},
             "args": args,
@@ -437,16 +350,40 @@ export async function setupTestExplorerSupport() {
             }
         }
 
-        if (envFiltering !== undefined) {
-            if (!debugConfiguration.env) {
-                debugConfiguration.env = { "RFLS_PRERUN_FILTER_TESTS": envFiltering };
-            } else {
-                debugConfiguration.env["RFLS_PRERUN_FILTER_TESTS"] = envFiltering;
+        if (debugConfiguration.makeSuite === undefined) {
+            // Not in template (default == true)
+            debugConfiguration.makeSuite = true;
+        }
+
+        // Note that target is unused if RFLS_PRERUN_FILTER_TESTS is specified and makeSuite == true.
+        let targetAsSet = new Set<string>();
+        for (const test of includeTests) {
+            targetAsSet.add(test.uri.fsPath);
+        }
+        let target: string[] = [];
+        for (const s of targetAsSet) {
+            target.push(s);
+        }
+        debugConfiguration.target = target;
+
+        if (debugConfiguration.makeSuite) {
+            if (workspaceFolders.length > 1) {
+                let suiteTarget = [];
+                for (const ws of workspaceFolders) {
+                    suiteTarget.push(ws.uri.fsPath);
+                }
+                debugConfiguration["suiteTarget"] = suiteTarget;
             }
         }
 
+        if (!debugConfiguration.env) {
+            debugConfiguration.env = { "RFLS_PRERUN_FILTER_TESTS": envFiltering };
+        } else {
+            debugConfiguration.env["RFLS_PRERUN_FILTER_TESTS"] = envFiltering;
+        }
+
         let debugSessionOptions: vscode.DebugSessionOptions = { "noDebug": !shouldDebug };
-        let started = await vscode.debug.startDebugging(workspaceFolder, debugConfiguration, debugSessionOptions);
+        let started = await vscode.debug.startDebugging(workspaceFolders[0], debugConfiguration, debugSessionOptions);
         return started;
     }
 
@@ -604,10 +541,6 @@ function failedKeywordsToTestMessage(event: vscode.DebugSessionCustomEvent): vsc
     let failedKeywords = event.body.failed_keywords;
     if (failedKeywords) {
         for (const failed of failedKeywords) {
-            // "name": name,
-            // "source": source,
-            // "lineno": lineno,
-            // "failure_messages": self._keyword_failure_messages,
             let errorMsg = "";
             for (const s of failed.failure_messages) {
                 errorMsg += s;
