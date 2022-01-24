@@ -10,7 +10,7 @@ from robotframework_ls.impl.protocols import (
     IKeywordCollector,
 )
 from robotframework_ls.impl.robot_specbuilder import KeywordArg
-from typing import Tuple, Sequence, List, Set, Dict
+from typing import Tuple, Sequence, List, Set, Dict, Optional
 
 
 log = get_logger(__name__)
@@ -109,6 +109,22 @@ class _KeywordFoundFromAst(object):
     def end_col_offset(self):
         return self._name_token.end_col_offset
 
+    @property
+    def scope_lineno(self) -> Optional[int]:
+        return self._keyword_node.lineno - 1
+
+    @property
+    def scope_end_lineno(self) -> Optional[int]:
+        return self._keyword_node.end_lineno - 1
+
+    @property
+    def scope_col_offset(self) -> Optional[int]:
+        return self._keyword_node.col_offset
+
+    @property
+    def scope_end_col_offset(self) -> Optional[int]:
+        return self._keyword_node.end_col_offset
+
     def __typecheckself__(self) -> None:
         _: IKeywordFound = check_implements(self)
 
@@ -188,6 +204,22 @@ class _KeywordFoundFromLibrary(object):
     @property
     def end_col_offset(self):
         return 0
+
+    @property
+    def scope_lineno(self) -> Optional[int]:
+        return self.lineno
+
+    @property
+    def scope_end_lineno(self) -> Optional[int]:
+        return self.end_lineno
+
+    @property
+    def scope_col_offset(self) -> Optional[int]:
+        return self.col_offset
+
+    @property
+    def scope_end_col_offset(self) -> Optional[int]:
+        return self.end_col_offset
 
     @property
     @instance_cache

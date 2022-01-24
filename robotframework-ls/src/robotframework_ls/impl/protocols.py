@@ -227,6 +227,30 @@ class IKeywordFound(Protocol):
         # If it's a resource, this is the basename of the resource without the extension.
         pass
 
+    @property
+    def library_alias(self) -> Optional[str]:
+        pass
+
+    # These are added if possible if there's some range to include the
+    # full scope of the keyword. It should always include
+    # the lineno/end_lineno range (so, it's a superset).
+
+    @property
+    def scope_lineno(self) -> Optional[int]:
+        pass
+
+    @property
+    def scope_end_lineno(self) -> Optional[int]:
+        pass
+
+    @property
+    def scope_col_offset(self) -> Optional[int]:
+        pass
+
+    @property
+    def scope_end_col_offset(self) -> Optional[int]:
+        pass
+
 
 class IKeywordCollector(Protocol):
     def accepts(self, keyword_name: str) -> bool:
@@ -271,15 +295,23 @@ class IDefinition(Protocol):
     # Note: Could be None (i.e.: we found it in a library spec file which doesn't have the source).
     source: str = ""
 
-    # Note: Could be None (i.e.: we found it in a library spec file which doesn't have the lineno).
-    lineno: Optional[int] = -1
+    # Note: if we found it in a library spec file which doesn't have the lineno, it should be 0
+    lineno: int = 0
 
-    # Note: Could be None (i.e.: we found it in a library spec file which doesn't have the lineno).
-    end_lineno: Optional[int] = -1
+    # Note: if we found it in a library spec file which doesn't have the lineno, it should be 0
+    end_lineno: int = 0
 
-    col_offset: Optional[int] = -1
+    col_offset: int = 0
 
-    end_col_offset: Optional[int] = -1
+    end_col_offset: int = 0
+
+    # These are added if possible if there's some range to include the
+    # full scope (of a keyword, test, etc). It should always include
+    # the lineno/end_lineno range (so, it's a superset).
+    scope_lineno: Optional[int] = None
+    scope_end_lineno: Optional[int] = None
+    scope_col_offset: Optional[int] = None
+    scope_end_col_offset: Optional[int] = None
 
 
 class IKeywordDefinition(IDefinition, Protocol):

@@ -1,0 +1,22 @@
+originSelectionRange:
+  end:
+    character: 22
+    line: 7
+  start:
+    character: 4
+    line: 7
+targetRange:
+  end:
+    character: 5
+    line: 4
+  start:
+    character: 0
+    line: 1
+targetSelectionRange:
+  end:
+    character: 18
+    line: 1
+  start:
+    character: 0
+    line: 1
+targetUri: case2.robot

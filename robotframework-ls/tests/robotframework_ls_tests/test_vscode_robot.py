@@ -37,6 +37,11 @@ def check_diagnostics(language_server, data_regression):
     data_regression.check(sort_diagnostics(diag), basename="diagnostics")
 
 
+def check_find_definition_data_regression(data_regression, check, basename=None):
+    check["targetUri"] = os.path.basename(check["targetUri"])
+    data_regression.check(check, basename=basename)
+
+
 def test_diagnostics(language_server, ws_root_path, data_regression):
     language_server.initialize(ws_root_path, process_id=os.getpid())
     import robot
@@ -419,7 +424,7 @@ Some Keyword
     definitions = language_server.find_definitions(uri, line, col)
     found = definitions["result"]
     assert len(found) == 1
-    assert found[0]["uri"].endswith("my_library.py")
+    assert found[0]["targetUri"].endswith("my_library.py")
 
 
 def test_snippets_completions_integrated(
@@ -593,7 +598,7 @@ def test_code_format_integrated(
 
 
 def test_find_definition_integrated_library(
-    language_server: ILanguageServerClient, cases, workspace_dir
+    language_server: ILanguageServerClient, cases, workspace_dir, data_regression
 ):
     from robocorp_ls_core import uris
 
@@ -609,15 +614,14 @@ def test_find_definition_integrated_library(
     result = ret["result"]
     assert len(result) == 1
     check = next(iter(result))
-    assert check["uri"].endswith("case1_library.py")
-    assert check["range"] == {
-        "start": {"line": 7, "character": 0},
-        "end": {"line": 7, "character": 0},
-    }
+
+    check_find_definition_data_regression(
+        data_regression, check, basename="test_find_definition_integrated_library"
+    )
 
 
 def test_find_definition_keywords(
-    language_server: ILanguageServerClient, cases, workspace_dir
+    language_server: ILanguageServerClient, cases, workspace_dir, data_regression
 ):
     from robocorp_ls_core import uris
 
@@ -633,11 +637,9 @@ def test_find_definition_keywords(
     result = ret["result"]
     assert len(result) == 1
     check = next(iter(result))
-    assert check["uri"].endswith("case2.robot")
-    assert check["range"] == {
-        "start": {"line": 1, "character": 0},
-        "end": {"line": 1, "character": 18},
-    }
+    check_find_definition_data_regression(
+        data_regression, check, basename="test_find_definition_keywords"
+    )
 
 
 def test_signature_help_integrated(

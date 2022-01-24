@@ -337,10 +337,10 @@ class TextDocumentContentChangeEvent(_Base):
 
 class LocationLink(_Base):
     def __init__(
-        self, original_selection_range, target_uri, target_range, target_selection_range
+        self, origin_selection_range, target_uri, target_range, target_selection_range
     ):
         """
-        :param original_selection_range:
+        :param origin_selection_range:
             Span of the origin of this link.
             Used as the underlined span for mouse interaction. Defaults to the word range at
             the mouse position.
@@ -357,7 +357,7 @@ class LocationLink(_Base):
             The range that should be selected and revealed when this link is being followed, e.g the name of a function.
             Must be contained by the the `targetRange`. See also `DocumentSymbol#range`
         """
-        self.originalSelectionRange = original_selection_range
+        self.originSelectionRange = origin_selection_range
         self.targetUri = target_uri
         self.targetRange = target_range
         self.targetSelectionRange = target_selection_range

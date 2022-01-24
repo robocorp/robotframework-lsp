@@ -1,0 +1,22 @@
+originSelectionRange:
+  end:
+    character: 16
+    line: 5
+  start:
+    character: 4
+    line: 5
+targetRange:
+  end:
+    character: 0
+    line: 7
+  start:
+    character: 0
+    line: 7
+targetSelectionRange:
+  end:
+    character: 0
+    line: 7
+  start:
+    character: 0
+    line: 7
+targetUri: case1_library.py

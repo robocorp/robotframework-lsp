@@ -40,7 +40,7 @@ def test_customize_interpreter_add_plugins_dir(
     result = ret["result"]
     assert result
     check = next(iter(result))
-    assert check["uri"].endswith("lib1.py")
+    assert check["targetUri"].endswith("lib1.py")
 
     # Check with another case
     case2_robot: Path = Path(workspace_dir) / "env2" / "caselib2.robot"
@@ -52,7 +52,7 @@ def test_customize_interpreter_add_plugins_dir(
     result = ret["result"]
     assert result
     check = next(iter(result))
-    assert check["uri"].endswith("lib2.py")
+    assert check["targetUri"].endswith("lib2.py")
 
 
 def test_customize_plugins_dir_in_initialization(
@@ -84,7 +84,7 @@ def test_customize_plugins_dir_in_initialization(
     result = ret["result"]
     assert result
     check = next(iter(result))
-    assert check["uri"].endswith("lib1.py")
+    assert check["targetUri"].endswith("lib1.py")
 
     # Check with another case
     case2_robot: Path = Path(workspace_dir) / "env2" / "caselib2.robot"
@@ -96,4 +96,4 @@ def test_customize_plugins_dir_in_initialization(
     result = ret["result"]
     assert result
     check = next(iter(result))
-    assert check["uri"].endswith("lib2.py")
+    assert check["targetUri"].endswith("lib2.py")

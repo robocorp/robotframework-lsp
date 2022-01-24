@@ -693,6 +693,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         doc_uri: str,
         monitor: IMonitor,
         __timeout__=DEFAULT_COMPLETIONS_TIMEOUT,
+        __log__=False,
         **kwargs,
     ):
         from robocorp_ls_core.client_base import wait_for_message_matcher
@@ -728,6 +729,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             msg = message_matcher.msg
             if msg is not None:
                 result = msg.get("result")
+                if __log__:
+                    log.info("Result: %s", result)
                 if result:
                     return result
 

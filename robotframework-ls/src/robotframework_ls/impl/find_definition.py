@@ -6,25 +6,30 @@ from robotframework_ls.impl.protocols import (
     IKeywordDefinition,
     IKeywordCollector,
     IVariablesCollector,
+    IKeywordFound,
 )
 from robocorp_ls_core.protocols import check_implements
 from typing import Optional, Sequence
+from robocorp_ls_core.lsp import RangeTypedDict
 
 _RF_VARIABLE = re.compile(r"([$|&|@]{[\w\s]+})")
 
 
 class _DefinitionFromKeyword(object):
-    def __init__(self, keyword_found):
-        """
-        :param IKeywordFound keyword_found:
-        """
+    def __init__(self, keyword_found: IKeywordFound):
         self.keyword_found = keyword_found
         self.keyword_name = keyword_found.keyword_name
         self.source = keyword_found.source
+
         self.lineno = keyword_found.lineno
         self.end_lineno = keyword_found.end_lineno
         self.col_offset = keyword_found.col_offset
         self.end_col_offset = keyword_found.end_col_offset
+
+        self.scope_lineno: Optional[int] = keyword_found.scope_lineno
+        self.scope_end_lineno: Optional[int] = keyword_found.scope_end_lineno
+        self.scope_col_offset: Optional[int] = keyword_found.scope_col_offset
+        self.scope_end_col_offset: Optional[int] = keyword_found.scope_end_col_offset
 
     def __str__(self):
         return "DefinitionFromKeyword[%s, %s:%s]" % (
@@ -53,6 +58,11 @@ class _DefinitionFromLibrary(object):
         self.col_offset = 0
         self.end_col_offset = 0
 
+        self.scope_lineno: Optional[int] = None
+        self.scope_end_lineno: Optional[int] = None
+        self.scope_col_offset: Optional[int] = None
+        self.scope_end_col_offset: Optional[int] = None
+
     def __str__(self):
         return "DefinitionFromLibrary[%s]" % (self.source,)
 
@@ -77,6 +87,11 @@ class _DefinitionFromResource(object):
         self.end_lineno = 0
         self.col_offset = 0
         self.end_col_offset = 0
+
+        self.scope_lineno: Optional[int] = None
+        self.scope_end_lineno: Optional[int] = None
+        self.scope_col_offset: Optional[int] = None
+        self.scope_end_col_offset: Optional[int] = None
 
     def __str__(self):
         return "DefinitionFromResource[%s]" % (self.source,)
@@ -103,6 +118,11 @@ class _DefinitionFromVariableImport(object):
         self.col_offset = 0
         self.end_col_offset = 0
 
+        self.scope_lineno: Optional[int] = None
+        self.scope_end_lineno: Optional[int] = None
+        self.scope_col_offset: Optional[int] = None
+        self.scope_end_col_offset: Optional[int] = None
+
     def __str__(self):
         return "DefinitionFromVariableImport[%s]" % (self.source,)
 
@@ -125,6 +145,11 @@ class _DefinitionFromVariable(object):
         self.end_lineno = variable_found.end_lineno
         self.col_offset = variable_found.col_offset
         self.end_col_offset = variable_found.end_col_offset
+
+        self.scope_lineno: Optional[int] = None
+        self.scope_end_lineno: Optional[int] = None
+        self.scope_col_offset: Optional[int] = None
+        self.scope_end_col_offset: Optional[int] = None
 
     def __str__(self):
         return "_DefinitionFromVariable(%s[%s, %s:%s])" % (
@@ -231,6 +256,25 @@ def find_keyword_definition(
 
 
 def find_definition(completion_context: ICompletionContext) -> Sequence[IDefinition]:
+    definition_info = find_definition_extended(completion_context)
+    if definition_info is None:
+        return []
+    return definition_info.definitions
+
+
+class _DefinitionInfo:
+    def __init__(
+        self,
+        definitions: Sequence[IDefinition],
+        origin_selection_range: Optional[RangeTypedDict] = None,
+    ):
+        self.definitions = definitions
+        self.origin_selection_range = origin_selection_range
+
+
+def find_definition_extended(
+    completion_context: ICompletionContext,
+) -> Optional[_DefinitionInfo]:
     """
     :note:
         Definitions may be found even if a given source file no longer exists
@@ -245,7 +289,9 @@ def find_definition(completion_context: ICompletionContext) -> Sequence[IDefinit
     if token_info is not None:
         matches = find_keyword_definition(completion_context, token_info)
         if matches is not None:
-            return matches
+            return _DefinitionInfo(
+                matches, ast_utils.create_range_from_token(token_info.token)
+            )
 
         token = ast_utils.get_library_import_name_token(
             token_info.node, token_info.token
@@ -261,7 +307,7 @@ def find_definition(completion_context: ICompletionContext) -> Sequence[IDefinit
             )
             if library_doc is not None:
                 definition = _DefinitionFromLibrary(library_doc)
-                return [definition]
+                return _DefinitionInfo([definition])
 
         token = ast_utils.get_resource_import_name_token(
             token_info.node, token_info.token
@@ -272,7 +318,9 @@ def find_definition(completion_context: ICompletionContext) -> Sequence[IDefinit
                 token_info.node
             )
             if resource_import_as_doc is not None:
-                return [_DefinitionFromResource(resource_import_as_doc)]
+                return _DefinitionInfo(
+                    [_DefinitionFromResource(resource_import_as_doc)]
+                )
 
         token = ast_utils.get_variables_import_name_token(
             token_info.node, token_info.token
@@ -283,7 +331,9 @@ def find_definition(completion_context: ICompletionContext) -> Sequence[IDefinit
                 token_info.node
             )
             if variable_import_as_doc is not None:
-                return [_DefinitionFromVariableImport(variable_import_as_doc)]
+                return _DefinitionInfo(
+                    [_DefinitionFromVariableImport(variable_import_as_doc)]
+                )
 
     token_info = completion_context.get_current_variable()
     if token_info is not None:
@@ -295,6 +345,6 @@ def find_definition(completion_context: ICompletionContext) -> Sequence[IDefinit
             completion_context.sel, token, RobotStringMatcher(match)
         )
         collect_variables(completion_context, collector)
-        return collector.matches
+        return _DefinitionInfo(collector.matches)
 
-    return []
+    return None

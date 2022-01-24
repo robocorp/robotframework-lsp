@@ -23,7 +23,7 @@ class _KeywordContainer(object):
         if "{" in normalized_name:
             self._names_with_variables.add(normalized_name)
 
-    def contains_keyword(self, normalized_keyword_name):
+    def contains_keyword(self, normalized_keyword_name: str):
         from robotframework_ls.impl.text_utilities import matches_robot_keyword
 
         if normalized_keyword_name in self._name_to_keyword:
@@ -49,10 +49,7 @@ class _AnalysisKeywordsCollector(object):
     def accepts(self, keyword_name):
         return True
 
-    def on_keyword(self, keyword_found):
-        """
-        :param IKeywordFound keyword_found:
-        """
+    def on_keyword(self, keyword_found: IKeywordFound):
         from robotframework_ls.impl.text_utilities import normalize_robot_name
 
         # Note: Even if something is imported 'WITH NAME', it's still added
@@ -74,8 +71,8 @@ class _AnalysisKeywordsCollector(object):
             dct = self._resource_name_to_keywords_container
         else:
             log.info(
-                "No library name nor resource name for keyword: %s"
-                % (keyword_found.name,)
+                "No library name nor resource name for keyword: %s",
+                keyword_found.keyword_name,
             )
             return
 

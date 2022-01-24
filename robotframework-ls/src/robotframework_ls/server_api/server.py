@@ -15,8 +15,9 @@ from robocorp_ls_core.lsp import (
     PositionTypedDict,
     LocationTypedDict,
     DocumentHighlightTypedDict,
+    RangeTypedDict,
 )
-from robotframework_ls.impl.protocols import IKeywordFound
+from robotframework_ls.impl.protocols import IKeywordFound, IDefinition
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 import itertools
 import typing
@@ -305,19 +306,29 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         return func
 
     def _threaded_find_definition(self, doc_uri, line, col, monitor) -> Optional[list]:
-        from robotframework_ls.impl.find_definition import find_definition
+        from robotframework_ls.impl.find_definition import find_definition_extended
         import os.path
         from robocorp_ls_core.lsp import Location, Range
         from robocorp_ls_core import uris
+        from robocorp_ls_core.lsp import LocationLink
 
         completion_context = self._create_completion_context(
             doc_uri, line, col, monitor
         )
         if completion_context is None:
             return None
-        definitions = find_definition(completion_context)
+        definition_info = find_definition_extended(completion_context)
+
+        if definition_info is None:
+            return []
+
+        origin_selection_range: Optional[
+            RangeTypedDict
+        ] = definition_info.origin_selection_range
+
         ret = []
-        for definition in definitions:
+        definition: IDefinition
+        for definition in definition_info.definitions:
             if not definition.source:
                 log.info("Found definition with empty source (%s).", definition)
                 continue
@@ -339,12 +350,36 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             col_offset = definition.col_offset
             end_col_offset = definition.end_col_offset
 
-            ret.append(
-                Location(
-                    uris.from_fs_path(definition.source),
-                    Range((lineno, col_offset), (end_lineno, end_col_offset)),
-                ).to_dict()
-            )
+            if origin_selection_range is None:
+                ret.append(
+                    Location(
+                        uris.from_fs_path(definition.source),
+                        Range((lineno, col_offset), (end_lineno, end_col_offset)),
+                    ).to_dict()
+                )
+            else:
+                target_range = Range((lineno, col_offset), (end_lineno, end_col_offset))
+                target_selection_range = target_range
+
+                scope_lineno = definition.scope_lineno
+                if scope_lineno is not None:
+                    scope_col_offset = definition.scope_col_offset
+                    if scope_col_offset is not None:
+                        scope_end_lineno = definition.scope_end_lineno
+                        scope_end_col_offset = definition.scope_end_col_offset
+                        target_range = Range(
+                            (scope_lineno, scope_col_offset),
+                            (scope_end_lineno, scope_end_col_offset),
+                        )
+
+                ret.append(
+                    LocationLink(
+                        origin_selection_range,
+                        uris.from_fs_path(definition.source),
+                        target_range=target_range,
+                        target_selection_range=target_selection_range,
+                    ).to_dict()
+                )
         return ret
 
     def m_code_format(self, text_document, options):
