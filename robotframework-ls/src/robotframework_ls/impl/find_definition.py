@@ -307,7 +307,9 @@ def find_definition_extended(
             )
             if library_doc is not None:
                 definition = _DefinitionFromLibrary(library_doc)
-                return _DefinitionInfo([definition])
+                return _DefinitionInfo(
+                    [definition], ast_utils.create_range_from_token(token)
+                )
 
         token = ast_utils.get_resource_import_name_token(
             token_info.node, token_info.token
@@ -319,7 +321,10 @@ def find_definition_extended(
             )
             if resource_import_as_doc is not None:
                 return _DefinitionInfo(
-                    [_DefinitionFromResource(resource_import_as_doc)]
+                    [
+                        _DefinitionFromResource(resource_import_as_doc),
+                    ],
+                    ast_utils.create_range_from_token(token),
                 )
 
         token = ast_utils.get_variables_import_name_token(
@@ -332,7 +337,8 @@ def find_definition_extended(
             )
             if variable_import_as_doc is not None:
                 return _DefinitionInfo(
-                    [_DefinitionFromVariableImport(variable_import_as_doc)]
+                    [_DefinitionFromVariableImport(variable_import_as_doc)],
+                    ast_utils.create_range_from_token(token),
                 )
 
     token_info = completion_context.get_current_variable()
@@ -345,6 +351,8 @@ def find_definition_extended(
             completion_context.sel, token, RobotStringMatcher(match)
         )
         collect_variables(completion_context, collector)
-        return _DefinitionInfo(collector.matches)
+        return _DefinitionInfo(
+            collector.matches, ast_utils.create_range_from_token(token)
+        )
 
     return None
