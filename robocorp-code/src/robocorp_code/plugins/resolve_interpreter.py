@@ -336,17 +336,18 @@ class RobocorpResolveInterpreter(object):
                 for entry in val.split(os.pathsep)
             )
 
-        new_additional_pythonpath_entries: List[str] = []
-        for entry in interpreter_info.get_additional_pythonpath_entries():
-            new_additional_pythonpath_entries.append(
-                fix_entry(entry, existing_robot_root, new_robot_root)
-            )
+        # Note: these should already be correct.
+        # new_additional_pythonpath_entries: List[str] = []
+        # for entry in interpreter_info.get_additional_pythonpath_entries():
+        #     new_additional_pythonpath_entries.append(
+        #         fix_entry(entry, existing_robot_root, new_robot_root)
+        #     )
 
         return DefaultInterpreterInfo(
             robot_yaml,
             interpreter_info.get_python_exe(),
             new_environ,
-            new_additional_pythonpath_entries,
+            interpreter_info.get_additional_pythonpath_entries(),
         )
 
     @classmethod

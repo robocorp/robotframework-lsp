@@ -42,6 +42,9 @@ def test_resolve_interpreter_relocate_robot_root(
         )
 
     assert interpreter_info2
+    entries = interpreter_info2.get_additional_pythonpath_entries()
+    additional_pythonpath_entries = tuple(Path(x) for x in entries)
+    assert additional_pythonpath_entries == (datadir / "robot3a" / "path2",)
 
     environ1 = interpreter_info1.get_environ()
     environ2 = interpreter_info2.get_environ()
