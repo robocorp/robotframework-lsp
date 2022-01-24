@@ -270,7 +270,7 @@ class CompletionContext(object):
             log.critical("Unrecognized section: %s", t)
             return robot_constants.TEST_CASE_FILE_SECTIONS
 
-    def get_section(self, section_name) -> Any:
+    def get_section(self, section_name: str) -> Any:
         """
         :rtype: robot_constants.Section
         """
@@ -563,6 +563,36 @@ class CompletionContext(object):
         return current_keyword_definition_and_usage_info[0]
 
     @instance_cache
+    def get_current_keyword_usage_info(
+        self,
+    ) -> Optional[KeywordUsageInfo]:
+        """
+        Provides the current keyword even if we're in its arguments and not actually
+        on the keyword itself.
+        """
+        from robotframework_ls.impl import ast_utils
+
+        token_info = self.get_current_token()
+        if token_info is None:
+            return None
+        cp: ICompletionContext = self
+
+        while token_info.token.type == token_info.token.EOL:
+            sel = cp.sel
+            if sel.col > 0:
+                cp = cp.create_copy_with_selection(sel.line, sel.col - 1)
+                token_info = cp.get_current_token()
+                if token_info is None:
+                    return None
+            else:
+                break
+
+        usage_info = ast_utils.create_keyword_usage_info_from_token(
+            token_info.stack, token_info.node, token_info.token
+        )
+        return usage_info
+
+    @instance_cache
     def get_current_keyword_definition_and_usage_info(
         self,
     ) -> Optional[Tuple[IKeywordDefinition, KeywordUsageInfo]]:
@@ -571,35 +601,21 @@ class CompletionContext(object):
         on the keyword itself.
         """
         from robotframework_ls.impl.find_definition import find_keyword_definition
-        from robotframework_ls.impl import ast_utils
 
-        token_info = self.get_current_token()
-        if token_info is not None:
-            cp: ICompletionContext = self
-            while token_info.token.type == token_info.token.EOL:
-                sel = cp.sel
-                if sel.col > 0:
-                    cp = cp.create_copy_with_selection(sel.line, sel.col - 1)
-                    token_info = cp.get_current_token()
-                else:
-                    break
+        usage_info = self.get_current_keyword_usage_info()
+        if usage_info is not None:
+            token = usage_info.token
 
-            usage_info = ast_utils.create_keyword_usage_info_from_token(
-                token_info.stack, token_info.node, token_info.token
+            # token line is 1-based and col is 0-based (make both 0-based here).
+            line = token.lineno - 1
+            col = token.col_offset
+            cp = self.create_copy_with_selection(line, col)
+            definitions = find_keyword_definition(
+                cp, TokenInfo(usage_info.stack, usage_info.node, usage_info.token)
             )
-            if usage_info is not None:
-                token = usage_info.token
-
-                # token line is 1-based and col is 0-based (make both 0-based here).
-                line = token.lineno - 1
-                col = token.col_offset
-                cp = cp.create_copy_with_selection(line, col)
-                definitions = find_keyword_definition(
-                    cp, TokenInfo(usage_info.stack, usage_info.node, usage_info.token)
-                )
-                if definitions and len(definitions) >= 1:
-                    definition: IKeywordDefinition = next(iter(definitions))
-                    return definition, usage_info
+            if definitions and len(definitions) >= 1:
+                definition: IKeywordDefinition = next(iter(definitions))
+                return definition, usage_info
         return None
 
     def __typecheckself__(self) -> None:

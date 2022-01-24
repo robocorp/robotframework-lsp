@@ -556,6 +556,8 @@ class LibspecManager(object):
                 config.get_setting(OPTION_ROBOT_PYTHONPATH, list, [])
             )
             for new_pythonpath_entry in pythonpath_entries:
+                new_pythonpath_entry = os.path.abspath(new_pythonpath_entry)
+
                 if new_pythonpath_entry not in existing_entries:
                     self.add_additional_pythonpath_folder(new_pythonpath_entry)
             for old_entry in existing_entries:

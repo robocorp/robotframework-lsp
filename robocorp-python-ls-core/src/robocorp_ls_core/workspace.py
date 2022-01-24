@@ -647,7 +647,7 @@ class Document(object):
         self.__line_start_offsets = line_start_offset_to_info
         return line_start_offset_to_info
 
-    def offset_to_line_col(self, offset):
+    def offset_to_line_col(self, offset: int) -> Tuple[int, int]:
         if offset < 0:
             raise ValueError("Expected offset to be >0. Found: %s" % (offset,))
 

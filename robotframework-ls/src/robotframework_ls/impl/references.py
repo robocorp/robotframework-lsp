@@ -1,8 +1,12 @@
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Iterator
 
-from robocorp_ls_core.lsp import LocationTypedDict
+from robocorp_ls_core.lsp import LocationTypedDict, RangeTypedDict
 from robocorp_ls_core.robotframework_log import get_logger
-from robotframework_ls.impl.protocols import ICompletionContext, IRobotDocument
+from robotframework_ls.impl.protocols import (
+    ICompletionContext,
+    IRobotDocument,
+    IKeywordFound,
+)
 import typing
 import os
 
@@ -10,7 +14,7 @@ import os
 log = get_logger(__name__)
 
 
-def _matches_source(s1, s2):
+def matches_source(s1: str, s2: str) -> bool:
     if s1 == s2:
         return True
 
@@ -19,15 +23,106 @@ def _matches_source(s1, s2):
     )
 
 
-def references(
-    completion_context: ICompletionContext, include_declaration: bool
-) -> List[LocationTypedDict]:
-    from robotframework_ls.impl.protocols import IKeywordFound
-    from robocorp_ls_core import uris
-    from robotframework_ls.impl.text_utilities import normalize_robot_name
+def iter_keyword_references_in_doc(
+    completion_context: ICompletionContext,
+    doc: IRobotDocument,
+    normalized_name: str,
+    keyword_found: Optional[IKeywordFound],
+) -> Iterator[RangeTypedDict]:
+    """
+    :param keyword_found: if given, we'll match if the definition actually
+    maps to the proper place (if not given, we'll just match based on the name
+    without verifying if the definition is the same).
+    """
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.find_definition import find_definition
     from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
+
+    ast = doc.get_ast()
+    if ast is None:
+        return None
+
+    # Dict with normalized name -> whether it was found or not previously.
+    found_in_this_doc: Dict[str, bool] = {}
+
+    # Ok, we have the document, now, load the usages.
+    for keyword_usage_info in ast_utils.iter_keyword_usage_tokens(
+        ast, collect_args_as_keywords=True
+    ):
+        keword_name_possibly_dotted = keyword_usage_info.name
+        found_dot_in_usage = "." in keword_name_possibly_dotted
+        if found_dot_in_usage:
+            keword_name_not_dotted = keword_name_possibly_dotted.split(".")[-1]
+        else:
+            keword_name_not_dotted = keword_name_possibly_dotted
+
+        if normalize_robot_name(keword_name_not_dotted) == normalized_name:
+            found_once_in_this_doc = found_in_this_doc.get(keword_name_possibly_dotted)
+            token = keyword_usage_info.token
+
+            line = token.lineno - 1
+
+            if keyword_found is not None:
+                if found_once_in_this_doc is None:
+                    # Verify if it's actually the same one (not one defined in
+                    # a different place with the same name).
+
+                    new_ctx = CompletionContext(
+                        doc,
+                        line,
+                        token.col_offset,
+                        workspace=completion_context.workspace,
+                        config=completion_context.config,
+                        monitor=completion_context.monitor,
+                    )
+                    definitions = find_definition(new_ctx)
+                    for definition in definitions:
+                        found = matches_source(definition.source, keyword_found.source)
+
+                        if found:
+                            found_once_in_this_doc = found_in_this_doc[
+                                keword_name_possibly_dotted
+                            ] = True
+                            break
+                    else:
+                        found_once_in_this_doc = found_in_this_doc[
+                            keword_name_possibly_dotted
+                        ] = False
+                        continue
+
+                if not found_once_in_this_doc:
+                    continue
+
+            token = keyword_usage_info.token
+            if found_dot_in_usage:
+                # We need to create a new token because we just want to match the name part.
+                col_offset = token.col_offset + (
+                    len(keword_name_possibly_dotted) - len(keword_name_not_dotted)
+                )
+                end_col_offset = token.end_col_offset
+            else:
+                col_offset = token.col_offset
+                end_col_offset = token.end_col_offset
+
+            # Ok, we found it, let's add it to the result.
+            yield {
+                "start": {
+                    "line": line,
+                    "character": col_offset,
+                },
+                "end": {
+                    "line": line,
+                    "character": end_col_offset,
+                },
+            }
+
+
+def references(
+    completion_context: ICompletionContext, include_declaration: bool
+) -> List[LocationTypedDict]:
+    from robocorp_ls_core import uris
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
 
     ret: List[LocationTypedDict] = []
     current_keyword_definition_and_usage_info = (
@@ -86,91 +181,9 @@ def references(
                         )
                         continue
 
-                ast = doc.get_ast()
-                if ast is None:
-                    continue
-
-                # Dict with normalized name -> whether it was found or not previously.
-                found_in_this_doc: Dict[str, bool] = {}
-
-                # Ok, we have the document, now, load the usages.
-                for keyword_usage_info in ast_utils.iter_keyword_usage_tokens(
-                    ast, collect_args_as_keywords=True
+                ref_range: RangeTypedDict
+                for ref_range in iter_keyword_references_in_doc(
+                    completion_context, doc, normalized_name, keyword_found
                 ):
-                    keword_name_possibly_dotted = keyword_usage_info.name
-                    found_dot_in_usage = "." in keword_name_possibly_dotted
-                    if found_dot_in_usage:
-                        keword_name_not_dotted = keword_name_possibly_dotted.split(".")[
-                            -1
-                        ]
-                    else:
-                        keword_name_not_dotted = keword_name_possibly_dotted
-
-                    if normalize_robot_name(keword_name_not_dotted) == normalized_name:
-                        found_once_in_this_doc = found_in_this_doc.get(
-                            keword_name_possibly_dotted
-                        )
-                        token = keyword_usage_info.token
-
-                        line = token.lineno - 1
-                        if found_once_in_this_doc is None:
-                            # Verify if it's actually the same one (not one defined in
-                            # a different place with the same name).
-
-                            new_ctx = CompletionContext(
-                                doc,
-                                line,
-                                token.col_offset,
-                                workspace=completion_context.workspace,
-                                config=completion_context.config,
-                                monitor=completion_context.monitor,
-                            )
-                            definitions = find_definition(new_ctx)
-                            for definition in definitions:
-                                found = _matches_source(
-                                    definition.source, keyword_found.source
-                                )
-
-                                if found:
-                                    found_once_in_this_doc = found_in_this_doc[
-                                        keword_name_possibly_dotted
-                                    ] = True
-                                    break
-                            else:
-                                found_once_in_this_doc = found_in_this_doc[
-                                    keword_name_possibly_dotted
-                                ] = False
-                                continue
-
-                        if not found_once_in_this_doc:
-                            continue
-
-                        token = keyword_usage_info.token
-                        if found_dot_in_usage:
-                            # We need to create a new token because we just want to match the name part.
-                            col_offset = token.col_offset + (
-                                len(keword_name_possibly_dotted)
-                                - len(keword_name_not_dotted)
-                            )
-                            end_col_offset = token.end_col_offset
-                        else:
-                            col_offset = token.col_offset
-                            end_col_offset = token.end_col_offset
-
-                        # Ok, we found it, let's add it to the result.
-                        ret.append(
-                            {
-                                "uri": doc.uri,
-                                "range": {
-                                    "start": {
-                                        "line": line,
-                                        "character": col_offset,
-                                    },
-                                    "end": {
-                                        "line": line,
-                                        "character": end_col_offset,
-                                    },
-                                },
-                            }
-                        )
+                    ret.append({"uri": doc.uri, "range": ref_range})
     return ret

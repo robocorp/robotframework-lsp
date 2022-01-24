@@ -110,6 +110,26 @@ def test_word_at_position(doc):
     assert doc.selection(4, 0).word_at_column == ""
 
 
+def test_word_at_position_unicode():
+    doc = Document("", """áááá éééé í """)
+    assert doc.selection(0, 0).word_at_column == "áááá"
+    assert doc.selection(0, 1).word_at_column == "áááá"
+    assert doc.selection(0, 2).word_at_column == "áááá"
+    assert doc.selection(0, 3).word_at_column == "áááá"
+    assert doc.selection(0, 4).word_at_column == "áááá"
+
+    assert doc.selection(0, 5).word_at_column == "éééé"
+    assert doc.selection(0, 6).word_at_column == "éééé"
+    assert doc.selection(0, 7).word_at_column == "éééé"
+    assert doc.selection(0, 8).word_at_column == "éééé"
+    assert doc.selection(0, 9).word_at_column == "éééé"
+
+    assert doc.selection(0, 10).word_at_column == "í"
+    assert doc.selection(0, 11).word_at_column == "í"
+
+    assert doc.selection(0, 12).word_at_column == ""
+
+
 def test_word_to_cursor():
     """
     Return the position under the cursor (or last in line if past the end)

@@ -1,0 +1,16 @@
+- kind: 1
+  range:
+    end:
+      character: 7
+      line: 3
+    start:
+      character: 4
+      line: 3
+- kind: 1
+  range:
+    end:
+      character: 7
+      line: 4
+    start:
+      character: 4
+      line: 4

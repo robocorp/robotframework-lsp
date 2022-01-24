@@ -25,6 +25,7 @@ class _KeywordFoundFromAst(object):
         "_keyword_args",
         "completion_context",
         "completion_item_kind",
+        "_name_token",
         "__instance_cache__",
     ]
 
@@ -37,8 +38,12 @@ class _KeywordFoundFromAst(object):
         completion_context,
         completion_item_kind,
     ):
+        from robot.api import Token
+
         self._module_ast = module_ast
         self._keyword_node = keyword_node
+
+        self._name_token = keyword_node.header.get_token(Token.KEYWORD_NAME)
 
         self._keyword_name = keyword_name
         self._keyword_args = keyword_args
@@ -90,19 +95,19 @@ class _KeywordFoundFromAst(object):
 
     @property
     def lineno(self):
-        return self._keyword_node.lineno - 1
+        return self._name_token.lineno - 1
 
     @property
     def end_lineno(self):
-        return self._keyword_node.end_lineno - 1
+        return self._name_token.lineno - 1
 
     @property
     def col_offset(self):
-        return self._keyword_node.col_offset
+        return self._name_token.col_offset
 
     @property
     def end_col_offset(self):
-        return self._keyword_node.end_col_offset
+        return self._name_token.end_col_offset
 
     def __typecheckself__(self) -> None:
         _: IKeywordFound = check_implements(self)

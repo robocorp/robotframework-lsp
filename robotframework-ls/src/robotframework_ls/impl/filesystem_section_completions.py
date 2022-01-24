@@ -1,10 +1,15 @@
 import os.path
 from robocorp_ls_core.robotframework_log import get_logger
+from typing import Optional, List
+from robotframework_ls.impl.protocols import ICompletionContext
+from robocorp_ls_core.lsp import CompletionItemTypedDict
 
 log = get_logger(__name__)
 
 
-def _create_completion_item(library_name, selection, token, start_col_offset=None):
+def _create_completion_item(
+    library_name, selection, token, start_col_offset=None
+) -> CompletionItemTypedDict:
     from robocorp_ls_core.lsp import (
         CompletionItem,
         InsertTextFormat,
@@ -40,7 +45,7 @@ def _add_completions_from_dir(
     completion_context,
     directory,
     matcher,
-    ret,
+    ret: List[CompletionItemTypedDict],
     sel,
     token,
     qualifier,
@@ -87,12 +92,14 @@ def _add_completions_from_dir(
             )
 
 
-def _get_completions(completion_context, token, match_libs, extensions, skip_current):
+def _get_completions(
+    completion_context, token, match_libs, extensions, skip_current
+) -> List[CompletionItemTypedDict]:
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
     from robocorp_ls_core import uris
     from robotframework_ls.impl.robot_constants import BUILTIN_LIB, RESERVED_LIB
 
-    ret = []
+    ret: List[CompletionItemTypedDict] = []
 
     sel = completion_context.sel
     value_to_cursor = token.value
@@ -152,7 +159,9 @@ def _get_completions(completion_context, token, match_libs, extensions, skip_cur
     return ret
 
 
-def _get_resource_completions(completion_context, token):
+def _get_resource_completions(
+    completion_context, token
+) -> List[CompletionItemTypedDict]:
     return _get_completions(
         completion_context,
         token,
@@ -162,38 +171,55 @@ def _get_resource_completions(completion_context, token):
     )
 
 
-def _get_library_completions(completion_context, token):
+def _get_library_completions(
+    completion_context, token
+) -> List[CompletionItemTypedDict]:
     return _get_completions(
         completion_context, token, True, (".py",), skip_current=False
     )
 
 
-def complete(completion_context):
-    """
-    Provides the completions for 'Library' and 'Resource' imports.
+class _Requisites(object):
+    def __init__(self, token, is_library: bool):
+        self.token = token
+        self.is_library = is_library
 
-    :param CompletionContext completion_context:
-    """
+
+def get_requisites(completion_context: ICompletionContext) -> Optional[_Requisites]:
     from robotframework_ls.impl import ast_utils
 
-    ret = []
-
-    try:
-        token_info = completion_context.get_current_token()
-        if token_info is not None:
-            token = ast_utils.get_library_import_name_token(
+    token_info = completion_context.get_current_token()
+    if token_info is not None:
+        token = ast_utils.get_library_import_name_token(
+            token_info.node, token_info.token
+        )
+        if token is not None:
+            return _Requisites(token, True)
+        else:
+            token = ast_utils.get_resource_import_name_token(
                 token_info.node, token_info.token
             )
             if token is not None:
-                ret = _get_library_completions(completion_context, token)
-            else:
-                token = ast_utils.get_resource_import_name_token(
-                    token_info.node, token_info.token
-                )
-                if token is not None:
-                    ret = _get_resource_completions(completion_context, token)
+                return _Requisites(token, False)
+    return None
+
+
+def complete(completion_context: ICompletionContext) -> List[CompletionItemTypedDict]:
+    """
+    Provides the completions for 'Library' and 'Resource' imports.
+    """
+    try:
+
+        requisites = get_requisites(completion_context)
+        if requisites is None:
+            return []
+
+        if requisites.is_library:
+            return _get_library_completions(completion_context, requisites.token)
+        else:
+            return _get_resource_completions(completion_context, requisites.token)
 
     except:
         log.exception()
 
-    return ret
+    return []

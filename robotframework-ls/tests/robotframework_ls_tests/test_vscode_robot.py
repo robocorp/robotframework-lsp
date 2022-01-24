@@ -636,7 +636,7 @@ def test_find_definition_keywords(
     assert check["uri"].endswith("case2.robot")
     assert check["range"] == {
         "start": {"line": 1, "character": 0},
-        "end": {"line": 4, "character": 5},
+        "end": {"line": 1, "character": 18},
     }
 
 
@@ -693,6 +693,36 @@ Log It
     contents = result["contents"]
     assert "Log" in contents["value"]
     assert contents["kind"] == "markdown"
+
+
+def test_document_highlight_integrated(
+    language_server_io: ILanguageServerClient, ws_root_path, data_regression
+):
+    from robocorp_ls_core.workspace import Document
+    from robocorp_ls_core.lsp import DocumentHighlightResponseTypedDict
+    from robocorp_ls_core.lsp import DocumentHighlightTypedDict
+
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    txt = """
+*** Test Cases ***
+Log It
+    Log    Something
+    log    Else
+    """
+    doc = Document("", txt)
+    language_server.open_doc(uri, 1, txt)
+    line, col = doc.get_last_line_col()
+    line -= 1
+
+    ret: DocumentHighlightResponseTypedDict = (
+        language_server.request_text_document_highlight(uri, line, col)
+    )
+    result: DocumentHighlightTypedDict = ret["result"]
+    assert len(result) == 2
+    data_regression.check(result)
 
 
 def test_workspace_symbols_integrated(

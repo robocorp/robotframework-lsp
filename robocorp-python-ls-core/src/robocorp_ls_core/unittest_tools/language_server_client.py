@@ -236,6 +236,20 @@ class LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    @implements(ILanguageServerClient.request_text_document_highlight)
+    def request_text_document_highlight(self, uri, line, col):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "textDocument/documentHighlight",
+                "params": {
+                    "textDocument": {"uri": uri},
+                    "position": {"line": line, "character": col},
+                },
+            }
+        )
+
     @implements(ILanguageServerClient.request_references)
     def request_references(self, uri, line, col, include_declaration):
         return self.request(

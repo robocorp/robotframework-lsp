@@ -28,6 +28,7 @@ if typing.TYPE_CHECKING:
     from robocorp_ls_core.lsp import ResponseTypedDict
     from robocorp_ls_core.lsp import CodeLensTypedDict
     from robocorp_ls_core.lsp import RangeTypedDict
+    from robocorp_ls_core.lsp import DocumentHighlightResponseTypedDict
     from robocorp_ls_core.callbacks import Callback
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
@@ -454,6 +455,11 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
     def request_hover(self, uri: str, line: int, col: int) -> "HoverResponseTypedDict":
         pass
 
+    def request_text_document_highlight(
+        self, uri: str, line: int, col: int
+    ) -> "DocumentHighlightResponseTypedDict":
+        pass
+
     def request_references(
         self, uri: str, line: int, col: int, include_declaration: bool
     ) -> "ReferencesResponseTypedDict":
@@ -643,6 +649,9 @@ class IDocument(Protocol):
         pass
 
     def get_line(self, line: int) -> str:
+        pass
+
+    def offset_to_line_col(self, offset: int) -> Tuple[int, int]:
         pass
 
     def get_range(self, line: int, col: int, endline: int, endcol: int) -> str:

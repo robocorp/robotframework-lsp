@@ -26,7 +26,7 @@ from robotframework_ls import __version__, rf_interactive_integration
 import typing
 import sys
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
-from robocorp_ls_core.lsp import CodeLensTypedDict
+from robocorp_ls_core.lsp import CodeLensTypedDict, TextDocumentPositionParamsTypedDict
 from robotframework_ls.commands import (
     ROBOT_GET_RFLS_HOME_DIR,
     ROBOT_START_INDEXING_INTERNAL,
@@ -337,7 +337,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                 "resolveProvider": False  # We know everything ahead of time
             },
             "documentFormattingProvider": True,
-            "documentHighlightProvider": False,
+            "documentHighlightProvider": True,
             "documentRangeFormattingProvider": False,
             "documentSymbolProvider": True,
             "definitionProvider": True,
@@ -903,9 +903,10 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         return []
 
     def m_text_document__hover(self, **kwargs):
-        doc_uri = kwargs["textDocument"]["uri"]
+        params: TextDocumentPositionParamsTypedDict = kwargs
+        doc_uri = params["textDocument"]["uri"]
         # Note: 0-based
-        line, col = kwargs["position"]["line"], kwargs["position"]["character"]
+        line, col = params["position"]["line"], params["position"]["character"]
         rf_api_client = self._server_manager.get_regular_rf_api_client(doc_uri)
         if rf_api_client is not None:
             func = partial(
@@ -978,6 +979,26 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             api,
             "request_workspace_symbols",
             query=query,
+        )
+        func = require_monitor(func)
+        return func
+
+    def m_text_document__document_highlight(self, **kwargs):
+        params: TextDocumentPositionParamsTypedDict = kwargs
+        doc_uri = params["textDocument"]["uri"]
+        line, col = params["position"]["line"], params["position"]["character"]
+        api = self._server_manager.get_others_api_client(doc_uri)
+        if api is None:
+            log.info("Unable to get api client when computing document highlight.")
+            return None
+
+        func = partial(
+            self._async_api_request,
+            api,
+            "request_document_highlight",
+            doc_uri=doc_uri,
+            line=line,
+            col=col,
         )
         func = require_monitor(func)
         return func

@@ -14,6 +14,7 @@ from robocorp_ls_core.lsp import (
     DocumentSymbolTypedDict,
     PositionTypedDict,
     LocationTypedDict,
+    DocumentHighlightTypedDict,
 )
 from robotframework_ls.impl.protocols import IKeywordFound
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
@@ -609,6 +610,25 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return None
 
         return hover(completion_context)
+
+    def m_document_highlight(self, doc_uri: str, line: int, col: int):
+        func = partial(self._threaded_document_highlight, doc_uri, line, col)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_document_highlight(
+        self, doc_uri: str, line, col, monitor: IMonitor
+    ) -> Optional[List[DocumentHighlightTypedDict]]:
+
+        from robotframework_ls.impl.doc_highlight import doc_highlight
+
+        completion_context = self._create_completion_context(
+            doc_uri, line, col, monitor
+        )
+        if completion_context is None:
+            return None
+
+        return doc_highlight(completion_context)
 
     def m_references(
         self, doc_uri: str, line: int, col: int, include_declaration: bool

@@ -419,6 +419,15 @@ class TextDocumentTypedDict(TypedDict, total=False):
     text: Optional[str]
 
 
+class TextDocumentIdentifierTypedDict(TypedDict):
+    uri: str
+
+
+class TextDocumentPositionParamsTypedDict(TypedDict, total=False):
+    textDocument: TextDocumentIdentifierTypedDict
+    position: PositionTypedDict
+
+
 class MarkupContentTypedDict(TypedDict):
     kind: str  # "plaintext" | "markdown"
     value: str
@@ -540,6 +549,11 @@ class HoverTypedDict(TypedDict, total=False):
     range: RangeTypedDict  # Optional
 
 
+class DocumentHighlightTypedDict(TypedDict, total=False):
+    range: RangeTypedDict
+    kind: int  # Optional
+
+
 class ResponseErrorTypedDict(TypedDict, total=False):
     code: int
     message: str
@@ -555,6 +569,12 @@ class ResponseTypedDict(TypedDict, total=False):
 class HoverResponseTypedDict(TypedDict, total=False):
     id: Union[int, str, None]
     result: HoverTypedDict  # Optional
+    error: ResponseErrorTypedDict  # Optional
+
+
+class DocumentHighlightResponseTypedDict(TypedDict, total=False):
+    id: Union[int, str, None]
+    result: DocumentHighlightTypedDict  # Optional
     error: ResponseErrorTypedDict  # Optional
 
 

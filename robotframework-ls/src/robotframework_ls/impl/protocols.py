@@ -385,6 +385,11 @@ class ICompletionContext(Protocol):
         :rtype: robot.parsing.model.blocks.Section|NoneType
         """
 
+    def get_section(self, section_name: str) -> Any:
+        """
+        :rtype: robot_constants.Section
+        """
+
     def get_accepted_section_header_words(self) -> List[str]:
         pass
 
@@ -426,6 +431,11 @@ class ICompletionContext(Protocol):
     def get_current_keyword_definition_and_usage_info(
         self,
     ) -> Optional[Tuple[IKeywordDefinition, KeywordUsageInfo]]:
+        pass
+
+    def get_current_keyword_usage_info(
+        self,
+    ) -> Optional[KeywordUsageInfo]:
         pass
 
 

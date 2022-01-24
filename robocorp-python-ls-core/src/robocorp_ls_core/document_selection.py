@@ -4,8 +4,8 @@ import re
 from robocorp_ls_core.protocols import IDocumentSelection, IDocument
 
 
-RE_START_WORD = re.compile("[A-Za-z_0-9]*$")
-RE_END_WORD = re.compile("^[A-Za-z_0-9]*")
+RE_START_WORD = re.compile("[\w]*$")
+RE_END_WORD = re.compile("^[\w]*")
 
 
 class DocumentSelection(object):
