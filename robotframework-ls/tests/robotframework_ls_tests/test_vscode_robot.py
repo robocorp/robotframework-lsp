@@ -1299,6 +1299,50 @@ def test_rf_interactive_integrated_completions(
         raise AssertionError('Did not find "Log" in the suggestions.')
 
 
+def test_rf_interactive_integrated_completions_not_duplicated(
+    language_server_io: ILanguageServerClient,
+    rf_interpreter_startup: _RfInterpreterInfo,
+):
+
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS
+    from robocorp_ls_core.lsp import Position
+    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE
+
+    language_server = language_server_io
+
+    eval2 = language_server.execute_command(
+        ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE,
+        [
+            {
+                "interpreter_id": rf_interpreter_startup.interpreter_id,
+                "code": """
+*** Keyword ***
+Mykeywordentered
+    Log    Something     console=True
+    
+*** Keyword ***
+Mykeywordentered
+    Log    Something     console=True
+""",
+            }
+        ],
+    )
+    assert eval2["result"] == {"success": True, "message": None, "result": None}
+
+    completions = language_server.execute_command(
+        ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS,
+        [
+            {
+                "interpreter_id": rf_interpreter_startup.interpreter_id,
+                "code": "\n\nMykeyworde",
+                "position": Position(2, 2).to_dict(),
+            }
+        ],
+    )
+
+    assert len(completions["result"]["suggestions"]) == 1
+
+
 def test_rf_interactive_integrated_fs_completions(
     language_server_io: ILanguageServerClient,
     rf_interpreter_startup: _RfInterpreterInfo,

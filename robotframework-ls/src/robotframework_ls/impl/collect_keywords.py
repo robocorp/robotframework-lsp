@@ -223,6 +223,8 @@ def _collect_completions_from_ast(
     from robotframework_ls.impl import ast_utils
     from robocorp_ls_core.lsp import CompletionItemKind
 
+    found = {}
+
     for keyword in ast_utils.iter_keywords(ast):
         completion_context.check_cancelled()
         keyword_name = keyword.node.name
@@ -231,16 +233,20 @@ def _collect_completions_from_ast(
             for arg in ast_utils.iter_keyword_arguments_as_str(keyword.node):
                 keyword_args.append(KeywordArg(arg))
 
-            collector.on_keyword(
-                _KeywordFoundFromAst(
-                    ast,
-                    keyword.node,
-                    keyword_name,
-                    keyword_args,
-                    completion_context,
-                    CompletionItemKind.Function,
-                )
+            found[keyword_name] = _KeywordFoundFromAst(
+                ast,
+                keyword.node,
+                keyword_name,
+                keyword_args,
+                completion_context,
+                CompletionItemKind.Function,
             )
+
+    # We notify afterwards because if multiple definitions of the same
+    # keyword are found, we just want to report the last one (as is the
+    # case for the interactive console).
+    for keyword_found in found.values():
+        collector.on_keyword(keyword_found)
 
 
 def _collect_current_doc_keywords(
