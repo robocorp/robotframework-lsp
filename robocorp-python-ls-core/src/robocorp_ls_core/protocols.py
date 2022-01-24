@@ -663,6 +663,9 @@ class IDocument(Protocol):
     def get_last_line_col(self) -> Tuple[int, int]:
         pass
 
+    def get_last_line_col_with_contents(self, contents: str) -> Tuple[int, int]:
+        pass
+
     def get_line_count(self) -> int:
         pass
 

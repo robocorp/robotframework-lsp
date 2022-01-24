@@ -79,7 +79,6 @@ class _VariableFoundFromPythonAst(object):
         self.variable_value = variable_value
 
     @property
-    @instance_cache
     def source(self):
         return self._path
 
@@ -88,23 +87,24 @@ class _VariableFoundFromPythonAst(object):
 
 
 class _VariableFoundFromSettings(object):
-    def __init__(self, variable_name, variable_value):
+    def __init__(self, variable_name, variable_value, source="", lineno=0):
         self.completion_context = None
         self.variable_name = variable_name
         self.variable_value = str(variable_value)
+        self._source = source
+        self._lineno = lineno
 
     @property
-    @instance_cache
     def source(self):
-        return ""
+        return self._source
 
     @property
     def lineno(self):
-        return 0
+        return self._lineno
 
     @property
     def end_lineno(self):
-        return 0
+        return self._lineno
 
     @property
     def col_offset(self):
@@ -295,12 +295,42 @@ def _collect_variable_imports_variables(
                                         collector.on_variable(variable_found)
 
             elif variable_import_doc.path.lower().endswith(".yaml"):
-                contents = variable_import_doc.get_yaml_contents()
-                if isinstance(contents, dict):
-                    for key, val in contents.items():
-                        key = "${%s}" % (key,)
-                        if collector.accepts(key):
-                            collector.on_variable(_VariableFoundFromYaml(key, str(val)))
+                dct_contents = variable_import_doc.get_yaml_contents()
+                if isinstance(dct_contents, dict):
+                    if dct_contents:
+                        try_to_compute_line = (
+                            variable_import_doc.source.count("\n") * len(dct_contents)
+                        ) <= 200
+                        # Our (lame) algorithm to find a key will need to iterate
+                        # over all lines for all entries, so, do it only for
+                        # small docs (consider a better algorithm in the future)...
+                        for initial_key, val in dct_contents.items():
+                            key = "${%s}" % (initial_key,)
+
+                            lineno = 0
+                            if try_to_compute_line:
+                                try:
+                                    # We don't have the real lineno during parsing,
+                                    # so, make a little hack to get something which
+                                    # may be close...
+                                    (
+                                        lineno,
+                                        _,
+                                    ) = variable_import_doc.get_last_line_col_with_contents(
+                                        initial_key
+                                    )
+                                except RuntimeError:
+                                    pass
+
+                            if collector.accepts(key):
+                                collector.on_variable(
+                                    _VariableFoundFromYaml(
+                                        key,
+                                        str(val),
+                                        source=variable_import_doc.path,
+                                        lineno=lineno,
+                                    )
+                                )
 
         except:
             log.exception()

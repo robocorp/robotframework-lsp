@@ -122,6 +122,9 @@ class IRobotDocument(IDocument, Protocol):
     def get_python_ast(self) -> Optional[Any]:
         pass
 
+    def get_yaml_contents(self) -> Optional[Any]:
+        pass
+
     symbols_cache: Optional["ISymbolsCache"]
 
 

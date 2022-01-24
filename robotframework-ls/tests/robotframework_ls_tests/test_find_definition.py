@@ -290,7 +290,24 @@ Resource    case4resource.txt"""
     assert definition.source.endswith("case4resource.txt")
 
 
-def test_find_definition_variables_file(workspace, libspec_manager):
+def test_find_definition_variables_file_yaml(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case_vars_file", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case_vars_file_yaml.robot")
+    line_contents = "Variables    ./robotvars.yaml"
+    line = doc.find_line_with_contents(line_contents)
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=len(line_contents) - 1
+    )
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("robotvars.yaml")
+
+
+def test_find_definition_variables_file_py(workspace, libspec_manager):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.find_definition import find_definition
 
@@ -307,7 +324,26 @@ def test_find_definition_variables_file(workspace, libspec_manager):
     assert definition.source.endswith("robotvars.py")
 
 
-def test_find_definition_variable_from_variables_file(workspace, libspec_manager):
+def test_find_definition_variable_from_variables_file_yaml(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case_vars_file", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case_vars_file_yaml.robot")
+    line_contents = "    Log    ${VARIABLE_YAML_2}    console=True"
+    line = doc.find_line_with_contents(line_contents)
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=18
+    )
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("robotvars.yaml")
+    assert definition.lineno == 1
+    assert definition.col_offset == 0
+
+
+def test_find_definition_variable_from_variables_file_py(workspace, libspec_manager):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.find_definition import find_definition
 

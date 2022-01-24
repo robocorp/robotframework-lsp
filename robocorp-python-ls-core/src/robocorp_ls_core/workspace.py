@@ -739,7 +739,7 @@ class Document(object):
                 return len(lines), 0
             return len(lines) - 1, len(last_line)
 
-    def get_last_line_col_with_contents(self, contents) -> Tuple[int, int]:
+    def get_last_line_col_with_contents(self, contents: str) -> Tuple[int, int]:
         if not contents:
             raise ValueError("Contents not specified.")
 
