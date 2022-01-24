@@ -1,7 +1,7 @@
 - deprecated: false
   documentation:
     kind: markdown
-    value: 'Check With Multi Args(arg1, arg2=10, *args, **kwargs)
+    value: '**Check With Multi Args(arg1, arg2=10, \*args, \*\*kwargs)**
 
 
       '
@@ -22,7 +22,7 @@
 - deprecated: false
   documentation:
     kind: markdown
-    value: 'Verify Another Model(model=10)
+    value: '**Verify Another Model(model=10)**
 
 
       '
@@ -43,7 +43,7 @@
 - deprecated: false
   documentation:
     kind: markdown
-    value: 'Verify Model(model)
+    value: '**Verify Model(model)**
 
 
       :type model: int

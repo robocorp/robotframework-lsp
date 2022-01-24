@@ -10,10 +10,37 @@ from robotframework_ls.impl.protocols import (
     IKeywordCollector,
 )
 from robotframework_ls.impl.robot_specbuilder import KeywordArg
-from typing import Tuple, Sequence, List, Set, Dict, Optional
+from typing import Tuple, Sequence, List, Dict, Optional
 
 
 log = get_logger(__name__)
+
+
+def _build_docs(keyword_name, args, docs, docs_format):
+
+    if docs_format == "markdown":
+        # Multi-line approach (it's a bit too big -- maybe as an option?)
+        # if docs_format == "markdown":
+        #     arg_docs = "  \n&nbsp;&nbsp;&nbsp;&nbsp;".join(
+        #         ("**" + (x.replace("*", "\\*") + "**") for x in args)
+        #     )
+        #     return f"**{keyword_name}**  \n&nbsp;&nbsp;&nbsp;&nbsp;{arg_docs}\n\n{docs}"
+
+        if args:
+            escaped_args = (x.replace("*", "\\*") for x in args)
+            arg_docs = f'({", ".join(escaped_args)})'
+
+        else:
+            arg_docs = ""
+        return f"**{keyword_name}{arg_docs}**\n\n{docs}"
+    else:
+        if args:
+            arg_docs = f'({", ".join(args)})'
+
+        else:
+            arg_docs = ""
+
+        return f"{keyword_name}{arg_docs}\n\n{docs}"
 
 
 class _KeywordFoundFromAst(object):
@@ -84,7 +111,8 @@ class _KeywordFoundFromAst(object):
 
         docs = ast_utils.get_documentation(self._keyword_node)
         args = [x.original_arg for x in self.keyword_args]
-        return "%s(%s)\n\n%s" % (self.keyword_name, ", ".join(args), docs)
+
+        return _build_docs(self.keyword_name, args, docs, "markdown")
 
     @property
     @instance_cache
@@ -229,7 +257,8 @@ class _KeywordFoundFromLibrary(object):
         docs, docs_format = docs_and_format(self._keyword_doc)
         if self.keyword_args:
             args = [x.original_arg for x in self.keyword_args]
-            docs = "%s(%s)\n\n%s" % (self.keyword_name, ", ".join(args), docs)
+
+            docs = _build_docs(self.keyword_name, args, docs, docs_format)
 
         return docs, docs_format
 

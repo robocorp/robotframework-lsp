@@ -1280,7 +1280,7 @@ def test_rf_interactive_integrated_completions(
 
     for completion in completions["result"]["suggestions"]:
         if completion["label"] == "Log (BuiltIn)":
-            assert completion.pop("documentation").startswith("Log(")
+            assert completion.pop("documentation").startswith("**Log(")
             assert completion == {
                 "label": "Log (BuiltIn)",
                 "kind": 0,

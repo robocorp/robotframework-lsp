@@ -1,7 +1,7 @@
 - deprecated: false
   documentation:
     kind: markdown
-    value: 'My Equal Redefined(${arg1}, ${arg2})
+    value: '**My Equal Redefined(${arg1}, ${arg2})**
 
 
       '
@@ -22,7 +22,7 @@
 - deprecated: false
   documentation:
     kind: markdown
-    value: 'Yet Another Equal Redefined(${arg1}, ${arg2})
+    value: '**Yet Another Equal Redefined(${arg1}, ${arg2})**
 
 
       Yes, this is redefined.

@@ -3,7 +3,7 @@ result:
 - deprecated: false
   documentation:
     kind: markdown
-    value: 'Verify Model(model)
+    value: '**Verify Model(model)**
 
 
       :type model: int
