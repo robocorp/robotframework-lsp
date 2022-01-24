@@ -61,6 +61,15 @@ class _RfInterpretersManager:
                 False, message=f"Did not find 'uri' in {args}"
             ).as_dict()
 
+        if not uri.endswith(".robot"):
+            # We can't leave the URI as a .resource because then the parsing
+            # we'd use is the one related to .resources (which can't have
+            # tests) and then we wouldn't be able to create our current test
+            # to be started in the interactive console.
+            import os
+
+            uri = os.path.splitext(uri)[0] + ".robot"
+
         # Thread pool with 1 worker (so, we're mostly sequentializing the
         # work to be done to another thread).
         commands_thread_pool = futures.ThreadPoolExecutor(max_workers=1)
