@@ -283,7 +283,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                 "uri": vscode.Uri.file(robotInfo.filePath),
                 "robot": robotInfo,
                 "taskName": task,
-                "iconPath": "symbol-misc",
+                "iconPath": "debug-alt-small",
                 "type": RobotEntryType.Task,
                 "parent": element,
             }));
@@ -326,6 +326,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
         const treeItem = new vscode.TreeItem(element.label, vscode.TreeItemCollapsibleState.Collapsed);
         if (element.type === RobotEntryType.Robot) {
             treeItem.contextValue = "robotItem";
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         } else if (isTask) {
             treeItem.contextValue = "taskItem";
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
