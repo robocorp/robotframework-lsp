@@ -123,6 +123,7 @@ def test_rcc_cloud(rcc: IRcc, ci_credentials: str, tmpdir: py.path.local):
         raise AssertionError("Expected to have CI Workspace available.")
 
     ws = workspaces[0]
+    assert ws.organization_name == "Fabio's Example Organization"
     result = rcc.cloud_list_workspace_robots(ws.workspace_id)
     assert result.success
     lst = result.result

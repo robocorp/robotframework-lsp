@@ -42,6 +42,7 @@ class PackageInfoDict(TypedDict):
     sortKey: str
     workspaceId: str
     workspaceName: str
+    organizationName: str
 
 
 class PackageInfoInLRUDict(TypedDict):
@@ -52,6 +53,7 @@ class PackageInfoInLRUDict(TypedDict):
 
 
 class WorkspaceInfoDict(TypedDict):
+    organizationName: str
     workspaceName: str
     workspaceId: str
     packages: List[PackageInfoDict]
@@ -180,6 +182,10 @@ class IRccWorkspace(Protocol):
 
     @property
     def workspace_name(self) -> str:
+        pass
+
+    @property
+    def organization_name(self) -> str:
         pass
 
 

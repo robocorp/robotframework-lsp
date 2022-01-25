@@ -135,9 +135,10 @@ class RccRobotMetadata(object):
 
 
 class RccWorkspace(object):
-    def __init__(self, workspace_id: str, workspace_name: str):
+    def __init__(self, workspace_id: str, workspace_name: str, organization_name: str):
         self._workspace_id = workspace_id
         self._workspace_name = workspace_name
+        self._organization_name = organization_name
 
     @property
     def workspace_id(self) -> str:
@@ -146,6 +147,10 @@ class RccWorkspace(object):
     @property
     def workspace_name(self) -> str:
         return self._workspace_name
+
+    @property
+    def organization_name(self) -> str:
+        return self._organization_name
 
     def __typecheckself__(self) -> None:
         _: IRccWorkspace = check_implements(self)
@@ -578,6 +583,9 @@ class Rcc(object):
                 RccWorkspace(
                     workspace_id=workspace_info["id"],
                     workspace_name=workspace_info["name"],
+                    organization_name=workspace_info.get(
+                        "orgName", "<Unable to get organization name>"
+                    ),
                 )
             )
         return ActionResult(True, None, ret)

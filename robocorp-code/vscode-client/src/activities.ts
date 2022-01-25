@@ -334,6 +334,10 @@ export async function rccConfigurationDiagnostics() {
     });
 }
 
+function getWorkspaceDescription(wsInfo: WorkspaceInfo) {
+    return wsInfo.organizationName + ": " + wsInfo.workspaceName;
+}
+
 export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
     // Start this in parallel while we ask the user for info.
     let isLoginNeededPromise: Thenable<ActionResult<boolean>> = commands.executeCommand(
@@ -411,7 +415,7 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
             for (let i = 0; i < workspaceInfo.length; i++) {
                 const wsInfo: WorkspaceInfo = workspaceInfo[i];
                 let caption: QuickPickItemWithAction = {
-                    "label": "$(folder) " + wsInfo.workspaceName,
+                    "label": "$(folder) " + getWorkspaceDescription(wsInfo),
                     "action": { "filterWorkspaceId": wsInfo.workspaceId },
                 };
                 captions.push(caption);
@@ -459,25 +463,27 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
 
             for (let j = 0; j < wsInfo.packages.length; j++) {
                 const robotInfo = wsInfo.packages[j];
+                const wsDesc = getWorkspaceDescription(wsInfo);
 
                 // i.e.: Show the Robots with the same name with more priority in the list.
-                let sortKey = "b" + robotInfo.name;
+                let sortKey = "b" + wsDesc;
                 if (robotInfo.name == robot.name) {
-                    sortKey = "a" + robotInfo.name;
+                    sortKey = "a" + wsDesc;
                 }
                 let caption: QuickPickItemWithAction = {
                     "label": "$(file) " + robotInfo.name,
-                    "description": "(Workspace: " + wsInfo.workspaceName + ")",
+                    "description": "(Workspace: " + wsDesc + ")",
                     "sortKey": sortKey,
                     "action": { "existingRobotPackage": robotInfo },
                 };
                 captions.push(caption);
             }
 
+            const wsDesc = getWorkspaceDescription(wsInfo);
             let caption: QuickPickItemWithAction = {
                 "label": "$(new-folder) + Create new Robot",
-                "description": "(Workspace: " + wsInfo.workspaceName + ")",
-                "sortKey": "c" + wsInfo.workspaceName, // right before last item.
+                "description": "(Workspace: " + wsDesc + ")",
+                "sortKey": "c" + wsDesc, // right before last item.
                 "action": { "newRobotPackageAtWorkspace": wsInfo },
             };
             captions.push(caption);

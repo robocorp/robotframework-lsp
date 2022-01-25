@@ -6,6 +6,7 @@ interface LocalRobotMetadataInfo {
 }
 
 interface WorkspaceInfo {
+    organizationName: string;
     workspaceName: string;
     workspaceId: string;
     packages: PackageInfo[];

@@ -78,7 +78,8 @@ command_dispatcher = _CommandDispatcher()
 
 class RobocorpLanguageServer(PythonLanguageServer):
     # V2: save the account info along to validate user.
-    CLOUD_LIST_WORKSPACE_CACHE_KEY = "CLOUD_LIST_WORKSPACE_CACHE_V2"
+    # V3: Add organizationName
+    CLOUD_LIST_WORKSPACE_CACHE_KEY = "CLOUD_LIST_WORKSPACE_CACHE_V3"
     PACKAGE_ACCESS_LRU_CACHE_KEY = "PACKAGE_ACCESS_LRU_CACHE"
 
     def __init__(self, read_stream, write_stream):
@@ -569,12 +570,14 @@ class RobocorpLanguageServer(PythonLanguageServer):
                         "name": activity_package.robot_name,
                         "id": activity_package.robot_id,
                         "sortKey": sort_key,
+                        "organizationName": ws.organization_name,
                         "workspaceId": ws.workspace_id,
                         "workspaceName": ws.workspace_name,
                     }
                     packages.append(package_info)
 
                 ws_dict = {
+                    "organizationName": ws.organization_name,
                     "workspaceName": ws.workspace_name,
                     "workspaceId": ws.workspace_id,
                     "packages": packages,
