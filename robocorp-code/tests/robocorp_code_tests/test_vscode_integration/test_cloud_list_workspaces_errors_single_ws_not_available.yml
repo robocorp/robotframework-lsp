@@ -1,6 +1,7 @@
 message: null
 result:
-- packages: []
+- organizationName: My Org Name
+  packages: []
   workspaceId: workspace_id_2
   workspaceName: My Other workspace
 success: true
