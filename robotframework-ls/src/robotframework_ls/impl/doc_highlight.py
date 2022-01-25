@@ -18,6 +18,10 @@ def _highlight_keyword(
 
     # We're in a keyword, so, search for matches.
     normalized_name = normalize_robot_name(curr_token_info.token.value)
+    if curr_token_info.token.type == curr_token_info.token.KEYWORD:
+        dot_i = normalized_name.find(".")
+        if dot_i != -1:
+            normalized_name = normalized_name[dot_i + 1 :]
 
     for range_ref in iter_keyword_references_in_doc(
         completion_context,

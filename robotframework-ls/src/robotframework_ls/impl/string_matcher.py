@@ -58,6 +58,9 @@ class MatcherWithResourceOrLibraryName(RobotStringMatcher):
         """
         RobotStringMatcher.__init__(self, qualifier)
         self.resource_or_library_name = resource_or_library_name
+        self.resource_or_library_name_normalized = normalize_robot_name(
+            resource_or_library_name
+        )
 
     def accepts_keyword(self, keyword_found):
         """
@@ -67,7 +70,7 @@ class MatcherWithResourceOrLibraryName(RobotStringMatcher):
         if name is None:
             name = keyword_found.resource_name or keyword_found.library_name
 
-        if name == self.resource_or_library_name:
+        if normalize_robot_name(name) == self.resource_or_library_name_normalized:
             return self.accepts_keyword_name(keyword_found.keyword_name)
         return False
 
@@ -76,7 +79,7 @@ class MatcherWithResourceOrLibraryName(RobotStringMatcher):
         if name is None:
             name = keyword_found.resource_name or keyword_found.library_name
 
-        if name == self.resource_or_library_name:
+        if normalize_robot_name(name) == self.resource_or_library_name_normalized:
             return self.is_keyword_name_match(keyword_found.keyword_name)
         return False
 

@@ -59,6 +59,34 @@ Test case 1
     data_regression.check(result)
 
 
+def test_document_highlight_keyword_namespace(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.doc_highlight import doc_highlight
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.put_doc(
+        "my.robot",
+        """*** Settings ***
+Library    Collections
+
+*** Test Cases ***
+Test case 1
+    Append to list
+    Collections.Append to list""",
+    )
+
+    line_contents = "    Collections.Append"
+    line = doc.find_line_with_contents(line_contents)
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=len(line_contents)
+    )
+    result = doc_highlight(completion_context)
+    assert len(result) == 2
+    data_regression.check(result, basename="test_document_highlight_keyword_namespace")
+
+
 def test_document_highlight_generic(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.doc_highlight import doc_highlight

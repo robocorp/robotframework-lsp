@@ -238,8 +238,9 @@ def test_keyword_completions_user_library(
     data_regression.check(completions, basename="keyword_completions_2_new")
 
 
+@pytest.mark.parametrize("contents", ["\n    case1_library.", "\n    case1 library."])
 def test_keyword_completions_case1(
-    data_regression, workspace, cases, libspec_manager, workspace_dir
+    data_regression, workspace, cases, libspec_manager, workspace_dir, contents
 ):
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
@@ -248,7 +249,7 @@ def test_keyword_completions_case1(
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
-    doc = workspace.put_doc("case1.robot", doc.source + "\n    case1_library.")
+    doc = workspace.put_doc("case1.robot", doc.source + contents)
 
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)

@@ -239,7 +239,7 @@ def test_find_definition_library_prefix_with_name(workspace, libspec_manager):
     workspace.set_root("case4", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case4.robot")
     doc.source = """*** Settings ***
-Library    Collections    WITH NAME    Col1
+Library    Collections    WITH NAME    col 1
 
 *** Test Cases ***
 Test
