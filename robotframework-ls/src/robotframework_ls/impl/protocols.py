@@ -272,6 +272,7 @@ class IKeywordCollector(Protocol):
 
     def on_unresolved_library(
         self,
+        completion_context: "ICompletionContext",
         library_name: str,
         lineno: int,
         end_lineno: int,
@@ -282,6 +283,7 @@ class IKeywordCollector(Protocol):
 
     def on_unresolved_resource(
         self,
+        completion_context: "ICompletionContext",
         resource_name: str,
         lineno: int,
         end_lineno: int,

@@ -3,7 +3,11 @@ from typing import Dict, Set
 from robocorp_ls_core.protocols import check_implements
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.ast_utils import MAX_ERRORS
-from robotframework_ls.impl.protocols import IKeywordFound, IKeywordCollector
+from robotframework_ls.impl.protocols import (
+    IKeywordFound,
+    IKeywordCollector,
+    ICompletionContext,
+)
 
 
 log = get_logger(__name__)
@@ -112,6 +116,7 @@ class _AnalysisKeywordsCollector(object):
 
     def on_unresolved_library(
         self,
+        completion_context: ICompletionContext,
         library_name: str,
         lineno: int,
         end_lineno: int,
@@ -119,11 +124,17 @@ class _AnalysisKeywordsCollector(object):
         end_col_offset: int,
     ):
         self._on_unresolved_library(
-            library_name, lineno, end_lineno, col_offset, end_col_offset
+            completion_context,
+            library_name,
+            lineno,
+            end_lineno,
+            col_offset,
+            end_col_offset,
         )
 
     def on_unresolved_resource(
         self,
+        completion_context: ICompletionContext,
         resource_name: str,
         lineno: int,
         end_lineno: int,
@@ -131,14 +142,19 @@ class _AnalysisKeywordsCollector(object):
         end_col_offset: int,
     ):
         self._on_unresolved_resource(
-            resource_name, lineno, end_lineno, col_offset, end_col_offset
+            completion_context,
+            resource_name,
+            lineno,
+            end_lineno,
+            col_offset,
+            end_col_offset,
         )
 
     def __typecheckself__(self) -> None:
         _: IKeywordCollector = check_implements(self)
 
 
-def collect_analysis_errors(completion_context):
+def collect_analysis_errors(initial_completion_context):
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.ast_utils import create_error_from_node
     from robotframework_ls.impl.collect_keywords import collect_keywords
@@ -148,41 +164,47 @@ def collect_analysis_errors(completion_context):
     errors = []
 
     def on_unresolved_library(
+        completion_context: ICompletionContext,
         library_name: str,
         lineno: int,
         end_lineno: int,
         col_offset: int,
         end_col_offset: int,
     ):
-        start = (lineno - 1, col_offset)
-        end = (end_lineno - 1, end_col_offset)
-        errors.append(
-            ast_utils.Error(f"Unresolved library: {library_name}", start, end)
-        )
+        doc = completion_context.doc
+        if doc and doc.uri == initial_completion_context.doc.uri:
+            start = (lineno - 1, col_offset)
+            end = (end_lineno - 1, end_col_offset)
+            errors.append(
+                ast_utils.Error(f"Unresolved library: {library_name}", start, end)
+            )
 
     def on_unresolved_resource(
+        completion_context: ICompletionContext,
         library_name: str,
         lineno: int,
         end_lineno: int,
         col_offset: int,
         end_col_offset: int,
     ):
-        start = (lineno - 1, col_offset)
-        end = (end_lineno - 1, end_col_offset)
-        errors.append(
-            ast_utils.Error(f"Unresolved resource: {library_name}", start, end)
-        )
+        doc = completion_context.doc
+        if doc and doc.uri == initial_completion_context.doc.uri:
+            start = (lineno - 1, col_offset)
+            end = (end_lineno - 1, end_col_offset)
+            errors.append(
+                ast_utils.Error(f"Unresolved resource: {library_name}", start, end)
+            )
 
     collector = _AnalysisKeywordsCollector(
         on_unresolved_library, on_unresolved_resource
     )
-    collect_keywords(completion_context, collector)
+    collect_keywords(initial_completion_context, collector)
 
-    ast = completion_context.get_ast()
+    ast = initial_completion_context.get_ast()
     for keyword_usage_info in ast_utils.iter_keyword_usage_tokens(
         ast, collect_args_as_keywords=True
     ):
-        completion_context.check_cancelled()
+        initial_completion_context.check_cancelled()
         if contains_variable_text(keyword_usage_info.name):
             continue
         normalized_name = normalize_robot_name(keyword_usage_info.name)

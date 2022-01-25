@@ -209,6 +209,30 @@ Test
     _collect_errors(workspace, doc, data_regression, config=config)
 
 
+def test_resource_does_not_exist_2nd_level(workspace, libspec_manager, data_regression):
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc(
+        "case4.robot",
+        """*** Settings ***
+Resource    my_resource.robot
+""",
+    )
+
+    doc2 = workspace.put_doc(
+        "my_resource.robot",
+        """*** Settings ***
+Resource    does_not_exist.robot
+Library    does_not_exist.py
+""",
+    )
+
+    from robotframework_ls.robot_config import RobotConfig
+
+    config = RobotConfig()
+    _collect_errors(workspace, doc, data_regression, config=config, basename="no_error")
+
+
 def test_report_wrong_library(workspace, libspec_manager, data_regression):
     workspace.set_root("case4", libspec_manager=libspec_manager)
     doc = workspace.put_doc(

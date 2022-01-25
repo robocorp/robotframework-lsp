@@ -406,6 +406,7 @@ def _collect_libraries_keywords(
             node_name_tok = node.get_token(Token.NAME)
             if node_name_tok is not None:
                 collector.on_unresolved_library(
+                    completion_context,
                     node.name,
                     node_name_tok.lineno,
                     node_name_tok.lineno,
@@ -414,6 +415,7 @@ def _collect_libraries_keywords(
                 )
             else:
                 collector.on_unresolved_library(
+                    completion_context,
                     library_info.name,
                     node.lineno,
                     node.end_lineno,
@@ -433,6 +435,7 @@ def _collect_resource_imports_keywords(
             node_name_tok = node.get_token(Token.NAME)
             if node_name_tok is not None:
                 collector.on_unresolved_resource(
+                    completion_context,
                     node.name,
                     node_name_tok.lineno,
                     node_name_tok.lineno,
@@ -441,6 +444,7 @@ def _collect_resource_imports_keywords(
                 )
             else:
                 collector.on_unresolved_resource(
+                    completion_context,
                     node.name,
                     node.lineno,
                     node.end_lineno,
@@ -481,6 +485,7 @@ class _CollectKeywordNameToKeywordFound:
 
     def on_unresolved_library(
         self,
+        completion_context: ICompletionContext,
         library_name: str,
         lineno: int,
         end_lineno: int,
@@ -491,6 +496,7 @@ class _CollectKeywordNameToKeywordFound:
 
     def on_unresolved_resource(
         self,
+        completion_context: ICompletionContext,
         resource_name: str,
         lineno: int,
         end_lineno: int,
