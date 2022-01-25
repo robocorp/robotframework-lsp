@@ -1,9 +1,14 @@
 package robocorp.dap;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.intellij.execution.Executor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.xdebugger.XDebugProcess;
@@ -24,6 +29,7 @@ import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import robocorp.dap.stack.*;
+import robocorp.robot.intellij.RobotProjectPreferences;
 
 import java.io.File;
 import java.io.InputStream;
@@ -37,6 +43,8 @@ import java.util.concurrent.*;
  * Intellij of thread suspension, etc.
  */
 public class RobotDebugProcess extends XDebugProcess {
+
+    private static final Logger LOG = Logger.getInstance(RobotDebugProcess.class);
 
     private final XDebuggerEditorsProvider editorsProvider = new RobotDebuggerEditorsProvider();
 
@@ -229,7 +237,33 @@ public class RobotDebugProcess extends XDebugProcess {
         launchArgs.put("terminal", "none");
 
         launchArgs.put("target", expandedOptions.target);
-        launchArgs.put("args", expandedOptions.args);
+        List<String> args = new ArrayList<>();
+
+        try {
+            Project project = session.getProject();
+            RobotProjectPreferences projectPreferences = RobotProjectPreferences.getInstance(project);
+            if (projectPreferences != null) {
+                JsonObject robotVariablesAsJson = projectPreferences.getRobotVariablesAsJson();
+                if (robotVariablesAsJson != null) {
+                    Set<Map.Entry<String, JsonElement>> entries = robotVariablesAsJson.entrySet();
+                    for (Map.Entry<String, JsonElement> entry : entries) {
+                        String key = entry.getKey();
+                        JsonElement value = entry.getValue();
+                        if (value instanceof JsonPrimitive) {
+                            JsonPrimitive jsonPrimitive = (JsonPrimitive) value;
+                            args.add("--variable");
+                            args.add(key + ":" + jsonPrimitive.getAsString());
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOG.error("Error getting robot.variables", e);
+        }
+
+        args.addAll(expandedOptions.args);
+
+        launchArgs.put("args", args);
         launchArgs.put("cwd", expandedOptions.computeWorkingDir());
         launchArgs.put("env", expandedOptions.env);
         launchArgs.put("makeSuite", expandedOptions.makeSuite);
