@@ -12,6 +12,7 @@ from robotframework_ls.impl.robot_lsp_constants import (
     OPTION_ROBOT_CODE_FORMATTER_ROBOTIDY,
     OPTION_ROBOT_CODE_FORMATTER_BUILTIN_TIDY,
 )
+from robocorp_ls_core.lsp import MarkupKind
 
 
 log = logging.getLogger(__name__)
@@ -666,7 +667,8 @@ Log It
     # Don't check the signature documentation in the data regression so that the
     # test doesn't become brittle.
     docs = signatures[0].pop("documentation")
-    assert "Log" in docs
+    assert docs["kind"] == MarkupKind.Markdown
+    assert "Log" in docs["value"]
 
     data_regression.check(result)
 

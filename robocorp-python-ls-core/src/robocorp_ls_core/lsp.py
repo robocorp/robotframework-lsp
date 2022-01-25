@@ -217,7 +217,8 @@ class CompletionItem(_Base):
 
 
 class MarkupContent(_Base):
-    def __init__(self, kind: "MarkupKind", value: str):
+    def __init__(self, kind: str, value: str):
+        # kind is one of the MarkupKind constants.
         self.kind = kind
         self.value = value
 
