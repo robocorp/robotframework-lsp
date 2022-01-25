@@ -113,6 +113,36 @@ def _tokenize_token(node, initial_token):
             yield initial_token, token_type_index
             return
 
+    if initial_token.type == KEYWORD:
+        dot_pos = initial_token.value.find(".")
+        if dot_pos > 0:
+            tok = _DummyToken()
+            tok.type = "name"
+            tok.value = initial_token.value[:dot_pos]
+            tok.lineno = initial_token.lineno
+            tok.col_offset = initial_token.col_offset
+            prev_col_offset_end = tok.end_col_offset = initial_token.col_offset + len(
+                tok.value
+            )
+            yield tok, TOKEN_TYPE_TO_INDEX["name"]
+
+            # tok = _DummyToken()
+            # tok.type = "control"
+            # tok.value = "."
+            # tok.lineno = initial_token.lineno
+            # tok.col_offset = prev_col_offset_end
+            prev_col_offset_end = tok.end_col_offset = prev_col_offset_end + 1
+            # yield tok, TOKEN_TYPE_TO_INDEX["control"]
+
+            tok = _DummyToken()
+            tok.type = initial_token.type
+            tok.value = initial_token.value[dot_pos + 1 :]
+            tok.lineno = initial_token.lineno
+            tok.col_offset = prev_col_offset_end
+            tok.end_col_offset = prev_col_offset_end + len(tok.value)
+            yield tok, RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[initial_token.type]
+            return
+
     try:
         iter_in = initial_token.tokenize_variables()
     except:
