@@ -2,7 +2,7 @@ import sys
 from typing import Iterator, Optional, List, Tuple, Any, Union
 
 import ast as ast_module
-from robocorp_ls_core.lsp import Error
+from robocorp_ls_core.lsp import Error, RangeTypedDict, PositionTypedDict
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.protocols import (
     TokenInfo,
@@ -277,7 +277,7 @@ def tokenize_variables(token):
 def _tokenize_variables_even_when_invalid(token, col):
     """
     If Token.tokenize_variables() fails, this can still provide the variable under
-    the given column by appliying some heuristics to find open variables.
+    the given column by applying some heuristics to find open variables.
     """
     try:
         return token.tokenize_variables()
@@ -444,6 +444,29 @@ def iter_variable_assigns(ast) -> Iterator:
                 yield TokenInfo(tuple(stack), node, token)
 
 
+def iter_variable_references(ast):
+    # Note: we collect only the references, not the definitions here!
+    for stack, node in _iter_nodes(ast, recursive=True):
+        if node.__class__.__name__ in (
+            "KeywordCall",
+            "LibraryImport",
+            "ResourceImport",
+            "TestTimeout",
+        ) or isinstance_name(
+            node,
+            ("Fixture", "TestTemplate", "Template"),
+        ):
+            token = None
+            try:
+                for token in node.tokens:
+                    if token.type in (token.ARGUMENT, token.NAME):
+                        for tok in tokenize_variables(token):
+                            if tok.type == token.VARIABLE:
+                                yield TokenInfo(stack, node, tok)
+            except:
+                log.exception("Unable to tokenize: %s", token)
+
+
 def iter_keyword_usage_tokens(
     ast, collect_args_as_keywords: bool
 ) -> Iterator[KeywordUsageInfo]:
@@ -507,17 +530,18 @@ def create_keyword_usage_info_from_token(
 
 def is_argument_keyword_name(node, token) -> bool:
     if isinstance_name(node, "KeywordCall"):
-        consider_keyword_at_index = KEYWORD_NAME_TO_KEYWORD_INDEX.get(
-            normalize_robot_name(node.keyword)
-        )
-        if consider_keyword_at_index is not None:
-            i_arg = 0
-            for arg in node.tokens:
-                if arg.type == token.ARGUMENT:
-                    i_arg += 1
-                    if arg is token:
-                        if i_arg == consider_keyword_at_index:
-                            return True
+        if node.keyword:
+            consider_keyword_at_index = KEYWORD_NAME_TO_KEYWORD_INDEX.get(
+                normalize_robot_name(node.keyword)
+            )
+            if consider_keyword_at_index is not None:
+                i_arg = 0
+                for arg in node.tokens:
+                    if arg.type == token.ARGUMENT:
+                        i_arg += 1
+                        if arg is token:
+                            if i_arg == consider_keyword_at_index:
+                                return True
     return False
 
 
@@ -657,8 +681,7 @@ def _append_eol_to_prev_token(last_token, eol_token_contents):
     )
 
 
-def create_range_from_token(token):
-    from robocorp_ls_core.lsp import RangeTypedDict, PositionTypedDict
+def create_range_from_token(token) -> RangeTypedDict:
 
     start: PositionTypedDict = {"line": token.lineno - 1, "character": token.col_offset}
     end: PositionTypedDict = {

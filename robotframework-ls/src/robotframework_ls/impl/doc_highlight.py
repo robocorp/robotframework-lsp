@@ -3,16 +3,108 @@ from typing import Optional, List
 from robotframework_ls.impl.protocols import ICompletionContext
 
 
-def doc_highlight(
-    completion_context: ICompletionContext,
-) -> Optional[List[DocumentHighlightTypedDict]]:
+def _highlight_keyword(
+    completion_context: ICompletionContext, curr_token_info
+) -> List[DocumentHighlightTypedDict]:
     from robotframework_ls.impl.references import (
         iter_keyword_references_in_doc,
         matches_source,
     )
     from robotframework_ls.impl.text_utilities import normalize_robot_name
-    from robocorp_ls_core.lsp import DocumentHighlightKind
     from robotframework_ls.impl.protocols import IKeywordFound
+    from robocorp_ls_core.lsp import DocumentHighlightKind
+
+    ret: List[DocumentHighlightTypedDict] = []
+
+    # We're in a keyword, so, search for matches.
+    normalized_name = normalize_robot_name(curr_token_info.token.value)
+
+    for range_ref in iter_keyword_references_in_doc(
+        completion_context,
+        completion_context.doc,
+        normalized_name,
+        keyword_found=None,  # We don't want to check it even if available (we want textual matches too even if not defined).
+    ):
+        completion_context.check_cancelled()
+        ret.append({"range": range_ref, "kind": DocumentHighlightKind.Text})
+
+    if curr_token_info.token.type == curr_token_info.token.KEYWORD_NAME:
+        # We're hovering over the keyword name.
+        ret.append(
+            {
+                "range": {
+                    "start": {
+                        "line": curr_token_info.token.lineno - 1,
+                        "character": curr_token_info.token.col_offset,
+                    },
+                    "end": {
+                        "line": curr_token_info.token.lineno - 1,
+                        "character": curr_token_info.token.end_col_offset,
+                    },
+                },
+                "kind": DocumentHighlightKind.Text,
+            }
+        )
+    else:
+        current_keyword_definition_and_usage_info = (
+            completion_context.get_current_keyword_definition_and_usage_info()
+        )
+        if current_keyword_definition_and_usage_info is not None:
+            # i.e.: check if the definition also matches.
+            (
+                keyword_definition,
+                _usage_info,
+            ) = current_keyword_definition_and_usage_info
+
+            keyword_found: IKeywordFound = keyword_definition.keyword_found
+            include_declaration = matches_source(
+                completion_context.doc.path, keyword_found.source
+            )
+            if include_declaration:
+                ret.append(
+                    {
+                        "range": {
+                            "start": {
+                                "line": keyword_found.lineno,
+                                "character": keyword_found.col_offset,
+                            },
+                            "end": {
+                                "line": keyword_found.end_lineno,
+                                "character": keyword_found.end_col_offset,
+                            },
+                        },
+                        "kind": DocumentHighlightKind.Text,
+                    }
+                )
+
+    return ret
+
+
+def _highlight_variables(
+    completion_context: ICompletionContext, curr_token_info
+) -> List[DocumentHighlightTypedDict]:
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
+    from robocorp_ls_core.lsp import DocumentHighlightKind
+    from robotframework_ls.impl.references import iter_variable_references_in_doc
+
+    ret: List[DocumentHighlightTypedDict] = []
+    normalized_name = normalize_robot_name(curr_token_info.token.value)
+
+    for range_ref in iter_variable_references_in_doc(
+        completion_context,
+        completion_context.doc,
+        normalized_name,
+    ):
+        completion_context.check_cancelled()
+        ret.append({"range": range_ref, "kind": DocumentHighlightKind.Text})
+
+    return ret
+
+
+def doc_highlight(
+    completion_context: ICompletionContext,
+) -> Optional[List[DocumentHighlightTypedDict]]:
+    from robocorp_ls_core.lsp import DocumentHighlightKind
 
     curr_token_info = completion_context.get_current_token()
     if curr_token_info is None:
@@ -23,69 +115,11 @@ def doc_highlight(
         curr_token_info.token.KEYWORD,
         curr_token_info.token.KEYWORD_NAME,
     ):
+        return _highlight_keyword(completion_context, curr_token_info)
 
-        # We're in a keyword, so, search for matches.
-        normalized_name = normalize_robot_name(curr_token_info.token.value)
-
-        for range_ref in iter_keyword_references_in_doc(
-            completion_context,
-            completion_context.doc,
-            normalized_name,
-            keyword_found=None,  # We don't want to check it even if available (we want textual matches too even if not defined).
-        ):
-            completion_context.check_cancelled()
-            ret.append({"range": range_ref, "kind": DocumentHighlightKind.Text})
-
-        if curr_token_info.token.type == curr_token_info.token.KEYWORD_NAME:
-            # We're hovering over the keyword name.
-            ret.append(
-                {
-                    "range": {
-                        "start": {
-                            "line": curr_token_info.token.lineno - 1,
-                            "character": curr_token_info.token.col_offset,
-                        },
-                        "end": {
-                            "line": curr_token_info.token.lineno - 1,
-                            "character": curr_token_info.token.end_col_offset,
-                        },
-                    },
-                    "kind": DocumentHighlightKind.Text,
-                }
-            )
-        else:
-            current_keyword_definition_and_usage_info = (
-                completion_context.get_current_keyword_definition_and_usage_info()
-            )
-            if current_keyword_definition_and_usage_info is not None:
-                # i.e.: check if the definition also matches.
-                (
-                    keyword_definition,
-                    _usage_info,
-                ) = current_keyword_definition_and_usage_info
-
-                keyword_found: IKeywordFound = keyword_definition.keyword_found
-                include_declaration = matches_source(
-                    completion_context.doc.path, keyword_found.source
-                )
-                if include_declaration:
-                    ret.append(
-                        {
-                            "range": {
-                                "start": {
-                                    "line": keyword_found.lineno,
-                                    "character": keyword_found.col_offset,
-                                },
-                                "end": {
-                                    "line": keyword_found.end_lineno,
-                                    "character": keyword_found.end_col_offset,
-                                },
-                            },
-                            "kind": DocumentHighlightKind.Text,
-                        }
-                    )
-
-        return ret
+    curr_token_info = completion_context.get_current_variable()
+    if curr_token_info is not None:
+        return _highlight_variables(completion_context, curr_token_info)
 
     # We found no custom heuristics, just use a text-based approach.
     doc = completion_context.doc

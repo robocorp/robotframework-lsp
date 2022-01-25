@@ -84,3 +84,38 @@ Test case 1
     assert result
     assert len(result) == 2
     data_regression.check(result)
+
+
+def test_document_highlight_variable(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.doc_highlight import doc_highlight
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.put_doc(
+        "my.robot",
+        """
+*** Settings ***
+Library    ${hh h}/my.py
+Resource    ${hhh}/my.resource
+Test Timeout    ${hh h}
+Suite Setup    ${hhh}    ${hhh} Something
+Suite Teardown    ${hhh}    ${hh h} Something hhh hh h h h
+
+*** Variables ***
+${h h h}    22
+
+*** Test Cases ***
+Test case 1
+    Log    ${hhh}
+    ${hhh}=    Log    ${h hh}    hhh ignore""",
+    )
+
+    line_contents = "    ${hhh}=    Log    ${h h"
+    line = doc.find_line_with_contents(line_contents)
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=len(line_contents)
+    )
+    result = doc_highlight(completion_context)
+    assert result
+    assert len(result) == 11
+    data_regression.check(result)

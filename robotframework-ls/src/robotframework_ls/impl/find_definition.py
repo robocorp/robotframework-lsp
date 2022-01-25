@@ -343,7 +343,6 @@ def find_definition_extended(
 
     token_info = completion_context.get_current_variable()
     if token_info is not None:
-
         token = token_info.token
         value = token.value
         match = next(iter(_RF_VARIABLE.findall(value)), value)

@@ -31,6 +31,22 @@ class RobotStringMatcher(object):
 
         return False
 
+    def is_same_variable_name(self, variable_name):
+        from robotframework_ls.impl.text_utilities import is_variable_text
+
+        try:
+            filter_var_name = self._filter_var_name
+        except AttributeError:
+            if is_variable_text(self.filter_text):
+                filter_var_name = self._filter_var_name = self.filter_text[2:-1]
+            else:
+                filter_var_name = self._filter_var_name = self.filter_text
+
+        if is_variable_text(variable_name):
+            variable_name = variable_name[2:-1]
+
+        return filter_var_name == normalize_robot_name(variable_name)
+
 
 class MatcherWithResourceOrLibraryName(RobotStringMatcher):
     def __init__(self, resource_or_library_name, qualifier):

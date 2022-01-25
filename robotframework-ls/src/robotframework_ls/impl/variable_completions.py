@@ -337,7 +337,9 @@ def _collect_variable_imports_variables(
 
 
 def _collect_following_imports(
-    completion_context: ICompletionContext, collector: IVariablesCollector
+    completion_context: ICompletionContext,
+    collector: IVariablesCollector,
+    only_current_doc=False,
 ):
     completion_context.check_cancelled()
     if completion_context.memo.follow_import_variables(completion_context.doc.uri):
@@ -345,9 +347,10 @@ def _collect_following_imports(
 
         _collect_current_doc_variables(completion_context, collector)
 
-        _collect_resource_imports_variables(completion_context, collector)
+        if not only_current_doc:
+            _collect_resource_imports_variables(completion_context, collector)
 
-        _collect_variable_imports_variables(completion_context, collector)
+            _collect_variable_imports_variables(completion_context, collector)
 
 
 def _collect_arguments(
@@ -401,7 +404,9 @@ def _collect_from_builtins(
 
 
 def collect_variables(
-    completion_context: ICompletionContext, collector: IVariablesCollector
+    completion_context: ICompletionContext,
+    collector: IVariablesCollector,
+    only_current_doc=False,
 ):
     from robotframework_ls.impl import ast_utils
 
@@ -412,6 +417,7 @@ def collect_variables(
         else:
             stack_node = completion_context.get_ast_current_section()
         for assign_node_info in ast_utils.iter_variable_assigns(stack_node):
+            completion_context.check_cancelled()
             if collector.accepts(assign_node_info.token.value):
                 rep = " ".join(tok.value for tok in assign_node_info.node.tokens)
                 variable_found = _VariableFoundFromToken(
@@ -420,15 +426,15 @@ def collect_variables(
                 collector.on_variable(variable_found)
 
     _collect_arguments(completion_context, collector)
-    _collect_following_imports(completion_context, collector)
-    _collect_from_settings(completion_context, collector)
-    _collect_from_builtins(completion_context, collector)
+    _collect_following_imports(
+        completion_context, collector, only_current_doc=only_current_doc
+    )
+    if not only_current_doc:
+        _collect_from_settings(completion_context, collector)
+        _collect_from_builtins(completion_context, collector)
 
 
-def complete(completion_context):
-    """
-    :param CompletionContext completion_context:
-    """
+def complete(completion_context: ICompletionContext):
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
 
     token_info = completion_context.get_current_variable()
