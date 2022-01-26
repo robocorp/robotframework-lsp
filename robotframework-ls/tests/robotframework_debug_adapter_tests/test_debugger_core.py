@@ -94,11 +94,23 @@ def stack_frames_repr(
     return dct
 
 
-def test_debugger_core(debugger_api_core, robot_thread) -> None:
+@pytest.fixture
+def debugger_impl():
     from robotframework_debug_adapter.debugger_impl import install_robot_debugger
+
+    ret = install_robot_debugger()
+    written = ret.written_messages = []
+
+    def _write_message(msg):
+        written.append(msg)
+
+    ret.write_message = _write_message
+    return ret
+
+
+def test_debugger_core(debugger_api_core, robot_thread, debugger_impl) -> None:
     from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
 
-    debugger_impl = install_robot_debugger()
     target = debugger_api_core.get_dap_case_file("case_log.robot")
     debugger_api_core.target = target
     line = debugger_api_core.get_line_index_with_content("check that log works")
@@ -118,11 +130,11 @@ def test_debugger_core(debugger_api_core, robot_thread) -> None:
     dbg_wait_for(lambda: robot_thread.result_code == 0)
 
 
-def test_debugger_core_for(debugger_api, robot_thread, data_regression) -> None:
-    from robotframework_debug_adapter.debugger_impl import install_robot_debugger
+def test_debugger_core_for(
+    debugger_api, robot_thread, data_regression, debugger_impl
+) -> None:
     from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
 
-    debugger_impl = install_robot_debugger()
     thread_id = debugger_impl.get_current_thread_id(robot_thread)
     target = debugger_api.get_dap_case_file(
         "case_control_flow/case_control_flow_for.robot"
@@ -179,11 +191,11 @@ def test_debugger_core_for(debugger_api, robot_thread, data_regression) -> None:
 @pytest.mark.skipif(
     not IS_ROBOT_4_ONWARDS, reason="If statement only available in RF 4 onwards."
 )
-def test_debugger_core_if(debugger_api, robot_thread, data_regression) -> None:
-    from robotframework_debug_adapter.debugger_impl import install_robot_debugger
+def test_debugger_core_if(
+    debugger_api, robot_thread, data_regression, debugger_impl
+) -> None:
     from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
 
-    debugger_impl = install_robot_debugger()
     thread_id = debugger_impl.get_current_thread_id(robot_thread)
     target = debugger_api.get_dap_case_file(
         "case_control_flow/case_control_flow_if.robot"
@@ -211,11 +223,11 @@ def test_debugger_core_if(debugger_api, robot_thread, data_regression) -> None:
     dbg_wait_for(lambda: robot_thread.result_code == 0)
 
 
-def test_debugger_core_condition_breakpoint(debugger_api, robot_thread) -> None:
-    from robotframework_debug_adapter.debugger_impl import install_robot_debugger
+def test_debugger_core_condition_breakpoint(
+    debugger_api, robot_thread, debugger_impl
+) -> None:
     from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
 
-    debugger_impl = install_robot_debugger()
     target = debugger_api.get_dap_case_file("case_condition.robot")
     line = debugger_api.get_line_index_with_content("Log    ${counter}", target)
 
@@ -238,11 +250,11 @@ def test_debugger_core_condition_breakpoint(debugger_api, robot_thread) -> None:
     dbg_wait_for(lambda: robot_thread.result_code == 0)
 
 
-def test_debugger_core_hit_condition_breakpoint(debugger_api, robot_thread) -> None:
-    from robotframework_debug_adapter.debugger_impl import install_robot_debugger
+def test_debugger_core_hit_condition_breakpoint(
+    debugger_api, robot_thread, debugger_impl
+) -> None:
     from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
 
-    debugger_impl = install_robot_debugger()
     target = debugger_api.get_dap_case_file("case_condition.robot")
     line = debugger_api.get_line_index_with_content("Log    ${counter}", target)
 
@@ -263,11 +275,11 @@ def test_debugger_core_hit_condition_breakpoint(debugger_api, robot_thread) -> N
     dbg_wait_for(lambda: robot_thread.result_code == 0)
 
 
-def test_debugger_core_keyword_if(debugger_api, robot_thread, data_regression) -> None:
-    from robotframework_debug_adapter.debugger_impl import install_robot_debugger
+def test_debugger_core_keyword_if(
+    debugger_api, robot_thread, data_regression, debugger_impl
+) -> None:
     from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
 
-    debugger_impl = install_robot_debugger()
     thread_id = debugger_impl.get_current_thread_id(robot_thread)
     target = debugger_api.get_dap_case_file(
         "case_control_flow/case_control_flow_for.robot"
@@ -312,11 +324,9 @@ def test_debugger_core_keyword_if(debugger_api, robot_thread, data_regression) -
     dbg_wait_for(lambda: robot_thread.result_code == 0)
 
 
-def test_debugger_core_step_in(debugger_api, run_robot_cli) -> None:
-    from robotframework_debug_adapter.debugger_impl import install_robot_debugger
+def test_debugger_core_step_in(debugger_api, run_robot_cli, debugger_impl) -> None:
     from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
 
-    debugger_impl = install_robot_debugger()
     target = debugger_api.get_dap_case_file("case4/case4.robot")
     line = debugger_api.get_line_index_with_content(
         "My Equal Redefined   2   2", target
@@ -346,11 +356,56 @@ def test_debugger_core_step_in(debugger_api, run_robot_cli) -> None:
     assert code == 0
 
 
-def test_debugger_core_step_next(debugger_api, run_robot_cli) -> None:
-    from robotframework_debug_adapter.debugger_impl import install_robot_debugger
+def test_debugger_core_stop_on_failure_in_keyword(
+    debugger_api, run_robot_cli, debugger_impl
+) -> None:
+    target = debugger_api.get_dap_case_file("case_failure.robot")
+
+    debugger_impl.break_on_log_failure = True
+    debugger_impl.break_on_log_error = True
+    busy_wait = DummyBusyWait(debugger_impl)
+    debugger_impl.busy_wait = busy_wait
+    busy_wait.on_wait = [debugger_impl.step_continue]
+
+    code = run_robot_cli(target)
+
+    assert busy_wait.waited == 1
+    assert busy_wait.proceeded == 1
+    assert len(busy_wait.stack) == 1
+    assert [x.name for x in busy_wait.stack[0]] == [
+        "This keyword does not exist",
+        "TestCase: Check failure",
+        "TestSuite: Case Failure",
+    ]
+    assert code != 0
+
+
+def test_debugger_core_stop_on_failure_in_import(
+    debugger_api, run_robot_cli, debugger_impl
+) -> None:
+    target = debugger_api.get_dap_case_file("case_import_failure.robot")
+
+    debugger_impl.break_on_log_failure = True
+    debugger_impl.break_on_log_error = True
+    busy_wait = DummyBusyWait(debugger_impl)
+    debugger_impl.busy_wait = busy_wait
+    busy_wait.on_wait = [debugger_impl.step_continue]
+
+    code = run_robot_cli(target)
+
+    assert busy_wait.waited == 1
+    assert busy_wait.proceeded == 1
+    assert len(busy_wait.stack) == 1
+    assert [x.name for x in busy_wait.stack[0]] == [
+        "Log (ERROR)",
+    ]
+    # Note: Robot Framework considers it as passed even though there was an import error...
+    assert code == 0
+
+
+def test_debugger_core_step_next(debugger_api, run_robot_cli, debugger_impl) -> None:
     from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
 
-    debugger_impl = install_robot_debugger()
     target = debugger_api.get_dap_case_file("case4/case4.robot")
     line = debugger_api.get_line_index_with_content(
         "My Equal Redefined   2   2", target
@@ -379,11 +434,9 @@ def test_debugger_core_step_next(debugger_api, run_robot_cli) -> None:
     assert code == 0
 
 
-def test_debugger_core_step_out(debugger_api, run_robot_cli) -> None:
-    from robotframework_debug_adapter.debugger_impl import install_robot_debugger
+def test_debugger_core_step_out(debugger_api, run_robot_cli, debugger_impl) -> None:
     from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
 
-    debugger_impl = install_robot_debugger()
     target = debugger_api.get_dap_case_file("case_step_out.robot")
     line = debugger_api.get_line_index_with_content("Break 1", target)
     debugger_impl.set_breakpoints(target, RobotBreakpoint(line))
@@ -412,12 +465,10 @@ def test_debugger_core_step_out(debugger_api, run_robot_cli) -> None:
 
 
 def test_debugger_core_with_setup_teardown(
-    debugger_api, run_robot_cli, data_regression
+    debugger_api, run_robot_cli, data_regression, debugger_impl
 ) -> None:
-    from robotframework_debug_adapter.debugger_impl import install_robot_debugger
     from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
 
-    debugger_impl = install_robot_debugger()
     target = debugger_api.get_dap_case_file("case_setup_teardown.robot")
     debugger_impl.set_breakpoints(
         target,
@@ -446,14 +497,14 @@ def test_debugger_core_with_setup_teardown(
     assert code == 0
 
 
-def test_debugger_core_evaluate(debugger_api_core, robot_thread, tmpdir) -> None:
-    from robotframework_debug_adapter.debugger_impl import install_robot_debugger
+def test_debugger_core_evaluate(
+    debugger_api_core, robot_thread, tmpdir, debugger_impl
+) -> None:
     from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
 
     from robotframework_debug_adapter.debugger_impl import InvalidFrameIdError
     from robotframework_debug_adapter.debugger_impl import InvalidFrameTypeError
 
-    debugger_impl = install_robot_debugger()
     thread_id = debugger_impl.get_current_thread_id(robot_thread)
     target = debugger_api_core.get_dap_case_file("case_evaluate.robot")
     debugger_api_core.target = target

@@ -30,6 +30,7 @@ class ReasonEnum(enum.Enum):
     REASON_BREAKPOINT = "breakpoint"
     REASON_STEP = "step"
     REASON_PAUSE = "pause"
+    REASON_EXCEPTION = "exception"
 
 
 class StepEnum(enum.Enum):

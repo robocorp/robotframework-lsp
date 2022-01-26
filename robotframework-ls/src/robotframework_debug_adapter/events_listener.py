@@ -127,23 +127,36 @@ class EventsListenerV2:
         if not message_string:
             return
 
+        from robotframework_debug_adapter.message_utils import (
+            extract_source_and_line_from_message,
+        )
+
         level = message.get("level")
 
         source = None
         lineno = None
         test_name = None
+
+        source_and_line = extract_source_and_line_from_message(message_string)
+        if source_and_line is not None:
+            source, lineno = source_and_line
+
         if self._source_info_stack:
             from robotframework_debug_adapter import file_utils
 
-            lineno = 0
             source_info: _SourceInfo = self._source_info_stack[-1]
-            source = source_info.source
-            test_name = source_info.test_name
-            source = file_utils.get_abs_path_real_path_and_base_from_file(source)[0]
-            try:
-                lineno = source_info.lineno
-            except AttributeError:
-                pass
+            test_name = source_info.test_name  # May be None.
+
+            if source is None:
+                source = source_info.source
+                source = file_utils.get_abs_path_real_path_and_base_from_file(source)[0]
+
+            if lineno is None:
+                lineno = 0
+                try:
+                    lineno = source_info.lineno
+                except AttributeError:
+                    pass
 
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             LogMessageEvent,
@@ -165,7 +178,10 @@ class EventsListenerV2:
         if message["level"] in ("FAIL", "ERROR"):  # FAIL/WARN/INFO/DEBUG/TRACE
             self._failure_messages.append(message["message"])
 
-    # message = log_message
+    def message(self, message):
+        if message["level"] in ("FAIL", "ERROR"):
+            # We also want to show these for system messages.
+            return self.log_message(message)
 
     def start_keyword(self, name: str, attributes: Dict[str, Any]) -> None:
         source = attributes.get("source")

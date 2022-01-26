@@ -135,6 +135,10 @@ class DebugAdapterComm(object):
         capabilities.supportsConditionalBreakpoints = True
         capabilities.supportsHitConditionalBreakpoints = True
         capabilities.supportsLogPoints = True
+        capabilities.exceptionBreakpointFilters = [
+            {"filter": "logFailure", "label": "On log failures", "default": True},
+            {"filter": "logError", "label": "On log errors", "default": True},
+        ]
         # capabilities.supportsSetVariable = True
         self.write_to_client_message(initialize_response)
 
@@ -254,7 +258,7 @@ class DebugAdapterComm(object):
         self, request: SetExceptionBreakpointsRequest
     ):
         if self._run_in_debug_mode and self._launch_process is not None:
-            self._launch_process.resend_request_to_pydevd(request)
+            self._launch_process.resend_request_to_robot(request)
         else:
             response = base_schema.build_response(request)
             self.write_to_client_message(response)

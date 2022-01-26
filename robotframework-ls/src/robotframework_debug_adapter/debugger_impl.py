@@ -30,7 +30,7 @@ from robotframework_debug_adapter.protocols import (
     IBusyWait,
     IEvaluationInfo,
 )
-from typing import Optional, List, Iterable, Union, Any, Dict, FrozenSet
+from typing import Optional, List, Iterable, Union, Any, Dict, FrozenSet, Tuple
 from robocorp_ls_core.basic import implements
 from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
     StackFrame,
@@ -387,6 +387,7 @@ class _StackInfo(object):
 _StepEntry = namedtuple("_StepEntry", "name, lineno, source, args, variables")
 _SuiteEntry = namedtuple("_SuiteEntry", "name, source")
 _TestEntry = namedtuple("_TestEntry", "name, source, lineno")
+_LogEntry = namedtuple("_LogEntry", "name, source, lineno")
 
 
 class InvalidFrameIdError(Exception):
@@ -542,6 +543,12 @@ class _RobotDebuggerImpl(object):
         self._evaluations = []
         self._skip_breakpoints = 0
 
+        self._exc_name = None
+        self._exc_description = None
+
+        self.break_on_log_failure = False
+        self.break_on_log_error = False
+
     def write_message(self, msg):
         log.critical(
             "Message: %s not sent!\nExpected _RobotDebuggerImpl.write_message to be replaced to the actual implementation!",
@@ -552,6 +559,14 @@ class _RobotDebuggerImpl(object):
     @property
     def stop_reason(self) -> ReasonEnum:
         return self._reason
+
+    @property
+    def exc_name(self) -> Optional[str]:
+        return self._exc_name
+
+    @property
+    def exc_description(self) -> Optional[str]:
+        return self._exc_description
 
     def _get_stack_info_from_frame_id(self, frame_id) -> Optional[_StackInfo]:
         thread_id = self._frame_id_to_tid.get(frame_id)
@@ -633,6 +648,14 @@ class _RobotDebuggerImpl(object):
                     frame_id = stack_info.add_test_entry_stack(
                         name, filename, entry.lineno
                     )
+
+                elif entry.__class__ == _LogEntry:
+                    name = "Log (%s)" % (entry.name,)
+                    filename = self._get_filename(entry, "Log")
+
+                    frame_id = stack_info.add_test_entry_stack(
+                        name, filename, entry.lineno
+                    )
             except:
                 log.exception("Error creating stack trace.")
 
@@ -657,7 +680,15 @@ class _RobotDebuggerImpl(object):
     def wait_suspended(self, reason: ReasonEnum) -> None:
         thread_id = self.get_current_thread_id()
 
-        log.info("wait_suspended", reason)
+        if self._exc_name or self._exc_description:
+            log.info(
+                "wait_suspended. Reason: %s. Exc name: %s. Exc description: %s",
+                reason,
+                self._exc_name,
+                self._exc_description,
+            )
+        else:
+            log.info("wait_suspended. Reason: %s", reason)
         self._create_stack_info(thread_id)
         try:
             self._run_state = STATE_PAUSED
@@ -984,29 +1015,90 @@ class _RobotDebuggerImpl(object):
         self._stack_ctx_entries_deque.pop()
 
     def log_message(self, message):
+        from robotframework_debug_adapter.message_utils import (
+            extract_source_and_line_from_message,
+        )
+
         # When debugging show any message in the console (if possible with the
         # current keyword as the source).
-        source = None
-        lineno = None
-        if self._stack_ctx_entries_deque:
-            lineno = 0
-            step_entry: _StepEntry = self._stack_ctx_entries_deque[-1]
-            source = step_entry.source
-            source = Source(path=source)
-            try:
-                lineno = step_entry.lineno
-            except AttributeError:
-                pass
-        self.write_message(
-            OutputEvent(
-                body=OutputEventBody(
-                    source=source,
-                    line=lineno,
-                    output=f"{message.message}\n",
-                    category="console",
+        try:
+            source = None
+            lineno = None
+
+            source_and_line = extract_source_and_line_from_message(message.message)
+
+            if source_and_line is not None:
+                source, lineno = source_and_line
+                source = Source(path=source)
+            else:
+                if self._stack_ctx_entries_deque:
+                    lineno = 0
+                    step_entry: _StepEntry = self._stack_ctx_entries_deque[-1]
+                    source = step_entry.source
+                    source = Source(path=source)
+                    try:
+                        lineno = step_entry.lineno
+                    except AttributeError:
+                        pass
+
+            self.write_message(
+                OutputEvent(
+                    body=OutputEventBody(
+                        source=source,
+                        line=lineno,
+                        output=f"{message.message}\n",
+                        category="console",
+                    )
                 )
             )
-        )
+            self._break_on_log_or_system_message(message)
+        except:
+            log.exception("Error handling log_message.")
+
+    def message(self, message):
+        if message.level in ("FAIL", "ERROR"):
+            # We also want to show in the console, not just check breaks.
+            return self.log_message(message)
+        else:
+            try:
+                self._break_on_log_or_system_message(message)
+            except:
+                log.exception("Error handling (system) message.")
+
+    def _break_on_log_or_system_message(self, message):
+        stop_reason = None
+        if message.level == "FAIL":
+            if self.break_on_log_failure:
+                stop_reason = ReasonEnum.REASON_EXCEPTION
+                exc_name = "Suspended due to logged failure: "
+
+        elif message.level == "ERROR":
+            if self.break_on_log_error:
+                stop_reason = ReasonEnum.REASON_EXCEPTION
+                exc_name = "Suspended due to logged error: "
+
+        if stop_reason is not None:
+            from robotframework_debug_adapter.message_utils import (
+                extract_source_and_line_from_message,
+            )
+
+            source_and_line = extract_source_and_line_from_message(message.message)
+            entry = None
+            if source_and_line is not None:
+                source, lineno = source_and_line
+                entry = _LogEntry(message.level, source, lineno)
+                self._stack_ctx_entries_deque.append(entry)
+
+            self._exc_name = exc_name + message.message
+            self._exc_description = message.message
+            try:
+                self.wait_suspended(stop_reason)
+            finally:
+                self._exc_name = None
+                self._exc_description = None
+
+                if entry is not None:
+                    self._stack_ctx_entries_deque.pop()
 
 
 def _patch(
@@ -1111,6 +1203,7 @@ def install_robot_debugger() -> IRobotDebugger:
         DebugListener.on_end_test.register(impl.end_test)
 
         DebugListener.on_log_message.register(impl.log_message)
+        DebugListener.on_message.register(impl.message)
 
         # On RobotFramework 3.x and earlier 4.x dev versions, we do some monkey-patching because
         # the listener was not able to give linenumbers.

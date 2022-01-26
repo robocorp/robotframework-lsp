@@ -548,6 +548,56 @@ def test_step_out(debugger_api: _DebuggerAPI):
     debugger_api.read(TerminatedEvent)
 
 
+def test_failure(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import InitializeResponse
+
+    initialize_response: InitializeResponse = debugger_api.initialize()
+    assert initialize_response.body.exceptionBreakpointFilters == [
+        {"filter": "logFailure", "label": "On log failures", "default": True},
+        {"filter": "logError", "label": "On log errors", "default": True},
+    ]
+    target = debugger_api.get_dap_case_file("case_failure.robot")
+    debugger_api.target = target
+
+    debugger_api.launch(target, debug=True)
+    debugger_api.set_exception_breakpoints(["logFailure", "logError"])
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(
+        name="This keyword does not exist", reason="exception"
+    )
+
+    debugger_api.continue_event(json_hit.thread_id)
+
+    debugger_api.read(TerminatedEvent)
+
+
+def test_import_failure(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import InitializeResponse
+
+    initialize_response: InitializeResponse = debugger_api.initialize()
+    assert initialize_response.body.exceptionBreakpointFilters == [
+        {"filter": "logFailure", "label": "On log failures", "default": True},
+        {"filter": "logError", "label": "On log errors", "default": True},
+    ]
+    target = debugger_api.get_dap_case_file("case_import_failure.robot")
+    debugger_api.target = target
+
+    debugger_api.launch(target, debug=True)
+    debugger_api.set_exception_breakpoints(["logFailure", "logError"])
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(
+        name="Log (ERROR)", reason="exception", file="case_import_failure.robot"
+    )
+
+    debugger_api.continue_event(json_hit.thread_id)
+
+    debugger_api.read(TerminatedEvent)
+
+
 def test_variables(debugger_api: _DebuggerAPI):
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
 

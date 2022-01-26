@@ -108,9 +108,16 @@ class _RobotTargetComm(threading.Thread):
 
         thread_id = self.get_current_thread_id()
 
+        exc_name = self._debugger_impl.exc_name
+        exc_desc = self._debugger_impl.exc_description
+
         reason = self._debugger_impl.stop_reason
         body = StoppedEventBody(
-            reason.value, allThreadsStopped=True, threadId=thread_id
+            reason.value,
+            allThreadsStopped=True,
+            threadId=thread_id,
+            text=exc_name,
+            description=exc_desc,
         )
         msg = StoppedEvent(body)
         self.write_message(msg)
@@ -235,6 +242,10 @@ class _RobotTargetComm(threading.Thread):
         capabilities.supportsConditionalBreakpoints = True
         capabilities.supportsHitConditionalBreakpoints = True
         capabilities.supportsLogPoints = True
+        capabilities.exceptionBreakpointFilters = [
+            {"filter": "logFailure", "label": "On log failures", "default": True},
+            {"filter": "logError", "label": "On log errors", "default": True},
+        ]
         # capabilities.supportsSetVariable = True
         self.write_message(initialize_response)
         self.write_message(
@@ -249,6 +260,27 @@ class _RobotTargetComm(threading.Thread):
 
         attach_response = build_response(request)
         self.write_message(attach_response)
+
+    def on_setExceptionBreakpoints_request(self, request):
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            SetExceptionBreakpointsArguments,
+        )
+        from robocorp_ls_core.debug_adapter_core.dap import dap_base_schema
+
+        arguments: SetExceptionBreakpointsArguments = request.arguments
+        filters = arguments.filters
+        break_on_log_failure = "logFailure" in filters
+        break_on_log_error = "logError" in filters
+
+        if self._debugger_impl:
+            self._debugger_impl.break_on_log_failure = break_on_log_failure
+            self._debugger_impl.break_on_log_error = break_on_log_error
+        else:
+            if break_on_log_failure or break_on_log_error:
+                get_log().info("Unable to break on failures/errors (no debug mode).")
+
+        # Note: no body needed.
+        self.write_message(dap_base_schema.build_response(request))
 
     def on_setBreakpoints_request(self, request):
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import SourceBreakpoint

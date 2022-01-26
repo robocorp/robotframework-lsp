@@ -209,6 +209,7 @@ class _DebuggerAPI(object):
         assert initialize_response.request_seq == 0
         assert initialize_response.success
         assert initialize_response.command == "initialize"
+        return initialize_response
 
     def configuration_done(self):
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
@@ -370,6 +371,25 @@ class _DebuggerAPI(object):
         )
         response = self.read(SetBreakpointsResponse)
         assert len(response.body.breakpoints) == len(lines)
+
+    def set_exception_breakpoints(self, filters):
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            SetExceptionBreakpointsRequest,
+        )
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            SetExceptionBreakpointsArguments,
+        )
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            SetExceptionBreakpointsResponse,
+        )
+
+        self.write(
+            SetExceptionBreakpointsRequest(
+                SetExceptionBreakpointsArguments(filters=filters)
+            )
+        )
+        response = self.read(SetExceptionBreakpointsResponse)
+        assert response.success
 
     def wait_for_response(self, request, response_class=None):
         from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (
