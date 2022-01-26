@@ -554,8 +554,8 @@ def test_failure(debugger_api: _DebuggerAPI):
 
     initialize_response: InitializeResponse = debugger_api.initialize()
     assert initialize_response.body.exceptionBreakpointFilters == [
-        {"filter": "logFailure", "label": "On log failures", "default": True},
-        {"filter": "logError", "label": "On log errors", "default": True},
+        {"filter": "logFailure", "label": "Robot Log FAIL", "default": True},
+        {"filter": "logError", "label": "Robot Log ERROR", "default": True},
     ]
     target = debugger_api.get_dap_case_file("case_failure.robot")
     debugger_api.target = target
@@ -579,8 +579,8 @@ def test_import_failure(debugger_api: _DebuggerAPI):
 
     initialize_response: InitializeResponse = debugger_api.initialize()
     assert initialize_response.body.exceptionBreakpointFilters == [
-        {"filter": "logFailure", "label": "On log failures", "default": True},
-        {"filter": "logError", "label": "On log errors", "default": True},
+        {"filter": "logFailure", "label": "Robot Log FAIL", "default": True},
+        {"filter": "logError", "label": "Robot Log ERROR", "default": True},
     ]
     target = debugger_api.get_dap_case_file("case_import_failure.robot")
     debugger_api.target = target

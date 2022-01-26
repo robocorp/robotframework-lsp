@@ -136,8 +136,8 @@ class DebugAdapterComm(object):
         capabilities.supportsHitConditionalBreakpoints = True
         capabilities.supportsLogPoints = True
         capabilities.exceptionBreakpointFilters = [
-            {"filter": "logFailure", "label": "On log failures", "default": True},
-            {"filter": "logError", "label": "On log errors", "default": True},
+            {"filter": "logFailure", "label": "Robot Log FAIL", "default": True},
+            {"filter": "logError", "label": "Robot Log ERROR", "default": True},
         ]
         # capabilities.supportsSetVariable = True
         self.write_to_client_message(initialize_response)
