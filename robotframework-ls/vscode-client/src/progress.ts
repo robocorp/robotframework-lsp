@@ -31,11 +31,11 @@ class ProgressReporter {
     }
 }
 
-let id_to_progress: Map<number, ProgressReporter> = new Map();
+let id_to_progress: Map<number | string, ProgressReporter> = new Map();
 
 export interface ProgressReport {
     kind: string; // 'begin' | 'end' | 'report'
-    id: number; // the id of the progress
+    id: number | string; // the id of the progress
     title?: string; // the title of the progress
     message?: string; // Only used for the 'report': The message for the progress.
     increment?: number; // Only used for the 'report': How much to increment it (0-100). Summed to previous inrcements.

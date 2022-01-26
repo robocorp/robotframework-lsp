@@ -51,6 +51,7 @@ import { errorFeedback, logError, OUTPUT_CHANNEL } from "./channel";
 import { Mutex } from "./mutex";
 import { fileExists } from "./files";
 import { clearTestItems, handleTestsCollected, ITestInfoFromUri, setupTestExplorerSupport } from "./testview";
+import { getPythonExtensionExecutable } from "./pythonExtIntegration";
 
 interface ExecuteWorkspaceCommandArgs {
     command: string;
@@ -335,6 +336,11 @@ async function getDefaultLanguageServerPythonExecutable(): Promise<ExecutableAnd
             // The command may not be available (in this case, go forward and try to find it in the filesystem).
         }
 
+        if (!executable) {
+            // If the user hasn't defined an executable, try to see if we can get it
+            // from the python installation.
+            executable = await getPythonExtensionExecutable();
+        }
         // Search python from the path.
         if (!executable) {
             OUTPUT_CHANNEL.appendLine("Language server Python executable. Searching in PATH.");

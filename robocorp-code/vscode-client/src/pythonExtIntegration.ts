@@ -102,9 +102,10 @@ export async function getPythonExecutable(
             // Note: just this in not enough to know if the user is actually using the new API
             // (i.e.: he may not be in the experiment).
             if (!extension.isActive) {
+                const id = "activate-vscode-python-" + Date.now();
                 handleProgressMessage({
                     kind: "begin",
-                    id: "activate-vscode-python",
+                    id: id,
                     title: "Waiting for vscode-python activation...",
                 });
                 try {
@@ -112,7 +113,7 @@ export async function getPythonExecutable(
                 } finally {
                     handleProgressMessage({
                         kind: "end",
-                        id: "activate-vscode-python",
+                        id: id,
                     });
                 }
             }
@@ -127,7 +128,7 @@ export async function getPythonExecutable(
             if (execCommand instanceof Array) {
                 // It could be some composite command such as conda activate, but that's ok, we don't want to consider those
                 // a match for our use-case.
-                return execCommand[0];
+                return execCommand.join(" ");
             }
             return execCommand;
         } else {
