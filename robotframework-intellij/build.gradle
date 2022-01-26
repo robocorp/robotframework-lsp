@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.37.0'
+version '0.38.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,14 +51,25 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.37.0
+    Release 0.38.0
     </p>
     <ul>
 
-    <li>Code analysis will now notify if Library or Resource cannot be resolved.</li>
-    <li>If Run Keyword has a variable concatenated, it's no longer considered an error.</li>
-    <li>Properly resolve variables in arguments in the libspec generation.</li>
-    <li>Improvements related to scheduling the lint after changing the editor.</li>
+    <li>[Intellij] Variables configured in <strong>robot.variables</strong> are properly passed to launched process.</li>
+    <li>It's now possible to break when an error or failure is logged with the following environment variables:</li>
+    <ul>
+      <li><strong>RFLS_BREAK_ON_FAILURE=1</strong></li>
+      <li><strong>RFLS_BREAK_ON_ERROR=1</strong></li>
+    </ul>
+    <li>When launching, better heuristics are used to create a proper test suite.</li>
+    <ul>
+      <li>A suite is created considering <strong>__init__.robot</strong> in parents based on the specified <strong>target</strong>.</li>
+      <li>By default the <strong>target</strong> will be used to compute the suite as well as the needed filtering.</li>
+    </ul>
+    <li>MarkupContent is now properly used in the signature help.</li>
+    <li>Go to definition now works properly with <strong>.yaml</strong> files.</li>
+    <li>The signature part of a keyword is now bold in the documentation.</li>
+    <li>Keyword namespace access now has a different color in semantic highlighting.</li>
 
     <br>
     Current feature set:<br>
@@ -74,6 +85,11 @@ patchPluginXml {
     <li>Debugger:</li>
     <ul>    
       <li>Add line breakpoints in <strong>.robot</strong> or <strong>.py</strong> files.</li>
+      <li>Break when an error or failure is logged with the following environment variables:</li>
+      <ul>
+        <li><strong>RFLS_BREAK_ON_FAILURE=1</strong></li>
+        <li><strong>RFLS_BREAK_ON_ERROR=1</strong></li>
+      </ul>
       <li>Evaluate keywords.</li>
       <li>Pause at breakpoints to inspect the stack and see variables.</li>
       <li>Step in.</li>

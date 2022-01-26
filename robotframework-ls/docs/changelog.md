@@ -1,3 +1,21 @@
+New in 0.38.0 (2022-01-25)
+-----------------------------
+
+- It's now possible to break when an error or failure is logged (enable in the `BREAKPOINTS` tab). [#284](https://github.com/robocorp/robotframework-lsp/issues/284)
+- When launching, better heuristics are used to create a proper test suite. [#482](https://github.com/robocorp/robotframework-lsp/issues/482)
+  - A suite is created considering __init__.robot in parents based on the specified `target`.
+  - By default the `target` will be used to compute the suite as well as the needed filtering.
+  - It's possible to specify a `suiteTarget` in the launch now to force a given suite to be created (the `target` is still used for filtering afterwards). 
+- When hovering for go to definition the origin location properly highlights the whole region not just the current word.  [#279](https://github.com/robocorp/robotframework-lsp/issues/279)
+- Document highlighting is now provided for keywords and variables.
+- MarkupContent is now properly used in the signature help.
+- Go to definition now works properly with .yaml files.
+- The signature part of a keyword is now bold in the documentation.
+- Auto-completing in interactive console no longer shows the same reloaded keyword multiple times. [#510](https://github.com/robocorp/robotframework-lsp/issues/510)
+- The interactive console now always uses the .robot parsing (which allows test-cases) even when started from a .resource. [#545](https://github.com/robocorp/robotframework-lsp/issues/545)
+- Keyword namespace access now has a different color in semantic highlighting. [#533](https://github.com/robocorp/robotframework-lsp/issues/533)
+
+
 New in 0.37.0 (2022-01-19)
 -----------------------------
 

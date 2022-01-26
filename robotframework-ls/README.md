@@ -31,7 +31,7 @@ See: [Config](docs/config.md) for details.
 See: [FAQ](docs/faq.md) for common issues encountered while configuring the language server.
   
 
-Features (0.37.0)
+Features (0.38.0)
 -----------------
 
 - Test Explorer support in VSCode.
@@ -44,6 +44,7 @@ Features (0.37.0)
 - Go to definition for keywords, variables, resource imports and library imports.
 - Symbols browser for keywords in workspace (activated through `Ctrl + T`).
 - Document symbols.
+- Highlight of keywords/variables.
 - Syntax highlighting (using `semanticTokens`).
 - Syntax validation.
 - Signature Help (activated through `Ctrl + Shift + Space`).
@@ -52,7 +53,8 @@ Features (0.37.0)
 - Code folding.
 - Launch `.robot` files.
 - Debugger:
-  - Add line breakpoints in `.robot` or `.py` files.
+  - Add line breakpoints in `.robot` or `.py` files
+  - Break on log error/failure
   - Evaluate keywords in debug console/hover/watch
   - Pause at breakpoints to inspect the stack and see variables
   - Breakpoint condition/hitCondition/logMessage

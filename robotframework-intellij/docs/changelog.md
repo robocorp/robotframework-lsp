@@ -1,3 +1,19 @@
+New in 0.38.0 (2022-01-25)
+-----------------------------
+
+- [Intellij] Variables configured in robot.variables are properly passed to launched process. [#548](https://github.com/robocorp/robotframework-lsp/issues/548)
+- It's now possible to break when an error or failure is logged with the following environment variables:
+  - `RFLS_BREAK_ON_FAILURE=1`
+  - `RFLS_BREAK_ON_ERROR=1`
+- When launching, better heuristics are used to create a proper test suite. [#482](https://github.com/robocorp/robotframework-lsp/issues/482)
+  - A suite is created considering __init__.robot in parents based on the specified `target`.
+  - By default the `target` will be used to compute the suite as well as the needed filtering.
+- MarkupContent is now properly used in the signature help.
+- Go to definition now works properly with .yaml files.
+- The signature part of a keyword is now bold in the documentation.
+- Keyword namespace access now has a different color in semantic highlighting. [#533](https://github.com/robocorp/robotframework-lsp/issues/533)
+
+
 New in 0.37.0 (2022-01-19)
 -----------------------------
 
