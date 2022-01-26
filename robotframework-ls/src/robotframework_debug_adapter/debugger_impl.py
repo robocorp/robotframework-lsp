@@ -546,8 +546,15 @@ class _RobotDebuggerImpl(object):
         self._exc_name = None
         self._exc_description = None
 
-        self.break_on_log_failure = False
-        self.break_on_log_error = False
+        def is_true_in_env(key):
+            return os.getenv(key, "0").lower() in (
+                "1",
+                "True",
+                "true",
+            )
+
+        self.break_on_log_failure = is_true_in_env("RFLS_BREAK_ON_FAILURE")
+        self.break_on_log_error = is_true_in_env("RFLS_BREAK_ON_ERROR")
 
     def write_message(self, msg):
         log.critical(
