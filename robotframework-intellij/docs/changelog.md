@@ -1,4 +1,4 @@
-New in 0.38.0 (2022-01-25)
+New in 0.38.0 (2022-01-26)
 -----------------------------
 
 - [Intellij] Variables configured in robot.variables are properly passed to launched process. [#548](https://github.com/robocorp/robotframework-lsp/issues/548)

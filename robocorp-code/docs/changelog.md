@@ -1,3 +1,11 @@
+New in 0.26.0 (2022-01-26)
+-----------------------------
+
+- The organization is shown when listing workspaces for workspace upload.
+- Robot tasks are expanded by default.
+- Fixed case where the computed pythonpath entries for a Robot could be wrong.
+
+
 New in 0.25.0 (2022-01-19)
 -----------------------------
 

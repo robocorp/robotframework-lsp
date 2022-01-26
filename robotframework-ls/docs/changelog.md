@@ -1,4 +1,4 @@
-New in 0.38.0 (2022-01-25)
+New in 0.38.0 (2022-01-26)
 -----------------------------
 
 - It's now possible to break when an error or failure is logged (enable in the `BREAKPOINTS` tab). [#284](https://github.com/robocorp/robotframework-lsp/issues/284)
@@ -13,6 +13,7 @@ New in 0.38.0 (2022-01-25)
 - The signature part of a keyword is now bold in the documentation.
 - Auto-completing in interactive console no longer shows the same reloaded keyword multiple times. [#510](https://github.com/robocorp/robotframework-lsp/issues/510)
 - The interactive console now always uses the .robot parsing (which allows test-cases) even when started from a .resource. [#545](https://github.com/robocorp/robotframework-lsp/issues/545)
+- The ms-python extension interpreter is used as a fallback if one has not been configured for the language server.
 - Keyword namespace access now has a different color in semantic highlighting. [#533](https://github.com/robocorp/robotframework-lsp/issues/533)
 
 
