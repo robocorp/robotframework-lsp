@@ -1,3 +1,9 @@
+New in 0.38.1 (2022-01-27)
+-----------------------------
+
+- Critical bugfix: it's possible to run test names containing unicode characters again.
+
+
 New in 0.38.0 (2022-01-26)
 -----------------------------
 
