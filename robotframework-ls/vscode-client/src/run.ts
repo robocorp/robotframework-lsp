@@ -12,6 +12,7 @@ import {
 } from "vscode";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import * as path from "path";
+import { jsonEscapeUTF } from "./escape";
 
 interface ITestInfo {
     uri: string;
@@ -203,10 +204,12 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
     // Note that target is unused if RFLS_PRERUN_FILTER_TESTS is specified and makeSuite == true.
     debugConfiguration.target = executePath;
 
-    let envFiltering = JSON.stringify({
-        "include": [[executePath, executeName]],
-        "exclude": [],
-    });
+    let envFiltering = jsonEscapeUTF(
+        JSON.stringify({
+            "include": [[executePath, executeName]],
+            "exclude": [],
+        })
+    );
     if (debugConfiguration.env) {
         debugConfiguration.env["RFLS_PRERUN_FILTER_TESTS"] = envFiltering;
     } else {

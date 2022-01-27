@@ -787,3 +787,31 @@ def test_launch_ignoring_tests(debugger_api: _DebuggerAPI):
 
     if not isinstance(msg, TerminatedEvent):
         debugger_api.read(TerminatedEvent)
+
+
+def test_launch_unicode(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+
+    debugger_api.initialize()
+    target = debugger_api.get_dap_case_file("àèìòù.robot")
+
+    debugger_api.launch(
+        target,
+        debug=True,
+        env={
+            "RFLS_PRERUN_FILTER_TESTS": json.dumps(
+                {"include": [[target, "àèìòù"]], "exclude": []}
+            )
+        },
+    )
+
+    bp1 = debugger_api.get_line_index_with_content("Log to console    àèìòù", target)
+    debugger_api.set_breakpoints(target, bp1)
+
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(file="àèìòù.robot")
+    msg = debugger_api.continue_event(json_hit.thread_id, accept_terminated=True)
+
+    if not isinstance(msg, TerminatedEvent):
+        debugger_api.read(TerminatedEvent)

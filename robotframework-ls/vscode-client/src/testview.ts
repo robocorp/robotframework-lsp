@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import { readLaunchTemplate } from "./run";
 import { WeakValueMap } from "./weakValueMap";
+import { jsonEscapeUTF } from "./escape";
 
 import * as nodePath from "path";
 import { sleep } from "./time";
@@ -311,10 +312,12 @@ export async function setupTestExplorerSupport() {
             return ret;
         }
 
-        envFiltering = JSON.stringify({
-            "include": convertToFiltering(includeTests),
-            "exclude": convertToFiltering(excludeTests),
-        });
+        envFiltering = jsonEscapeUTF(
+            JSON.stringify({
+                "include": convertToFiltering(includeTests),
+                "exclude": convertToFiltering(excludeTests),
+            })
+        );
 
         let debugConfiguration: vscode.DebugConfiguration = {
             "type": "robotframework-lsp",

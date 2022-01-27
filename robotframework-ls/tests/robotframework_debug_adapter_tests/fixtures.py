@@ -471,7 +471,7 @@ class _DebuggerAPI(object):
         """
         if filename is None:
             filename = self.target
-        with open(filename, "r") as stream:
+        with open(filename, "r", encoding="utf-8") as stream:
             for i_line, line in enumerate(stream):
                 if line_content in line:
                     return i_line + 1
