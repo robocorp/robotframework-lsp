@@ -5,7 +5,7 @@ import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE }
 import { FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeView } from "./viewsCommon";
 import { basename, dirname, join } from "path";
 import { Uri, TreeItem } from "vscode";
-import { RobotSelectionTreeDataProviderBase } from "./viewsRobotSelection";
+import { RobotSelectionTreeDataProviderBase } from "./viewsRobotSelectionTreeBase";
 
 const fsPromises = fs.promises;
 

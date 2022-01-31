@@ -11,7 +11,7 @@ import {
     treeViewIdToTreeView,
 } from "./viewsCommon";
 import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE } from "./robocorpViews";
-import { getCurrRobotDir, RobotSelectionTreeDataProviderBase } from "./viewsRobotSelection";
+import { getCurrRobotDir, RobotSelectionTreeDataProviderBase } from "./viewsRobotSelectionTreeBase";
 import { resolveInterpreter } from "./activities";
 import { feedback } from "./rcc";
 

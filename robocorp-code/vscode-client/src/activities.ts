@@ -16,8 +16,8 @@ import * as roboCommands from "./robocorpCommands";
 import * as vscode from "vscode";
 import * as pythonExtIntegration from "./pythonExtIntegration";
 import { QuickPickItemWithAction, sortCaptions, QuickPickItemRobotTask, showSelectOneQuickPick } from "./ask";
-import { refreshCloudTreeView } from "./views";
 import { feedback, feedbackRobocorpCodeError } from "./rcc";
+import { refreshCloudTreeView } from "./viewsRobocorp";
 
 export async function cloudLogin(): Promise<boolean> {
     let loggedIn: boolean;

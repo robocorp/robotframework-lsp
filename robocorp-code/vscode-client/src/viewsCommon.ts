@@ -45,6 +45,13 @@ export interface FSEntry {
 export let treeViewIdToTreeView: Map<string, vscode.TreeView<any>> = new Map();
 export let treeViewIdToTreeDataProvider: Map<string, vscode.TreeDataProvider<any>> = new Map();
 
+export function refreshTreeView(treeViewId: string) {
+    let dataProvider: any = <any>treeViewIdToTreeDataProvider.get(treeViewId);
+    if (dataProvider) {
+        dataProvider.fireRootChange();
+    }
+}
+
 export interface SingleTreeSelectionOpts {
     noSelectionMessage?: string;
     moreThanOneSelectionMessage?: string;

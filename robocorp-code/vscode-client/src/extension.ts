@@ -91,7 +91,7 @@ import {
     newWorkItemInWorkItemsTree,
     openWorkItemHelp,
 } from "./viewsWorkItems";
-import { FSEntry, LocatorEntry, RobotEntry } from "./viewsCommon";
+import { FSEntry, LocatorEntry, refreshTreeView, RobotEntry } from "./viewsCommon";
 import {
     ROBOCORP_CLOUD_LOGIN,
     ROBOCORP_CLOUD_LOGOUT,
@@ -137,6 +137,7 @@ import {
     ROBOCORP_REVEAL_ROBOT_IN_EXPLORER,
 } from "./robocorpCommands";
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
+import { refreshCloudTreeView } from "./viewsRobocorp";
 
 const clientOptions: LanguageClientOptions = {
     documentSelector: [
@@ -415,11 +416,11 @@ async function cloudLoginShowConfirmationAndRefresh() {
     if (loggedIn) {
         window.showInformationMessage("Successfully logged in Control Room.");
     }
-    views.refreshCloudTreeView();
+    refreshCloudTreeView();
 }
 async function cloudLogoutAndRefresh() {
     await cloudLogout();
-    views.refreshCloudTreeView();
+    refreshCloudTreeView();
 }
 
 interface RobocorpCodeCommandsOpts {
@@ -438,8 +439,8 @@ function registerRobocorpCodeCommands(C: CommandRegistry, opts?: RobocorpCodeCom
     C.register(ROBOCORP_RUN_ROBOT_RCC, () => askAndRunRobotRCC(true));
     C.register(ROBOCORP_DEBUG_ROBOT_RCC, () => askAndRunRobotRCC(false));
     C.register(ROBOCORP_SET_PYTHON_INTERPRETER, () => setPythonInterpreterFromRobotYaml());
-    C.register(ROBOCORP_REFRESH_ROBOTS_VIEW, () => views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE));
-    C.register(ROBOCORP_REFRESH_CLOUD_VIEW, () => views.refreshCloudTreeView());
+    C.register(ROBOCORP_REFRESH_ROBOTS_VIEW, () => refreshTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE));
+    C.register(ROBOCORP_REFRESH_CLOUD_VIEW, () => refreshCloudTreeView());
     C.register(ROBOCORP_ROBOTS_VIEW_TASK_RUN, (entry: RobotEntry) => views.runSelectedRobot(true, entry));
     C.register(ROBOCORP_ROBOTS_VIEW_TASK_DEBUG, (entry: RobotEntry) => views.runSelectedRobot(false, entry));
     C.register(ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR, (locator?: LocatorEntry) =>
@@ -459,7 +460,7 @@ function registerRobocorpCodeCommands(C: CommandRegistry, opts?: RobocorpCodeCom
         views.createRccTerminalTreeSelection(robot)
     );
     C.register(ROBOCORP_RCC_TERMINAL_NEW, () => askAndCreateRccTerminal());
-    C.register(ROBOCORP_REFRESH_ROBOT_CONTENT_VIEW, () => views.refreshTreeView(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE));
+    C.register(ROBOCORP_REFRESH_ROBOT_CONTENT_VIEW, () => refreshTreeView(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE));
     C.register(ROBOCORP_NEW_FILE_IN_ROBOT_CONTENT_VIEW, newFileInRobotContentTree);
     C.register(ROBOCORP_NEW_FOLDER_IN_ROBOT_CONTENT_VIEW, newFolderInRobotContentTree);
     C.register(ROBOCORP_DELETE_RESOURCE_IN_ROBOT_CONTENT_VIEW, deleteResourceInRobotContentTree);
@@ -668,7 +669,7 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
                 );
                 context.subscriptions.push(
                     langServer.onNotification("$/linkedAccountChanged", () => {
-                        views.refreshCloudTreeView();
+                        refreshCloudTreeView();
                     })
                 );
             }
