@@ -8,7 +8,9 @@ import contextlib
 from importlib import import_module
 import os
 import sys
+from robocorp_ls_core.robotframework_log import get_logger
 
+log = get_logger(__name__)
 
 VENDORED_ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -91,15 +93,17 @@ if not pydevd_available:
         ],
     )
 
-    import pydevd  # noqa
+import pydevd  # noqa
 
-    # Ensure that pydevd uses JSON protocol by default.
-    from _pydevd_bundle import pydevd_constants
-    from _pydevd_bundle import pydevd_defaults
+log.info("Vendored root: %s\npydevd: %s", VENDORED_ROOT, pydevd)
 
-    pydevd_defaults.PydevdCustomization.DEFAULT_PROTOCOL = (
-        pydevd_constants.HTTP_JSON_PROTOCOL
-    )
+# Ensure that pydevd uses JSON protocol by default.
+from _pydevd_bundle import pydevd_constants
+from _pydevd_bundle import pydevd_defaults
+
+pydevd_defaults.PydevdCustomization.DEFAULT_PROTOCOL = (
+    pydevd_constants.HTTP_JSON_PROTOCOL
+)
 
 
 from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import (

@@ -598,6 +598,12 @@ def main():
     s = connect(port)
 
     if debug:
+        if LOG_FILENAME:
+            if not os.getenv("PYDEVD_DEBUG_FILE"):
+                path, ext = os.path.splitext(LOG_FILENAME)
+                os.environ["PYDEVD_DEBUG_FILE"] = f"{path}.pydevd{ext}"
+            os.environ["PYDEVD_DEBUG"] = "1"
+
         # Make sure that we can use pydevd (initialize only in debug mode).
         import robotframework_debug_adapter.vendored.force_pydevd  # @UnusedImport
 
