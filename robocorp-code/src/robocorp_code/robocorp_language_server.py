@@ -34,7 +34,7 @@ from robocorp_code.protocols import (
 )
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.cache import CachedFileInfo
-from robocorp_ls_core.protocols import IConfig, LibraryVersionInfoDict
+from robocorp_ls_core.protocols import IConfig, LibraryVersionInfoDict, ActionResult
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
@@ -421,8 +421,81 @@ class RobocorpLanguageServer(PythonLanguageServer):
         self._dir_cache.store(name, cache_lru_list)
         return {"success": True, "message": "", "result": entry}
 
+    @command_dispatcher(commands.ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL)
+    def _get_connected_vault_workspace(self, params: dict = None) -> ActionResultDict:
+        try:
+            info = self._dir_cache.load("VAULT_WORKSPACE_INFO", dict)
+            ret = {
+                "workspaceId": info["workspaceId"],
+                "organizationName": info["organizationName"],
+                "workspaceName": info["workspaceName"],
+            }
+            return ActionResult(True, "", ret).as_dict()
+
+        except KeyError:
+            # It worked (thus, success == True), but it's not available.
+            return ActionResult(
+                True, "Connected vault workspace not set", None
+            ).as_dict()
+
+        except Exception as e:
+            log.exception("Error loading VAULT_WORKSPACE_INFO.")
+            return ActionResult(False, str(e), None).as_dict()
+
+    @command_dispatcher(commands.ROBOCORP_SET_CONNECTED_VAULT_WORKSPACE_INTERNAL)
+    def _set_connected_vault_workspace(self, params: dict) -> ActionResultDict:
+        if "workspaceId" not in params:
+            return ActionResult(
+                False, "workspaceId not passed in params.", None
+            ).as_dict()
+
+        workspace_id = params["workspaceId"]
+
+        if not workspace_id:
+            # If set to empty, discard the info.
+            self._dir_cache.discard("VAULT_WORKSPACE_INFO")
+            return ActionResult(True, "", None).as_dict()
+
+        if not isinstance(workspace_id, str):
+            return ActionResult(
+                False, "Expected workspaceId to be a str.", None
+            ).as_dict()
+
+        if "organizationName" not in params:
+            return ActionResult(
+                False, "organizationName not passed in params.", None
+            ).as_dict()
+
+        if "workspaceName" not in params:
+            return ActionResult(
+                False, "workspaceName not passed in params.", None
+            ).as_dict()
+
+        organization_name = params["organizationName"]
+        if not isinstance(organization_name, str):
+            return ActionResult(
+                False, "Expected organizationName to be a str.", None
+            ).as_dict()
+
+        workspace_name = params["workspaceName"]
+        if not isinstance(workspace_name, str):
+            return ActionResult(
+                False, "Expected workspaceName to be a str.", None
+            ).as_dict()
+
+        self._dir_cache.store(
+            "VAULT_WORKSPACE_INFO",
+            {
+                "workspaceId": workspace_id,
+                "organizationName": organization_name,
+                "workspaceName": workspace_name,
+            },
+        )
+
+        return ActionResult(True, "", None).as_dict()
+
     @command_dispatcher(commands.ROBOCORP_LOAD_FROM_DISK_LRU, list)
-    def _load_from_disk_lru(self, params: dict) -> ActionResultDict:
+    def _load_from_disk_lru(self, params: dict) -> list:
         try:
             name = params["name"]
             cache_lru_list = self._dir_cache.load(name, list)

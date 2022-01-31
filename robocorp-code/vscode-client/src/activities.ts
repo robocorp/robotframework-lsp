@@ -15,7 +15,14 @@ import { logError, OUTPUT_CHANNEL } from "./channel";
 import * as roboCommands from "./robocorpCommands";
 import * as vscode from "vscode";
 import * as pythonExtIntegration from "./pythonExtIntegration";
-import { QuickPickItemWithAction, sortCaptions, QuickPickItemRobotTask, showSelectOneQuickPick } from "./ask";
+import {
+    QuickPickItemWithAction,
+    sortCaptions,
+    QuickPickItemRobotTask,
+    showSelectOneQuickPick,
+    getWorkspaceDescription,
+    selectWorkspace,
+} from "./ask";
 import { feedback, feedbackRobocorpCodeError } from "./rcc";
 import { refreshCloudTreeView } from "./viewsRobocorp";
 
@@ -334,10 +341,6 @@ export async function rccConfigurationDiagnostics() {
     });
 }
 
-function getWorkspaceDescription(wsInfo: WorkspaceInfo) {
-    return wsInfo.organizationName + ": " + wsInfo.workspaceName;
-}
-
 export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
     // Start this in parallel while we ask the user for info.
     let isLoginNeededPromise: Thenable<ActionResult<boolean>> = commands.executeCommand(
@@ -386,66 +389,16 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
 
     let refresh = false;
     SELECT_OR_REFRESH: do {
-        // We ask for the information on the existing workspaces information.
-        // Note that this may be cached from the last time it was asked,
-        // so, we have an option to refresh it (and ask again).
-        let actionResult: ListWorkspacesActionResult = await commands.executeCommand(
-            roboCommands.ROBOCORP_CLOUD_LIST_WORKSPACES_INTERNAL,
-            { "refresh": refresh }
+        let workspaceSelection = await selectWorkspace(
+            "Please select a Workspace to upload ‘" + robot.name + "’ to.",
+            refresh
         );
-
-        if (!actionResult.success) {
-            window.showErrorMessage("Error listing Control Room workspaces: " + actionResult.message);
+        if (workspaceSelection === undefined) {
             return;
         }
 
-        let workspaceInfo: WorkspaceInfo[] = actionResult.result;
-        if (!workspaceInfo || workspaceInfo.length == 0) {
-            window.showErrorMessage("A Control Room Workspace must be created to submit a Robot to the Control Room.");
-            return;
-        }
-
-        // Now, if there are only a few items or a single workspace,
-        // just show it all, otherwise do a pre-selectedItem with the workspace.
-        let workspaceIdFilter: string = undefined;
-
-        if (workspaceInfo.length > 1) {
-            // Ok, there are many workspaces, let's provide a pre-filter for it.
-            let captions: QuickPickItemWithAction[] = new Array();
-            for (let i = 0; i < workspaceInfo.length; i++) {
-                const wsInfo: WorkspaceInfo = workspaceInfo[i];
-                let caption: QuickPickItemWithAction = {
-                    "label": "$(folder) " + getWorkspaceDescription(wsInfo),
-                    "action": { "filterWorkspaceId": wsInfo.workspaceId },
-                };
-                captions.push(caption);
-            }
-
-            sortCaptions(captions);
-
-            let caption: QuickPickItemWithAction = {
-                "label": "$(refresh) * Refresh list",
-                "description": "Expected Workspace is not appearing.",
-                "sortKey": "09999", // last item
-                "action": { "refresh": true },
-            };
-            captions.push(caption);
-
-            let selectedItem: QuickPickItemWithAction = await showSelectOneQuickPick(
-                captions,
-                "Please select a Workspace to upload ‘" + robot.name + "’ to."
-            );
-
-            if (!selectedItem) {
-                return;
-            }
-            if (selectedItem.action.refresh) {
-                refresh = true;
-                continue SELECT_OR_REFRESH;
-            } else {
-                workspaceIdFilter = selectedItem.action.filterWorkspaceId;
-            }
-        }
+        const workspaceInfo = workspaceSelection.workspaceInfo;
+        const workspaceIdFilter = workspaceSelection.selectedWorkspaceInfo.workspaceId;
 
         // -------------------------------------------------------
         // Select Robot/New Robot/Refresh
@@ -455,10 +408,8 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
         for (let i = 0; i < workspaceInfo.length; i++) {
             const wsInfo: WorkspaceInfo = workspaceInfo[i];
 
-            if (workspaceIdFilter) {
-                if (workspaceIdFilter != wsInfo.workspaceId) {
-                    continue;
-                }
+            if (workspaceIdFilter != wsInfo.workspaceId) {
+                continue;
             }
 
             for (let j = 0; j < wsInfo.packages.length; j++) {

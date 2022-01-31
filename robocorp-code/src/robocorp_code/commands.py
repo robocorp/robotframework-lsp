@@ -64,6 +64,10 @@ ROBOCORP_DELETE_WORK_ITEM_IN_WORK_ITEMS_VIEW = "robocorp.deleteWorkItemInWorkIte
 ROBOCORP_HELP_WORK_ITEMS = "robocorp.helpWorkItems"  # Work Items Help
 ROBOCORP_CONVERT_OUTPUT_WORK_ITEM_TO_INPUT = "robocorp.convertOutputWorkItemToInput"  # Convert output work item to input
 ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL = "robocorp.verifyLibraryVersion.internal"  # Collect a library version and verify if it matches some expected version
+ROBOCORP_CONNECT_VAULT = "robocorp.connectVault"  # Connect to online secrets vault
+ROBOCORP_DISCONNECT_VAULT = "robocorp.disconnectVault"  # Disconnect from online secrets vault
+ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL = "robocorp.getConnectedVaultWorkspace.internal"  # Gets workspace id of the currently connected vault
+ROBOCORP_SET_CONNECTED_VAULT_WORKSPACE_INTERNAL = "robocorp.setConnectedVaultWorkspace.internal"  # Sets the currently connected vault workspace
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,
@@ -88,6 +92,8 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL,
     ROBOCORP_LIST_WORK_ITEMS_INTERNAL,
     ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL,
+    ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL,
+    ROBOCORP_SET_CONNECTED_VAULT_WORKSPACE_INTERNAL,
 ]
 
 # fmt: on

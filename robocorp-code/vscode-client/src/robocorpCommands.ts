@@ -63,3 +63,7 @@ export const ROBOCORP_DELETE_WORK_ITEM_IN_WORK_ITEMS_VIEW = "robocorp.deleteWork
 export const ROBOCORP_HELP_WORK_ITEMS = "robocorp.helpWorkItems";  // Work Items Help
 export const ROBOCORP_CONVERT_OUTPUT_WORK_ITEM_TO_INPUT = "robocorp.convertOutputWorkItemToInput";  // Convert output work item to input
 export const ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL = "robocorp.verifyLibraryVersion.internal";  // Collect a library version and verify if it matches some expected version
+export const ROBOCORP_CONNECT_VAULT = "robocorp.connectVault";  // Connect to online secrets vault
+export const ROBOCORP_DISCONNECT_VAULT = "robocorp.disconnectVault";  // Disconnect from online secrets vault
+export const ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL = "robocorp.getConnectedVaultWorkspace.internal";  // Gets workspace id of the currently connected vault
+export const ROBOCORP_SET_CONNECTED_VAULT_WORKSPACE_INTERNAL = "robocorp.setConnectedVaultWorkspace.internal";  // Sets the currently connected vault workspace

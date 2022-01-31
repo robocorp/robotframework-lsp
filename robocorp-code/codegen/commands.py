@@ -467,6 +467,34 @@ COMMANDS = [
         add_to_package_json=False,
         server_handled=True,
     ),
+    Command(
+        "robocorp.connectVault",
+        "Connect to online secrets vault",
+        icon="$(lock)",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
+    Command(
+        "robocorp.disconnectVault",
+        "Disconnect from online secrets vault",
+        icon="$(unlock)",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
+    Command(
+        "robocorp.getConnectedVaultWorkspace.internal",
+        "Gets workspace id of the currently connected vault",
+        add_to_package_json=True,
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
+    Command(
+        "robocorp.setConnectedVaultWorkspace.internal",
+        "Sets the currently connected vault workspace",
+        add_to_package_json=True,
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
 ]
 
 

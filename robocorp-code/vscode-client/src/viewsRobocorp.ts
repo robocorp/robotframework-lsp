@@ -37,6 +37,32 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
                     "iconPath": "link",
                     "viewItemContextValue": "cloudLogoutItem",
                 });
+
+                let vaultInfoResult: ActionResult<any> = await vscode.commands.executeCommand(
+                    roboCommands.ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL
+                );
+
+                if (
+                    vaultInfoResult === undefined ||
+                    vaultInfoResult.success === false ||
+                    vaultInfoResult.result === undefined
+                ) {
+                    let label = "Vault: disconnected.";
+                    if (vaultInfoResult !== undefined && vaultInfoResult.message !== undefined) {
+                        label += " " + vaultInfoResult.message;
+                    }
+                    ret.push({
+                        "label": label,
+                        "iconPath": "unlock",
+                        "viewItemContextValue": "vaultDisconnected",
+                    });
+                } else {
+                    ret.push({
+                        "label": "Vault: " + vaultInfoResult.message,
+                        "iconPath": "lock",
+                        "viewItemContextValue": "vaultConnected",
+                    });
+                }
             }
             ret.push({
                 "label": "Robot Development Guide",
