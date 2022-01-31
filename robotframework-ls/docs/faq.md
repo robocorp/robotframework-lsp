@@ -124,7 +124,7 @@ version).
 How to install a build from GitHub on Intellij?
 ------------------------------------------------
 
-First download the `distribution-intellij.zip` from one of the [Tests Intellij](https://github.com/robocorp/robotframework-lsp/actions?query=workflow%3A%22Tests+-+Intellij%22) jobs
+First download the `intellij-distribution.zip` from one of the [Tests Intellij](https://github.com/robocorp/robotframework-lsp/actions?query=workflow%3A%22Tests+-+Intellij%22) jobs
 in [https://github.com/robocorp/robotframework-lsp/actions](https://github.com/robocorp/robotframework-lsp/actions),
 then extract the `robotframework-intellij-X.XX.X.zip` from it (due to a limitation in the GitHub upload artifacts
 action, even a single .zip is zipped again).
