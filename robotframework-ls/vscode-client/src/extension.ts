@@ -235,15 +235,19 @@ function registerDebugger() {
         env: { [key: string]: string },
         targetRobot: string
     ): Promise<DebugAdapterExecutable> {
-        let dapPythonExecutable: string = getStrFromConfigExpandingVars(
+        let dapPythonExecutable: string[] | undefined = undefined;
+        const inConfig: string = getStrFromConfigExpandingVars(
             workspace.getConfiguration("robot"),
             "python.executable"
         );
+        if (inConfig) {
+            dapPythonExecutable = [inConfig];
+        }
 
-        // If it's not specified in the language, let's check if some plugin wants to provide an implementation.
-        let interpreter: InterpreterInfo = await commands.executeCommand("robot.resolveInterpreter", targetRobot);
+        // Even if it's specified in the language, let's check if some plugin wants to provide an implementation.
+        const interpreter: InterpreterInfo = await commands.executeCommand("robot.resolveInterpreter", targetRobot);
         if (interpreter) {
-            dapPythonExecutable = interpreter.pythonExe;
+            dapPythonExecutable = [interpreter.pythonExe];
             if (interpreter.environ) {
                 if (!env) {
                     env = interpreter.environ;
@@ -253,13 +257,16 @@ function registerDebugger() {
                     }
                 }
             }
-        } else if (!dapPythonExecutable && env) {
+        } else if ((!dapPythonExecutable || dapPythonExecutable.length === 0) && env) {
             // If a `PYTHON_EXE` is specified in the env, give it priority vs using the language server
             // executable.
-            dapPythonExecutable = env["PYTHON_EXE"];
+            const inEnv = env["PYTHON_EXE"];
+            if (inEnv) {
+                dapPythonExecutable = [inEnv];
+            }
         }
 
-        if (!dapPythonExecutable) {
+        if (!dapPythonExecutable || dapPythonExecutable.length === 0) {
             // If the dapPythonExecutable is not specified, use the default language server executable.
             if (!lastLanguageServerExecutable) {
                 window.showWarningMessage(
@@ -270,20 +277,33 @@ function registerDebugger() {
             dapPythonExecutable = lastLanguageServerExecutable;
         }
 
-        let targetMain: string = path.resolve(__dirname, "../../src/robotframework_debug_adapter/__main__.py");
+        if (!dapPythonExecutable || dapPythonExecutable.length === 0) {
+            window.showWarningMessage("Error. Unable to resolve the python executable to launch debug adapter.");
+            return;
+        }
+
+        const targetMain: string = path.resolve(__dirname, "../../src/robotframework_debug_adapter/__main__.py");
         if (!fs.existsSync(targetMain)) {
             window.showWarningMessage("Error. Expected: " + targetMain + " to exist.");
             return;
         }
-        if (!fs.existsSync(dapPythonExecutable)) {
-            window.showWarningMessage("Error. Expected: " + dapPythonExecutable + " to exist.");
+        if (!fs.existsSync(dapPythonExecutable[0])) {
+            window.showWarningMessage("Error. Expected: " + dapPythonExecutable[0] + " to exist.");
             return;
         }
 
+        OUTPUT_CHANNEL.appendLine("Launching debug adapter with python: " + dapPythonExecutable);
+
+        const args = [];
+        for (let index = 1; index < dapPythonExecutable.length; index++) {
+            args.push(dapPythonExecutable[index]);
+        }
+        args.push("-u");
+        args.push(targetMain);
         if (env) {
-            return new DebugAdapterExecutable(dapPythonExecutable, ["-u", targetMain], { "env": env });
+            return new DebugAdapterExecutable(dapPythonExecutable[0], args, { "env": env });
         } else {
-            return new DebugAdapterExecutable(dapPythonExecutable, ["-u", targetMain]);
+            return new DebugAdapterExecutable(dapPythonExecutable[0], args);
         }
     }
 
@@ -304,82 +324,122 @@ function registerDebugger() {
 }
 
 interface ExecutableAndMessage {
-    executable: string;
+    executable: string[] | undefined;
     message: string;
 }
 
 async function getDefaultLanguageServerPythonExecutable(): Promise<ExecutableAndMessage> {
     OUTPUT_CHANNEL.appendLine("Getting language server Python executable.");
-    let languageServerPython: string = getStrFromConfigExpandingVars(
+    const languageServerPython: string = getStrFromConfigExpandingVars(
         workspace.getConfiguration("robot"),
         "language-server.python"
     );
-    let executable: string = languageServerPython;
 
-    if (!executable || (executable.indexOf("/") == -1 && executable.indexOf("\\") == -1)) {
-        // Try to use the Robocorp Code extension to provide one for us (if it's installed and
-        // available).
-        try {
-            let languageServerPython: string = await commands.executeCommand<string>(
-                "robocorp.getLanguageServerPython"
-            );
-            if (languageServerPython) {
-                OUTPUT_CHANNEL.appendLine(
-                    "Language server Python executable gotten from robocorp.getLanguageServerPython."
-                );
+    if (languageServerPython) {
+        if (languageServerPython.indexOf("/") !== -1 || languageServerPython.indexOf("\\") !== -1) {
+            // This means it was specified as a full path and it's not just a basename.
+            if (!fs.existsSync(languageServerPython)) {
                 return {
-                    executable: languageServerPython,
-                    "message": undefined,
+                    executable: undefined,
+                    "message":
+                        "Unable to start robotframework-lsp because: " +
+                        languageServerPython +
+                        " (specified as robot.language-server.python) does not exist. Do you want to select a new python executable to start robotframework-lsp?",
                 };
             }
-        } catch (error) {
-            // The command may not be available (in this case, go forward and try to find it in the filesystem).
-        }
-
-        if (!executable) {
-            // If the user hasn't defined an executable, try to see if we can get it
-            // from the python installation.
-            executable = await getPythonExtensionExecutable();
-        }
-        // Search python from the path.
-        if (!executable) {
-            OUTPUT_CHANNEL.appendLine("Language server Python executable. Searching in PATH.");
-            if (process.platform == "win32") {
-                executable = findExecutableInPath("python.exe");
-            } else {
-                executable = findExecutableInPath("python3");
-                if (!fs.existsSync(executable)) {
-                    executable = findExecutableInPath("python");
-                }
-            }
+            return {
+                executable: [languageServerPython],
+                "message": undefined,
+            };
         } else {
-            OUTPUT_CHANNEL.appendLine("Language server Python executable. Searching " + executable + " from the PATH.");
-            executable = findExecutableInPath(executable);
-            OUTPUT_CHANNEL.appendLine("Language server Python executable. Found: " + executable);
+            // Just basename was specified: we need to find it in the PATH
+            OUTPUT_CHANNEL.appendLine(
+                "Language server Python executable: searching " + languageServerPython + " in the PATH."
+            );
+            const found = findExecutableInPath(languageServerPython);
+            if (!found) {
+                OUTPUT_CHANNEL.appendLine(
+                    "Language server Python executable: could not find: " + languageServerPython + " in the PATH."
+                );
+                return {
+                    executable: undefined,
+                    "message":
+                        "Unable to start robotframework-lsp because: " +
+                        languageServerPython +
+                        " could not be found in the PATH. Do you want to select a python executable to start robotframework-lsp?",
+                };
+            }
+            OUTPUT_CHANNEL.appendLine("Language server Python executable: found: " + found);
+            return {
+                executable: [found],
+                "message": undefined,
+            };
         }
-        if (!fs.existsSync(executable)) {
+    }
+
+    // If we got here, it means that the language server python executable wasn't specified,
+    // so, we'll use some additional heuristics...
+
+    // Try to use the Robocorp Code extension to provide one for us (if it's installed and
+    // available).
+    try {
+        const languageServerPython: string = await commands.executeCommand<string>("robocorp.getLanguageServerPython");
+        if (languageServerPython) {
+            OUTPUT_CHANNEL.appendLine(
+                "Language server Python executable gotten from robocorp.getLanguageServerPython."
+            );
+            return {
+                executable: [languageServerPython],
+                "message": undefined,
+            };
+        }
+    } catch (error) {
+        // The command may not be available (in this case, go forward and try to find it in the filesystem).
+    }
+
+    // If the user hasn't defined an executable, try to see if we can get it
+    // from the python installation.
+    let executableAsArray: string[] | undefined = await getPythonExtensionExecutable();
+    if (executableAsArray && executableAsArray.length > 0) {
+        OUTPUT_CHANNEL.appendLine("Using ms-python.python returned python executable: " + executableAsArray);
+        return {
+            executable: executableAsArray,
+            "message": undefined,
+        };
+    }
+
+    // Search python from the path.
+    OUTPUT_CHANNEL.appendLine("Language server Python executable: searching in PATH.");
+    if (process.platform == "win32") {
+        const executable = findExecutableInPath("python.exe");
+        if (!executable) {
             return {
                 executable: undefined,
                 "message":
-                    "Unable to start robotframework-lsp because: python could not be found on the PATH. Do you want to select a python executable to start robotframework-lsp?",
+                    "Unable to start robotframework-lsp because: python.exe could not be found in the PATH. Do you want to select a python executable to start robotframework-lsp?",
             };
         }
+        OUTPUT_CHANNEL.appendLine("Language server Python executable: found in PATH: " + executable);
         return {
-            executable: executable,
+            executable: [executable],
             "message": undefined,
         };
     } else {
-        if (!fs.existsSync(executable)) {
+        // Not Windows
+        let executable = findExecutableInPath("python3");
+        if (!executable) {
+            executable = findExecutableInPath("python");
+        }
+        if (!executable) {
             return {
                 executable: undefined,
                 "message":
-                    "Unable to start robotframework-lsp because: " +
-                    executable +
-                    " does not exist. Do you want to select a new python executable to start robotframework-lsp?",
+                    "Unable to start robotframework-lsp because: neither python3 nor python could be found in the PATH. Do you want to select a python executable to start robotframework-lsp?",
             };
         }
+        OUTPUT_CHANNEL.appendLine("Language server Python executable: found in PATH: " + executable);
         return {
-            executable: executable,
+            executable: [executable],
             "message": undefined,
         };
     }
@@ -391,7 +451,7 @@ async function getDefaultLanguageServerPythonExecutable(): Promise<ExecutableAnd
  * tcp port).
  */
 const serverOptions: ServerOptions = async function () {
-    let executableAndMessage = await getDefaultLanguageServerPythonExecutable();
+    let executableAndMessage: ExecutableAndMessage = await getDefaultLanguageServerPythonExecutable();
     if (executableAndMessage.message) {
         OUTPUT_CHANNEL.appendLine(executableAndMessage.message);
 
@@ -445,7 +505,7 @@ const serverOptions: ServerOptions = async function () {
                     window.showErrorMessage(errorMessage);
                 }
             }
-            executableAndMessage = { "executable": onfulfilled[0].fsPath, message: undefined };
+            executableAndMessage = { "executable": [onfulfilled[0].fsPath], message: undefined };
         } else {
             // There's not much we can do (besides start listening to changes to the related variables
             // on the finally block so that we start listening and ask for a reload if a related configuration changes).
@@ -481,25 +541,36 @@ const serverOptions: ServerOptions = async function () {
             throw new Error(msg);
         }
 
-        let args: Array<string> = ["-u", targetMain];
+        let args: Array<string> = [];
+        for (let index = 1; index < executableAndMessage.executable.length; index++) {
+            args.push(executableAndMessage.executable[index]);
+        }
+        args.push("-u");
+        args.push(targetMain);
         let lsArgs = workspace.getConfiguration("robot").get<Array<string>>("language-server.args");
+        if (lsArgs && !(lsArgs instanceof Array)) {
+            OUTPUT_CHANNEL.appendLine(
+                "Ignoring robot.language-server.args because it's not an array. Found: " + lsArgs
+            );
+            lsArgs = undefined;
+        }
         if (lsArgs && lsArgs.length >= 1) {
             args = args.concat(lsArgs);
         } else {
             // Default is using simple verbose mode (shows critical/info but not debug).
-            args = args.concat(["-v"]);
+            args.push("-v");
         }
         OUTPUT_CHANNEL.appendLine(
-            "Starting RobotFramework Language Server with args: " + executableAndMessage.executable + "," + args
+            "Starting RobotFramework Language Server with args: " + executableAndMessage.executable[0] + "," + args
         );
 
         let src: string = path.resolve(__dirname, "../../src");
-        const serverProcess = cp.spawn(executableAndMessage.executable, args, {
+        const serverProcess = cp.spawn(executableAndMessage.executable[0], args, {
             env: { ...process.env, PYTHONPATH: src },
         });
         if (!serverProcess || !serverProcess.pid) {
             throw new Error(
-                `Launching server using command ${executableAndMessage.executable} with args: ${args} failed.`
+                `Launching server using command ${executableAndMessage.executable[0]} with args: ${args} failed.`
             );
         }
         return serverProcess;
@@ -612,7 +683,7 @@ async function startLanguageServer(): Promise<LanguageClient> {
 export let languageServerClient: LanguageClient | undefined = undefined;
 let languageServerClientMutex: Mutex = new Mutex();
 let extensionContext: ExtensionContext | undefined = undefined;
-let lastLanguageServerExecutable: string | undefined = undefined;
+let lastLanguageServerExecutable: string[] | undefined = undefined;
 
 async function restartLanguageServer() {
     await languageServerClientMutex.dispatch(async () => {

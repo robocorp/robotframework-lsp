@@ -5,7 +5,7 @@ import { handleProgressMessage } from "./progress";
 export async function getPythonExtensionExecutable(
     resource: Uri = null,
     showInOutput: boolean = true
-): Promise<string | undefined | "config"> {
+): Promise<string[] | undefined> {
     try {
         const extension = extensions.getExtension("ms-python.python");
         if (!extension) {
@@ -44,12 +44,19 @@ export async function getPythonExtensionExecutable(
                 return undefined;
             }
             if (execCommand instanceof Array) {
-                return execCommand.join(" ");
+                if (execCommand.length === 0) {
+                    return undefined;
+                }
+                return execCommand;
             }
-            return execCommand;
+            return [execCommand];
         } else {
             let config = workspace.getConfiguration("python");
-            return await config.get("pythonPath");
+            let executable = <string>await config.get("pythonPath");
+            if (!executable) {
+                return undefined;
+            }
+            return [executable];
         }
     } catch (error) {
         logError(
