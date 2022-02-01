@@ -18,6 +18,7 @@ from robotframework_ls.impl.libspec_warmup import (
     LibspecWarmup,
 )
 from pathlib import Path
+from contextlib import contextmanager
 
 log = get_logger(__name__)
 
@@ -43,6 +44,23 @@ def _get_digest_from_string(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8", "replace")).hexdigest()[:8]
 
 
+@contextmanager
+def timed_acquire_mutex_for_spec_filename(spec_filename):
+    from robocorp_ls_core.system_mutex import timed_acquire_mutex
+
+    try:
+        ctx = timed_acquire_mutex(_get_libspec_mutex_name(spec_filename), timeout=30)
+        ctx.__enter__()
+    except:
+        raise RuntimeError(
+            f"Unable to get mutex for: {spec_filename} after 30 seconds."
+        )
+    try:
+        yield ctx
+    finally:
+        ctx.__exit__()
+
+
 def _load_library_doc_and_mtime(spec_filename, obtain_mutex=True):
     """
     :param obtain_mutex:
@@ -50,10 +68,9 @@ def _load_library_doc_and_mtime(spec_filename, obtain_mutex=True):
         has the spec_filename mutex.
     """
     from robotframework_ls.impl import robot_specbuilder
-    from robocorp_ls_core.system_mutex import timed_acquire_mutex
 
     if obtain_mutex:
-        ctx = timed_acquire_mutex(_get_libspec_mutex_name(spec_filename))
+        ctx = timed_acquire_mutex_for_spec_filename(spec_filename)
     else:
         ctx = NULL
     with ctx:
@@ -804,12 +821,13 @@ class LibspecManager(object):
         """
         import time
         from robocorp_ls_core.subprocess_wrapper import subprocess
-        from robocorp_ls_core.system_mutex import timed_acquire_mutex
         from robocorp_ls_core.robotframework_log import get_log_level
+
+        acquire_mutex = timed_acquire_mutex_for_spec_filename
 
         if _internal_force_text:
             # In this case this is a recursive call and we already have the lock.
-            timed_acquire_mutex = NULL
+            acquire_mutex = NULL
 
         log_exception = log.exception
         if is_builtin and libname == "Dialogs" and get_log_level() < 1:
@@ -871,9 +889,7 @@ class LibspecManager(object):
                 )
 
                 log.debug(f"Obtaining mutex to generate libspec: {libspec_filename}.")
-                with timed_acquire_mutex(
-                    _get_libspec_mutex_name(libspec_filename)
-                ):  # Could fail.
+                with acquire_mutex(libspec_filename):  # Could fail.
                     log.debug(
                         f"Obtained mutex to generate libspec: {libspec_filename}."
                     )
