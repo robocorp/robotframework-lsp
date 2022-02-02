@@ -129,6 +129,7 @@ class LaunchProcess(object):
             self._valid = False
 
         robot_yaml = request.arguments.kwargs.get("robot")
+        workspace_id = request.arguments.kwargs.get("workspaceId")
         self._terminal = request.arguments.kwargs.get("terminal", TERMINAL_INTEGRATED)
 
         task_name = request.arguments.kwargs.get("task", "")
@@ -282,6 +283,13 @@ class LaunchProcess(object):
 
             space_name = robot_yaml_env_info_result.space_info.space_name
 
+            workspace_args = []
+            if workspace_id:
+                workspace_args.append("--workspace")
+                workspace_args.append(workspace_id)
+                workspace_args.append("--account")
+                workspace_args.append("robocorp-code")
+
             cmdline = (
                 [
                     rcc_executable,
@@ -292,6 +300,7 @@ class LaunchProcess(object):
                     "--space",
                     space_name,
                 ]
+                + workspace_args
                 + task_args
                 + args
             )
