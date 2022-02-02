@@ -15,6 +15,7 @@ from robocorp_code.protocols import (
     IRobotYamlEnvInfo,
     IRccListener,
     RobotTemplate,
+    AuthorizeTokenDict,
 )
 from pathlib import Path
 import os.path
@@ -540,9 +541,46 @@ class Rcc(object):
         # Found no valid credential
         return None
 
+    @implements(IRcc.cloud_authorize_token)
+    def cloud_authorize_token(self, workspace_id) -> ActionResult[AuthorizeTokenDict]:
+        args = ["cloud", "authorize"]
+
+        args = self._add_config_to_args(args)
+
+        args.append("--workspace")
+        args.append(workspace_id)
+
+        args.append("--minutes")
+        args.append("120")
+
+        error_action_result = self._add_account_to_args(args)
+        if error_action_result is not None:
+            return error_action_result
+
+        result = self._run_rcc(args, log_errors=False)
+
+        if not result.success:
+            return ActionResult(False, result.message)
+
+        output = result.result
+        if not output:
+            return ActionResult(
+                False, "Error in cloud authorize (output not available)."
+            )
+
+        try:
+            as_dict = json.loads(output)
+        except Exception:
+            msg = "Unable to load json from cloud authorize."
+            log.exception(msg)
+            return ActionResult(False, msg)
+        else:
+            return ActionResult(
+                True, None, {"token": as_dict["token"], "endpoint": as_dict["endpoint"]}
+            )
+
     @implements(IRcc.cloud_list_workspaces)
     def cloud_list_workspaces(self) -> ActionResult[List[IRccWorkspace]]:
-
         ret: List[IRccWorkspace] = []
         args = ["cloud", "workspace"]
         args = self._add_config_to_args(args)

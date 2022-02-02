@@ -430,6 +430,13 @@ COMMANDS = [
         hide_from_command_palette=True,
     ),
     Command(
+        "robocorp.updateLaunchEnv.getVaultEnv.internal",
+        "Provides the environment variables related to the vault.",
+        add_to_package_json=True,
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
+    Command(
         "robocorp.newWorkItemInWorkItemsView",
         "New Work Item",
         add_to_package_json=True,
@@ -466,6 +473,41 @@ COMMANDS = [
         "Collect a library version and verify if it matches some expected version",
         add_to_package_json=False,
         server_handled=True,
+    ),
+    Command(
+        "robocorp.connectVault",
+        "Connect to online secrets vault",
+        icon="$(lock)",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
+    Command(
+        "robocorp.disconnectVault",
+        "Disconnect from online secrets vault",
+        icon="$(unlock)",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
+    Command(
+        "robocorp.getConnectedVaultWorkspace.internal",
+        "Gets workspace id of the currently connected vault",
+        add_to_package_json=True,
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
+    Command(
+        "robocorp.setConnectedVaultWorkspace.internal",
+        "Sets the currently connected vault workspace",
+        add_to_package_json=True,
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
+    Command(
+        "robocorp.openVaultHelp",
+        "Open vault help",
+        add_to_package_json=True,
+        server_handled=False,
+        hide_from_command_palette=True,
     ),
 ]
 

@@ -3,6 +3,7 @@ import * as roboCommands from "./robocorpCommands";
 import { CloudEntry, treeViewIdToTreeDataProvider } from "./viewsCommon";
 import { ROBOCORP_SUBMIT_ISSUE } from "./robocorpCommands";
 import { TREE_VIEW_ROBOCORP_CLOUD_TREE } from "./robocorpViews";
+import { getWorkspaceDescription } from "./ask";
 
 export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry> {
     private _onDidChangeTreeData: vscode.EventEmitter<CloudEntry | null> = new vscode.EventEmitter<CloudEntry | null>();
@@ -37,6 +38,25 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
                     "iconPath": "link",
                     "viewItemContextValue": "cloudLogoutItem",
                 });
+
+                let vaultInfoResult: ActionResult<any> = await vscode.commands.executeCommand(
+                    roboCommands.ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL
+                );
+
+                if (!vaultInfoResult || !vaultInfoResult.success || !vaultInfoResult.result) {
+                    ret.push({
+                        "label": "Vault: disconnected.",
+                        "iconPath": "unlock",
+                        "viewItemContextValue": "vaultDisconnected",
+                    });
+                } else {
+                    const result: IVaultInfo = vaultInfoResult.result;
+                    ret.push({
+                        "label": "Vault: connected to: " + getWorkspaceDescription(result),
+                        "iconPath": "lock",
+                        "viewItemContextValue": "vaultConnected",
+                    });
+                }
             }
             ret.push({
                 "label": "Robot Development Guide",

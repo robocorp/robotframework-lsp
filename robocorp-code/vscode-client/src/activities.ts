@@ -15,7 +15,14 @@ import { logError, OUTPUT_CHANNEL } from "./channel";
 import * as roboCommands from "./robocorpCommands";
 import * as vscode from "vscode";
 import * as pythonExtIntegration from "./pythonExtIntegration";
-import { QuickPickItemWithAction, sortCaptions, QuickPickItemRobotTask, showSelectOneQuickPick } from "./ask";
+import {
+    QuickPickItemWithAction,
+    sortCaptions,
+    QuickPickItemRobotTask,
+    showSelectOneQuickPick,
+    getWorkspaceDescription,
+    selectWorkspace,
+} from "./ask";
 import { feedback, feedbackRobocorpCodeError } from "./rcc";
 import { refreshCloudTreeView } from "./viewsRobocorp";
 
@@ -334,10 +341,6 @@ export async function rccConfigurationDiagnostics() {
     });
 }
 
-function getWorkspaceDescription(wsInfo: WorkspaceInfo) {
-    return wsInfo.organizationName + ": " + wsInfo.workspaceName;
-}
-
 export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
     // Start this in parallel while we ask the user for info.
     let isLoginNeededPromise: Thenable<ActionResult<boolean>> = commands.executeCommand(
@@ -386,66 +389,16 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
 
     let refresh = false;
     SELECT_OR_REFRESH: do {
-        // We ask for the information on the existing workspaces information.
-        // Note that this may be cached from the last time it was asked,
-        // so, we have an option to refresh it (and ask again).
-        let actionResult: ListWorkspacesActionResult = await commands.executeCommand(
-            roboCommands.ROBOCORP_CLOUD_LIST_WORKSPACES_INTERNAL,
-            { "refresh": refresh }
+        let workspaceSelection = await selectWorkspace(
+            "Please select a Workspace to upload ‘" + robot.name + "’ to.",
+            refresh
         );
-
-        if (!actionResult.success) {
-            window.showErrorMessage("Error listing Control Room workspaces: " + actionResult.message);
+        if (workspaceSelection === undefined) {
             return;
         }
 
-        let workspaceInfo: WorkspaceInfo[] = actionResult.result;
-        if (!workspaceInfo || workspaceInfo.length == 0) {
-            window.showErrorMessage("A Control Room Workspace must be created to submit a Robot to the Control Room.");
-            return;
-        }
-
-        // Now, if there are only a few items or a single workspace,
-        // just show it all, otherwise do a pre-selectedItem with the workspace.
-        let workspaceIdFilter: string = undefined;
-
-        if (workspaceInfo.length > 1) {
-            // Ok, there are many workspaces, let's provide a pre-filter for it.
-            let captions: QuickPickItemWithAction[] = new Array();
-            for (let i = 0; i < workspaceInfo.length; i++) {
-                const wsInfo: WorkspaceInfo = workspaceInfo[i];
-                let caption: QuickPickItemWithAction = {
-                    "label": "$(folder) " + getWorkspaceDescription(wsInfo),
-                    "action": { "filterWorkspaceId": wsInfo.workspaceId },
-                };
-                captions.push(caption);
-            }
-
-            sortCaptions(captions);
-
-            let caption: QuickPickItemWithAction = {
-                "label": "$(refresh) * Refresh list",
-                "description": "Expected Workspace is not appearing.",
-                "sortKey": "09999", // last item
-                "action": { "refresh": true },
-            };
-            captions.push(caption);
-
-            let selectedItem: QuickPickItemWithAction = await showSelectOneQuickPick(
-                captions,
-                "Please select a Workspace to upload ‘" + robot.name + "’ to."
-            );
-
-            if (!selectedItem) {
-                return;
-            }
-            if (selectedItem.action.refresh) {
-                refresh = true;
-                continue SELECT_OR_REFRESH;
-            } else {
-                workspaceIdFilter = selectedItem.action.filterWorkspaceId;
-            }
-        }
+        const workspaceInfo = workspaceSelection.workspaceInfo;
+        const workspaceIdFilter = workspaceSelection.selectedWorkspaceInfo.workspaceId;
 
         // -------------------------------------------------------
         // Select Robot/New Robot/Refresh
@@ -455,10 +408,8 @@ export async function uploadRobot(robot?: LocalRobotMetadataInfo) {
         for (let i = 0; i < workspaceInfo.length; i++) {
             const wsInfo: WorkspaceInfo = workspaceInfo[i];
 
-            if (workspaceIdFilter) {
-                if (workspaceIdFilter != wsInfo.workspaceId) {
-                    continue;
-                }
+            if (workspaceIdFilter != wsInfo.workspaceId) {
+                continue;
             }
 
             for (let j = 0; j < wsInfo.packages.length; j++) {
@@ -914,18 +865,49 @@ export async function updateLaunchEnvironment(args): Promise<{ [key: string]: st
         return environment;
     }
 
-    let work_items_action_result: ActionResultWorkItems = await commands.executeCommand(
+    // Note: we need to update the environment for:
+    // - Vault
+    // - Work items
+
+    let newEnv: { [key: string]: string } = { ...environment };
+
+    let vaultInfoActionResult: ActionResult<IVaultInfo> = await commands.executeCommand(
+        roboCommands.ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL
+    );
+    if (vaultInfoActionResult?.success) {
+        const vaultInfo: IVaultInfo = vaultInfoActionResult.result;
+        if (vaultInfo?.workspaceId) {
+            // The workspace vault is connected, so, we must authorize it...
+            let vaultInfoEnvActionResult: ActionResult<{ [key: string]: string }> = await commands.executeCommand(
+                roboCommands.ROBOCORP_UPDATE_LAUNCH_ENV_GET_VAULT_ENV_INTERNAL
+            );
+            if (!vaultInfoEnvActionResult.success) {
+                throw new Error(
+                    "It was not possible to connect to the vault while launching for: " +
+                        getWorkspaceDescription(vaultInfo) +
+                        ".\nDetails: " +
+                        vaultInfoEnvActionResult.message
+                );
+            }
+
+            for (const [key, value] of Object.entries(vaultInfoEnvActionResult.result)) {
+                newEnv[key] = value;
+            }
+        }
+    }
+
+    let workItemsActionResult: ActionResultWorkItems = await commands.executeCommand(
         roboCommands.ROBOCORP_LIST_WORK_ITEMS_INTERNAL,
         { "robot": robot, "increment_output": true }
     );
 
-    if (!work_items_action_result || !work_items_action_result.success) {
-        return environment;
+    if (!workItemsActionResult || !workItemsActionResult.success) {
+        return newEnv;
     }
 
-    let result: WorkItemsInfo = work_items_action_result.result;
+    let result: WorkItemsInfo = workItemsActionResult.result;
     if (!result) {
-        return environment;
+        return newEnv;
     }
 
     // Let's verify that the library is available and has the version we expect.
@@ -941,20 +923,19 @@ export async function updateLaunchEnvironment(args): Promise<{ [key: string]: st
         );
     } catch (error) {
         logError("Error updating launch environment.", error, "ACT_UPDATE_LAUNCH_ENV");
-        return environment;
+        return newEnv;
     }
 
     if (!libraryVersionInfoActionResult["success"]) {
         OUTPUT_CHANNEL.appendLine(
             "Launch environment for work items not updated. Reason: " + libraryVersionInfoActionResult.message
         );
-        return environment;
+        return newEnv;
     }
 
     // If we have found the robot, we should have the result and thus we should always set the
     // RPA_OUTPUT_WORKITEM_PATH (even if we don't have any input, we'll set to where we want
     // to save items).
-    let newEnv: { [key: string]: string } = { ...environment };
 
     newEnv["RPA_OUTPUT_WORKITEM_PATH"] = result.new_output_workitem_path;
     newEnv["RPA_WORKITEMS_ADAPTER"] = "RPA.Robocorp.WorkItems.FileAdapter";

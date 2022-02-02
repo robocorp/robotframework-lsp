@@ -270,6 +270,16 @@ TREE_VIEW_CONTAINERS = [
                             MenuGroup.INLINE,
                             when="viewItem == cloudLogoutItem",
                         ),
+                        Menu(
+                            "robocorp.connectVault",
+                            MenuGroup.INLINE,
+                            when="viewItem == vaultDisconnected",
+                        ),
+                        Menu(
+                            "robocorp.disconnectVault",
+                            MenuGroup.INLINE,
+                            when="viewItem == vaultConnected",
+                        ),
                     ]
                 },
             ),

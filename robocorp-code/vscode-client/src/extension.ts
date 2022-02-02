@@ -135,9 +135,14 @@ import {
     ROBOCORP_OPEN_IN_VS_CODE,
     ROBOCORP_REVEAL_IN_EXPLORER,
     ROBOCORP_REVEAL_ROBOT_IN_EXPLORER,
+    ROBOCORP_CONNECT_VAULT,
+    ROBOCORP_DISCONNECT_VAULT,
+    ROBOCORP_OPEN_VAULT_HELP,
+    ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL,
 } from "./robocorpCommands";
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
+import { connectVault, disconnectVault } from "./vault";
 
 const clientOptions: LanguageClientOptions = {
     documentSelector: [
@@ -284,6 +289,12 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
         }
 
         if (debugConfiguration.noDebug) {
+            let vaultInfoActionResult: ActionResult = await commands.executeCommand(
+                ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL
+            );
+            if (vaultInfoActionResult?.success) {
+                debugConfiguration.workspaceId = vaultInfoActionResult.result.workspaceId;
+            }
             // Not running with debug: just use rcc to launch.
             debugConfiguration.env = env;
             return debugConfiguration;
@@ -466,8 +477,16 @@ function registerRobocorpCodeCommands(C: CommandRegistry, opts?: RobocorpCodeCom
     C.register(ROBOCORP_DELETE_RESOURCE_IN_ROBOT_CONTENT_VIEW, deleteResourceInRobotContentTree);
     C.register(ROBOCORP_RENAME_RESOURCE_IN_ROBOT_CONTENT_VIEW, renameResourceInRobotContentTree);
     C.register(ROBOCORP_UPDATE_LAUNCH_ENV, updateLaunchEnvironment);
+    C.register(ROBOCORP_CONNECT_VAULT, connectVault);
+    C.register(ROBOCORP_DISCONNECT_VAULT, disconnectVault);
     C.register(ROBOCORP_OPEN_CLOUD_HOME, () => {
         commands.executeCommand("vscode.open", Uri.parse("https://cloud.robocorp.com/home"));
+    });
+    C.register(ROBOCORP_OPEN_VAULT_HELP, () => {
+        commands.executeCommand(
+            "vscode.open",
+            Uri.parse("https://robocorp.com/docs/development-guide/variables-and-secrets/vault")
+        );
     });
     C.register(ROBOCORP_OPEN_EXTERNALLY, async (item: FSEntry) => {
         if (item.filePath) {

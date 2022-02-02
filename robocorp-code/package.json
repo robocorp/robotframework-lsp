@@ -77,11 +77,17 @@
         "onCommand:robocorp.rccTerminalNew",
         "onCommand:robocorp.listWorkItems.internal",
         "onCommand:robocorp.updateLaunchEnv",
+        "onCommand:robocorp.updateLaunchEnv.getVaultEnv.internal",
         "onCommand:robocorp.newWorkItemInWorkItemsView",
         "onCommand:robocorp.deleteWorkItemInWorkItemsView",
         "onCommand:robocorp.helpWorkItems",
         "onCommand:robocorp.convertOutputWorkItemToInput",
         "onCommand:robocorp.verifyLibraryVersion.internal",
+        "onCommand:robocorp.connectVault",
+        "onCommand:robocorp.disconnectVault",
+        "onCommand:robocorp.getConnectedVaultWorkspace.internal",
+        "onCommand:robocorp.setConnectedVaultWorkspace.internal",
+        "onCommand:robocorp.openVaultHelp",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -456,6 +462,11 @@
                 "category": "Robocorp"
             },
             {
+                "command": "robocorp.updateLaunchEnv.getVaultEnv.internal",
+                "title": "Provides the environment variables related to the vault.",
+                "category": "Robocorp"
+            },
+            {
                 "command": "robocorp.newWorkItemInWorkItemsView",
                 "title": "New Work Item",
                 "category": "Robocorp",
@@ -478,6 +489,33 @@
                 "title": "Convert output work item to input",
                 "category": "Robocorp",
                 "icon": "$(fold-up)"
+            },
+            {
+                "command": "robocorp.connectVault",
+                "title": "Connect to online secrets vault",
+                "category": "Robocorp",
+                "icon": "$(lock)"
+            },
+            {
+                "command": "robocorp.disconnectVault",
+                "title": "Disconnect from online secrets vault",
+                "category": "Robocorp",
+                "icon": "$(unlock)"
+            },
+            {
+                "command": "robocorp.getConnectedVaultWorkspace.internal",
+                "title": "Gets workspace id of the currently connected vault",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.setConnectedVaultWorkspace.internal",
+                "title": "Sets the currently connected vault workspace",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.openVaultHelp",
+                "title": "Open vault help",
+                "category": "Robocorp"
             }
         ],
         "menus": {
@@ -668,6 +706,16 @@
                     "command": "robocorp.openCloudHome",
                     "when": "view == robocorp-cloud-tree && viewItem == cloudLogoutItem",
                     "group": "inline"
+                },
+                {
+                    "command": "robocorp.connectVault",
+                    "when": "view == robocorp-cloud-tree && viewItem == vaultDisconnected",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.disconnectVault",
+                    "when": "view == robocorp-cloud-tree && viewItem == vaultConnected",
+                    "group": "inline"
                 }
             ],
             "commandPalette": [
@@ -764,6 +812,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "robocorp.updateLaunchEnv.getVaultEnv.internal",
+                    "when": "false"
+                },
+                {
                     "command": "robocorp.deleteWorkItemInWorkItemsView",
                     "when": "false"
                 },
@@ -773,6 +825,18 @@
                 },
                 {
                     "command": "robocorp.convertOutputWorkItemToInput",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.getConnectedVaultWorkspace.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.setConnectedVaultWorkspace.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.openVaultHelp",
                     "when": "false"
                 }
             ]
