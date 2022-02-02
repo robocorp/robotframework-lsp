@@ -49,7 +49,7 @@ export async function disconnectVault() {
     let setVaultResult: ActionResult<boolean> = await vscode.commands.executeCommand(
         roboCommands.ROBOCORP_SET_CONNECTED_VAULT_WORKSPACE_INTERNAL,
         {
-            "workspaceId": undefined,
+            "workspaceId": null,
         }
     );
     if (!setVaultResult) {

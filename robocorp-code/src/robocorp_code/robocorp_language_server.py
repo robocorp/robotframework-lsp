@@ -34,13 +34,14 @@ from robocorp_code.protocols import (
 )
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.cache import CachedFileInfo
-from robocorp_ls_core.protocols import IConfig, LibraryVersionInfoDict, ActionResult
+from robocorp_ls_core.protocols import IConfig, LibraryVersionInfoDict
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 from robocorp_ls_core import watchdog_wrapper
 import time
 from robocorp_ls_core.command_dispatcher import _CommandDispatcher
+import weakref
 
 log = get_logger(__name__)
 
@@ -93,6 +94,9 @@ class RobocorpLanguageServer(PythonLanguageServer):
         from robocorp_ls_core.ep_providers import DefaultEndPointProvider
         from robocorp_ls_core.ep_providers import EPEndPointProvider
         from queue import Queue
+        from robocorp_code._language_server_vault import _Vault
+        from robocorp_code._language_server_login import _Login
+        from robocorp_code._language_server_feedback import _Feedback
 
         user_home = os.getenv("ROBOCORP_CODE_USER_HOME", None)
         if user_home is None:
@@ -136,11 +140,32 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
         self._dir_cache = DirCache(cache_dir)
         self._rcc = Rcc(self)
-        self._track = True
+        self._feedback = _Feedback(self._rcc)
         self._local_list_robots_cache: Dict[
             Path, CachedFileInfo[LocalRobotMetadataInfoDict]
         ] = {}
         PythonLanguageServer.__init__(self, read_stream, write_stream)
+
+        self._vault = _Vault(
+            self._dir_cache, self._endpoint, self._rcc, command_dispatcher
+        )
+
+        weak_self = weakref.ref(self)  # Avoid cyclic ref.
+
+        def clear_caches_on_login_change():
+            s = weak_self()
+            if s is not None:
+                s._discard_listed_workspaces_info()
+                s._vault.discard_vault_workspace_info()
+
+        self._login = _Login(
+            self._dir_cache,
+            self._endpoint,
+            command_dispatcher,
+            self._rcc,
+            self._feedback,
+            clear_caches_on_login_change,
+        )
 
         self._pm = PluginManager()
         self._config_provider = DefaultConfigurationProvider(self.config)
@@ -158,6 +183,9 @@ class RobocorpLanguageServer(PythonLanguageServer):
         self._paths_remover = None
         self._paths_remover_queue = Queue()
         register_plugins(self._pm)
+
+    def _discard_listed_workspaces_info(self):
+        self._dir_cache.discard(self.CLOUD_LIST_WORKSPACE_CACHE_KEY)
 
     def _schedule_path_removal(self, path):
         from robocorp_code.path_operations import PathsRemover
@@ -189,24 +217,13 @@ class RobocorpLanguageServer(PythonLanguageServer):
         )
 
         if initializationOptions and isinstance(initializationOptions, dict):
-            self._track = not initializationOptions.get("do-not-track", False)
+            self._feedback.track = not initializationOptions.get("do-not-track", False)
 
         from robocorp_code import __version__
 
-        self._feedback_metric("vscode.started", __version__)
-        self._feedback_metric("vscode.started.os", sys.platform)
+        self._feedback.metric("vscode.started", __version__)
+        self._feedback.metric("vscode.started.os", sys.platform)
         return ret
-
-    def _feedback_metric(self, name, value="+1"):
-        if not self._track:
-            return
-
-        from robocorp_ls_core.timeouts import TimeoutTracker
-
-        timeout_tracker = TimeoutTracker.get_singleton()
-        timeout_tracker.call_on_timeout(
-            0.1, partial(self._rcc.feedack_metric, name, value)
-        )
 
     def m_shutdown(self, **_kwargs):
         PythonLanguageServer.m_shutdown(self, **_kwargs)
@@ -348,53 +365,6 @@ class RobocorpLanguageServer(PythonLanguageServer):
             action_result = self._rcc.configuration_diagnostics(robot_yaml, json=False)
             return action_result.as_dict()
 
-    @command_dispatcher(commands.ROBOCORP_IS_LOGIN_NEEDED_INTERNAL)
-    def _is_login_needed_internal(self) -> ActionResultDict:
-        from robocorp_ls_core.progress_report import progress_context
-
-        with progress_context(
-            self._endpoint, "Validating Control Room credentials", self._dir_cache
-        ):
-            login_needed = not self._rcc.credentials_valid()
-        return {"success": login_needed, "message": None, "result": login_needed}
-
-    @command_dispatcher(commands.ROBOCORP_CLOUD_LOGIN_INTERNAL)
-    def _cloud_login(self, params: CloudLoginParamsDict) -> ActionResultDict:
-        from robocorp_ls_core.progress_report import progress_context
-
-        self._feedback_metric("vscode.cloud.login")
-
-        # When new credentials are added we need to remove existing caches.
-        self._dir_cache.discard(self.CLOUD_LIST_WORKSPACE_CACHE_KEY)
-
-        credentials = params["credentials"]
-        with progress_context(
-            self._endpoint, "Adding Control Room credentials", self._dir_cache
-        ):
-            result = self._rcc.add_credentials(credentials)
-            self._endpoint.notify("$/linkedAccountChanged")
-            if not result.success:
-                return result.as_dict()
-
-            result = self._rcc.credentials_valid()
-        return {"success": result, "message": None, "result": result}
-
-    @command_dispatcher(commands.ROBOCORP_CLOUD_LOGOUT_INTERNAL)
-    def _cloud_logout(self) -> ActionResultDict:
-        from robocorp_ls_core.progress_report import progress_context
-
-        self._feedback_metric("vscode.cloud.logout")
-
-        # When credentials are removed we need to remove existing caches.
-        self._dir_cache.discard(self.CLOUD_LIST_WORKSPACE_CACHE_KEY)
-
-        with progress_context(
-            self._endpoint, "Removing Control Room credentials", self._dir_cache
-        ):
-            ret = self._rcc.remove_current_credentials().as_dict()
-            self._endpoint.notify("$/linkedAccountChanged")
-            return ret
-
     @command_dispatcher(commands.ROBOCORP_SAVE_IN_DISK_LRU)
     def _save_in_disk_lru(self, params: dict) -> ActionResultDict:
         name = params["name"]
@@ -420,79 +390,6 @@ class RobocorpLanguageServer(PythonLanguageServer):
         cache_lru_list.insert(0, entry)
         self._dir_cache.store(name, cache_lru_list)
         return {"success": True, "message": "", "result": entry}
-
-    @command_dispatcher(commands.ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL)
-    def _get_connected_vault_workspace(self, params: dict = None) -> ActionResultDict:
-        try:
-            info = self._dir_cache.load("VAULT_WORKSPACE_INFO", dict)
-            ret = {
-                "workspaceId": info["workspaceId"],
-                "organizationName": info["organizationName"],
-                "workspaceName": info["workspaceName"],
-            }
-            return ActionResult(True, "", ret).as_dict()
-
-        except KeyError:
-            # It worked (thus, success == True), but it's not available.
-            return ActionResult(
-                True, "Connected vault workspace not set", None
-            ).as_dict()
-
-        except Exception as e:
-            log.exception("Error loading VAULT_WORKSPACE_INFO.")
-            return ActionResult(False, str(e), None).as_dict()
-
-    @command_dispatcher(commands.ROBOCORP_SET_CONNECTED_VAULT_WORKSPACE_INTERNAL)
-    def _set_connected_vault_workspace(self, params: dict) -> ActionResultDict:
-        if "workspaceId" not in params:
-            return ActionResult(
-                False, "workspaceId not passed in params.", None
-            ).as_dict()
-
-        workspace_id = params["workspaceId"]
-
-        if not workspace_id:
-            # If set to empty, discard the info.
-            self._dir_cache.discard("VAULT_WORKSPACE_INFO")
-            return ActionResult(True, "", None).as_dict()
-
-        if not isinstance(workspace_id, str):
-            return ActionResult(
-                False, "Expected workspaceId to be a str.", None
-            ).as_dict()
-
-        if "organizationName" not in params:
-            return ActionResult(
-                False, "organizationName not passed in params.", None
-            ).as_dict()
-
-        if "workspaceName" not in params:
-            return ActionResult(
-                False, "workspaceName not passed in params.", None
-            ).as_dict()
-
-        organization_name = params["organizationName"]
-        if not isinstance(organization_name, str):
-            return ActionResult(
-                False, "Expected organizationName to be a str.", None
-            ).as_dict()
-
-        workspace_name = params["workspaceName"]
-        if not isinstance(workspace_name, str):
-            return ActionResult(
-                False, "Expected workspaceName to be a str.", None
-            ).as_dict()
-
-        self._dir_cache.store(
-            "VAULT_WORKSPACE_INFO",
-            {
-                "workspaceId": workspace_id,
-                "organizationName": organization_name,
-                "workspaceName": workspace_name,
-            },
-        )
-
-        return ActionResult(True, "", None).as_dict()
 
     @command_dispatcher(commands.ROBOCORP_LOAD_FROM_DISK_LRU, list)
     def _load_from_disk_lru(self, params: dict) -> list:
@@ -670,7 +567,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
     @command_dispatcher(commands.ROBOCORP_CREATE_ROBOT_INTERNAL)
     def _create_robot(self, params: CreateRobotParamsDict) -> ActionResultDict:
-        self._feedback_metric("vscode.create.robot")
+        self._feedback.metric("vscode.create.robot")
         directory = params["directory"]
         template = params["template"]
 
@@ -1024,7 +921,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
     ) -> ActionResultDict:
         from robocorp_ls_core.progress_report import progress_context
 
-        self._feedback_metric("vscode.cloud.upload.existing")
+        self._feedback.metric("vscode.cloud.upload.existing")
 
         directory = params["directory"]
         error_msg = self._validate_directory(directory)
@@ -1049,7 +946,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
     ) -> ActionResultDict:
         from robocorp_ls_core.progress_report import progress_context
 
-        self._feedback_metric("vscode.cloud.upload.new")
+        self._feedback.metric("vscode.cloud.upload.new")
 
         directory = params["directory"]
         error_msg = self._validate_directory(directory)
@@ -1060,7 +957,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         robot_name = params["robotName"]
 
         # When we upload to a new activity, clear the existing cache key.
-        self._dir_cache.discard(self.CLOUD_LIST_WORKSPACE_CACHE_KEY)
+        self._discard_listed_workspaces_info()
         with progress_context(
             self._endpoint, "Uploading to new robot", self._dir_cache
         ):
@@ -1213,7 +1110,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 "result": None,
             }
 
-        self._feedback_metric(name, value)
+        self._feedback.metric(name, value)
         return {"success": True, "message": None, "result": None}
 
     def m_text_document__hover(self, **kwargs):

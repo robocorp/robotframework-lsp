@@ -145,6 +145,11 @@ class CloudLoginParamsDict(TypedDict):
     credentials: str
 
 
+class AuthorizeTokenDict(TypedDict):
+    token: str
+    endpoint: str
+
+
 class ConfigurationDiagnosticsDict(TypedDict):
     robotYaml: str
 
@@ -291,6 +296,11 @@ class IRcc(Protocol):
         """
         Note: needs connection to the cloud.
         """
+
+    def cloud_authorize_token(
+        self, workspace_id: str
+    ) -> ActionResult[AuthorizeTokenDict]:
+        pass
 
     def cloud_list_workspaces(self) -> ActionResult[List[IRccWorkspace]]:
         """

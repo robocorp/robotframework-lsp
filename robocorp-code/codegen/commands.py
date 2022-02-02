@@ -430,6 +430,13 @@ COMMANDS = [
         hide_from_command_palette=True,
     ),
     Command(
+        "robocorp.updateLaunchEnv.getVaultEnv.internal",
+        "Provides the environment variables related to the vault.",
+        add_to_package_json=True,
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
+    Command(
         "robocorp.newWorkItemInWorkItemsView",
         "New Work Item",
         add_to_package_json=True,
@@ -493,6 +500,13 @@ COMMANDS = [
         "Sets the currently connected vault workspace",
         add_to_package_json=True,
         server_handled=True,
+        hide_from_command_palette=True,
+    ),
+    Command(
+        "robocorp.openVaultHelp",
+        "Open vault help",
+        add_to_package_json=True,
+        server_handled=False,
         hide_from_command_palette=True,
     ),
 ]

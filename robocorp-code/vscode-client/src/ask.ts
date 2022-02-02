@@ -53,7 +53,7 @@ export async function showSelectOneStrQuickPick(items: string[], message: string
     return selectedItem;
 }
 
-export function getWorkspaceDescription(wsInfo: WorkspaceInfo) {
+export function getWorkspaceDescription(wsInfo: WorkspaceInfo | IVaultInfo) {
     return wsInfo.organizationName + ": " + wsInfo.workspaceName;
 }
 

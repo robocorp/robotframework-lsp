@@ -59,6 +59,7 @@ ROBOCORP_CONFIGURATION_DIAGNOSTICS = "robocorp.configuration.diagnostics"  # Rob
 ROBOCORP_RCC_TERMINAL_NEW = "robocorp.rccTerminalNew"  # Terminal with Robot environment
 ROBOCORP_LIST_WORK_ITEMS_INTERNAL = "robocorp.listWorkItems.internal"  # Lists the work items available for a Robot
 ROBOCORP_UPDATE_LAUNCH_ENV = "robocorp.updateLaunchEnv"  # Updates the environment variables used for some launch (given a Robot)
+ROBOCORP_UPDATE_LAUNCH_ENV_GET_VAULT_ENV_INTERNAL = "robocorp.updateLaunchEnv.getVaultEnv.internal"  # Provides the environment variables related to the vault.
 ROBOCORP_NEW_WORK_ITEM_IN_WORK_ITEMS_VIEW = "robocorp.newWorkItemInWorkItemsView"  # New Work Item
 ROBOCORP_DELETE_WORK_ITEM_IN_WORK_ITEMS_VIEW = "robocorp.deleteWorkItemInWorkItemsView"  # Delete Work Item
 ROBOCORP_HELP_WORK_ITEMS = "robocorp.helpWorkItems"  # Work Items Help
@@ -68,6 +69,7 @@ ROBOCORP_CONNECT_VAULT = "robocorp.connectVault"  # Connect to online secrets va
 ROBOCORP_DISCONNECT_VAULT = "robocorp.disconnectVault"  # Disconnect from online secrets vault
 ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL = "robocorp.getConnectedVaultWorkspace.internal"  # Gets workspace id of the currently connected vault
 ROBOCORP_SET_CONNECTED_VAULT_WORKSPACE_INTERNAL = "robocorp.setConnectedVaultWorkspace.internal"  # Sets the currently connected vault workspace
+ROBOCORP_OPEN_VAULT_HELP = "robocorp.openVaultHelp"  # Open vault help
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,
@@ -91,6 +93,7 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_SEND_METRIC,
     ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL,
     ROBOCORP_LIST_WORK_ITEMS_INTERNAL,
+    ROBOCORP_UPDATE_LAUNCH_ENV_GET_VAULT_ENV_INTERNAL,
     ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL,
     ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL,
     ROBOCORP_SET_CONNECTED_VAULT_WORKSPACE_INTERNAL,

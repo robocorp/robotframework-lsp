@@ -77,6 +77,7 @@
         "onCommand:robocorp.rccTerminalNew",
         "onCommand:robocorp.listWorkItems.internal",
         "onCommand:robocorp.updateLaunchEnv",
+        "onCommand:robocorp.updateLaunchEnv.getVaultEnv.internal",
         "onCommand:robocorp.newWorkItemInWorkItemsView",
         "onCommand:robocorp.deleteWorkItemInWorkItemsView",
         "onCommand:robocorp.helpWorkItems",
@@ -86,6 +87,7 @@
         "onCommand:robocorp.disconnectVault",
         "onCommand:robocorp.getConnectedVaultWorkspace.internal",
         "onCommand:robocorp.setConnectedVaultWorkspace.internal",
+        "onCommand:robocorp.openVaultHelp",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -460,6 +462,11 @@
                 "category": "Robocorp"
             },
             {
+                "command": "robocorp.updateLaunchEnv.getVaultEnv.internal",
+                "title": "Provides the environment variables related to the vault.",
+                "category": "Robocorp"
+            },
+            {
                 "command": "robocorp.newWorkItemInWorkItemsView",
                 "title": "New Work Item",
                 "category": "Robocorp",
@@ -503,6 +510,11 @@
             {
                 "command": "robocorp.setConnectedVaultWorkspace.internal",
                 "title": "Sets the currently connected vault workspace",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.openVaultHelp",
+                "title": "Open vault help",
                 "category": "Robocorp"
             }
         ],
@@ -800,6 +812,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "robocorp.updateLaunchEnv.getVaultEnv.internal",
+                    "when": "false"
+                },
+                {
                     "command": "robocorp.deleteWorkItemInWorkItemsView",
                     "when": "false"
                 },
@@ -817,6 +833,10 @@
                 },
                 {
                     "command": "robocorp.setConnectedVaultWorkspace.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.openVaultHelp",
                     "when": "false"
                 }
             ]

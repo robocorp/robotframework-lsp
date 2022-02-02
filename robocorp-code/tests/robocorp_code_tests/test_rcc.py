@@ -107,7 +107,24 @@ def test_rcc_cloud_issues(
 
 
 def test_rcc_cloud(rcc: IRcc, ci_credentials: str, tmpdir: py.path.local):
+    """
+    Note on the setup:
+
+    It's expected that we have credentials (at the given endpoint) which
+    has a workspace named:
+
+    "CI Workspace" under an organization named "Fabio's Example Organization"
+    and it must have a "CI activity" robot.
+
+    Also, it must have a vault named:
+    "VAULT_TEST" with entries:
+        "VAULT_KEY1": "VAULT_VALUE1"
+        "vault_key2": "vault_value2"
+    """
     assert not rcc.credentials_valid()
+    action_result_authorize = rcc.cloud_authorize_token("some_workspace_id")
+    assert not action_result_authorize.success
+
     result = rcc.add_credentials(ci_credentials)
     assert result.success
     assert rcc.credentials_valid()
@@ -123,6 +140,13 @@ def test_rcc_cloud(rcc: IRcc, ci_credentials: str, tmpdir: py.path.local):
         raise AssertionError("Expected to have CI Workspace available.")
 
     ws = workspaces[0]
+
+    action_result_authorize = rcc.cloud_authorize_token(ws.workspace_id)
+    assert action_result_authorize.success
+    assert action_result_authorize.result
+    assert len(action_result_authorize.result["token"]) > 10
+    assert len(action_result_authorize.result["endpoint"]) > 10
+
     assert ws.organization_name == "Fabio's Example Organization"
     result = rcc.cloud_list_workspace_robots(ws.workspace_id)
     assert result.success

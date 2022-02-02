@@ -5,6 +5,12 @@ interface LocalRobotMetadataInfo {
     yamlContents: object;
 }
 
+interface IVaultInfo {
+    workspaceId: string;
+    organizationName: string;
+    workspaceName: string;
+}
+
 interface WorkspaceInfo {
     organizationName: string;
     workspaceName: string;

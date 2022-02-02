@@ -3,6 +3,7 @@ import * as roboCommands from "./robocorpCommands";
 import { CloudEntry, treeViewIdToTreeDataProvider } from "./viewsCommon";
 import { ROBOCORP_SUBMIT_ISSUE } from "./robocorpCommands";
 import { TREE_VIEW_ROBOCORP_CLOUD_TREE } from "./robocorpViews";
+import { getWorkspaceDescription } from "./ask";
 
 export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry> {
     private _onDidChangeTreeData: vscode.EventEmitter<CloudEntry | null> = new vscode.EventEmitter<CloudEntry | null>();
@@ -42,23 +43,16 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
                     roboCommands.ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL
                 );
 
-                if (
-                    vaultInfoResult === undefined ||
-                    vaultInfoResult.success === false ||
-                    vaultInfoResult.result === undefined
-                ) {
-                    let label = "Vault: disconnected.";
-                    if (vaultInfoResult !== undefined && vaultInfoResult.message !== undefined) {
-                        label += " " + vaultInfoResult.message;
-                    }
+                if (!vaultInfoResult || !vaultInfoResult.success || !vaultInfoResult.result) {
                     ret.push({
-                        "label": label,
+                        "label": "Vault: disconnected.",
                         "iconPath": "unlock",
                         "viewItemContextValue": "vaultDisconnected",
                     });
                 } else {
+                    const result: IVaultInfo = vaultInfoResult.result;
                     ret.push({
-                        "label": "Vault: " + vaultInfoResult.message,
+                        "label": "Vault: connected to: " + getWorkspaceDescription(result),
                         "iconPath": "lock",
                         "viewItemContextValue": "vaultConnected",
                     });

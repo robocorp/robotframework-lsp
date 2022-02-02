@@ -865,18 +865,49 @@ export async function updateLaunchEnvironment(args): Promise<{ [key: string]: st
         return environment;
     }
 
-    let work_items_action_result: ActionResultWorkItems = await commands.executeCommand(
+    // Note: we need to update the environment for:
+    // - Vault
+    // - Work items
+
+    let newEnv: { [key: string]: string } = { ...environment };
+
+    let vaultInfoActionResult: ActionResult<IVaultInfo> = await commands.executeCommand(
+        roboCommands.ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL
+    );
+    if (vaultInfoActionResult?.success) {
+        const vaultInfo: IVaultInfo = vaultInfoActionResult.result;
+        if (vaultInfo?.workspaceId) {
+            // The workspace vault is connected, so, we must authorize it...
+            let vaultInfoEnvActionResult: ActionResult<{ [key: string]: string }> = await commands.executeCommand(
+                roboCommands.ROBOCORP_UPDATE_LAUNCH_ENV_GET_VAULT_ENV_INTERNAL
+            );
+            if (!vaultInfoEnvActionResult.success) {
+                throw new Error(
+                    "It was not possible to connect to the vault while launching for: " +
+                        getWorkspaceDescription(vaultInfo) +
+                        ".\nDetails: " +
+                        vaultInfoEnvActionResult.message
+                );
+            }
+
+            for (const [key, value] of Object.entries(vaultInfoEnvActionResult.result)) {
+                newEnv[key] = value;
+            }
+        }
+    }
+
+    let workItemsActionResult: ActionResultWorkItems = await commands.executeCommand(
         roboCommands.ROBOCORP_LIST_WORK_ITEMS_INTERNAL,
         { "robot": robot, "increment_output": true }
     );
 
-    if (!work_items_action_result || !work_items_action_result.success) {
-        return environment;
+    if (!workItemsActionResult || !workItemsActionResult.success) {
+        return newEnv;
     }
 
-    let result: WorkItemsInfo = work_items_action_result.result;
+    let result: WorkItemsInfo = workItemsActionResult.result;
     if (!result) {
-        return environment;
+        return newEnv;
     }
 
     // Let's verify that the library is available and has the version we expect.
@@ -892,20 +923,19 @@ export async function updateLaunchEnvironment(args): Promise<{ [key: string]: st
         );
     } catch (error) {
         logError("Error updating launch environment.", error, "ACT_UPDATE_LAUNCH_ENV");
-        return environment;
+        return newEnv;
     }
 
     if (!libraryVersionInfoActionResult["success"]) {
         OUTPUT_CHANNEL.appendLine(
             "Launch environment for work items not updated. Reason: " + libraryVersionInfoActionResult.message
         );
-        return environment;
+        return newEnv;
     }
 
     // If we have found the robot, we should have the result and thus we should always set the
     // RPA_OUTPUT_WORKITEM_PATH (even if we don't have any input, we'll set to where we want
     // to save items).
-    let newEnv: { [key: string]: string } = { ...environment };
 
     newEnv["RPA_OUTPUT_WORKITEM_PATH"] = result.new_output_workitem_path;
     newEnv["RPA_WORKITEMS_ADAPTER"] = "RPA.Robocorp.WorkItems.FileAdapter";
