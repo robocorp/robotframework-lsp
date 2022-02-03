@@ -1,4 +1,4 @@
-_SNIPPETS = {
+_SNIPPETS_RF4 = {
     "FOR IN": {
         "prefix": "FOR IN",
         "body": [
@@ -79,7 +79,46 @@ _SNIPPETS = {
     },
 }
 
-_SNIPPETS_SORTED = sorted(_SNIPPETS.items())
+_SNIPPETS_RF5 = {
+    "TRY EXCEPT STATEMENT": {
+        "prefix": "TRY EXCEPT",
+        "body": ["TRY", "    $0", "EXCEPT  message", "    ", "END"],
+        "description": "Snippet of a TRY..EXCEPT statement",
+    },
+    "TRY EXCEPT FINALLY STATEMENT": {
+        "prefix": "TRY EXCEPT FINALLY",
+        "body": ["TRY", "    $0", "EXCEPT  message", "    ", "FINALLY", "    ", "END"],
+        "description": "Snippet of a TRY..EXCEPT..FINALLY statement",
+    },
+    "TRY FINALLY STATEMENT": {
+        "prefix": "TRY FINALLY",
+        "body": ["TRY", "    $0", "FINALLY", "    ", "END"],
+        "description": "Snippet of a TRY..EXCEPT..FINALLY statement",
+    },
+    "WHILE STATEMENT": {
+        "prefix": "WHILE",
+        "body": [r"WHILE  ${1:expression}", "    $0", "END"],
+        "description": "Snippet of a WHILE statement",
+    },
+}
+
+_SNIPPETS_SORTED = None
+
+
+def _get_global_snippets():
+    from robotframework_ls.impl.robot_version import get_robot_major_version
+
+    global _SNIPPETS_SORTED
+    if _SNIPPETS_SORTED is None:
+        use = {}
+        use.update(_SNIPPETS_RF4)
+
+        if get_robot_major_version() >= 5:
+            use.update(_SNIPPETS_RF5)
+
+        _SNIPPETS_SORTED = sorted(use.items())
+
+    return _SNIPPETS_SORTED
 
 
 def _create_completion_item_from_snippet(label, snippet, selection, line_to_col):
@@ -129,7 +168,7 @@ def complete(completion_context):
         return []
 
     ret = []
-    for label, data in _SNIPPETS_SORTED:
+    for label, data in _get_global_snippets():
         if line_to_column in data["prefix"].lower():
             ret.append(
                 _create_completion_item_from_snippet(label, data, sel, line_to_column)

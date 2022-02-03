@@ -377,27 +377,15 @@ class LibspecManager(object):
 
     @classmethod
     def get_robot_version(cls):
-        try:
-            import robot  # noqa
+        from robotframework_ls.impl import robot_version
 
-            v = str(robot.get_version())
-        except:
-            log.exception("Unable to get robot version.")
-            v = "unknown"
-        return v
+        return robot_version.get_robot_version()
 
     @classmethod
     def get_robot_major_version(cls):
-        robot_version = cls.get_robot_version()
+        from robotframework_ls.impl import robot_version
 
-        major_version = 3
-        try:
-            if "." in robot_version:
-                major_version = int(robot_version.split(".")[0])
-        except:
-            log.exception("Unable to get robot major version.")
-
-        return major_version
+        return robot_version.get_robot_major_version()
 
     @classmethod
     def get_internal_libspec_dir(cls):
