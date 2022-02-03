@@ -89,6 +89,7 @@ def get_json_contents():
                         "testCaseName": ["entity.name.function.robot"],
                         "parameterName": ["variable.parameter.robot"],
                         "argumentValue": ["string.quoted.single.robot"],
+                        "error": ["token.error-token.robot", "invalid.illegal.robot"],
                     }
                 }
             ],
@@ -210,7 +211,7 @@ def get_json_contents():
                             "properties": {
                                 "target": {
                                     "type": ["string", "array"],
-                                    "description": "The .robot file or a folder containing .robot files to be launched.",
+                                    "description": "The .robot file or a folder containing .robot files to be launched. Note: a suite will be created from suiteTarget or cwd and further filtering is done with the target.",
                                     "default": "${file}",
                                 },
                                 "args": {
@@ -219,7 +220,7 @@ def get_json_contents():
                                 },
                                 "cwd": {
                                     "type": "string",
-                                    "description": "The working directory for the launch.",
+                                    "description": "The working directory for the launch (also used to create suite if suiteTarget is not specified and makeSuite is true).",
                                     "default": "${workspaceFolder}",
                                 },
                                 "env": {
@@ -228,12 +229,12 @@ def get_json_contents():
                                 },
                                 "makeSuite": {
                                     "type": "boolean",
-                                    "description": "If specified, creates a suite from suiteTarget or uses heuristics to create a suite based on __init__.robot found in the structure.",
+                                    "description": "If specified, creates a suite from suiteTarget or cwd and applies filtering based on the target (to automatically load __init__.robot).",
                                     "default": True,
                                 },
                                 "suiteTarget": {
                                     "type": ["string", "array"],
-                                    "description": "If specified, a suite will be created from the given target(s).",
+                                    "description": "If specified, a suite will be created from the given target (by default, if not specified, it will be created from cwd).",
                                     "default": "",
                                 },
                                 "terminal": {

@@ -2,6 +2,7 @@ from typing import List
 from robocorp_ls_core.protocols import IDocument
 import robot
 import pytest
+from robotframework_ls.impl.robot_version import get_robot_major_version
 
 
 def check(found, expected):
@@ -276,6 +277,27 @@ Test Case
     )
 
 
+def test_semantic_highlighting_errors(workspace):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
+
+    workspace.set_root("case1")
+    doc = workspace.put_doc("case1.robot")
+    doc.source = """*** invalid invalid ***
+Foo
+""".replace(
+        "\r\n", "\n"
+    ).replace(
+        "\r", "\n"
+    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    semantic_tokens = semantic_tokens_full(context)
+    check(
+        (semantic_tokens, doc),
+        [("*** invalid invalid ***", "error"), ("Foo", "comment")],
+    )
+
+
 def test_semantic_highlighting_dotted_access_to_keyword(workspace):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
@@ -311,9 +333,112 @@ Test case 1
     )
 
 
-@pytest.mark.skipif(
-    robot.get_version().startswith("3."), reason="Requires RF 4 onwards"
-)
+@pytest.mark.skipif(get_robot_major_version() < 5, reason="Requires RF 5 onwards")
+def test_semantic_highlighting_try_except(workspace):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
+
+    workspace.set_root("case1")
+    doc = workspace.put_doc("case1.robot")
+    doc.source = """*** Test cases ***
+Try except inside try
+    TRY
+        TRY
+            Fail    nested failure
+        EXCEPT    miss
+            Fail    Should not be executed
+        ELSE
+            No operation
+        FINALLY
+            Log    in the finally
+        END
+    EXCEPT    nested failure
+        No operation
+    END
+""".replace(
+        "\r\n", "\n"
+    ).replace(
+        "\r", "\n"
+    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    semantic_tokens = semantic_tokens_full(context)
+    check(
+        (semantic_tokens, doc),
+        [
+            ("*** Test cases ***", "header"),
+            ("Try except inside try", "testCaseName"),
+            ("TRY", "control"),
+            ("TRY", "control"),
+            ("Fail", "keywordNameCall"),
+            ("nested failure", "argumentValue"),
+            ("EXCEPT", "control"),
+            ("miss", "argumentValue"),
+            ("Fail", "keywordNameCall"),
+            ("Should not be executed", "argumentValue"),
+            ("ELSE", "control"),
+            ("No operation", "keywordNameCall"),
+            ("FINALLY", "control"),
+            ("Log", "keywordNameCall"),
+            ("in the finally", "argumentValue"),
+            ("END", "control"),
+            ("EXCEPT", "control"),
+            ("nested failure", "argumentValue"),
+            ("No operation", "keywordNameCall"),
+            ("END", "control"),
+        ],
+    )
+
+
+@pytest.mark.skipif(get_robot_major_version() < 5, reason="Requires RF 5 onwards")
+def test_semantic_highlighting_while(workspace):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
+
+    workspace.set_root("case1")
+    doc = workspace.put_doc("case1.robot")
+    doc.source = """*** Variables ***
+${variable}    ${1}
+
+*** Test Cases ***
+While loop executed once
+    WHILE    $variable < 2
+        Log    ${variable}
+        ${variable}=    Evaluate    $variable + 1
+    END
+""".replace(
+        "\r\n", "\n"
+    ).replace(
+        "\r", "\n"
+    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    semantic_tokens = semantic_tokens_full(context)
+    check(
+        (semantic_tokens, doc),
+        [
+            ("*** Variables ***", "header"),
+            ("${", "variableOperator"),
+            ("variable", "variable"),
+            ("}", "variableOperator"),
+            ("${", "variableOperator"),
+            ("1", "variable"),
+            ("}", "variableOperator"),
+            ("*** Test Cases ***", "header"),
+            ("While loop executed once", "testCaseName"),
+            ("WHILE", "control"),
+            ("$variable < 2", "argumentValue"),
+            ("Log", "keywordNameCall"),
+            ("${", "variableOperator"),
+            ("variable", "variable"),
+            ("}", "variableOperator"),
+            ("${variable}=", "control"),
+            ("Evaluate", "keywordNameCall"),
+            ("$variable + 1", "argumentValue"),
+            ("END", "control"),
+        ],
+    )
+
+
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 4 onwards")
 def test_semantic_highlighting_for_if(workspace):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.semantic_tokens import semantic_tokens_full

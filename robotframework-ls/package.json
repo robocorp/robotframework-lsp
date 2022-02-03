@@ -253,6 +253,10 @@
                     ],
                     "argumentValue": [
                         "string.quoted.single.robot"
+                    ],
+                    "error": [
+                        "token.error-token.robot",
+                        "invalid.illegal.robot"
                     ]
                 }
             }

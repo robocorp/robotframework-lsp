@@ -19,6 +19,7 @@ TOKEN_TYPES = [
     "testCaseName",
     "parameterName",
     "argumentValue",
+    "error",
 ]
 
 TOKEN_MODIFIERS = [
@@ -58,6 +59,8 @@ from robotframework_ls.impl.robot_constants import (
     KEYWORD,
     CONTROL_TOKENS,
     TESTCASE_NAME,
+    ERROR,
+    FATAL_ERROR,
 )
 
 
@@ -71,6 +74,8 @@ RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX = {
     KEYWORD: TOKEN_TYPE_TO_INDEX["keywordNameCall"],
     ARGUMENT: TOKEN_TYPE_TO_INDEX["argumentValue"],
     VARIABLE: TOKEN_TYPE_TO_INDEX["variable"],
+    ERROR: TOKEN_TYPE_TO_INDEX["error"],
+    FATAL_ERROR: TOKEN_TYPE_TO_INDEX["error"],
 }
 
 
@@ -107,13 +112,15 @@ def semantic_tokens_range(context, range):
 def _tokenize_token(node, initial_token):
     from robotframework_ls.impl.ast_utils import is_argument_keyword_name
 
-    if initial_token.type == ARGUMENT:
+    initial_token_type = initial_token.type
+
+    if initial_token_type == ARGUMENT:
         if is_argument_keyword_name(node, initial_token):
             token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[KEYWORD]
             yield initial_token, token_type_index
             return
 
-    if initial_token.type == KEYWORD:
+    if initial_token_type == KEYWORD:
         dot_pos = initial_token.value.find(".")
         if dot_pos > 0:
             tok = _DummyToken()
@@ -135,25 +142,23 @@ def _tokenize_token(node, initial_token):
             # yield tok, TOKEN_TYPE_TO_INDEX["control"]
 
             tok = _DummyToken()
-            tok.type = initial_token.type
+            tok.type = initial_token_type
             tok.value = initial_token.value[dot_pos + 1 :]
             tok.lineno = initial_token.lineno
             tok.col_offset = prev_col_offset_end
             tok.end_col_offset = prev_col_offset_end + len(tok.value)
-            yield tok, RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[initial_token.type]
+            yield tok, RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[initial_token_type]
             return
 
     try:
         iter_in = initial_token.tokenize_variables()
     except:
-        token_type = initial_token.type
-
-        token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.get(token_type)
+        token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.get(initial_token_type)
         if token_type_index is not None:
             yield initial_token, token_type_index
     else:
         if (
-            initial_token.type == ARGUMENT
+            initial_token_type == ARGUMENT
             and node.__class__.__name__ != "Documentation"
         ):
 
