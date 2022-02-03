@@ -1,3 +1,17 @@
+New in 0.39.0 (2022-02-03)
+-----------------------------
+
+- Robot Framework 5 is now officially supported.
+  - New statements (TRY, WHILE) should now work for all existing features.
+- Debugger: step next considers that control flow statements are a part of the current keyword.
+- Debugger: Fixed issue initializing `pydevd` debugger when it's already present in the environment.
+- Semantic highlighting properly colors keyword calls with a namespace in fixtures. [#533](https://github.com/robocorp/robotframework-lsp/issues/533)
+- Libraries without keywords (a.k.a `DataDriver`) are no longer considered undefined. [#559](https://github.com/robocorp/robotframework-lsp/issues/559)
+- Properly deal with suites with a `__` prefix when launching. [#561](https://github.com/robocorp/robotframework-lsp/issues/561)
+- Raised time to obtain libspec mutex and give a better message on failure. [#555](https://github.com/robocorp/robotframework-lsp/issues/555)
+- Properly dealing with multi-argument python executable from `ms-python` extension. [#560](https://github.com/robocorp/robotframework-lsp/issues/560)
+
+
 New in 0.38.1 (2022-01-27)
 -----------------------------
 

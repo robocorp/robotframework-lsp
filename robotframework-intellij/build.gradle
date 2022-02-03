@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.38.1'
+version '0.39.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,25 +51,20 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.38.1
+    Release 0.39.0
     </p>
     <ul>
 
-    <li>[Intellij] Variables configured in <strong>robot.variables</strong> are properly passed to launched process.</li>
-    <li>It's now possible to break when an error or failure is logged with the following environment variables:</li>
+    <li>Robot Framework 5 is now officially supported.</li>
     <ul>
-      <li><strong>RFLS_BREAK_ON_FAILURE=1</strong></li>
-      <li><strong>RFLS_BREAK_ON_ERROR=1</strong></li>
+      <li>New statements (TRY, WHILE) should now work for all existing features.</li>
     </ul>
-    <li>When launching, better heuristics are used to create a proper test suite.</li>
-    <ul>
-      <li>A suite is created considering <strong>__init__.robot</strong> in parents based on the specified <strong>target</strong>.</li>
-      <li>By default the <strong>target</strong> will be used to compute the suite as well as the needed filtering.</li>
-    </ul>
-    <li>MarkupContent is now properly used in the signature help.</li>
-    <li>Go to definition now works properly with <strong>.yaml</strong> files.</li>
-    <li>The signature part of a keyword is now bold in the documentation.</li>
-    <li>Keyword namespace access now has a different color in semantic highlighting.</li>
+    <li>Debugger: step next considers that control flow statements are a part of the current keyword.</li>
+    <li>Debugger: Fixed issue initializing `pydevd` debugger when it's already present in the environment.</li>
+    <li>Semantic highlighting properly colors keyword calls with a namespace in fixtures.</li>
+    <li>Libraries without keywords (a.k.a `DataDriver`) are no longer considered undefined.</li>
+    <li>Properly deal with suites with a `__` prefix when launching.</li>
+    <li>Raised time to obtain libspec mutex and give a better message on failure.</li>
 
     <br>
     Current feature set:<br>
