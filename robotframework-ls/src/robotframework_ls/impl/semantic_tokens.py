@@ -20,6 +20,7 @@ TOKEN_TYPES = [
     "parameterName",
     "argumentValue",
     "error",
+    "documentation",
 ]
 
 TOKEN_MODIFIERS = [
@@ -96,6 +97,7 @@ VARIABLE_INDEX = TOKEN_TYPE_TO_INDEX["variable"]
 VARIABLE_OPERATOR_INDEX = TOKEN_TYPE_TO_INDEX["variableOperator"]
 SETTING_INDEX = TOKEN_TYPE_TO_INDEX["setting"]
 PARAMETER_NAME_INDEX = TOKEN_TYPE_TO_INDEX["parameterName"]
+DOCUMENTATION_INDEX = TOKEN_TYPE_TO_INDEX["documentation"]
 
 
 class _DummyToken(object):
@@ -157,10 +159,10 @@ def _tokenize_token(node, initial_token):
         if token_type_index is not None:
             yield initial_token, token_type_index
     else:
-        if (
-            initial_token_type == ARGUMENT
-            and node.__class__.__name__ != "Documentation"
-        ):
+        if initial_token_type == ARGUMENT:
+            if node.__class__.__name__ == "Documentation":
+                yield initial_token, DOCUMENTATION_INDEX
+                return
 
             first_token = next(iter_in)
             equals_pos = first_token.value.find("=")

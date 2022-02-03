@@ -90,6 +90,11 @@ def get_json_contents():
                         "parameterName": ["variable.parameter.robot"],
                         "argumentValue": ["string.quoted.single.robot"],
                         "error": ["token.error-token.robot", "invalid.illegal.robot"],
+                        "documentation": [
+                            "comment.block.documentation.robot",
+                            "comment.line.documentation.robot",
+                            "meta.documentation.robot",
+                        ],
                     }
                 }
             ],

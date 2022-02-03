@@ -131,6 +131,7 @@ export function configureMonacoLanguage() {
             { token: "parameterName", foreground: "9CDCFE" },
             { token: "argumentValue", foreground: "CE9178" },
             { token: "error", foreground: "F44747" },
+            { token: "documentation", foreground: "6A9955" },
         ],
         colors: {},
     });
@@ -153,6 +154,7 @@ export function configureMonacoLanguage() {
             { token: "parameterName", foreground: "098658" },
             { token: "argumentValue", foreground: "A31515" },
             { token: "error", foreground: "CD3131" },
+            { token: "documentation", foreground: "008000" },
         ],
         colors: {},
     });
@@ -175,6 +177,7 @@ export function configureMonacoLanguage() {
             { token: "parameterName", foreground: "9CDCFE" },
             { token: "argumentValue", foreground: "CE9178" },
             { token: "error", foreground: "FF0000" },
+            { token: "documentation", foreground: "7CA668" },
         ],
         colors: {},
     });
