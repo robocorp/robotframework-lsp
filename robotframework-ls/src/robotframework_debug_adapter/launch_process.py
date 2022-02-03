@@ -200,11 +200,20 @@ def compute_cmd_line_and_env(
 
                         suite_filter_args.append("--suite")
                         if suite_to_filter == ".":
-                            suite_filter_args.append(os.path.basename(base_root))
+                            suite_name = os.path.basename(base_root)
                         else:
-                            suite_filter_args.append(
+                            suite_name = (
                                 os.path.basename(base_root) + "." + suite_to_filter
                             )
+
+                        if "__" in suite_name:
+                            lst = []
+                            for name in suite_name.split("."):
+                                if name != "__init__":
+                                    name = name.split("__", 1)[-1]
+                                lst.append(name)
+                            suite_name = ".".join(lst)
+                        suite_filter_args.append(suite_name)
 
                     new_target_args = [base_root]
 

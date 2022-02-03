@@ -477,6 +477,43 @@ def test_sub_init_auto_loaded(debugger_api: _DebuggerAPI):
     debugger_api.read(TerminatedEvent)
 
 
+def test_suite_with_prefix(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+
+    debugger_api.initialize()
+    target = debugger_api.get_dap_case_file(
+        "check_suite_with_prefix/03__config/my.robot"
+    )
+    target_init = debugger_api.get_dap_case_file(
+        "check_suite_with_prefix/03__config/__init__.robot"
+    )
+    debugger_api.target = target
+
+    debugger_api.launch(target, debug=True)
+
+    # Set init breaks
+    bp_setup = debugger_api.get_line_index_with_content(
+        "Suite Setup", filename=target_init
+    )
+    bp_teardown = debugger_api.get_line_index_with_content(
+        "Suite Teardown", filename=target_init
+    )
+    debugger_api.set_breakpoints(target_init, (bp_setup, bp_teardown))
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(
+        file="check_suite_with_prefix/03__config/__init__.robot"
+    )
+    debugger_api.continue_event(json_hit.thread_id)
+
+    json_hit = debugger_api.wait_for_thread_stopped(
+        file="check_suite_with_prefix/03__config/__init__.robot"
+    )
+    debugger_api.continue_event(json_hit.thread_id)
+
+    debugger_api.read(TerminatedEvent)
+
+
 @pytest.mark.parametrize("scenario", ["cwd", "suite_target"])
 def test_sub_init_auto_loaded_not_complete(debugger_api: _DebuggerAPI, scenario):
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
