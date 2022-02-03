@@ -1,3 +1,11 @@
+New in 0.27.0 (2022-02-03)
+-----------------------------
+
+- It's now possible to use the online vault secrets from within VSCode.
+  - A new `Vault` item is added to the `Robocorp` view which allows setting the workspace for the vault.
+  - Note: each new run obtains a new token (valid for 2 hours) to communicate with the vault.
+
+
 New in 0.26.0 (2022-01-26)
 -----------------------------
 
