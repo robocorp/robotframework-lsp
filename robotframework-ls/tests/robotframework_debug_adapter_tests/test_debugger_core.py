@@ -7,11 +7,12 @@ from robocorp_ls_core.basic import implements
 from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StackFrame
 from robotframework_debug_adapter.protocols import IBusyWait, IRobotDebugger
 from robotframework_debug_adapter_tests.fixtures import dbg_wait_for
+from robotframework_ls.impl.robot_version import get_robot_major_version
 
-from robot import version
 
 # We don't even support version 2, so, this is ok.
-IS_ROBOT_4_ONWARDS = not version.get_version().startswith("3.")
+IS_ROBOT_4_ONWARDS = get_robot_major_version() >= 4
+IS_ROBOT_5_ONWARDS = get_robot_major_version() >= 5
 
 
 class DummyBusyWait(object):
@@ -188,6 +189,62 @@ def test_debugger_core_for(
     dbg_wait_for(lambda: robot_thread.result_code == 0)
 
 
+@pytest.mark.skipif(not IS_ROBOT_4_ONWARDS, reason="This is valid for RF4 onwards.")
+def test_debugger_core_for_next(
+    debugger_api, robot_thread, data_regression, debugger_impl
+) -> None:
+    from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
+
+    thread_id = debugger_impl.get_current_thread_id(robot_thread)
+    target = debugger_api.get_dap_case_file(
+        "case_control_flow/case_control_flow_for.robot"
+    )
+    line = debugger_api.get_line_index_with_content("Break 1", target)
+    debugger_impl.set_breakpoints(target, RobotBreakpoint(line))
+
+    robot_thread.run_target(target)
+
+    stack_lst: List[Optional[List[StackFrame]]] = []
+
+    try:
+        dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 1)
+        stack_lst.append(debugger_impl.get_frames(thread_id))
+        debugger_impl.step_next()
+
+        dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 2)
+        stack_lst.append(debugger_impl.get_frames(thread_id))
+        debugger_impl.step_next()
+
+        dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 3)
+        stack_lst.append(debugger_impl.get_frames(thread_id))
+        debugger_impl.step_next()
+
+        dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 4)
+        stack_lst.append(debugger_impl.get_frames(thread_id))
+
+        # We have additional steps as we get one step with the creation
+        # of the ${counter} variable when stepping into the for.
+        debugger_impl.step_next()
+
+        dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 5)
+        stack_lst.append(debugger_impl.get_frames(thread_id))
+        debugger_impl.step_next()
+
+        dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 6)
+        stack_lst.append(debugger_impl.get_frames(thread_id))
+    finally:
+        debugger_impl.step_continue()
+
+    dbg_wait_for(lambda: debugger_impl.busy_wait.proceeded == 6)
+
+    if IS_ROBOT_4_ONWARDS:
+        basename = "test_debugger_core_for.v4"
+    else:
+        basename = "test_debugger_core_for.v3"
+    data_regression.check(stack_frames_repr(stack_lst), basename=basename)
+    dbg_wait_for(lambda: robot_thread.result_code == 0)
+
+
 @pytest.mark.skipif(
     not IS_ROBOT_4_ONWARDS, reason="If statement only available in RF 4 onwards."
 )
@@ -218,6 +275,84 @@ def test_debugger_core_if(
         debugger_impl.step_in()  # Will actually finish the program now.
 
     dbg_wait_for(lambda: debugger_impl.busy_wait.proceeded == 2)
+
+    data_regression.check(stack_frames_repr(stack_lst))
+    dbg_wait_for(lambda: robot_thread.result_code == 0)
+
+
+@pytest.mark.skipif(
+    not IS_ROBOT_4_ONWARDS, reason="If statement only available in RF 4 onwards."
+)
+def test_debugger_core_if_next(
+    debugger_api, robot_thread, data_regression, debugger_impl
+) -> None:
+    from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
+
+    thread_id = debugger_impl.get_current_thread_id(robot_thread)
+    target = debugger_api.get_dap_case_file(
+        "case_control_flow/case_control_flow_if.robot"
+    )
+    line = debugger_api.get_line_index_with_content("Break 1", target)
+    debugger_impl.set_breakpoints(target, RobotBreakpoint(line))
+
+    robot_thread.run_target(target)
+
+    stack_lst: List[Optional[List[StackFrame]]] = []
+
+    try:
+        dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 1)
+        stack_lst.append(debugger_impl.get_frames(thread_id))
+        debugger_impl.step_next()
+
+        dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 2)
+        stack_lst.append(debugger_impl.get_frames(thread_id))
+    finally:
+        debugger_impl.step_in()  # Will actually finish the program now.
+
+    dbg_wait_for(lambda: debugger_impl.busy_wait.proceeded == 2)
+
+    data_regression.check(
+        stack_frames_repr(stack_lst), basename="test_debugger_core_if"
+    )
+    dbg_wait_for(lambda: robot_thread.result_code == 0)
+
+
+@pytest.mark.skipif(
+    not IS_ROBOT_5_ONWARDS, reason="While statement only available in RF 5 onwards."
+)
+def test_debugger_core_while(
+    debugger_api, robot_thread, data_regression, debugger_impl
+) -> None:
+    from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
+
+    thread_id = debugger_impl.get_current_thread_id(robot_thread)
+    target = debugger_api.get_dap_case_file(
+        "case_control_flow/case_control_flow_while.robot"
+    )
+    line = debugger_api.get_line_index_with_content(
+        "${SOMETHING}=    Evaluate    5", target
+    )
+    debugger_impl.set_breakpoints(target, RobotBreakpoint(line))
+
+    robot_thread.run_target(target)
+
+    stack_lst: List[Optional[List[StackFrame]]] = []
+
+    dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 1)
+    stack_lst.append(debugger_impl.get_frames(thread_id))
+    debugger_impl.step_next()
+
+    dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 2)
+    stack_lst.append(debugger_impl.get_frames(thread_id))
+    debugger_impl.step_next()
+
+    dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 3)
+    stack_lst.append(debugger_impl.get_frames(thread_id))
+    debugger_impl.step_next()
+
+    dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 4)
+    stack_lst.append(debugger_impl.get_frames(thread_id))
+    debugger_impl.step_continue()
 
     data_regression.check(stack_frames_repr(stack_lst))
     dbg_wait_for(lambda: robot_thread.result_code == 0)
@@ -534,6 +669,8 @@ def test_debugger_core_evaluate(
         )
         with pytest.raises(InvalidFrameTypeError):
             eval_info.future.result()
+
+        assert not os.path.exists(filename)
 
         # Keyword evaluation works
         eval_info = debugger_impl.evaluate(

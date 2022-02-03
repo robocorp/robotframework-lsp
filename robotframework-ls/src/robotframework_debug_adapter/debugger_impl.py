@@ -384,10 +384,12 @@ class _StackInfo(object):
         return lst
 
 
-_StepEntry = namedtuple("_StepEntry", "name, lineno, source, args, variables")
-_SuiteEntry = namedtuple("_SuiteEntry", "name, source")
-_TestEntry = namedtuple("_TestEntry", "name, source, lineno")
-_LogEntry = namedtuple("_LogEntry", "name, source, lineno")
+_StepEntry = namedtuple(
+    "_StepEntry", "name, lineno, source, args, variables, entry_type"
+)
+_SuiteEntry = namedtuple("_SuiteEntry", "name, source, entry_type")
+_TestEntry = namedtuple("_TestEntry", "name, source, lineno, entry_type")
+_LogEntry = namedtuple("_LogEntry", "name, source, lineno, entry_type")
 
 
 class InvalidFrameIdError(Exception):
@@ -718,6 +720,11 @@ class _RobotDebuggerImpl(object):
 
             if self._step_cmd == StepEnum.STEP_NEXT:
                 self._stop_on_stack_len = len(self._stack_ctx_entries_deque)
+                if self._stop_on_stack_len:
+                    if self._is_control_step(
+                        self._stack_ctx_entries_deque[-1].entry_type
+                    ):
+                        self._stop_on_stack_len += 1
 
             elif self._step_cmd == StepEnum.STEP_OUT:
                 self._stop_on_stack_len = len(self._stack_ctx_entries_deque) - 1
@@ -797,11 +804,12 @@ class _RobotDebuggerImpl(object):
         source = attributes["source"]
         name = attributes["kwname"]
         args = attributes["args"]
+        entry_type = attributes.get("type", "KEYWORD")
         if attributes.get("status") == "NOT RUN":
             return
         if not args:
             args = []
-        self._before_run_step(ctx, name, lineno, source, args)
+        self._before_run_step(ctx, name, entry_type, lineno, source, args)
 
     # 4.0 versions where the lineno is available on the V2 listener
     def end_keyword_v2(self, name, attributes):
@@ -839,7 +847,8 @@ class _RobotDebuggerImpl(object):
             args = control_flow_stmt.args
         except AttributeError:
             args = []
-        self._before_run_step(ctx, name, lineno, source, args)
+        entry_type = "KEYWORD"
+        self._before_run_step(ctx, name, entry_type, lineno, source, args)
 
     # 3.x versions where the lineno is NOT available on the V2 listener
     def after_control_flow_stmt(self, control_flow_stmt, ctx, *args, **kwargs):
@@ -863,7 +872,8 @@ class _RobotDebuggerImpl(object):
         except AttributeError:
             args = []
         ctx = runner._context
-        self._before_run_step(ctx, name, lineno, source, args)
+        entry_type = "KEYWORD"
+        self._before_run_step(ctx, name, entry_type, lineno, source, args)
 
     def after_keyword_runner(self, runner, step, *args, **kwargs):
         self._after_run_step()
@@ -886,13 +896,33 @@ class _RobotDebuggerImpl(object):
         except AttributeError:
             args = []
         ctx = step_runner._context
-        self._before_run_step(ctx, name, lineno, source, args)
+        entry_type = "KEYWORD"
+        self._before_run_step(ctx, name, entry_type, lineno, source, args)
 
     # 3.x versions where the lineno is NOT available on the V2 listener
     def after_run_step(self, step_runner, step, name=None):
         self._after_run_step()
 
-    def _before_run_step(self, ctx, name, lineno, source, args):
+    def _is_control_step(self, entry_type):
+        return entry_type in (
+            "FOR",
+            "FOR ITERATION",
+            "ITERATION",
+            "IF",
+            "ELSE",
+            "ELSE IF",
+            "TRY",
+            "EXCEPT",
+            "WHILE",
+        )
+
+    def _before_run_step(self, ctx, name, entry_type, lineno, source, args):
+        if not name:
+            name = entry_type
+
+        if self._is_control_step(entry_type):
+            self._stop_on_stack_len += 1
+
         if source is None or lineno is None:
             # RunKeywordIf doesn't have a source, so, just show the caller source.
             for entry in reversed(self._stack_ctx_entries_deque):
@@ -909,7 +939,7 @@ class _RobotDebuggerImpl(object):
             if os.path.exists(robot_init):
                 source = robot_init
         self._stack_ctx_entries_deque.append(
-            _StepEntry(name, lineno, source, args, ctx.variables.current)
+            _StepEntry(name, lineno, source, args, ctx.variables.current, entry_type)
         )
         if self._skip_breakpoints:
             return
@@ -1005,17 +1035,21 @@ class _RobotDebuggerImpl(object):
             self.wait_suspended(stop_reason)
 
     def _after_run_step(self):
-        self._stack_ctx_entries_deque.pop()
+        entry = self._stack_ctx_entries_deque.pop()
+        if self._is_control_step(entry.entry_type):
+            self._stop_on_stack_len -= 1
 
     def start_suite(self, data, result):
-        self._stack_ctx_entries_deque.append(_SuiteEntry(data.name, data.source))
+        self._stack_ctx_entries_deque.append(
+            _SuiteEntry(data.name, data.source, "SUITE")
+        )
 
     def end_suite(self, data, result):
         self._stack_ctx_entries_deque.pop()
 
     def start_test(self, data, result):
         self._stack_ctx_entries_deque.append(
-            _TestEntry(data.name, data.source, data.lineno)
+            _TestEntry(data.name, data.source, data.lineno, "TEST")
         )
 
     def end_test(self, data, result):
@@ -1093,7 +1127,7 @@ class _RobotDebuggerImpl(object):
             entry = None
             if source_and_line is not None:
                 source, lineno = source_and_line
-                entry = _LogEntry(message.level, source, lineno)
+                entry = _LogEntry(message.level, source, lineno, "LOG")
                 self._stack_ctx_entries_deque.append(entry)
 
             self._exc_name = exc_name + message.message

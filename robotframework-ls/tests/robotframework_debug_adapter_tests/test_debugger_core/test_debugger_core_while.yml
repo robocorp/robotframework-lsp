@@ -1,0 +1,118 @@
+Stack 0:
+- column: 0
+  line: 4
+  name: Evaluate
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+- column: 0
+  line: 3
+  name: TRY
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+- column: 0
+  line: 2
+  name: 'TestCase: Test case 1'
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+- column: 0
+  line: 1
+  name: 'TestSuite: Case Control Flow While'
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+Stack 1:
+- column: 0
+  line: 5
+  name: $SOMETHING > 2
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+- column: 0
+  line: 3
+  name: TRY
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+- column: 0
+  line: 2
+  name: 'TestCase: Test case 1'
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+- column: 0
+  line: 1
+  name: 'TestSuite: Case Control Flow While'
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+Stack 2:
+- column: 0
+  line: 5
+  name: ITERATION
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+- column: 0
+  line: 5
+  name: $SOMETHING > 2
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+- column: 0
+  line: 3
+  name: TRY
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+- column: 0
+  line: 2
+  name: 'TestCase: Test case 1'
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+- column: 0
+  line: 1
+  name: 'TestSuite: Case Control Flow While'
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+Stack 3:
+- column: 0
+  line: 6
+  name: Evaluate
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+- column: 0
+  line: 5
+  name: ITERATION
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+- column: 0
+  line: 5
+  name: $SOMETHING > 2
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+- column: 0
+  line: 3
+  name: TRY
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+- column: 0
+  line: 2
+  name: 'TestCase: Test case 1'
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
+- column: 0
+  line: 1
+  name: 'TestSuite: Case Control Flow While'
+  source:
+    name: case_control_flow_while.robot
+    path: '.../case_control_flow_while.robot'
