@@ -545,6 +545,9 @@ def is_argument_keyword_name(node, token) -> bool:
     return False
 
 
+CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS = ("Fixture", "TestTemplate", "Template")
+
+
 def get_keyword_name_token(ast, token):
     """
     If the given token is a keyword, return the token, otherwise return None.
@@ -553,7 +556,7 @@ def get_keyword_name_token(ast, token):
     """
     if token.type == token.KEYWORD or (
         token.type == token.NAME
-        and isinstance_name(ast, ("Fixture", "TestTemplate", "Template"))
+        and isinstance_name(ast, CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS)
     ):
         return _strip_token_bdd_prefix(token)
 

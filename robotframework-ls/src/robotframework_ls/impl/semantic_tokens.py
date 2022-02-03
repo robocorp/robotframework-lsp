@@ -2,6 +2,7 @@ from typing import List, Tuple, Optional
 import itertools
 from robocorp_ls_core.protocols import IDocument, IMonitor
 from robotframework_ls.impl.protocols import ICompletionContext
+from robocorp_ls_core.basic import isinstance_name
 
 
 TOKEN_TYPES = [
@@ -112,7 +113,10 @@ def semantic_tokens_range(context, range):
 
 
 def _tokenize_token(node, initial_token):
-    from robotframework_ls.impl.ast_utils import is_argument_keyword_name
+    from robotframework_ls.impl.ast_utils import (
+        is_argument_keyword_name,
+        CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS,
+    )
 
     initial_token_type = initial_token.type
 
@@ -121,6 +125,10 @@ def _tokenize_token(node, initial_token):
             token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[KEYWORD]
             yield initial_token, token_type_index
             return
+
+    if initial_token_type == NAME:
+        if isinstance_name(node, CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS):
+            initial_token_type = KEYWORD
 
     if initial_token_type == KEYWORD:
         dot_pos = initial_token.value.find(".")

@@ -333,6 +333,51 @@ Test case 1
     )
 
 
+def test_semantic_highlighting_dotted_access_to_keyword_suite_setup(workspace):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
+
+    workspace.set_root("case1")
+    doc = workspace.put_doc("case1.robot")
+    doc.source = """*** Settings ***
+Library    Collections     WITH NAME     Col
+Suite Setup    Col.Append to list
+
+*** Test Cases ***
+Some test
+    [Setup]     Col.Append to list
+    Col.Append to list
+""".replace(
+        "\r\n", "\n"
+    ).replace(
+        "\r", "\n"
+    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    semantic_tokens = semantic_tokens_full(context)
+    check(
+        (semantic_tokens, doc),
+        [
+            ("*** Settings ***", "header"),
+            ("Library", "setting"),
+            ("Collections", "name"),
+            ("WITH NAME", "control"),
+            ("Col", "name"),
+            ("Suite Setup", "setting"),
+            ("Col", "name"),
+            ("Append to list", "keywordNameCall"),
+            ("*** Test Cases ***", "header"),
+            ("Some test", "testCaseName"),
+            ("[", "variableOperator"),
+            ("Setup", "setting"),
+            ("]", "variableOperator"),
+            ("Col", "name"),
+            ("Append to list", "keywordNameCall"),
+            ("Col", "name"),
+            ("Append to list", "keywordNameCall"),
+        ],
+    )
+
+
 @pytest.mark.skipif(get_robot_major_version() < 5, reason="Requires RF 5 onwards")
 def test_semantic_highlighting_try_except(workspace):
     from robotframework_ls.impl.completion_context import CompletionContext
