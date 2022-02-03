@@ -209,6 +209,13 @@ Test
     _collect_errors(workspace, doc, data_regression, config=config)
 
 
+def test_empty_library_exists(workspace, libspec_manager, data_regression):
+    workspace.set_root("case_empty_lib", libspec_manager=libspec_manager)
+
+    doc = workspace.get_doc("case_empty_lib.robot")
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
 def test_resource_does_not_exist_2nd_level(workspace, libspec_manager, data_regression):
     workspace.set_root("case4", libspec_manager=libspec_manager)
 
