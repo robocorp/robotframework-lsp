@@ -1,3 +1,8 @@
+New in 0.27.1 (2022-02-04)
+-----------------------------
+
+- Fix issue where run failed with error if vault connection was not set.
+
 New in 0.27.0 (2022-02-03)
 -----------------------------
 
@@ -61,19 +66,19 @@ New in 0.21.0 (2021-12-14)
   - Added option to reveal in explorer.
   - Added button to create new robot.
   - Context menu filled with actions.
-  
+
 - Robot content view:
   - Added option to reveal in explorer.
   - Context menu filled with actions to open file externally or internally.
   - When clicking an item, it's opened even if already selected.
-  
+
 - Robocorp view:
   - Updated labels
-  
+
 - Improvements in the upload Robot UI.
   - Labels
   - Workspaces that the user cannot read are no longer shown.
-   
+
 
 New in 0.20.0 (2021-11-16)
 -----------------------------
@@ -95,9 +100,9 @@ New in 0.18.0 (2021-11-01)
 -----------------------------
 
 - When relocating robot, make sure that the `PYTHONPATH` entries are properly forwarded.
-- Robot Framework Language Server `0.26.0` is now required. 
- 
- 
+- Robot Framework Language Server `0.26.0` is now required.
+
+
 New in 0.17.0 (2021-10-21)
 -----------------------------
 
@@ -106,7 +111,7 @@ New in 0.17.0 (2021-10-21)
 - RCC updated to 11.4.2
 - When a `work item` selection is cancelled, the related launch is also cancelled.
 - When `ROBOCORP_OVERRIDE_SYSTEM_REQUIREMENTS` is set, it's now possible to initialize the extension.
- 
+
 
 New in 0.16.0 (2021-10-13)
 -----------------------------
@@ -126,7 +131,7 @@ New in 0.16.0 (2021-10-13)
   - Only the last 5 runs are kept in the output. To keep older items, rename the folder or move it to `devdata/work-items-in`.
   - For previously existing items, those should be moved to `devdata/work-items-in` so that they are shown.
   - Changing `env.json` should not be needed anymore (in fact, changes to the related variables will be ignored to avoid clashes with other tools).
-  - The latest `rpaframework` is required for the integration.  
+  - The latest `rpaframework` is required for the integration.
 
 
 New in 0.15.0 (2021-10-04)
@@ -146,9 +151,9 @@ New in 0.13.3 (2021-09-08)
 -----------------------------
 
 - Fix case where the python used in debug did not match the one used in the environment.
-- Two different `conda.yaml` files with only cosmetic changes (such as comments) now map to the same environment. 
+- Two different `conda.yaml` files with only cosmetic changes (such as comments) now map to the same environment.
 - Fixes related to `TEMP` directories managed in the environment.
-- The default `cwd` when resolving environments is now properly managed so that conflicts don't arise due to having a `robot.yaml` in the `cwd`. 
+- The default `cwd` when resolving environments is now properly managed so that conflicts don't arise due to having a `robot.yaml` in the `cwd`.
 - `--controller` is properly set when making an `rcc` run.
 
 
@@ -162,7 +167,7 @@ New in 0.13.2 (2021-09-06)
 New in 0.13.1 (2021-08-31)
 -----------------------------
 
-- Critical fix: if the base environment was removed the extension could fail to initialize. 
+- Critical fix: if the base environment was removed the extension could fail to initialize.
 
 
 New in 0.13.0 (2021-08-30)
@@ -178,7 +183,7 @@ New in 0.12.1 (2021-08-23)
 - At most 10 environment are created, using Holotree from RCC (environments are now recycled).
 - Upgraded to RCC 10.7.0.
 - Deal with `pythonDeprecatePythonPath` when setting the python executable path for vscode-python from a Robot.
-- If the Robot Framework Language Server extension is installed in VSCode, at least 0.21.0 is now required. 
+- If the Robot Framework Language Server extension is installed in VSCode, at least 0.21.0 is now required.
 
 
 New in 0.11.1 (2021-05-27)
@@ -193,7 +198,7 @@ New in 0.11.0 (2021-05-26)
 - The Robocorp view now has a tree showing the contents of the currently selected robot.
 - RCC upgraded to 9.16.0.
 
-  
+
 New in 0.10.0 (2021-05-12)
 -----------------------------
 
@@ -240,7 +245,7 @@ New in 0.8.0 (2021-02-24)
 - Fix creating browser locator with rpaframework-core 6.0.0.
 - New `Robocorp: Submit issue` command.
   - Allows reporting issues to Robocorp from within VSCode.
-  - Attaches logging and system information. 
+  - Attaches logging and system information.
 
 
 New in 0.7.1 (2021-01-22)
@@ -295,7 +300,7 @@ New in 0.5.3 (2020-12-08)
 New in 0.5.2 (2020-12-02)
 -----------------------------
 
-- Unlink user from Robocorp Cloud 
+- Unlink user from Robocorp Cloud
 
 New in 0.5.1 (2020-11-29)
 -----------------------------
@@ -318,13 +323,13 @@ New in 0.4.0 (2020-11-08)
 
 - Plain python Robot Tasks from `robot.yaml` can now also be debugged (note:
   the Python plugin must also be installed). #179
-- In the login action, pressing enter without any information will open the 
+- In the login action, pressing enter without any information will open the
   proper url to obtain the credentials. #177
 - If there's only one task to run in the workspace, use it in the Debug/Run Robot
   action. #175
 - Upgraded to use RCC v4.
 
-  
+
 New in 0.3.0 (2020-10-26)
 -----------------------------
 
@@ -383,7 +388,7 @@ New in 0.0.5 (2020-09-23)
 New in 0.0.4 (2020-09-02)
 -----------------------------
 
-- The extension name changed to Robocorp Code (so, if upgrading from 0.0.3, please 
+- The extension name changed to Robocorp Code (so, if upgrading from 0.0.3, please
   remove the previous version manually).
 - When a package.yaml is found, it's used to provide a different python environment
   when running/debugging `.robot` files using the RobotFramework Language Server.
