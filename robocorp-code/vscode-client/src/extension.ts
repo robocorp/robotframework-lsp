@@ -292,7 +292,7 @@ class RobocorpCodeDebugConfigurationProvider implements DebugConfigurationProvid
             let vaultInfoActionResult: ActionResult = await commands.executeCommand(
                 ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL
             );
-            if (vaultInfoActionResult?.success) {
+            if (vaultInfoActionResult?.success && vaultInfoActionResult.result) {
                 debugConfiguration.workspaceId = vaultInfoActionResult.result.workspaceId;
             }
             // Not running with debug: just use rcc to launch.
