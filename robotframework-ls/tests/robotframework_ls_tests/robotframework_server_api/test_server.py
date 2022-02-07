@@ -181,7 +181,17 @@ def check_no_robotframework():
     with before(builtins, "__import__", fail_robot_import):
         api = initialize_robotframework_server_api()
         assert "robot" not in sys.modules
-        assert api.m_version() == "NO_ROBOT"
+        msg = (
+            'Error in "import robot".\n'
+            f"It seems that Robot Framework is not installed in {sys.executable}.\n"
+            "Please install it in your environment and restart the Robot Framework Language Server\n"
+            'or set: "robot.language-server.python" or "robot.python.executable"\n'
+            "to point to a python installation that has Robot Framework installed.\n"
+            "Hint: with pip it can be installed with:\n"
+            f"{sys.executable} -m pip install robotframework\n"
+        )
+
+        assert api.m_version() == msg
         result = api.m_lint("something foo bar")
         assert result == [
             {
@@ -189,10 +199,7 @@ def check_no_robotframework():
                     "start": {"character": 0, "line": 0},
                     "end": {"character": 0, "line": 1},
                 },
-                "message": (
-                    "robotframework version (NO_ROBOT) too old for linting.\n"
-                    "Please install a newer version and restart the language server."
-                ),
+                "message": (msg),
                 "source": "robotframework",
                 "severity": 1,
             }

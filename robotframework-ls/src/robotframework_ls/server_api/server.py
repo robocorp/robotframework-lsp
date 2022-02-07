@@ -21,6 +21,7 @@ from robotframework_ls.impl.protocols import IKeywordFound, IDefinition
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 import itertools
 import typing
+import sys
 
 
 log = get_logger(__name__)
@@ -76,16 +77,29 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         try:
             import robot  # noqa
         except:
-            log.exception("Unable to import 'robot'.")
-            version = "NO_ROBOT"
+            version = (
+                'Error in "import robot".\n'
+                f"It seems that Robot Framework is not installed in {sys.executable}.\n"
+                "Please install it in your environment and restart the Robot Framework Language Server\n"
+                'or set: "robot.language-server.python" or "robot.python.executable"\n'
+                "to point to a python installation that has Robot Framework installed.\n"
+                "Hint: with pip it can be installed with:\n"
+                f"{sys.executable} -m pip install robotframework\n"
+            )
+            log.exception(version)
         else:
             try:
                 from robot import get_version
 
                 version = get_version(naked=True)
             except:
-                log.exception("Unable to get version.")
-                version = "N/A"  # Too old?
+                version = (
+                    'Error calling "robot.get_version()".\n'
+                    f"If the module: {robot}\n"
+                    "is a module from your project, please rename it (as it is shadowing the Robot Framework `robot` package)\n"
+                    "and restart the Robot Framework Language Server."
+                )
+                log.exception(version)
         self._version = version
         return self._version
 
@@ -134,11 +148,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if not self._check_min_version((3, 2)):
             from robocorp_ls_core.lsp import Error
 
-            msg = (
-                "robotframework version (%s) too old for linting.\n"
-                "Please install a newer version and restart the language server."
-                % (self.m_version(),)
-            )
+            msg = self.m_version()
             log.info(msg)
             return [Error(msg, (0, 0), (1, 0)).to_lsp_diagnostic()]
 

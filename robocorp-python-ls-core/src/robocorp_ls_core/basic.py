@@ -364,9 +364,6 @@ def check_min_version(version, min_version):
     :return bool:
         True if version >= min_versiond and False otherwise.
     """
-    if version == "N/A":
-        return False
-
     try:
         version = tuple(int(x) for x in version.split("."))
     except:
