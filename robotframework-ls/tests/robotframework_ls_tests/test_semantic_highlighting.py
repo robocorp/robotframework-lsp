@@ -1,6 +1,5 @@
 from typing import List
 from robocorp_ls_core.protocols import IDocument
-import robot
 import pytest
 from robotframework_ls.impl.robot_version import get_robot_major_version
 
@@ -465,6 +464,79 @@ Some test
             ("Documentation", "setting"),
             ("]", "variableOperator"),
             ("Some documentation", "documentation"),
+        ],
+    )
+
+
+def test_semantic_highlighting_vars_in_documentation(workspace):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
+
+    workspace.set_root("case1")
+    doc = workspace.put_doc("case1.robot")
+    doc.source = """*** Settings ***
+Documentation    Docs in settings
+
+*** Test Cases ***
+Some test
+    [Documentation]    ${my var} Some documentation
+""".replace(
+        "\r\n", "\n"
+    ).replace(
+        "\r", "\n"
+    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    semantic_tokens = semantic_tokens_full(context)
+    check(
+        (semantic_tokens, doc),
+        [
+            ("*** Settings ***", "header"),
+            ("Documentation", "setting"),
+            ("Docs in settings", "documentation"),
+            ("*** Test Cases ***", "header"),
+            ("Some test", "testCaseName"),
+            ("[", "variableOperator"),
+            ("Documentation", "setting"),
+            ("]", "variableOperator"),
+            ("${", "variableOperator"),
+            ("my var", "variable"),
+            ("}", "variableOperator"),
+            (" Some documentation", "documentation"),
+        ],
+    )
+
+
+def test_semantic_highlighting_vars_in_documentation_incomplete(workspace):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
+
+    workspace.set_root("case1")
+    doc = workspace.put_doc("case1.robot")
+    doc.source = """*** Settings ***
+Documentation    Docs in settings
+
+*** Test Cases ***
+Some test
+    [Documentation]    ${my var Some documentation
+""".replace(
+        "\r\n", "\n"
+    ).replace(
+        "\r", "\n"
+    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    semantic_tokens = semantic_tokens_full(context)
+    check(
+        (semantic_tokens, doc),
+        [
+            ("*** Settings ***", "header"),
+            ("Documentation", "setting"),
+            ("Docs in settings", "documentation"),
+            ("*** Test Cases ***", "header"),
+            ("Some test", "testCaseName"),
+            ("[", "variableOperator"),
+            ("Documentation", "setting"),
+            ("]", "variableOperator"),
+            ("${my var Some documentation", "documentation"),
         ],
     )
 

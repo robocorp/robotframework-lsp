@@ -95,6 +95,7 @@ for key, val in list(RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.items()):
 
 
 VARIABLE_INDEX = TOKEN_TYPE_TO_INDEX["variable"]
+ARGUMENT_INDEX = TOKEN_TYPE_TO_INDEX["argumentValue"]
 VARIABLE_OPERATOR_INDEX = TOKEN_TYPE_TO_INDEX["variableOperator"]
 SETTING_INDEX = TOKEN_TYPE_TO_INDEX["setting"]
 PARAMETER_NAME_INDEX = TOKEN_TYPE_TO_INDEX["parameterName"]
@@ -119,12 +120,16 @@ def _tokenize_token(node, initial_token):
     )
 
     initial_token_type = initial_token.type
+    in_documentation = False
 
     if initial_token_type == ARGUMENT:
+
         if is_argument_keyword_name(node, initial_token):
             token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[KEYWORD]
             yield initial_token, token_type_index
             return
+
+        in_documentation = node.__class__.__name__ == "Documentation"
 
     if initial_token_type == NAME:
         if isinstance_name(node, CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS):
@@ -163,40 +168,44 @@ def _tokenize_token(node, initial_token):
     try:
         iter_in = initial_token.tokenize_variables()
     except:
-        token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.get(initial_token_type)
-        if token_type_index is not None:
-            yield initial_token, token_type_index
+        if in_documentation:
+            yield initial_token, DOCUMENTATION_INDEX
+        else:
+            token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.get(initial_token_type)
+            if token_type_index is not None:
+                yield initial_token, token_type_index
+        return
     else:
         if initial_token_type == ARGUMENT:
-            if node.__class__.__name__ == "Documentation":
-                yield initial_token, DOCUMENTATION_INDEX
-                return
-
             first_token = next(iter_in)
-            equals_pos = first_token.value.find("=")
-            if equals_pos != -1:
-                # Found an equals... let's check if it's not a 'catenate', which
-                # doesn't really accept parameters and just concatenates all...
-                value = node.get_value(initial_token.KEYWORD)
-                if value and value.strip().lower() == "catenate":
-                    equals_pos = -1
 
-                    # Note: the best way to actually do this would be finding the
-                    # reference to the keyword and then validating whether the
-                    # keyword arguments match the expected name.
-                    #
-                    # For instance, a keyword call such as:
-                    # Some Call     some arg = 22
-                    #
-                    # Should color `some arg =` differently only if the argument
-                    # of `Some Call` is `some arg`, otherwise it should not color
-                    # the argument as `same arg = 22` will be passed as a string
-                    # to the positional argument 0 and not really a keyword parameter
-                    # where `same arg` is set with value 22.
-                    #
-                    # Now, this requires a bit more tinkering with keyword caches
-                    # and possibly semantic highlighting deltas to make sure the
-                    # performance isn't negatively impacted by it.
+            if in_documentation:
+                equals_pos = -1
+            else:
+                equals_pos = first_token.value.find("=")
+                if equals_pos != -1:
+                    # Found an equals... let's check if it's not a 'catenate', which
+                    # doesn't really accept parameters and just concatenates all...
+                    value = node.get_value(initial_token.KEYWORD)
+                    if value and value.strip().lower() == "catenate":
+                        equals_pos = -1
+
+                        # Note: the best way to actually do this would be finding the
+                        # reference to the keyword and then validating whether the
+                        # keyword arguments match the expected name.
+                        #
+                        # For instance, a keyword call such as:
+                        # Some Call     some arg = 22
+                        #
+                        # Should color `some arg =` differently only if the argument
+                        # of `Some Call` is `some arg`, otherwise it should not color
+                        # the argument as `same arg = 22` will be passed as a string
+                        # to the positional argument 0 and not really a keyword parameter
+                        # where `same arg` is set with value 22.
+                        #
+                        # Now, this requires a bit more tinkering with keyword caches
+                        # and possibly semantic highlighting deltas to make sure the
+                        # performance isn't negatively impacted by it.
 
             if equals_pos != -1:
                 tok = _DummyToken()
@@ -233,77 +242,88 @@ def _tokenize_token(node, initial_token):
 
         for token in iter_in:
             token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.get(token.type)
-            if token_type_index is not None:
-                if (
-                    token_type_index == VARIABLE_INDEX
-                    and len(token.value) > 3
-                    and token.value[-1] == "}"
-                    and token.value[1] == "{"
-                ):
-                    # We want to do an additional tokenization on variables to
-                    # convert '${var}' to '${', 'var', '}'
-                    tok = _DummyToken()
-                    tok.type = "variableOperator"
-                    tok.value = token.value[:2]
-                    tok.lineno = token.lineno
-                    tok.col_offset = token.col_offset
-                    prev_col_offset_end = tok.end_col_offset = token.col_offset + 2
-                    yield tok, VARIABLE_OPERATOR_INDEX
 
-                    tok = _DummyToken()
-                    tok.type = token.type
-                    tok.value = token.value[2:-1]
-                    tok.lineno = token.lineno
-                    tok.col_offset = prev_col_offset_end
-                    prev_col_offset_end = (
-                        tok.end_col_offset
-                    ) = prev_col_offset_end + len(tok.value)
-                    yield tok, token_type_index
+            if token_type_index is None:
+                continue
 
-                    tok = _DummyToken()
-                    tok.type = "variableOperator"
-                    tok.value = token.value[-1:]
-                    tok.lineno = token.lineno
-                    tok.col_offset = prev_col_offset_end
-                    tok.end_col_offset = prev_col_offset_end + 1
-                    yield tok, VARIABLE_OPERATOR_INDEX
+            if in_documentation and token_type_index == ARGUMENT_INDEX:
+                # Handle the doc itself (note that we may also tokenize docs
+                # to include variables).
+                yield token, DOCUMENTATION_INDEX
+                continue
 
-                elif (
-                    token_type_index == SETTING_INDEX
-                    and len(token.value) > 2
-                    and token.value[-1] == "]"
-                    and token.value[0] == "["
-                ):
-                    # We want to do an additional tokenization on names to
-                    # convert '[Arguments]' to '[', 'Arguments', ']'
-                    tok = _DummyToken()
-                    tok.type = "settingOperator"
-                    tok.value = token.value[:1]
-                    tok.lineno = token.lineno
-                    tok.col_offset = token.col_offset
-                    prev_col_offset_end = tok.end_col_offset = token.col_offset + 1
-                    yield tok, VARIABLE_OPERATOR_INDEX
+            if (
+                token_type_index == VARIABLE_INDEX
+                and len(token.value) > 3
+                and token.value[-1] == "}"
+                and token.value[1] == "{"
+            ):
+                # We want to do an additional tokenization on variables to
+                # convert '${var}' to '${', 'var', '}'
+                tok = _DummyToken()
+                tok.type = "variableOperator"
+                tok.value = token.value[:2]
+                tok.lineno = token.lineno
+                tok.col_offset = token.col_offset
+                prev_col_offset_end = tok.end_col_offset = token.col_offset + 2
+                yield tok, VARIABLE_OPERATOR_INDEX
 
-                    tok = _DummyToken()
-                    tok.type = token.type
-                    tok.value = token.value[1:-1]
-                    tok.lineno = token.lineno
-                    tok.col_offset = prev_col_offset_end
-                    prev_col_offset_end = (
-                        tok.end_col_offset
-                    ) = prev_col_offset_end + len(tok.value)
-                    yield tok, token_type_index
+                tok = _DummyToken()
+                tok.type = token.type
+                tok.value = token.value[2:-1]
+                tok.lineno = token.lineno
+                tok.col_offset = prev_col_offset_end
+                prev_col_offset_end = tok.end_col_offset = prev_col_offset_end + len(
+                    tok.value
+                )
+                yield tok, token_type_index
 
-                    tok = _DummyToken()
-                    tok.type = "settingOperator"
-                    tok.value = token.value[-1:]
-                    tok.lineno = token.lineno
-                    tok.col_offset = prev_col_offset_end
-                    tok.end_col_offset = prev_col_offset_end + 1
-                    yield tok, VARIABLE_OPERATOR_INDEX
+                tok = _DummyToken()
+                tok.type = "variableOperator"
+                tok.value = token.value[-1:]
+                tok.lineno = token.lineno
+                tok.col_offset = prev_col_offset_end
+                tok.end_col_offset = prev_col_offset_end + 1
+                yield tok, VARIABLE_OPERATOR_INDEX
+                continue
 
-                else:
-                    yield token, token_type_index
+            if (
+                token_type_index == SETTING_INDEX
+                and len(token.value) > 2
+                and token.value[-1] == "]"
+                and token.value[0] == "["
+            ):
+                # We want to do an additional tokenization on names to
+                # convert '[Arguments]' to '[', 'Arguments', ']'
+                tok = _DummyToken()
+                tok.type = "settingOperator"
+                tok.value = token.value[:1]
+                tok.lineno = token.lineno
+                tok.col_offset = token.col_offset
+                prev_col_offset_end = tok.end_col_offset = token.col_offset + 1
+                yield tok, VARIABLE_OPERATOR_INDEX
+
+                tok = _DummyToken()
+                tok.type = token.type
+                tok.value = token.value[1:-1]
+                tok.lineno = token.lineno
+                tok.col_offset = prev_col_offset_end
+                prev_col_offset_end = tok.end_col_offset = prev_col_offset_end + len(
+                    tok.value
+                )
+                yield tok, token_type_index
+
+                tok = _DummyToken()
+                tok.type = "settingOperator"
+                tok.value = token.value[-1:]
+                tok.lineno = token.lineno
+                tok.col_offset = prev_col_offset_end
+                tok.end_col_offset = prev_col_offset_end + 1
+                yield tok, VARIABLE_OPERATOR_INDEX
+                continue
+
+            # Default case (just yield the current token/type).
+            yield token, token_type_index
 
 
 def semantic_tokens_full(context: ICompletionContext):

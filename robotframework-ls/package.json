@@ -257,6 +257,11 @@
                     "error": [
                         "token.error-token.robot",
                         "invalid.illegal.robot"
+                    ],
+                    "documentation": [
+                        "comment.block.documentation.robot",
+                        "comment.line.documentation.robot",
+                        "meta.documentation.robot"
                     ]
                 }
             }
