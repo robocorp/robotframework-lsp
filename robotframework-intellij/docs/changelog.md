@@ -1,3 +1,9 @@
+New in 0.39.1 (2022-02-07)
+-----------------------------
+
+- Critical fix: properly apply new colors during semantic highlighting in Intellij. [#565](https://github.com/robocorp/robotframework-lsp/issues/565)
+
+
 New in 0.39.0 (2022-02-03)
 -----------------------------
 

@@ -75,17 +75,3 @@ jobs:
       run: ./gradlew publishPlugin
       env:
         ORG_GRADLE_PROJECT_intellijPublishToken: ${{ secrets.ORG_GRADLE_PROJECT_intellijPublishToken }}
-    - name: Upload to PyPI
-      working-directory: ./robotframework-ls/src
-      run: twine upload dist/*
-      env:
-        TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
-    - name: Publish to vscode marketplace 
-      run: vsce publish -p $VSCE_TOKEN
-      env:
-        VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
-    - name: Publish to open vsx marketplace 
-      run: npx ovsx publish robotframework-lsp.vsix -p $OPEN_VSX_TOKEN
-      env:
-        OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
