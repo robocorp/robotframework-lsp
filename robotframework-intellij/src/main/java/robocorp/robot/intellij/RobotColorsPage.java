@@ -32,6 +32,8 @@ public class RobotColorsPage implements ColorSettingsPage {
                 new AttributesDescriptor("color.settings.settingOperator", RobotFrameworkSyntaxHighlightingFactory.SETTING_OPERATOR),
                 new AttributesDescriptor("color.settings.control", RobotFrameworkSyntaxHighlightingFactory.CONTROL),
                 new AttributesDescriptor("color.settings.testCaseName", RobotFrameworkSyntaxHighlightingFactory.TEST_CASE_NAME),
+                new AttributesDescriptor("color.settings.error", RobotFrameworkSyntaxHighlightingFactory.ERROR),
+                new AttributesDescriptor("color.settings.documentation", RobotFrameworkSyntaxHighlightingFactory.DOCUMENTATION),
         };
     }
 

@@ -48,6 +48,10 @@ class Highlighter implements @NotNull SyntaxHighlighter {
             return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.CONTROL};
         } else if (tokenType == RobotElementType.TEST_CASE_NAME) {
             return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.TEST_CASE_NAME};
+        } else if (tokenType == RobotElementType.DOCUMENTATION) {
+            return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.DOCUMENTATION};
+        } else if (tokenType == RobotElementType.ERROR) {
+            return new TextAttributesKey[]{RobotFrameworkSyntaxHighlightingFactory.ERROR};
         }
         return new TextAttributesKey[0];
     }
@@ -94,6 +98,12 @@ public class RobotFrameworkSyntaxHighlightingFactory extends SyntaxHighlighterFa
     public static final TextAttributesKey TEST_CASE_NAME = TextAttributesKey.createTextAttributesKey(
             RobotElementType.TEST_CASE_NAME.toString(), DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
 
+    public static final TextAttributesKey ERROR = TextAttributesKey.createTextAttributesKey(
+            RobotElementType.ERROR.toString(), DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE);
+
+    public static final TextAttributesKey DOCUMENTATION = TextAttributesKey.createTextAttributesKey(
+            RobotElementType.DOCUMENTATION.toString(), DefaultLanguageHighlighterColors.DOC_COMMENT);
+
     private static Map<String, TextAttributesKey> lspTypeToTextAttributeKey = new HashMap<>();
 
     static {
@@ -110,6 +120,8 @@ public class RobotFrameworkSyntaxHighlightingFactory extends SyntaxHighlighterFa
         lspTypeToTextAttributeKey.put("settingOperator", VARIABLE);
         lspTypeToTextAttributeKey.put("control", CONTROL);
         lspTypeToTextAttributeKey.put("testCaseName", TEST_CASE_NAME);
+        lspTypeToTextAttributeKey.put("error", ERROR);
+        lspTypeToTextAttributeKey.put("documentation", DOCUMENTATION);
     }
 
     public static TextAttributesKey getFromType(String s) {
