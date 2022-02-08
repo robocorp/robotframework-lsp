@@ -30,6 +30,7 @@ if typing.TYPE_CHECKING:
     from robocorp_ls_core.lsp import RangeTypedDict
     from robocorp_ls_core.lsp import DocumentHighlightResponseTypedDict
     from robocorp_ls_core.callbacks import Callback
+    from robocorp_ls_core.lsp import PositionTypedDict
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -359,6 +360,13 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
         pass
 
     def request_wait_for_full_test_collection(self) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+
+    def request_evaluatable_expression(
+        self, doc_uri: str, position: "PositionTypedDict"
+    ) -> Optional[IIdMessageMatcher]:
         """
         :Note: async complete.
         """

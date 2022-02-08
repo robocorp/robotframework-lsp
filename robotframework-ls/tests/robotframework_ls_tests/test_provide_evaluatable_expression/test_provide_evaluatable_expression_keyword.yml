@@ -1,0 +1,8 @@
+expression: Log
+range:
+  end:
+    character: 7
+    line: 2
+  start:
+    character: 4
+    line: 2

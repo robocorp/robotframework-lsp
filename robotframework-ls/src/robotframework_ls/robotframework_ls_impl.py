@@ -26,7 +26,11 @@ from robotframework_ls import __version__, rf_interactive_integration
 import typing
 import sys
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
-from robocorp_ls_core.lsp import CodeLensTypedDict, TextDocumentPositionParamsTypedDict
+from robocorp_ls_core.lsp import (
+    CodeLensTypedDict,
+    TextDocumentPositionParamsTypedDict,
+    PositionTypedDict,
+)
 from robotframework_ls.commands import (
     ROBOT_GET_RFLS_HOME_DIR,
     ROBOT_START_INDEXING_INTERNAL,
@@ -400,6 +404,24 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     @command_dispatcher(ROBOT_START_INDEXING_INTERNAL)
     def _start_indexing(self, *arguments):
         self._server_manager.get_regular_rf_api_client("")
+
+    def m_robot__provide_evaluatable_expression(
+        self, uri: str, position: PositionTypedDict
+    ):
+        rf_api_client = self._server_manager.get_others_api_client(uri)
+        if rf_api_client is not None:
+            func = partial(
+                self._async_api_request,
+                rf_api_client,
+                "request_evaluatable_expression",
+                doc_uri=uri,
+                position=position,
+            )
+            func = require_monitor(func)
+            return func
+
+        log.info("Unable to provide evaluatable expression (no api available).")
+        return None
 
     @command_dispatcher(ROBOT_WAIT_FULL_TEST_COLLECTION_INTERNAL)
     def _wait_for_full_test_collection(self, *arguments):

@@ -52,15 +52,14 @@ class IRobotDebugger(Protocol):
     def reset(self):
         pass
 
-    def evaluate(self, frame_id: int, expression: str) -> IEvaluationInfo:
+    def evaluate(
+        self, frame_id: int, expression: str, context: str = "watch"
+    ) -> IEvaluationInfo:
         """
         Asks something to be evaluated.
 
         This is an asynchronous operation and returns an _EvaluationInfo (to get
         the result, access _EvaluationInfo.future.result())
-
-        :param frame_id:
-        :param expression:
         """
 
     def step_continue(self) -> None:

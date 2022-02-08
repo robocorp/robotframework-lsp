@@ -619,6 +619,28 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
         return list_tests(completion_context)
 
+    def m_evaluatable_expression(self, doc_uri: str, position: PositionTypedDict):
+        func = partial(self._threaded_evaluatable_expression, doc_uri, position)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_evaluatable_expression(
+        self, doc_uri: str, position: PositionTypedDict, monitor: IMonitor
+    ) -> Optional[dict]:
+        from robotframework_ls.impl.provide_evaluatable_expression import (
+            provide_evaluatable_expression,
+        )
+
+        line = position["line"]
+        col = position["character"]
+        completion_context = self._create_completion_context(
+            doc_uri, line, col, monitor
+        )
+        if completion_context is None:
+            return None
+
+        return provide_evaluatable_expression(completion_context)
+
     def m_wait_for_full_test_collection(self):
         func = partial(self._threaded_wait_for_full_test_collection)
         func = require_monitor(func)

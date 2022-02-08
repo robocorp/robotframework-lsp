@@ -22,7 +22,7 @@ from robocorp_ls_core.constants import NULL
 from robocorp_ls_core.protocols import TypedDict
 from collections import namedtuple
 import enum
-from robocorp_ls_core.lsp import SymbolKind, LocationTypedDict
+from robocorp_ls_core.lsp import SymbolKind, LocationTypedDict, RangeTypedDict
 
 if sys.version_info[:2] < (3, 8):
 
@@ -521,3 +521,8 @@ class IVariablesCollector(Protocol):
 
     def on_variable(self, variable_found: IVariableFound):
         pass
+
+
+class EvaluatableExpressionTypedDict(TypedDict):
+    range: RangeTypedDict
+    expression: Optional[str]

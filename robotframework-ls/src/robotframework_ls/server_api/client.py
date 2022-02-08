@@ -275,6 +275,16 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         """
         return self.request_async(self._build_msg("waitForFullTestCollection"))
 
+    def request_evaluatable_expression(
+        self, doc_uri, position
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(
+            self._build_msg("evaluatableExpression", doc_uri=doc_uri, position=position)
+        )
+
     def request_hover(
         self, doc_uri: str, line: int, col: int
     ) -> Optional[IIdMessageMatcher]:

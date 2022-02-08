@@ -240,6 +240,7 @@ class _RobotTargetComm(threading.Thread):
         capabilities = initialize_response.body
         capabilities.supportsConfigurationDoneRequest = True
         capabilities.supportsConditionalBreakpoints = True
+        capabilities.supportsEvaluateForHovers = True
         capabilities.supportsHitConditionalBreakpoints = True
         capabilities.supportsLogPoints = True
         capabilities.exceptionBreakpointFilters = [
@@ -533,10 +534,15 @@ class _RobotTargetComm(threading.Thread):
             return response
 
     def on_evaluate_request(self, request):
-        frame_id = request.arguments.frameId
-        expression = request.arguments.expression
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import EvaluateArguments
+
+        arguments: EvaluateArguments = request.arguments
+
+        frame_id = arguments.frameId
+        expression = arguments.expression
+        context = arguments.context
         if self._debugger_impl:
-            eval_info = self._debugger_impl.evaluate(frame_id, expression)
+            eval_info = self._debugger_impl.evaluate(frame_id, expression, context)
             try:
                 result = eval_info.future.result()
             except Exception as e:

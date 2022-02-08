@@ -684,10 +684,17 @@ def test_debugger_core_evaluate(
         assert contents == content
 
         # Get variable in evaluation works
-        eval_info = debugger_impl.evaluate(frame_ids[0], "${arg1}")
-        assert eval_info.future.result() == "2"
+        for context in ("watch", "hover", "repl"):
+            eval_info = debugger_impl.evaluate(frame_ids[0], "${arg1}", context=context)
+            assert eval_info.future.result() == "2"
 
-        eval_info = debugger_impl.evaluate(frame_ids[0], "${ARG1}")
-        assert eval_info.future.result() == "2"
+            eval_info = debugger_impl.evaluate(frame_ids[0], "${ARG1}", context=context)
+            assert eval_info.future.result() == "2"
+
+        eval_info = debugger_impl.evaluate(
+            frame_ids[0], "Should Be Equal", context="hover"
+        )
+        assert eval_info.future.result() == "BuiltIn.Should Be Equal"
+
     finally:
         debugger_impl.step_continue()

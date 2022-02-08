@@ -1,0 +1,8 @@
+expression: ${some variable}
+range:
+  end:
+    character: 16
+    line: 1
+  start:
+    character: 0
+    line: 1
