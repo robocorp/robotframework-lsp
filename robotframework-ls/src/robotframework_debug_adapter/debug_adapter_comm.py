@@ -133,6 +133,7 @@ class DebugAdapterComm(object):
         capabilities: Capabilities = initialize_response.body
         capabilities.supportsConfigurationDoneRequest = True
         capabilities.supportsConditionalBreakpoints = True
+        capabilities.supportsEvaluateForHovers = True
         capabilities.supportsHitConditionalBreakpoints = True
         capabilities.supportsLogPoints = True
         capabilities.exceptionBreakpointFilters = [

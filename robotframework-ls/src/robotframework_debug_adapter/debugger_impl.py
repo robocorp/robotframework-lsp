@@ -231,7 +231,9 @@ class _TestFrameInfo(_BaseFrameInfo):
 
 
 class _KeywordFrameInfo(_BaseFrameInfo):
-    def __init__(self, stack_list, dap_frame, name, lineno, args, variables):
+    def __init__(
+        self, stack_list, dap_frame, name, lineno, args, variables, execution_context
+    ):
         self._stack_list = weakref.ref(stack_list)
         self._dap_frame = dap_frame
         self._name = name
@@ -239,6 +241,7 @@ class _KeywordFrameInfo(_BaseFrameInfo):
         self._scopes = None
         self._args = args
         self._variables = variables
+        self._execution_context = execution_context
 
     @property
     def name(self):
@@ -251,6 +254,10 @@ class _KeywordFrameInfo(_BaseFrameInfo):
     @property
     def variables(self):
         return self._variables
+
+    @property
+    def execution_context(self):
+        return self._execution_context
 
     @property
     def dap_frame(self):
@@ -318,7 +325,7 @@ class _StackInfo(object):
         self._ref_id_to_children[variables_reference] = children
 
     def add_keyword_entry_stack(
-        self, name, lineno, filename: str, args, variables
+        self, name, lineno, filename: str, args, variables, execution_context
     ) -> int:
         frame_id: int = next_id()
         dap_frame = StackFrame(
@@ -330,7 +337,7 @@ class _StackInfo(object):
         )
         self._dap_frames.append(dap_frame)
         self._frame_id_to_frame_info[frame_id] = _KeywordFrameInfo(
-            self, dap_frame, name, lineno, args, variables
+            self, dap_frame, name, lineno, args, variables, execution_context
         )
         return frame_id
 
@@ -385,7 +392,7 @@ class _StackInfo(object):
 
 
 _StepEntry = namedtuple(
-    "_StepEntry", "name, lineno, source, args, variables, entry_type"
+    "_StepEntry", "name, lineno, source, args, variables, entry_type, execution_context"
 )
 _SuiteEntry = namedtuple("_SuiteEntry", "name, source, entry_type")
 _TestEntry = namedtuple("_TestEntry", "name, source, lineno, entry_type")
@@ -410,11 +417,12 @@ class EvaluationResult(Exception):
 
 
 class _EvaluationInfo(object):
-    def __init__(self, frame_id, expression):
+    def __init__(self, frame_id: int, expression: str, context: str):
         from concurrent import futures
 
         self.frame_id = frame_id
         self.expression = expression
+        self.context = context
         self.future = futures.Future()
 
     def _do_eval(self, debugger_impl):
@@ -459,6 +467,16 @@ class _EvaluationInfo(object):
                 pass
             else:
                 return EvaluationResult(value)
+
+        if self.context == "hover":
+            try:
+                ctx = info.execution_context
+                return EvaluationResult(
+                    ctx.namespace.get_runner(self.expression).longname
+                )
+            except:
+                log.exception("Error on hover evaluation: %s", self.expression)
+                return EvaluationResult("")
 
         # Do we want this?
         # from robot.variables.evaluation import evaluate_expression
@@ -638,10 +656,11 @@ class _RobotDebuggerImpl(object):
                     lineno = entry.lineno
                     variables = entry.variables
                     args = entry.args
+                    execution_context = entry.execution_context
                     filename = self._get_filename(entry, "Keyword")
 
                     frame_id = stack_info.add_keyword_entry_stack(
-                        name, lineno, filename, args, variables
+                        name, lineno, filename, args, variables, execution_context
                     )
 
                 elif entry.__class__ == _SuiteEntry:
@@ -734,18 +753,16 @@ class _RobotDebuggerImpl(object):
             self._dispose_stack_info(thread_id)
 
     @implements(IRobotDebugger.evaluate)
-    def evaluate(self, frame_id, expression) -> IEvaluationInfo:
+    def evaluate(
+        self, frame_id: int, expression: str, context: str = "watch"
+    ) -> IEvaluationInfo:
         """
         Asks something to be evaluated.
 
         This is an asynchronous operation and returns an _EvaluationInfo (to get
         the result, access _EvaluationInfo.future.result())
-
-        :param frame_id:
-        :param expression:
-        :return _EvaluationInfo:
         """
-        evaluation_info = _EvaluationInfo(frame_id, expression)
+        evaluation_info = _EvaluationInfo(frame_id, expression, context)
         self._evaluations.append(evaluation_info)
         self.busy_wait.proceed()
         return evaluation_info
@@ -939,7 +956,9 @@ class _RobotDebuggerImpl(object):
             if os.path.exists(robot_init):
                 source = robot_init
         self._stack_ctx_entries_deque.append(
-            _StepEntry(name, lineno, source, args, ctx.variables.current, entry_type)
+            _StepEntry(
+                name, lineno, source, args, ctx.variables.current, entry_type, ctx
+            )
         )
         if self._skip_breakpoints:
             return

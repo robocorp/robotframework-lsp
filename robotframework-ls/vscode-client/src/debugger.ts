@@ -14,7 +14,7 @@ import {
     DebugAdapterExecutable,
 } from "vscode";
 import { logError, OUTPUT_CHANNEL } from "./channel";
-import { lastLanguageServerExecutable } from "./extension";
+import { languageServerClient, lastLanguageServerExecutable } from "./extension";
 import * as path from "path";
 import * as fs from "fs";
 
@@ -249,6 +249,36 @@ export function registerDebugger() {
                 let env = session.configuration.env;
                 let target = session.configuration.target;
                 return createDebugAdapterExecutable(env, target);
+            },
+        });
+
+        vscode.languages.registerEvaluatableExpressionProvider("robotframework", {
+            provideEvaluatableExpression(
+                document: vscode.TextDocument,
+                position: vscode.Position,
+                token: vscode.CancellationToken
+            ): vscode.ProviderResult<vscode.EvaluatableExpression> {
+                return languageServerClient
+                    .sendRequest(
+                        "robot/provideEvaluatableExpression",
+                        {
+                            "uri": document.uri.toString(),
+                            "position": { "line": position.line, "character": position.character },
+                        },
+                        token
+                    )
+                    .then((r: any) => {
+                        if (!r) {
+                            return undefined;
+                        }
+                        const range = r.range;
+                        if (!range) {
+                            return undefined;
+                        }
+                        let start = new vscode.Position(range.start.line, range.start.character);
+                        let end = new vscode.Position(range.end.line, range.end.character);
+                        return new vscode.EvaluatableExpression(new vscode.Range(start, end), r.expression);
+                    });
             },
         });
     } catch (error) {
