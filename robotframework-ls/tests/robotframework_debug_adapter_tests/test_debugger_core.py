@@ -358,6 +358,54 @@ def test_debugger_core_while(
     dbg_wait_for(lambda: robot_thread.result_code == 0)
 
 
+@pytest.mark.skipif(
+    not IS_ROBOT_5_ONWARDS, reason="Try statement only available in RF 5 onwards."
+)
+def test_debugger_core_try(
+    debugger_api, robot_thread, data_regression, debugger_impl
+) -> None:
+    from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
+
+    thread_id = debugger_impl.get_current_thread_id(robot_thread)
+    target = debugger_api.get_dap_case_file(
+        "case_control_flow/case_control_flow_try.robot"
+    )
+    line = debugger_api.get_line_index_with_content("Fail    Message", target)
+    debugger_impl.set_breakpoints(target, RobotBreakpoint(line))
+
+    robot_thread.run_target(target)
+
+    stack_lst: List[Optional[List[StackFrame]]] = []
+
+    # stop on fail
+    dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 1)
+    stack_lst.append(debugger_impl.get_frames(thread_id))
+    debugger_impl.step_next()
+
+    # stop on except
+    dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 2)
+    stack_lst.append(debugger_impl.get_frames(thread_id))
+    debugger_impl.step_next()
+
+    # stop inside except
+    dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 3)
+    stack_lst.append(debugger_impl.get_frames(thread_id))
+    debugger_impl.step_next()
+
+    # stop on finally
+    dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 4)
+    stack_lst.append(debugger_impl.get_frames(thread_id))
+    debugger_impl.step_next()
+
+    # stop inside finally
+    dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 5)
+    stack_lst.append(debugger_impl.get_frames(thread_id))
+    debugger_impl.step_next()  # Actually finishes it.
+
+    data_regression.check(stack_frames_repr(stack_lst))
+    dbg_wait_for(lambda: robot_thread.result_code == 0)
+
+
 def test_debugger_core_condition_breakpoint(
     debugger_api, robot_thread, debugger_impl
 ) -> None:

@@ -922,14 +922,15 @@ class _RobotDebuggerImpl(object):
 
     def _is_control_step(self, entry_type):
         return entry_type in (
-            "FOR",
-            "FOR ITERATION",
-            "ITERATION",
-            "IF",
-            "ELSE",
             "ELSE IF",
-            "TRY",
+            "ELSE",
             "EXCEPT",
+            "FINALLY",
+            "FOR ITERATION",
+            "FOR",
+            "IF",
+            "ITERATION",
+            "TRY",
             "WHILE",
         )
 
