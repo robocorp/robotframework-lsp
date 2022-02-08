@@ -438,11 +438,17 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             )
             from robotframework_ls.ep_resolve_interpreter import IInterpreterInfo
 
-            target_robot: str = arguments[0]
+            target_robot = arguments[0]
+
+            if isinstance(target_robot, (list, tuple)):
+                if len(target_robot) > 0:
+                    target_robot = target_robot[0]
+
+            robot_uri = uris.from_fs_path(target_robot)
 
             for ep in self._pm.get_implementations(EPResolveInterpreter):
                 interpreter_info: IInterpreterInfo = (
-                    ep.get_interpreter_info_for_doc_uri(uris.from_fs_path(target_robot))
+                    ep.get_interpreter_info_for_doc_uri(robot_uri)
                 )
                 if interpreter_info is not None:
                     return {
