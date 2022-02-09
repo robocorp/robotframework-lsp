@@ -157,7 +157,13 @@ class KeywordArg(object):
         and default_value are computed.
         """
         self.original_arg = arg
-        if arg.startswith("**"):
+        if arg.startswith("&"):
+            self._is_keyword_arg = True
+
+        elif arg.startswith("@"):
+            self._is_star_arg = True
+
+        elif arg.startswith("**"):
             self._is_keyword_arg = True
             arg = "&" + arg[2:]
 

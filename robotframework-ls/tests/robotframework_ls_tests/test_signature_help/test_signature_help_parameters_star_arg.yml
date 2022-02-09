@@ -1,0 +1,15 @@
+activeParameter: 2
+activeSignature: 0
+signatures:
+- documentation:
+    kind: markdown
+    value: '**Arg With Starargs(arg1, arg2=10, \*arg3, \*\*arg4)**
+
+
+      '
+  label: Arg With Starargs(arg1, arg2=10, *arg3, **arg4)
+  parameters:
+  - label: arg1
+  - label: arg2=10
+  - label: '*arg3'
+  - label: '**arg4'

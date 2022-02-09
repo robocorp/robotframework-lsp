@@ -1,0 +1,15 @@
+activeParameter: 3
+activeSignature: 0
+signatures:
+- documentation:
+    kind: markdown
+    value: '**Some Keyword(${arg1}, ${arg2}, @{arg3}, &{arg4})**
+
+
+      '
+  label: Some Keyword(${arg1}, ${arg2}, @{arg3}, &{arg4})
+  parameters:
+  - label: ${arg1}
+  - label: ${arg2}
+  - label: '@{arg3}'
+  - label: '&{arg4}'

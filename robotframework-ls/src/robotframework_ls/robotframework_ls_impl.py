@@ -362,7 +362,10 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             # Note that there are no auto-trigger characters (there's no good
             # character as there's no `(` for parameters and putting it as a
             # space becomes a bit too much).
-            "signatureHelpProvider": {"triggerCharacters": []},
+            # Under review: added ' ' and '\t' now that we have info on the
+            # active parameter (waiting for feedback from community here to
+            # check whether this is good or annoying).
+            "signatureHelpProvider": {"triggerCharacters": [" ", "\t"]},
             "textDocumentSync": {
                 "change": TextDocumentSyncKind.INCREMENTAL,
                 "save": {"includeText": False},
