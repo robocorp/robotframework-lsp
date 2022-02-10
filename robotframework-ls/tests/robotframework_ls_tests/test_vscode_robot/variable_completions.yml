@@ -225,6 +225,22 @@ result:
         character: 22
         line: 9
 - deprecated: false
+  documentation: ''
+  insertText: ${EMPTY}
+  insertTextFormat: 2
+  kind: 6
+  label: ${EMPTY}
+  preselect: false
+  textEdit:
+    newText: \${EMPTY}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
   documentation: settings.output_directory
   insertText: ${OUTPUT_DIR}
   insertTextFormat: 2

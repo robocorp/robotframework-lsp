@@ -1,3 +1,7 @@
+from typing import List
+from robocorp_ls_core.lsp import CompletionItemTypedDict
+from robotframework_ls.impl.protocols import ICompletionContext
+
 _SNIPPETS_RF4 = {
     "FOR IN": {
         "prefix": "FOR IN",
@@ -156,7 +160,7 @@ def _create_completion_item_from_snippet(label, snippet, selection, line_to_col)
     ).to_dict()
 
 
-def complete(completion_context):
+def complete(completion_context: ICompletionContext) -> List[CompletionItemTypedDict]:
     """
     Collects all the keywords that are available to the given completion_context.
 

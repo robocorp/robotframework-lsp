@@ -677,7 +677,6 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     ) -> list:
         from robotframework_ls.impl.completion_context import CompletionContext
         from robotframework_ls.impl import section_completions
-        from robotframework_ls.impl import snippets_completions
         from robocorp_ls_core.client_base import wait_for_message_matchers
 
         ws = self.workspace
@@ -699,7 +698,6 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         # These run locally (no need to get from the server).
         completions.extend(section_completions.complete(ctx))
-        completions.extend(snippets_completions.complete(ctx))
 
         accepted_message_matchers = wait_for_message_matchers(
             message_matchers,

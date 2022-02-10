@@ -22,6 +22,7 @@ BUILTIN_VARIABLES = [
     ("${False}", "False"),
     ("${None}", "None"),
     ("${null}", "None"),
+    ("${EMPTY}", ""),
     ("${OUTPUT_DIR}", "settings.output_directory"),
     ("${OUTPUT_FILE}", "settings.output or 'NONE'"),
     ("${REPORT_FILE}", "settings.report or 'NONE'"),

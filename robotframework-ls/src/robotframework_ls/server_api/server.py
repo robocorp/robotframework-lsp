@@ -245,7 +245,11 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if completion_context is None:
             return []
 
-        return self._complete_from_completion_context(completion_context)
+        from robotframework_ls.impl import snippets_completions
+
+        completions = snippets_completions.complete(completion_context)
+        completions.extend(self._complete_from_completion_context(completion_context))
+        return completions
 
     def _complete_from_completion_context(self, completion_context):
         from robotframework_ls.impl import section_name_completions
