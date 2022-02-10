@@ -158,6 +158,31 @@ def get_json_contents():
                         "default": False,
                         "description": "Specifies whether to lint with Robocop.",
                     },
+                    "robot.lint.enabled": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Determines whether linting should be enabled.",
+                    },
+                    "robot.lint.undefinedKeywords": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Reports undefined keywords when linting.",
+                    },
+                    "robot.lint.undefinedLibraries": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Reports undefined libraries when linting.",
+                    },
+                    "robot.lint.undefinedResources": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Reports undefined resources when linting.",
+                    },
+                    "robot.lint.keywordCallArguments": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Reports issues in keyword call arguments.",
+                    },
                     "robot.completions.section_headers.form": {
                         "type": "string",
                         "default": "plural",

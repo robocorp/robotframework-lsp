@@ -332,6 +332,31 @@
                     "default": false,
                     "description": "Specifies whether to lint with Robocop."
                 },
+                "robot.lint.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Determines whether linting should be enabled."
+                },
+                "robot.lint.undefinedKeywords": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Reports undefined keywords when linting."
+                },
+                "robot.lint.undefinedLibraries": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Reports undefined libraries when linting."
+                },
+                "robot.lint.undefinedResources": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Reports undefined resources when linting."
+                },
+                "robot.lint.keywordCallArguments": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Reports issues in keyword call arguments."
+                },
                 "robot.completions.section_headers.form": {
                     "type": "string",
                     "default": "plural",

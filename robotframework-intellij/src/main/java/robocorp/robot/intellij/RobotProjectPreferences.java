@@ -28,6 +28,11 @@ class RobotProjectState {
     public String robotLibrariesLibdocPreGenerate = "";
     public String robotCodeFormatter = "";
     public String robotLintRobocopEnabled = "";
+    public String robotLintEnabled = "";
+    public String robotLintUndefinedKeywords = "";
+    public String robotLintUndefinedLibraries = "";
+    public String robotLintUndefinedResources = "";
+    public String robotLintKeywordCallArguments = "";
     public String robotCompletionsSectionHeadersForm = "";
     public String robotCompletionsKeywordsFormat = "";
     public String robotWorkspaceSymbolsOnlyForOpenDocs = "";
@@ -49,6 +54,11 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
     public static final String ROBOT_LIBRARIES_LIBDOC_PRE_GENERATE = "robot.libraries.libdoc.preGenerate";
     public static final String ROBOT_CODE_FORMATTER = "robot.codeFormatter";
     public static final String ROBOT_LINT_ROBOCOP_ENABLED = "robot.lint.robocop.enabled";
+    public static final String ROBOT_LINT_ENABLED = "robot.lint.enabled";
+    public static final String ROBOT_LINT_UNDEFINED_KEYWORDS = "robot.lint.undefinedKeywords";
+    public static final String ROBOT_LINT_UNDEFINED_LIBRARIES = "robot.lint.undefinedLibraries";
+    public static final String ROBOT_LINT_UNDEFINED_RESOURCES = "robot.lint.undefinedResources";
+    public static final String ROBOT_LINT_KEYWORD_CALL_ARGUMENTS = "robot.lint.keywordCallArguments";
     public static final String ROBOT_COMPLETIONS_SECTION_HEADERS_FORM = "robot.completions.section_headers.form";
     public static final String ROBOT_COMPLETIONS_KEYWORDS_FORMAT = "robot.completions.keywords.format";
     public static final String ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS = "robot.workspaceSymbolsOnlyForOpenDocs";
@@ -72,6 +82,11 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         robotState.robotLibrariesLibdocPreGenerate = getRobotLibrariesLibdocPreGenerate();
         robotState.robotCodeFormatter = getRobotCodeFormatter();
         robotState.robotLintRobocopEnabled = getRobotLintRobocopEnabled();
+        robotState.robotLintEnabled = getRobotLintEnabled();
+        robotState.robotLintUndefinedKeywords = getRobotLintUndefinedKeywords();
+        robotState.robotLintUndefinedLibraries = getRobotLintUndefinedLibraries();
+        robotState.robotLintUndefinedResources = getRobotLintUndefinedResources();
+        robotState.robotLintKeywordCallArguments = getRobotLintKeywordCallArguments();
         robotState.robotCompletionsSectionHeadersForm = getRobotCompletionsSectionHeadersForm();
         robotState.robotCompletionsKeywordsFormat = getRobotCompletionsKeywordsFormat();
         robotState.robotWorkspaceSymbolsOnlyForOpenDocs = getRobotWorkspaceSymbolsOnlyForOpenDocs();
@@ -93,6 +108,11 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         setRobotLibrariesLibdocPreGenerate(robotState.robotLibrariesLibdocPreGenerate);
         setRobotCodeFormatter(robotState.robotCodeFormatter);
         setRobotLintRobocopEnabled(robotState.robotLintRobocopEnabled);
+        setRobotLintEnabled(robotState.robotLintEnabled);
+        setRobotLintUndefinedKeywords(robotState.robotLintUndefinedKeywords);
+        setRobotLintUndefinedLibraries(robotState.robotLintUndefinedLibraries);
+        setRobotLintUndefinedResources(robotState.robotLintUndefinedResources);
+        setRobotLintKeywordCallArguments(robotState.robotLintKeywordCallArguments);
         setRobotCompletionsSectionHeadersForm(robotState.robotCompletionsSectionHeadersForm);
         setRobotCompletionsKeywordsFormat(robotState.robotCompletionsKeywordsFormat);
         setRobotWorkspaceSymbolsOnlyForOpenDocs(robotState.robotWorkspaceSymbolsOnlyForOpenDocs);
@@ -186,6 +206,46 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         if(!robotLintRobocopEnabled.isEmpty()){
             try {
                 jsonObject.add(ROBOT_LINT_ROBOCOP_ENABLED, new JsonPrimitive(Boolean.parseBoolean(robotLintRobocopEnabled)));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotLintEnabled.isEmpty()){
+            try {
+                jsonObject.add(ROBOT_LINT_ENABLED, new JsonPrimitive(Boolean.parseBoolean(robotLintEnabled)));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotLintUndefinedKeywords.isEmpty()){
+            try {
+                jsonObject.add(ROBOT_LINT_UNDEFINED_KEYWORDS, new JsonPrimitive(Boolean.parseBoolean(robotLintUndefinedKeywords)));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotLintUndefinedLibraries.isEmpty()){
+            try {
+                jsonObject.add(ROBOT_LINT_UNDEFINED_LIBRARIES, new JsonPrimitive(Boolean.parseBoolean(robotLintUndefinedLibraries)));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotLintUndefinedResources.isEmpty()){
+            try {
+                jsonObject.add(ROBOT_LINT_UNDEFINED_RESOURCES, new JsonPrimitive(Boolean.parseBoolean(robotLintUndefinedResources)));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotLintKeywordCallArguments.isEmpty()){
+            try {
+                jsonObject.add(ROBOT_LINT_KEYWORD_CALL_ARGUMENTS, new JsonPrimitive(Boolean.parseBoolean(robotLintKeywordCallArguments)));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -695,6 +755,221 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         robotLintRobocopEnabled = s;
         for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             listener.onChanged(ROBOT_LINT_ROBOCOP_ENABLED, old, s);
+        }
+    }
+    
+    private String robotLintEnabled = "";
+
+    public @NotNull String getRobotLintEnabled() {
+        return robotLintEnabled;
+    }
+
+    public @Nullable JsonPrimitive getRobotLintEnabledAsJson() {
+        if(robotLintEnabled.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return new JsonPrimitive(Boolean.parseBoolean(robotLintEnabled));
+    }
+
+    public @NotNull String validateRobotLintEnabled(String robotLintEnabled) {
+        if(robotLintEnabled.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            new JsonPrimitive(Boolean.parseBoolean(robotLintEnabled));
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLintEnabled(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLintEnabled)) {
+            return;
+        }
+        String old = robotLintEnabled;
+        robotLintEnabled = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            listener.onChanged(ROBOT_LINT_ENABLED, old, s);
+        }
+    }
+    
+    private String robotLintUndefinedKeywords = "";
+
+    public @NotNull String getRobotLintUndefinedKeywords() {
+        return robotLintUndefinedKeywords;
+    }
+
+    public @Nullable JsonPrimitive getRobotLintUndefinedKeywordsAsJson() {
+        if(robotLintUndefinedKeywords.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return new JsonPrimitive(Boolean.parseBoolean(robotLintUndefinedKeywords));
+    }
+
+    public @NotNull String validateRobotLintUndefinedKeywords(String robotLintUndefinedKeywords) {
+        if(robotLintUndefinedKeywords.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            new JsonPrimitive(Boolean.parseBoolean(robotLintUndefinedKeywords));
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLintUndefinedKeywords(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLintUndefinedKeywords)) {
+            return;
+        }
+        String old = robotLintUndefinedKeywords;
+        robotLintUndefinedKeywords = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            listener.onChanged(ROBOT_LINT_UNDEFINED_KEYWORDS, old, s);
+        }
+    }
+    
+    private String robotLintUndefinedLibraries = "";
+
+    public @NotNull String getRobotLintUndefinedLibraries() {
+        return robotLintUndefinedLibraries;
+    }
+
+    public @Nullable JsonPrimitive getRobotLintUndefinedLibrariesAsJson() {
+        if(robotLintUndefinedLibraries.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return new JsonPrimitive(Boolean.parseBoolean(robotLintUndefinedLibraries));
+    }
+
+    public @NotNull String validateRobotLintUndefinedLibraries(String robotLintUndefinedLibraries) {
+        if(robotLintUndefinedLibraries.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            new JsonPrimitive(Boolean.parseBoolean(robotLintUndefinedLibraries));
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLintUndefinedLibraries(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLintUndefinedLibraries)) {
+            return;
+        }
+        String old = robotLintUndefinedLibraries;
+        robotLintUndefinedLibraries = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            listener.onChanged(ROBOT_LINT_UNDEFINED_LIBRARIES, old, s);
+        }
+    }
+    
+    private String robotLintUndefinedResources = "";
+
+    public @NotNull String getRobotLintUndefinedResources() {
+        return robotLintUndefinedResources;
+    }
+
+    public @Nullable JsonPrimitive getRobotLintUndefinedResourcesAsJson() {
+        if(robotLintUndefinedResources.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return new JsonPrimitive(Boolean.parseBoolean(robotLintUndefinedResources));
+    }
+
+    public @NotNull String validateRobotLintUndefinedResources(String robotLintUndefinedResources) {
+        if(robotLintUndefinedResources.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            new JsonPrimitive(Boolean.parseBoolean(robotLintUndefinedResources));
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLintUndefinedResources(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLintUndefinedResources)) {
+            return;
+        }
+        String old = robotLintUndefinedResources;
+        robotLintUndefinedResources = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            listener.onChanged(ROBOT_LINT_UNDEFINED_RESOURCES, old, s);
+        }
+    }
+    
+    private String robotLintKeywordCallArguments = "";
+
+    public @NotNull String getRobotLintKeywordCallArguments() {
+        return robotLintKeywordCallArguments;
+    }
+
+    public @Nullable JsonPrimitive getRobotLintKeywordCallArgumentsAsJson() {
+        if(robotLintKeywordCallArguments.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return new JsonPrimitive(Boolean.parseBoolean(robotLintKeywordCallArguments));
+    }
+
+    public @NotNull String validateRobotLintKeywordCallArguments(String robotLintKeywordCallArguments) {
+        if(robotLintKeywordCallArguments.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            new JsonPrimitive(Boolean.parseBoolean(robotLintKeywordCallArguments));
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLintKeywordCallArguments(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLintKeywordCallArguments)) {
+            return;
+        }
+        String old = robotLintKeywordCallArguments;
+        robotLintKeywordCallArguments = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            listener.onChanged(ROBOT_LINT_KEYWORD_CALL_ARGUMENTS, old, s);
         }
     }
     

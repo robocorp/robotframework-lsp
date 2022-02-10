@@ -163,6 +163,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         )
         from robocorp_ls_core import uris
         from robocorp_ls_core.lsp import Error
+        from robotframework_ls.impl.robot_lsp_constants import (
+            OPTION_ROBOT_LINT_ENABLED,
+        )
 
         try:
             from robotframework_ls.impl.ast_utils import collect_errors
@@ -186,10 +189,21 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             errors = collect_errors(ast)
             log.debug("Collected AST errors (in thread): %s", len(errors))
             monitor.check_cancelled()
-            analysis_errors = code_analysis.collect_analysis_errors(completion_context)
-            monitor.check_cancelled()
-            log.debug("Collected analysis errors (in thread): %s", len(analysis_errors))
-            errors.extend(analysis_errors)
+
+            lint_ls_enabled = config is None or config.get_setting(
+                OPTION_ROBOT_LINT_ENABLED, bool, True
+            )
+            if lint_ls_enabled:
+                analysis_errors = code_analysis.collect_analysis_errors(
+                    completion_context
+                )
+                monitor.check_cancelled()
+                log.debug(
+                    "Collected analysis errors (in thread): %s", len(analysis_errors)
+                )
+                errors.extend(analysis_errors)
+            else:
+                log.debug("Language server linting disabled.")
 
             lsp_diagnostics = [error.to_lsp_diagnostic() for error in errors]
 

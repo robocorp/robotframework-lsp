@@ -166,6 +166,7 @@ def collect_analysis_errors(initial_completion_context):
     from robotframework_ls.impl.text_utilities import contains_variable_text
 
     errors = []
+    config = initial_completion_context.config
 
     def on_unresolved_library(
         completion_context: ICompletionContext,
@@ -175,6 +176,15 @@ def collect_analysis_errors(initial_completion_context):
         col_offset: int,
         end_col_offset: int,
     ):
+        from robotframework_ls.impl.robot_lsp_constants import (
+            OPTION_ROBOT_LINT_UNDEFINED_LIBRARIES,
+        )
+
+        if config is not None and not config.get_setting(
+            OPTION_ROBOT_LINT_UNDEFINED_LIBRARIES, bool, True
+        ):
+            return
+
         doc = completion_context.doc
         if doc and doc.uri == initial_completion_context.doc.uri:
             start = (lineno - 1, col_offset)
@@ -191,6 +201,15 @@ def collect_analysis_errors(initial_completion_context):
         col_offset: int,
         end_col_offset: int,
     ):
+        from robotframework_ls.impl.robot_lsp_constants import (
+            OPTION_ROBOT_LINT_UNDEFINED_RESOURCES,
+        )
+
+        if config is not None and not config.get_setting(
+            OPTION_ROBOT_LINT_UNDEFINED_RESOURCES, bool, True
+        ):
+            return
+
         doc = completion_context.doc
         if doc and doc.uri == initial_completion_context.doc.uri:
             start = (lineno - 1, col_offset)
@@ -215,8 +234,14 @@ def collect_analysis_errors(initial_completion_context):
         keyword_found = collector.get_keyword(normalized_name)
         try:
             if not keyword_found:
-                # There's not a direct match, but the library name may be builtin
-                # into the keyword name, so, check if we have a match that way.
+                from robotframework_ls.impl.robot_lsp_constants import (
+                    OPTION_ROBOT_LINT_UNDEFINED_KEYWORDS,
+                )
+
+                if config is not None and not config.get_setting(
+                    OPTION_ROBOT_LINT_UNDEFINED_KEYWORDS, bool, True
+                ):
+                    continue
 
                 node = keyword_usage_info.node
                 error = create_error_from_node(
@@ -225,10 +250,17 @@ def collect_analysis_errors(initial_completion_context):
                     tokens=[keyword_usage_info.token],
                 )
                 errors.append(error)
-                if len(errors) >= MAX_ERRORS:
-                    # i.e.: Collect at most 100 errors
-                    break
+
             else:
+                from robotframework_ls.impl.robot_lsp_constants import (
+                    OPTION_ROBOT_LINT_KEYWORD_CALL_ARGUMENTS,
+                )
+
+                if config is not None and not config.get_setting(
+                    OPTION_ROBOT_LINT_KEYWORD_CALL_ARGUMENTS, bool, True
+                ):
+                    continue
+
                 from robotframework_ls.impl.keyword_argument_analysis import (
                     KeywordArgumentAnalysis,
                 )
@@ -239,9 +271,10 @@ def collect_analysis_errors(initial_completion_context):
                     keyword_usage_info
                 ):
                     errors.append(error)
-                    if len(errors) >= MAX_ERRORS:
-                        # i.e.: Collect at most 100 errors
-                        break
+
+            if len(errors) >= MAX_ERRORS:
+                # i.e.: Collect at most 100 errors
+                break
         except:
             log.exception("Error collecting exceptions")
 

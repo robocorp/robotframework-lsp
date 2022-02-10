@@ -31,6 +31,11 @@ class RobotProjectPreferencesComponent {
     private final JBTextField robotLibrariesLibdocPreGenerate = new JBTextField();
     private final JBTextField robotCodeFormatter = new JBTextField();
     private final JBTextField robotLintRobocopEnabled = new JBTextField();
+    private final JBTextField robotLintEnabled = new JBTextField();
+    private final JBTextField robotLintUndefinedKeywords = new JBTextField();
+    private final JBTextField robotLintUndefinedLibraries = new JBTextField();
+    private final JBTextField robotLintUndefinedResources = new JBTextField();
+    private final JBTextField robotLintKeywordCallArguments = new JBTextField();
     private final JBTextField robotCompletionsSectionHeadersForm = new JBTextField();
     private final JBTextField robotCompletionsKeywordsFormat = new JBTextField();
     private final JBTextField robotWorkspaceSymbolsOnlyForOpenDocs = new JBTextField();
@@ -59,6 +64,16 @@ class RobotProjectPreferencesComponent {
                 .addComponent(createJTextArea("Allows the configuration of the code-formatter engine to be used. One of: robotidy, builtinTidy.\n"))
                 .addLabeledComponent(new JBLabel("Lint Robocop Enabled"), robotLintRobocopEnabled, 1, false)
                 .addComponent(createJTextArea("Specifies whether to lint with Robocop.\nNote: expected 'true' or 'false'\n"))
+                .addLabeledComponent(new JBLabel("Lint Enabled"), robotLintEnabled, 1, false)
+                .addComponent(createJTextArea("Determines whether linting should be enabled.\nNote: expected 'true' or 'false'\n"))
+                .addLabeledComponent(new JBLabel("Lint Undefined Keywords"), robotLintUndefinedKeywords, 1, false)
+                .addComponent(createJTextArea("Reports undefined keywords when linting.\nNote: expected 'true' or 'false'\n"))
+                .addLabeledComponent(new JBLabel("Lint Undefined Libraries"), robotLintUndefinedLibraries, 1, false)
+                .addComponent(createJTextArea("Reports undefined libraries when linting.\nNote: expected 'true' or 'false'\n"))
+                .addLabeledComponent(new JBLabel("Lint Undefined Resources"), robotLintUndefinedResources, 1, false)
+                .addComponent(createJTextArea("Reports undefined resources when linting.\nNote: expected 'true' or 'false'\n"))
+                .addLabeledComponent(new JBLabel("Lint Keyword Call Arguments"), robotLintKeywordCallArguments, 1, false)
+                .addComponent(createJTextArea("Reports issues in keyword call arguments.\nNote: expected 'true' or 'false'\n"))
                 .addLabeledComponent(new JBLabel("Completions Section Headers Form"), robotCompletionsSectionHeadersForm, 1, false)
                 .addComponent(createJTextArea("Defines how completions should be shown for section headers\n(i.e.: *** Setting(s) ***). One of: plural, singular, both.\n"))
                 .addLabeledComponent(new JBLabel("Completions Keywords Format"), robotCompletionsKeywordsFormat, 1, false)
@@ -189,6 +204,51 @@ class RobotProjectPreferencesComponent {
     }
     
     @NotNull
+    public String getRobotLintEnabled() {
+        return robotLintEnabled.getText();
+    }
+
+    public void setRobotLintEnabled (@NotNull String newText) {
+        robotLintEnabled.setText(newText);
+    }
+    
+    @NotNull
+    public String getRobotLintUndefinedKeywords() {
+        return robotLintUndefinedKeywords.getText();
+    }
+
+    public void setRobotLintUndefinedKeywords (@NotNull String newText) {
+        robotLintUndefinedKeywords.setText(newText);
+    }
+    
+    @NotNull
+    public String getRobotLintUndefinedLibraries() {
+        return robotLintUndefinedLibraries.getText();
+    }
+
+    public void setRobotLintUndefinedLibraries (@NotNull String newText) {
+        robotLintUndefinedLibraries.setText(newText);
+    }
+    
+    @NotNull
+    public String getRobotLintUndefinedResources() {
+        return robotLintUndefinedResources.getText();
+    }
+
+    public void setRobotLintUndefinedResources (@NotNull String newText) {
+        robotLintUndefinedResources.setText(newText);
+    }
+    
+    @NotNull
+    public String getRobotLintKeywordCallArguments() {
+        return robotLintKeywordCallArguments.getText();
+    }
+
+    public void setRobotLintKeywordCallArguments (@NotNull String newText) {
+        robotLintKeywordCallArguments.setText(newText);
+    }
+    
+    @NotNull
     public String getRobotCompletionsSectionHeadersForm() {
         return robotCompletionsSectionHeadersForm.getText();
     }
@@ -296,6 +356,26 @@ public class RobotProjectPreferencesPage implements Configurable {
             return true;
         }
         
+        if(!settings.getRobotLintEnabled().equals(component.getRobotLintEnabled())){
+            return true;
+        }
+        
+        if(!settings.getRobotLintUndefinedKeywords().equals(component.getRobotLintUndefinedKeywords())){
+            return true;
+        }
+        
+        if(!settings.getRobotLintUndefinedLibraries().equals(component.getRobotLintUndefinedLibraries())){
+            return true;
+        }
+        
+        if(!settings.getRobotLintUndefinedResources().equals(component.getRobotLintUndefinedResources())){
+            return true;
+        }
+        
+        if(!settings.getRobotLintKeywordCallArguments().equals(component.getRobotLintKeywordCallArguments())){
+            return true;
+        }
+        
         if(!settings.getRobotCompletionsSectionHeadersForm().equals(component.getRobotCompletionsSectionHeadersForm())){
             return true;
         }
@@ -326,6 +406,11 @@ public class RobotProjectPreferencesPage implements Configurable {
         component.setRobotLibrariesLibdocPreGenerate(settings.getRobotLibrariesLibdocPreGenerate());
         component.setRobotCodeFormatter(settings.getRobotCodeFormatter());
         component.setRobotLintRobocopEnabled(settings.getRobotLintRobocopEnabled());
+        component.setRobotLintEnabled(settings.getRobotLintEnabled());
+        component.setRobotLintUndefinedKeywords(settings.getRobotLintUndefinedKeywords());
+        component.setRobotLintUndefinedLibraries(settings.getRobotLintUndefinedLibraries());
+        component.setRobotLintUndefinedResources(settings.getRobotLintUndefinedResources());
+        component.setRobotLintKeywordCallArguments(settings.getRobotLintKeywordCallArguments());
         component.setRobotCompletionsSectionHeadersForm(settings.getRobotCompletionsSectionHeadersForm());
         component.setRobotCompletionsKeywordsFormat(settings.getRobotCompletionsKeywordsFormat());
         component.setRobotWorkspaceSymbolsOnlyForOpenDocs(settings.getRobotWorkspaceSymbolsOnlyForOpenDocs());
@@ -380,6 +465,26 @@ public class RobotProjectPreferencesPage implements Configurable {
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Lint Robocop Enabled:\n" + s);
         }
+        s = settings.validateRobotLintEnabled(component.getRobotLintEnabled());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Lint Enabled:\n" + s);
+        }
+        s = settings.validateRobotLintUndefinedKeywords(component.getRobotLintUndefinedKeywords());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Lint Undefined Keywords:\n" + s);
+        }
+        s = settings.validateRobotLintUndefinedLibraries(component.getRobotLintUndefinedLibraries());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Lint Undefined Libraries:\n" + s);
+        }
+        s = settings.validateRobotLintUndefinedResources(component.getRobotLintUndefinedResources());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Lint Undefined Resources:\n" + s);
+        }
+        s = settings.validateRobotLintKeywordCallArguments(component.getRobotLintKeywordCallArguments());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Lint Keyword Call Arguments:\n" + s);
+        }
         s = settings.validateRobotCompletionsSectionHeadersForm(component.getRobotCompletionsSectionHeadersForm());
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Completions Section Headers Form:\n" + s);
@@ -404,6 +509,11 @@ public class RobotProjectPreferencesPage implements Configurable {
         settings.setRobotLibrariesLibdocPreGenerate(component.getRobotLibrariesLibdocPreGenerate());
         settings.setRobotCodeFormatter(component.getRobotCodeFormatter());
         settings.setRobotLintRobocopEnabled(component.getRobotLintRobocopEnabled());
+        settings.setRobotLintEnabled(component.getRobotLintEnabled());
+        settings.setRobotLintUndefinedKeywords(component.getRobotLintUndefinedKeywords());
+        settings.setRobotLintUndefinedLibraries(component.getRobotLintUndefinedLibraries());
+        settings.setRobotLintUndefinedResources(component.getRobotLintUndefinedResources());
+        settings.setRobotLintKeywordCallArguments(component.getRobotLintKeywordCallArguments());
         settings.setRobotCompletionsSectionHeadersForm(component.getRobotCompletionsSectionHeadersForm());
         settings.setRobotCompletionsKeywordsFormat(component.getRobotCompletionsKeywordsFormat());
         settings.setRobotWorkspaceSymbolsOnlyForOpenDocs(component.getRobotWorkspaceSymbolsOnlyForOpenDocs());
