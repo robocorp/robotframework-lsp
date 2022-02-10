@@ -1,0 +1,20 @@
+- message: 'Unexpected named argument: arg3'
+  range:
+    end:
+      character: 53
+      line: 8
+    start:
+      character: 42
+      line: 8
+  severity: 1
+  source: robotframework
+- message: 'Unexpected named argument: arg4'
+  range:
+    end:
+      character: 68
+      line: 8
+    start:
+      character: 57
+      line: 8
+  severity: 1
+  source: robotframework

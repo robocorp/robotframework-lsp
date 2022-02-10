@@ -1,0 +1,10 @@
+- message: 'Multiple values for argument: arg1'
+  range:
+    end:
+      character: 54
+      line: 8
+    start:
+      character: 43
+      line: 8
+  severity: 1
+  source: robotframework

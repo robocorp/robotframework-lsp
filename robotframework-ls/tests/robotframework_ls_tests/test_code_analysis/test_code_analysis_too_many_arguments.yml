@@ -1,0 +1,10 @@
+- message: 'Unexpected argument: 22'
+  range:
+    end:
+      character: 16
+      line: 7
+    start:
+      character: 14
+      line: 7
+  severity: 1
+  source: robotframework

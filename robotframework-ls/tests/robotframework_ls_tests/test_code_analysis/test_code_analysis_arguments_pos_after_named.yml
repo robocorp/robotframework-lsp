@@ -1,0 +1,20 @@
+- message: 'Positional argument not allowed after named arguments: pos_after_named'
+  range:
+    end:
+      character: 44
+      line: 16
+    start:
+      character: 29
+      line: 16
+  severity: 1
+  source: robotframework
+- message: 'Positional argument not allowed after named arguments: pos_after_named'
+  range:
+    end:
+      character: 55
+      line: 17
+    start:
+      character: 40
+      line: 17
+  severity: 1
+  source: robotframework

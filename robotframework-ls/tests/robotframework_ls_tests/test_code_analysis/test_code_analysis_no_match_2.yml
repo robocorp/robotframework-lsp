@@ -1,0 +1,20 @@
+- message: 'Positional argument not allowed after named arguments: not ok'
+  range:
+    end:
+      character: 50
+      line: 10
+    start:
+      character: 44
+      line: 10
+  severity: 1
+  source: robotframework
+- message: 'Positional argument not allowed after named arguments: not ok'
+  range:
+    end:
+      character: 61
+      line: 11
+    start:
+      character: 55
+      line: 11
+  severity: 1
+  source: robotframework

@@ -16,7 +16,7 @@ def test_spec_doc_builder(
 ):
     # Uncomment to generate for the current version
     # Note: must be manually copied to the proper place after the generation.
-    # _generate_new_libspec(libspec_manager, cases)
+    _generate_new_libspec(libspec_manager, cases)
 
     from robotframework_ls.impl.robot_specbuilder import SpecDocBuilder
 

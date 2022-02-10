@@ -8,8 +8,8 @@ from robotframework_ls.impl.protocols import (
     IKeywordFound,
     ICompletionContext,
     IKeywordCollector,
+    IKeywordArg,
 )
-from robotframework_ls.impl.robot_specbuilder import KeywordArg
 from typing import Tuple, Sequence, List, Dict, Optional
 
 
@@ -61,7 +61,7 @@ class _KeywordFoundFromAst(object):
         module_ast,
         keyword_node,
         keyword_name,
-        keyword_args: Sequence[KeywordArg],
+        keyword_args: Sequence[IKeywordArg],
         completion_context,
         completion_item_kind,
     ):
@@ -82,7 +82,7 @@ class _KeywordFoundFromAst(object):
         return self._keyword_name
 
     @property
-    def keyword_args(self) -> Sequence[KeywordArg]:
+    def keyword_args(self) -> Sequence[IKeywordArg]:
         return self._keyword_args
 
     @property
@@ -175,7 +175,7 @@ class _KeywordFoundFromLibrary(object):
         library_doc,
         keyword_doc,
         keyword_name,
-        keyword_args: Sequence[KeywordArg],
+        keyword_args: Sequence[IKeywordArg],
         completion_context,
         completion_item_kind,
         library_alias=None,
@@ -195,7 +195,7 @@ class _KeywordFoundFromLibrary(object):
         return self._keyword_name
 
     @property
-    def keyword_args(self) -> Sequence[KeywordArg]:
+    def keyword_args(self) -> Sequence[IKeywordArg]:
         return self._keyword_args
 
     @property
@@ -283,6 +283,7 @@ def _collect_completions_from_ast(
 ):
     from robotframework_ls.impl import ast_utils
     from robocorp_ls_core.lsp import CompletionItemKind
+    from robotframework_ls.impl.robot_specbuilder import KeywordArg
 
     found = {}
 

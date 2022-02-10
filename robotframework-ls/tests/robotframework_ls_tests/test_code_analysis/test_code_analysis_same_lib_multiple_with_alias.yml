@@ -1,0 +1,60 @@
+- message: 'Mandatory argument missing: dictionary'
+  range:
+    end:
+      character: 39
+      line: 6
+    start:
+      character: 4
+      line: 6
+  severity: 1
+  source: robotframework
+- message: 'Mandatory argument missing: key'
+  range:
+    end:
+      character: 39
+      line: 6
+    start:
+      character: 4
+      line: 6
+  severity: 1
+  source: robotframework
+- message: 'Mandatory argument missing: value'
+  range:
+    end:
+      character: 39
+      line: 6
+    start:
+      character: 4
+      line: 6
+  severity: 1
+  source: robotframework
+- message: 'Mandatory argument missing: dictionary'
+  range:
+    end:
+      character: 39
+      line: 7
+    start:
+      character: 4
+      line: 7
+  severity: 1
+  source: robotframework
+- message: 'Mandatory argument missing: key'
+  range:
+    end:
+      character: 39
+      line: 7
+    start:
+      character: 4
+      line: 7
+  severity: 1
+  source: robotframework
+- message: 'Mandatory argument missing: value'
+  range:
+    end:
+      character: 39
+      line: 7
+    start:
+      character: 4
+      line: 7
+  severity: 1
+  source: robotframework

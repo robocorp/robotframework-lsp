@@ -1,0 +1,10 @@
+- message: 'Unexpected positional argument: not ok'
+  range:
+    end:
+      character: 45
+      line: 9
+    start:
+      character: 39
+      line: 9
+  severity: 1
+  source: robotframework

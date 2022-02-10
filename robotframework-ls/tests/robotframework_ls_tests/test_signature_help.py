@@ -329,6 +329,62 @@ Test case 1
     data_regression.check(signature_help(completion_context))
 
 
+def test_signature_help_parameters_only_stararg(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.signature_help import signature_help
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.put_doc(
+        "case4.robot",
+        """
+*** Keywords ***
+Keyword only star
+    [Arguments]     @{arg3}
+    Log To Console     ${arg3}
+
+*** Test Cases **
+Normal test case
+    Keyword only star    arg1=22   this is ok""",
+    )
+
+    lineno, col = doc.get_last_line_col()
+    col -= len("1=22   this is ok")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=lineno, col=col
+    )
+    data_regression.check(signature_help(completion_context))
+
+
+def test_signature_help_parameters_named_and_stararg(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.signature_help import signature_help
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.put_doc(
+        "case4.robot",
+        """
+*** Keywords ***
+Keyword only star
+    [Arguments]     ${arg1}  @{arg3}
+    Log To Console     ${arg3}
+
+*** Test Cases **
+Normal test case
+    Keyword only star    arg1   arg1=22   this is ok""",
+    )
+
+    lineno, col = doc.get_last_line_col()
+    col -= len("1=22   this is ok")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=lineno, col=col
+    )
+    data_regression.check(signature_help(completion_context))
+
+
 def test_signature_help_parameters_name_star_even_with_eq(
     workspace, libspec_manager, data_regression
 ):
@@ -396,4 +452,33 @@ Check
     )
 
     completion_context = CompletionContext(doc, workspace=workspace.ws)
+    data_regression.check(signature_help(completion_context))
+
+
+def test_signature_help_parameters_misleading_match_1(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.signature_help import signature_help
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.put_doc(
+        "my.robot",
+        """
+*** Keywords ***
+Keyword named and keyword
+    [Arguments]     ${arg1}  @{arg3}  &{arg4}
+    Log to console    22 @{arg3} &{arg4}
+
+*** Test Cases **
+Normal test case
+    Keyword named and keyword    arg1=ok    arg3=keyword    arg4=arg4""",
+    )
+
+    lineno, col = doc.get_last_line_col()
+    # We're actually matching the kwargs, not star args...
+    col -= len("3=keyword    arg4=arg4")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=lineno, col=col
+    )
     data_regression.check(signature_help(completion_context))

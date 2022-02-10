@@ -88,3 +88,23 @@
       line: 2
   severity: 1
   source: robotframework
+- message: 'Mandatory argument missing: arg1'
+  range:
+    end:
+      character: 46
+      line: 16
+    start:
+      character: 4
+      line: 16
+  severity: 1
+  source: robotframework
+- message: 'Mandatory argument missing: arg2'
+  range:
+    end:
+      character: 46
+      line: 16
+    start:
+      character: 4
+      line: 16
+  severity: 1
+  source: robotframework

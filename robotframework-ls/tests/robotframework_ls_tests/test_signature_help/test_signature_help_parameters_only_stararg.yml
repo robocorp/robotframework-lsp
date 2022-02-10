@@ -1,0 +1,12 @@
+activeParameter: 0
+activeSignature: 0
+signatures:
+- documentation:
+    kind: markdown
+    value: '**Keyword only star(@{arg3})**
+
+
+      '
+  label: Keyword only star(@{arg3})
+  parameters:
+  - label: '@{arg3}'

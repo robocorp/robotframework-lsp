@@ -23,6 +23,7 @@ from robocorp_ls_core.protocols import TypedDict
 from collections import namedtuple
 import enum
 from robocorp_ls_core.lsp import SymbolKind, LocationTypedDict, RangeTypedDict
+import typing
 
 if sys.version_info[:2] < (3, 8):
 
@@ -96,12 +97,30 @@ class IKeywordArg(Protocol):
     def is_star_arg(self) -> bool:
         pass
 
+    def is_arg_type_set(self) -> bool:
+        pass
+
     @property
     def arg_type(self) -> Optional[str]:
         pass
 
+    def is_default_value_set(self) -> bool:
+        pass
+
     @property
     def default_value(self) -> Optional[str]:
+        pass
+
+
+if typing.TYPE_CHECKING:
+    from robot.api import Token
+
+    IRobotToken = Token
+
+
+else:
+    # We don't want to import robot in this case (just do it when type-checking).
+    class IRobotToken(Protocol):
         pass
 
 

@@ -1,0 +1,20 @@
+- message: 'Mandatory argument missing: arg1'
+  range:
+    end:
+      character: 46
+      line: 8
+    start:
+      character: 4
+      line: 8
+  severity: 1
+  source: robotframework
+- message: 'Mandatory argument missing: arg2'
+  range:
+    end:
+      character: 46
+      line: 8
+    start:
+      character: 4
+      line: 8
+  severity: 1
+  source: robotframework

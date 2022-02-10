@@ -1,3 +1,23 @@
+- message: 'Unexpected argument: first argument'
+  range:
+    end:
+      character: 37
+      line: 6
+    start:
+      character: 23
+      line: 6
+  severity: 1
+  source: robotframework
+- message: 'Unexpected argument: second argument'
+  range:
+    end:
+      character: 56
+      line: 6
+    start:
+      character: 41
+      line: 6
+  severity: 1
+  source: robotframework
 - message: 'Undefined keyword: Example k.'
   range:
     end:

@@ -1,4 +1,4 @@
-from typing import Dict, Set
+from typing import Dict, Optional
 
 from robocorp_ls_core.protocols import check_implements
 from robocorp_ls_core.robotframework_log import get_logger
@@ -16,7 +16,7 @@ log = get_logger(__name__)
 class _KeywordContainer(object):
     def __init__(self) -> None:
         self._name_to_keyword: Dict[str, IKeywordFound] = {}
-        self._names_with_variables: Set[str] = set()
+        self._names_with_variables: Dict[str, IKeywordFound] = {}
 
     def add_keyword(self, keyword_found: IKeywordFound) -> None:
         from robotframework_ls.impl.text_utilities import normalize_robot_name
@@ -25,21 +25,23 @@ class _KeywordContainer(object):
         self._name_to_keyword[normalized_name] = keyword_found
 
         if "{" in normalized_name:
-            self._names_with_variables.add(normalized_name)
+            self._names_with_variables[normalized_name] = keyword_found
 
-    def contains_keyword(self, normalized_keyword_name: str):
+    def get_keyword(self, normalized_keyword_name: str) -> Optional[IKeywordFound]:
         from robotframework_ls.impl.text_utilities import matches_robot_keyword
 
-        if normalized_keyword_name in self._name_to_keyword:
-            return True
+        keyword_found = self._name_to_keyword.get(normalized_keyword_name)
+
+        if keyword_found is not None:
+            return keyword_found
 
         # We do not have an exact match, still, we need to check if we may
         # have a match in keywords that accept variables.
-        for name in self._names_with_variables:
+        for name, keyword_found in self._names_with_variables.items():
             if matches_robot_keyword(normalized_keyword_name, name):
-                return True
+                return keyword_found
 
-        return False
+        return None
 
 
 class _AnalysisKeywordsCollector(object):
@@ -86,11 +88,12 @@ class _AnalysisKeywordsCollector(object):
 
         keyword_container.add_keyword(keyword_found)
 
-    def contains_keyword(self, normalized_keyword_name):
+    def get_keyword(self, normalized_keyword_name: str) -> Optional[IKeywordFound]:
         from robotframework_ls.impl import text_utilities
 
-        if self._keywords_container.contains_keyword(normalized_keyword_name):
-            return True
+        keyword_found = self._keywords_container.get_keyword(normalized_keyword_name)
+        if keyword_found is not None:
+            return keyword_found
 
         # Note: the name could be something as `alias.keywordname` or
         # 'libraryname.keywordname`. In this case, we need to verify if there's
@@ -109,10 +112,11 @@ class _AnalysisKeywordsCollector(object):
                 containers.append(keywords_container)
 
             for keywords_container in containers:
-                if keywords_container.contains_keyword(remainder):
-                    return True
+                keyword_found = keywords_container.get_keyword(remainder)
+                if keyword_found is not None:
+                    return keyword_found
 
-        return False
+        return None
 
     def on_unresolved_library(
         self,
@@ -208,19 +212,37 @@ def collect_analysis_errors(initial_completion_context):
         if contains_variable_text(keyword_usage_info.name):
             continue
         normalized_name = normalize_robot_name(keyword_usage_info.name)
-        if not collector.contains_keyword(normalized_name):
+        keyword_found = collector.get_keyword(normalized_name)
+        try:
+            if not keyword_found:
+                # There's not a direct match, but the library name may be builtin
+                # into the keyword name, so, check if we have a match that way.
 
-            # There's not a direct match, but the library name may be builtin
-            # into the keyword name, so, check if we have a match that way.
+                node = keyword_usage_info.node
+                error = create_error_from_node(
+                    node,
+                    "Undefined keyword: %s." % (keyword_usage_info.name,),
+                    tokens=[keyword_usage_info.token],
+                )
+                errors.append(error)
+                if len(errors) >= MAX_ERRORS:
+                    # i.e.: Collect at most 100 errors
+                    break
+            else:
+                from robotframework_ls.impl.keyword_argument_analysis import (
+                    KeywordArgumentAnalysis,
+                )
 
-            node = keyword_usage_info.node
-            error = create_error_from_node(
-                node,
-                "Undefined keyword: %s." % (keyword_usage_info.name,),
-                tokens=[keyword_usage_info.token],
-            )
-            errors.append(error)
-            if len(errors) >= MAX_ERRORS:
-                # i.e.: Collect at most 100 errors
-                break
+                # Ok, we found the keyword, let's check if the arguments are correct.
+                keyword_argument_analysis = KeywordArgumentAnalysis(keyword_found)
+                for error in keyword_argument_analysis.collect_keyword_usage_errors(
+                    keyword_usage_info
+                ):
+                    errors.append(error)
+                    if len(errors) >= MAX_ERRORS:
+                        # i.e.: Collect at most 100 errors
+                        break
+        except:
+            log.exception("Error collecting exceptions")
+
     return errors

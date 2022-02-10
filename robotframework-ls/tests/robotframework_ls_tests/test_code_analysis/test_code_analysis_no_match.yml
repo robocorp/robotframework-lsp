@@ -1,0 +1,10 @@
+- message: 'Unexpected named argument: arg2'
+  range:
+    end:
+      character: 55
+      line: 8
+    start:
+      character: 44
+      line: 8
+  severity: 1
+  source: robotframework

@@ -147,7 +147,7 @@ Test
     Collections.Append To List    ${list}    3""",
     )
 
-    _collect_errors(workspace, doc, data_regression, basename="no_error")
+    _collect_errors(workspace, doc, data_regression)
 
 
 def test_keywords_prefixed_with_alias(workspace, libspec_manager, data_regression):
@@ -346,7 +346,7 @@ Test
     col2.Dictionary Should Contain Item
 """
 
-    _collect_errors(workspace, doc, data_regression, basename="no_error")
+    _collect_errors(workspace, doc, data_regression)
 
 
 def test_code_analysis_same_lib_with_alias_with_params(
@@ -424,3 +424,337 @@ Templated test case
 """
 
     _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_too_many_arguments(workspace, libspec_manager, data_regression):
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case1.robot")
+    doc.source = """
+*** Keywords ***
+No arg
+    Log To Console      22
+
+*** Test Cases **
+Normal test case
+    No arg    22
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_arguments_pos_after_named(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case1.robot")
+    doc.source = """
+*** Keywords ***
+Keyword all
+    [Arguments]    ${arg1}    ${arg2}    @{arg3}   &{arg4}
+    Log To Console      ${arg1} ${arg2} ${arg3} &{arg4}
+    
+Keyword named and star
+    [Arguments]     ${arg1}   @{arg3}
+    Log To Console     ${arg3}
+
+Keyword only star
+    [Arguments]     @{arg3}
+    Log To Console     ${arg3}
+
+*** Test Cases **
+Normal test case
+    Keyword all    arg1=22   pos_after_named
+    Keyword named and star    arg1=22   pos_after_named
+    Keyword only star    arg1=22   this is ok
+    Keyword named and star    arg1   foo=22    22
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_pos_in_keyword(workspace, libspec_manager, data_regression):
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case1.robot")
+    doc.source = """
+*** Keywords ***
+Keyword named and keyword
+    [Arguments]     ${arg1}  &{arg3}
+
+*** Test Cases **
+Normal test case
+    Keyword named and keyword    arg1=ok    arg3=ok    arg4=ok
+    Keyword named and keyword    arg3=ok    arg1=ok    arg4=ok
+    Keyword named and keyword    ok    not ok
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_missing_arg(workspace, libspec_manager, data_regression):
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case1.robot")
+    doc.source = """
+*** Keywords ***
+Keyword named and keyword
+    [Arguments]     ${arg1}  &{arg3}
+    Log to console    22
+
+*** Test Cases **
+Normal test case
+    Keyword named and keyword    arg2=still missing arg1
+    Keyword named and keyword    ok    not ok here
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_no_match(workspace, libspec_manager, data_regression):
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case1.robot")
+    doc.source = """
+*** Keywords ***
+Keyword named and keyword
+    [Arguments]     ${arg1}  @{arg3}
+    Log to console    22
+
+*** Test Cases **
+Normal test case
+    Keyword named and keyword    arg1=ok    arg2=not ok
+    Keyword named and keyword    arg1    arg2=ok here    arg3=ok here too    anything    arg4=ok
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_no_match_2(workspace, libspec_manager, data_regression):
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case1.robot")
+    doc.source = """
+*** Keywords ***
+Keyword named and keyword
+    [Arguments]     ${arg1}  @{arg3}    &{arg4}
+    Log to console    22
+
+*** Test Cases **
+Normal test case
+    Keyword named and keyword    arg1=ok    arg4=ok
+    Keyword named and keyword    ok    ok    arg4=ok
+    Keyword named and keyword    arg1=ok    not ok    arg4=ok
+    Keyword named and keyword    arg1=ok    arg4=ok    not ok    arg5=not ok
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_star_and_keyword(workspace, libspec_manager, data_regression):
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case1.robot")
+    doc.source = """
+*** Keywords ***
+Keyword star and keyword
+    [Arguments]     @{arg3}    &{arg4}
+    Log to console    22
+
+*** Test Cases **
+Normal test case
+    Keyword star and keyword    a    b    f=2    not ok
+    Keyword star and keyword    f=2    not ok 2
+    Keyword star and keyword    a    b    f=2
+    Keyword star and keyword    a
+    Keyword star and keyword
+    Keyword star and keyword    f=3
+    Keyword star and keyword    f=3    g=4
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_argspec_empty_ok(workspace, libspec_manager, data_regression):
+    workspace.set_root("case_argspec_expand", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_argspec_expand.robot")
+    doc.source = """
+*** Settings ***
+Library    case_argspec_expand.py
+
+*** Test Cases **
+Normal test case
+    arg_with_default_empty_arg    arg1
+    arg_with_default_none_arg    arg1
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_code_analysis_argspec_misleading(workspace, libspec_manager, data_regression):
+    workspace.set_root("case_argspec_expand", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_argspec_expand.robot")
+    doc.source = """
+*** Keywords ***
+Keyword named and keyword
+    [Arguments]     ${arg1}  @{arg3}
+
+*** Test Cases **
+Normal test case
+    # Because we start to match arg1 as named, the others don't match.
+    Keyword named and keyword    arg1=ok  arg3=not ok    arg4=not ok
+    
+    # Here 'arg3=ok' makes it into arg1, so, as it wasn't matched as named
+    # we can match the star args even with equals in them.
+    Keyword named and keyword    arg3=ok    arg4=ok
+    Keyword named and keyword    arg3=ok   arg2=ok   arg4=ok
+    Keyword named and keyword    arg3=ok   arg2=ok   ok    arg3=ok=foo
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_argspec_multiple_arg1(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case_argspec_expand", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_argspec_expand.robot")
+    doc.source = """
+*** Keywords ***
+Keyword named and keyword
+    [Arguments]     ${arg1}  ${arg2}  @{arg3}
+    Log to console    22 ${arg1} @{arg3}
+
+*** Test Cases **
+Normal test case
+    Keyword named and keyword    arg3=ok   arg1=not ok
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_argspec_expand_keyword_args(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case_argspec_expand", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_argspec_expand.robot")
+    doc.source = """
+*** Keywords ***
+Keyword 4
+    [Arguments]     &{arg2}
+    Log to console    22
+
+*** Test Cases ***
+Test
+    ${dct} =     Create dictionary    a=1    b=2
+    Keyword 4    &{dct}
+    Keyword 4    &{dct}    a=1
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_code_analysis_multiple_errors(workspace, libspec_manager, data_regression):
+    workspace.set_root("case_argspec_expand", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_argspec_expand.robot")
+
+    doc.source = """
+*** Keywords ***
+Keyword 0
+    Log to console    22
+
+Keyword 1
+    [Arguments]     ${arg1}
+    Log to console    22
+    
+Keyword 2
+    [Arguments]     ${arg1}  ${arg2}
+    Log to console    22
+    
+Keyword 3
+    [Arguments]     ${arg1}  @{arg2}
+    Log to console    22
+    
+Keyword 4
+    [Arguments]     ${arg1}  &{arg2}
+    Log to console    22
+
+*** Test Cases **
+Normal test case
+    Keyword 0    not ok
+    Keyword 0    not=ok
+    
+    Keyword 1
+    Keyword 1    arg1=1    arg2=not ok
+    Keyword 1    arg2=1    arg1=not ok
+    Keyword 1    arg    not ok
+    
+    Keyword 2    arg2=1    arg3=2
+    Keyword 2
+    Keyword 2    1
+    Keyword 2    arg2=1
+    Keyword 2    arg1=1
+"""
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_multiple_no_errors(workspace, libspec_manager, data_regression):
+    workspace.set_root("case_argspec_expand", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_argspec_expand.robot")
+    doc.source = """
+*** Keywords ***
+Keyword 0
+    Log to console    22
+
+Keyword 1
+    [Arguments]     ${arg1}
+    Log to console    22
+    
+Keyword 2
+    [Arguments]     ${arg1}  ${arg2}
+    Log to console    22
+    
+Keyword 3
+    [Arguments]     ${arg1}  @{arg2}
+    Log to console    22
+    
+Keyword 4
+    [Arguments]     ${arg1}  &{arg2}
+    Log to console    22
+    
+Keyword 5
+    [Arguments]    ${arg}=${None}
+    [Return]    ${arg}
+    
+Keyword 6
+    [Arguments]    ${arg}
+    [Return]    ${arg}
+
+
+*** Test Cases **
+Normal test case
+    Keyword 0
+    
+    Keyword 1    foo
+    Keyword 1    arg1=1
+    Keyword 1    arg2=1
+    Keyword 1    arg2=1 =3
+    
+    Keyword 2    arg1=1    arg2=2
+    Keyword 2    arg2=1    arg1=2
+    Keyword 2    any    arg2=any
+    Keyword 2    arg3=foo    arg4=bar
+    Keyword 2    arg3=foo    arg2=bar
+    
+    Keyword 3    arg1=1
+    Keyword 3    arg1    arg2    arg3
+    Keyword 3    arg1    arg2=foo    arg3=bar
+    Keyword 3    arg1    arg2=foo    arg3=bar    any
+    
+    Keyword 4    arg1=1
+    Keyword 4    arg1    arg2=2    arg3=3
+    Keyword 4    arg1=1    arg2=foo    arg3=bar
+    Keyword 4    arg2=foo    arg3=bar    arg1=1
+
+    Keyword 5
+    Keyword 5    call
+    Keyword 5    arg=call    
+    
+    Keyword 6    @{starargs}    &{kwargs}
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")

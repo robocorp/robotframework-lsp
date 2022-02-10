@@ -12,7 +12,7 @@ def signature_help(completion_context: ICompletionContext) -> Optional[dict]:
     if current_token is None:
         return None
 
-    from robotframework_ls.impl.keyword_analysis import KeywordAnalysis
+    from robotframework_ls.impl.keyword_argument_analysis import KeywordArgumentAnalysis
     from robocorp_ls_core.lsp import MarkupContent
     from robocorp_ls_core.lsp import MarkupKind
     from robocorp_ls_core.lsp import SignatureHelp
@@ -26,7 +26,7 @@ def signature_help(completion_context: ICompletionContext) -> Optional[dict]:
     keyword_found: IKeywordFound = keyword_definition.keyword_found
 
     keyword_args = keyword_found.keyword_args
-    keyword_analysis = KeywordAnalysis(keyword_found)
+    keyword_analysis = KeywordArgumentAnalysis(keyword_found)
     active_parameter = keyword_analysis.compute_active_parameter(
         usage_info, lineno=completion_context.sel.line, col=completion_context.sel.col
     )

@@ -18,7 +18,7 @@
 import os
 import weakref
 from robocorp_ls_core.cache import instance_cache
-from typing import Optional
+from typing import Optional, Union, Type
 from robocorp_ls_core.protocols import Sentinel
 from robotframework_ls.impl.protocols import ISymbolsCache
 from robocorp_ls_core.robotframework_log import get_logger
@@ -145,11 +145,15 @@ class KeywordArg(object):
 
     _is_keyword_arg = False
     _is_star_arg = False
-    _default_value = None
-    _arg_type = None
+    _default_value: Union[Type[Sentinel], str] = Sentinel
+    _arg_type: Union[Type[Sentinel], str] = Sentinel
 
     def __init__(
-        self, arg: str, name=Sentinel, arg_type=Sentinel, default_value=Sentinel
+        self,
+        arg: str,
+        name: Union[Type[Sentinel], str] = Sentinel,
+        arg_type: Union[Type[Sentinel], str] = Sentinel,
+        default_value: Union[Type[Sentinel], str] = Sentinel,
     ):
         """
         If arg_type and default_value are given, the arg name == arg, otherwise,
@@ -183,6 +187,13 @@ class KeywordArg(object):
             if arg_type is not Sentinel:
                 self._arg_type = arg_type
             else:
+                if default_value is not Sentinel:
+                    # i.e.: if the default value was given this was already
+                    # done when we got here.
+                    eq_i = arg.rfind("=")
+                    if eq_i != -1:
+                        arg = arg[:eq_i].strip()
+
                 colon_i = arg.rfind(":")
                 if colon_i != -1:
                     self._arg_type = arg[colon_i + 1 :].strip()
@@ -192,6 +203,9 @@ class KeywordArg(object):
             self._arg_name = name
         else:
             self._arg_name = arg
+
+    def is_default_value_set(self) -> bool:
+        return self._default_value is not Sentinel
 
     @property
     def arg_name(self) -> str:
@@ -205,12 +219,19 @@ class KeywordArg(object):
     def is_star_arg(self) -> bool:
         return self._is_star_arg
 
+    def is_arg_type_set(self) -> bool:
+        return self._arg_type is not Sentinel
+
     @property
     def arg_type(self) -> Optional[str]:
+        if self._arg_type is Sentinel:
+            return None
         return self._arg_type
 
     @property
     def default_value(self) -> Optional[str]:
+        if self._default_value is Sentinel:
+            return None
         return self._default_value
 
 
@@ -387,8 +408,8 @@ class SpecDocBuilder(object):
                 KeywordArg(
                     arg_repr,
                     name,
-                    arg_type.text if arg_type is not None else None,
-                    arg_default.text if arg_default is not None else None,
+                    arg_type.text if arg_type is not None else Sentinel,
+                    arg_default.text if arg_default is not None else Sentinel,
                 )
             )
 
