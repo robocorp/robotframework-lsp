@@ -1,30 +1,50 @@
-from robocorp_ls_core.lsp import HoverTypedDict, MarkupKind
-from robotframework_ls.impl.protocols import IKeywordFound
+from robocorp_ls_core.lsp import (
+    HoverTypedDict,
+    MarkupKind,
+    SignatureHelp,
+    SignatureInformation,
+)
 from typing import Optional
 
 
 def hover(completion_context) -> Optional[HoverTypedDict]:
-    current_keyword_definition_and_usage_info = (
-        completion_context.get_current_keyword_definition_and_usage_info()
-    )
-    if current_keyword_definition_and_usage_info is not None:
-        keyword_definition, usage_info = current_keyword_definition_and_usage_info
+    from robotframework_ls.impl.signature_help import signature_help_internal
+    from robocorp_ls_core.lsp import MarkupContent
 
-        keyword_found: IKeywordFound = keyword_definition.keyword_found
+    sig_help_and_node = signature_help_internal(completion_context)
+    if sig_help_and_node is None:
+        return None
 
-        documentation = keyword_found.docs
-        kind = keyword_found.docs_format
-        if kind not in (MarkupKind.Markdown, MarkupKind.PlainText):
-            kind = MarkupKind.PlainText
+    sig_help: SignatureHelp = sig_help_and_node[0]
+    node = sig_help_and_node[1]
+    signatures = sig_help.signatures
+    if not signatures:
+        return None
+    try:
+        active_signature: SignatureInformation = signatures[sig_help.activeSignature]
+    except IndexError:
+        active_signature = signatures[0]
 
-        node = usage_info.node
+    documentation_markup_or_str = active_signature.documentation
 
-        return {
-            "contents": {"kind": kind, "value": documentation},
-            "range": {
-                "start": {"line": node.lineno - 1, "character": node.col_offset},
-                "end": {"line": node.end_lineno - 1, "character": node.end_col_offset},
-            },
-        }
+    if isinstance(documentation_markup_or_str, MarkupContent):
+        kind = documentation_markup_or_str.kind
+        documentation = documentation_markup_or_str.value
+
+    elif isinstance(documentation_markup_or_str, str):
+        kind = MarkupKind.PlainText
+        documentation = documentation_markup_or_str
+
+    else:
+        kind = MarkupKind.PlainText
+        documentation = str(documentation_markup_or_str)
+
+    return {
+        "contents": {"kind": kind, "value": documentation},
+        "range": {
+            "start": {"line": node.lineno - 1, "character": node.col_offset},
+            "end": {"line": node.end_lineno - 1, "character": node.end_col_offset},
+        },
+    }
 
     return None

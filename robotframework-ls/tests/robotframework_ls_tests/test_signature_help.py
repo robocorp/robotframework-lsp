@@ -482,3 +482,71 @@ Normal test case
         doc, workspace=workspace.ws, line=lineno, col=col
     )
     data_regression.check(signature_help(completion_context))
+
+
+def test_signature_help_library_basic(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.signature_help import signature_help
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.put_doc(
+        "my.robot",
+        """
+*** Settings ***
+Library    Collections""",
+    )
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    sig_help = signature_help(completion_context)
+    documentation = sig_help["signatures"][0].pop("documentation")
+    assert documentation["kind"] == "markdown"
+    assert "Collections is Robot Framework's standard library" in documentation["value"]
+    data_regression.check(sig_help)
+
+
+def test_signature_help_library_with_params(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.signature_help import signature_help
+    from robotframework_ls.robot_config import RobotConfig
+
+    config = RobotConfig()
+    config.update(
+        {"robot": {"libraries": {"libdoc": {"needsArgs": ["LibWithParams"]}}}}
+    )
+    libspec_manager.config = config
+
+    workspace.set_root("case_params_on_lib", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_params_on_lib.robot")
+
+    doc.source = """
+*** Settings ***
+Library    LibWithParams    some_param=foo"""
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    sig_help = signature_help(completion_context)
+    documentation = sig_help["signatures"][0].pop("documentation")
+    assert documentation["kind"] == "markdown"
+    # assert "Collections is Robot Framework's standard library" in documentation["value"]
+    data_regression.check(sig_help)
+
+
+def test_signature_help_library_with_params_active_arg(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.signature_help import signature_help
+
+    workspace.set_root("case_params_on_lib", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_params_on_lib.robot")
+
+    doc.source = """
+*** Settings ***
+Library    AnotherLibWithParams   param1=foo   param2=bar"""
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    sig_help = signature_help(completion_context)
+    documentation = sig_help["signatures"][0].pop("documentation")
+    assert documentation["kind"] == "markdown"
+    data_regression.check(sig_help)

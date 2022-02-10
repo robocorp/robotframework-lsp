@@ -164,6 +164,10 @@ def collect_analysis_errors(initial_completion_context):
     from robotframework_ls.impl.collect_keywords import collect_keywords
     from robotframework_ls.impl.text_utilities import normalize_robot_name
     from robotframework_ls.impl.text_utilities import contains_variable_text
+    from robotframework_ls.impl.keyword_argument_analysis import (
+        UsageInfoForKeywordArgumentAnalysis,
+    )
+    from robot.api import Token
 
     errors = []
     config = initial_completion_context.config
@@ -266,11 +270,18 @@ def collect_analysis_errors(initial_completion_context):
                 )
 
                 # Ok, we found the keyword, let's check if the arguments are correct.
-                keyword_argument_analysis = KeywordArgumentAnalysis(keyword_found)
-                for error in keyword_argument_analysis.collect_keyword_usage_errors(
-                    keyword_usage_info
-                ):
-                    errors.append(error)
+                keyword_argument_analysis = KeywordArgumentAnalysis(
+                    keyword_found.keyword_args
+                )
+
+                keyword_token = keyword_usage_info.node.get_token(Token.KEYWORD)
+                if keyword_token is not None:
+                    for error in keyword_argument_analysis.collect_keyword_usage_errors(
+                        UsageInfoForKeywordArgumentAnalysis(
+                            keyword_usage_info.node, keyword_token
+                        )
+                    ):
+                        errors.append(error)
 
             if len(errors) >= MAX_ERRORS:
                 # i.e.: Collect at most 100 errors

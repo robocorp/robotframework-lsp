@@ -1,0 +1,6 @@
+activeParameter: 0
+activeSignature: 0
+signatures:
+- label: LibWithParams(some_param)
+  parameters:
+  - label: some_param

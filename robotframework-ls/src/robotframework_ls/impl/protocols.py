@@ -39,7 +39,10 @@ Y = TypeVar("Y", covariant=True)
 
 
 class INode(Protocol):
-    pass
+    lineno: int
+    end_lineno: int
+    col_offset: int
+    end_col_offset: int
 
 
 class ILibraryImportNode(INode, Protocol):
@@ -207,6 +210,10 @@ class IKeywordFound(Protocol):
 
     @property
     def docs(self) -> str:
+        pass
+
+    @property
+    def docs_without_signature(self) -> str:
         pass
 
     @property

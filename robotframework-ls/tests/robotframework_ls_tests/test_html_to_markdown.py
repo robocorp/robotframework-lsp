@@ -80,6 +80,11 @@ def test_a_no_autolinks():
     assert text == "[http://google.com](http://google.com)"
 
 
+def test_a_remove_local_links():
+    text = md('<a href="#here">http://google.com</a>')
+    assert text == "**http://google.com**"
+
+
 def test_b():
     assert md("<b>Hello</b>") == "**Hello**"
 

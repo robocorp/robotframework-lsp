@@ -1,6 +1,5 @@
 from robotframework_ls.impl.protocols import (
     IKeywordFound,
-    KeywordUsageInfo,
     IKeywordArg,
     IRobotToken,
 )
@@ -25,12 +24,19 @@ class SkipAnalysisControlFlowException(Exception):
     pass
 
 
+class UsageInfoForKeywordArgumentAnalysis:
+    def __init__(self, node, token_to_report_missing_argument):
+        self.node = node
+        self._token_to_report_missing_argument = token_to_report_missing_argument
+
+    def get_token_to_report_argument_missing(self):
+        return self._token_to_report_missing_argument
+
+
 class KeywordArgumentAnalysis:
-    def __init__(self, keyword_found: IKeywordFound) -> None:
+    def __init__(self, keyword_args: Sequence[IKeywordArg]) -> None:
 
-        self.keyword_found = keyword_found
-
-        args = self._keyword_args = keyword_found.keyword_args
+        args = self._keyword_args = keyword_args
 
         self.found_star_arg: Optional[IKeywordArg] = None
         self.found_keyword_arg: Optional[IKeywordArg] = None
@@ -126,82 +132,6 @@ class KeywordArgumentAnalysis:
 
         return active_parameter
 
-    def compute_active_parameter(
-        self, usage_info: KeywordUsageInfo, lineno: int, col: int
-    ) -> int:
-        from robot.api import Token
-
-        usage_info_argument_index: int = 0
-        # We need to find out the current arg/separator.
-        after_last_arg: List[Token] = []
-        usage_info_arg_tokens: List[Token] = []
-
-        for token in usage_info.node.tokens:
-            if token.type == Token.ARGUMENT:
-                usage_info_arg_tokens.append(token)
-                usage_info_argument_index += 1
-                del after_last_arg[:]
-
-            elif token.type in (Token.SEPARATOR, Token.EOL, Token.EOS):
-                after_last_arg.append(token)
-            else:
-                # Keyword name token
-                del after_last_arg[:]
-
-            if token.lineno - 1 == lineno:
-                if (token.end_col_offset - 1) >= col:
-                    break
-
-        if token.type == Token.ARGUMENT:
-            usage_info_argument_index -= 1
-
-        elif after_last_arg:
-            # Check if we are in prev/next based on the number of spaces found
-            # up to the current cursor position.
-            # i.e.: in `Call  arg ` we still need to have an usage_info_argument_index == 0
-            # i.e.: in `Call  arg  ` we need to have an usage_info_argument_index == 1
-            whitespaces_found = []
-            if token.lineno - 1 == lineno:
-                if (token.end_col_offset - 1) <= col:
-                    whitespaces_found.append(token.value)
-                else:
-                    whitespaces_found.append(
-                        token.value[: -(token.end_col_offset - col)]
-                    )
-            s = "".join(whitespaces_found)
-            if len(s) <= 1:
-                usage_info_argument_index -= 1
-
-        if usage_info_argument_index == -1:
-            return -1
-
-        active_parameter: int = -1
-
-        try:
-            arg_token = usage_info_arg_tokens[usage_info_argument_index]
-        except IndexError:
-            pass
-        else:
-            if arg_token is not None:
-                token_id_to_match: Dict[int, _Match] = {}
-                for (
-                    _error
-                ) in self._collect_keyword_usage_errors_and_build_definition_map(
-                    usage_info, token_id_to_match, collect_errors=False
-                ):
-                    pass
-
-                matched = token_id_to_match.get(id(arg_token))
-                if matched is not None:
-                    active_parameter = matched.get_active_parameter_in_definition()
-
-        # Something didn't work out...
-        if active_parameter == -1:
-            return self._compute_active_parameter_fallback(
-                usage_info_argument_index, usage_info_arg_tokens
-            )
-        return active_parameter
-
     def _iter_args(self, tokens):
         from robot.api import Token
 
@@ -213,17 +143,9 @@ class KeywordArgumentAnalysis:
 
                 yield token
 
-    def collect_keyword_usage_errors(
-        self,
-        usage_info: KeywordUsageInfo,
-    ) -> Iterator[Error]:
-        yield from self._collect_keyword_usage_errors_and_build_definition_map(
-            usage_info
-        )
-
     def _collect_keyword_usage_errors_and_build_definition_map(
         self,
-        usage_info: KeywordUsageInfo,
+        usage_info: UsageInfoForKeywordArgumentAnalysis,
         usage_token_id_to_definition_arg_match: Union[Dict[int, _Match], Null] = NULL,
         collect_errors=True,
     ) -> Iterator[Error]:
@@ -236,7 +158,7 @@ class KeywordArgumentAnalysis:
 
     def _collect_keyword_usage_errors_and_build_definition_map_raises_exc(
         self,
-        usage_info: KeywordUsageInfo,
+        usage_info: UsageInfoForKeywordArgumentAnalysis,
         usage_token_id_to_definition_arg_match: Union[Dict[int, _Match], Null] = NULL,
         collect_errors=True,
     ) -> Iterator[Error]:
@@ -251,7 +173,7 @@ class KeywordArgumentAnalysis:
         from robotframework_ls.impl.text_utilities import is_variable_text
 
         # Pre-requisite.
-        keyword_token = usage_info.node.get_token(Token.KEYWORD)
+        keyword_token = usage_info.get_token_to_report_argument_missing()
         if not keyword_token:
             return
 
@@ -444,3 +366,89 @@ class KeywordArgumentAnalysis:
                         tokens=[keyword_token],
                     )
                     yield error
+
+    # --------------------------------------------------------------- Public API
+
+    def compute_active_parameter(
+        self, usage_info: UsageInfoForKeywordArgumentAnalysis, lineno: int, col: int
+    ) -> int:
+        from robot.api import Token
+
+        usage_info_argument_index: int = 0
+        # We need to find out the current arg/separator.
+        after_last_arg: List[Token] = []
+        usage_info_arg_tokens: List[Token] = []
+
+        for token in usage_info.node.tokens:
+            if token.type == Token.ARGUMENT:
+                usage_info_arg_tokens.append(token)
+                usage_info_argument_index += 1
+                del after_last_arg[:]
+
+            elif token.type in (Token.SEPARATOR, Token.EOL, Token.EOS):
+                after_last_arg.append(token)
+            else:
+                # Keyword name token
+                del after_last_arg[:]
+
+            if token.lineno - 1 == lineno:
+                if (token.end_col_offset - 1) >= col:
+                    break
+
+        if token.type == Token.ARGUMENT:
+            usage_info_argument_index -= 1
+
+        elif after_last_arg:
+            # Check if we are in prev/next based on the number of spaces found
+            # up to the current cursor position.
+            # i.e.: in `Call  arg ` we still need to have an usage_info_argument_index == 0
+            # i.e.: in `Call  arg  ` we need to have an usage_info_argument_index == 1
+            whitespaces_found = []
+            if token.lineno - 1 == lineno:
+                if (token.end_col_offset - 1) <= col:
+                    whitespaces_found.append(token.value)
+                else:
+                    whitespaces_found.append(
+                        token.value[: -(token.end_col_offset - col)]
+                    )
+            s = "".join(whitespaces_found)
+            if len(s) <= 1:
+                usage_info_argument_index -= 1
+
+        if usage_info_argument_index == -1:
+            return -1
+
+        active_parameter: int = -1
+
+        try:
+            arg_token = usage_info_arg_tokens[usage_info_argument_index]
+        except IndexError:
+            pass
+        else:
+            if arg_token is not None:
+                token_id_to_match: Dict[int, _Match] = {}
+                for (
+                    _error
+                ) in self._collect_keyword_usage_errors_and_build_definition_map(
+                    usage_info, token_id_to_match, collect_errors=False
+                ):
+                    pass
+
+                matched = token_id_to_match.get(id(arg_token))
+                if matched is not None:
+                    active_parameter = matched.get_active_parameter_in_definition()
+
+        # Something didn't work out...
+        if active_parameter == -1:
+            return self._compute_active_parameter_fallback(
+                usage_info_argument_index, usage_info_arg_tokens
+            )
+        return active_parameter
+
+    def collect_keyword_usage_errors(
+        self,
+        usage_info: UsageInfoForKeywordArgumentAnalysis,
+    ) -> Iterator[Error]:
+        yield from self._collect_keyword_usage_errors_and_build_definition_map(
+            usage_info
+        )

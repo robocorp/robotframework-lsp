@@ -116,6 +116,13 @@ class _KeywordFoundFromAst(object):
 
     @property
     @instance_cache
+    def docs_without_signature(self) -> str:
+        from robotframework_ls.impl import ast_utils
+
+        return ast_utils.get_documentation(self._keyword_node)
+
+    @property
+    @instance_cache
     def source(self) -> str:
         from robocorp_ls_core import uris
 
@@ -266,6 +273,14 @@ class _KeywordFoundFromLibrary(object):
     @instance_cache
     def docs(self):
         docs, _docs_format = self._docs_and_format
+        return docs
+
+    @property
+    @instance_cache
+    def docs_without_signature(self):
+        from robotframework_ls.impl.robot_specbuilder import docs_and_format
+
+        docs, _docs_format = docs_and_format(self._keyword_doc)
         return docs
 
     @property

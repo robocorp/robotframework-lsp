@@ -138,6 +138,7 @@ class _HTMLToMarkdownParser(HTMLParser):
     def _handle_a(self, tag_info):
         el = dict(tag_info.attrs)
         href = el.get("href")
+
         title = el.get("title")
         text = "".join(tag_info.output)
 
@@ -146,6 +147,14 @@ class _HTMLToMarkdownParser(HTMLParser):
         #     self._append("<%s>" % href)
         # else:
         title_part = ' "%s"' % title.replace('"', r"\"") if title else ""
+
+        if href.startswith("#"):
+            if title:
+                self._append("**%s**" % title.replace("*", r"\\*"))
+            else:
+                self._append("**%s**" % text.replace("*", r"\\*"))
+            return
+
         self._append(
             "[%s](%s%s)" % (text or "", href, title_part) if href else text or ""
         )

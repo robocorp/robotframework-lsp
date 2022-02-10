@@ -1,0 +1,7 @@
+activeParameter: 1
+activeSignature: 0
+signatures:
+- label: AnotherLibWithParams(param1=None, param2=None)
+  parameters:
+  - label: param1=None
+  - label: param2=None

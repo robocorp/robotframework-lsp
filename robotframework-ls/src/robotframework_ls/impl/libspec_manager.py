@@ -1051,6 +1051,8 @@ class LibspecManager(object):
 
         :rtype: LibraryDoc
         """
+        from robotframework_ls.impl import robot_constants
+
         assert current_doc_uri is not None
 
         libname_lower = libname.lower()
@@ -1098,6 +1100,8 @@ class LibspecManager(object):
             if found_target_filename:
                 target_file = found_target_filename
                 normalized_target_file = os.path.normcase(os.path.normpath(target_file))
+            else:
+                builtin = libname in robot_constants.STDLIBS
 
         if libname_lower.endswith((".py", ".class", ".java")):
             libname_lower = os.path.splitext(libname_lower)[0]
