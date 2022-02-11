@@ -279,6 +279,35 @@ Test case 1
     data_regression.check(signature_help(completion_context))
 
 
+def test_signature_help_over_keyword(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.signature_help import signature_help
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.put_doc(
+        "case4.robot",
+        """
+*** Keywords ***
+Some Keyword
+    [Arguments]    ${arg1}    ${arg2}    @{arg3}
+    Log To Console      ${arg1} ${arg2} ${arg3}
+
+*** Test Cases ***
+Test case 1
+    Some Keyword    val""",
+    )
+
+    lineno, _col = doc.get_last_line_col()
+    for check_col in range(4, 17):
+        completion_context = CompletionContext(
+            doc, line=lineno, col=check_col, workspace=workspace.ws
+        )
+        try:
+            data_regression.check(signature_help(completion_context))
+        except:
+            raise AssertionError(f"Failed on col: {check_col}")
+
+
 def test_signature_help_parameters_keyword_arg_keyword(
     workspace, libspec_manager, data_regression
 ):

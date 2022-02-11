@@ -261,6 +261,22 @@ class SignatureHelp(_Base):
         self.activeSignature = active_signature
         self.activeParameter = active_parameter
 
+        # This isn't part of the spec (just used to internally manipulate more information).
+        self.name = ""
+        self.node = None
+
+    def to_dict(self):
+        new_dict = {}
+        for key in ["signatures", "activeSignature", "activeParameter"]:
+            value = self[key]
+            if hasattr(value, "to_dict"):
+                value = value.to_dict()
+            if value.__class__ in (list, tuple):
+                value = [v.to_dict() if hasattr(v, "to_dict") else v for v in value]
+            if value is not None:
+                new_dict[key] = value
+        return new_dict
+
 
 class Position(_Base):
     def __init__(self, line=0, character=0):
@@ -766,7 +782,16 @@ class Error(object):
         self.severity = severity
 
     def to_dict(self):
-        return dict((name, getattr(self, name, None)) for name in self.__slots__)
+        ret = {
+            "msg": self.msg,
+            "start": self.start,
+            "end": self.end,
+            "severity": self.severity,
+        }
+        tags = getattr(self, "tags", None)
+        if tags:
+            ret["tags"] = tags
+        return ret
 
     def __repr__(self):
         import json

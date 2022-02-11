@@ -2,6 +2,7 @@
   - 3
   - 20
   msg: IF has no closing END.
+  severity: 1
   start:
   - 3
   - 0

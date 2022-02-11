@@ -4,16 +4,16 @@ from robocorp_ls_core.lsp import MarkupKind
 from robocorp_ls_core.lsp import ParameterInformation
 from robocorp_ls_core.lsp import SignatureHelp
 from robocorp_ls_core.lsp import SignatureInformation
-from robotframework_ls.impl.protocols import ICompletionContext, IKeywordFound, INode
+from robotframework_ls.impl.protocols import ICompletionContext, IKeywordFound
 from robotframework_ls.impl.protocols import IKeywordDefinition
 from robotframework_ls.impl.protocols import KeywordUsageInfo
 
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Union
 
 
 def _library_signature_help(
     completion_context: ICompletionContext, library_node
-) -> Optional[Tuple[SignatureHelp, INode]]:
+) -> Optional[SignatureHelp]:
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.robot_specbuilder import docs_and_format
     from robot.api import Token
@@ -74,17 +74,17 @@ def _library_signature_help(
     signatures: List[SignatureInformation] = [
         SignatureInformation(label, documentation, parameters)
     ]
-    return (
-        SignatureHelp(
-            signatures, active_signature=0, active_parameter=active_parameter
-        ),
-        library_node,
+    ret = SignatureHelp(
+        signatures, active_signature=0, active_parameter=active_parameter
     )
+    ret.name = library_doc.name
+    ret.node = library_node
+    return ret
 
 
 def signature_help_internal(
     completion_context: ICompletionContext,
-) -> Optional[Tuple[SignatureHelp, INode]]:
+) -> Optional[SignatureHelp]:
     token_info = completion_context.get_current_token()
     if token_info is None:
         return None
@@ -112,6 +112,7 @@ def signature_help_internal(
     keyword_analysis = KeywordArgumentAnalysis(keyword_args)
 
     keyword_token = usage_info.node.get_token(Token.KEYWORD)
+
     if keyword_token is None:
         active_parameter = -1
     else:
@@ -125,9 +126,11 @@ def signature_help_internal(
 
     documentation: Union[str, MarkupContent]
     if docs_format == "markdown":
-        documentation = MarkupContent(MarkupKind.Markdown, keyword_found.docs)
+        documentation = MarkupContent(
+            MarkupKind.Markdown, keyword_found.docs_without_signature
+        )
     else:
-        documentation = keyword_found.docs
+        documentation = keyword_found.docs_without_signature
 
     arg_names_as_list: List[str] = []
     parameters: List[ParameterInformation] = []
@@ -138,16 +141,20 @@ def signature_help_internal(
             ParameterInformation(arg.original_arg, None),
         )
 
-    label = "%s(%s)" % (keyword_found.keyword_name, ", ".join(arg_names_as_list))
+    if not arg_names_as_list:
+        label = keyword_found.keyword_name
+    else:
+        label = "%s(%s)" % (keyword_found.keyword_name, ", ".join(arg_names_as_list))
+
     signatures: List[SignatureInformation] = [
         SignatureInformation(label, documentation, parameters)
     ]
-    return (
-        SignatureHelp(
-            signatures, active_signature=0, active_parameter=active_parameter
-        ),
-        usage_info.node,
+    ret = SignatureHelp(
+        signatures, active_signature=0, active_parameter=active_parameter
     )
+    ret.name = keyword_found.keyword_name
+    ret.node = usage_info.node
+    return ret
 
 
 def signature_help(completion_context: ICompletionContext) -> Optional[dict]:
@@ -155,4 +162,4 @@ def signature_help(completion_context: ICompletionContext) -> Optional[dict]:
     if ret is None:
         return None
 
-    return ret[0].to_dict()
+    return ret.to_dict()

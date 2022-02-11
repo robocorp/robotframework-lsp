@@ -1,10 +1,11 @@
-activeParameter: 1
+activeParameter: -1
 activeSignature: 0
 signatures:
 - documentation:
     kind: markdown
     value: ''
-  label: Keyword only star(${arg1}, @{arg3})
+  label: Some Keyword(${arg1}, ${arg2}, @{arg3})
   parameters:
   - label: ${arg1}
+  - label: ${arg2}
   - label: '@{arg3}'

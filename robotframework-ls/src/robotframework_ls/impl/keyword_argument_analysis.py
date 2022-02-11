@@ -372,6 +372,16 @@ class KeywordArgumentAnalysis:
     def compute_active_parameter(
         self, usage_info: UsageInfoForKeywordArgumentAnalysis, lineno: int, col: int
     ) -> int:
+
+        token_to_report_argument_missing = (
+            usage_info.get_token_to_report_argument_missing()
+        )
+        if token_to_report_argument_missing.lineno - 1 > lineno or (
+            token_to_report_argument_missing.lineno - 1 == lineno
+            and token_to_report_argument_missing.end_col_offset >= col
+        ):
+            return -1
+
         from robot.api import Token
 
         usage_info_argument_index: int = 0

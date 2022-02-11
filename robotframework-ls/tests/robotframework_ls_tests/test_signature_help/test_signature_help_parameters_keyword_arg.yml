@@ -3,10 +3,7 @@ activeSignature: 0
 signatures:
 - documentation:
     kind: markdown
-    value: '**Arg With Starargs(arg1, arg2=10, \*arg3, \*\*arg4)**
-
-
-      '
+    value: ''
   label: Arg With Starargs(arg1, arg2=10, *arg3, **arg4)
   parameters:
   - label: arg1

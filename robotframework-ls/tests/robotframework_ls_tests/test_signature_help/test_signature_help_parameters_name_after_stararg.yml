@@ -3,10 +3,7 @@ activeSignature: 0
 signatures:
 - documentation:
     kind: markdown
-    value: '**Some Keyword(${arg1}, ${arg2}, @{arg3}, &{arg4})**
-
-
-      '
+    value: ''
   label: Some Keyword(${arg1}, ${arg2}, @{arg3}, &{arg4})
   parameters:
   - label: ${arg1}
