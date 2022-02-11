@@ -604,11 +604,11 @@ def test_typing_not_shown(libspec_manager, workspace, data_regression, workspace
         stream.write(LIBSPEC_3)
     libspec_manager.add_workspace_folder(uris.from_fs_path(workspace_dir_a))
     assert (
-        libspec_manager.get_library_info(
+        libspec_manager.get_library_doc_or_error(
             "case3_library",
             False,
             uris.from_fs_path(os.path.join(workspace_dir_a, "my.robot")),
-        )
+        ).library_doc
         is not None
     )
 

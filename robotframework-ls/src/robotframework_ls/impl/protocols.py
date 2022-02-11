@@ -138,6 +138,11 @@ class ILibraryDoc(Protocol):
     inits: list
 
 
+class ILibraryDocOrError(Protocol):
+    library_doc: Optional[ILibraryDoc]
+    error: Optional[str]
+
+
 class IRobotDocument(IDocument, Protocol):
     def get_type(self) -> str:
         pass
@@ -316,6 +321,7 @@ class IKeywordCollector(Protocol):
         end_lineno: int,
         col_offset: int,
         end_col_offset: int,
+        error_msg: Optional[str],
     ):
         pass
 

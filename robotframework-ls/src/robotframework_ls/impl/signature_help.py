@@ -21,21 +21,22 @@ def _library_signature_help(
     from robotframework_ls.impl.keyword_argument_analysis import (
         UsageInfoForKeywordArgumentAnalysis,
     )
+    from robotframework_ls.impl.libspec_manager import LibspecManager
 
     name = library_node.name
     if not name:
         return None
 
-    libspec_manager = completion_context.workspace.libspec_manager
+    libspec_manager: LibspecManager = completion_context.workspace.libspec_manager
     args = ast_utils.get_library_arguments_serialized(library_node)
 
-    library_doc = libspec_manager.get_library_info(
+    library_doc = libspec_manager.get_library_doc_or_error(
         name,
         create=True,
         current_doc_uri=completion_context.doc.uri,
         builtin=False,
         args=args,
-    )
+    ).library_doc
     if library_doc is None:
         return None
 

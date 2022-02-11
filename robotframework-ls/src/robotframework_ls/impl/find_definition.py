@@ -210,6 +210,7 @@ class _FindDefinitionKeywordCollector(object):
         end_lineno: int,
         col_offset: int,
         end_col_offset: int,
+        error_msg: Optional[str],
     ):
         pass
 
@@ -294,6 +295,7 @@ def find_definition_extended(
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
     from robotframework_ls.impl.variable_completions import collect_variables
+    from robotframework_ls.impl.libspec_manager import LibspecManager
 
     token_info = completion_context.get_current_token()
 
@@ -308,14 +310,16 @@ def find_definition_extended(
             token_info.node, token_info.token
         )
         if token is not None:
-            libspec_manager = completion_context.workspace.libspec_manager
+            libspec_manager: LibspecManager = (
+                completion_context.workspace.libspec_manager
+            )
             completion_context.check_cancelled()
-            library_doc = libspec_manager.get_library_info(
+            library_doc = libspec_manager.get_library_doc_or_error(
                 completion_context.token_value_resolving_variables(token),
                 create=True,
                 current_doc_uri=completion_context.doc.uri,
                 args=ast_utils.get_library_arguments_serialized(token_info.node),
-            )
+            ).library_doc
             if library_doc is not None:
                 definition = _DefinitionFromLibrary(library_doc)
                 return _DefinitionInfo(

@@ -659,6 +659,19 @@ Library    AnotherLibWithParams   param1=foo   foo=not ok
     _collect_errors(workspace, doc, data_regression)
 
 
+def test_code_analysis_show_why_unresolved_library(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case_params_on_lib", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_params_on_lib.robot")
+    doc.source = """
+*** Settings ***
+Library    LibWithParams
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
 def test_code_analysis_multiple_errors(workspace, libspec_manager, data_regression):
     workspace.set_root("case_argspec_expand", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case_argspec_expand.robot")

@@ -5,7 +5,7 @@ from robocorp_ls_core.robotframework_log import get_logger
 import threading
 from typing import Optional, Dict, Set, Iterator
 from robocorp_ls_core.protocols import Sentinel, IEndPoint
-from robotframework_ls.impl.protocols import ILibraryDoc
+from robotframework_ls.impl.protocols import ILibraryDoc, ILibraryDocOrError
 import itertools
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 from robotframework_ls.impl.robot_lsp_constants import (
@@ -19,6 +19,7 @@ from robotframework_ls.impl.libspec_warmup import (
 )
 from pathlib import Path
 from contextlib import contextmanager
+import typing
 
 log = get_logger(__name__)
 
@@ -440,7 +441,9 @@ class LibspecManager(object):
         self.pre_generate_libspecs = pre_generate_libspecs
         self._libspec_warmup = LibspecWarmup(endpoint, dir_cache)
 
-        self._libspec_failures_cache: Dict[tuple, bool] = {}
+        self._libspec_failures_cache: Dict[
+            tuple, str
+        ] = {}  # key -> error creating libspec
 
         self._main_thread = threading.current_thread()
 
@@ -750,6 +753,17 @@ class LibspecManager(object):
             set(lib_info.library_doc.name for lib_info in self.iter_lib_info())
         )
 
+    def _get_cached_error(
+        self,
+        libname,
+        *,
+        is_builtin=False,
+        target_file: Optional[str] = None,
+        args: Optional[str] = None,
+    ) -> Optional[str]:
+        cache_key = (libname, is_builtin, target_file, args)
+        return self._libspec_failures_cache.get(cache_key)
+
     def _create_libspec(
         self,
         libname,
@@ -757,27 +771,27 @@ class LibspecManager(object):
         is_builtin=False,
         target_file: Optional[str] = None,
         args: Optional[str] = None,
-    ):
+    ) -> Optional[str]:
         """
         :param target_file:
             If given this is the library file (i.e.: c:/foo/bar.py) which is the
             actual library we're creating the spec for.
         """
         cache_key = (libname, is_builtin, target_file, args)
-        failed_to_create_previously = self._libspec_failures_cache.get(
-            cache_key, Sentinel.SENTINEL
-        )
-        if failed_to_create_previously is Sentinel.SENTINEL:
-            created = self._cached_create_libspec(
-                libname, is_builtin, target_file, args
-            )
-            if not created:
-                # Always set as a whole (to avoid racing conditions).
-                cp = self._libspec_failures_cache.copy()
-                cp[cache_key] = False
-                self._libspec_failures_cache = cp
+        previous = self._libspec_failures_cache.get(cache_key, Sentinel.SENTINEL)
+        if previous is not Sentinel.SENTINEL:
+            return typing.cast(Optional[str], previous)
 
-        return failed_to_create_previously
+        error_creating = self._cached_create_libspec(
+            libname, is_builtin, target_file, args
+        )
+        if error_creating is not None:
+            # Always set as a whole (to avoid racing conditions).
+            cp = self._libspec_failures_cache.copy()
+            cp[cache_key] = error_creating
+            self._libspec_failures_cache = cp
+
+        return error_creating
 
     def _subprocess_check_output(self, *args, **kwargs):
         # Only done for mocking.
@@ -793,11 +807,17 @@ class LibspecManager(object):
         args: Optional[str],
         *,
         _internal_force_text=False,  # Should only be set from within this function.
-    ):
+    ) -> Optional[str]:
         """
-        :param str libname:
-        :raise Exception: if unable to create the library.
+        Returns an error message if it wasn't able to generate it or None if
+        it did generate it.
         """
+        from robotframework_ls.impl import robot_constants
+
+        if not is_builtin:
+            if not target_file:
+                is_builtin = libname in robot_constants.STDLIBS
+
         import time
         from robocorp_ls_core.subprocess_wrapper import subprocess
         from robocorp_ls_core.robotframework_log import get_log_level
@@ -908,12 +928,12 @@ class LibspecManager(object):
                                         is_builtin=is_builtin,
                                         obtain_mutex=False,
                                     )
-                                    return True
+                                    return None
                             except:
                                 pass
 
                             log.debug("Not retrying after OSError failure.")
-                            return False
+                            return str(e)
 
                     except subprocess.CalledProcessError as e:
                         if not _internal_force_text:
@@ -935,14 +955,26 @@ class LibspecManager(object):
                             e.returncode,
                             e.output,
                         )
-                        return False
+                        bytes_output = e.output
+                        output = bytes_output.decode("utf-8", "replace")
+
+                        # Remove things we don't want to show.
+                        for s in ("Try --help", "--help", "Traceback"):
+                            index = output.find(s)
+                            if index >= 0:
+                                output = output[:index].strip()
+
+                        if output:
+                            return output
+                        return f"Error creating libspec: {output}"
+
                     _dump_spec_filename_additional_info(
                         libspec_filename, is_builtin=is_builtin, obtain_mutex=False
                     )
-                    return True
-            except Exception:
+                    return None
+            except Exception as e:
                 log_exception("Error creating libspec: %s", libname)
-                return False
+                return str(e)
         finally:
             if log_time:
                 delta = time.time() - curtime
@@ -983,13 +1015,15 @@ class LibspecManager(object):
         return libspec_filename
 
     def _do_create_libspec_on_get(
-        self, libname, target_file: Optional[str], args: Optional[str]
-    ):
+        self, libname, target_file: Optional[str], args: Optional[str], is_builtin: bool
+    ) -> Optional[str]:
+        error_creating = self._create_libspec(
+            libname, target_file=target_file, args=args, is_builtin=is_builtin
+        )
 
-        if self._create_libspec(libname, target_file=target_file, args=args):
+        if error_creating is None:
             self.synchronize_internal_libspec_folders()
-            return True
-        return False
+        return error_creating
 
     def _get_library_target_filename(
         self, libname: str, current_doc_uri: Optional[str] = None
@@ -1036,20 +1070,18 @@ class LibspecManager(object):
 
         return target_file
 
-    def get_library_info(
+    def get_library_doc_or_error(
         self,
         libname: str,
         create: bool,
         current_doc_uri: str,
         builtin: bool = False,
         args: Optional[str] = None,
-    ) -> Optional[ILibraryDoc]:
+    ) -> ILibraryDocOrError:
         """
         :param libname:
             It may be a library name, a relative path to a .py file or an
             absolute path to a .py file.
-
-        :rtype: LibraryDoc
         """
         from robotframework_ls.impl import robot_constants
 
@@ -1158,11 +1190,13 @@ class LibspecManager(object):
                         # Found but it's not in sync. Try to regenerate (don't proceed
                         # because we don't want to match a lower priority item, so,
                         # regenerate and get from the cache without creating).
-                        self._do_create_libspec_on_get(libname, target_file, args)
+                        self._do_create_libspec_on_get(
+                            libname, target_file, args, is_builtin=builtin
+                        )
 
                         # Note: get even if it if was not created (we may match
                         # a lower priority library).
-                        return self.get_library_info(
+                        return self.get_library_doc_or_error(
                             libname,
                             create=False,
                             current_doc_uri=current_doc_uri,
@@ -1173,17 +1207,40 @@ class LibspecManager(object):
                         # Not in sync and it should not be created, just skip it.
                         continue
                 else:
-                    return library_doc
+                    return _LibraryDocOrError(library_doc, None)
 
         if create:
-            if self._do_create_libspec_on_get(libname, target_file, args):
-                return self.get_library_info(
+            error_msg = self._do_create_libspec_on_get(
+                libname, target_file, args, is_builtin=builtin
+            )
+            if error_msg is None:
+                return self.get_library_doc_or_error(
                     libname,
                     create=False,
                     current_doc_uri=current_doc_uri,
                     builtin=builtin,
                     args=args,
                 )
+            return _LibraryDocOrError(None, error_msg)
 
-        log.debug("Unable to find library named: %s", libname)
-        return None
+        error_msg = self._get_cached_error(
+            libname, is_builtin=builtin, target_file=target_file, args=args
+        )
+        if error_msg:
+            log.debug("Unable to get library named: %s. Reason: %s", libname, error_msg)
+            return _LibraryDocOrError(None, error_msg)
+
+        msg = f"Unable to find library named: {libname}"
+        log.debug(msg)
+        return _LibraryDocOrError(None, msg)
+
+
+class _LibraryDocOrError:
+    def __init__(self, library_doc: Optional[ILibraryDoc], error: Optional[str]):
+        self.library_doc = library_doc
+        self.error = error
+
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
+
+        _: ILibraryDocOrError = check_implements(self)

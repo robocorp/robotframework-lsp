@@ -135,6 +135,7 @@ class _Collector(object):
         end_lineno: int,
         col_offset: int,
         end_col_offset: int,
+        error_msg: Optional[str],
     ):
         pass
 

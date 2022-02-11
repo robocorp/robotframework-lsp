@@ -118,7 +118,7 @@ User can call library
     )
 
     # Needed to pre-generate the information
-    workspace.ws.libspec_manager.get_library_info(
+    workspace.ws.libspec_manager.get_library_doc_or_error(
         libname="case1_library",
         create=True,
         current_doc_uri=workspace.get_doc("case1.robot").uri,
@@ -189,7 +189,7 @@ def test_completion_with_auto_import_case1_library_imported_1(
     doc = setup_case2_doc
 
     # Needed to pre-generate the information
-    workspace.ws.libspec_manager.get_library_info(
+    workspace.ws.libspec_manager.get_library_doc_or_error(
         libname="case1_library",
         create=True,
         current_doc_uri=workspace.get_doc("case1.robot").uri,
@@ -222,7 +222,7 @@ def test_completion_with_auto_import_case1_library_imported_2(
 
     doc = setup_case2_doc
     # Needed to pre-generate the information
-    workspace.ws.libspec_manager.get_library_info(
+    workspace.ws.libspec_manager.get_library_doc_or_error(
         libname="case1_library",
         create=True,
         current_doc_uri=workspace.get_doc("case1.robot").uri,
@@ -268,7 +268,7 @@ User can call library
     Verify another m"""
 
     # Needed to pre-generate the information
-    workspace.ws.libspec_manager.get_library_info(
+    workspace.ws.libspec_manager.get_library_doc_or_error(
         libname="case1_library",
         create=True,
         current_doc_uri=workspace.get_doc("case1.robot").uri,

@@ -50,12 +50,12 @@ def test_workspace_symbols_same_basename(workspace, libspec_manager):
 
     workspace.set_root("case_same_basename", libspec_manager=libspec_manager)
     # Needed to pre-generate the information
-    libspec_manager.get_library_info(
+    libspec_manager.get_library_doc_or_error(
         libname="my_library",
         create=True,
         current_doc_uri=workspace.get_doc("tasks1.robot").uri,
     )
-    libspec_manager.get_library_info(
+    libspec_manager.get_library_doc_or_error(
         libname="my_library",
         create=True,
         current_doc_uri=workspace.get_doc("directory/tasks2.robot").uri,

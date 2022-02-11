@@ -348,6 +348,9 @@ def _collect_libraries_keywords(
     """
     :param CompletionContext completion_context:
     """
+    from robotframework_ls.impl.libspec_manager import LibspecManager
+    from robotframework_ls.impl.protocols import ILibraryDocOrError
+
     # Get keywords from libraries
     from robotframework_ls.impl.robot_constants import BUILTIN_LIB
     from robocorp_ls_core.lsp import CompletionItemKind
@@ -379,7 +382,7 @@ def _collect_libraries_keywords(
             library_infos[lib_info] = True
 
     library_infos[_LibInfo(BUILTIN_LIB, None, True, None, None)] = True
-    libspec_manager = completion_context.workspace.libspec_manager
+    libspec_manager: LibspecManager = completion_context.workspace.libspec_manager
 
     for library_info in library_infos:
         completion_context.check_cancelled()
@@ -388,13 +391,16 @@ def _collect_libraries_keywords(
         ):
             continue
 
-        library_doc = libspec_manager.get_library_info(
-            library_info.name,
-            create=True,
-            current_doc_uri=completion_context.doc.uri,
-            builtin=library_info.builtin,
-            args=library_info.args,
+        library_doc_or_error: ILibraryDocOrError = (
+            libspec_manager.get_library_doc_or_error(
+                library_info.name,
+                create=True,
+                current_doc_uri=completion_context.doc.uri,
+                builtin=library_info.builtin,
+                args=library_info.args,
+            )
         )
+        library_doc = library_doc_or_error.library_doc
         if library_doc is not None:
             #: :type keyword: KeywordDoc
             for keyword in library_doc.keywords:
@@ -423,6 +429,8 @@ def _collect_libraries_keywords(
         else:
             from robot.api import Token
 
+            error_msg = library_doc_or_error.error
+
             node = library_info.node
             node_name_tok = node.get_token(Token.NAME)
             if node_name_tok is not None:
@@ -433,6 +441,7 @@ def _collect_libraries_keywords(
                     node_name_tok.lineno,
                     node_name_tok.col_offset,
                     node_name_tok.end_col_offset,
+                    error_msg,
                 )
             else:
                 collector.on_unresolved_library(
@@ -442,6 +451,7 @@ def _collect_libraries_keywords(
                     node.end_lineno,
                     node.col_offset,
                     node.end_col_offset,
+                    error_msg,
                 )
 
 
@@ -520,6 +530,7 @@ class _CollectKeywordNameToKeywordFound:
         end_lineno: int,
         col_offset: int,
         end_col_offset: int,
+        error_msg: Optional[str],
     ):
         pass
 

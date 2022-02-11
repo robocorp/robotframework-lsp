@@ -144,6 +144,7 @@ class _AnalysisKeywordsCollector(object):
         end_lineno: int,
         col_offset: int,
         end_col_offset: int,
+        error_msg: Optional[str],
     ):
         self._on_unresolved_library(
             completion_context,
@@ -152,6 +153,7 @@ class _AnalysisKeywordsCollector(object):
             end_lineno,
             col_offset,
             end_col_offset,
+            error_msg,
         )
 
     def on_unresolved_resource(
@@ -237,6 +239,7 @@ def collect_analysis_errors(initial_completion_context):
         end_lineno: int,
         col_offset: int,
         end_col_offset: int,
+        error_msg: Optional[str],
     ):
         from robotframework_ls.impl.robot_lsp_constants import (
             OPTION_ROBOT_LINT_UNDEFINED_LIBRARIES,
@@ -252,7 +255,11 @@ def collect_analysis_errors(initial_completion_context):
             start = (lineno - 1, col_offset)
             end = (end_lineno - 1, end_col_offset)
             errors.append(
-                ast_utils.Error(f"Unresolved library: {library_name}", start, end)
+                ast_utils.Error(
+                    f"Unresolved library: {library_name}. Details: {error_msg}",
+                    start,
+                    end,
+                )
             )
 
     def on_unresolved_resource(
