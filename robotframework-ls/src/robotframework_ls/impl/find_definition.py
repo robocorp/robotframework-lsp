@@ -7,6 +7,7 @@ from robotframework_ls.impl.protocols import (
     IKeywordCollector,
     IVariablesCollector,
     IKeywordFound,
+    ILibraryDoc,
 )
 from robocorp_ls_core.protocols import check_implements
 from typing import Optional, Sequence
@@ -192,6 +193,14 @@ class _FindDefinitionKeywordCollector(object):
                 definition = _DefinitionFromKeyword(keyword_found)
                 self.matches.append(definition)
                 return
+
+    def on_resolved_library(
+        self,
+        completion_context: ICompletionContext,
+        library_node,
+        library_doc: ILibraryDoc,
+    ):
+        pass
 
     def on_unresolved_library(
         self,

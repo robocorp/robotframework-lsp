@@ -44,6 +44,9 @@ class INode(Protocol):
     col_offset: int
     end_col_offset: int
 
+    def get_token(self, name: str) -> Any:
+        pass
+
 
 class ILibraryImportNode(INode, Protocol):
     name: str
@@ -132,6 +135,7 @@ class ILibraryDoc(Protocol):
     name: str
     source: str
     symbols_cache: Optional["ISymbolsCache"]
+    inits: list
 
 
 class IRobotDocument(IDocument, Protocol):
@@ -295,6 +299,14 @@ class IKeywordCollector(Protocol):
         """
         :param IKeywordFound keyword_found:
         """
+
+    def on_resolved_library(
+        self,
+        completion_context: "ICompletionContext",
+        library_node: Optional[INode],
+        library_doc: "ILibraryDoc",
+    ):
+        pass
 
     def on_unresolved_library(
         self,

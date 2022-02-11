@@ -6,6 +6,7 @@ from robotframework_ls.impl.protocols import (
     ICompletionContext,
     IKeywordFound,
     IKeywordCollector,
+    ILibraryDoc,
 )
 
 
@@ -117,6 +118,14 @@ class _Collector(object):
         )
 
         self.completion_items.append(item)
+
+    def on_resolved_library(
+        self,
+        completion_context: ICompletionContext,
+        library_node,
+        library_doc: ILibraryDoc,
+    ):
+        pass
 
     def on_unresolved_library(
         self,

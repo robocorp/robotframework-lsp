@@ -202,7 +202,7 @@ class KeywordArgumentAnalysis:
                 # Skip not matched by name
                 continue
 
-            arg_name = definition_arg.original_arg
+            arg_name = definition_arg.arg_name
             if is_variable_text(arg_name):
                 arg_name = arg_name[2:-1]
 

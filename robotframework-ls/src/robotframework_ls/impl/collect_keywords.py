@@ -9,6 +9,7 @@ from robotframework_ls.impl.protocols import (
     ICompletionContext,
     IKeywordCollector,
     IKeywordArg,
+    ILibraryDoc,
 )
 from typing import Tuple, Sequence, List, Dict, Optional
 
@@ -415,6 +416,10 @@ def _collect_libraries_keywords(
                             library_alias=library_info.alias,
                         )
                     )
+
+            collector.on_resolved_library(
+                completion_context, library_info.node, library_doc
+            )
         else:
             from robot.api import Token
 
@@ -498,6 +503,14 @@ class _CollectKeywordNameToKeywordFound:
         if lst is None:
             self.keyword_name_to_keyword_found[keyword_found.keyword_name] = lst = []
         lst.append(keyword_found)
+
+    def on_resolved_library(
+        self,
+        completion_context: ICompletionContext,
+        library_node,
+        library_doc: ILibraryDoc,
+    ):
+        pass
 
     def on_unresolved_library(
         self,

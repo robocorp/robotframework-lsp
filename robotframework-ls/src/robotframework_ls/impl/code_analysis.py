@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 from robocorp_ls_core.protocols import check_implements
 from robocorp_ls_core.robotframework_log import get_logger
@@ -7,6 +7,9 @@ from robotframework_ls.impl.protocols import (
     IKeywordFound,
     IKeywordCollector,
     ICompletionContext,
+    IKeywordArg,
+    ILibraryDoc,
+    INode,
 )
 
 
@@ -45,12 +48,15 @@ class _KeywordContainer(object):
 
 
 class _AnalysisKeywordsCollector(object):
-    def __init__(self, on_unresolved_library, on_unresolved_resource):
+    def __init__(
+        self, on_unresolved_library, on_unresolved_resource, on_resolved_library
+    ):
         self._keywords_container = _KeywordContainer()
         self._resource_name_to_keywords_container = {}
         self._library_name_to_keywords_container = {}
         self._on_unresolved_library = on_unresolved_library
         self._on_unresolved_resource = on_unresolved_resource
+        self._on_resolved_library = on_resolved_library
 
     def accepts(self, keyword_name):
         return True
@@ -118,6 +124,18 @@ class _AnalysisKeywordsCollector(object):
 
         return None
 
+    def on_resolved_library(
+        self,
+        completion_context: ICompletionContext,
+        library_node: Optional[INode],
+        library_doc: ILibraryDoc,
+    ):
+        self._on_resolved_library(
+            completion_context,
+            library_node,
+            library_doc,
+        )
+
     def on_unresolved_library(
         self,
         completion_context: ICompletionContext,
@@ -172,6 +190,46 @@ def collect_analysis_errors(initial_completion_context):
     errors = []
     config = initial_completion_context.config
 
+    def on_resolved_library(
+        completion_context: ICompletionContext,
+        library_node: Optional[INode],
+        library_doc: ILibraryDoc,
+    ):
+        if library_node is None:
+            return
+
+        from robotframework_ls.impl.robot_lsp_constants import (
+            OPTION_ROBOT_LINT_KEYWORD_CALL_ARGUMENTS,
+        )
+
+        if config is not None and not config.get_setting(
+            OPTION_ROBOT_LINT_KEYWORD_CALL_ARGUMENTS, bool, True
+        ):
+            return
+
+        doc = completion_context.doc
+        if not doc or doc.uri != initial_completion_context.doc.uri:
+            return
+
+        from robotframework_ls.impl.keyword_argument_analysis import (
+            KeywordArgumentAnalysis,
+        )
+
+        library_args = []
+        if library_doc.inits:
+            keyword_doc = library_doc.inits[0]
+            library_args = keyword_doc.args
+
+        # Ok, we found the keyword, let's check if the arguments are correct.
+        keyword_argument_analysis = KeywordArgumentAnalysis(library_args)
+
+        name_token = library_node.get_token(Token.NAME)
+        if name_token is not None:
+            for error in keyword_argument_analysis.collect_keyword_usage_errors(
+                UsageInfoForKeywordArgumentAnalysis(library_node, name_token)
+            ):
+                errors.append(error)
+
     def on_unresolved_library(
         completion_context: ICompletionContext,
         library_name: str,
@@ -223,7 +281,7 @@ def collect_analysis_errors(initial_completion_context):
             )
 
     collector = _AnalysisKeywordsCollector(
-        on_unresolved_library, on_unresolved_resource
+        on_unresolved_library, on_unresolved_resource, on_resolved_library
     )
     collect_keywords(initial_completion_context, collector)
 

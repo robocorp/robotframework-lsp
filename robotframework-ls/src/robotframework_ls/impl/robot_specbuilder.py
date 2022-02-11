@@ -234,6 +234,11 @@ class KeywordArg(object):
             return None
         return self._default_value
 
+    def __repr__(self):
+        return f"KeywordArg({self.original_arg})"
+
+    __str__ = __repr__
+
 
 class KeywordDoc(object):
     def __init__(
