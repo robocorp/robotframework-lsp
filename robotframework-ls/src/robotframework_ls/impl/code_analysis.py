@@ -11,6 +11,7 @@ from robotframework_ls.impl.protocols import (
     ILibraryDoc,
     INode,
 )
+from robocorp_ls_core.lsp import DiagnosticSeverity, DiagnosticTag
 
 
 log = get_logger(__name__)
@@ -370,6 +371,23 @@ def collect_analysis_errors(initial_completion_context):
                             keyword_usage_info.node, keyword_token
                         )
                     ):
+                        errors.append(error)
+
+                docs_without_signature = keyword_found.docs_without_signature
+                if docs_without_signature and "DEPRECATED" in docs_without_signature:
+                    import re
+
+                    matched = re.match(
+                        r"^\*DEPRECATED(.*)\*(.*)", docs_without_signature
+                    )
+                    if matched:
+                        error = create_error_from_node(
+                            keyword_usage_info.node,
+                            f"Keyword: {keyword_usage_info.name} is deprecated",
+                            tokens=[keyword_usage_info.token],
+                        )
+                        error.severity = DiagnosticSeverity.Hint
+                        error.tags = [DiagnosticTag.Deprecated]
                         errors.append(error)
 
             if len(errors) >= MAX_ERRORS:

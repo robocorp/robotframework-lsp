@@ -808,3 +808,20 @@ Normal test case
 """
 
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_code_analysis_deprecated_keyword(workspace, libspec_manager, data_regression):
+    workspace.set_root("case_params_on_lib", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_params_on_lib.robot")
+    doc.source = """
+*** Keyword ***
+Deprecated keyword
+    [Documentation]    *DEPRECATED*    Ok, this is deprecated
+    Log to console    Deprecated
+    
+*** Task ***
+Some task
+    Deprecated Keyword
+"""
+
+    _collect_errors(workspace, doc, data_regression)

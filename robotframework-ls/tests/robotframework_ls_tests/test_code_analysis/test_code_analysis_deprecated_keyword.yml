@@ -1,0 +1,12 @@
+- message: 'Keyword: Deprecated Keyword is deprecated'
+  range:
+    end:
+      character: 22
+      line: 8
+    start:
+      character: 4
+      line: 8
+  severity: 4
+  source: robotframework
+  tags:
+  - 2
