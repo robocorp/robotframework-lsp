@@ -181,6 +181,8 @@ Test
 
 
 def test_resource_does_not_exist(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.robot_version import get_robot_major_version
+
     workspace.set_root("case4", libspec_manager=libspec_manager)
     doc = workspace.put_doc(
         "case4.robot",
@@ -206,7 +208,12 @@ Test
     from robotframework_ls.robot_config import RobotConfig
 
     config = RobotConfig()
-    _collect_errors(workspace, doc, data_regression, config=config)
+    v = get_robot_major_version()
+    if v > 4:
+        v = 4
+    basename = f"test_resource_does_not_exist.v{v}"
+
+    _collect_errors(workspace, doc, data_regression, config=config, basename=basename)
 
 
 def test_empty_library_exists(workspace, libspec_manager, data_regression):
@@ -241,6 +248,8 @@ Library    does_not_exist.py
 
 
 def test_report_wrong_library(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.robot_version import get_robot_major_version
+
     workspace.set_root("case4", libspec_manager=libspec_manager)
     doc = workspace.put_doc(
         "case4.robot",
@@ -253,7 +262,17 @@ Resource    DoesNotExist
     from robotframework_ls.robot_config import RobotConfig
 
     config = RobotConfig()
-    _collect_errors(workspace, doc, data_regression, config=config)
+    v = get_robot_major_version()
+    if v > 4:
+        v = 4
+    basename = f"test_report_wrong_library.v{v}"
+    _collect_errors(
+        workspace,
+        doc,
+        data_regression,
+        config=config,
+        basename=basename,
+    )
 
 
 def test_casing_on_filename(workspace, libspec_manager, data_regression):
@@ -662,6 +681,8 @@ Library    AnotherLibWithParams   param1=foo   foo=not ok
 def test_code_analysis_show_why_unresolved_library(
     workspace, libspec_manager, data_regression
 ):
+    from robotframework_ls.impl.robot_version import get_robot_major_version
+
     workspace.set_root("case_params_on_lib", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case_params_on_lib.robot")
     doc.source = """
@@ -669,7 +690,12 @@ def test_code_analysis_show_why_unresolved_library(
 Library    LibWithParams
 """
 
-    _collect_errors(workspace, doc, data_regression)
+    v = get_robot_major_version()
+    if v > 4:
+        v = 4
+    basename = f"test_code_analysis_show_why_unresolved_library.v{v}"
+
+    _collect_errors(workspace, doc, data_regression, basename=basename)
 
 
 def test_code_analysis_multiple_errors(workspace, libspec_manager, data_regression):

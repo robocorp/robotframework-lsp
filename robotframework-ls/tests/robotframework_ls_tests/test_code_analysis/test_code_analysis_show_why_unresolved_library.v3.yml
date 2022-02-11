@@ -1,0 +1,22 @@
+- message: 'Unresolved library: LibWithParams.
+
+    Error generating libspec:
+
+    Test Library ''LibWithParams'' expected 1 argument, got 0.
+
+    Consider using default arguments in the LibWithParams constructor and
+
+    calling the "Robot Framework: Clear caches and restart" action or
+
+    adding "LibWithParams" to the "robot.libraries.libdoc.needsArgs"
+
+    setting to pass the typed arguments when generating the libspec.'
+  range:
+    end:
+      character: 24
+      line: 2
+    start:
+      character: 11
+      line: 2
+  severity: 1
+  source: robotframework

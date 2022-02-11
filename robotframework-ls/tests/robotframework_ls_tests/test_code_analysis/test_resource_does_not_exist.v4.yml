@@ -68,7 +68,16 @@
       line: 11
   severity: 1
   source: robotframework
-- message: 'Unresolved library: DoesNotExist'
+- message: 'Unresolved library: DoesNotExist.
+
+    Error generating libspec:
+
+    Importing library ''DoesNotExist'' failed: ModuleNotFoundError: No module named
+    ''DoesNotExist''
+
+    Consider adding the needed paths to the "robot.pythonpath" setting
+
+    and calling the "Robot Framework: Clear caches and restart" action.'
   range:
     end:
       character: 23
@@ -78,7 +87,11 @@
       line: 1
   severity: 1
   source: robotframework
-- message: 'Unresolved library: .'
+- message: 'Unresolved library: ..
+
+    Error generating libspec:
+
+    Format must be ''HTML'', ''XML'', ''JSON'' or ''LIBSPEC'', got ''''.'
   range:
     end:
       character: 12

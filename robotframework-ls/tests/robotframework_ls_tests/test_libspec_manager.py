@@ -282,6 +282,7 @@ def test_libspec_manager_caches(libspec_manager, workspace_dir):
 
 def test_libspec_manager_basic(workspace, libspec_manager):
     from robotframework_ls.impl import robot_constants
+    from robotframework_ls.impl.robot_version import get_robot_major_version
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
@@ -312,12 +313,19 @@ def test_libspec_manager_basic(workspace, libspec_manager):
 
     libdoc_or_error = get_library_doc_or_error("invalid")
     assert libdoc_or_error.library_doc is None
-    assert "Importing library 'invalid' failed" in libdoc_or_error.error
+    if get_robot_major_version() >= 4:
+        assert "Importing library 'invalid' failed" in libdoc_or_error.error
+    else:
+        assert "Importing test library 'invalid' failed" in libdoc_or_error.error
 
     # 2nd call should get error from cache
     libdoc_or_error = get_library_doc_or_error("invalid")
     assert libdoc_or_error.library_doc is None
-    assert "Importing library 'invalid' failed" in libdoc_or_error.error
+    assert libdoc_or_error.library_doc is None
+    if get_robot_major_version() >= 4:
+        assert "Importing library 'invalid' failed" in libdoc_or_error.error
+    else:
+        assert "Importing test library 'invalid' failed" in libdoc_or_error.error
 
     library = get_library_doc_or_error("case1_library").library_doc
 

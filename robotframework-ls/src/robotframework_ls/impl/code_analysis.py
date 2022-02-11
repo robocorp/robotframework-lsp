@@ -244,6 +244,7 @@ def collect_analysis_errors(initial_completion_context):
         from robotframework_ls.impl.robot_lsp_constants import (
             OPTION_ROBOT_LINT_UNDEFINED_LIBRARIES,
         )
+        from robotframework_ls.impl.robot_version import get_robot_major_version
 
         if config is not None and not config.get_setting(
             OPTION_ROBOT_LINT_UNDEFINED_LIBRARIES, bool, True
@@ -254,9 +255,32 @@ def collect_analysis_errors(initial_completion_context):
         if doc and doc.uri == initial_completion_context.doc.uri:
             start = (lineno - 1, col_offset)
             end = (end_lineno - 1, end_col_offset)
+
+            additional = ""
+            if error_msg is None:
+                error_msg = ""
+            else:
+                error_msg = f"\nError generating libspec:\n{error_msg}"
+
+                if "expected" in error_msg:
+                    import re
+
+                    if re.search(r"expected\s+(.*)\s+argument(s)?,\s+got", error_msg):
+                        additional = f'\nConsider using default arguments in the {library_name} constructor and\ncalling the "Robot Framework: Clear caches and restart" action or\nadding "{library_name}" to the "robot.libraries.libdoc.needsArgs"\nsetting to pass the typed arguments when generating the libspec.'
+
+                if not additional and "Importing" in error_msg:
+                    import re  # noqa
+
+                    if get_robot_major_version() <= 3:
+                        pattern = r"Importing\s+test\s+library(.*)failed"
+                    else:
+                        pattern = r"Importing\s+library(.*)failed"
+                    if re.search(pattern, error_msg):
+                        additional = f'\nConsider adding the needed paths to the "robot.pythonpath" setting\nand calling the "Robot Framework: Clear caches and restart" action.'
+
             errors.append(
                 ast_utils.Error(
-                    f"Unresolved library: {library_name}. Details: {error_msg}",
+                    f"Unresolved library: {library_name}.{error_msg}{additional}".strip(),
                     start,
                     end,
                 )

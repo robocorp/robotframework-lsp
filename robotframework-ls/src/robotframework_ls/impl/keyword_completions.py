@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from robocorp_ls_core.protocols import check_implements
 from robocorp_ls_core.robotframework_log import get_logger
