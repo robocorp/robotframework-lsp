@@ -60,7 +60,7 @@ patchPluginXml {
     <li>When a libspec can't be generated the reason and possible fixes are properly shown to the user.</li>
     <li>Signature info is now shown for libraries.</li>
     <li>Added options related to enabling/disabling linting features individually (see: <strong>robot.lint.*</strong> settings).</li>
-    <li>Added <strong>${EMPTY}</strong> completion.</li>
+    <li>Added <strong>EMPTY</strong> completion.</li>
     <li>Snippet completions are now done at the target <strong>robot.python.executable</strong> and not <strong>robot.language-server.python</strong> (to account for statements only available depending on robot version).</li>
     <li>The active parameter is properly highlighted in the signature help.</li>
     <li>The signature help is shown whenever a space is typed.</li>
