@@ -25,9 +25,10 @@ class SkipAnalysisControlFlowException(Exception):
 
 
 class UsageInfoForKeywordArgumentAnalysis:
-    def __init__(self, node, token_to_report_missing_argument):
+    def __init__(self, node, token_to_report_missing_argument, argument_usage_index=-1):
         self.node = node
         self._token_to_report_missing_argument = token_to_report_missing_argument
+        self.argument_usage_index = argument_usage_index
 
     def get_token_to_report_argument_missing(self):
         return self._token_to_report_missing_argument
@@ -132,11 +133,17 @@ class KeywordArgumentAnalysis:
 
         return active_parameter
 
-    def _iter_args(self, tokens):
+    def _iter_args(self, tokens, argument_usage_index: int):
         from robot.api import Token
 
         for token in tokens:
             if token.type == Token.ARGUMENT:
+                # In a Run Keyword     Some Keyword     Arguments
+                # We want to skip the `Some Keyword` (which is itself an argument).
+                if argument_usage_index > -1:
+                    argument_usage_index -= 1
+                    continue
+
                 if token.value.startswith("&{") or token.value.startswith("@{"):
                     # All bets are off in this case (it may match anything...)
                     raise SkipAnalysisControlFlowException()
@@ -210,7 +217,9 @@ class KeywordArgumentAnalysis:
                 normalize_robot_name(arg_name)
             ] = definition_arg
 
-        tokens_args_to_iterate = self._iter_args(usage_info.node.tokens)
+        tokens_args_to_iterate = self._iter_args(
+            usage_info.node.tokens, usage_info.argument_usage_index
+        )
         # Fill positional args
         for token_arg in tokens_args_to_iterate:
             if not definition_keyword_args_deque:

@@ -83,9 +83,35 @@ class NodeInfo(Generic[Y]):
 
 
 TokenInfo = namedtuple("TokenInfo", "stack, node, token")
-KeywordUsageInfo = namedtuple(
-    "KeywordUsageInfo", "stack, node, token, name, is_argument_usage"
-)
+
+
+class KeywordUsageInfo:
+    __slots__ = [
+        "stack",
+        "node",
+        "token",
+        "name",
+        "is_argument_usage",
+        "argument_usage_index",
+    ]
+
+    def __init__(
+        self, stack, node, token, name, is_argument_usage=False, argument_usage_index=-1
+    ):
+        self.stack = stack
+        self.node = node
+        self.token = token
+        self.name = name
+        self.is_argument_usage = is_argument_usage
+        self.argument_usage_index = argument_usage_index
+
+    def __repr__(self):
+        if self.is_argument_usage:
+            return f"KeywordUsageInfo({self.name} (argument usage: {self.argument_usage_index}))"
+        else:
+            return f"KeywordUsageInfo({self.name})"
+
+    __str__ = __repr__
 
 
 class IKeywordArg(Protocol):

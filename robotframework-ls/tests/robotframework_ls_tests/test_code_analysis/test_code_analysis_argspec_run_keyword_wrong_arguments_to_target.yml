@@ -1,0 +1,10 @@
+- message: 'Mandatory argument missing: message'
+  range:
+    end:
+      character: 33
+      line: 3
+    start:
+      character: 19
+      line: 3
+  severity: 1
+  source: robotframework

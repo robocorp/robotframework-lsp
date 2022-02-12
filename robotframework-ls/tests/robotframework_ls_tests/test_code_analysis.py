@@ -679,6 +679,21 @@ Some task
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
+def test_code_analysis_argspec_run_keyword_wrong_arguments_to_target(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case_argspec_expand", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_argspec_expand.robot")
+    doc.source = """
+*** Task ***
+Some task
+    Run keyword    Log to console    stream=STDOUT
+    Run keyword Unless    a<2   Log to console    stream=STDOUT
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
 def test_code_analysis_argspec_library(workspace, libspec_manager, data_regression):
     workspace.set_root("case_params_on_lib", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case_params_on_lib.robot")

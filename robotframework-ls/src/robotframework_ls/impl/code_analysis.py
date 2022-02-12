@@ -355,9 +355,6 @@ def collect_analysis_errors(initial_completion_context):
                 ):
                     continue
 
-                if keyword_usage_info.is_argument_usage:
-                    continue
-
                 from robotframework_ls.impl.keyword_argument_analysis import (
                     KeywordArgumentAnalysis,
                 )
@@ -367,11 +364,24 @@ def collect_analysis_errors(initial_completion_context):
                     keyword_found.keyword_args
                 )
 
-                keyword_token = keyword_usage_info.node.get_token(Token.KEYWORD)
+                keyword_token = None
+                if keyword_usage_info.is_argument_usage:
+                    try:
+                        keyword_token = keyword_usage_info.node.get_tokens(
+                            Token.ARGUMENT
+                        )[keyword_usage_info.argument_usage_index]
+                    except IndexError:
+                        pass
+
+                if keyword_token is None:
+                    keyword_token = keyword_usage_info.node.get_token(Token.KEYWORD)
+
                 if keyword_token is not None:
                     for error in keyword_argument_analysis.collect_keyword_usage_errors(
                         UsageInfoForKeywordArgumentAnalysis(
-                            keyword_usage_info.node, keyword_token
+                            keyword_usage_info.node,
+                            keyword_token,
+                            keyword_usage_info.argument_usage_index,
                         )
                     ):
                         errors.append(error)

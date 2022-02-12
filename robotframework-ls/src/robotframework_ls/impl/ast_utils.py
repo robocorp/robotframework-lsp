@@ -482,9 +482,15 @@ def iter_keyword_usage_tokens(
 
             if collect_args_as_keywords:
                 for token in usage_info.node.tokens:
-                    if is_argument_keyword_name(usage_info.node, token):
+                    i = get_argument_keyword_name_index(node, token)
+                    if i >= 0:
                         yield KeywordUsageInfo(
-                            usage_info.stack, usage_info.node, token, token.value, True
+                            usage_info.stack,
+                            usage_info.node,
+                            token,
+                            token.value,
+                            True,
+                            i,
                         )
 
 
@@ -502,13 +508,13 @@ def _create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
         if token is not None:
             node = _copy_of_node_replacing_token(node, token, Token.KEYWORD)
             keyword_name = token.value
-            return KeywordUsageInfo(tuple(stack), node, token, keyword_name, False)
+            return KeywordUsageInfo(tuple(stack), node, token, keyword_name)
 
     elif isinstance_name(node, ("Fixture", "TestTemplate", "Template")):
         node, token = _strip_node_and_token_bdd_prefix(node, Token.NAME)
         if token is not None:
             keyword_name = token.value
-            return KeywordUsageInfo(tuple(stack), node, token, keyword_name, False)
+            return KeywordUsageInfo(tuple(stack), node, token, keyword_name)
 
     return None
 
@@ -522,13 +528,17 @@ def create_keyword_usage_info_from_token(
 
     :note: this goes hand-in-hand with get_keyword_name_token.
     """
-    if is_argument_keyword_name(node, token):
-        return KeywordUsageInfo(tuple(stack), node, token, token.value, True)
+    i = get_argument_keyword_name_index(node, token)
+    if i >= 0:
+        return KeywordUsageInfo(tuple(stack), node, token, token.value, True, i)
 
     return _create_keyword_usage_info(stack, node)
 
 
-def is_argument_keyword_name(node, token) -> bool:
+def get_argument_keyword_name_index(node, token) -> int:
+    """
+    Note: the return is 0-based (even though KEYWORD_NAME_TO_KEYWORD_INDEX is 1-based).
+    """
     if isinstance_name(node, "KeywordCall"):
         if node.keyword:
             consider_keyword_at_index = KEYWORD_NAME_TO_KEYWORD_INDEX.get(
@@ -541,8 +551,12 @@ def is_argument_keyword_name(node, token) -> bool:
                         i_arg += 1
                         if arg is token:
                             if i_arg == consider_keyword_at_index:
-                                return True
-    return False
+                                return i_arg - 1
+    return -1
+
+
+def is_argument_keyword_name(node, token) -> bool:
+    return get_argument_keyword_name_index(node, token) >= 0
 
 
 CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS = ("Fixture", "TestTemplate", "Template")
