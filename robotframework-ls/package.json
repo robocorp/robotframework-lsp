@@ -401,7 +401,11 @@
                     ".robot",
                     ".resource"
                 ],
-                "configuration": "./language-configuration.json"
+                "configuration": "./language-configuration.json",
+                "icon": {
+                    "light": "./images/light.svg",
+                    "dark": "./images/dark.svg"
+                }
             }
         ],
         "grammars": [

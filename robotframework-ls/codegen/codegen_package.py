@@ -213,6 +213,10 @@ def get_json_contents():
                     "aliases": ["Robot Framework", "robotframework"],
                     "extensions": [".robot", ".resource"],
                     "configuration": "./language-configuration.json",
+                    "icon": {
+                        "light": "./images/light.svg",
+                        "dark": "./images/dark.svg",
+                    },
                 }
             ],
             "grammars": [
