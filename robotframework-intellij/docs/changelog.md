@@ -1,3 +1,22 @@
+New in 0.40.0 (2022-02-12)
+-----------------------------
+
+- Keyword calls and library inits are now validated according to the signature. [#558](https://github.com/robocorp/robotframework-lsp/issues/558)
+- Usage of deprecated keywords is marked with a strikethrough.
+- When a libspec can't be generated the reason and possible fixes are properly shown to the user.
+- Signature info is now shown for libraries.
+- Added options related to enabling/disabling linting features individually (see: `robot.lint.*` settings).
+- Added `${EMPTY}` completion. [#566](https://github.com/robocorp/robotframework-lsp/issues/566)
+- Snippet completions are now done at the target `robot.python.executable` and not `robot.language-server.python` (to account for statements only available depending on robot version).
+- The active parameter is properly highlighted in the signature help.
+- The signature help is shown whenever a space is typed.
+- Fixed case where `try..finally` wasn't stepping properly with step next.
+- When debugging variable values are shown on hover. [#550](https://github.com/robocorp/robotframework-lsp/issues/550)
+- A better error message is provided in the case where `robot` is not available or shadowed. [#563](https://github.com/robocorp/robotframework-lsp/issues/563)
+- Semantic highlighting is provided for variables in documentation. [#564](https://github.com/robocorp/robotframework-lsp/issues/564)
+- The current argument is highlighted during hover.
+
+
 New in 0.39.1 (2022-02-07)
 -----------------------------
 

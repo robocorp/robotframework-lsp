@@ -31,7 +31,7 @@ See: [Config](docs/config.md) for details.
 See: [FAQ](docs/faq.md) for common issues encountered while configuring the language server.
   
 
-Features (0.39.0)
+Features (0.40.0)
 -----------------
 
 - Test Explorer support in VSCode.

@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.39.0'
+version '0.40.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,20 +51,24 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.39.0
+    Release 0.40.0
     </p>
     <ul>
 
-    <li>Robot Framework 5 is now officially supported.</li>
-    <ul>
-      <li>New statements (TRY, WHILE) should now work for all existing features.</li>
-    </ul>
-    <li>Debugger: step next considers that control flow statements are a part of the current keyword.</li>
-    <li>Debugger: Fixed issue initializing `pydevd` debugger when it's already present in the environment.</li>
-    <li>Semantic highlighting properly colors keyword calls with a namespace in fixtures.</li>
-    <li>Libraries without keywords (a.k.a `DataDriver`) are no longer considered undefined.</li>
-    <li>Properly deal with suites with a `__` prefix when launching.</li>
-    <li>Raised time to obtain libspec mutex and give a better message on failure.</li>
+    <li>Keyword calls and library inits are now validated according to the signature.</li>
+    <li>Usage of deprecated keywords is marked with a strikethrough.</li>
+    <li>When a libspec can't be generated the reason and possible fixes are properly shown to the user.</li>
+    <li>Signature info is now shown for libraries.</li>
+    <li>Added options related to enabling/disabling linting features individually (see: <strong>robot.lint.*</strong> settings).</li>
+    <li>Added <strong>${EMPTY}</strong> completion.</li>
+    <li>Snippet completions are now done at the target <strong>robot.python.executable</strong> and not <strong>robot.language-server.python</strong> (to account for statements only available depending on robot version).</li>
+    <li>The active parameter is properly highlighted in the signature help.</li>
+    <li>The signature help is shown whenever a space is typed.</li>
+    <li>Fixed case where <strong>try..finally</strong> wasn't stepping properly with step next.</li>
+    <li>When debugging variable values are shown on hover.</li>
+    <li>A better error message is provided in the case where <strong>robot</strong> is not available or shadowed.</li>
+    <li>Semantic highlighting is provided for variables in documentation.</li>
+    <li>The current argument is highlighted during hover.</li>
 
     <br>
     Current feature set:<br>
