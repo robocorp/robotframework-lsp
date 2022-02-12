@@ -355,6 +355,9 @@ def collect_analysis_errors(initial_completion_context):
                 ):
                     continue
 
+                if keyword_usage_info.is_argument_usage:
+                    continue
+
                 from robotframework_ls.impl.keyword_argument_analysis import (
                     KeywordArgumentAnalysis,
                 )

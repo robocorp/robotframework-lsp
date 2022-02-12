@@ -1,3 +1,9 @@
+New in 0.40.1 (2022-02-12)
+-----------------------------
+
+- Critical fix: skip analysis of arguments for `Run Keyword` variants.
+
+
 New in 0.40.0 (2022-02-12)
 -----------------------------
 

@@ -484,7 +484,7 @@ def iter_keyword_usage_tokens(
                 for token in usage_info.node.tokens:
                     if is_argument_keyword_name(usage_info.node, token):
                         yield KeywordUsageInfo(
-                            usage_info.stack, usage_info.node, token, token.value
+                            usage_info.stack, usage_info.node, token, token.value, True
                         )
 
 
@@ -502,13 +502,13 @@ def _create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
         if token is not None:
             node = _copy_of_node_replacing_token(node, token, Token.KEYWORD)
             keyword_name = token.value
-            return KeywordUsageInfo(tuple(stack), node, token, keyword_name)
+            return KeywordUsageInfo(tuple(stack), node, token, keyword_name, False)
 
     elif isinstance_name(node, ("Fixture", "TestTemplate", "Template")):
         node, token = _strip_node_and_token_bdd_prefix(node, Token.NAME)
         if token is not None:
             keyword_name = token.value
-            return KeywordUsageInfo(tuple(stack), node, token, keyword_name)
+            return KeywordUsageInfo(tuple(stack), node, token, keyword_name, False)
 
     return None
 
@@ -523,7 +523,7 @@ def create_keyword_usage_info_from_token(
     :note: this goes hand-in-hand with get_keyword_name_token.
     """
     if is_argument_keyword_name(node, token):
-        return KeywordUsageInfo(tuple(stack), node, token, token.value)
+        return KeywordUsageInfo(tuple(stack), node, token, token.value, True)
 
     return _create_keyword_usage_info(stack, node)
 

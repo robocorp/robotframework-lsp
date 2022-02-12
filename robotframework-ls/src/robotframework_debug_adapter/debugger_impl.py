@@ -500,7 +500,9 @@ Evaluation
             ast_utils.iter_keyword_usage_tokens(model, collect_args_as_keywords=False)
         )
         if len(usage_info) == 1:
-            _stack, node, _token, name = next(iter(usage_info))
+            usage = next(iter(usage_info))
+            node = usage.node
+            name = usage.name
 
             dap_frames = stack_info.dap_frames
             if dap_frames:

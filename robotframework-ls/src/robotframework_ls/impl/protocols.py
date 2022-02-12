@@ -83,7 +83,9 @@ class NodeInfo(Generic[Y]):
 
 
 TokenInfo = namedtuple("TokenInfo", "stack, node, token")
-KeywordUsageInfo = namedtuple("KeywordUsageInfo", "stack, node, token, name")
+KeywordUsageInfo = namedtuple(
+    "KeywordUsageInfo", "stack, node, token, name, is_argument_usage"
+)
 
 
 class IKeywordArg(Protocol):
