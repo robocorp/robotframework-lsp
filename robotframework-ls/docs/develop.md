@@ -97,4 +97,4 @@ Official clients supported: `VSCode` and `Intellij`.
 Other editors supporting language servers can get it with: `pip install robotframework-lsp`.
 
 Install `Robot Framework Language Server` from the respective marketplace or from one of the links below.
-Links: [https://marketplace.visualstudio.com/items?itemName=robocorp.robotframework-lsp](VSCode), [https://plugins.jetbrains.com/plugin/16086-robot-framework-language-server/versions/stable/](Intellij) , [https://open-vsx.org/extension/robocorp/robotframework-lsp](OpenVSX), [https://pypi.org/project/robotframework-lsp/](PyPI), [https://github.com/robocorp/robotframework-lsp/tree/master/robotframework-ls](GitHub (sources))
+Links: [VSCode](https://marketplace.visualstudio.com/items?itemName=robocorp.robotframework-lsp), [Intellij](https://plugins.jetbrains.com/plugin/16086-robot-framework-language-server/versions/stable/) , [OpenVSX](https://open-vsx.org/extension/robocorp/robotframework-lsp), [PyPI](https://pypi.org/project/robotframework-lsp/), [GitHub (sources)](https://github.com/robocorp/robotframework-lsp/tree/master/robotframework-ls)
