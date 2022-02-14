@@ -1,5 +1,6 @@
 from functools import lru_cache
 from robocorp_ls_core.robotframework_log import get_logger
+import re
 
 log = get_logger(__name__)
 
@@ -132,3 +133,14 @@ def iter_dotted_names(text):
             remainder = ".".join(splitted[i + 1 :])
             head = buf.getvalue()
             yield head, remainder
+
+
+_DEPRECATED_PATTERN = re.compile(r"^\*DEPRECATED(.*)\*(.*)")
+
+
+def has_deprecated_text(docs: str) -> bool:
+    if docs and "DEPRECATED" in docs:
+        matched = _DEPRECATED_PATTERN.match(docs)
+        return bool(matched)
+
+    return False

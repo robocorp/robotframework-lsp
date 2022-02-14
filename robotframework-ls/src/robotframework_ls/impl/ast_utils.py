@@ -414,13 +414,53 @@ def iter_keyword_arguments_as_tokens(ast) -> Iterator:
                 yield token
 
 
-def get_documentation(ast) -> str:
-    doc = []
-    for _stack, node in _iter_nodes_filtered(ast, accept_class="Documentation"):
+def is_deprecated(ast) -> bool:
+    from robotframework_ls.impl.text_utilities import has_deprecated_text
+
+    docs = get_documentation_raw(ast)
+    return has_deprecated_text(docs)
+
+
+def get_documentation_raw(ast) -> str:
+    doc: List[str] = []
+    last_line: List[str] = []
+
+    last_token = None
+    for _stack, node in _iter_nodes_filtered(
+        ast, accept_class="Documentation", recursive=False
+    ):
         for token in node.tokens:
-            if token.type == token.ARGUMENT:
-                doc.append(str(token).strip())
-    return "\n".join(doc)
+            if last_token is not None and last_token.lineno != token.lineno:
+                doc.extend(last_line)
+                del last_line[:]
+
+            last_token = token
+
+            if token.type in (token.CONTINUATION, token.DOCUMENTATION):
+                # Ignore anything before a continuation.
+                del last_line[:]
+                continue
+
+            last_line.append(token.value)
+        else:
+            # Last iteration
+            doc.extend(last_line)
+
+    ret = "".join(doc).strip()
+    return ret
+
+
+def get_documentation_as_markdown(ast) -> str:
+    documentation = get_documentation_raw(ast)
+    if not documentation:
+        return documentation
+    try:
+        from robotframework_ls import robot_to_markdown
+
+        return robot_to_markdown.convert(documentation)
+    except:
+        log.exception("Error converting to markdown: %s", documentation)
+        return documentation
 
 
 def iter_variable_assigns(ast) -> Iterator:

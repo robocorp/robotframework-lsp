@@ -27,18 +27,23 @@ from robocorp_ls_core.robotframework_log import get_logger
 log = get_logger(__name__)
 
 
-def markdown_doc(obj):
+def _markdown_doc(lower_doc_format: str, obj):
     """
-
     :type obj: LibraryDoc|KeywordDoc
     """
-    if obj is None:
-        return ""
-
     if not obj.doc:
         return ""
 
-    if obj.doc_format.lower() == "html":
+    if lower_doc_format == "robot":
+        try:
+            return obj.__md_doc__
+        except AttributeError:
+            from robotframework_ls import robot_to_markdown
+
+            obj.__md_doc__ = robot_to_markdown.convert(obj.doc)
+        return obj.__md_doc__
+
+    if lower_doc_format == "html":
         try:
             return obj.__md_doc__
         except AttributeError:
@@ -46,18 +51,32 @@ def markdown_doc(obj):
 
             obj.__md_doc__ = html_to_markdown.convert(obj.doc)
         return obj.__md_doc__
+
+    assert lower_doc_format == "markdown"
+
     return obj.doc
 
 
 def docs_and_format(obj):
+    """
+    Given an object with a '.doc_format' and a '.doc', provide a
+    tuple with (formatted contents, MarkupKind)
+
+    Where MarkupKind = 'plaintext' | 'markdown'
+
+    Note: may create a `__md_doc__` cache in the object.
+    """
     doc_format = obj.doc_format
-    if doc_format.lower() == "html":
-        return markdown_doc(obj), "markdown"
+    lower = doc_format.lower()
 
-    if doc_format.lower() == "markdown":
-        return obj.doc, "markdown"
+    if lower in ("robot", "html", "markdown"):
+        try:
+            return _markdown_doc(lower, obj), "markdown"
+        except:
+            log.exception("Error formatting: %s.\nContent:\n%s", lower, obj.doc)
+            return obj.doc, "plaintext"
 
-    return obj.doc, doc_format
+    return obj.doc, "plaintext"
 
 
 class LibraryDoc(object):

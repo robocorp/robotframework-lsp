@@ -99,7 +99,7 @@ def _compute_symbols_from_ast(completion_context: ICompletionContext) -> ISymbol
     uri = doc.uri
 
     for keyword_node_info in ast_utils.iter_keywords(ast):
-        docs = ast_utils.get_documentation(keyword_node_info.node)
+        docs = ast_utils.get_documentation_as_markdown(keyword_node_info.node)
         args = []
         for arg in ast_utils.iter_keyword_arguments_as_str(keyword_node_info.node):
             args.append(arg)

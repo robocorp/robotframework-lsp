@@ -4,11 +4,10 @@
     value: '**Yet Another Equal Redefined(${arg1}, ${arg2})**
 
 
-      Yes, this is redefined.
+      Yes, this is redefined. 2nd line. 3rd line.
 
-      2nd line.
 
-      3rd line.'
+      '
   insertText: Yet Another Equal Redefined    ${1:\$arg1}    ${2:\$arg2}
   insertTextFormat: 2
   kind: 3
