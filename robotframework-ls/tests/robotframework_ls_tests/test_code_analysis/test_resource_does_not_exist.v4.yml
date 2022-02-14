@@ -91,7 +91,7 @@
 
     Error generating libspec:
 
-    Format must be ''HTML'', ''XML'', ''JSON'' or ''LIBSPEC'', got ''''.'
+    Unable to generate libspec for: .'
   range:
     end:
       character: 12
@@ -99,6 +99,34 @@
     start:
       character: 11
       line: 2
+  severity: 1
+  source: robotframework
+- message: 'Unresolved library: ...
+
+    Error generating libspec:
+
+    Unable to generate libspec for: ..'
+  range:
+    end:
+      character: 13
+      line: 3
+    start:
+      character: 11
+      line: 3
+  severity: 1
+  source: robotframework
+- message: 'Unresolved library: ../.
+
+    Error generating libspec:
+
+    Unable to generate libspec for: ../'
+  range:
+    end:
+      character: 14
+      line: 4
+    start:
+      character: 11
+      line: 4
   severity: 1
   source: robotframework
 - message: 'Mandatory argument missing: arg1'

@@ -21,15 +21,51 @@ from robocorp_ls_core.cache import instance_cache
 from typing import Optional, Union, Type
 from robocorp_ls_core.protocols import Sentinel
 from robotframework_ls.impl.protocols import ISymbolsCache
-from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.robotframework_log import get_logger, get_log_level
 
 
 log = get_logger(__name__)
 
+_notified_missing_docutils = False
 
-def _markdown_doc(lower_doc_format: str, obj):
+
+def _rest_to_markdown(doc: str) -> Optional[str]:
+    global _notified_missing_docutils
+    try:
+        import docutils.core
+        from robotframework_ls.impl.doctree2md import Writer
+    except Exception as e:
+        if _notified_missing_docutils:
+            return None
+
+        if get_log_level() >= 2:
+            log.exception(
+                "It's not possible to convert rest to markdown (please make sure that `docutils` is installed)"
+            )
+        else:
+            log.critical(
+                "It's not possible to convert rest to markdown (please make sure that `docutils` is installed).\nOriginal error: %s",
+                e,
+            )
+
+        _notified_missing_docutils = True
+        return None
+
+    return docutils.core.publish_string(
+        doc,
+        writer=Writer(),
+        settings_overrides={
+            "input_encoding": "unicode",
+            "output_encoding": "unicode",
+        },
+    )
+
+
+def _markdown_doc(lower_doc_format: str, obj) -> Optional[str]:
     """
     :type obj: LibraryDoc|KeywordDoc
+
+    Note that None is returned if the conversion couldn't be done.
     """
     if not obj.doc:
         return ""
@@ -52,9 +88,17 @@ def _markdown_doc(lower_doc_format: str, obj):
             obj.__md_doc__ = html_to_markdown.convert(obj.doc)
         return obj.__md_doc__
 
-    assert lower_doc_format == "markdown"
+    if lower_doc_format == "rest":
+        try:
+            return obj.__md_doc__
+        except AttributeError:
+            obj.__md_doc__ = _rest_to_markdown(obj.doc)
+        return obj.__md_doc__
 
-    return obj.doc
+    if lower_doc_format in ("markdown", "md"):
+        return obj.doc
+
+    return None
 
 
 def docs_and_format(obj):
@@ -69,13 +113,16 @@ def docs_and_format(obj):
     doc_format = obj.doc_format
     lower = doc_format.lower()
 
-    if lower in ("robot", "html", "markdown"):
+    if lower in ("robot", "html", "markdown", "rest"):
         try:
-            return _markdown_doc(lower, obj), "markdown"
+            as_markdown = _markdown_doc(lower, obj)
+            if as_markdown is not None:
+                return as_markdown, "markdown"
+
         except:
             log.exception("Error formatting: %s.\nContent:\n%s", lower, obj.doc)
-            return obj.doc, "plaintext"
 
+    # Could be 'text' or 'rest' here...
     return obj.doc, "plaintext"
 
 
