@@ -391,6 +391,24 @@ From: https://github.com/MarketSquare/robotframework-robocop
    See the License for the specific language governing permissions and
    limitations under the License.
    
-20) All third party javascript packages in node_modules folders are licensed under the licenses specified in those packages.
+
+20) robotcode (Apache 2.0)
+From: https://github.com/d-biehl/robotcode
+
+   Copyright 2021-2022, Daniel Biehl
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
    
-21) All third party python packages in robocorp-python-ls-core/src/robocorp_ls_core/libs folders are licensed under the licenses specified in those packages.
+21) All third party javascript packages in node_modules folders are licensed under the licenses specified in those packages.
+   
+22) All third party python packages in robocorp-python-ls-core/src/robocorp_ls_core/libs folders are licensed under the licenses specified in those packages.

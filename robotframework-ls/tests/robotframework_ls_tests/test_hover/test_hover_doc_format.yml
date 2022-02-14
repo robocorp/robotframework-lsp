@@ -1,0 +1,18 @@
+kind: markdown
+value: '**Some Keyword**
+
+
+  Some **table** in docs
+
+
+
+  | A | B | C |
+
+  | :--- | :--- | :--- |
+
+  | *1* | Hello | world! |
+
+  | *2* | Hi |  |
+
+
+  '

@@ -386,22 +386,15 @@ def collect_analysis_errors(initial_completion_context):
                     ):
                         errors.append(error)
 
-                docs_without_signature = keyword_found.docs_without_signature
-                if docs_without_signature and "DEPRECATED" in docs_without_signature:
-                    import re
-
-                    matched = re.match(
-                        r"^\*DEPRECATED(.*)\*(.*)", docs_without_signature
+                if keyword_found.is_deprecated():
+                    error = create_error_from_node(
+                        keyword_usage_info.node,
+                        f"Keyword: {keyword_usage_info.name} is deprecated",
+                        tokens=[keyword_usage_info.token],
                     )
-                    if matched:
-                        error = create_error_from_node(
-                            keyword_usage_info.node,
-                            f"Keyword: {keyword_usage_info.name} is deprecated",
-                            tokens=[keyword_usage_info.token],
-                        )
-                        error.severity = DiagnosticSeverity.Hint
-                        error.tags = [DiagnosticTag.Deprecated]
-                        errors.append(error)
+                    error.severity = DiagnosticSeverity.Hint
+                    error.tags = [DiagnosticTag.Deprecated]
+                    errors.append(error)
 
             if len(errors) >= MAX_ERRORS:
                 # i.e.: Collect at most 100 errors

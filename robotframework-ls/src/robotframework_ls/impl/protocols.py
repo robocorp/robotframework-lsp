@@ -245,6 +245,9 @@ class IKeywordFound(Protocol):
     def keyword_args(self) -> Sequence[IKeywordArg]:
         pass
 
+    def is_deprecated(self) -> bool:
+        pass
+
     @property
     def docs(self) -> str:
         pass

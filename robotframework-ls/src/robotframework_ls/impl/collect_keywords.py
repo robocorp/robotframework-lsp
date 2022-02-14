@@ -108,9 +108,7 @@ class _KeywordFoundFromAst(object):
     @property
     @instance_cache
     def docs(self) -> str:
-        from robotframework_ls.impl import ast_utils
-
-        docs = ast_utils.get_documentation(self._keyword_node)
+        docs = self.docs_without_signature
         args = [x.original_arg for x in self.keyword_args]
 
         return _build_docs(self.keyword_name, args, docs, "markdown")
@@ -120,7 +118,13 @@ class _KeywordFoundFromAst(object):
     def docs_without_signature(self) -> str:
         from robotframework_ls.impl import ast_utils
 
-        return ast_utils.get_documentation(self._keyword_node)
+        return ast_utils.get_documentation_as_markdown(self._keyword_node)
+
+    @instance_cache
+    def is_deprecated(self) -> bool:
+        from robotframework_ls.impl import ast_utils
+
+        return ast_utils.is_deprecated(self._keyword_node)
 
     @property
     @instance_cache
@@ -217,6 +221,12 @@ class _KeywordFoundFromLibrary(object):
     @property
     def resource_name(self):
         return None
+
+    @instance_cache
+    def is_deprecated(self):
+        from robotframework_ls.impl import text_utilities
+
+        return text_utilities.has_deprecated_text(self._keyword_doc.doc)
 
     @property
     @instance_cache
