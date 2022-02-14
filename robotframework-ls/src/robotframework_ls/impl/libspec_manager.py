@@ -834,6 +834,9 @@ class LibspecManager(object):
             # it unless verbose mode is enabled.
             log_exception = log.debug
 
+        if not libname.replace(".", "").replace("/", "").replace("\\", "").strip():
+            return f"Unable to generate libspec for: {libname}"
+
         additional_path = None
         additional_path_exists = False
 
@@ -863,8 +866,9 @@ class LibspecManager(object):
                 if major_version < 4:
                     call.extend("-m robot.libdoc --format XML:HTML".split())
                 else:
-                    # Use default values for libspec (--format XML:HTML is deprecated).
-                    call.extend("-m robot.libdoc".split())
+                    call.extend(
+                        "-m robot.libdoc --format XML --specdocformat RAW".split()
+                    )
 
                 if additional_path and additional_path_exists:
                     call.extend(["-P", os.path.normpath(additional_path)])
