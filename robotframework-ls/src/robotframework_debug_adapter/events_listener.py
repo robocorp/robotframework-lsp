@@ -10,6 +10,9 @@ from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
     EndTestEventBody,
 )
 from collections import namedtuple
+from robocorp_ls_core.robotframework_log import get_logger
+
+log = get_logger(__name__)
 
 
 def send_event(event):
@@ -30,11 +33,15 @@ class EventsListenerV2:
 
     def __init__(self) -> None:
         from collections import deque
+        from robotframework_debug_adapter._ignore_failures_in_stack import (
+            IgnoreFailuresInStack,
+        )
 
         self._failed_keywords: Optional[List[Dict[str, Any]]] = None
         self._failure_messages: List[str] = []
         self._add_to_test_failure: str = ""
         self._source_info_stack: Deque[_SourceInfo] = deque()
+        self._ignore_failures_in_stack = IgnoreFailuresInStack()
 
     # start suite/test
 
@@ -127,6 +134,9 @@ class EventsListenerV2:
         if not message_string:
             return
 
+        if self._ignore_failures_in_stack.ignore():
+            return
+
         from robotframework_debug_adapter.message_utils import (
             extract_source_and_line_from_message,
         )
@@ -184,6 +194,7 @@ class EventsListenerV2:
             return self.log_message(message)
 
     def start_keyword(self, name: str, attributes: Dict[str, Any]) -> None:
+        self._ignore_failures_in_stack.push(attributes.get("kwname", ""))
         source = attributes.get("source")
         lineno = attributes.get("lineno")
         test_name = None
@@ -197,6 +208,10 @@ class EventsListenerV2:
             status = attributes.get("status")
             # Status could be PASS, FAIL, SKIP or NOT RUN. SKIP and NOT RUN
             if status == "FAIL":
+
+                if self._ignore_failures_in_stack.ignore():
+                    return
+
                 if self._failed_keywords is None:
                     self._failed_keywords = []
                 source = attributes.get("source")
@@ -216,4 +231,9 @@ class EventsListenerV2:
                 )
                 self._failure_messages = []
         finally:
-            self._source_info_stack.pop()
+            try:
+                self._source_info_stack.pop()
+            except:
+                log.exception("Error in self._source_info_stack.pop()")
+
+            self._ignore_failures_in_stack.pop()

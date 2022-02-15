@@ -123,3 +123,34 @@ def test_events_listener_output(debugger_api: _DebuggerAPI):
     assert debugger_api.read(EndSuiteEvent)
 
     debugger_api.read(TerminatedEvent)
+
+
+def test_events_listener_ignore(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StartSuiteEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StartTestEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import EndTestEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import EndSuiteEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+
+    target = debugger_api.get_dap_case_file("case_failure_handled.robot")
+    debugger_api.target = target
+
+    debugger_api.launch(
+        target,
+        debug=False,
+        args=[
+            "--listener=robotframework_debug_adapter.events_listener.EventsListenerV2"
+        ],
+    )
+
+    debugger_api.configuration_done()
+
+    assert debugger_api.read(StartSuiteEvent)
+    assert debugger_api.read(StartTestEvent)
+    end_test_body = debugger_api.read(EndTestEvent).body
+    assert end_test_body.status == "PASS"
+    assert not end_test_body.failed_keywords
+
+    assert debugger_api.read(EndSuiteEvent)
+
+    debugger_api.read(TerminatedEvent)

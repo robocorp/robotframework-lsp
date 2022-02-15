@@ -30,7 +30,7 @@ from robotframework_debug_adapter.protocols import (
     IBusyWait,
     IEvaluationInfo,
 )
-from typing import Optional, List, Iterable, Union, Any, Dict, FrozenSet, Tuple
+from typing import Optional, List, Iterable, Union, Any, Dict, FrozenSet, Set
 from robocorp_ls_core.basic import implements
 from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
     StackFrame,
@@ -549,6 +549,9 @@ class _RobotDebuggerImpl(object):
     @implements(IRobotDebugger.reset)
     def reset(self):
         from collections import deque
+        from robotframework_debug_adapter._ignore_failures_in_stack import (
+            IgnoreFailuresInStack,
+        )
 
         self._filename_to_line_to_breakpoint = {}
         self.busy_wait = BusyWait()
@@ -577,6 +580,7 @@ class _RobotDebuggerImpl(object):
 
         self.break_on_log_failure = is_true_in_env("RFLS_BREAK_ON_FAILURE")
         self.break_on_log_error = is_true_in_env("RFLS_BREAK_ON_ERROR")
+        self._ignore_failures_in_stack = IgnoreFailuresInStack()
 
     def write_message(self, msg):
         log.critical(
@@ -937,6 +941,9 @@ class _RobotDebuggerImpl(object):
         )
 
     def _before_run_step(self, ctx, name, entry_type, lineno, source, args):
+        if entry_type == "KEYWORD":
+            self._ignore_failures_in_stack.push(name)
+
         if not name:
             name = entry_type
 
@@ -1058,6 +1065,10 @@ class _RobotDebuggerImpl(object):
 
     def _after_run_step(self):
         entry = self._stack_ctx_entries_deque.pop()
+
+        if entry.entry_type == "KEYWORD":
+            self._ignore_failures_in_stack.pop()
+
         if self._is_control_step(entry.entry_type):
             self._stop_on_stack_len -= 1
 
@@ -1141,6 +1152,9 @@ class _RobotDebuggerImpl(object):
                 exc_name = "Suspended due to logged error: "
 
         if stop_reason is not None:
+            if self._ignore_failures_in_stack.ignore():
+                return
+
             from robotframework_debug_adapter.message_utils import (
                 extract_source_and_line_from_message,
             )
