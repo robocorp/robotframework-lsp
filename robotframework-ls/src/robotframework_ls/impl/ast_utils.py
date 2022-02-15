@@ -604,7 +604,7 @@ CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS = ("Fixture", "TestTemplate", "Template"
 
 def get_keyword_name_token(ast, token):
     """
-    If the given token is a keyword, return the token, otherwise return None.
+    If the given token is a keyword call name, return the token, otherwise return None.
 
     :note: this goes hand-in-hand with iter_keyword_usage_tokens.
     """

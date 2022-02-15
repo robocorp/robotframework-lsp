@@ -8,10 +8,13 @@ from robotframework_ls.impl.protocols import (
     IKeywordFound,
     IVariablesCollector,
     IVariableFound,
+    IKeywordDefinition,
+    cast_to_keyword_definition,
 )
 import typing
 import os
 from robocorp_ls_core.protocols import check_implements
+from robocorp_ls_core.basic import isinstance_name
 
 
 log = get_logger(__name__)
@@ -182,10 +185,25 @@ def iter_keyword_references_in_doc(
 def references(
     completion_context: ICompletionContext, include_declaration: bool
 ) -> List[LocationTypedDict]:
-    from robocorp_ls_core import uris
-    from robotframework_ls.impl.text_utilities import normalize_robot_name
 
-    ret: List[LocationTypedDict] = []
+    token_info = completion_context.get_current_token()
+    if token_info is None:
+        return []
+
+    if token_info.token.type == token_info.token.KEYWORD_NAME:
+        if isinstance_name(token_info.node, "KeywordName"):
+            from robotframework_ls.impl.find_definition import find_keyword_definition
+
+            definitions = find_keyword_definition(completion_context, token_info)
+            if definitions:
+                for definition in definitions:
+                    as_keyword_definition = cast_to_keyword_definition(definition)
+                    if as_keyword_definition:
+                        keyword_found = as_keyword_definition.keyword_found
+                        return _references_for_keyword_found(
+                            completion_context, keyword_found, include_declaration
+                        )
+
     current_keyword_definition_and_usage_info = (
         completion_context.get_current_keyword_definition_and_usage_info()
     )
@@ -194,57 +212,74 @@ def references(
         keyword_definition, _usage_info = current_keyword_definition_and_usage_info
 
         keyword_found: IKeywordFound = keyword_definition.keyword_found
+        return _references_for_keyword_found(
+            completion_context, keyword_found, include_declaration
+        )
 
-        normalized_name = normalize_robot_name(keyword_found.keyword_name)
-        # Ok, we have the keyword definition, now, we must actually look for the
-        # references...
-        if include_declaration:
-            ret.append(
-                {
-                    "uri": uris.from_fs_path(keyword_found.source),
-                    "range": {
-                        "start": {
-                            "line": keyword_found.lineno,
-                            "character": keyword_found.col_offset,
-                        },
-                        "end": {
-                            "line": keyword_found.end_lineno,
-                            "character": keyword_found.end_col_offset,
-                        },
+    return []
+
+
+def _references_for_keyword_found(
+    completion_context: ICompletionContext,
+    keyword_found: IKeywordFound,
+    include_declaration: bool,
+):
+    from robocorp_ls_core import uris
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
+
+    ret: List[LocationTypedDict] = []
+
+    normalized_name = normalize_robot_name(keyword_found.keyword_name)
+    # Ok, we have the keyword definition, now, we must actually look for the
+    # references...
+    if include_declaration:
+        ret.append(
+            {
+                "uri": uris.from_fs_path(keyword_found.source),
+                "range": {
+                    "start": {
+                        "line": keyword_found.lineno,
+                        "character": keyword_found.col_offset,
                     },
-                }
-            )
+                    "end": {
+                        "line": keyword_found.end_lineno,
+                        "character": keyword_found.end_col_offset,
+                    },
+                },
+            }
+        )
 
-        from robotframework_ls.impl.workspace_symbols import iter_symbols_caches
+    from robotframework_ls.impl.workspace_symbols import iter_symbols_caches
 
-        for symbols_cache in iter_symbols_caches(
-            None, completion_context, force_all_docs_in_workspace=True, timeout=999999
-        ):
-            completion_context.check_cancelled()
-            if symbols_cache.has_keyword_usage(normalized_name):
-                doc: Optional[IRobotDocument] = symbols_cache.get_doc()
+    for symbols_cache in iter_symbols_caches(
+        None, completion_context, force_all_docs_in_workspace=True, timeout=999999
+    ):
+        completion_context.check_cancelled()
+        if symbols_cache.has_keyword_usage(normalized_name):
+            doc: Optional[IRobotDocument] = symbols_cache.get_doc()
+            if doc is None:
+                uri = symbols_cache.get_uri()
+                if uri is None:
+                    continue
+
+                doc = typing.cast(
+                    Optional[IRobotDocument],
+                    completion_context.workspace.get_document(
+                        doc_uri=uri, accept_from_file=True
+                    ),
+                )
+
                 if doc is None:
-                    uri = symbols_cache.get_uri()
-                    if uri is None:
-                        continue
-
-                    doc = typing.cast(
-                        Optional[IRobotDocument],
-                        completion_context.workspace.get_document(
-                            doc_uri=uri, accept_from_file=True
-                        ),
+                    log.debug(
+                        "Unable to load document for getting references with uri: %s",
+                        uri,
                     )
+                    continue
 
-                    if doc is None:
-                        log.debug(
-                            "Unable to load document for getting references with uri: %s",
-                            uri,
-                        )
-                        continue
+            ref_range: RangeTypedDict
+            for ref_range in iter_keyword_references_in_doc(
+                completion_context, doc, normalized_name, keyword_found
+            ):
+                ret.append({"uri": doc.uri, "range": ref_range})
 
-                ref_range: RangeTypedDict
-                for ref_range in iter_keyword_references_in_doc(
-                    completion_context, doc, normalized_name, keyword_found
-                ):
-                    ret.append({"uri": doc.uri, "range": ref_range})
     return ret

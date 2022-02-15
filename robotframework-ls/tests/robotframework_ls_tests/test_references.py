@@ -37,6 +37,26 @@ def test_references_basic(workspace, libspec_manager, data_regression):
     check_data_regression(result, data_regression)
 
 
+def test_references_from_keyword_definition(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.references import references
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.get_doc("case4resource3.robot")
+
+    line = doc.find_line_with_contents("Yet Another Equal Redefined")
+    col = 6
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+    result = references(completion_context, include_declaration=True)
+    assert result
+
+    check_data_regression(result, data_regression)
+
+
 def test_references_with_name_1(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.references import references

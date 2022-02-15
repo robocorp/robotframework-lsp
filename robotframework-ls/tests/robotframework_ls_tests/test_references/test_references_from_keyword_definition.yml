@@ -1,0 +1,16 @@
+case4.robot:
+- range:
+    end:
+      character: 31
+      line: 10
+    start:
+      character: 4
+      line: 10
+case4resource3.robot:
+- range:
+    end:
+      character: 27
+      line: 1
+    start:
+      character: 0
+      line: 1
