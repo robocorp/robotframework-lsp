@@ -136,7 +136,7 @@ def _tokenize_token(node, initial_token):
             initial_token_type = KEYWORD
 
     if initial_token_type == KEYWORD:
-        dot_pos = initial_token.value.find(".")
+        dot_pos = initial_token.value.rfind(".")
         if dot_pos > 0:
             tok = _DummyToken()
             tok.type = "name"
