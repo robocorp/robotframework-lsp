@@ -864,7 +864,7 @@ class LibspecManager(object):
                 call = [sys.executable]
                 major_version = self.get_robot_major_version()
                 if major_version < 4:
-                    call.extend("-m robot.libdoc --format XML:HTML".split())
+                    call.extend("-m robot.libdoc --format XML".split())
                 else:
                     call.extend(
                         "-m robot.libdoc --format XML --specdocformat RAW".split()

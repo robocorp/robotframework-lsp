@@ -55,6 +55,7 @@ def _rest_to_markdown(doc: str) -> Optional[str]:
         doc,
         writer=Writer(),
         settings_overrides={
+            "syntax_highlight": "none",
             "input_encoding": "unicode",
             "output_encoding": "unicode",
         },

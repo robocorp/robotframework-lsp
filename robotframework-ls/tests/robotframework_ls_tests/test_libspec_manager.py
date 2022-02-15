@@ -89,6 +89,44 @@ def method6():
     ), "Libspec version changed. Check parsing. "
 
 
+def test_libspec_rest(libspec_manager, workspace_dir, data_regression):
+    from robotframework_ls.impl.robot_specbuilder import LibraryDoc
+    from robotframework_ls.impl.robot_specbuilder import KeywordDoc
+    from typing import List
+
+    os.makedirs(workspace_dir)
+    libspec_manager.add_additional_pythonpath_folder(workspace_dir)
+    path = Path(workspace_dir) / "CheckLib.py"
+    path.write_text(
+        '''
+from robot.api.deco import library, keyword
+
+@library(scope="GLOBAL", doc_format="REST", auto_keywords=False)
+class CheckLib:
+    @keyword("My method")
+    def my_method(self) -> None:
+        """Do something with rest.
+        
+        .. code-block:: robotframework
+
+            FOR    ${a}   IN    @{b}
+                Do Something
+            END
+        """
+'''
+    )
+
+    uri = uris.from_fs_path(os.path.join(workspace_dir, "case.robot"))
+    library_info: Optional[LibraryDoc] = libspec_manager.get_library_doc_or_error(
+        "CheckLib", True, uri
+    ).library_doc
+
+    assert library_info is not None
+    assert library_info.doc_format == "REST"
+    keywords: List[KeywordDoc] = library_info.keywords
+    data_regression.check([keyword_to_dict(k) for k in keywords])
+
+
 def test_libspec_cache_no_lib(libspec_manager, workspace_dir):
     from robotframework_ls.impl.robot_specbuilder import LibraryDoc
     import time
