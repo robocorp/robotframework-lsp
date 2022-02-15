@@ -427,3 +427,12 @@ def test_get_robot_yaml_environ_not_ok(rcc: IRcc, datadir, holotree_manager):
     assert result.message
     assert not commands
     assert "Environment from broken conda.yaml requested" in result.message
+
+
+def test_rcc_timeout(rcc):
+    result = rcc._run_rcc(
+        ["configuration", "diagnostics"],
+        mutex_name=None,
+        timeout=0.0001,
+    )
+    assert result.message.startswith("Timed out (0.0001s elapsed) when running: ")

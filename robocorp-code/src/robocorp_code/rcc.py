@@ -1,4 +1,4 @@
-from subprocess import CalledProcessError
+from subprocess import CalledProcessError, TimeoutExpired, list2cmdline
 import sys
 from typing import Optional, List, Any, Dict, Set
 import weakref
@@ -242,7 +242,7 @@ class Rcc(object):
     def _run_rcc(
         self,
         args: List[str],
-        timeout: float = 30,
+        timeout: float = 35,
         error_msg: str = "",
         mutex_name=None,
         cwd: Optional[str] = None,
@@ -284,7 +284,7 @@ class Rcc(object):
 
         kwargs: dict = build_subprocess_kwargs(cwd, env, stderr=stderr)
         args = [rcc_location] + args + ["--controller", "RobocorpCode"]
-        cmdline = " ".join([str(x) for x in args])
+        cmdline = list2cmdline([str(x) for x in args])
 
         try:
             if mutex_name:
@@ -371,8 +371,13 @@ class Rcc(object):
 
                 return ActionResult(success=False, message="".join(additional_info))
 
+        except TimeoutExpired:
+            msg = f"Timed out ({timeout}s elapsed) when running: {cmdline}"
+            log.exception(msg)
+            return ActionResult(success=False, message=msg)
+
         except Exception:
-            msg = f"Error running: {args}"
+            msg = f"Error running: {cmdline}"
             log.exception(msg)
             return ActionResult(success=False, message=msg)
 
@@ -713,7 +718,7 @@ class Rcc(object):
         if error_action_result is not None:
             return error_action_result
 
-        ret = self._run_rcc(args, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME)
+        ret = self._run_rcc(args, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME, timeout=60 * 5)
         return ret
 
     @implements(IRcc.cloud_create_robot)
@@ -732,7 +737,10 @@ class Rcc(object):
             return error_action_result
 
         ret = self._run_rcc(
-            args, mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME, stderr=subprocess.STDOUT
+            args,
+            mutex_name=RCC_CLOUD_ROBOT_MUTEX_NAME,
+            stderr=subprocess.STDOUT,
+            timeout=60,
         )
         if not ret.success:
             return ret
@@ -1017,6 +1025,7 @@ class Rcc(object):
             + (["--json"] if json else [])
             + ["-r", robot_yaml],
             mutex_name=None,
+            timeout=60,
         )
 
 
