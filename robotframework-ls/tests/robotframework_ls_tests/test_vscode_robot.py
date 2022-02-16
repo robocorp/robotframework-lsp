@@ -1296,7 +1296,6 @@ def test_rf_interactive_integrated_completions(
                     "endLineNumber": 3,
                     "endColumn": 3,
                 },
-                "preselect": False,
             }
             break
     else:

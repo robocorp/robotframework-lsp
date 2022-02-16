@@ -3,7 +3,7 @@ import sys
 from robotframework_ls.constants import NULL
 from robocorp_ls_core.robotframework_log import get_logger
 import threading
-from typing import Optional, Dict, Set, Iterator
+from typing import Optional, Dict, Set, Iterator, Union
 from robocorp_ls_core.protocols import Sentinel, IEndPoint
 from robotframework_ls.impl.protocols import ILibraryDoc, ILibraryDocOrError
 import itertools
@@ -38,7 +38,7 @@ def _get_additional_info_filename(spec_filename):
     return additional_info_filename
 
 
-@lru_cache(maxsize=250)
+@lru_cache(maxsize=300)
 def _get_digest_from_string(s: str) -> str:
     import hashlib
 
@@ -62,6 +62,41 @@ def timed_acquire_mutex_for_spec_filename(spec_filename):
         ctx.__exit__()
 
 
+def _get_markdown_json_version_filename(spec_filename, mtime) -> str:
+    digest = _get_digest_from_string(f"{spec_filename} - {mtime}")
+
+    internal_dir = LibspecManager.get_internal_libspec_dir()
+    target_json = os.path.join(
+        internal_dir, f"{digest}_{os.path.basename(spec_filename)}.json"
+    )
+    return target_json
+
+
+def _load_markdown_json_version(spec_filename, target_json) -> Optional[ILibraryDoc]:
+    from robotframework_ls.impl import robot_specbuilder
+
+    libdoc = None
+    json_builder = robot_specbuilder.JsonDocBuilder()
+    try:
+        libdoc = json_builder.build(target_json)
+        # Let the external world think it was built with the libspec.
+        libdoc.filename = spec_filename
+    except:
+        log.debug("Unable to load from json: %s (needs to be created?)", target_json)
+    return libdoc
+
+
+def _convert_to_markdown_and_save_as_json(spec_filename, libdoc, target_json):
+    try:
+        libdoc.convert_docs_to_markdown()
+        with open(target_json, "w", encoding="utf-8") as stream:
+            import json
+
+            json.dump(libdoc.to_dictionary(), stream)
+    except Exception:
+        log.exception("Error when converting spec to markdown/json: %s", spec_filename)
+
+
 def _load_library_doc_and_mtime(spec_filename, obtain_mutex=True):
     """
     :param obtain_mutex:
@@ -76,10 +111,17 @@ def _load_library_doc_and_mtime(spec_filename, obtain_mutex=True):
         ctx = NULL
     with ctx:
         # We must load it with a mutex to avoid conflicts between generating/reading.
-        builder = robot_specbuilder.SpecDocBuilder()
         try:
             mtime = os.path.getmtime(spec_filename)
-            libdoc = builder.build(spec_filename)
+            target_json = _get_markdown_json_version_filename(spec_filename, mtime)
+            libdoc = _load_markdown_json_version(spec_filename, target_json)
+
+            if libdoc is None:
+                builder = robot_specbuilder.SpecDocBuilder()
+                libdoc = builder.build(spec_filename)
+                _convert_to_markdown_and_save_as_json(
+                    spec_filename, libdoc, target_json
+                )
             return libdoc, mtime
         except Exception:
             log.exception("Error when loading spec info from: %s", spec_filename)
@@ -194,7 +236,7 @@ class _LibInfo(object):
         "_can_regenerate",
     ]
 
-    def __init__(self, library_doc, mtime, spec_filename, can_regenerate):
+    def __init__(self, library_doc: ILibraryDoc, mtime, spec_filename, can_regenerate):
         """
         :param library_doc:
         :param mtime:
@@ -341,7 +383,7 @@ class _FolderInfo(object):
                         if filename.lower().endswith(".libspec"):
                             seen_libspec_files.add(os.path.join(folder, filename))
 
-        new_libspec_filename_to_info = {}
+        new_libspec_filename_to_info: Dict[str, _LibInfo] = {}
 
         for filename in seen_libspec_files:
             filename = _norm_filename(filename)
@@ -377,30 +419,28 @@ class LibspecManager(object):
     """
 
     @classmethod
-    def get_robot_version(cls):
+    def get_robot_version(cls) -> str:
         from robotframework_ls.impl import robot_version
 
         return robot_version.get_robot_version()
 
     @classmethod
-    def get_robot_major_version(cls):
+    def get_robot_major_version(cls) -> int:
         from robotframework_ls.impl import robot_version
 
         return robot_version.get_robot_major_version()
 
     @classmethod
-    def get_internal_libspec_dir(cls):
+    def get_internal_libspec_dir(cls) -> str:
         from robotframework_ls import robot_config
 
         home = robot_config.get_robotframework_ls_home()
 
-        pyexe = sys.executable
-        if not isinstance(pyexe, bytes):
-            pyexe = pyexe.encode("utf-8")
+        pyexe: Union[bytes, str] = sys.executable
+        if isinstance(pyexe, bytes):
+            pyexe = pyexe.decode("utf-8", "replace")
 
-        import hashlib
-
-        digest = hashlib.sha256(pyexe).hexdigest()[:8]
+        digest: str = _get_digest_from_string(pyexe)
 
         v = cls.get_robot_version()
 
@@ -580,8 +620,6 @@ class LibspecManager(object):
             if self.pre_generate_libspecs:
                 log.debug("Generating user/pythonpath libraries libspec.")
                 self._libspec_warmup.gen_user_libraries(self, make_unique(pre_generate))
-
-        self.synchronize_additional_pythonpath_folders()
 
     @property
     def user_libspec_dir(self):

@@ -4,7 +4,11 @@ from robotframework_ls.impl.protocols import (
     ILibraryDoc,
     IKeywordFound,
 )
-from robocorp_ls_core.lsp import CompletionItemKind
+from robocorp_ls_core.lsp import (
+    CompletionItemKind,
+    TextEditTypedDict,
+    CompletionItemTypedDict,
+)
 from typing import Optional, List, Set, Dict, Any
 from robotframework_ls.impl.protocols import NodeInfo
 import os.path
@@ -23,7 +27,7 @@ class _Collector(object):
 
         token_str = token.value
 
-        self.completion_items: List[dict] = []
+        self.completion_items: List[CompletionItemTypedDict] = []
         self.selection = selection
         self.import_location_info = import_location_info
         self.token = token
@@ -82,13 +86,7 @@ class _Collector(object):
         i.e.: It's the name concatenated to the `Library    {lib_import}` or
         `Resource    {resource_path}`.
         """
-        from robocorp_ls_core.lsp import (
-            CompletionItem,
-            InsertTextFormat,
-            Position,
-            Range,
-            TextEdit,
-        )
+        from robocorp_ls_core.lsp import InsertTextFormat
         from robocorp_ls_core.lsp import MarkupKind
         from robotframework_ls.impl.protocols import CompletionType
 
@@ -132,52 +130,59 @@ class _Collector(object):
                     basename = os.path.splitext(basename)[0]
                 text = f"{basename}.{keyword_name}"
 
-        text_edit = TextEdit(
-            Range(
-                start=Position(selection.line, token.col_offset + col_delta),
-                end=Position(selection.line, token.end_col_offset),
-            ),
-            text,
-        )
+        text_edit: TextEditTypedDict = {
+            "range": {
+                "start": {
+                    "line": selection.line,
+                    "character": token.col_offset + col_delta,
+                },
+                "end": {"line": selection.line, "character": token.end_col_offset},
+            },
+            "newText": text,
+        }
 
-        additional_text_edits: List[TextEdit] = []
+        additional_text_edits: List[TextEditTypedDict] = []
 
         if lib_import is not None:
             additional_text_edits.append(
-                TextEdit(
-                    Range(start=Position(import_line, 0), end=Position(import_line, 0)),
-                    f"{prefix}Library    {lib_import}\n",
-                )
+                {
+                    "range": {
+                        "start": {"line": import_line, "character": 0},
+                        "end": {"line": import_line, "character": 0},
+                    },
+                    "newText": f"{prefix}Library    {lib_import}\n",
+                }
             )
             detail = "* Adds Library Import"
         elif resource_path is not None:
             additional_text_edits.append(
-                TextEdit(
-                    Range(start=Position(import_line, 0), end=Position(import_line, 0)),
-                    f"{prefix}Resource    {resource_path}\n",
-                )
+                {
+                    "range": {
+                        "start": {"line": import_line, "character": 0},
+                        "end": {"line": import_line, "character": 0},
+                    },
+                    "newText": f"{prefix}Resource    {resource_path}\n",
+                }
             )
             detail = "* Adds Resource Import"
 
-        # text_edit = None
-        self.completion_items.append(
-            CompletionItem(
-                f"{label}*",
-                detail=detail,
-                kind=CompletionItemKind.Reference,
-                text_edit=text_edit,
-                insertText=text_edit.newText,
-                documentation={
-                    "kind": MarkupKind.Markdown
-                    if docs_format == "markdown"
-                    else MarkupKind.PlainText,
-                    "value": docs,
-                },
-                insertTextFormat=InsertTextFormat.Snippet,
-                additionalTextEdits=additional_text_edits,
-                data=data,
-            ).to_dict()
-        )
+        completion_item: CompletionItemTypedDict = {
+            "label": f"{label}*",
+            "detail": detail,
+            "kind": CompletionItemKind.Reference,
+            "textEdit": text_edit,
+            "insertText": text_edit["newText"],
+            "documentation": {
+                "kind": MarkupKind.Markdown
+                if docs_format == "markdown"
+                else MarkupKind.PlainText,
+                "value": docs,
+            },
+            "insertTextFormat": InsertTextFormat.Snippet,
+            "additionalTextEdits": additional_text_edits,
+            "data": data,
+        }
+        self.completion_items.append(completion_item)
 
 
 def _collect_auto_import_completions(

@@ -127,7 +127,6 @@ class _ServerApi(object):
         if not was_disposed:
             new_settings = self._config.get_full_settings()
             if new_settings != self._last_settings_sent:
-                log.info("Setting new settings to API: %s", new_settings)
                 self._last_settings_sent = new_settings
                 # i.e.: when the interpreter info changes, even if it kept the same
                 # interpreter, it's possible that the configuration changed.

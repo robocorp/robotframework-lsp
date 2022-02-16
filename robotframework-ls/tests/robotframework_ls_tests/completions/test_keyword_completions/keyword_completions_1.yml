@@ -1,5 +1,4 @@
-- deprecated: false
-  documentation:
+- documentation:
     kind: markdown
     value: '**Verify Another Model(model=10)**
 
@@ -9,7 +8,6 @@
   insertTextFormat: 2
   kind: 2
   label: Verify Another Model (case1_library)
-  preselect: false
   textEdit:
     newText: Verify Another Model
     range:
@@ -19,8 +17,7 @@
       start:
         character: 4
         line: 7
-- deprecated: false
-  documentation:
+- documentation:
     kind: markdown
     value: '**Verify Model(model)**
 
@@ -33,7 +30,6 @@
   insertTextFormat: 2
   kind: 2
   label: Verify Model (case1_library)
-  preselect: false
   textEdit:
     newText: Verify Model    ${1:model}
     range:

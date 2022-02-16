@@ -412,6 +412,11 @@ class LocationTypedDict(TypedDict):
     range: RangeTypedDict
 
 
+class TextEditTypedDict(TypedDict):
+    range: RangeTypedDict
+    newText: str
+
+
 class SymbolInformationTypedDict(TypedDict, total=False):
     """
     :ivar location:
@@ -552,7 +557,7 @@ class CompletionItemTypedDict(TypedDict, total=False):
     # Additional text edits should be used to change text unrelated to the current cursor position
     # (for example adding an import statement at the top of the file if the completion item will
     # insert an unqualified type).
-    additionalTextEdits: Optional[List[TextEdit]]
+    additionalTextEdits: Optional[List[TextEditTypedDict]]
     #
     # An optional set of characters that when pressed while this completion is active will accept it first and
     # then type that character. *Note* that all commit characters should have `length=1` and that superfluous

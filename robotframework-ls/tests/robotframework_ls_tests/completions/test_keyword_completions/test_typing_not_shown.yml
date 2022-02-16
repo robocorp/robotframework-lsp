@@ -1,5 +1,4 @@
-- deprecated: false
-  documentation:
+- documentation:
     kind: markdown
     value: '**Case Verify Typing(new model:NoneType=10)**
 
@@ -9,7 +8,6 @@
   insertTextFormat: 2
   kind: 2
   label: Case Verify Typing (case3_library)
-  preselect: false
   textEdit:
     newText: Case Verify Typing
     range:

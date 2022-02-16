@@ -8,6 +8,12 @@ from robotframework_ls.impl.protocols import (
     IKeywordCollector,
     ILibraryDoc,
 )
+from robocorp_ls_core.lsp import (
+    TextEditTypedDict,
+    CompletionItemTypedDict,
+    MarkupKind,
+    InsertTextFormat,
+)
 
 
 log = get_logger(__name__)
@@ -23,7 +29,7 @@ class _Collector(object):
 
         token_str = token.value
 
-        self.completion_items: List[dict] = []
+        self.completion_items: List[CompletionItemTypedDict] = []
         self.completion_context = completion_context
         self.selection = completion_context.sel
         self.token = token
@@ -34,7 +40,7 @@ class _Collector(object):
 
         self._convert_keyword_format = create_convert_keyword_format_func(config)
 
-    def accepts(self, keyword_name):
+    def accepts(self, keyword_name: str) -> bool:
         if self._matcher.accepts_keyword_name(keyword_name):
             return True
         for matcher in self._scope_matchers:
@@ -44,15 +50,7 @@ class _Collector(object):
 
     def _create_completion_item_from_keyword(
         self, keyword_found: IKeywordFound, selection, token, col_delta=0
-    ):
-        from robocorp_ls_core.lsp import (
-            CompletionItem,
-            InsertTextFormat,
-            Position,
-            Range,
-            TextEdit,
-        )
-        from robocorp_ls_core.lsp import MarkupKind
+    ) -> CompletionItemTypedDict:
         from robotframework_ls.impl.protocols import IKeywordArg
 
         label = keyword_found.keyword_name
@@ -73,13 +71,16 @@ class _Collector(object):
 
             text += "    ${%s:%s}" % (i + 1, arg_name)
 
-        text_edit = TextEdit(
-            Range(
-                start=Position(selection.line, token.col_offset + col_delta),
-                end=Position(selection.line, token.end_col_offset),
-            ),
-            text,
-        )
+        text_edit: TextEditTypedDict = {
+            "range": {
+                "start": {
+                    "line": selection.line,
+                    "character": token.col_offset + col_delta,
+                },
+                "end": {"line": selection.line, "character": token.end_col_offset},
+            },
+            "newText": text,
+        }
 
         if keyword_found.library_name:
             label = f"{label} ({keyword_found.library_name})"
@@ -87,20 +88,19 @@ class _Collector(object):
         elif keyword_found.resource_name:
             label = f"{label} ({keyword_found.resource_name})"
 
-        # text_edit = None
-        return CompletionItem(
-            label,
-            kind=keyword_found.completion_item_kind,
-            text_edit=text_edit,
-            insertText=text_edit.newText,
-            documentation={
+        return {
+            "label": label,
+            "kind": keyword_found.completion_item_kind,
+            "textEdit": text_edit,
+            "insertText": text_edit["newText"],
+            "documentation": {
                 "kind": MarkupKind.Markdown
                 if keyword_found.docs_format == "markdown"
                 else MarkupKind.PlainText,
                 "value": keyword_found.docs,
             },
-            insertTextFormat=InsertTextFormat.Snippet,
-        ).to_dict()
+            "insertTextFormat": InsertTextFormat.Snippet,
+        }
 
     def on_keyword(self, keyword_found):
         col_delta = 0
@@ -154,7 +154,7 @@ class _Collector(object):
         _: IKeywordCollector = check_implements(self)
 
 
-def complete(completion_context: ICompletionContext) -> List[dict]:
+def complete(completion_context: ICompletionContext) -> List[CompletionItemTypedDict]:
     from robotframework_ls.impl.collect_keywords import collect_keywords
     from robotframework_ls.impl import ast_utils
 

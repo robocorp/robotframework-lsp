@@ -1,0 +1,89 @@
+Arg String Default:
+  args:
+  - arg_type: null
+    default_value: my:,my:something,*foo,**foo,<rara>
+    is_keyword: false
+    is_star: false
+    name: arg1
+    original_arg: arg1=my:,my:something,*foo,**foo,<rara>
+Arg With Enum Type:
+  args:
+  - arg_type: SomeEnum
+    default_value: null
+    is_keyword: false
+    is_star: false
+    name: model
+    original_arg: 'model: SomeEnum'
+Arg With Enum Type And Default:
+  args:
+  - arg_type: SomeEnum
+    default_value: v2
+    is_keyword: false
+    is_star: false
+    name: model
+    original_arg: 'model: SomeEnum = v2'
+Arg With Positional:
+  args:
+  - arg_type: null
+    default_value: null
+    is_keyword: false
+    is_star: false
+    name: arg1
+    original_arg: arg1
+  - arg_type: null
+    default_value: null
+    is_keyword: false
+    is_star: false
+    name: arg2
+    original_arg: arg2
+Arg With Starargs:
+  args:
+  - arg_type: null
+    default_value: null
+    is_keyword: false
+    is_star: false
+    name: arg1
+    original_arg: arg1
+  - arg_type: null
+    default_value: '10'
+    is_keyword: false
+    is_star: false
+    name: arg2
+    original_arg: arg2=10
+  - arg_type: null
+    default_value: null
+    is_keyword: false
+    is_star: true
+    name: '@arg3'
+    original_arg: '*arg3'
+  - arg_type: null
+    default_value: null
+    is_keyword: true
+    is_star: false
+    name: '&arg4'
+    original_arg: '**arg4'
+Arg With Type:
+  args:
+  - arg_type: int
+    default_value: null
+    is_keyword: false
+    is_star: false
+    name: model
+    original_arg: 'model: int'
+Simple Arg:
+  args:
+  - arg_type: null
+    default_value: null
+    is_keyword: false
+    is_star: false
+    name: model
+    original_arg: model
+data_types:
+- doc: An enumeration.
+  members:
+  - name: v1
+    value: '0'
+  - name: v2
+    value: '1'
+  name: SomeEnum
+  type: Enum

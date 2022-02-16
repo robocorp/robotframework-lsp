@@ -3,7 +3,7 @@ from robocorp_ls_core.robotframework_log import get_logger
 log = get_logger(__name__)
 
 
-def get_robot_version():
+def get_robot_version() -> str:
     try:
         import robot  # noqa
 
@@ -14,7 +14,7 @@ def get_robot_version():
     return v
 
 
-def get_robot_major_version():
+def get_robot_major_version() -> int:
     robot_version = get_robot_version()
 
     major_version = 4

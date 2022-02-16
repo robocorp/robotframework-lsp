@@ -1,6 +1,6 @@
 - args: []
-  doc: "Do something with rest.\n\n.. code-block:: robotframework\n\n    FOR    ${a}\
-    \   IN    @{b}\n        Do Something\n    END"
+  doc: "Do something with rest.\n\n```robotframework\nFOR    ${a}   IN    @{b}\n \
+    \   Do Something\nEND\n```\n"
   docs_and_format:
   - "Do something with rest.\n\n```robotframework\nFOR    ${a}   IN    @{b}\n    Do\
     \ Something\nEND\n```\n"

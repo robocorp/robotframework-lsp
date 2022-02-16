@@ -14,7 +14,6 @@
   insertTextRules: 4
   kind: 21
   label: Append To List (Collections)*
-  preselect: false
   range:
     end:
       character: 17

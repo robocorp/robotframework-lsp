@@ -1,7 +1,6 @@
 jsonrpc: '2.0'
 result:
-- deprecated: false
-  documentation:
+- documentation:
     kind: markdown
     value: '**Verify Model(model)**
 
@@ -14,7 +13,6 @@ result:
   insertTextFormat: 2
   kind: 2
   label: Verify Model (case1_library)
-  preselect: false
   textEdit:
     newText: Verify Model    ${1:model}
     range:

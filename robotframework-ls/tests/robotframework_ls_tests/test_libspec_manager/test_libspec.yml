@@ -4,7 +4,10 @@
     default_value: '10'
     is_keyword_arg: false
     is_star_arg: false
-  doc: ':param a: This is the parameter a.'
+  doc: ':param a: This is the parameter a.
+
+
+    '
   docs_and_format:
   - ':param a: This is the parameter a.
 

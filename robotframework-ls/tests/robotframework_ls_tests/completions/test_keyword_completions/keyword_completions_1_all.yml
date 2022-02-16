@@ -1,5 +1,4 @@
-- deprecated: false
-  documentation:
+- documentation:
     kind: markdown
     value: '**Check With Multi Args(arg1, arg2=10, \*args, \*\*kwargs)**
 
@@ -9,7 +8,6 @@
   insertTextFormat: 2
   kind: 2
   label: Check With Multi Args (case1_library)
-  preselect: false
   textEdit:
     newText: Check With Multi Args    ${1:arg1}
     range:
@@ -19,8 +17,7 @@
       start:
         character: 18
         line: 7
-- deprecated: false
-  documentation:
+- documentation:
     kind: markdown
     value: '**Verify Another Model(model=10)**
 
@@ -30,7 +27,6 @@
   insertTextFormat: 2
   kind: 2
   label: Verify Another Model (case1_library)
-  preselect: false
   textEdit:
     newText: Verify Another Model
     range:
@@ -40,8 +36,7 @@
       start:
         character: 18
         line: 7
-- deprecated: false
-  documentation:
+- documentation:
     kind: markdown
     value: '**Verify Model(model)**
 
@@ -54,7 +49,6 @@
   insertTextFormat: 2
   kind: 2
   label: Verify Model (case1_library)
-  preselect: false
   textEdit:
     newText: Verify Model    ${1:model}
     range:

@@ -18,10 +18,11 @@
 import os
 import weakref
 from robocorp_ls_core.cache import instance_cache
-from typing import Optional, Union, Type
+from typing import Optional, Union, Type, Callable, List
 from robocorp_ls_core.protocols import Sentinel
 from robotframework_ls.impl.protocols import ISymbolsCache
 from robocorp_ls_core.robotframework_log import get_logger, get_log_level
+import json
 
 
 log = get_logger(__name__)
@@ -62,6 +63,24 @@ def _rest_to_markdown(doc: str) -> Optional[str]:
     )
 
 
+def _get_formatter(doc_format) -> Optional[Callable[[str], Optional[str]]]:
+    lower_doc_format = doc_format.lower()
+    if lower_doc_format == "robot":
+        from robotframework_ls import robot_to_markdown
+
+        return robot_to_markdown.convert
+
+    if lower_doc_format == "html":
+        from robotframework_ls import html_to_markdown
+
+        return html_to_markdown.convert
+
+    if lower_doc_format == "rest":
+        return _rest_to_markdown
+
+    return None
+
+
 def _markdown_doc(lower_doc_format: str, obj) -> Optional[str]:
     """
     :type obj: LibraryDoc|KeywordDoc
@@ -70,6 +89,9 @@ def _markdown_doc(lower_doc_format: str, obj) -> Optional[str]:
     """
     if not obj.doc:
         return ""
+
+    if lower_doc_format in ("markdown", "md"):
+        return obj.doc
 
     if lower_doc_format == "robot":
         try:
@@ -95,9 +117,6 @@ def _markdown_doc(lower_doc_format: str, obj) -> Optional[str]:
         except AttributeError:
             obj.__md_doc__ = _rest_to_markdown(obj.doc)
         return obj.__md_doc__
-
-    if lower_doc_format in ("markdown", "md"):
-        return obj.doc
 
     return None
 
@@ -158,8 +177,35 @@ class LibraryDoc(object):
         self.lineno = lineno
         self.inits = []
         self.keywords = []
+        self.data_types = []
 
         self.symbols_cache: Optional[ISymbolsCache] = None
+
+    def to_dictionary(self):
+        data_types = {}
+
+        for data_type in self.data_types:
+            type_name = data_type.type
+            type_name = type_name[0].lower() + type_name[1:] + "s"
+            assert type_name in ("customs", "enums", "typedDicts")
+            lst = data_types.setdefault(type_name, [])
+            lst.append(data_type.to_dictionary())
+
+        return {
+            "name": self.name,
+            "doc": self.doc,
+            "version": self.version,
+            "specversion": self.specversion,
+            "type": self.type,
+            "scope": self.scope,
+            "docFormat": self.doc_format,
+            "source": self._source,
+            "lineno": self.lineno,
+            "tags": list(self.all_tags),
+            "inits": [init.to_dictionary() for init in self.inits],
+            "keywords": [kw.to_dictionary() for kw in self.keywords],
+            "dataTypes": data_types,
+        }
 
     @property
     @instance_cache
@@ -207,8 +253,49 @@ class LibraryDoc(object):
 
     __str__ = __repr__
 
+    def convert_docs_to_markdown(self) -> bool:
+        old_doc_format = self.doc_format
+        formatter = _get_formatter(old_doc_format)
+
+        if formatter is not None:
+            new_doc = formatter(self.doc)
+            if new_doc is None:
+                # We can't format it (docutils not installed?)
+                return False
+
+            self.doc = new_doc
+
+            for init in self.inits:
+                new = formatter(init.doc)
+                if new is not None:
+                    init.doc = new
+
+            for keyword in self.keywords:
+                new = formatter(keyword.doc)
+                if new is not None:
+                    keyword.doc = new
+
+            for type_doc in self.data_types:
+                new = formatter(type_doc.doc)
+                if new is not None:
+                    type_doc.doc = new
+
+            self.doc_format = "markdown"
+
+            return True
+
+        return False
+
 
 class KeywordArg(object):
+
+    POSITIONAL_ONLY = "POSITIONAL_ONLY"
+    POSITIONAL_ONLY_MARKER = "POSITIONAL_ONLY_MARKER"
+    POSITIONAL_OR_NAMED = "POSITIONAL_OR_NAMED"
+    VAR_POSITIONAL = "VAR_POSITIONAL"
+    NAMED_ONLY_MARKER = "NAMED_ONLY_MARKER"
+    NAMED_ONLY = "NAMED_ONLY"
+    VAR_NAMED = "VAR_NAMED"
 
     _is_keyword_arg = False
     _is_star_arg = False
@@ -221,6 +308,7 @@ class KeywordArg(object):
         name: Union[Type[Sentinel], str] = Sentinel,
         arg_type: Union[Type[Sentinel], str] = Sentinel,
         default_value: Union[Type[Sentinel], str] = Sentinel,
+        kind: str = "",
     ):
         """
         If arg_type and default_value are given, the arg name == arg, otherwise,
@@ -228,21 +316,34 @@ class KeywordArg(object):
         and default_value are computed.
         """
         self.original_arg = arg
+        self.kind = kind
+
         if arg.startswith("&"):
             self._is_keyword_arg = True
+            if not kind:
+                self.kind = self.VAR_NAMED
 
         elif arg.startswith("@"):
             self._is_star_arg = True
+            if not kind:
+                self.kind = self.VAR_POSITIONAL
 
         elif arg.startswith("**"):
             self._is_keyword_arg = True
             arg = "&" + arg[2:]
+            if not kind:
+                self.kind = self.VAR_NAMED
 
         elif arg.startswith("*"):
             self._is_star_arg = True
             arg = "@" + arg[1:]
+            if not kind:
+                self.kind = self.VAR_POSITIONAL
 
         else:
+            if not kind:
+                self.kind = self.POSITIONAL_OR_NAMED
+
             if default_value is not Sentinel:
                 self._default_value = default_value
             else:
@@ -270,6 +371,20 @@ class KeywordArg(object):
             self._arg_name = name
         else:
             self._arg_name = arg
+
+    def to_dictionary(self):
+        ret = {
+            "name": self._arg_name,
+            "kind": self.kind,
+            "repr": self.original_arg,
+        }
+        if self._default_value is not Sentinel:
+            ret["defaultValue"] = self._default_value
+
+        if self._arg_type is not Sentinel:
+            ret["types"] = self._arg_type
+
+        return ret
 
     def is_default_value_set(self) -> bool:
         return self._default_value is not Sentinel
@@ -357,6 +472,67 @@ class KeywordDoc(object):
 
     __str__ = __repr__
 
+    def to_dictionary(self):
+        return {
+            "name": self.name,
+            "args": [arg.to_dictionary() for arg in self.args],
+            "doc": self.doc,
+            "tags": list(self.tags),
+            "source": self.source,
+            "lineno": self.lineno,
+        }
+
+
+class DataType(object):
+    type: Optional = None
+
+    def __init__(self, name, doc):
+        self.name = name
+        self.doc = doc
+
+    def to_dictionary(self):
+        return {
+            "type": self.type,
+            "name": self.name,
+            "doc": self.doc,
+        }
+
+
+class TypedDictDoc(DataType):
+    type = "TypedDict"
+
+    def __init__(self, name, doc, items=None):
+        super().__init__(name, doc)
+        self.items = items or []
+
+    def to_dictionary(self):
+        return {
+            "type": self.type,
+            "name": self.name,
+            "doc": self.doc,
+            "items": self.items,
+        }
+
+
+class EnumDoc(DataType):
+    type = "Enum"
+
+    def __init__(self, name, doc, members=None):
+        super().__init__(name, doc)
+        self.members = members or []
+
+    def to_dictionary(self):
+        return {
+            "type": self.type,
+            "name": self.name,
+            "doc": self.doc,
+            "members": self.members,
+        }
+
+
+class CustomDoc(DataType):
+    type = "Custom"
+
 
 class SpecDocBuilder(object):
     def build(self, path):
@@ -392,6 +568,10 @@ class SpecDocBuilder(object):
             libdoc.keywords = self._create_keywords_v3(
                 weakref.ref(libdoc), spec, "keywords/kw"
             )
+            try:
+                libdoc.data_types = self._create_data_types(spec)
+            except:
+                log.exception("Error loading data types from libspec.")
         else:
             libdoc.inits = self._create_keywords_v2(weakref.ref(libdoc), spec, "init")
             libdoc.keywords = self._create_keywords_v2(weakref.ref(libdoc), spec, "kw")
@@ -409,6 +589,46 @@ class SpecDocBuilder(object):
             "test suite": "SUITE",
             "test case": "TEST",
         }[scope]
+
+    def _create_data_types(self, spec):
+        data_types = [
+            self._create_enum_doc(dt) for dt in spec.findall("datatypes/enums/enum")
+        ]
+        data_types.extend(
+            self._create_typed_dict_doc(dt)
+            for dt in spec.findall("datatypes/typeddicts/typeddict")
+        )
+        data_types.extend(
+            self._create_custom_doc(dt)
+            for dt in spec.findall("datatypes/customs/custom")
+        )
+        return data_types
+
+    def _create_enum_doc(self, dt):
+        return EnumDoc(
+            name=dt.get("name"),
+            doc=dt.find("doc").text or "",
+            members=[
+                {"name": member.get("name"), "value": member.get("value")}
+                for member in dt.findall("members/member")
+            ],
+        )
+
+    def _create_typed_dict_doc(self, dt):
+        items = []
+        for item in dt.findall("items/item"):
+            required = item.get("required", None)
+            if required is not None:
+                required = True if required == "true" else False
+            items.append(
+                {"key": item.get("key"), "type": item.get("type"), "required": required}
+            )
+        return TypedDictDoc(
+            name=dt.get("name"), doc=dt.find("doc").text or "", items=items
+        )
+
+    def _create_custom_doc(self, dt):
+        return CustomDoc(name=dt.get("name"), doc=dt.find("doc").text or "")
 
     def _parse_spec(self, path):
         try:
@@ -471,7 +691,7 @@ class SpecDocBuilder(object):
             kind = arg.get("kind")
             if not kind or kind in ("VAR_POSITIONAL", "VAR_NAMED"):
                 # Default handling for *args and **kwargs converts to &args / @args
-                ret.append(KeywordArg(arg_repr))
+                ret.append(KeywordArg(arg_repr, kind=kind))
                 continue
 
             arg_type = arg.find("type")
@@ -482,6 +702,7 @@ class SpecDocBuilder(object):
                     name,
                     arg_type.text if arg_type is not None else Sentinel,
                     arg_default.text if arg_default is not None else Sentinel,
+                    kind=kind,
                 )
             )
 
@@ -502,3 +723,102 @@ class SpecDocBuilder(object):
                 )
             )
         return ret
+
+
+class JsonDocBuilder:
+    def build(self, path):
+        assert isinstance(path, str)
+        spec = self._parse_spec_json(path)
+        return self.build_from_dict(path, spec)
+
+    def build_from_dict(self, filename, spec):
+        libdoc = LibraryDoc(
+            filename,
+            name=spec["name"],
+            doc=spec["doc"],
+            version=spec["version"],
+            specversion=spec["specversion"],
+            type=spec["type"],
+            scope=spec["scope"],
+            doc_format=spec["docFormat"],
+            source=spec["source"],
+            lineno=int(spec.get("lineno", -1)),
+        )
+        new_data_types = []
+
+        for custom in spec["dataTypes"].get("customs", []):
+            new_data_types.append(
+                CustomDoc(
+                    name=custom["name"],
+                    doc=custom["doc"],
+                )
+            )
+
+        for enum in spec["dataTypes"].get("enums", []):
+            new_data_types.append(
+                EnumDoc(
+                    name=enum["name"],
+                    doc=enum["doc"],
+                    members=enum["members"],
+                )
+            )
+        for typed_dict in spec["dataTypes"].get("typedDicts", []):
+            new_data_types.append(
+                TypedDictDoc(
+                    name=typed_dict["name"],
+                    doc=typed_dict["doc"],
+                    items=typed_dict["items"],
+                )
+            )
+
+        libdoc.data_types = new_data_types
+
+        weak_libdoc = weakref.ref(libdoc)
+        libdoc.inits = [self._create_keyword(kw, weak_libdoc) for kw in spec["inits"]]
+        libdoc.keywords = [
+            self._create_keyword(kw, weak_libdoc) for kw in spec["keywords"]
+        ]
+        return libdoc
+
+    def _parse_spec_json(self, path):
+        if not os.path.isfile(path):
+            raise RuntimeError("Spec file '%s' does not exist." % path)
+        with open(path) as json_source:
+            libdoc_dict = json.load(json_source)
+        return libdoc_dict
+
+    def _create_keyword(self, kw, weak_libdoc):
+        return KeywordDoc(
+            name=kw.get("name"),
+            args=self._create_arguments(kw["args"]),
+            doc=kw["doc"],
+            tags=kw["tags"],
+            source=kw["source"],
+            lineno=int(kw.get("lineno", -1)),
+            weak_libdoc=weak_libdoc,
+        )
+
+    def _create_arguments(self, arguments) -> List[KeywordArg]:
+        new_arguments = []
+
+        for argument in arguments:
+            arg = argument["repr"]
+            name = argument["name"]
+            kind = argument["kind"]
+
+            kwargs = {
+                "arg": arg,
+                "name": name,
+                "kind": kind,
+            }
+
+            arg_type = argument.get("types")
+            if arg_type is not None:
+                kwargs["arg_type"] = arg_type
+
+            default_value = argument.get("defaultValue")
+            if default_value is not None:
+                kwargs["default_value"] = default_value
+            new_arguments.append(KeywordArg(**kwargs))
+
+        return new_arguments

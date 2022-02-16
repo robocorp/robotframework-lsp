@@ -1,0 +1,115 @@
+dataTypes:
+  enums:
+  - doc: 'An enumeration.
+
+
+      '
+    members:
+    - name: v1
+      value: '0'
+    - name: v2
+      value: '1'
+    name: SomeEnum
+    type: Enum
+doc: 'Documentation for library `case_argspec`.
+
+
+  '
+docFormat: markdown
+inits: []
+keywords:
+- args:
+  - defaultValue: my:,my:something,*foo,**foo,<rara>
+    kind: POSITIONAL_OR_NAMED
+    name: arg1
+    repr: arg1=my:,my:something,*foo,**foo,<rara>
+  doc: ''
+  lineno: 42
+  name: Arg String Default
+  source: null
+  tags: []
+- args:
+  - kind: POSITIONAL_OR_NAMED
+    name: model
+    repr: 'model: SomeEnum'
+    types: SomeEnum
+  doc: ''
+  lineno: 26
+  name: Arg With Enum Type
+  source: null
+  tags: []
+- args:
+  - defaultValue: v2
+    kind: POSITIONAL_OR_NAMED
+    name: model
+    repr: 'model: SomeEnum = v2'
+    types: SomeEnum
+  doc: ''
+  lineno: 30
+  name: Arg With Enum Type And Default
+  source: null
+  tags: []
+- args:
+  - kind: POSITIONAL_OR_NAMED
+    name: arg1
+    repr: arg1
+  - kind: NAMED_ONLY
+    name: arg2
+    repr: arg2
+  doc: ''
+  lineno: 38
+  name: Arg With Positional
+  source: null
+  tags: []
+- args:
+  - kind: POSITIONAL_OR_NAMED
+    name: arg1
+    repr: arg1
+  - defaultValue: '10'
+    kind: POSITIONAL_OR_NAMED
+    name: arg2
+    repr: arg2=10
+  - kind: VAR_POSITIONAL
+    name: '@arg3'
+    repr: '*arg3'
+  - kind: VAR_NAMED
+    name: '&arg4'
+    repr: '**arg4'
+  doc: ''
+  lineno: 34
+  name: Arg With Starargs
+  source: null
+  tags: []
+- args:
+  - kind: POSITIONAL_OR_NAMED
+    name: model
+    repr: 'model: int'
+    types: int
+  doc: 'Some doc in arg_with_type.
+
+
+    '
+  lineno: 20
+  name: Arg With Type
+  source: null
+  tags: []
+- args:
+  - kind: POSITIONAL_OR_NAMED
+    name: model
+    repr: model
+  doc: 'Some doc in simple_arg.
+
+
+    '
+  lineno: 14
+  name: Simple Arg
+  source: null
+  tags: []
+lineno: 1
+name: case_argspec
+scope: GLOBAL
+source: case_argspec.py
+specversion: '4'
+tags: []
+type: LIBRARY
+version: null

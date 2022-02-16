@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<keywordspec name="case_argspec" type="LIBRARY" format="ROBOT" scope="GLOBAL" generated="2022-02-16T17:26:13Z" specversion="4" source="case_argspec.py" lineno="1">
+<version/>
+<doc>Documentation for library ``case_argspec``.</doc>
+<tags>
+</tags>
+<inits>
+</inits>
+<keywords>
+<kw name="Arg String Default" lineno="42">
+<arguments repr="arg1=my:,my:something,*foo,**foo,&lt;rara&gt;">
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="arg1=my:,my:something,*foo,**foo,&lt;rara&gt;">
+<name>arg1</name>
+<default>my:,my:something,*foo,**foo,&lt;rara&gt;</default>
+</arg>
+</arguments>
+<doc/>
+<shortdoc/>
+</kw>
+<kw name="Arg With Enum Type" lineno="26">
+<arguments repr="model: SomeEnum">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="model: SomeEnum">
+<name>model</name>
+<type>SomeEnum</type>
+</arg>
+</arguments>
+<doc/>
+<shortdoc/>
+</kw>
+<kw name="Arg With Enum Type And Default" lineno="30">
+<arguments repr="model: SomeEnum = v2">
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="model: SomeEnum = v2">
+<name>model</name>
+<type>SomeEnum</type>
+<default>v2</default>
+</arg>
+</arguments>
+<doc/>
+<shortdoc/>
+</kw>
+<kw name="Arg With Positional" lineno="38">
+<arguments repr="arg1, *, arg2">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="arg1">
+<name>arg1</name>
+</arg>
+<arg kind="NAMED_ONLY_MARKER" required="false" repr="*">
+</arg>
+<arg kind="NAMED_ONLY" required="true" repr="arg2">
+<name>arg2</name>
+</arg>
+</arguments>
+<doc/>
+<shortdoc/>
+</kw>
+<kw name="Arg With Starargs" lineno="34">
+<arguments repr="arg1, arg2=10, *arg3, **arg4">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="arg1">
+<name>arg1</name>
+</arg>
+<arg kind="POSITIONAL_OR_NAMED" required="false" repr="arg2=10">
+<name>arg2</name>
+<default>10</default>
+</arg>
+<arg kind="VAR_POSITIONAL" required="false" repr="*arg3">
+<name>arg3</name>
+</arg>
+<arg kind="VAR_NAMED" required="false" repr="**arg4">
+<name>arg4</name>
+</arg>
+</arguments>
+<doc/>
+<shortdoc/>
+</kw>
+<kw name="Arg With Type" lineno="20">
+<arguments repr="model: int">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="model: int">
+<name>model</name>
+<type>int</type>
+</arg>
+</arguments>
+<doc>Some doc in arg_with_type.</doc>
+<shortdoc>Some doc in arg_with_type.</shortdoc>
+</kw>
+<kw name="Simple Arg" lineno="14">
+<arguments repr="model">
+<arg kind="POSITIONAL_OR_NAMED" required="true" repr="model">
+<name>model</name>
+</arg>
+</arguments>
+<doc>Some doc in simple_arg.</doc>
+<shortdoc>Some doc in simple_arg.</shortdoc>
+</kw>
+</keywords>
+<datatypes>
+<enums>
+<enum name="SomeEnum">
+<doc>An enumeration.</doc>
+<members>
+<member name="v1" value="0"/>
+<member name="v2" value="1"/>
+</members>
+</enum>
+</enums>
+</datatypes>
+</keywordspec>
