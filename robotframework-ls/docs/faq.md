@@ -71,14 +71,28 @@ language server cannot collect its information).
 
     After the library is changed, you may need to restart your editor/IDE to clear the related caches.
 
+
 How to specify a variable needed to resolve some library or resource import?
 -----------------------------------------------------------------------------
 
-In this case, the full path needed to resolve the variable needs to be specified in a variable in the `robot.variables`
-setting (relative paths or paths requiring other variables aren't currently supported).
+In this case, the path needed to resolve the variable needs to be specified in a 
+variable in the `robot.variables` setting.
 
-i.e.: Given a resource import such as: `Resource ${some_variable}/my.resource`,
-`robot.variables` must be set to `{"some_variable": "c:/my/project/src"}`.
+Note that relative paths aren't supported, but it's possible to use the following variables
+in the variable value:
+
+- `${workspace}`
+- `${workspaceRoot}`
+- `${workspaceFolder}`
+- `${env.ENV_NAME_VARIABLE}`
+- `${env:ENV_NAME_VARIABLE}`
+
+**Example**: Given a resource import such as: `Resource  ${ROOT}/my.resource`,
+`robot.variables` could be set to something as:
+
+`{"ROOT": "c:/my/project/src"}`
+`{"ROOT": "${workspaceRoot}/src"}`
+`{"ROOT": "${env:MY_ROOT}/src"}`
 
 
 
