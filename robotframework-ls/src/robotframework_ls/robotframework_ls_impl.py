@@ -19,7 +19,6 @@ from robotframework_ls.ep_providers import (
     EPEndPointProvider,
 )
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
-from robocorp_ls_core.jsonrpc.monitor import Monitor
 from functools import partial
 import itertools
 from robotframework_ls import __version__, rf_interactive_integration
@@ -54,6 +53,7 @@ class _CurrLintInfo(object):
         on_finish,
     ) -> None:
         from robocorp_ls_core.lsp import LSPMessages
+        from robocorp_ls_core.jsonrpc.monitor import Monitor
 
         self._rf_lint_api_client = rf_lint_api_client
         self.lsp_messages: LSPMessages = lsp_messages

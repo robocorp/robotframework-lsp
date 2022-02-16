@@ -29,8 +29,7 @@ from .exceptions import (
 
 from concurrent import futures
 from robocorp_ls_core.basic import implements
-from robocorp_ls_core.protocols import IEndPoint, IFuture
-from robocorp_ls_core.jsonrpc.monitor import Monitor
+from robocorp_ls_core.protocols import IEndPoint, IFuture, IMonitor
 from typing import Optional
 
 log = get_logger(__name__)
@@ -214,7 +213,7 @@ class Endpoint(object):
             return
 
         # Will only work if the request hasn't started executing
-        monitor: Optional[Monitor] = getattr(request_future, "__monitor__", None)
+        monitor: Optional[IMonitor] = getattr(request_future, "__monitor__", None)
         if monitor is not None:
             monitor.cancel()
         if request_future.cancel():
@@ -281,7 +280,9 @@ class Endpoint(object):
             kwargs = {}
             monitor = None
             if getattr(handler_result, "__require_monitor__", False):
-                monitor = Monitor()
+                from robocorp_ls_core.jsonrpc.monitor import Monitor
+
+                monitor = Monitor(f"Message: id: {msg_id}, method: {method}")
                 kwargs["monitor"] = monitor
             log.debug("Executing async request handler %s", handler_result)
 

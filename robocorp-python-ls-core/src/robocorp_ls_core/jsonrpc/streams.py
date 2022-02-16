@@ -18,6 +18,7 @@ import threading
 from robocorp_ls_core.robotframework_log import get_logger
 from typing import Optional
 import json
+from robocorp_ls_core.options import BaseOptions
 
 log = get_logger(__name__)
 
@@ -96,8 +97,8 @@ class JsonRpcStreamReader(object):
         try:
             while not self._rfile.closed:
                 data = read(self._rfile)
-                log.debug("Read: %s", data)
                 if data is None:
+                    log.debug("Read: %s", data)
                     return
 
                 try:
@@ -105,6 +106,13 @@ class JsonRpcStreamReader(object):
                 except:
                     log.exception("Failed to parse JSON message %s", data)
                     continue
+
+                if isinstance(msg, dict):
+                    if msg.get("command") not in BaseOptions.HIDE_COMMAND_MESSAGES:
+                        log.debug("Read: %s", data)
+                else:
+                    log.debug("Read (non dict data): %s", data)
+
                 try:
                     message_consumer(msg)
                 except:
@@ -136,7 +144,12 @@ class JsonRpcStreamWriter(object):
                 log.debug("Unable to write %s (file already closed).", (message,))
                 return False
             try:
-                log.debug("Writing: %s", message)
+                if isinstance(message, dict):
+                    if message.get("command") not in BaseOptions.HIDE_COMMAND_MESSAGES:
+                        log.debug("Writing: %s", message)
+                else:
+                    log.debug("Writing (non dict message): %s", message)
+
                 body = json.dumps(message, **self._json_dumps_args)
 
                 as_bytes = body.encode("utf-8")

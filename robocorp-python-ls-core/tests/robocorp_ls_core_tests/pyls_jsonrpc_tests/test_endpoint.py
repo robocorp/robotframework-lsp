@@ -25,8 +25,8 @@ from robocorp_ls_core.jsonrpc.endpoint import Endpoint, require_monitor
 
 # pylint: disable=redefined-outer-name
 from concurrent import futures
-from robocorp_ls_core.jsonrpc.monitor import Monitor
 import io
+from robocorp_ls_core.protocols import IMonitor
 
 
 MSG_ID = "id"
@@ -393,7 +393,7 @@ def test_consume_request_cancel_monitor(endpoint, dispatcher, consumer, monkeypa
     endpoint_module.FORCE_NON_THREADED_VERSION = False
     # i.e.: cancel after the request already started.
     @require_monitor
-    def async_handler(monitor: Monitor):
+    def async_handler(monitor: IMonitor):
         for _ in range(10):
             time.sleep(0.1)
             monitor.check_cancelled()

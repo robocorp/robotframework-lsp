@@ -1475,3 +1475,54 @@ def test_get_rfls_home_dir(language_server_io: ILanguageServerClient):
     assert language_server_io.execute_command("robot.getRFLSHomeDir", [])[
         "result"
     ].endswith(".robotframework-ls")
+
+
+def test_cancelling_requests(language_server_tcp: ILanguageServerClient, ws_root_path):
+    from robocorp_ls_core.workspace import Document
+
+    language_server = language_server_tcp
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+
+    uri = "~untitled"
+    contents = []
+
+    # Let's create a document with many keywords so that it's somewhat slow to parse.
+    for i in range(200):
+        contents.append(
+            f"""
+*** Keyword ***
+Some keyword {i}
+    Log to console    Something
+    Log to console    Something
+    Log to console    Something
+    Log to console    Something
+    Log to console    Something
+    Log to console    Something
+    
+
+"""
+        )
+
+    contents.append(
+        """
+*** Keyword ***
+Another keyword
+    Log to cons"""
+    )
+    txt = "".join(contents)
+
+    language_server.open_doc(uri, 1, txt)
+
+    doc = Document("", source=txt)
+    line, col = doc.get_last_line_col()
+    completions_message_matcher = language_server.get_completions_async(uri, line, col)
+    assert completions_message_matcher
+
+    language_server.request_cancel(completions_message_matcher.message_id)
+
+    timeout = 10
+    if not completions_message_matcher.event.wait(timeout=timeout):
+        raise TimeoutError(f"Request timed-out: ({timeout}s)")
+
+    assert completions_message_matcher.msg["error"]["message"] == "Request Cancelled"

@@ -262,6 +262,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         from robotframework_ls.impl import snippets_completions
 
         completions = snippets_completions.complete(completion_context)
+        monitor.check_cancelled()
         completions.extend(self._complete_from_completion_context(completion_context))
         return completions
 

@@ -31,6 +31,8 @@ if typing.TYPE_CHECKING:
     from robocorp_ls_core.lsp import DocumentHighlightResponseTypedDict
     from robocorp_ls_core.callbacks import Callback
     from robocorp_ls_core.lsp import PositionTypedDict
+    from robocorp_ls_core.lsp import CompletionItemTypedDict
+    from robocorp_ls_core.lsp import CompletionsResponseTypedDict
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -155,9 +157,11 @@ class IMessageMatcher(Generic[T], Protocol):
     msg: T
 
 
-class IIdMessageMatcher(IMessageMatcher, Protocol):
+class IIdMessageMatcher(Generic[T], Protocol):
 
     message_id: str
+    event: threading.Event
+    msg: T
 
 
 COMMUNICATION_DROPPED = CommunicationDropped()
@@ -423,7 +427,21 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
     def change_doc(self, uri: str, version: int, text: str):
         pass
 
-    def get_completions(self, uri: str, line: int, col: int):
+    def get_completions(
+        self, uri: str, line: int, col: int
+    ) -> "CompletionsResponseTypedDict":
+        """
+        :param uri:
+            The uri for the request.
+        :param line:
+            0-based line.
+        :param col:
+            0-based col.
+        """
+
+    def get_completions_async(
+        self, uri: str, line: int, col: int
+    ) -> Optional[IIdMessageMatcher["CompletionsResponseTypedDict"]]:
         """
         :param uri:
             The uri for the request.

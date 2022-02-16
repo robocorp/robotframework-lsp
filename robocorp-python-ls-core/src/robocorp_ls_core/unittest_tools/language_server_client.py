@@ -3,8 +3,12 @@ from typing import Mapping, Any, List, Optional, Dict
 
 from robocorp_ls_core.basic import implements
 from robocorp_ls_core.client_base import LanguageServerClientBase
-from robocorp_ls_core.protocols import ILanguageServerClient, IIdMessageMatcher
-from robocorp_ls_core.lsp import CodeLensTypedDict
+from robocorp_ls_core.protocols import (
+    ILanguageServerClient,
+    IIdMessageMatcher,
+    IMessageMatcher,
+)
+from robocorp_ls_core.lsp import CodeLensTypedDict, CompletionsResponseTypedDict
 
 
 log = logging.getLogger(__name__)
@@ -183,19 +187,28 @@ class LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    def _build_completions_request(self, uri: str, line: int, col: int):
+        return {
+            "jsonrpc": "2.0",
+            "id": self.next_id(),
+            "method": "textDocument/completion",
+            "params": {
+                "textDocument": {"uri": uri},
+                "position": {"line": line, "character": col},
+            },
+        }
+
     @implements(ILanguageServerClient.get_completions)
-    def get_completions(self, uri: str, line: int, col: int):
-        return self.request(
-            {
-                "jsonrpc": "2.0",
-                "id": self.next_id(),
-                "method": "textDocument/completion",
-                "params": {
-                    "textDocument": {"uri": uri},
-                    "position": {"line": line, "character": col},
-                },
-            }
-        )
+    def get_completions(
+        self, uri: str, line: int, col: int
+    ) -> CompletionsResponseTypedDict:
+        return self.request(self._build_completions_request(uri, line, col))
+
+    @implements(ILanguageServerClient.get_completions_async)
+    def get_completions_async(
+        self, uri: str, line: int, col: int
+    ) -> Optional[IIdMessageMatcher[CompletionsResponseTypedDict]]:
+        return self.request_async(self._build_completions_request(uri, line, col))
 
     @implements(ILanguageServerClient.request_source_format)
     def request_source_format(self, uri: str):
@@ -326,7 +339,13 @@ class LanguageServerClient(LanguageServerClientBase):
         """
         Requests that some processing is cancelled.
         """
-        raise AssertionError("Not implemented")
+        self.write(
+            {
+                "jsonrpc": "2.0",
+                "method": "$/cancelRequest",
+                "params": {"id": message_id},
+            }
+        )
 
     @implements(ILanguageServerClient.find_definitions)
     def find_definitions(self, uri, line: int, col: int):
