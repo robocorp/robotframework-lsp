@@ -48,7 +48,7 @@ New in 0.38.0 (2022-01-26)
 
 - It's now possible to break when an error or failure is logged (enable in the `BREAKPOINTS` tab). [#284](https://github.com/robocorp/robotframework-lsp/issues/284)
 - When launching, better heuristics are used to create a proper test suite. [#482](https://github.com/robocorp/robotframework-lsp/issues/482)
-  - A suite is created considering __init__.robot in parents based on the specified `target`.
+  - A suite is created considering `__init__.robot` in parents based on the specified `target`.
   - By default the `target` will be used to compute the suite as well as the needed filtering.
   - It's possible to specify a `suiteTarget` in the launch now to force a given suite to be created (the `target` is still used for filtering afterwards). 
 - When hovering for go to definition the origin location properly highlights the whole region not just the current word.  [#279](https://github.com/robocorp/robotframework-lsp/issues/279)
@@ -357,7 +357,7 @@ New in 0.10.0 (2021-03-19)
 New in 0.9.1 (2021-03-10)
 -----------------------------
 
-- Support python packages as libraries (package/__init__.py). [#228](https://github.com/robocorp/robotframework-lsp/issues/228)
+- Support python packages as libraries (`package/__init__.py`). [#228](https://github.com/robocorp/robotframework-lsp/issues/228)
 
 New in 0.9.0 (2021-03-03)
 -----------------------------

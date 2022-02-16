@@ -26,7 +26,47 @@ Configuration settings
 
 - `robot.libraries.libdoc.needsArgs`: a list of the libraries for which the arguments need to be passed for the libdoc generation.
 
-- `robot.libraries.libdoc.preGenerate`: a list of the libraries for which the libdoc should be pre-generated.
+- `robot.libraries.libdoc.preGenerate`: a list of the libraries for which the libdoc should be pre-generated 
+    (note: builtin libraries are always pre-generated and don't need to be added here).
+
+
+
+Environment variables
+----------------------
+
+Environment variables that affect the debugger:
+
+- `RFLS_BREAK_ON_FAILURE`: Set to `true` to stop on failures when debugging in Intellij
+    (In VSCode this is handled by the `Robot Log FAIL` in the breakpoints).
+    
+- `RFLS_BREAK_ON_ERROR`: Set to `true` to stop on errors when debugging in Intellij
+    (In VSCode this is handled by the `Robot Log ERROR` in the breakpoints).
+
+- `RFLS_IGNORE_FAILURES_IN_KEYWORDS`: May be used to set the Keywords in which Robot Failures and Errors
+    should not stop the debugger execution nor be reported as errors.
+
+    It's a json-formatted list of keywords where failures should be ignored.
+
+    Note that the list below is always ignored by default (so using `RFLS_IGNORE_FAILURES_IN_KEYWORDS`
+    it's possible to add other items to that list).
+
+    ```
+    [
+        "Run keyword and continue on failure",
+        "Run keyword and expect error",
+        "Run keyword and ignore error",
+        "Run keyword and warn on failure",
+        "Wait until keyword succeeds"
+    ]
+    ```
+
+- `RFLS_IGNORE_FAILURES_IN_KEYWORDS_OVERRIDE`: Set to `true` to only load the `RFLS_IGNORE_FAILURES_IN_KEYWORDS` from
+    `RFLS_IGNORE_FAILURES_IN_KEYWORDS` and not use any pre-defined entry.
+    
+- `ROBOTFRAMEWORK_DAP_LOG_FILENAME`: Path to a filename where logs should be written.
+
+    
+- `ROBOTFRAMEWORK_DAP_LOG_LEVEL`: Log level for the logging (0 to 3).
 
 
 Development/debug settings
