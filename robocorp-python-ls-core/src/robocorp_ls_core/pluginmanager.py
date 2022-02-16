@@ -165,6 +165,17 @@ class PluginManager(object):
 
         impls.append((impl, kwargs))
 
+    def unregister(
+        self, ep: Type, context: Optional[str] = None, keep_instance: bool = False
+    ):
+        self._name_to_ep.pop(ep.__name__, None)
+        if keep_instance:
+            ep_to_instance_impls = self._ep_to_instance_impls
+            ep_to_instance_impls.pop((ep, context), None)
+        else:
+            ep_to_impl = self._ep_to_impls
+            ep_to_impl.pop(ep, None)
+
     def set_instance(self, ep: Type, instance, context=None) -> None:
         if isinstance(ep, str):
             raise ValueError("Expected the actual EP class to be passed.")

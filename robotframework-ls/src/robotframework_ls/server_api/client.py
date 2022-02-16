@@ -1,7 +1,11 @@
 from typing import Optional, Dict
 
 from robocorp_ls_core.client_base import LanguageServerClientBase
-from robocorp_ls_core.protocols import IIdMessageMatcher, IRobotFrameworkApiClient
+from robocorp_ls_core.protocols import (
+    IIdMessageMatcher,
+    IRobotFrameworkApiClient,
+    ILanguageServerClientBase,
+)
 from robocorp_ls_core.lsp import (
     TextDocumentTypedDict,
     ResponseTypedDict,
@@ -23,6 +27,16 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         self.server_process = server_process
         self._check_process_alive()
         self._version = None
+
+        self.stats: Dict[str, int] = {}
+
+    @implements(ILanguageServerClientBase.write)
+    def write(self, contents):
+        if isinstance(contents, dict):
+            method = contents.get("method")
+            if method:
+                self.stats[method] = self.stats.get(method, 0) + 1
+        return LanguageServerClientBase.write(self, contents)
 
     def _check_process_alive(self, raise_exception=True):
         returncode = self.server_process.poll()

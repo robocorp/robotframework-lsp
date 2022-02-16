@@ -55,7 +55,10 @@ class _ServerApi(object):
         self._used_python_executable: Optional[str] = None
         self._used_environ: Optional[Dict[str, str]] = None
         self._server_process = None
-        self._robotframework_api_client: Optional[IRobotFrameworkApiClient] = None
+
+        from robotframework_ls.server_api.client import RobotFrameworkApiClient
+
+        self._robotframework_api_client: Optional[RobotFrameworkApiClient] = None
 
         # We have a version of the config with the settings passed overridden
         # by the settings of a given (customized) interpreter.
@@ -69,6 +72,15 @@ class _ServerApi(object):
         self._log_extension = log_extension
         self._language_server_ref = language_server_ref
         self._interpreter_info: Optional[IInterpreterInfo] = None
+
+        self._last_settings_sent: Optional[dict] = None
+
+    @property
+    def stats(self) -> Optional[dict]:
+        client = self._robotframework_api_client
+        if client is not None:
+            return client.stats
+        return None
 
     def _check_in_main_thread(self):
         curr_thread = threading.current_thread()
@@ -113,12 +125,16 @@ class _ServerApi(object):
         self._check_in_main_thread()
         was_disposed = self._check_reinitialize()
         if not was_disposed:
-            # i.e.: when the interpreter info changes, even if it kept the same
-            # interpreter, it's possible that the configuration changed.
-            self.forward(
-                "workspace/didChangeConfiguration",
-                {"settings": self._config.get_full_settings()},
-            )
+            new_settings = self._config.get_full_settings()
+            if new_settings != self._last_settings_sent:
+                log.info("Setting new settings to API: %s", new_settings)
+                self._last_settings_sent = new_settings
+                # i.e.: when the interpreter info changes, even if it kept the same
+                # interpreter, it's possible that the configuration changed.
+                self.forward(
+                    "workspace/didChangeConfiguration",
+                    {"settings": new_settings},
+                )
 
     def _check_reinitialize(self) -> bool:
         """
@@ -371,6 +387,7 @@ class _ServerApi(object):
             self._robotframework_api_client = None
             self._used_environ = None
             self._used_python_executable = None
+            self._last_settings_sent = None
 
     def request_cancel(self, message_id) -> None:
         self._check_in_main_thread()
