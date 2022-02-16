@@ -52,3 +52,19 @@ Gfg website<www.geeksforgeeks.org>
 `GeeksforGeeks in vebatim`
 """
     )
+
+
+def test_rest_to_markdown_incomplete():
+    from robotframework_ls.impl.robot_specbuilder import _rest_to_markdown
+
+    initial = """.. code-block::
+
+    Match(anchor='Invoice Number', direction='right', neighbours=['INV-3337'])
+"""
+    assert (
+        _rest_to_markdown(initial)
+        == """```
+Match(anchor='Invoice Number', direction='right', neighbours=['INV-3337'])
+```
+"""
+    )
