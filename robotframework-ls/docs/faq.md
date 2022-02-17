@@ -235,7 +235,12 @@ it's possible to create a `.vscode/launch.json` such as:
 
 Note: alternatively it's also possible to create the `launch` configuration
 in the user or workspace-settings by creating an entry such as the one below
-in (user or workspace) `settings.json`:
+in (user or workspace) `settings.json`.
+
+-- note: if a `.vscode/launch.json` is present in the workspace it will take precedence over
+launch configuration in the workspace settings, even if it's empty (so, in this case you need to define
+it either in your user settings or and put all `launch` settings in `.vscode/settings.json`
+and erase your workspace `.vscode/launch.json`).
 
 
 ```
