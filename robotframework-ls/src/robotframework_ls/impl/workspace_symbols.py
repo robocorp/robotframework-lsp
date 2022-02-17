@@ -35,6 +35,7 @@ def _compute_symbols_from_library_info(library_name, library_info) -> ISymbolsCa
     from robocorp_ls_core.lsp import SymbolKind
     from robotframework_ls.impl.robot_specbuilder import KeywordDoc
     from robotframework_ls.impl.robot_workspace import SymbolsCache
+    from robotframework_ls.impl.text_utilities import build_keyword_docs_with_signature
 
     symbols: List[ISymbolsJsonListEntry] = []
     keyword: KeywordDoc
@@ -56,16 +57,12 @@ def _compute_symbols_from_library_info(library_name, library_info) -> ISymbolsCa
 
         lineno -= 1
 
-        keyword_args = ()
-        if keyword.args:
-            keyword_args = keyword.args
-
         from robotframework_ls.impl.robot_specbuilder import docs_and_format
 
         docs, docs_format = docs_and_format(keyword)
-        if keyword_args:
-            args = [x.original_arg for x in keyword_args]
-            docs = "%s(%s)\n\n%s" % (keyword.name, ", ".join(args), docs)
+        docs = build_keyword_docs_with_signature(
+            keyword.name, keyword.args, docs, docs_format
+        )
 
         symbols.append(
             {

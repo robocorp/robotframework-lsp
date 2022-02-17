@@ -1,6 +1,8 @@
 from functools import lru_cache
 from robocorp_ls_core.robotframework_log import get_logger
 import re
+from robotframework_ls.impl.protocols import IKeywordArg
+from typing import List, Optional
 
 log = get_logger(__name__)
 
@@ -144,3 +146,40 @@ def has_deprecated_text(docs: str) -> bool:
         return bool(matched)
 
     return False
+
+
+def build_keyword_docs_with_signature(
+    keyword_name: str,
+    keyword_args: Optional[List[IKeywordArg]],
+    docs: str,
+    docs_format: str,
+):
+
+    if not keyword_args:
+        args = None
+    else:
+        args = [x.original_arg for x in keyword_args]
+
+    if docs_format == "markdown":
+        # Multi-line approach (it's a bit too big -- maybe as an option?)
+        # if docs_format == "markdown":
+        #     arg_docs = "  \n&nbsp;&nbsp;&nbsp;&nbsp;".join(
+        #         ("**" + (x.replace("*", "\\*") + "**") for x in args)
+        #     )
+        #     return f"**{keyword_name}**  \n&nbsp;&nbsp;&nbsp;&nbsp;{arg_docs}\n\n{docs}"
+
+        if args:
+            escaped_args = (x.replace("*", "\\*") for x in args)
+            arg_docs = f'({", ".join(escaped_args)})'
+
+        else:
+            arg_docs = ""
+        return f"**{keyword_name}{arg_docs}**\n\n{docs}"
+    else:
+        if args:
+            arg_docs = f'({", ".join(args)})'
+
+        else:
+            arg_docs = ""
+
+        return f"{keyword_name}{arg_docs}\n\n{docs}"

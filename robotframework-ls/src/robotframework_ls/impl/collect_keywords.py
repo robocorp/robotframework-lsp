@@ -12,36 +12,10 @@ from robotframework_ls.impl.protocols import (
     ILibraryDoc,
 )
 from typing import Tuple, Sequence, List, Dict, Optional
+from robotframework_ls.impl.text_utilities import build_keyword_docs_with_signature
 
 
 log = get_logger(__name__)
-
-
-def _build_docs(keyword_name, args, docs, docs_format):
-
-    if docs_format == "markdown":
-        # Multi-line approach (it's a bit too big -- maybe as an option?)
-        # if docs_format == "markdown":
-        #     arg_docs = "  \n&nbsp;&nbsp;&nbsp;&nbsp;".join(
-        #         ("**" + (x.replace("*", "\\*") + "**") for x in args)
-        #     )
-        #     return f"**{keyword_name}**  \n&nbsp;&nbsp;&nbsp;&nbsp;{arg_docs}\n\n{docs}"
-
-        if args:
-            escaped_args = (x.replace("*", "\\*") for x in args)
-            arg_docs = f'({", ".join(escaped_args)})'
-
-        else:
-            arg_docs = ""
-        return f"**{keyword_name}{arg_docs}**\n\n{docs}"
-    else:
-        if args:
-            arg_docs = f'({", ".join(args)})'
-
-        else:
-            arg_docs = ""
-
-        return f"{keyword_name}{arg_docs}\n\n{docs}"
 
 
 class _KeywordFoundFromAst(object):
@@ -109,9 +83,10 @@ class _KeywordFoundFromAst(object):
     @instance_cache
     def docs(self) -> str:
         docs = self.docs_without_signature
-        args = [x.original_arg for x in self.keyword_args]
 
-        return _build_docs(self.keyword_name, args, docs, "markdown")
+        return build_keyword_docs_with_signature(
+            self.keyword_name, self.keyword_args, docs, "markdown"
+        )
 
     @property
     @instance_cache
@@ -273,10 +248,9 @@ class _KeywordFoundFromLibrary(object):
         from robotframework_ls.impl.robot_specbuilder import docs_and_format
 
         docs, docs_format = docs_and_format(self._keyword_doc)
-        if self.keyword_args:
-            args = [x.original_arg for x in self.keyword_args]
-
-            docs = _build_docs(self.keyword_name, args, docs, docs_format)
+        docs = build_keyword_docs_with_signature(
+            self.keyword_name, self.keyword_args, docs, docs_format
+        )
 
         return docs, docs_format
 
