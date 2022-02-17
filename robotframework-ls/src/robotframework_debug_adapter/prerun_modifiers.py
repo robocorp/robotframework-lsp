@@ -4,6 +4,7 @@ import json
 from typing import Set, Dict, Optional
 
 from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.basic import normalize_filename
 
 log = get_logger(__name__)
 
@@ -41,7 +42,7 @@ class FilteringTestsSuiteVisitor(SuiteVisitor):
                 add(tup, self.exclude)
 
     def _normalize(self, source):
-        return os.path.normcase(os.path.normpath(os.path.abspath(source)))
+        return normalize_filename(source)
 
     def _contains(
         self, container: dict, source: str, test_name: str, cache: dict

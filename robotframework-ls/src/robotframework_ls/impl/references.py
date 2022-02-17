@@ -8,13 +8,11 @@ from robotframework_ls.impl.protocols import (
     IKeywordFound,
     IVariablesCollector,
     IVariableFound,
-    IKeywordDefinition,
     cast_to_keyword_definition,
 )
 import typing
-import os
 from robocorp_ls_core.protocols import check_implements
-from robocorp_ls_core.basic import isinstance_name
+from robocorp_ls_core.basic import isinstance_name, normalize_filename
 
 
 log = get_logger(__name__)
@@ -24,9 +22,7 @@ def matches_source(s1: str, s2: str) -> bool:
     if s1 == s2:
         return True
 
-    return os.path.normcase(os.path.normpath(s1)) == os.path.normcase(
-        os.path.normpath(s2)
-    )
+    return normalize_filename(s1) == normalize_filename(s2)
 
 
 class _VariableDefinitionsCollector(object):

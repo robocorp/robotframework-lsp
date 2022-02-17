@@ -16,16 +16,17 @@ from robocorp_ls_core.constants import NULL
 from functools import partial
 import threading
 from robotframework_ls.impl.robot_lsp_constants import CHECK_IF_LIBRARIES_INSTALLED
+from robocorp_ls_core.basic import normalize_filename
 
 log = get_logger(__name__)
 
 
 def _normfile(filename):
-    return os.path.abspath(os.path.normpath(os.path.normcase(filename)))
+    return normalize_filename(filename)
 
 
 def _norm_filename(path):
-    return os.path.normcase(os.path.realpath(os.path.abspath(path)))
+    return normalize_filename(os.path.realpath(path))
 
 
 class _Node(object):

@@ -3,7 +3,7 @@ import sys
 from robotframework_ls.constants import NULL
 from robocorp_ls_core.robotframework_log import get_logger
 import threading
-from typing import Optional, Dict, Set, Iterator, Union
+from typing import Optional, Dict, Set, Iterator, Union, Any
 from robocorp_ls_core.protocols import Sentinel, IEndPoint
 from robotframework_ls.impl.protocols import ILibraryDoc, ILibraryDocOrError
 import itertools
@@ -11,7 +11,6 @@ from robocorp_ls_core.watchdog_wrapper import IFSObserver
 from robotframework_ls.impl.robot_lsp_constants import (
     OPTION_ROBOT_LIBRARIES_LIBDOC_NEEDS_ARGS,
 )
-from functools import lru_cache
 from robotframework_ls.impl.libspec_warmup import (
     _norm_filename,
     _normfile,
@@ -20,6 +19,8 @@ from robotframework_ls.impl.libspec_warmup import (
 from pathlib import Path
 from contextlib import contextmanager
 import typing
+from robotframework_ls.impl.text_utilities import get_digest_from_string
+from robocorp_ls_core.basic import normalize_filename
 
 log = get_logger(__name__)
 
@@ -36,13 +37,6 @@ def _get_libspec_mutex_name(libspec_filename):
 def _get_additional_info_filename(spec_filename):
     additional_info_filename = os.path.join(spec_filename + ".m")
     return additional_info_filename
-
-
-@lru_cache(maxsize=300)
-def _get_digest_from_string(s: str) -> str:
-    import hashlib
-
-    return hashlib.sha256(s.encode("utf-8", "replace")).hexdigest()[:8]
 
 
 @contextmanager
@@ -62,49 +56,18 @@ def timed_acquire_mutex_for_spec_filename(spec_filename):
         ctx.__exit__()
 
 
-def _get_markdown_json_version_filename(spec_filename, mtime) -> str:
-    digest = _get_digest_from_string(f"{spec_filename} - {mtime}")
-
-    internal_dir = LibspecManager.get_internal_libspec_dir()
-    target_json = os.path.join(
-        internal_dir, f"{digest}_{os.path.basename(spec_filename)}.json"
-    )
-    return target_json
-
-
-def _load_markdown_json_version(spec_filename, target_json) -> Optional[ILibraryDoc]:
-    from robotframework_ls.impl import robot_specbuilder
-
-    libdoc = None
-    json_builder = robot_specbuilder.JsonDocBuilder()
-    try:
-        libdoc = json_builder.build(target_json)
-        # Let the external world think it was built with the libspec.
-        libdoc.filename = spec_filename
-    except:
-        log.debug("Unable to load from json: %s (needs to be created?)", target_json)
-    return libdoc
-
-
-def _convert_to_markdown_and_save_as_json(spec_filename, libdoc, target_json):
-    try:
-        libdoc.convert_docs_to_markdown()
-        with open(target_json, "w", encoding="utf-8") as stream:
-            import json
-
-            json.dump(libdoc.to_dictionary(), stream)
-    except Exception:
-        log.exception("Error when converting spec to markdown/json: %s", spec_filename)
-
-
-def _load_library_doc_and_mtime(spec_filename, obtain_mutex=True):
+def _load_library_doc_and_mtime(libspec_manager, spec_filename: str, obtain_mutex=True):
     """
     :param obtain_mutex:
         Should be False if this is part of a bigger operation that already
         has the spec_filename mutex.
     """
     from robotframework_ls.impl import robot_specbuilder
+    from robotframework_ls.impl.libspec_markdown_conversion import (
+        load_markdown_json_version,
+    )
 
+    ctx: Any
     if obtain_mutex:
         ctx = timed_acquire_mutex_for_spec_filename(spec_filename)
     else:
@@ -113,23 +76,23 @@ def _load_library_doc_and_mtime(spec_filename, obtain_mutex=True):
         # We must load it with a mutex to avoid conflicts between generating/reading.
         try:
             mtime = os.path.getmtime(spec_filename)
-            target_json = _get_markdown_json_version_filename(spec_filename, mtime)
-            libdoc = _load_markdown_json_version(spec_filename, target_json)
+            libdoc = load_markdown_json_version(libspec_manager, spec_filename, mtime)
 
             if libdoc is None:
                 builder = robot_specbuilder.SpecDocBuilder()
                 libdoc = builder.build(spec_filename)
-                _convert_to_markdown_and_save_as_json(
-                    spec_filename, libdoc, target_json
-                )
+                if libdoc.doc_format != "markdown":
+                    libspec_manager.schedule_conversion_to_markdown(spec_filename)
             return libdoc, mtime
         except Exception:
             log.exception("Error when loading spec info from: %s", spec_filename)
             return None
 
 
-def _load_lib_info(canonical_spec_filename, can_regenerate):
-    libdoc_and_mtime = _load_library_doc_and_mtime(canonical_spec_filename)
+def _load_lib_info(libspec_manager, canonical_spec_filename: str, can_regenerate: bool):
+    libdoc_and_mtime = _load_library_doc_and_mtime(
+        libspec_manager, canonical_spec_filename
+    )
     if libdoc_and_mtime is None:
         return None
     libdoc, mtime = libdoc_and_mtime
@@ -167,7 +130,9 @@ def _create_updated_source_to_mtime(library_doc):
     return source_to_mtime
 
 
-def _create_additional_info(spec_filename, is_builtin, obtain_mutex=True):
+def _create_additional_info(
+    libspec_manager, spec_filename, is_builtin, obtain_mutex=True
+):
     try:
         additional_info = {_IS_BUILTIN: is_builtin}
         if is_builtin:
@@ -176,7 +141,7 @@ def _create_additional_info(spec_filename, is_builtin, obtain_mutex=True):
             return additional_info
 
         library_doc_and_mtime = _load_library_doc_and_mtime(
-            spec_filename, obtain_mutex=obtain_mutex
+            libspec_manager, spec_filename, obtain_mutex=obtain_mutex
         )
         if library_doc_and_mtime is None:
             additional_info[_UNABLE_TO_LOAD] = True
@@ -211,15 +176,25 @@ def _load_spec_filename_additional_info(spec_filename):
         return {}
 
 
-def _dump_spec_filename_additional_info(spec_filename, is_builtin, obtain_mutex=True):
+def _dump_spec_filename_additional_info(
+    libspec_manager, spec_filename, is_builtin, obtain_mutex=True
+):
     """
     Creates a filename with additional information not directly available in the
     spec.
     """
+    from robotframework_ls.impl.libspec_markdown_conversion import (
+        convert_to_markdown_now,
+    )
+
+    try:
+        convert_to_markdown_now(libspec_manager, spec_filename)
+    except:
+        log.exception("Error converting %s to markdown.", spec_filename)
     import json
 
     source_to_mtime = _create_additional_info(
-        spec_filename, is_builtin, obtain_mutex=obtain_mutex
+        libspec_manager, spec_filename, is_builtin, obtain_mutex=obtain_mutex
     )
     additional_info_filename = _get_additional_info_filename(spec_filename)
     with open(additional_info_filename, "w") as stream:
@@ -440,7 +415,7 @@ class LibspecManager(object):
         if isinstance(pyexe, bytes):
             pyexe = pyexe.decode("utf-8", "replace")
 
-        digest: str = _get_digest_from_string(pyexe)
+        digest: str = get_digest_from_string(pyexe)
 
         v = cls.get_robot_version()
 
@@ -465,6 +440,7 @@ class LibspecManager(object):
         observer: Optional[IFSObserver] = None,
         endpoint: Optional[IEndPoint] = None,
         pre_generate_libspecs: bool = False,
+        cache_libspec_dir: Optional[str] = None,
     ):
         """
         :param __internal_libspec_dir__:
@@ -478,7 +454,52 @@ class LibspecManager(object):
             dir_cache_dir
             or os.path.join(robot_config.get_robotframework_ls_home(), ".cache")
         )
+
+        self._libspec_dir = self.get_internal_libspec_dir()
+
+        self._user_libspec_dir = user_libspec_dir or os.path.join(
+            self._libspec_dir, "user"
+        )
+        self._cache_libspec_dir = cache_libspec_dir or os.path.join(
+            self._libspec_dir, "cache"
+        )
+        self._builtins_libspec_dir = (
+            builtin_libspec_dir
+            or self.get_internal_builtins_libspec_dir(self._libspec_dir)
+        )
+        log.info("User libspec dir: %s", self._user_libspec_dir)
+        log.info("Builtins libspec dir: %s", self._builtins_libspec_dir)
+        log.info("Cache libspec dir: %s", self._cache_libspec_dir)
+
+        try:
+            os.makedirs(self._user_libspec_dir)
+        except:
+            # Ignore exception if it's already created.
+            pass
+        try:
+            os.makedirs(self._builtins_libspec_dir)
+        except:
+            # Ignore exception if it's already created.
+            pass
+        try:
+            os.makedirs(self._cache_libspec_dir)
+        except:
+            # Ignore exception if it's already created.
+            pass
+
         self.pre_generate_libspecs = pre_generate_libspecs
+
+        if pre_generate_libspecs:
+            from robotframework_ls.impl.libspec_markdown_conversion import (
+                LibspecMarkdownConversion,
+            )
+
+            self.libspec_markdown_conversion: Optional[
+                LibspecMarkdownConversion
+            ] = LibspecMarkdownConversion(self)
+        else:
+            self.libspec_markdown_conversion = None
+
         self._libspec_warmup = LibspecWarmup(endpoint, dir_cache)
 
         self._libspec_failures_cache: Dict[
@@ -498,29 +519,6 @@ class LibspecManager(object):
         self._file_changes_notifier = watchdog_wrapper.create_notifier(
             self._on_file_changed, timeout=0.5, extensions=(".libspec", ".py")
         )
-
-        self._libspec_dir = self.get_internal_libspec_dir()
-
-        self._user_libspec_dir = user_libspec_dir or os.path.join(
-            self._libspec_dir, "user"
-        )
-        self._builtins_libspec_dir = (
-            builtin_libspec_dir
-            or self.get_internal_builtins_libspec_dir(self._libspec_dir)
-        )
-        log.info("User libspec dir: %s", self._user_libspec_dir)
-        log.info("Builtins libspec dir: %s", self._builtins_libspec_dir)
-
-        try:
-            os.makedirs(self._user_libspec_dir)
-        except:
-            # Ignore exception if it's already created.
-            pass
-        try:
-            os.makedirs(self._builtins_libspec_dir)
-        except:
-            # Ignore exception if it's already created.
-            pass
 
         # Spec info found in the workspace
         self._workspace_folder_uri_to_folder_info: Dict[str, _FolderInfo] = {}
@@ -571,6 +569,12 @@ class LibspecManager(object):
         log.debug("Synchronizing internal caches.")
         self._synchronize()
         log.debug("Finished initializing LibspecManager.")
+
+    def schedule_conversion_to_markdown(self, spec_filename: str):
+        if self.libspec_markdown_conversion is not None:
+            self.libspec_markdown_conversion.schedule_conversion_to_markdown(
+                spec_filename
+            )
 
     @property
     def fs_observer(self) -> IFSObserver:
@@ -624,6 +628,10 @@ class LibspecManager(object):
     @property
     def user_libspec_dir(self):
         return self._user_libspec_dir
+
+    @property
+    def cache_libspec_dir(self):
+        return self._cache_libspec_dir
 
     def _on_file_changed(self, spec_file, folder_info_on_change_spec):
         log.debug("File change detected: %s", spec_file)
@@ -778,7 +786,7 @@ class LibspecManager(object):
                 if info is None:
                     info = canonical_filename_to_info[
                         canonical_spec_filename
-                    ] = _load_lib_info(canonical_spec_filename, can_regenerate)
+                    ] = _load_lib_info(self, canonical_spec_filename, can_regenerate)
 
                 # Note: we could end up yielding a library with the same name
                 # multiple times due to its scope. It's up to the caller to
@@ -966,6 +974,7 @@ class LibspecManager(object):
                             try:
                                 if mtime != os.path.getmtime(libspec_filename):
                                     _dump_spec_filename_additional_info(
+                                        self,
                                         libspec_filename,
                                         is_builtin=is_builtin,
                                         obtain_mutex=False,
@@ -1011,7 +1020,10 @@ class LibspecManager(object):
                         return f"Error creating libspec: {output}"
 
                     _dump_spec_filename_additional_info(
-                        libspec_filename, is_builtin=is_builtin, obtain_mutex=False
+                        self,
+                        libspec_filename,
+                        is_builtin=is_builtin,
+                        obtain_mutex=False,
                     )
                     return None
             except Exception as e:
@@ -1024,6 +1036,8 @@ class LibspecManager(object):
 
     def dispose(self):
         self._file_changes_notifier.dispose()
+        if self.libspec_markdown_conversion is not None:
+            self.libspec_markdown_conversion.dispose()
 
     def _compute_libspec_filename(
         self,
@@ -1041,18 +1055,18 @@ class LibspecManager(object):
         if target_file:
             if args:
                 digest = (
-                    _get_digest_from_string(target_file)
+                    get_digest_from_string(target_file)
                     + "_"
-                    + _get_digest_from_string(args)
+                    + get_digest_from_string(args)
                 )
             else:
-                digest = _get_digest_from_string(target_file)
+                digest = get_digest_from_string(target_file)
 
             libspec_filename = os.path.join(libspec_dir, digest + ".libspec")
         elif not args:
             libspec_filename = os.path.join(libspec_dir, libname + ".libspec")
         else:
-            digest = _get_digest_from_string(args)
+            digest = get_digest_from_string(args)
             libspec_filename = os.path.join(libspec_dir, libname + digest + ".libspec")
         return libspec_filename
 
@@ -1173,7 +1187,7 @@ class LibspecManager(object):
             )
             if found_target_filename:
                 target_file = found_target_filename
-                normalized_target_file = os.path.normcase(os.path.normpath(target_file))
+                normalized_target_file = normalize_filename(target_file)
             else:
                 builtin = libname in robot_constants.STDLIBS
 
@@ -1194,16 +1208,16 @@ class LibspecManager(object):
             if target_file and lib_info._can_regenerate:
                 if args:
                     digest = (
-                        _get_digest_from_string(target_file)
+                        get_digest_from_string(target_file)
                         + "_"
-                        + _get_digest_from_string(args)
+                        + get_digest_from_string(args)
                     )
                     found = library_doc.filename.endswith(digest + ".libspec")
 
                 else:
                     found = (
                         library_doc.source
-                        and os.path.normcase(os.path.normpath(library_doc.source))
+                        and normalize_filename(library_doc.source)
                         == normalized_target_file
                     )
                     if not found:
@@ -1221,7 +1235,7 @@ class LibspecManager(object):
                         library_doc.name and library_doc.name.lower() == libname_lower
                     )
                 else:
-                    digest = _get_digest_from_string(args)
+                    digest = get_digest_from_string(args)
                     found = library_doc.filename.endswith(
                         os.path.normcase(libname + digest + ".libspec")
                     )

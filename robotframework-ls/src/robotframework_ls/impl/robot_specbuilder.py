@@ -731,6 +731,10 @@ class JsonDocBuilder:
         spec = self._parse_spec_json(path)
         return self.build_from_dict(path, spec)
 
+    def build_from_stream(self, spec_filename, stream):
+        spec = json.loads(stream.read())
+        return self.build_from_dict(spec_filename, spec)
+
     def build_from_dict(self, filename, spec):
         libdoc = LibraryDoc(
             filename,

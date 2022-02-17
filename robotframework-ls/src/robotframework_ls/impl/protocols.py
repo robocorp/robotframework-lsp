@@ -164,6 +164,7 @@ class ILibraryDoc(Protocol):
     source: str
     symbols_cache: Optional["ISymbolsCache"]
     inits: list
+    doc_format: str
 
 
 class ILibraryDocOrError(Protocol):

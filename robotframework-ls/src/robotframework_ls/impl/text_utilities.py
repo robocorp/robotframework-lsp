@@ -183,3 +183,10 @@ def build_keyword_docs_with_signature(
             arg_docs = ""
 
         return f"{keyword_name}{arg_docs}\n\n{docs}"
+
+
+@lru_cache(maxsize=300)
+def get_digest_from_string(s: str) -> str:
+    import hashlib
+
+    return hashlib.sha256(s.encode("utf-8", "replace")).hexdigest()[:8]
