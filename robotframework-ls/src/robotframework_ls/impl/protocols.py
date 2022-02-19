@@ -8,6 +8,7 @@ from typing import (
     Tuple,
     Iterable,
     Generic,
+    Iterator,
 )
 from robocorp_ls_core.protocols import (
     Sentinel,
@@ -22,7 +23,12 @@ from robocorp_ls_core.constants import NULL
 from robocorp_ls_core.protocols import TypedDict
 from collections import namedtuple
 import enum
-from robocorp_ls_core.lsp import SymbolKind, LocationTypedDict, RangeTypedDict
+from robocorp_ls_core.lsp import (
+    SymbolKind,
+    LocationTypedDict,
+    RangeTypedDict,
+    MarkupContentTypedDict,
+)
 import typing
 
 if sys.version_info[:2] < (3, 8):
@@ -44,31 +50,18 @@ class INode(Protocol):
     col_offset: int
     end_col_offset: int
 
-    def get_token(self, name: str) -> Any:
-        pass
-
 
 class ILibraryImportNode(INode, Protocol):
     name: str
     alias: Optional[str]
-    lineno: int
-    end_lineno: int
-    col_offset: int
-    end_col_offset: int
 
-    def get_token(self, name: str) -> Any:
-        pass
+
+class IKeywordNode(INode, Protocol):
+    name: str
 
 
 class IResourceImportNode(INode, Protocol):
     name: str
-    lineno: int
-    end_lineno: int
-    col_offset: int
-    end_col_offset: int
-
-    def get_token(self, name: str) -> Any:
-        pass
 
 
 class NodeInfo(Generic[Y]):
@@ -165,6 +158,37 @@ class ILibraryDoc(Protocol):
     symbols_cache: Optional["ISymbolsCache"]
     inits: list
     doc_format: str
+    keywords: List["IKeywordDoc"]
+
+
+class IKeywordDoc(Protocol):
+    name: str
+    tags: Tuple[str, ...]
+    lineno: int
+    doc: str
+
+    @property
+    def args(self) -> Tuple[IKeywordArg, ...]:
+        pass
+
+    @property
+    def libdoc(self) -> ILibraryDoc:
+        pass
+
+    @property
+    def deprecated(self) -> bool:
+        pass
+
+    @property
+    def source(self) -> str:
+        pass
+
+    @property
+    def doc_format(self) -> str:
+        pass
+
+    def to_dictionary(self) -> dict:
+        pass
 
 
 class ILibraryDocOrError(Protocol):
@@ -190,11 +214,18 @@ class IRobotDocument(IDocument, Protocol):
 
 class ISymbolsJsonListEntry(TypedDict):
     name: str
-    kind: SymbolKind
+    kind: int  # SymbolKind
     location: LocationTypedDict
-    docs: str
-    docsFormat: str
     containerName: str
+
+
+class ISymbolKeywordInfo(Protocol):
+    name: str
+
+    def get_documentation(self) -> MarkupContentTypedDict:
+        """
+        Note: It should be computed on demand (and can be slow).
+        """
 
 
 class ISymbolsCache(Protocol):
@@ -214,6 +245,9 @@ class ISymbolsCache(Protocol):
         pass
 
     def get_test_info(self) -> Optional[List[ITestInfoFromSymbolsCacheTypedDict]]:
+        pass
+
+    def iter_keyword_info(self) -> Iterator[ISymbolKeywordInfo]:
         pass
 
 

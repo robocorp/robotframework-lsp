@@ -85,7 +85,10 @@ class _KeywordFoundFromAst(object):
         docs = self.docs_without_signature
 
         return build_keyword_docs_with_signature(
-            self.keyword_name, self.keyword_args, docs, "markdown"
+            self.keyword_name,
+            tuple(x.original_arg for x in self.keyword_args),
+            docs,
+            "markdown",
         )
 
     @property
@@ -249,7 +252,10 @@ class _KeywordFoundFromLibrary(object):
 
         docs, docs_format = docs_and_format(self._keyword_doc)
         docs = build_keyword_docs_with_signature(
-            self.keyword_name, self.keyword_args, docs, docs_format
+            self.keyword_name,
+            tuple(x.original_arg for x in self.keyword_args),
+            docs,
+            docs_format,
         )
 
         return docs, docs_format

@@ -1,8 +1,7 @@
 from functools import lru_cache
 from robocorp_ls_core.robotframework_log import get_logger
 import re
-from robotframework_ls.impl.protocols import IKeywordArg
-from typing import List, Optional
+from typing import Sequence
 
 log = get_logger(__name__)
 
@@ -150,15 +149,10 @@ def has_deprecated_text(docs: str) -> bool:
 
 def build_keyword_docs_with_signature(
     keyword_name: str,
-    keyword_args: Optional[List[IKeywordArg]],
+    args: Sequence[str],  # tuple(x.original_arg for x in keyword_args)
     docs: str,
     docs_format: str,
 ):
-
-    if not keyword_args:
-        args = None
-    else:
-        args = [x.original_arg for x in keyword_args]
 
     if docs_format == "markdown":
         # Multi-line approach (it's a bit too big -- maybe as an option?)

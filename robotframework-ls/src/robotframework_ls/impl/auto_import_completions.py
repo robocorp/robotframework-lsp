@@ -3,11 +3,13 @@ from robotframework_ls.impl.protocols import (
     IRobotDocument,
     ILibraryDoc,
     IKeywordFound,
+    CompletionType,
 )
 from robocorp_ls_core.lsp import (
     CompletionItemKind,
     TextEditTypedDict,
     CompletionItemTypedDict,
+    InsertTextFormat,
 )
 from typing import Optional, List, Set, Dict, Any
 from robotframework_ls.impl.protocols import NodeInfo
@@ -35,8 +37,7 @@ class _Collector(object):
 
         self._matcher = RobotStringMatcher(token_str)
 
-    def accepts(self, symbols_entry):
-        keyword_name = symbols_entry["name"]
+    def accepts(self, keyword_name: str) -> bool:
         if not self._matcher.accepts_keyword_name(keyword_name):
             return False
 
@@ -46,31 +47,12 @@ class _Collector(object):
         if not keywords_found:
             return True
 
-        # No longer do this check: if there's some symbol imported already, don't
-        # try to match with the filename (just don't show it).
-        #
-        # This change was done because the check below wasn't perfect
-        # and because it can be a bit confusing since everything imported
-        # works as a wild import in RobotFramework (so, even if it was a different
-        # keyword from a different place, importing it would make it clash and
-        # thus such a completion is kind of strange).
-        #
-        # for keyword_found in keywords_found:
-        #     if (
-        #         uris.from_fs_path(keyword_found.source)
-        #         == symbols_entry["location"]["uri"]
-        #     ):
-        #         return False
-        # return True
-
         return False
 
-    def create_completion_item(
+    def _create_completion_item(
         self,
         completion_context: ICompletionContext,
         keyword_name: str,
-        docs: str,
-        docs_format: str,
         selection,
         token,
         col_delta: int,
@@ -78,7 +60,7 @@ class _Collector(object):
         lib_import: Optional[str] = None,
         resource_path: Optional[str] = None,
         data: Optional[Any] = None,
-    ) -> None:
+    ) -> Optional[CompletionItemTypedDict]:
         """
         Note: the lib_import and resource_path are the strings to be added
         so that the given library/resource is loaded.
@@ -86,13 +68,9 @@ class _Collector(object):
         i.e.: It's the name concatenated to the `Library    {lib_import}` or
         `Resource    {resource_path}`.
         """
-        from robocorp_ls_core.lsp import InsertTextFormat
-        from robocorp_ls_core.lsp import MarkupKind
-        from robotframework_ls.impl.protocols import CompletionType
-
         label = f"{keyword_name} ({lib_import or resource_path})"
         if label in memo:
-            return
+            return None
         memo.add(label)
 
         prefix = ""
@@ -172,17 +150,12 @@ class _Collector(object):
             "kind": CompletionItemKind.Reference,
             "textEdit": text_edit,
             "insertText": text_edit["newText"],
-            "documentation": {
-                "kind": MarkupKind.Markdown
-                if docs_format == "markdown"
-                else MarkupKind.PlainText,
-                "value": docs,
-            },
             "insertTextFormat": InsertTextFormat.Snippet,
             "additionalTextEdits": additional_text_edits,
             "data": data,
         }
         self.completion_items.append(completion_item)
+        return completion_item
 
 
 def _collect_auto_import_completions(
@@ -192,6 +165,7 @@ def _collect_auto_import_completions(
     from robotframework_ls.impl.protocols import ISymbolsCache
     from robocorp_ls_core.protocols import IWorkspace
     from robotframework_ls.robot_config import create_convert_keyword_format_func
+    from robocorp_ls_core.lsp import MarkupKind
 
     symbols_cache: ISymbolsCache
     selection = completion_context.sel
@@ -261,14 +235,11 @@ def _collect_auto_import_completions(
                 pass
             convert_keyword_format = noop
 
-        json_list = symbols_cache.get_json_list()
-        for entry in json_list:
-            if collector.accepts(entry):
-                collector.create_completion_item(
+        for keyword_info in symbols_cache.iter_keyword_info():
+            if collector.accepts(keyword_info.name):
+                item = collector._create_completion_item(
                     completion_context,
-                    convert_keyword_format(entry["name"]),
-                    entry["docs"],
-                    entry["docsFormat"],
+                    convert_keyword_format(keyword_info.name),
                     selection,
                     token,
                     0,
@@ -277,6 +248,8 @@ def _collect_auto_import_completions(
                     resource_path=resource_path,
                     data=None,
                 )
+                if item is not None:
+                    item["documentation"] = keyword_info.get_documentation()
 
 
 class _ImportLocationInfo:

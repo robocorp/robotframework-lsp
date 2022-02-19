@@ -18,9 +18,9 @@
 import os
 import weakref
 from robocorp_ls_core.cache import instance_cache
-from typing import Optional, Union, Type, Callable, List
+from typing import Optional, Union, Type, Callable, List, Tuple
 from robocorp_ls_core.protocols import Sentinel
-from robotframework_ls.impl.protocols import ISymbolsCache
+from robotframework_ls.impl.protocols import ISymbolsCache, ILibraryDoc, IKeywordArg
 from robocorp_ls_core.robotframework_log import get_logger, get_log_level
 import json
 
@@ -187,7 +187,7 @@ class LibraryDoc(object):
         for data_type in self.data_types:
             type_name = data_type.type
             type_name = type_name[0].lower() + type_name[1:] + "s"
-            assert type_name in ("customs", "enums", "typedDicts")
+            # assert type_name in ("customs", "enums", "typedDicts")
             lst = data_types.setdefault(type_name, [])
             lst.append(data_type.to_dictionary())
 
@@ -435,12 +435,12 @@ class KeywordDoc(object):
         self.lineno = lineno
 
     @property
-    def deprecated(self):
+    def deprecated(self) -> bool:
         return self.doc.startswith("*DEPRECATED") and "*" in self.doc[1:]
 
     @property
     @instance_cache
-    def args(self):
+    def args(self) -> Tuple[IKeywordArg, ...]:
         if self._args:
             if isinstance(self._args[0], KeywordArg):
                 return self._args
@@ -449,7 +449,7 @@ class KeywordDoc(object):
 
     @property
     @instance_cache
-    def source(self):
+    def source(self) -> str:
         # When asked for, make sure that the path is absolute.
         source = self._source
         if source:
@@ -460,11 +460,11 @@ class KeywordDoc(object):
         return source
 
     @property
-    def libdoc(self):
+    def libdoc(self) -> ILibraryDoc:
         return self._weak_libdoc()
 
     @property
-    def doc_format(self):
+    def doc_format(self) -> str:
         return self._weak_libdoc().doc_format
 
     def __repr__(self):
@@ -472,7 +472,7 @@ class KeywordDoc(object):
 
     __str__ = __repr__
 
-    def to_dictionary(self):
+    def to_dictionary(self) -> dict:
         return {
             "name": self.name,
             "args": [arg.to_dictionary() for arg in self.args],
@@ -482,9 +482,15 @@ class KeywordDoc(object):
             "lineno": self.lineno,
         }
 
+    def __typecheckself__(self) -> None:
+        from robotframework_ls.impl.protocols import IKeywordDoc
+        from robocorp_ls_core.protocols import check_implements
+
+        _: IKeywordDoc = check_implements(self)
+
 
 class DataType(object):
-    type: Optional = None
+    type: str = ""
 
     def __init__(self, name, doc):
         self.name = name
