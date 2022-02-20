@@ -464,6 +464,13 @@ class MarkupContentTypedDict(TypedDict):
     value: str
 
 
+class MonacoMarkdownStringTypedDict(TypedDict, total=False):
+    value: str
+    isTrusted: bool
+    supportThemeIcons: bool
+    uris: Any
+
+
 class CompletionItemTypedDict(TypedDict, total=False):
     #
     # The label of this completion item. By default
@@ -485,7 +492,9 @@ class CompletionItemTypedDict(TypedDict, total=False):
     detail: Optional[str]
     #
     # A human-readable string that represents a doc-comment.
-    documentation: Optional[Union[str, MarkupContentTypedDict]]
+    documentation: Optional[
+        Union[str, MarkupContentTypedDict, MonacoMarkdownStringTypedDict]
+    ]
     #
     # Indicates if this item is deprecated.
     # @deprecated Use `tags` instead.

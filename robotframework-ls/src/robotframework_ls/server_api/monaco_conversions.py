@@ -154,6 +154,10 @@ class MonacoCompletionItemTypedDict(TypedDict, total=False):
     #
     command: Optional[MonacoCommandTypedDict]
 
+    # Not really in the official docs, but if present it'll be persisted
+    # so that it's possible to resolve a completion item.
+    data: Any
+
 
 class CompletionItemInsertTextRule:
     #
@@ -233,6 +237,10 @@ def convert_to_monaco_completion(
     detail = lsp_completion.get("detail")
     if detail is not None:
         ret["detail"] = detail
+
+    data = lsp_completion.get("data")
+    if data is not None:
+        ret["data"] = data
 
     additional_text_edits = lsp_completion.get("additionalTextEdits")
     if additional_text_edits is not None:

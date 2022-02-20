@@ -258,7 +258,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return ret
 
     def m_resolve_completion_item(
-        self, completion_item: CompletionItemTypedDict
+        self,
+        completion_item: CompletionItemTypedDict,
+        monaco=False,
     ) -> CompletionItemTypedDict:
         # Note: don't put it in a thread as it should be cheap to do in the main thread.
         use_ctx = None
@@ -266,15 +268,14 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             data = completion_item.get("data")
             if data and isinstance(data, dict):
                 ctx_id = data.get("ctx")
-
-            if ctx_id is not None:
-                for ctx in self._completion_contexts_saved:
-                    if id(ctx) == ctx_id:
-                        use_ctx = ctx
-                        break
+                if ctx_id is not None:
+                    for ctx in self._completion_contexts_saved:
+                        if id(ctx) == ctx_id:
+                            use_ctx = ctx
+                            break
 
         if use_ctx is not None:
-            use_ctx.resolve_completion_item(data, completion_item)
+            use_ctx.resolve_completion_item(data, completion_item, monaco=monaco)
 
         return completion_item
 
@@ -836,6 +837,12 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         )
         func = require_monitor(func)
         return func
+
+    def m_monaco_resolve_completion(
+        self,
+        completion_item: CompletionItemTypedDict,
+    ):
+        return self.m_resolve_completion_item(completion_item, monaco=True)
 
     def threaded_monaco_completions_from_code_full(
         self,

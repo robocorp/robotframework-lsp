@@ -167,6 +167,20 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             )
         )
 
+    def request_monaco_resolve_completion(
+        self,
+        completion_item: CompletionItemTypedDict,
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(
+            self._build_msg(
+                "monacoResolveCompletion",
+                completion_item=completion_item,
+            )
+        )
+
     def forward(self, method_name, params):
         self._check_process_alive()
         msg_id = self.next_id()

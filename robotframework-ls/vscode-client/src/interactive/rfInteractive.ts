@@ -186,6 +186,29 @@ class InteractiveShellPanel {
             }
         }
 
+        async function handleResolveCompletion(message) {
+            let result = undefined;
+            try {
+                let completionItem = message.arguments["completionItem"];
+                // result is {'suggestions': [...], ...}
+                result = await commands.executeCommand("robot.internal.rfinteractive.resolveCompletion", {
+                    "interpreter_id": interpreterId,
+                    "completionItem": completionItem,
+                });
+            } catch (err) {
+                logError("Error resolving completion.", err, "INTERACTIVE_RESOLVE_COMPLETION");
+            } finally {
+                let response: any = {
+                    type: "response",
+                    seq: nextMessageSeq(),
+                    command: message.command,
+                    request_seq: message.seq,
+                    body: result,
+                };
+                webview.postMessage(response);
+            }
+        }
+
         async function handleCompletions(message) {
             let result = undefined;
             try {
@@ -251,6 +274,10 @@ class InteractiveShellPanel {
 
                         case "completions":
                             await handleCompletions(message);
+                            return;
+
+                        case "resolveCompletion":
+                            await handleResolveCompletion(message);
                             return;
 
                         case "persistState":

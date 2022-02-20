@@ -157,7 +157,7 @@ class CompletionContext(object):
             completion_item["data"] = {"id": next_id, "ctx": id(self)}
 
     def resolve_completion_item(
-        self, data, completion_item: CompletionItemTypedDict
+        self, data, completion_item: CompletionItemTypedDict, monaco=False
     ) -> None:
         if self._original_ctx is not None:
             self._original_ctx.resolve_completion_item(data, completion_item)
@@ -166,7 +166,17 @@ class CompletionContext(object):
                 data.get("id")
             )
             if compute_documentation is not None:
-                completion_item["documentation"] = compute_documentation()
+                marked: Optional[MarkupContentTypedDict] = compute_documentation()
+                if marked:
+                    if monaco:
+                        if marked["kind"] == "markdown":
+                            completion_item["documentation"] = {
+                                "value": marked["value"]
+                            }
+                        else:
+                            completion_item["documentation"] = marked["value"]
+                    else:
+                        completion_item["documentation"] = marked
 
     @property
     def monitor(self) -> IMonitor:

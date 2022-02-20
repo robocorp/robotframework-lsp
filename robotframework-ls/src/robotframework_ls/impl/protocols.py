@@ -485,7 +485,7 @@ class ICompletionContext(Protocol):
         """
 
     def resolve_completion_item(
-        self, data, completion_item: CompletionItemTypedDict
+        self, data, completion_item: CompletionItemTypedDict, monaco: bool = False
     ) -> None:
         pass
 
