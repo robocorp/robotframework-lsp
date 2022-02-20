@@ -1,5 +1,5 @@
 from robocorp_ls_core.basic import isinstance_name
-from robocorp_ls_core.lsp import MarkupContent
+from robocorp_ls_core.lsp import MarkupContentTypedDict
 from robocorp_ls_core.lsp import MarkupKind
 from robocorp_ls_core.lsp import ParameterInformation
 from robocorp_ls_core.lsp import SignatureHelp
@@ -8,7 +8,7 @@ from robotframework_ls.impl.protocols import ICompletionContext, IKeywordFound
 from robotframework_ls.impl.protocols import IKeywordDefinition
 from robotframework_ls.impl.protocols import KeywordUsageInfo
 
-from typing import List, Optional, Union
+from typing import List, Optional
 
 
 def _library_signature_help(
@@ -16,7 +16,7 @@ def _library_signature_help(
 ) -> Optional[SignatureHelp]:
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.robot_specbuilder import docs_and_format
-    from robot.api import Token
+    from robot.api import Token  # type: ignore
     from robotframework_ls.impl.keyword_argument_analysis import KeywordArgumentAnalysis
     from robotframework_ls.impl.keyword_argument_analysis import (
         UsageInfoForKeywordArgumentAnalysis,
@@ -41,9 +41,12 @@ def _library_signature_help(
         return None
 
     docs, docs_format = docs_and_format(library_doc)
-    documentation = MarkupContent(
-        MarkupKind.Markdown if docs_format == "markdown" else MarkupKind.PlainText, docs
-    )
+    documentation: MarkupContentTypedDict = {
+        "kind": MarkupKind.Markdown
+        if docs_format == "markdown"
+        else MarkupKind.PlainText,
+        "value": docs,
+    }
 
     arg_names_as_list: List[str] = []
     active_parameter = -1
@@ -122,15 +125,7 @@ def signature_help_internal(
             col=completion_context.sel.col,
         )
 
-    docs_format = keyword_found.docs_format
-
-    documentation: Union[str, MarkupContent]
-    if docs_format == "markdown":
-        documentation = MarkupContent(
-            MarkupKind.Markdown, keyword_found.docs_without_signature
-        )
-    else:
-        documentation = keyword_found.docs_without_signature
+    documentation = keyword_found.compute_docs_without_signature()
 
     arg_names_as_list: List[str] = []
     parameters: List[ParameterInformation] = []

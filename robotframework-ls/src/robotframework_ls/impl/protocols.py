@@ -10,7 +10,6 @@ from typing import (
     Generic,
     Iterator,
     Callable,
-    Dict,
 )
 from robocorp_ls_core.protocols import (
     Sentinel,
@@ -51,6 +50,9 @@ class INode(Protocol):
     end_lineno: int
     col_offset: int
     end_col_offset: int
+
+    def get_token(self, name: str) -> Any:
+        pass
 
 
 class ILibraryImportNode(INode, Protocol):
@@ -142,7 +144,7 @@ class IKeywordArg(Protocol):
 
 
 if typing.TYPE_CHECKING:
-    from robot.api import Token
+    from robot.api import Token  # type: ignore
 
     IRobotToken = Token
 
@@ -285,16 +287,10 @@ class IKeywordFound(Protocol):
     def is_deprecated(self) -> bool:
         pass
 
-    @property
-    def docs(self) -> str:
+    def compute_docs_with_signature(self) -> MarkupContentTypedDict:
         pass
 
-    @property
-    def docs_without_signature(self) -> str:
-        pass
-
-    @property
-    def docs_format(self) -> str:
+    def compute_docs_without_signature(self) -> MarkupContentTypedDict:
         pass
 
     completion_context: Optional["ICompletionContext"]

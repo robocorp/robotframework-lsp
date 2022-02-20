@@ -1,4 +1,4 @@
-from typing import Dict, Optional, List
+from typing import Dict, Optional
 
 from robocorp_ls_core.protocols import check_implements
 from robocorp_ls_core.robotframework_log import get_logger
@@ -7,7 +7,6 @@ from robotframework_ls.impl.protocols import (
     IKeywordFound,
     IKeywordCollector,
     ICompletionContext,
-    IKeywordArg,
     ILibraryDoc,
     INode,
 )
@@ -188,7 +187,7 @@ def collect_analysis_errors(initial_completion_context):
     from robotframework_ls.impl.keyword_argument_analysis import (
         UsageInfoForKeywordArgumentAnalysis,
     )
-    from robot.api import Token
+    from robot.api import Token  # type: ignore
 
     errors = []
     config = initial_completion_context.config

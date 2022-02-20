@@ -107,7 +107,7 @@ def matches_robot_keyword(keyword_name_call_text, keyword_name, _re_cache={}):
     return compiled.match(keyword_name_call_text)
 
 
-def iter_dotted_names(text):
+def iter_dotted_names(text: str):
     """
     list(iter_dotted_names("")) == []
     list(iter_dotted_names("a")) == []

@@ -233,7 +233,11 @@ class MarkupContent(_Base):
 
 
 class ParameterInformation(_Base):
-    def __init__(self, label: str, documentation: Union[str, MarkupContent] = None):
+    def __init__(
+        self,
+        label: str,
+        documentation: Optional[MarkupContentTypedDict] = None,
+    ):
         self.label = label
         self.documentation = documentation
 
@@ -242,7 +246,7 @@ class SignatureInformation(_Base):
     def __init__(
         self,
         label: str,
-        documentation: Union[str, MarkupContent] = None,
+        documentation: Optional[MarkupContentTypedDict] = None,
         parameters: List[ParameterInformation] = None,
     ):
         self.label = label
@@ -263,7 +267,7 @@ class SignatureHelp(_Base):
 
         # This isn't part of the spec (just used to internally manipulate more information).
         self.name = ""
-        self.node = None
+        self.node: Any = None
 
     def to_dict(self):
         new_dict = {}

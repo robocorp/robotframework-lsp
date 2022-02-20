@@ -1,5 +1,4 @@
 from robotframework_ls.impl.protocols import (
-    IKeywordFound,
     IKeywordArg,
     IRobotToken,
 )
@@ -134,7 +133,7 @@ class KeywordArgumentAnalysis:
         return active_parameter
 
     def _iter_args(self, tokens, argument_usage_index: int):
-        from robot.api import Token
+        from robot.api import Token  # type: ignore
 
         for token in tokens:
             if token.type == Token.ARGUMENT:
@@ -175,7 +174,6 @@ class KeywordArgumentAnalysis:
         """
         from robotframework_ls.impl.ast_utils import create_error_from_node
         from collections import deque
-        from robot.api import Token
         from robotframework_ls.impl.text_utilities import normalize_robot_name
         from robotframework_ls.impl.text_utilities import is_variable_text
 

@@ -183,12 +183,8 @@ def _dump_spec_filename_additional_info(
     Creates a filename with additional information not directly available in the
     spec.
     """
-    from robotframework_ls.impl.libspec_markdown_conversion import (
-        convert_to_markdown_now,
-    )
-
     try:
-        convert_to_markdown_now(libspec_manager, spec_filename)
+        libspec_manager.schedule_conversion_to_markdown(spec_filename)
     except:
         log.exception("Error converting %s to markdown.", spec_filename)
     import json
