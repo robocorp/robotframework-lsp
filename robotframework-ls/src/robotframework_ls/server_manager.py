@@ -648,9 +648,11 @@ class ServerManager(object):
 
         - auto-import completions
         - find references
+        - signature help
         - collect tests
         - workspace tokens
         - find definition
+        - code-completion
         """
         api = self._get_regular_api(doc_uri)
         if api is not None:

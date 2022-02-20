@@ -9,6 +9,8 @@ from typing import (
     Iterable,
     Generic,
     Iterator,
+    Callable,
+    Dict,
 )
 from robocorp_ls_core.protocols import (
     Sentinel,
@@ -24,10 +26,10 @@ from robocorp_ls_core.protocols import TypedDict
 from collections import namedtuple
 import enum
 from robocorp_ls_core.lsp import (
-    SymbolKind,
     LocationTypedDict,
     RangeTypedDict,
     MarkupContentTypedDict,
+    CompletionItemTypedDict,
 )
 import typing
 
@@ -482,6 +484,11 @@ class ICompletionContext(Protocol):
         :param _Memo memo:
         """
 
+    def resolve_completion_item(
+        self, data, completion_item: CompletionItemTypedDict
+    ) -> None:
+        pass
+
     @property
     def type(self) -> CompletionType:
         pass
@@ -589,6 +596,13 @@ class ICompletionContext(Protocol):
     def get_current_keyword_usage_info(
         self,
     ) -> Optional[KeywordUsageInfo]:
+        pass
+
+    def assign_documentation_resolve(
+        self,
+        completion_item: CompletionItemTypedDict,
+        compute_documentation: Callable[[], MarkupContentTypedDict],
+    ) -> None:
         pass
 
 

@@ -15,6 +15,8 @@ from typing import Optional, List, Set, Dict, Any
 from robotframework_ls.impl.protocols import NodeInfo
 import os.path
 from robocorp_ls_core import uris
+from robocorp_ls_core.protocols import IWorkspace
+from robotframework_ls.impl.protocols import ISymbolsCache
 
 
 class _Collector(object):
@@ -41,9 +43,9 @@ class _Collector(object):
         if not self._matcher.accepts_keyword_name(keyword_name):
             return False
 
-        keywords_found: List[IKeywordFound] = self.imported_keyword_name_to_keyword.get(
-            keyword_name
-        )
+        keywords_found: Optional[
+            List[IKeywordFound]
+        ] = self.imported_keyword_name_to_keyword.get(keyword_name)
         if not keywords_found:
             return True
 
@@ -162,10 +164,7 @@ def _collect_auto_import_completions(
     completion_context: ICompletionContext, collector: _Collector
 ):
     from robotframework_ls.impl.workspace_symbols import iter_symbols_caches
-    from robotframework_ls.impl.protocols import ISymbolsCache
-    from robocorp_ls_core.protocols import IWorkspace
     from robotframework_ls.robot_config import create_convert_keyword_format_func
-    from robocorp_ls_core.lsp import MarkupKind
 
     symbols_cache: ISymbolsCache
     selection = completion_context.sel
@@ -249,7 +248,9 @@ def _collect_auto_import_completions(
                     data=None,
                 )
                 if item is not None:
-                    item["documentation"] = keyword_info.get_documentation()
+                    completion_context.assign_documentation_resolve(
+                        item, keyword_info.get_documentation
+                    )
 
 
 class _ImportLocationInfo:

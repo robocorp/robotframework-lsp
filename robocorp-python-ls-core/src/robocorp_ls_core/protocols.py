@@ -307,11 +307,18 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
         :Note: async complete.
         """
 
-    def request_complete_all(self, doc_uri, line, col) -> Optional[IIdMessageMatcher]:
+    def request_complete_all(
+        self, doc_uri, line, col
+    ) -> Optional[IIdMessageMatcher[List["CompletionItemTypedDict"]]]:
         """
         Completes: sectionName, keyword, variables
         :Note: async complete.
         """
+
+    def request_resolve_completion_item(
+        self, completion_item: "CompletionItemTypedDict"
+    ) -> "CompletionItemTypedDict":
+        pass
 
     def request_find_definition(
         self, doc_uri, line, col

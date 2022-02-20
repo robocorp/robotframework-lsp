@@ -1,7 +1,7 @@
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Deque
 from robocorp_ls_core.protocols import IConfig, IMonitor, ITestInfoTypedDict, IWorkspace
 from functools import partial
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
@@ -16,12 +16,18 @@ from robocorp_ls_core.lsp import (
     LocationTypedDict,
     DocumentHighlightTypedDict,
     RangeTypedDict,
+    CompletionItemTypedDict,
 )
-from robotframework_ls.impl.protocols import IKeywordFound, IDefinition
+from robotframework_ls.impl.protocols import (
+    IKeywordFound,
+    IDefinition,
+    ICompletionContext,
+)
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 import itertools
 import typing
 import sys
+import threading
 
 
 log = get_logger(__name__)
@@ -64,6 +70,10 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         self.libspec_manager = libspec_manager
         self._version = None
         self._next_time = partial(next, itertools.count(0))
+        from collections import deque
+
+        self._completion_contexts_saved_lock = threading.Lock()
+        self._completion_contexts_saved: Deque[ICompletionContext] = deque()
 
     @overrides(PythonLanguageServer._create_config)
     def _create_config(self) -> IConfig:
@@ -247,6 +257,27 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             ]
             return ret
 
+    def m_resolve_completion_item(
+        self, completion_item: CompletionItemTypedDict
+    ) -> CompletionItemTypedDict:
+        # Note: don't put it in a thread as it should be cheap to do in the main thread.
+        use_ctx = None
+        with self._completion_contexts_saved_lock:
+            data = completion_item.get("data")
+            if data and isinstance(data, dict):
+                ctx_id = data.get("ctx")
+
+            if ctx_id is not None:
+                for ctx in self._completion_contexts_saved:
+                    if id(ctx) == ctx_id:
+                        use_ctx = ctx
+                        break
+
+        if use_ctx is not None:
+            use_ctx.resolve_completion_item(data, completion_item)
+
+        return completion_item
+
     def m_complete_all(self, doc_uri, line, col):
         func = partial(self._threaded_complete_all, doc_uri, line, col)
         func = require_monitor(func)
@@ -278,6 +309,12 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             collect_keyword_name_to_keyword_found,
         )
         from robotframework_ls.impl import ast_utils
+
+        with self._completion_contexts_saved_lock:
+            # Keep up to 3 saved contexts there.
+            while len(self._completion_contexts_saved) > 2:
+                self._completion_contexts_saved.popleft()
+            self._completion_contexts_saved.append(completion_context)
 
         ret = section_name_completions.complete(completion_context)
         if not ret:
