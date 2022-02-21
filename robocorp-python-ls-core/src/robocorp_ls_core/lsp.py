@@ -616,6 +616,12 @@ class CompletionsResponseTypedDict(TypedDict, total=False):
     error: ResponseErrorTypedDict  # Optional
 
 
+class CompletionResolveResponseTypedDict(TypedDict, total=False):
+    id: Union[int, str, None]
+    result: CompletionItemTypedDict
+    error: ResponseErrorTypedDict  # Optional
+
+
 class HoverResponseTypedDict(TypedDict, total=False):
     id: Union[int, str, None]
     result: HoverTypedDict  # Optional

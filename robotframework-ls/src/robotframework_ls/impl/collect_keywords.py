@@ -76,13 +76,13 @@ class _KeywordFoundFromAst(object):
         uri = self.completion_context.doc.uri
         return os.path.splitext(os.path.basename(uris.to_fs_path(uri)))[0]
 
-    def compute_docs_with_signature(self) -> MarkupContentTypedDict:
+    def compute_docs_without_signature(self) -> MarkupContentTypedDict:
         return {
             "kind": MarkupKind.Markdown,
             "value": self._docs_without_signature,
         }
 
-    def compute_docs_without_signature(self) -> MarkupContentTypedDict:
+    def compute_docs_with_signature(self) -> MarkupContentTypedDict:
         docs = build_keyword_docs_with_signature(
             self.keyword_name,
             tuple(x.original_arg for x in self.keyword_args),

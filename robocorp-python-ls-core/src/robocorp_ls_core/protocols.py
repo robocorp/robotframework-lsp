@@ -33,6 +33,7 @@ if typing.TYPE_CHECKING:
     from robocorp_ls_core.lsp import PositionTypedDict
     from robocorp_ls_core.lsp import CompletionItemTypedDict
     from robocorp_ls_core.lsp import CompletionsResponseTypedDict
+    from robocorp_ls_core.lsp import CompletionResolveResponseTypedDict
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -511,6 +512,11 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
         pass
 
     def request_workspace_symbols(self, query: Optional[str] = None):
+        pass
+
+    def request_resolve_completion(
+        self, completion_item: "CompletionItemTypedDict"
+    ) -> "CompletionResolveResponseTypedDict":
         pass
 
     def hover(self, uri: str, line: int, col: int):
