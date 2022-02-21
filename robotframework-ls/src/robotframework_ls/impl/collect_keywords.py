@@ -41,7 +41,7 @@ class _KeywordFoundFromAst(object):
         completion_context,
         completion_item_kind,
     ):
-        from robot.api import Token  # type: ignore
+        from robot.api import Token
 
         self._module_ast = module_ast
         self._keyword_node = keyword_node
@@ -79,14 +79,14 @@ class _KeywordFoundFromAst(object):
     def compute_docs_without_signature(self) -> MarkupContentTypedDict:
         return {
             "kind": MarkupKind.Markdown,
-            "value": self._docs_without_signature,
+            "value": self._docs_without_signature(),
         }
 
     def compute_docs_with_signature(self) -> MarkupContentTypedDict:
         docs = build_keyword_docs_with_signature(
             self.keyword_name,
             tuple(x.original_arg for x in self.keyword_args),
-            self._docs_without_signature,
+            self._docs_without_signature(),
             "markdown",
         )
         return {
@@ -94,7 +94,6 @@ class _KeywordFoundFromAst(object):
             "value": docs,
         }
 
-    @property  # type: ignore
     @instance_cache
     def _docs_without_signature(self) -> str:
         from robotframework_ls.impl import ast_utils

@@ -28,10 +28,7 @@ def test_print_ast(data_regression):
     from robotframework_ls.impl.robot_workspace import RobotDocument
     from robotframework_ls.impl import ast_utils
 
-    try:
-        from StringIO import StringIO
-    except ImportError:
-        from io import StringIO
+    from io import StringIO
 
     doc = RobotDocument("unused", source="*** settings ***")
     s = StringIO()

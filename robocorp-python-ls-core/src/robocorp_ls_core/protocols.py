@@ -21,6 +21,7 @@ from enum import Enum
 
 if typing.TYPE_CHECKING:
     # This would lead to a circular import, so, do it only when type-checking.
+    from robocorp_ls_core.callbacks import Callback
     from robocorp_ls_core.lsp import TextDocumentContentChangeEvent
     from robocorp_ls_core.lsp import HoverResponseTypedDict
     from robocorp_ls_core.lsp import ReferencesResponseTypedDict
@@ -29,11 +30,11 @@ if typing.TYPE_CHECKING:
     from robocorp_ls_core.lsp import CodeLensTypedDict
     from robocorp_ls_core.lsp import RangeTypedDict
     from robocorp_ls_core.lsp import DocumentHighlightResponseTypedDict
-    from robocorp_ls_core.callbacks import Callback
     from robocorp_ls_core.lsp import PositionTypedDict
     from robocorp_ls_core.lsp import CompletionItemTypedDict
     from robocorp_ls_core.lsp import CompletionsResponseTypedDict
     from robocorp_ls_core.lsp import CompletionResolveResponseTypedDict
+    from robocorp_ls_core.lsp import TextDocumentItem
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -310,7 +311,7 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
 
     def request_complete_all(
         self, doc_uri, line, col
-    ) -> Optional[IIdMessageMatcher[List["CompletionItemTypedDict"]]]:
+    ) -> Optional[IIdMessageMatcher["CompletionsResponseTypedDict"]]:
         """
         Completes: sectionName, keyword, variables
         :Note: async complete.
@@ -318,7 +319,7 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
 
     def request_resolve_completion_item(
         self, completion_item: "CompletionItemTypedDict"
-    ) -> "CompletionItemTypedDict":
+    ) -> Optional[IIdMessageMatcher["CompletionResolveResponseTypedDict"]]:
         pass
 
     def request_find_definition(
@@ -750,9 +751,7 @@ class IWorkspace(Protocol):
     def remove_document(self, uri: str) -> None:
         pass
 
-    def put_document(
-        self, text_document: "robocorp_ls_core.lsp.TextDocumentItem"  # type: ignore
-    ) -> IDocument:
+    def put_document(self, text_document: "TextDocumentItem") -> IDocument:
         pass
 
     def get_document(self, doc_uri: str, accept_from_file: bool) -> Optional[IDocument]:

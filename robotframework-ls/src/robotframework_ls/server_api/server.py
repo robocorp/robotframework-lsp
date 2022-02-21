@@ -22,6 +22,7 @@ from robotframework_ls.impl.protocols import (
     IKeywordFound,
     IDefinition,
     ICompletionContext,
+    EvaluatableExpressionTypedDict,
 )
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 import itertools
@@ -503,9 +504,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
                 from robot.tidy import Tidy
             except ImportError:
                 # It's not available in newer versions of RobotFramework.
-                from robot import get_version
+                from robotframework_ls.impl.robot_version import get_robot_major_version
 
-                if int(get_version(naked=True).split(".")[0]) >= 5:
+                if get_robot_major_version() >= 5:
                     formatter = OPTION_ROBOT_CODE_FORMATTER_ROBOTIDY
 
         if formatter == OPTION_ROBOT_CODE_FORMATTER_BUILTIN_TIDY:
@@ -683,7 +684,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
     def _threaded_evaluatable_expression(
         self, doc_uri: str, position: PositionTypedDict, monitor: IMonitor
-    ) -> Optional[dict]:
+    ) -> Optional[EvaluatableExpressionTypedDict]:
         from robotframework_ls.impl.provide_evaluatable_expression import (
             provide_evaluatable_expression,
         )

@@ -2,7 +2,11 @@ from typing import Optional, Set, List
 import weakref
 
 from robocorp_ls_core.protocols import ITestInfoFromSymbolsCacheTypedDict
-from robotframework_ls.impl.protocols import ILibraryDoc, IRobotDocument
+from robotframework_ls.impl.protocols import (
+    ILibraryDoc,
+    IRobotDocument,
+    ISymbolsJsonListEntry,
+)
 
 
 class BaseSymbolsCache:
@@ -11,7 +15,7 @@ class BaseSymbolsCache:
 
     def __init__(
         self,
-        json_list,
+        json_list: List[ISymbolsJsonListEntry],
         library_info: Optional[ILibraryDoc],
         doc: Optional[IRobotDocument],
         keywords_used: Set[str],
@@ -42,7 +46,7 @@ class BaseSymbolsCache:
     def has_keyword_usage(self, normalized_keyword_name: str) -> bool:
         return normalized_keyword_name in self._keywords_used
 
-    def get_json_list(self) -> list:
+    def get_json_list(self) -> List[ISymbolsJsonListEntry]:
         return self._json_list
 
     def get_library_info(self) -> Optional[ILibraryDoc]:

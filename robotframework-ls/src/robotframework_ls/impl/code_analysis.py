@@ -187,7 +187,7 @@ def collect_analysis_errors(initial_completion_context):
     from robotframework_ls.impl.keyword_argument_analysis import (
         UsageInfoForKeywordArgumentAnalysis,
     )
-    from robot.api import Token  # type: ignore
+    from robot.api import Token
 
     errors = []
     config = initial_completion_context.config

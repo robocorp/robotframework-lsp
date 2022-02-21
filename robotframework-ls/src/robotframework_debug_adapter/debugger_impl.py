@@ -30,7 +30,7 @@ from robotframework_debug_adapter.protocols import (
     IBusyWait,
     IEvaluationInfo,
 )
-from typing import Optional, List, Iterable, Union, Any, Dict, FrozenSet, Set
+from typing import Optional, List, Iterable, Union, Any, Dict, FrozenSet
 from robocorp_ls_core.basic import implements
 from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
     StackFrame,
@@ -419,11 +419,12 @@ class EvaluationResult(Exception):
 class _EvaluationInfo(object):
     def __init__(self, frame_id: int, expression: str, context: str):
         from concurrent import futures
+        from robocorp_ls_core.protocols import IFuture
 
         self.frame_id = frame_id
         self.expression = expression
         self.context = context
-        self.future = futures.Future()
+        self.future: IFuture[Any] = futures.Future()
 
     def _do_eval(self, debugger_impl):
         frame_id = self.frame_id
@@ -535,6 +536,11 @@ Evaluation
             if get_log_level() >= 2:
                 log.exception("Error evaluating: %s", (self.expression,))
             self.future.set_exception(e)
+
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
+
+        _: IEvaluationInfo = check_implements(self)
 
 
 class _RobotDebuggerImpl(object):

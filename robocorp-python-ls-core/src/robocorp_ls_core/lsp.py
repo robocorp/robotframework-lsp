@@ -677,7 +677,7 @@ class DocumentSymbolTypedDict(TypedDict, total=False):
     # but everything else like comments. This information is typically used to
     # determine if the clients cursor is inside the symbol to reveal in the
     # symbol in the UI.
-    range: Range
+    range: RangeTypedDict
 
     # The range that should be selected and revealed when this symbol is being
     # picked, e.g. the name of a function. Must be contained by the `range`.

@@ -133,7 +133,7 @@ class KeywordArgumentAnalysis:
         return active_parameter
 
     def _iter_args(self, tokens, argument_usage_index: int):
-        from robot.api import Token  # type: ignore
+        from robot.api import Token
 
         for token in tokens:
             if token.type == Token.ARGUMENT:

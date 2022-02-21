@@ -23,6 +23,7 @@ from robocorp_ls_core.protocols import Sentinel
 from robotframework_ls.impl.protocols import ISymbolsCache, ILibraryDoc, IKeywordArg
 from robocorp_ls_core.robotframework_log import get_logger, get_log_level
 import json
+import typing
 
 
 log = get_logger(__name__)
@@ -207,7 +208,7 @@ class LibraryDoc(object):
             "dataTypes": data_types,
         }
 
-    @property
+    @property  # type: ignore
     @instance_cache
     def source(self):
         # When asked for, make sure that the path is absolute.
@@ -301,6 +302,7 @@ class KeywordArg(object):
     _is_star_arg = False
     _default_value: Union[Type[Sentinel], str] = Sentinel
     _arg_type: Union[Type[Sentinel], str] = Sentinel
+    _arg_name: str
 
     def __init__(
         self,
@@ -368,7 +370,7 @@ class KeywordArg(object):
                     arg = arg[:colon_i]
 
         if name is not Sentinel:
-            self._arg_name = name
+            self._arg_name = typing.cast(str, name)
         else:
             self._arg_name = arg
 
@@ -408,13 +410,13 @@ class KeywordArg(object):
     def arg_type(self) -> Optional[str]:
         if self._arg_type is Sentinel:
             return None
-        return self._arg_type
+        return typing.cast(Optional[str], self._arg_type)
 
     @property
     def default_value(self) -> Optional[str]:
         if self._default_value is Sentinel:
             return None
-        return self._default_value
+        return typing.cast(Optional[str], self._default_value)
 
     def __repr__(self):
         return f"KeywordArg({self.original_arg})"
@@ -438,7 +440,7 @@ class KeywordDoc(object):
     def deprecated(self) -> bool:
         return self.doc.startswith("*DEPRECATED") and "*" in self.doc[1:]
 
-    @property
+    @property  # type: ignore
     @instance_cache
     def args(self) -> Tuple[IKeywordArg, ...]:
         if self._args:
@@ -447,7 +449,7 @@ class KeywordDoc(object):
 
         return tuple(KeywordArg(arg) for arg in self._args)
 
-    @property
+    @property  # type: ignore
     @instance_cache
     def source(self) -> str:
         # When asked for, make sure that the path is absolute.

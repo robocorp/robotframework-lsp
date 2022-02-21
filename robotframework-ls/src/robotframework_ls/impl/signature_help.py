@@ -16,7 +16,7 @@ def _library_signature_help(
 ) -> Optional[SignatureHelp]:
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.robot_specbuilder import docs_and_format
-    from robot.api import Token  # type: ignore
+    from robot.api import Token
     from robotframework_ls.impl.keyword_argument_analysis import KeywordArgumentAnalysis
     from robotframework_ls.impl.keyword_argument_analysis import (
         UsageInfoForKeywordArgumentAnalysis,

@@ -44,6 +44,17 @@ else:
 T = TypeVar("T")
 Y = TypeVar("Y", covariant=True)
 
+if typing.TYPE_CHECKING:
+    from robot.api import Token
+
+    IRobotToken = Token
+
+
+else:
+    # We don't want to import robot in this case (just do it when type-checking).
+    class IRobotToken(Protocol):
+        pass
+
 
 class INode(Protocol):
     lineno: int
@@ -51,7 +62,7 @@ class INode(Protocol):
     col_offset: int
     end_col_offset: int
 
-    def get_token(self, name: str) -> Any:
+    def get_token(self, name: str) -> IRobotToken:
         pass
 
 
@@ -140,18 +151,6 @@ class IKeywordArg(Protocol):
 
     @property
     def default_value(self) -> Optional[str]:
-        pass
-
-
-if typing.TYPE_CHECKING:
-    from robot.api import Token  # type: ignore
-
-    IRobotToken = Token
-
-
-else:
-    # We don't want to import robot in this case (just do it when type-checking).
-    class IRobotToken(Protocol):
         pass
 
 

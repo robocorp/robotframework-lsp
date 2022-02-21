@@ -12,6 +12,8 @@ from robocorp_ls_core.lsp import (
     PositionTypedDict,
     CodeLensTypedDict,
     CompletionItemTypedDict,
+    CompletionsResponseTypedDict,
+    CompletionResolveResponseTypedDict,
 )
 from robocorp_ls_core.basic import implements
 
@@ -231,7 +233,7 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
 
     def request_complete_all(
         self, doc_uri, line, col
-    ) -> Optional[IIdMessageMatcher[CompletionItemTypedDict]]:
+    ) -> Optional[IIdMessageMatcher[CompletionsResponseTypedDict]]:
         """
         Completes: sectionName, keyword, variables
         :Note: async complete.
@@ -242,7 +244,7 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
 
     def request_resolve_completion_item(
         self, completion_item: CompletionItemTypedDict
-    ) -> Optional[IIdMessageMatcher[CompletionItemTypedDict]]:
+    ) -> Optional[IIdMessageMatcher[CompletionResolveResponseTypedDict]]:
         """
         :Note: async complete.
         """

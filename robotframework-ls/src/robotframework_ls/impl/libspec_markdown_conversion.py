@@ -183,11 +183,6 @@ def _get_markdown_json_version_filename(libspec_manager, spec_filename: str) -> 
     return target_json
 
 
-def convert_to_markdown_now(libspec_manager, spec_filename: str):
-    target_json = _get_markdown_json_version_filename(libspec_manager, spec_filename)
-    _convert_to_markdown_if_needed(spec_filename, target_json)
-
-
 class LibspecMarkdownConversion:
     def __init__(self, libspec_manager):
         self._conversion_thread = _ConversionThread()

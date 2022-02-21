@@ -10,7 +10,7 @@ log = get_logger(__name__)
 
 
 def list_tests(completion_context: ICompletionContext) -> List[ITestInfoTypedDict]:
-    from robot.api import Token  # noqa
+    from robot.api import Token
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.ast_utils import create_range_from_token
 
@@ -42,7 +42,7 @@ def list_tests(completion_context: ICompletionContext) -> List[ITestInfoTypedDic
 
 
 def code_lens_runs(completion_context: ICompletionContext) -> List[CodeLensTypedDict]:
-    from robot.api import Token  # noqa
+    from robot.api import Token
     from robotframework_ls.impl.ast_utils import create_range_from_token
 
     ast = completion_context.get_ast()
@@ -149,7 +149,7 @@ TEST_CASE_HEADER = "*** Test Case ***\n"
 
 
 def _iter_rf_interactive_items(ast):
-    from robot.api import Token  # noqa
+    from robot.api import Token
 
     sections = ast.sections
 
@@ -192,7 +192,6 @@ def _iter_rf_interactive_items(ast):
 def code_lens_rf_interactive(
     completion_context: ICompletionContext,
 ) -> List[CodeLensTypedDict]:
-    from robot.api import Token  # noqa
     from robotframework_ls import import_rf_interactive
 
     import_rf_interactive()
