@@ -9,10 +9,14 @@ from robotframework_ls.impl.protocols import (
     NodeInfo,
     KeywordUsageInfo,
     ILibraryImportNode,
+    IRobotToken,
 )
 from robotframework_ls.impl.text_utilities import normalize_robot_name
 from robocorp_ls_core.basic import isinstance_name
 from robotframework_ls.impl.keywords_in_args import KEYWORD_NAME_TO_KEYWORD_INDEX
+import functools
+import weakref
+import threading
 
 
 log = get_logger(__name__)
@@ -99,6 +103,49 @@ class _PrinterVisitor(ast_module.NodeVisitor):
 MAX_ERRORS = 100
 
 
+class _ASTIndexer:
+    def __init__(self, ast):
+        self._ast = weakref.ref(ast)
+
+        self._indexed = False
+        self._name_to_node_info_lst = {}
+        self._lock = threading.Lock()
+        self._additional_caches = {}
+
+    def iter_cached(self, cache_key, compute, *args):
+        try:
+            cached = self._additional_caches[cache_key]
+        except KeyError:
+            cached = tuple(compute(self, *args))
+            self._additional_caches[cache_key] = cached
+
+        yield from iter(cached)
+
+    def _index(self):
+        if self._indexed:
+            return
+
+        with self._lock:
+            if self._indexed:
+                return
+
+            ast = self._ast()
+            if ast is None:
+                raise RuntimeError("AST already garbage collected.")
+
+            for stack, node in _iter_nodes(ast):
+                lst = self._name_to_node_info_lst.get(node.__class__.__name__)
+                if lst is None:
+                    lst = self._name_to_node_info_lst[node.__class__.__name__] = []
+
+                lst.append(NodeInfo(tuple(stack), node))
+            self._indexed = True
+
+    def iter_indexed(self, clsname):
+        self._index()
+        yield from iter(self._name_to_node_info_lst.get(clsname, ()))
+
+
 def _get_errors_from_tokens(node):
     for token in node.tokens:
         if token.type in (token.ERROR, token.FATAL_ERROR):
@@ -106,6 +153,19 @@ def _get_errors_from_tokens(node):
             end = (token.lineno - 1, token.end_col_offset)
             error = Error(token.error, start, end)
             yield error
+
+
+def _convert_ast_to_indexer(func):
+    @functools.wraps(func)
+    def new_func(ast, *args, **kwargs):
+        try:
+            indexer = ast.__ast_indexer__
+        except:
+            indexer = ast.__ast_indexer__ = _ASTIndexer(ast)
+
+        return func(indexer, *args, **kwargs)
+
+    return new_func
 
 
 def collect_errors(node) -> List[Error]:
@@ -199,8 +259,22 @@ def _iter_nodes(node, stack=None, recursive=True):
                 stack.pop()
 
 
-def find_token(ast, line, col) -> Optional[TokenInfo]:
-    for stack, node in _iter_nodes(ast):
+def _iter_nodes_filtered_not_recursive(
+    ast, accept_class: Union[Tuple[str, ...], str]
+) -> Iterator[Tuple[list, Any]]:
+    if not isinstance(accept_class, (list, tuple, set)):
+        accept_class = (accept_class,)
+    for stack, node in _iter_nodes(ast, recursive=False):
+        if node.__class__.__name__ in accept_class:
+            yield stack, node
+
+
+def find_token(section, line, col) -> Optional[TokenInfo]:
+    """
+    :param section:
+        The result from find_section(line, col), to pre-filter the nodes we may match.
+    """
+    for stack, node in _iter_nodes(section):
         try:
             tokens = node.tokens
         except AttributeError:
@@ -240,8 +314,8 @@ def find_token(ast, line, col) -> Optional[TokenInfo]:
     return None
 
 
-def find_variable(ast, line, col) -> Optional[TokenInfo]:
-    token_info = find_token(ast, line, col)
+def find_variable(section, line, col) -> Optional[TokenInfo]:
+    token_info = find_token(section, line, col)
     if token_info is not None:
         token = token_info.token
         if "{" in token.value:
@@ -319,32 +393,31 @@ def _tokenize_variables_even_when_invalid(token, col):
             ]
 
 
-def _iter_nodes_filtered(
-    ast, accept_class: Union[Tuple[str, ...], str], recursive=True
-) -> Iterator[Tuple[list, Any]]:
-    if not isinstance(accept_class, (list, tuple, set)):
-        accept_class = (accept_class,)
-    for stack, node in _iter_nodes(ast, recursive=recursive):
-        if node.__class__.__name__ in accept_class:
-            yield stack, node
-
-
 LIBRARY_IMPORT_CLASSES = ("LibraryImport",)
 RESOURCE_IMPORT_CLASSES = ("ResourceImport",)
 SETTING_SECTION_CLASSES = ("SettingSection",)
 
 
-def iter_nodes(
-    ast, accept_class: Union[Tuple[str, ...], str], recursive=True
-) -> Iterator[NodeInfo]:
+@_convert_ast_to_indexer
+def iter_nodes(ast, accept_class: Union[Tuple[str, ...], str]) -> Iterator[NodeInfo]:
+    """
+    Note: always recursive.
+    """
     if not isinstance(accept_class, (list, tuple, set)):
         accept_class = (accept_class,)
-    for stack, node in _iter_nodes(ast, recursive=recursive):
-        if node.__class__.__name__ in accept_class:
-            yield NodeInfo(tuple(stack), node)
+
+    for classname in accept_class:
+        yield from ast.iter_indexed(classname)
 
 
 def iter_all_nodes(ast, recursive=True) -> Iterator[NodeInfo]:
+    """
+    Note: use this *very* sparingly as no caching will take place
+    (as all nodes need to be iterated).
+
+    Use one of the filtered APIs whenever possible as those are cached
+    by the type.
+    """
     for stack, node in _iter_nodes(ast, recursive=recursive):
         yield NodeInfo(tuple(stack), node)
 
@@ -361,42 +434,39 @@ def is_setting_section_node_info(node_info: NodeInfo) -> bool:
     return node_info.node.__class__.__name__ in SETTING_SECTION_CLASSES
 
 
+@_convert_ast_to_indexer
 def iter_library_imports(ast) -> Iterator[NodeInfo[ILibraryImportNode]]:
-    for stack, node in _iter_nodes_filtered(ast, accept_class="LibraryImport"):
-        yield NodeInfo(tuple(stack), node)
+    yield from ast.iter_indexed("LibraryImport")
 
 
+@_convert_ast_to_indexer
 def iter_resource_imports(ast) -> Iterator[NodeInfo]:
-    for stack, node in _iter_nodes_filtered(ast, accept_class="ResourceImport"):
-        yield NodeInfo(tuple(stack), node)
+    yield from ast.iter_indexed("ResourceImport")
 
 
+@_convert_ast_to_indexer
 def iter_variable_imports(ast) -> Iterator[NodeInfo]:
-    for stack, node in _iter_nodes_filtered(ast, accept_class="VariablesImport"):
-        yield NodeInfo(tuple(stack), node)
+    yield from ast.iter_indexed("VariablesImport")
 
 
+@_convert_ast_to_indexer
 def iter_keywords(ast) -> Iterator[NodeInfo]:
-    for stack, node in _iter_nodes_filtered(ast, accept_class="Keyword"):
-        yield NodeInfo(tuple(stack), node)
+    yield from ast.iter_indexed("Keyword")
 
 
+@_convert_ast_to_indexer
 def iter_variables(ast) -> Iterator[NodeInfo]:
-    for stack, node in _iter_nodes_filtered(ast, accept_class="Variable"):
-        yield NodeInfo(tuple(stack), node)
+    yield from ast.iter_indexed("Variable")
 
 
+@_convert_ast_to_indexer
 def iter_tests(ast) -> Iterator[NodeInfo]:
-    for stack, node in _iter_nodes_filtered(ast, accept_class="TestCase"):
-        yield NodeInfo(tuple(stack), node)
+    yield from ast.iter_indexed("TestCase")
 
 
+@_convert_ast_to_indexer
 def iter_test_case_sections(ast) -> Iterator[NodeInfo]:
-    # Sections are top-level, so, we don't need to do it recursively.
-    for stack, node in _iter_nodes_filtered(
-        ast, accept_class="TestCaseSection", recursive=False
-    ):
-        yield NodeInfo(tuple(stack), node)
+    yield from ast.iter_indexed("TestCaseSection")
 
 
 def iter_keyword_arguments_as_str(ast) -> Iterator[str]:
@@ -404,12 +474,13 @@ def iter_keyword_arguments_as_str(ast) -> Iterator[str]:
         yield str(token)
 
 
-def iter_keyword_arguments_as_tokens(ast) -> Iterator:
+@_convert_ast_to_indexer
+def iter_keyword_arguments_as_tokens(ast) -> Iterator[IRobotToken]:
     """
     :rtype: generator(Token)
     """
-    for _stack, node in _iter_nodes_filtered(ast, accept_class="Arguments"):
-        for token in node.tokens:
+    for node_info in ast.iter_indexed("Arguments"):
+        for token in node_info.node.tokens:
             if token.type == token.ARGUMENT:
                 yield token
 
@@ -426,8 +497,8 @@ def get_documentation_raw(ast) -> str:
     last_line: List[str] = []
 
     last_token = None
-    for _stack, node in _iter_nodes_filtered(
-        ast, accept_class="Documentation", recursive=False
+    for _stack, node in _iter_nodes_filtered_not_recursive(
+        ast, accept_class="Documentation"
     ):
         for token in node.tokens:
             if last_token is not None and last_token.lineno != token.lineno:
@@ -484,18 +555,37 @@ def iter_variable_assigns(ast) -> Iterator:
                 yield TokenInfo(tuple(stack), node, token)
 
 
-def iter_variable_references(ast):
+_FIXTURE_CLASS_NAMES = (
+    "Setup",
+    "Teardown",
+    "SuiteSetup",
+    "SuiteTeardown",
+    "TestSetup",
+    "TestTeardown",
+)
+
+_CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_TUPLE = _FIXTURE_CLASS_NAMES + (
+    "TestTemplate",
+    "Template",
+)
+
+CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET = frozenset(
+    _CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_TUPLE
+)
+
+
+@_convert_ast_to_indexer
+def iter_variable_references(ast) -> Iterator[TokenInfo]:
     # Note: we collect only the references, not the definitions here!
-    for stack, node in _iter_nodes(ast, recursive=True):
-        if node.__class__.__name__ in (
-            "KeywordCall",
-            "LibraryImport",
-            "ResourceImport",
-            "TestTimeout",
-        ) or isinstance_name(
-            node,
-            ("Fixture", "TestTemplate", "Template"),
-        ):
+    for clsname in (
+        "KeywordCall",
+        "LibraryImport",
+        "ResourceImport",
+        "TestTimeout",
+    ) + _CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_TUPLE:
+        for node_info in ast.iter_indexed(clsname):
+            stack = node_info.stack
+            node = node_info.node
             token = None
             try:
                 for token in node.tokens:
@@ -507,6 +597,7 @@ def iter_variable_references(ast):
                 log.exception("Unable to tokenize: %s", token)
 
 
+@_convert_ast_to_indexer
 def iter_keyword_usage_tokens(
     ast, collect_args_as_keywords: bool
 ) -> Iterator[KeywordUsageInfo]:
@@ -515,23 +606,33 @@ def iter_keyword_usage_tokens(
     the stack, node, token and name.
     """
 
-    for stack, node in _iter_nodes(ast, recursive=True):
-        usage_info = _create_keyword_usage_info(stack, node)
-        if usage_info is not None:
-            yield usage_info
+    cache_key = ("iter_keyword_usage_tokens", collect_args_as_keywords)
+    yield from ast.iter_cached(
+        cache_key, _iter_keyword_usage_tokens_uncached, collect_args_as_keywords
+    )
 
-            if collect_args_as_keywords:
-                for token in usage_info.node.tokens:
-                    i = get_argument_keyword_name_index(node, token)
-                    if i >= 0:
-                        yield KeywordUsageInfo(
-                            usage_info.stack,
-                            usage_info.node,
-                            token,
-                            token.value,
-                            True,
-                            i,
-                        )
+
+def _iter_keyword_usage_tokens_uncached(ast, collect_args_as_keywords):
+    for clsname in ("KeywordCall",) + _CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_TUPLE:
+        for node_info in ast.iter_indexed(clsname):
+            stack = node_info.stack
+            node = node_info.node
+            usage_info = _create_keyword_usage_info(stack, node)
+            if usage_info is not None:
+                yield usage_info
+
+                if collect_args_as_keywords:
+                    for token in usage_info.node.tokens:
+                        i = get_argument_keyword_name_index(node, token)
+                        if i >= 0:
+                            yield KeywordUsageInfo(
+                                usage_info.stack,
+                                usage_info.node,
+                                token,
+                                token.value,
+                                True,
+                                i,
+                            )
 
 
 def _create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
@@ -550,7 +651,7 @@ def _create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
             keyword_name = token.value
             return KeywordUsageInfo(tuple(stack), node, token, keyword_name)
 
-    elif isinstance_name(node, ("Fixture", "TestTemplate", "Template")):
+    elif node.__class__.__name__ in CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET:
         node, token = _strip_node_and_token_bdd_prefix(node, Token.NAME)
         if token is not None:
             keyword_name = token.value
@@ -599,9 +700,6 @@ def is_argument_keyword_name(node, token) -> bool:
     return get_argument_keyword_name_index(node, token) >= 0
 
 
-CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS = ("Fixture", "TestTemplate", "Template")
-
-
 def get_keyword_name_token(ast, token):
     """
     If the given token is a keyword call name, return the token, otherwise return None.
@@ -610,7 +708,7 @@ def get_keyword_name_token(ast, token):
     """
     if token.type == token.KEYWORD or (
         token.type == token.NAME
-        and isinstance_name(ast, CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS)
+        and ast.__class__.__name__ in CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET
     ):
         return _strip_token_bdd_prefix(token)
 

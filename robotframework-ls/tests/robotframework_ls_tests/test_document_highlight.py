@@ -146,4 +146,12 @@ Test case 1
     result = doc_highlight(completion_context)
     assert result
     assert len(result) == 11
-    data_regression.check(result)
+    data_regression.check(
+        sorted(
+            result,
+            key=lambda entry: (
+                entry["range"]["start"]["line"],
+                entry["range"]["start"]["character"],
+            ),
+        )
+    )

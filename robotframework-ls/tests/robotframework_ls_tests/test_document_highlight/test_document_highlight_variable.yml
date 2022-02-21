@@ -57,19 +57,19 @@
 - kind: 1
   range:
     end:
+      character: 8
+      line: 9
+    start:
+      character: 0
+      line: 9
+- kind: 1
+  range:
+    end:
       character: 17
       line: 13
     start:
       character: 11
       line: 13
-- kind: 1
-  range:
-    end:
-      character: 29
-      line: 14
-    start:
-      character: 22
-      line: 14
 - kind: 1
   range:
     end:
@@ -81,8 +81,8 @@
 - kind: 1
   range:
     end:
-      character: 8
-      line: 9
+      character: 29
+      line: 14
     start:
-      character: 0
-      line: 9
+      character: 22
+      line: 14

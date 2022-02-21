@@ -333,7 +333,6 @@ class CompletionContext(object):
             return None
         return ast_utils.find_token(section, self.sel.line, self.sel.col)
 
-    @instance_cache
     def get_all_variables(self):
         from robotframework_ls.impl import ast_utils
 
