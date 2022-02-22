@@ -14,7 +14,8 @@
     "Comment1": "To develop the library, the recommended way to work with it is changing the launch.json to include an environment variable such as",
     "Comment2": "RF_INTERACTIVE_LOCAL_RESOURCE_ROOT as in the example below, then, running yarn install/yarn watch-build-dev to automatically",
     "Comment3": "regenerate the contents when the webview contents are changed.",
-    "RF_INTERACTIVE_LOCAL_RESOURCE_ROOT": "X:/vscode-robot/robotframework-lsp/robotframework-interactive/vscode-interpreter-webview/dist"
+    "RF_INTERACTIVE_LOCAL_RESOURCE_ROOT": "X:/vscode-robot/robotframework-lsp/robotframework-interactive/vscode-interpreter-webview/dist",
+    "Note": "Execute commands with yarn -- i.e.: yarn watch-build-dev"
   },
   "keywords": [],
   "author": "Fabio Zadrozny",
