@@ -2,7 +2,7 @@
 Developing
 -----------
 
-Clone the sources with git.
+Fork the repository at GitHub and then clone the sources of your fork with git.
 
 Get the submodule contents:
 `git submodule update --init --recursive`
@@ -56,6 +56,14 @@ After this step, it should be possible to open the `roboframework-lsp` folder in
 `Extension: Roboframework-lsp` to have a new instance of VSCode with the loaded extension.
 
 
+Contributing back
+------------------------
+
+After doing the needed work, it's possible to create a pull request.
+
+See: [Creating Pull Request](https://docs.github.com/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request) for more details.
+
+
 Building a VSIX locally
 ------------------------
 
@@ -71,7 +79,7 @@ To release a new version:
 
 - Create release branch (`git branch -D release-robotframework-lsp&git checkout -b release-robotframework-lsp`)
 
-- Update version (`python -m dev set-version 0.40.1`).
+- Update version (`python -m dev set-version 0.41.0`).
 
 - Update README.md to add notes on features/fixes (on `robotframework-ls` and `robotframework-intellij`).
 
@@ -83,11 +91,11 @@ To release a new version:
 
 - Rebase with master (`git checkout master&git rebase release-robotframework-lsp`).
 
-- Create a tag (`git tag robotframework-lsp-0.40.1`) and push it.
+- Create a tag (`git tag robotframework-lsp-0.41.0`) and push it.
 
 - Send release msg. i.e.:
 
-Hi @channel, `Robot Framework Language Server 0.40.1` is now available.
+Hi @channel, `Robot Framework Language Server 0.41.0` is now available.
 
 Changes in this release:
 
