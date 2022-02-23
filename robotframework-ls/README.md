@@ -28,6 +28,7 @@ the python executable used for launching the Language Server or Robot Framework)
 may be needed.
 
 See: [Config](docs/config.md) for details.
+
 See: [FAQ](docs/faq.md) for common issues encountered while configuring the language server.
   
 
@@ -66,10 +67,10 @@ Features (0.41.0)
 See: [Changelog](docs/changelog.md) for details.
 
 
-Developing
-------------
+Contributing
+--------------
 
-See: [Developing](docs/develop.md) for details on how to develop `Robot Framework Language Server`.
+See: [Contributing](docs/contributing.md) for how to help in the development of `Robot Framework Language Server`.
 
 Reporting Issues
 -----------------
