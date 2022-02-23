@@ -3,8 +3,6 @@ import itertools
 from robocorp_ls_core.protocols import IDocument, IMonitor
 from robotframework_ls.impl.protocols import ICompletionContext
 from robocorp_ls_core.basic import isinstance_name
-from robotframework_ls.impl.semantic_tokens_gherkin import _DummyToken
-import robotframework_ls.impl.semantic_tokens_gherkin as gherkin
 
 
 TOKEN_TYPES = [
@@ -51,6 +49,46 @@ for i, value in enumerate(TOKEN_MODIFIERS):
 del i
 del value
 
+class _DummyToken(object):
+    __slots__ = ["type", "value", "lineno", "col_offset", "end_col_offset"]
+
+    def __init__(self, initial_token=None):
+        if initial_token:
+            self.type = initial_token.type
+            self.value = initial_token.value
+            self.lineno = initial_token.lineno
+            self.col_offset = initial_token.col_offset
+            self.end_col_offset = initial_token.end_col_offset
+
+    def extract_gherkin_token_from_keyword(self):
+        gherkin_token = None
+        import re
+        result = re.match("^(Given|When|Then|And|But)", self.value, flags=re.IGNORECASE)
+        if result:
+            gherkin_token = self.__extract_token("control",result.end())
+        return gherkin_token
+
+    def extract_library_token_from_keyword(self):
+        library_token = None
+        dot_pos = self.value.rfind(".")
+        if dot_pos > 0:
+            library_token = self.__extract_token("name", dot_pos)
+        return library_token
+    
+    def __extract_token(self, type, position):
+            extracted_token = _DummyToken()
+            extracted_token.type = type
+            extracted_token.value = self.value[:position]
+            extracted_token.lineno = self.lineno
+            extracted_token.col_offset = self.col_offset
+            extracted_token.end_col_offset = self.col_offset + len(extracted_token.value)
+            self.__remove(extracted_token)
+            return extracted_token
+
+    def __remove(self, extracted_token):
+        extracted_token_length = extracted_token.end_col_offset - extracted_token.col_offset
+        self.value = self.value[extracted_token_length + 1 :]
+        self.col_offset = extracted_token.end_col_offset + 1
 
 from robotframework_ls.impl.robot_constants import (
     COMMENT,
@@ -130,18 +168,14 @@ def _tokenize_token(node, initial_token):
 
     if initial_token_type == KEYWORD:
         token_to_process = _DummyToken(initial_token)
-        token_gherkin_prefix = gherkin.extract_gherkin_token_from_keyword(token_to_process)
+        token_gherkin_prefix = token_to_process.extract_gherkin_token_from_keyword()
         if token_gherkin_prefix:
-            token_keyword = token_to_process - token_gherkin_prefix
             yield token_gherkin_prefix, TOKEN_TYPE_TO_INDEX[token_gherkin_prefix.type]
-            yield token_keyword, RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[KEYWORD]
-            return
-
-        token_library_prefix = gherkin.extract_library_token_from_keyword(token_to_process)
+        token_library_prefix = token_to_process.extract_library_token_from_keyword()
         if token_library_prefix:
-            token_keyword = token_to_process - token_library_prefix
             yield token_library_prefix, TOKEN_TYPE_TO_INDEX[token_library_prefix.type]
-            yield token_keyword, RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[KEYWORD]
+        if token_gherkin_prefix or token_library_prefix:
+            yield token_to_process, RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[KEYWORD]
             return
 
     try:

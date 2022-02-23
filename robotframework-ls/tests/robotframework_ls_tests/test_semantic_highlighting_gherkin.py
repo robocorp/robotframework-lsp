@@ -1,13 +1,6 @@
-from contextlib import _AsyncGeneratorContextManager
-from typing import List
-from robocorp_ls_core.protocols import IDocument
-import pytest
-from robotframework_ls.impl.robot_version import get_robot_major_version
-import json
 from robotframework_ls.impl.completion_context import CompletionContext
 from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
 from robotframework_ls.impl.semantic_tokens import decode_semantic_tokens
-
 
 robot_framework_template_file ="""
 *** Settings ***
@@ -64,8 +57,10 @@ def convert_decoded_tokens_to_dictionary(decoded_tokens):
 def test_gherkin_at_beginning_of_keyword_should_be_highlighed(workspace):
     robot_source_file = set_test_case_with_keyword("Given Some BDD description of desired system behaviour", workspace)
     semantic_tokens = get_semantic_tokens_from_language_server(workspace, robot_source_file)
+    print(semantic_tokens)
     assert semantic_tokens.get("Given") == "control"
     assert semantic_tokens.get("Some BDD description of desired system behaviour") == "keywordNameCall"
+    assert not semantic_tokens.get("Given Some BDD description of desired system behaviour")
 
 def test_gherkin_when_should_be_highlighted(workspace):
     robot_source_file = set_test_case_with_keyword("When Some BDD description of desired system behaviour", workspace)
@@ -106,7 +101,12 @@ def test_gherkin_in_keyword_sections_should_also_be_highlighted(workspace):
 def test_library_prefix_should_be_highlighted(workspace):
     robot_source_file = set_keyword_in_keyword_section("Requests.GET    url=https://github.com/robocorp/robotframework-lsp/issues/581", workspace)
     semantic_tokens = get_semantic_tokens_from_language_server(workspace, robot_source_file)
-    print(semantic_tokens)
     assert semantic_tokens.get("Requests") == "name"
     assert semantic_tokens.get("GET") == "keywordNameCall"
     
+def test_module_prefix_abuse_in_bdd_should_be_supported(workspace):
+    robot_source_file = set_test_case_with_keyword("Given Module.Keyword    With parameter", workspace)
+    semantic_tokens = get_semantic_tokens_from_language_server(workspace, robot_source_file)
+    assert semantic_tokens.get("Given") == "control"
+    assert semantic_tokens.get("Module") == "name"
+    assert semantic_tokens.get("Keyword") == "keywordNameCall"
