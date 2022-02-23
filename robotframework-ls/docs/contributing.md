@@ -26,7 +26,7 @@ After getting the code, the following steps are needed:
 
 - Get submodules:
 
-`git submodule update --init --recursive`
+    `git submodule update --init --recursive`
 
 
 - Install NodeJs (https://nodejs.org/en/) -- make sure that `node` and `npm` are in the `PATH`.
