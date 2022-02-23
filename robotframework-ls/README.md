@@ -30,7 +30,19 @@ may be needed.
 See: [Config](docs/config.md) for details.
 
 See: [FAQ](docs/faq.md) for common issues encountered while configuring the language server.
+
   
+Contributing
+--------------
+
+See: [Contributing](docs/contributing.md) for how to help in the development of `Robot Framework Language Server`.
+
+
+Reporting Issues
+-----------------
+
+See: [Reporting Issue](docs/reporting_issues.md) for details on how to report some issue in the `Robot Framework Language Server`.
+
 
 Features (0.41.0)
 -----------------
@@ -67,15 +79,6 @@ Features (0.41.0)
 See: [Changelog](docs/changelog.md) for details.
 
 
-Contributing
---------------
-
-See: [Contributing](docs/contributing.md) for how to help in the development of `Robot Framework Language Server`.
-
-Reporting Issues
------------------
-
-See: [Reporting Issue](docs/reporting_issues.md) for details on how to report some issue in the `Robot Framework Language Server`.
 
 License: Apache 2.0
 -------------------
