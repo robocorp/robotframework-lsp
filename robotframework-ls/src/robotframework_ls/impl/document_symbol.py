@@ -6,7 +6,7 @@ from robocorp_ls_core.lsp import DocumentSymbolTypedDict, SymbolKind
 
 def collect_children(ast) -> List[DocumentSymbolTypedDict]:
     from robotframework_ls.impl import ast_utils
-    from robot.api import Token  # noqa
+    from robot.api import Token
     from robotframework_ls.impl.ast_utils import create_range_from_token
 
     ret: List[DocumentSymbolTypedDict] = []
@@ -74,32 +74,29 @@ def document_symbol(
     completion_context: ICompletionContext,
 ) -> List[DocumentSymbolTypedDict]:
     from robotframework_ls.impl import ast_utils
-    from robot.api import Token  # noqa
+    from robot.api import Token
 
     ret: List[DocumentSymbolTypedDict] = []
     ast = completion_context.get_ast()
 
-    for node_info in ast_utils.iter_all_nodes(ast, recursive=False):
-        classname = node_info.node.__class__.__name__
+    for node_info in ast_utils.iter_nodes(ast, "SettingSection"):
+        create_section_doc_symbol(
+            ret, node_info.node, Token.SETTING_HEADER, SymbolKind.Namespace
+        )
 
-        if classname == "SettingSection":
-            create_section_doc_symbol(
-                ret, node_info.node, Token.SETTING_HEADER, SymbolKind.Namespace
-            )
+    for node_info in ast_utils.iter_nodes(ast, "VariableSection"):
+        create_section_doc_symbol(
+            ret, node_info.node, Token.VARIABLE_HEADER, SymbolKind.Namespace
+        )
 
-        elif classname == "VariableSection":
-            create_section_doc_symbol(
-                ret, node_info.node, Token.VARIABLE_HEADER, SymbolKind.Namespace
-            )
+    for node_info in ast_utils.iter_nodes(ast, "TestCaseSection"):
+        create_section_doc_symbol(
+            ret, node_info.node, Token.TESTCASE_HEADER, SymbolKind.Namespace
+        )
 
-        elif classname == "TestCaseSection":
-            create_section_doc_symbol(
-                ret, node_info.node, Token.TESTCASE_HEADER, SymbolKind.Namespace
-            )
-
-        elif classname == "KeywordSection":
-            create_section_doc_symbol(
-                ret, node_info.node, Token.KEYWORD_HEADER, SymbolKind.Namespace
-            )
+    for node_info in ast_utils.iter_nodes(ast, "KeywordSection"):
+        create_section_doc_symbol(
+            ret, node_info.node, Token.KEYWORD_HEADER, SymbolKind.Namespace
+        )
 
     return ret

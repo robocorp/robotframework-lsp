@@ -233,7 +233,11 @@ class MarkupContent(_Base):
 
 
 class ParameterInformation(_Base):
-    def __init__(self, label: str, documentation: Union[str, MarkupContent] = None):
+    def __init__(
+        self,
+        label: str,
+        documentation: Optional[MarkupContentTypedDict] = None,
+    ):
         self.label = label
         self.documentation = documentation
 
@@ -242,7 +246,7 @@ class SignatureInformation(_Base):
     def __init__(
         self,
         label: str,
-        documentation: Union[str, MarkupContent] = None,
+        documentation: Optional[MarkupContentTypedDict] = None,
         parameters: List[ParameterInformation] = None,
     ):
         self.label = label
@@ -263,7 +267,7 @@ class SignatureHelp(_Base):
 
         # This isn't part of the spec (just used to internally manipulate more information).
         self.name = ""
-        self.node = None
+        self.node: Any = None
 
     def to_dict(self):
         new_dict = {}
@@ -464,6 +468,13 @@ class MarkupContentTypedDict(TypedDict):
     value: str
 
 
+class MonacoMarkdownStringTypedDict(TypedDict, total=False):
+    value: str
+    isTrusted: bool
+    supportThemeIcons: bool
+    uris: Any
+
+
 class CompletionItemTypedDict(TypedDict, total=False):
     #
     # The label of this completion item. By default
@@ -485,7 +496,9 @@ class CompletionItemTypedDict(TypedDict, total=False):
     detail: Optional[str]
     #
     # A human-readable string that represents a doc-comment.
-    documentation: Optional[Union[str, MarkupContentTypedDict]]
+    documentation: Optional[
+        Union[str, MarkupContentTypedDict, MonacoMarkdownStringTypedDict]
+    ]
     #
     # Indicates if this item is deprecated.
     # @deprecated Use `tags` instead.
@@ -603,6 +616,12 @@ class CompletionsResponseTypedDict(TypedDict, total=False):
     error: ResponseErrorTypedDict  # Optional
 
 
+class CompletionResolveResponseTypedDict(TypedDict, total=False):
+    id: Union[int, str, None]
+    result: CompletionItemTypedDict
+    error: ResponseErrorTypedDict  # Optional
+
+
 class HoverResponseTypedDict(TypedDict, total=False):
     id: Union[int, str, None]
     result: HoverTypedDict  # Optional
@@ -658,7 +677,7 @@ class DocumentSymbolTypedDict(TypedDict, total=False):
     # but everything else like comments. This information is typically used to
     # determine if the clients cursor is inside the symbol to reveal in the
     # symbol in the UI.
-    range: Range
+    range: RangeTypedDict
 
     # The range that should be selected and revealed when this symbol is being
     # picked, e.g. the name of a function. Must be contained by the `range`.

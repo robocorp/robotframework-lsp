@@ -1,5 +1,4 @@
 from robotframework_ls.impl.protocols import (
-    IKeywordFound,
     IKeywordArg,
     IRobotToken,
 )
@@ -175,7 +174,6 @@ class KeywordArgumentAnalysis:
         """
         from robotframework_ls.impl.ast_utils import create_error_from_node
         from collections import deque
-        from robot.api import Token
         from robotframework_ls.impl.text_utilities import normalize_robot_name
         from robotframework_ls.impl.text_utilities import is_variable_text
 

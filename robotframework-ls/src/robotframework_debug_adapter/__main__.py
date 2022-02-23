@@ -91,10 +91,7 @@ def main():
         )
         from robotframework_debug_adapter.debug_adapter_comm import DebugAdapterComm
 
-        try:
-            from queue import Queue
-        except ImportError:
-            from Queue import Queue
+        from queue import Queue
 
         to_client_queue = Queue()
         comm = DebugAdapterComm(to_client_queue)

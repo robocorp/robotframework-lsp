@@ -39,8 +39,8 @@ def test_events_listener_failure(debugger_api: _DebuggerAPI):
         StartSuiteEvent,
         TerminatedEvent,
     )
-    import robot
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import LogMessageEvent
+    from robotframework_ls.impl.robot_version import get_robot_major_version
 
     target = debugger_api.get_dap_case_file("case_failure.robot")
     debugger_api.target = target
@@ -63,14 +63,14 @@ def test_events_listener_failure(debugger_api: _DebuggerAPI):
     assert log_message_body.level == "FAIL"
     assert log_message_body.testName == "Check failure"
 
-    if int(robot.get_version().split(".")[0]) >= 4:
+    if get_robot_major_version() >= 4:
         # source is not available on RF 3.
         assert log_message_body.source.endswith("case_failure.robot")
         assert log_message_body.lineno == 4
 
     end_test_body = debugger_api.read(EndTestEvent).body
     assert end_test_body.status == "FAIL"
-    if int(robot.get_version().split(".")[0]) >= 4:
+    if get_robot_major_version() >= 4:
         # source is not available on RF 3.
         assert len(end_test_body.failed_keywords) == 1
         assert end_test_body.failed_keywords[0]["lineno"] == 4
@@ -89,6 +89,7 @@ def test_events_listener_output(debugger_api: _DebuggerAPI):
 
     import robot
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import LogMessageEvent
+    from robotframework_ls.impl.robot_version import get_robot_major_version
 
     target = debugger_api.get_dap_case_file("case_log_no_console.robot")
     debugger_api.target = target
@@ -112,7 +113,7 @@ def test_events_listener_output(debugger_api: _DebuggerAPI):
     assert log_message_body.testName == "Check log"
 
     # Source not available in RF 3.
-    if int(robot.get_version().split(".")[0]) >= 4:
+    if get_robot_major_version() >= 4:
         assert log_message_body.source.endswith("case_log_no_console.robot")
         assert log_message_body.lineno == 4
 

@@ -11,8 +11,9 @@ from robotframework_ls.impl.protocols import (
     IKeywordArg,
     ILibraryDoc,
 )
-from typing import Tuple, Sequence, List, Dict, Optional
+from typing import Sequence, List, Dict, Optional
 from robotframework_ls.impl.text_utilities import build_keyword_docs_with_signature
+from robocorp_ls_core.lsp import MarkupContentTypedDict, MarkupKind
 
 
 log = get_logger(__name__)
@@ -75,22 +76,26 @@ class _KeywordFoundFromAst(object):
         uri = self.completion_context.doc.uri
         return os.path.splitext(os.path.basename(uris.to_fs_path(uri)))[0]
 
-    @property
-    def docs_format(self):
-        return "markdown"
+    def compute_docs_without_signature(self) -> MarkupContentTypedDict:
+        return {
+            "kind": MarkupKind.Markdown,
+            "value": self._docs_without_signature(),
+        }
 
-    @property
-    @instance_cache
-    def docs(self) -> str:
-        docs = self.docs_without_signature
-
-        return build_keyword_docs_with_signature(
-            self.keyword_name, self.keyword_args, docs, "markdown"
+    def compute_docs_with_signature(self) -> MarkupContentTypedDict:
+        docs = build_keyword_docs_with_signature(
+            self.keyword_name,
+            tuple(x.original_arg for x in self.keyword_args),
+            self._docs_without_signature(),
+            "markdown",
         )
+        return {
+            "kind": MarkupKind.Markdown,
+            "value": docs,
+        }
 
-    @property
     @instance_cache
-    def docs_without_signature(self) -> str:
+    def _docs_without_signature(self) -> str:
         from robotframework_ls.impl import ast_utils
 
         return ast_utils.get_documentation_as_markdown(self._keyword_node)
@@ -101,7 +106,7 @@ class _KeywordFoundFromAst(object):
 
         return ast_utils.is_deprecated(self._keyword_node)
 
-    @property
+    @property  # type: ignore
     @instance_cache
     def source(self) -> str:
         from robocorp_ls_core import uris
@@ -203,13 +208,13 @@ class _KeywordFoundFromLibrary(object):
 
         return text_utilities.has_deprecated_text(self._keyword_doc.doc)
 
-    @property
+    @property  # type: ignore
     @instance_cache
     def source(self):
         source = self._keyword_doc.source or self._library_doc.source
         return source
 
-    @property
+    @property  # type: ignore
     @instance_cache
     def lineno(self):
         return self._keyword_doc.lineno - 1  # i.e.: make 0-based.
@@ -242,37 +247,28 @@ class _KeywordFoundFromLibrary(object):
     def scope_end_col_offset(self) -> Optional[int]:
         return self.end_col_offset
 
-    @property
-    @instance_cache
-    def _docs_and_format(self) -> Tuple[str, str]:
+    def compute_docs_without_signature(self) -> MarkupContentTypedDict:
+        from robotframework_ls.impl.robot_specbuilder import docs_and_format
+
+        docs, docs_format = docs_and_format(self._keyword_doc)
+
+        return {"kind": docs_format, "value": docs}
+
+    def compute_docs_with_signature(self) -> MarkupContentTypedDict:
         from robotframework_ls.impl.robot_specbuilder import docs_and_format
 
         docs, docs_format = docs_and_format(self._keyword_doc)
         docs = build_keyword_docs_with_signature(
-            self.keyword_name, self.keyword_args, docs, docs_format
+            self.keyword_name,
+            tuple(x.original_arg for x in self.keyword_args),
+            docs,
+            docs_format,
         )
 
-        return docs, docs_format
-
-    @property
-    @instance_cache
-    def docs(self):
-        docs, _docs_format = self._docs_and_format
-        return docs
-
-    @property
-    @instance_cache
-    def docs_without_signature(self):
-        from robotframework_ls.impl.robot_specbuilder import docs_and_format
-
-        docs, _docs_format = docs_and_format(self._keyword_doc)
-        return docs
-
-    @property
-    @instance_cache
-    def docs_format(self):
-        _docs, docs_format = self._docs_and_format
-        return docs_format
+        return {
+            "kind": docs_format,
+            "value": docs,
+        }
 
     def __typecheckself__(self) -> None:
         _: IKeywordFound = check_implements(self)
@@ -391,7 +387,7 @@ def _collect_libraries_keywords(
                 keyword_name = keyword.name
                 if collector.accepts(keyword_name):
 
-                    keyword_args = []
+                    keyword_args: Sequence[IKeywordArg] = ()
                     if keyword.args:
                         keyword_args = keyword.args
 

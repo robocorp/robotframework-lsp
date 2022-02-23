@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.40.1'
+version '0.41.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,24 +51,20 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.40.1
+    Release 0.41.0
     </p>
     <ul>
 
-    <li>Keyword calls and library inits are now validated according to the signature.</li>
-    <li>Usage of deprecated keywords is marked with a strikethrough.</li>
-    <li>When a libspec can't be generated the reason and possible fixes are properly shown to the user.</li>
-    <li>Signature info is now shown for libraries.</li>
-    <li>Added options related to enabling/disabling linting features individually (see: <strong>robot.lint.*</strong> settings).</li>
-    <li>Added <strong>EMPTY</strong> completion.</li>
-    <li>Snippet completions are now done at the target <strong>robot.python.executable</strong> and not <strong>robot.language-server.python</strong> (to account for statements only available depending on robot version).</li>
-    <li>The active parameter is properly highlighted in the signature help.</li>
-    <li>The signature help is shown whenever a space is typed.</li>
-    <li>Fixed case where <strong>try..finally</strong> wasn't stepping properly with step next.</li>
-    <li>When debugging variable values are shown on hover.</li>
-    <li>A better error message is provided in the case where <strong>robot</strong> is not available or shadowed.</li>
-    <li>Semantic highlighting is provided for variables in documentation.</li>
-    <li>The current argument is highlighted during hover.</li>
+    <li>Argument analysis is now also done for <strong>Run Keyword</strong> variants.</li>
+    <li>[Debugger] It's now possible to ignore failures inside some keywords so that the debugger doesn't break in these cases when <strong>RFLS_BREAK_ON_FAILURE/RFLS_BREAK_ON_ERROR</strong> is enabled.</li>
+    <li> * Customizable through the <strong>RFLS_IGNORE_FAILURES_IN_KEYWORDS</strong> and <strong>RFLS_IGNORE_FAILURES_IN_KEYWORDS_OVERRIDE</strong> environment variables (see https://github.com/robocorp/robotframework-lsp/blob/master/robotframework-ls/docs/config.md#environment-variables for details).</li>
+    <li>Performance improvements</li>
+    <li> * Improved AST indexing.</li>
+    <li> * Notification that settings changed are only sent to the server api if they actually changed.</li>
+    <li> * Documentation is now lazily loaded during code-completion.</li>
+    <li>References are found when find references is activated from the keyword definition.</li>
+    <li>Semantic highlighting for Keywords with dotted access improved.</li>
+    <li>The documentation conversion from <strong>REST</strong> and <strong>ROBOT</strong> to <strong>markdown</strong> is now done internally.</li>
 
     <br>
     Current feature set:<br>

@@ -10,3 +10,9 @@ a `python` executable must be in the `PATH`).
 
 Afterwards, it should be possible to just open the `robotframework-intellij` folder
 in `Intellij` (the community edition is Ok).
+
+Note that `robotframework-intellij` is mostly the integration of the `Robot Framework Language Server`
+into `Intellij` and the actual implementation of most features reside in the 
+`Robot Framework Language Server` itself.
+
+See: [Contributing to Robot Framework Language Server](../../robotframework-ls/docs/contributing.md).

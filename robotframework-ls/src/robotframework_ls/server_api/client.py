@@ -11,6 +11,9 @@ from robocorp_ls_core.lsp import (
     ResponseTypedDict,
     PositionTypedDict,
     CodeLensTypedDict,
+    CompletionItemTypedDict,
+    CompletionsResponseTypedDict,
+    CompletionResolveResponseTypedDict,
 )
 from robocorp_ls_core.basic import implements
 
@@ -166,6 +169,20 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             )
         )
 
+    def request_monaco_resolve_completion(
+        self,
+        completion_item: CompletionItemTypedDict,
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(
+            self._build_msg(
+                "monacoResolveCompletion",
+                completion_item=completion_item,
+            )
+        )
+
     def forward(self, method_name, params):
         self._check_process_alive()
         msg_id = self.next_id()
@@ -214,13 +231,25 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             self._build_msg("keywordComplete", doc_uri=doc_uri, line=line, col=col)
         )
 
-    def request_complete_all(self, doc_uri, line, col) -> Optional[IIdMessageMatcher]:
+    def request_complete_all(
+        self, doc_uri, line, col
+    ) -> Optional[IIdMessageMatcher[CompletionsResponseTypedDict]]:
         """
         Completes: sectionName, keyword, variables
         :Note: async complete.
         """
         return self.request_async(
             self._build_msg("completeAll", doc_uri=doc_uri, line=line, col=col)
+        )
+
+    def request_resolve_completion_item(
+        self, completion_item: CompletionItemTypedDict
+    ) -> Optional[IIdMessageMatcher[CompletionResolveResponseTypedDict]]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(
+            self._build_msg("resolveCompletionItem", completion_item=completion_item)
         )
 
     def request_find_definition(

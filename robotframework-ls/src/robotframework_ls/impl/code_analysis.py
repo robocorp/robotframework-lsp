@@ -1,4 +1,4 @@
-from typing import Dict, Optional, List
+from typing import Dict, Optional
 
 from robocorp_ls_core.protocols import check_implements
 from robocorp_ls_core.robotframework_log import get_logger
@@ -7,7 +7,6 @@ from robotframework_ls.impl.protocols import (
     IKeywordFound,
     IKeywordCollector,
     ICompletionContext,
-    IKeywordArg,
     ILibraryDoc,
     INode,
 )

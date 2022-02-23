@@ -1,17 +1,17 @@
-Collections.py:
-- found_in_py_line_col
-case_with_name.robot:
-- range:
-    end:
-      character: 25
-      line: 6
-    start:
-      character: 8
-      line: 6
-- range:
-    end:
-      character: 19
-      line: 7
-    start:
-      character: 4
-      line: 7
+- - Collections.py
+  - - found_in_py_line_col
+- - case_with_name.robot
+  - - range:
+        end:
+          character: 25
+          line: 6
+        start:
+          character: 8
+          line: 6
+    - range:
+        end:
+          character: 19
+          line: 7
+        start:
+          character: 4
+          line: 7

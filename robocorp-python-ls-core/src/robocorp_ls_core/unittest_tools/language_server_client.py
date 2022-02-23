@@ -6,9 +6,13 @@ from robocorp_ls_core.client_base import LanguageServerClientBase
 from robocorp_ls_core.protocols import (
     ILanguageServerClient,
     IIdMessageMatcher,
-    IMessageMatcher,
 )
-from robocorp_ls_core.lsp import CodeLensTypedDict, CompletionsResponseTypedDict
+from robocorp_ls_core.lsp import (
+    CodeLensTypedDict,
+    CompletionsResponseTypedDict,
+    CompletionItemTypedDict,
+    CompletionResolveResponseTypedDict,
+)
 
 
 log = logging.getLogger(__name__)
@@ -209,6 +213,19 @@ class LanguageServerClient(LanguageServerClientBase):
         self, uri: str, line: int, col: int
     ) -> Optional[IIdMessageMatcher[CompletionsResponseTypedDict]]:
         return self.request_async(self._build_completions_request(uri, line, col))
+
+    @implements(ILanguageServerClient.request_resolve_completion)
+    def request_resolve_completion(
+        self, completion_item: CompletionItemTypedDict
+    ) -> CompletionResolveResponseTypedDict:
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "completionItem/resolve",
+                "params": completion_item,
+            }
+        )
 
     @implements(ILanguageServerClient.request_source_format)
     def request_source_format(self, uri: str):

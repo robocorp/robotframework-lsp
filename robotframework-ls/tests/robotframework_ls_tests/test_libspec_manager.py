@@ -122,7 +122,7 @@ class CheckLib:
     ).library_doc
 
     assert library_info is not None
-    assert library_info.doc_format == "markdown"
+    assert library_info.doc_format == "REST"
     keywords: List[KeywordDoc] = library_info.keywords
     data_regression.check([keyword_to_dict(k) for k in keywords])
 

@@ -16,6 +16,7 @@
 # limitations under the License.
 import functools
 import re
+from robocorp_ls_core.protocols import Sentinel
 
 _RE_FIRST_CAP = re.compile("(.)([A-Z][a-z]+)")
 _RE_ALL_CAP = re.compile("([a-z0-9])([A-Z])")
@@ -29,16 +30,31 @@ class MethodDispatcher(object):
     """
 
     def __getitem__(self, item):
-        method_name = "m_{}".format(_method_to_string(item))
-        if hasattr(self, method_name):
-            method = getattr(self, method_name)
+        try:
+            cache = self.__method_dispatcher_cache__
+        except AttributeError:
+            cache = self.__method_dispatcher_cache__ = {}
 
-            @functools.wraps(method)
-            def handler(params):
-                return method(**(params or {}))
+        handler = cache.get(item)
+        if handler is None:
 
-            return handler
-        raise KeyError()
+            method_name = f"m_{_method_to_string(item)}"
+            if not hasattr(self, method_name):
+                handler = Sentinel
+            else:
+                method = getattr(self, method_name)
+
+                @functools.wraps(method)
+                def _handler(params):
+                    return method(**(params or {}))
+
+                handler = _handler
+
+            cache[item] = handler
+
+        if handler is Sentinel:
+            raise KeyError()
+        return handler
 
 
 def _method_to_string(method):

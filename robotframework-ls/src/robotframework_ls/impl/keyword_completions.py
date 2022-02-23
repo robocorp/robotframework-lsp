@@ -11,7 +11,6 @@ from robotframework_ls.impl.protocols import (
 from robocorp_ls_core.lsp import (
     TextEditTypedDict,
     CompletionItemTypedDict,
-    MarkupKind,
     InsertTextFormat,
 )
 
@@ -93,12 +92,6 @@ class _Collector(object):
             "kind": keyword_found.completion_item_kind,
             "textEdit": text_edit,
             "insertText": text_edit["newText"],
-            "documentation": {
-                "kind": MarkupKind.Markdown
-                if keyword_found.docs_format == "markdown"
-                else MarkupKind.PlainText,
-                "value": keyword_found.docs,
-            },
             "insertTextFormat": InsertTextFormat.Snippet,
         }
 
@@ -115,6 +108,10 @@ class _Collector(object):
 
         item = self._create_completion_item_from_keyword(
             keyword_found, self.selection, self.token, col_delta=col_delta
+        )
+
+        self.completion_context.assign_documentation_resolve(
+            item, keyword_found.compute_docs_with_signature
         )
 
         self.completion_items.append(item)

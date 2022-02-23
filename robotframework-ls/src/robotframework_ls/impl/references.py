@@ -8,13 +8,11 @@ from robotframework_ls.impl.protocols import (
     IKeywordFound,
     IVariablesCollector,
     IVariableFound,
-    IKeywordDefinition,
     cast_to_keyword_definition,
 )
 import typing
-import os
 from robocorp_ls_core.protocols import check_implements
-from robocorp_ls_core.basic import isinstance_name
+from robocorp_ls_core.basic import isinstance_name, normalize_filename
 
 
 log = get_logger(__name__)
@@ -24,9 +22,7 @@ def matches_source(s1: str, s2: str) -> bool:
     if s1 == s2:
         return True
 
-    return os.path.normcase(os.path.normpath(s1)) == os.path.normcase(
-        os.path.normpath(s2)
-    )
+    return normalize_filename(s1) == normalize_filename(s2)
 
 
 class _VariableDefinitionsCollector(object):
@@ -190,6 +186,7 @@ def references(
     if token_info is None:
         return []
 
+    keyword_found: IKeywordFound
     if token_info.token.type == token_info.token.KEYWORD_NAME:
         if isinstance_name(token_info.node, "KeywordName"):
             from robotframework_ls.impl.find_definition import find_keyword_definition
@@ -211,7 +208,7 @@ def references(
         completion_context.monitor.check_cancelled()
         keyword_definition, _usage_info = current_keyword_definition_and_usage_info
 
-        keyword_found: IKeywordFound = keyword_definition.keyword_found
+        keyword_found = keyword_definition.keyword_found
         return _references_for_keyword_found(
             completion_context, keyword_found, include_declaration
         )

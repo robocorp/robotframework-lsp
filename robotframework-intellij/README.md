@@ -36,7 +36,12 @@ may be needed (by default it'll use the `python` from the `PATH`).
 
 The settings may be configured at: `File > Settings > Languages & Frameworks > Robot Framework Language Server`.
 
-Features (0.40.1)
+Developing
+------------
+
+See: [Contributing](docs/contributing.md) for how to help in the development of `Robot Framework Language Server for Intellij`.
+
+Features (0.41.0)
 -----------------
 
 - Settings page for the language server (per project and global).
@@ -61,12 +66,6 @@ Features (0.40.1)
 
 
 See: [Changelog](docs/changelog.md) for details.
-
-
-Developing
-------------
-
-See: [Developing](docs/develop.md) for details on how to develop `Robot Framework Language Server`.
 
 
 License: Apache 2.0

@@ -2,6 +2,7 @@ from robotframework_ls.impl.text_utilities import (
     normalize_robot_name,
     matches_robot_keyword,
 )
+from robotframework_ls.impl.protocols import IKeywordFound
 
 
 class RobotStringMatcher(object):
@@ -62,10 +63,7 @@ class MatcherWithResourceOrLibraryName(RobotStringMatcher):
             resource_or_library_name
         )
 
-    def accepts_keyword(self, keyword_found):
-        """
-        :param IKeywordFound keyword_found:
-        """
+    def accepts_keyword(self, keyword_found: IKeywordFound):
         name = keyword_found.library_alias
         if name is None:
             name = keyword_found.resource_name or keyword_found.library_name
@@ -74,7 +72,7 @@ class MatcherWithResourceOrLibraryName(RobotStringMatcher):
             return self.accepts_keyword_name(keyword_found.keyword_name)
         return False
 
-    def is_keyword_match(self, keyword_found):
+    def is_keyword_match(self, keyword_found: IKeywordFound):
         name = keyword_found.library_alias
         if name is None:
             name = keyword_found.resource_name or keyword_found.library_name
@@ -84,7 +82,7 @@ class MatcherWithResourceOrLibraryName(RobotStringMatcher):
         return False
 
 
-def build_matchers_with_resource_or_library_scope(token_str):
+def build_matchers_with_resource_or_library_scope(token_str: str):
     """
     Given a string such as:
 

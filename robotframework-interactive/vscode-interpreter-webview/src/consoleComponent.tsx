@@ -151,6 +151,14 @@ function configEditor(editor: monaco.editor.IStandaloneCodeEditor, history, hand
             history.push(value);
             contextKeyIsHistoryTop.set(history.computeInTop());
             replaceAllInEditor("", false);
+
+            // Fix for https://github.com/robocorp/robotframework-lsp/issues/570
+            // (i.e.: we need to leave snippet mode)
+            const snippetController: any = editor.getContribution("snippetController2");
+            if (snippetController) {
+                snippetController.cancel();
+            }
+
             await handleEvaluate(value, codeAsHtml.html);
         },
     });

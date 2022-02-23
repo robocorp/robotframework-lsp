@@ -1,10 +1,16 @@
 from typing import Optional, List, Set, Iterator
-from robocorp_ls_core.lsp import SymbolInformationTypedDict
+from robocorp_ls_core.lsp import (
+    SymbolInformationTypedDict,
+    MarkupContentTypedDict,
+    MarkupKind,
+)
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.protocols import (
     ISymbolsCache,
     IBaseCompletionContext,
     ILibraryDoc,
+    IKeywordDoc,
+    ISymbolKeywordInfo,
 )
 from robotframework_ls.impl.robot_lsp_constants import (
     OPTION_ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS,
@@ -12,6 +18,8 @@ from robotframework_ls.impl.robot_lsp_constants import (
 from robocorp_ls_core.options import USE_TIMEOUTS
 from robotframework_ls.impl.protocols import ISymbolsJsonListEntry
 import typing
+from robotframework_ls.impl._symbols_cache import BaseSymbolsCache
+from robocorp_ls_core.protocols import check_implements
 
 log = get_logger(__name__)
 
@@ -30,15 +38,75 @@ def _add_to_ret(ret, symbols_cache: ISymbolsCache, query: Optional[str]):
     ret.extend(symbols_cache.get_json_list())
 
 
-def _compute_symbols_from_library_info(library_name, library_info) -> ISymbolsCache:
+class _SymbolKeywordInfoFromKeywordDoc:
+
+    _documentation: MarkupContentTypedDict
+
+    __slots__ = ["name", "_keyword_doc", "_documentation"]
+
+    def __init__(self, keyword_doc: IKeywordDoc):
+        self.name = keyword_doc.name
+        self._keyword_doc = keyword_doc
+
+    def get_documentation(self) -> MarkupContentTypedDict:
+        from robotframework_ls.impl.text_utilities import (
+            build_keyword_docs_with_signature,
+        )
+
+        try:
+            return self._documentation
+        except AttributeError:
+            from robotframework_ls.impl.robot_specbuilder import docs_and_format
+
+            docs, docs_format = docs_and_format(self._keyword_doc)
+            docs = build_keyword_docs_with_signature(
+                self._keyword_doc.name,
+                tuple(x.original_arg for x in self._keyword_doc.args),
+                docs,
+                docs_format,
+            )
+
+            self._documentation = {
+                "kind": MarkupKind.Markdown,
+                "value": docs,
+            }
+
+        return self._documentation
+
+    def __typecheckself__(self) -> None:
+        _: ISymbolKeywordInfo = check_implements(self)
+
+
+class _SymbolsCacheForLibrary(BaseSymbolsCache):
+    _cached_keyword_info: List[ISymbolKeywordInfo]
+
+    def iter_keyword_info(self) -> Iterator[ISymbolKeywordInfo]:
+        try:
+            yield from iter(self._cached_keyword_info)
+        except:
+            cache: List[ISymbolKeywordInfo] = []
+
+            library_info = self.get_library_info()
+            if library_info is not None:
+                for keyword_doc in library_info.keywords:
+                    info = _SymbolKeywordInfoFromKeywordDoc(keyword_doc)
+                    yield info
+                    cache.append(info)
+
+            self._cached_keyword_info = cache
+
+    def __typecheckself__(self) -> None:
+        _: ISymbolsCache = check_implements(self)
+
+
+def _compute_symbols_from_library_info(
+    library_name: str, library_info: ILibraryDoc
+) -> ISymbolsCache:
     from robocorp_ls_core import uris
     from robocorp_ls_core.lsp import SymbolKind
-    from robotframework_ls.impl.robot_specbuilder import KeywordDoc
-    from robotframework_ls.impl.robot_workspace import SymbolsCache
-    from robotframework_ls.impl.text_utilities import build_keyword_docs_with_signature
 
     symbols: List[ISymbolsJsonListEntry] = []
-    keyword: KeywordDoc
+    keyword: IKeywordDoc
     for keyword in library_info.keywords:
         source = keyword.source
         if not source:
@@ -57,13 +125,6 @@ def _compute_symbols_from_library_info(library_name, library_info) -> ISymbolsCa
 
         lineno -= 1
 
-        from robotframework_ls.impl.robot_specbuilder import docs_and_format
-
-        docs, docs_format = docs_and_format(keyword)
-        docs = build_keyword_docs_with_signature(
-            keyword.name, keyword.args, docs, docs_format
-        )
-
         symbols.append(
             {
                 "name": keyword.name,
@@ -75,12 +136,10 @@ def _compute_symbols_from_library_info(library_name, library_info) -> ISymbolsCa
                         "end": {"line": lineno, "character": 0},
                     },
                 },
-                "docs": docs,
-                "docsFormat": docs_format,
                 "containerName": library_name,
             }
         )
-    return SymbolsCache(symbols, library_info, None, set(), None, None)
+    return _SymbolsCacheForLibrary(symbols, library_info, None, set(), None, None)
 
 
 def iter_symbols_caches(

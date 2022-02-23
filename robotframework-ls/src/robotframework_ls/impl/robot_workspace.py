@@ -7,10 +7,11 @@ from robotframework_ls.impl.protocols import (
     IRobotWorkspace,
     IRobotDocument,
     IBaseCompletionContext,
-    ILibraryDoc,
     ISymbolsCache,
     ISymbolsJsonListEntry,
     ICompletionContext,
+    IKeywordNode,
+    ISymbolKeywordInfo,
 )
 from robocorp_ls_core.protocols import (
     check_implements,
@@ -21,66 +22,73 @@ from robocorp_ls_core.protocols import (
     IDocument,
 )
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
-from typing import Optional, Any, Set, List, Dict, Iterable, Tuple
+from typing import Optional, Any, Set, List, Dict, Iterable, Tuple, Iterator
 import weakref
 import threading
-from robocorp_ls_core.lsp import TextDocumentContentChangeEvent, TextDocumentItem
+from robocorp_ls_core.lsp import (
+    TextDocumentContentChangeEvent,
+    TextDocumentItem,
+    MarkupContentTypedDict,
+    MarkupKind,
+)
 from robocorp_ls_core import uris
+from robotframework_ls.impl._symbols_cache import BaseSymbolsCache
 
 log = get_logger(__name__)
 
 
-class SymbolsCache:
-    _library_info: "Optional[weakref.ReferenceType[ILibraryDoc]]"
-    _doc: "Optional[weakref.ReferenceType[IRobotDocument]]"
+class _KeywordInfo:
+    _documentation: MarkupContentTypedDict
 
-    def __init__(
-        self,
-        json_list,
-        library_info: Optional[ILibraryDoc],
-        doc: Optional[IRobotDocument],
-        keywords_used: Set[str],
-        uri: Optional[str],  # Always available if generated from doc.
-        test_info: Optional[List[ITestInfoFromSymbolsCacheTypedDict]],
-    ):
-        self._uri = uri
-        if library_info is not None:
-            self._library_info = weakref.ref(library_info)
-        else:
-            self._library_info = None
+    __slots__ = ["_node", "name", "_documentation"]
 
-        if doc is not None:
-            self._doc = weakref.ref(doc)
-        else:
-            self._doc = None
+    def __init__(self, node: IKeywordNode):
+        self._node = node
+        self.name = node.name
 
-        self._json_list = json_list
-        self._keywords_used = keywords_used
-        self._test_info = test_info
+    def get_documentation(self) -> MarkupContentTypedDict:
+        from robotframework_ls.impl import ast_utils
+        from robotframework_ls.impl.text_utilities import (
+            build_keyword_docs_with_signature,
+        )
 
-    def get_test_info(self) -> Optional[List[ITestInfoFromSymbolsCacheTypedDict]]:
-        return self._test_info
+        try:
+            return self._documentation
+        except AttributeError:
+            docs = ast_utils.get_documentation_as_markdown(self._node)
+            args = tuple(ast_utils.iter_keyword_arguments_as_str(self._node))
 
-    def get_uri(self) -> Optional[str]:
-        return self._uri
+            docs = build_keyword_docs_with_signature(self.name, args, docs, "markdown")
 
-    def has_keyword_usage(self, normalized_keyword_name: str) -> bool:
-        return normalized_keyword_name in self._keywords_used
+            self._documentation = {
+                "kind": MarkupKind.Markdown,
+                "value": docs,
+            }
 
-    def get_json_list(self) -> list:
-        return self._json_list
+        return self._documentation
 
-    def get_library_info(self) -> Optional[ILibraryDoc]:
-        w = self._library_info
-        if w is None:
-            return None
-        return w()
+    def __typecheckself__(self) -> None:
+        _: ISymbolKeywordInfo = check_implements(self)
 
-    def get_doc(self) -> Optional[IRobotDocument]:
-        w = self._doc
-        if w is None:
-            return None
-        return w()
+
+class _SymbolsCacheForAST(BaseSymbolsCache):
+    _cached_keyword_info: List[ISymbolKeywordInfo]
+
+    def __init__(self, *args, **kwargs):
+        keywords = kwargs.pop("keywords")
+        self._keywords: List[IKeywordNode] = keywords
+        super(_SymbolsCacheForAST, self).__init__(*args, **kwargs)
+
+    def iter_keyword_info(self) -> Iterator[ISymbolKeywordInfo]:
+        try:
+            yield from iter(self._cached_keyword_info)
+        except:
+            cache: List[ISymbolKeywordInfo] = []
+            for k in self._keywords:
+                keyword_info = _KeywordInfo(k)
+                yield keyword_info
+                cache.append(keyword_info)
+            self._cached_keyword_info = cache
 
     def __typecheckself__(self) -> None:
         _: ISymbolsCache = check_implements(self)
@@ -98,14 +106,9 @@ def _compute_symbols_from_ast(completion_context: ICompletionContext) -> ISymbol
     symbols: List[ISymbolsJsonListEntry] = []
     uri = doc.uri
 
+    keywords: List[IKeywordNode] = []
     for keyword_node_info in ast_utils.iter_keywords(ast):
-        docs = ast_utils.get_documentation_as_markdown(keyword_node_info.node)
-        args = []
-        for arg in ast_utils.iter_keyword_arguments_as_str(keyword_node_info.node):
-            args.append(arg)
-
-        docs = "%s(%s)\n\n%s" % (keyword_node_info.node.name, ", ".join(args), docs)
-
+        keywords.append(keyword_node_info.node)
         symbols.append(
             {
                 "name": keyword_node_info.node.name,
@@ -123,8 +126,6 @@ def _compute_symbols_from_ast(completion_context: ICompletionContext) -> ISymbol
                         },
                     },
                 },
-                "docs": docs,
-                "docsFormat": "markdown",
                 "containerName": doc.path,
             }
         )
@@ -140,13 +141,14 @@ def _compute_symbols_from_ast(completion_context: ICompletionContext) -> ISymbol
         {"name": x["name"], "range": x["range"]} for x in test_info
     ]
 
-    return SymbolsCache(
+    return _SymbolsCacheForAST(
         symbols,
         None,
         doc,
         keywords_used,
         uri=uri,
         test_info=test_info_for_cache,
+        keywords=keywords,
     )
 
 

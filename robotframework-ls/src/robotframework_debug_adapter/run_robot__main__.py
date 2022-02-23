@@ -1,15 +1,10 @@
-from os.path import os
+import os
 import json
 import socket as socket_module
 import sys
 import threading
 import traceback
-import weakref
-
-try:
-    import queue
-except ImportError:
-    import Queue as queue
+import queue
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
@@ -60,17 +55,20 @@ def connect(port):
 
 
 class _RobotTargetComm(threading.Thread):
-    def __init__(self, socket, debug: bool):
+    def __init__(self, socket, debug: bool) -> None:
         """
         :param socket:
         :param debug:
             True means that we should run in debug mode and False means that the
             --nodebug flag was passed.
         """
+        from robocorp_ls_core.debug_adapter_core.dap.dap_base_schema import BaseSchema
+        from typing import Union
+
         threading.Thread.__init__(self)
         self.daemon = True
         self._socket = socket
-        self._write_queue = queue.Queue()
+        self._write_queue: "queue.Queue[Union[BaseSchema, dict, str]]" = queue.Queue()
         self.configuration_done = threading.Event()
         self.terminated = threading.Event()
         self._run_in_debug_mode = debug
@@ -95,7 +93,7 @@ class _RobotTargetComm(threading.Thread):
             else:
                 debugger_impl = install_robot_debugger()
                 debugger_impl.busy_wait.before_wait.append(self._notify_stopped)
-                debugger_impl.write_message = self.write_message
+                debugger_impl.write_message = self.write_message  # type: ignore
 
                 log.debug("Finished patching execution context.")
                 self._debugger_impl = debugger_impl

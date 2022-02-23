@@ -24,6 +24,7 @@ from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.options import DEFAULT_TIMEOUT
 from typing import TypeVar, Any, Callable
 from robocorp_ls_core.jsonrpc.exceptions import JsonRpcRequestCancelled
+from functools import lru_cache
 
 
 PARENT_PROCESS_WATCH_INTERVAL = 3  # 3 s
@@ -475,3 +476,8 @@ def build_subprocess_kwargs(cwd, env, **kwargs) -> dict:
 def make_unique(lst):
     seen = set()
     return [x for x in lst if x not in seen and not seen.add(x)]
+
+
+@lru_cache(maxsize=3000)
+def normalize_filename(filename):
+    return os.path.abspath(os.path.normpath(os.path.normcase(filename)))

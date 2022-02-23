@@ -14,7 +14,7 @@ def check_data_regression(result, data_regression):
         else:
             data[name] = [item]
 
-    data_regression.check(data)
+    data_regression.check(sorted(data.items()))
 
 
 def test_references_basic(workspace, libspec_manager, data_regression):
