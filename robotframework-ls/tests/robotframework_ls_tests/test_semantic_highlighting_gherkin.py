@@ -1,4 +1,3 @@
-from robotframework_ls.impl.completion_context import CompletionContext
 from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
 from robotframework_ls.impl.semantic_tokens import decode_semantic_tokens
 
@@ -40,6 +39,7 @@ def set_keyword_in_keyword_section(keyword, workspace):
     return doc
 
 def get_semantic_tokens_from_language_server(workspace, doc):
+    from robotframework_ls.impl.completion_context import CompletionContext
     context = CompletionContext(doc, workspace=workspace.ws)
     semantic_tokens = semantic_tokens_full(context)
     decoded = decode_semantic_tokens(semantic_tokens, doc)
@@ -110,3 +110,9 @@ def test_module_prefix_abuse_in_bdd_should_be_supported(workspace):
     assert semantic_tokens.get("Given") == "control"
     assert semantic_tokens.get("Module") == "name"
     assert semantic_tokens.get("Keyword") == "keywordNameCall"
+
+def test_keywords_should_not_be_mistaken_for_gherkin(workspace):
+    robot_source_file = set_test_case_with_keyword("Buttercup    ${argument_1}    ${argument_2}", workspace)
+    semantic_tokens = get_semantic_tokens_from_language_server(workspace, robot_source_file)
+    assert semantic_tokens.get("Buttercup") == "keywordNameCall"
+    assert not semantic_tokens.get("But")
