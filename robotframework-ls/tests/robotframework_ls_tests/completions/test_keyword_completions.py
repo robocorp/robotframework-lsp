@@ -1,4 +1,5 @@
 import pytest
+from robotframework_ls.impl.protocols import ICompletionContext
 
 
 def test_keyword_completions_builtin(workspace, libspec_manager):
@@ -151,6 +152,15 @@ def test_keyword_completions_builtin_after_space_before_newline(
     ]
 
 
+def _check_resolve(context: ICompletionContext, completions):
+    for completion_item in completions:
+        data = completion_item.pop("data", None)
+        assert data
+        assert not completion_item.get("documentation")
+        context.resolve_completion_item(data, completion_item)
+        assert "documentation" in completion_item
+
+
 def test_keyword_completions_changes_user_library(
     data_regression, workspace, cases, libspec_manager, workspace_dir
 ):
@@ -165,9 +175,9 @@ def test_keyword_completions_changes_user_library(
     doc = workspace.get_doc("case1.robot")
     doc = workspace.put_doc("case1.robot", doc.source + "\n    verify")
 
-    completions = keyword_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws)
-    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    completions = keyword_completions.complete(context)
+    _check_resolve(context, completions)
     data_regression.check(completions, basename="keyword_completions_1")
 
     time.sleep(1)  # Make sure that the mtime changes enough in the filesystem
@@ -221,9 +231,9 @@ def test_keyword_completions_user_library(
     new_source = new_source + "\n    verify"
     doc = workspace.put_doc("case1.robot", new_source)
 
-    completions = keyword_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws)
-    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    completions = keyword_completions.complete(context)
+    _check_resolve(context, completions)
     data_regression.check(completions, basename="keyword_completions_1")
 
     # Now, let's put a .libspec file in the workspace and check whether
@@ -232,9 +242,9 @@ def test_keyword_completions_user_library(
         stream.write(LIBSPEC_1)
     libspec_manager.synchronize_workspace_folders()
 
-    completions = keyword_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws)
-    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    completions = keyword_completions.complete(context)
+    _check_resolve(context, completions)
     data_regression.check(completions, basename="keyword_completions_2_new")
 
 
@@ -251,9 +261,9 @@ def test_keyword_completions_case1(
     doc = workspace.get_doc("case1.robot")
     doc = workspace.put_doc("case1.robot", doc.source + contents)
 
-    completions = keyword_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws)
-    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    completions = keyword_completions.complete(context)
+    _check_resolve(context, completions)
     data_regression.check(completions, basename="keyword_completions_1_all")
 
 
@@ -267,9 +277,9 @@ def test_keyword_completions_user_in_robot_file(
     doc = workspace.get_doc("case2.robot")
     doc = workspace.put_doc("case2.robot", doc.source + "\n    my equ")
 
-    completions = keyword_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws)
-    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    completions = keyword_completions.complete(context)
+    _check_resolve(context, completions)
     data_regression.check(
         completions, basename="keyword_completions_user_in_robot_file"
     )
@@ -293,9 +303,9 @@ def test_keyword_completions_from_resource_files(
     doc = workspace.get_doc("case3.robot")
     doc = workspace.put_doc("case3.robot", doc.source + "\n    equal redef")
 
-    completions = keyword_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws, config=config)
-    )
+    context = CompletionContext(doc, workspace=workspace.ws, config=config)
+    completions = keyword_completions.complete(context)
+    _check_resolve(context, completions)
     data_regression.check(
         completions, basename="keyword_completions_from_resource_files"
     )
@@ -311,9 +321,9 @@ def test_keyword_completions_from_recursively_included_resource_files(
     doc = workspace.get_doc("case4.robot")
     doc = workspace.put_doc("case4.robot", doc.source + "\n    equal redef")
 
-    completions = keyword_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws)
-    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    completions = keyword_completions.complete(context)
+    _check_resolve(context, completions)
 
     data_regression.check(
         completions, basename="keyword_completions_from_recursively_resource_files"
@@ -397,9 +407,9 @@ def test_keyword_completions_bdd_prefix(workspace, libspec_manager, data_regress
         "case2.robot", doc.source + "\n*** Keywords ***\nTeardown    WHEN my_Equal red"
     )
 
-    completions = keyword_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws)
-    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    completions = keyword_completions.complete(context)
+    _check_resolve(context, completions)
 
     found = [
         completion
@@ -467,9 +477,9 @@ Test
     case4resource3."""
 
     config = RobotConfig()
-    completions = keyword_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws, config=config)
-    )
+    context = CompletionContext(doc, workspace=workspace.ws, config=config)
+    completions = keyword_completions.complete(context)
+    _check_resolve(context, completions)
 
     data_regression.check(completions)
 
@@ -492,9 +502,9 @@ Resource    case4resource.txt
 Test
     case4resource3."""
 
-    completions = keyword_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws)
-    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    completions = keyword_completions.complete(context)
+    _check_resolve(context, completions)
 
     data_regression.check(
         completions, basename="test_keyword_completions_library_prefix_1"
@@ -509,9 +519,9 @@ Resource    case4resource.txt
 Test
     case4resource3.Another"""
 
-    completions = keyword_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws)
-    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    completions = keyword_completions.complete(context)
+    _check_resolve(context, completions)
 
     data_regression.check(
         completions, basename="test_keyword_completions_library_prefix_2"
@@ -524,9 +534,9 @@ Library    Collections
 Test
     Collections.Append To Lis"""
 
-    completions = keyword_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws)
-    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    completions = keyword_completions.complete(context)
+    _check_resolve(context, completions)
     assert [completion["label"] for completion in completions] == [
         "Append To List (Collections)"
     ]
@@ -583,9 +593,9 @@ Can use resource keywords
     My Equal Redefined   2   2
     Yet Another Equ"""
 
-    completions = keyword_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws, config=config)
-    )
+    context = CompletionContext(doc, workspace=workspace.ws, config=config)
+    completions = keyword_completions.complete(context)
+    _check_resolve(context, completions)
 
     data_regression.check(completions)
 
@@ -622,9 +632,9 @@ Library    case3_library
 Can use resource keywords
     Case Verify"""
 
-    completions = keyword_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws)
-    )
+    context = CompletionContext(doc, workspace=workspace.ws)
+    completions = keyword_completions.complete(context)
+    _check_resolve(context, completions)
 
     data_regression.check(completions)
 

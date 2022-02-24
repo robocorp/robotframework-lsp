@@ -1,2 +1,4 @@
 black==21.9b0
 mypy==0.910
+types-docutils
+types-PyYAML

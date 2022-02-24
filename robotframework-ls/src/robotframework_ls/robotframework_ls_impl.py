@@ -4,7 +4,7 @@ import os
 import time
 from robotframework_ls.constants import DEFAULT_COMPLETIONS_TIMEOUT
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Any, Optional, List, Dict
+from typing import Any, Optional, Dict
 from robocorp_ls_core.protocols import (
     IConfig,
     IWorkspace,
@@ -29,6 +29,7 @@ from robocorp_ls_core.lsp import (
     CodeLensTypedDict,
     TextDocumentPositionParamsTypedDict,
     PositionTypedDict,
+    CompletionItemTypedDict,
 )
 from robotframework_ls.commands import (
     ROBOT_GET_RFLS_HOME_DIR,
@@ -180,6 +181,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         from robocorp_ls_core import watchdog_wrapper
         from robocorp_ls_core.remote_fs_observer_impl import RemoteFSObserver
         from robocorp_ls_core.options import Setup
+        from robotframework_ls.robotframework_ls_completion_impl import (
+            _RobotFrameworkLsCompletionImpl,
+        )
 
         PythonLanguageServer.__init__(self, rx, tx)
 
@@ -250,6 +254,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         self._server_manager = ServerManager(self._pm, language_server=self)
         self._lint_manager = _LintManager(self._server_manager, self._lsp_messages)
+        self._robot_framework_ls_completion_impl = _RobotFrameworkLsCompletionImpl(
+            self._server_manager, self
+        )
 
     def get_remote_fs_observer_port(self) -> Optional[int]:
         from robocorp_ls_core.remote_fs_observer_impl import RemoteFSObserver
@@ -337,9 +344,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         server_capabilities = {
             "codeActionProvider": False,
             "codeLensProvider": {"resolveProvider": True},
-            "completionProvider": {
-                "resolveProvider": False  # We know everything ahead of time
-            },
+            "completionProvider": {"resolveProvider": True},  # Docs are lazily computed
             "documentFormattingProvider": True,
             "documentHighlightProvider": True,
             "documentRangeFormattingProvider": False,
@@ -414,7 +419,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         rf_api_client = self._server_manager.get_others_api_client(uri)
         if rf_api_client is not None:
             func = partial(
-                self._async_api_request,
+                self._threaded_api_request,
                 rf_api_client,
                 "request_evaluatable_expression",
                 doc_uri=uri,
@@ -431,7 +436,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         rf_api_client = self._server_manager.get_regular_rf_api_client("")
         if rf_api_client is not None:
             func = partial(
-                self._async_api_request_no_doc,
+                self._threaded_api_request_no_doc,
                 rf_api_client,
                 "request_wait_for_full_test_collection",
             )
@@ -501,7 +506,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         rf_api_client = self._server_manager.get_others_api_client(doc_uri)
         if rf_api_client is not None:
             func = partial(
-                self._async_api_request,
+                self._threaded_api_request,
                 rf_api_client,
                 "request_list_tests",
                 doc_uri=doc_uri,
@@ -650,72 +655,22 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def cancel_lint(self, doc_uri) -> None:
         self._lint_manager.cancel_lint(doc_uri)
 
-    def m_text_document__completion(self, **kwargs):
-        doc_uri = kwargs["textDocument"]["uri"]
-        # Note: 0-based
-        line, col = kwargs["position"]["line"], kwargs["position"]["character"]
-
-        rf_api_client = self._server_manager.get_regular_rf_api_client(doc_uri)
-        if rf_api_client is not None:
-            func = partial(
-                self._threaded_document_completion, rf_api_client, doc_uri, line, col
-            )
-            func = require_monitor(func)
-            return func
-
-        log.info("Unable to get completions (no api available).")
-        return []
-
-    @log_and_silence_errors(log, return_on_error=[])
-    def _threaded_document_completion(
-        self,
-        rf_api_client: IRobotFrameworkApiClient,
-        doc_uri: str,
-        line: int,
-        col: int,
-        monitor: IMonitor,
-    ) -> list:
-        from robotframework_ls.impl.completion_context import CompletionContext
-        from robotframework_ls.impl import section_completions
-        from robocorp_ls_core.client_base import wait_for_message_matchers
-
-        ws = self.workspace
-        if not ws:
-            log.critical("Workspace must be set before returning completions.")
-            return []
-
-        document = ws.get_document(doc_uri, accept_from_file=True)
-        if document is None:
-            log.critical("Unable to find document (%s) for completions." % (doc_uri,))
-            return []
-
-        ctx = CompletionContext(document, line, col, config=self.config)
-        completions = []
-
-        # Asynchronous completion.
-        message_matchers: List[Optional[IIdMessageMatcher]] = []
-        message_matchers.append(rf_api_client.request_complete_all(doc_uri, line, col))
-
-        # These run locally (no need to get from the server).
-        completions.extend(section_completions.complete(ctx))
-
-        accepted_message_matchers = wait_for_message_matchers(
-            message_matchers,
-            monitor,
-            rf_api_client.request_cancel,
-            DEFAULT_COMPLETIONS_TIMEOUT,
+    def m_completion_item__resolve(self, **params):
+        completion_item: CompletionItemTypedDict = params
+        return self._robot_framework_ls_completion_impl.resolve_completion_item(
+            completion_item
         )
-        for message_matcher in accepted_message_matchers:
-            msg = message_matcher.msg
-            if msg is not None:
-                result = msg.get("result")
-                if result:
-                    completions.extend(result)
 
-        return completions
+    def m_text_document__completion(self, **params):
+        doc_uri = params["textDocument"]["uri"]
+        # Note: 0-based
+        line, col = params["position"]["line"], params["position"]["character"]
+        return self._robot_framework_ls_completion_impl.text_document_completion(
+            doc_uri, line, col
+        )
 
     @log_and_silence_errors(log)
-    def _async_api_request(
+    def _threaded_api_request(
         self,
         rf_api_client: IRobotFrameworkApiClient,
         request_method_name: str,
@@ -766,7 +721,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         return None
 
     @log_and_silence_errors(log)
-    def _async_api_request_no_doc(
+    def _threaded_api_request_no_doc(
         self,
         rf_api_client: IRobotFrameworkApiClient,
         request_method_name: str,
@@ -797,26 +752,55 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         return None
 
+    def async_api_forward(
+        self,
+        api_client_method_name,
+        target_api,
+        doc_uri,
+        default_return=None,
+        __add_doc_uri_in_args__=True,
+        **kwargs,
+    ):
+        rf_api_client: IRobotFrameworkApiClient
+        if target_api == "api":
+            rf_api_client = self._server_manager.get_regular_rf_api_client(doc_uri)
+        elif target_api == "lint":
+            rf_api_client = self._server_manager.get_lint_rf_api_client(doc_uri)
+        elif target_api == "others":
+            rf_api_client = self._server_manager.get_others_api_client(doc_uri)
+        else:
+            raise AssertionError(f"Unexpected: {target_api}")
+        if rf_api_client is not None:
+            if __add_doc_uri_in_args__:
+                func = partial(
+                    self._threaded_api_request,
+                    rf_api_client,
+                    api_client_method_name,
+                    doc_uri=doc_uri,
+                    **kwargs,
+                )
+            else:
+                func = partial(
+                    self._threaded_api_request_no_doc,
+                    rf_api_client,
+                    api_client_method_name,
+                    **kwargs,
+                )
+            func = require_monitor(func)
+            return func
+
+        log.info(
+            "No api available (call: %s, uri: %s).", api_client_method_name, doc_uri
+        )
+        return default_return
+
     def m_text_document__definition(self, **kwargs):
         doc_uri = kwargs["textDocument"]["uri"]
         # Note: 0-based
         line, col = kwargs["position"]["line"], kwargs["position"]["character"]
-
-        rf_api_client = self._server_manager.get_regular_rf_api_client(doc_uri)
-        if rf_api_client is not None:
-            func = partial(
-                self._async_api_request,
-                rf_api_client,
-                "request_find_definition",
-                doc_uri=doc_uri,
-                line=line,
-                col=col,
-            )
-            func = require_monitor(func)
-            return func
-
-        log.info("Unable to find definition (no api available).")
-        return None
+        return self.async_api_forward(
+            "request_find_definition", "api", doc_uri, line=line, col=col
+        )
 
     def m_text_document__signature_help(self, **kwargs):
         """
@@ -836,21 +820,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         # Note: 0-based
         line, col = kwargs["position"]["line"], kwargs["position"]["character"]
 
-        rf_api_client = self._server_manager.get_regular_rf_api_client(doc_uri)
-        if rf_api_client is not None:
-            func = partial(
-                self._async_api_request,
-                rf_api_client,
-                "request_signature_help",
-                doc_uri=doc_uri,
-                line=line,
-                col=col,
-            )
-            func = require_monitor(func)
-            return func
-
-        log.info("Unable to get signature (no api available).")
-        return []
+        return self.async_api_forward(
+            "request_signature_help", "api", doc_uri, line=line, col=col
+        )
 
     def m_text_document__folding_range(self, **kwargs):
         """
@@ -862,36 +834,11 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         """
         doc_uri = kwargs["textDocument"]["uri"]
 
-        rf_api_client = self._server_manager.get_others_api_client(doc_uri)
-        if rf_api_client is not None:
-            func = partial(
-                self._async_api_request,
-                rf_api_client,
-                "request_folding_range",
-                doc_uri=doc_uri,
-            )
-            func = require_monitor(func)
-            return func
-
-        log.info("Unable to get folding range (no api available).")
-        return []
+        return self.async_api_forward("request_folding_range", "others", doc_uri)
 
     def m_text_document__code_lens(self, **kwargs):
         doc_uri = kwargs["textDocument"]["uri"]
-
-        rf_api_client = self._server_manager.get_others_api_client(doc_uri)
-        if rf_api_client is not None:
-            func = partial(
-                self._async_api_request,
-                rf_api_client,
-                "request_code_lens",
-                doc_uri=doc_uri,
-            )
-            func = require_monitor(func)
-            return func
-
-        log.info("Unable to get code lens (no api available).")
-        return []
+        return self.async_api_forward("request_code_lens", "others", doc_uri)
 
     def m_code_lens__resolve(self, **kwargs):
         code_lens: CodeLensTypedDict = kwargs
@@ -900,60 +847,31 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         data = code_lens.get("data")
         if code_lens_command is None and isinstance(data, dict):
             # For the interactive shell we need to resolve the arguments.
-            uri = data.get("uri")
+            doc_uri = data.get("uri")
 
-            rf_api_client = self._server_manager.get_others_api_client(uri)
-            if rf_api_client is not None:
-                func = partial(
-                    self._async_api_request_no_doc,
-                    rf_api_client,
-                    "request_resolve_code_lens",
-                    code_lens=code_lens,
-                )
-                func = require_monitor(func)
-                return func
-
-            log.info("Unable to resolve code lens (no api available).")
+            return self.async_api_forward(
+                "request_resolve_code_lens",
+                "others",
+                doc_uri,
+                code_lens=code_lens,
+                __add_doc_uri_in_args__=False,
+            )
 
         return code_lens
 
     def m_text_document__document_symbol(self, **kwargs):
         doc_uri = kwargs["textDocument"]["uri"]
-
-        rf_api_client = self._server_manager.get_others_api_client(doc_uri)
-        if rf_api_client is not None:
-            func = partial(
-                self._async_api_request,
-                rf_api_client,
-                "request_document_symbol",
-                doc_uri=doc_uri,
-            )
-            func = require_monitor(func)
-            return func
-
-        log.info("Unable to get document symbol (no api available).")
-        return []
+        return self.async_api_forward("request_document_symbol", "others", doc_uri)
 
     def m_text_document__hover(self, **kwargs):
         params: TextDocumentPositionParamsTypedDict = kwargs
         doc_uri = params["textDocument"]["uri"]
         # Note: 0-based
         line, col = params["position"]["line"], params["position"]["character"]
-        rf_api_client = self._server_manager.get_regular_rf_api_client(doc_uri)
-        if rf_api_client is not None:
-            func = partial(
-                self._async_api_request,
-                rf_api_client,
-                "request_hover",
-                doc_uri=doc_uri,
-                line=line,
-                col=col,
-            )
-            func = require_monitor(func)
-            return func
 
-        log.info("Unable to compute hover (no api available).")
-        return []
+        return self.async_api_forward(
+            "request_hover", "api", doc_uri, line=line, col=col
+        )
 
     def m_text_document__references(self, **kwargs):
         doc_uri = kwargs["textDocument"]["uri"]
@@ -966,7 +884,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         rf_api_client = self._server_manager.get_regular_rf_api_client(doc_uri)
         if rf_api_client is not None:
             func = partial(
-                self._async_api_request,
+                self._threaded_api_request,
                 rf_api_client,
                 "request_references",
                 doc_uri=doc_uri,
@@ -992,7 +910,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             return {"resultId": None, "data": []}
 
         func = partial(
-            self._async_api_request_no_doc,
+            self._threaded_api_request_no_doc,
             api,
             "request_semantic_tokens_full",
             text_document=textDocument,
@@ -1007,7 +925,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             return None
 
         func = partial(
-            self._async_api_request_no_doc,
+            self._threaded_api_request_no_doc,
             api,
             "request_workspace_symbols",
             query=query,
@@ -1025,7 +943,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             return None
 
         func = partial(
-            self._async_api_request,
+            self._threaded_api_request,
             api,
             "request_document_highlight",
             doc_uri=doc_uri,

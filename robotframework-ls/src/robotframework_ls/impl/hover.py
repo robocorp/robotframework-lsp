@@ -3,15 +3,15 @@ from robocorp_ls_core.lsp import (
     MarkupKind,
     SignatureHelp,
     SignatureInformation,
+    MarkupContentTypedDict,
 )
 from typing import Optional
 
 
 def hover(completion_context) -> Optional[HoverTypedDict]:
     from robotframework_ls.impl.signature_help import signature_help_internal
-    from robocorp_ls_core.lsp import MarkupContent
 
-    sig_help: SignatureHelp = signature_help_internal(completion_context)
+    sig_help: Optional[SignatureHelp] = signature_help_internal(completion_context)
     if sig_help is None:
         return None
 
@@ -26,19 +26,15 @@ def hover(completion_context) -> Optional[HoverTypedDict]:
 
     active_parameter = sig_help.activeParameter
 
-    documentation_markup_or_str = active_signature.documentation
-
-    if isinstance(documentation_markup_or_str, MarkupContent):
-        kind = documentation_markup_or_str.kind
-        documentation = documentation_markup_or_str.value
-
-    elif isinstance(documentation_markup_or_str, str):
-        kind = MarkupKind.PlainText
-        documentation = documentation_markup_or_str
-
+    optional_documentation_markup: Optional[
+        MarkupContentTypedDict
+    ] = active_signature.documentation
+    documentation_markup: MarkupContentTypedDict
+    if not optional_documentation_markup:
+        documentation_markup = {"kind": MarkupKind.Markdown, "value": ""}
     else:
-        kind = MarkupKind.PlainText
-        documentation = str(documentation_markup_or_str)
+        documentation_markup = optional_documentation_markup
+    kind = documentation_markup["kind"]
 
     # Now, let's add the signature to the documentation
     escape = lambda s: s
@@ -76,7 +72,7 @@ def hover(completion_context) -> Optional[HoverTypedDict]:
         signature_doc.append(")")
 
     signature_doc.append("\n\n")
-    signature_doc.append(documentation)
+    signature_doc.append(documentation_markup["value"])
 
     return {
         "contents": {"kind": kind, "value": "".join(signature_doc)},

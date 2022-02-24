@@ -12,7 +12,6 @@ from robocorp_ls_core.protocols import (
     IFuture,
 )
 from robocorp_ls_core.robotframework_log import get_logger
-from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS
 from robocorp_ls_core.pluginmanager import PluginManager
 
 log = get_logger(__name__)
@@ -359,7 +358,7 @@ def _handle_semantic_tokens(
             else:
                 code = evaluate_text_result["result"]
 
-                return language_server_impl._async_api_request_no_doc(
+                return language_server_impl._threaded_api_request_no_doc(
                     api,
                     "request_semantic_tokens_from_code_full",
                     prefix=code["prefix"],
@@ -431,7 +430,7 @@ def _handle_completions(language_server_impl, rf_interpreters_manager, arguments
             else:
                 code = evaluate_text_result["result"]
 
-                return language_server_impl._async_api_request_no_doc(
+                return language_server_impl._threaded_api_request_no_doc(
                     api,
                     "request_monaco_completions_from_code",
                     prefix=code["prefix"],
@@ -441,6 +440,58 @@ def _handle_completions(language_server_impl, rf_interpreters_manager, arguments
                     position=position,
                     monitor=None,
                 )
+        except:
+            log.exception(f"Error computing completions for arguments: {arguments}")
+            return {"suggestions": []}
+
+    return rf_info_or_dict_error.ls_thread_pool.submit(run)
+
+
+def _handle_resolve_completion(
+    language_server_impl, rf_interpreters_manager, arguments
+):
+    rf_info_or_dict_error: Union[
+        _RfInfo, ActionResultDict
+    ] = rf_interpreters_manager.get_interpreter_from_arguments(arguments)
+    if isinstance(rf_info_or_dict_error, dict):
+        msg = rf_info_or_dict_error.get("message")
+        if msg:
+            log.info(msg)
+        return None
+
+    from robotframework_interactive.server.rf_interpreter_server_manager import (
+        RfInterpreterServerManager,
+    )
+
+    interpreter: RfInterpreterServerManager = rf_info_or_dict_error.interpreter
+    uri = interpreter.uri
+
+    api = language_server_impl._server_manager.get_regular_rf_api_client(uri)
+    if api is None:
+        log.info(
+            "Unable to get api client when resolving completion (for interactive usage)."
+        )
+        return None
+
+    if not arguments or not isinstance(arguments, (list, tuple)) or len(arguments) != 1:
+        log.info(f"Expected arguments to be a list of size 1. Found: {arguments}")
+        return None
+
+    def run():
+
+        try:
+            args: dict = arguments[0]
+            completion_item = args.get("completionItem", Sentinel.SENTINEL)
+            if completion_item is Sentinel.SENTINEL:
+                log.info(f"Did not find 'completionItem' in {args}")
+                return None
+
+            return language_server_impl._threaded_api_request_no_doc(
+                api,
+                "request_monaco_resolve_completion",
+                completion_item=completion_item,
+                monitor=None,
+            )
         except:
             log.exception(f"Error computing completions for arguments: {arguments}")
             return {"suggestions": []}
@@ -459,6 +510,8 @@ def execute_command(
         ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE,
         ROBOT_INTERNAL_RFINTERACTIVE_STOP,
         ROBOT_INTERNAL_RFINTERACTIVE_SEMANTIC_TOKENS,
+        ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS,
+        ROBOT_INTERNAL_RFINTERACTIVE_RESOLVE_COMPLETION,
     )
 
     if command == ROBOT_INTERNAL_RFINTERACTIVE_START:
@@ -479,5 +532,10 @@ def execute_command(
 
     elif command == ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS:
         return _handle_completions(
+            language_server_impl, rf_interpreters_manager, arguments
+        )
+
+    elif command == ROBOT_INTERNAL_RFINTERACTIVE_RESOLVE_COMPLETION:
+        return _handle_resolve_completion(
             language_server_impl, rf_interpreters_manager, arguments
         )

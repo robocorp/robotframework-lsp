@@ -1,5 +1,6 @@
 [tool.mypy]
-exclude = "_resources|libs|dap_schema"
+exclude = "_resources|libs|dap_schema|vendored"
+mypy_path = "robocorp-python-ls-core/src:robocorp-python-ls-core/stubs:robocorp-python-ls-core/tests:robotframework-ls/src:robotframework-ls/tests:robocorp-python-ls-core/src/robocorp_ls_core/libs/fsnotify_lib:robocorp-python-ls-core/src/robocorp_ls_core/libs/robocop_lib:robocorp-python-ls-core/src/robocorp_ls_core/libs/robotidy_lib:robocorp-python-ls-core/src/robocorp_ls_core/libs/watchdog_lib:robocorp-python-ls-core/src/robocorp_ls_core/libs/yaml_lib:robotframework-interactive/src:robotframework-interactive/tests:robocorp-code/src:robocorp-code/tests"
 
 [[tool.mypy.overrides]]
 module = "RPA.*"
@@ -20,4 +21,33 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "pytest_timeout.*"
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "pympler.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "pytest_timeout.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "pydevd.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "_pydevd_bundle.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "robot.running.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "robot.variables.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "robot.parsing.*"
+ignore_missing_imports = true
+
 

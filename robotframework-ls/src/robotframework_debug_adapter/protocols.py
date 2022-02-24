@@ -93,6 +93,9 @@ class IRobotDebugger(Protocol):
     def get_current_thread_id(self, thread=None) -> int:
         pass
 
+    def write_message(self, msg):
+        pass
+
 
 class INextId(Protocol):
     def __call__(self) -> T:

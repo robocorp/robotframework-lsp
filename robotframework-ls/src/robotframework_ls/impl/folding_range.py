@@ -18,6 +18,9 @@ def folding_range(
 
     ret: List[FoldingRangeTypedDict] = []
     node: NodeInfo
+
+    # i.e.: any node that spans more than one line
+    # should be added to the result.
     for node in ast_utils.iter_all_nodes(ast):
         completion_context.check_cancelled()
         try:

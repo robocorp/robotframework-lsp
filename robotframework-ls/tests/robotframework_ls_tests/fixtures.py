@@ -207,6 +207,7 @@ def libspec_manager(tmpdir, remote_fs_observer):
 
     libspec_manager = LibspecManager(
         user_libspec_dir=str(tmpdir.join("user_libspec")),
+        cache_libspec_dir=str(tmpdir.join("cache_libspec")),
         observer=remote_fs_observer,
         dir_cache_dir=str(tmpdir.join(".cache")),
     )

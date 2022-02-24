@@ -1,9 +1,11 @@
+import sys
+from typing import Optional, Any, List, Tuple, Set, Callable, Dict
+
 from robocorp_ls_core.cache import instance_cache
 from robocorp_ls_core.constants import NULL
+from robocorp_ls_core.lsp import CompletionItemTypedDict, MarkupContentTypedDict
 from robocorp_ls_core.protocols import IMonitor, Sentinel, IConfig, IDocumentSelection
 from robocorp_ls_core.robotframework_log import get_logger
-from robotframework_ls.impl.robot_workspace import RobotDocument
-from typing import Optional, Any, List, Tuple, Set
 from robotframework_ls.impl.protocols import (
     IRobotDocument,
     ICompletionContext,
@@ -13,10 +15,9 @@ from robotframework_ls.impl.protocols import (
     ILibraryImportNode,
     KeywordUsageInfo,
     CompletionType,
-    INode,
     IResourceImportNode,
 )
-import sys
+from robotframework_ls.impl.robot_workspace import RobotDocument
 
 
 log = get_logger(__name__)
@@ -136,6 +137,46 @@ class CompletionContext(object):
         self._original_ctx: Optional[CompletionContext] = None
         self._monitor = monitor or NULL
         self.type = CompletionType.regular
+
+        self._id_to_compute_documentation: Dict[
+            int, Callable[[], MarkupContentTypedDict]
+        ] = {}
+
+    def assign_documentation_resolve(
+        self,
+        completion_item: CompletionItemTypedDict,
+        compute_documentation: Callable[[], MarkupContentTypedDict],
+    ) -> None:
+        if self._original_ctx is not None:
+            self._original_ctx.assign_documentation_resolve(
+                completion_item, compute_documentation
+            )
+        else:
+            next_id = len(self._id_to_compute_documentation)
+            self._id_to_compute_documentation[next_id] = compute_documentation
+            completion_item["data"] = {"id": next_id, "ctx": id(self)}
+
+    def resolve_completion_item(
+        self, data, completion_item: CompletionItemTypedDict, monaco=False
+    ) -> None:
+        if self._original_ctx is not None:
+            self._original_ctx.resolve_completion_item(data, completion_item)
+        else:
+            compute_documentation = self._id_to_compute_documentation.get(
+                data.get("id")
+            )
+            if compute_documentation is not None:
+                marked: Optional[MarkupContentTypedDict] = compute_documentation()
+                if marked:
+                    if monaco:
+                        if marked["kind"] == "markdown":
+                            completion_item["documentation"] = {
+                                "value": marked["value"]
+                            }
+                        else:
+                            completion_item["documentation"] = marked["value"]
+                    else:
+                        completion_item["documentation"] = marked
 
     @property
     def monitor(self) -> IMonitor:
@@ -292,7 +333,6 @@ class CompletionContext(object):
             return None
         return ast_utils.find_token(section, self.sel.line, self.sel.col)
 
-    @instance_cache
     def get_all_variables(self):
         from robotframework_ls.impl import ast_utils
 

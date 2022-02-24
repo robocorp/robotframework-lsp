@@ -23,12 +23,8 @@ from functools import partial
 
 log = logging.getLogger(__name__)
 
-try:
-    from HTMLParser import HTMLParser
-    from htmlentitydefs import name2codepoint
-except ImportError:
-    from html.parser import HTMLParser
-    from html.entities import name2codepoint
+from html.parser import HTMLParser
+from html.entities import name2codepoint
 
 convert_heading_re = re.compile(r"convert_h(\d+)")
 line_beginning_re = re.compile(r"^", re.MULTILINE)

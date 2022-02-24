@@ -1,3 +1,18 @@
+New in 0.41.0 (2022-02-22)
+-----------------------------
+
+- Argument analysis is now also done for `Run Keyword` variants. [#572](https://github.com/robocorp/robotframework-lsp/issues/572)
+- [Debugger] It's now possible to ignore failures inside some keywords so that the debugger doesn't break in these cases when `Robot Log FAIL` is enabled. [#575](https://github.com/robocorp/robotframework-lsp/issues/575)
+  - Customizable through the `RFLS_IGNORE_FAILURES_IN_KEYWORDS` and `RFLS_IGNORE_FAILURES_IN_KEYWORDS_OVERRIDE` environment variables (see [Config](https://github.com/robocorp/robotframework-lsp/blob/master/robotframework-ls/docs/config.md#environment-variables) for details).
+- Performance improvements
+  - Improved AST indexing.
+  - Notification that settings changed are only sent to the server api if they actually changed.
+  - Documentation is now lazily loaded during code-completion.
+- References are found when find references is activated from the keyword definition. [#576](https://github.com/robocorp/robotframework-lsp/issues/576)
+- Semantic highlighting for Keywords with dotted access improved.
+- The documentation conversion from `REST` and `ROBOT` to `markdown` is now done internally. 
+
+
 New in 0.40.1 (2022-02-12)
 -----------------------------
 

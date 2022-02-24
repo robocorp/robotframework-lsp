@@ -8,6 +8,8 @@ from typing import (
     Tuple,
     Iterable,
     Generic,
+    Iterator,
+    Callable,
 )
 from robocorp_ls_core.protocols import (
     Sentinel,
@@ -22,7 +24,12 @@ from robocorp_ls_core.constants import NULL
 from robocorp_ls_core.protocols import TypedDict
 from collections import namedtuple
 import enum
-from robocorp_ls_core.lsp import SymbolKind, LocationTypedDict, RangeTypedDict
+from robocorp_ls_core.lsp import (
+    LocationTypedDict,
+    RangeTypedDict,
+    MarkupContentTypedDict,
+    CompletionItemTypedDict,
+)
 import typing
 
 if sys.version_info[:2] < (3, 8):
@@ -37,6 +44,17 @@ else:
 T = TypeVar("T")
 Y = TypeVar("Y", covariant=True)
 
+if typing.TYPE_CHECKING:
+    from robot.api import Token
+
+    IRobotToken = Token
+
+
+else:
+    # We don't want to import robot in this case (just do it when type-checking).
+    class IRobotToken(Protocol):
+        pass
+
 
 class INode(Protocol):
     lineno: int
@@ -44,31 +62,21 @@ class INode(Protocol):
     col_offset: int
     end_col_offset: int
 
-    def get_token(self, name: str) -> Any:
+    def get_token(self, name: str) -> IRobotToken:
         pass
 
 
 class ILibraryImportNode(INode, Protocol):
     name: str
     alias: Optional[str]
-    lineno: int
-    end_lineno: int
-    col_offset: int
-    end_col_offset: int
 
-    def get_token(self, name: str) -> Any:
-        pass
+
+class IKeywordNode(INode, Protocol):
+    name: str
 
 
 class IResourceImportNode(INode, Protocol):
     name: str
-    lineno: int
-    end_lineno: int
-    col_offset: int
-    end_col_offset: int
-
-    def get_token(self, name: str) -> Any:
-        pass
 
 
 class NodeInfo(Generic[Y]):
@@ -146,24 +154,44 @@ class IKeywordArg(Protocol):
         pass
 
 
-if typing.TYPE_CHECKING:
-    from robot.api import Token
-
-    IRobotToken = Token
-
-
-else:
-    # We don't want to import robot in this case (just do it when type-checking).
-    class IRobotToken(Protocol):
-        pass
-
-
 class ILibraryDoc(Protocol):
     filename: str
     name: str
     source: str
     symbols_cache: Optional["ISymbolsCache"]
     inits: list
+    doc_format: str
+    keywords: List["IKeywordDoc"]
+
+
+class IKeywordDoc(Protocol):
+    name: str
+    tags: Tuple[str, ...]
+    lineno: int
+    doc: str
+
+    @property
+    def args(self) -> Tuple[IKeywordArg, ...]:
+        pass
+
+    @property
+    def libdoc(self) -> ILibraryDoc:
+        pass
+
+    @property
+    def deprecated(self) -> bool:
+        pass
+
+    @property
+    def source(self) -> str:
+        pass
+
+    @property
+    def doc_format(self) -> str:
+        pass
+
+    def to_dictionary(self) -> dict:
+        pass
 
 
 class ILibraryDocOrError(Protocol):
@@ -189,11 +217,18 @@ class IRobotDocument(IDocument, Protocol):
 
 class ISymbolsJsonListEntry(TypedDict):
     name: str
-    kind: SymbolKind
+    kind: int  # SymbolKind
     location: LocationTypedDict
-    docs: str
-    docsFormat: str
     containerName: str
+
+
+class ISymbolKeywordInfo(Protocol):
+    name: str
+
+    def get_documentation(self) -> MarkupContentTypedDict:
+        """
+        Note: It should be computed on demand (and can be slow).
+        """
 
 
 class ISymbolsCache(Protocol):
@@ -213,6 +248,9 @@ class ISymbolsCache(Protocol):
         pass
 
     def get_test_info(self) -> Optional[List[ITestInfoFromSymbolsCacheTypedDict]]:
+        pass
+
+    def iter_keyword_info(self) -> Iterator[ISymbolKeywordInfo]:
         pass
 
 
@@ -248,16 +286,10 @@ class IKeywordFound(Protocol):
     def is_deprecated(self) -> bool:
         pass
 
-    @property
-    def docs(self) -> str:
+    def compute_docs_with_signature(self) -> MarkupContentTypedDict:
         pass
 
-    @property
-    def docs_without_signature(self) -> str:
-        pass
-
-    @property
-    def docs_format(self) -> str:
+    def compute_docs_without_signature(self) -> MarkupContentTypedDict:
         pass
 
     completion_context: Optional["ICompletionContext"]
@@ -447,6 +479,11 @@ class ICompletionContext(Protocol):
         :param _Memo memo:
         """
 
+    def resolve_completion_item(
+        self, data, completion_item: CompletionItemTypedDict, monaco: bool = False
+    ) -> None:
+        pass
+
     @property
     def type(self) -> CompletionType:
         pass
@@ -554,6 +591,13 @@ class ICompletionContext(Protocol):
     def get_current_keyword_usage_info(
         self,
     ) -> Optional[KeywordUsageInfo]:
+        pass
+
+    def assign_documentation_resolve(
+        self,
+        completion_item: CompletionItemTypedDict,
+        compute_documentation: Callable[[], MarkupContentTypedDict],
+    ) -> None:
         pass
 
 

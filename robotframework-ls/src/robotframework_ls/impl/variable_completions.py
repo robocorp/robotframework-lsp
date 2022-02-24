@@ -30,7 +30,7 @@ class _VariableFoundFromToken(object):
         else:
             self.variable_value = str(variable_value)
 
-    @property
+    @property  # type: ignore
     @instance_cache
     def source(self):
         from robocorp_ls_core import uris

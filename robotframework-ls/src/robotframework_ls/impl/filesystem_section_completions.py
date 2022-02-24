@@ -3,6 +3,7 @@ from robocorp_ls_core.robotframework_log import get_logger
 from typing import Optional, List
 from robotframework_ls.impl.protocols import ICompletionContext
 from robocorp_ls_core.lsp import CompletionItemTypedDict
+from robocorp_ls_core.basic import normalize_filename
 
 log = get_logger(__name__)
 
@@ -55,7 +56,7 @@ def _add_completions_from_dir(
     from robocorp_ls_core import uris
 
     def normfile(path):
-        return os.path.normpath(os.path.normcase(path))
+        return normalize_filename(path)
 
     curr_file = normfile(uris.to_fs_path(completion_context.doc.uri))
 

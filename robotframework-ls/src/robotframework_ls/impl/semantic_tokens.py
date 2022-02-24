@@ -148,7 +148,7 @@ def semantic_tokens_range(context, range):
 def _tokenize_token(node, initial_token):
     from robotframework_ls.impl.ast_utils import (
         is_argument_keyword_name,
-        CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS,
+        CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET,
     )
 
     initial_token_type = initial_token.type
@@ -164,7 +164,7 @@ def _tokenize_token(node, initial_token):
         in_documentation = node.__class__.__name__ == "Documentation"
 
     if initial_token_type == NAME:
-        if isinstance_name(node, CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS):
+        if node.__class__.__name__ in CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET:
             initial_token_type = KEYWORD
 
     if initial_token_type == KEYWORD:

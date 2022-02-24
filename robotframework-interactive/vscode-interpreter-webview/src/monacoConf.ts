@@ -39,6 +39,29 @@ export function configureMonacoLanguage() {
     });
 
     monaco.languages.registerCompletionItemProvider(LANGUAGE_ID, {
+        async resolveCompletionItem(
+            item: monaco.languages.CompletionItem,
+            token: monaco.CancellationToken
+        ): Promise<monaco.languages.CompletionItem> {
+            let msg: IRequestMessage = {
+                "type": "request",
+                "seq": nextMessageSeq(),
+                "command": "resolveCompletion",
+            };
+            msg["arguments"] = {
+                "completionItem": item,
+            };
+            let response = await sendRequestToClient(msg);
+            if (!response.body) {
+                return item;
+            }
+            let newItem: monaco.languages.CompletionItem = response.body;
+            if (newItem) {
+                return newItem;
+            }
+            return item;
+        },
+
         async provideCompletionItems(
             model: monaco.editor.ITextModel,
             position: monaco.Position,

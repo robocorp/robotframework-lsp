@@ -18,11 +18,12 @@
 import os
 import weakref
 from robocorp_ls_core.cache import instance_cache
-from typing import Optional, Union, Type, Callable, List
+from typing import Optional, Union, Type, Callable, List, Tuple
 from robocorp_ls_core.protocols import Sentinel
-from robotframework_ls.impl.protocols import ISymbolsCache
+from robotframework_ls.impl.protocols import ISymbolsCache, ILibraryDoc, IKeywordArg
 from robocorp_ls_core.robotframework_log import get_logger, get_log_level
 import json
+import typing
 
 
 log = get_logger(__name__)
@@ -187,7 +188,7 @@ class LibraryDoc(object):
         for data_type in self.data_types:
             type_name = data_type.type
             type_name = type_name[0].lower() + type_name[1:] + "s"
-            assert type_name in ("customs", "enums", "typedDicts")
+            # assert type_name in ("customs", "enums", "typedDicts")
             lst = data_types.setdefault(type_name, [])
             lst.append(data_type.to_dictionary())
 
@@ -207,7 +208,7 @@ class LibraryDoc(object):
             "dataTypes": data_types,
         }
 
-    @property
+    @property  # type: ignore
     @instance_cache
     def source(self):
         # When asked for, make sure that the path is absolute.
@@ -301,6 +302,7 @@ class KeywordArg(object):
     _is_star_arg = False
     _default_value: Union[Type[Sentinel], str] = Sentinel
     _arg_type: Union[Type[Sentinel], str] = Sentinel
+    _arg_name: str
 
     def __init__(
         self,
@@ -368,7 +370,7 @@ class KeywordArg(object):
                     arg = arg[:colon_i]
 
         if name is not Sentinel:
-            self._arg_name = name
+            self._arg_name = typing.cast(str, name)
         else:
             self._arg_name = arg
 
@@ -408,13 +410,13 @@ class KeywordArg(object):
     def arg_type(self) -> Optional[str]:
         if self._arg_type is Sentinel:
             return None
-        return self._arg_type
+        return typing.cast(Optional[str], self._arg_type)
 
     @property
     def default_value(self) -> Optional[str]:
         if self._default_value is Sentinel:
             return None
-        return self._default_value
+        return typing.cast(Optional[str], self._default_value)
 
     def __repr__(self):
         return f"KeywordArg({self.original_arg})"
@@ -435,21 +437,21 @@ class KeywordDoc(object):
         self.lineno = lineno
 
     @property
-    def deprecated(self):
+    def deprecated(self) -> bool:
         return self.doc.startswith("*DEPRECATED") and "*" in self.doc[1:]
 
-    @property
+    @property  # type: ignore
     @instance_cache
-    def args(self):
+    def args(self) -> Tuple[IKeywordArg, ...]:
         if self._args:
             if isinstance(self._args[0], KeywordArg):
                 return self._args
 
         return tuple(KeywordArg(arg) for arg in self._args)
 
-    @property
+    @property  # type: ignore
     @instance_cache
-    def source(self):
+    def source(self) -> str:
         # When asked for, make sure that the path is absolute.
         source = self._source
         if source:
@@ -460,11 +462,11 @@ class KeywordDoc(object):
         return source
 
     @property
-    def libdoc(self):
+    def libdoc(self) -> ILibraryDoc:
         return self._weak_libdoc()
 
     @property
-    def doc_format(self):
+    def doc_format(self) -> str:
         return self._weak_libdoc().doc_format
 
     def __repr__(self):
@@ -472,7 +474,7 @@ class KeywordDoc(object):
 
     __str__ = __repr__
 
-    def to_dictionary(self):
+    def to_dictionary(self) -> dict:
         return {
             "name": self.name,
             "args": [arg.to_dictionary() for arg in self.args],
@@ -482,9 +484,15 @@ class KeywordDoc(object):
             "lineno": self.lineno,
         }
 
+    def __typecheckself__(self) -> None:
+        from robotframework_ls.impl.protocols import IKeywordDoc
+        from robocorp_ls_core.protocols import check_implements
+
+        _: IKeywordDoc = check_implements(self)
+
 
 class DataType(object):
-    type: Optional = None
+    type: str = ""
 
     def __init__(self, name, doc):
         self.name = name
@@ -730,6 +738,10 @@ class JsonDocBuilder:
         assert isinstance(path, str)
         spec = self._parse_spec_json(path)
         return self.build_from_dict(path, spec)
+
+    def build_from_stream(self, spec_filename, stream):
+        spec = json.loads(stream.read())
+        return self.build_from_dict(spec_filename, spec)
 
     def build_from_dict(self, filename, spec):
         libdoc = LibraryDoc(

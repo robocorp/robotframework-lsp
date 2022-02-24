@@ -3,7 +3,7 @@
     "displayName": "Robot Framework Language Server",
     "description": "VSCode extension support for Robot Framework",
     "author": "Fabio Zadrozny",
-    "homepage": "https://github.com/robocorp/robotframework-lsp/blob/robotframework-lsp-0.40.1/robotframework-ls/README.md",
+    "homepage": "https://github.com/robocorp/robotframework-lsp/blob/robotframework-lsp-0.41.0/robotframework-ls/README.md",
     "repository": {
         "type": "git",
         "url": "https://github.com/robocorp/robotframework-lsp.git"
@@ -12,7 +12,7 @@
         "url": "https://github.com/robocorp/robotframework-lsp/issues"
     },
     "license": "Apache 2.0",
-    "version": "0.40.1",
+    "version": "0.41.0",
     "icon": "images/icon.png",
     "publisher": "robocorp",
     "categories": [
@@ -43,6 +43,7 @@
         "onCommand:robot.internal.rfinteractive.evaluate",
         "onCommand:robot.internal.rfinteractive.stop",
         "onCommand:robot.internal.rfinteractive.semanticTokens",
+        "onCommand:robot.internal.rfinteractive.resolveCompletion",
         "onCommand:robot.internal.rfinteractive.completions",
         "onCommand:robot.getRFLSHomeDir",
         "onCommand:robot.clearCachesAndRestartProcesses",
@@ -105,6 +106,11 @@
             {
                 "command": "robot.internal.rfinteractive.semanticTokens",
                 "title": "Get the semantic tokens based on the code entered.",
+                "category": "Robot Framework"
+            },
+            {
+                "command": "robot.internal.rfinteractive.resolveCompletion",
+                "title": "Resolves the passed completion.",
                 "category": "Robot Framework"
             },
             {
@@ -187,6 +193,10 @@
                 },
                 {
                     "command": "robot.internal.rfinteractive.semanticTokens",
+                    "when": "false"
+                },
+                {
+                    "command": "robot.internal.rfinteractive.resolveCompletion",
                     "when": "false"
                 },
                 {

@@ -27,6 +27,10 @@ import sys
 import os
 from typing import Dict, Optional, Iterable
 from robocorp_ls_core.options import DEFAULT_TIMEOUT
+import typing
+
+if typing.TYPE_CHECKING:
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Variable
 
 
 __file__ = os.path.abspath(__file__)
@@ -214,9 +218,6 @@ class _DebuggerAPI(object):
     def configuration_done(self):
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             ConfigurationDoneRequest,
-        )
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
-            ConfigurationDoneResponse,
         )
 
         self.write(ConfigurationDoneRequest())
@@ -495,7 +496,7 @@ class _DebuggerAPI(object):
 
         return name_to_scopes
 
-    def get_name_to_var(self, variables_reference):
+    def get_name_to_var(self, variables_reference: int) -> Dict[str, "Variable"]:
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Variable
 
         variables_response = self.get_variables_response(variables_reference)
@@ -504,17 +505,17 @@ class _DebuggerAPI(object):
             for variable in variables_response.body.variables
         )
 
-    def get_arguments_name_to_var(self, frame_id: int) -> Dict[str, str]:
+    def get_arguments_name_to_var(self, frame_id: int) -> Dict[str, "Variable"]:
         name_to_scope = self.get_name_to_scope(frame_id)
 
         return self.get_name_to_var(name_to_scope["Arguments"].variablesReference)
 
-    def get_variables_name_to_var(self, frame_id: int) -> Dict[str, str]:
+    def get_variables_name_to_var(self, frame_id: int) -> Dict[str, "Variable"]:
         name_to_scope = self.get_name_to_scope(frame_id)
 
         return self.get_name_to_var(name_to_scope["Variables"].variablesReference)
 
-    def get_builtins_name_to_var(self, frame_id: int) -> Dict[str, str]:
+    def get_builtins_name_to_var(self, frame_id: int) -> Dict[str, "Variable"]:
         name_to_scope = self.get_name_to_scope(frame_id)
 
         return self.get_name_to_var(name_to_scope["Builtins"].variablesReference)

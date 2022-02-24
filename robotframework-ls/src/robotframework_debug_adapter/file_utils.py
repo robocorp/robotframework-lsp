@@ -86,18 +86,6 @@ def __getfilesystemencoding():
             raise RuntimeError("Unable to get encoding.")
         return ret
     except:
-        try:
-            # Handle Jython
-            from java.lang import System  # @UnresolvedImport
-
-            env = System.getProperty("os.name").lower()
-            if env.find("win") != -1:
-                return "ISO-8859-1"  # mbcs does not work on Jython, so, use a (hopefully) suitable replacement
-            return "utf-8"
-        except:
-            pass
-
-        # Only available from 2.3 onwards.
         if sys.platform == "win32":
             return "mbcs"
         return "utf-8"
@@ -126,12 +114,7 @@ try:
 except NameError:
     FileNotFoundError = IOError  # noqa
 
-try:
-    rPath = os.path.realpath  # @UndefinedVariable
-except:
-    # jython does not support os.path.realpath
-    # realpath is a no-op on systems without islink support
-    rPath = os.path.abspath
+rPath = os.path.realpath
 
 
 def _get_library_dir():
@@ -225,7 +208,7 @@ if sys.platform == "win32":
         # issue is if the user actually changes the case of an existing file on windows while
         # the debugger is executing (as this seems very unlikely and the cache can save a
         # reasonable time -- especially on mapped drives -- it seems nice to have it).
-        _listdir_cache = {}
+        _listdir_cache: dict = {}
 
         def _resolve_listing(resolved, iter_parts, cache=_listdir_cache):
             while True:  # Note: while True to make iterative and not recursive
@@ -307,31 +290,14 @@ if sys.platform == "win32":
         convert_to_short_pathname = _convert_to_short_pathname
         get_path_with_real_case = _get_path_with_real_case
 
-elif IS_JYTHON and IS_WINDOWS:
 
-    def get_path_with_real_case(filename):
-        from java.io import File  # noqa
+def _normcase_windows(filename):
+    # `normcase` doesn't lower case on Python 2 for non-English locale, so we should do it manually.
+    if "~" in filename:
+        filename = convert_to_long_pathname(filename)
 
-        f = File(filename)
-        ret = f.getCanonicalPath()
-        return ret
-
-
-if IS_JYTHON:
-
-    def _normcase_windows(filename):
-        return filename.lower()
-
-
-else:
-
-    def _normcase_windows(filename):
-        # `normcase` doesn't lower case on Python 2 for non-English locale, so we should do it manually.
-        if "~" in filename:
-            filename = convert_to_long_pathname(filename)
-
-        filename = _nt_os_normcase(filename)
-        return filename.lower()
+    filename = _nt_os_normcase(filename)
+    return filename.lower()
 
 
 def _normcase_linux(filename):
@@ -394,8 +360,8 @@ def set_ide_os(os):
 
 
 # Caches filled as requested during the debug session.
-NORM_PATHS_CONTAINER = {}
-NORM_PATHS_AND_BASE_CONTAINER = {}
+NORM_PATHS_CONTAINER: dict = {}
+NORM_PATHS_AND_BASE_CONTAINER: dict = {}
 
 
 def _NormFile(filename):
@@ -495,7 +461,7 @@ def _NormPath(filename, normpath, isabs, os_path_exists=os_path_exists, join=joi
     return r
 
 
-_ZIP_SEARCH_CACHE = {}
+_ZIP_SEARCH_CACHE: dict = {}
 _NOT_FOUND_SENTINEL = object()
 
 
@@ -593,9 +559,9 @@ def _fix_path(path, sep):
 _last_client_server_paths_set = []
 
 _source_reference_to_frame_id = {}
-_source_reference_to_server_filename = {}
+_source_reference_to_server_filename: dict = {}
 _line_cache_source_reference_to_server_filename = {}
-_client_filename_in_utf8_to_source_reference = {}
+_client_filename_in_utf8_to_source_reference: dict = {}
 _next_source_reference = partial(next, itertools.count(1))
 
 

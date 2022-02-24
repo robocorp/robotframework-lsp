@@ -13,6 +13,7 @@ from robotframework_ls.impl.robot_lsp_constants import (
     OPTION_ROBOT_CODE_FORMATTER_BUILTIN_TIDY,
 )
 from robocorp_ls_core.lsp import MarkupKind
+import typing
 
 
 log = logging.getLogger(__name__)
@@ -197,6 +198,7 @@ Check It
         line, col = doc.get_last_line_col()
         completions = language_server.get_completions(uri, line, col)
         del completions["id"]
+        _check_resolve(language_server, completions["result"])
         return completions
 
     data_regression.check(request_completion())
@@ -234,6 +236,7 @@ Check It
         line, col = doc.get_last_line_col()
         completions = language_server.get_completions(uri, line, col)
         del completions["id"]
+        _check_resolve(language_server, completions["result"])
         return completions
 
     data_regression.check(request_completion())
@@ -304,6 +307,7 @@ User can call library
         line, col = doc.get_last_line_col()
         completions = language_server.get_completions(uri, line, col)
         del completions["id"]
+        _check_resolve(language_server, completions["result"])
         return completions
 
     data_regression.check(request_completion())
@@ -376,6 +380,7 @@ Some Keyword
     doc = Document("", source=contents)
     line, col = doc.get_last_line_col()
     completions = language_server.get_completions(uri, line, col)
+    _check_resolve(language_server, completions["result"])
     data_regression.check(completions)
 
 
@@ -412,6 +417,7 @@ Some Keyword
     doc = Document("", source=contents)
     line, col = doc.get_last_line_col()
     completions = language_server.get_completions(uri, line, col)
+    _check_resolve(language_server, completions["result"])
     data_regression.check(completions)
 
     contents = """*** Settings ***
@@ -426,6 +432,19 @@ Some Keyword
     found = definitions["result"]
     assert len(found) == 1
     assert found[0]["targetUri"].endswith("my_library.py")
+
+
+def _check_resolve(language_server: ILanguageServerClient, completions):
+    for completion_item in completions:
+        assert "data" in completion_item
+        assert not completion_item.get("documentation")
+        new_completion_item = language_server.request_resolve_completion(
+            completion_item
+        )["result"]
+        assert "documentation" in new_completion_item
+        new_completion_item.pop("data")
+        completion_item.clear()
+        completion_item.update(new_completion_item)
 
 
 def test_snippets_completions_integrated(
@@ -1265,7 +1284,10 @@ def test_rf_interactive_integrated_completions(
     rf_interpreter_startup: _RfInterpreterInfo,
 ):
 
-    from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS
+    from robotframework_ls.commands import (
+        ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS,
+        ROBOT_INTERNAL_RFINTERACTIVE_RESOLVE_COMPLETION,
+    )
     from robocorp_ls_core.lsp import Position
 
     language_server = language_server_io
@@ -1282,7 +1304,20 @@ def test_rf_interactive_integrated_completions(
 
     for completion in completions["result"]["suggestions"]:
         if completion["label"] == "Log (BuiltIn)":
-            assert completion.pop("documentation").startswith("**Log(")
+
+            assert "documentation" not in completion
+            completion = language_server.execute_command(
+                ROBOT_INTERNAL_RFINTERACTIVE_RESOLVE_COMPLETION,
+                [
+                    {
+                        "interpreter_id": rf_interpreter_startup.interpreter_id,
+                        "completionItem": completion,
+                    }
+                ],
+            )["result"]
+
+            assert completion.pop("documentation")["value"].startswith("**Log(")
+            del completion["data"]
             assert completion == {
                 "label": "Log (BuiltIn)",
                 "kind": 0,
@@ -1395,6 +1430,11 @@ def test_rf_interactive_integrated_auto_import_completions(
 ):
     from robocorp_ls_core.workspace import Document
     from robotframework_ls_tests.fixtures import check_code_lens_data_regression
+    from robotframework_ls.commands import (
+        ROBOT_INTERNAL_RFINTERACTIVE_RESOLVE_COMPLETION,
+    )
+    from robocorp_ls_core.lsp import CompletionItemTypedDict
+    from robocorp_ls_core.lsp import MonacoMarkdownStringTypedDict
 
     # Check that we're able to get completions based on the current dir.
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS
@@ -1418,9 +1458,28 @@ def test_rf_interactive_integrated_auto_import_completions(
 
     suggestions = completions["result"]["suggestions"]
     assert suggestions
-    assert "Adds values to the end of list" in suggestions[0]["documentation"]
-    suggestions[0]["documentation"] = "<replaced_for_test>"
-    check_code_lens_data_regression(data_regression, suggestions)
+    assert "documentation" not in suggestions[0]
+    new_completion_item = typing.cast(
+        CompletionItemTypedDict,
+        language_server.execute_command(
+            ROBOT_INTERNAL_RFINTERACTIVE_RESOLVE_COMPLETION,
+            [
+                {
+                    "interpreter_id": rf_interpreter_startup.interpreter_id,
+                    "completionItem": suggestions[0],
+                }
+            ],
+        )["result"],
+    )
+
+    assert "documentation" in new_completion_item
+    documentation = typing.cast(
+        MonacoMarkdownStringTypedDict, new_completion_item["documentation"]
+    )
+    assert "Adds values to the end of list" in documentation["value"]
+    new_completion_item["documentation"] = "<replaced_for_test>"
+    del new_completion_item["data"]
+    check_code_lens_data_regression(data_regression, [new_completion_item])
 
 
 def test_code_lens_integrated_rf_interactive(

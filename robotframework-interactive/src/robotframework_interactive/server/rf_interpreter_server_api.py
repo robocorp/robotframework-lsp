@@ -5,7 +5,7 @@ from robocorp_ls_core.robotframework_log import get_logger
 import threading
 from robotframework_interactive.protocols import IMessage, IRobotFrameworkInterpreter
 from robocorp_ls_core.options import DEFAULT_TIMEOUT, USE_TIMEOUTS, NO_TIMEOUT
-from typing import Optional
+from typing import Optional, Callable, Union
 import sys
 import traceback
 import json
@@ -157,7 +157,9 @@ class RfInterpreterServerApi(PythonLanguageServer):
             log.exception()
             return {"success": False, "message": str(e), "result": None}
 
-    def m_interpreter__evaluate(self, code: str) -> ActionResultDict:
+    def m_interpreter__evaluate(
+        self, code: str
+    ) -> Union[Callable[[], ActionResultDict], ActionResultDict]:
         if not self._interpreter_initialized:
             return {
                 "success": False,
@@ -173,8 +175,12 @@ class RfInterpreterServerApi(PythonLanguageServer):
 
         evaluate = _Evaluate(code)
         self._interpreter_queue.put(evaluate)
-        evaluate.event.wait()
-        return evaluate.action_result_dict
+
+        def func():
+            evaluate.event.wait()
+            return evaluate.action_result_dict
+
+        return func
 
     def m_interpreter__compute_evaluate_text(
         self, code: str, target_type: str
