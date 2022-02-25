@@ -49,6 +49,7 @@ for i, value in enumerate(TOKEN_MODIFIERS):
 del i
 del value
 
+
 class _DummyToken(object):
     __slots__ = ["type", "value", "lineno", "col_offset", "end_col_offset"]
 
@@ -61,28 +62,35 @@ class _DummyToken(object):
             self.end_col_offset = initial_token.end_col_offset
 
     def extract_token(self, type, position):
-            extracted_token = _DummyToken()
-            extracted_token.type = type
-            extracted_token.value = self.value[:position]
-            extracted_token.lineno = self.lineno
-            extracted_token.col_offset = self.col_offset
-            extracted_token.end_col_offset = self.col_offset + len(extracted_token.value)
-            self.__remove(extracted_token)
-            return extracted_token
+        extracted_token = _DummyToken()
+        extracted_token.type = type
+        extracted_token.value = self.value[:position]
+        extracted_token.lineno = self.lineno
+        extracted_token.col_offset = self.col_offset
+        extracted_token.end_col_offset = self.col_offset + len(extracted_token.value)
+        self.__remove(extracted_token)
+        return extracted_token
 
     def __remove(self, extracted_token):
-        extracted_token_length = extracted_token.end_col_offset - extracted_token.col_offset
+        extracted_token_length = (
+            extracted_token.end_col_offset - extracted_token.col_offset
+        )
         self.value = self.value[extracted_token_length + 1 :]
         self.col_offset = extracted_token.end_col_offset + 1
+
 
 def extract_gherkin_token_from_keyword(keyword_token):
     gherkin_token = None
     import re
-    result = re.match(r"^(Given|When|Then|And|But)\s", keyword_token.value, flags=re.IGNORECASE)
+
+    result = re.match(
+        r"^(Given|When|Then|And|But)\s", keyword_token.value, flags=re.IGNORECASE
+    )
     if result:
         gherkin_token_length = len(result.group(1))
-        gherkin_token = keyword_token.extract_token("control",gherkin_token_length)
+        gherkin_token = keyword_token.extract_token("control", gherkin_token_length)
     return gherkin_token
+
 
 def extract_library_token_from_keyword(keyword_token):
     library_token = None
@@ -90,6 +98,7 @@ def extract_library_token_from_keyword(keyword_token):
     if library_token_length > 0:
         library_token = keyword_token.extract_token("name", library_token_length)
     return library_token
+
 
 from robotframework_ls.impl.robot_constants import (
     COMMENT,
@@ -142,8 +151,10 @@ SETTING_INDEX = TOKEN_TYPE_TO_INDEX["setting"]
 PARAMETER_NAME_INDEX = TOKEN_TYPE_TO_INDEX["parameterName"]
 DOCUMENTATION_INDEX = TOKEN_TYPE_TO_INDEX["documentation"]
 
+
 def semantic_tokens_range(context, range):
     return []
+
 
 def _tokenize_token(node, initial_token):
     from robotframework_ls.impl.ast_utils import (
