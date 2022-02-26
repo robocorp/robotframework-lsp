@@ -50,6 +50,56 @@ del i
 del value
 
 
+class _DummyToken(object):
+    __slots__ = ["type", "value", "lineno", "col_offset", "end_col_offset"]
+
+    def __init__(self, initial_token=None):
+        if initial_token:
+            self.type = initial_token.type
+            self.value = initial_token.value
+            self.lineno = initial_token.lineno
+            self.col_offset = initial_token.col_offset
+            self.end_col_offset = initial_token.end_col_offset
+
+    def extract_token(self, type, position):
+        extracted_token = _DummyToken()
+        extracted_token.type = type
+        extracted_token.value = self.value[:position]
+        extracted_token.lineno = self.lineno
+        extracted_token.col_offset = self.col_offset
+        extracted_token.end_col_offset = self.col_offset + len(extracted_token.value)
+        self.__remove(extracted_token)
+        return extracted_token
+
+    def __remove(self, extracted_token):
+        extracted_token_length = (
+            extracted_token.end_col_offset - extracted_token.col_offset
+        )
+        self.value = self.value[extracted_token_length + 1 :]
+        self.col_offset = extracted_token.end_col_offset + 1
+
+
+def extract_gherkin_token_from_keyword(keyword_token):
+    gherkin_token = None
+    import re
+
+    result = re.match(
+        r"^(Given|When|Then|And|But)\s", keyword_token.value, flags=re.IGNORECASE
+    )
+    if result:
+        gherkin_token_length = len(result.group(1))
+        gherkin_token = keyword_token.extract_token("control", gherkin_token_length)
+    return gherkin_token
+
+
+def extract_library_token_from_keyword(keyword_token):
+    library_token = None
+    library_token_length = keyword_token.value.rfind(".")
+    if library_token_length > 0:
+        library_token = keyword_token.extract_token("name", library_token_length)
+    return library_token
+
+
 from robotframework_ls.impl.robot_constants import (
     COMMENT,
     HEADER_TOKENS,
@@ -102,13 +152,6 @@ PARAMETER_NAME_INDEX = TOKEN_TYPE_TO_INDEX["parameterName"]
 DOCUMENTATION_INDEX = TOKEN_TYPE_TO_INDEX["documentation"]
 
 
-class _DummyToken(object):
-    __slots__ = ["type", "value", "lineno", "col_offset", "end_col_offset"]
-
-    def __init__(self):
-        pass
-
-
 def semantic_tokens_range(context, range):
     return []
 
@@ -136,33 +179,15 @@ def _tokenize_token(node, initial_token):
             initial_token_type = KEYWORD
 
     if initial_token_type == KEYWORD:
-        dot_pos = initial_token.value.rfind(".")
-        if dot_pos > 0:
-            tok = _DummyToken()
-            tok.type = "name"
-            tok.value = initial_token.value[:dot_pos]
-            tok.lineno = initial_token.lineno
-            tok.col_offset = initial_token.col_offset
-            prev_col_offset_end = tok.end_col_offset = initial_token.col_offset + len(
-                tok.value
-            )
-            yield tok, TOKEN_TYPE_TO_INDEX["name"]
-
-            # tok = _DummyToken()
-            # tok.type = "control"
-            # tok.value = "."
-            # tok.lineno = initial_token.lineno
-            # tok.col_offset = prev_col_offset_end
-            prev_col_offset_end = tok.end_col_offset = prev_col_offset_end + 1
-            # yield tok, TOKEN_TYPE_TO_INDEX["control"]
-
-            tok = _DummyToken()
-            tok.type = initial_token_type
-            tok.value = initial_token.value[dot_pos + 1 :]
-            tok.lineno = initial_token.lineno
-            tok.col_offset = prev_col_offset_end
-            tok.end_col_offset = prev_col_offset_end + len(tok.value)
-            yield tok, RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[initial_token_type]
+        token_keyword = _DummyToken(initial_token)
+        token_gherkin_prefix = extract_gherkin_token_from_keyword(token_keyword)
+        if token_gherkin_prefix:
+            yield token_gherkin_prefix, TOKEN_TYPE_TO_INDEX[token_gherkin_prefix.type]
+        token_library_prefix = extract_library_token_from_keyword(token_keyword)
+        if token_library_prefix:
+            yield token_library_prefix, TOKEN_TYPE_TO_INDEX[token_library_prefix.type]
+        if token_gherkin_prefix or token_library_prefix:
+            yield token_keyword, RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[KEYWORD]
             return
 
     try:
