@@ -895,13 +895,14 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         }
 
     def m_semantic_tokens_from_code_full(
-        self, prefix: str = "", full_code: str = "", indent: str = ""
+        self, prefix: str = "", full_code: str = "", indent: str = "", uri: str = ""
     ):
         func = partial(
             self.threaded_semantic_tokens_from_code_full,
             prefix=prefix,
             full_code=full_code,
             indent=indent,
+            uri=uri,
         )
         func = require_monitor(func)
         return func
@@ -911,17 +912,24 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         prefix: str,
         full_code: str,
         indent: str,
+        uri: str,
         monitor: Optional[IMonitor] = None,
     ):
-        from robotframework_ls.impl.semantic_tokens import semantic_tokens_full_from_ast
+        from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
+        from robotframework_ls.impl.completion_context import CompletionContext
 
         try:
             from robotframework_ls.impl.robot_workspace import RobotDocument
 
-            doc = RobotDocument("")
-            doc.source = full_code
-            ast = doc.get_ast()
-            data = semantic_tokens_full_from_ast(ast, monitor)
+            document = RobotDocument(uri, full_code)
+            completion_context = CompletionContext(
+                document,
+                config=self.config,
+                monitor=monitor,
+                workspace=self.workspace,
+            )
+
+            data = semantic_tokens_full(completion_context)
             if not prefix:
                 return {"resultId": None, "data": data}
 

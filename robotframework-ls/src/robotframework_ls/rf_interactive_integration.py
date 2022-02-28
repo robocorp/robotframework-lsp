@@ -364,6 +364,7 @@ def _handle_semantic_tokens(
                     prefix=code["prefix"],
                     full_code=code["full_code"],
                     indent=code["indent"],
+                    uri=uri,
                     monitor=None,
                 )
         except:

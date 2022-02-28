@@ -259,6 +259,14 @@ def _iter_nodes(node, stack=None, recursive=True):
                 stack.pop()
 
 
+def iter_all_nodes_recursive(node):
+    """
+    This function will iterate over all the nodes. Use only if there's no
+    other way to implement it as iterating over all the nodes is slow...
+    """
+    yield from _iter_nodes(node)
+
+
 def _iter_nodes_filtered_not_recursive(
     ast, accept_class: Union[Tuple[str, ...], str]
 ) -> Iterator[Tuple[list, Any]]:

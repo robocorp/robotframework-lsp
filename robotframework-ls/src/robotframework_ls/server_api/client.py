@@ -133,7 +133,7 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         )
 
     def request_semantic_tokens_from_code_full(
-        self, prefix: str, full_code: str, indent: str
+        self, prefix: str, full_code: str, indent: str, uri: str
     ) -> Optional[IIdMessageMatcher]:
         """
         :Note: async complete.
@@ -144,6 +144,7 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
                 prefix=prefix,
                 full_code=full_code,
                 indent=indent,
+                uri=uri,
             )
         )
 

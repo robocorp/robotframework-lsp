@@ -6,7 +6,7 @@ def test_iter_nodes():
         "unused", source="*** settings ***\nResource    my_resource.resource"
     )
     lst = []
-    for stack, node in ast_utils._iter_nodes(doc.get_ast()):
+    for stack, node in ast_utils.iter_all_nodes_recursive(doc.get_ast()):
         lst.append(
             "%s - %s" % ([s.__class__.__name__ for s in stack], node.__class__.__name__)
         )

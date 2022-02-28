@@ -356,18 +356,17 @@ def semantic_tokens_full(context: ICompletionContext):
         ast = context.doc.get_ast()
     except:
         return []
-    return semantic_tokens_full_from_ast(ast, context.monitor)
 
-
-def semantic_tokens_full_from_ast(ast, monitor: Optional[IMonitor]):
     from robotframework_ls.impl import ast_utils
+
+    monitor = context.monitor
 
     ret: List[int] = []
     append = ret.append
 
     last_line = 0
     last_column = 0
-    for _stack, node in ast_utils._iter_nodes(ast, recursive=True):
+    for _stack, node in ast_utils.iter_all_nodes_recursive(ast):
         if monitor:
             monitor.check_cancelled()
         tokens = getattr(node, "tokens", None)
