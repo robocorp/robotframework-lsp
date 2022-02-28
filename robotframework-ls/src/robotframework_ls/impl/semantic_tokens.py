@@ -51,44 +51,55 @@ del value
 
 
 class _DummyToken(object):
-    __slots__ = ["type", "value", "lineno", "col_offset", "end_col_offset"]
+    __slots__ = ["type", "value", "lineno", "col_offset", "end_col_offset", "index"]
 
-    def __init__(self, initial_token=None):
+    def __init__(self, initial_token=None, index=None):
         if initial_token:
             self.type = initial_token.type
             self.value = initial_token.value
             self.lineno = initial_token.lineno
             self.col_offset = initial_token.col_offset
             self.end_col_offset = initial_token.end_col_offset
+            self.index = index
 
-    def extract_token(self, type, position):
+    def extract_token(self, type, position, trailing_whitespaces=1):
         extracted_token = _DummyToken()
         extracted_token.type = type
         extracted_token.value = self.value[:position]
         extracted_token.lineno = self.lineno
         extracted_token.col_offset = self.col_offset
         extracted_token.end_col_offset = self.col_offset + len(extracted_token.value)
-        self.__remove(extracted_token)
+        self.__remove(extracted_token, trailing_whitespaces)
         return extracted_token
 
-    def __remove(self, extracted_token):
+    def __remove(self, extracted_token, trailing_whitespaces):
         extracted_token_length = (
             extracted_token.end_col_offset - extracted_token.col_offset
         )
-        self.value = self.value[extracted_token_length + 1 :]
-        self.col_offset = extracted_token.end_col_offset + 1
+        self.value = self.value[extracted_token_length + trailing_whitespaces :]
+        self.col_offset = extracted_token.end_col_offset + trailing_whitespaces
+
+    def __eq__(self, other):
+        if (
+            self.col_offset == other.col_offset
+            and self.end_col_offset == other.end_col_offset
+        ):
+            return True
+        else:
+            return False
 
 
 def extract_gherkin_token_from_keyword(keyword_token):
-    gherkin_token = None
     import re
 
+    gherkin_token = None
     result = re.match(
         r"^(Given|When|Then|And|But)\s", keyword_token.value, flags=re.IGNORECASE
     )
     if result:
         gherkin_token_length = len(result.group(1))
         gherkin_token = keyword_token.extract_token("control", gherkin_token_length)
+        gherkin_token.index = TOKEN_TYPE_TO_INDEX[gherkin_token.type]
     return gherkin_token
 
 
@@ -97,7 +108,99 @@ def extract_library_token_from_keyword(keyword_token):
     library_token_length = keyword_token.value.rfind(".")
     if library_token_length > 0:
         library_token = keyword_token.extract_token("name", library_token_length)
+        library_token.index = TOKEN_TYPE_TO_INDEX[library_token.type]
     return library_token
+
+
+def extract_part_of_bdd_statement(keyword_token):
+    import re
+
+    bdd_statement_token = None
+    result = re.match(r"([^$&@]+)", keyword_token.value)
+    if result:
+        bdd_statement_value = result.group(1)
+        if bdd_statement_value[-1].isspace():
+            trailing_whitespace = 1
+        else:
+            trailing_whitespace = 0
+        bdd_statement_length = len(bdd_statement_value) - trailing_whitespace
+        bdd_statement_token = keyword_token.extract_token(
+            keyword_token.type, bdd_statement_length, trailing_whitespace
+        )
+        bdd_statement_token.index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[KEYWORD]
+    return bdd_statement_token
+
+
+def extract_embedded_variable(keyword_token):
+    import re
+
+    embedded_variable_token = None
+    result = re.match(r"([$&@]{[^}]*?})", keyword_token.value)
+    if result:
+        embedded_variable_value = result.group(1)
+        embedded_variable_length = len(embedded_variable_value)
+        trailing_whitespace = 0
+        if embedded_variable_length < len(keyword_token.value):
+            if keyword_token.value[embedded_variable_length].isspace():
+                trailing_whitespace = 1
+        embedded_variable_token = keyword_token.extract_token(
+            "variable", embedded_variable_length, trailing_whitespace
+        )
+        embedded_variable_token.index = TOKEN_TYPE_TO_INDEX[
+            embedded_variable_token.type
+        ]
+    return embedded_variable_token
+
+
+def split_variable_into_subtokens(variable_token):
+    opening_brackets_token = variable_token.extract_token("variableOperator", 2, 0)
+    opening_brackets_token.index = VARIABLE_OPERATOR_INDEX
+    embedded_variable_length = (
+        variable_token.end_col_offset - variable_token.col_offset - 1
+    )
+    embedded_variable_token = variable_token.extract_token(
+        "variable", embedded_variable_length, 0
+    )
+    embedded_variable_token.index = TOKEN_TYPE_TO_INDEX[embedded_variable_token.type]
+    closing_brackets_token = variable_token.extract_token("variableOperator", 1, 0)
+    closing_brackets_token.index = VARIABLE_OPERATOR_INDEX
+    return [opening_brackets_token, embedded_variable_token, closing_brackets_token]
+
+
+def extract_tokens_from_bdd_statement(token_being_parsed):
+    token_has_been_fully_parsed = False
+    list_with_subtokens = []
+    if keyword_contains_embedded_variable(token_being_parsed):
+        token_bdd_statement = extract_part_of_bdd_statement(token_being_parsed)
+        if token_bdd_statement:
+            if token_bdd_statement == token_being_parsed:
+                token_has_been_fully_parsed = True
+            list_with_subtokens.append(token_bdd_statement)
+        token_embedded_variable = extract_embedded_variable(token_being_parsed)
+        if token_embedded_variable:
+            if token_embedded_variable == token_being_parsed:
+                token_has_been_fully_parsed = True
+            list_with_subtokens = list_with_subtokens + split_variable_into_subtokens(
+                token_embedded_variable
+            )
+        if not token_has_been_fully_parsed:
+            tokens_parsed_recursively = extract_tokens_from_bdd_statement(
+                token_being_parsed
+            )
+            list_with_subtokens = list_with_subtokens + tokens_parsed_recursively
+    else:
+        list_with_subtokens = [token_being_parsed]
+    return list_with_subtokens
+
+
+def keyword_contains_embedded_variable(keyword_token):
+    import re
+
+    result = re.search(r"\${.*?}", keyword_token.value, flags=re.IGNORECASE)
+    if result:
+        return True
+    else:
+        return False
 
 
 from robotframework_ls.impl.robot_constants import (
@@ -179,16 +282,22 @@ def _tokenize_token(node, initial_token):
             initial_token_type = KEYWORD
 
     if initial_token_type == KEYWORD:
-        token_keyword = _DummyToken(initial_token)
+        token_keyword = _DummyToken(
+            initial_token, RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[KEYWORD]
+        )
         token_gherkin_prefix = extract_gherkin_token_from_keyword(token_keyword)
         if token_gherkin_prefix:
-            yield token_gherkin_prefix, TOKEN_TYPE_TO_INDEX[token_gherkin_prefix.type]
+            yield token_gherkin_prefix, token_gherkin_prefix.index
         token_library_prefix = extract_library_token_from_keyword(token_keyword)
         if token_library_prefix:
-            yield token_library_prefix, TOKEN_TYPE_TO_INDEX[token_library_prefix.type]
-        if token_gherkin_prefix or token_library_prefix:
-            yield token_keyword, RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[KEYWORD]
-            return
+            yield token_library_prefix, token_library_prefix.index
+        is_bdd_statement = keyword_contains_embedded_variable(token_keyword)
+        if is_bdd_statement:
+            for token in extract_tokens_from_bdd_statement(token_keyword):
+                yield token, token.index
+        else:
+            yield token_keyword, token_keyword.index
+        return
 
     try:
         iter_in = initial_token.tokenize_variables()
@@ -285,31 +394,9 @@ def _tokenize_token(node, initial_token):
             ):
                 # We want to do an additional tokenization on variables to
                 # convert '${var}' to '${', 'var', '}'
-                tok = _DummyToken()
-                tok.type = "variableOperator"
-                tok.value = token.value[:2]
-                tok.lineno = token.lineno
-                tok.col_offset = token.col_offset
-                prev_col_offset_end = tok.end_col_offset = token.col_offset + 2
-                yield tok, VARIABLE_OPERATOR_INDEX
-
-                tok = _DummyToken()
-                tok.type = token.type
-                tok.value = token.value[2:-1]
-                tok.lineno = token.lineno
-                tok.col_offset = prev_col_offset_end
-                prev_col_offset_end = tok.end_col_offset = prev_col_offset_end + len(
-                    tok.value
-                )
-                yield tok, token_type_index
-
-                tok = _DummyToken()
-                tok.type = "variableOperator"
-                tok.value = token.value[-1:]
-                tok.lineno = token.lineno
-                tok.col_offset = prev_col_offset_end
-                tok.end_col_offset = prev_col_offset_end + 1
-                yield tok, VARIABLE_OPERATOR_INDEX
+                variable_token = _DummyToken(token, VARIABLE_INDEX)
+                for subtoken in split_variable_into_subtokens(variable_token):
+                    yield subtoken, subtoken.index
                 continue
 
             if (
@@ -356,17 +443,18 @@ def semantic_tokens_full(context: ICompletionContext):
         ast = context.doc.get_ast()
     except:
         return []
+    return semantic_tokens_full_from_ast(ast, context.monitor)
 
+
+def semantic_tokens_full_from_ast(ast, monitor: Optional[IMonitor]):
     from robotframework_ls.impl import ast_utils
-
-    monitor = context.monitor
 
     ret: List[int] = []
     append = ret.append
 
     last_line = 0
     last_column = 0
-    for _stack, node in ast_utils.iter_all_nodes_recursive(ast):
+    for _stack, node in ast_utils._iter_nodes(ast, recursive=True):
         if monitor:
             monitor.check_cancelled()
         tokens = getattr(node, "tokens", None)
