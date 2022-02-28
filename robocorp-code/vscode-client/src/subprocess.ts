@@ -85,7 +85,7 @@ export async function execFilePromise(
     }
 
     if (!hideCommandLine) {
-        OUTPUT_CHANNEL.appendLine("Executing: " + command + "," + args);
+        OUTPUT_CHANNEL.appendLine("Executing: " + command + " " + args.join(" "));
     }
     try {
         if (!options.cwd) {
@@ -96,7 +96,7 @@ export async function execFilePromise(
         let errorInfo: ExecFileError = exc;
         let error: ExecException = errorInfo.error;
 
-        OUTPUT_CHANNEL.appendLine("Error executing: " + command + "," + args);
+        OUTPUT_CHANNEL.appendLine("Error executing: " + command + " " + args.join(" "));
         OUTPUT_CHANNEL.appendLine("Error code: " + error.code);
         OUTPUT_CHANNEL.appendLine("Error: " + error);
         if (error.name) {

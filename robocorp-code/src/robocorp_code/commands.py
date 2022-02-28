@@ -70,6 +70,7 @@ ROBOCORP_DISCONNECT_VAULT = "robocorp.disconnectVault"  # Disconnect from online
 ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL = "robocorp.getConnectedVaultWorkspace.internal"  # Gets workspace id of the currently connected vault
 ROBOCORP_SET_CONNECTED_VAULT_WORKSPACE_INTERNAL = "robocorp.setConnectedVaultWorkspace.internal"  # Sets the currently connected vault workspace
 ROBOCORP_OPEN_VAULT_HELP = "robocorp.openVaultHelp"  # Open vault help
+ROBOCORP_CLEAR_ENV_AND_RESTART = "robocorp.clearEnvAndRestart"  # Clear Robocorp (RCC) environments and restart Robocorp Code
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,

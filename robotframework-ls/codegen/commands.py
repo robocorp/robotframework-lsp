@@ -107,7 +107,7 @@ COMMANDS: List[Command] = [
     ),
     Command(
         "robot.clearCachesAndRestartProcesses",
-        "Clear caches and restart Robot Framework Language Server processes",
+        "Clear caches and restart Robot Framework Language Server",
         server_handled=False,
     ),
     Command(

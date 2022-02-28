@@ -88,6 +88,7 @@
         "onCommand:robocorp.getConnectedVaultWorkspace.internal",
         "onCommand:robocorp.setConnectedVaultWorkspace.internal",
         "onCommand:robocorp.openVaultHelp",
+        "onCommand:robocorp.clearEnvAndRestart",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -515,6 +516,11 @@
             {
                 "command": "robocorp.openVaultHelp",
                 "title": "Open vault help",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.clearEnvAndRestart",
+                "title": "Clear Robocorp (RCC) environments and restart Robocorp Code",
                 "category": "Robocorp"
             }
         ],

@@ -225,36 +225,45 @@ const serverOptions: ServerOptions = async function () {
                 throw new Error(msg);
             }
 
-            let configurationTarget: ConfigurationTarget;
-            if (selection == saveInUser) {
-                configurationTarget = ConfigurationTarget.Global;
-            } else {
-                configurationTarget = ConfigurationTarget.Workspace;
-            }
-
-            let config = workspace.getConfiguration("robot");
+            globalIgnoreConfigurationChangesToRestart = true;
             try {
-                config.update("language-server.python", onfulfilled[0].fsPath, configurationTarget);
-            } catch (err) {
-                let errorMessage = "Error persisting python to start the language server.\nError: " + err.message;
-                logError("Error persisting python to start the language server.", err, "EXT_SAVE_LS_PYTHON");
+                let configurationTarget: ConfigurationTarget;
+                if (selection == saveInUser) {
+                    configurationTarget = ConfigurationTarget.Global;
+                } else {
+                    configurationTarget = ConfigurationTarget.Workspace;
+                }
 
-                if (configurationTarget == ConfigurationTarget.Workspace) {
-                    try {
-                        config.update("language-server.python", onfulfilled[0].fsPath, ConfigurationTarget.Global);
-                        window.showInformationMessage(
-                            "It was not possible to save the configuration in the workspace. It was saved in the user settings instead."
-                        );
-                        err = undefined;
-                    } catch (err2) {
-                        // ignore this one (show original error).
+                let config = workspace.getConfiguration("robot");
+                try {
+                    await config.update("language-server.python", onfulfilled[0].fsPath, configurationTarget);
+                } catch (err) {
+                    let errorMessage = "Error persisting python to start the language server.\nError: " + err.message;
+                    logError("Error persisting python to start the language server.", err, "EXT_SAVE_LS_PYTHON");
+
+                    if (configurationTarget == ConfigurationTarget.Workspace) {
+                        try {
+                            await config.update(
+                                "language-server.python",
+                                onfulfilled[0].fsPath,
+                                ConfigurationTarget.Global
+                            );
+                            await window.showInformationMessage(
+                                "It was not possible to save the configuration in the workspace. It was saved in the user settings instead."
+                            );
+                            err = undefined;
+                        } catch (err2) {
+                            // ignore this one (show original error).
+                        }
+                    }
+                    if (err !== undefined) {
+                        await window.showErrorMessage(errorMessage);
                     }
                 }
-                if (err !== undefined) {
-                    window.showErrorMessage(errorMessage);
-                }
+                executableAndMessage = { "executable": [onfulfilled[0].fsPath], message: undefined };
+            } finally {
+                globalIgnoreConfigurationChangesToRestart = false;
             }
-            executableAndMessage = { "executable": [onfulfilled[0].fsPath], message: undefined };
         } else {
             // There's not much we can do (besides start listening to changes to the related variables
             // on the finally block so that we start listening and ask for a reload if a related configuration changes).
@@ -535,32 +544,34 @@ async function removeCaches(dirPath: string, level: number, removeDirsArray: str
 }
 
 async function clearCachesAndRestartProcessesStart(): Promise<boolean> {
-    if (languageServerClient === undefined) {
-        window.showErrorMessage(
-            "Unable to clear caches and restart because the language server still hasn't been successfully started."
-        );
-        return false;
-    }
-    let homeDir: string;
-    try {
-        homeDir = await commands.executeCommand("robot.getRFLSHomeDir");
-    } catch (err) {
-        let msg = "Unable to clear caches and restart because calling robot.getRFLSHomeDir threw an exception.";
-        window.showErrorMessage(msg);
-        logError(msg, err, "EXT_GET_HOMEDIR");
-        return false;
-    }
+    return await languageServerClientMutex.dispatch(async () => {
+        if (languageServerClient === undefined) {
+            window.showErrorMessage(
+                "Unable to clear caches and restart because the language server still hasn't been successfully started."
+            );
+            return false;
+        }
+        let homeDir: string;
+        try {
+            homeDir = await commands.executeCommand("robot.getRFLSHomeDir");
+        } catch (err) {
+            let msg = "Unable to clear caches and restart because calling robot.getRFLSHomeDir threw an exception.";
+            window.showErrorMessage(msg);
+            logError(msg, err, "EXT_GET_HOMEDIR");
+            return false;
+        }
 
-    try {
-        await languageServerClient.stop();
-    } catch (err) {
-        logError("Error stopping language server.", err, "EXT_STOP_LS_ON_CLEAR_RESTART");
-    }
-    await clearTestItems();
-    if (await fileExists(homeDir)) {
-        await removeCaches(homeDir, 0, []);
-    }
-    return true;
+        try {
+            await languageServerClient.stop();
+        } catch (err) {
+            logError("Error stopping language server.", err, "EXT_STOP_LS_ON_CLEAR_RESTART");
+        }
+        await clearTestItems();
+        if (await fileExists(homeDir)) {
+            await removeCaches(homeDir, 0, []);
+        }
+        return true;
+    });
 }
 
 async function clearCachesAndRestartProcessesFinish() {
@@ -604,6 +615,7 @@ async function clearCachesAndRestartProcesses() {
     );
 }
 
+let globalIgnoreConfigurationChangesToRestart = false;
 function registerOnDidChangeConfiguration(context: ExtensionContext): void {
     context.subscriptions.push(
         workspace.onDidChangeConfiguration((event) => {
@@ -612,6 +624,9 @@ function registerOnDidChangeConfiguration(context: ExtensionContext): void {
                 "robot.language-server.tcp-port",
                 "robot.language-server.args",
             ]) {
+                if (globalIgnoreConfigurationChangesToRestart) {
+                    return;
+                }
                 if (event.affectsConfiguration(s)) {
                     restartLanguageServer();
                     break;
@@ -622,41 +637,43 @@ function registerOnDidChangeConfiguration(context: ExtensionContext): void {
 }
 
 export async function activate(context: ExtensionContext) {
-    extensionContext = context;
+    await languageServerClientMutex.dispatch(async () => {
+        extensionContext = context;
 
-    context.subscriptions.push(
-        commands.registerCommand("robot.clearCachesAndRestartProcesses", clearCachesAndRestartProcesses)
-    );
-    context.subscriptions.push(
-        commands.registerCommand(
-            "robot.clearCachesAndRestartProcesses.start.internal",
-            clearCachesAndRestartProcessesStart
-        )
-    );
-    context.subscriptions.push(
-        commands.registerCommand(
-            "robot.clearCachesAndRestartProcesses.finish.internal",
-            clearCachesAndRestartProcessesFinish
-        )
-    );
-    registerDebugger();
-    await registerRunCommands(context);
-    await registerLinkProviders(context);
-    await registerInteractiveCommands(context);
+        context.subscriptions.push(
+            commands.registerCommand("robot.clearCachesAndRestartProcesses", clearCachesAndRestartProcesses)
+        );
+        context.subscriptions.push(
+            commands.registerCommand(
+                "robot.clearCachesAndRestartProcesses.start.internal",
+                clearCachesAndRestartProcessesStart
+            )
+        );
+        context.subscriptions.push(
+            commands.registerCommand(
+                "robot.clearCachesAndRestartProcesses.finish.internal",
+                clearCachesAndRestartProcessesFinish
+            )
+        );
+        registerDebugger();
+        await registerRunCommands(context);
+        await registerLinkProviders(context);
+        await registerInteractiveCommands(context);
 
-    try {
-        // Note: assign to module variable.
-        languageServerClient = await startLanguageServer();
-    } catch (err) {
-        const msg =
-            "It was not possible to start the Robot Framework Language Server. Please update the related `robot.language-server` configurations.";
-        logError(msg, err, "EXT_UNABLE_TO_START");
-        window.showErrorMessage(msg);
-    } finally {
-        // Note: only register to listen for changes at the end.
-        // If we do it before, we conflict with the case where we
-        // ask for the executable in a dialog (and then we'd go
-        // through the usual start and a restart at the same time).
-        registerOnDidChangeConfiguration(context);
-    }
+        try {
+            // Note: assign to module variable.
+            languageServerClient = await startLanguageServer();
+        } catch (err) {
+            const msg =
+                "It was not possible to start the Robot Framework Language Server. Please update the related `robot.language-server` configurations.";
+            logError(msg, err, "EXT_UNABLE_TO_START");
+            window.showErrorMessage(msg);
+        } finally {
+            // Note: only register to listen for changes at the end.
+            // If we do it before, we conflict with the case where we
+            // ask for the executable in a dialog (and then we'd go
+            // through the usual start and a restart at the same time).
+            registerOnDidChangeConfiguration(context);
+        }
+    });
 }

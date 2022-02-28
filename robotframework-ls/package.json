@@ -125,7 +125,7 @@
             },
             {
                 "command": "robot.clearCachesAndRestartProcesses",
-                "title": "Clear caches and restart Robot Framework Language Server processes",
+                "title": "Clear caches and restart Robot Framework Language Server",
                 "category": "Robot Framework"
             },
             {

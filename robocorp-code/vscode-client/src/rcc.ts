@@ -9,8 +9,26 @@ import { workspace, window, ProgressLocation, CancellationToken, Progress, exten
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import { Timing, sleep } from "./time";
 import { execFilePromise, ExecFileReturn } from "./subprocess";
+import * as roboConfig from "./robocorpSettings";
 
-function createBaseEnv(robocorpHome: string): { [key: string]: string | null } {
+export async function getRobocorpHome(): Promise<string> {
+    let robocorpHome: string = roboConfig.getHome();
+    if (!robocorpHome || robocorpHome.length == 0) {
+        robocorpHome = process.env["ROBOCORP_HOME"];
+        if (!robocorpHome) {
+            // Default from RCC (maybe it should provide an API to get it before creating an env?)
+            if (process.platform == "win32") {
+                robocorpHome = path.join(process.env.LOCALAPPDATA, "robocorp");
+            } else {
+                robocorpHome = path.join(process.env.HOME, ".robocorp");
+            }
+        }
+    }
+    OUTPUT_CHANNEL.appendLine("ROBOCORP_HOME: " + robocorpHome);
+    return robocorpHome;
+}
+
+export function createEnvWithRobocorpHome(robocorpHome: string): { [key: string]: string | null } {
     let env: { [key: string]: string | null } = {};
     if (process.platform == "win32") {
         Object.keys(process.env).forEach(function (key) {
@@ -28,7 +46,7 @@ function createBaseEnv(robocorpHome: string): { [key: string]: string | null } {
 }
 
 function envArrayToEnvMap(envArray: [], robocorpHome: string): { [key: string]: string | null } {
-    let env = createBaseEnv(robocorpHome);
+    let env = createEnvWithRobocorpHome(robocorpHome);
     for (let index = 0; index < envArray.length; index++) {
         const element = envArray[index];
         let key: string = element["key"];
@@ -518,7 +536,7 @@ export async function collectBaseEnv(
         let execFileReturn: ExecFileReturn = await execFilePromise(
             rccLocation,
             args,
-            { "env": createBaseEnv(robocorpHome) },
+            { "env": createEnvWithRobocorpHome(robocorpHome) },
             { "showOutputInteractively": true }
         );
         if (!execFileReturn.stdout) {

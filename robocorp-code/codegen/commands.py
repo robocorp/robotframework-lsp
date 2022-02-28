@@ -509,6 +509,12 @@ COMMANDS = [
         server_handled=False,
         hide_from_command_palette=True,
     ),
+    Command(
+        "robocorp.clearEnvAndRestart",
+        "Clear Robocorp (RCC) environments and restart Robocorp Code",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
 ]
 
 

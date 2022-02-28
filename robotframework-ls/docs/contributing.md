@@ -106,6 +106,7 @@ Please take into account the following guidelines of the `Robot Framework Langua
 - `robotframework_ls.robotframework_ls_impl.RobotFrameworkLanguageServer` is just a facade to distribute requests
   and it shouldn't import `robot` anywhere. Rather it forwards requests to `robotframework_ls.server_api.server.RobotFrameworkServerApi`
   which is running in another process (which can then import the module that actually implements the request, which can import `robot`).
+- Remember that the `package.json` is generated from `codegen/codegen_package.py`.
 
 Third-party libraries
 ---------------------------
