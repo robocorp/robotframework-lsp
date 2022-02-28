@@ -196,6 +196,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         log.debug(f"Cache dir: {cache_dir}")
 
+        self._last_doc_uri: str = ""
         self._dir_cache = DirCache(cache_dir)
 
         self._pm = PluginManager()
@@ -754,14 +755,14 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
     def async_api_forward(
         self,
-        api_client_method_name,
-        target_api,
-        doc_uri,
+        api_client_method_name: str,
+        target_api: str,  # api, lint, others
+        doc_uri: str,
         default_return=None,
         __add_doc_uri_in_args__=True,
         **kwargs,
     ):
-        rf_api_client: IRobotFrameworkApiClient
+        rf_api_client: Optional[IRobotFrameworkApiClient]
         if target_api == "api":
             rf_api_client = self._server_manager.get_regular_rf_api_client(doc_uri)
         elif target_api == "lint":
@@ -770,6 +771,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             rf_api_client = self._server_manager.get_others_api_client(doc_uri)
         else:
             raise AssertionError(f"Unexpected: {target_api}")
+
+        self._last_doc_uri = doc_uri
         if rf_api_client is not None:
             if __add_doc_uri_in_args__:
                 func = partial(
@@ -904,51 +907,31 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
     def m_text_document__semantic_tokens__full(self, textDocument=None):
         doc_uri = textDocument["uri"]
-        api = self._server_manager.get_others_api_client(doc_uri)
-        if api is None:
-            log.info("Unable to get api client when computing semantic tokens (full).")
-            return {"resultId": None, "data": []}
 
-        func = partial(
-            self._threaded_api_request_no_doc,
-            api,
+        return self.async_api_forward(
             "request_semantic_tokens_full",
+            "others",
+            doc_uri,
+            default_return={"resultId": None, "data": []},
             text_document=textDocument,
+            __add_doc_uri_in_args__=False,
         )
-        func = require_monitor(func)
-        return func
 
     def m_workspace__symbol(self, query: Optional[str] = None) -> Any:
-        api = self._server_manager.get_regular_rf_api_client("")
-        if api is None:
-            log.info("Unable to search workspace symbols (no api available).")
-            return None
-
-        func = partial(
-            self._threaded_api_request_no_doc,
-            api,
+        doc_uri = self._last_doc_uri
+        return self.async_api_forward(
             "request_workspace_symbols",
+            "api",
+            doc_uri,
             query=query,
+            __add_doc_uri_in_args__=False,
         )
-        func = require_monitor(func)
-        return func
 
     def m_text_document__document_highlight(self, **kwargs):
         params: TextDocumentPositionParamsTypedDict = kwargs
         doc_uri = params["textDocument"]["uri"]
         line, col = params["position"]["line"], params["position"]["character"]
-        api = self._server_manager.get_others_api_client(doc_uri)
-        if api is None:
-            log.info("Unable to get api client when computing document highlight.")
-            return None
 
-        func = partial(
-            self._threaded_api_request,
-            api,
-            "request_document_highlight",
-            doc_uri=doc_uri,
-            line=line,
-            col=col,
+        return self.async_api_forward(
+            "request_document_highlight", "others", doc_uri, line=line, col=col
         )
-        func = require_monitor(func)
-        return func
