@@ -1,3 +1,64 @@
+- message: 'Unresolved library: DoesNotExist.
+
+    Error generating libspec:
+
+    Importing library ''DoesNotExist'' failed: ModuleNotFoundError: No module named
+    ''DoesNotExist''
+
+    Consider adding the needed paths to the "robot.pythonpath" setting
+
+    and calling the "Robot Framework: Clear caches and restart" action.'
+  range:
+    end:
+      character: 23
+      line: 1
+    start:
+      character: 11
+      line: 1
+  severity: 1
+  source: robotframework
+- message: 'Unresolved library: ..
+
+    Error generating libspec:
+
+    Unable to generate libspec for: .'
+  range:
+    end:
+      character: 12
+      line: 2
+    start:
+      character: 11
+      line: 2
+  severity: 1
+  source: robotframework
+- message: 'Unresolved library: ...
+
+    Error generating libspec:
+
+    Unable to generate libspec for: ..'
+  range:
+    end:
+      character: 13
+      line: 3
+    start:
+      character: 11
+      line: 3
+  severity: 1
+  source: robotframework
+- message: 'Unresolved library: ../.
+
+    Error generating libspec:
+
+    Unable to generate libspec for: ../'
+  range:
+    end:
+      character: 14
+      line: 4
+    start:
+      character: 11
+      line: 4
+  severity: 1
+  source: robotframework
 - message: 'Unresolved resource: does_not_exist.txt'
   range:
     end:
@@ -66,67 +127,6 @@
     start:
       character: 12
       line: 11
-  severity: 1
-  source: robotframework
-- message: 'Unresolved library: DoesNotExist.
-
-    Error generating libspec:
-
-    Importing library ''DoesNotExist'' failed: ModuleNotFoundError: No module named
-    ''DoesNotExist''
-
-    Consider adding the needed paths to the "robot.pythonpath" setting
-
-    and calling the "Robot Framework: Clear caches and restart" action.'
-  range:
-    end:
-      character: 23
-      line: 1
-    start:
-      character: 11
-      line: 1
-  severity: 1
-  source: robotframework
-- message: 'Unresolved library: ..
-
-    Error generating libspec:
-
-    Unable to generate libspec for: .'
-  range:
-    end:
-      character: 12
-      line: 2
-    start:
-      character: 11
-      line: 2
-  severity: 1
-  source: robotframework
-- message: 'Unresolved library: ...
-
-    Error generating libspec:
-
-    Unable to generate libspec for: ..'
-  range:
-    end:
-      character: 13
-      line: 3
-    start:
-      character: 11
-      line: 3
-  severity: 1
-  source: robotframework
-- message: 'Unresolved library: ../.
-
-    Error generating libspec:
-
-    Unable to generate libspec for: ../'
-  range:
-    end:
-      character: 14
-      line: 4
-    start:
-      character: 11
-      line: 4
   severity: 1
   source: robotframework
 - message: 'Mandatory argument missing: arg1'

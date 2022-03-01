@@ -239,118 +239,119 @@ def _collect_resource_imports_variables(
         if resource_doc is None:
             continue
         new_ctx = completion_context.create_copy(resource_doc)
-        _collect_following_imports(new_ctx, collector)
+        _collect_variables_from_context(new_ctx, collector)
 
 
-def _collect_variable_imports_variables(
-    completion_context: ICompletionContext, collector: IVariablesCollector
+def _collect_variables_from_variable_import_doc(
+    variable_import_doc: IRobotDocument, collector: IVariablesCollector
 ):
-    variable_import_doc: IRobotDocument
-    for variable_import_doc in completion_context.get_variable_imports_as_docs():
-        try:
-            if variable_import_doc.path.lower().endswith(".py"):
-                python_ast = variable_import_doc.get_python_ast()
-                if python_ast is not None:
-                    import ast as ast_module
+    try:
+        if variable_import_doc.path.lower().endswith(".py"):
+            python_ast = variable_import_doc.get_python_ast()
+            if python_ast is not None:
+                import ast as ast_module
 
-                    for node in python_ast.body:
-                        if isinstance(node, ast_module.Assign):
-                            for target in node.targets:
-                                if isinstance(target, ast_module.Name):
-                                    varname = "${%s}" % (target.id,)
-                                    if collector.accepts(varname):
-                                        value = ""
-                                        try:
-                                            # Only available for Python 3.8 onwards...
-                                            end_lineno = getattr(
-                                                node.value, "end_lineno", None
-                                            )
-                                            if end_lineno is None:
-                                                end_lineno = node.value.lineno
-
-                                            # Only available for Python 3.8 onwards...
-                                            end_col_offset = getattr(
-                                                node.value, "end_col_offset", None
-                                            )
-                                            if end_col_offset is None:
-                                                end_col_offset = 99999999
-                                            value = variable_import_doc.get_range(
-                                                node.value.lineno - 1,
-                                                node.value.col_offset,
-                                                end_lineno - 1,
-                                                end_col_offset,
-                                            )
-                                        except:
-                                            log.exception()
-
-                                        variable_found = _VariableFoundFromPythonAst(
-                                            variable_import_doc.path,
-                                            target.lineno - 1,
-                                            target.col_offset,
-                                            target.lineno - 1,
-                                            target.col_offset + len(target.id),
-                                            value,
-                                            variable_name=varname,
+                for node in python_ast.body:
+                    if isinstance(node, ast_module.Assign):
+                        for target in node.targets:
+                            if isinstance(target, ast_module.Name):
+                                varname = "${%s}" % (target.id,)
+                                if collector.accepts(varname):
+                                    value = ""
+                                    try:
+                                        # Only available for Python 3.8 onwards...
+                                        end_lineno = getattr(
+                                            node.value, "end_lineno", None
                                         )
-                                        collector.on_variable(variable_found)
+                                        if end_lineno is None:
+                                            end_lineno = node.value.lineno
 
-            elif variable_import_doc.path.lower().endswith(".yaml"):
-                dct_contents = variable_import_doc.get_yaml_contents()
-                if isinstance(dct_contents, dict):
-                    if dct_contents:
-                        try_to_compute_line = (
-                            variable_import_doc.source.count("\n") * len(dct_contents)
-                        ) <= 200
-                        # Our (lame) algorithm to find a key will need to iterate
-                        # over all lines for all entries, so, do it only for
-                        # small docs (consider a better algorithm in the future)...
-                        for initial_key, val in dct_contents.items():
-                            key = "${%s}" % (initial_key,)
+                                        # Only available for Python 3.8 onwards...
+                                        end_col_offset = getattr(
+                                            node.value, "end_col_offset", None
+                                        )
+                                        if end_col_offset is None:
+                                            end_col_offset = 99999999
+                                        value = variable_import_doc.get_range(
+                                            node.value.lineno - 1,
+                                            node.value.col_offset,
+                                            end_lineno - 1,
+                                            end_col_offset,
+                                        )
+                                    except:
+                                        log.exception()
 
-                            lineno = 0
-                            if try_to_compute_line:
-                                try:
-                                    # We don't have the real lineno during parsing,
-                                    # so, make a little hack to get something which
-                                    # may be close...
-                                    (
-                                        lineno,
-                                        _,
-                                    ) = variable_import_doc.get_last_line_col_with_contents(
-                                        initial_key
+                                    variable_found = _VariableFoundFromPythonAst(
+                                        variable_import_doc.path,
+                                        target.lineno - 1,
+                                        target.col_offset,
+                                        target.lineno - 1,
+                                        target.col_offset + len(target.id),
+                                        value,
+                                        variable_name=varname,
                                     )
-                                except RuntimeError:
-                                    pass
+                                    collector.on_variable(variable_found)
 
-                            if collector.accepts(key):
-                                collector.on_variable(
-                                    _VariableFoundFromYaml(
-                                        key,
-                                        str(val),
-                                        source=variable_import_doc.path,
-                                        lineno=lineno,
-                                    )
+        elif variable_import_doc.path.lower().endswith(".yaml"):
+            dct_contents = variable_import_doc.get_yaml_contents()
+            if isinstance(dct_contents, dict):
+                if dct_contents:
+                    try_to_compute_line = (
+                        variable_import_doc.source.count("\n") * len(dct_contents)
+                    ) <= 200
+                    # Our (lame) algorithm to find a key will need to iterate
+                    # over all lines for all entries, so, do it only for
+                    # small docs (consider a better algorithm in the future)...
+                    for initial_key, val in dct_contents.items():
+                        key = "${%s}" % (initial_key,)
+
+                        lineno = 0
+                        if try_to_compute_line:
+                            try:
+                                # We don't have the real lineno during parsing,
+                                # so, make a little hack to get something which
+                                # may be close...
+                                (
+                                    lineno,
+                                    _,
+                                ) = variable_import_doc.get_last_line_col_with_contents(
+                                    initial_key
                                 )
+                            except RuntimeError:
+                                pass
 
-        except:
-            log.exception()
+                        if collector.accepts(key):
+                            collector.on_variable(
+                                _VariableFoundFromYaml(
+                                    key,
+                                    str(val),
+                                    source=variable_import_doc.path,
+                                    lineno=lineno,
+                                )
+                            )
+
+    except:
+        log.exception()
 
 
-def _collect_following_imports(
+def _collect_variables_from_context(
     completion_context: ICompletionContext,
     collector: IVariablesCollector,
     only_current_doc=False,
 ):
     completion_context.check_cancelled()
-    if completion_context.memo.follow_import_variables(completion_context.doc.uri):
-        # i.e.: prevent collecting variables for the same doc more than once.
+    _collect_current_doc_variables(completion_context, collector)
 
-        _collect_current_doc_variables(completion_context, collector)
+    if not only_current_doc:
+        dependency_graph = completion_context.collect_dependency_graph()
 
-        if not only_current_doc:
-            _collect_resource_imports_variables(completion_context, collector)
+        for _, resource_doc in dependency_graph.iter_resource_imports_as_docs():
+            if resource_doc is not None:
+                new_ctx = completion_context.create_copy(resource_doc)
+                _collect_current_doc_variables(new_ctx, collector)
 
-            _collect_variable_imports_variables(completion_context, collector)
+        for variable_doc in dependency_graph.iter_variable_imports_as_docs():
+            _collect_variables_from_variable_import_doc(variable_doc, collector)
 
 
 def _collect_arguments(
@@ -426,9 +427,11 @@ def collect_variables(
                 collector.on_variable(variable_found)
 
     _collect_arguments(completion_context, collector)
-    _collect_following_imports(
+
+    _collect_variables_from_context(
         completion_context, collector, only_current_doc=only_current_doc
     )
+
     if not only_current_doc:
         _collect_from_settings(completion_context, collector)
         _collect_from_builtins(completion_context, collector)

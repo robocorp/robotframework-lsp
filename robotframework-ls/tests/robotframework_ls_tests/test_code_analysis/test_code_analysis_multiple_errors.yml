@@ -58,16 +58,6 @@
       line: 29
   severity: 1
   source: robotframework
-- message: 'Unexpected named argument: arg3'
-  range:
-    end:
-      character: 33
-      line: 31
-    start:
-      character: 27
-      line: 31
-  severity: 1
-  source: robotframework
 - message: 'Mandatory argument missing: arg1'
   range:
     end:
@@ -75,6 +65,16 @@
       line: 31
     start:
       character: 4
+      line: 31
+  severity: 1
+  source: robotframework
+- message: 'Unexpected named argument: arg3'
+  range:
+    end:
+      character: 33
+      line: 31
+    start:
+      character: 27
       line: 31
   severity: 1
   source: robotframework

@@ -33,6 +33,7 @@ from robocorp_ls_core.lsp import (
 )
 from robocorp_ls_core import uris
 from robotframework_ls.impl._symbols_cache import BaseSymbolsCache
+import typing
 
 log = get_logger(__name__)
 
@@ -473,10 +474,17 @@ class RobotWorkspace(Workspace):
         collect_tests=False,
         endpoint: Optional[IEndPoint] = None,
     ):
+        from robotframework_ls.impl.completion_context_workspace_caches import (
+            CompletionContextWorkspaceCaches,
+        )
+
         self.libspec_manager = libspec_manager
 
         # It needs to be set to None in the initialization (while we setup folders).
         self.workspace_indexer: Optional[WorkspaceIndexer] = None
+        self._completion_context_workspace_caches: CompletionContextWorkspaceCaches = (
+            CompletionContextWorkspaceCaches()
+        )
 
         Workspace.__init__(
             self, root_uri, fs_observer, workspace_folders=workspace_folders
@@ -493,9 +501,14 @@ class RobotWorkspace(Workspace):
         else:
             self.workspace_indexer = None
 
+        self.on_file_changed.register(
+            self._completion_context_workspace_caches.on_file_changed
+        )
+
     @overrides(Workspace.put_document)
     def put_document(self, text_document: TextDocumentItem) -> IDocument:
-        doc = Workspace.put_document(self, text_document)
+        doc = typing.cast(IRobotDocument, Workspace.put_document(self, text_document))
+        self._completion_context_workspace_caches.on_updated_document(doc.uri, doc)
         if self.workspace_indexer is not None:
             self.workspace_indexer.on_updated_document(doc.uri)
         return doc
@@ -504,7 +517,10 @@ class RobotWorkspace(Workspace):
     def update_document(
         self, text_doc: TextDocumentItem, change: TextDocumentContentChangeEvent
     ) -> IDocument:
-        doc = Workspace.update_document(self, text_doc, change)
+        doc = typing.cast(
+            IRobotDocument, Workspace.update_document(self, text_doc, change)
+        )
+        self._completion_context_workspace_caches.on_updated_document(doc.uri, doc)
         if self.workspace_indexer is not None:
             self.workspace_indexer.on_updated_document(doc.uri)
         return doc
@@ -512,6 +528,7 @@ class RobotWorkspace(Workspace):
     @overrides(Workspace.remove_document)
     def remove_document(self, uri: str):
         doc = Workspace.remove_document(self, uri)
+        self._completion_context_workspace_caches.on_updated_document(uri, None)
         if self.workspace_indexer is not None:
             self.workspace_indexer.on_updated_document(uri)
         return doc
@@ -520,6 +537,7 @@ class RobotWorkspace(Workspace):
     def add_folder(self, folder: IWorkspaceFolder):
         Workspace.add_folder(self, folder)
         self.libspec_manager.add_workspace_folder(folder.uri)
+        self._completion_context_workspace_caches.clear_caches()
         if self.workspace_indexer is not None:
             self.workspace_indexer.on_updated_folders()
 
@@ -527,12 +545,14 @@ class RobotWorkspace(Workspace):
     def remove_folder(self, folder_uri):
         Workspace.remove_folder(self, folder_uri)
         self.libspec_manager.remove_workspace_folder(folder_uri)
+        self._completion_context_workspace_caches.clear_caches()
         if self.workspace_indexer is not None:
             self.workspace_indexer.on_updated_folders()
 
     @overrides(Workspace.dispose)
     def dispose(self):
         Workspace.dispose(self)
+        self._completion_context_workspace_caches.dispose()
         indexer = self.workspace_indexer
         if indexer is not None:
             indexer.dispose()

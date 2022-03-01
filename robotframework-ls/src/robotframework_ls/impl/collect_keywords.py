@@ -1,4 +1,3 @@
-from collections import namedtuple
 import os.path
 
 from robocorp_ls_core.cache import instance_cache
@@ -10,10 +9,12 @@ from robotframework_ls.impl.protocols import (
     IKeywordCollector,
     IKeywordArg,
     ILibraryDoc,
+    LibraryDependencyInfo,
 )
-from typing import Sequence, List, Dict, Optional
+from typing import Sequence, List, Dict, Optional, Iterator
 from robotframework_ls.impl.text_utilities import build_keyword_docs_with_signature
 from robocorp_ls_core.lsp import MarkupContentTypedDict, MarkupKind
+from robocorp_ls_core.ordered_set import OrderedSet
 
 
 log = get_logger(__name__)
@@ -319,63 +320,28 @@ def _collect_current_doc_keywords(
     _collect_completions_from_ast(ast, completion_context, collector)
 
 
-_LibInfo = namedtuple("_LibInfo", "name, alias, builtin, args, node")
-
-
 def _collect_libraries_keywords(
-    completion_context: ICompletionContext, collector: IKeywordCollector
+    completion_context: ICompletionContext,
+    current_doc_uri: str,
+    library_infos: Iterator[LibraryDependencyInfo],
+    collector: IKeywordCollector,
 ):
-    """
-    :param CompletionContext completion_context:
-    """
     from robotframework_ls.impl.libspec_manager import LibspecManager
     from robotframework_ls.impl.protocols import ILibraryDocOrError
 
     # Get keywords from libraries
-    from robotframework_ls.impl.robot_constants import BUILTIN_LIB
     from robocorp_ls_core.lsp import CompletionItemKind
-    from robotframework_ls.impl import ast_utils
 
-    libraries = completion_context.get_imported_libraries()
-
-    # Note: using a dict(_LibInfo:bool) where only the keys are meaningful
-    # because we want to keep the order and sets aren't ordered.
-    library_infos = {}
-    for name, alias, args, node in (
-        (
-            library.name,
-            library.alias,
-            ast_utils.get_library_arguments_serialized(library),
-            library,
-        )
-        for library in libraries
-    ):
-        if name:
-            lib_info = _LibInfo(
-                completion_context.token_value_resolving_variables(name),
-                alias,
-                False,
-                args,
-                node,
-            )
-
-            library_infos[lib_info] = True
-
-    library_infos[_LibInfo(BUILTIN_LIB, None, True, None, None)] = True
     libspec_manager: LibspecManager = completion_context.workspace.libspec_manager
 
     for library_info in library_infos:
         completion_context.check_cancelled()
-        if not completion_context.memo.complete_for_library(
-            library_info.name, library_info.alias
-        ):
-            continue
 
         library_doc_or_error: ILibraryDocOrError = (
             libspec_manager.get_library_doc_or_error(
                 library_info.name,
                 create=True,
-                current_doc_uri=completion_context.doc.uri,
+                current_doc_uri=current_doc_uri,
                 builtin=library_info.builtin,
                 args=library_info.args,
             )
@@ -412,35 +378,54 @@ def _collect_libraries_keywords(
             error_msg = library_doc_or_error.error
 
             node = library_info.node
-            node_name_tok = node.get_token(Token.NAME)
-            if node_name_tok is not None:
-                collector.on_unresolved_library(
-                    completion_context,
-                    node.name,
-                    node_name_tok.lineno,
-                    node_name_tok.lineno,
-                    node_name_tok.col_offset,
-                    node_name_tok.end_col_offset,
-                    error_msg,
-                )
-            else:
-                collector.on_unresolved_library(
-                    completion_context,
-                    library_info.name,
-                    node.lineno,
-                    node.end_lineno,
-                    node.col_offset,
-                    node.end_col_offset,
-                    error_msg,
-                )
+            if node:
+                node_name_tok = node.get_token(Token.NAME)
+                if node_name_tok is not None:
+                    collector.on_unresolved_library(
+                        completion_context,
+                        node.name,
+                        node_name_tok.lineno,
+                        node_name_tok.lineno,
+                        node_name_tok.col_offset,
+                        node_name_tok.end_col_offset,
+                        error_msg,
+                    )
+                else:
+                    collector.on_unresolved_library(
+                        completion_context,
+                        library_info.name,
+                        node.lineno,
+                        node.end_lineno,
+                        node.col_offset,
+                        node.end_col_offset,
+                        error_msg,
+                    )
 
 
-def _collect_resource_imports_keywords(
+def _collect_from_context(
     completion_context: ICompletionContext, collector: IKeywordCollector
 ):
+    dependency_graph = completion_context.collect_dependency_graph()
 
-    for node, resource_doc in completion_context.get_resource_imports_as_docs():
+    root_doc = dependency_graph.get_root_doc()
+    assert root_doc.uri == completion_context.doc.uri
+    _collect_current_doc_keywords(completion_context, collector)
+
+    completion_context.check_cancelled()
+    _collect_libraries_keywords(
+        completion_context,
+        completion_context.doc.uri,
+        dependency_graph.iter_libraries(completion_context.doc.uri),
+        collector,
+    )
+
+    for node, resource_doc in dependency_graph.iter_resource_imports_as_docs():
+        completion_context.check_cancelled()
+
         if resource_doc is None:
+            # Note that 'None' documents will only be given for the
+            # initial context (so, it's ok to use `completion_context`
+            # in this case).
             from robot.api import Token
 
             node_name_tok = node.get_token(Token.NAME)
@@ -463,22 +448,16 @@ def _collect_resource_imports_keywords(
                     node.end_col_offset,
                 )
             continue
+        completion_context.check_cancelled()
         new_ctx = completion_context.create_copy(resource_doc)
-        _collect_following_imports(new_ctx, collector)
 
-
-def _collect_following_imports(
-    completion_context: ICompletionContext, collector: IKeywordCollector
-):
-    completion_context.check_cancelled()
-    if completion_context.memo.follow_import(completion_context.doc.uri):
-        # i.e.: prevent collecting keywords for the same doc more than once.
-
-        _collect_current_doc_keywords(completion_context, collector)
-
-        _collect_resource_imports_keywords(completion_context, collector)
-
-        _collect_libraries_keywords(completion_context, collector)
+        _collect_current_doc_keywords(new_ctx, collector)
+        _collect_libraries_keywords(
+            new_ctx,
+            resource_doc.uri,
+            dependency_graph.iter_libraries(resource_doc.uri),
+            collector,
+        )
 
 
 class _CollectKeywordNameToKeywordFound:
@@ -532,9 +511,8 @@ class _CollectKeywordNameToKeywordFound:
 def collect_keyword_name_to_keyword_found(
     completion_context: ICompletionContext,
 ) -> Dict[str, List[IKeywordFound]]:
-    completion_context.memo.clear()
     collector = _CollectKeywordNameToKeywordFound()
-    _collect_following_imports(completion_context, collector)
+    _collect_from_context(completion_context, collector)
     return collector.keyword_name_to_keyword_found
 
 
@@ -544,5 +522,4 @@ def collect_keywords(
     """
     Collects all the keywords that are available to the given completion_context.
     """
-    completion_context.memo.clear()
-    _collect_following_imports(completion_context, collector)
+    _collect_from_context(completion_context, collector)

@@ -8,6 +8,15 @@ def _collect_errors(workspace, doc, data_regression, basename=None, config=None)
         error.to_lsp_diagnostic()
         for error in collect_analysis_errors(completion_context)
     ]
+
+    def key(diagnostic):
+        return (
+            diagnostic["range"]["start"]["line"],
+            diagnostic["range"]["start"]["character"],
+            diagnostic["message"],
+        )
+
+    errors = sorted(errors, key=key)
     data_regression.check(errors, basename=basename)
 
 

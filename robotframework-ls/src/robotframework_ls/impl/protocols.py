@@ -10,6 +10,7 @@ from typing import (
     Generic,
     Iterator,
     Callable,
+    Union,
 )
 from robocorp_ls_core.protocols import (
     Sentinel,
@@ -31,6 +32,7 @@ from robocorp_ls_core.lsp import (
     CompletionItemTypedDict,
 )
 import typing
+from robocorp_ls_core.ordered_set import OrderedSet
 
 if sys.version_info[:2] < (3, 8):
 
@@ -44,15 +46,83 @@ else:
 T = TypeVar("T")
 Y = TypeVar("Y", covariant=True)
 
-if typing.TYPE_CHECKING:
-    from robot.api import Token
+# We don't want to import robot in this case (just do it when type-checking).
+class IRobotToken(Protocol):
+    SETTING_HEADER: str
+    VARIABLE_HEADER: str
+    TESTCASE_HEADER: str
+    KEYWORD_HEADER: str
+    COMMENT_HEADER: str
 
-    IRobotToken = Token
+    TESTCASE_NAME: str
+    KEYWORD_NAME: str
 
+    DOCUMENTATION: str
+    SUITE_SETUP: str
+    SUITE_TEARDOWN: str
+    METADATA: str
+    TEST_SETUP: str
+    TEST_TEARDOWN: str
+    TEST_TEMPLATE: str
+    TEST_TIMEOUT: str
+    FORCE_TAGS: str
+    DEFAULT_TAGS: str
+    LIBRARY: str
+    RESOURCE: str
+    VARIABLES: str
+    SETUP: str
+    TEARDOWN: str
+    TEMPLATE: str
+    TIMEOUT: str
+    TAGS: str
+    ARGUMENTS: str
+    # Use ´RETURN_SETTING` type instead of `RETURN`. `[Return]` is deprecated and
+    # `RETURN` type will be used with `RETURN` statement in the future.
+    RETURN: str
+    RETURN_SETTING: str
 
-else:
-    # We don't want to import robot in this case (just do it when type-checking).
-    class IRobotToken(Protocol):
+    NAME: str
+    VARIABLE: str
+    ARGUMENT: str
+    ASSIGN: str
+    KEYWORD: str
+    WITH_NAME: str
+    FOR: str
+    FOR_SEPARATOR: str
+    END: str
+    IF: str
+    INLINE_IF: str
+    ELSE_IF: str
+    ELSE: str
+    TRY: str
+    EXCEPT: str
+    FINALLY: str
+    AS: str
+    WHILE: str
+    RETURN_STATEMENT: str
+    CONTINUE: str
+    BREAK: str
+
+    SEPARATOR: str
+    COMMENT: str
+    CONTINUATION: str
+    EOL: str
+    EOS: str
+
+    ERROR: str
+    FATAL_ERROR: str
+
+    type: str
+    value: str
+    lineno: int
+    col_offset: int
+    error: Any
+
+    @property
+    def end_col_offset(self) -> int:
+        pass
+
+    def tokenize_variables(self) -> Iterator["IRobotToken"]:
         pass
 
 
@@ -462,6 +532,63 @@ class CompletionType(enum.Enum):
     shell = 2
 
 
+class LibraryDependencyInfo:
+    def __init__(
+        self,
+        name: str,
+        alias: Optional[str],
+        builtin: bool,
+        args: Optional[str],
+        node: Optional[ILibraryImportNode],
+    ):
+        self.name = name
+        self.alias = alias
+        self.builtin = builtin
+        self.args = args
+        self.node = node
+
+
+class ICompletionContextDependencyGraph(Protocol):
+    def add_library_infos(
+        self,
+        doc_uri: str,
+        library_infos: OrderedSet[LibraryDependencyInfo],
+    ):
+        pass
+
+    def add_resource_infos(
+        self,
+        doc_uri: str,
+        resource_imports_as_docs: Sequence[
+            Tuple[IResourceImportNode, Optional[IRobotDocument]]
+        ],
+    ):
+        pass
+
+    def add_variable_infos(
+        self, doc_uri: str, new_variable_imports: List[IRobotDocument]
+    ):
+        pass
+
+    def get_root_doc(self) -> IRobotDocument:
+        pass
+
+    def iter_libraries(self, doc_uri: str) -> Iterator[LibraryDependencyInfo]:
+        """
+        Provides an iterator(doc_uri, library_dependency_infos)
+        """
+
+    def iter_resource_imports_as_docs(
+        self,
+    ) -> Iterator[Tuple[IResourceImportNode, Optional[IRobotDocument]]]:
+        pass
+
+    def iter_variable_imports_as_docs(
+        self,
+    ) -> Iterator[IRobotDocument]:
+        pass
+
+
 class ICompletionContext(Protocol):
     def __init__(
         self,
@@ -583,7 +710,7 @@ class ICompletionContext(Protocol):
     def get_imported_libraries(self) -> Tuple[ILibraryImportNode, ...]:
         pass
 
-    def token_value_resolving_variables(self, token) -> str:
+    def token_value_resolving_variables(self, token: Union[str, IRobotToken]) -> str:
         pass
 
     def get_current_keyword_definition_and_usage_info(
@@ -601,6 +728,9 @@ class ICompletionContext(Protocol):
         completion_item: CompletionItemTypedDict,
         compute_documentation: Callable[[], MarkupContentTypedDict],
     ) -> None:
+        pass
+
+    def collect_dependency_graph(self) -> ICompletionContextDependencyGraph:
         pass
 
 

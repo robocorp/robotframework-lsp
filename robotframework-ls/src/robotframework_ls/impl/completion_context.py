@@ -1,5 +1,5 @@
 import sys
-from typing import Optional, Any, List, Tuple, Set, Callable, Dict
+from typing import Optional, Any, List, Tuple, Set, Callable, Dict, Union
 
 from robocorp_ls_core.cache import instance_cache
 from robocorp_ls_core.constants import NULL
@@ -16,6 +16,8 @@ from robotframework_ls.impl.protocols import (
     KeywordUsageInfo,
     CompletionType,
     IResourceImportNode,
+    ICompletionContextDependencyGraph,
+    IRobotToken,
 )
 from robotframework_ls.impl.robot_workspace import RobotDocument
 
@@ -24,35 +26,7 @@ log = get_logger(__name__)
 
 
 class _Memo(object):
-    def __init__(self):
-        self.clear()
-
-    def clear(self):
-        self._followed_imports_variables = {}
-        self._followed_imports = {}
-        self._completed_libraries = {}
-
-    def follow_import(self, uri: str) -> bool:
-        if uri not in self._followed_imports:
-            self._followed_imports[uri] = True
-            return True
-
-        return False
-
-    def follow_import_variables(self, uri: str) -> bool:
-        if uri not in self._followed_imports_variables:
-            self._followed_imports_variables[uri] = True
-            return True
-
-        return False
-
-    def complete_for_library(self, library_name: str, alias: Optional[str]) -> bool:
-        key = (library_name, alias)
-        if key not in self._completed_libraries:
-            self._completed_libraries[key] = True
-            return True
-
-        return False
+    pass
 
 
 class BaseContext(object):
@@ -383,16 +357,19 @@ class CompletionContext(object):
                 ret.append(resource.node)
         return tuple(ret)
 
-    def token_value_resolving_variables(self, token):
+    def token_value_resolving_variables(self, token: Union[str, IRobotToken]):
         from robotframework_ls.impl import ast_utils
 
+        robot_token: IRobotToken
         if isinstance(token, str):
-            token = ast_utils.create_token(token)
+            robot_token = ast_utils.create_token(token)
+        else:
+            robot_token = token
 
         try:
-            tokenized_vars = ast_utils.tokenize_variables(token)
+            tokenized_vars = ast_utils.tokenize_variables(robot_token)
         except:
-            return token.value  # Unable to tokenize
+            return robot_token.value  # Unable to tokenize
         parts = []
         for v in tokenized_vars:
             if v.type == v.NAME:
@@ -657,6 +634,14 @@ class CompletionContext(object):
                 definition: IKeywordDefinition = next(iter(definitions))
                 return definition, usage_info
         return None
+
+    @instance_cache
+    def collect_dependency_graph(self) -> ICompletionContextDependencyGraph:
+        from robotframework_ls.impl.completion_context_dependency_graph import (
+            CompletionContextDependencyGraph,
+        )
+
+        return CompletionContextDependencyGraph.from_completion_context(self)
 
     def __typecheckself__(self) -> None:
         from robocorp_ls_core.protocols import check_implements

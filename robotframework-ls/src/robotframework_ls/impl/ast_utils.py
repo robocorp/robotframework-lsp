@@ -352,11 +352,11 @@ def tokenize_variables_from_name(name):
     return tokenize_variables(create_token(name))  # May throw error if it's not OK.
 
 
-def tokenize_variables(token):
+def tokenize_variables(token: IRobotToken):
     return token.tokenize_variables()  # May throw error if it's not OK.
 
 
-def _tokenize_variables_even_when_invalid(token, col):
+def _tokenize_variables_even_when_invalid(token: IRobotToken, col: int):
     """
     If Token.tokenize_variables() fails, this can still provide the variable under
     the given column by applying some heuristics to find open variables.
