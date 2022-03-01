@@ -24,6 +24,10 @@ def get_menus():
     return ret
 
 
+# We need 1.63.0 for pre-releases.
+VSCODE_ENGINE_VERSION = os.environ.get("VSCODE_ENGINE_VERSION", "1.61.0")
+
+
 def get_json_contents():
     from robocorp_code import __version__
 
@@ -41,7 +45,7 @@ def get_json_contents():
         "version": __version__,
         "icon": "images/icon.png",
         "publisher": "robocorp",
-        "engines": {"vscode": "^1.61.0"},
+        "engines": {"vscode": f"^{VSCODE_ENGINE_VERSION}"},
         "categories": ["Debuggers"],
         "activationEvents": get_activation_events_for_json()
         + views.get_activation_events_for_json()
@@ -131,7 +135,7 @@ def get_json_contents():
         "devDependencies": {
             "@types/mocha": "^2.2.32",
             "@types/node": "^13.0.00",
-            "@types/vscode": "1.61.0",
+            "@types/vscode": VSCODE_ENGINE_VERSION,
             "prettier": "2.4.1",
             "vscode-test": "1.5.1",
             "typescript": "^4.5.4",

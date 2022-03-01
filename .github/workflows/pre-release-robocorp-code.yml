@@ -1,10 +1,10 @@
-on:
-  push:
-    branches:
-      - "release-robocorp-code"
-    tags:
-      - "robocorp-code-*"
-name: Deploy - Robocorp Code Extension
+on: 
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version'     
+        required: true
+name: Pre-release - Robocorp Code Extension
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -21,47 +21,51 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: 16.x
+        
     - name: Yarn install
       run: yarn install
+      
     - name: Set up Python 3.7
       uses: actions/setup-python@v1
       with:
         python-version: 3.7
+        
     - name: Install deps
       run: pip install --upgrade pip fire twine wheel setuptools
+      
+    - name: Update version
+      run: python -m dev set-version ${{ github.event.inputs.version }}
+      
+    - name: Update vscode required version
+      run: python -m dev codegen/codegen_package.py
+      env:
+        VSCODE_ENGINE_VERSION: 1.63.0
+      
     - name: Vendor robocorp_ls_core
       run: python -m dev vendor-robocorp-ls-core
+      
     - name: Fix README references
       run: python -m dev fix-readme
+      
     - name: Generate LICENSE.md
       run: python -m dev generate-license-file
+      
     - name: Build wheel
       working-directory: ./robocorp-code/src
       run: |
         cp ../README.md ./README.md
         python setup.py sdist bdist_wheel --universal
+        
     - run: npm install -g vsce@2.6.7
+    
     - run: vsce package -o robocorp-code.vsix
+
     - uses: actions/upload-artifact@v1
       with:
         name: robocorp-code.vsix
         path: ./robocorp-code/robocorp-code.vsix
-        
-    - name: Check tag version
-      run: python -m dev check-tag-version
-#     - name: Upload to PyPI
-#       working-directory: ./robocorp-code/src
-#       run: twine upload dist/*
-#       env:
-#         TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
-#         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
-
-    - name: Publish to vscode marketplace 
-      run: vsce publish -p $VSCE_TOKEN
+    
+    - name: Publish pre-release to vscode marketplace
+      run: vsce publish -p $VSCE_TOKEN --pre-release
       env:
         VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
-        
-    - name: Publish to open vsx marketplace 
-      run: npx ovsx publish robocorp-code.vsix -p $OPEN_VSX_TOKEN
-      env:
-        OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}

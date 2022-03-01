@@ -1,3 +1,12 @@
+New in NEXT
+-----------------------------
+
+- Created action: `Robocorp: Clear Robocorp (RCC) environments and restart Robocorp Code`.
+- RCC updated to v11.6.4.
+- Properly notify of timeouts executing RCC.
+- Raised timeout for uploading Robots.
+
+
 New in 0.27.1 (2022-02-04)
 -----------------------------
 

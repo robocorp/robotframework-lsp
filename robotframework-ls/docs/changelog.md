@@ -1,3 +1,9 @@
+New in NEXT
+-----------------------------
+
+- Semantic highlighting supports Gherkin style (patch by @weltings)
+
+
 New in 0.41.0 (2022-02-22)
 -----------------------------
 
