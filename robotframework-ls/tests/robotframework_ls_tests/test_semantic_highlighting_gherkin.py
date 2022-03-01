@@ -3,8 +3,9 @@ from robotframework_ls.impl.semantic_tokens import decode_semantic_tokens
 
 robot_framework_template_file = """
 *** Settings ***
-Library   my.lib
-                    
+Library    my.lib
+Library    Requests
+Library    Module                     
 *** Test Cases ***
 Foobar
     <PLACEHOLDER_TESTCASE_KEYWORD>

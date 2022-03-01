@@ -92,12 +92,31 @@ def extract_gherkin_token_from_keyword(keyword_token):
     return gherkin_token
 
 
-def extract_library_token_from_keyword(keyword_token):
+def extract_library_token_from_keyword(keyword_token, context):
     library_token = None
     library_token_length = keyword_token.value.rfind(".")
     if library_token_length > 0:
-        library_token = keyword_token.extract_token("name", library_token_length)
+        imported_libraries = get_list_with_imported_library_names(context)
+        library_name = keyword_token.value[:library_token_length]
+        if library_name in imported_libraries:
+            library_token = keyword_token.extract_token("name", library_token_length)
     return library_token
+
+
+def get_list_with_imported_library_names(context):
+    library_names = []
+    import os
+    from robot.api import Token
+
+    for library_import in context.get_imported_libraries():
+        for token in library_import:
+            if token.type == Token.NAME:
+                library_name = os.path.basename(token.value)
+                if os.path.splitext(library_name)[1] == ".py":
+                    library_names.append(os.path.splitext(library_name)[0])
+                else:
+                    library_names.append(token.value)
+    return library_names
 
 
 from robotframework_ls.impl.robot_constants import (
@@ -156,7 +175,7 @@ def semantic_tokens_range(context, range):
     return []
 
 
-def _tokenize_token(node, initial_token):
+def _tokenize_token(node, initial_token, context):
     from robotframework_ls.impl.ast_utils import (
         is_argument_keyword_name,
         CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET,
@@ -183,7 +202,9 @@ def _tokenize_token(node, initial_token):
         token_gherkin_prefix = extract_gherkin_token_from_keyword(token_keyword)
         if token_gherkin_prefix:
             yield token_gherkin_prefix, TOKEN_TYPE_TO_INDEX[token_gherkin_prefix.type]
-        token_library_prefix = extract_library_token_from_keyword(token_keyword)
+        token_library_prefix = extract_library_token_from_keyword(
+            token_keyword, context
+        )
         if token_library_prefix:
             yield token_library_prefix, TOKEN_TYPE_TO_INDEX[token_library_prefix.type]
         if token_gherkin_prefix or token_library_prefix:
@@ -372,7 +393,9 @@ def semantic_tokens_full(context: ICompletionContext):
         tokens = getattr(node, "tokens", None)
         if tokens:
             for token in tokens:
-                for token_part, token_type_index in _tokenize_token(node, token):
+                for token_part, token_type_index in _tokenize_token(
+                    node, token, context
+                ):
                     lineno = token_part.lineno - 1
                     if lineno < 0:
                         lineno = 0
