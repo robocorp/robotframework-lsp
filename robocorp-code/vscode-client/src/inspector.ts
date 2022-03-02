@@ -12,6 +12,13 @@ let _openingInspector: boolean = false;
 let _startingRootWindowNotified: boolean = false;
 
 export async function openRobocorpInspector(locatorType?: string, locator?: LocatorEntry): Promise<void> {
+    if (locatorType === "windows" && process.platform !== "win32") {
+        window.showInformationMessage(
+            "This feature is Windows specific and not supported on other platforms."
+        );
+        return; // Windows only feature
+    }
+
     if (_openingInspector) {
         if (!_startingRootWindowNotified) {
             return; // We should be showing the progress already, so, don't do anything.
