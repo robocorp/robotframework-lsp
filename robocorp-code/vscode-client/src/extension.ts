@@ -239,6 +239,7 @@ class CommandRegistry {
     private context: ExtensionContext;
     public registerErrorStubs: boolean = false;
     public useErrorStubs: boolean = false;
+    public errorMessage: string | undefined = undefined;
 
     public constructor(context: ExtensionContext) {
         this.context = context;
@@ -255,7 +256,7 @@ class CommandRegistry {
         const that = this;
         async function redirect() {
             if (that.useErrorStubs) {
-                notifyOfInitializationErrorShowOutputTab();
+                notifyOfInitializationErrorShowOutputTab(that.errorMessage);
             } else {
                 return await callback.apply(thisArg, arguments);
             }
@@ -440,18 +441,19 @@ async function clearEnvsAndRestart(progress: vscode.Progress<{ message?: string;
         notifyOfInitializationErrorShowOutputTab(msg);
         logError(msg, err, "INIT_RESTART_ROBOCORP_CODE");
     } finally {
+        if (allOk) {
+            window.showInformationMessage("RCC Environments cleared and Robocorp Code restarted.");
+            C.useErrorStubs = false;
+        } else {
+            C.useErrorStubs = true;
+        }
+
         if (okToRestartRFLS) {
             progress.report({
                 "message": `Starting Robot Framework Language Server.`,
             });
             await commands.executeCommand("robot.clearCachesAndRestartProcesses.finish.internal");
         }
-    }
-    if (allOk) {
-        window.showInformationMessage("RCC Environments cleared and Robocorp Code restarted.");
-        C.useErrorStubs = false;
-    } else {
-        C.useErrorStubs = true;
     }
 }
 
@@ -474,44 +476,50 @@ async function clearEnvsLocked(progress: vscode.Progress<{ message?: string; inc
     globalCachedPythonInfo = undefined;
 
     C.useErrorStubs = true; // Prevent any calls while restarting...
-
-    let timing = new Timing();
-    const extension = extensions.getExtension("robocorp.robotframework-lsp");
+    C.errorMessage = "Unable to use Robocorp Code actions while clearing environments.";
     let okToRestartRFLS = false;
-    if (extension) {
-        progress.report({
-            "message": `Stopping Robot Framework Language Server.`,
-        });
-        // In this case we also need to stop the language server.
-        okToRestartRFLS = await commands.executeCommand("robot.clearCachesAndRestartProcesses.start.internal");
-        OUTPUT_CHANNEL.appendLine("Stopped Robot Framework Language Server. Took: " + timing.getTotalElapsedAsStr());
-    }
-
-    let timingStop = new Timing();
-    progress.report({
-        "message": `Stopping Robocorp Code.`,
-    });
-    await langServer.stop();
-    OUTPUT_CHANNEL.appendLine("Stopped Robocorp Code. Took: " + timingStop.getTotalElapsedAsStr());
-
-    if (envsToLoCollect) {
-        await clearRCCEnvironments(rccLocation, robocorpHome, envsToLoCollect, progress);
-    }
-
     try {
-        progress.report({
-            "message": `Clearing Robocorp Code caches.`,
-        });
-        await clearRobocorpCodeCaches(robocorpHome);
-    } catch (error) {
-        let msg = "Error clearing Robocorp Code caches.";
-        logError(msg, error, "RCC_CLEAR_ENV");
-    }
+        let timing = new Timing();
+        const extension = extensions.getExtension("robocorp.robotframework-lsp");
+        if (extension) {
+            progress.report({
+                "message": `Stopping Robot Framework Language Server.`,
+            });
+            // In this case we also need to stop the language server.
+            okToRestartRFLS = await commands.executeCommand("robot.clearCachesAndRestartProcesses.start.internal");
+            OUTPUT_CHANNEL.appendLine(
+                "Stopped Robot Framework Language Server. Took: " + timing.getTotalElapsedAsStr()
+            );
+        }
 
-    progress.report({
-        "message": `Starting Robocorp Code.`,
-    });
-    langServer.start();
+        let timingStop = new Timing();
+        progress.report({
+            "message": `Stopping Robocorp Code.`,
+        });
+        await langServer.stop();
+        OUTPUT_CHANNEL.appendLine("Stopped Robocorp Code. Took: " + timingStop.getTotalElapsedAsStr());
+
+        if (envsToLoCollect) {
+            await clearRCCEnvironments(rccLocation, robocorpHome, envsToLoCollect, progress);
+        }
+
+        try {
+            progress.report({
+                "message": `Clearing Robocorp Code caches.`,
+            });
+            await clearRobocorpCodeCaches(robocorpHome);
+        } catch (error) {
+            let msg = "Error clearing Robocorp Code caches.";
+            logError(msg, error, "RCC_CLEAR_ENV");
+        }
+
+        progress.report({
+            "message": `Starting Robocorp Code.`,
+        });
+        langServer.start();
+    } finally {
+        C.errorMessage = undefined;
+    }
     return { "okToRestartRFLS": okToRestartRFLS };
 }
 
