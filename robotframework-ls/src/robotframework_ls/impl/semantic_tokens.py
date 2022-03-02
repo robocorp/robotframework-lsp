@@ -91,7 +91,9 @@ def _extract_gherkin_token_from_keyword(keyword_token: _DummyToken):
     return gherkin_token
 
 
-def _extract_library_token_from_keyword(keyword_token: _DummyToken, context: ICompletionContext) -> Optional[_DummyToken]:
+def _extract_library_token_from_keyword(
+    keyword_token: _DummyToken, context: ICompletionContext
+) -> Optional[_DummyToken]:
     if not "." in keyword_token.value:
         return None
     library_token = None
