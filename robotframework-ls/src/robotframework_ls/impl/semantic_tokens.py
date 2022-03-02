@@ -113,9 +113,11 @@ def get_list_with_imported_library_names(context):
             if token.type == Token.NAME:
                 library_name = os.path.basename(token.value)
                 if os.path.splitext(library_name)[1] == ".py":
-                    library_names.append(os.path.splitext(library_name)[0])
+                    custom_library = os.path.splitext(library_name)[0]
+                    library_names.append(custom_library)
                 else:
-                    library_names.append(token.value)
+                    third_party_library = token.value
+                    library_names.append(third_party_library)
     return library_names
 
 
