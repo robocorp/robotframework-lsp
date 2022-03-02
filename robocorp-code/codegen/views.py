@@ -188,6 +188,11 @@ TREE_VIEW_CONTAINERS = [
                             MenuGroup.NAVIGATION,
                             "robocorp-code:single-robot-selected",
                         ),
+                        Menu(
+                            "robocorp.newRobocorpInspectorWindows",
+                            MenuGroup.NAVIGATION,
+                            "robocorp-code:single-robot-selected",
+                        ),
                     ],
                     "view/item/context": [
                         Menu(

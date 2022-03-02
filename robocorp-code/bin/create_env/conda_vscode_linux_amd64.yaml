@@ -12,5 +12,5 @@ dependencies:
   - pyqt=5.12.3
 
   - pip:
-    - robocorp-inspector==0.5.0
+    - robocorp-inspector==0.6.0
     - robotframework==4.1

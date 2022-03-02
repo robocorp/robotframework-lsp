@@ -41,6 +41,7 @@ ROBOCORP_REMOVE_LOCATOR_FROM_JSON = "robocorp.removeLocatorFromJson"  # Remove L
 ROBOCORP_OPEN_CLOUD_HOME = "robocorp.openCloudHome"  # Open cloud home
 ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER = "robocorp.newRobocorpInspectorBrowser"  # Add Browser Locator
 ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE = "robocorp.newRobocorpInspectorImage"  # Add Image Locator
+ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS = "robocorp.newRobocorpInspectorWindows"  # Add Windows Locator
 ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR = "robocorp.editRobocorpInspectorLocator"  # Edit locator
 ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL = "robocorp.copyLocatorToClipboard.internal"  # Copy locator name to clipboard
 ROBOCORP_OPEN_ROBOT_TREE_SELECTION = "robocorp.openRobotTreeSelection"  # Open robot.yaml
