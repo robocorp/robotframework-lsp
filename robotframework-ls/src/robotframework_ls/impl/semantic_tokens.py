@@ -1,9 +1,7 @@
-from operator import index
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Set, Iterator
 import itertools
-from robocorp_ls_core.protocols import IDocument, IMonitor
+from robocorp_ls_core.protocols import IDocument
 from robotframework_ls.impl.protocols import ICompletionContext
-from robocorp_ls_core.basic import isinstance_name
 
 
 TOKEN_TYPES = [
@@ -97,46 +95,45 @@ def extract_library_token_from_keyword(keyword_token, context):
     if not "." in keyword_token.value:
         return None
     library_token = None
-    library_references = get_list_of_potential_library_names_from_keyword(
+    potential_candidates = _get_potential_library_names_from_keyword(
         keyword_token.value
     )
-    imported_libraries = get_list_of_library_names_from_settings(context)
-    for reference in library_references:
-        if reference in imported_libraries:
-            library_token = keyword_token.extract_token("name", len(reference))
+    imported_libraries = _get_library_names_from_settings(context)
+    for library_name in potential_candidates:
+        if library_name in imported_libraries:
+            library_token = keyword_token.extract_token("name", len(library_name))
             break
     return library_token
 
 
-def get_list_of_potential_library_names_from_keyword(keyword_name):
-    potential_library_names = []
+def _get_potential_library_names_from_keyword(keyword_name: str) -> Iterator[str]:
     name_length = -1
     while True:
         name_length = keyword_name.find(".", name_length + 1)
         if name_length == -1:
             break
         library_name = keyword_name[:name_length].lower()
-        potential_library_names.append(library_name)
-    return potential_library_names
+        yield library_name
 
 
-def get_list_of_library_names_from_settings(context):
+def _get_library_names_from_settings(context: ICompletionContext) -> Set[str]:
     from robot.api import Token
     import os
 
-    library_names = []
-    append = library_names.append
+    library_names = set()
+    add = library_names.add
 
     for library_import in context.get_imported_libraries():
-        for token in library_import:
-            if token.type == Token.NAME:
-                library_name = os.path.basename(token.value)
-                if os.path.splitext(library_name)[1] == ".py":
-                    custom_library = os.path.splitext(library_name)[0].lower()
-                    append(custom_library)
-                else:
-                    third_party_library = token.value.lower()
-                    append(third_party_library)
+        tokens = library_import.get_tokens(Token.NAME)
+        for token in tokens:
+            library_name = os.path.basename(token.value)
+            if os.path.splitext(library_name)[1] == ".py":
+                custom_library = os.path.splitext(library_name)[0].lower()
+                add(custom_library)
+            else:
+                third_party_library = token.value.lower()
+                add(third_party_library)
+
     return library_names
 
 
