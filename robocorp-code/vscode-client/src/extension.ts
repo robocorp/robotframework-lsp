@@ -123,6 +123,7 @@ import { getLanguageServerPythonInfoUncached } from "./extensionCreateEnv";
 import { registerDebugger } from "./debugger";
 import { clearRCCEnvironments, clearRobocorpCodeCaches, computeEnvsToCollect } from "./clear";
 import { Mutex } from "./mutex";
+import { mergeEnviron } from "./subprocess";
 
 interface InterpreterInfo {
     pythonExe: string;
@@ -216,8 +217,9 @@ const serverOptions: ServerOptions = async function () {
             executableAndEnvEnviron = executableAndEnv.environ;
         }
 
+        let finalEnv = mergeEnviron({ ...executableAndEnvEnviron, PYTHONPATH: src });
         const serverProcess = cp.spawn(executableAndEnv.pythonExe, args, {
-            env: { ...process.env, ...executableAndEnvEnviron, PYTHONPATH: src },
+            env: finalEnv,
             cwd: path.dirname(executableAndEnv.pythonExe),
         });
         if (!serverProcess || !serverProcess.pid) {

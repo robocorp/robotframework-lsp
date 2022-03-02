@@ -8,7 +8,7 @@ import { fileExists, getExtensionRelativeFile } from "./files";
 import { workspace, window, ProgressLocation, CancellationToken, Progress, extensions } from "vscode";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import { Timing, sleep } from "./time";
-import { execFilePromise, ExecFileReturn } from "./subprocess";
+import { execFilePromise, ExecFileReturn, mergeEnviron } from "./subprocess";
 import * as roboConfig from "./robocorpSettings";
 
 export async function getRobocorpHome(): Promise<string> {
@@ -29,19 +29,7 @@ export async function getRobocorpHome(): Promise<string> {
 }
 
 export function createEnvWithRobocorpHome(robocorpHome: string): { [key: string]: string | null } {
-    let env: { [key: string]: string | null } = {};
-    if (process.platform == "win32") {
-        Object.keys(process.env).forEach(function (key) {
-            // We could have something as `Path` -- convert it to `PATH`.
-            env[key.toUpperCase()] = process.env[key];
-        });
-    } else {
-        env = { ...process.env };
-    }
-
-    if (robocorpHome) {
-        env["ROBOCORP_HOME"] = robocorpHome;
-    }
+    let env: { [key: string]: string | null } = mergeEnviron({ "ROBOCORP_HOME": robocorpHome });
     return env;
 }
 
@@ -306,10 +294,7 @@ export async function runConfigDiagnostics(
 ): Promise<RCCDiagnostics | undefined> {
     try {
         let timing = new Timing();
-        let env = { ...process.env };
-        if (robocorpHome) {
-            env["ROBOCORP_HOME"] = robocorpHome;
-        }
+        let env = mergeEnviron({ "ROBOCORP_HOME": robocorpHome });
         let configureLongpathsOutput: ExecFileReturn = await execFilePromise(
             rccLocation,
             ["configure", "diagnostics", "-j", "--controller", "RobocorpCode"],

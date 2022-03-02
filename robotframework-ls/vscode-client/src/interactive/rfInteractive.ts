@@ -13,7 +13,6 @@
 
 import { commands, ExtensionContext, window } from "vscode";
 import * as vscode from "vscode";
-import { LanguageClient } from "vscode-languageclient/node";
 import { logError, OUTPUT_CHANNEL } from "../channel";
 import { languageServerClient } from "../extension";
 

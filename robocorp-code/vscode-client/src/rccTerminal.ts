@@ -4,6 +4,7 @@ import * as pathModule from "path";
 import { listAndAskRobotSelection, resolveInterpreter } from "./activities";
 import * as roboCommands from "./robocorpCommands";
 import { getRccLocation } from "./rcc";
+import { mergeEnviron } from "./subprocess";
 
 export async function askAndCreateRccTerminal() {
     let robot: LocalRobotMetadataInfo = await listAndAskRobotSelection(
@@ -43,15 +44,7 @@ export async function createRccTerminal(robotInfo: LocalRobotMetadataInfo) {
                 return;
             }
 
-            let env = {};
-            if (process.platform == "win32") {
-                Object.keys(process.env).forEach(function (key) {
-                    // We could have something as `Path` -- convert it to `PATH`.
-                    env[key.toUpperCase()] = process.env[key];
-                });
-            } else {
-                env = { ...process.env };
-            }
+            let env = mergeEnviron();
 
             // Update env to contain rcc location.
             if (interpreter.environ) {

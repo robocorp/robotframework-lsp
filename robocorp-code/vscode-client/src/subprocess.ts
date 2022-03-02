@@ -52,7 +52,7 @@ interface ExecConfigOptions {
 }
 
 /**
- * @param options may be something as: { env: { ...process.env, ENV_VAR: 'test' } }
+ * @param options may be something as: { env: mergeEnviron({ ENV_VAR: 'test' }) }
  */
 export async function execFilePromise(
     command: string,
@@ -113,4 +113,22 @@ export async function execFilePromise(
         }
         throw exc;
     }
+}
+
+export function mergeEnviron(environ?: { [key: string]: string }): { [key: string]: string } {
+    let baseEnv: { [key: string]: string | null } = {};
+    if (process.platform == "win32") {
+        Object.keys(process.env).forEach(function (key) {
+            // We could have something as `Path` -- convert it to `PATH`.
+            baseEnv[key.toUpperCase()] = process.env[key];
+        });
+    } else {
+        baseEnv = { ...process.env };
+    }
+
+    if (!environ) {
+        return baseEnv;
+    }
+
+    return { ...baseEnv, ...environ };
 }

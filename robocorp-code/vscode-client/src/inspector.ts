@@ -4,7 +4,7 @@ import { getLanguageServerPythonInfo } from "./extension";
 import { verifyFileExists } from "./files";
 import { listAndAskRobotSelection } from "./activities";
 import { getSelectedLocator, getSelectedRobot, LocatorEntry, RobotEntry } from "./viewsCommon";
-import { execFilePromise, ExecFileReturn } from "./subprocess";
+import { execFilePromise, ExecFileReturn, mergeEnviron } from "./subprocess";
 import { OUTPUT_CHANNEL } from "./channel";
 import { ChildProcess } from "child_process";
 
@@ -160,7 +160,7 @@ async function startInspectorCLI(
         pythonExecutable,
         completeArgs,
         {
-            env: { ...process.env, ...environ },
+            env: mergeEnviron(environ),
             cwd,
         },
         {
