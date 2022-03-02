@@ -1,3 +1,4 @@
+from operator import index
 from typing import List, Tuple, Optional
 import itertools
 from robocorp_ls_core.protocols import IDocument, IMonitor
@@ -93,31 +94,45 @@ def extract_gherkin_token_from_keyword(keyword_token):
 
 
 def extract_library_token_from_keyword(keyword_token, context):
+    if not "." in keyword_token.value:
+        return None
     library_token = None
-    library_token_length = keyword_token.value.rfind(".")
-    if library_token_length > 0:
-        imported_libraries = get_list_with_imported_library_names(context)
-        library_name = keyword_token.value[:library_token_length]
-        if library_name in imported_libraries:
-            library_token = keyword_token.extract_token("name", library_token_length)
+    library_references = get_list_of_potential_library_names_from_keyword(keyword_token.value)
+    imported_libraries = get_list_of_library_names_from_settings(context)
+    for reference in library_references:
+        if reference in imported_libraries:
+            library_token = keyword_token.extract_token("name", len(reference))
+            break
     return library_token
 
+def get_list_of_potential_library_names_from_keyword(keyword_name):
+    potential_library_names = []
+    name_length = -1
+    while True:
+        name_length = keyword_name.find(".", name_length + 1)
+        if name_length == -1:
+            break
+        library_name = keyword_name[:name_length].lower()
+        potential_library_names.append(library_name) 
+    return potential_library_names
 
-def get_list_with_imported_library_names(context):
-    library_names = []
-    import os
+def get_list_of_library_names_from_settings(context):
     from robot.api import Token
+    import os
+
+    library_names = []
+    append = library_names.append
 
     for library_import in context.get_imported_libraries():
         for token in library_import:
             if token.type == Token.NAME:
                 library_name = os.path.basename(token.value)
                 if os.path.splitext(library_name)[1] == ".py":
-                    custom_library = os.path.splitext(library_name)[0]
-                    library_names.append(custom_library)
+                    custom_library = os.path.splitext(library_name)[0].lower()
+                    append(custom_library)
                 else:
-                    third_party_library = token.value
-                    library_names.append(third_party_library)
+                    third_party_library = token.value.lower()
+                    append(third_party_library)
     return library_names
 
 
