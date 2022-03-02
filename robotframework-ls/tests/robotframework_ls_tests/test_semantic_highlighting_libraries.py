@@ -136,7 +136,7 @@ def test_library_prefix_combined_with_dots_in_keyword(workspace):
     assert semantic_tokens.get("Open Version 1.0, workspace") == "keywordNameCall"
 
 
-def test_library_prefix_combined_with_dots_in_keyword(workspace):
+def test_library_name_in_dot_notation_should_be_highlighted(workspace):
     robot_source_file = set_test_case_with_keyword("A.B.Append to list", workspace)
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
