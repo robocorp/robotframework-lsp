@@ -1,6 +1,4 @@
 from convert import convert_case_to_constant
-import os
-
 
 class Command(object):
     def __init__(
