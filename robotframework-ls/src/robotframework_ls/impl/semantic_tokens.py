@@ -120,7 +120,7 @@ def _get_library_names_from_settings(context: ICompletionContext) -> Set[str]:
     from robot.api import Token
     import os
 
-    library_names = set()
+    library_names: Set[str] = set()
     add = library_names.add
 
     for library_import in context.get_imported_libraries():
