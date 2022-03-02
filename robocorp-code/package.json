@@ -59,6 +59,7 @@
         "onCommand:robocorp.openCloudHome",
         "onCommand:robocorp.newRobocorpInspectorBrowser",
         "onCommand:robocorp.newRobocorpInspectorImage",
+        "onCommand:robocorp.newRobocorpInspectorWindows",
         "onCommand:robocorp.editRobocorpInspectorLocator",
         "onCommand:robocorp.copyLocatorToClipboard.internal",
         "onCommand:robocorp.openRobotTreeSelection",
@@ -368,6 +369,12 @@
                 "icon": "$(desktop-download)"
             },
             {
+                "command": "robocorp.newRobocorpInspectorWindows",
+                "title": "Add Windows Locator",
+                "category": "Robocorp",
+                "icon": "$(window)"
+            },
+            {
                 "command": "robocorp.editRobocorpInspectorLocator",
                 "title": "Edit locator",
                 "category": "Robocorp",
@@ -558,6 +565,11 @@
                 },
                 {
                     "command": "robocorp.newRobocorpInspectorImage",
+                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.newRobocorpInspectorWindows",
                     "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
                     "group": "navigation"
                 },

@@ -114,6 +114,7 @@ import {
     ROBOCORP_DISCONNECT_VAULT,
     ROBOCORP_OPEN_VAULT_HELP,
     ROBOCORP_CLEAR_ENV_AND_RESTART,
+    ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS,
 } from "./robocorpCommands";
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -326,6 +327,7 @@ function registerRobocorpCodeCommands(C: CommandRegistry) {
     );
     C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER, () => inspector.openRobocorpInspector("browser"));
     C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE, () => inspector.openRobocorpInspector("image"));
+    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS, () => inspector.openRobocorpInspector("windows"));
     C.register(ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL, (locator?: LocatorEntry) =>
         copySelectedToClipboard(locator)
     );

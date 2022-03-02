@@ -1,4 +1,5 @@
 from convert import convert_case_to_constant
+import os
 
 
 class Command(object):
@@ -307,6 +308,13 @@ COMMANDS = [
         add_to_package_json=True,
         server_handled=False,
         icon="$(desktop-download)",
+    ),
+    Command(
+        "robocorp.newRobocorpInspectorWindows",
+        "Add Windows Locator",
+        add_to_package_json=True,
+        server_handled=False,
+        icon="$(window)",
     ),
     Command(
         "robocorp.editRobocorpInspectorLocator",
