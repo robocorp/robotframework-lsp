@@ -97,13 +97,16 @@ def extract_library_token_from_keyword(keyword_token, context):
     if not "." in keyword_token.value:
         return None
     library_token = None
-    library_references = get_list_of_potential_library_names_from_keyword(keyword_token.value)
+    library_references = get_list_of_potential_library_names_from_keyword(
+        keyword_token.value
+    )
     imported_libraries = get_list_of_library_names_from_settings(context)
     for reference in library_references:
         if reference in imported_libraries:
             library_token = keyword_token.extract_token("name", len(reference))
             break
     return library_token
+
 
 def get_list_of_potential_library_names_from_keyword(keyword_name):
     potential_library_names = []
@@ -113,8 +116,9 @@ def get_list_of_potential_library_names_from_keyword(keyword_name):
         if name_length == -1:
             break
         library_name = keyword_name[:name_length].lower()
-        potential_library_names.append(library_name) 
+        potential_library_names.append(library_name)
     return potential_library_names
+
 
 def get_list_of_library_names_from_settings(context):
     from robot.api import Token

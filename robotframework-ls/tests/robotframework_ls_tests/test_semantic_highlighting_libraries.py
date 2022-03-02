@@ -145,6 +145,7 @@ def test_library_name_in_dot_notation_should_be_highlighted(workspace):
     assert semantic_tokens.get("A.B") == "name"
     assert semantic_tokens.get("Append to list") == "keywordNameCall"
 
+
 def test_library_names_with_different_case_should_be_highlighted(workspace):
     robot_source_file = set_test_case_with_keyword(
         "MY_LIBRARY.Open Version 1.0, workspace", workspace
