@@ -1,4 +1,4 @@
-from typing import List, Tuple, Set, Iterator
+from typing import List, Tuple, Set, Iterator, Optional
 import itertools
 from robocorp_ls_core.protocols import IDocument
 from robotframework_ls.impl.protocols import ICompletionContext
@@ -78,7 +78,7 @@ class _DummyToken(object):
         self.col_offset = extracted_token.end_col_offset + 1
 
 
-def extract_gherkin_token_from_keyword(keyword_token):
+def _extract_gherkin_token_from_keyword(keyword_token: _DummyToken):
     gherkin_token = None
     import re
 
@@ -91,7 +91,7 @@ def extract_gherkin_token_from_keyword(keyword_token):
     return gherkin_token
 
 
-def extract_library_token_from_keyword(keyword_token, context):
+def _extract_library_token_from_keyword(keyword_token: _DummyToken, context: ICompletionContext) -> Optional[_DummyToken]:
     if not "." in keyword_token.value:
         return None
     library_token = None
@@ -217,10 +217,10 @@ def _tokenize_token(node, initial_token, context):
 
     if initial_token_type == KEYWORD:
         token_keyword = _DummyToken(initial_token)
-        token_gherkin_prefix = extract_gherkin_token_from_keyword(token_keyword)
+        token_gherkin_prefix = _extract_gherkin_token_from_keyword(token_keyword)
         if token_gherkin_prefix:
             yield token_gherkin_prefix, TOKEN_TYPE_TO_INDEX[token_gherkin_prefix.type]
-        token_library_prefix = extract_library_token_from_keyword(
+        token_library_prefix = _extract_library_token_from_keyword(
             token_keyword, context
         )
         if token_library_prefix:
