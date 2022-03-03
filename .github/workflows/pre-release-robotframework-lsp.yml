@@ -43,7 +43,7 @@ jobs:
       run: python -m dev set-version ${{ github.event.inputs.version }}
       
     - name: Update vscode required version
-      run: python -m dev codegen/codegen_package.py
+      run: python codegen/codegen_package.py
       env:
         VSCODE_ENGINE_VERSION: 1.63.0
 
