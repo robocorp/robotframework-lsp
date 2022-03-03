@@ -1,8 +1,7 @@
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Set, Iterator, Optional
 import itertools
-from robocorp_ls_core.protocols import IDocument, IMonitor
+from robocorp_ls_core.protocols import IDocument
 from robotframework_ls.impl.protocols import ICompletionContext
-from robocorp_ls_core.basic import isinstance_name
 
 
 TOKEN_TYPES = [
@@ -79,7 +78,7 @@ class _DummyToken(object):
         self.col_offset = extracted_token.end_col_offset + 1
 
 
-def extract_gherkin_token_from_keyword(keyword_token):
+def _extract_gherkin_token_from_keyword(keyword_token: _DummyToken):
     gherkin_token = None
     import re
 
@@ -92,12 +91,52 @@ def extract_gherkin_token_from_keyword(keyword_token):
     return gherkin_token
 
 
-def extract_library_token_from_keyword(keyword_token):
+def _extract_library_token_from_keyword(
+    keyword_token: _DummyToken, context: ICompletionContext
+) -> Optional[_DummyToken]:
+    if not "." in keyword_token.value:
+        return None
     library_token = None
-    library_token_length = keyword_token.value.rfind(".")
-    if library_token_length > 0:
-        library_token = keyword_token.extract_token("name", library_token_length)
+    potential_candidates = _get_potential_library_names_from_keyword(
+        keyword_token.value
+    )
+    imported_libraries = _get_library_names_from_settings(context)
+    for library_name in potential_candidates:
+        if library_name in imported_libraries:
+            library_token = keyword_token.extract_token("name", len(library_name))
+            break
     return library_token
+
+
+def _get_potential_library_names_from_keyword(keyword_name: str) -> Iterator[str]:
+    name_length = -1
+    while True:
+        name_length = keyword_name.find(".", name_length + 1)
+        if name_length == -1:
+            break
+        library_name = keyword_name[:name_length].lower()
+        yield library_name
+
+
+def _get_library_names_from_settings(context: ICompletionContext) -> Set[str]:
+    from robot.api import Token
+    import os
+
+    library_names: Set[str] = set()
+    add = library_names.add
+
+    for library_import in context.get_imported_libraries():
+        tokens = library_import.get_tokens(Token.NAME)
+        for token in tokens:
+            library_name = os.path.basename(token.value)
+            if os.path.splitext(library_name)[1] == ".py":
+                custom_library = os.path.splitext(library_name)[0].lower()
+                add(custom_library)
+            else:
+                third_party_library = token.value.lower()
+                add(third_party_library)
+
+    return library_names
 
 
 from robotframework_ls.impl.robot_constants import (
@@ -156,7 +195,7 @@ def semantic_tokens_range(context, range):
     return []
 
 
-def _tokenize_token(node, initial_token):
+def _tokenize_token(node, initial_token, context):
     from robotframework_ls.impl.ast_utils import (
         is_argument_keyword_name,
         CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET,
@@ -180,10 +219,12 @@ def _tokenize_token(node, initial_token):
 
     if initial_token_type == KEYWORD:
         token_keyword = _DummyToken(initial_token)
-        token_gherkin_prefix = extract_gherkin_token_from_keyword(token_keyword)
+        token_gherkin_prefix = _extract_gherkin_token_from_keyword(token_keyword)
         if token_gherkin_prefix:
             yield token_gherkin_prefix, TOKEN_TYPE_TO_INDEX[token_gherkin_prefix.type]
-        token_library_prefix = extract_library_token_from_keyword(token_keyword)
+        token_library_prefix = _extract_library_token_from_keyword(
+            token_keyword, context
+        )
         if token_library_prefix:
             yield token_library_prefix, TOKEN_TYPE_TO_INDEX[token_library_prefix.type]
         if token_gherkin_prefix or token_library_prefix:
@@ -372,7 +413,9 @@ def semantic_tokens_full(context: ICompletionContext):
         tokens = getattr(node, "tokens", None)
         if tokens:
             for token in tokens:
-                for token_part, token_type_index in _tokenize_token(node, token):
+                for token_part, token_type_index in _tokenize_token(
+                    node, token, context
+                ):
                     lineno = token_part.lineno - 1
                     if lineno < 0:
                         lineno = 0

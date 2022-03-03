@@ -65,6 +65,9 @@ class INode(Protocol):
     def get_token(self, name: str) -> IRobotToken:
         pass
 
+    def get_tokens(self, name: str) -> List[IRobotToken]:
+        pass
+
 
 class ILibraryImportNode(INode, Protocol):
     name: str
