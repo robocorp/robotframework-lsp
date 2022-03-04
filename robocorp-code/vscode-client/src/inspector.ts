@@ -125,14 +125,6 @@ export async function _internalOpenRobocorpInspector(locatorType?: string, locat
                     _startingRootWindowNotified = true;
                     resolveProgress();
                 }
-                if (process.platform == "win32") {
-                    if (s.includes("EdgeHTML is deprecated") || s.includes("MSHTML is deprecated")) {
-                        const msg =
-                            "\n\nError opening locators: Microsoft Edge Webview 2 not detected.\nPlease install it from: https://developer.microsoft.com/en-us/microsoft-edge/webview2/\n\n";
-                        window.showErrorMessage(msg);
-                        OUTPUT_CHANNEL.append(msg);
-                    }
-                }
             });
             childProcess.stdout.on("data", function (data: any) {
                 append("" + data);
