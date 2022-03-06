@@ -76,7 +76,6 @@ def test_gherkin_at_beginning_of_keyword_should_be_highlighed(workspace):
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
     )
-    print(semantic_tokens)
     assert semantic_tokens.get("Given") == "control"
     assert (
         semantic_tokens.get("Some BDD description of desired system behaviour")

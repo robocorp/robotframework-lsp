@@ -89,13 +89,17 @@ class CompletionContextDependencyGraph:
         if info:
             yield from info
 
-    def iter_resource_imports_as_docs(
+    def iter_all_libraries(self) -> Iterator[LibraryDependencyInfo]:
+        for infos in self._doc_uri_to_library_infos.values():
+            yield from infos
+
+    def iter_all_resource_imports_with_docs(
         self,
     ) -> Iterator[Tuple[IResourceImportNode, Optional[IRobotDocument]]]:
         for infos in self._doc_uri_to_resource_imports.values():
             yield from infos
 
-    def iter_variable_imports_as_docs(
+    def iter_all_variable_imports_as_docs(
         self,
     ) -> Iterator[IRobotDocument]:
         for variable_imports in self._doc_uri_to_variable_imports.values():

@@ -419,7 +419,7 @@ def _collect_from_context(
         collector,
     )
 
-    for node, resource_doc in dependency_graph.iter_resource_imports_as_docs():
+    for node, resource_doc in dependency_graph.iter_all_resource_imports_with_docs():
         completion_context.check_cancelled()
 
         if resource_doc is None:

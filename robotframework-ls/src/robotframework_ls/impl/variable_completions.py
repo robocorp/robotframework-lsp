@@ -345,12 +345,12 @@ def _collect_variables_from_context(
     if not only_current_doc:
         dependency_graph = completion_context.collect_dependency_graph()
 
-        for _, resource_doc in dependency_graph.iter_resource_imports_as_docs():
+        for _, resource_doc in dependency_graph.iter_all_resource_imports_with_docs():
             if resource_doc is not None:
                 new_ctx = completion_context.create_copy(resource_doc)
                 _collect_current_doc_variables(new_ctx, collector)
 
-        for variable_doc in dependency_graph.iter_variable_imports_as_docs():
+        for variable_doc in dependency_graph.iter_all_variable_imports_as_docs():
             _collect_variables_from_variable_import_doc(variable_doc, collector)
 
 

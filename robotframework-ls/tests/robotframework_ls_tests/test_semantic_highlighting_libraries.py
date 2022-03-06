@@ -1,6 +1,3 @@
-from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-from robotframework_ls.impl.semantic_tokens import decode_semantic_tokens
-
 robot_framework_template_file = """
 *** Settings ***
 Library    XML    use_lxml=${True}
@@ -48,6 +45,8 @@ def set_keyword_in_keyword_section(keyword, workspace):
 
 def get_semantic_tokens_from_language_server(workspace, doc):
     from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
+    from robotframework_ls.impl.semantic_tokens import decode_semantic_tokens
 
     context = CompletionContext(doc, workspace=workspace.ws)
     semantic_tokens = semantic_tokens_full(context)
@@ -72,7 +71,7 @@ def test_keyword_should_be_highlighted(workspace):
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
     )
-    print(semantic_tokens)
+
     assert semantic_tokens.get("Parse XML") == "keywordNameCall"
 
 
@@ -83,7 +82,7 @@ def test_library_prefix_should_be_highlighted(workspace):
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
     )
-    print(semantic_tokens)
+
     assert semantic_tokens.get("XML") == "name"
 
 
@@ -94,7 +93,7 @@ def test_library_imported_with_name_should_be_highlighted(workspace):
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
     )
-    print(semantic_tokens)
+
     assert semantic_tokens.get("Selenium") == "name"
     assert semantic_tokens.get("Open Browser") == "keywordNameCall"
 
@@ -104,7 +103,7 @@ def test_custom_library_should_be_highlighted(workspace):
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
     )
-    print(semantic_tokens)
+
     assert semantic_tokens.get("my_library") == "name"
     assert semantic_tokens.get("Foobar") == "keywordNameCall"
 
@@ -116,7 +115,7 @@ def test_keyword_that_contains_dot_should_not_be_mistaken_for_library(workspace)
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
     )
-    print(semantic_tokens)
+
     assert not semantic_tokens.get("Transport costs to destination are 389")
     assert (
         semantic_tokens.get("Transport costs to destination are 389.50")
@@ -131,7 +130,7 @@ def test_library_prefix_combined_with_dots_in_keyword(workspace):
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
     )
-    print(semantic_tokens)
+
     assert semantic_tokens.get("my_library") == "name"
     assert semantic_tokens.get("Open Version 1.0, workspace") == "keywordNameCall"
 
@@ -141,7 +140,7 @@ def test_library_name_in_dot_notation_should_be_highlighted(workspace):
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
     )
-    print(semantic_tokens)
+
     assert semantic_tokens.get("A.B") == "name"
     assert semantic_tokens.get("Append to list") == "keywordNameCall"
 
@@ -153,6 +152,6 @@ def test_library_names_with_different_case_should_be_highlighted(workspace):
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
     )
-    print(semantic_tokens)
+
     assert semantic_tokens.get("MY_LIBRARY") == "name"
     assert semantic_tokens.get("Open Version 1.0, workspace") == "keywordNameCall"

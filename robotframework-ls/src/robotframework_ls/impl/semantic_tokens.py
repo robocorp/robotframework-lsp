@@ -2,6 +2,7 @@ from typing import List, Tuple, Set, Iterator, Optional
 import itertools
 from robocorp_ls_core.protocols import IDocument
 from robotframework_ls.impl.protocols import ICompletionContext
+import os
 
 
 TOKEN_TYPES = [
@@ -100,7 +101,7 @@ def _extract_library_token_from_keyword(
     potential_candidates = _get_potential_library_names_from_keyword(
         keyword_token.value
     )
-    imported_libraries = _get_library_names_from_settings(context)
+    imported_libraries = set(_iter_dependent_names(context))
     for library_name in potential_candidates:
         if library_name in imported_libraries:
             library_token = keyword_token.extract_token("name", len(library_name))
@@ -118,25 +119,38 @@ def _get_potential_library_names_from_keyword(keyword_name: str) -> Iterator[str
         yield library_name
 
 
-def _get_library_names_from_settings(context: ICompletionContext) -> Set[str]:
-    from robot.api import Token
-    import os
+def _iter_dependent_names(context: ICompletionContext) -> Iterator[str]:
+    """
+    Provides names which can be used as (library/resource) prefixes
+    for keyword calls.
 
-    library_names: Set[str] = set()
-    add = library_names.add
-
-    for library_import in context.get_imported_libraries():
-        tokens = library_import.get_tokens(Token.NAME)
-        for token in tokens:
-            library_name = os.path.basename(token.value)
-            if os.path.splitext(library_name)[1] == ".py":
-                custom_library = os.path.splitext(library_name)[0].lower()
-                add(custom_library)
+    Note: names returned are all lower-case as case should not be taken into
+    account for matches.
+    """
+    dependency_graph = context.collect_dependency_graph()
+    for library in dependency_graph.iter_all_libraries():
+        name = library.name
+        if name:
+            library_name = os.path.basename(name)
+            basename, ext = os.path.splitext(library_name)
+            if ext == ".py":
+                yield basename.lower()
             else:
-                third_party_library = token.value.lower()
-                add(third_party_library)
+                yield name.lower()
 
-    return library_names
+        alias = library.alias
+        if alias:
+            yield alias.lower()
+
+    for resource_node, _ in dependency_graph.iter_all_resource_imports_with_docs():
+        name = resource_node.name
+        if name:
+            resource_name = os.path.basename(name)
+            basename, ext = os.path.splitext(resource_name)
+            if ext in (".robot", ".txt"):
+                yield basename.lower()
+            else:
+                yield name.lower()
 
 
 from robotframework_ls.impl.robot_constants import (

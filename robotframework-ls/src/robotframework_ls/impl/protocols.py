@@ -578,12 +578,15 @@ class ICompletionContextDependencyGraph(Protocol):
         Provides an iterator(doc_uri, library_dependency_infos)
         """
 
-    def iter_resource_imports_as_docs(
+    def iter_all_libraries(self) -> Iterator[LibraryDependencyInfo]:
+        pass
+
+    def iter_all_resource_imports_with_docs(
         self,
     ) -> Iterator[Tuple[IResourceImportNode, Optional[IRobotDocument]]]:
         pass
 
-    def iter_variable_imports_as_docs(
+    def iter_all_variable_imports_as_docs(
         self,
     ) -> Iterator[IRobotDocument]:
         pass
@@ -697,6 +700,11 @@ class ICompletionContext(Protocol):
         pass
 
     def get_current_keyword_definition(self) -> Optional[IKeywordDefinition]:
+        pass
+
+    def get_resource_imports(
+        self,
+    ) -> Tuple[IResourceImportNode, ...]:
         pass
 
     def get_resource_imports_as_docs(

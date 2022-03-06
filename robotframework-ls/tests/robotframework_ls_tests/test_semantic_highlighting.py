@@ -24,28 +24,202 @@ def check(found, expected):
         )
 
 
-def test_semantic_highlighting_base(workspace):
+def _setup_doc(workspace, source, root="case1", name="case1.robot"):
+    workspace.set_root(root)
+    doc = workspace.put_doc(name)
+    doc.source = source
+    return doc
+
+
+def _create_ctx_and_check(workspace, doc, expected):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
 
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """*** Settings ***
+    context = CompletionContext(doc, workspace=workspace.ws)
+    semantic_tokens = semantic_tokens_full(context)
+    check(
+        (semantic_tokens, doc),
+        expected,
+    )
+
+
+def check_simple(workspace, source, expected, root="case1", name="case1.robot"):
+    doc = _setup_doc(workspace, source, root, name)
+    _create_ctx_and_check(workspace, doc, expected)
+
+
+def test_library_highlighting_resource(workspace):
+    check_simple(
+        workspace,
+        """
+*** Settings ***
+Resource    some_resource.robot
+
+*** Test Cases ***
+Some test
+    some_resource.Some Keyword
+""",
+        [
+            ("*** Settings ***", "header"),
+            ("Resource", "setting"),
+            ("some_resource.robot", "name"),
+            ("*** Test Cases ***", "header"),
+            ("Some test", "testCaseName"),
+            ("some_resource", "name"),
+            ("Some Keyword", "keywordNameCall"),
+        ],
+    )
+
+
+def test_library_highlighting_resource_casing(workspace):
+    check_simple(
+        workspace,
+        """
+*** Settings ***
+Resource    some_resource.robot
+
+*** Test Cases ***
+Some test
+    Some_REsource.Some Keyword
+""",
+        [
+            ("*** Settings ***", "header"),
+            ("Resource", "setting"),
+            ("some_resource.robot", "name"),
+            ("*** Test Cases ***", "header"),
+            ("Some test", "testCaseName"),
+            ("Some_REsource", "name"),
+            ("Some Keyword", "keywordNameCall"),
+        ],
+    )
+
+
+def test_library_highlighting_resource_no_match(workspace):
+    check_simple(
+        workspace,
+        """
+*** Settings ***
+Resource    some_resource.robot
+
+*** Test Cases ***
+Some test
+    someresource.Some Keyword
+""",
+        [
+            ("*** Settings ***", "header"),
+            ("Resource", "setting"),
+            ("some_resource.robot", "name"),
+            ("*** Test Cases ***", "header"),
+            ("Some test", "testCaseName"),
+            ("someresource.Some Keyword", "keywordNameCall"),
+        ],
+    )
+
+
+def test_library_highlighting_deps_basic(workspace):
+    doc = _setup_doc(
+        workspace,
+        """
+*** Settings ***
+Resource    another_import.robot
+
+*** Test Cases ***
+Some test
+    Collections.Insert into list
+""",
+    )
+
+    another_doc = workspace.put_doc("another_import.robot")
+    another_doc.source = """*** Settings ***
+Library    Collections
+"""
+
+    _create_ctx_and_check(
+        workspace,
+        doc,
+        [
+            ("*** Settings ***", "header"),
+            ("Resource", "setting"),
+            ("another_import.robot", "name"),
+            ("*** Test Cases ***", "header"),
+            ("Some test", "testCaseName"),
+            ("Collections", "name"),
+            ("Insert into list", "keywordNameCall"),
+        ],
+    )
+
+
+def test_resource_highlighting_deps(workspace):
+    doc = _setup_doc(
+        workspace,
+        """
+*** Settings ***
+Resource    ./resources/resource_in_pythonpath.robot
+
+*** Test Cases ***
+Some test
+    resource_in_pythonpath.Keyword in Pythonpath
+""",
+        root="case_search_pythonpath_resource",
+        name="root.robot",
+    )
+
+    _create_ctx_and_check(
+        workspace,
+        doc,
+        [
+            ("*** Settings ***", "header"),
+            ("Resource", "setting"),
+            ("./resources/resource_in_pythonpath.robot", "name"),
+            ("*** Test Cases ***", "header"),
+            ("Some test", "testCaseName"),
+            ("resource_in_pythonpath", "name"),
+            ("Keyword in Pythonpath", "keywordNameCall"),
+        ],
+    )
+
+
+def test_library_highlighting_deps_1(workspace):
+    doc = _setup_doc(
+        workspace,
+        """
+*** Settings ***
+Library    libraries.lib_in_pythonpath
+
+*** Test Cases ***
+Some test
+    libraries.lib_in_pythonpath.find in library
+""",
+        root="case_search_pythonpath",
+        name="root.robot",
+    )
+
+    _create_ctx_and_check(
+        workspace,
+        doc,
+        [
+            ("*** Settings ***", "header"),
+            ("Library", "setting"),
+            ("libraries.lib_in_pythonpath", "name"),
+            ("*** Test Cases ***", "header"),
+            ("Some test", "testCaseName"),
+            ("libraries.lib_in_pythonpath", "name"),
+            ("find in library", "keywordNameCall"),
+        ],
+    )
+
+
+def test_semantic_highlighting_base(workspace):
+    check_simple(
+        workspace,
+        """*** Settings ***
 Library   my.lib
 
 *** Keywords ***
 Some Keyword
     [Arguments]     Some ${arg1}     Another ${arg2}
     Clear All Highlights    ${arg1}    ${arg2}
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [
             ("*** Settings ***", "header"),
             ("Library", "setting"),
@@ -75,24 +249,13 @@ Some Keyword
 
 
 def test_semantic_highlighting_arguments(workspace):
-    from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """
+    check_simple(
+        workspace,
+        """
 *** Test Cases ***
 Some Test
     Clear All Highlights    formatter=some ${arg1} other
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [
             ("*** Test Cases ***", "header"),
             ("Some Test", "testCaseName"),
@@ -109,23 +272,12 @@ Some Test
 
 
 def test_semantic_highlighting_arguments_in_doc(workspace):
-    from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """
+    check_simple(
+        workspace,
+        """
 *** Settings ***
 Documentation    Some = eq
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [
             ("*** Settings ***", "header"),
             ("Documentation", "setting"),
@@ -135,24 +287,13 @@ Documentation    Some = eq
 
 
 def test_semantic_highlighting_keyword(workspace):
-    from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """*** Keywords ***
+    check_simple(
+        workspace,
+        """*** Keywords ***
 Some Keyword
     [Arguments]     ${arg1}
     Call Keyword    ${arg1}
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [
             ("*** Keywords ***", "header"),
             ("Some Keyword", "keywordNameDefinition"),
@@ -171,44 +312,22 @@ Some Keyword
 
 
 def test_semantic_highlighting_task_name(workspace):
-    from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """*** Task ***
+    check_simple(
+        workspace,
+        """*** Task ***
 Some Task
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [("*** Task ***", "header"), ("Some Task", "testCaseName")],
     )
 
 
 def test_semantic_highlighting_comments(workspace):
-    from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """*** Comments ***
+    check_simple(
+        workspace,
+        """*** Comments ***
 Comment part 1
 Comment part 2
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [
             ("*** Comments ***", "header"),
             ("Comment part 1", "comment"),
@@ -218,24 +337,13 @@ Comment part 2
 
 
 def test_semantic_highlighting_catenate(workspace):
-    from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """*** Test Case ***
+    check_simple(
+        workspace,
+        """*** Test Case ***
 Test Case
     Catenate    FOO
     ...            Check = 22
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [
             ("*** Test Case ***", "header"),
             ("Test Case", "testCaseName"),
@@ -247,23 +355,12 @@ Test Case
 
 
 def test_semantic_highlighting_on_keyword_argument(workspace):
-    from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """*** Test Case ***
+    check_simple(
+        workspace,
+        """*** Test Case ***
 Test Case
     Run Keyword If    ${var}    Should Be Empty
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [
             ("*** Test Case ***", "header"),
             ("Test Case", "testCaseName"),
@@ -277,47 +374,25 @@ Test Case
 
 
 def test_semantic_highlighting_errors(workspace):
-    from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """*** invalid invalid ***
+    check_simple(
+        workspace,
+        """*** invalid invalid ***
 Foo
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [("*** invalid invalid ***", "error"), ("Foo", "comment")],
     )
 
 
 def test_semantic_highlighting_dotted_access_to_keyword(workspace):
-    from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """*** Settings ***
+    check_simple(
+        workspace,
+        """*** Settings ***
 Library    Collections     WITH NAME     Col
 
 *** Test Cases ***
 Test case 1
     Col.Append to list
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [
             ("*** Settings ***", "header"),
             ("Library", "setting"),
@@ -333,12 +408,9 @@ Test case 1
 
 
 def test_semantic_highlighting_dotted_access_to_keyword_suite_setup(workspace):
-    from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """*** Settings ***
+    check_simple(
+        workspace,
+        """*** Settings ***
 Library    Collections     WITH NAME     Col
 Suite Setup    Col.Append to list
 
@@ -346,15 +418,7 @@ Suite Setup    Col.Append to list
 Some test
     [Setup]     Col.Append to list
     Col.Append to list
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [
             ("*** Settings ***", "header"),
             ("Library", "setting"),
@@ -378,12 +442,9 @@ Some test
 
 
 def test_semantic_highlighting_dotted_access_to_keyword_suite_setup_2(workspace):
-    from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """*** Settings ***
+    check_simple(
+        workspace,
+        """*** Settings ***
 Library    A.B
 Suite Setup    A.B.Append to list
 
@@ -391,15 +452,7 @@ Suite Setup    A.B.Append to list
 Some test
     [Setup]     A.B.Append to list
     A.B.Append to list
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [
             ("*** Settings ***", "header"),
             ("Library", "setting"),
@@ -422,12 +475,9 @@ Some test
 
 @pytest.mark.skipif(get_robot_major_version() < 5, reason="Requires RF 5 onwards")
 def test_semantic_highlighting_try_except(workspace):
-    from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """*** Test cases ***
+    check_simple(
+        workspace,
+        """*** Test cases ***
 Try except inside try
     TRY
         TRY
@@ -442,15 +492,7 @@ Try except inside try
     EXCEPT    nested failure
         No operation
     END
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [
             ("*** Test cases ***", "header"),
             ("Try except inside try", "testCaseName"),
@@ -477,26 +519,15 @@ Try except inside try
 
 
 def test_semantic_highlighting_documentation(workspace):
-    from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """*** Settings ***
+    check_simple(
+        workspace,
+        """*** Settings ***
 Documentation    Docs in settings
 
 *** Test Cases ***
 Some test
     [Documentation]    Some documentation
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [
             ("*** Settings ***", "header"),
             ("Documentation", "setting"),
@@ -512,26 +543,15 @@ Some test
 
 
 def test_semantic_highlighting_vars_in_documentation(workspace):
-    from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """*** Settings ***
+    check_simple(
+        workspace,
+        """*** Settings ***
 Documentation    Docs in settings
 
 *** Test Cases ***
 Some test
     [Documentation]    ${my var} Some documentation
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [
             ("*** Settings ***", "header"),
             ("Documentation", "setting"),
@@ -550,26 +570,15 @@ Some test
 
 
 def test_semantic_highlighting_vars_in_documentation_incomplete(workspace):
-    from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """*** Settings ***
+    check_simple(
+        workspace,
+        """*** Settings ***
 Documentation    Docs in settings
 
 *** Test Cases ***
 Some test
     [Documentation]    ${my var Some documentation
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [
             ("*** Settings ***", "header"),
             ("Documentation", "setting"),
@@ -586,12 +595,9 @@ Some test
 
 @pytest.mark.skipif(get_robot_major_version() < 5, reason="Requires RF 5 onwards")
 def test_semantic_highlighting_while(workspace):
-    from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """*** Variables ***
+    check_simple(
+        workspace,
+        """*** Variables ***
 ${variable}    ${1}
 
 *** Test Cases ***
@@ -600,15 +606,7 @@ While loop executed once
         Log    ${variable}
         ${variable}=    Evaluate    $variable + 1
     END
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [
             ("*** Variables ***", "header"),
             ("${", "variableOperator"),
@@ -635,12 +633,9 @@ While loop executed once
 
 @pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 4 onwards")
 def test_semantic_highlighting_for_if(workspace):
-    from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
-
-    workspace.set_root("case1")
-    doc = workspace.put_doc("case1.robot")
-    doc.source = """*** Keywords ***
+    check_simple(
+        workspace,
+        """*** Keywords ***
 Some keyword
     FOR    ${element}    IN       @{LIST}
         IF    ${random} == ${NUMBER_TO_PASS_ON}
@@ -651,16 +646,7 @@ Some keyword
             Log To Console    Too low.
         END
     END
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
-    context = CompletionContext(doc, workspace=workspace.ws)
-
-    semantic_tokens = semantic_tokens_full(context)
-    check(
-        (semantic_tokens, doc),
+""",
         [
             ("*** Keywords ***", "header"),
             ("Some keyword", "keywordNameDefinition"),
