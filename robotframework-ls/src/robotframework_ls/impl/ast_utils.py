@@ -1,5 +1,5 @@
 import sys
-from typing import Iterator, Optional, List, Tuple, Any, Union
+from typing import Iterator, Optional, List, Tuple, Any, Union, Hashable, Callable, Dict
 
 import ast as ast_module
 from robocorp_ls_core.lsp import Error, RangeTypedDict, PositionTypedDict
@@ -103,33 +103,24 @@ class _PrinterVisitor(ast_module.NodeVisitor):
 MAX_ERRORS = 100
 
 
-class _ASTIndexer:
-    def __init__(self, ast):
-        self._ast = weakref.ref(ast)
+class _AbstractIndexer:
+    def iter_indexed(self, clsname):
+        pass
 
-        self._indexed = False
-        self._name_to_node_info_lst = {}
+
+class _FullIndexer(_AbstractIndexer):
+    def __init__(self, weak_ast: "weakref.ref[ast_module.AST]"):
+        self._weak_ast = weak_ast
         self._lock = threading.Lock()
-        self._additional_caches = {}
-
-    def iter_cached(self, cache_key, compute, *args):
-        try:
-            cached = self._additional_caches[cache_key]
-        except KeyError:
-            cached = tuple(compute(self, *args))
-            self._additional_caches[cache_key] = cached
-
-        yield from iter(cached)
+        self._name_to_node_info_lst: Dict[str, List[NodeInfo]] = {}
+        self._indexed_full = False
 
     def _index(self):
-        if self._indexed:
-            return
-
         with self._lock:
-            if self._indexed:
+            if self._indexed_full:
                 return
 
-            ast = self._ast()
+            ast = self._weak_ast()
             if ast is None:
                 raise RuntimeError("AST already garbage collected.")
 
@@ -139,11 +130,114 @@ class _ASTIndexer:
                     lst = self._name_to_node_info_lst[node.__class__.__name__] = []
 
                 lst.append(NodeInfo(tuple(stack), node))
-            self._indexed = True
+            self._indexed_full = True
 
-    def iter_indexed(self, clsname):
-        self._index()
+    def iter_indexed(self, clsname: str) -> Iterator[NodeInfo]:
+        if not self._indexed_full:
+            self._index()
+
         yield from iter(self._name_to_node_info_lst.get(clsname, ()))
+
+
+class _SectionIndexer(_AbstractIndexer):
+    """
+    This is a bit smarter in that it can index only the parts we're interested
+    in (so, to get the LibraryImport it won't iterate over the keywords to
+    do the indexing).
+    """
+
+    INNER_INSIDE_TOP_LEVEL = {
+        "LibraryImport": "SettingSection",
+        "ResourceImport": "SettingSection",
+        "VariablesImport": "SettingSection",
+        "SuiteSetup": "SettingSection",
+        "SuiteTeardown": "SettingSection",
+        "TestTemplate": "SettingSection",
+        # Not settings:
+        "Keyword": "KeywordSection",
+        "TestCase": "TestCaseSection",
+        "Variable": "VariableSection",
+    }
+
+    TOP_LEVEL = {
+        "SettingSection",
+        "VariableSection",
+        "TestCaseSection",
+        "KeywordSection",
+        "CommentSection",
+    }
+
+    def __init__(self, weak_ast):
+        self._weak_ast = weak_ast
+        self._lock = threading.Lock()
+        self._first_level_name_to_node_info_lst: Dict[str, List[NodeInfo]] = {}
+
+        # We always start by indexing the first level in this case (to get the sections
+        # such as 'CommentSection', 'SettingSection', etc), which should be fast.
+
+        ast = self._weak_ast()
+        if ast is None:
+            raise RuntimeError("AST already garbage collected.")
+
+        for stack, node in _iter_nodes(ast, recursive=False):
+            lst = self._first_level_name_to_node_info_lst.get(node.__class__.__name__)
+            if lst is None:
+                lst = self._first_level_name_to_node_info_lst[
+                    node.__class__.__name__
+                ] = []
+
+            lst.append(NodeInfo(tuple(stack), node))
+
+    def iter_indexed(self, clsname: str) -> Iterator[NodeInfo]:
+        top_level = self.INNER_INSIDE_TOP_LEVEL.get(clsname)
+        if top_level is not None:
+            lst = self._first_level_name_to_node_info_lst.get(top_level)
+            if lst is not None:
+                for node_info in lst:
+                    indexer = _obtain_ast_indexer(node_info.node)
+                    yield from indexer.iter_indexed(clsname)
+        else:
+            if clsname in self.TOP_LEVEL:
+                yield from iter(
+                    self._first_level_name_to_node_info_lst.get(clsname, ())
+                )
+            else:
+                # i.e.: We don't know what we should be getting, so, just check
+                # everything...
+                for lst in self._first_level_name_to_node_info_lst.values():
+                    for node_info in lst:
+                        indexer = _obtain_ast_indexer(node_info.node)
+                        yield from indexer.iter_indexed(clsname)
+
+
+class _ASTIndexer:
+    def __init__(self, ast: ast_module.AST):
+        self._weak_ast = weakref.ref(ast)
+        self._is_root = ast.__class__.__name__ == "File"
+
+        self._indexer: _AbstractIndexer
+        if self._is_root:
+            # Cache by sections
+            self._indexer = _SectionIndexer(self._weak_ast)
+        else:
+            # Always cache fully
+            self._indexer = _FullIndexer(self._weak_ast)
+
+        self._additional_caches: Dict[Hashable, Tuple[Any, ...]] = {}
+
+    def iter_cached(
+        self, cache_key: Hashable, compute: Callable, *args
+    ) -> Iterator[Any]:
+        try:
+            cached = self._additional_caches[cache_key]
+        except KeyError:
+            cached = tuple(compute(self, *args))
+            self._additional_caches[cache_key] = cached
+
+        yield from iter(cached)
+
+    def iter_indexed(self, clsname: str) -> Iterator[NodeInfo]:
+        return self._indexer.iter_indexed(clsname)
 
 
 def _get_errors_from_tokens(node):
@@ -153,6 +247,14 @@ def _get_errors_from_tokens(node):
             end = (token.lineno - 1, token.end_col_offset)
             error = Error(token.error, start, end)
             yield error
+
+
+def _obtain_ast_indexer(ast):
+    try:
+        indexer = ast.__ast_indexer__
+    except:
+        indexer = ast.__ast_indexer__ = _ASTIndexer(ast)
+    return indexer
 
 
 def _convert_ast_to_indexer(func):
@@ -238,25 +340,33 @@ def _iter_nodes(node, stack=None, recursive=True):
     if stack is None:
         stack = []
 
-    for _field, value in ast_module.iter_fields(node):
-        if isinstance(value, list):
-            for item in value:
-                if isinstance(item, ast_module.AST):
-                    yield stack, item
-                    if recursive:
+    if recursive:
+        for _field, value in ast_module.iter_fields(node):
+            if isinstance(value, list):
+                for item in value:
+                    if isinstance(item, ast_module.AST):
+                        yield stack, item
                         stack.append(item)
-                        for o in _iter_nodes(item, stack, recursive=recursive):
-                            yield o
+                        yield from _iter_nodes(item, stack, recursive=True)
                         stack.pop()
-        elif isinstance(value, ast_module.AST):
-            if recursive:
+
+            elif isinstance(value, ast_module.AST):
                 yield stack, value
                 stack.append(value)
 
-                for o in _iter_nodes(value, stack, recursive=recursive):
-                    yield o
+                yield from _iter_nodes(value, stack, recursive=True)
 
                 stack.pop()
+    else:
+        # Not recursive
+        for _field, value in ast_module.iter_fields(node):
+            if isinstance(value, list):
+                for item in value:
+                    if isinstance(item, ast_module.AST):
+                        yield stack, item
+
+            elif isinstance(value, ast_module.AST):
+                yield stack, value
 
 
 def iter_all_nodes_recursive(node):

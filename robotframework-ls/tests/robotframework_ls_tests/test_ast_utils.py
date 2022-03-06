@@ -23,6 +23,51 @@ def test_iter_nodes():
         ],
     )
 
+    lst = []
+    for stack, node in ast_utils._iter_nodes(doc.get_ast()):
+        lst.append(
+            "%s - %s" % ([s.__class__.__name__ for s in stack], node.__class__.__name__)
+        )
+    assert lst in (
+        [
+            "[] - SettingSection",
+            "['SettingSection'] - SettingSectionHeader",
+            "['SettingSection'] - ResourceImport",
+        ],
+        [  # version 4.0.4 onwards
+            "[] - SettingSection",
+            "['SettingSection'] - SectionHeader",
+            "['SettingSection'] - ResourceImport",
+        ],
+    )
+
+    lst = []
+    for stack, node in ast_utils._iter_nodes(doc.get_ast(), recursive=False):
+        lst.append(
+            "%s - %s" % ([s.__class__.__name__ for s in stack], node.__class__.__name__)
+        )
+    assert lst == [
+        "[] - SettingSection",
+    ]
+
+    lst = []
+    for stack, node in ast_utils._iter_nodes(
+        doc.get_ast().sections[0], recursive=False
+    ):
+        lst.append(
+            "%s - %s" % ([s.__class__.__name__ for s in stack], node.__class__.__name__)
+        )
+    assert lst in (
+        [
+            "[] - SettingSectionHeader",
+            "[] - ResourceImport",
+        ],
+        [  # version 4.0.4 onwards
+            "[] - SectionHeader",
+            "[] - ResourceImport",
+        ],
+    )
+
 
 def test_print_ast(data_regression):
     from robotframework_ls.impl.robot_workspace import RobotDocument
@@ -77,7 +122,7 @@ def test_find_token(workspace):
     assert token_info is None
 
 
-def test_ast_indexer():
+def test_ast_indexer_basic():
     from robotframework_ls.impl.robot_workspace import RobotDocument
     from robotframework_ls.impl.ast_utils import _ASTIndexer
 
@@ -96,3 +141,26 @@ Keyword 2
     document = RobotDocument("uri", code)
     indexer = _ASTIndexer(document.get_ast())
     assert len(list(indexer.iter_indexed("Keyword"))) == 2
+
+
+def test_ast_indexer_only_setting():
+    from robotframework_ls.impl.robot_workspace import RobotDocument
+    from robotframework_ls.impl.ast_utils import _ASTIndexer
+
+    code = """
+*** Settings ***
+Library           Lib1
+Library           Lib2
+
+*** Keywords ***
+Keyword 1
+    Sleep    1
+
+Keyword 2
+    Sleep    1
+"""
+    document = RobotDocument("uri", code)
+    indexer = _ASTIndexer(document.get_ast())
+    assert len(list(indexer.iter_indexed("LibraryImport"))) == 2
+    assert len(list(indexer.iter_indexed("Keyword"))) == 2
+    assert len(list(indexer.iter_indexed("SettingSection"))) == 1
