@@ -271,6 +271,57 @@ Some Test
     )
 
 
+def test_semantic_highlighting_run_keyword_if_basic(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Some test
+    Run Keyword If    ${Cond1}    No operation    ELSE    No operation
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Some test", "testCaseName"),
+            ("Run Keyword If", "keywordNameCall"),
+            ("${", "variableOperator"),
+            ("Cond1", "variable"),
+            ("}", "variableOperator"),
+            ("No operation", "keywordNameCall"),
+            ("ELSE", "argumentValue"),
+            ("No operation", "keywordNameCall"),
+        ],
+    )
+
+
+def test_semantic_highlighting_run_keyword_if_2(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Some test
+    Run Keyword If    ${Cond1}    No operation    ELSE IF   ${cond}    No operation    arg    ELSE    No operation     arg
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Some test", "testCaseName"),
+            ("Run Keyword If", "keywordNameCall"),
+            ("${", "variableOperator"),
+            ("Cond1", "variable"),
+            ("}", "variableOperator"),
+            ("No operation", "keywordNameCall"),
+            ("ELSE IF", "argumentValue"),
+            ("${", "variableOperator"),
+            ("cond", "variable"),
+            ("}", "variableOperator"),
+            ("No operation", "keywordNameCall"),
+            ("arg", "argumentValue"),
+            ("ELSE", "argumentValue"),
+            ("No operation", "keywordNameCall"),
+            ("arg", "argumentValue"),
+        ],
+    )
+
+
 def test_semantic_highlighting_arguments_in_doc(workspace):
     check_simple(
         workspace,

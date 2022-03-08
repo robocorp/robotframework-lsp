@@ -209,9 +209,8 @@ def semantic_tokens_range(context, range):
     return []
 
 
-def _tokenize_token(node, initial_token, context):
+def _tokenize_token(node, initial_token, context, args_as_keywords_handler):
     from robotframework_ls.impl.ast_utils import (
-        is_argument_keyword_name,
         CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET,
     )
 
@@ -219,11 +218,13 @@ def _tokenize_token(node, initial_token, context):
     in_documentation = False
 
     if initial_token_type == ARGUMENT:
-
-        if is_argument_keyword_name(node, initial_token):
-            token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[KEYWORD]
-            yield initial_token, token_type_index
-            return
+        if args_as_keywords_handler is not None:
+            if args_as_keywords_handler.consider_current_argument_token_as_keyword(
+                initial_token
+            ):
+                token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[KEYWORD]
+                yield initial_token, token_type_index
+                return
 
         in_documentation = node.__class__.__name__ == "Documentation"
 
@@ -426,9 +427,11 @@ def semantic_tokens_full(context: ICompletionContext):
             monitor.check_cancelled()
         tokens = getattr(node, "tokens", None)
         if tokens:
+            args_as_keywords_handler = ast_utils.get_args_as_keywords_handler(node)
+
             for token in tokens:
                 for token_part, token_type_index in _tokenize_token(
-                    node, token, context
+                    node, token, context, args_as_keywords_handler
                 ):
                     lineno = token_part.lineno - 1
                     if lineno < 0:

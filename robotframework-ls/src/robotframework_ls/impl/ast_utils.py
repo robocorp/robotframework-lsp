@@ -730,9 +730,64 @@ def iter_keyword_usage_tokens(
     )
 
 
-def _iter_keyword_usage_tokens_uncached(ast, collect_args_as_keywords):
-    from robot.api import Token
+def _iter_keyword_usage_tokens_uncached_from_args(
+    stack, node, usage_info, args_as_keywords_handler
+):
+    if not args_as_keywords_handler.multiple_matches:
+        for token in usage_info.node.tokens:
+            if token.type == token.ARGUMENT:
+                if args_as_keywords_handler.consider_current_argument_token_as_keyword(
+                    token
+                ):
+                    if not args_as_keywords_handler.multiple_matches:
+                        yield KeywordUsageInfo(
+                            usage_info.stack,
+                            usage_info.node,
+                            token,
+                            token.value,
+                            True,
+                            args_as_keywords_handler.get_current_argument_usage_index(),
+                        )
+                        # We can only find one match (other tokens are passed to that usage).
+                        return
 
+    # We may have multiple matches, so, we need to setup the appropriate book-keeping
+    current_tokens = []
+    found_at_index = -1
+
+    for token in usage_info.node.tokens:
+        if token.type == token.ARGUMENT:
+            current_tokens.append(token)
+            if args_as_keywords_handler.consider_current_argument_token_as_keyword(
+                token
+            ):
+                found_at_index = len(current_tokens) - 1
+            else:
+                if args_as_keywords_handler.started_match:
+                    del current_tokens[-1]  # Don't add the ELSE IF/ELSE argument.
+                    yield KeywordUsageInfo(
+                        usage_info.stack,
+                        usage_info.node.__class__(current_tokens),
+                        current_tokens[found_at_index],
+                        current_tokens[found_at_index].value,
+                        True,
+                        found_at_index,
+                    )
+                    found_at_index = -1
+    else:
+        # Do one last iteration at the end to deal with the last one.
+        if found_at_index >= 0 and len(current_tokens) > found_at_index:
+            yield KeywordUsageInfo(
+                usage_info.stack,
+                usage_info.node.__class__(current_tokens),
+                current_tokens[found_at_index],
+                current_tokens[found_at_index].value,
+                True,
+                found_at_index,
+            )
+
+
+def _iter_keyword_usage_tokens_uncached(ast, collect_args_as_keywords):
     for clsname in ("KeywordCall",) + _CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_TUPLE:
         for node_info in ast.iter_indexed(clsname):
             stack = node_info.stack
@@ -742,81 +797,15 @@ def _iter_keyword_usage_tokens_uncached(ast, collect_args_as_keywords):
                 yield usage_info
 
                 if collect_args_as_keywords:
-                    iter_in_tokens = iter(usage_info.node.tokens)
-                    for token in iter_in_tokens:
-                        i = get_argument_keyword_name_index(node, token)
-                        if i >= 0:
+                    args_as_keywords_handler = get_args_as_keywords_handler(
+                        usage_info.node
+                    )
+                    if args_as_keywords_handler is None:
+                        continue
 
-                            if normalize_robot_name(usage_info.name) == "runkeywordif":
-                                # Run Keyword If is special because it has 'ELSE IF' / 'ELSE'
-                                # which will then be be (cond, keyword) or just (keyword), so
-                                # we need to provide keyword usages as needed.
-                                original_tokens = [token]
-                                else_if_tokens_lst = []
-                                else_tokens = []
-
-                                add_tokens_to = original_tokens
-
-                                skip_separator = False
-                                for token in iter_in_tokens:
-                                    if skip_separator and token.type == Token.SEPARATOR:
-                                        continue
-
-                                    skip_separator = False
-
-                                    if token.value == "ELSE IF":
-                                        add_tokens_to = []
-                                        else_if_tokens_lst.append(add_tokens_to)
-                                        skip_separator = True
-                                        continue
-                                    elif token.value == "ELSE":
-                                        skip_separator = True
-                                        add_tokens_to = else_tokens
-                                        continue
-
-                                    add_tokens_to.append(token)
-
-                                if original_tokens:
-                                    yield KeywordUsageInfo(
-                                        usage_info.stack,
-                                        usage_info.node.__class__(original_tokens),
-                                        original_tokens[0],
-                                        original_tokens[0].value,
-                                        True,
-                                        0,
-                                    )
-                                for else_if_tokens in else_if_tokens_lst:
-                                    if len(else_if_tokens) >= 2:
-                                        yield KeywordUsageInfo(
-                                            usage_info.stack,
-                                            usage_info.node.__class__(else_if_tokens),
-                                            else_if_tokens[1],
-                                            else_if_tokens[1].value,
-                                            True,
-                                            1,
-                                        )
-                                if else_tokens:
-                                    yield KeywordUsageInfo(
-                                        usage_info.stack,
-                                        usage_info.node.__class__(else_tokens),
-                                        else_tokens[0],
-                                        else_tokens[0].value,
-                                        True,
-                                        0,
-                                    )
-
-                            else:
-                                yield KeywordUsageInfo(
-                                    usage_info.stack,
-                                    usage_info.node,
-                                    token,
-                                    token.value,
-                                    True,
-                                    i,
-                                )
-
-                            # We can only find one match (other tokens are passed to that usage).
-                            break
+                    yield from _iter_keyword_usage_tokens_uncached_from_args(
+                        stack, node, usage_info, args_as_keywords_handler
+                    )
 
 
 def _create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
@@ -883,8 +872,67 @@ def get_argument_keyword_name_index(node, token) -> int:
     return -1
 
 
-def is_argument_keyword_name(node, token) -> bool:
-    return get_argument_keyword_name_index(node, token) >= 0
+class _ConsiderArgsAsKeywordNames:
+    def __init__(self, normalized_keyword_name, consider_keyword_at_index):
+        self._normalized_keyword_name = normalized_keyword_name
+        self._consider_keyword_at_index = consider_keyword_at_index
+        self._current_arg = 0
+
+        # Run Keyword If is special because it has 'ELSE IF' / 'ELSE'
+        # which will then be be (cond, keyword) or just (keyword), so
+        # we need to provide keyword usages as needed.
+        self.multiple_matches = self._normalized_keyword_name == "runkeywordif"
+
+        self._stack_kind = None
+        self._stack = None
+        self.started_match = False
+
+    def consider_current_argument_token_as_keyword(self, token) -> bool:
+        assert token.type == token.ARGUMENT
+
+        self._current_arg += 1
+
+        if self.multiple_matches:
+            if token.value == "ELSE IF":
+                self.started_match = True
+                self._stack = []
+                self._stack_kind = token.value
+            elif token.value == "ELSE":
+                self.started_match = True
+                self._stack = []
+                self._stack_kind = token.value
+
+            else:
+                self.started_match = False
+                if self._stack is not None:
+                    self._stack.append(token)
+
+            if self._stack is not None:
+                if self._stack_kind == "ELSE IF":
+                    return len(self._stack) == 2
+
+                if self._stack_kind == "ELSE":
+                    return len(self._stack) == 1
+
+        return self._current_arg == self._consider_keyword_at_index
+
+    def get_current_argument_usage_index(self):
+        return self._current_arg
+
+
+def get_args_as_keywords_handler(node) -> Optional[_ConsiderArgsAsKeywordNames]:
+    if isinstance_name(node, "KeywordCall"):
+        node_keyword_name = node.keyword
+        if node_keyword_name:
+            normalized_keyword_name = normalize_robot_name(node_keyword_name)
+            consider_keyword_at_index = KEYWORD_NAME_TO_KEYWORD_INDEX.get(
+                normalized_keyword_name
+            )
+            if consider_keyword_at_index is not None:
+                return _ConsiderArgsAsKeywordNames(
+                    normalized_keyword_name, consider_keyword_at_index
+                )
+    return None
 
 
 def get_keyword_name_token(ast, token):
@@ -900,7 +948,7 @@ def get_keyword_name_token(ast, token):
         return _strip_token_bdd_prefix(token)
 
     if token.type == token.ARGUMENT and not token.value.strip().endswith("}"):
-        if is_argument_keyword_name(ast, token):
+        if get_argument_keyword_name_index(ast, token) >= 0:
             return token
 
     return None

@@ -805,7 +805,9 @@ Keyword 0
 *** Tasks ***
 Minimal task
     ${Cond1}=    Set local variable    ${Cond1}    1
-    Run Keyword If    ${Cond1}    Keyword 0    wrong arg 0    ELSE    Keyword 0    wrong arg 1
+    Run Keyword If    ${Cond1}    Keyword 0    wrong arg 0
+    Run Keyword If    ${Cond1}    Keyword 0    wrong arg 1    ELSE    Keyword 0    wrong arg 2
+    Run Keyword If    ${Cond1}    Keyword 0    wrong arg 3    ELSE IF    ${cond}    Keyword 0    wrong arg 4
 """
     _collect_errors(workspace, doc, data_regression)
 

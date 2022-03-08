@@ -11,10 +11,40 @@
 - message: 'Unexpected argument: wrong arg 1'
   range:
     end:
+      character: 58
+      line: 9
+    start:
+      character: 47
+      line: 9
+  severity: 1
+  source: robotframework
+- message: 'Unexpected argument: wrong arg 2'
+  range:
+    end:
       character: 94
-      line: 8
+      line: 9
     start:
       character: 83
-      line: 8
+      line: 9
+  severity: 1
+  source: robotframework
+- message: 'Unexpected argument: wrong arg 3'
+  range:
+    end:
+      character: 58
+      line: 10
+    start:
+      character: 47
+      line: 10
+  severity: 1
+  source: robotframework
+- message: 'Unexpected argument: wrong arg 4'
+  range:
+    end:
+      character: 108
+      line: 10
+    start:
+      character: 97
+      line: 10
   severity: 1
   source: robotframework
