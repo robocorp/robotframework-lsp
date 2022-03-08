@@ -731,6 +731,8 @@ def iter_keyword_usage_tokens(
 
 
 def _iter_keyword_usage_tokens_uncached(ast, collect_args_as_keywords):
+    from robot.api import Token
+
     for clsname in ("KeywordCall",) + _CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_TUPLE:
         for node_info in ast.iter_indexed(clsname):
             stack = node_info.stack
@@ -740,17 +742,81 @@ def _iter_keyword_usage_tokens_uncached(ast, collect_args_as_keywords):
                 yield usage_info
 
                 if collect_args_as_keywords:
-                    for token in usage_info.node.tokens:
+                    iter_in_tokens = iter(usage_info.node.tokens)
+                    for token in iter_in_tokens:
                         i = get_argument_keyword_name_index(node, token)
                         if i >= 0:
-                            yield KeywordUsageInfo(
-                                usage_info.stack,
-                                usage_info.node,
-                                token,
-                                token.value,
-                                True,
-                                i,
-                            )
+
+                            if normalize_robot_name(usage_info.name) == "runkeywordif":
+                                # Run Keyword If is special because it has 'ELSE IF' / 'ELSE'
+                                # which will then be be (cond, keyword) or just (keyword), so
+                                # we need to provide keyword usages as needed.
+                                original_tokens = [token]
+                                else_if_tokens_lst = []
+                                else_tokens = []
+
+                                add_tokens_to = original_tokens
+
+                                skip_separator = False
+                                for token in iter_in_tokens:
+                                    if skip_separator and token.type == Token.SEPARATOR:
+                                        continue
+
+                                    skip_separator = False
+
+                                    if token.value == "ELSE IF":
+                                        add_tokens_to = []
+                                        else_if_tokens_lst.append(add_tokens_to)
+                                        skip_separator = True
+                                        continue
+                                    elif token.value == "ELSE":
+                                        skip_separator = True
+                                        add_tokens_to = else_tokens
+                                        continue
+
+                                    add_tokens_to.append(token)
+
+                                if original_tokens:
+                                    yield KeywordUsageInfo(
+                                        usage_info.stack,
+                                        usage_info.node.__class__(original_tokens),
+                                        original_tokens[0],
+                                        original_tokens[0].value,
+                                        True,
+                                        0,
+                                    )
+                                for else_if_tokens in else_if_tokens_lst:
+                                    if len(else_if_tokens) >= 2:
+                                        yield KeywordUsageInfo(
+                                            usage_info.stack,
+                                            usage_info.node.__class__(else_if_tokens),
+                                            else_if_tokens[1],
+                                            else_if_tokens[1].value,
+                                            True,
+                                            1,
+                                        )
+                                if else_tokens:
+                                    yield KeywordUsageInfo(
+                                        usage_info.stack,
+                                        usage_info.node.__class__(else_tokens),
+                                        else_tokens[0],
+                                        else_tokens[0].value,
+                                        True,
+                                        0,
+                                    )
+
+                            else:
+                                yield KeywordUsageInfo(
+                                    usage_info.stack,
+                                    usage_info.node,
+                                    token,
+                                    token.value,
+                                    True,
+                                    i,
+                                )
+
+                            # We can only find one match (other tokens are passed to that usage).
+                            break
 
 
 def _create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:

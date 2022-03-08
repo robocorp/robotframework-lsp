@@ -778,6 +778,38 @@ Normal test case
     _collect_errors(workspace, doc, data_regression)
 
 
+def test_code_analysis_run_keyword_if_basic(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case_argspec_expand", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_argspec_expand.robot")
+    doc.source = """
+*** Tasks ***
+Minimal task
+    ${Cond1}=    Set local variable    ${Cond1}    1
+    Run Keyword If    ${Cond1}    No operation    ELSE    No operation
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_code_analysis_run_keyword_if_errors_internal(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case_argspec_expand", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_argspec_expand.robot")
+    doc.source = """
+*** Keywords ***
+Keyword 0
+    Log to console    22
+    
+*** Tasks ***
+Minimal task
+    ${Cond1}=    Set local variable    ${Cond1}    1
+    Run Keyword If    ${Cond1}    Keyword 0    wrong arg 0    ELSE    Keyword 0    wrong arg 1
+"""
+    _collect_errors(workspace, doc, data_regression)
+
+
 def test_code_analysis_multiple_no_errors(workspace, libspec_manager, data_regression):
     workspace.set_root("case_argspec_expand", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case_argspec_expand.robot")

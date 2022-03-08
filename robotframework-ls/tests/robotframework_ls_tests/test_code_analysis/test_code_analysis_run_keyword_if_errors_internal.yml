@@ -1,0 +1,20 @@
+- message: 'Unexpected argument: wrong arg 0'
+  range:
+    end:
+      character: 58
+      line: 8
+    start:
+      character: 47
+      line: 8
+  severity: 1
+  source: robotframework
+- message: 'Unexpected argument: wrong arg 1'
+  range:
+    end:
+      character: 94
+      line: 8
+    start:
+      character: 83
+      line: 8
+  severity: 1
+  source: robotframework
