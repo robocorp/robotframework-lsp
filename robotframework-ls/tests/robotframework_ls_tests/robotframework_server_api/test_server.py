@@ -157,15 +157,19 @@ def _check_in_separate_process(method_name, module_name="test_server", update_en
 def test_check_version():
     api = initialize_robotframework_server_api()
     # In tests we always have at least 3.2.
-    assert api._check_min_version((3, 2))
+    assert api._compute_min_version_error((3, 2)) is None
 
-    assert not api._check_min_version((22, 1))
+    assert api._compute_min_version_error((22, 1)).startswith(
+        "Expected Robot Framework version: 22.1. Found: "
+    )
 
     api._version = "3.1"
-    assert not api._check_min_version((3, 2))
+    assert api._compute_min_version_error((3, 2)).startswith(
+        "Expected Robot Framework version: 3.2. Found: 3.1"
+    )
 
     api._version = "3.2"
-    assert api._check_min_version((3, 2))
+    assert api._compute_min_version_error((3, 2)) is None
 
 
 def check_no_robotframework():

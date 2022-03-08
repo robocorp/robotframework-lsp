@@ -1,7 +1,7 @@
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Optional, List, Dict, Deque
+from typing import Optional, List, Dict, Deque, Tuple
 from robocorp_ls_core.protocols import IConfig, IMonitor, ITestInfoTypedDict, IWorkspace
 from functools import partial
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
@@ -69,7 +69,8 @@ class RobotFrameworkServerApi(PythonLanguageServer):
                 raise
 
         self.libspec_manager = libspec_manager
-        self._version = None
+        self._version: Optional[str] = None
+        self._logged_version_error = False
         self._next_time = partial(next, itertools.count(0))
         from collections import deque
 
@@ -82,7 +83,14 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
         return RobotConfig()
 
-    def m_version(self):
+    def m_version(self) -> str:
+        """
+        Kind of a code-smell:
+
+        Either a string with the version is provided or an error message.
+
+        It's now part of the API, so, keep as is.
+        """
         if self._version is not None:
             return self._version
         try:
@@ -114,11 +122,32 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         self._version = version
         return self._version
 
-    def _check_min_version(self, min_version):
+    def _compute_min_version_error(self, min_version: Tuple[int, int]) -> Optional[str]:
         from robocorp_ls_core.basic import check_min_version
 
-        version = self.m_version()
-        return check_min_version(version, min_version)
+        v_or_error = self.m_version()
+        try:
+            # Check if it's an error or a valid version.
+            tuple(int(x) for x in v_or_error.split("."))
+        except:
+            return v_or_error  # This is an error message
+
+        if not check_min_version(v_or_error, min_version):
+            return f"Expected Robot Framework version: {'.'.join((str(x) for x in min_version))}. Found: {v_or_error}"
+        return None
+
+    def _check_and_log_rf_dependency_version(self):
+        error = self._compute_min_version_error((3, 2))
+        if error is not None:
+            if self._logged_version_error:
+                log.info(
+                    "Problem with `robotframework` dependency. See previous errors."
+                )
+            else:
+                log.info(error)
+                self._logged_version_error = True
+            return False
+        return True
 
     @overrides(PythonLanguageServer.m_workspace__did_change_configuration)
     def m_workspace__did_change_configuration(self, **kwargs):
@@ -156,12 +185,11 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         return robot_workspace
 
     def m_lint(self, doc_uri):
-        if not self._check_min_version((3, 2)):
+        error = self._compute_min_version_error((3, 2))
+        if error is not None:
             from robocorp_ls_core.lsp import Error
 
-            msg = self.m_version()
-            log.info(msg)
-            return [Error(msg, (0, 0), (1, 0)).to_lsp_diagnostic()]
+            return [Error(error, (0, 0), (1, 0)).to_lsp_diagnostic()]
 
         func = partial(self._threaded_lint, doc_uri)
         func = require_monitor(func)
@@ -482,6 +510,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if not text:
             return []
 
+        if not self._check_and_log_rf_dependency_version():
+            return []
+
         if options is None:
             options = {}
         tab_size = options.get("tabSize", 4)
@@ -515,9 +546,10 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             new_contents = robot_source_format(text, space_count=tab_size)
 
         else:
-            if not self._check_min_version((4, 0)):
+            error = self._compute_min_version_error((4, 0))
+            if error is not None:
                 log.critical(
-                    f"To use the robotidy formatter, at least Robot Framework 4 is needed. Found: {self.m_version()}"
+                    f"To use the robotidy formatter, at least Robot Framework 4 is needed. {error}"
                 )
                 return []
 
@@ -553,8 +585,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     ):
         from robotframework_ls.impl.completion_context import CompletionContext
 
-        if not self._check_min_version((3, 2)):
-            log.info("robotframework version too old.")
+        if not self._check_and_log_rf_dependency_version():
             return None
         workspace = self.workspace
         if not workspace:

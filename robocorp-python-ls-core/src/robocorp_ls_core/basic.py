@@ -22,7 +22,7 @@ import threading
 from contextlib import contextmanager
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.options import DEFAULT_TIMEOUT
-from typing import TypeVar, Any, Callable
+from typing import TypeVar, Any, Callable, Tuple
 from robocorp_ls_core.jsonrpc.exceptions import JsonRpcRequestCancelled
 from functools import lru_cache
 
@@ -354,7 +354,7 @@ def before(obj, method_name, callback):
         setattr(obj, method_name, original_method)
 
 
-def check_min_version(version, min_version):
+def check_min_version(version: str, min_version: Tuple[int, int]) -> bool:
     """
     :param version:
         This is the version of robotframework.
