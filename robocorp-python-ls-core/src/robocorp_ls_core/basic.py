@@ -366,11 +366,11 @@ def check_min_version(version: str, min_version: Tuple[int, int]) -> bool:
         True if version >= min_versiond and False otherwise.
     """
     try:
-        version = tuple(int(x) for x in version.split("."))
+        v = tuple(int(x) for x in version.split("."))
     except:
         return False
 
-    return version >= min_version
+    return v >= min_version
 
 
 def wait_for_condition(condition, msg=None, timeout=DEFAULT_TIMEOUT, sleep=1 / 20.0):
