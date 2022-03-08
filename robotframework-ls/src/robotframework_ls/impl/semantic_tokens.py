@@ -1,8 +1,24 @@
-from typing import List, Tuple, Set, Iterator, Optional
+from typing import List, Tuple, Iterator, Optional
 import itertools
 from robocorp_ls_core.protocols import IDocument
 from robotframework_ls.impl.protocols import ICompletionContext
 import os
+
+from robotframework_ls.impl.robot_constants import (
+    COMMENT,
+    HEADER_TOKENS,
+    SETTING_TOKENS,
+    NAME,
+    KEYWORD_NAME,
+    ARGUMENT,
+    VARIABLE,
+    KEYWORD,
+    CONTROL_TOKENS,
+    TESTCASE_NAME,
+    ERROR,
+    FATAL_ERROR,
+    ROBOT_AND_TXT_FILE_EXTENSIONS,
+)
 
 
 TOKEN_TYPES = [
@@ -147,26 +163,10 @@ def _iter_dependent_names(context: ICompletionContext) -> Iterator[str]:
         if name:
             resource_name = os.path.basename(name)
             basename, ext = os.path.splitext(resource_name)
-            if ext in (".robot", ".txt"):
+            if ext in ROBOT_AND_TXT_FILE_EXTENSIONS:
                 yield basename.lower()
             else:
                 yield name.lower()
-
-
-from robotframework_ls.impl.robot_constants import (
-    COMMENT,
-    HEADER_TOKENS,
-    SETTING_TOKENS,
-    NAME,
-    KEYWORD_NAME,
-    ARGUMENT,
-    VARIABLE,
-    KEYWORD,
-    CONTROL_TOKENS,
-    TESTCASE_NAME,
-    ERROR,
-    FATAL_ERROR,
-)
 
 
 # See: https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide#semantic-token-scope-map

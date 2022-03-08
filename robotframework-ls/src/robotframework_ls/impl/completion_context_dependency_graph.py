@@ -7,8 +7,10 @@ from robotframework_ls.impl.protocols import (
     ICompletionContext,
     IResourceImportNode,
     IRobotDocument,
+    ICompletionContextWorkspaceCaches,
 )
 from robotframework_ls.impl.robot_constants import BUILTIN_LIB
+from robocorp_ls_core.callbacks import Callback
 
 
 class _Memo(object):
@@ -50,6 +52,9 @@ class CompletionContextDependencyGraph:
     i.e.: Imports / Resources / Variables
     """
 
+    # Called as: on_before_cache_dependency_graph(ICompletionContextDependencyGraph)
+    on_before_cache_dependency_graph = Callback()
+
     def __init__(self, root_doc: IRobotDocument):
         self._root_doc: IRobotDocument = root_doc
         self._doc_uri_to_library_infos: Dict[
@@ -59,6 +64,36 @@ class CompletionContextDependencyGraph:
             str, Sequence[Tuple[IResourceImportNode, Optional[IRobotDocument]]]
         ] = {}
         self._doc_uri_to_variable_imports: Dict[str, List[IRobotDocument]] = {}
+
+    def to_dict(self):
+        libraries = {}
+        for doc_uri, library_infos in self._doc_uri_to_library_infos.items():
+            libraries[doc_uri] = [x.to_dict() for x in library_infos]
+
+        resources = {}
+        for doc_uri, resource_imports in self._doc_uri_to_resource_imports.items():
+            resources[doc_uri] = [
+                (doc.uri if doc else None) for (_node, doc) in resource_imports
+            ]
+
+        variables = {}
+        for doc_uri, variable_imports in self._doc_uri_to_variable_imports.items():
+            variables[doc_uri] = [
+                (doc.uri if doc else None) for doc in variable_imports
+            ]
+
+        ret = {
+            "root_doc": self._root_doc.uri,
+            "libraries": libraries,
+            "resources": resources,
+            "variables": variables,
+        }
+        return ret
+
+    def print_repr(self):
+        import json
+
+        print(json.dumps(self.to_dict(), indent=4))
 
     def add_library_infos(
         self,
@@ -85,12 +120,19 @@ class CompletionContextDependencyGraph:
         return self._root_doc
 
     def iter_libraries(self, doc_uri: str) -> Iterator[LibraryDependencyInfo]:
-        info = self._doc_uri_to_library_infos.get(doc_uri)
-        if info:
-            yield from info
+        infos = self._doc_uri_to_library_infos.get(doc_uri)
+        if infos:
+            yield from infos
 
     def iter_all_libraries(self) -> Iterator[LibraryDependencyInfo]:
         for infos in self._doc_uri_to_library_infos.values():
+            yield from infos
+
+    def iter_resource_imports_with_docs(
+        self, doc_uri: str
+    ) -> Iterator[Tuple[IResourceImportNode, Optional[IRobotDocument]]]:
+        infos = self._doc_uri_to_resource_imports.get(doc_uri)
+        if infos:
             yield from infos
 
     def iter_all_resource_imports_with_docs(
@@ -99,104 +141,230 @@ class CompletionContextDependencyGraph:
         for infos in self._doc_uri_to_resource_imports.values():
             yield from infos
 
+    def iter_variable_imports_as_docs(self, doc_uri: str) -> Iterator[IRobotDocument]:
+        variable_imports = self._doc_uri_to_variable_imports.get(doc_uri)
+        if variable_imports:
+            yield from variable_imports
+
     def iter_all_variable_imports_as_docs(
         self,
     ) -> Iterator[IRobotDocument]:
         for variable_imports in self._doc_uri_to_variable_imports.values():
             yield from variable_imports
 
+    def do_invalidate_on_uri_change(self, uri: str) -> bool:
+        if uri == self.get_root_doc().uri:
+            # Changes in the root don't invalidate the dependency info (rather
+            # it's used in the cache key when checking so it won't be a match).
+            return False
+
+        return (
+            uri in self._doc_uri_to_library_infos
+            or uri in self._doc_uri_to_resource_imports
+            or uri in self._doc_uri_to_variable_imports
+        )
+
+    @classmethod
+    def _collect_library_info_from_completion_context(
+        cls, curr_ctx: ICompletionContext, is_root_context: bool, memo: _Memo
+    ) -> OrderedSet[LibraryDependencyInfo]:
+        from robotframework_ls.impl import ast_utils
+
+        # Collect libraries information
+        libraries = curr_ctx.get_imported_libraries()
+
+        new_library_infos: OrderedSet[LibraryDependencyInfo] = OrderedSet()
+        if is_root_context:
+            new_library_infos.add(
+                LibraryDependencyInfo(BUILTIN_LIB, None, True, None, None)
+            )
+
+        for name, alias, args, node in (
+            (
+                library.name,
+                library.alias,
+                ast_utils.get_library_arguments_serialized(library),
+                library,
+            )
+            for library in libraries
+        ):
+            if name:
+                lib_info = LibraryDependencyInfo(
+                    curr_ctx.token_value_resolving_variables(name),
+                    alias,
+                    False,
+                    args,
+                    node,
+                )
+                if not memo.complete_for_library(lib_info.name, lib_info.alias):
+                    continue
+
+                new_library_infos.add(lib_info)
+        return new_library_infos
+
+    @classmethod
+    def _collect_resource_info_from_completion_context(
+        cls, curr_ctx: ICompletionContext, is_root_context: bool, memo: _Memo
+    ):
+        # Collect related resource imports information.
+        resource_imports_as_docs = curr_ctx.get_resource_imports_as_docs()
+        new_resource_infos: List[
+            Tuple[IResourceImportNode, Optional[IRobotDocument]]
+        ] = []
+        if resource_imports_as_docs:
+            for resource_import_node, resource_doc in resource_imports_as_docs:
+                if resource_doc is None:
+                    if is_root_context:
+                        # We need to keep the empty nodes for the initial context.
+                        new_resource_infos.append((resource_import_node, resource_doc))
+                elif memo.follow_import(resource_doc.uri):
+                    new_resource_infos.append((resource_import_node, resource_doc))
+        return new_resource_infos
+
+    @classmethod
+    def _collect_variable_info_from_completion_context(
+        cls, curr_ctx: ICompletionContext, is_root_context: bool, memo: _Memo
+    ):
+
+        new_variable_imports: List[IRobotDocument] = []
+        for variable_import in curr_ctx.get_variable_imports_as_docs():
+            if memo.follow_import_variables(variable_import.uri):
+                new_variable_imports.append(variable_import)
+
+        return new_variable_imports
+
     @classmethod
     def from_completion_context(cls, completion_context: ICompletionContext):
-        from robotframework_ls.impl import ast_utils
         from collections import deque
+        from robot.api import Token
 
-        dependency_graph = CompletionContextDependencyGraph(completion_context.doc)
-
-        completion_context_stack: Deque[ICompletionContext] = deque()
-        completion_context_stack.append(completion_context)
+        caches: ICompletionContextWorkspaceCaches = (
+            completion_context.workspace.completion_context_workspace_caches
+        )
 
         memo = _Memo()
-        initial_context = True
+        with caches.invalidation_tracker() as invalidation_tracker:
+            dependency_graph = CompletionContextDependencyGraph(completion_context.doc)
 
-        # Mark as being followed.
-        memo.follow_import(completion_context.doc.uri)
+            initial_library_infos = cls._collect_library_info_from_completion_context(
+                completion_context, is_root_context=True, memo=memo
+            )
 
-        while completion_context_stack:
-            curr_ctx = completion_context_stack.popleft()
-
-            # Collect libraries information
-            libraries = curr_ctx.get_imported_libraries()
-
-            # Note: using a dict(_LibInfo:bool) where only the keys are meaningful
-            # because we want to keep the order and sets aren't ordered.
-            library_infos: OrderedSet[LibraryDependencyInfo] = OrderedSet()
-            if initial_context:
-                library_infos.add(
-                    LibraryDependencyInfo(BUILTIN_LIB, None, True, None, None)
-                )
-
-            for name, alias, args, node in (
-                (
-                    library.name,
-                    library.alias,
-                    ast_utils.get_library_arguments_serialized(library),
-                    library,
-                )
-                for library in libraries
-            ):
-                if name:
-                    lib_info = LibraryDependencyInfo(
-                        curr_ctx.token_value_resolving_variables(name),
-                        alias,
-                        False,
-                        args,
-                        node,
+            # i.e.: Node that the cache key involves the import names, not the
+            # import locations (so, in case there's a match we need to fix
+            # the newly returned info).
+            cache_key = (
+                completion_context.doc.uri,
+                tuple(
+                    (info.name, info.alias, info.builtin, info.args)
+                    for info in initial_library_infos
+                ),
+                tuple(
+                    (
+                        tuple(t.value for t in node.get_tokens(Token.NAME))
+                        for node in completion_context.get_resource_imports()
                     )
-                    if not memo.complete_for_library(lib_info.name, lib_info.alias):
-                        continue
+                ),
+                tuple(
+                    (
+                        tuple(t.value for t in node.get_tokens(Token.NAME))
+                        for node in completion_context.get_variable_imports()
+                    )
+                ),
+            )
 
-                    library_infos.add(lib_info)
+            found = caches.get_cached_dependency_graph(cache_key)
+            if found is not None:
+                # We need to fix the nodes as we can match even when the node
+                # lines/columns change.
 
-            if library_infos:
-                dependency_graph.add_library_infos(curr_ctx.doc.uri, library_infos)
+                # Library infos can be just added again.
+                found.add_library_infos(
+                    completion_context.doc.uri, initial_library_infos
+                )
 
-            # Collect related resource imports information.
-            resource_imports_as_docs = curr_ctx.get_resource_imports_as_docs()
-            if resource_imports_as_docs:
-                new_resource_infos: List[
+                # For resources, we don't want to add them completely because this
+                # means that the resolution must be done again.
+                names_to_resources: Dict[
+                    Tuple[str, ...], List[IResourceImportNode]
+                ] = {}
+
+                for resource_import in completion_context.get_resource_imports():
+                    key = tuple(x.value for x in resource_import.get_tokens(Token.NAME))
+                    names_to_resources.setdefault(key, []).append(resource_import)
+
+                new_resources: List[
                     Tuple[IResourceImportNode, Optional[IRobotDocument]]
                 ] = []
+                for (
+                    resource_import,
+                    resource_doc,
+                ) in found.iter_resource_imports_with_docs(completion_context.doc.uri):
+                    key = tuple(x.value for x in resource_import.get_tokens(Token.NAME))
+                    lst = names_to_resources.get(key)
+                    if lst:
+                        resource_import = lst.pop()
+                        new_resources.append((resource_import, resource_doc))
 
-                for resource_import_node, resource_doc in resource_imports_as_docs:
-                    if resource_doc is None:
-                        if initial_context:
-                            # We need to keep the empty nodes for the initial context.
-                            new_resource_infos.append(
-                                (resource_import_node, resource_doc)
-                            )
-                    elif memo.follow_import(resource_doc.uri):
-                        new_resource_infos.append((resource_import_node, resource_doc))
+                found.add_resource_infos(completion_context.doc.uri, new_resources)
 
-                        new_ctx = curr_ctx.create_copy(resource_doc)
-                        completion_context_stack.append(new_ctx)
+                # Variables don't need any change as we don't store the nodes.
+                return found
+
+            completion_context_stack: Deque[ICompletionContext] = deque()
+            completion_context_stack.append(completion_context)
+
+            is_root_context = True
+
+            # Mark as being followed.
+            memo.follow_import(completion_context.doc.uri)
+
+            while completion_context_stack:
+                curr_ctx = completion_context_stack.popleft()
+
+                if is_root_context:
+                    # use what's been already collected to compute the cache.
+                    new_library_infos = initial_library_infos
+                else:
+                    new_library_infos = (
+                        cls._collect_library_info_from_completion_context(
+                            curr_ctx, is_root_context, memo
+                        )
+                    )
+                new_resource_infos = cls._collect_resource_info_from_completion_context(
+                    curr_ctx, is_root_context, memo
+                )
+                new_variable_imports = (
+                    cls._collect_variable_info_from_completion_context(
+                        curr_ctx, is_root_context, memo
+                    )
+                )
+
+                if new_library_infos:
+                    dependency_graph.add_library_infos(
+                        curr_ctx.doc.uri, new_library_infos
+                    )
 
                 if new_resource_infos:
                     dependency_graph.add_resource_infos(
                         curr_ctx.doc.uri, new_resource_infos
                     )
+                    for _resource_import_node, resource_doc in new_resource_infos:
+                        if resource_doc is not None:
+                            new_ctx = curr_ctx.create_copy(resource_doc)
+                            completion_context_stack.append(new_ctx)
 
-            new_variable_imports: List[IRobotDocument] = []
-            for variable_import in completion_context.get_variable_imports_as_docs():
-                if memo.follow_import_variables(variable_import.uri):
-                    new_variable_imports.append(variable_import)
+                if new_variable_imports:
+                    dependency_graph.add_variable_infos(
+                        curr_ctx.doc.uri, new_variable_imports
+                    )
 
-            if new_variable_imports:
-                dependency_graph.add_variable_infos(
-                    curr_ctx.doc.uri, new_variable_imports
-                )
+                is_root_context = False
 
-            initial_context = False
-
+            cls.on_before_cache_dependency_graph(dependency_graph)
+            caches.cache_dependency_graph(
+                cache_key, dependency_graph, invalidation_tracker
+            )
         return dependency_graph
 
     def __typecheckself__(self) -> None:

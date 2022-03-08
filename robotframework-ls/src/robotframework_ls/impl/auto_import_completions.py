@@ -17,6 +17,7 @@ import os.path
 from robocorp_ls_core import uris
 from robocorp_ls_core.protocols import IWorkspace
 from robotframework_ls.impl.protocols import ISymbolsCache
+from robotframework_ls.impl.robot_constants import ALL_RELATED_FILE_EXTENSIONS
 
 
 class _Collector(object):
@@ -106,7 +107,7 @@ class _Collector(object):
             check = lib_import or resource_path
             if check:
                 basename = os.path.basename(check)
-                if basename.endswith((".txt", ".py", ".robot", ".resource")):
+                if basename.endswith(ALL_RELATED_FILE_EXTENSIONS):
                     basename = os.path.splitext(basename)[0]
                 text = f"{basename}.{keyword_name}"
 

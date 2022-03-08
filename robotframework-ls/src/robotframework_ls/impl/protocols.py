@@ -11,6 +11,7 @@ from typing import (
     Iterator,
     Callable,
     Union,
+    Hashable,
 )
 from robocorp_ls_core.protocols import (
     Sentinel,
@@ -33,6 +34,7 @@ from robocorp_ls_core.lsp import (
 )
 import typing
 from robocorp_ls_core.ordered_set import OrderedSet
+from contextlib import contextmanager
 
 if sys.version_info[:2] < (3, 8):
 
@@ -327,7 +329,50 @@ class ISymbolsCache(Protocol):
         pass
 
 
+class ICompletionContextWorkspaceCaches(Protocol):
+    cache_hits: int
+
+    def on_file_changed(self, filename: str):
+        pass
+
+    def on_updated_document(self, uri: str, document: Optional[IRobotDocument]):
+        pass
+
+    def clear_caches(self):
+        pass
+
+    def dispose(self):
+        pass
+
+    def get_cached_dependency_graph(
+        self, cache_key: Hashable
+    ) -> Optional["ICompletionContextDependencyGraph"]:
+        pass
+
+    @contextmanager
+    def invalidation_tracker(self):
+        """
+        Note that it's possible that changes happen in-flight. This means that
+        we must track changes while the dependency graph is being calculated.
+
+        So, one must do something as:
+
+        with caches.invalidation_tracker() as invalidation_tracker:
+            ... compute dependency graph
+            caches.cache_dependency_graph(cache_key, dependency_graph, invalidation_tracker)
+        """
+
+    def cache_dependency_graph(
+        self,
+        cache_key: Hashable,
+        dependency_graph: "ICompletionContextDependencyGraph",
+        invalidation_tracker,
+    ) -> None:
+        pass
+
+
 class IRobotWorkspace(IWorkspace, Protocol):
+    completion_context_workspace_caches: ICompletionContextWorkspaceCaches
     libspec_manager: Any
 
     def iter_all_doc_uris_in_workspace(
@@ -541,11 +586,29 @@ class LibraryDependencyInfo:
         args: Optional[str],
         node: Optional[ILibraryImportNode],
     ):
+        """
+        :param builtin:
+            Note that builtin should only be set == True if it's actually known
+            that it's a builtin, otherwise it should be set to False (in which
+            case it's computed internally if it's builtin or not).
+        """
         self.name = name
         self.alias = alias
         self.builtin = builtin
         self.args = args
         self.node = node
+
+    def to_dict(self):
+        ret = {
+            "name": self.name,
+        }
+        if self.alias:
+            ret["alias"] = self.alias
+        if self.builtin:
+            ret["builtin"] = self.builtin
+        if self.args:
+            ret["args"] = self.args
+        return ret
 
 
 class ICompletionContextDependencyGraph(Protocol):
@@ -581,14 +644,28 @@ class ICompletionContextDependencyGraph(Protocol):
     def iter_all_libraries(self) -> Iterator[LibraryDependencyInfo]:
         pass
 
+    def iter_resource_imports_with_docs(
+        self, doc_uri: str
+    ) -> Iterator[Tuple[IResourceImportNode, Optional[IRobotDocument]]]:
+        pass
+
     def iter_all_resource_imports_with_docs(
         self,
     ) -> Iterator[Tuple[IResourceImportNode, Optional[IRobotDocument]]]:
         pass
 
+    def iter_variable_imports_as_docs(self, doc_uri: str) -> Iterator[IRobotDocument]:
+        pass
+
     def iter_all_variable_imports_as_docs(
         self,
     ) -> Iterator[IRobotDocument]:
+        pass
+
+    def to_dict(self) -> dict:
+        pass
+
+    def do_invalidate_on_uri_change(self, uri: str) -> bool:
         pass
 
 
@@ -694,6 +771,9 @@ class ICompletionContext(Protocol):
         pass
 
     def get_resource_import_as_doc(self, resource_import) -> Optional[IRobotDocument]:
+        pass
+
+    def get_variable_imports(self) -> Tuple[INode, ...]:
         pass
 
     def get_variable_import_as_doc(self, variables_import) -> Optional[IRobotDocument]:

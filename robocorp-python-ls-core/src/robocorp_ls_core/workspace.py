@@ -26,6 +26,7 @@ from robocorp_ls_core.protocols import (
     IDocument,
     IDocumentSelection,
     IWorkspaceFolder,
+    IConfig,
 )
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.uris import uri_scheme, to_fs_path, normalize_drive
@@ -344,6 +345,9 @@ class Workspace(object):
             as_fs_path = uris.to_fs_path(root_uri)
             name = os.path.basename(as_fs_path)
             self.add_folder(WorkspaceFolder(root_uri, name))
+
+    def on_changed_config(self, config: IConfig) -> None:
+        pass
 
     def _check_in_mutate_thread(self):
         curr_thread = threading.current_thread()
@@ -779,6 +783,15 @@ class Document(object):
             return
 
         new = io.StringIO()
+
+        # Note: we could probably improve this sometime to work better with big documents
+        # (but the link with the AST must be well thought out too).
+        # References:
+        # https://news.ycombinator.com/item?id=30415868
+        # https://news.ycombinator.com/item?id=15381886
+        # https://code.visualstudio.com/blogs/2018/03/23/text-buffer-reimplementation
+        # https://blog.jetbrains.com/fleet/2022/02/fleet-below-deck-part-ii-breaking-down-the-editor/
+        # https://raphlinus.github.io/xi/2020/06/27/xi-retrospective.html
 
         # Iterate over the existing document until we hit the edit range,
         # at which point we write the new text, then loop until we hit

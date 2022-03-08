@@ -520,7 +520,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
     @overrides(PythonLanguageServer.m_workspace__did_change_configuration)
     @log_and_silence_errors(log)
-    def m_workspace__did_change_configuration(self, **kwargs):
+    def m_workspace__did_change_configuration(self, **kwargs) -> None:
         PythonLanguageServer.m_workspace__did_change_configuration(self, **kwargs)
         self._server_manager.set_config(self.config)
 

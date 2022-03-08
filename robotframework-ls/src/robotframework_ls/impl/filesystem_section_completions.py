@@ -4,6 +4,10 @@ from typing import Optional, List
 from robotframework_ls.impl.protocols import ICompletionContext
 from robocorp_ls_core.lsp import CompletionItemTypedDict
 from robocorp_ls_core.basic import normalize_filename
+from robotframework_ls.impl.robot_constants import (
+    ROBOT_AND_TXT_FILE_EXTENSIONS,
+    LIBRARY_FILE_EXTENSIONS,
+)
 
 log = get_logger(__name__)
 
@@ -167,7 +171,7 @@ def _get_resource_completions(
         completion_context,
         token,
         False,
-        (".resource", ".robot", ".txt"),
+        ROBOT_AND_TXT_FILE_EXTENSIONS,
         skip_current=True,
     )
 
@@ -176,7 +180,7 @@ def _get_library_completions(
     completion_context, token
 ) -> List[CompletionItemTypedDict]:
     return _get_completions(
-        completion_context, token, True, (".py",), skip_current=False
+        completion_context, token, True, LIBRARY_FILE_EXTENSIONS, skip_current=False
     )
 
 

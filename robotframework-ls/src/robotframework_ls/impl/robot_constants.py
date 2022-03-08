@@ -7,6 +7,10 @@ import os
 BDD_PREFIXES = ["given ", "when ", "then ", "and ", "but "]
 VARIABLE_PREFIXES = ("@", "%", "$", "&")
 
+ROBOT_FILE_EXTENSIONS = (".robot", ".resource")
+ROBOT_AND_TXT_FILE_EXTENSIONS = ROBOT_FILE_EXTENSIONS + (".txt",)
+LIBRARY_FILE_EXTENSIONS = (".py",)
+ALL_RELATED_FILE_EXTENSIONS = ROBOT_AND_TXT_FILE_EXTENSIONS + LIBRARY_FILE_EXTENSIONS
 
 # From: robot.variables.scopes.GlobalVariables._set_built_in_variables
 # (var name and description)

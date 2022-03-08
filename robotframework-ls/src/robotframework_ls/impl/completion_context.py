@@ -18,6 +18,7 @@ from robotframework_ls.impl.protocols import (
     IResourceImportNode,
     ICompletionContextDependencyGraph,
     IRobotToken,
+    INode,
 )
 from robotframework_ls.impl.robot_workspace import RobotDocument
 
@@ -347,7 +348,7 @@ class CompletionContext(object):
         return tuple(ret)
 
     @instance_cache
-    def get_variable_imports(self):
+    def get_variable_imports(self) -> Tuple[INode, ...]:
         from robotframework_ls.impl import ast_utils
 
         ast = self.get_ast()
@@ -392,80 +393,84 @@ class CompletionContext(object):
         return joined_parts
 
     @instance_cache
-    def get_resource_import_as_doc(self, resource_import) -> Optional[IRobotDocument]:
+    def get_resource_import_as_doc(
+        self, resource_import: INode
+    ) -> Optional[IRobotDocument]:
         from robocorp_ls_core import uris
+        from robot.api import Token
         import os.path
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
 
         ws = self._workspace
 
-        for token in resource_import.tokens:
-            if token.type == token.NAME:
+        token = resource_import.get_token(Token.NAME)
+        if token is not None:
+            name_with_resolved_vars = self.token_value_resolving_variables(token)
 
-                name_with_resolved_vars = self.token_value_resolving_variables(token)
-
-                if not os.path.isabs(name_with_resolved_vars):
-                    # It's a relative resource, resolve its location based on the
-                    # current file.
-                    check_paths = [
-                        os.path.normpath(
-                            os.path.join(
-                                os.path.dirname(self.doc.path), name_with_resolved_vars
-                            )
+            if not os.path.isabs(name_with_resolved_vars):
+                # It's a relative resource, resolve its location based on the
+                # current file.
+                check_paths = [
+                    os.path.normpath(
+                        os.path.join(
+                            os.path.dirname(self.doc.path), name_with_resolved_vars
                         )
-                    ]
-                    config = self.config
-                    if config is not None:
-                        for additional_pythonpath_entry in config.get_setting(
-                            OPTION_ROBOT_PYTHONPATH, list, []
-                        ):
-                            check_paths.append(
-                                os.path.normpath(
-                                    os.path.join(
-                                        additional_pythonpath_entry,
-                                        name_with_resolved_vars,
-                                    )
-                                )
-                            )
-
-                    for path in sys.path:
+                    )
+                ]
+                config = self.config
+                if config is not None:
+                    for additional_pythonpath_entry in config.get_setting(
+                        OPTION_ROBOT_PYTHONPATH, list, []
+                    ):
                         check_paths.append(
                             os.path.normpath(
                                 os.path.join(
-                                    path,
+                                    additional_pythonpath_entry,
                                     name_with_resolved_vars,
                                 )
                             )
                         )
 
-                    # Make the entries in the list unique (keeping order).
-                    seen: Set[str] = set()
-                    add_it_and_return_none = seen.add
-                    check_paths = [
-                        x
-                        for x in check_paths
-                        if x not in seen and not add_it_and_return_none(x)
-                    ]
+                for path in sys.path:
+                    check_paths.append(
+                        os.path.normpath(
+                            os.path.join(
+                                path,
+                                name_with_resolved_vars,
+                            )
+                        )
+                    )
 
-                else:
-                    check_paths = [name_with_resolved_vars]
+                # Make the entries in the list unique (keeping order).
+                seen: Set[str] = set()
+                add_it_and_return_none = seen.add
+                check_paths = [
+                    x
+                    for x in check_paths
+                    if x not in seen and not add_it_and_return_none(x)
+                ]
 
-                for resource_path in check_paths:
-                    doc_uri = uris.from_fs_path(resource_path)
-                    resource_doc = ws.get_document(doc_uri, accept_from_file=True)
-                    if resource_doc is None:
-                        continue
-                    return resource_doc
+            else:
+                check_paths = [name_with_resolved_vars]
 
-                log.info(
-                    "Unable to find: %s (checked paths: %s)",
-                    name_with_resolved_vars,
-                    check_paths,
-                )
+            for resource_path in check_paths:
+                doc_uri = uris.from_fs_path(resource_path)
+                resource_doc = ws.get_document(doc_uri, accept_from_file=True)
+                if resource_doc is None:
+                    continue
+                return resource_doc
+
+            log.info(
+                "Unable to find: %s (checked paths: %s)",
+                name_with_resolved_vars,
+                check_paths,
+            )
 
         return None
 
-    def get_variable_import_as_doc(self, variables_import) -> Optional[IRobotDocument]:
+    def get_variable_import_as_doc(
+        self, variables_import: INode
+    ) -> Optional[IRobotDocument]:
         return self.get_resource_import_as_doc(variables_import)
 
     @instance_cache

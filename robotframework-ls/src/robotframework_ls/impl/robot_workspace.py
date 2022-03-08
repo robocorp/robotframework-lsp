@@ -1,8 +1,31 @@
-from robocorp_ls_core.workspace import Workspace, Document
+import threading
+from typing import Optional, Any, Set, List, Dict, Iterable, Tuple, Iterator
+import typing
+import weakref
+
+from robocorp_ls_core import uris
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.cache import instance_cache
-from robotframework_ls.constants import NULL
+from robocorp_ls_core.lsp import (
+    TextDocumentContentChangeEvent,
+    TextDocumentItem,
+    MarkupContentTypedDict,
+    MarkupKind,
+)
+from robocorp_ls_core.protocols import (
+    check_implements,
+    IWorkspaceFolder,
+    IEndPoint,
+    ITestInfoFromSymbolsCacheTypedDict,
+    ITestInfoFromUriTypedDict,
+    IDocument,
+    IConfig,
+)
 from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.watchdog_wrapper import IFSObserver
+from robocorp_ls_core.workspace import Workspace, Document
+from robotframework_ls.constants import NULL
+from robotframework_ls.impl._symbols_cache import BaseSymbolsCache
 from robotframework_ls.impl.protocols import (
     IRobotWorkspace,
     IRobotDocument,
@@ -12,28 +35,10 @@ from robotframework_ls.impl.protocols import (
     ICompletionContext,
     IKeywordNode,
     ISymbolKeywordInfo,
+    ICompletionContextWorkspaceCaches,
 )
-from robocorp_ls_core.protocols import (
-    check_implements,
-    IWorkspaceFolder,
-    IEndPoint,
-    ITestInfoFromSymbolsCacheTypedDict,
-    ITestInfoFromUriTypedDict,
-    IDocument,
-)
-from robocorp_ls_core.watchdog_wrapper import IFSObserver
-from typing import Optional, Any, Set, List, Dict, Iterable, Tuple, Iterator
-import weakref
-import threading
-from robocorp_ls_core.lsp import (
-    TextDocumentContentChangeEvent,
-    TextDocumentItem,
-    MarkupContentTypedDict,
-    MarkupKind,
-)
-from robocorp_ls_core import uris
-from robotframework_ls.impl._symbols_cache import BaseSymbolsCache
-import typing
+from robotframework_ls.impl.robot_constants import ROBOT_FILE_EXTENSIONS
+
 
 log = get_logger(__name__)
 
@@ -253,7 +258,7 @@ class WorkspaceIndexer(object):
         # with open("x:/temp/rara.txt", "a+") as stream:
         #     stream.write("%s\n" % filename)
 
-        if filename and filename.endswith((".resource", ".robot")):
+        if filename and filename.endswith(ROBOT_FILE_EXTENSIONS):
             uri = uris.from_fs_path(filename)
             self._reindex_manager.request_uri_collection(uri)
 
@@ -410,7 +415,7 @@ class WorkspaceIndexer(object):
 
                 def iter_in():
                     for uri in workspace.iter_all_doc_uris_in_workspace(
-                        (".robot", ".resource")
+                        ROBOT_FILE_EXTENSIONS
                     ):
                         yield uri
 
@@ -482,7 +487,7 @@ class RobotWorkspace(Workspace):
 
         # It needs to be set to None in the initialization (while we setup folders).
         self.workspace_indexer: Optional[WorkspaceIndexer] = None
-        self._completion_context_workspace_caches: CompletionContextWorkspaceCaches = (
+        self.completion_context_workspace_caches: ICompletionContextWorkspaceCaches = (
             CompletionContextWorkspaceCaches()
         )
 
@@ -502,13 +507,13 @@ class RobotWorkspace(Workspace):
             self.workspace_indexer = None
 
         self.on_file_changed.register(
-            self._completion_context_workspace_caches.on_file_changed
+            self.completion_context_workspace_caches.on_file_changed
         )
 
     @overrides(Workspace.put_document)
     def put_document(self, text_document: TextDocumentItem) -> IDocument:
         doc = typing.cast(IRobotDocument, Workspace.put_document(self, text_document))
-        self._completion_context_workspace_caches.on_updated_document(doc.uri, doc)
+        self.completion_context_workspace_caches.on_updated_document(doc.uri, doc)
         if self.workspace_indexer is not None:
             self.workspace_indexer.on_updated_document(doc.uri)
         return doc
@@ -520,7 +525,7 @@ class RobotWorkspace(Workspace):
         doc = typing.cast(
             IRobotDocument, Workspace.update_document(self, text_doc, change)
         )
-        self._completion_context_workspace_caches.on_updated_document(doc.uri, doc)
+        self.completion_context_workspace_caches.on_updated_document(doc.uri, doc)
         if self.workspace_indexer is not None:
             self.workspace_indexer.on_updated_document(doc.uri)
         return doc
@@ -528,7 +533,7 @@ class RobotWorkspace(Workspace):
     @overrides(Workspace.remove_document)
     def remove_document(self, uri: str):
         doc = Workspace.remove_document(self, uri)
-        self._completion_context_workspace_caches.on_updated_document(uri, None)
+        self.completion_context_workspace_caches.on_updated_document(uri, None)
         if self.workspace_indexer is not None:
             self.workspace_indexer.on_updated_document(uri)
         return doc
@@ -537,7 +542,7 @@ class RobotWorkspace(Workspace):
     def add_folder(self, folder: IWorkspaceFolder):
         Workspace.add_folder(self, folder)
         self.libspec_manager.add_workspace_folder(folder.uri)
-        self._completion_context_workspace_caches.clear_caches()
+        self.completion_context_workspace_caches.clear_caches()
         if self.workspace_indexer is not None:
             self.workspace_indexer.on_updated_folders()
 
@@ -545,14 +550,19 @@ class RobotWorkspace(Workspace):
     def remove_folder(self, folder_uri):
         Workspace.remove_folder(self, folder_uri)
         self.libspec_manager.remove_workspace_folder(folder_uri)
-        self._completion_context_workspace_caches.clear_caches()
+        self.completion_context_workspace_caches.clear_caches()
         if self.workspace_indexer is not None:
             self.workspace_indexer.on_updated_folders()
+
+    @overrides(Workspace.on_changed_config)
+    def on_changed_config(self, config: IConfig):
+        Workspace.on_changed_config(self, config)
+        self.completion_context_workspace_caches.clear_caches()
 
     @overrides(Workspace.dispose)
     def dispose(self):
         Workspace.dispose(self)
-        self._completion_context_workspace_caches.dispose()
+        self.completion_context_workspace_caches.dispose()
         indexer = self.workspace_indexer
         if indexer is not None:
             indexer.dispose()

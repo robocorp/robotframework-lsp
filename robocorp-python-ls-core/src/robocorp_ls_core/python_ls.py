@@ -404,6 +404,9 @@ class PythonLanguageServer(MethodDispatcher):
 
     def m_workspace__did_change_configuration(self, settings=None) -> None:
         self.config.update(settings or {})
+        ws = self.workspace
+        if ws:
+            ws.on_changed_config(self.config)
 
     def m_workspace__did_change_workspace_folders(self, event=None):
         """Adds/Removes folders from the workspace."""

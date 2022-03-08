@@ -5,6 +5,7 @@ from robotframework_ls.impl.protocols import ICompletionContext, NodeInfo
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.protocols import ITestInfoTypedDict
 from robocorp_ls_core.lsp import CommandTypedDict
+from robotframework_ls.impl.robot_constants import ROBOT_FILE_EXTENSIONS
 
 log = get_logger(__name__)
 
@@ -297,7 +298,7 @@ def code_lens(completion_context: ICompletionContext) -> List[CodeLensTypedDict]
     if not path or not os.path.exists(os.path.dirname(path)):
         # The cwd must exist.
         return []
-    if not path.endswith((".robot", ".resource")):
+    if not path.endswith(ROBOT_FILE_EXTENSIONS):
         return []
 
     code_lenses = code_lens_runs(completion_context)

@@ -730,6 +730,9 @@ class IWorkspaceFolder(Protocol):
 class IWorkspace(Protocol):
     on_file_changed: "Callback"
 
+    def on_changed_config(self, config: IConfig) -> None:
+        pass
+
     @property
     def root_path(self):
         pass

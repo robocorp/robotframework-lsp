@@ -41,7 +41,10 @@ from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
     OutputEventBody,
 )
 
-from robotframework_ls.impl.robot_constants import BUILTIN_VARIABLES
+from robotframework_ls.impl.robot_constants import (
+    BUILTIN_VARIABLES,
+    ROBOT_AND_TXT_FILE_EXTENSIONS,
+)
 
 
 @lru_cache(None)
@@ -967,7 +970,7 @@ class _RobotDebuggerImpl(object):
 
         if not source:
             return
-        if not source.endswith((".robot", ".resource", ".txt")):
+        if not source.endswith(ROBOT_AND_TXT_FILE_EXTENSIONS):
             robot_init = os.path.join(source, "__init__.robot")
             if os.path.exists(robot_init):
                 source = robot_init
