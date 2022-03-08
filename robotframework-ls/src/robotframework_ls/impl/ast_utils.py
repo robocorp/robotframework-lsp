@@ -763,19 +763,22 @@ def _create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
     from robot.api import Token
 
     if node.__class__.__name__ == "KeywordCall":
-        token = _strip_token_bdd_prefix(node.get_token(Token.KEYWORD))
-        if token is not None:
-            node = _copy_of_node_replacing_token(node, token, Token.KEYWORD)
-            keyword_name = token.value
-            return KeywordUsageInfo(tuple(stack), node, token, keyword_name)
+        token_type = Token.KEYWORD
 
     elif node.__class__.__name__ in CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET:
-        node, token = _strip_node_and_token_bdd_prefix(node, Token.NAME)
-        if token is not None:
-            keyword_name = token.value
-            return KeywordUsageInfo(tuple(stack), node, token, keyword_name)
+        token_type = Token.NAME
 
-    return None
+    else:
+        return None
+
+    node, token = _strip_node_and_token_bdd_prefix(node, token_type)
+    if token is None:
+        return None
+
+    keyword_name = token.value
+    if keyword_name.lower() == "none":
+        return None
+    return KeywordUsageInfo(tuple(stack), node, token, keyword_name)
 
 
 def create_keyword_usage_info_from_token(

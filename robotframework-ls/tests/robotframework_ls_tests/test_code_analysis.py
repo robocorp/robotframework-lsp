@@ -861,3 +861,25 @@ Some task
 """
 
     _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_none(workspace, libspec_manager, data_regression):
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case1.robot")
+    doc.source = """
+*** Settings ***
+Test Setup    none
+Test Template    None
+Test Timeout    NONE
+
+*** Test Cases ***
+My Test Case
+    [Setup]    none
+    [Template]    NONE
+    [Tags]     NONE
+    [Timeout]    NONE
+    Should Be True    ${TRUE}
+
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
