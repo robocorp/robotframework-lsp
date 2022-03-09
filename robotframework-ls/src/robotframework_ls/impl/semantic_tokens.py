@@ -1,7 +1,7 @@
-from typing import List, Tuple, Iterator, Optional
+from typing import List, Tuple, Iterator, Optional, Set, Any
 import itertools
 from robocorp_ls_core.protocols import IDocument
-from robotframework_ls.impl.protocols import ICompletionContext
+from robotframework_ls.impl.protocols import ICompletionContext, IRobotToken
 import os
 
 from robotframework_ls.impl.robot_constants import (
@@ -66,63 +66,69 @@ del i
 del value
 
 
-class _DummyToken(object):
-    __slots__ = ["type", "value", "lineno", "col_offset", "end_col_offset"]
+def _split_token_change_first(
+    token: IRobotToken, first_token_type: str, position: int
+) -> Tuple[IRobotToken, IRobotToken]:
+    from robotframework_ls.impl import ast_utils
 
-    def __init__(self, initial_token=None):
-        if initial_token:
-            self.type = initial_token.type
-            self.value = initial_token.value
-            self.lineno = initial_token.lineno
-            self.col_offset = initial_token.col_offset
-            self.end_col_offset = initial_token.end_col_offset
-
-    def extract_token(self, type, position):
-        extracted_token = _DummyToken()
-        extracted_token.type = type
-        extracted_token.value = self.value[:position]
-        extracted_token.lineno = self.lineno
-        extracted_token.col_offset = self.col_offset
-        extracted_token.end_col_offset = self.col_offset + len(extracted_token.value)
-        self.__remove(extracted_token)
-        return extracted_token
-
-    def __remove(self, extracted_token):
-        extracted_token_length = (
-            extracted_token.end_col_offset - extracted_token.col_offset
-        )
-        self.value = self.value[extracted_token_length + 1 :]
-        self.col_offset = extracted_token.end_col_offset + 1
+    prefix = ast_utils.copy_token_replacing(
+        token,
+        type=first_token_type,
+        value=token.value[:position],
+    )
+    remainder = ast_utils.copy_token_replacing(
+        token, value=token.value[position:], col_offset=prefix.end_col_offset
+    )
+    return prefix, remainder
 
 
-def _extract_gherkin_token_from_keyword(keyword_token: _DummyToken):
-    gherkin_token = None
+def _split_token_change_second(
+    token: IRobotToken, second_token_type: str, position: int
+) -> Tuple[IRobotToken, IRobotToken]:
+    from robotframework_ls.impl import ast_utils
+
+    prefix = ast_utils.copy_token_replacing(
+        token,
+        value=token.value[:position],
+    )
+    remainder = ast_utils.copy_token_replacing(
+        token,
+        value=token.value[position:],
+        col_offset=prefix.end_col_offset,
+        type=second_token_type,
+    )
+    return prefix, remainder
+
+
+def _extract_gherkin_token_from_keyword(
+    keyword_token: IRobotToken,
+) -> Tuple[Optional[IRobotToken], IRobotToken]:
     import re
 
     result = re.match(
-        r"^(Given|When|Then|And|But)\s", keyword_token.value, flags=re.IGNORECASE
+        r"^((Given|When|Then|And|But)\s+)", keyword_token.value, flags=re.IGNORECASE
     )
     if result:
         gherkin_token_length = len(result.group(1))
-        gherkin_token = keyword_token.extract_token("control", gherkin_token_length)
-    return gherkin_token
+        return _split_token_change_first(keyword_token, "control", gherkin_token_length)
+
+    return None, keyword_token
 
 
 def _extract_library_token_from_keyword(
-    keyword_token: _DummyToken, context: ICompletionContext
-) -> Optional[_DummyToken]:
+    keyword_token: IRobotToken, scope: "_SemanticTokensScope"
+) -> Tuple[Optional[IRobotToken], IRobotToken]:
     if not "." in keyword_token.value:
-        return None
-    library_token = None
+        return None, keyword_token
+
     potential_candidates = _get_potential_library_names_from_keyword(
         keyword_token.value
     )
-    imported_libraries = set(_iter_dependent_names(context))
+
     for library_name in potential_candidates:
-        if library_name in imported_libraries:
-            library_token = keyword_token.extract_token("name", len(library_name))
-            break
-    return library_token
+        if library_name in scope.imported_libraries:
+            return _split_token_change_first(keyword_token, "name", len(library_name))
+    return None, keyword_token
 
 
 def _get_potential_library_names_from_keyword(keyword_name: str) -> Iterator[str]:
@@ -205,59 +211,103 @@ PARAMETER_NAME_INDEX = TOKEN_TYPE_TO_INDEX["parameterName"]
 DOCUMENTATION_INDEX = TOKEN_TYPE_TO_INDEX["documentation"]
 
 
+def _tokenize_changing_argument_to_keyword(tokenize_variables_generator):
+    from robotframework_ls.impl import ast_utils
+
+    for tok in tokenize_variables_generator:
+        if tok.type == ARGUMENT:
+            yield ast_utils.copy_token_replacing(tok, type=KEYWORD)
+        else:
+            yield tok
+
+
+def _tokenize_variables(token):
+    if token.type == KEYWORD:
+        from robotframework_ls.impl import ast_utils
+
+        # Hack because RF can't tokenize KEYWORD (it only tokenizes
+        # some pre-defined types and KEYWORD is not there).
+
+        if not token.value or "{" not in token.value:
+            # Nothing to tokenize.
+            return iter((token,))
+
+        else:
+            # Force ARGUMENT tokenization but show KEYWORD for callers.
+            token = ast_utils.copy_token_replacing(token, type=ARGUMENT)
+            return _tokenize_changing_argument_to_keyword(token.tokenize_variables())
+    else:
+        return token.tokenize_variables()
+
+
 def semantic_tokens_range(context, range):
     return []
 
 
-def _tokenize_token(node, initial_token, context, args_as_keywords_handler):
+def _tokenize_token(node, use_token, scope: "_SemanticTokensScope"):
+    if use_token.type in (use_token.EOL, use_token.SEPARATOR):
+        # Fast way out for the most common tokens (which have no special handling).
+        return
+
     from robotframework_ls.impl.ast_utils import (
         CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET,
+        copy_token_replacing,
     )
 
-    initial_token_type = initial_token.type
+    use_token_type = use_token.type
     in_documentation = False
 
-    if initial_token_type == ARGUMENT:
-        if args_as_keywords_handler is not None:
-            if args_as_keywords_handler.consider_current_argument_token_as_keyword(
-                initial_token
-            ):
-                token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[KEYWORD]
-                yield initial_token, token_type_index
-                return
-
+    # Step 1: cast to KEYWORD if needed.
+    if use_token_type == ARGUMENT:
         in_documentation = node.__class__.__name__ == "Documentation"
 
-    if initial_token_type == NAME:
-        if node.__class__.__name__ in CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET:
-            initial_token_type = KEYWORD
+        if not in_documentation:
+            if scope.args_as_keywords_handler is not None:
+                if scope.args_as_keywords_handler.consider_current_argument_token_as_keyword(
+                    use_token
+                ):
+                    use_token_type = KEYWORD
 
-    if initial_token_type == KEYWORD:
-        token_keyword = _DummyToken(initial_token)
-        token_gherkin_prefix = _extract_gherkin_token_from_keyword(token_keyword)
+    if use_token_type == NAME:
+        if node.__class__.__name__ in CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET:
+            use_token_type = KEYWORD
+
+    if use_token.type != use_token_type:
+        use_token = copy_token_replacing(use_token, type=use_token_type)
+
+    if use_token_type == KEYWORD:
+        token_keyword = use_token
+
+        token_gherkin_prefix, token_keyword = _extract_gherkin_token_from_keyword(
+            token_keyword
+        )
         if token_gherkin_prefix:
-            yield token_gherkin_prefix, TOKEN_TYPE_TO_INDEX[token_gherkin_prefix.type]
-        token_library_prefix = _extract_library_token_from_keyword(
-            token_keyword, context
+            yield token_gherkin_prefix, scope.get_index_from_internal_token_type(
+                token_gherkin_prefix.type
+            )
+
+        token_library_prefix, token_keyword = _extract_library_token_from_keyword(
+            token_keyword, scope
         )
         if token_library_prefix:
-            yield token_library_prefix, TOKEN_TYPE_TO_INDEX[token_library_prefix.type]
-        if token_gherkin_prefix or token_library_prefix:
-            yield token_keyword, RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[KEYWORD]
-            return
+            yield token_library_prefix, scope.get_index_from_internal_token_type(
+                token_library_prefix.type
+            )
+
+        use_token = token_keyword
 
     try:
-        iter_in = initial_token.tokenize_variables()
+        iter_in = _tokenize_variables(use_token)
     except:
         if in_documentation:
-            yield initial_token, DOCUMENTATION_INDEX
+            yield use_token, DOCUMENTATION_INDEX
         else:
-            token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.get(initial_token_type)
+            token_type_index = scope.get_index_from_rf_token_type(use_token_type)
             if token_type_index is not None:
-                yield initial_token, token_type_index
+                yield use_token, token_type_index
         return
     else:
-        if initial_token_type == ARGUMENT:
+        if use_token_type == ARGUMENT:
             first_token = next(iter_in)
 
             if in_documentation:
@@ -267,7 +317,7 @@ def _tokenize_token(node, initial_token, context, args_as_keywords_handler):
                 if equals_pos != -1:
                     # Found an equals... let's check if it's not a 'catenate', which
                     # doesn't really accept parameters and just concatenates all...
-                    value = node.get_value(initial_token.KEYWORD)
+                    value = node.get_value(use_token.KEYWORD)
                     if value and value.strip().lower() == "catenate":
                         equals_pos = -1
 
@@ -289,122 +339,87 @@ def _tokenize_token(node, initial_token, context, args_as_keywords_handler):
                         # performance isn't negatively impacted by it.
 
             if equals_pos != -1:
-                tok = _DummyToken()
-                tok.type = "parameterName"
-                tok.value = first_token.value[:equals_pos]
-                tok.lineno = first_token.lineno
-                tok.col_offset = first_token.col_offset
-                prev_col_offset_end = tok.end_col_offset = first_token.col_offset + len(
-                    tok.value
+                tok, first_token = _split_token_change_first(
+                    first_token, "parameterName", equals_pos
                 )
                 yield tok, PARAMETER_NAME_INDEX
 
-                tok = _DummyToken()
-                tok.type = "variableOperator"
-                tok.value = "="
-                tok.lineno = first_token.lineno
-                tok.col_offset = prev_col_offset_end
-                prev_col_offset_end = tok.end_col_offset = prev_col_offset_end + 1
+                tok, first_token = _split_token_change_first(
+                    first_token, "variableOperator", 1
+                )
                 yield tok, VARIABLE_OPERATOR_INDEX
 
                 # Add the remainder back.
-                first_token_remainder = _DummyToken()
-                first_token_remainder.type = first_token.type
-                first_token_remainder.value = first_token.value[equals_pos + 1 :]
-                first_token_remainder.lineno = first_token.lineno
-                first_token_remainder.col_offset = prev_col_offset_end
-                prev_col_offset_end = (
-                    first_token_remainder.end_col_offset
-                ) = prev_col_offset_end + len(first_token_remainder.value)
-
-                iter_in = itertools.chain(iter([first_token_remainder]), iter_in)
+                iter_in = itertools.chain(iter((first_token,)), iter_in)
             else:
                 iter_in = itertools.chain(iter((first_token,)), iter_in)
 
         for token in iter_in:
-            token_type_index = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.get(token.type)
+            token_type_index = scope.get_index_from_rf_token_type(token.type)
+            if token_type_index is not None:
+                yield from _tokenized_args(token, token_type_index, in_documentation)
 
-            if token_type_index is None:
-                continue
 
-            if in_documentation and token_type_index == ARGUMENT_INDEX:
-                # Handle the doc itself (note that we may also tokenize docs
-                # to include variables).
-                yield token, DOCUMENTATION_INDEX
-                continue
+def _tokenized_args(token, token_type_index, in_documentation):
+    if in_documentation and token_type_index == ARGUMENT_INDEX:
+        # Handle the doc itself (note that we may also tokenize docs
+        # to include variables).
+        yield token, DOCUMENTATION_INDEX
+        return
 
-            if (
-                token_type_index == VARIABLE_INDEX
-                and len(token.value) > 3
-                and token.value[-1] == "}"
-                and token.value[1] == "{"
-            ):
-                # We want to do an additional tokenization on variables to
-                # convert '${var}' to '${', 'var', '}'
-                tok = _DummyToken()
-                tok.type = "variableOperator"
-                tok.value = token.value[:2]
-                tok.lineno = token.lineno
-                tok.col_offset = token.col_offset
-                prev_col_offset_end = tok.end_col_offset = token.col_offset + 2
-                yield tok, VARIABLE_OPERATOR_INDEX
+    if (
+        token_type_index == VARIABLE_INDEX
+        and len(token.value) > 3
+        and token.value[-1] == "}"
+        and token.value[1] == "{"
+    ):
+        # We want to do an additional tokenization on variables to
+        # convert '${var}' to '${', 'var', '}'
 
-                tok = _DummyToken()
-                tok.type = token.type
-                tok.value = token.value[2:-1]
-                tok.lineno = token.lineno
-                tok.col_offset = prev_col_offset_end
-                prev_col_offset_end = tok.end_col_offset = prev_col_offset_end + len(
-                    tok.value
-                )
-                yield tok, token_type_index
+        op_start_token, token = _split_token_change_first(token, "variableOperator", 2)
+        yield op_start_token, VARIABLE_OPERATOR_INDEX
 
-                tok = _DummyToken()
-                tok.type = "variableOperator"
-                tok.value = token.value[-1:]
-                tok.lineno = token.lineno
-                tok.col_offset = prev_col_offset_end
-                tok.end_col_offset = prev_col_offset_end + 1
-                yield tok, VARIABLE_OPERATOR_INDEX
-                continue
+        var_token, op_end_token = _split_token_change_second(
+            token, "variableOperator", len(token.value) - 1
+        )
+        yield var_token, token_type_index
+        yield op_end_token, VARIABLE_OPERATOR_INDEX
 
-            if (
-                token_type_index == SETTING_INDEX
-                and len(token.value) > 2
-                and token.value[-1] == "]"
-                and token.value[0] == "["
-            ):
-                # We want to do an additional tokenization on names to
-                # convert '[Arguments]' to '[', 'Arguments', ']'
-                tok = _DummyToken()
-                tok.type = "settingOperator"
-                tok.value = token.value[:1]
-                tok.lineno = token.lineno
-                tok.col_offset = token.col_offset
-                prev_col_offset_end = tok.end_col_offset = token.col_offset + 1
-                yield tok, VARIABLE_OPERATOR_INDEX
+        return
 
-                tok = _DummyToken()
-                tok.type = token.type
-                tok.value = token.value[1:-1]
-                tok.lineno = token.lineno
-                tok.col_offset = prev_col_offset_end
-                prev_col_offset_end = tok.end_col_offset = prev_col_offset_end + len(
-                    tok.value
-                )
-                yield tok, token_type_index
+    if (
+        token_type_index == SETTING_INDEX
+        and len(token.value) > 2
+        and token.value[-1] == "]"
+        and token.value[0] == "["
+    ):
+        # We want to do an additional tokenization on names to
+        # convert '[Arguments]' to '[', 'Arguments', ']'
+        op_start_token, token = _split_token_change_first(token, "settingOperator", 1)
+        yield op_start_token, VARIABLE_OPERATOR_INDEX
 
-                tok = _DummyToken()
-                tok.type = "settingOperator"
-                tok.value = token.value[-1:]
-                tok.lineno = token.lineno
-                tok.col_offset = prev_col_offset_end
-                tok.end_col_offset = prev_col_offset_end + 1
-                yield tok, VARIABLE_OPERATOR_INDEX
-                continue
+        var_token, op_end_token = _split_token_change_second(
+            token, "settingOperator", len(token.value) - 1
+        )
+        yield var_token, token_type_index
+        yield op_end_token, VARIABLE_OPERATOR_INDEX
 
-            # Default case (just yield the current token/type).
-            yield token, token_type_index
+        return
+
+    # Default case (just yield the current token/type).
+    yield token, token_type_index
+
+
+class _SemanticTokensScope:
+    def __init__(self, context: ICompletionContext):
+        # It's the same for all files.
+        self.imported_libraries = set(_iter_dependent_names(context))
+
+        # Note: it's set for the node and then reused for all the tokens in that same node.
+        self.args_as_keywords_handler: Any = None
+
+        self.get_index_from_rf_token_type = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.get
+        self.get_index_from_internal_token_type = TOKEN_TYPE_TO_INDEX.__getitem__
 
 
 def semantic_tokens_full(context: ICompletionContext):
@@ -422,17 +437,19 @@ def semantic_tokens_full(context: ICompletionContext):
 
     last_line = 0
     last_column = 0
+
+    scope = _SemanticTokensScope(context)
     for _stack, node in ast_utils.iter_all_nodes_recursive(ast):
         if monitor:
             monitor.check_cancelled()
         tokens = getattr(node, "tokens", None)
         if tokens:
-            args_as_keywords_handler = ast_utils.get_args_as_keywords_handler(node)
+            scope.args_as_keywords_handler = ast_utils.get_args_as_keywords_handler(
+                node
+            )
 
             for token in tokens:
-                for token_part, token_type_index in _tokenize_token(
-                    node, token, context, args_as_keywords_handler
-                ):
+                for token_part, token_type_index in _tokenize_token(node, token, scope):
                     lineno = token_part.lineno - 1
                     if lineno < 0:
                         lineno = 0

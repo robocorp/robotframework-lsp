@@ -767,7 +767,7 @@ def _build_keyword_usage(
         yield_only_for_token, current_tokens[found_at_index]
     ):
         current_token = current_tokens[found_at_index]
-        current_token = _copy_token_replacing(current_token, type=current_token.KEYWORD)
+        current_token = copy_token_replacing(current_token, type=current_token.KEYWORD)
         new_tokens = [current_token]
         new_tokens.extend(current_tokens[found_at_index + 1 :])
 
@@ -1082,7 +1082,7 @@ def _strip_token_bdd_prefix(token):
     return token
 
 
-def _copy_token_replacing(token, **kwargs):
+def copy_token_replacing(token, **kwargs):
     from robot.api import Token
 
     new_kwargs = {

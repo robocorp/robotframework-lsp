@@ -66,7 +66,7 @@ Some test
             ("*** Test Cases ***", "header"),
             ("Some test", "testCaseName"),
             ("some_resource", "name"),
-            ("Some Keyword", "keywordNameCall"),
+            (".Some Keyword", "keywordNameCall"),
         ],
     )
 
@@ -89,7 +89,7 @@ Some test
             ("*** Test Cases ***", "header"),
             ("Some test", "testCaseName"),
             ("Some_REsource", "name"),
-            ("Some Keyword", "keywordNameCall"),
+            (".Some Keyword", "keywordNameCall"),
         ],
     )
 
@@ -144,7 +144,7 @@ Library    Collections
             ("*** Test Cases ***", "header"),
             ("Some test", "testCaseName"),
             ("Collections", "name"),
-            ("Insert into list", "keywordNameCall"),
+            (".Insert into list", "keywordNameCall"),
         ],
     )
 
@@ -174,7 +174,7 @@ Some test
             ("*** Test Cases ***", "header"),
             ("Some test", "testCaseName"),
             ("resource_in_pythonpath", "name"),
-            ("Keyword in Pythonpath", "keywordNameCall"),
+            (".Keyword in Pythonpath", "keywordNameCall"),
         ],
     )
 
@@ -204,7 +204,7 @@ Some test
             ("*** Test Cases ***", "header"),
             ("Some test", "testCaseName"),
             ("libraries.lib_in_pythonpath", "name"),
-            ("find in library", "keywordNameCall"),
+            (".find in library", "keywordNameCall"),
         ],
     )
 
@@ -267,6 +267,44 @@ Some Test
             ("arg1", "variable"),
             ("}", "variableOperator"),
             (" other", "argumentValue"),
+        ],
+    )
+
+
+def test_semantic_highlighting_vars_in_call(workspace):
+    check_simple(
+        workspace,
+        """
+*** Keyword ***
+Some ${val} in arg
+    Log to console    ${val}
+        
+*** Test Cases ***
+Some Test
+    ${val}=    Set variable    2
+    Some ${val} in arg
+""",
+        [
+            ("*** Keyword ***", "header"),
+            ("Some ", "keywordNameDefinition"),
+            ("${", "variableOperator"),
+            ("val", "variable"),
+            ("}", "variableOperator"),
+            (" in arg", "keywordNameDefinition"),
+            ("Log to console", "keywordNameCall"),
+            ("${", "variableOperator"),
+            ("val", "variable"),
+            ("}", "variableOperator"),
+            ("*** Test Cases ***", "header"),
+            ("Some Test", "testCaseName"),
+            ("${val}=", "control"),
+            ("Set variable", "keywordNameCall"),
+            ("2", "argumentValue"),
+            ("Some ", "keywordNameCall"),
+            ("${", "variableOperator"),
+            ("val", "variable"),
+            ("}", "variableOperator"),
+            (" in arg", "keywordNameCall"),
         ],
     )
 
@@ -453,7 +491,7 @@ Test case 1
             ("*** Test Cases ***", "header"),
             ("Test case 1", "testCaseName"),
             ("Col", "name"),
-            ("Append to list", "keywordNameCall"),
+            (".Append to list", "keywordNameCall"),
         ],
     )
 
@@ -478,16 +516,16 @@ Some test
             ("Col", "name"),
             ("Suite Setup", "setting"),
             ("Col", "name"),
-            ("Append to list", "keywordNameCall"),
+            (".Append to list", "keywordNameCall"),
             ("*** Test Cases ***", "header"),
             ("Some test", "testCaseName"),
             ("[", "variableOperator"),
             ("Setup", "setting"),
             ("]", "variableOperator"),
             ("Col", "name"),
-            ("Append to list", "keywordNameCall"),
+            (".Append to list", "keywordNameCall"),
             ("Col", "name"),
-            ("Append to list", "keywordNameCall"),
+            (".Append to list", "keywordNameCall"),
         ],
     )
 
@@ -510,16 +548,16 @@ Some test
             ("A.B", "name"),
             ("Suite Setup", "setting"),
             ("A.B", "name"),
-            ("Append to list", "keywordNameCall"),
+            (".Append to list", "keywordNameCall"),
             ("*** Test Cases ***", "header"),
             ("Some test", "testCaseName"),
             ("[", "variableOperator"),
             ("Setup", "setting"),
             ("]", "variableOperator"),
             ("A.B", "name"),
-            ("Append to list", "keywordNameCall"),
+            (".Append to list", "keywordNameCall"),
             ("A.B", "name"),
-            ("Append to list", "keywordNameCall"),
+            (".Append to list", "keywordNameCall"),
         ],
     )
 
