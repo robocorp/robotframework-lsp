@@ -1,11 +1,14 @@
 from robotframework_ls.impl.protocols import (
     ICompletionContext,
     EvaluatableExpressionTypedDict,
+    IRobotToken,
 )
 from typing import Optional
 
 
-def _create_evaluatable_expression_from_token(token) -> EvaluatableExpressionTypedDict:
+def _create_evaluatable_expression_from_token(
+    token: IRobotToken,
+) -> EvaluatableExpressionTypedDict:
     return {
         "range": {
             "start": {"line": token.lineno - 1, "character": token.col_offset},
@@ -32,8 +35,10 @@ def provide_evaluatable_expression(
 
     token_info = completion_context.get_current_token()
     if token_info is not None:
-        token = ast_utils.get_keyword_name_token(token_info.node, token_info.token)
-        if token is not None:
-            return _create_evaluatable_expression_from_token(token)
+        keyword_name_token = ast_utils.get_keyword_name_token(
+            token_info.stack, token_info.node, token_info.token
+        )
+        if keyword_name_token is not None:
+            return _create_evaluatable_expression_from_token(keyword_name_token)
 
     return None

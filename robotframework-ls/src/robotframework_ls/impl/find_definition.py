@@ -260,7 +260,9 @@ def find_keyword_definition(
     from robotframework_ls.impl.collect_keywords import collect_keywords
     from robotframework_ls.impl import ast_utils
 
-    token = ast_utils.get_keyword_name_token(token_info.node, token_info.token)
+    token = ast_utils.get_keyword_name_token(
+        token_info.stack, token_info.node, token_info.token
+    )
     if token is None:
         if token_info.token.type == token_info.token.KEYWORD_NAME:
             if isinstance_name(token_info.node, "KeywordName"):

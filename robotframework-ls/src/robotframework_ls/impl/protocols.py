@@ -24,7 +24,6 @@ from robocorp_ls_core.protocols import (
 )
 from robocorp_ls_core.constants import NULL
 from robocorp_ls_core.protocols import TypedDict
-from collections import namedtuple
 import enum
 from robocorp_ls_core.lsp import (
     LocationTypedDict,
@@ -133,6 +132,7 @@ class INode(Protocol):
     end_lineno: int
     col_offset: int
     end_col_offset: int
+    tokens: List[IRobotToken]
 
     def get_token(self, name: str) -> IRobotToken:
         pass
@@ -155,7 +155,7 @@ class IResourceImportNode(INode, Protocol):
 
 
 class NodeInfo(Generic[Y]):
-    stack: tuple
+    stack: Tuple[INode, ...]
     node: Y
 
     __slots__ = ["stack", "node"]
@@ -165,7 +165,14 @@ class NodeInfo(Generic[Y]):
         self.node = node
 
 
-TokenInfo = namedtuple("TokenInfo", "stack, node, token")
+class TokenInfo:
+
+    __slots__ = ["stack", "node", "token"]
+
+    def __init__(self, stack: Tuple[INode, ...], node: INode, token: IRobotToken):
+        self.stack = stack
+        self.node = node
+        self.token = token
 
 
 class KeywordUsageInfo:
@@ -174,23 +181,26 @@ class KeywordUsageInfo:
         "node",
         "token",
         "name",
-        "is_argument_usage",
-        "argument_usage_index",
+        "_is_argument_usage",
     ]
 
     def __init__(
-        self, stack, node, token, name, is_argument_usage=False, argument_usage_index=-1
+        self,
+        stack: Tuple[INode, ...],
+        node: INode,
+        token: IRobotToken,
+        name: str,
+        is_argument_usage: bool = False,
     ):
         self.stack = stack
         self.node = node
         self.token = token
         self.name = name
-        self.is_argument_usage = is_argument_usage
-        self.argument_usage_index = argument_usage_index
+        self._is_argument_usage = is_argument_usage
 
     def __repr__(self):
-        if self.is_argument_usage:
-            return f"KeywordUsageInfo({self.name} (argument usage: {self.argument_usage_index}))"
+        if self._is_argument_usage:
+            return f"KeywordUsageInfo({self.name} (argument usage))"
         else:
             return f"KeywordUsageInfo({self.name})"
 

@@ -327,7 +327,9 @@ def complete(
 
     token_info = completion_context.get_current_token()
     if token_info is not None:
-        token = ast_utils.get_keyword_name_token(token_info.node, token_info.token)
+        token = ast_utils.get_keyword_name_token(
+            token_info.stack, token_info.node, token_info.token
+        )
         if token is not None:
             import_location_info = _obtain_import_location_info(completion_context)
 

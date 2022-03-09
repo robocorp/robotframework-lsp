@@ -635,7 +635,7 @@ class CompletionContext(object):
             definitions = find_keyword_definition(
                 cp, TokenInfo(usage_info.stack, usage_info.node, usage_info.token)
             )
-            if definitions and len(definitions) >= 1:
+            if definitions:
                 definition: IKeywordDefinition = next(iter(definitions))
                 return definition, usage_info
         return None

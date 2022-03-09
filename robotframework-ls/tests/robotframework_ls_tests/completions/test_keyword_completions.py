@@ -3,35 +3,21 @@ from robotframework_ls.impl.protocols import ICompletionContext
 
 
 def test_keyword_completions_builtin(workspace, libspec_manager):
-    from robotframework_ls.impl import keyword_completions
-    from robotframework_ls.impl.completion_context import CompletionContext
-
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
     doc = workspace.put_doc("case1.robot", doc.source + "\n    should be")
 
-    completions = keyword_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws)
-    )
-    assert sorted([comp["label"] for comp in completions]) == [
-        "Length Should Be (BuiltIn)",
-        "Should Be Empty (BuiltIn)",
-        "Should Be Equal (BuiltIn)",
-        "Should Be Equal As Integers (BuiltIn)",
-        "Should Be Equal As Numbers (BuiltIn)",
-        "Should Be Equal As Strings (BuiltIn)",
-        "Should Be True (BuiltIn)",
-    ]
+    _check_should_be_completions(doc, workspace.ws)
 
 
 def test_keyword_completions_format(workspace, libspec_manager):
-    from robotframework_ls.impl import keyword_completions
-    from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.robot_config import RobotConfig
     from robotframework_ls.impl.robot_lsp_constants import (
         OPTION_ROBOT_COMPLETION_KEYWORDS_FORMAT,
         OPTION_ROBOT_COMPLETION_KEYWORDS_FORMAT_FIRST_UPPER,
     )
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
@@ -100,34 +86,18 @@ Testing Completion Here
 
 
 def test_keyword_completions_builtin_after_space(workspace, libspec_manager):
-    from robotframework_ls.impl import keyword_completions
-    from robotframework_ls.impl.completion_context import CompletionContext
     from robocorp_ls_core.protocols import IDocument
 
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc: IDocument = workspace.get_doc("case1.robot")
     doc = workspace.put_doc("case1.robot", doc.source + "\n    should be ")
 
-    completions = keyword_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws)
-    )
-    assert sorted([comp["label"] for comp in completions]) == [
-        "Length Should Be (BuiltIn)",
-        "Should Be Empty (BuiltIn)",
-        "Should Be Equal (BuiltIn)",
-        "Should Be Equal As Integers (BuiltIn)",
-        "Should Be Equal As Numbers (BuiltIn)",
-        "Should Be Equal As Strings (BuiltIn)",
-        "Should Be True (BuiltIn)",
-    ]
+    _check_should_be_completions(doc, workspace.ws)
 
 
 def test_keyword_completions_builtin_after_space_before_newline(
     workspace, libspec_manager
 ):
-    from robotframework_ls.impl import keyword_completions
-    from robotframework_ls.impl.completion_context import CompletionContext
-
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
     doc = workspace.put_doc("case1.robot", doc.source + "\n    should be \n")
@@ -135,21 +105,9 @@ def test_keyword_completions_builtin_after_space_before_newline(
     line, _col = doc.get_last_line_col()
     line_contents = doc.get_line(line - 1)
 
-    completions = keyword_completions.complete(
-        CompletionContext(
-            doc, workspace=workspace.ws, line=line - 1, col=len(line_contents)
-        )
+    _check_should_be_completions(
+        doc, workspace.ws, line=line - 1, col=len(line_contents)
     )
-
-    assert sorted([comp["label"] for comp in completions]) == [
-        "Length Should Be (BuiltIn)",
-        "Should Be Empty (BuiltIn)",
-        "Should Be Equal (BuiltIn)",
-        "Should Be Equal As Integers (BuiltIn)",
-        "Should Be Equal As Numbers (BuiltIn)",
-        "Should Be Equal As Strings (BuiltIn)",
-        "Should Be True (BuiltIn)",
-    ]
 
 
 def _check_resolve(context: ICompletionContext, completions):
@@ -717,17 +675,11 @@ def test_simple_with_params(workspace, libspec_manager, cases):
     ]
 
 
-def test_keyword_completions_on_keyword_arguments(workspace, libspec_manager):
+def _check_should_be_completions(doc, ws, **kwargs):
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
 
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
-    doc = workspace.put_doc(
-        "case1.robot", doc.source + "\n    Run keyword if    ${var}    Should Be"
-    )
-
-    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    completion_context = CompletionContext(doc, workspace=ws, **kwargs)
 
     completions = keyword_completions.complete(completion_context)
     assert sorted([comp["label"] for comp in completions]) == [
@@ -739,6 +691,44 @@ def test_keyword_completions_on_keyword_arguments(workspace, libspec_manager):
         "Should Be Equal As Strings (BuiltIn)",
         "Should Be True (BuiltIn)",
     ]
+
+
+def test_keyword_completions_on_keyword_arguments(workspace, libspec_manager):
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc(
+        "case1.robot", doc.source + "\n    Run keyword if    ${var}    Should Be"
+    )
+    _check_should_be_completions(doc, workspace.ws)
+
+
+def test_keyword_completions_on_keyword_arguments_run_keyword_if(
+    workspace, libspec_manager
+):
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc(
+        "case1.robot",
+        doc.source
+        + "\n    Run keyword if    ${var}    No Operation    ELSE IF   ${cond}    Should Be",
+    )
+
+    _check_should_be_completions(doc, workspace.ws)
+
+
+def test_keyword_completions_on_keyword_arguments_run_keyword_if_space_at_end(
+    workspace, libspec_manager
+):
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    doc = workspace.put_doc(
+        "case1.robot",
+        doc.source
+        + "\n    Run keyword if    ${var}    No Operation    ELSE IF   ${cond}    Should Be ",
+    )
+
+    _check_should_be_completions(doc, workspace.ws)
 
 
 def test_keyword_completions_on_template_name(workspace, libspec_manager):

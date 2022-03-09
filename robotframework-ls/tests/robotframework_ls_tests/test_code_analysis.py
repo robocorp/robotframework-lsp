@@ -788,6 +788,8 @@ def test_code_analysis_run_keyword_if_basic(
 Minimal task
     ${Cond1}=    Set local variable    ${Cond1}    1
     Run Keyword If    ${Cond1}    No operation    ELSE    No operation
+    Run Keyword If    ${Cond1}    No operation    ELSE IF   ${Cond1}   No operation
+    Run Keyword If    ${Cond1}    No operation    ELSE IF   ${Cond1}   No operation    ELSE    No operation
 """
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 

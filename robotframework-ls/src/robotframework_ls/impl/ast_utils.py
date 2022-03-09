@@ -10,6 +10,7 @@ from robotframework_ls.impl.protocols import (
     KeywordUsageInfo,
     ILibraryImportNode,
     IRobotToken,
+    INode,
 )
 from robotframework_ls.impl.text_utilities import normalize_robot_name
 from robocorp_ls_core.basic import isinstance_name
@@ -17,6 +18,7 @@ from robotframework_ls.impl.keywords_in_args import KEYWORD_NAME_TO_KEYWORD_INDE
 import functools
 import weakref
 import threading
+import typing
 
 
 log = get_logger(__name__)
@@ -315,7 +317,7 @@ def print_ast(node, stream=None):
     errors_visitor.visit(node)
 
 
-def find_section(node, line: int):
+def find_section(node, line: int) -> Optional[INode]:
     """
     :param line:
         0-based
@@ -332,25 +334,46 @@ def find_section(node, line: int):
     return last_section
 
 
-def _iter_nodes(node, stack=None, recursive=True):
+if typing.TYPE_CHECKING:
+    # The INode has Robot Framework specific methods, but at runtime
+    # we can just check the actual ast class.
+    from typing import runtime_checkable, Protocol
+
+    @runtime_checkable
+    class _AST_CLASS(INode, Protocol):
+        pass
+
+
+else:
+    # We know that the AST we're dealing with is the INode.
+    # We can't use runtime_checkable on Python 3.7 though.
+    _AST_CLASS = ast_module.AST
+
+
+def _iter_nodes(
+    node, internal_stack: Optional[List[INode]] = None, recursive=True
+) -> Iterator[Tuple[List[INode], INode]]:
     """
     :note: the yielded stack is actually always the same (mutable) list, so,
     clients that want to return it somewhere else should create a copy.
     """
-    if stack is None:
+    stack: List[INode]
+    if internal_stack is None:
         stack = []
+    else:
+        stack = internal_stack
 
     if recursive:
         for _field, value in ast_module.iter_fields(node):
             if isinstance(value, list):
                 for item in value:
-                    if isinstance(item, ast_module.AST):
+                    if isinstance(item, _AST_CLASS):
                         yield stack, item
                         stack.append(item)
                         yield from _iter_nodes(item, stack, recursive=True)
                         stack.pop()
 
-            elif isinstance(value, ast_module.AST):
+            elif isinstance(value, _AST_CLASS):
                 yield stack, value
                 stack.append(value)
 
@@ -362,14 +385,14 @@ def _iter_nodes(node, stack=None, recursive=True):
         for _field, value in ast_module.iter_fields(node):
             if isinstance(value, list):
                 for item in value:
-                    if isinstance(item, ast_module.AST):
+                    if isinstance(item, _AST_CLASS):
                         yield stack, item
 
-            elif isinstance(value, ast_module.AST):
+            elif isinstance(value, _AST_CLASS):
                 yield stack, value
 
 
-def iter_all_nodes_recursive(node):
+def iter_all_nodes_recursive(node: INode) -> Iterator[Tuple[List[INode], INode]]:
     """
     This function will iterate over all the nodes. Use only if there's no
     other way to implement it as iterating over all the nodes is slow...
@@ -730,32 +753,42 @@ def iter_keyword_usage_tokens(
     )
 
 
-def _iter_keyword_usage_tokens_uncached_from_args(
-    stack, node, usage_info, args_as_keywords_handler
-):
-    if not args_as_keywords_handler.multiple_matches:
-        for token in usage_info.node.tokens:
-            if token.type == token.ARGUMENT:
-                if args_as_keywords_handler.consider_current_argument_token_as_keyword(
-                    token
-                ):
-                    if not args_as_keywords_handler.multiple_matches:
-                        yield KeywordUsageInfo(
-                            usage_info.stack,
-                            usage_info.node,
-                            token,
-                            token.value,
-                            True,
-                            args_as_keywords_handler.get_current_argument_usage_index(),
-                        )
-                        # We can only find one match (other tokens are passed to that usage).
-                        return
+def _same_line_col(tok1: IRobotToken, tok2: IRobotToken):
+    return tok1.lineno == tok2.lineno and tok1.col_offset == tok2.col_offset
 
+
+def _build_keyword_usage(
+    stack, node, yield_only_for_token, current_tokens, found_at_index
+) -> Optional[KeywordUsageInfo]:
+    # Note: just check for line/col because the token could be changed
+    # (for instance, an EOL ' ' could be added to the token).
+
+    if yield_only_for_token is None or _same_line_col(
+        yield_only_for_token, current_tokens[found_at_index]
+    ):
+        current_token = current_tokens[found_at_index]
+        current_token = _copy_token_replacing(current_token, type=current_token.KEYWORD)
+        new_tokens = [current_token]
+        new_tokens.extend(current_tokens[found_at_index + 1 :])
+
+        return KeywordUsageInfo(
+            stack,
+            node.__class__(new_tokens),
+            current_token,
+            current_token.value,
+            True,
+        )
+    return None
+
+
+def _iter_keyword_usage_tokens_uncached_from_args(
+    stack, node, args_as_keywords_handler, yield_only_for_token=None
+):
     # We may have multiple matches, so, we need to setup the appropriate book-keeping
     current_tokens = []
     found_at_index = -1
 
-    for token in usage_info.node.tokens:
+    for token in node.tokens:
         if token.type == token.ARGUMENT:
             current_tokens.append(token)
             if args_as_keywords_handler.consider_current_argument_token_as_keyword(
@@ -765,26 +798,25 @@ def _iter_keyword_usage_tokens_uncached_from_args(
             else:
                 if args_as_keywords_handler.started_match:
                     del current_tokens[-1]  # Don't add the ELSE IF/ELSE argument.
-                    yield KeywordUsageInfo(
-                        usage_info.stack,
-                        usage_info.node.__class__(current_tokens),
-                        current_tokens[found_at_index],
-                        current_tokens[found_at_index].value,
-                        True,
+                    usage_info = _build_keyword_usage(
+                        stack,
+                        node,
+                        yield_only_for_token,
+                        current_tokens,
                         found_at_index,
                     )
+                    if usage_info is not None:
+                        yield usage_info
+                    current_tokens = []
                     found_at_index = -1
     else:
         # Do one last iteration at the end to deal with the last one.
         if found_at_index >= 0 and len(current_tokens) > found_at_index:
-            yield KeywordUsageInfo(
-                usage_info.stack,
-                usage_info.node.__class__(current_tokens),
-                current_tokens[found_at_index],
-                current_tokens[found_at_index].value,
-                True,
-                found_at_index,
+            usage_info = _build_keyword_usage(
+                stack, node, yield_only_for_token, current_tokens, found_at_index
             )
+            if usage_info is not None:
+                yield usage_info
 
 
 def _iter_keyword_usage_tokens_uncached(ast, collect_args_as_keywords):
@@ -804,7 +836,7 @@ def _iter_keyword_usage_tokens_uncached(ast, collect_args_as_keywords):
                         continue
 
                     yield from _iter_keyword_usage_tokens_uncached_from_args(
-                        stack, node, usage_info, args_as_keywords_handler
+                        stack, node, args_as_keywords_handler
                     )
 
 
@@ -837,39 +869,27 @@ def _create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
 
 
 def create_keyword_usage_info_from_token(
-    stack, node, token
+    stack: Tuple[INode, ...], node: INode, token: IRobotToken
 ) -> Optional[KeywordUsageInfo]:
     """
     If this is a keyword usage node, return information on it, otherwise,
     returns None.
 
-    :note: this goes hand-in-hand with get_keyword_name_token.
+    Note that it should return the keyword usage for the whole keyword call
+    if we're in an argument that isn't itself a keyword call.
     """
-    i = get_argument_keyword_name_index(node, token)
-    if i >= 0:
-        return KeywordUsageInfo(tuple(stack), node, token, token.value, True, i)
+    if token.type == token.ARGUMENT:
+        args_as_keywords_handler = get_args_as_keywords_handler(node)
+        if args_as_keywords_handler is not None:
+            for v in _iter_keyword_usage_tokens_uncached_from_args(
+                stack,
+                node,
+                args_as_keywords_handler,
+                yield_only_for_token=token,
+            ):
+                return v
 
     return _create_keyword_usage_info(stack, node)
-
-
-def get_argument_keyword_name_index(node, token) -> int:
-    """
-    Note: the return is 0-based (even though KEYWORD_NAME_TO_KEYWORD_INDEX is 1-based).
-    """
-    if isinstance_name(node, "KeywordCall"):
-        if node.keyword:
-            consider_keyword_at_index = KEYWORD_NAME_TO_KEYWORD_INDEX.get(
-                normalize_robot_name(node.keyword)
-            )
-            if consider_keyword_at_index is not None:
-                i_arg = 0
-                for arg in node.tokens:
-                    if arg.type == token.ARGUMENT:
-                        i_arg += 1
-                        if arg is token:
-                            if i_arg == consider_keyword_at_index:
-                                return i_arg - 1
-    return -1
 
 
 class _ConsiderArgsAsKeywordNames:
@@ -916,9 +936,6 @@ class _ConsiderArgsAsKeywordNames:
 
         return self._current_arg == self._consider_keyword_at_index
 
-    def get_current_argument_usage_index(self):
-        return self._current_arg
-
 
 def get_args_as_keywords_handler(node) -> Optional[_ConsiderArgsAsKeywordNames]:
     if isinstance_name(node, "KeywordCall"):
@@ -935,7 +952,9 @@ def get_args_as_keywords_handler(node) -> Optional[_ConsiderArgsAsKeywordNames]:
     return None
 
 
-def get_keyword_name_token(ast, token):
+def get_keyword_name_token(
+    stack: Tuple[INode, ...], node: INode, token: IRobotToken
+) -> Optional[IRobotToken]:
     """
     If the given token is a keyword call name, return the token, otherwise return None.
 
@@ -943,18 +962,24 @@ def get_keyword_name_token(ast, token):
     """
     if token.type == token.KEYWORD or (
         token.type == token.NAME
-        and ast.__class__.__name__ in CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET
+        and node.__class__.__name__ in CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET
     ):
         return _strip_token_bdd_prefix(token)
 
     if token.type == token.ARGUMENT and not token.value.strip().endswith("}"):
-        if get_argument_keyword_name_index(ast, token) >= 0:
-            return token
-
+        args_as_keywords_handler = get_args_as_keywords_handler(node)
+        if args_as_keywords_handler is not None:
+            for _ in _iter_keyword_usage_tokens_uncached_from_args(
+                stack,
+                node,
+                args_as_keywords_handler,
+                yield_only_for_token=token,
+            ):
+                return token
     return None
 
 
-def get_library_import_name_token(ast, token):
+def get_library_import_name_token(node, token: IRobotToken) -> Optional[IRobotToken]:
     """
     If the given ast node is a library import and the token is its name, return
     the name token, otherwise, return None.
@@ -962,14 +987,14 @@ def get_library_import_name_token(ast, token):
 
     if (
         token.type == token.NAME
-        and isinstance_name(ast, "LibraryImport")
-        and ast.name == token.value  # I.e.: match the name, not the alias.
+        and isinstance_name(node, "LibraryImport")
+        and node.name == token.value  # I.e.: match the name, not the alias.
     ):
         return token
     return None
 
 
-def get_resource_import_name_token(ast, token):
+def get_resource_import_name_token(node, token: IRobotToken) -> Optional[IRobotToken]:
     """
     If the given ast node is a library import and the token is its name, return
     the name token, otherwise, return None.
@@ -977,8 +1002,8 @@ def get_resource_import_name_token(ast, token):
 
     if (
         token.type == token.NAME
-        and isinstance_name(ast, "ResourceImport")
-        and ast.name == token.value  # I.e.: match the name, not the alias.
+        and isinstance_name(node, "ResourceImport")
+        and node.name == token.value  # I.e.: match the name, not the alias.
     ):
         return token
     return None
@@ -1055,6 +1080,20 @@ def _strip_token_bdd_prefix(token):
                 error=token.error,
             )
     return token
+
+
+def _copy_token_replacing(token, **kwargs):
+    from robot.api import Token
+
+    new_kwargs = {
+        "type": token.type,
+        "value": token.value,
+        "lineno": token.lineno,
+        "col_offset": token.col_offset,
+        "error": token.error,
+    }
+    new_kwargs.update(kwargs)
+    return Token(**new_kwargs)
 
 
 def _append_eol_to_prev_token(last_token, eol_token_contents):

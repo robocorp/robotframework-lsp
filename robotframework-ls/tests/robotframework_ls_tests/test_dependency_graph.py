@@ -5,6 +5,7 @@ from robotframework_ls.impl.protocols import (
     ILibraryImportNode,
 )
 from typing import Optional
+import pytest
 
 
 def _nodes_info_to_compare(dependency_graph: ICompletionContextDependencyGraph):
@@ -54,7 +55,17 @@ def check_nodes(initial_nodes_info, dependency_graph, must_equal=True):
                 raise AssertionError(f"Error comparing: {key}")
 
 
-def test_dependency_graph_caches_basic(workspace):
+@pytest.fixture
+def _log_caches_ctx():
+    from robocorp_ls_core.options import BaseOptions
+
+    original = BaseOptions.DEBUG_CACHE_DEPS
+    BaseOptions.DEBUG_CACHE_DEPS = True
+    yield
+    BaseOptions.DEBUG_CACHE_DEPS = original
+
+
+def test_dependency_graph_caches_basic(workspace, _log_caches_ctx):
     from robotframework_ls.impl.completion_context import CompletionContext
 
     workspace.set_root("case_deps")

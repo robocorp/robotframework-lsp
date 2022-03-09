@@ -364,14 +364,6 @@ def collect_analysis_errors(initial_completion_context):
                 )
 
                 keyword_token = None
-                if keyword_usage_info.is_argument_usage:
-                    try:
-                        keyword_token = keyword_usage_info.node.get_tokens(
-                            Token.ARGUMENT
-                        )[keyword_usage_info.argument_usage_index]
-                    except IndexError:
-                        pass
-
                 if keyword_token is None:
                     keyword_token = keyword_usage_info.node.get_token(Token.KEYWORD)
 
@@ -380,7 +372,6 @@ def collect_analysis_errors(initial_completion_context):
                         UsageInfoForKeywordArgumentAnalysis(
                             keyword_usage_info.node,
                             keyword_token,
-                            keyword_usage_info.argument_usage_index,
                         )
                     ):
                         errors.append(error)

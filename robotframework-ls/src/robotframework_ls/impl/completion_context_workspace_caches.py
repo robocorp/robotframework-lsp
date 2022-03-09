@@ -52,6 +52,9 @@ class _LRU(Generic[T]):
     def items(self) -> Iterator[Tuple[Hashable, T]]:
         yield from self._cache.items()
 
+    def values(self) -> Iterator[T]:
+        yield from self._cache.values()
+
 
 class _InvalidationTracker:
     def __init__(self):
@@ -98,7 +101,8 @@ class CompletionContextWorkspaceCaches:
                         import json
 
                         log.info(
-                            "Invalidated:\n%s\n",
+                            "Invalidated: %s\n%s\n",
+                            key,
                             json.dumps(invalidated.to_dict(), indent=4),
                         )
 
@@ -159,12 +163,24 @@ class CompletionContextWorkspaceCaches:
         with self._lock:
             ret = self._cached.get(cache_key)
             if ret is not None:
-                if BaseOptions.DEBUG_CACHE_DEPS:
+                self.cache_hits += 1
+
+            if BaseOptions.DEBUG_CACHE_DEPS:
+                if ret is not None:
                     import json
 
-                    log.info("Cache HIT:\n%s\n", json.dumps(ret.to_dict(), indent=4))
+                    log.info(
+                        "Cache HIT (%s):\n%s\n",
+                        cache_key,
+                        json.dumps(ret.to_dict(), indent=4),
+                    )
+                else:
+                    log.info(
+                        "Cache MISS (%s):\n%s\n",
+                        cache_key,
+                        "  \n".join(str(x) for x in self._cached.values()),
+                    )
 
-                self.cache_hits += 1
             return ret
 
     def cache_dependency_graph(
