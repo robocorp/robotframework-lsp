@@ -95,7 +95,7 @@ def test_library_imported_with_name_should_be_highlighted(workspace):
     )
 
     assert semantic_tokens.get("Selenium") == "name"
-    assert semantic_tokens.get("Open Browser") == "keywordNameCall"
+    assert semantic_tokens.get(".Open Browser") == "keywordNameCall"
 
 
 def test_custom_library_should_be_highlighted(workspace):
@@ -105,7 +105,7 @@ def test_custom_library_should_be_highlighted(workspace):
     )
 
     assert semantic_tokens.get("my_library") == "name"
-    assert semantic_tokens.get("Foobar") == "keywordNameCall"
+    assert semantic_tokens.get(".Foobar") == "keywordNameCall"
 
 
 def test_keyword_that_contains_dot_should_not_be_mistaken_for_library(workspace):
@@ -132,7 +132,7 @@ def test_library_prefix_combined_with_dots_in_keyword(workspace):
     )
 
     assert semantic_tokens.get("my_library") == "name"
-    assert semantic_tokens.get("Open Version 1.0, workspace") == "keywordNameCall"
+    assert semantic_tokens.get(".Open Version 1.0, workspace") == "keywordNameCall"
 
 
 def test_library_name_in_dot_notation_should_be_highlighted(workspace):
@@ -142,7 +142,7 @@ def test_library_name_in_dot_notation_should_be_highlighted(workspace):
     )
 
     assert semantic_tokens.get("A.B") == "name"
-    assert semantic_tokens.get("Append to list") == "keywordNameCall"
+    assert semantic_tokens.get(".Append to list") == "keywordNameCall"
 
 
 def test_library_names_with_different_case_should_be_highlighted(workspace):
@@ -154,4 +154,4 @@ def test_library_names_with_different_case_should_be_highlighted(workspace):
     )
 
     assert semantic_tokens.get("MY_LIBRARY") == "name"
-    assert semantic_tokens.get("Open Version 1.0, workspace") == "keywordNameCall"
+    assert semantic_tokens.get(".Open Version 1.0, workspace") == "keywordNameCall"

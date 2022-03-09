@@ -76,7 +76,7 @@ def test_gherkin_at_beginning_of_keyword_should_be_highlighed(workspace):
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
     )
-    assert semantic_tokens.get("Given") == "control"
+    assert semantic_tokens.get("Given ") == "control"
     assert (
         semantic_tokens.get("Some BDD description of desired system behaviour")
         == "keywordNameCall"
@@ -93,7 +93,7 @@ def test_gherkin_when_should_be_highlighted(workspace):
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
     )
-    assert semantic_tokens.get("When") == "control"
+    assert semantic_tokens.get("When ") == "control"
 
 
 def test_gherkin_then_should_be_highlighted(workspace):
@@ -103,7 +103,7 @@ def test_gherkin_then_should_be_highlighted(workspace):
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
     )
-    assert semantic_tokens.get("Then") == "control"
+    assert semantic_tokens.get("Then ") == "control"
 
 
 def test_gherkin_and_should_be_highlighted(workspace):
@@ -113,7 +113,7 @@ def test_gherkin_and_should_be_highlighted(workspace):
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
     )
-    assert semantic_tokens.get("And") == "control"
+    assert semantic_tokens.get("And ") == "control"
 
 
 def test_gherkin_but_should_be_highlighted(workspace):
@@ -123,7 +123,7 @@ def test_gherkin_but_should_be_highlighted(workspace):
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
     )
-    assert semantic_tokens.get("But") == "control"
+    assert semantic_tokens.get("But ") == "control"
 
 
 def test_gherkin_recognition_should_be_case_insensitive(workspace):
@@ -133,7 +133,7 @@ def test_gherkin_recognition_should_be_case_insensitive(workspace):
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
     )
-    assert semantic_tokens.get("givEN") == "control"
+    assert semantic_tokens.get("givEN ") == "control"
 
 
 def test_false_gherkin_in_middle_of_keyword_should_not_be_highlighted(workspace):
@@ -157,7 +157,7 @@ def test_gherkin_in_keyword_sections_should_also_be_highlighted(workspace):
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
     )
-    assert semantic_tokens.get("Then") == "control"
+    assert semantic_tokens.get("Then ") == "control"
 
 
 def test_library_prefix_should_be_highlighted(workspace):
@@ -169,7 +169,7 @@ def test_library_prefix_should_be_highlighted(workspace):
         workspace, robot_source_file
     )
     assert semantic_tokens.get("Requests") == "name"
-    assert semantic_tokens.get("GET") == "keywordNameCall"
+    assert semantic_tokens.get(".GET") == "keywordNameCall"
 
 
 def test_module_prefix_abuse_in_bdd_should_be_supported(workspace):
@@ -179,9 +179,9 @@ def test_module_prefix_abuse_in_bdd_should_be_supported(workspace):
     semantic_tokens = get_semantic_tokens_from_language_server(
         workspace, robot_source_file
     )
-    assert semantic_tokens.get("Given") == "control"
+    assert semantic_tokens.get("Given ") == "control"
     assert semantic_tokens.get("Module") == "name"
-    assert semantic_tokens.get("Keyword") == "keywordNameCall"
+    assert semantic_tokens.get(".Keyword") == "keywordNameCall"
 
 
 def test_keywords_should_not_be_mistaken_for_gherkin(workspace):
