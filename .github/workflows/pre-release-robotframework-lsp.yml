@@ -37,7 +37,7 @@ jobs:
     
     # Build Python version
     - name: Install deps
-      run: pip install --upgrade pip fire twine wheel setuptools
+      run: pip install --upgrade pip fire twine wheel setuptools jinja2
       
     - name: Update version
       run: python -m dev set-version ${{ github.event.inputs.version }}
