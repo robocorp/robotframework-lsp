@@ -1,10 +1,12 @@
-New in NEXT
+New in pre-release
 -----------------------------
 
 - Created action: `Robocorp: Clear Robocorp (RCC) environments and restart Robocorp Code`.
-- RCC updated to v11.6.4.
+- RCC updated to v11.6.6.
 - Properly notify of timeouts executing RCC.
 - Raised timeout for uploading Robots.
+- Fix case where Path and PATH could conflict on Windows.
+- Pre-releases now available from VSCode marketplace.
 
 
 New in 0.27.1 (2022-02-04)

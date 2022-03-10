@@ -1,7 +1,17 @@
-New in NEXT
+New in pre-release
 -----------------------------
 
-- Semantic highlighting supports Gherkin style (patch by @weltings)
+- Semantic highlighting supports Gherkin style (`Given`, `Then`, ...). [#581](https://github.com/robocorp/robotframework-lsp/issues/581) (patch by @weltings)
+- Semantic highlighting only highlights names up to a dot if a related import/resource is found to avoid conflict with Keywords with a dot in the name. [#585](https://github.com/robocorp/robotframework-lsp/issues/585) (patch by @weltings)
+- Semantic highlighting available for variables in keyword calls. [#586](https://github.com/robocorp/robotframework-lsp/issues/586)
+- Performance improvements
+  - Don't index everything in AST when only items from the section (LibraryImport, ResourceImport, ...) are requested.
+  - Caching of dependencies.
+- `Run Keyword If` is now properly handled across all features in the language server. [#495](https://github.com/robocorp/robotframework-lsp/issues/495)
+- `None` is no longer reported as undefined keyword when used as keyword call. [#597](https://github.com/robocorp/robotframework-lsp/issues/597)
+- Misleading message saying that RF is old when it's not installed is no longer shown.
+- Environment of Robot where the last action was done is considered for Workspace symbols (when used with Robocorp Robots).
+- Pre-releases now available from VSCode marketplace.
 
 
 New in 0.41.0 (2022-02-22)
