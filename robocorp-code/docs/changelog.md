@@ -3,6 +3,7 @@ New in pre-release
 
 - Created action: `Robocorp: Clear Robocorp (RCC) environments and restart Robocorp Code`.
 - RCC updated to v11.6.6.
+- New Windows locator integrated.
 - Properly notify of timeouts executing RCC.
 - Raised timeout for uploading Robots.
 - Fix case where Path and PATH could conflict on Windows.
