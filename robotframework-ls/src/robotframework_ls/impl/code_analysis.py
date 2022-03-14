@@ -164,6 +164,7 @@ class _AnalysisKeywordsCollector(object):
         end_lineno: int,
         col_offset: int,
         end_col_offset: int,
+        error_msg: Optional[str],
     ):
         self._on_unresolved_resource(
             completion_context,
@@ -172,6 +173,7 @@ class _AnalysisKeywordsCollector(object):
             end_lineno,
             col_offset,
             end_col_offset,
+            error_msg,
         )
 
     def __typecheckself__(self) -> None:
@@ -260,8 +262,6 @@ def collect_analysis_errors(initial_completion_context):
             if error_msg is None:
                 error_msg = ""
             else:
-                error_msg = f"\nError generating libspec:\n{error_msg}"
-
                 if "expected" in error_msg:
                     import re
 
@@ -293,6 +293,7 @@ def collect_analysis_errors(initial_completion_context):
         end_lineno: int,
         col_offset: int,
         end_col_offset: int,
+        error_msg: Optional[str],
     ):
         from robotframework_ls.impl.robot_lsp_constants import (
             OPTION_ROBOT_LINT_UNDEFINED_RESOURCES,
@@ -307,9 +308,10 @@ def collect_analysis_errors(initial_completion_context):
         if doc and doc.uri == initial_completion_context.doc.uri:
             start = (lineno - 1, col_offset)
             end = (end_lineno - 1, end_col_offset)
-            errors.append(
-                ast_utils.Error(f"Unresolved resource: {library_name}", start, end)
-            )
+            if not error_msg:
+                error_msg = f"Unresolved resource: {library_name}"
+
+            errors.append(ast_utils.Error(error_msg, start, end))
 
     collector = _AnalysisKeywordsCollector(
         on_unresolved_library, on_unresolved_resource, on_resolved_library

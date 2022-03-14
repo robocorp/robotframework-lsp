@@ -5,6 +5,7 @@ New in pre-release
 - Semantic highlighting only highlights names up to a dot if a related import/resource is found to avoid conflict with Keywords with a dot in the name. [#585](https://github.com/robocorp/robotframework-lsp/issues/585) (patch by @weltings)
 - Semantic highlighting available for variables in keyword calls. [#586](https://github.com/robocorp/robotframework-lsp/issues/586)
 - Semantic highlighting for `WHILE limit=` and `EXCEPT type=`.
+- Report unresolved variables when resolving a resource/import. [#600](https://github.com/robocorp/robotframework-lsp/issues/600) 
 - Performance improvements
   - Don't index everything in AST when only items from the section (LibraryImport, ResourceImport, ...) are requested.
   - Caching of dependencies.

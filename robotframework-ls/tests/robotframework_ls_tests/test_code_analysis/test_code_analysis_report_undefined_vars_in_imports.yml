@@ -1,0 +1,28 @@
+- message: '
+
+    Unable to statically resolve variable: ${unresolved}.
+
+    Please set the `unresolved` value in `robot.variables`.'
+  range:
+    end:
+      character: 25
+      line: 2
+    start:
+      character: 12
+      line: 2
+  severity: 1
+  source: robotframework
+- message: 'Unresolved library: ${unresolved}/foo.py.
+
+    Unable to statically resolve variable: ${unresolved}.
+
+    Please set the `unresolved` value in `robot.variables`.'
+  range:
+    end:
+      character: 24
+      line: 3
+    start:
+      character: 11
+      line: 3
+  severity: 1
+  source: robotframework

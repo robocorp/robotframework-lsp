@@ -84,6 +84,7 @@ class CompletionContextWorkspaceCaches:
         # (and it should be enough to hold what we're currently working with).
         self._cached: _LRU[ICompletionContextDependencyGraph] = _LRU(5)
         self.cache_hits = 0
+        self.invalidations = 0
 
         self._invalidation_trackers: Set[_InvalidationTracker] = set()
 
@@ -150,6 +151,7 @@ class CompletionContextWorkspaceCaches:
         Called when all caches should be cleared.
         """
         with self._lock:
+            self.invalidations += 1
             for invalidation_tracker in self._invalidation_trackers:
                 invalidation_tracker.mark_all_invalidated()
             self._cached.clear()

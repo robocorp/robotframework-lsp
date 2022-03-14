@@ -69,10 +69,14 @@
       line: 5
   severity: 1
   source: robotframework
-- message: 'Unresolved resource: ${foo}/does_not_exist.txt'
+- message: '
+
+    Unable to statically resolve variable: ${foo}.
+
+    Please set the `foo` value in `robot.variables`.'
   range:
     end:
-      character: 37
+      character: 18
       line: 6
     start:
       character: 12
