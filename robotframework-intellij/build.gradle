@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.41.0'
+version '0.42.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,20 +51,20 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.41.0
+    Release 0.42.0
     </p>
     <ul>
-
-    <li>Argument analysis is now also done for <strong>Run Keyword</strong> variants.</li>
-    <li>[Debugger] It's now possible to ignore failures inside some keywords so that the debugger doesn't break in these cases when <strong>RFLS_BREAK_ON_FAILURE/RFLS_BREAK_ON_ERROR</strong> is enabled.</li>
-    <li> * Customizable through the <strong>RFLS_IGNORE_FAILURES_IN_KEYWORDS</strong> and <strong>RFLS_IGNORE_FAILURES_IN_KEYWORDS_OVERRIDE</strong> environment variables (see https://github.com/robocorp/robotframework-lsp/blob/master/robotframework-ls/docs/config.md#environment-variables for details).</li>
-    <li>Performance improvements</li>
-    <li> * Improved AST indexing.</li>
-    <li> * Notification that settings changed are only sent to the server api if they actually changed.</li>
-    <li> * Documentation is now lazily loaded during code-completion.</li>
-    <li>References are found when find references is activated from the keyword definition.</li>
-    <li>Semantic highlighting for Keywords with dotted access improved.</li>
-    <li>The documentation conversion from <strong>REST</strong> and <strong>ROBOT</strong> to <strong>markdown</strong> is now done internally.</li>
+  
+    <li>Semantic highlighting supports Gherkin style (Given, Then, ...). (patch by @weltings)</li>
+    <li>Semantic highlighting only highlights names up to a dot if a related import/resource is found to avoid conflict with Keywords with a dot in the name.(patch by @weltings)</li>
+    <li>Semantic highlighting available for variables in keyword calls.</li>
+    <li>Semantic highlighting for WHILE limit= and EXCEPT type=.</li>
+    <li>Report unresolved variables when resolving a resource/import.</li>
+    <li>Performance improvement: Don't index everything in AST when only items from the section (LibraryImport, ResourceImport, ...) are requested.</li>
+    <li>Performance improvement: Caching of dependencies.</li>
+    <li>Run Keyword If is now properly handled across all features in the language server.</li>
+    <li>None is no longer reported as undefined keyword when used as keyword call.</li>
+    <li>Misleading message saying that RF is old when it's not installed is no longer shown.</li>
 
     <br>
     Current feature set:<br>

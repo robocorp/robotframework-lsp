@@ -1,4 +1,4 @@
-New in pre-release
+New in 0.42.0 (2022-03-14)
 -----------------------------
 
 - Semantic highlighting supports Gherkin style (`Given`, `Then`, ...). [#581](https://github.com/robocorp/robotframework-lsp/issues/581) (patch by @weltings)
