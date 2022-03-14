@@ -1,4 +1,4 @@
-from typing import List, Tuple, Iterator, Optional, Set, Any
+from typing import List, Tuple, Iterator, Optional, Any
 import itertools
 from robocorp_ls_core.protocols import IDocument
 from robotframework_ls.impl.protocols import ICompletionContext, IRobotToken
@@ -18,6 +18,7 @@ from robotframework_ls.impl.robot_constants import (
     ERROR,
     FATAL_ERROR,
     ROBOT_AND_TXT_FILE_EXTENSIONS,
+    OPTION,
 )
 
 
@@ -187,6 +188,7 @@ RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX = {
     VARIABLE: TOKEN_TYPE_TO_INDEX["variable"],
     ERROR: TOKEN_TYPE_TO_INDEX["error"],
     FATAL_ERROR: TOKEN_TYPE_TO_INDEX["error"],
+    OPTION: TOKEN_TYPE_TO_INDEX["argumentValue"],
 }
 
 
@@ -405,6 +407,22 @@ def _tokenized_args(token, token_type_index, in_documentation):
         yield op_end_token, VARIABLE_OPERATOR_INDEX
 
         return
+
+    if token.type == OPTION:
+        eq_i = token.value.index("=")
+        if eq_i != -1:
+            # Convert limit=10 to 'limit' '=' '10'
+            var_start_token, token = _split_token_change_first(
+                token, "parameterName", eq_i
+            )
+            yield var_start_token, PARAMETER_NAME_INDEX
+
+            var_token, var_end_token = _split_token_change_second(
+                token, "variableOperator", 1
+            )
+            yield var_token, VARIABLE_OPERATOR_INDEX
+            yield var_end_token, ARGUMENT_INDEX
+            return
 
     # Default case (just yield the current token/type).
     yield token, token_type_index

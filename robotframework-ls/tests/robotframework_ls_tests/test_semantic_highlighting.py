@@ -720,6 +720,56 @@ While loop executed once
     )
 
 
+@pytest.mark.skipif(get_robot_major_version() < 5, reason="Requires RF 5 onwards")
+def test_semantic_highlighting_while_limit(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+While loop
+    WHILE    $variable < 2    limit=10
+        No operation
+    END
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("While loop", "testCaseName"),
+            ("WHILE", "control"),
+            ("$variable < 2", "argumentValue"),
+            ("limit", "parameterName"),
+            ("=", "variableOperator"),
+            ("10", "argumentValue"),
+            ("No operation", "keywordNameCall"),
+            ("END", "control"),
+        ],
+    )
+
+
+@pytest.mark.skipif(get_robot_major_version() < 5, reason="Requires RF 5 onwards")
+def test_semantic_highlighting_except_type(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Glob pattern
+    TRY
+        Some Keyword
+    EXCEPT    ValueError: *    type=GLOB
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Glob pattern", "testCaseName"),
+            ("TRY", "control"),
+            ("Some Keyword", "keywordNameCall"),
+            ("EXCEPT", "control"),
+            ("ValueError: *", "argumentValue"),
+            ("type", "parameterName"),
+            ("=", "variableOperator"),
+            ("GLOB", "argumentValue"),
+        ],
+    )
+
+
 @pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 4 onwards")
 def test_semantic_highlighting_for_if(workspace):
     check_simple(
