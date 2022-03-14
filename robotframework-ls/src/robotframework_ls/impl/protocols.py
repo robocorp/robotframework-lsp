@@ -528,6 +528,39 @@ class IKeywordCollector(Protocol):
         pass
 
 
+class AbstractKeywordCollector:
+    def on_resolved_library(
+        self,
+        completion_context: "ICompletionContext",
+        library_node,
+        library_doc: ILibraryDoc,
+    ):
+        pass
+
+    def on_unresolved_library(
+        self,
+        completion_context: "ICompletionContext",
+        library_name: str,
+        lineno: int,
+        end_lineno: int,
+        col_offset: int,
+        end_col_offset: int,
+        error_msg: Optional[str],
+    ):
+        pass
+
+    def on_unresolved_resource(
+        self,
+        completion_context: "ICompletionContext",
+        resource_name: str,
+        lineno: int,
+        end_lineno: int,
+        col_offset: int,
+        end_col_offset: int,
+    ):
+        pass
+
+
 class IDefinition(Protocol):
 
     keyword_name: str = ""  # Can be empty if it's not found as a keyword.

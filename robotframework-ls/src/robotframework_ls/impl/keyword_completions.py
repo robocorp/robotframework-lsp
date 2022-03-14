@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 
 from robocorp_ls_core.protocols import check_implements
 from robocorp_ls_core.robotframework_log import get_logger
@@ -6,7 +6,7 @@ from robotframework_ls.impl.protocols import (
     ICompletionContext,
     IKeywordFound,
     IKeywordCollector,
-    ILibraryDoc,
+    AbstractKeywordCollector,
 )
 from robocorp_ls_core.lsp import (
     TextEditTypedDict,
@@ -18,7 +18,7 @@ from robocorp_ls_core.lsp import (
 log = get_logger(__name__)
 
 
-class _Collector(object):
+class _Collector(AbstractKeywordCollector):
     def __init__(self, completion_context: ICompletionContext, token):
         from robotframework_ls.impl.string_matcher import RobotStringMatcher
         from robotframework_ls.impl.string_matcher import (
@@ -115,37 +115,6 @@ class _Collector(object):
         )
 
         self.completion_items.append(item)
-
-    def on_resolved_library(
-        self,
-        completion_context: ICompletionContext,
-        library_node,
-        library_doc: ILibraryDoc,
-    ):
-        pass
-
-    def on_unresolved_library(
-        self,
-        completion_context: ICompletionContext,
-        library_name: str,
-        lineno: int,
-        end_lineno: int,
-        col_offset: int,
-        end_col_offset: int,
-        error_msg: Optional[str],
-    ):
-        pass
-
-    def on_unresolved_resource(
-        self,
-        completion_context: ICompletionContext,
-        library_name: str,
-        lineno: int,
-        end_lineno: int,
-        col_offset: int,
-        end_col_offset: int,
-    ):
-        pass
 
     def __typecheckself__(self) -> None:
         _: IKeywordCollector = check_implements(self)

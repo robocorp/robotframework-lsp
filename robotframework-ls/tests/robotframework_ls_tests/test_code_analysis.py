@@ -919,3 +919,17 @@ My Test Case
 """
 
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_code_analysis_report_undefined_vars_in_imports(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case1.robot")
+    doc.source = """
+*** Settings ***
+Resource    ${unresolved}/foo.robot
+Library    ${unresolved}/foo.py
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")

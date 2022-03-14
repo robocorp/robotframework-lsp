@@ -10,6 +10,7 @@ from robotframework_ls.impl.protocols import (
     IKeywordArg,
     ILibraryDoc,
     LibraryDependencyInfo,
+    AbstractKeywordCollector,
 )
 from typing import Sequence, List, Dict, Optional, Iterator
 from robotframework_ls.impl.text_utilities import build_keyword_docs_with_signature
@@ -460,7 +461,7 @@ def _collect_from_context(
         )
 
 
-class _CollectKeywordNameToKeywordFound:
+class _CollectKeywordNameToKeywordFound(AbstractKeywordCollector):
     def __init__(self) -> None:
         self.keyword_name_to_keyword_found: Dict[str, List[IKeywordFound]] = {}
 
@@ -472,37 +473,6 @@ class _CollectKeywordNameToKeywordFound:
         if lst is None:
             self.keyword_name_to_keyword_found[keyword_found.keyword_name] = lst = []
         lst.append(keyword_found)
-
-    def on_resolved_library(
-        self,
-        completion_context: ICompletionContext,
-        library_node,
-        library_doc: ILibraryDoc,
-    ):
-        pass
-
-    def on_unresolved_library(
-        self,
-        completion_context: ICompletionContext,
-        library_name: str,
-        lineno: int,
-        end_lineno: int,
-        col_offset: int,
-        end_col_offset: int,
-        error_msg: Optional[str],
-    ):
-        pass
-
-    def on_unresolved_resource(
-        self,
-        completion_context: ICompletionContext,
-        resource_name: str,
-        lineno: int,
-        end_lineno: int,
-        col_offset: int,
-        end_col_offset: int,
-    ):
-        pass
 
     def __typecheckself__(self) -> None:
         _: IKeywordCollector = check_implements(self)

@@ -7,7 +7,7 @@ from robotframework_ls.impl.protocols import (
     IKeywordCollector,
     IVariablesCollector,
     IKeywordFound,
-    ILibraryDoc,
+    AbstractKeywordCollector,
 )
 from robocorp_ls_core.protocols import check_implements
 from typing import Optional, Sequence
@@ -167,7 +167,7 @@ class _DefinitionFromVariable(object):
         _: IDefinition = check_implements(self)
 
 
-class _FindDefinitionKeywordCollector(object):
+class _FindDefinitionKeywordCollector(AbstractKeywordCollector):
     def __init__(self, match_name):
         from robotframework_ls.impl.string_matcher import RobotStringMatcher
         from robotframework_ls.impl.string_matcher import (
@@ -194,37 +194,6 @@ class _FindDefinitionKeywordCollector(object):
                 definition = _DefinitionFromKeyword(keyword_found)
                 self.matches.append(definition)
                 return
-
-    def on_resolved_library(
-        self,
-        completion_context: ICompletionContext,
-        library_node,
-        library_doc: ILibraryDoc,
-    ):
-        pass
-
-    def on_unresolved_library(
-        self,
-        completion_context: ICompletionContext,
-        library_name: str,
-        lineno: int,
-        end_lineno: int,
-        col_offset: int,
-        end_col_offset: int,
-        error_msg: Optional[str],
-    ):
-        pass
-
-    def on_unresolved_resource(
-        self,
-        completion_context: ICompletionContext,
-        resource_name: str,
-        lineno: int,
-        end_lineno: int,
-        col_offset: int,
-        end_col_offset: int,
-    ):
-        pass
 
     def __typecheckself__(self) -> None:
         _: IKeywordCollector = check_implements(self)
