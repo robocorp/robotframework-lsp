@@ -169,6 +169,7 @@ class CompletionContextDependencyGraph:
         cls, curr_ctx: ICompletionContext, is_root_context: bool, memo: _Memo
     ) -> OrderedSet[LibraryDependencyInfo]:
         from robotframework_ls.impl import ast_utils
+        from robot.api import Token
 
         # Collect libraries information
         libraries = curr_ctx.get_imported_libraries()
@@ -179,18 +180,16 @@ class CompletionContextDependencyGraph:
                 LibraryDependencyInfo(BUILTIN_LIB, None, True, None, None)
             )
 
-        for name, alias, args, node in (
-            (
-                library.name,
-                library.alias,
-                ast_utils.get_library_arguments_serialized(library),
-                library,
-            )
-            for library in libraries
-        ):
-            if name:
+        for library in libraries:
+            name_tok = library.get_token(Token.NAME)
+
+            if name_tok and name_tok.value:
+                alias = library.alias
+                args = ast_utils.get_library_arguments_serialized(library)
+                node = library
+
                 lib_info = LibraryDependencyInfo(
-                    curr_ctx.token_value_resolving_variables(name),
+                    curr_ctx.token_value_resolving_variables(name_tok),
                     alias,
                     False,
                     args,
@@ -278,7 +277,8 @@ class CompletionContextDependencyGraph:
                 # We need to fix the nodes as we can match even when the node
                 # lines/columns change.
 
-                # Library infos can be just added again.
+                # Library infos for the root can be added again as is because we
+                # just collected the whole info again (including the nodes).
                 found.add_library_infos(
                     completion_context.doc.uri, initial_library_infos
                 )

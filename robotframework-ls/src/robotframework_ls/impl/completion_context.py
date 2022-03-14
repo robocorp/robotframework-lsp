@@ -358,7 +358,7 @@ class CompletionContext(object):
                 ret.append(resource.node)
         return tuple(ret)
 
-    def token_value_resolving_variables(self, token: Union[str, IRobotToken]):
+    def token_value_resolving_variables(self, token: Union[str, IRobotToken]) -> str:
         from robotframework_ls.impl import ast_utils
 
         robot_token: IRobotToken
@@ -371,6 +371,7 @@ class CompletionContext(object):
             tokenized_vars = ast_utils.tokenize_variables(robot_token)
         except:
             return robot_token.value  # Unable to tokenize
+
         parts = []
         for v in tokenized_vars:
             if v.type == v.NAME:
@@ -391,6 +392,55 @@ class CompletionContext(object):
 
         joined_parts = "".join(parts)
         return joined_parts
+
+    def token_value_and_unresolved_resolving_variables(
+        self, token: IRobotToken
+    ) -> Tuple[str, Tuple[IRobotToken, ...]]:
+        unresolved: List[IRobotToken] = []
+
+        from robotframework_ls.impl import ast_utils
+
+        robot_token: IRobotToken
+        if isinstance(token, str):
+            robot_token = ast_utils.create_token(token)
+        else:
+            robot_token = token
+
+        try:
+            tokenized_vars = ast_utils.tokenize_variables(robot_token)
+        except:
+            return robot_token.value, ()  # Unable to tokenize
+
+        parts = []
+        for tok in tokenized_vars:
+            if tok.type == tok.NAME:
+                parts.append(str(tok))
+
+            elif tok.type == tok.VARIABLE:
+                # Resolve variable from config
+                initial_v = v = str(tok)
+                if v.startswith("${") and v.endswith("}"):
+                    v = v[2:-1]
+                    converted = self._convert_robot_variable(v, initial_v)
+                    parts.append(converted)
+                    if converted == initial_v:
+                        # Unable to resolve
+                        unresolved.append(tok)
+
+                elif v.startswith("%{") and v.endswith("}"):
+                    v = v[2:-1]
+                    converted = self._convert_environment_variable(v, initial_v)
+                    parts.append(converted)
+                    if converted == initial_v:
+                        # Unable to resolve
+                        unresolved.append(tok)
+
+                else:
+                    log.info("Cannot resolve variable: %s", v)
+                    parts.append(v)  # Leave unresolved.
+
+        joined_parts = "".join(parts)
+        return joined_parts, tuple(unresolved)
 
     @instance_cache
     def get_resource_import_as_doc(

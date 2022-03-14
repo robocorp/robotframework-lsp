@@ -932,4 +932,4 @@ Resource    ${unresolved}/foo.robot
 Library    ${unresolved}/foo.py
 """
 
-    _collect_errors(workspace, doc, data_regression, basename="no_error")
+    _collect_errors(workspace, doc, data_regression)

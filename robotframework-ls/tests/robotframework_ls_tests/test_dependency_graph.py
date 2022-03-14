@@ -70,20 +70,36 @@ def test_dependency_graph_caches_basic(workspace, _log_caches_ctx):
 
     workspace.set_root("case_deps")
     doc = workspace.get_doc("root.robot")
+    # We may have a change even that could invalidate
 
-    context = CompletionContext(doc, workspace=workspace.ws)
-    dependency_graph = context.collect_dependency_graph()
-    initial_dict = dependency_graph.to_dict()
-    initial_nodes_info = _nodes_info_to_compare(dependency_graph)
+    # Workaround case where a cache invalidation occurs due to the setup
+    # of the workspace...
 
-    # Step 1: change nothing -> contents should be gotten from the cache.
+    import time
+
+    time.sleep(0.1)
+
     ws: IRobotWorkspace = workspace.ws
     caches: ICompletionContextWorkspaceCaches = ws.completion_context_workspace_caches
+    invalidations = caches.invalidations
 
-    context = CompletionContext(doc, workspace=workspace.ws)
-    dependency_graph = context.collect_dependency_graph()
-    assert initial_dict == dependency_graph.to_dict()
-    check_nodes(initial_nodes_info, dependency_graph)
+    while True:
+        context = CompletionContext(doc, workspace=workspace.ws)
+        dependency_graph = context.collect_dependency_graph()
+        initial_dict = dependency_graph.to_dict()
+        initial_nodes_info = _nodes_info_to_compare(dependency_graph)
+
+        # Step 1: change nothing -> contents should be gotten from the cache.
+
+        context = CompletionContext(doc, workspace=workspace.ws)
+        dependency_graph = context.collect_dependency_graph()
+        assert initial_dict == dependency_graph.to_dict()
+        check_nodes(initial_nodes_info, dependency_graph)
+        if invalidations == caches.invalidations:
+            break
+        else:
+            assert caches.invalidations < 5
+            invalidations = caches.invalidations
 
     assert caches.cache_hits == 1
 
@@ -100,6 +116,11 @@ def test_dependency_graph_caches_basic(workspace, _log_caches_ctx):
     assert initial_dict == dependency_graph.to_dict()
     # The nodes must have changed!
     check_nodes(initial_nodes_info, dependency_graph, False)
+
+    libraries = list(
+        x for x in dependency_graph.iter_libraries(doc.uri) if not x.builtin
+    )
+    assert len(libraries) == 1
 
     # Ok, up until now all is ok, caches found all the time. Let's check
     # for the invalidation strategies.

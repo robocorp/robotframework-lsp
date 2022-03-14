@@ -524,6 +524,7 @@ class IKeywordCollector(Protocol):
         end_lineno: int,
         col_offset: int,
         end_col_offset: int,
+        error_msg: Optional[str],
     ):
         pass
 
@@ -557,6 +558,7 @@ class AbstractKeywordCollector:
         end_lineno: int,
         col_offset: int,
         end_col_offset: int,
+        error_msg: Optional[str],
     ):
         pass
 
@@ -842,6 +844,11 @@ class ICompletionContext(Protocol):
         pass
 
     def token_value_resolving_variables(self, token: Union[str, IRobotToken]) -> str:
+        pass
+
+    def token_value_and_unresolved_resolving_variables(
+        self, token: IRobotToken
+    ) -> Tuple[str, Tuple[IRobotToken, ...]]:
         pass
 
     def get_current_keyword_definition_and_usage_info(
