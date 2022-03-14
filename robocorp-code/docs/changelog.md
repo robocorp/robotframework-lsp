@@ -1,4 +1,4 @@
-New in pre-release
+New in 0.28.0 (2022-03-14)
 -----------------------------
 
 - Created action: `Robocorp: Clear Robocorp (RCC) environments and restart Robocorp Code`.
