@@ -51,7 +51,6 @@ Valid Login
 def test_parse_errors_if(data_regression):
     from robotframework_ls.impl.robot_workspace import RobotDocument
     from robotframework_ls.impl.ast_utils import collect_errors
-    from robotframework_ls.impl import ast_utils
 
     source = """
 *** Test Cases ***
@@ -61,10 +60,16 @@ If without end
 """
 
     doc = RobotDocument("unsaved", source)
-    ast_utils.print_ast(doc.get_ast())
     errors = collect_errors(doc.get_ast())
+    new_errors = []
+    for e in errors:
+        dct = e.to_dict()
+        if dct["msg"] == "IF must have closing END.":
+            # i.e.: this changed (so accept both).
+            dct["msg"] = "IF has no closing END."
+        new_errors.append(dct)
 
-    data_regression.check([e.to_dict() for e in errors], basename="errors_if")
+    data_regression.check(new_errors, basename="errors_if")
 
 
 @pytest.mark.skipif(
@@ -73,7 +78,6 @@ If without end
 def test_parse_errors_for(data_regression):
     from robotframework_ls.impl.robot_workspace import RobotDocument
     from robotframework_ls.impl.ast_utils import collect_errors
-    from robotframework_ls.impl import ast_utils
 
     source = """
 *** Test Cases ***
@@ -83,7 +87,13 @@ Invalid END
 """
 
     doc = RobotDocument("unsaved", source)
-    ast_utils.print_ast(doc.get_ast())
     errors = collect_errors(doc.get_ast())
+    new_errors = []
+    for e in errors:
+        dct = e.to_dict()
+        if dct["msg"] == "FOR loop must have closing END.":
+            # i.e.: this changed (so accept both).
+            dct["msg"] = "FOR loop has no closing END."
+        new_errors.append(dct)
 
-    data_regression.check([e.to_dict() for e in errors], basename="errors_for")
+    data_regression.check(new_errors, basename="errors_for")
