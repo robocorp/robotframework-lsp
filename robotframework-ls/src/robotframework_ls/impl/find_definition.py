@@ -8,9 +8,11 @@ from robotframework_ls.impl.protocols import (
     IVariablesCollector,
     IKeywordFound,
     AbstractKeywordCollector,
+    IRobotToken,
+    IVariableFound,
 )
-from robocorp_ls_core.protocols import check_implements
-from typing import Optional, Sequence
+from robocorp_ls_core.protocols import check_implements, IDocumentSelection
+from typing import Optional, Sequence, List
 from robocorp_ls_core.lsp import RangeTypedDict
 from robocorp_ls_core.basic import isinstance_name
 
@@ -200,16 +202,18 @@ class _FindDefinitionKeywordCollector(AbstractKeywordCollector):
 
 
 class _FindDefinitionVariablesCollector(object):
-    def __init__(self, sel, token, robot_string_matcher):
-        self.matches = []
+    def __init__(
+        self, sel: IDocumentSelection, token: IRobotToken, robot_string_matcher
+    ):
+        self.matches: List[IDefinition] = []
         self.sel = sel
         self.token = token
         self.matcher = robot_string_matcher
 
-    def accepts(self, variable_name):
+    def accepts(self, variable_name: str) -> bool:
         return self.matcher.is_same_robot_name(variable_name)
 
-    def on_variable(self, variable_found):
+    def on_variable(self, variable_found: IVariableFound):
         definition = _DefinitionFromVariable(variable_found)
         self.matches.append(definition)
 
@@ -337,9 +341,9 @@ def find_definition_extended(
     if token_info is not None:
         token = token_info.token
         value = token.value
-        match = next(iter(_RF_VARIABLE.findall(value)), value)
+        re_match = next(iter(_RF_VARIABLE.findall(value)), value)
         collector = _FindDefinitionVariablesCollector(
-            completion_context.sel, token, RobotStringMatcher(match)
+            completion_context.sel, token, RobotStringMatcher(re_match)
         )
         collect_variables(completion_context, collector)
         return _DefinitionInfo(

@@ -1,10 +1,17 @@
 import sys
+import os
 from typing import Optional, Any, List, Tuple, Set, Callable, Dict, Union
 
 from robocorp_ls_core.cache import instance_cache
 from robocorp_ls_core.constants import NULL
 from robocorp_ls_core.lsp import CompletionItemTypedDict, MarkupContentTypedDict
-from robocorp_ls_core.protocols import IMonitor, Sentinel, IConfig, IDocumentSelection
+from robocorp_ls_core.protocols import (
+    IMonitor,
+    Sentinel,
+    IConfig,
+    IDocumentSelection,
+    IWorkspace,
+)
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.protocols import (
     IRobotDocument,
@@ -21,6 +28,10 @@ from robotframework_ls.impl.protocols import (
     INode,
 )
 from robotframework_ls.impl.robot_workspace import RobotDocument
+from robocorp_ls_core import uris
+import itertools
+from functools import partial
+import typing
 
 
 log = get_logger(__name__)
@@ -69,9 +80,9 @@ class CompletionContext(object):
         doc,
         line=Sentinel.SENTINEL,
         col=Sentinel.SENTINEL,
-        workspace=None,
-        config=None,
-        memo=None,
+        workspace: Optional[IWorkspace] = None,
+        config: Optional[IConfig] = None,
+        memo: Optional[_Memo] = None,
         monitor: Optional[IMonitor] = NULL,
     ) -> None:
         """
@@ -106,7 +117,7 @@ class CompletionContext(object):
 
         self._doc = doc
         self._sel = sel
-        self._workspace = workspace
+        self._workspace = typing.cast(Optional[IRobotWorkspace], workspace)
         self._config = config
         self._memo = memo
         self._original_ctx: Optional[CompletionContext] = None
@@ -217,6 +228,7 @@ class CompletionContext(object):
 
     @property
     def workspace(self) -> IRobotWorkspace:
+        assert self._workspace
         return self._workspace
 
     @instance_cache
@@ -446,13 +458,10 @@ class CompletionContext(object):
     def get_resource_import_as_doc(
         self, resource_import: INode
     ) -> Optional[IRobotDocument]:
-        from robocorp_ls_core import uris
         from robot.api import Token
-        import os.path
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
 
-        ws = self._workspace
-
+        ws = self.workspace
         token = resource_import.get_token(Token.NAME)
         if token is not None:
             name_with_resolved_vars = self.token_value_resolving_variables(token)
@@ -508,7 +517,7 @@ class CompletionContext(object):
                 resource_doc = ws.get_document(doc_uri, accept_from_file=True)
                 if resource_doc is None:
                     continue
-                return resource_doc
+                return typing.cast(IRobotDocument, resource_doc)
 
             log.info(
                 "Unable to find: %s (checked paths: %s)",
@@ -538,6 +547,56 @@ class CompletionContext(object):
         return tuple(ret)
 
     @instance_cache
+    def get_resource_inits_as_docs(self) -> Tuple[IRobotDocument, ...]:
+        doc = self.doc
+        path = doc.path
+        if not path:
+            return ()
+
+        if not os.path.isabs(path):
+            # i.e.: We can't deal with untitled...
+            return ()
+
+        parent_dir_path = os.path.dirname(path)
+
+        ret: List[IRobotDocument] = []
+        ws = self.workspace
+        folder_root_paths = ws.get_folder_paths()
+
+        for root_path in folder_root_paths:
+            if parent_dir_path.startswith(root_path):
+                stop_condition = lambda parent_dir_path: parent_dir_path == root_path
+                break
+
+        else:
+            # We're dealing with a resource out of the workspace root,
+            # so, let's stop at max range.
+            next_i: "partial[int]" = partial(next, itertools.count())
+            stop_condition = lambda parent_dir_path: next_i() >= 6
+
+        initial_parent_path = parent_dir_path
+
+        def iter_inits():
+            parent_dir_path = initial_parent_path
+            while True:
+                yield os.path.join(parent_dir_path, "__init__.robot")
+
+                if stop_condition(parent_dir_path):
+                    break
+
+                initial_len = len(parent_dir_path)
+                parent_dir_path = os.path.dirname(parent_dir_path)
+                if initial_len == len(parent_dir_path) or not len(parent_dir_path):
+                    break
+
+        for resource_path in iter_inits():
+            doc_uri = uris.from_fs_path(resource_path)
+            resource_doc = ws.get_document(doc_uri, accept_from_file=True)
+            if resource_doc is not None:
+                ret.append(typing.cast(IRobotDocument, resource_doc))
+        return tuple(ret)
+
+    @instance_cache
     def get_variable_imports_as_docs(self) -> Tuple[IRobotDocument, ...]:
         ret: List[IRobotDocument] = []
 
@@ -555,16 +614,12 @@ class CompletionContext(object):
         ret = BUILTIN_VARIABLES_RESOLVED.get(var_name, Sentinel.SENTINEL)
         if ret is Sentinel.SENTINEL:
             if var_name == "CURDIR":
-                import os
-
                 return os.path.dirname(self._doc.path)
             log.info(*log_info)
             return value_if_not_found
         return ret
 
     def _resolve_environment_variable(self, var_name, value_if_not_found, log_info):
-        import os
-
         ret = os.environ.get(var_name, Sentinel.SENTINEL)
         if ret is Sentinel.SENTINEL:
             log.info(*log_info)

@@ -324,6 +324,30 @@ def test_find_definition_variables_file_py(workspace, libspec_manager):
     assert definition.source.endswith("robotvars.py")
 
 
+@pytest.mark.parametrize(
+    "line_and_basename",
+    [
+        ("    Log To Console    ${GLOBAL_VAR}", "__init__.robot"),
+        ("    Log To Console    ${CONST_1}", "my.robot"),
+    ],
+)
+def test_find_definition_set_vars_global(workspace, libspec_manager, line_and_basename):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case_global_vars", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("my.robot")
+    line_contents, basename = line_and_basename
+    line = doc.find_line_with_contents(line_contents)
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=len(line_contents) - 3
+    )
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith(basename)
+
+
 def test_find_definition_variable_from_variables_file_yaml(workspace, libspec_manager):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.find_definition import find_definition

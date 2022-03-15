@@ -4,10 +4,14 @@ from robotframework_ls.impl.protocols import (
     IRobotDocument,
     IVariablesCollector,
     IVariableFound,
+    IRobotToken,
 )
 from robocorp_ls_core.robotframework_log import get_logger
-from robocorp_ls_core.protocols import check_implements
-from typing import Optional
+from robocorp_ls_core.protocols import check_implements, IDocumentSelection
+from typing import Optional, List
+from robotframework_ls.impl.text_utilities import normalize_robot_name
+from robocorp_ls_core.lsp import CompletionItemTypedDict
+import itertools
 
 log = get_logger(__name__)
 
@@ -127,18 +131,18 @@ class _VariableFoundFromYaml(_VariableFoundFromSettings):
 
 
 class _Collector(object):
-    def __init__(self, selection, token, matcher):
+    def __init__(self, selection: IDocumentSelection, token: IRobotToken, matcher):
         self.matcher = matcher
-        self.completion_items = []
+        self.completion_items: List[CompletionItemTypedDict] = []
         self.selection = selection
         self.token = token
 
-    def _create_completion_item_from_variable(self, variable_found, selection, token):
-        """
-        :param IVariableFound variable_found:
-        :param selection:
-        :param token:
-        """
+    def _create_completion_item_from_variable(
+        self,
+        variable_found: IVariableFound,
+        selection: IDocumentSelection,
+        token: IRobotToken,
+    ) -> CompletionItemTypedDict:
         from robocorp_ls_core.lsp import (
             CompletionItem,
             InsertTextFormat,
@@ -170,20 +174,25 @@ class _Collector(object):
             insertTextFormat=InsertTextFormat.Snippet,
         ).to_dict()
 
-    def accepts(self, variable_name):
+    def accepts(self, variable_name: str) -> bool:
         return self.matcher.accepts(variable_name)
 
-    def on_variable(self, variable_found):
+    def on_variable(self, variable_found: IVariableFound):
         self.completion_items.append(
             self._create_completion_item_from_variable(
                 variable_found, self.selection, self.token
             )
         )
 
+    def __typecheckself__(self) -> None:
+        _: IVariablesCollector = check_implements(self)
+
 
 def _collect_completions_from_ast(
-    ast, completion_context: ICompletionContext, collector
+    ast, completion_context: ICompletionContext, collector: IVariablesCollector
 ):
+    from robotframework_ls.impl import ast_utils
+
     completion_context.check_cancelled()
     from robot.api import Token
 
@@ -217,6 +226,40 @@ def _collect_completions_from_ast(
                 completion_context, token, variable_node.value, variable_name=name
             )
             collector.on_variable(variable_found)
+
+    accept_sets_in = {
+        normalize_robot_name("Set Task Variable"),
+        normalize_robot_name("Set Test Variable"),
+        normalize_robot_name("Set Suite Variable"),
+        normalize_robot_name("Set Global Variable"),
+    }
+    ast = completion_context.get_ast()
+    for keyword_usage in ast_utils.iter_keyword_usage_tokens(
+        ast, collect_args_as_keywords=True
+    ):
+        if normalize_robot_name(keyword_usage.name) in accept_sets_in:
+            var_name_tok = None
+            var_value_tok = None
+            for tok in keyword_usage.node.tokens:
+                if tok.type == Token.ARGUMENT:
+                    if var_name_tok is None:
+                        var_name_tok = tok
+                    else:
+                        var_value_tok = tok
+                        break
+
+            if var_name_tok is not None:
+                if collector.accepts(var_name_tok.value):
+                    variable_value = ""
+                    if var_value_tok is not None:
+                        variable_value = var_value_tok.value
+
+                    variable_found = _VariableFoundFromToken(
+                        completion_context,
+                        var_name_tok,
+                        variable_value=variable_value,
+                    )
+                    collector.on_variable(variable_found)
 
 
 def _collect_current_doc_variables(
@@ -334,6 +377,18 @@ def _collect_variables_from_variable_import_doc(
         log.exception()
 
 
+def _iter_resource_docs(completion_context: ICompletionContext, dependency_graph):
+    visited = set()
+    for resource_doc in itertools.chain(
+        (d[1] for d in dependency_graph.iter_all_resource_imports_with_docs()),
+        iter(completion_context.get_resource_inits_as_docs()),
+    ):
+        if resource_doc is not None:
+            if resource_doc.uri not in visited:
+                visited.add(resource_doc.uri)
+                yield resource_doc
+
+
 def _collect_variables_from_context(
     completion_context: ICompletionContext,
     collector: IVariablesCollector,
@@ -345,7 +400,7 @@ def _collect_variables_from_context(
     if not only_current_doc:
         dependency_graph = completion_context.collect_dependency_graph()
 
-        for _, resource_doc in dependency_graph.iter_all_resource_imports_with_docs():
+        for resource_doc in _iter_resource_docs(completion_context, dependency_graph):
             if resource_doc is not None:
                 new_ctx = completion_context.create_copy(resource_doc)
                 _collect_current_doc_variables(new_ctx, collector)

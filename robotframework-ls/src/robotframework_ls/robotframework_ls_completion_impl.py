@@ -69,7 +69,7 @@ class _RobotFrameworkLsCompletionImpl(object):
             log.critical("Unable to find document (%s) for completions." % (doc_uri,))
             return []
 
-        ctx = CompletionContext(document, line, col, config=ls.config)
+        ctx = CompletionContext(document, line, col, config=ls.config, workspace=ws)
         completions = []
 
         # Asynchronous completion.

@@ -233,7 +233,9 @@ class CompletionContextDependencyGraph:
         return new_variable_imports
 
     @classmethod
-    def from_completion_context(cls, completion_context: ICompletionContext):
+    def from_completion_context(
+        cls, completion_context: ICompletionContext
+    ) -> ICompletionContextDependencyGraph:
         from collections import deque
         from robot.api import Token
 
@@ -249,7 +251,7 @@ class CompletionContextDependencyGraph:
                 completion_context, is_root_context=True, memo=memo
             )
 
-            # i.e.: Node that the cache key involves the import names, not the
+            # i.e.: Note that the cache key involves the import names, not the
             # import locations (so, in case there's a match we need to fix
             # the newly returned info).
             cache_key = (

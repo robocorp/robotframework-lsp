@@ -1211,15 +1211,16 @@ class LibspecManager(object):
                     found = library_doc.filename.endswith(digest + ".libspec")
 
                 else:
-                    found = (
+                    found = bool(
                         library_doc.source
                         and normalize_filename(library_doc.source)
                         == normalized_target_file
                     )
                     if not found:
                         try:
-                            found = library_doc.source and os.path.samefile(
-                                library_doc.source, target_file
+                            found = bool(
+                                library_doc.source
+                                and os.path.samefile(library_doc.source, target_file)
                             )
                         except:
                             # os.path.samefile touches the filesystem, so, it can
@@ -1227,7 +1228,7 @@ class LibspecManager(object):
                             found = False
             else:
                 if not args:
-                    found = (
+                    found = bool(
                         library_doc.name and library_doc.name.lower() == libname_lower
                     )
                 else:

@@ -606,7 +606,7 @@ class IBaseCompletionContext(Protocol):
         pass
 
     @property
-    def workspace(self) -> Optional[IRobotWorkspace]:
+    def workspace(self) -> IRobotWorkspace:
         pass
 
     @property
@@ -837,6 +837,9 @@ class ICompletionContext(Protocol):
     ) -> Tuple[Tuple[IResourceImportNode, Optional[IRobotDocument]], ...]:
         pass
 
+    def get_resource_inits_as_docs(self) -> Tuple[IRobotDocument, ...]:
+        pass
+
     def get_variable_imports_as_docs(self) -> Tuple[IRobotDocument, ...]:
         pass
 
@@ -913,7 +916,10 @@ class IVariableFound(Protocol):
 
 class IVariablesCollector(Protocol):
     def accepts(self, variable_name: str) -> bool:
-        pass
+        """
+        :param variable_name:
+            The name of the variable (i.e.: ${some_var}).
+        """
 
     def on_variable(self, variable_found: IVariableFound):
         pass
