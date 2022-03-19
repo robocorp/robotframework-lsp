@@ -362,6 +362,20 @@ def _tokenize_token(node, use_token, scope: "_SemanticTokensScope"):
                 yield from _tokenized_args(token, token_type_index, in_documentation)
 
 
+def _tokenize_subvars(var_token, token_type_index):
+    if "{" not in var_token.value:
+        yield var_token, token_type_index
+        return
+
+    try:
+        iter_in = var_token.tokenize_variables()
+    except:
+        yield var_token, token_type_index
+    else:
+        for tok in iter_in:
+            yield from _tokenized_args(tok, token_type_index, False)
+
+
 def _tokenized_args(token, token_type_index, in_documentation):
     if in_documentation and token_type_index == ARGUMENT_INDEX:
         # Handle the doc itself (note that we may also tokenize docs
@@ -369,24 +383,58 @@ def _tokenized_args(token, token_type_index, in_documentation):
         yield token, DOCUMENTATION_INDEX
         return
 
-    if (
-        token_type_index == VARIABLE_INDEX
-        and len(token.value) > 3
-        and token.value[-1] == "}"
-        and token.value[1] == "{"
-    ):
-        # We want to do an additional tokenization on variables to
-        # convert '${var}' to '${', 'var', '}'
+    if token_type_index == VARIABLE_INDEX:
+        from robotframework_ls.impl.text_utilities import robot_search_variable
 
-        op_start_token, token = _split_token_change_first(token, "variableOperator", 2)
-        yield op_start_token, VARIABLE_OPERATOR_INDEX
+        variable_match = robot_search_variable(token.value)
+        if variable_match.base is None:
+            yield token, token_type_index
+            return
 
-        var_token, op_end_token = _split_token_change_second(
-            token, "variableOperator", len(token.value) - 1
-        )
-        yield var_token, token_type_index
-        yield op_end_token, VARIABLE_OPERATOR_INDEX
+        after_token = None
+        if variable_match.end > 0 and variable_match.end < len(token.value):
+            token, after_token = _split_token_change_first(
+                token, token.type, variable_match.end
+            )
 
+        if variable_match.start > 0:
+            before_token, token = _split_token_change_first(
+                token, token.type, variable_match.start
+            )
+            yield before_token, token_type_index
+
+        base = variable_match.base
+        if base:
+            i = token.value.find(base)
+            op_start_token, token = _split_token_change_first(
+                token, "variableOperator", i
+            )
+            yield op_start_token, VARIABLE_OPERATOR_INDEX
+
+            var_token, op_end_token = _split_token_change_second(
+                token, "variableOperator", len(base)
+            )
+            yield from _tokenize_subvars(var_token, token_type_index)
+
+            if variable_match.items:
+                token = op_end_token
+                for item in variable_match.items:
+                    i = token.value.find(item)
+
+                    op_start_token, token = _split_token_change_first(
+                        token, "variableOperator", i
+                    )
+                    yield op_start_token, VARIABLE_OPERATOR_INDEX
+
+                    var_token, op_end_token = _split_token_change_second(
+                        token, "variableOperator", len(item)
+                    )
+                    yield from _tokenize_subvars(var_token, token_type_index)
+
+            yield op_end_token, VARIABLE_OPERATOR_INDEX
+
+        if after_token:
+            yield after_token, token_type_index
         return
 
     if (

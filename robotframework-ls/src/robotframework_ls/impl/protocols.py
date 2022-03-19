@@ -127,6 +127,15 @@ class IRobotToken(Protocol):
         pass
 
 
+class IRobotVariableMatch(Protocol):
+    string: str
+    identifier: str
+    base: Optional[str]
+    items: Tuple[str, ...]
+    start: int
+    end: int
+
+
 class INode(Protocol):
     lineno: int
     end_lineno: int
