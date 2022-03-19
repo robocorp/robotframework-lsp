@@ -309,6 +309,103 @@ Some Test
     )
 
 
+def test_semantic_highlighting_var_with_modifier(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Some test
+    Log    ${A}[1]
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Some test", "testCaseName"),
+            ("Log", "keywordNameCall"),
+            ("${", "variableOperator"),
+            ("A", "variable"),
+            ("}[", "variableOperator"),
+            ("1", "variable"),
+            ("]", "variableOperator"),
+        ],
+    )
+
+
+def test_semantic_highlighting_var_with_modifier_2(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Some test
+    Log    ${A VAR ${A}}
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Some test", "testCaseName"),
+            ("Log", "keywordNameCall"),
+            ("${", "variableOperator"),
+            ("A VAR ", "variable"),
+            ("${", "variableOperator"),
+            ("A", "variable"),
+            ("}", "variableOperator"),
+            ("}", "variableOperator"),
+        ],
+    )
+
+
+def test_semantic_highlighting_var_with_modifier_3(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Some test
+    Log    ${A}[${{["\["]}}]
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Some test", "testCaseName"),
+            ("Log", "keywordNameCall"),
+            ("${", "variableOperator"),
+            ("A", "variable"),
+            ("}[", "variableOperator"),
+            ("${", "variableOperator"),
+            ('{["\\["]}', "variable"),
+            ("}", "variableOperator"),
+            ("]", "variableOperator"),
+        ],
+    )
+
+
+def test_semantic_highlighting_var_with_modifier_1(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Some test
+    Log    ${AA ${BB} CC}[${DD}]
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Some test", "testCaseName"),
+            ("Log", "keywordNameCall"),
+            ("${", "variableOperator"),
+            # var
+            ("AA ", "variable"),
+            ("${", "variableOperator"),
+            # var
+            ("BB", "variable"),
+            ("}", "variableOperator"),
+            # var
+            (" CC", "variable"),
+            ("}[", "variableOperator"),
+            ("${", "variableOperator"),
+            # var
+            ("DD", "variable"),
+            ("}", "variableOperator"),
+            ("]", "variableOperator"),
+        ],
+    )
+
+
 def test_semantic_highlighting_run_keyword_if_basic(workspace):
     check_simple(
         workspace,
