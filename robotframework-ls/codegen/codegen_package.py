@@ -186,6 +186,16 @@ def get_json_contents():
                         "default": True,
                         "description": "Reports issues in keyword call arguments.",
                     },
+                    "robot.lint.variables": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Reports issues in undefined variables.",
+                    },
+                    "robot.lint.ignoreVariables": {
+                        "type": "array",
+                        "default": [],
+                        "description": 'Don\'t report undefined variables for these variables (i.e.: ["Var1", "Var2"]).',
+                    },
                     "robot.completions.section_headers.form": {
                         "type": "string",
                         "default": "plural",

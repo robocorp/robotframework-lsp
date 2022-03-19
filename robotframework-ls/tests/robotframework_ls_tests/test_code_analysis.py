@@ -1,3 +1,7 @@
+from robotframework_ls.impl.robot_version import get_robot_major_version
+import pytest
+
+
 def _collect_errors(workspace, doc, data_regression, basename=None, config=None):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.code_analysis import collect_analysis_errors
@@ -22,10 +26,10 @@ def _collect_errors(workspace, doc, data_regression, basename=None, config=None)
 
 def test_keywords_analyzed(workspace, libspec_manager, data_regression):
 
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case2.robot")
     doc = workspace.put_doc(
-        "case1.robot",
+        "case2.robot",
         doc.source
         + ("\n    This keyword does not exist" "\n    [Teardown]    Also not there"),
     )
@@ -34,9 +38,9 @@ def test_keywords_analyzed(workspace, libspec_manager, data_regression):
 
 
 def test_keywords_analyzed_templates(workspace, libspec_manager, data_regression):
-    workspace.set_root("case1", libspec_manager=libspec_manager)
+    workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc(
-        "case1.robot",
+        "case2.robot",
         """*** Settings ***
 Test Template    this is not there""",
     )
@@ -45,9 +49,9 @@ Test Template    this is not there""",
 
 
 def test_no_lib_name(workspace, libspec_manager, data_regression):
-    workspace.set_root("case1", libspec_manager=libspec_manager)
+    workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc(
-        "case1.robot",
+        "case2.robot",
         """*** Settings ***
 Library
 Resource
@@ -62,10 +66,10 @@ I check ${cmd}
 
 
 def test_keywords_with_vars_no_error(workspace, libspec_manager, data_regression):
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case2.robot")
     doc = workspace.put_doc(
-        "case1.robot",
+        "case2.robot",
         doc.source
         + """
     I check ls
@@ -85,10 +89,10 @@ I execute "${cmd}" rara "${opts}"
 
 
 def test_keywords_in_args(workspace, libspec_manager, data_regression):
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case2.robot")
     doc = workspace.put_doc(
-        "case1.robot",
+        "case2.robot",
         doc.source
         + """
     Run Keyword If    ${var}    This does not exist    
@@ -101,26 +105,27 @@ def test_keywords_in_args(workspace, libspec_manager, data_regression):
 def test_keywords_in_args_no_error_with_var(
     workspace, libspec_manager, data_regression
 ):
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case2.robot")
     new_source = (
         doc.source
         + """
+    ${var}=    Set Variable    22
     Run Keyword    ${var}
     Run Keyword    concat with ${var}
 """
     )
-    doc = workspace.put_doc("case1.robot", new_source)
+    doc = workspace.put_doc("case2.robot", new_source)
 
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
 def test_keywords_with_prefix_no_error(workspace, libspec_manager, data_regression):
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.get_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case2.robot")
     # Ignore bdd-related prefixes (see: robotframework_ls.impl.robot_constants.BDD_PREFIXES)
     doc = workspace.put_doc(
-        "case1.robot",
+        "case2.robot",
         doc.source
         + """
     given I check ls
@@ -168,6 +173,7 @@ Library    Collections    WITH NAME    Col1
 
 *** Test Cases ***
 Test
+    ${list}=    Set Variable    1
     Col1.Append To List    ${list}    3""",
     )
 
@@ -183,6 +189,7 @@ Library    Collections
 
 *** Test Cases ***
 Test
+    ${list}=    Set Variable    1
     AppendToList    ${list}    3""",
     )
 
@@ -436,8 +443,8 @@ def test_code_analysis_search_pythonpath(
 def test_code_analysis_template_name_keyword(
     workspace, libspec_manager, data_regression
 ):
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Keyword ***
 Example Keyword
@@ -455,8 +462,8 @@ Templated test case
 
 
 def test_code_analysis_too_many_arguments(workspace, libspec_manager, data_regression):
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Keywords ***
 No arg
@@ -473,8 +480,8 @@ Normal test case
 def test_code_analysis_arguments_pos_after_named(
     workspace, libspec_manager, data_regression
 ):
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Keywords ***
 Keyword all
@@ -501,8 +508,8 @@ Normal test case
 
 
 def test_code_analysis_pos_in_keyword(workspace, libspec_manager, data_regression):
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Keywords ***
 Keyword named and keyword
@@ -519,8 +526,8 @@ Normal test case
 
 
 def test_code_analysis_missing_arg(workspace, libspec_manager, data_regression):
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Keywords ***
 Keyword named and keyword
@@ -537,8 +544,8 @@ Normal test case
 
 
 def test_code_analysis_no_match(workspace, libspec_manager, data_regression):
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Keywords ***
 Keyword named and keyword
@@ -555,8 +562,8 @@ Normal test case
 
 
 def test_code_analysis_no_match_2(workspace, libspec_manager, data_regression):
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Keywords ***
 Keyword named and keyword
@@ -575,8 +582,8 @@ Normal test case
 
 
 def test_code_analysis_star_and_keyword(workspace, libspec_manager, data_regression):
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Keywords ***
 Keyword star and keyword
@@ -807,6 +814,7 @@ Keyword 0
 *** Tasks ***
 Minimal task
     ${Cond1}=    Set local variable    ${Cond1}    1
+    ${Cond}=     Set variable   1
     Run Keyword If    ${Cond1}    Keyword 0    wrong arg 0
     Run Keyword If    ${Cond1}    Keyword 0    wrong arg 1    ELSE    Keyword 0    wrong arg 2
     Run Keyword If    ${Cond1}    Keyword 0    wrong arg 3    ELSE IF    ${cond}    Keyword 0    wrong arg 4
@@ -876,6 +884,8 @@ Normal test case
     Keyword 5    call
     Keyword 5    arg=call    
     
+    ${starargs}   Set variable    22
+    ${kwargs}     Set variable    22
     Keyword 6    @{starargs}    &{kwargs}
 """
 
@@ -900,8 +910,8 @@ Some task
 
 
 def test_code_analysis_none(workspace, libspec_manager, data_regression):
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Settings ***
 Test Setup    none
@@ -924,12 +934,210 @@ My Test Case
 def test_code_analysis_report_undefined_vars_in_imports(
     workspace, libspec_manager, data_regression
 ):
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Settings ***
 Resource    ${unresolved}/foo.robot
 Library    ${unresolved}/foo.py
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_report_undefined_variables_basic(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Case ***
+Some test
+    Log to console    ${unresolved}
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_report_undefined_variables_in_vars(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Variables ***
+&{SOME DICT}    cwd=${unresolved}
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_report_undefined_variables_custom_args(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Example test case
+    Something specified with type: foo and reference: bar
+
+*** Keywords ***
+Something specified with type: ${type} and reference: ${reference}
+    Log to console    ${type} ${reference} ${undefined}
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_ignore_report_undefined_variables(
+    workspace, libspec_manager, data_regression
+):
+
+    from robotframework_ls.robot_config import RobotConfig
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Case ***
+Some test
+    Log to console    ${unresolved} ${UN resolved}
+"""
+
+    config = RobotConfig()
+    config.update({"robot.lint.ignoreVariables": ["unresolved"]})
+
+    _collect_errors(workspace, doc, data_regression, config=config, basename="no_error")
+
+
+def test_extended_variable_syntax(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Case ***
+Some test
+    ${number}=    Set Variable    ${-2}
+    ${Object}=    Set Variable    22
+    Log to console    ${Object.foo}
+    Log to console    ${Object[2]}
+    Log to console    ${Object * 2}
+    Log to console    ${empty}
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_variable_no_error_1(workspace, libspec_manager, data_regression):
+    from robotframework_ls.robot_config import RobotConfig
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Dictionary variable item
+    Log Many    ${USER}[name]    ${USER}[password]
+    Log Many    Welcome ${USER}[name]!
+
+Key defined as variable
+    Log Many    ${DICT}[${KEY}]    ${DICT}[${42}]
+
+Attribute access
+    Log Many    ${USER.name}    ${USER.password}
+    Log Many    Welcome ${USER.name}!
+"""
+
+    config = RobotConfig()
+    config.update({"robot.lint.ignoreVariables": ["user", "dict"]})
+    _collect_errors(workspace, doc, data_regression, config=config, basename="no_error")
+
+
+def test_variable_no_error_2(workspace, libspec_manager, data_regression):
+    from robotframework_ls.robot_config import RobotConfig
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Example
+    ${OBJECT} =    Set Variable    22
+    ${OBJECT.name} =    Set Variable    New name
+    ${OBJECT.new_attr} =    Set Variable    New attribute
+"""
+
+    config = RobotConfig()
+    config.update({"robot.lint.ignoreVariables": ["user", "dict"]})
+    _collect_errors(workspace, doc, data_regression, config=config, basename="no_error")
+
+
+def test_variable_in_var(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Variables ***
+${JOHN HOME}    /home/john
+${JANE HOME}    /home/jane
+
+*** Test Cases ***
+Example
+    ${name} =    Set Variable    John
+    Log    ${${name} HOME}
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_variable_evaluation(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Example
+    Log to console    ${{"foo"}}
+    Log to console    ${{[1, 2, 3, 4]}}, ${{ {'id': 1, 'name': 'Example', 'children': [7, 9]} }}
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 4 onwards.")
+def test_var_from_for(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Example
+    FOR  ${i}  IN  ${{[1, 2, 3]}}
+        Log    ${i}
+    END
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+@pytest.mark.skipif(get_robot_major_version() < 5, reason="Requires RF 5 onwards.")
+def test_var_from_except_as(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Example
+    TRY
+        No operation
+    EXCEPT    AS    ${ee}
+        Log    ${ee}
+    END
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_env_var(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Example
+    Log    %{not_there}
+    Log    %{PATH}
 """
 
     _collect_errors(workspace, doc, data_regression)

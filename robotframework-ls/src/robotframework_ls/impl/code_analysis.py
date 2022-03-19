@@ -1,4 +1,5 @@
 from typing import Dict, Optional
+import re
 
 from robocorp_ls_core.protocols import check_implements
 from robocorp_ls_core.robotframework_log import get_logger
@@ -9,8 +10,15 @@ from robotframework_ls.impl.protocols import (
     ICompletionContext,
     ILibraryDoc,
     INode,
+    IVariableFound,
 )
 from robocorp_ls_core.lsp import DiagnosticSeverity, DiagnosticTag
+from robotframework_ls.impl.robot_lsp_constants import (
+    OPTION_ROBOT_LINT_VARIABLES,
+    OPTION_ROBOT_LINT_IGNORE_VARIABLES,
+)
+from robotframework_ls.impl.text_utilities import normalize_variable_name
+from functools import lru_cache
 
 
 log = get_logger(__name__)
@@ -45,6 +53,23 @@ class _KeywordContainer(object):
                 return keyword_found
 
         return None
+
+
+class _VariablesCollector(object):
+    def __init__(self):
+        self._variables_collected = set()
+
+    def accepts(self, variable_name: str) -> bool:
+        self._variables_collected.add(normalize_variable_name(variable_name))
+        # We don't want to create the IVariableFound, just the names should be
+        # enough for our usage.
+        return False
+
+    def on_variable(self, variable_found: IVariableFound):
+        pass
+
+    def contains_variable(self, variable_name):
+        return variable_name in self._variables_collected
 
 
 class _AnalysisKeywordsCollector(object):
@@ -263,14 +288,10 @@ def collect_analysis_errors(initial_completion_context):
                 error_msg = ""
             else:
                 if "expected" in error_msg:
-                    import re
-
                     if re.search(r"expected\s+(.*)\s+argument(s)?,\s+got", error_msg):
                         additional = f'\nConsider using default arguments in the {library_name} constructor and\ncalling the "Robot Framework: Clear caches and restart" action or\nadding "{library_name}" to the "robot.libraries.libdoc.needsArgs"\nsetting to pass the typed arguments when generating the libspec.'
 
                 if not additional and "Importing" in error_msg:
-                    import re  # noqa
-
                     if get_robot_major_version() <= 3:
                         pattern = r"Importing\s+test\s+library(.*)failed"
                     else:
@@ -394,4 +415,194 @@ def collect_analysis_errors(initial_completion_context):
         except:
             log.exception("Error collecting exceptions")
 
+    for error in _collect_undefined_variables_errors(initial_completion_context):
+        errors.append(error)
+        if len(errors) >= MAX_ERRORS:
+            # i.e.: Collect at most 100 errors
+            break
+
     return errors
+
+
+def _is_number_var(normalized_variable_name):
+    # see: robot.variables.finders.NumberFinder
+    try:
+        bases = {"0b": 2, "0o": 8, "0x": 16}
+        if normalized_variable_name.startswith(tuple(bases)):
+            return int(
+                normalized_variable_name[2:], bases[normalized_variable_name[:2]]
+            )
+        int(normalized_variable_name)
+        return True
+    except:
+        pass  # Let's try float...
+
+    try:
+        float(normalized_variable_name)
+        return True
+    except:
+        pass
+
+    return False
+
+
+def _is_python_eval_var(normalized_variable_name):
+    return (
+        len(normalized_variable_name) >= 2
+        and normalized_variable_name[0] == "{"
+        and normalized_variable_name[-1] == "}"
+    )
+
+
+@lru_cache(maxsize=1000)
+def _skip_variable_analysis(normalized_variable_name):
+    from robotframework_ls.impl.ast_utils import create_token
+    from robotframework_ls.impl.ast_utils import tokenize_variables
+
+    if _is_number_var(normalized_variable_name):
+        return True
+
+    if _is_python_eval_var(normalized_variable_name):
+        return True
+
+    try:
+        has_inner_variables = False
+        for t in tokenize_variables(create_token(normalized_variable_name)):
+            if t.type == t.VARIABLE:
+                has_inner_variables = True
+                break
+
+        # We don't currently resolve recursively for this analysis,
+        # so, just bail out.
+        if has_inner_variables:
+            return True
+    except:
+        pass
+
+    return False
+
+
+_match_extended = re.compile(
+    r"""
+    (.+?)          # base name (group 1)
+    ([^\s\w].+)    # extended part (group 2)
+""",
+    re.UNICODE | re.VERBOSE,
+).match
+
+
+def _extract_base_from_extended_var_name(normalized_variable_name):
+    m = _match_extended(normalized_variable_name)
+    if m is None:
+        return normalized_variable_name
+
+    base_name, _extended = m.groups()
+    return base_name
+
+
+def _env_vars_upper():
+    import os
+
+    return tuple(x.upper() for x in os.environ)
+
+
+def _collect_undefined_variables_errors(initial_completion_context):
+    from robotframework_ls.impl import ast_utils
+
+    config = initial_completion_context.config
+    if config is not None and not config.get_setting(
+        OPTION_ROBOT_LINT_VARIABLES, bool, True
+    ):
+        return
+
+    from robotframework_ls.impl import variable_completions
+
+    ignore_variables = set()
+    if config is not None:
+        ignore_variables.update(
+            normalize_variable_name(str(x))
+            for x in config.get_setting(OPTION_ROBOT_LINT_IGNORE_VARIABLES, list, [])
+        )
+
+    ast = initial_completion_context.get_ast()
+
+    globals_collector = _VariablesCollector()
+
+    # Collect undefined variables
+    variable_completions.collect_global_variables(
+        initial_completion_context, globals_collector, only_current_doc=False
+    )
+
+    env_vars_upper = None
+
+    for token_info in ast_utils.iter_variable_references(ast):
+        initial_completion_context.check_cancelled()
+
+        if token_info.node.__class__.__name__ in ("ResourceImport", "LibraryImport"):
+            # These ones are handled differently as it ends up in an unresolved
+            # import.
+            continue
+
+        var_name = token_info.token.value
+        if var_name.startswith("%"):
+            from robotframework_ls.impl.text_utilities import extract_variable_base
+
+            if env_vars_upper is None:
+                env_vars_upper = _env_vars_upper()
+
+            if extract_variable_base(var_name).upper() not in env_vars_upper:
+                # Environment variable
+                from robotframework_ls.impl.ast_utils import create_error_from_node
+
+                yield create_error_from_node(
+                    token_info.node,
+                    f"Undefined environment variable: {token_info.token.value}",
+                    tokens=[token_info.token],
+                )
+            continue
+
+        normalized_variable_name = normalize_variable_name(var_name)
+
+        found = False
+        while not found:
+            if normalized_variable_name in ignore_variables:
+                found = True
+                break
+
+            if _skip_variable_analysis(normalized_variable_name):
+                found = True
+                break
+
+            if globals_collector.contains_variable(normalized_variable_name):
+                found = True
+                break
+
+            locals_collector = _VariablesCollector()
+            local_ctx = initial_completion_context.create_copy_with_selection(
+                line=token_info.token.lineno - 1,
+                col=token_info.token.col_offset - 1,
+            )
+
+            variable_completions.collect_local_variables(
+                local_ctx, locals_collector, token_info
+            )
+            if locals_collector.contains_variable(normalized_variable_name):
+                found = True
+                break
+
+            extracted_base = _extract_base_from_extended_var_name(
+                normalized_variable_name
+            )
+            if extracted_base and extracted_base != normalized_variable_name:
+                normalized_variable_name = extracted_base
+            else:
+                break
+
+        if not found:
+            from robotframework_ls.impl.ast_utils import create_error_from_node
+
+            yield create_error_from_node(
+                token_info.node,
+                f"Undefined variable: {token_info.token.value}",
+                tokens=[token_info.token],
+            )

@@ -37,6 +37,36 @@ def normalize_robot_name(text):
     return text.lower().replace("_", "").replace(" ", "")
 
 
+@lru_cache(maxsize=100)
+def extract_variable_base(text: str) -> str:
+    """
+    Converts something as: "${S_ome.VAR}[foo]" to "S_ome.VAR".
+    """
+    from robot.variables.search import search_variable  # type:ignore
+
+    try:
+        variable_match = search_variable(text)
+        base = variable_match.base
+        if base is None:
+            base = text
+    except:
+        base = text
+        if len(text) >= 3:
+            if text.endswith("}") and text[1] == "{":
+                base = text[2:-1]
+    return base
+
+
+@lru_cache(maxsize=500)
+def normalize_variable_name(text: str) -> str:
+    """
+    Converts something as: "${S_ome.VAR}[foo]" to "some.var".
+    """
+    base = extract_variable_base(text)
+
+    return base.lower().replace("_", "").replace(" ", "")
+
+
 def is_variable_text(text: str) -> bool:
     from robotframework_ls.impl import robot_constants
 

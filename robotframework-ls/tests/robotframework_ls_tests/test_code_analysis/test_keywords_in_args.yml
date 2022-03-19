@@ -1,10 +1,20 @@
+- message: 'Undefined variable: ${var}'
+  range:
+    end:
+      character: 28
+      line: 8
+    start:
+      character: 22
+      line: 8
+  severity: 1
+  source: robotframework
 - message: 'Undefined keyword: This does not exist.'
   range:
     end:
       character: 51
-      line: 7
+      line: 8
     start:
       character: 32
-      line: 7
+      line: 8
   severity: 1
   source: robotframework

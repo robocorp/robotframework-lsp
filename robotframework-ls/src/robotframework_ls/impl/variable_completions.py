@@ -5,6 +5,7 @@ from robotframework_ls.impl.protocols import (
     IVariablesCollector,
     IVariableFound,
     IRobotToken,
+    TokenInfo,
 )
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.protocols import check_implements, IDocumentSelection
@@ -282,7 +283,7 @@ def _collect_resource_imports_variables(
         if resource_doc is None:
             continue
         new_ctx = completion_context.create_copy(resource_doc)
-        _collect_variables_from_context(new_ctx, collector)
+        _collect_variables_from_document_context(new_ctx, collector)
 
 
 def _collect_variables_from_variable_import_doc(
@@ -389,7 +390,7 @@ def _iter_resource_docs(completion_context: ICompletionContext, dependency_graph
                 yield resource_doc
 
 
-def _collect_variables_from_context(
+def _collect_variables_from_document_context(
     completion_context: ICompletionContext,
     collector: IVariablesCollector,
     only_current_doc=False,
@@ -410,22 +411,24 @@ def _collect_variables_from_context(
 
 
 def _collect_arguments(
-    completion_context: ICompletionContext, collector: IVariablesCollector
+    completion_context: ICompletionContext,
+    token_info: TokenInfo,
+    collector: IVariablesCollector,
 ):
     from robotframework_ls.impl import ast_utils
 
-    current_token_info = completion_context.get_current_token()
-    if current_token_info is not None:
-        stack = current_token_info.stack
-        if stack:
-            last_in_stack = stack[-1]
-            for arg_token in ast_utils.iter_keyword_arguments_as_tokens(last_in_stack):
-                name = str(arg_token)
-                if collector.accepts(name):
-                    variable_found = _VariableFoundFromToken(
-                        completion_context, arg_token, "", variable_name=name
-                    )
-                    collector.on_variable(variable_found)
+    stack = token_info.stack
+    if stack:
+        last_in_stack = stack[-1]
+        for arg_token in ast_utils.iter_keyword_arguments_as_tokens(
+            last_in_stack, tokenize_keyword_name=True
+        ):
+            name = str(arg_token)
+            if collector.accepts(name):
+                variable_found = _VariableFoundFromToken(
+                    completion_context, arg_token, "", variable_name=name
+                )
+                collector.on_variable(variable_found)
 
 
 def _convert_name_to_var(variable_name):
@@ -464,32 +467,57 @@ def collect_variables(
     collector: IVariablesCollector,
     only_current_doc=False,
 ):
-    from robotframework_ls.impl import ast_utils
-
     token_info = completion_context.get_current_token()
     if token_info is not None:
-        if token_info.stack:
-            stack_node = token_info.stack[-1]
-        else:
-            stack_node = completion_context.get_ast_current_section()
-        for assign_node_info in ast_utils.iter_variable_assigns(stack_node):
-            completion_context.check_cancelled()
-            if collector.accepts(assign_node_info.token.value):
-                rep = " ".join(tok.value for tok in assign_node_info.node.tokens)
-                variable_found = _VariableFoundFromToken(
-                    completion_context, assign_node_info.token, rep
-                )
-                collector.on_variable(variable_found)
+        collect_local_variables(completion_context, collector, token_info)
 
-    _collect_arguments(completion_context, collector)
+    collect_global_variables(completion_context, collector, only_current_doc)
 
-    _collect_variables_from_context(
+
+def collect_global_variables(
+    completion_context: ICompletionContext,
+    collector: IVariablesCollector,
+    only_current_doc=False,
+):
+    _collect_variables_from_document_context(
         completion_context, collector, only_current_doc=only_current_doc
     )
 
     if not only_current_doc:
         _collect_from_settings(completion_context, collector)
         _collect_from_builtins(completion_context, collector)
+
+
+def collect_local_variables(
+    completion_context: ICompletionContext,
+    collector: IVariablesCollector,
+    token_info: TokenInfo,
+):
+    from robotframework_ls.impl import ast_utils
+
+    if token_info.stack:
+        for stack_node in reversed(token_info.stack):
+            if stack_node.__class__.__name__ in ("Keyword", "TestCase"):
+                break
+        else:
+            stack_node = token_info.stack[0]
+    else:
+        stack_node = completion_context.get_ast_current_section()
+
+    for assign_node_info in itertools.chain(
+        ast_utils.iter_variable_assigns(stack_node),
+        ast_utils.iter_for_assigns(stack_node),
+        ast_utils.iter_except_as_assigns(stack_node),
+    ):
+        completion_context.check_cancelled()
+        if collector.accepts(assign_node_info.token.value):
+            rep = " ".join(tok.value for tok in assign_node_info.node.tokens)
+            variable_found = _VariableFoundFromToken(
+                completion_context, assign_node_info.token, rep
+            )
+            collector.on_variable(variable_found)
+
+    _collect_arguments(completion_context, token_info, collector)
 
 
 def complete(completion_context: ICompletionContext):

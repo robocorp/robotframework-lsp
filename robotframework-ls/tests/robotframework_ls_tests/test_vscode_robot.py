@@ -662,6 +662,13 @@ def test_find_definition_keywords(
     )
 
 
+def _fix_log_signature(signatures):
+    for signature in signatures:
+        signature["label"] = signature["label"].replace("repr=DEPRECATED", "repr=False")
+        for dct in signature["parameters"]:
+            dct["label"] = dct["label"].replace("repr=DEPRECATED", "repr=False")
+
+
 def test_signature_help_integrated(
     language_server_io: ILanguageServerClient, ws_root_path, data_regression
 ):
@@ -688,6 +695,7 @@ Log It
     docs = signatures[0].pop("documentation")
     assert docs["kind"] == MarkupKind.Markdown
     assert "Log" in docs["value"]
+    _fix_log_signature(signatures)
 
     data_regression.check(result)
 

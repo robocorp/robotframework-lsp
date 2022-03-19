@@ -18,6 +18,10 @@ OPTION_ROBOT_LINT_UNDEFINED_LIBRARIES = "robot.lint.undefinedLibraries"
 OPTION_ROBOT_LINT_UNDEFINED_RESOURCES = "robot.lint.undefinedResources"
 OPTION_ROBOT_LINT_KEYWORD_CALL_ARGUMENTS = "robot.lint.keywordCallArguments"
 
+OPTION_ROBOT_LINT_VARIABLES = "robot.lint.variables"
+OPTION_ROBOT_LINT_IGNORE_VARIABLES = "robot.lint.ignoreVariables"
+
+
 OPTION_ROBOT_CODE_FORMATTER = "robot.codeFormatter"
 
 OPTION_ROBOT_CODE_FORMATTER_ROBOTIDY = "robotidy"

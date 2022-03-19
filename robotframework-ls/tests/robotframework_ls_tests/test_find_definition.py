@@ -1,6 +1,7 @@
 from typing import Tuple
 import os.path
 import pytest
+from robotframework_ls.impl.robot_version import get_robot_major_version
 
 
 def test_find_definition_builtin(workspace, libspec_manager):
@@ -858,3 +859,88 @@ def test_find_definition_remote_library(workspace, libspec_manager, remote_libra
     definition = next(iter(definitions))
     assert definition.source.endswith("Remote.py")
     assert definition.lineno == -2
+
+
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 4 onwards.")
+def test_var_from_for(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Example
+    FOR  ${vv}  IN  ${{[1, 2, 3]}}
+        Log    ${vv}
+    END
+"""
+
+    line, col = doc.get_last_line_col_with_contents("Log    ${vv}")
+    col -= 1
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 3
+
+
+@pytest.mark.skipif(get_robot_major_version() < 5, reason="Requires RF 5 onwards.")
+def test_var_from_except(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Example
+    TRY
+        Log  something
+    EXCEPT    AS    ${ee}
+        Log    ${ee}
+    END
+"""
+
+    line, col = doc.get_last_line_col_with_contents("Log    ${ee}")
+    col -= 1
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 5
+
+
+def test_var_in_outer_scope(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Example
+    ${aa}=    Set Variable    33
+    FOR  ${ii}  IN  ${{[1, 2, 3]}}
+        Log    ${aa}
+    END
+"""
+
+    line, col = doc.get_last_line_col_with_contents("Log    ${aa}")
+    col -= 1
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("case2.robot")

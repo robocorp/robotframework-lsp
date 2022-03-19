@@ -2,19 +2,19 @@
   range:
     end:
       character: 31
-      line: 7
+      line: 8
     start:
       character: 4
-      line: 7
+      line: 8
   severity: 1
   source: robotframework
 - message: 'Undefined keyword: Also not there.'
   range:
     end:
       character: 32
-      line: 8
+      line: 9
     start:
       character: 18
-      line: 8
+      line: 9
   severity: 1
   source: robotframework

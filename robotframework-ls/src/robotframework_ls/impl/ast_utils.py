@@ -109,6 +109,10 @@ class _AbstractIndexer:
     def iter_indexed(self, clsname):
         pass
 
+    @property
+    def ast(self):
+        return self._weak_ast()
+
 
 class _FullIndexer(_AbstractIndexer):
     def __init__(self, weak_ast: "weakref.ref[ast_module.AST]"):
@@ -212,7 +216,7 @@ class _SectionIndexer(_AbstractIndexer):
                         yield from indexer.iter_indexed(clsname)
 
 
-class _ASTIndexer:
+class _ASTIndexer(_AbstractIndexer):
     def __init__(self, ast: ast_module.AST):
         self._weak_ast = weakref.ref(ast)
         self._is_root = ast.__class__.__name__ == "File"
@@ -610,20 +614,36 @@ def iter_test_case_sections(ast) -> Iterator[NodeInfo]:
     yield from ast.iter_indexed("TestCaseSection")
 
 
-def iter_keyword_arguments_as_str(ast) -> Iterator[str]:
-    for token in iter_keyword_arguments_as_tokens(ast):
-        yield str(token)
+def iter_keyword_arguments_as_str(ast, tokenize_keyword_name=False) -> Iterator[str]:
+    for token in iter_keyword_arguments_as_tokens(ast, tokenize_keyword_name):
+        yield token.value
 
 
 @_convert_ast_to_indexer
-def iter_keyword_arguments_as_tokens(ast) -> Iterator[IRobotToken]:
-    """
-    :rtype: generator(Token)
-    """
+def iter_keyword_arguments_as_tokens(
+    ast, tokenize_keyword_name=False
+) -> Iterator[IRobotToken]:
+
     for node_info in ast.iter_indexed("Arguments"):
         for token in node_info.node.tokens:
             if token.type == token.ARGUMENT:
                 yield token
+
+    if tokenize_keyword_name:
+        from robot.api import Token
+
+        ast_node = ast.ast
+        if ast_node.__class__.__name__ == "Keyword":
+            keyword_name = ast_node.header.get_token(Token.KEYWORD_NAME)
+            if keyword_name:
+                try:
+                    tokenized_vars = keyword_name.tokenize_variables()
+                except:
+                    pass
+                else:
+                    for tok in tokenized_vars:
+                        if tok.type == Token.VARIABLE:
+                            yield tok
 
 
 def is_deprecated(ast) -> bool:
@@ -675,15 +695,17 @@ def get_documentation_as_markdown(ast) -> str:
         return documentation
 
 
+@_convert_ast_to_indexer
 def iter_variable_assigns(ast) -> Iterator:
     from robot.api import Token
 
-    for stack, node in _iter_nodes(ast, recursive=False):
-        if node.__class__.__name__ == "KeywordCall":
-            for token in node.get_tokens(Token.ASSIGN):
+    for node_info in ast.iter_indexed("KeywordCall"):
+        node = node_info.node
+        for token in node.tokens:
+            if token.type == token.ASSIGN:
                 value = token.value
                 i = value.rfind("}")
-                if i > 0:
+                if i > 0 and i != len(value) - 1:
                     new_value = value[: i + 1]
                     token = Token(
                         type=token.type,
@@ -693,7 +715,53 @@ def iter_variable_assigns(ast) -> Iterator:
                         error=token.error,
                     )
 
-                yield TokenInfo(tuple(stack), node, token)
+                yield TokenInfo(node_info.stack, node, token)
+
+
+@_convert_ast_to_indexer
+def iter_for_assigns(ast) -> Iterator:
+    from robot.api import Token
+
+    for node_info in ast.iter_indexed("ForHeader"):
+        node = node_info.node
+        for token in node.tokens:
+            if token.type == token.VARIABLE:
+                value = token.value
+                i = value.rfind("}")
+                if i > 0 and i != len(value) - 1:
+                    new_value = value[: i + 1]
+                    token = Token(
+                        type=token.type,
+                        value=new_value,
+                        lineno=token.lineno,
+                        col_offset=token.col_offset,
+                        error=token.error,
+                    )
+
+                yield TokenInfo(node_info.stack, node, token)
+
+
+@_convert_ast_to_indexer
+def iter_except_as_assigns(ast) -> Iterator:
+    from robot.api import Token
+
+    for node_info in ast.iter_indexed("ExceptHeader"):
+        node = node_info.node
+        for token in node.tokens:
+            if token.type == token.VARIABLE:
+                value = token.value
+                i = value.rfind("}")
+                if i > 0 and i != len(value) - 1:
+                    new_value = value[: i + 1]
+                    token = Token(
+                        type=token.type,
+                        value=new_value,
+                        lineno=token.lineno,
+                        col_offset=token.col_offset,
+                        error=token.error,
+                    )
+
+                yield TokenInfo(node_info.stack, node, token)
 
 
 _FIXTURE_CLASS_NAMES = (
@@ -723,6 +791,7 @@ def iter_variable_references(ast) -> Iterator[TokenInfo]:
         "LibraryImport",
         "ResourceImport",
         "TestTimeout",
+        "Variable",
     ) + _CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_TUPLE:
         for node_info in ast.iter_indexed(clsname):
             stack = node_info.stack
