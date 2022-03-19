@@ -336,7 +336,7 @@ def _collect_variables_from_variable_import_doc(
                                     )
                                     collector.on_variable(variable_found)
 
-        elif variable_import_doc.path.lower().endswith(".yaml"):
+        elif variable_import_doc.path.lower().endswith((".yaml", ".yml")):
             dct_contents = variable_import_doc.get_yaml_contents()
             if isinstance(dct_contents, dict):
                 if dct_contents:

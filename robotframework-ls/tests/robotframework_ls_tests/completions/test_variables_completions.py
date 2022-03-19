@@ -4,8 +4,8 @@ def test_string_variables_completions_basic_1(
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import variable_completions
 
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Variables ***
 ${NAME}         Robot Framework
@@ -29,8 +29,8 @@ def test_string_variables_completions_basic_2(
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import variable_completions
 
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """*** Variables ***
 ${NAME}         Robot Framework
 ${VERSION}      2.0
@@ -50,8 +50,8 @@ def test_string_variables_completions_unable_to_tokenize_1(
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import variable_completions
 
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Variables ***
 ${NAME}         Robot Framework
@@ -76,8 +76,8 @@ def test_string_variables_completions_unable_to_tokenize_2(
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import variable_completions
 
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Variables ***
 ${NAME}         Robot Framework
@@ -104,8 +104,8 @@ def test_list_variables_completions_basic_1(
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import variable_completions
 
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Variables ***
 @{NAMES}        Matti       Teppo
@@ -128,8 +128,8 @@ def test_list_variables_completions_basic_2(
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import variable_completions
 
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """*** Variables ***
 @{NAMES}        Matti       Teppo
 
@@ -149,8 +149,8 @@ def test_list_variables_completions_in_variables(
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import variable_completions
 
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Variables ***
 @{NAMES}        Matti       Teppo
@@ -166,8 +166,8 @@ def test_dict_variables_completions(workspace, libspec_manager, data_regression)
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import variable_completions
 
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """
 *** Variables ***
 &{USER 1}       name=Matti    address=xxx         phone=123
@@ -403,8 +403,8 @@ def test_dictionary_variables_completions_with_dollar(
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import variable_completions
 
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """*** Variables ***
 &{ROBOT}   Name=Robot Framework   Version=4.0
 
@@ -424,14 +424,37 @@ def test_dictionary_variables_completions_with_ampersand(
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import variable_completions
 
-    workspace.set_root("case1", libspec_manager=libspec_manager)
-    doc = workspace.put_doc("case1.robot")
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
     doc.source = """*** Variables ***
 &{ROBOT}   Name=Robot Framework   Version=4.0
 
 ***Test Cases***
 Test dictionary variable completion
    Log to Console   &{ROB"""
+
+    completions = variable_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    data_regression.check(completions)
+
+
+def test_variable_completions_from_resource(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import variable_completions
+
+    workspace.set_root("case_vars_file", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_root.robot")
+    doc.source = """*** Settings ***
+Resource    case_vars_file_yml.resource
+
+
+*** Test Cases ***
+Test
+    Log    ${VARIABLE_YAML_2}    console=True
+    Log    ${Var|in.R"""
 
     completions = variable_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)

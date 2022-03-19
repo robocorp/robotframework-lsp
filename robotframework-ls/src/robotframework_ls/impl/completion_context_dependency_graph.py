@@ -262,13 +262,13 @@ class CompletionContextDependencyGraph:
                 ),
                 tuple(
                     (
-                        tuple(t.value for t in node.get_tokens(Token.NAME))
+                        tuple(t.value for t in node.tokens if t.type == t.NAME)
                         for node in completion_context.get_resource_imports()
                     )
                 ),
                 tuple(
                     (
-                        tuple(t.value for t in node.get_tokens(Token.NAME))
+                        tuple(t.value for t in node.tokens if t.type == t.NAME)
                         for node in completion_context.get_variable_imports()
                     )
                 ),
