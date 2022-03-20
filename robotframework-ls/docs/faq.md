@@ -161,7 +161,7 @@ To fix this, please use a configure a Python executable which does have `Robot F
 How to configure the launch from a code lens/shortcut?
 ------------------------------------------------------
 
-To configure the launch from a code lens/shortcut, please create a launch
+To configure the launch from a code lens or shortcut (such as the test run in the gutter), please create a launch
 configuration named `Robot Framework: Launch template`.
 i.e.: To configure the terminal to be an `integrated` terminal on all launches
 and to specify all launches to have an additional `--argumentfile /path/to/arguments.txt`, it's possible to create a `.vscode/launch.json` such as:
@@ -247,6 +247,7 @@ The `Interactive Console` may be started using the `Robot Framework: Start Inter
 Note that its scope will be based on the currently opened `.robot` or `.resource` file (if a `.robot` or `.resource` is not opened, the `Interactive Console` will not be opened).
 
 Alternatively it's also possible to start the `Interactive Console` and send the contents of a given section to it using the `Run in Interactive Console` code-lens, which should automatically open it and send the initial contents for execution.
+-- **Note**: to enable code-lenses, the setting `robot.codeLens.enable` must be set to `true`. 
 
 When the `Interactive Console` is opened, an initial task will be considered running. At this point, it's possible to either send full sections (such as `*** Settings ***` or `*** Keyword ***`) or evaluate Keywords line by line.
 -- **Note**: it's also possible to send the contents of `*** Test Case ***` or `*** Task ***`, but a new task won't actually be started, instead, the keyword calls in this case will be executed as a block in the context of the `Test/Task` that is already running.

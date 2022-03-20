@@ -293,6 +293,13 @@ def code_lens_resolve(
 
 def code_lens(completion_context: ICompletionContext) -> List[CodeLensTypedDict]:
     import os
+    from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_SHOW_CODE_LENSES
+
+    config = completion_context.config
+    if config is not None and not config.get_setting(
+        OPTION_ROBOT_SHOW_CODE_LENSES, bool, False
+    ):
+        return []
 
     path = completion_context.doc.path
     if not path or not os.path.exists(os.path.dirname(path)):
