@@ -17,7 +17,6 @@ from robotframework_ls.impl.robot_lsp_constants import (
     OPTION_ROBOT_LINT_VARIABLES,
     OPTION_ROBOT_LINT_IGNORE_VARIABLES,
 )
-from robotframework_ls.impl.text_utilities import normalize_variable_name
 from functools import lru_cache
 
 
@@ -60,6 +59,8 @@ class _VariablesCollector(object):
         self._variables_collected = set()
 
     def accepts(self, variable_name: str) -> bool:
+        from robotframework_ls.impl.variable_resolve import normalize_variable_name
+
         self._variables_collected.add(normalize_variable_name(variable_name))
         # We don't want to create the IVariableFound, just the names should be
         # enough for our usage.
@@ -508,6 +509,7 @@ def _env_vars_upper():
 
 def _collect_undefined_variables_errors(initial_completion_context):
     from robotframework_ls.impl import ast_utils
+    from robotframework_ls.impl.variable_resolve import normalize_variable_name
 
     config = initial_completion_context.config
     if config is not None and not config.get_setting(
@@ -545,7 +547,7 @@ def _collect_undefined_variables_errors(initial_completion_context):
 
         var_name = token_info.token.value
         if var_name.startswith("%"):
-            from robotframework_ls.impl.text_utilities import extract_variable_base
+            from robotframework_ls.impl.variable_resolve import extract_variable_base
 
             if env_vars_upper is None:
                 env_vars_upper = _env_vars_upper()

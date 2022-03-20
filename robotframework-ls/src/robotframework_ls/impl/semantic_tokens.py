@@ -384,7 +384,7 @@ def _tokenized_args(token, token_type_index, in_documentation):
         return
 
     if token_type_index == VARIABLE_INDEX:
-        from robotframework_ls.impl.text_utilities import robot_search_variable
+        from robotframework_ls.impl.variable_resolve import robot_search_variable
 
         variable_match = robot_search_variable(token.value)
         if variable_match.base is None:

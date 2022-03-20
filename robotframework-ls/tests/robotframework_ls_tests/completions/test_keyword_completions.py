@@ -1,5 +1,6 @@
 import pytest
 from robotframework_ls.impl.protocols import ICompletionContext
+import sys
 
 
 def test_keyword_completions_builtin(workspace, libspec_manager):
@@ -56,7 +57,6 @@ def test_keyword_completions_directory_separator(
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.robot_config import RobotConfig
-    import sys
 
     if sys.platform != "win32" and separator == "\\":
         return
@@ -642,6 +642,40 @@ def test_keyword_completions_lib_with_params(workspace, libspec_manager, cases):
     assert sorted([comp["label"] for comp in completions]) == [
         "Foo Method (LibWithParams)"
     ]
+
+
+def test_keyword_completions_lib_with_params_slash(workspace, libspec_manager, cases):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.robot_config import RobotConfig
+    from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
+
+    workspace.set_root("case_params_on_lib", libspec_manager=libspec_manager)
+
+    caseroot = cases.get_path("case_params_on_lib")
+    config = RobotConfig()
+    config.update(
+        {
+            "robot": {
+                "pythonpath": [caseroot],
+                "libraries": {"libdoc": {"needsArgs": ["*"]}},
+            }
+        }
+    )
+    assert config.get_setting(OPTION_ROBOT_PYTHONPATH, list, []) == [caseroot]
+    libspec_manager.config = config
+
+    doc = workspace.get_doc("case_params_on_lib2.robot")
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    if sys.platform == "win32":
+        expected = r"My:\foo\bar\echo (LibWithParams2)"
+    else:
+        expected = r"My:\foo\bar/echo (LibWithParams2)"
+
+    assert sorted([comp["label"] for comp in completions]) == [expected]
 
 
 def test_simple_with_params(workspace, libspec_manager, cases):

@@ -1164,18 +1164,18 @@ class LibspecManager(object):
         ):
             args = None
 
-        if args and "{" in args:
-            # We need to resolve the arguments if there are variables in it.
-            from robotframework_ls.impl.completion_context import (
-                CompletionContext,
-            )
-            from robocorp_ls_core.workspace import Document
+        if args:
+            if "{" in args:
+                # We need to resolve the arguments if there are variables in it.
+                from robotframework_ls.impl.variable_resolve import (
+                    ResolveVariablesContext,
+                )
 
-            # We just need the doc for the CURDIR variable, so create a dummy
-            # doc with that uri.
-            doc = Document(current_doc_uri, "")
-            ctx = CompletionContext(doc, config=self.config)
-            args = ctx.token_value_resolving_variables(args)
+                args = ResolveVariablesContext(
+                    self.config, current_doc_uri
+                ).token_value_resolving_variables(args)
+
+            args = args.replace("\\\\", "\\")
 
         if not builtin:
             found_target_filename = self._get_library_target_filename(

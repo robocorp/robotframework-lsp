@@ -1554,7 +1554,7 @@ def test_cancelling_requests(language_server_tcp: ILanguageServerClient, ws_root
     contents = []
 
     # Let's create a document with many keywords so that it's somewhat slow to parse.
-    for i in range(200):
+    for i in range(500):
         contents.append(
             f"""
 *** Keyword ***

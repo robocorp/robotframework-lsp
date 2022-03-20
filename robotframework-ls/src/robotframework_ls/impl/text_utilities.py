@@ -1,8 +1,7 @@
 from functools import lru_cache
 from robocorp_ls_core.robotframework_log import get_logger
 import re
-from typing import Sequence, Optional
-from robotframework_ls.impl.protocols import IRobotVariableMatch
+from typing import Sequence
 
 log = get_logger(__name__)
 
@@ -36,48 +35,6 @@ class TextUtilities(object):
 @lru_cache(maxsize=2000)
 def normalize_robot_name(text):
     return text.lower().replace("_", "").replace(" ", "")
-
-
-@lru_cache(maxsize=200)
-def robot_search_variable(text: str) -> Optional[IRobotVariableMatch]:
-    """
-    Provides the IRobotVariableMatch from a text such as "${S_ome.VAR}[foo]".
-    """
-    from robot.variables.search import search_variable  # type:ignore
-
-    try:
-        variable_match = search_variable(text, ignore_errors=True)
-        return variable_match
-    except:
-        pass
-
-    return None
-
-
-def extract_variable_base(text: str) -> str:
-    """
-    Converts something as: "${S_ome.VAR}[foo]" to "S_ome.VAR".
-    """
-    variable_match = robot_search_variable(text)
-    if variable_match is not None:
-        base = variable_match.base
-        if base is not None:
-            return base
-
-    if len(text) >= 3:
-        if text.endswith("}") and text[1] == "{":
-            return text[2:-1]
-    return text
-
-
-@lru_cache(maxsize=500)
-def normalize_variable_name(text: str) -> str:
-    """
-    Converts something as: "${S_ome.VAR}[foo]" to "some.var".
-    """
-    base = extract_variable_base(text)
-
-    return base.lower().replace("_", "").replace(" ", "")
 
 
 def is_variable_text(text: str) -> bool:
