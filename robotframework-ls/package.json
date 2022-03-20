@@ -407,6 +407,11 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Replaces the key stroke of tab with 4 spaces. Set to 'false' to active VSCode default."
+                },
+                "robot.codeLens.enable": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enables or disables code-lenses (Run/Debug/Interactive console)"
                 }
             }
         },

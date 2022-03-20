@@ -800,6 +800,7 @@ def test_code_lens_integrated(
     language_server = language_server_io
 
     language_server.initialize(ws_root_path, process_id=os.getpid())
+    language_server.settings({"settings": {"robot.codeLens.enable": True}})
     os.makedirs(ws_root_path, exist_ok=True)
     uri = uris.from_fs_path(os.path.join(ws_root_path, "my.robot"))
 
@@ -829,6 +830,7 @@ def test_code_lens_integrated_suites(
     language_server = language_server_io
 
     language_server.initialize(ws_root_path, process_id=os.getpid())
+    language_server.settings({"settings": {"robot.codeLens.enable": True}})
     os.makedirs(ws_root_path, exist_ok=True)
     uri = uris.from_fs_path(os.path.join(ws_root_path, "my.robot"))
     txt = """
@@ -1499,6 +1501,7 @@ def test_code_lens_integrated_rf_interactive(
     language_server = language_server_io
 
     language_server.initialize(ws_root_path, process_id=os.getpid())
+    language_server.settings({"settings": {"robot.codeLens.enable": True}})
     uri_untitled = "~untitled"
     txt = """
 *** Task ***

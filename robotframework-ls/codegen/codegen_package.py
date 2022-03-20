@@ -218,6 +218,11 @@ def get_json_contents():
                         "default": True,
                         "description": "Replaces the key stroke of tab with 4 spaces. Set to 'false' to active VSCode default.",
                     },
+                    "robot.codeLens.enable": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Enables or disables code-lenses (Run/Debug/Interactive console)",
+                    },
                 },
             },
             "languages": [

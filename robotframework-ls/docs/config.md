@@ -24,6 +24,11 @@ Configuration settings
 
 - `robot.codeFormatter`: used to configure the code-formatter to be used.
 
+- `robot.codeLens.enable`: used to configure whether code-lenses should be shown.
+      Code lenses available are:
+          - Run/Debug (to run or debug a Test/Task)
+          - Load in interactive console (to load or run a Session/Keyword/Test/Task in the interactive console).
+
 - `robot.libraries.libdoc.needsArgs`: a list of the libraries for which the arguments need to be passed for the libdoc generation.
 
 - `robot.libraries.libdoc.preGenerate`: a list of the libraries for which the libdoc should be pre-generated 
