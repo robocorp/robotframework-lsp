@@ -362,6 +362,11 @@
                     "default": true,
                     "description": "Reports undefined resources when linting."
                 },
+                "robot.lint.undefinedVariableImports": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Reports undefined variable imports when linting."
+                },
                 "robot.lint.keywordCallArguments": {
                     "type": "boolean",
                     "default": true,

@@ -35,6 +35,7 @@ class RobotPreferencesComponent {
     private final JBTextField robotLintUndefinedKeywords = new JBTextField();
     private final JBTextField robotLintUndefinedLibraries = new JBTextField();
     private final JBTextField robotLintUndefinedResources = new JBTextField();
+    private final JBTextField robotLintUndefinedVariableImports = new JBTextField();
     private final JBTextField robotLintKeywordCallArguments = new JBTextField();
     private final JBTextField robotLintVariables = new JBTextField();
     private final JBTextField robotLintIgnoreVariables = new JBTextField();
@@ -75,6 +76,8 @@ class RobotPreferencesComponent {
                 .addComponent(createJTextArea("Reports undefined libraries when linting.\nNote: expected 'true' or 'false'\n"))
                 .addLabeledComponent(new JBLabel("Lint Undefined Resources"), robotLintUndefinedResources, 1, false)
                 .addComponent(createJTextArea("Reports undefined resources when linting.\nNote: expected 'true' or 'false'\n"))
+                .addLabeledComponent(new JBLabel("Lint Undefined Variable Imports"), robotLintUndefinedVariableImports, 1, false)
+                .addComponent(createJTextArea("Reports undefined variable imports when linting.\nNote: expected 'true' or 'false'\n"))
                 .addLabeledComponent(new JBLabel("Lint Keyword Call Arguments"), robotLintKeywordCallArguments, 1, false)
                 .addComponent(createJTextArea("Reports issues in keyword call arguments.\nNote: expected 'true' or 'false'\n"))
                 .addLabeledComponent(new JBLabel("Lint Variables"), robotLintVariables, 1, false)
@@ -249,6 +252,15 @@ class RobotPreferencesComponent {
     }
     
     @NotNull
+    public String getRobotLintUndefinedVariableImports() {
+        return robotLintUndefinedVariableImports.getText();
+    }
+
+    public void setRobotLintUndefinedVariableImports (@NotNull String newText) {
+        robotLintUndefinedVariableImports.setText(newText);
+    }
+    
+    @NotNull
     public String getRobotLintKeywordCallArguments() {
         return robotLintKeywordCallArguments.getText();
     }
@@ -399,6 +411,10 @@ public class RobotPreferencesPage implements Configurable {
             return true;
         }
         
+        if(!settings.getRobotLintUndefinedVariableImports().equals(component.getRobotLintUndefinedVariableImports())){
+            return true;
+        }
+        
         if(!settings.getRobotLintKeywordCallArguments().equals(component.getRobotLintKeywordCallArguments())){
             return true;
         }
@@ -449,6 +465,7 @@ public class RobotPreferencesPage implements Configurable {
         component.setRobotLintUndefinedKeywords(settings.getRobotLintUndefinedKeywords());
         component.setRobotLintUndefinedLibraries(settings.getRobotLintUndefinedLibraries());
         component.setRobotLintUndefinedResources(settings.getRobotLintUndefinedResources());
+        component.setRobotLintUndefinedVariableImports(settings.getRobotLintUndefinedVariableImports());
         component.setRobotLintKeywordCallArguments(settings.getRobotLintKeywordCallArguments());
         component.setRobotLintVariables(settings.getRobotLintVariables());
         component.setRobotLintIgnoreVariables(settings.getRobotLintIgnoreVariables());
@@ -523,6 +540,10 @@ public class RobotPreferencesPage implements Configurable {
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Lint Undefined Resources:\n" + s);
         }
+        s = settings.validateRobotLintUndefinedVariableImports(component.getRobotLintUndefinedVariableImports());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Lint Undefined Variable Imports:\n" + s);
+        }
         s = settings.validateRobotLintKeywordCallArguments(component.getRobotLintKeywordCallArguments());
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Lint Keyword Call Arguments:\n" + s);
@@ -567,6 +588,7 @@ public class RobotPreferencesPage implements Configurable {
         settings.setRobotLintUndefinedKeywords(component.getRobotLintUndefinedKeywords());
         settings.setRobotLintUndefinedLibraries(component.getRobotLintUndefinedLibraries());
         settings.setRobotLintUndefinedResources(component.getRobotLintUndefinedResources());
+        settings.setRobotLintUndefinedVariableImports(component.getRobotLintUndefinedVariableImports());
         settings.setRobotLintKeywordCallArguments(component.getRobotLintKeywordCallArguments());
         settings.setRobotLintVariables(component.getRobotLintVariables());
         settings.setRobotLintIgnoreVariables(component.getRobotLintIgnoreVariables());

@@ -32,6 +32,7 @@ class RobotState {
     public String robotLintUndefinedKeywords = "";
     public String robotLintUndefinedLibraries = "";
     public String robotLintUndefinedResources = "";
+    public String robotLintUndefinedVariableImports = "";
     public String robotLintKeywordCallArguments = "";
     public String robotLintVariables = "";
     public String robotLintIgnoreVariables = "";
@@ -61,6 +62,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
     public static final String ROBOT_LINT_UNDEFINED_KEYWORDS = "robot.lint.undefinedKeywords";
     public static final String ROBOT_LINT_UNDEFINED_LIBRARIES = "robot.lint.undefinedLibraries";
     public static final String ROBOT_LINT_UNDEFINED_RESOURCES = "robot.lint.undefinedResources";
+    public static final String ROBOT_LINT_UNDEFINED_VARIABLE_IMPORTS = "robot.lint.undefinedVariableImports";
     public static final String ROBOT_LINT_KEYWORD_CALL_ARGUMENTS = "robot.lint.keywordCallArguments";
     public static final String ROBOT_LINT_VARIABLES = "robot.lint.variables";
     public static final String ROBOT_LINT_IGNORE_VARIABLES = "robot.lint.ignoreVariables";
@@ -92,6 +94,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         robotState.robotLintUndefinedKeywords = getRobotLintUndefinedKeywords();
         robotState.robotLintUndefinedLibraries = getRobotLintUndefinedLibraries();
         robotState.robotLintUndefinedResources = getRobotLintUndefinedResources();
+        robotState.robotLintUndefinedVariableImports = getRobotLintUndefinedVariableImports();
         robotState.robotLintKeywordCallArguments = getRobotLintKeywordCallArguments();
         robotState.robotLintVariables = getRobotLintVariables();
         robotState.robotLintIgnoreVariables = getRobotLintIgnoreVariables();
@@ -121,6 +124,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         setRobotLintUndefinedKeywords(robotState.robotLintUndefinedKeywords);
         setRobotLintUndefinedLibraries(robotState.robotLintUndefinedLibraries);
         setRobotLintUndefinedResources(robotState.robotLintUndefinedResources);
+        setRobotLintUndefinedVariableImports(robotState.robotLintUndefinedVariableImports);
         setRobotLintKeywordCallArguments(robotState.robotLintKeywordCallArguments);
         setRobotLintVariables(robotState.robotLintVariables);
         setRobotLintIgnoreVariables(robotState.robotLintIgnoreVariables);
@@ -250,6 +254,14 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         if(!robotLintUndefinedResources.isEmpty()){
             try {
                 jsonObject.add(ROBOT_LINT_UNDEFINED_RESOURCES, new JsonPrimitive(Boolean.parseBoolean(robotLintUndefinedResources)));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotLintUndefinedVariableImports.isEmpty()){
+            try {
+                jsonObject.add(ROBOT_LINT_UNDEFINED_VARIABLE_IMPORTS, new JsonPrimitive(Boolean.parseBoolean(robotLintUndefinedVariableImports)));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -963,6 +975,49 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         robotLintUndefinedResources = s;
         for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             listener.onChanged(ROBOT_LINT_UNDEFINED_RESOURCES, old, s);
+        }
+    }
+    
+    private String robotLintUndefinedVariableImports = "";
+
+    public @NotNull String getRobotLintUndefinedVariableImports() {
+        return robotLintUndefinedVariableImports;
+    }
+
+    public @Nullable JsonPrimitive getRobotLintUndefinedVariableImportsAsJson() {
+        if(robotLintUndefinedVariableImports.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return new JsonPrimitive(Boolean.parseBoolean(robotLintUndefinedVariableImports));
+    }
+
+    public @NotNull String validateRobotLintUndefinedVariableImports(String robotLintUndefinedVariableImports) {
+        if(robotLintUndefinedVariableImports.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            new JsonPrimitive(Boolean.parseBoolean(robotLintUndefinedVariableImports));
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLintUndefinedVariableImports(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLintUndefinedVariableImports)) {
+            return;
+        }
+        String old = robotLintUndefinedVariableImports;
+        robotLintUndefinedVariableImports = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            listener.onChanged(ROBOT_LINT_UNDEFINED_VARIABLE_IMPORTS, old, s);
         }
     }
     

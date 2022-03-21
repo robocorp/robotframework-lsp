@@ -55,8 +55,9 @@ class _KeywordContainer(object):
 
 
 class _VariablesCollector(object):
-    def __init__(self):
+    def __init__(self, on_unresolved_variable_import):
         self._variables_collected = set()
+        self.on_unresolved_variable_import = on_unresolved_variable_import
 
     def accepts(self, variable_name: str) -> bool:
         from robotframework_ls.impl.variable_resolve import normalize_variable_name
@@ -75,14 +76,18 @@ class _VariablesCollector(object):
 
 class _AnalysisKeywordsCollector(object):
     def __init__(
-        self, on_unresolved_library, on_unresolved_resource, on_resolved_library
+        self,
+        on_unresolved_library,
+        on_unresolved_resource,
+        on_resolved_library,
     ):
         self._keywords_container = _KeywordContainer()
         self._resource_name_to_keywords_container = {}
         self._library_name_to_keywords_container = {}
-        self._on_unresolved_library = on_unresolved_library
-        self._on_unresolved_resource = on_unresolved_resource
-        self._on_resolved_library = on_resolved_library
+
+        self.on_unresolved_library = on_unresolved_library
+        self.on_unresolved_resource = on_unresolved_resource
+        self.on_resolved_library = on_resolved_library
 
     def accepts(self, keyword_name):
         return True
@@ -149,58 +154,6 @@ class _AnalysisKeywordsCollector(object):
                     return keyword_found
 
         return None
-
-    def on_resolved_library(
-        self,
-        completion_context: ICompletionContext,
-        library_node: Optional[INode],
-        library_doc: ILibraryDoc,
-    ):
-        self._on_resolved_library(
-            completion_context,
-            library_node,
-            library_doc,
-        )
-
-    def on_unresolved_library(
-        self,
-        completion_context: ICompletionContext,
-        library_name: str,
-        lineno: int,
-        end_lineno: int,
-        col_offset: int,
-        end_col_offset: int,
-        error_msg: Optional[str],
-    ):
-        self._on_unresolved_library(
-            completion_context,
-            library_name,
-            lineno,
-            end_lineno,
-            col_offset,
-            end_col_offset,
-            error_msg,
-        )
-
-    def on_unresolved_resource(
-        self,
-        completion_context: ICompletionContext,
-        resource_name: str,
-        lineno: int,
-        end_lineno: int,
-        col_offset: int,
-        end_col_offset: int,
-        error_msg: Optional[str],
-    ):
-        self._on_unresolved_resource(
-            completion_context,
-            resource_name,
-            lineno,
-            end_lineno,
-            col_offset,
-            end_col_offset,
-            error_msg,
-        )
 
     def __typecheckself__(self) -> None:
         _: IKeywordCollector = check_implements(self)
@@ -336,7 +289,9 @@ def collect_analysis_errors(initial_completion_context):
             errors.append(ast_utils.Error(error_msg, start, end))
 
     collector = _AnalysisKeywordsCollector(
-        on_unresolved_library, on_unresolved_resource, on_resolved_library
+        on_unresolved_library,
+        on_unresolved_resource,
+        on_resolved_library,
     )
     collect_keywords(initial_completion_context, collector)
 
@@ -510,12 +465,44 @@ def _env_vars_upper():
 def _collect_undefined_variables_errors(initial_completion_context):
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.variable_resolve import normalize_variable_name
+    from robotframework_ls.impl.ast_utils import create_error_from_node
 
     config = initial_completion_context.config
     if config is not None and not config.get_setting(
         OPTION_ROBOT_LINT_VARIABLES, bool, True
     ):
         return
+
+    unresolved_variable_import_errors = []
+
+    def on_unresolved_variable_import(
+        completion_context: ICompletionContext,
+        library_name: str,
+        lineno: int,
+        end_lineno: int,
+        col_offset: int,
+        end_col_offset: int,
+        error_msg: Optional[str],
+    ):
+        from robotframework_ls.impl.robot_lsp_constants import (
+            OPTION_ROBOT_LINT_UNDEFINED_VARIABLE_IMPORTS,
+        )
+
+        if config is not None and not config.get_setting(
+            OPTION_ROBOT_LINT_UNDEFINED_VARIABLE_IMPORTS, bool, True
+        ):
+            return
+
+        doc = completion_context.doc
+        if doc and doc.uri == initial_completion_context.doc.uri:
+            start = (lineno - 1, col_offset)
+            end = (end_lineno - 1, end_col_offset)
+            if not error_msg:
+                error_msg = f"Unresolved variable import: {library_name}"
+
+            unresolved_variable_import_errors.append(
+                ast_utils.Error(error_msg, start, end)
+            )
 
     from robotframework_ls.impl import variable_completions
 
@@ -528,19 +515,27 @@ def _collect_undefined_variables_errors(initial_completion_context):
 
     ast = initial_completion_context.get_ast()
 
-    globals_collector = _VariablesCollector()
+    globals_collector = _VariablesCollector(
+        on_unresolved_variable_import=on_unresolved_variable_import
+    )
 
     # Collect undefined variables
     variable_completions.collect_global_variables(
         initial_completion_context, globals_collector, only_current_doc=False
     )
 
+    yield from iter(unresolved_variable_import_errors)
+
     env_vars_upper = None
 
     for token_info in ast_utils.iter_variable_references(ast):
         initial_completion_context.check_cancelled()
 
-        if token_info.node.__class__.__name__ in ("ResourceImport", "LibraryImport"):
+        if token_info.node.__class__.__name__ in (
+            "ResourceImport",
+            "LibraryImport",
+            "VariableImport",
+        ):
             # These ones are handled differently as it ends up in an unresolved
             # import.
             continue
@@ -554,8 +549,6 @@ def _collect_undefined_variables_errors(initial_completion_context):
 
             if extract_variable_base(var_name).upper() not in env_vars_upper:
                 # Environment variable
-                from robotframework_ls.impl.ast_utils import create_error_from_node
-
                 yield create_error_from_node(
                     token_info.node,
                     f"Undefined environment variable: {token_info.token.value}",
@@ -579,7 +572,7 @@ def _collect_undefined_variables_errors(initial_completion_context):
                 found = True
                 break
 
-            locals_collector = _VariablesCollector()
+            locals_collector = _VariablesCollector(lambda *args, **kwargs: None)
             local_ctx = initial_completion_context.create_copy_with_selection(
                 line=token_info.token.lineno - 1,
                 col=token_info.token.col_offset - 1,
@@ -601,8 +594,6 @@ def _collect_undefined_variables_errors(initial_completion_context):
                 break
 
         if not found:
-            from robotframework_ls.impl.ast_utils import create_error_from_node
-
             yield create_error_from_node(
                 token_info.node,
                 f"Undefined variable: {token_info.token.value}",

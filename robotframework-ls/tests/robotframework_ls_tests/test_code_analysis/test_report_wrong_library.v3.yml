@@ -1,29 +1,39 @@
-- message: 'Unresolved library: DoesNotExist.
+- message: 'Unresolved library: DoesNotExistLib.
 
     Error generating libspec:
 
-    Importing test library ''DoesNotExist'' failed: ModuleNotFoundError: No module
-    named ''DoesNotExist''
+    Importing test library ''DoesNotExistLib'' failed: ModuleNotFoundError: No module
+    named ''DoesNotExistLib''
 
     Consider adding the needed paths to the "robot.pythonpath" setting
 
     and calling the "Robot Framework: Clear caches and restart" action.'
   range:
     end:
-      character: 23
+      character: 26
       line: 1
     start:
       character: 11
       line: 1
   severity: 1
   source: robotframework
-- message: 'Unresolved resource: DoesNotExist'
+- message: 'Unresolved resource: DoesNotExistRes'
   range:
     end:
-      character: 24
+      character: 27
       line: 2
     start:
       character: 12
       line: 2
+  severity: 1
+  source: robotframework
+- message: 'Unresolved variable import: DoesNotExistVar'
+  range:
+    end:
+      character: 28
+      line: 3
+    start:
+      character: 13
+      line: 3
   severity: 1
   source: robotframework

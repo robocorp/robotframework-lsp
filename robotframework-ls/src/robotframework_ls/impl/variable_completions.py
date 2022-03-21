@@ -406,7 +406,56 @@ def _collect_variables_from_document_context(
                 new_ctx = completion_context.create_copy(resource_doc)
                 _collect_current_doc_variables(new_ctx, collector)
 
-        for variable_doc in dependency_graph.iter_all_variable_imports_as_docs():
+        for node, variable_doc in dependency_graph.iter_all_variable_imports_as_docs():
+            if variable_doc is None:
+                # Note that 'None' documents will only be given for the
+                # initial context (so, it's ok to use `completion_context`
+                # in this case).
+                from robot.api import Token
+
+                node_name_tok = node.get_token(Token.NAME)
+                if node_name_tok is not None:
+
+                    (
+                        _value,
+                        token_errors,
+                    ) = completion_context.token_value_and_unresolved_resolving_variables(
+                        node_name_tok
+                    )
+
+                    if token_errors:
+                        for token_error in token_errors:
+                            collector.on_unresolved_variable_import(
+                                completion_context,
+                                node.name,
+                                token_error.lineno,
+                                token_error.lineno,
+                                token_error.col_offset,
+                                token_error.end_col_offset,
+                                f"\nUnable to statically resolve variable: {token_error.value}.\nPlease set the `{token_error.value[2:-1]}` value in `robot.variables`.",
+                            )
+
+                    else:
+                        collector.on_unresolved_variable_import(
+                            completion_context,
+                            node.name,
+                            node_name_tok.lineno,
+                            node_name_tok.lineno,
+                            node_name_tok.col_offset,
+                            node_name_tok.end_col_offset,
+                            None,
+                        )
+                else:
+                    collector.on_unresolved_variable_import(
+                        completion_context,
+                        node.name,
+                        node.lineno,
+                        node.end_lineno,
+                        node.col_offset,
+                        node.end_col_offset,
+                        None,
+                    )
+                continue
             _collect_variables_from_variable_import_doc(variable_doc, collector)
 
 

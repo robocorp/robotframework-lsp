@@ -179,6 +179,10 @@ class IResourceImportNode(INode, Protocol):
     name: str
 
 
+class IVariableImportNode(INode, Protocol):
+    name: str
+
+
 class NodeInfo(Generic[Y]):
     stack: Tuple[INode, ...]
     node: Y
@@ -699,7 +703,11 @@ class ICompletionContextDependencyGraph(Protocol):
         pass
 
     def add_variable_infos(
-        self, doc_uri: str, new_variable_imports: List[IRobotDocument]
+        self,
+        doc_uri: str,
+        new_variable_imports: Sequence[
+            Tuple[IVariableImportNode, Optional[IRobotDocument]]
+        ],
     ):
         pass
 
@@ -724,12 +732,14 @@ class ICompletionContextDependencyGraph(Protocol):
     ) -> Iterator[Tuple[IResourceImportNode, Optional[IRobotDocument]]]:
         pass
 
-    def iter_variable_imports_as_docs(self, doc_uri: str) -> Iterator[IRobotDocument]:
+    def iter_variable_imports_as_docs(
+        self, doc_uri: str
+    ) -> Iterator[Tuple[IVariableImportNode, Optional[IRobotDocument]]]:
         pass
 
     def iter_all_variable_imports_as_docs(
         self,
-    ) -> Iterator[IRobotDocument]:
+    ) -> Iterator[Tuple[IVariableImportNode, Optional[IRobotDocument]]]:
         pass
 
     def to_dict(self) -> dict:
@@ -865,7 +875,9 @@ class ICompletionContext(Protocol):
     def get_resource_inits_as_docs(self) -> Tuple[IRobotDocument, ...]:
         pass
 
-    def get_variable_imports_as_docs(self) -> Tuple[IRobotDocument, ...]:
+    def get_variable_imports_as_docs(
+        self,
+    ) -> Tuple[Tuple[IVariableImportNode, Optional[IRobotDocument]], ...]:
         pass
 
     def get_imported_libraries(self) -> Tuple[ILibraryImportNode, ...]:
@@ -947,6 +959,18 @@ class IVariablesCollector(Protocol):
         """
 
     def on_variable(self, variable_found: IVariableFound):
+        pass
+
+    def on_unresolved_variable_import(
+        self,
+        completion_context: "ICompletionContext",
+        variable_import_name: str,
+        lineno: int,
+        end_lineno: int,
+        col_offset: int,
+        end_col_offset: int,
+        error_msg: Optional[str],
+    ):
         pass
 
 

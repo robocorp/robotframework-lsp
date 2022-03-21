@@ -181,6 +181,11 @@ def get_json_contents():
                         "default": True,
                         "description": "Reports undefined resources when linting.",
                     },
+                    "robot.lint.undefinedVariableImports": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Reports undefined variable imports when linting.",
+                    },
                     "robot.lint.keywordCallArguments": {
                         "type": "boolean",
                         "default": True,

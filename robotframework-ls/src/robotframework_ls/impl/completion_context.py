@@ -26,6 +26,7 @@ from robotframework_ls.impl.protocols import (
     ICompletionContextDependencyGraph,
     IRobotToken,
     INode,
+    IVariableImportNode,
 )
 from robotframework_ls.impl.robot_workspace import RobotDocument
 from robocorp_ls_core import uris
@@ -529,14 +530,15 @@ class CompletionContext(object):
         return tuple(ret)
 
     @instance_cache
-    def get_variable_imports_as_docs(self) -> Tuple[IRobotDocument, ...]:
-        ret: List[IRobotDocument] = []
+    def get_variable_imports_as_docs(
+        self,
+    ) -> Tuple[Tuple[IVariableImportNode, Optional[IRobotDocument]], ...]:
+        ret: List[Tuple[IResourceImportNode, Optional[IRobotDocument]]] = []
 
         variable_imports = self.get_variable_imports()
         for variable_import in variable_imports:
             variable_doc = self.get_variable_import_as_doc(variable_import)
-            if variable_doc is not None:
-                ret.append(variable_doc)
+            ret.append((variable_import, variable_doc))
 
         return tuple(ret)
 
