@@ -8,6 +8,7 @@ from robotframework_ls.impl.protocols import (
     IResourceImportNode,
     IRobotDocument,
     ICompletionContextWorkspaceCaches,
+    IVariableImportNode,
 )
 from robotframework_ls.impl.robot_constants import BUILTIN_LIB
 from robocorp_ls_core.callbacks import Callback
@@ -63,7 +64,9 @@ class CompletionContextDependencyGraph:
         self._doc_uri_to_resource_imports: Dict[
             str, Sequence[Tuple[IResourceImportNode, Optional[IRobotDocument]]]
         ] = {}
-        self._doc_uri_to_variable_imports: Dict[str, List[IRobotDocument]] = {}
+        self._doc_uri_to_variable_imports: Dict[
+            str, Sequence[Tuple[IVariableImportNode, Optional[IRobotDocument]]]
+        ] = {}
 
     def to_dict(self):
         libraries = {}
@@ -79,7 +82,7 @@ class CompletionContextDependencyGraph:
         variables = {}
         for doc_uri, variable_imports in self._doc_uri_to_variable_imports.items():
             variables[doc_uri] = [
-                (doc.uri if doc else None) for doc in variable_imports
+                (doc.uri if doc else None) for (_node, doc) in variable_imports
             ]
 
         ret = {
@@ -112,7 +115,11 @@ class CompletionContextDependencyGraph:
         self._doc_uri_to_resource_imports[doc_uri] = resource_imports_as_docs
 
     def add_variable_infos(
-        self, doc_uri: str, new_variable_imports: List[IRobotDocument]
+        self,
+        doc_uri: str,
+        new_variable_imports: Sequence[
+            Tuple[IVariableImportNode, Optional[IRobotDocument]]
+        ],
     ):
         self._doc_uri_to_variable_imports[doc_uri] = new_variable_imports
 
@@ -141,14 +148,16 @@ class CompletionContextDependencyGraph:
         for infos in self._doc_uri_to_resource_imports.values():
             yield from infos
 
-    def iter_variable_imports_as_docs(self, doc_uri: str) -> Iterator[IRobotDocument]:
+    def iter_variable_imports_as_docs(
+        self, doc_uri: str
+    ) -> Iterator[Tuple[IVariableImportNode, Optional[IRobotDocument]]]:
         variable_imports = self._doc_uri_to_variable_imports.get(doc_uri)
         if variable_imports:
             yield from variable_imports
 
     def iter_all_variable_imports_as_docs(
         self,
-    ) -> Iterator[IRobotDocument]:
+    ) -> Iterator[Tuple[IVariableImportNode, Optional[IRobotDocument]]]:
         for variable_imports in self._doc_uri_to_variable_imports.values():
             yield from variable_imports
 
@@ -223,14 +232,21 @@ class CompletionContextDependencyGraph:
     @classmethod
     def _collect_variable_info_from_completion_context(
         cls, curr_ctx: ICompletionContext, is_root_context: bool, memo: _Memo
-    ):
+    ) -> Sequence[Tuple[IVariableImportNode, Optional[IRobotDocument]]]:
 
-        new_variable_imports: List[IRobotDocument] = []
-        for variable_import in curr_ctx.get_variable_imports_as_docs():
-            if memo.follow_import_variables(variable_import.uri):
-                new_variable_imports.append(variable_import)
-
-        return new_variable_imports
+        variable_imports_as_docs = curr_ctx.get_variable_imports_as_docs()
+        new_variable_infos: List[
+            Tuple[IVariableImportNode, Optional[IRobotDocument]]
+        ] = []
+        if variable_imports_as_docs:
+            for variable_import_node, variable_doc in variable_imports_as_docs:
+                if variable_doc is None:
+                    if is_root_context:
+                        # We need to keep the empty nodes for the initial context.
+                        new_variable_infos.append((variable_import_node, variable_doc))
+                elif memo.follow_import(variable_doc.uri):
+                    new_variable_infos.append((variable_import_node, variable_doc))
+        return new_variable_infos
 
     @classmethod
     def from_completion_context(

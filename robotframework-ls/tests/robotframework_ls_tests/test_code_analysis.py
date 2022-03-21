@@ -197,8 +197,6 @@ Test
 
 
 def test_resource_does_not_exist(workspace, libspec_manager, data_regression):
-    from robotframework_ls.impl.robot_version import get_robot_major_version
-
     workspace.set_root("case4", libspec_manager=libspec_manager)
     doc = workspace.put_doc(
         "case4.robot",
@@ -252,8 +250,9 @@ Resource    my_resource.robot
     doc2 = workspace.put_doc(
         "my_resource.robot",
         """*** Settings ***
-Resource    does_not_exist.robot
-Library    does_not_exist.py
+Resource    does_not_exist_res.robot
+Library    does_not_exist_lib.py
+Variables    does_not_exist_var.py
 """,
     )
 
@@ -264,14 +263,13 @@ Library    does_not_exist.py
 
 
 def test_report_wrong_library(workspace, libspec_manager, data_regression):
-    from robotframework_ls.impl.robot_version import get_robot_major_version
-
     workspace.set_root("case4", libspec_manager=libspec_manager)
     doc = workspace.put_doc(
         "case4.robot",
         """*** Settings ***
-Library    DoesNotExist
-Resource    DoesNotExist
+Library    DoesNotExistLib
+Resource    DoesNotExistRes
+Variables    DoesNotExistVar
 """,
     )
 
