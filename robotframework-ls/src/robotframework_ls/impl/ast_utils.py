@@ -792,6 +792,7 @@ def iter_variable_references(ast) -> Iterator[TokenInfo]:
         "ResourceImport",
         "TestTimeout",
         "Variable",
+        "ForHeader",
     ) + _CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_TUPLE:
         for node_info in ast.iter_indexed(clsname):
             stack = node_info.stack
