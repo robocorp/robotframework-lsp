@@ -412,23 +412,20 @@ def _collect_variables_from_document_context(
 
 def _collect_arguments(
     completion_context: ICompletionContext,
-    token_info: TokenInfo,
+    node,
     collector: IVariablesCollector,
 ):
     from robotframework_ls.impl import ast_utils
 
-    stack = token_info.stack
-    if stack:
-        last_in_stack = stack[-1]
-        for arg_token in ast_utils.iter_keyword_arguments_as_tokens(
-            last_in_stack, tokenize_keyword_name=True
-        ):
-            name = str(arg_token)
-            if collector.accepts(name):
-                variable_found = _VariableFoundFromToken(
-                    completion_context, arg_token, "", variable_name=name
-                )
-                collector.on_variable(variable_found)
+    for arg_token in ast_utils.iter_keyword_arguments_as_tokens(
+        node, tokenize_keyword_name=True
+    ):
+        name = str(arg_token)
+        if collector.accepts(name):
+            variable_found = _VariableFoundFromToken(
+                completion_context, arg_token, "", variable_name=name
+            )
+            collector.on_variable(variable_found)
 
 
 def _convert_name_to_var(variable_name):
@@ -517,7 +514,7 @@ def collect_local_variables(
             )
             collector.on_variable(variable_found)
 
-    _collect_arguments(completion_context, token_info, collector)
+    _collect_arguments(completion_context, stack_node, collector)
 
 
 def complete(completion_context: ICompletionContext):

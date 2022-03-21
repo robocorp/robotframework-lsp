@@ -724,8 +724,6 @@ Library    AnotherLibWithParams   param1=foo   foo=not ok
 def test_code_analysis_show_why_unresolved_library(
     workspace, libspec_manager, data_regression
 ):
-    from robotframework_ls.impl.robot_version import get_robot_major_version
-
     workspace.set_root("case_params_on_lib", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case_params_on_lib.robot")
     doc.source = """
@@ -1158,6 +1156,22 @@ def test_var_from_for(workspace, libspec_manager, data_regression):
 Example
     FOR  ${i}  IN  ${{[1, 2, 3]}}
         Log    ${i}
+    END
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 4 onwards.")
+def test_var_from_args_used_in_for(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+Sample Keyword
+    [Arguments]    ${some_argument}
+    FOR    ${i}    IN RANGE    3
+        Log    ${some_argument}
     END
 """
 
