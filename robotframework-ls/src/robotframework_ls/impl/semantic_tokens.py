@@ -19,6 +19,7 @@ from robotframework_ls.impl.robot_constants import (
     FATAL_ERROR,
     ROBOT_AND_TXT_FILE_EXTENSIONS,
     OPTION,
+    ASSIGN,
 )
 
 
@@ -201,6 +202,9 @@ for tok_type in SETTING_TOKENS:  # Library, Teardown, ...
 for tok_type in CONTROL_TOKENS:  # Library, Teardown, ...
     RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[tok_type] = TOKEN_TYPE_TO_INDEX["control"]
 
+# The assign will be tokenized and the '=' will be variableOperator.
+RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[ASSIGN] = TOKEN_TYPE_TO_INDEX["variableOperator"]
+
 for key, val in list(RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.items()):
     RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[key.replace(" ", "_")] = val
 
@@ -213,18 +217,19 @@ PARAMETER_NAME_INDEX = TOKEN_TYPE_TO_INDEX["parameterName"]
 DOCUMENTATION_INDEX = TOKEN_TYPE_TO_INDEX["documentation"]
 
 
-def _tokenize_changing_argument_to_keyword(tokenize_variables_generator):
+def _tokenize_changing_argument_to_type(tokenize_variables_generator, use_type):
     from robotframework_ls.impl import ast_utils
 
     for tok in tokenize_variables_generator:
         if tok.type == ARGUMENT:
-            yield ast_utils.copy_token_replacing(tok, type=KEYWORD)
+            yield ast_utils.copy_token_replacing(tok, type=use_type)
         else:
             yield tok
 
 
 def _tokenize_variables(token):
-    if token.type == KEYWORD:
+
+    if token.type in (KEYWORD, ASSIGN):
         from robotframework_ls.impl import ast_utils
 
         # Hack because RF can't tokenize KEYWORD (it only tokenizes
@@ -235,9 +240,12 @@ def _tokenize_variables(token):
             return iter((token,))
 
         else:
-            # Force ARGUMENT tokenization but show KEYWORD for callers.
-            token = ast_utils.copy_token_replacing(token, type=ARGUMENT)
-            return _tokenize_changing_argument_to_keyword(token.tokenize_variables())
+            # Force ARGUMENT tokenization but show KEYWORD/ASSIGN for callers.
+            t = ast_utils.copy_token_replacing(token, type=ARGUMENT)
+            return _tokenize_changing_argument_to_type(
+                t.tokenize_variables(), token.type
+            )
+
     else:
         return token.tokenize_variables()
 

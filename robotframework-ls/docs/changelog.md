@@ -13,6 +13,7 @@ NEXT
 - Semantic highlighting properly deals with advanced variable syntax (with variables inside variables or using the subscript).
 - `\\` is escaped to `\` when passed in the library arguments. [#608](https://github.com/robocorp/robotframework-lsp/issues/608)
 - Fix in heuristics to match arguments which could result in wrong argument analysis in keyword calls. [#603](https://github.com/robocorp/robotframework-lsp/issues/603)
+- Variables in assign now have the same color as variables in other places. [#613](https://github.com/robocorp/robotframework-lsp/issues/613)
 
 
 New in 0.42.0 (2022-03-14)
