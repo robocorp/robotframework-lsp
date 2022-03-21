@@ -1,0 +1,10 @@
+- message: 'Mandatory argument missing: text'
+  range:
+    end:
+      character: 14
+      line: 9
+    start:
+      character: 4
+      line: 9
+  severity: 1
+  source: robotframework

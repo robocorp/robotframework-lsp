@@ -135,6 +135,22 @@ class IRobotVariableMatch(Protocol):
     start: int
     end: int
 
+    @property
+    def name(self) -> str:
+        pass
+
+    @property
+    def before(self) -> str:
+        pass
+
+    @property
+    def match(self) -> str:
+        pass
+
+    @property
+    def after(self) -> str:
+        pass
+
 
 class INode(Protocol):
     lineno: int

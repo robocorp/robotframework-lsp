@@ -801,6 +801,31 @@ Minimal task
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
+def test_code_analysis_arg_mismatches(workspace, libspec_manager, data_regression):
+    workspace.set_root("case_argspec_expand", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_argspec_expand.robot")
+    doc.source = """
+*** Test Cases ***
+My Test Case
+    My Keyword    options=value
+    My Keyword    options = value
+    My Keyword    opt ions= value
+    My Keyword    Options= value
+    My Keyword    o ptions= value
+    # Only the last one is an error because ${text} isn't matched.
+    My Keyword    O ptions= value
+
+
+*** Keywords ***
+My Keyword
+    [Arguments]    ${text}    ${O ptions}=${EMPTY}
+    Log to console    ----
+    Log to console    text=${text}
+    Log to console    options=${options}
+"""
+    _collect_errors(workspace, doc, data_regression)
+
+
 def test_code_analysis_run_keyword_if_errors_internal(
     workspace, libspec_manager, data_regression
 ):
@@ -820,6 +845,32 @@ Minimal task
     Run Keyword If    ${Cond1}    Keyword 0    wrong arg 3    ELSE IF    ${cond}    Keyword 0    wrong arg 4
 """
     _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_ignore_eq_after_slash(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case_argspec_expand", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_argspec_expand.robot")
+    doc.source = """
+*** Test Cases ***
+My Test Case 2
+    My Keyword 2    options \= value
+    #My Keyword 2    options \= value    opt=value
+    #My Keyword 2    specifiedText\=withEqual    opt=value
+
+    #My Keyword 2    text=options = value    opt=value
+    #My Keyword 2    text=specifiedText\=withEqual    opt=value
+
+    # Only this is an error
+    # My Keyword 2    options = value
+
+*** Keywords ***
+My Keyword 2
+    [Arguments]    ${text}    &{options}
+    No Operation
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
 def test_code_analysis_multiple_no_errors(workspace, libspec_manager, data_regression):

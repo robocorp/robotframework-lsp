@@ -1,10 +1,10 @@
 NEXT
 -----------------------------
 
-- Code-lenses are now not shown by default.
+- Code-lenses are now not shown by default. [#539](https://github.com/robocorp/robotframework-lsp/issues/539)
     - The `robot.codeLens.enable` setting may be used to re-enable them.
 - Undefined variables are now reported. [#334](https://github.com/robocorp/robotframework-lsp/issues/334)
-- Recognize variables set with the following keywords: [#577](https://github.com/robocorp/robotframework-lsp/issues/577)
+- Variables set with the following keywords are recognized: [#577](https://github.com/robocorp/robotframework-lsp/issues/577)
     - Set Task Variable
     - Set Test Variable
     - Set Suite Variable
@@ -12,6 +12,7 @@ NEXT
 - Variable files with a `.yml` are properly recognized (previously only `.yaml` was supported). 
 - Semantic highlighting properly deals with advanced variable syntax (with variables inside variables or using the subscript).
 - `\\` is escaped to `\` when passed in the library arguments. [#608](https://github.com/robocorp/robotframework-lsp/issues/608)
+- Fix in heuristics to match arguments which could result in wrong argument analysis in keyword calls. [#603](https://github.com/robocorp/robotframework-lsp/issues/603)
 
 
 New in 0.42.0 (2022-03-14)

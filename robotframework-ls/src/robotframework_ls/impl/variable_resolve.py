@@ -1,6 +1,6 @@
 import os
 from functools import lru_cache
-from typing import Optional, Union, Tuple, List
+from typing import Optional, Union, Tuple, List, Iterator
 from robotframework_ls.impl.protocols import IRobotVariableMatch, IRobotToken
 from robocorp_ls_core.protocols import Sentinel, IConfig
 from robocorp_ls_core.robotframework_log import get_logger
@@ -42,12 +42,67 @@ def robot_search_variable(text: str) -> Optional[IRobotVariableMatch]:
     from robot.variables.search import search_variable  # type:ignore
 
     try:
-        variable_match = search_variable(text, ignore_errors=True)
+        variable_match = search_variable(text, identifiers="$@&%", ignore_errors=True)
         return variable_match
     except:
         pass
 
     return None
+
+
+def iter_variables(string: str) -> Iterator[Tuple[str, str, str]]:
+    # Based on robot.variables.search.VariableIterator
+    remaining = string
+    while True:
+        robot_match = robot_search_variable(remaining)
+        if not robot_match:
+            break
+        remaining = robot_match.after
+        yield robot_match.before, robot_match.match, remaining
+
+
+def find_split_index(string: str) -> int:
+    # Based on: robot.utils.escaping.split_from_equals
+    # Based on: robot.utils.escaping._find_split_index
+
+    eq_i = string.find("=")
+    if eq_i == -1:
+        return -1
+
+    return _find_split_index(string, eq_i)
+
+
+@lru_cache(maxsize=200)
+def _find_split_index(string: str, eq_i: int) -> int:
+    try:
+        variables = tuple(iter_variables(string))
+        if not variables and "\\" not in string:
+            return eq_i
+
+        relative_index = 0
+        for before, match, string in variables:
+            try:
+                return _find_split_index_from_part(before) + relative_index
+            except ValueError:
+                relative_index += len(before) + len(match)
+        return _find_split_index_from_part(string) + relative_index
+    except ValueError:
+        return -1
+
+
+def _find_split_index_from_part(string):
+    index = 0
+    while "=" in string[index:]:
+        index += string[index:].index("=")
+        if _not_escaping(string[:index]):
+            return index
+        index += 1
+    raise ValueError()
+
+
+def _not_escaping(name):
+    backslashes = len(name) - len(name.rstrip("\\"))
+    return backslashes % 2 == 0
 
 
 class ResolveVariablesContext:

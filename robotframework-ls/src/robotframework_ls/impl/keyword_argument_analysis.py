@@ -62,7 +62,7 @@ class KeywordArgumentAnalysis:
         fallback which works better is such situations.
         """
         from robotframework_ls.impl.text_utilities import is_variable_text
-        from robotframework_ls.impl.text_utilities import normalize_robot_name
+        from robotframework_ls.impl.variable_resolve import find_split_index
 
         if usage_info_argument_index < 0:
             return -1
@@ -80,14 +80,14 @@ class KeywordArgumentAnalysis:
         definition_keyword_args = self._keyword_args
         # Now, it's also possible that we're dealing with an assign here... let's
         # see if this is the case.
-        eq: int = caller_arg_value.find("=")
+        eq: int = find_split_index(caller_arg_value)
         if eq != -1:
-            name = normalize_robot_name(caller_arg_value[:eq])
+            name = caller_arg_value[:eq]
             for i, keyword_arg in enumerate(definition_keyword_args):
                 arg_name = keyword_arg.original_arg
                 if is_variable_text(arg_name):
                     arg_name = arg_name[2:-1]
-                arg_name = normalize_robot_name(arg_name)
+                arg_name = arg_name
                 if name == arg_name:
                     active_parameter = i
                     break
@@ -167,8 +167,8 @@ class KeywordArgumentAnalysis:
         """
         from robotframework_ls.impl.ast_utils import create_error_from_node
         from collections import deque
-        from robotframework_ls.impl.text_utilities import normalize_robot_name
         from robotframework_ls.impl.text_utilities import is_variable_text
+        from robotframework_ls.impl.variable_resolve import find_split_index
 
         # Pre-requisite.
         keyword_token = usage_info.get_token_to_report_argument_missing()
@@ -204,9 +204,7 @@ class KeywordArgumentAnalysis:
             if is_variable_text(arg_name):
                 arg_name = arg_name[2:-1]
 
-            definition_keyword_name_to_arg[
-                normalize_robot_name(arg_name)
-            ] = definition_arg
+            definition_keyword_name_to_arg[arg_name] = definition_arg
 
         tokens_args_to_iterate = self._iter_args(usage_info.node.tokens)
         # Fill positional args
@@ -219,7 +217,8 @@ class KeywordArgumentAnalysis:
                 )
                 break
 
-            eq_index = token_arg.value.find("=")
+            eq_index = find_split_index(token_arg.value)
+
             if eq_index == -1:
                 matched_keyword_arg: IKeywordArg = (
                     definition_keyword_args_deque.popleft()
@@ -264,7 +263,7 @@ class KeywordArgumentAnalysis:
                     )
                     break
 
-                name = normalize_robot_name(token_arg.value[:eq_index])
+                name = token_arg.value[:eq_index]
                 found_definition_arg = definition_keyword_name_to_arg.get(name, None)
                 if found_definition_arg is not None:
                     if definition_arg_matched.get(found_definition_arg):
@@ -315,9 +314,9 @@ class KeywordArgumentAnalysis:
 
         # Now, consume all the ones given by name.
         for token_arg in tokens_args_to_iterate:
-            eq_index = token_arg.value.find("=")
+            eq_index = find_split_index(token_arg.value)
             if eq_index >= 0:
-                name = normalize_robot_name(token_arg.value[:eq_index])
+                name = token_arg.value[:eq_index]
                 found_definition_arg = definition_keyword_name_to_arg.pop(name, None)
                 if not found_definition_arg:
                     if self.found_keyword_arg is not None:
