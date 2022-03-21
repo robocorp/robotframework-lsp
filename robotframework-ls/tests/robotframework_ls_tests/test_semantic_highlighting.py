@@ -929,3 +929,38 @@ Some keyword
             ("END", "control"),
         ],
     )
+
+
+def test_semantic_highlighting_match_args(workspace):
+    check_simple(
+        workspace,
+        """
+*** Keywords ***
+Keyword named and keyword
+    [Arguments]     ${arg1}  @{arg3}
+
+*** Test Cases **
+Normal test case
+    Keyword named and keyword    some=ok    arg4=ok
+""",
+        [
+            ("*** Keywords ***", "header"),
+            ("Keyword named and keyword", "keywordNameDefinition"),
+            ("[", "variableOperator"),
+            ("Arguments", "setting"),
+            ("]", "variableOperator"),
+            ("${", "variableOperator"),
+            ("arg1", "variable"),
+            ("}", "variableOperator"),
+            ("@{", "variableOperator"),
+            ("arg3", "variable"),
+            ("}", "variableOperator"),
+            ("*** Test Cases **", "header"),
+            ("Normal test case", "testCaseName"),
+            ("Keyword named and keyword", "keywordNameCall"),
+            ("some=ok", "argumentValue"),
+            ("arg4", "parameterName"),
+            ("=", "variableOperator"),
+            ("ok", "argumentValue"),
+        ],
+    )
