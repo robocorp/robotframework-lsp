@@ -108,6 +108,10 @@ def wait_for_message_matcher(
             request_cancel(message_matcher.message_id)
             raise
 
+    log.info(
+        f"Request timed out: {message_matcher.message_id} after {timeout} (seconds)."
+    )
+
     # If we got here, it timed out, so, we should cancel the request itself
     # (even if it the monitor wasn't cancelled).
     request_cancel(message_matcher.message_id)

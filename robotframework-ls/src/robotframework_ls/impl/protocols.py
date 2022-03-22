@@ -974,6 +974,20 @@ class IVariablesCollector(Protocol):
         pass
 
 
+class AbstractVariablesCollector:
+    def on_unresolved_variable_import(
+        self,
+        completion_context: "ICompletionContext",
+        variable_import_name: str,
+        lineno: int,
+        end_lineno: int,
+        col_offset: int,
+        end_col_offset: int,
+        error_msg: Optional[str],
+    ):
+        pass
+
+
 class EvaluatableExpressionTypedDict(TypedDict):
     range: RangeTypedDict
     expression: Optional[str]

@@ -6,6 +6,7 @@ from robotframework_ls.impl.protocols import (
     IVariableFound,
     IRobotToken,
     TokenInfo,
+    AbstractVariablesCollector,
 )
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.protocols import check_implements, IDocumentSelection
@@ -131,7 +132,7 @@ class _VariableFoundFromYaml(_VariableFoundFromSettings):
     pass
 
 
-class _Collector(object):
+class _Collector(AbstractVariablesCollector):
     def __init__(self, selection: IDocumentSelection, token: IRobotToken, matcher):
         self.matcher = matcher
         self.completion_items: List[CompletionItemTypedDict] = []

@@ -10,6 +10,7 @@ from robotframework_ls.impl.protocols import (
     AbstractKeywordCollector,
     IRobotToken,
     IVariableFound,
+    AbstractVariablesCollector,
 )
 from robocorp_ls_core.protocols import check_implements, IDocumentSelection
 from typing import Optional, Sequence, List
@@ -201,7 +202,7 @@ class _FindDefinitionKeywordCollector(AbstractKeywordCollector):
         _: IKeywordCollector = check_implements(self)
 
 
-class _FindDefinitionVariablesCollector(object):
+class _FindDefinitionVariablesCollector(AbstractVariablesCollector):
     def __init__(
         self, sel: IDocumentSelection, token: IRobotToken, robot_string_matcher
     ):

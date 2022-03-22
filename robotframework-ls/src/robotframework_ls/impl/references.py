@@ -9,6 +9,7 @@ from robotframework_ls.impl.protocols import (
     IVariablesCollector,
     IVariableFound,
     cast_to_keyword_definition,
+    AbstractVariablesCollector,
 )
 import typing
 from robocorp_ls_core.protocols import check_implements
@@ -25,7 +26,7 @@ def matches_source(s1: str, s2: str) -> bool:
     return normalize_filename(s1) == normalize_filename(s2)
 
 
-class _VariableDefinitionsCollector(object):
+class _VariableDefinitionsCollector(AbstractVariablesCollector):
     def __init__(self, robot_string_matcher):
         from robotframework_ls.impl.string_matcher import RobotStringMatcher
 

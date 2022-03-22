@@ -128,6 +128,13 @@ def main_module():
     return __main__
 
 
+def pytest_report_header(config):
+    import robot
+
+    print(f"RF Version: {robot.get_version()}")
+    print(f"RF Location: {robot.__file__}")
+
+
 @pytest.fixture(autouse=True, scope="session")
 def sync_builtins(tmpdir_factory):
     """

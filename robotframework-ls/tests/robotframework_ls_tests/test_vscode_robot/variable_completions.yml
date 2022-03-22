@@ -338,6 +338,70 @@ result:
         line: 9
 - deprecated: false
   documentation: ''
+  insertText: ${KEYWORD_STATUS}
+  insertTextFormat: 2
+  kind: 6
+  label: ${KEYWORD_STATUS}
+  preselect: false
+  textEdit:
+    newText: \${KEYWORD_STATUS}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertText: ${KEYWORD_MESSAGE}
+  insertTextFormat: 2
+  kind: 6
+  label: ${KEYWORD_MESSAGE}
+  preselect: false
+  textEdit:
+    newText: \${KEYWORD_MESSAGE}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertText: ${TEST_STATUS}
+  insertTextFormat: 2
+  kind: 6
+  label: ${TEST_STATUS}
+  preselect: false
+  textEdit:
+    newText: \${TEST_STATUS}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertText: ${TEST_MESSAGE}
+  insertTextFormat: 2
+  kind: 6
+  label: ${TEST_MESSAGE}
+  preselect: false
+  textEdit:
+    newText: \${TEST_MESSAGE}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: ''
   insertText: ${PREV_TEST_NAME}
   insertTextFormat: 2
   kind: 6
@@ -425,6 +489,38 @@ result:
   preselect: false
   textEdit:
     newText: \${SUITE_SOURCE}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertText: ${SUITE_STATUS}
+  insertTextFormat: 2
+  kind: 6
+  label: ${SUITE_STATUS}
+  preselect: false
+  textEdit:
+    newText: \${SUITE_STATUS}
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 22
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertText: ${SUITE_MESSAGE}
+  insertTextFormat: 2
+  kind: 6
+  label: ${SUITE_MESSAGE}
+  preselect: false
+  textEdit:
+    newText: \${SUITE_MESSAGE}
     range:
       end:
         character: 24
