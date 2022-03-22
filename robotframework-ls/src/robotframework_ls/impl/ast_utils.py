@@ -714,72 +714,32 @@ def get_documentation_as_markdown(ast) -> str:
 
 
 @_convert_ast_to_indexer
-def iter_variable_assigns(ast) -> Iterator:
+def iter_local_assigns(ast) -> Iterator:
     from robot.api import Token
 
-    for node_info in ast.iter_indexed("KeywordCall"):
-        node = node_info.node
-        for token in node.tokens:
-            if token.type == token.ASSIGN:
-                value = token.value
-                i = value.rfind("}")
-                if i > 0 and i != len(value) - 1:
-                    new_value = value[: i + 1]
-                    token = Token(
-                        type=token.type,
-                        value=new_value,
-                        lineno=token.lineno,
-                        col_offset=token.col_offset,
-                        error=token.error,
-                    )
+    for clsname, assign_token_type in (
+        ("KeywordCall", Token.ASSIGN),
+        ("ForHeader", Token.VARIABLE),
+        ("ExceptHeader", Token.VARIABLE),
+        ("InlineIfHeader", Token.ASSIGN),
+    ):
+        for node_info in ast.iter_indexed(clsname):
+            node = node_info.node
+            for token in node.tokens:
+                if token.type == assign_token_type:
+                    value = token.value
+                    i = value.rfind("}")
+                    if i > 0 and i != len(value) - 1:
+                        new_value = value[: i + 1]
+                        token = Token(
+                            type=token.type,
+                            value=new_value,
+                            lineno=token.lineno,
+                            col_offset=token.col_offset,
+                            error=token.error,
+                        )
 
-                yield TokenInfo(node_info.stack, node, token)
-
-
-@_convert_ast_to_indexer
-def iter_for_assigns(ast) -> Iterator:
-    from robot.api import Token
-
-    for node_info in ast.iter_indexed("ForHeader"):
-        node = node_info.node
-        for token in node.tokens:
-            if token.type == token.VARIABLE:
-                value = token.value
-                i = value.rfind("}")
-                if i > 0 and i != len(value) - 1:
-                    new_value = value[: i + 1]
-                    token = Token(
-                        type=token.type,
-                        value=new_value,
-                        lineno=token.lineno,
-                        col_offset=token.col_offset,
-                        error=token.error,
-                    )
-
-                yield TokenInfo(node_info.stack, node, token)
-
-
-@_convert_ast_to_indexer
-def iter_except_as_assigns(ast) -> Iterator:
-    from robot.api import Token
-
-    for node_info in ast.iter_indexed("ExceptHeader"):
-        node = node_info.node
-        for token in node.tokens:
-            if token.type == token.VARIABLE:
-                value = token.value
-                i = value.rfind("}")
-                if i > 0 and i != len(value) - 1:
-                    new_value = value[: i + 1]
-                    token = Token(
-                        type=token.type,
-                        value=new_value,
-                        lineno=token.lineno,
-                        col_offset=token.col_offset,
-                        error=token.error,
-                    )
-
-                yield TokenInfo(node_info.stack, node, token)
+                    yield TokenInfo(node_info.stack, node, token)
 
 
 _FIXTURE_CLASS_NAMES = (

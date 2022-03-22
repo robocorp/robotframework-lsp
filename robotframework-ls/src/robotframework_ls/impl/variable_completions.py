@@ -565,11 +565,7 @@ def collect_local_variables(
     else:
         stack_node = completion_context.get_ast_current_section()
 
-    for assign_node_info in itertools.chain(
-        ast_utils.iter_variable_assigns(stack_node),
-        ast_utils.iter_for_assigns(stack_node),
-        ast_utils.iter_except_as_assigns(stack_node),
-    ):
+    for assign_node_info in ast_utils.iter_local_assigns(stack_node):
         completion_context.check_cancelled()
         if collector.accepts(assign_node_info.token.value):
             rep = " ".join(tok.value for tok in assign_node_info.node.tokens)

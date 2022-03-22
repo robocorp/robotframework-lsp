@@ -1208,6 +1208,20 @@ Example
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
+@pytest.mark.skipif(get_robot_major_version() < 5, reason="Requires RF 5 onwards.")
+def test_var_from_inline_if(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Example
+    ${v}=    IF    1    Evaluate    2    ELSE    Evaluate    4
+    Log    ${v}
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
 def test_env_var(workspace, libspec_manager, data_regression):
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case2.robot")

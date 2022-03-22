@@ -76,22 +76,22 @@
 
     Logs the given message with the given level.'
 - doc: '${TEST NAME} (line: Test Setup        Log    ${TEST NAME})'
-  hover: 'Builtin Variable: **\$\{TEST\_NAME\}**'
+  hover: 'Builtin Variable: **${TEST\_NAME}**'
 - doc: '${some var}= (line: ${some var}=      ${22})'
-  hover: 'Variable: **\$\{some var\}**
+  hover: 'Variable: **${some var}**
 
 
-    Value: \$\{22\}'
+    Value: ${22}'
 - doc: '${another var}= (line: ${another var}=      %{path})'
-  hover: 'Variable: **\$\{another var\}**
+  hover: 'Variable: **${another var}**
 
 
-    Value: %\{path\}'
+    Value: %{path}'
 - doc: '${i} (line:     FOR    ${i}    IN    string)'
-  hover: 'Variable: **\$\{i\}**
+  hover: 'Variable: **${i}**
 
 
-    Value: FOR      \$\{i\}      IN      string'
+    Value: FOR      ${i}      IN      string'
 - doc: '         (line:         Log    ${i}    console=True)'
   hover: '**Log**(message, level=INFO, html=False, console=False, repr=False, formatter=str)
 
@@ -113,10 +113,10 @@
 
     **Log**(*`message`*, level=INFO, html=False, console=False, repr=False, formatter=str)'
 - doc: '${i} (line:         Log    ${i}    console=True)'
-  hover: 'Variable: **\$\{i\}**
+  hover: 'Variable: **${i}**
 
 
-    Value: FOR      \$\{i\}      IN      string'
+    Value: FOR      ${i}      IN      string'
 - doc: '     (line:         Log    ${i}    console=True)'
   hover: 'Parameter: *`message`* in Keyword Call.
 
@@ -168,55 +168,55 @@
 
     **Create Dictionary**(*`\*items`*)'
 - doc: '     (line:     ${dct}=    Put Key    key    ${opts})'
-  hover: '**Put Key**(\$\{key\}, \$\{opts\})
+  hover: '**Put Key**(${key}, ${opts})
 
 
     '
 - doc: '${dct}= (line:     ${dct}=    Put Key    key    ${opts})'
-  hover: '**Put Key**(\$\{key\}, \$\{opts\})
+  hover: '**Put Key**(${key}, ${opts})
 
 
     '
 - doc: '     (line:     ${dct}=    Put Key    key    ${opts})'
-  hover: '**Put Key**(\$\{key\}, \$\{opts\})
+  hover: '**Put Key**(${key}, ${opts})
 
 
     '
 - doc: 'Put Key (line:     ${dct}=    Put Key    key    ${opts})'
-  hover: '**Put Key**(\$\{key\}, \$\{opts\})
+  hover: '**Put Key**(${key}, ${opts})
 
 
     '
 - doc: '     (line:     ${dct}=    Put Key    key    ${opts})'
-  hover: '**Put Key**(\$\{key\}, \$\{opts\})
+  hover: '**Put Key**(${key}, ${opts})
 
 
     '
 - doc: '     (line:     ${dct}=    Put Key    key    ${opts})'
-  hover: 'Parameter: *`\$\{key\}`* in Keyword Call.
+  hover: 'Parameter: *`${key}`* in Keyword Call.
 
 
-    **Put Key**(*`\$\{key\}`*, \$\{opts\})'
+    **Put Key**(*`${key}`*, ${opts})'
 - doc: 'key (line:     ${dct}=    Put Key    key    ${opts})'
-  hover: 'Parameter: *`\$\{key\}`* in Keyword Call.
+  hover: 'Parameter: *`${key}`* in Keyword Call.
 
 
-    **Put Key**(*`\$\{key\}`*, \$\{opts\})'
+    **Put Key**(*`${key}`*, ${opts})'
 - doc: '     (line:     ${dct}=    Put Key    key    ${opts})'
-  hover: 'Parameter: *`\$\{key\}`* in Keyword Call.
+  hover: 'Parameter: *`${key}`* in Keyword Call.
 
 
-    **Put Key**(*`\$\{key\}`*, \$\{opts\})'
+    **Put Key**(*`${key}`*, ${opts})'
 - doc: '     (line:     ${dct}=    Put Key    key    ${opts})'
-  hover: 'Parameter: *`\$\{opts\}`* in Keyword Call.
+  hover: 'Parameter: *`${opts}`* in Keyword Call.
 
 
-    **Put Key**(\$\{key\}, *`\$\{opts\}`*)'
+    **Put Key**(${key}, *`${opts}`*)'
 - doc: '${opts} (line:     ${dct}=    Put Key    key    ${opts})'
-  hover: 'Variable: **\$\{opts\}**
+  hover: 'Variable: **${opts}**
 
 
-    Value: \$\{opts\}=      Create dictionary      create=True'
+    Value: ${opts}=      Create dictionary      create=True'
 - doc: '     (line:     Log to console    ${dct})'
   hover: '**Log To Console**(message, stream=STDOUT, no\_newline=False)
 
@@ -238,14 +238,14 @@
 
     **Log To Console**(*`message`*, stream=STDOUT, no\_newline=False)'
 - doc: '${dct} (line:     Log to console    ${dct})'
-  hover: 'Variable: **\$\{dct\}**
+  hover: 'Variable: **${dct}**
 
 
-    Value: \$\{dct\}=      Put Key      key      \$\{opts\}'
+    Value: ${dct}=      Put Key      key      ${opts}'
 - doc: '${key} (line:     [Arguments]    ${key}    ${opts})'
-  hover: 'Argument: **\$\{key\}**'
+  hover: 'Argument: **${key}**'
 - doc: '${opts} (line:     [Arguments]    ${key}    ${opts})'
-  hover: 'Argument: **\$\{opts\}**'
+  hover: 'Argument: **${opts}**'
 - doc: '         (line:         ${ret}=    Create dictionary    ${key}=${some var})'
   hover: '**Create Dictionary**(\*items)
 
@@ -278,7 +278,7 @@
 
     **Create Dictionary**(*`\*items`*)'
 - doc: '${key} (line:         ${ret}=    Create dictionary    ${key}=${some var})'
-  hover: 'Argument: **\$\{key\}**'
+  hover: 'Argument: **${key}**'
 - doc: '${key}=${some var} (line:         ${ret}=    Create dictionary    ${key}=${some
     var})'
   hover: 'Parameter: *`\*items`* in Keyword Call.
@@ -286,10 +286,10 @@
 
     **Create Dictionary**(*`\*items`*)'
 - doc: '${some var} (line:         ${ret}=    Create dictionary    ${key}=${some var})'
-  hover: 'Variable: **\$\{some var\}**
+  hover: 'Variable: **${some var}**
 
 
-    Value: \$\{22\}'
+    Value: ${22}'
 - doc: '         (line:         ${ret}=    Create dictionary)'
   hover: '**Create Dictionary**(\*items)
 
@@ -311,7 +311,7 @@
 
     Creates and returns a dictionary based on the given items.'
 - doc: '${ret} (line:     [Return]    ${ret})'
-  hover: 'Variable: **\$\{ret\}**
+  hover: 'Variable: **${ret}**
 
 
-    Value: \$\{ret\}=      Create dictionary      \$\{key\}=\$\{some var\}'
+    Value: ${ret}=      Create dictionary      ${key}=${some var}'
