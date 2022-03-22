@@ -1235,6 +1235,7 @@ Example
     _collect_errors(workspace, doc, data_regression)
 
 
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 4 onwards.")
 def test_var_in_expression(workspace, libspec_manager, data_regression):
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case2.robot")
