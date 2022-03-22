@@ -117,7 +117,21 @@ class _DefinitionFromResource(object):
         self.scope_end_col_offset: Optional[int] = None
 
     def hover_docs(self) -> MarkupContentTypedDict:
-        return {"kind": MarkupKind.Markdown, "value": f"Resource: {self.source}"}
+        from robotframework_ls.impl import ast_utils
+        from robotframework_ls.html_to_markdown import escape
+        import os
+
+        ast = self.resource_doc.get_ast()
+        documentation = ast_utils.get_documentation_as_markdown(ast)
+        if documentation:
+            documentation = "\n\n" + documentation
+
+        name = escape(os.path.splitext(os.path.basename(self.source))[0])
+
+        return {
+            "kind": MarkupKind.Markdown,
+            "value": f"Resource: {name}{documentation}",
+        }
 
     def __str__(self):
         return "DefinitionFromResource[%s]" % (self.source,)

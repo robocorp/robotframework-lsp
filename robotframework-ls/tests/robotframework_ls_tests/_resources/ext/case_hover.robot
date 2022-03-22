@@ -1,6 +1,7 @@
 *** Settings ***
 Library           Collections
 Library           OperatingSystem    WITH NAME    OS
+Resource          ./hover_resource.resource
 Test Setup        Log    ${TEST NAME}
 
 *** Variables ***

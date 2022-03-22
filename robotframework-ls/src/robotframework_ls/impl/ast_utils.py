@@ -614,6 +614,11 @@ def iter_test_case_sections(ast) -> Iterator[NodeInfo]:
     yield from ast.iter_indexed("TestCaseSection")
 
 
+@_convert_ast_to_indexer
+def iter_setting_sections(ast) -> Iterator[NodeInfo]:
+    yield from ast.iter_indexed("SettingSection")
+
+
 def iter_keyword_arguments_as_str(ast, tokenize_keyword_name=False) -> Iterator[str]:
     for token in iter_keyword_arguments_as_tokens(ast, tokenize_keyword_name):
         yield token.value
@@ -653,30 +658,43 @@ def is_deprecated(ast) -> bool:
     return has_deprecated_text(docs)
 
 
-def get_documentation_raw(ast) -> str:
+def get_documentation_raw(ast: INode) -> str:
+    iter_in: Iterator[INode]
+    if ast.__class__.__name__ == "File":
+        # Handle the case where the File is given (docs must be gotten from
+        # the *** Settings *** in this case).
+        iter_in = (node_info.node for node_info in iter_setting_sections(ast))
+    else:
+        iter_in = iter((ast,))
+
     doc: List[str] = []
     last_line: List[str] = []
 
     last_token = None
-    for _stack, node in _iter_nodes_filtered_not_recursive(
-        ast, accept_class="Documentation"
-    ):
-        for token in node.tokens:
-            if last_token is not None and last_token.lineno != token.lineno:
+    for ast_node in iter_in:
+        for _stack, node in _iter_nodes_filtered_not_recursive(
+            ast_node, accept_class="Documentation"
+        ):
+            for token in node.tokens:
+                if last_token is not None and last_token.lineno != token.lineno:
+                    doc.extend(last_line)
+                    del last_line[:]
+
+                last_token = token
+
+                if token.type in (token.CONTINUATION, token.DOCUMENTATION):
+                    # Ignore anything before a continuation.
+                    del last_line[:]
+                    continue
+
+                last_line.append(token.value)
+            else:
+                # Last iteration
                 doc.extend(last_line)
-                del last_line[:]
 
-            last_token = token
-
-            if token.type in (token.CONTINUATION, token.DOCUMENTATION):
-                # Ignore anything before a continuation.
-                del last_line[:]
-                continue
-
-            last_line.append(token.value)
-        else:
-            # Last iteration
-            doc.extend(last_line)
+        if doc:
+            # Case with multiple Setting sections
+            break
 
     ret = "".join(doc).strip()
     return ret

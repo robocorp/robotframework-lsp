@@ -140,12 +140,7 @@ def test_hover_full(workspace, libspec_manager, data_regression):
                 last_result = found
                 all_found.append(
                     _convert_to_compare(
-                        doc_contents
-                        + " (line: "
-                        + str(range_start_found["line"])
-                        + ": "
-                        + full_line
-                        + ")",
+                        doc_contents + " (line: " + full_line + ")",
                         result["contents"],
                         result["range"],
                     )

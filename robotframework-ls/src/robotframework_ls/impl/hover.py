@@ -12,12 +12,10 @@ def hover(completion_context) -> Optional[HoverTypedDict]:
     from robotframework_ls.impl.find_definition import find_definition_extended
     from robotframework_ls.impl import ast_utils
 
-    keyword_definition = None
     definition_info = find_definition_extended(completion_context)
     if definition_info:
         for definition in definition_info.definitions:
             if hasattr(definition, "keyword_found"):
-                keyword_definition = definition
                 # If we found a keyword use the signature help.
                 break
 
@@ -26,8 +24,6 @@ def hover(completion_context) -> Optional[HoverTypedDict]:
                 "range": definition_info.origin_selection_range,
             }
 
-    if keyword_definition is None:
-        return
     from robotframework_ls.impl.signature_help import signature_help_internal
 
     sig_help: Optional[SignatureHelp] = signature_help_internal(completion_context)
