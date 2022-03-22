@@ -2,6 +2,7 @@
 Library           Collections
 Library           OperatingSystem    WITH NAME    OS
 Resource          ./hover_resource.resource
+Variables         ./hover_variables.py
 Test Setup        Log    ${TEST NAME}
 
 *** Variables ***

@@ -164,7 +164,12 @@ class _DefinitionFromVariableImport(object):
         self.scope_end_col_offset: Optional[int] = None
 
     def hover_docs(self) -> MarkupContentTypedDict:
-        return {"kind": MarkupKind.Markdown, "value": f"Variable Import: {self.source}"}
+        from robotframework_ls.html_to_markdown import escape
+        import os
+
+        name = escape(os.path.splitext(os.path.basename(self.source))[0])
+
+        return {"kind": MarkupKind.Markdown, "value": f"Variable Import: {name}"}
 
     def __str__(self):
         return "DefinitionFromVariableImport[%s]" % (self.source,)

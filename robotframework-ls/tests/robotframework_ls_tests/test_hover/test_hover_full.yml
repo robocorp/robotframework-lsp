@@ -53,6 +53,8 @@
 
 
     Some docs for resource'
+- doc: './hover_variables.py (line: Variables         ./hover_variables.py)'
+  hover: 'Variable Import: hover\_variables'
 - doc: 'Test Setup (line: Test Setup        Log    ${TEST NAME})'
   hover: '**Log**(message, level=INFO, html=False, console=False, repr=False, formatter=str)
 
