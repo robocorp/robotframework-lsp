@@ -1,3 +1,7 @@
+import pytest
+from robotframework_ls.impl.robot_version import get_robot_major_version
+
+
 def test_hover_basic(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.hover import hover
@@ -108,6 +112,7 @@ def _convert_to_compare(doc_contents, hover_contents, range_found):
     }
 
 
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 4 onwards")
 def test_hover_full(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.hover import hover
