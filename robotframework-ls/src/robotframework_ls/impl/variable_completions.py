@@ -7,6 +7,7 @@ from robotframework_ls.impl.protocols import (
     IRobotToken,
     TokenInfo,
     AbstractVariablesCollector,
+    VariableKind,
 )
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.protocols import check_implements, IDocumentSelection
@@ -20,7 +21,12 @@ log = get_logger(__name__)
 
 class _VariableFoundFromToken(object):
     def __init__(
-        self, completion_context, variable_token, variable_value, variable_name=None
+        self,
+        completion_context,
+        variable_token,
+        variable_value,
+        variable_name=None,
+        variable_kind=VariableKind.VARIABLE,
     ):
         self.completion_context = completion_context
         self.variable_token = variable_token
@@ -35,6 +41,7 @@ class _VariableFoundFromToken(object):
                 self.variable_value = str(variable_value)
         else:
             self.variable_value = str(variable_value)
+        self.variable_kind = variable_kind
 
     @property  # type: ignore
     @instance_cache
@@ -83,6 +90,7 @@ class _VariableFoundFromPythonAst(object):
         self._path = path
         self.variable_name = variable_name
         self.variable_value = variable_value
+        self.variable_kind = VariableKind.PYTHON
 
     @property
     def source(self):
@@ -93,6 +101,8 @@ class _VariableFoundFromPythonAst(object):
 
 
 class _VariableFoundFromSettings(object):
+    variable_kind = VariableKind.SETTINGS
+
     def __init__(self, variable_name, variable_value, source="", lineno=0):
         self.completion_context = None
         self.variable_name = variable_name
@@ -125,11 +135,11 @@ class _VariableFoundFromSettings(object):
 
 
 class _VariableFoundFromBuiltins(_VariableFoundFromSettings):
-    pass
+    variable_kind = VariableKind.BUILTIN
 
 
 class _VariableFoundFromYaml(_VariableFoundFromSettings):
-    pass
+    variable_kind = VariableKind.YAML
 
 
 class _Collector(AbstractVariablesCollector):
@@ -473,7 +483,11 @@ def _collect_arguments(
         name = str(arg_token)
         if collector.accepts(name):
             variable_found = _VariableFoundFromToken(
-                completion_context, arg_token, "", variable_name=name
+                completion_context,
+                arg_token,
+                "",
+                variable_name=name,
+                variable_kind=VariableKind.ARGUMENT,
             )
             collector.on_variable(variable_found)
 

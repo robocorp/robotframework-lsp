@@ -1,0 +1,317 @@
+- doc: 'Library (line: Library           Collections)'
+  hover: '**Collections**
+
+
+    A test library providing keywords for handling lists and dictionaries.'
+- doc: '            (line: Library           Collections)'
+  hover: '**Collections**
+
+
+    A test library providing keywords for handling lists and dictionaries.'
+- doc: 'Collections (line: Library           Collections)'
+  hover: 'Library: **Collections**
+
+
+    A test library providing keywords for handling lists and dictionaries.'
+- doc: 'Library (line: Library           OperatingSystem    WITH NAME    OS)'
+  hover: '**OperatingSystem**
+
+
+    A test library providing keywords for OS related tasks.'
+- doc: '            (line: Library           OperatingSystem    WITH NAME    OS)'
+  hover: '**OperatingSystem**
+
+
+    A test library providing keywords for OS related tasks.'
+- doc: 'OperatingSystem (line: Library           OperatingSystem    WITH NAME    OS)'
+  hover: 'Library: **OperatingSystem**
+
+
+    A test library providing keywords for OS related tasks.'
+- doc: '     (line: Library           OperatingSystem    WITH NAME    OS)'
+  hover: '**OperatingSystem**
+
+
+    A test library providing keywords for OS related tasks.'
+- doc: 'WITH NAME (line: Library           OperatingSystem    WITH NAME    OS)'
+  hover: '**OperatingSystem**
+
+
+    A test library providing keywords for OS related tasks.'
+- doc: '     (line: Library           OperatingSystem    WITH NAME    OS)'
+  hover: '**OperatingSystem**
+
+
+    A test library providing keywords for OS related tasks.'
+- doc: 'OS (line: Library           OperatingSystem    WITH NAME    OS)'
+  hover: '**OperatingSystem**
+
+
+    A test library providing keywords for OS related tasks.'
+- doc: './hover_resource.resource (line: Resource          ./hover_resource.resource)'
+  hover: 'Resource: hover\_resource
+
+
+    Some docs for resource'
+- doc: './hover_variables.py (line: Variables         ./hover_variables.py)'
+  hover: 'Variable Import: hover\_variables'
+- doc: 'Test Setup (line: Test Setup        Log    ${TEST NAME})'
+  hover: '**Log**(message, level=INFO, html=False, console=False, repr=False, formatter=str)
+
+
+    Logs the given message with the given level.'
+- doc: '         (line: Test Setup        Log    ${TEST NAME})'
+  hover: '**Log**(message, level=INFO, html=False, console=False, repr=False, formatter=str)
+
+
+    Logs the given message with the given level.'
+- doc: 'Log (line: Test Setup        Log    ${TEST NAME})'
+  hover: '**Log**(message, level=INFO, html=False, console=False, repr=False, formatter=str)
+
+
+    Logs the given message with the given level.'
+- doc: '     (line: Test Setup        Log    ${TEST NAME})'
+  hover: '**Log**(message, level=INFO, html=False, console=False, repr=False, formatter=str)
+
+
+    Logs the given message with the given level.'
+- doc: '${TEST NAME} (line: Test Setup        Log    ${TEST NAME})'
+  hover: 'Builtin Variable: **\$\{TEST\_NAME\}**'
+- doc: '${some var}= (line: ${some var}=      ${22})'
+  hover: 'Variable: **\$\{some var\}**
+
+
+    Value: \$\{22\}'
+- doc: '${another var}= (line: ${another var}=      %{path})'
+  hover: 'Variable: **\$\{another var\}**
+
+
+    Value: %\{path\}'
+- doc: '${i} (line:     FOR    ${i}    IN    string)'
+  hover: 'Variable: **\$\{i\}**
+
+
+    Value: FOR      \$\{i\}      IN      string'
+- doc: '         (line:         Log    ${i}    console=True)'
+  hover: '**Log**(message, level=INFO, html=False, console=False, repr=False, formatter=str)
+
+
+    Logs the given message with the given level.'
+- doc: 'Log (line:         Log    ${i}    console=True)'
+  hover: '**Log**(message, level=INFO, html=False, console=False, repr=False, formatter=str)
+
+
+    Logs the given message with the given level.'
+- doc: '     (line:         Log    ${i}    console=True)'
+  hover: '**Log**(message, level=INFO, html=False, console=False, repr=False, formatter=str)
+
+
+    Logs the given message with the given level.'
+- doc: '     (line:         Log    ${i}    console=True)'
+  hover: 'Parameter: *`message`* in Keyword Call.
+
+
+    **Log**(*`message`*, level=INFO, html=False, console=False, repr=False, formatter=str)'
+- doc: '${i} (line:         Log    ${i}    console=True)'
+  hover: 'Variable: **\$\{i\}**
+
+
+    Value: FOR      \$\{i\}      IN      string'
+- doc: '     (line:         Log    ${i}    console=True)'
+  hover: 'Parameter: *`message`* in Keyword Call.
+
+
+    **Log**(*`message`*, level=INFO, html=False, console=False, repr=False, formatter=str)'
+- doc: '     (line:         Log    ${i}    console=True)'
+  hover: 'Parameter: *`level=INFO`* in Keyword Call.
+
+
+    **Log**(message, *`level=INFO`*, html=False, console=False, repr=False, formatter=str)'
+- doc: 'console=True (line:         Log    ${i}    console=True)'
+  hover: 'Parameter: *`console=False`* in Keyword Call.
+
+
+    **Log**(message, level=INFO, html=False, *`console=False`*, repr=False, formatter=str)'
+- doc: '     (line:     ${opts}=    Create dictionary    create=True)'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: '${opts}= (line:     ${opts}=    Create dictionary    create=True)'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: '     (line:     ${opts}=    Create dictionary    create=True)'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: 'Create dictionary (line:     ${opts}=    Create dictionary    create=True)'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: '     (line:     ${opts}=    Create dictionary    create=True)'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: '     (line:     ${opts}=    Create dictionary    create=True)'
+  hover: 'Parameter: *`\*items`* in Keyword Call.
+
+
+    **Create Dictionary**(*`\*items`*)'
+- doc: 'create=True (line:     ${opts}=    Create dictionary    create=True)'
+  hover: 'Parameter: *`\*items`* in Keyword Call.
+
+
+    **Create Dictionary**(*`\*items`*)'
+- doc: '     (line:     ${dct}=    Put Key    key    ${opts})'
+  hover: '**Put Key**(\$\{key\}, \$\{opts\})
+
+
+    '
+- doc: '${dct}= (line:     ${dct}=    Put Key    key    ${opts})'
+  hover: '**Put Key**(\$\{key\}, \$\{opts\})
+
+
+    '
+- doc: '     (line:     ${dct}=    Put Key    key    ${opts})'
+  hover: '**Put Key**(\$\{key\}, \$\{opts\})
+
+
+    '
+- doc: 'Put Key (line:     ${dct}=    Put Key    key    ${opts})'
+  hover: '**Put Key**(\$\{key\}, \$\{opts\})
+
+
+    '
+- doc: '     (line:     ${dct}=    Put Key    key    ${opts})'
+  hover: '**Put Key**(\$\{key\}, \$\{opts\})
+
+
+    '
+- doc: '     (line:     ${dct}=    Put Key    key    ${opts})'
+  hover: 'Parameter: *`\$\{key\}`* in Keyword Call.
+
+
+    **Put Key**(*`\$\{key\}`*, \$\{opts\})'
+- doc: 'key (line:     ${dct}=    Put Key    key    ${opts})'
+  hover: 'Parameter: *`\$\{key\}`* in Keyword Call.
+
+
+    **Put Key**(*`\$\{key\}`*, \$\{opts\})'
+- doc: '     (line:     ${dct}=    Put Key    key    ${opts})'
+  hover: 'Parameter: *`\$\{key\}`* in Keyword Call.
+
+
+    **Put Key**(*`\$\{key\}`*, \$\{opts\})'
+- doc: '     (line:     ${dct}=    Put Key    key    ${opts})'
+  hover: 'Parameter: *`\$\{opts\}`* in Keyword Call.
+
+
+    **Put Key**(\$\{key\}, *`\$\{opts\}`*)'
+- doc: '${opts} (line:     ${dct}=    Put Key    key    ${opts})'
+  hover: 'Variable: **\$\{opts\}**
+
+
+    Value: \$\{opts\}=      Create dictionary      create=True'
+- doc: '     (line:     Log to console    ${dct})'
+  hover: '**Log To Console**(message, stream=STDOUT, no\_newline=False)
+
+
+    Logs the given message to the console.'
+- doc: 'Log to console (line:     Log to console    ${dct})'
+  hover: '**Log To Console**(message, stream=STDOUT, no\_newline=False)
+
+
+    Logs the given message to the console.'
+- doc: '     (line:     Log to console    ${dct})'
+  hover: '**Log To Console**(message, stream=STDOUT, no\_newline=False)
+
+
+    Logs the given message to the console.'
+- doc: '     (line:     Log to console    ${dct})'
+  hover: 'Parameter: *`message`* in Keyword Call.
+
+
+    **Log To Console**(*`message`*, stream=STDOUT, no\_newline=False)'
+- doc: '${dct} (line:     Log to console    ${dct})'
+  hover: 'Variable: **\$\{dct\}**
+
+
+    Value: \$\{dct\}=      Put Key      key      \$\{opts\}'
+- doc: '${key} (line:     [Arguments]    ${key}    ${opts})'
+  hover: 'Argument: **\$\{key\}**'
+- doc: '${opts} (line:     [Arguments]    ${key}    ${opts})'
+  hover: 'Argument: **\$\{opts\}**'
+- doc: '         (line:         ${ret}=    Create dictionary    ${key}=${some var})'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: '${ret}= (line:         ${ret}=    Create dictionary    ${key}=${some var})'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: '     (line:         ${ret}=    Create dictionary    ${key}=${some var})'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: 'Create dictionary (line:         ${ret}=    Create dictionary    ${key}=${some
+    var})'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: '     (line:         ${ret}=    Create dictionary    ${key}=${some var})'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: '     (line:         ${ret}=    Create dictionary    ${key}=${some var})'
+  hover: 'Parameter: *`\*items`* in Keyword Call.
+
+
+    **Create Dictionary**(*`\*items`*)'
+- doc: '${key} (line:         ${ret}=    Create dictionary    ${key}=${some var})'
+  hover: 'Argument: **\$\{key\}**'
+- doc: '${key}=${some var} (line:         ${ret}=    Create dictionary    ${key}=${some
+    var})'
+  hover: 'Parameter: *`\*items`* in Keyword Call.
+
+
+    **Create Dictionary**(*`\*items`*)'
+- doc: '${some var} (line:         ${ret}=    Create dictionary    ${key}=${some var})'
+  hover: 'Variable: **\$\{some var\}**
+
+
+    Value: \$\{22\}'
+- doc: '         (line:         ${ret}=    Create dictionary)'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: '${ret}= (line:         ${ret}=    Create dictionary)'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: '     (line:         ${ret}=    Create dictionary)'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: 'Create dictionary (line:         ${ret}=    Create dictionary)'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: '${ret} (line:     [Return]    ${ret})'
+  hover: 'Variable: **\$\{ret\}**
+
+
+    Value: \$\{ret\}=      Create dictionary      \$\{key\}=\$\{some var\}'

@@ -617,6 +617,9 @@ class IDefinition(Protocol):
     scope_col_offset: Optional[int] = None
     scope_end_col_offset: Optional[int] = None
 
+    def hover_docs(self) -> MarkupContentTypedDict:
+        pass
+
 
 class IKeywordDefinition(IDefinition, Protocol):
 
@@ -912,6 +915,16 @@ class ICompletionContext(Protocol):
         pass
 
 
+class VariableKind:
+    VARIABLE = "Variable"
+    BUILTIN = "Builtin Variable"
+    ARGUMENT = "Argument"
+    ENV_VARIABLE = "Environment Variable"
+    SETTINGS = "Variable (settings)"
+    PYTHON = "Variable (python)"
+    YAML = "Variable (yaml)"
+
+
 class IVariableFound(Protocol):
     """
     :ivar variable_name:
@@ -927,6 +940,7 @@ class IVariableFound(Protocol):
 
     variable_name: str = ""
     variable_value: str = ""
+    variable_kind: str = VariableKind.VARIABLE
     completion_context: Optional[ICompletionContext] = None
 
     @property

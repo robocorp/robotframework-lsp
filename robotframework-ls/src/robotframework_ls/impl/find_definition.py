@@ -1,4 +1,3 @@
-import re
 from robotframework_ls.impl.protocols import (
     ICompletionContext,
     IDefinition,
@@ -14,10 +13,8 @@ from robotframework_ls.impl.protocols import (
 )
 from robocorp_ls_core.protocols import check_implements, IDocumentSelection
 from typing import Optional, Sequence, List
-from robocorp_ls_core.lsp import RangeTypedDict
+from robocorp_ls_core.lsp import RangeTypedDict, MarkupContentTypedDict, MarkupKind
 from robocorp_ls_core.basic import isinstance_name
-
-_RF_VARIABLE = re.compile(r"([$|&|@]{[\w\s]+})")
 
 
 class _DefinitionFromKeyword(object):
@@ -35,6 +32,12 @@ class _DefinitionFromKeyword(object):
         self.scope_end_lineno: Optional[int] = keyword_found.scope_end_lineno
         self.scope_col_offset: Optional[int] = keyword_found.scope_col_offset
         self.scope_end_col_offset: Optional[int] = keyword_found.scope_end_col_offset
+
+    def hover_docs(self) -> MarkupContentTypedDict:
+        from robotframework_ls.html_to_markdown import escape
+
+        keyword_name = escape(self.keyword_name)
+        return {"kind": MarkupKind.Markdown, "value": f"Keyword: **{keyword_name}**"}
 
     def __str__(self):
         return "DefinitionFromKeyword[%s, %s:%s]" % (
@@ -68,6 +71,18 @@ class _DefinitionFromLibrary(object):
         self.scope_col_offset: Optional[int] = None
         self.scope_end_col_offset: Optional[int] = None
 
+    def hover_docs(self) -> MarkupContentTypedDict:
+        from robotframework_ls.html_to_markdown import escape
+        from robotframework_ls.impl.robot_specbuilder import docs_and_format
+
+        library_name = escape(self.library_doc.name)
+        docs, doc_format = docs_and_format(self.library_doc)
+
+        return {
+            "kind": doc_format,
+            "value": f"Library: **{library_name}**\n\n{docs}",
+        }
+
     def __str__(self):
         return "DefinitionFromLibrary[%s]" % (self.source,)
 
@@ -97,6 +112,23 @@ class _DefinitionFromResource(object):
         self.scope_end_lineno: Optional[int] = None
         self.scope_col_offset: Optional[int] = None
         self.scope_end_col_offset: Optional[int] = None
+
+    def hover_docs(self) -> MarkupContentTypedDict:
+        from robotframework_ls.impl import ast_utils
+        from robotframework_ls.html_to_markdown import escape
+        import os
+
+        ast = self.resource_doc.get_ast()
+        documentation = ast_utils.get_documentation_as_markdown(ast)
+        if documentation:
+            documentation = "\n\n" + documentation
+
+        name = escape(os.path.splitext(os.path.basename(self.source))[0])
+
+        return {
+            "kind": MarkupKind.Markdown,
+            "value": f"Resource: {name}{documentation}",
+        }
 
     def __str__(self):
         return "DefinitionFromResource[%s]" % (self.source,)
@@ -128,6 +160,14 @@ class _DefinitionFromVariableImport(object):
         self.scope_col_offset: Optional[int] = None
         self.scope_end_col_offset: Optional[int] = None
 
+    def hover_docs(self) -> MarkupContentTypedDict:
+        from robotframework_ls.html_to_markdown import escape
+        import os
+
+        name = escape(os.path.splitext(os.path.basename(self.source))[0])
+
+        return {"kind": MarkupKind.Markdown, "value": f"Variable Import: {name}"}
+
     def __str__(self):
         return "DefinitionFromVariableImport[%s]" % (self.source,)
 
@@ -155,6 +195,34 @@ class _DefinitionFromVariable(object):
         self.scope_end_lineno: Optional[int] = None
         self.scope_col_offset: Optional[int] = None
         self.scope_end_col_offset: Optional[int] = None
+
+    def hover_docs(self) -> MarkupContentTypedDict:
+        from robotframework_ls.html_to_markdown import escape
+
+        variable_found = self.variable_found
+        variable_name = "".join(
+            (
+                variable_found.variable_kind,
+                ": ",
+                "**",
+                escape(variable_found.variable_name.strip()),
+                "**",
+            )
+        )
+
+        variable_value = ""
+        if variable_found.variable_value:
+            variable_value = "".join(
+                (
+                    "\n\nValue: ",
+                    escape(variable_found.variable_value.strip()),
+                )
+            )
+
+        return {
+            "kind": MarkupKind.Markdown,
+            "value": (f"{variable_name}{variable_value}"),
+        }
 
     def __str__(self):
         return "_DefinitionFromVariable(%s[%s, %s:%s])" % (
@@ -340,15 +408,19 @@ def find_definition_extended(
 
     token_info = completion_context.get_current_variable()
     if token_info is not None:
+        from robotframework_ls.impl.variable_resolve import robot_search_variable
+
         token = token_info.token
         value = token.value
-        re_match = next(iter(_RF_VARIABLE.findall(value)), value)
-        collector = _FindDefinitionVariablesCollector(
-            completion_context.sel, token, RobotStringMatcher(re_match)
-        )
-        collect_variables(completion_context, collector)
-        return _DefinitionInfo(
-            collector.matches, ast_utils.create_range_from_token(token)
-        )
+        robot_variable_match = robot_search_variable(value)
+        if robot_variable_match and robot_variable_match.base:
+            re_match = robot_variable_match.name
+            collector = _FindDefinitionVariablesCollector(
+                completion_context.sel, token, RobotStringMatcher(re_match)
+            )
+            collect_variables(completion_context, collector)
+            return _DefinitionInfo(
+                collector.matches, ast_utils.create_range_from_token(token)
+            )
 
     return None

@@ -464,7 +464,7 @@ class TextDocumentPositionParamsTypedDict(TypedDict, total=False):
 
 
 class MarkupContentTypedDict(TypedDict):
-    kind: str  # "plaintext" | "markdown"
+    kind: str  # "plaintext" | "markdown" # see: MarkupKind
     value: str
 
 
@@ -590,7 +590,7 @@ class CompletionItemTypedDict(TypedDict, total=False):
 
 class HoverTypedDict(TypedDict, total=False):
     contents: MarkupContentTypedDict
-    range: RangeTypedDict  # Optional
+    range: Optional[RangeTypedDict]
 
 
 class DocumentHighlightTypedDict(TypedDict, total=False):
