@@ -1,0 +1,9 @@
+- col_offset: 1
+  lineno: 1
+  value: v1
+- col_offset: 7
+  lineno: 1
+  value: v2
+- col_offset: 14
+  lineno: 1
+  value: v3

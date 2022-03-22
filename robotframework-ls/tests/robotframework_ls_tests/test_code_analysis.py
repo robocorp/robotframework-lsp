@@ -1233,3 +1233,17 @@ Example
 """
 
     _collect_errors(workspace, doc, data_regression)
+
+
+def test_var_in_expression(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Example
+    IF    $rc > ${rc2}
+        Log    22
+    END
+"""
+
+    _collect_errors(workspace, doc, data_regression)

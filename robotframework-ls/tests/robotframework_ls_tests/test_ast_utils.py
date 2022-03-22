@@ -164,3 +164,22 @@ Keyword 2
     assert len(list(indexer.iter_indexed("LibraryImport"))) == 2
     assert len(list(indexer.iter_indexed("Keyword"))) == 2
     assert len(list(indexer.iter_indexed("SettingSection"))) == 1
+
+
+def test_ast_extract_expression_variables(data_regression):
+    from robotframework_ls.impl import ast_utils
+    from robot.api import Token
+
+    collected = []
+    for token in ast_utils.iter_expression_variables(
+        Token(Token.ARGUMENT, "$v1 > $v2 > ${v3}", 1, 0)
+    ):
+        collected.append(
+            {
+                "value": token.value,
+                "lineno": token.lineno,
+                "col_offset": token.col_offset,
+            }
+        )
+
+    data_regression.check(collected)

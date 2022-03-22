@@ -785,6 +785,21 @@ def iter_variable_references(ast) -> Iterator[TokenInfo]:
             except:
                 log.exception("Unable to tokenize: %s", token)
 
+    for clsname in ("IfHeader", "WhileHeader"):
+        for node_info in ast.iter_indexed(clsname):
+            stack = node_info.stack
+            node = node_info.node
+            token = None
+
+            try:
+                for token in node.tokens:
+                    if token.type == token.ARGUMENT:
+                        for tok in iter_expression_variables(token):
+                            if tok.type == token.VARIABLE:
+                                yield TokenInfo(stack, node, tok)
+            except:
+                log.exception("Unable to tokenize: %s", token)
+
 
 @_convert_ast_to_indexer
 def iter_keyword_usage_tokens(
@@ -1171,3 +1186,24 @@ def create_range_from_token(token) -> RangeTypedDict:
 
 def get_library_arguments_serialized(library) -> Optional[str]:
     return "::".join(library.args) if library.args else None
+
+
+def iter_expression_variables(expression_token: IRobotToken):
+    from tokenize import generate_tokens, NAME, ERRORTOKEN
+    from io import StringIO
+    from robot.api import Token
+
+    gen_var = False
+    for token_info in generate_tokens(StringIO(expression_token.value).readline):
+        if token_info.type == ERRORTOKEN and token_info.string == "$":
+            gen_var = True
+
+        elif gen_var and token_info.type == NAME:
+            gen_var = False
+            yield Token(
+                Token.VARIABLE,
+                token_info.string,
+                expression_token.lineno,
+                expression_token.col_offset + token_info.start[1],
+                expression_token.error,
+            )
