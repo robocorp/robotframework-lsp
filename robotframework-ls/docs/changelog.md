@@ -15,6 +15,7 @@ NEXT
 - Fix in heuristics to match arguments which could result in wrong argument analysis in keyword calls. [#603](https://github.com/robocorp/robotframework-lsp/issues/603)
 - Variables in assign now have the same color as variables in other places. [#613](https://github.com/robocorp/robotframework-lsp/issues/613)
 - Variable imports which can't be resolved are reported.
+- Improved hover (now provides custom hints for variables, imports and parameters).
 
 
 New in 0.42.0 (2022-03-14)
