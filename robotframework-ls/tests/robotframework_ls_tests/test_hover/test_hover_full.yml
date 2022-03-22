@@ -82,6 +82,11 @@
 
 
     Value: \$\{22\}'
+- doc: '${another var}= (line: ${another var}=      %{path})'
+  hover: 'Variable: **\$\{another var\}**
+
+
+    Value: %\{path\}'
 - doc: '${i} (line:     FOR    ${i}    IN    string)'
   hover: 'Variable: **\$\{i\}**
 

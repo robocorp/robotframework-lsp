@@ -7,6 +7,7 @@ Test Setup        Log    ${TEST NAME}
 
 *** Variables ***
 ${some var}=      ${22}
+${another var}=      %{path}
 
 *** Test Cases ***
 T1

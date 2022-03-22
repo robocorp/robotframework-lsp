@@ -411,15 +411,19 @@ def find_definition_extended(
 
     token_info = completion_context.get_current_variable()
     if token_info is not None:
+        from robotframework_ls.impl.variable_resolve import robot_search_variable
+
         token = token_info.token
         value = token.value
-        re_match = next(iter(_RF_VARIABLE.findall(value)), value)
-        collector = _FindDefinitionVariablesCollector(
-            completion_context.sel, token, RobotStringMatcher(re_match)
-        )
-        collect_variables(completion_context, collector)
-        return _DefinitionInfo(
-            collector.matches, ast_utils.create_range_from_token(token)
-        )
+        robot_variable_match = robot_search_variable(value)
+        if robot_variable_match and robot_variable_match.base:
+            re_match = robot_variable_match.name
+            collector = _FindDefinitionVariablesCollector(
+                completion_context.sel, token, RobotStringMatcher(re_match)
+            )
+            collect_variables(completion_context, collector)
+            return _DefinitionInfo(
+                collector.matches, ast_utils.create_range_from_token(token)
+            )
 
     return None
