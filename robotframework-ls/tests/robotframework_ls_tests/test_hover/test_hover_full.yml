@@ -1,0 +1,90 @@
+- doc: 'Collections (line: 1: Library           Collections)'
+  hover: 'Library: **Collections**
+
+
+    A test library providing keywords for handling lists and dictionaries.'
+- doc: 'OperatingSystem (line: 2: Library           OperatingSystem    WITH NAME    OS)'
+  hover: 'Library: **OperatingSystem**
+
+
+    A test library providing keywords for OS related tasks.'
+- doc: 'Log (line: 3: Test Setup        Log    ${TEST NAME})'
+  hover: '**Log**(message, level=INFO, html=False, console=False, repr=False, formatter=str)
+
+
+    Logs the given message with the given level.'
+- doc: '${TEST NAME} (line: 3: Test Setup        Log    ${TEST NAME})'
+  hover: 'Builtin Variable: **\$\{TEST\_NAME\}**'
+- doc: '${some var}= (line: 6: ${some var}=      ${22})'
+  hover: 'Variable: **\$\{some var\}**
+
+
+    Value: \$\{22\}'
+- doc: '${i} (line: 10:     FOR    ${i}    IN    string)'
+  hover: 'Variable: **\$\{i\}**
+
+
+    Value: FOR      \$\{i\}      IN      string'
+- doc: 'Log (line: 11:         Log    ${i}    console=True)'
+  hover: '**Log**(message, level=INFO, html=False, console=False, repr=False, formatter=str)
+
+
+    Logs the given message with the given level.'
+- doc: '${i} (line: 11:         Log    ${i}    console=True)'
+  hover: 'Variable: **\$\{i\}**
+
+
+    Value: FOR      \$\{i\}      IN      string'
+- doc: 'Create dictionary (line: 13:     ${opts}=    Create dictionary    create=True)'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: 'Put Key (line: 14:     ${dct}=    Put Key    key    ${opts})'
+  hover: '**Put Key**(\$\{key\}, \$\{opts\})
+
+
+    '
+- doc: '${opts} (line: 14:     ${dct}=    Put Key    key    ${opts})'
+  hover: 'Variable: **\$\{opts\}**
+
+
+    Value: \$\{opts\}=      Create dictionary      create=True'
+- doc: 'Log to console (line: 15:     Log to console    ${dct})'
+  hover: '**Log To Console**(message, stream=STDOUT, no\_newline=False)
+
+
+    Logs the given message to the console.'
+- doc: '${dct} (line: 15:     Log to console    ${dct})'
+  hover: 'Variable: **\$\{dct\}**
+
+
+    Value: \$\{dct\}=      Put Key      key      \$\{opts\}'
+- doc: '${key} (line: 19:     [Arguments]    ${key}    ${opts})'
+  hover: 'Argument: **\$\{key\}**'
+- doc: '${opts} (line: 19:     [Arguments]    ${key}    ${opts})'
+  hover: 'Argument: **\$\{opts\}**'
+- doc: 'Create dictionary (line: 21:         ${ret}=    Create dictionary    ${key}=${some
+    var})'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: '${key} (line: 21:         ${ret}=    Create dictionary    ${key}=${some var})'
+  hover: 'Argument: **\$\{key\}**'
+- doc: '${some var} (line: 21:         ${ret}=    Create dictionary    ${key}=${some
+    var})'
+  hover: 'Variable: **\$\{some var\}**
+
+
+    Value: \$\{22\}'
+- doc: 'Create dictionary (line: 23:         ${ret}=    Create dictionary)'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: '${ret} (line: 25:     [Return]    ${ret})'
+  hover: 'Variable: **\$\{ret\}**
+
+
+    Value: \$\{ret\}=      Create dictionary      \$\{key\}=\$\{some var\}'

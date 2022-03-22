@@ -9,6 +9,25 @@ from typing import Optional
 
 
 def hover(completion_context) -> Optional[HoverTypedDict]:
+    from robotframework_ls.impl.find_definition import find_definition_extended
+    from robotframework_ls.impl import ast_utils
+
+    keyword_definition = None
+    definition_info = find_definition_extended(completion_context)
+    if definition_info:
+        for definition in definition_info.definitions:
+            if hasattr(definition, "keyword_found"):
+                keyword_definition = definition
+                # If we found a keyword use the signature help.
+                break
+
+            return {
+                "contents": definition.hover_docs(),
+                "range": definition_info.origin_selection_range,
+            }
+
+    if keyword_definition is None:
+        return
     from robotframework_ls.impl.signature_help import signature_help_internal
 
     sig_help: Optional[SignatureHelp] = signature_help_internal(completion_context)
@@ -44,10 +63,18 @@ def hover(completion_context) -> Optional[HoverTypedDict]:
 
         escape = html_to_markdown.escape
 
+    add_documentation = True
     if kind == MarkupKind.Markdown:
         signature_doc = ["**", escape(sig_help.name), "**"]
     else:
         signature_doc = [sig_help.name]
+
+    if kind == MarkupKind.Markdown:
+        prefix_highlight = "*`"
+        postfix_highlight = "`*"
+    else:
+        prefix_highlight = "`"
+        postfix_highlight = "`"
 
     if active_signature.parameters:
         signature_doc.append("(")
@@ -55,31 +82,37 @@ def hover(completion_context) -> Optional[HoverTypedDict]:
             if i > 0:
                 signature_doc.append(", ")
 
+            escaped_label = escape(parameter.label)
             if i == active_parameter:
-                if kind == MarkupKind.Markdown:
-                    signature_doc.append("*`")
-                else:
-                    signature_doc.append("`")
+                add_documentation = False
+                signature_doc.insert(
+                    0,
+                    f"Parameter: {prefix_highlight}{escaped_label}{postfix_highlight} in Keyword Call.\n\n",
+                )
 
-            signature_doc.append(escape(parameter.label))
+                signature_doc.append(prefix_highlight)
+
+            signature_doc.append(escaped_label)
 
             if i == active_parameter:
-                if kind == MarkupKind.Markdown:
-                    signature_doc.append("`*")
-                else:
-                    signature_doc.append("`")
+                signature_doc.append(postfix_highlight)
 
         signature_doc.append(")")
 
-    signature_doc.append("\n\n")
-    signature_doc.append(documentation_markup["value"])
+    if add_documentation:
+        # When over a parameter, don't add the documentation.
+        signature_doc.append("\n\n")
+        signature_doc.append(documentation_markup["value"])
 
-    return {
-        "contents": {"kind": kind, "value": "".join(signature_doc)},
-        "range": {
+    token_info = completion_context.get_current_token()
+    if token_info and token_info.token:
+        show_range = ast_utils.create_range_from_token(token_info.token)
+    else:
+        show_range = {
             "start": {"line": node.lineno - 1, "character": node.col_offset},
             "end": {"line": node.end_lineno - 1, "character": node.end_col_offset},
-        },
+        }
+    return {
+        "contents": {"kind": kind, "value": "".join(signature_doc)},
+        "range": show_range,
     }
-
-    return None

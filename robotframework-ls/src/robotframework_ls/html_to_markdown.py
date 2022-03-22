@@ -39,6 +39,10 @@ def escape(text):
         .replace("*", r"\*")
         .replace("[", r"\[")
         .replace("]", r"\]")
+        .replace("{", r"\{")
+        .replace("}", r"\}")
+        .replace("@", r"\@")
+        .replace("$", r"\$")
         .replace("#", r"\#")
     )
 
