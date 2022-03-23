@@ -26,6 +26,9 @@ KEYWORD_NAME_TO_CONDITION_INDEX = {
     "returnfromkeywordif": 1,  # return_from_keyword_if
     "runkeywordandreturnif": 1,  # run_keyword_and_return_if
     "runkeywordif": 1,  # run_keyword_if
+    "runkeywordunless": 1,  # run_keyword_unless
     "setvariableif": 1,  # set_variable_if
+    "shouldbetrue": 1,  # should_be_true
+    "shouldnotbetrue": 1,  # should_not_be_true
     "skipif": 1,  # skip_if
 }

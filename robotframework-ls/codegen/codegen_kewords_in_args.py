@@ -2,6 +2,7 @@ def main():
     from pathlib import Path
     from robot.running.runkwregister import RUN_KW_REGISTER
     from robotframework_ls.impl.text_utilities import normalize_robot_name
+    import inspect
 
     p = Path(__file__)
     impl_folder = p.parent.parent / "src" / "robotframework_ls" / "impl"
@@ -18,7 +19,13 @@ def main():
     for method in dir(BuiltIn):
         if method.startswith("_"):
             continue
-        if method.endswith("_if"):
+
+        m = getattr(BuiltIn, method)
+        try:
+            signature = inspect.signature(m)
+        except:
+            continue
+        if "condition" in signature.parameters:
             KEYWORD_NAME_TO_CONDITION_INDEX[method] = 1
             print(method)
     print("Found", len(KEYWORD_NAME_TO_CONDITION_INDEX), "keywords with conditions\n\n")
