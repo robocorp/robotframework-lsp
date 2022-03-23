@@ -13,8 +13,19 @@ def main():
     from robot.libraries.BuiltIn import BuiltIn
 
     KEYWORD_NAME_TO_KEYWORD_INDEX = {}
+    KEYWORD_NAME_TO_CONDITION_INDEX = {}
+
+    for method in dir(BuiltIn):
+        if method.startswith("_"):
+            continue
+        if method.endswith("_if"):
+            KEYWORD_NAME_TO_CONDITION_INDEX[method] = 1
+            print(method)
+    print("Found", len(KEYWORD_NAME_TO_CONDITION_INDEX), "keywords with conditions\n\n")
+
     for libname, keyword in RUN_KW_REGISTER._libs.items():
         for keyword_name, arg_i in keyword.items():
+
             if keyword_name in (
                 "pass_execution_if",
                 "return_from_keyword_if",
@@ -37,9 +48,16 @@ def main():
         dict_repr += f'    "{normalized_key}": {val},  # {key}\n'
     dict_repr += "}"
 
+    dict_repr_condition = "{\n"
+    for key, val in KEYWORD_NAME_TO_CONDITION_INDEX.items():
+        normalized_key = normalize_robot_name(key)
+        dict_repr_condition += f'    "{normalized_key}": {val},  # {key}\n'
+    dict_repr_condition += "}"
+
     content = f"""# WARNING: auto-generated file. Do NOT edit.
 # If this file needs to be edited, change `codegen_kewords_in_args.py` and rerun.
 KEYWORD_NAME_TO_KEYWORD_INDEX = {dict_repr}
+KEYWORD_NAME_TO_CONDITION_INDEX = {dict_repr_condition}
 """
 
     keywords_in_args.write_text(content, encoding="utf-8")

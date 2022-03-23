@@ -204,6 +204,23 @@ class TokenInfo:
         self.token = token
 
 
+class VarTokenInfo:
+
+    __slots__ = ["stack", "node", "token", "var_identifier"]  # var_identifier is $,@,%
+
+    def __init__(
+        self,
+        stack: Tuple[INode, ...],
+        node: INode,
+        token: IRobotToken,
+        var_identifier: str,
+    ):
+        self.stack = stack
+        self.node = node
+        self.token = token
+        self.var_identifier = var_identifier
+
+
 class KeywordUsageInfo:
     __slots__ = [
         "stack",

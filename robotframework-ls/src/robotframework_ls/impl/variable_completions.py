@@ -12,7 +12,7 @@ from robotframework_ls.impl.protocols import (
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.protocols import check_implements, IDocumentSelection
 from typing import Optional, List
-from robotframework_ls.impl.text_utilities import normalize_robot_name
+from robotframework_ls.impl.text_utilities import normalize_robot_name, is_variable_text
 from robocorp_ls_core.lsp import CompletionItemTypedDict
 import itertools
 
@@ -30,6 +30,13 @@ class _VariableFoundFromToken(object):
     ):
         self.completion_context = completion_context
         self.variable_token = variable_token
+
+        if is_variable_text(variable_token.value):
+            self._col_offset = self.variable_token.col_offset + 2
+            self._end_col_offset = variable_token.end_col_offset - 1
+        else:
+            self._col_offset = self.variable_token.col_offset
+            self._end_col_offset = variable_token.end_col_offset
 
         if variable_name is None:
             variable_name = str(variable_token)
@@ -60,11 +67,11 @@ class _VariableFoundFromToken(object):
 
     @property
     def col_offset(self):
-        return self.variable_token.col_offset
+        return self._col_offset
 
     @property
     def end_col_offset(self):
-        return self.variable_token.end_col_offset
+        return self._end_col_offset
 
     def __typecheckself__(self) -> None:
         _: IVariableFound = check_implements(self)

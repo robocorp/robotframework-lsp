@@ -412,28 +412,12 @@ def _is_python_eval_var(normalized_variable_name):
 
 @lru_cache(maxsize=1000)
 def _skip_variable_analysis(normalized_variable_name):
-    from robotframework_ls.impl.ast_utils import create_token
-    from robotframework_ls.impl.ast_utils import tokenize_variables
 
     if _is_number_var(normalized_variable_name):
         return True
 
     if _is_python_eval_var(normalized_variable_name):
         return True
-
-    try:
-        has_inner_variables = False
-        for t in tokenize_variables(create_token(normalized_variable_name)):
-            if t.type == t.VARIABLE:
-                has_inner_variables = True
-                break
-
-        # We don't currently resolve recursively for this analysis,
-        # so, just bail out.
-        if has_inner_variables:
-            return True
-    except:
-        pass
 
     return False
 
@@ -541,7 +525,7 @@ def _collect_undefined_variables_errors(initial_completion_context):
             continue
 
         var_name = token_info.token.value
-        if var_name.startswith("%"):
+        if token_info.var_identifier == "%":
             from robotframework_ls.impl.variable_resolve import extract_variable_base
 
             if env_vars_upper is None:

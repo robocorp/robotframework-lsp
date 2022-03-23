@@ -50,15 +50,22 @@ def robot_search_variable(text: str) -> Optional[IRobotVariableMatch]:
     return None
 
 
-def iter_variables(string: str) -> Iterator[Tuple[str, str, str]]:
+def iter_robot_variable_matches(
+    string: str,
+) -> Iterator[Tuple[IRobotVariableMatch, int]]:
+    """
+    Provides the IRobotVariableMatch and the relative index for the match in the string.
+    """
     # Based on robot.variables.search.VariableIterator
     remaining = string
+    relative_index = 0
     while True:
         robot_match = robot_search_variable(remaining)
         if not robot_match:
             break
+        yield robot_match, relative_index
         remaining = robot_match.after
-        yield robot_match.before, robot_match.match, remaining
+        relative_index += len(robot_match.before) + len(robot_match.match)
 
 
 def find_split_index(string: str) -> int:
@@ -75,16 +82,19 @@ def find_split_index(string: str) -> int:
 @lru_cache(maxsize=200)
 def _find_split_index(string: str, eq_i: int) -> int:
     try:
-        variables = tuple(iter_variables(string))
+        variables = tuple(iter_robot_variable_matches(string))
         if not variables and "\\" not in string:
             return eq_i
 
-        relative_index = 0
-        for before, match, string in variables:
+        for robot_match, relative_index in variables:
+            before, string = (
+                robot_match.before,
+                robot_match.after,
+            )
             try:
                 return _find_split_index_from_part(before) + relative_index
             except ValueError:
-                relative_index += len(before) + len(match)
+                pass
         return _find_split_index_from_part(string) + relative_index
     except ValueError:
         return -1

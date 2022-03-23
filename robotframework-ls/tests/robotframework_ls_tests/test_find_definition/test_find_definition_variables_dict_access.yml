@@ -1,5 +1,5 @@
-- col_offset: 0
-  end_col_offset: 9
+- col_offset: 2
+  end_col_offset: 8
   end_lineno: 2
   lineno: 2
   source: case4.robot

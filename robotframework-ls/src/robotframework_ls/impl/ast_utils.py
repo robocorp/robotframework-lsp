@@ -1,5 +1,16 @@
 import sys
-from typing import Iterator, Optional, List, Tuple, Any, Union, Hashable, Callable, Dict
+from typing import (
+    Iterator,
+    Optional,
+    List,
+    Tuple,
+    Any,
+    Union,
+    Hashable,
+    Callable,
+    Dict,
+    Iterable,
+)
 
 import ast as ast_module
 from robocorp_ls_core.lsp import Error, RangeTypedDict, PositionTypedDict
@@ -11,10 +22,15 @@ from robotframework_ls.impl.protocols import (
     ILibraryImportNode,
     IRobotToken,
     INode,
+    IRobotVariableMatch,
+    VarTokenInfo,
 )
 from robotframework_ls.impl.text_utilities import normalize_robot_name
 from robocorp_ls_core.basic import isinstance_name
-from robotframework_ls.impl.keywords_in_args import KEYWORD_NAME_TO_KEYWORD_INDEX
+from robotframework_ls.impl.keywords_in_args import (
+    KEYWORD_NAME_TO_KEYWORD_INDEX,
+    KEYWORD_NAME_TO_CONDITION_INDEX,
+)
 import functools
 import weakref
 import threading
@@ -619,6 +635,11 @@ def iter_setting_sections(ast) -> Iterator[NodeInfo]:
     yield from ast.iter_indexed("SettingSection")
 
 
+@_convert_ast_to_indexer
+def iter_indexed(ast, clsname) -> Iterator[NodeInfo]:
+    yield from ast.iter_indexed(clsname)
+
+
 def iter_keyword_arguments_as_str(ast, tokenize_keyword_name=False) -> Iterator[str]:
     for token in iter_keyword_arguments_as_tokens(ast, tokenize_keyword_name):
         yield token.value
@@ -760,9 +781,50 @@ CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET = frozenset(
     _CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_TUPLE
 )
 
+CLASSES_WTH_EXPRESSION_ARGUMENTS = ("IfHeader", "ElseIfHeader", "WhileHeader")
+
+
+def _tokenize_subvars(initial_token) -> Iterator[Tuple[IRobotToken, str]]:
+    from robot.api import Token
+
+    if "{" not in initial_token.value:
+        return
+
+    if initial_token.value.startswith("{") and initial_token.value.endswith("}"):
+        # i.e.: We're dealing with an expression.
+        _first, second, _third = split_token_in_3(
+            initial_token,
+            "variableOperator",
+            "argumentValue",
+            "variableOperator",
+            1,
+            -1,
+        )
+
+        for tok in iter_expression_variables(second):
+            yield tok, "$"
+        return
+
+    skip_type = ""
+    robot_match_generator = RobotMatchTokensGenerator(initial_token, skip_type)
+    from robotframework_ls.impl.variable_resolve import iter_robot_variable_matches
+
+    for robot_match, relative_index in iter_robot_variable_matches(initial_token.value):
+        for token in robot_match_generator.gen_tokens_from_robot_match(
+            robot_match, relative_index, skip_type, Token.VARIABLE
+        ):
+            if token.type == Token.VARIABLE:
+                found = False
+                for v in _tokenize_subvars(token):
+                    found = True
+                    yield v
+
+                if not found:
+                    yield token, robot_match.identifier
+
 
 @_convert_ast_to_indexer
-def iter_variable_references(ast) -> Iterator[TokenInfo]:
+def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
     # Note: we collect only the references, not the definitions here!
     for clsname in (
         "KeywordCall",
@@ -781,11 +843,16 @@ def iter_variable_references(ast) -> Iterator[TokenInfo]:
                     if token.type in (token.ARGUMENT, token.NAME):
                         for tok in tokenize_variables(token):
                             if tok.type == token.VARIABLE:
-                                yield TokenInfo(stack, node, tok)
+
+                                # We need to check for inner variables (as in
+                                # this case we validate those).
+                                for t, var_identifier in _tokenize_subvars(tok):
+                                    yield VarTokenInfo(stack, node, t, var_identifier)
+
             except:
                 log.exception("Unable to tokenize: %s", token)
 
-    for clsname in ("IfHeader", "WhileHeader"):
+    for clsname in CLASSES_WTH_EXPRESSION_ARGUMENTS:
         for node_info in ast.iter_indexed(clsname):
             stack = node_info.stack
             node = node_info.node
@@ -796,7 +863,7 @@ def iter_variable_references(ast) -> Iterator[TokenInfo]:
                     if token.type == token.ARGUMENT:
                         for tok in iter_expression_variables(token):
                             if tok.type == token.VARIABLE:
-                                yield TokenInfo(stack, node, tok)
+                                yield VarTokenInfo(stack, node, tok, "$")
             except:
                 log.exception("Unable to tokenize: %s", token)
 
@@ -956,9 +1023,15 @@ def create_keyword_usage_info_from_token(
 
 
 class _ConsiderArgsAsKeywordNames:
-    def __init__(self, normalized_keyword_name, consider_keyword_at_index):
+    def __init__(
+        self,
+        normalized_keyword_name,
+        consider_keyword_at_index,
+        consider_condition_at_index,
+    ):
         self._normalized_keyword_name = normalized_keyword_name
         self._consider_keyword_at_index = consider_keyword_at_index
+        self._consider_condition_at_index = consider_condition_at_index
         self._current_arg = 0
 
         # Run Keyword If is special because it has 'ELSE IF' / 'ELSE'
@@ -969,6 +1042,7 @@ class _ConsiderArgsAsKeywordNames:
         self._stack_kind = None
         self._stack = None
         self.started_match = False
+        self.was_last_expression_argument = False
 
     def consider_current_argument_token_as_keyword(self, token) -> bool:
         assert token.type == token.ARGUMENT
@@ -992,11 +1066,16 @@ class _ConsiderArgsAsKeywordNames:
 
             if self._stack is not None:
                 if self._stack_kind == "ELSE IF":
+                    self.was_last_expression_argument = len(self._stack) == 1
                     return len(self._stack) == 2
 
                 if self._stack_kind == "ELSE":
+                    self.was_last_expression_argument = False
                     return len(self._stack) == 1
 
+        self.was_last_expression_argument = (
+            self._current_arg == self._consider_condition_at_index
+        )
         return self._current_arg == self._consider_keyword_at_index
 
 
@@ -1008,9 +1087,17 @@ def get_args_as_keywords_handler(node) -> Optional[_ConsiderArgsAsKeywordNames]:
             consider_keyword_at_index = KEYWORD_NAME_TO_KEYWORD_INDEX.get(
                 normalized_keyword_name
             )
-            if consider_keyword_at_index is not None:
+            consider_condition_at_index = KEYWORD_NAME_TO_CONDITION_INDEX.get(
+                normalized_keyword_name
+            )
+            if (
+                consider_keyword_at_index is not None
+                or consider_condition_at_index is not None
+            ):
                 return _ConsiderArgsAsKeywordNames(
-                    normalized_keyword_name, consider_keyword_at_index
+                    normalized_keyword_name,
+                    consider_keyword_at_index,
+                    consider_condition_at_index,
                 )
     return None
 
@@ -1184,26 +1271,255 @@ def create_range_from_token(token) -> RangeTypedDict:
     return code_lens_range
 
 
+def split_token_in_3(
+    token: IRobotToken,
+    first_token_type: str,
+    second_token_type: str,
+    third_token_type,
+    start_pos,
+    end_pos,
+) -> Tuple[IRobotToken, IRobotToken, IRobotToken]:
+    first = copy_token_replacing(
+        token,
+        type=first_token_type,
+        value=token.value[:start_pos],
+    )
+    second = copy_token_replacing(
+        token,
+        type=second_token_type,
+        value=token.value[start_pos:end_pos],
+        col_offset=token.col_offset + start_pos,
+    )
+
+    if end_pos < 0:
+        third = copy_token_replacing(
+            token,
+            type=third_token_type,
+            value=token.value[:end_pos],
+            col_offset=second.end_col_offset,
+        )
+    else:
+        third = copy_token_replacing(
+            token,
+            type=third_token_type,
+            value=token.value[end_pos:],
+            col_offset=second.end_col_offset,
+        )
+
+    return first, second, third
+
+
+def split_token_change_first(
+    token: IRobotToken, first_token_type: str, position: int
+) -> Tuple[IRobotToken, IRobotToken]:
+    prefix = copy_token_replacing(
+        token,
+        type=first_token_type,
+        value=token.value[:position],
+    )
+    remainder = copy_token_replacing(
+        token, value=token.value[position:], col_offset=prefix.end_col_offset
+    )
+    return prefix, remainder
+
+
+def split_token_change_second(
+    token: IRobotToken, second_token_type: str, position: int
+) -> Tuple[IRobotToken, IRobotToken]:
+    prefix = copy_token_replacing(
+        token,
+        value=token.value[:position],
+    )
+    remainder = copy_token_replacing(
+        token,
+        value=token.value[position:],
+        col_offset=prefix.end_col_offset,
+        type=second_token_type,
+    )
+    return prefix, remainder
+
+
 def get_library_arguments_serialized(library) -> Optional[str]:
     return "::".join(library.args) if library.args else None
 
 
-def iter_expression_variables(expression_token: IRobotToken):
+def iter_expression_variables(expression_token: IRobotToken) -> Iterator[IRobotToken]:
+    from robot.api import Token
+
+    for tok in iter_expression_tokens(expression_token):
+        if tok.type == "variable":
+            yield copy_token_replacing(tok, type=Token.VARIABLE)
+
+
+class RobotMatchTokensGenerator:
+    def __init__(self, token, default_type):
+        self.default_type = default_type
+        self.token = token
+        self.last_gen_end_offset = 0
+
+    def gen_default_type(self, until_offset: int) -> Iterable[IRobotToken]:
+        token = self.token
+        if until_offset > self.last_gen_end_offset:
+            from robot.api import Token
+
+            val = token.value[self.last_gen_end_offset : until_offset]
+            if val.strip():  # Don't generate just for whitespaces.
+                yield Token(
+                    self.default_type,
+                    val,
+                    token.lineno,
+                    token.col_offset + self.last_gen_end_offset,
+                    token.error,
+                )
+
+    def gen_tokens_from_robot_match(
+        self,
+        robot_match: IRobotVariableMatch,
+        last_relative_index: int,
+        op_type: str = "variableOperator",
+        var_type: str = "variable",
+    ) -> Iterable[IRobotToken]:
+        from robot.api import Token
+
+        token = self.token
+        i = token.value.find(robot_match.base, robot_match.start + last_relative_index)
+
+        start_offset = robot_match.start + last_relative_index
+
+        yield from self.gen_default_type(start_offset)
+
+        yield Token(
+            op_type,
+            token.value[robot_match.start + last_relative_index : i],
+            token.lineno,
+            token.col_offset + start_offset,
+            token.error,
+        )
+
+        yield Token(
+            var_type,
+            robot_match.base,
+            token.lineno,
+            token.col_offset + i,
+            token.error,
+        )
+
+        base = robot_match.base
+        assert base
+        j = i + len(base)
+
+        val = token.value[j : robot_match.end + last_relative_index]
+        yield Token(
+            op_type,
+            val,
+            token.lineno,
+            token.col_offset + j,
+            token.error,
+        )
+
+        self.last_gen_end_offset = j + len(val)
+
+
+def iter_expression_tokens(
+    expression_token: IRobotToken, default_type="argument"
+) -> Iterator[IRobotToken]:
+    from robotframework_ls.impl.variable_resolve import iter_robot_variable_matches
     from tokenize import generate_tokens, NAME, ERRORTOKEN
     from io import StringIO
     from robot.api import Token
 
-    gen_var = False
+    robot_match_generator = RobotMatchTokensGenerator(expression_token, default_type)
+
+    # Note: tokens yielded are tokens which are internal LS types (not RF types).
+    # Use: iter_expression_variables to get the vars with RF types.
+
+    # See: robot.variables.evaluation.evaluate_expression
+
+    iter_robot_match = iter_robot_variable_matches(expression_token.value)
+    last_robot_match = None
+
+    try:
+        last_robot_match, last_relative_index = next(iter_robot_match)
+    except StopIteration:
+        pass
+
+    gen_var_token_info: Any = None
     for token_info in generate_tokens(StringIO(expression_token.value).readline):
         if token_info.type == ERRORTOKEN and token_info.string == "$":
-            gen_var = True
+            gen_var_token_info = token_info
 
-        elif gen_var and token_info.type == NAME:
-            gen_var = False
-            yield Token(
-                Token.VARIABLE,
-                token_info.string,
-                expression_token.lineno,
-                expression_token.col_offset + token_info.start[1],
-                expression_token.error,
-            )
+        elif gen_var_token_info is not None and token_info.type == NAME:
+            if gen_var_token_info.start[1] == token_info.start[1] - 1:
+
+                while True:
+                    if last_robot_match is None or last_robot_match.base is None:
+                        break
+
+                    if (
+                        last_robot_match.start + last_relative_index
+                        < gen_var_token_info.start[1]
+                    ):
+                        yield from robot_match_generator.gen_tokens_from_robot_match(
+                            last_robot_match, last_relative_index
+                        )
+
+                        last_robot_match = None
+
+                        try:
+                            last_robot_match, last_relative_index = next(
+                                iter_robot_match
+                            )
+                        except StopIteration:
+                            pass
+                    else:
+                        break
+
+                start_offset = gen_var_token_info.start[1]
+                yield from robot_match_generator.gen_default_type(start_offset)
+
+                yield Token(
+                    "variableOperator",
+                    gen_var_token_info.string,
+                    expression_token.lineno,
+                    expression_token.col_offset + start_offset,
+                    expression_token.error,
+                )
+
+                yield Token(
+                    "variable",
+                    token_info.string,
+                    expression_token.lineno,
+                    expression_token.col_offset + token_info.start[1],
+                    expression_token.error,
+                )
+
+                robot_match_generator.last_gen_end_offset = token_info.start[1] + len(
+                    token_info.string
+                )
+
+            gen_var_token_info = None
+
+    while True:
+        if last_robot_match is None or last_robot_match.base is None:
+            break
+
+        yield from robot_match_generator.gen_tokens_from_robot_match(
+            last_robot_match, last_relative_index
+        )
+
+        last_robot_match = None
+
+        try:
+            last_robot_match, last_relative_index = next(iter_robot_match)
+        except StopIteration:
+            pass
+
+    yield from robot_match_generator.gen_default_type(len(expression_token.value))
+
+
+def is_node_with_expression_argument(node):
+    if node.__class__.__name__ == "KeywordCall":
+        kw_name = node.keyword
+        return kw_name and normalize_robot_name(kw_name) == "evaluate"
+    else:
+        return node.__class__.__name__ in CLASSES_WTH_EXPRESSION_ARGUMENTS

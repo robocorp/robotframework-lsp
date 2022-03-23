@@ -1,10 +1,10 @@
-- message: 'Undefined variable: ${var}'
+- message: 'Undefined variable: var'
   range:
     end:
-      character: 28
+      character: 27
       line: 8
     start:
-      character: 22
+      character: 24
       line: 8
   severity: 1
   source: robotframework

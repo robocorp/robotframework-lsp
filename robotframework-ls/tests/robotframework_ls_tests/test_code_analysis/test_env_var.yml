@@ -1,10 +1,10 @@
-- message: 'Undefined environment variable: %{not_there}'
+- message: 'Undefined environment variable: not_there'
   range:
     end:
-      character: 23
+      character: 22
       line: 3
     start:
-      character: 11
+      character: 13
       line: 3
   severity: 1
   source: robotframework

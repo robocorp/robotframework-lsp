@@ -1,88 +1,88 @@
 - kind: 1
   range:
     end:
-      character: 18
+      character: 17
       line: 2
     start:
-      character: 11
+      character: 13
       line: 2
-- kind: 1
-  range:
-    end:
-      character: 18
-      line: 3
-    start:
-      character: 12
-      line: 3
-- kind: 1
-  range:
-    end:
-      character: 23
-      line: 4
-    start:
-      character: 16
-      line: 4
-- kind: 1
-  range:
-    end:
-      character: 21
-      line: 5
-    start:
-      character: 15
-      line: 5
-- kind: 1
-  range:
-    end:
-      character: 31
-      line: 5
-    start:
-      character: 25
-      line: 5
-- kind: 1
-  range:
-    end:
-      character: 24
-      line: 6
-    start:
-      character: 18
-      line: 6
-- kind: 1
-  range:
-    end:
-      character: 35
-      line: 6
-    start:
-      character: 28
-      line: 6
-- kind: 1
-  range:
-    end:
-      character: 8
-      line: 9
-    start:
-      character: 0
-      line: 9
 - kind: 1
   range:
     end:
       character: 17
-      line: 13
+      line: 3
     start:
-      character: 11
-      line: 13
+      character: 14
+      line: 3
 - kind: 1
   range:
     end:
-      character: 10
-      line: 14
-    start:
-      character: 4
-      line: 14
-- kind: 1
-  range:
-    end:
-      character: 29
-      line: 14
-    start:
       character: 22
+      line: 4
+    start:
+      character: 18
+      line: 4
+- kind: 1
+  range:
+    end:
+      character: 20
+      line: 5
+    start:
+      character: 17
+      line: 5
+- kind: 1
+  range:
+    end:
+      character: 30
+      line: 5
+    start:
+      character: 27
+      line: 5
+- kind: 1
+  range:
+    end:
+      character: 23
+      line: 6
+    start:
+      character: 20
+      line: 6
+- kind: 1
+  range:
+    end:
+      character: 34
+      line: 6
+    start:
+      character: 30
+      line: 6
+- kind: 1
+  range:
+    end:
+      character: 7
+      line: 9
+    start:
+      character: 2
+      line: 9
+- kind: 1
+  range:
+    end:
+      character: 16
+      line: 13
+    start:
+      character: 13
+      line: 13
+- kind: 1
+  range:
+    end:
+      character: 9
+      line: 14
+    start:
+      character: 6
+      line: 14
+- kind: 1
+  range:
+    end:
+      character: 28
+      line: 14
+    start:
+      character: 24
       line: 14

@@ -11,13 +11,21 @@ KEYWORD_NAME_TO_KEYWORD_INDEX = {
     "runkeywordandreturnstatus": 1,  # run_keyword_and_return_status
     "runkeywordandwarnonfailure": 1,  # run_keyword_and_warn_on_failure
     "runkeywordif": 2,  # run_keyword_if
-    "runkeywordifallcriticaltestspassed": 1,  # run_keyword_if_all_critical_tests_passed
     "runkeywordifalltestspassed": 1,  # run_keyword_if_all_tests_passed
-    "runkeywordifanycriticaltestsfailed": 1,  # run_keyword_if_any_critical_tests_failed
     "runkeywordifanytestsfailed": 1,  # run_keyword_if_any_tests_failed
     "runkeywordiftestfailed": 1,  # run_keyword_if_test_failed
     "runkeywordiftestpassed": 1,  # run_keyword_if_test_passed
     "runkeywordiftimeoutoccurred": 1,  # run_keyword_if_timeout_occurred
     "runkeywordunless": 2,  # run_keyword_unless
     "waituntilkeywordsucceeds": 3,  # wait_until_keyword_succeeds
+}
+KEYWORD_NAME_TO_CONDITION_INDEX = {
+    "continueforloopif": 1,  # continue_for_loop_if
+    "exitforloopif": 1,  # exit_for_loop_if
+    "passexecutionif": 1,  # pass_execution_if
+    "returnfromkeywordif": 1,  # return_from_keyword_if
+    "runkeywordandreturnif": 1,  # run_keyword_and_return_if
+    "runkeywordif": 1,  # run_keyword_if
+    "setvariableif": 1,  # set_variable_if
+    "skipif": 1,  # skip_if
 }

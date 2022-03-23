@@ -183,3 +183,93 @@ def test_ast_extract_expression_variables(data_regression):
         )
 
     data_regression.check(collected)
+
+
+def test_ast_extract_expression_tokens(data_regression):
+    from robotframework_ls.impl import ast_utils
+    from robot.api import Token
+
+    collected = []
+    for token in ast_utils.iter_expression_tokens(
+        Token(Token.ARGUMENT, "$v1 > ${v2} > ${v3} > $v4", 1, 0)
+    ):
+        collected.append(
+            {
+                "type": token.type,
+                "value": token.value,
+                "lineno": token.lineno,
+                "col_offset": token.col_offset,
+            }
+        )
+
+    data_regression.check(collected)
+
+
+def test_in_expression():
+    from robotframework_ls.impl.robot_workspace import RobotDocument
+    from robotframework_ls.impl import ast_utils
+
+    document = RobotDocument(
+        "uri",
+        """
+*** Keyword **
+my
+    Run Keyword If   $v1 == ${v2}    CallThis""",
+    )
+    ast = document.get_ast()
+    found = []
+    for node_info in ast_utils.iter_indexed(ast, "KeywordCall"):
+        handler = ast_utils.get_args_as_keywords_handler(node_info.node)
+        for tok in node_info.node.tokens:
+            if tok.type == tok.ARGUMENT:
+                found.append(
+                    f"is_kw {tok.value} = {handler.consider_current_argument_token_as_keyword(tok)}",
+                )
+                found.append(
+                    f"was_exp {tok.value} = {handler.was_last_expression_argument}",
+                )
+
+    assert found == [
+        "is_kw $v1 == ${v2} = False",
+        "was_exp $v1 == ${v2} = True",
+        "is_kw CallThis = True",
+        "was_exp CallThis = False",
+    ]
+
+
+def test_in_expression_else_if():
+    from robotframework_ls.impl.robot_workspace import RobotDocument
+    from robotframework_ls.impl import ast_utils
+
+    document = RobotDocument(
+        "uri",
+        """
+*** Keyword **
+my
+    Run Keyword If   $v1 == ${v2}    CallThis    ELSE IF    $v1 == ${v2}    CallThis""",
+    )
+    ast = document.get_ast()
+    found = []
+    for node_info in ast_utils.iter_indexed(ast, "KeywordCall"):
+        handler = ast_utils.get_args_as_keywords_handler(node_info.node)
+        for tok in node_info.node.tokens:
+            if tok.type == tok.ARGUMENT:
+                found.append(
+                    f"is_kw {tok.value} = {handler.consider_current_argument_token_as_keyword(tok)}",
+                )
+                found.append(
+                    f"was_exp {tok.value} = {handler.was_last_expression_argument}",
+                )
+
+    assert found == [
+        "is_kw $v1 == ${v2} = False",
+        "was_exp $v1 == ${v2} = True",
+        "is_kw CallThis = True",
+        "was_exp CallThis = False",
+        "is_kw ELSE IF = False",
+        "was_exp ELSE IF = False",
+        "is_kw $v1 == ${v2} = False",
+        "was_exp $v1 == ${v2} = True",
+        "is_kw CallThis = True",
+        "was_exp CallThis = False",
+    ]

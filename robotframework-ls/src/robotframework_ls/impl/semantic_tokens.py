@@ -68,51 +68,18 @@ del i
 del value
 
 
-def _split_token_change_first(
-    token: IRobotToken, first_token_type: str, position: int
-) -> Tuple[IRobotToken, IRobotToken]:
-    from robotframework_ls.impl import ast_utils
-
-    prefix = ast_utils.copy_token_replacing(
-        token,
-        type=first_token_type,
-        value=token.value[:position],
-    )
-    remainder = ast_utils.copy_token_replacing(
-        token, value=token.value[position:], col_offset=prefix.end_col_offset
-    )
-    return prefix, remainder
-
-
-def _split_token_change_second(
-    token: IRobotToken, second_token_type: str, position: int
-) -> Tuple[IRobotToken, IRobotToken]:
-    from robotframework_ls.impl import ast_utils
-
-    prefix = ast_utils.copy_token_replacing(
-        token,
-        value=token.value[:position],
-    )
-    remainder = ast_utils.copy_token_replacing(
-        token,
-        value=token.value[position:],
-        col_offset=prefix.end_col_offset,
-        type=second_token_type,
-    )
-    return prefix, remainder
-
-
 def _extract_gherkin_token_from_keyword(
     keyword_token: IRobotToken,
 ) -> Tuple[Optional[IRobotToken], IRobotToken]:
     import re
+    from robotframework_ls.impl.ast_utils import split_token_change_first
 
     result = re.match(
         r"^((Given|When|Then|And|But)\s+)", keyword_token.value, flags=re.IGNORECASE
     )
     if result:
         gherkin_token_length = len(result.group(1))
-        return _split_token_change_first(keyword_token, "control", gherkin_token_length)
+        return split_token_change_first(keyword_token, "control", gherkin_token_length)
 
     return None, keyword_token
 
@@ -120,6 +87,8 @@ def _extract_gherkin_token_from_keyword(
 def _extract_library_token_from_keyword(
     keyword_token: IRobotToken, scope: "_SemanticTokensScope"
 ) -> Tuple[Optional[IRobotToken], IRobotToken]:
+    from robotframework_ls.impl.ast_utils import split_token_change_first
+
     if not "." in keyword_token.value:
         return None, keyword_token
 
@@ -129,7 +98,7 @@ def _extract_library_token_from_keyword(
 
     for library_name in potential_candidates:
         if library_name in scope.imported_libraries:
-            return _split_token_change_first(keyword_token, "name", len(library_name))
+            return split_token_change_first(keyword_token, "name", len(library_name))
     return None, keyword_token
 
 
@@ -227,7 +196,7 @@ def _tokenize_changing_argument_to_type(tokenize_variables_generator, use_type):
             yield tok
 
 
-def _tokenize_variables(token):
+def _tokenize_variables(token: IRobotToken) -> Iterator[IRobotToken]:
 
     if token.type in (KEYWORD, ASSIGN):
         from robotframework_ls.impl import ast_utils
@@ -254,29 +223,53 @@ def semantic_tokens_range(context, range):
     return []
 
 
-def _tokenize_token(node, use_token, scope: "_SemanticTokensScope"):
+def _tokenize_token(
+    node, use_token, scope: "_SemanticTokensScope"
+) -> Iterator[Tuple[IRobotToken, int]]:
     if use_token.type in (use_token.EOL, use_token.SEPARATOR):
         # Fast way out for the most common tokens (which have no special handling).
         return
 
+    from robotframework_ls.impl.variable_resolve import find_split_index
+
     from robotframework_ls.impl.ast_utils import (
         CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET,
         copy_token_replacing,
+        split_token_change_first,
+        is_node_with_expression_argument,
+        iter_expression_tokens,
     )
 
     use_token_type = use_token.type
     in_documentation = False
+    token_type_index: Optional[int]
 
     # Step 1: cast to KEYWORD if needed.
     if use_token_type == ARGUMENT:
         in_documentation = node.__class__.__name__ == "Documentation"
 
         if not in_documentation:
+
+            in_expression = is_node_with_expression_argument(node)
             if scope.args_as_keywords_handler is not None:
                 if scope.args_as_keywords_handler.consider_current_argument_token_as_keyword(
                     use_token
                 ):
                     use_token_type = KEYWORD
+
+                if not in_expression:
+                    in_expression = (
+                        scope.args_as_keywords_handler.was_last_expression_argument
+                    )
+
+            if in_expression:
+                for token in iter_expression_tokens(use_token, "argumentValue"):
+                    token_type_index = scope.get_index_from_internal_token_type(
+                        token.type
+                    )
+                    if token_type_index is not None:
+                        yield token, token_type_index
+                return
 
     if use_token_type == NAME:
         if node.__class__.__name__ in CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET:
@@ -323,7 +316,7 @@ def _tokenize_token(node, use_token, scope: "_SemanticTokensScope"):
             if in_documentation:
                 equals_pos = -1
             else:
-                equals_pos = first_token.value.find("=")
+                equals_pos = find_split_index(first_token.value)
                 if equals_pos != -1:
                     # Found an equals... let's check if it's not a 'catenate', which
                     # doesn't really accept parameters and just concatenates all...
@@ -349,12 +342,12 @@ def _tokenize_token(node, use_token, scope: "_SemanticTokensScope"):
                         # performance isn't negatively impacted by it.
 
             if equals_pos != -1:
-                tok, first_token = _split_token_change_first(
+                tok, first_token = split_token_change_first(
                     first_token, "parameterName", equals_pos
                 )
                 yield tok, PARAMETER_NAME_INDEX
 
-                tok, first_token = _split_token_change_first(
+                tok, first_token = split_token_change_first(
                     first_token, "variableOperator", 1
                 )
                 yield tok, VARIABLE_OPERATOR_INDEX
@@ -367,24 +360,65 @@ def _tokenize_token(node, use_token, scope: "_SemanticTokensScope"):
         for token in iter_in:
             token_type_index = scope.get_index_from_rf_token_type(token.type)
             if token_type_index is not None:
-                yield from _tokenized_args(token, token_type_index, in_documentation)
+                yield from _tokenized_args(
+                    token, token_type_index, in_documentation, scope
+                )
 
 
-def _tokenize_subvars(var_token, token_type_index):
+def _tokenize_subvars(var_token, token_type_index, scope):
     if "{" not in var_token.value:
         yield var_token, token_type_index
         return
 
-    try:
-        iter_in = var_token.tokenize_variables()
-    except:
-        yield var_token, token_type_index
-    else:
-        for tok in iter_in:
-            yield from _tokenized_args(tok, token_type_index, False)
+    if var_token.value.startswith("{") and var_token.value.endswith("}"):
+        from robotframework_ls.impl.ast_utils import split_token_in_3
+        from robotframework_ls.impl.ast_utils import iter_expression_tokens
+
+        # i.e.: We're dealing with an expression.
+        first, second, third = split_token_in_3(
+            var_token,
+            "variableOperator",
+            "argumentValue",
+            "variableOperator",
+            1,
+            -1,
+        )
+
+        yield first, VARIABLE_OPERATOR_INDEX
+
+        for token in iter_expression_tokens(second, "argumentValue"):
+            token_type_index = scope.get_index_from_internal_token_type(token.type)
+            if token_type_index is not None:
+                yield token, token_type_index
+
+        yield third, VARIABLE_OPERATOR_INDEX
+        return
+
+    from robotframework_ls.impl.ast_utils import RobotMatchTokensGenerator
+
+    robot_match_generator = RobotMatchTokensGenerator(var_token, "variable")
+    from robotframework_ls.impl.variable_resolve import iter_robot_variable_matches
+
+    for robot_match, relative_index in iter_robot_variable_matches(var_token.value):
+        for token in robot_match_generator.gen_tokens_from_robot_match(
+            robot_match,
+            relative_index,
+        ):
+            token_type_index = scope.get_index_from_internal_token_type(token.type)
+            if token_type_index is not None:
+                yield token, token_type_index
+
+    for token in robot_match_generator.gen_default_type(len(var_token.value)):
+        token_type_index = scope.get_index_from_internal_token_type(token.type)
+        if token_type_index is not None:
+            yield token, token_type_index
 
 
-def _tokenized_args(token, token_type_index, in_documentation):
+def _tokenized_args(token, token_type_index, in_documentation, scope):
+    from robotframework_ls.impl.ast_utils import split_token_change_first
+    from robotframework_ls.impl.ast_utils import split_token_change_second
+    from robotframework_ls.impl.ast_utils import split_token_in_3
+
     if in_documentation and token_type_index == ARGUMENT_INDEX:
         # Handle the doc itself (note that we may also tokenize docs
         # to include variables).
@@ -401,12 +435,12 @@ def _tokenized_args(token, token_type_index, in_documentation):
 
         after_token = None
         if variable_match.end > 0 and variable_match.end < len(token.value):
-            token, after_token = _split_token_change_first(
+            token, after_token = split_token_change_first(
                 token, token.type, variable_match.end
             )
 
         if variable_match.start > 0:
-            before_token, token = _split_token_change_first(
+            before_token, token = split_token_change_first(
                 token, token.type, variable_match.start
             )
             yield before_token, token_type_index
@@ -414,30 +448,34 @@ def _tokenized_args(token, token_type_index, in_documentation):
         base = variable_match.base
         if base:
             i = token.value.find(base)
-            op_start_token, token = _split_token_change_first(
-                token, "variableOperator", i
+            op_start_token, var_token, op_end_token = split_token_in_3(
+                token,
+                "variableOperator",
+                token.type,
+                "variableOperator",
+                i,
+                i + len(base),
             )
-            yield op_start_token, VARIABLE_OPERATOR_INDEX
 
-            var_token, op_end_token = _split_token_change_second(
-                token, "variableOperator", len(base)
-            )
-            yield from _tokenize_subvars(var_token, token_type_index)
+            yield op_start_token, VARIABLE_OPERATOR_INDEX
+            yield from _tokenize_subvars(var_token, token_type_index, scope)
 
             if variable_match.items:
                 token = op_end_token
                 for item in variable_match.items:
                     i = token.value.find(item)
 
-                    op_start_token, token = _split_token_change_first(
-                        token, "variableOperator", i
+                    op_start_token, var_token, op_end_token = split_token_in_3(
+                        token,
+                        "variableOperator",
+                        token.type,
+                        "variableOperator",
+                        i,
+                        i + len(item),
                     )
-                    yield op_start_token, VARIABLE_OPERATOR_INDEX
 
-                    var_token, op_end_token = _split_token_change_second(
-                        token, "variableOperator", len(item)
-                    )
-                    yield from _tokenize_subvars(var_token, token_type_index)
+                    yield op_start_token, VARIABLE_OPERATOR_INDEX
+                    yield from _tokenize_subvars(var_token, token_type_index, scope)
 
             yield op_end_token, VARIABLE_OPERATOR_INDEX
 
@@ -453,10 +491,10 @@ def _tokenized_args(token, token_type_index, in_documentation):
     ):
         # We want to do an additional tokenization on names to
         # convert '[Arguments]' to '[', 'Arguments', ']'
-        op_start_token, token = _split_token_change_first(token, "settingOperator", 1)
+        op_start_token, token = split_token_change_first(token, "settingOperator", 1)
         yield op_start_token, VARIABLE_OPERATOR_INDEX
 
-        var_token, op_end_token = _split_token_change_second(
+        var_token, op_end_token = split_token_change_second(
             token, "settingOperator", len(token.value) - 1
         )
         yield var_token, token_type_index
@@ -468,12 +506,12 @@ def _tokenized_args(token, token_type_index, in_documentation):
         eq_i = token.value.index("=")
         if eq_i != -1:
             # Convert limit=10 to 'limit' '=' '10'
-            var_start_token, token = _split_token_change_first(
+            var_start_token, token = split_token_change_first(
                 token, "parameterName", eq_i
             )
             yield var_start_token, PARAMETER_NAME_INDEX
 
-            var_token, var_end_token = _split_token_change_second(
+            var_token, var_end_token = split_token_change_second(
                 token, "variableOperator", 1
             )
             yield var_token, VARIABLE_OPERATOR_INDEX

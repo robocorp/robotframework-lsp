@@ -1,10 +1,10 @@
-- message: 'Undefined variable: @{lst}'
+- message: 'Undefined variable: lst'
   range:
     end:
-      character: 32
+      character: 31
       line: 3
     start:
-      character: 26
+      character: 28
       line: 3
   severity: 1
   source: robotframework

@@ -807,7 +807,9 @@ While loop executed once
             ("*** Test Cases ***", "header"),
             ("While loop executed once", "testCaseName"),
             ("WHILE", "control"),
-            ("$variable < 2", "argumentValue"),
+            ("$", "variableOperator"),
+            ("variable", "variable"),
+            (" < 2", "argumentValue"),
             ("Log", "keywordNameCall"),
             ("${", "variableOperator"),
             ("variable", "variable"),
@@ -817,7 +819,9 @@ While loop executed once
             ("}", "variableOperator"),
             ("=", "variableOperator"),
             ("Evaluate", "keywordNameCall"),
-            ("$variable + 1", "argumentValue"),
+            ("$", "variableOperator"),
+            ("variable", "variable"),
+            (" + 1", "argumentValue"),
             ("END", "control"),
         ],
     )
@@ -838,7 +842,9 @@ While loop
             ("*** Test Cases ***", "header"),
             ("While loop", "testCaseName"),
             ("WHILE", "control"),
-            ("$variable < 2", "argumentValue"),
+            ("$", "variableOperator"),
+            ("variable", "variable"),
+            (" < 2", "argumentValue"),
             ("limit", "parameterName"),
             ("=", "variableOperator"),
             ("10", "argumentValue"),
@@ -933,5 +939,146 @@ Some keyword
             ("Too low.", "argumentValue"),
             ("END", "control"),
             ("END", "control"),
+        ],
+    )
+
+
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 5 onwards")
+def test_semantic_highlighting_expressions(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Example
+    IF    $rc > 0
+        Op
+    ELSE IF    $rc < ${rc2}
+        Op2
+    ELSE
+        Fail    Unexpected rc: ${rc}
+    END
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Example", "testCaseName"),
+            ("IF", "control"),
+            ("$", "variableOperator"),
+            ("rc", "variable"),
+            (" > 0", "argumentValue"),
+            ("Op", "keywordNameCall"),
+            ("ELSE IF", "control"),
+            ("$", "variableOperator"),
+            ("rc", "variable"),
+            (" < ", "argumentValue"),
+            ("${", "variableOperator"),
+            ("rc2", "variable"),
+            ("}", "variableOperator"),
+            ("Op2", "keywordNameCall"),
+            ("ELSE", "control"),
+            ("Fail", "keywordNameCall"),
+            ("Unexpected rc: ", "argumentValue"),
+            ("${", "variableOperator"),
+            ("rc", "variable"),
+            ("}", "variableOperator"),
+            ("END", "control"),
+        ],
+    )
+
+
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 5 onwards")
+def test_semantic_highlighting_expression_evaluate(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Example
+    Evaluate   $v1 == ${v2}
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Example", "testCaseName"),
+            ("Evaluate", "keywordNameCall"),
+            ("$", "variableOperator"),
+            ("v1", "variable"),
+            (" == ", "argumentValue"),
+            ("${", "variableOperator"),
+            ("v2", "variable"),
+            ("}", "variableOperator"),
+        ],
+    )
+
+
+def test_semantic_highlighting_expression_keyword_if(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Example
+    Run Keyword If   $v1 == ${v2}    Log to console    Foo
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Example", "testCaseName"),
+            ("Run Keyword If", "keywordNameCall"),
+            ("$", "variableOperator"),
+            ("v1", "variable"),
+            (" == ", "argumentValue"),
+            ("${", "variableOperator"),
+            ("v2", "variable"),
+            ("}", "variableOperator"),
+            ("Log to console", "keywordNameCall"),
+            ("Foo", "argumentValue"),
+        ],
+    )
+
+
+def test_semantic_highlighting_inner_exp(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Example
+    Log to console    ${{$a == ${b}}}
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Example", "testCaseName"),
+            ("Log to console", "keywordNameCall"),
+            ("${", "variableOperator"),
+            ("{", "variableOperator"),
+            ("$", "variableOperator"),
+            ("a", "variable"),
+            (" == ", "argumentValue"),
+            ("${", "variableOperator"),
+            ("b", "variable"),
+            ("}", "variableOperator"),
+            ("}}", "variableOperator"),
+            ("}", "variableOperator"),
+        ],
+    )
+
+
+def test_semantic_multiple_inner_vars(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Example
+    Log    ${a+${b}+${c}}
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Example", "testCaseName"),
+            ("Log", "keywordNameCall"),
+            ("${", "variableOperator"),
+            ("a+", "variable"),
+            ("${", "variableOperator"),
+            ("b", "variable"),
+            ("}", "variableOperator"),
+            ("+", "variable"),
+            ("${", "variableOperator"),
+            ("c", "variable"),
+            ("}", "variableOperator"),
+            ("}", "variableOperator"),
         ],
     )
