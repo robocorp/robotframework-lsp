@@ -359,9 +359,14 @@ class Range(_Base):
 
 
 class TextDocumentContentChangeEvent(_Base):
-    def __init__(self, range, rangeLength, text):
+    def __init__(
+        self, range: Optional[RangeTypedDict], rangeLength: Optional[int], text: str
+    ):
+        """
+        :param rangeLength: Deprecated
+        """
         self.range = range
-        self.rangeLength = rangeLength
+        self.rangeLength = rangeLength  # Deprecated
         self.text = text
 
 

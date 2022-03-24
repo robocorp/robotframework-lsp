@@ -170,3 +170,69 @@ def test_dependency_graph_caches_changes_during_compute(workspace):
     assert caches.cache_hits == 0
     dependency_graph = context.collect_dependency_graph()
     assert caches.cache_hits == 0
+
+
+def test_dependency_graph_invalidate(workspace):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robocorp_ls_core.lsp import TextDocumentContentChangeEvent
+    from robocorp_ls_core.lsp import TextDocumentItem
+
+    workspace.set_root("case_deps")
+    robot_doc = workspace.get_doc("root2.robot")
+    resource_doc = workspace.get_doc("some_resource.resource")
+    resource_doc = workspace.put_doc("some_resource.resource", resource_doc.source)
+
+    # Workaround case where a cache invalidation occurs due to the setup
+    # of the workspace...
+
+    import time
+
+    time.sleep(0.1)
+
+    ws: IRobotWorkspace = workspace.ws
+    caches: ICompletionContextWorkspaceCaches = ws.completion_context_workspace_caches
+    invalidations = caches.invalidations
+
+    while True:
+        context = CompletionContext(robot_doc, workspace=workspace.ws)
+        dependency_graph = context.collect_dependency_graph()
+        initial_dict = dependency_graph.to_dict()
+        initial_nodes_info = _nodes_info_to_compare(dependency_graph)
+
+        # Step 1: change nothing -> contents should be gotten from the cache.
+
+        context = CompletionContext(robot_doc, workspace=workspace.ws)
+        dependency_graph = context.collect_dependency_graph()
+        assert initial_dict == dependency_graph.to_dict()
+        check_nodes(initial_nodes_info, dependency_graph)
+        if invalidations == caches.invalidations:
+            break
+        else:
+            assert caches.invalidations < 5
+            invalidations = caches.invalidations
+
+    assert caches.cache_hits == 1
+
+    resources = list(
+        r for _, r in dependency_graph.iter_all_resource_imports_with_docs()
+    )
+    assert len(resources) == 1
+    assert resources[0].uri == resource_doc.uri
+
+    # Updating the document should invalidate the cache.
+    workspace.ws.update_document(
+        TextDocumentItem(resource_doc.uri),
+        TextDocumentContentChangeEvent(
+            None,
+            None,
+            text="""
+*** Keyword ***
+Renamed Keyword in resource
+    Log to console    Foo
+    """,
+        ),
+    )
+
+    context = CompletionContext(robot_doc, workspace=workspace.ws)
+    dependency_graph = context.collect_dependency_graph()
+    assert caches.cache_hits == 1

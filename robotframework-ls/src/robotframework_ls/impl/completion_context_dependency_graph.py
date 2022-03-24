@@ -1,4 +1,4 @@
-from typing import Iterator, Tuple, Optional, Deque, Dict, Sequence, List
+from typing import Iterator, Tuple, Optional, Deque, Dict, Sequence, List, Set
 
 from robocorp_ls_core.ordered_set import OrderedSet
 from robotframework_ls.impl.protocols import (
@@ -68,6 +68,8 @@ class CompletionContextDependencyGraph:
             str, Sequence[Tuple[IVariableImportNode, Optional[IRobotDocument]]]
         ] = {}
 
+        self._invalidate_on_uri_changes: Set[str] = set()
+
     def to_dict(self):
         libraries = {}
         for doc_uri, library_infos in self._doc_uri_to_library_infos.items():
@@ -104,6 +106,7 @@ class CompletionContextDependencyGraph:
         library_infos: OrderedSet[LibraryDependencyInfo],
     ):
         self._doc_uri_to_library_infos[doc_uri] = library_infos
+        self._invalidate_on_uri_changes.add(doc_uri)
 
     def add_resource_infos(
         self,
@@ -114,6 +117,11 @@ class CompletionContextDependencyGraph:
     ):
         self._doc_uri_to_resource_imports[doc_uri] = resource_imports_as_docs
 
+        self._invalidate_on_uri_changes.add(doc_uri)
+        for _, resource_doc in resource_imports_as_docs:
+            if resource_doc is not None:
+                self._invalidate_on_uri_changes.add(resource_doc.uri)
+
     def add_variable_infos(
         self,
         doc_uri: str,
@@ -122,6 +130,11 @@ class CompletionContextDependencyGraph:
         ],
     ):
         self._doc_uri_to_variable_imports[doc_uri] = new_variable_imports
+
+        self._invalidate_on_uri_changes.add(doc_uri)
+        for _, variable_doc in new_variable_imports:
+            if variable_doc is not None:
+                self._invalidate_on_uri_changes.add(variable_doc.uri)
 
     def get_root_doc(self) -> IRobotDocument:
         return self._root_doc
@@ -167,11 +180,7 @@ class CompletionContextDependencyGraph:
             # it's used in the cache key when checking so it won't be a match).
             return False
 
-        return (
-            uri in self._doc_uri_to_library_infos
-            or uri in self._doc_uri_to_resource_imports
-            or uri in self._doc_uri_to_variable_imports
-        )
+        return uri in self._invalidate_on_uri_changes
 
     @classmethod
     def _collect_library_info_from_completion_context(

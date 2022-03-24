@@ -31,7 +31,11 @@ from robocorp_ls_core.protocols import (
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.uris import uri_scheme, to_fs_path, normalize_drive
 import threading
-from robocorp_ls_core.lsp import TextDocumentItem, TextDocumentContentChangeEvent
+from robocorp_ls_core.lsp import (
+    TextDocumentItem,
+    TextDocumentContentChangeEvent,
+    RangeTypedDict,
+)
 import weakref
 from collections import namedtuple
 import time
@@ -760,10 +764,10 @@ class Document(object):
         """Apply a change to the document."""
         self._check_in_mutate_thread()
         text = change["text"]
-        change_range = change.get("range")
+        change_range: Optional[RangeTypedDict] = change.get("range")
         self._apply_change(change_range, text)
 
-    def _apply_change(self, change_range, text):
+    def _apply_change(self, change_range: Optional[RangeTypedDict], text):
         self._check_in_mutate_thread()
         if not change_range:
             # The whole file has changed
