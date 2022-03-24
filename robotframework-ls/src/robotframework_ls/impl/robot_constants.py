@@ -3,6 +3,7 @@ Constants that help in describing the accepted structure of a file.
 """
 from typing import Tuple, Dict
 import os
+from functools import lru_cache
 
 BDD_PREFIXES = ["given ", "when ", "then ", "and ", "but "]
 VARIABLE_PREFIXES = ("@", "%", "$", "&")
@@ -14,7 +15,7 @@ ALL_RELATED_FILE_EXTENSIONS = ROBOT_AND_TXT_FILE_EXTENSIONS + LIBRARY_FILE_EXTEN
 
 # From: robot.variables.scopes.GlobalVariables._set_built_in_variables
 # (var name and description)
-BUILTIN_VARIABLES = [
+_BUILTIN_VARIABLES = (
     ("${TEMPDIR}", "abspath(tempfile.gettempdir())"),
     ("${EXECDIR}", "abspath('.')"),
     ("${CURDIR}", "abspath('.')"),
@@ -50,7 +51,20 @@ BUILTIN_VARIABLES = [
     ("${TEST_NAME}", ""),
     ("&{SUITE_METADATA}", ""),
     ("@{TEST_TAGS}", ""),
-]
+)
+
+_RF5_BUILTIN_VARIABLES = (("${OPTIONS}", ""),)
+
+
+@lru_cache(None)
+def get_builtin_variables():
+    from robotframework_ls.impl.robot_version import get_robot_major_version
+
+    v = get_robot_major_version()
+    if v >= 5:
+        return _BUILTIN_VARIABLES + _RF5_BUILTIN_VARIABLES
+    return _BUILTIN_VARIABLES
+
 
 # i.e.: Just the variables we can resolve statically...
 BUILTIN_VARIABLES_RESOLVED = dict(

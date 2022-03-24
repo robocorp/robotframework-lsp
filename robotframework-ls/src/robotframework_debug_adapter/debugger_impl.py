@@ -42,7 +42,7 @@ from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
 )
 
 from robotframework_ls.impl.robot_constants import (
-    BUILTIN_VARIABLES,
+    get_builtin_variables,
     ROBOT_AND_TXT_FILE_EXTENSIONS,
 )
 
@@ -52,7 +52,7 @@ def get_builtin_normalized_names() -> FrozenSet[str]:
     from robotframework_ls.impl.text_utilities import normalize_robot_name
 
     normalized = list()
-    for k, _ in BUILTIN_VARIABLES:
+    for k, _ in get_builtin_variables():
         normalized.append(normalize_robot_name(k))
     return frozenset(normalized)
 

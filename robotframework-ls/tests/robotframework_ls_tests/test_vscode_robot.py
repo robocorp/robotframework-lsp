@@ -317,6 +317,7 @@ def test_variables_completions_integrated(
     language_server_tcp: ILanguageServerClient, ws_root_path, data_regression
 ):
     from robocorp_ls_core.workspace import Document
+    from robotframework_ls.impl.robot_version import get_robot_major_version
 
     language_server = language_server_tcp
     language_server.initialize(ws_root_path, process_id=os.getpid())
@@ -338,6 +339,14 @@ List Variable
     line, col = doc.get_last_line_col()
     completions = language_server.get_completions(uri, line, col)
     del completions["id"]
+
+    found_options = False
+    for i, completion in enumerate(completions["result"]):
+        if completion["label"] == "${OPTIONS}":
+            found_options = True
+            del completions["result"][i]
+            break
+    assert found_options == (get_robot_major_version() >= 5)
     data_regression.check(completions, "variable_completions")
 
     # Note: for libraries, if we found it, we keep it in memory (so, even though

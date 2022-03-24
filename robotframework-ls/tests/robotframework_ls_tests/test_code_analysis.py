@@ -1260,3 +1260,19 @@ Example
 """
 
     _collect_errors(workspace, doc, data_regression)
+
+
+def test_options(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Example
+    Log    ${OPTIONS}[include]
+"""
+
+    if get_robot_major_version() >= 5:
+        basename = "no_error"
+    else:
+        basename = None  # Default
+    _collect_errors(workspace, doc, data_regression, basename=basename)

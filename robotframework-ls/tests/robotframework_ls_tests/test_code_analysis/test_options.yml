@@ -1,0 +1,10 @@
+- message: 'Undefined variable: OPTIONS'
+  range:
+    end:
+      character: 20
+      line: 3
+    start:
+      character: 13
+      line: 3
+  severity: 1
+  source: robotframework

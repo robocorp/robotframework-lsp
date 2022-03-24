@@ -522,9 +522,9 @@ def _collect_from_settings(
 def _collect_from_builtins(
     completion_context: ICompletionContext, collector: IVariablesCollector
 ):
-    from robotframework_ls.impl.robot_constants import BUILTIN_VARIABLES
+    from robotframework_ls.impl.robot_constants import get_builtin_variables
 
-    for key, val in BUILTIN_VARIABLES:
+    for key, val in get_builtin_variables():
         key = _convert_name_to_var(key)
         if collector.accepts(key):
             collector.on_variable(_VariableFoundFromBuiltins(key, val))
