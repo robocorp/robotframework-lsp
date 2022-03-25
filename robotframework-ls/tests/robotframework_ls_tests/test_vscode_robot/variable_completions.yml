@@ -2,561 +2,593 @@ jsonrpc: '2.0'
 result:
 - deprecated: false
   documentation: Robot Framework
-  insertText: ${NAME}
+  insertText: NAME
   insertTextFormat: 2
   kind: 6
-  label: ${NAME}
+  label: NAME
   preselect: false
   textEdit:
-    newText: \${NAME}
+    newText: NAME
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: '2.0'
-  insertText: ${VERSION}
+  insertText: VERSION
   insertTextFormat: 2
   kind: 6
-  label: ${VERSION}
+  label: VERSION
   preselect: false
   textEdit:
-    newText: \${VERSION}
+    newText: VERSION
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: ${NAME} ${VERSION}
-  insertText: ${ROBOT}
+  insertText: ROBOT
   insertTextFormat: 2
   kind: 6
-  label: ${ROBOT}
+  label: ROBOT
   preselect: false
   textEdit:
-    newText: \${ROBOT}
+    newText: ROBOT
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: abspath(tempfile.gettempdir())
-  insertText: ${TEMPDIR}
+  insertText: TEMPDIR
   insertTextFormat: 2
   kind: 6
-  label: ${TEMPDIR}
+  label: TEMPDIR
   preselect: false
   textEdit:
-    newText: \${TEMPDIR}
+    newText: TEMPDIR
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: abspath('.')
-  insertText: ${EXECDIR}
+  insertText: EXECDIR
   insertTextFormat: 2
   kind: 6
-  label: ${EXECDIR}
+  label: EXECDIR
   preselect: false
   textEdit:
-    newText: \${EXECDIR}
+    newText: EXECDIR
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: abspath('.')
-  insertText: ${CURDIR}
+  insertText: CURDIR
   insertTextFormat: 2
   kind: 6
-  label: ${CURDIR}
+  label: CURDIR
   preselect: false
   textEdit:
-    newText: \${CURDIR}
+    newText: CURDIR
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: os.sep
-  insertText: ${/}
+  insertText: /
   insertTextFormat: 2
   kind: 6
-  label: ${/}
+  label: /
   preselect: false
   textEdit:
-    newText: \${/}
+    newText: /
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: os.pathsep
-  insertText: ${:}
+  insertText: ':'
   insertTextFormat: 2
   kind: 6
-  label: ${:}
+  label: ':'
   preselect: false
   textEdit:
-    newText: \${:}
+    newText: ':'
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: os.linesep
-  insertText: ${\n}
+  insertText: \n
   insertTextFormat: 2
   kind: 6
-  label: ${\n}
+  label: \n
   preselect: false
   textEdit:
-    newText: \${\n}
+    newText: \n
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: ' '
-  insertText: ${SPACE}
+  insertText: SPACE
   insertTextFormat: 2
   kind: 6
-  label: ${SPACE}
+  label: SPACE
   preselect: false
   textEdit:
-    newText: \${SPACE}
+    newText: SPACE
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: 'True'
-  insertText: ${True}
+  insertText: 'True'
   insertTextFormat: 2
   kind: 6
-  label: ${True}
+  label: 'True'
   preselect: false
   textEdit:
-    newText: \${True}
+    newText: 'True'
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: 'False'
-  insertText: ${False}
+  insertText: 'False'
   insertTextFormat: 2
   kind: 6
-  label: ${False}
+  label: 'False'
   preselect: false
   textEdit:
-    newText: \${False}
+    newText: 'False'
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: None
-  insertText: ${None}
+  insertText: None
   insertTextFormat: 2
   kind: 6
-  label: ${None}
+  label: None
   preselect: false
   textEdit:
-    newText: \${None}
+    newText: None
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: None
-  insertText: ${null}
+  insertText: 'null'
   insertTextFormat: 2
   kind: 6
-  label: ${null}
+  label: 'null'
   preselect: false
   textEdit:
-    newText: \${null}
+    newText: 'null'
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: ${EMPTY}
+  insertText: EMPTY
   insertTextFormat: 2
   kind: 6
-  label: ${EMPTY}
+  label: EMPTY
   preselect: false
   textEdit:
-    newText: \${EMPTY}
+    newText: EMPTY
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: settings.output_directory
-  insertText: ${OUTPUT_DIR}
+  insertText: OUTPUT_DIR
   insertTextFormat: 2
   kind: 6
-  label: ${OUTPUT_DIR}
+  label: OUTPUT_DIR
   preselect: false
   textEdit:
-    newText: \${OUTPUT_DIR}
+    newText: OUTPUT_DIR
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: settings.output or 'NONE'
-  insertText: ${OUTPUT_FILE}
+  insertText: OUTPUT_FILE
   insertTextFormat: 2
   kind: 6
-  label: ${OUTPUT_FILE}
+  label: OUTPUT_FILE
   preselect: false
   textEdit:
-    newText: \${OUTPUT_FILE}
+    newText: OUTPUT_FILE
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: settings.report or 'NONE'
-  insertText: ${REPORT_FILE}
+  insertText: REPORT_FILE
   insertTextFormat: 2
   kind: 6
-  label: ${REPORT_FILE}
+  label: REPORT_FILE
   preselect: false
   textEdit:
-    newText: \${REPORT_FILE}
+    newText: REPORT_FILE
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: settings.log or 'NONE'
-  insertText: ${LOG_FILE}
+  insertText: LOG_FILE
   insertTextFormat: 2
   kind: 6
-  label: ${LOG_FILE}
+  label: LOG_FILE
   preselect: false
   textEdit:
-    newText: \${LOG_FILE}
+    newText: LOG_FILE
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: settings.debug_file or 'NONE'
-  insertText: ${DEBUG_FILE}
+  insertText: DEBUG_FILE
   insertTextFormat: 2
   kind: 6
-  label: ${DEBUG_FILE}
+  label: DEBUG_FILE
   preselect: false
   textEdit:
-    newText: \${DEBUG_FILE}
+    newText: DEBUG_FILE
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: settings.log_level
-  insertText: ${LOG_LEVEL}
+  insertText: LOG_LEVEL
   insertTextFormat: 2
   kind: 6
-  label: ${LOG_LEVEL}
+  label: LOG_LEVEL
   preselect: false
   textEdit:
-    newText: \${LOG_LEVEL}
+    newText: LOG_LEVEL
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: ${KEYWORD_STATUS}
+  insertText: KEYWORD_STATUS
   insertTextFormat: 2
   kind: 6
-  label: ${KEYWORD_STATUS}
+  label: KEYWORD_STATUS
   preselect: false
   textEdit:
-    newText: \${KEYWORD_STATUS}
+    newText: KEYWORD_STATUS
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: ${KEYWORD_MESSAGE}
+  insertText: KEYWORD_MESSAGE
   insertTextFormat: 2
   kind: 6
-  label: ${KEYWORD_MESSAGE}
+  label: KEYWORD_MESSAGE
   preselect: false
   textEdit:
-    newText: \${KEYWORD_MESSAGE}
+    newText: KEYWORD_MESSAGE
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: ${TEST_STATUS}
+  insertText: TEST_STATUS
   insertTextFormat: 2
   kind: 6
-  label: ${TEST_STATUS}
+  label: TEST_STATUS
   preselect: false
   textEdit:
-    newText: \${TEST_STATUS}
+    newText: TEST_STATUS
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: ${TEST_MESSAGE}
+  insertText: TEST_MESSAGE
   insertTextFormat: 2
   kind: 6
-  label: ${TEST_MESSAGE}
+  label: TEST_MESSAGE
   preselect: false
   textEdit:
-    newText: \${TEST_MESSAGE}
+    newText: TEST_MESSAGE
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: ${PREV_TEST_NAME}
+  insertText: PREV_TEST_NAME
   insertTextFormat: 2
   kind: 6
-  label: ${PREV_TEST_NAME}
+  label: PREV_TEST_NAME
   preselect: false
   textEdit:
-    newText: \${PREV_TEST_NAME}
+    newText: PREV_TEST_NAME
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: ${PREV_TEST_STATUS}
+  insertText: PREV_TEST_STATUS
   insertTextFormat: 2
   kind: 6
-  label: ${PREV_TEST_STATUS}
+  label: PREV_TEST_STATUS
   preselect: false
   textEdit:
-    newText: \${PREV_TEST_STATUS}
+    newText: PREV_TEST_STATUS
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: ${PREV_TEST_MESSAGE}
+  insertText: PREV_TEST_MESSAGE
   insertTextFormat: 2
   kind: 6
-  label: ${PREV_TEST_MESSAGE}
+  label: PREV_TEST_MESSAGE
   preselect: false
   textEdit:
-    newText: \${PREV_TEST_MESSAGE}
+    newText: PREV_TEST_MESSAGE
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: ${SUITE_DOCUMENTATION}
+  insertText: SUITE_DOCUMENTATION
   insertTextFormat: 2
   kind: 6
-  label: ${SUITE_DOCUMENTATION}
+  label: SUITE_DOCUMENTATION
   preselect: false
   textEdit:
-    newText: \${SUITE_DOCUMENTATION}
+    newText: SUITE_DOCUMENTATION
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: ${SUITE_NAME}
+  insertText: SUITE_NAME
   insertTextFormat: 2
   kind: 6
-  label: ${SUITE_NAME}
+  label: SUITE_NAME
   preselect: false
   textEdit:
-    newText: \${SUITE_NAME}
+    newText: SUITE_NAME
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: ${SUITE_SOURCE}
+  insertText: SUITE_SOURCE
   insertTextFormat: 2
   kind: 6
-  label: ${SUITE_SOURCE}
+  label: SUITE_SOURCE
   preselect: false
   textEdit:
-    newText: \${SUITE_SOURCE}
+    newText: SUITE_SOURCE
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: ${SUITE_STATUS}
+  insertText: SUITE_STATUS
   insertTextFormat: 2
   kind: 6
-  label: ${SUITE_STATUS}
+  label: SUITE_STATUS
   preselect: false
   textEdit:
-    newText: \${SUITE_STATUS}
+    newText: SUITE_STATUS
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: ${SUITE_MESSAGE}
+  insertText: SUITE_MESSAGE
   insertTextFormat: 2
   kind: 6
-  label: ${SUITE_MESSAGE}
+  label: SUITE_MESSAGE
   preselect: false
   textEdit:
-    newText: \${SUITE_MESSAGE}
+    newText: SUITE_MESSAGE
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: ${TEST_DOCUMENTATION}
+  insertText: TEST_DOCUMENTATION
   insertTextFormat: 2
   kind: 6
-  label: ${TEST_DOCUMENTATION}
+  label: TEST_DOCUMENTATION
   preselect: false
   textEdit:
-    newText: \${TEST_DOCUMENTATION}
+    newText: TEST_DOCUMENTATION
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: ${TEST_NAME}
+  insertText: TEST_NAME
   insertTextFormat: 2
   kind: 6
-  label: ${TEST_NAME}
+  label: TEST_NAME
   preselect: false
   textEdit:
-    newText: \${TEST_NAME}
+    newText: TEST_NAME
     range:
       end:
         character: 24
         line: 9
       start:
-        character: 22
+        character: 24
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertText: SUITE_METADATA
+  insertTextFormat: 2
+  kind: 6
+  label: SUITE_METADATA
+  preselect: false
+  textEdit:
+    newText: SUITE_METADATA
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 24
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertText: TEST_TAGS
+  insertTextFormat: 2
+  kind: 6
+  label: TEST_TAGS
+  preselect: false
+  textEdit:
+    newText: TEST_TAGS
+    range:
+      end:
+        character: 24
+        line: 9
+      start:
+        character: 24
         line: 9

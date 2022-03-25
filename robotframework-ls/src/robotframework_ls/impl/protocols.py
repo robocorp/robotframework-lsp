@@ -193,6 +193,11 @@ class NodeInfo(Generic[Y]):
         self.stack = stack
         self.node = node
 
+    def __str__(self):
+        return f"NodeInfo({self.node.__class__.__name__})"
+
+    __repr__ = __str__
+
 
 class TokenInfo:
 
@@ -202,6 +207,11 @@ class TokenInfo:
         self.stack = stack
         self.node = node
         self.token = token
+
+    def __str__(self):
+        return f"TokenInfo({self.token.value} -- in: {self.node.__class__.__name__})"
+
+    __repr__ = __str__
 
 
 class VarTokenInfo:
@@ -219,6 +229,11 @@ class VarTokenInfo:
         self.node = node
         self.token = token
         self.var_identifier = var_identifier
+
+    def __str__(self):
+        return f"VarTokenInfo({self.token.value} -- id: {self.var_identifier} -- in: {self.node.__class__.__name__})"
+
+    __repr__ = __str__
 
 
 class KeywordUsageInfo:
@@ -867,7 +882,7 @@ class ICompletionContext(Protocol):
     def get_all_variables(self) -> Tuple[NodeInfo, ...]:
         pass
 
-    def get_current_variable(self, section=None) -> Optional[TokenInfo]:
+    def get_current_variable(self, section=None) -> Optional[VarTokenInfo]:
         pass
 
     def get_resource_import_as_doc(self, resource_import) -> Optional[IRobotDocument]:
@@ -929,6 +944,11 @@ class ICompletionContext(Protocol):
         pass
 
     def collect_dependency_graph(self) -> ICompletionContextDependencyGraph:
+        pass
+
+    def iter_dependency_and_init_resource_docs(
+        self, dependency_graph
+    ) -> Iterator[IRobotDocument]:
         pass
 
 

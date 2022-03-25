@@ -342,7 +342,7 @@ List Variable
 
     found_options = False
     for i, completion in enumerate(completions["result"]):
-        if completion["label"] == "${OPTIONS}":
+        if completion["label"] == "OPTIONS":
             found_options = True
             del completions["result"][i]
             break
@@ -355,7 +355,7 @@ List Variable
 
     completions = language_server.get_completions(uri, line, col)
     labels = [x["label"] for x in completions["result"]]
-    assert "${myvar1}" in labels
+    assert "myvar1" in labels
 
 
 def test_variables_resolved_on_completion_integrated(

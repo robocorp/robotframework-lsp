@@ -1,16 +1,16 @@
 - deprecated: false
   documentation: c:/foo/bar
-  insertText: ${SOME_DIR}
+  insertText: SOME_DIR
   insertTextFormat: 2
   kind: 6
-  label: ${SOME_DIR}
+  label: SOME_DIR
   preselect: false
   textEdit:
-    newText: \${SOME_DIR}
+    newText: SOME_DIR
     range:
       end:
         character: 27
         line: 5
       start:
-        character: 19
+        character: 21
         line: 5

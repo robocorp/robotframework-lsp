@@ -429,7 +429,7 @@ def _tokenized_args(token, token_type_index, in_documentation, scope):
         from robotframework_ls.impl.variable_resolve import robot_search_variable
 
         variable_match = robot_search_variable(token.value)
-        if variable_match.base is None:
+        if variable_match is None or variable_match.base is None:
             yield token, token_type_index
             return
 
@@ -448,36 +448,38 @@ def _tokenized_args(token, token_type_index, in_documentation, scope):
         base = variable_match.base
         if base:
             i = token.value.find(base)
-            op_start_token, var_token, op_end_token = split_token_in_3(
-                token,
-                "variableOperator",
-                token.type,
-                "variableOperator",
-                i,
-                i + len(base),
-            )
+        else:
+            i = token.value.find("{") + 1
+        op_start_token, var_token, op_end_token = split_token_in_3(
+            token,
+            "variableOperator",
+            token.type,
+            "variableOperator",
+            i,
+            i + len(base),
+        )
 
-            yield op_start_token, VARIABLE_OPERATOR_INDEX
-            yield from _tokenize_subvars(var_token, token_type_index, scope)
+        yield op_start_token, VARIABLE_OPERATOR_INDEX
+        yield from _tokenize_subvars(var_token, token_type_index, scope)
 
-            if variable_match.items:
+        if variable_match.items:
+            for item in variable_match.items:
                 token = op_end_token
-                for item in variable_match.items:
-                    i = token.value.find(item)
+                i = token.value.find(item)
 
-                    op_start_token, var_token, op_end_token = split_token_in_3(
-                        token,
-                        "variableOperator",
-                        token.type,
-                        "variableOperator",
-                        i,
-                        i + len(item),
-                    )
+                op_start_token, var_token, op_end_token = split_token_in_3(
+                    token,
+                    "variableOperator",
+                    token.type,
+                    "variableOperator",
+                    i,
+                    i + len(item),
+                )
 
-                    yield op_start_token, VARIABLE_OPERATOR_INDEX
-                    yield from _tokenize_subvars(var_token, token_type_index, scope)
+                yield op_start_token, VARIABLE_OPERATOR_INDEX
+                yield from _tokenize_subvars(var_token, token_type_index, scope)
 
-            yield op_end_token, VARIABLE_OPERATOR_INDEX
+        yield op_end_token, VARIABLE_OPERATOR_INDEX
 
         if after_token:
             yield after_token, token_type_index

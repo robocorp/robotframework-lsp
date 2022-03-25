@@ -1082,3 +1082,49 @@ Example
             ("}", "variableOperator"),
         ],
     )
+
+
+def test_semantic_items(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Dictionary Variable
+    Log to Console    ${Person}[Address][Zip]
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Dictionary Variable", "testCaseName"),
+            ("Log to Console", "keywordNameCall"),
+            ("${", "variableOperator"),
+            ("Person", "variable"),
+            ("}[", "variableOperator"),
+            ("Address", "variable"),
+            ("][", "variableOperator"),
+            ("Zip", "variable"),
+            ("]", "variableOperator"),
+        ],
+    )
+
+
+def test_empty_base(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Dictionary Variable
+    Log to Console    ${}[Address][Zip]
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Dictionary Variable", "testCaseName"),
+            ("Log to Console", "keywordNameCall"),
+            ("${", "variableOperator"),
+            ("", "variable"),
+            ("}[", "variableOperator"),
+            ("Address", "variable"),
+            ("][", "variableOperator"),
+            ("Zip", "variable"),
+            ("]", "variableOperator"),
+        ],
+    )

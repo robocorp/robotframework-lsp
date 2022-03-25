@@ -1,6 +1,6 @@
 import sys
 import os
-from typing import Optional, Any, List, Tuple, Set, Callable, Dict, Union
+from typing import Optional, Any, List, Tuple, Set, Callable, Dict, Union, Iterator
 
 from robocorp_ls_core.cache import instance_cache
 from robocorp_ls_core.constants import NULL
@@ -27,12 +27,14 @@ from robotframework_ls.impl.protocols import (
     IRobotToken,
     INode,
     IVariableImportNode,
+    VarTokenInfo,
 )
 from robotframework_ls.impl.robot_workspace import RobotDocument
 from robocorp_ls_core import uris
 import itertools
 from functools import partial
 import typing
+from robotframework_ls.impl import text_utilities
 
 
 log = get_logger(__name__)
@@ -328,7 +330,7 @@ class CompletionContext(object):
         return tuple(ast_utils.iter_variables(ast))
 
     @instance_cache
-    def get_current_variable(self, section=None) -> Optional[TokenInfo]:
+    def get_current_variable(self, section=None) -> Optional[VarTokenInfo]:
         from robotframework_ls.impl import ast_utils
 
         if section is None:
@@ -528,6 +530,19 @@ class CompletionContext(object):
             if resource_doc is not None:
                 ret.append(typing.cast(IRobotDocument, resource_doc))
         return tuple(ret)
+
+    def iter_dependency_and_init_resource_docs(
+        self, dependency_graph
+    ) -> Iterator[IRobotDocument]:
+        visited = set()
+        for resource_doc in itertools.chain(
+            (d[1] for d in dependency_graph.iter_all_resource_imports_with_docs()),
+            iter(self.get_resource_inits_as_docs()),
+        ):
+            if resource_doc is not None:
+                if resource_doc.uri not in visited:
+                    visited.add(resource_doc.uri)
+                    yield resource_doc
 
     @instance_cache
     def get_variable_imports_as_docs(

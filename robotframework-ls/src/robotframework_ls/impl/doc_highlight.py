@@ -121,9 +121,9 @@ def doc_highlight(
     ):
         return _highlight_keyword(completion_context, curr_token_info)
 
-    curr_token_info = completion_context.get_current_variable()
-    if curr_token_info is not None:
-        return _highlight_variables(completion_context, curr_token_info)
+    curr_var_token_info = completion_context.get_current_variable()
+    if curr_var_token_info is not None:
+        return _highlight_variables(completion_context, curr_var_token_info)
 
     # We found no custom heuristics, just use a text-based approach.
     doc = completion_context.doc

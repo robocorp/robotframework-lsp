@@ -1,34 +1,51 @@
 - deprecated: false
   documentation: "     ${variable_x} =      ${variable_y}      @{variable_z}=    \
     \  Get X      an argument \n"
-  insertText: ${variable_x}
+  insertText: variable_x
   insertTextFormat: 2
   kind: 6
-  label: ${variable_x}
+  label: variable_x
   preselect: false
   textEdit:
-    newText: \${variable_x}
+    newText: variable_x
     range:
       end:
         character: 28
         line: 8
       start:
-        character: 18
+        character: 20
         line: 8
 - deprecated: false
   documentation: "     ${variable_x} =      ${variable_y}      @{variable_z}=    \
     \  Get X      an argument \n"
-  insertText: ${variable_y}
+  insertText: variable_y
   insertTextFormat: 2
   kind: 6
-  label: ${variable_y}
+  label: variable_y
   preselect: false
   textEdit:
-    newText: \${variable_y}
+    newText: variable_y
     range:
       end:
         character: 28
         line: 8
       start:
-        character: 18
+        character: 20
+        line: 8
+- deprecated: false
+  documentation: "     ${variable_x} =      ${variable_y}      @{variable_z}=    \
+    \  Get X      an argument \n"
+  insertText: variable_z
+  insertTextFormat: 2
+  kind: 6
+  label: variable_z
+  preselect: false
+  textEdit:
+    newText: variable_z
+    range:
+      end:
+        character: 28
+        line: 8
+      start:
+        character: 20
         line: 8

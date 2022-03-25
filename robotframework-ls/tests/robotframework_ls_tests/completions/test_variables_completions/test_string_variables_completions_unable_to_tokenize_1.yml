@@ -1,16 +1,64 @@
 - deprecated: false
   documentation: Robot Framework
-  insertText: ${NAME}
+  insertText: NAME
   insertTextFormat: 2
   kind: 6
-  label: ${NAME}
+  label: NAME
   preselect: false
   textEdit:
-    newText: \${NAME}
+    newText: NAME
     range:
       end:
-        character: 34
+        character: 33
         line: 9
       start:
-        character: 29
+        character: 31
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertText: PREV_TEST_NAME
+  insertTextFormat: 2
+  kind: 6
+  label: PREV_TEST_NAME
+  preselect: false
+  textEdit:
+    newText: PREV_TEST_NAME
+    range:
+      end:
+        character: 33
+        line: 9
+      start:
+        character: 31
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertText: SUITE_NAME
+  insertTextFormat: 2
+  kind: 6
+  label: SUITE_NAME
+  preselect: false
+  textEdit:
+    newText: SUITE_NAME
+    range:
+      end:
+        character: 33
+        line: 9
+      start:
+        character: 31
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertText: TEST_NAME
+  insertTextFormat: 2
+  kind: 6
+  label: TEST_NAME
+  preselect: false
+  textEdit:
+    newText: TEST_NAME
+    range:
+      end:
+        character: 33
+        line: 9
+      start:
+        character: 31
         line: 9

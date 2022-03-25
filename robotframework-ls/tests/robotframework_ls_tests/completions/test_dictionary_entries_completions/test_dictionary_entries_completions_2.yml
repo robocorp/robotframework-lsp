@@ -6,10 +6,10 @@
   label: Zip Code
   preselect: false
   textEdit:
-    newText: Zip Code]
+    newText: Zip Code
     range:
       end:
-        character: 45
+        character: 44
         line: 7
       start:
         character: 41

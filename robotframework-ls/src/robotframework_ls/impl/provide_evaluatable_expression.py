@@ -7,7 +7,7 @@ from typing import Optional
 
 
 def _create_evaluatable_expression_from_token(
-    token: IRobotToken,
+    token: IRobotToken, expression: str
 ) -> EvaluatableExpressionTypedDict:
     return {
         "range": {
@@ -17,21 +17,21 @@ def _create_evaluatable_expression_from_token(
                 "character": token.end_col_offset,
             },
         },
-        "expression": token.value,
+        "expression": expression,
     }
 
 
 def provide_evaluatable_expression(
     completion_context: ICompletionContext,
 ) -> Optional[EvaluatableExpressionTypedDict]:
-    from robotframework_ls.impl.text_utilities import is_variable_text
     from robotframework_ls.impl import ast_utils
 
-    token_info = completion_context.get_current_variable()
-    if token_info is not None:
-        token = token_info.token
-        if is_variable_text(token.value):
-            return _create_evaluatable_expression_from_token(token)
+    var_token_info = completion_context.get_current_variable()
+    if var_token_info is not None:
+        token = var_token_info.token
+        return _create_evaluatable_expression_from_token(
+            token, var_token_info.var_identifier + "{" + token.value + "}"
+        )
 
     token_info = completion_context.get_current_token()
     if token_info is not None:
@@ -39,6 +39,8 @@ def provide_evaluatable_expression(
             token_info.stack, token_info.node, token_info.token
         )
         if keyword_name_token is not None:
-            return _create_evaluatable_expression_from_token(keyword_name_token)
+            return _create_evaluatable_expression_from_token(
+                keyword_name_token, keyword_name_token.value
+            )
 
     return None

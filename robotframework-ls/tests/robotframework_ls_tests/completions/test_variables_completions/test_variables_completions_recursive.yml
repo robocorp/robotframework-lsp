@@ -1,32 +1,32 @@
 - deprecated: false
   documentation: variable2
-  insertText: ${VAR2}
+  insertText: VAR2
   insertTextFormat: 2
   kind: 6
-  label: ${VAR2}
+  label: VAR2
   preselect: false
   textEdit:
-    newText: \${VAR2}
+    newText: VAR2
     range:
       end:
         character: 16
         line: 8
       start:
-        character: 11
+        character: 13
         line: 8
 - deprecated: false
   documentation: variable1
-  insertText: ${VAR1}
+  insertText: VAR1
   insertTextFormat: 2
   kind: 6
-  label: ${VAR1}
+  label: VAR1
   preselect: false
   textEdit:
-    newText: \${VAR1}
+    newText: VAR1
     range:
       end:
         character: 16
         line: 8
       start:
-        character: 11
+        character: 13
         line: 8

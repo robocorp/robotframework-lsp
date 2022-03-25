@@ -1,8 +1,8 @@
 expression: ${some variable}
 range:
   end:
-    character: 16
+    character: 15
     line: 1
   start:
-    character: 0
+    character: 2
     line: 1

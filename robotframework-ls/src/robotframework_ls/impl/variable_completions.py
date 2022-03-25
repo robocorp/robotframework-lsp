@@ -31,15 +31,10 @@ class _VariableFoundFromToken(object):
         self.completion_context = completion_context
         self.variable_token = variable_token
 
-        if is_variable_text(variable_token.value):
-            self._col_offset = self.variable_token.col_offset + 2
-            self._end_col_offset = variable_token.end_col_offset - 1
-        else:
-            self._col_offset = self.variable_token.col_offset
-            self._end_col_offset = variable_token.end_col_offset
-
         if variable_name is None:
-            variable_name = str(variable_token)
+            variable_name = variable_token.value
+        assert not is_variable_text(variable_name)
+
         self.variable_name = variable_name
         if isinstance(variable_value, (list, tuple, set)):
             if len(variable_value) == 1:
@@ -67,11 +62,11 @@ class _VariableFoundFromToken(object):
 
     @property
     def col_offset(self):
-        return self._col_offset
+        return self.variable_token.col_offset
 
     @property
     def end_col_offset(self):
-        return self._end_col_offset
+        return self.variable_token.end_col_offset
 
     def __typecheckself__(self) -> None:
         _: IVariableFound = check_implements(self)
@@ -88,6 +83,7 @@ class _VariableFoundFromPythonAst(object):
         variable_value: str,
         variable_name: str,
     ):
+        assert not is_variable_text(variable_name)
         self.lineno = lineno
         self.col_offset = col
         self.end_lineno = end_lineno
@@ -111,6 +107,7 @@ class _VariableFoundFromSettings(object):
     variable_kind = VariableKind.SETTINGS
 
     def __init__(self, variable_name, variable_value, source="", lineno=0):
+        assert not is_variable_text(variable_name)
         self.completion_context = None
         self.variable_name = variable_name
         self.variable_value = str(variable_value)
@@ -211,6 +208,7 @@ def _collect_completions_from_ast(
     ast, completion_context: ICompletionContext, collector: IVariablesCollector
 ):
     from robotframework_ls.impl import ast_utils
+    from robotframework_ls.impl.variable_resolve import robot_search_variable
 
     completion_context.check_cancelled()
     from robot.api import Token
@@ -220,29 +218,21 @@ def _collect_completions_from_ast(
         token = variable_node.get_token(Token.VARIABLE)
         if token is None:
             continue
-        name = token.value
-        if not name:
-            continue
-        name = name.strip()
-        if not name:
-            continue
-        if name.endswith("="):
-            name = name[:-1].rstrip()
 
-        if name.startswith(("&", "@")):
-            # Allow referencing dict(&)/list(@) variables as regular ($) variables
-            dict_or_list_var = "$" + name[1:]
-            if collector.accepts(dict_or_list_var):
-                variable_found = _VariableFoundFromToken(
-                    completion_context,
-                    token,
-                    variable_node.value,
-                    variable_name=dict_or_list_var,
-                )
-                collector.on_variable(variable_found)
-        if collector.accepts(name):
+        variable_match = robot_search_variable(token.value)
+        # Filter out empty base
+        if variable_match is None or not variable_match.base:
+            continue
+
+        if collector.accepts(variable_match.base):
+            base_token = ast_utils.convert_variable_match_base_to_token(
+                token, variable_match
+            )
             variable_found = _VariableFoundFromToken(
-                completion_context, token, variable_node.value, variable_name=name
+                completion_context,
+                base_token,
+                variable_node.value,
+                variable_name=variable_match.base,
             )
             collector.on_variable(variable_found)
 
@@ -268,15 +258,24 @@ def _collect_completions_from_ast(
                         break
 
             if var_name_tok is not None:
-                if collector.accepts(var_name_tok.value):
+                variable_match = robot_search_variable(var_name_tok.value)
+                # Filter out empty base
+                if variable_match is None or not variable_match.base:
+                    continue
+
+                if collector.accepts(variable_match.base):
+                    base_token = ast_utils.convert_variable_match_base_to_token(
+                        var_name_tok, variable_match
+                    )
                     variable_value = ""
                     if var_value_tok is not None:
                         variable_value = var_value_tok.value
 
                     variable_found = _VariableFoundFromToken(
                         completion_context,
-                        var_name_tok,
-                        variable_value=variable_value,
+                        base_token,
+                        variable_value,
+                        variable_name=variable_match.base,
                     )
                     collector.on_variable(variable_found)
 
@@ -317,7 +316,7 @@ def _collect_variables_from_variable_import_doc(
                     if isinstance(node, ast_module.Assign):
                         for target in node.targets:
                             if isinstance(target, ast_module.Name):
-                                varname = "${%s}" % (target.id,)
+                                varname = target.id
                                 if collector.accepts(varname):
                                     value = ""
                                     try:
@@ -365,7 +364,7 @@ def _collect_variables_from_variable_import_doc(
                     # over all lines for all entries, so, do it only for
                     # small docs (consider a better algorithm in the future)...
                     for initial_key, val in dct_contents.items():
-                        key = "${%s}" % (initial_key,)
+                        key = initial_key
 
                         lineno = 0
                         if try_to_compute_line:
@@ -396,18 +395,6 @@ def _collect_variables_from_variable_import_doc(
         log.exception()
 
 
-def _iter_resource_docs(completion_context: ICompletionContext, dependency_graph):
-    visited = set()
-    for resource_doc in itertools.chain(
-        (d[1] for d in dependency_graph.iter_all_resource_imports_with_docs()),
-        iter(completion_context.get_resource_inits_as_docs()),
-    ):
-        if resource_doc is not None:
-            if resource_doc.uri not in visited:
-                visited.add(resource_doc.uri)
-                yield resource_doc
-
-
 def _collect_variables_from_document_context(
     completion_context: ICompletionContext,
     collector: IVariablesCollector,
@@ -419,10 +406,11 @@ def _collect_variables_from_document_context(
     if not only_current_doc:
         dependency_graph = completion_context.collect_dependency_graph()
 
-        for resource_doc in _iter_resource_docs(completion_context, dependency_graph):
-            if resource_doc is not None:
-                new_ctx = completion_context.create_copy(resource_doc)
-                _collect_current_doc_variables(new_ctx, collector)
+        for resource_doc in completion_context.iter_dependency_and_init_resource_docs(
+            dependency_graph
+        ):
+            new_ctx = completion_context.create_copy(resource_doc)
+            _collect_current_doc_variables(new_ctx, collector)
 
         for node, variable_doc in dependency_graph.iter_all_variable_imports_as_docs():
             if variable_doc is None:
@@ -484,10 +472,10 @@ def _collect_arguments(
 ):
     from robotframework_ls.impl import ast_utils
 
-    for arg_token in ast_utils.iter_keyword_arguments_as_tokens(
+    for arg_token, var_identifier in ast_utils.iter_keyword_arguments_as_tokens(
         node, tokenize_keyword_name=True
     ):
-        name = str(arg_token)
+        name = arg_token.value
         if collector.accepts(name):
             variable_found = _VariableFoundFromToken(
                 completion_context,
@@ -499,12 +487,6 @@ def _collect_arguments(
             collector.on_variable(variable_found)
 
 
-def _convert_name_to_var(variable_name):
-    if not variable_name.strip().endswith("}"):
-        variable_name = "${%s}" % (variable_name,)
-    return variable_name
-
-
 def _collect_from_settings(
     completion_context: ICompletionContext, collector: IVariablesCollector
 ):
@@ -514,7 +496,6 @@ def _collect_from_settings(
     if config is not None:
         robot_variables = config.get_setting(OPTION_ROBOT_VARIABLES, dict, {})
         for key, val in robot_variables.items():
-            key = _convert_name_to_var(key)
             if collector.accepts(key):
                 collector.on_variable(_VariableFoundFromSettings(key, val))
 
@@ -525,7 +506,6 @@ def _collect_from_builtins(
     from robotframework_ls.impl.robot_constants import get_builtin_variables
 
     for key, val in get_builtin_variables():
-        key = _convert_name_to_var(key)
         if collector.accepts(key):
             collector.on_variable(_VariableFoundFromBuiltins(key, val))
 
@@ -584,7 +564,7 @@ def collect_local_variables(
     _collect_arguments(completion_context, stack_node, collector)
 
 
-def complete(completion_context: ICompletionContext):
+def complete(completion_context: ICompletionContext) -> List[CompletionItemTypedDict]:
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
 
     token_info = completion_context.get_current_variable()

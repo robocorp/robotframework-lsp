@@ -279,7 +279,6 @@ def _collect_completions_from_ast(
 ):
     from robotframework_ls.impl import ast_utils
     from robocorp_ls_core.lsp import CompletionItemKind
-    from robotframework_ls.impl.robot_specbuilder import KeywordArg
 
     found = {}
 
@@ -287,9 +286,7 @@ def _collect_completions_from_ast(
         completion_context.check_cancelled()
         keyword_name = keyword.node.name
         if collector.accepts(keyword_name):
-            keyword_args = []
-            for arg in ast_utils.iter_keyword_arguments_as_str(keyword.node):
-                keyword_args.append(KeywordArg(arg))
+            keyword_args = list(ast_utils.iter_keyword_arguments_as_kwarg(keyword.node))
 
             found[keyword_name] = _KeywordFoundFromAst(
                 ast,

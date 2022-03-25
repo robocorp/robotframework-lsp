@@ -1,3 +1,11 @@
+import pytest
+from robotframework_ls.impl.robot_version import get_robot_major_version
+
+
+@pytest.mark.skipif(
+    get_robot_major_version() < 5,
+    reason="Requires RF 5 onwards (OPTIONS completion only there).",
+)
 def test_string_variables_completions_basic_1(
     workspace, libspec_manager, data_regression
 ):
@@ -23,6 +31,10 @@ List Variable
     data_regression.check(completions)
 
 
+@pytest.mark.skipif(
+    get_robot_major_version() < 5,
+    reason="Requires RF 5 onwards (OPTIONS completion only there).",
+)
 def test_string_variables_completions_basic_2(
     workspace, libspec_manager, data_regression
 ):
@@ -98,6 +110,10 @@ List Variable
     data_regression.check(completions)
 
 
+@pytest.mark.skipif(
+    get_robot_major_version() < 5,
+    reason="Requires RF 5 onwards (OPTIONS completion only there).",
+)
 def test_list_variables_completions_basic_1(
     workspace, libspec_manager, data_regression
 ):
@@ -122,6 +138,10 @@ List Variable
     data_regression.check(completions)
 
 
+@pytest.mark.skipif(
+    get_robot_major_version() < 5,
+    reason="Requires RF 5 onwards (OPTIONS completion only there).",
+)
 def test_list_variables_completions_basic_2(
     workspace, libspec_manager, data_regression
 ):
@@ -143,6 +163,10 @@ List Variable
     data_regression.check(completions)
 
 
+@pytest.mark.skipif(
+    get_robot_major_version() < 5,
+    reason="Requires RF 5 onwards (OPTIONS completion only there).",
+)
 def test_list_variables_completions_in_variables(
     workspace, libspec_manager, data_regression
 ):
@@ -162,6 +186,10 @@ def test_list_variables_completions_in_variables(
     data_regression.check(completions)
 
 
+@pytest.mark.skipif(
+    get_robot_major_version() < 5,
+    reason="Requires RF 5 onwards (OPTIONS completion only there).",
+)
 def test_dict_variables_completions(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import variable_completions
@@ -460,3 +488,22 @@ Test
         CompletionContext(doc, workspace=workspace.ws)
     )
     data_regression.check(completions)
+
+
+def test_variable_completions_empty(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import variable_completions
+
+    workspace.set_root("case_vars_file", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_root.robot")
+    doc.source = """*** Keywords ***
+Put Key
+    ${ret}=    Create dictionary    key=${}"""
+
+    line, col = doc.get_last_line_col()
+    completions = variable_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws, line=line, col=col - 1)
+    )
+    assert len(completions) > 10
+    for completion in completions:
+        assert completion["textEdit"]["range"]["end"]["character"] == col - 1

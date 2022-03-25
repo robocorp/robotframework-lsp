@@ -6,10 +6,10 @@
   label: Home of Aalto University
   preselect: false
   textEdit:
-    newText: Home of Aalto University]
+    newText: Home of Aalto University
     range:
       end:
-        character: 55
+        character: 54
         line: 9
       start:
         character: 47

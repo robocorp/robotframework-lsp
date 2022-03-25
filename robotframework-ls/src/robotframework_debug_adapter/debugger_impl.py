@@ -172,9 +172,9 @@ class _NonBuiltinVariablesAsDAP(_BaseObjectToDAP):
         return lst
 
     def _accept(self, k: str) -> bool:
-        from robotframework_ls.impl.text_utilities import normalize_robot_name
+        from robotframework_ls.impl.variable_resolve import normalize_variable_name
 
-        if normalize_robot_name(k) in self._builtins:
+        if normalize_variable_name(k) in self._builtins:
             return False
         else:
             return True

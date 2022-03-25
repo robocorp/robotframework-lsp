@@ -1,32 +1,32 @@
 - deprecated: false
   documentation: ''
-  insertText: ${arg}
+  insertText: arg
   insertTextFormat: 2
   kind: 6
-  label: ${arg}
+  label: arg
   preselect: false
   textEdit:
-    newText: \${arg}
+    newText: arg
     range:
       end:
         character: 26
         line: 4
       start:
-        character: 22
+        character: 24
         line: 4
 - deprecated: false
   documentation: ''
-  insertText: ${arg2}
+  insertText: arg2
   insertTextFormat: 2
   kind: 6
-  label: ${arg2}
+  label: arg2
   preselect: false
   textEdit:
-    newText: \${arg2}
+    newText: arg2
     range:
       end:
         character: 26
         line: 4
       start:
-        character: 22
+        character: 24
         line: 4

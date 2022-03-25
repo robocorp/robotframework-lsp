@@ -1,32 +1,32 @@
 - deprecated: false
-  documentation: '10'
-  insertText: VARIABLE_YAML_1
+  documentation: Somewhere
+  insertText: City
   insertTextFormat: 2
   kind: 6
-  label: VARIABLE_YAML_1
+  label: City
   preselect: false
   textEdit:
-    newText: VARIABLE_YAML_1
+    newText: City
     range:
       end:
-        character: 19
+        character: 41
         line: 7
       start:
-        character: 13
+        character: 41
         line: 7
 - deprecated: false
-  documentation: '20'
-  insertText: VARIABLE_YAML_2
+  documentation: '12345'
+  insertText: Zip Code
   insertTextFormat: 2
   kind: 6
-  label: VARIABLE_YAML_2
+  label: Zip Code
   preselect: false
   textEdit:
-    newText: VARIABLE_YAML_2
+    newText: Zip Code
     range:
       end:
-        character: 19
+        character: 41
         line: 7
       start:
-        character: 13
+        character: 41
         line: 7

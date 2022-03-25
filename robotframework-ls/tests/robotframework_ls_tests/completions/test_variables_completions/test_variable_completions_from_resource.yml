@@ -1,16 +1,16 @@
 - deprecated: false
   documentation: '22'
-  insertText: ${Var|in.Resource}
+  insertText: Var|in.Resource
   insertTextFormat: 2
   kind: 6
-  label: ${Var|in.Resource}
+  label: Var|in.Resource
   preselect: false
   textEdit:
-    newText: \${Var|in.Resource}
+    newText: Var|in.Resource
     range:
       end:
         character: 21
         line: 7
       start:
-        character: 11
+        character: 13
         line: 7

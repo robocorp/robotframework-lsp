@@ -1,16 +1,64 @@
 - deprecated: false
   documentation: ('Matti', 'Teppo')
-  insertText: '@{NAMES}'
+  insertText: NAMES
   insertTextFormat: 2
   kind: 6
-  label: '@{NAMES}'
+  label: NAMES
   preselect: false
   textEdit:
-    newText: '@{NAMES}'
+    newText: NAMES
     range:
       end:
-        character: 27
+        character: 26
         line: 5
       start:
-        character: 22
+        character: 24
+        line: 5
+- deprecated: false
+  documentation: ''
+  insertText: PREV_TEST_NAME
+  insertTextFormat: 2
+  kind: 6
+  label: PREV_TEST_NAME
+  preselect: false
+  textEdit:
+    newText: PREV_TEST_NAME
+    range:
+      end:
+        character: 26
+        line: 5
+      start:
+        character: 24
+        line: 5
+- deprecated: false
+  documentation: ''
+  insertText: SUITE_NAME
+  insertTextFormat: 2
+  kind: 6
+  label: SUITE_NAME
+  preselect: false
+  textEdit:
+    newText: SUITE_NAME
+    range:
+      end:
+        character: 26
+        line: 5
+      start:
+        character: 24
+        line: 5
+- deprecated: false
+  documentation: ''
+  insertText: TEST_NAME
+  insertTextFormat: 2
+  kind: 6
+  label: TEST_NAME
+  preselect: false
+  textEdit:
+    newText: TEST_NAME
+    range:
+      end:
+        character: 26
+        line: 5
+      start:
+        character: 24
         line: 5

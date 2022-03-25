@@ -1,48 +1,176 @@
 - deprecated: false
   documentation: Robot Framework
-  insertText: ${NAME}
+  insertText: NAME
   insertTextFormat: 2
   kind: 6
-  label: ${NAME}
+  label: NAME
   preselect: false
   textEdit:
-    newText: \${NAME}
+    newText: NAME
     range:
       end:
         character: 25
         line: 9
       start:
-        character: 22
+        character: 24
+        line: 9
+- deprecated: false
+  documentation: '2.0'
+  insertText: VERSION
+  insertTextFormat: 2
+  kind: 6
+  label: VERSION
+  preselect: false
+  textEdit:
+    newText: VERSION
+    range:
+      end:
+        character: 25
+        line: 9
+      start:
+        character: 24
+        line: 9
+- deprecated: false
+  documentation: os.linesep
+  insertText: \n
+  insertTextFormat: 2
+  kind: 6
+  label: \n
+  preselect: false
+  textEdit:
+    newText: \n
+    range:
+      end:
+        character: 25
+        line: 9
+      start:
+        character: 24
         line: 9
 - deprecated: false
   documentation: None
-  insertText: ${None}
+  insertText: None
   insertTextFormat: 2
   kind: 6
-  label: ${None}
+  label: None
   preselect: false
   textEdit:
-    newText: \${None}
+    newText: None
     range:
       end:
         character: 25
         line: 9
       start:
-        character: 22
+        character: 24
         line: 9
 - deprecated: false
   documentation: None
-  insertText: ${null}
+  insertText: 'null'
   insertTextFormat: 2
   kind: 6
-  label: ${null}
+  label: 'null'
   preselect: false
   textEdit:
-    newText: \${null}
+    newText: 'null'
     range:
       end:
         character: 25
         line: 9
       start:
-        character: 22
+        character: 24
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertText: PREV_TEST_NAME
+  insertTextFormat: 2
+  kind: 6
+  label: PREV_TEST_NAME
+  preselect: false
+  textEdit:
+    newText: PREV_TEST_NAME
+    range:
+      end:
+        character: 25
+        line: 9
+      start:
+        character: 24
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertText: SUITE_DOCUMENTATION
+  insertTextFormat: 2
+  kind: 6
+  label: SUITE_DOCUMENTATION
+  preselect: false
+  textEdit:
+    newText: SUITE_DOCUMENTATION
+    range:
+      end:
+        character: 25
+        line: 9
+      start:
+        character: 24
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertText: SUITE_NAME
+  insertTextFormat: 2
+  kind: 6
+  label: SUITE_NAME
+  preselect: false
+  textEdit:
+    newText: SUITE_NAME
+    range:
+      end:
+        character: 25
+        line: 9
+      start:
+        character: 24
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertText: TEST_DOCUMENTATION
+  insertTextFormat: 2
+  kind: 6
+  label: TEST_DOCUMENTATION
+  preselect: false
+  textEdit:
+    newText: TEST_DOCUMENTATION
+    range:
+      end:
+        character: 25
+        line: 9
+      start:
+        character: 24
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertText: TEST_NAME
+  insertTextFormat: 2
+  kind: 6
+  label: TEST_NAME
+  preselect: false
+  textEdit:
+    newText: TEST_NAME
+    range:
+      end:
+        character: 25
+        line: 9
+      start:
+        character: 24
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertText: OPTIONS
+  insertTextFormat: 2
+  kind: 6
+  label: OPTIONS
+  preselect: false
+  textEdit:
+    newText: OPTIONS
+    range:
+      end:
+        character: 25
+        line: 9
+      start:
+        character: 24
         line: 9

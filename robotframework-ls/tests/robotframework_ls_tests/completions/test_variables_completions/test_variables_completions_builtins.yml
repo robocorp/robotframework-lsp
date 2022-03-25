@@ -1,16 +1,16 @@
 - deprecated: false
   documentation: ''
-  insertText: ${PREV_TEST_STATUS}
+  insertText: PREV_TEST_STATUS
   insertTextFormat: 2
   kind: 6
-  label: ${PREV_TEST_STATUS}
+  label: PREV_TEST_STATUS
   preselect: false
   textEdit:
-    newText: \${PREV_TEST_STATUS}
+    newText: PREV_TEST_STATUS
     range:
       end:
         character: 36
         line: 4
       start:
-        character: 22
+        character: 24
         line: 4

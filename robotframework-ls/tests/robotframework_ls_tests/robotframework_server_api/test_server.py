@@ -223,3 +223,36 @@ def check_robotframework_load():
 def test_server_requisites():
     _check_in_separate_process("check_no_robotframework")
     _check_in_separate_process("check_robotframework_load")
+
+
+def test_server_complete_all():
+    from robocorp_ls_core.jsonrpc.monitor import Monitor
+
+    api = initialize_robotframework_server_api()
+
+    try:
+        uri = "<untitled>"
+        api.m_text_document__did_open(textDocument={"uri": uri})
+        api.m_text_document__did_change(
+            textDocument={"uri": uri},
+            contentChanges=[
+                {
+                    "text": """
+*** Variables ***
+&{Person}         Address=&{home_address}
+&{home_address}   City=Somewhere   Zip Code=12345
+
+*** Test Cases ***
+Dictionary Variable
+    Log to Console    ${Person}[]"""
+                }
+            ],
+        )
+        doc = api.workspace.get_document(uri, accept_from_file=False)
+        line, col = doc.get_last_line_col()
+        monitor = Monitor()
+        completions = api.m_complete_all(uri, line, col - 1)(monitor=monitor)
+    finally:
+        api.m_exit()
+        api.m_shutdown()
+    assert set(x["label"] for x in completions) == {"Address"}

@@ -16,7 +16,7 @@ NEXT
 - Variables in assign now have the same color as variables in other places. [#613](https://github.com/robocorp/robotframework-lsp/issues/613)
 - Variable imports which can't be resolved are reported.
 - Improved hover (now provides custom hints for variables, imports and parameters).
-- Variables are now recognized in expressions as well as inner variables. 
+- Variables are now recognized in expressions as well as inner variables.
 
 
 New in 0.42.0 (2022-03-14)

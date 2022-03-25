@@ -280,7 +280,7 @@ class _FindDefinitionVariablesCollector(AbstractVariablesCollector):
         self.matcher = robot_string_matcher
 
     def accepts(self, variable_name: str) -> bool:
-        return self.matcher.is_same_robot_name(variable_name)
+        return self.matcher.is_same_variable_name(variable_name)
 
     def on_variable(self, variable_found: IVariableFound):
         definition = _DefinitionFromVariable(variable_found)
@@ -406,21 +406,16 @@ def find_definition_extended(
                     ast_utils.create_range_from_token(token),
                 )
 
-    token_info = completion_context.get_current_variable()
-    if token_info is not None:
-        from robotframework_ls.impl.variable_resolve import robot_search_variable
-
-        token = token_info.token
+    var_token_info = completion_context.get_current_variable()
+    if var_token_info is not None:
+        token = var_token_info.token
         value = token.value
-        robot_variable_match = robot_search_variable(value)
-        if robot_variable_match and robot_variable_match.base:
-            re_match = robot_variable_match.name
-            collector = _FindDefinitionVariablesCollector(
-                completion_context.sel, token, RobotStringMatcher(re_match)
-            )
-            collect_variables(completion_context, collector)
-            return _DefinitionInfo(
-                collector.matches, ast_utils.create_range_from_token(token)
-            )
+        collector = _FindDefinitionVariablesCollector(
+            completion_context.sel, token, RobotStringMatcher(value)
+        )
+        collect_variables(completion_context, collector)
+        return _DefinitionInfo(
+            collector.matches, ast_utils.create_range_from_token(token)
+        )
 
     return None

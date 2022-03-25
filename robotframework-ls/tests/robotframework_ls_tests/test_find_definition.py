@@ -593,7 +593,11 @@ def test_find_definition_variables_dict_access(
 Dictionary Variable
     Log to Console    ${Person}[First]"""
 
-    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    line, col = doc.get_last_line_col()
+    col -= len("n}[First]")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
     data_regression.check(
         _definitions_to_data_regression(find_definition(completion_context))
     )
@@ -981,3 +985,128 @@ Example
     assert len(definitions) == 1
     definition = next(iter(definitions))
     assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 3
+
+
+def test_find_var_in_expression(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Example
+    ${aa}=    Set Variable    33
+    Log    ${{$aa}}
+"""
+
+    line, col = doc.get_last_line_col_with_contents("Log    ${{$aa}}")
+    col -= 2
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = next(iter(definitions))
+    assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 3
+
+
+@pytest.mark.skipif(get_robot_major_version() < 5, reason="Requires RF 5 onwards.")
+def test_find_var_in_expression_2(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Variables ***
+${var_a}    ${1}
+
+*** Test Cases ***
+Test
+    WHILE    $var_a < 2
+        Log    ${var_a}
+        ${var_a}=    Evaluate    $var_a + 1
+    END
+"""
+
+    line, col = doc.get_last_line_col_with_contents("WHILE    $var_a < 2")
+    col -= len("r_a < 2")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 2  # In global and local
+    for definition in definitions:
+        assert definition.source.endswith("case2.robot")
+        assert definition.lineno in (2, 8)
+
+
+@pytest.mark.skipif(get_robot_major_version() < 5, reason="Requires RF 5 onwards.")
+def test_find_var_in_arg_passed(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Variables ***
+${some var1}    1
+${some var2}    2
+
+*** Keywords ***
+Put Key
+    [Arguments]    ${key}    ${opts}=${some var1}
+    ${ret}=    Create dictionary    ${key}=${some var2}
+"""
+
+    line, col = doc.get_last_line_col_with_contents(
+        "Create dictionary    ${key}=${some var2}"
+    )
+    col -= len("e var2}")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = definitions[0]
+    assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 3
+
+
+@pytest.mark.skipif(get_robot_major_version() < 5, reason="Requires RF 5 onwards.")
+def test_find_var_in_arg_received(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Variables ***
+${some var1}    1
+${some var2}    2
+
+*** Keywords ***
+Put Key
+    [Arguments]    ${key}    ${opts}=${some var1}
+    ${ret}=    Create dictionary    ${key}=${some var2}
+"""
+
+    line, col = doc.get_last_line_col_with_contents(
+        "[Arguments]    ${key}    ${opts}=${some var1}"
+    )
+    col -= len("r1}")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = definitions[0]
+    assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 2

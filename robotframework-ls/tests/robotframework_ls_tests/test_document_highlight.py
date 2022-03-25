@@ -155,3 +155,42 @@ Test case 1
             ),
         )
     )
+
+
+def test_document_highlight_variable_in_default_ard(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.doc_highlight import doc_highlight
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.put_doc(
+        "my.robot",
+        """
+*** Variables ***
+${some var1}    1
+${some var2}    2
+
+*** Keywords ***
+Put Key
+    [Arguments]    ${key}    ${opts}=${some var1}
+    ${ret}=    Create dictionary    ${key}=${some var2}
+""",
+    )
+
+    line_contents = "    [Arguments]    ${key}    ${opts}=${som"
+    line = doc.find_line_with_contents(line_contents)
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=len(line_contents)
+    )
+    result = doc_highlight(completion_context)
+    assert len(result) == 2
+    data_regression.check(
+        sorted(
+            result,
+            key=lambda entry: (
+                entry["range"]["start"]["line"],
+                entry["range"]["start"]["character"],
+            ),
+        )
+    )

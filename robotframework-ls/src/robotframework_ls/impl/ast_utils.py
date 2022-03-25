@@ -24,6 +24,7 @@ from robotframework_ls.impl.protocols import (
     INode,
     IRobotVariableMatch,
     VarTokenInfo,
+    IKeywordArg,
 )
 from robotframework_ls.impl.text_utilities import normalize_robot_name
 from robocorp_ls_core.basic import isinstance_name
@@ -475,30 +476,60 @@ def find_token(section, line, col) -> Optional[TokenInfo]:
     return None
 
 
-def find_variable(section, line, col) -> Optional[TokenInfo]:
+def _find_subvar(stack, node, initial_token, col) -> Optional[VarTokenInfo]:
+    for token, var_identifier in _tokenize_subvars(initial_token):
+        if token.col_offset <= col <= token.end_col_offset:
+            return VarTokenInfo(stack, node, token, var_identifier)
+
+    from robotframework_ls.impl import robot_constants
+
+    for p in robot_constants.VARIABLE_PREFIXES:
+        if initial_token.value.startswith(p + "{"):
+            if initial_token.value.endswith("}"):
+                var_token = copy_token_with_subpart(initial_token, 2, -1)
+            else:
+                var_token = copy_token_with_subpart(
+                    initial_token, 2, len(initial_token.value)
+                )
+
+            var_identifier = p
+            return VarTokenInfo(stack, node, var_token, var_identifier)
+    return None
+
+
+def find_variable(section, line, col) -> Optional[VarTokenInfo]:
     token_info = find_token(section, line, col)
     if token_info is not None:
+        stack = token_info.stack
+        node = token_info.node
         token = token_info.token
+
+        try:
+            if (
+                token.type == token.ARGUMENT
+                and node.__class__.__name__ in CLASSES_WTH_EXPRESSION_ARGUMENTS
+            ):
+                for part in iter_expression_variables(token):
+                    if part.type == token.VARIABLE:
+                        if part.col_offset <= col <= part.end_col_offset:
+                            return VarTokenInfo(stack, node, part, "$")
+        except:
+            log.exception("Unable to tokenize: %s", token)
+
         if "{" in token.value:
             parts = _tokenize_variables_even_when_invalid(token, col)
             if not parts:
                 return None
 
             for part in parts:
-                if part.col_offset <= col <= part.end_col_offset:
-                    if part.type == part.VARIABLE:
-                        return TokenInfo(token_info.stack, token_info.node, part)
-                    else:
-                        return None
+                if part.type == part.VARIABLE:
+                    if part.col_offset <= col <= part.end_col_offset:
+                        return _find_subvar(
+                            token_info.stack, token_info.node, part, col
+                        )
             else:
                 return None
     return None
-
-
-def create_token(name):
-    from robot.api import Token
-
-    return Token(Token.NAME, name)
 
 
 def tokenize_variables_from_name(name):
@@ -641,15 +672,29 @@ def iter_indexed(ast, clsname) -> Iterator[NodeInfo]:
 
 
 def iter_keyword_arguments_as_str(ast, tokenize_keyword_name=False) -> Iterator[str]:
-    for token in iter_keyword_arguments_as_tokens(ast, tokenize_keyword_name):
+    """
+    Provides the arguments with the full representation (use only for getting
+    docs).
+
+    May return strings as:
+    ${my.store}=${my.load}[first][second]
+    """
+    for token in _iter_keyword_arguments_tokens(ast, tokenize_keyword_name):
         yield token.value
 
 
 @_convert_ast_to_indexer
-def iter_keyword_arguments_as_tokens(
+def _iter_keyword_arguments_tokens(
     ast, tokenize_keyword_name=False
-) -> Iterator[IRobotToken]:
+) -> Iterator[Tuple[IRobotToken, str]]:
+    """
+    This API provides tokens as they are.
 
+    i.e.: it returns tokens as: ${my.store}=${my.load}[first][second]
+
+    So, this is internal as the outer world is tailored to
+    dealing with what's actually needed.
+    """
     for node_info in ast.iter_indexed("Arguments"):
         for token in node_info.node.tokens:
             if token.type == token.ARGUMENT:
@@ -670,6 +715,38 @@ def iter_keyword_arguments_as_tokens(
                     for tok in tokenized_vars:
                         if tok.type == Token.VARIABLE:
                             yield tok
+
+
+def iter_keyword_arguments_as_tokens(
+    ast, tokenize_keyword_name=False
+) -> Iterator[Tuple[IRobotToken, str]]:
+    """
+    API tailored at getting argument names.
+
+    It converts an argument such as:
+    ${my.store}=${my.load}[first][second]
+
+    and yields something as:
+
+    my.store
+    """
+    for token in _iter_keyword_arguments_tokens(ast, tokenize_keyword_name):
+        for t in _tokenize_subvars(token):
+            # The first one is the variable store (the other is the
+            # variable load on a default argument)
+            # We are only interested in the former in this API.
+            yield t
+            break  # Just break the inner for.
+
+
+def iter_keyword_arguments_as_kwarg(
+    ast, tokenize_keyword_name=False
+) -> Iterator[IKeywordArg]:
+
+    from robotframework_ls.impl.robot_specbuilder import KeywordArg
+
+    for token in _iter_keyword_arguments_tokens(ast, tokenize_keyword_name):
+        yield KeywordArg(token.value)
 
 
 def is_deprecated(ast) -> bool:
@@ -749,18 +826,20 @@ def iter_local_assigns(ast) -> Iterator:
             for token in node.tokens:
                 if token.type == assign_token_type:
                     value = token.value
-                    i = value.rfind("}")
-                    if i > 0 and i != len(value) - 1:
-                        new_value = value[: i + 1]
+
+                    i = value.find("{")
+                    j = value.rfind("}")
+                    if i != -1 and j != -1 and i >= 1:
+                        new_value = value[i + 1 : j]
                         token = Token(
                             type=token.type,
                             value=new_value,
                             lineno=token.lineno,
-                            col_offset=token.col_offset,
+                            col_offset=token.col_offset + i + 1,
                             error=token.error,
                         )
 
-                    yield TokenInfo(node_info.stack, node, token)
+                        yield VarTokenInfo(node_info.stack, node, token, value[0])
 
 
 _FIXTURE_CLASS_NAMES = (
@@ -784,7 +863,7 @@ CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET = frozenset(
 CLASSES_WTH_EXPRESSION_ARGUMENTS = ("IfHeader", "ElseIfHeader", "WhileHeader")
 
 
-def _tokenize_subvars(initial_token) -> Iterator[Tuple[IRobotToken, str]]:
+def _tokenize_subvars(initial_token: IRobotToken) -> Iterator[Tuple[IRobotToken, str]]:
     from robot.api import Token
 
     if "{" not in initial_token.value:
@@ -825,6 +904,12 @@ def _tokenize_subvars(initial_token) -> Iterator[Tuple[IRobotToken, str]]:
 
 @_convert_ast_to_indexer
 def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
+    # TODO: This right now makes everything globally, we should have 2 versions,
+    # one to resolve references which are global and another to resolve references
+    # just inside some scope when dealing with local variables.
+    # Right now we're not very smart and even if a variable is local we'll reference
+    # global variables...
+
     # Note: we collect only the references, not the definitions here!
     for clsname in (
         "KeywordCall",
@@ -866,6 +951,23 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
                                 yield VarTokenInfo(stack, node, tok, "$")
             except:
                 log.exception("Unable to tokenize: %s", token)
+
+    for node_info in ast.iter_indexed("Keyword"):
+        for token in _iter_keyword_arguments_tokens(
+            node_info.node, tokenize_keyword_name=True
+        ):
+            iter_in = _tokenize_subvars(token)
+
+            try:
+                # The first one is the variable store (the other is the
+                # variable load on a default argument)
+                # We are only interested in the second in this API.
+                next(iter_in)
+            except StopIteration:
+                continue
+
+            for t, varid in iter_in:
+                yield VarTokenInfo(stack, node, t, varid)
 
 
 @_convert_ast_to_indexer
@@ -1232,20 +1334,6 @@ def _strip_token_bdd_prefix(token):
     return token
 
 
-def copy_token_replacing(token, **kwargs):
-    from robot.api import Token
-
-    new_kwargs = {
-        "type": token.type,
-        "value": token.value,
-        "lineno": token.lineno,
-        "col_offset": token.col_offset,
-        "error": token.error,
-    }
-    new_kwargs.update(kwargs)
-    return Token(**new_kwargs)
-
-
 def _append_eol_to_prev_token(last_token, eol_token_contents):
     from robot.api import Token
 
@@ -1260,6 +1348,32 @@ def _append_eol_to_prev_token(last_token, eol_token_contents):
     )
 
 
+def copy_token_replacing(token, **kwargs):
+    from robot.api import Token
+
+    new_kwargs = {
+        "type": token.type,
+        "value": token.value,
+        "lineno": token.lineno,
+        "col_offset": token.col_offset,
+        "error": token.error,
+    }
+    new_kwargs.update(kwargs)
+    return Token(**new_kwargs)
+
+
+def copy_token_with_subpart(token, start, end):
+    from robot.api import Token
+
+    return Token(
+        type=token.type,
+        value=token.value[start:end],
+        lineno=token.lineno,
+        col_offset=token.col_offset + start,
+        error=token.error,
+    )
+
+
 def create_range_from_token(token) -> RangeTypedDict:
 
     start: PositionTypedDict = {"line": token.lineno - 1, "character": token.col_offset}
@@ -1269,6 +1383,95 @@ def create_range_from_token(token) -> RangeTypedDict:
     }
     code_lens_range: RangeTypedDict = {"start": start, "end": end}
     return code_lens_range
+
+
+def create_token(name):
+    from robot.api import Token
+
+    return Token(Token.NAME, name)
+
+
+def convert_variable_match_base_to_token(
+    token: IRobotToken, variable_match: IRobotVariableMatch
+):
+    from robot.api import Token
+
+    base = variable_match.base
+    assert base is not None
+    s = variable_match.string
+    if not base:
+        base_i = s.find("{") + 1
+    else:
+        base_i = s.find(base)
+
+    return Token(
+        type=token.type,
+        value=variable_match.base,
+        lineno=token.lineno,
+        col_offset=token.col_offset + variable_match.start + base_i,
+        error=token.error,
+    )
+
+
+def iter_robot_match_as_tokens(
+    robot_match: IRobotVariableMatch, relative_index: int = 0, lineno: int = 0
+) -> Iterator[IRobotToken]:
+    from robot.api import Token
+
+    base = robot_match.base
+    assert base is not None
+    s = robot_match.string
+    if not base:
+        base_i = s.find("{") + 1
+    else:
+        base_i = s.find(base)
+
+    yield Token(
+        type="base",
+        value=base,
+        lineno=lineno,
+        col_offset=relative_index + robot_match.start + base_i,
+    )
+
+    last_i = base_i + len(base)
+    for item in robot_match.items:
+        open_char_i = s.find("[", last_i)
+        if open_char_i > 0:
+            yield Token(
+                type="[",
+                value="[",
+                lineno=lineno,
+                col_offset=relative_index + robot_match.start + open_char_i,
+            )
+
+            last_i = open_char_i + 1
+
+        if not item:
+            item_i = last_i
+        else:
+            item_i = s.find(item, last_i)
+
+        yield Token(
+            type="item",
+            value=item,
+            lineno=lineno,
+            col_offset=relative_index + robot_match.start + item_i,
+        )
+
+        last_i = item_i + len(item)
+
+        close_char_i = s.find("]", last_i)
+        if close_char_i < 0:
+            break
+
+        yield Token(
+            type="]",
+            value="]",
+            lineno=lineno,
+            col_offset=relative_index + robot_match.start + close_char_i,
+        )
+
+        last_i = close_char_i
 
 
 def split_token_in_3(
@@ -1382,7 +1585,12 @@ class RobotMatchTokensGenerator:
         from robot.api import Token
 
         token = self.token
-        i = token.value.find(robot_match.base, robot_match.start + last_relative_index)
+        if not robot_match.base:
+            i = token.value.find("{", robot_match.start + last_relative_index) + 1
+        else:
+            i = token.value.find(
+                robot_match.base, robot_match.start + last_relative_index
+            )
 
         start_offset = robot_match.start + last_relative_index
 
@@ -1405,7 +1613,7 @@ class RobotMatchTokensGenerator:
         )
 
         base = robot_match.base
-        assert base
+        assert base is not None
         j = i + len(base)
 
         val = token.value[j : robot_match.end + last_relative_index]
