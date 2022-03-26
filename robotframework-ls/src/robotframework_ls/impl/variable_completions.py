@@ -15,7 +15,6 @@ from robocorp_ls_core.protocols import check_implements, IDocumentSelection
 from typing import Optional, List
 from robotframework_ls.impl.text_utilities import normalize_robot_name, is_variable_text
 from robocorp_ls_core.lsp import CompletionItemTypedDict
-import itertools
 
 log = get_logger(__name__)
 
@@ -582,6 +581,14 @@ def complete(completion_context: ICompletionContext) -> List[CompletionItemTyped
         collector = _Collector(
             completion_context.sel, var_token_info, RobotStringMatcher(value)
         )
-        collect_variables(completion_context, collector)
+        only_current_doc = False
+        if var_token_info.token.type == var_token_info.token.ASSIGN:
+            # When assigning to variables we don't want to assign what's not
+            # currently in this document (such as builtins).
+            only_current_doc = True
+
+        collect_variables(
+            completion_context, collector, only_current_doc=only_current_doc
+        )
         return collector.completion_items
     return []

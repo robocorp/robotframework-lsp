@@ -442,6 +442,14 @@ def find_token(section, line, col) -> Optional[TokenInfo]:
         except AttributeError:
             continue
 
+        if not tokens:
+            continue
+
+        if (tokens[-1].lineno - 1) < line:
+            # i.e.: if the last node in the token is still before the
+            # line we're searching, keep on going
+            continue
+
         last_token = None
         for token in tokens:
             lineno = token.lineno - 1
@@ -553,7 +561,7 @@ def find_variable(section, line, col) -> Optional[VarTokenInfo]:
                 return None
 
             for part in parts:
-                if part.type == part.VARIABLE:
+                if part.type in (part.VARIABLE, part.ASSIGN):
                     if part.col_offset <= col <= part.end_col_offset:
                         return _find_subvar(
                             token_info.stack, token_info.node, part, col
@@ -921,9 +929,9 @@ def _tokenize_subvars(initial_token: IRobotToken) -> Iterator[Tuple[IRobotToken,
 
     for robot_match, relative_index in iter_robot_variable_matches(initial_token.value):
         for token in robot_match_generator.gen_tokens_from_robot_match(
-            robot_match, relative_index, skip_type, Token.VARIABLE
+            robot_match, relative_index, skip_type, initial_token.type
         ):
-            if token.type == Token.VARIABLE:
+            if token.type == initial_token.type:
                 found = False
                 for v in _tokenize_subvars(token):
                     found = True

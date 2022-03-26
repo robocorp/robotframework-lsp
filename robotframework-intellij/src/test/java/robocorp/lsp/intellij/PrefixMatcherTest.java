@@ -20,7 +20,7 @@ public class PrefixMatcherTest extends TestCase {
         assertEquals("this", prefix);
 
         prefix = FeatureCodeCompletion.LSPPrefixMatcher.getPrefix(" ${th");
-        assertEquals("${th", prefix);
+        assertEquals("th", prefix);
 
         prefix = FeatureCodeCompletion.LSPPrefixMatcher.getPrefix("Some.call");
         assertEquals("call", prefix);

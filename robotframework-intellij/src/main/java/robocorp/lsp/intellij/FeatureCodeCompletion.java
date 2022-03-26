@@ -115,17 +115,10 @@ public class FeatureCodeCompletion extends CompletionContributor {
                     return builder.reverse().toString();
                 }
 
-                if (c == '.' || c == '/') {
+                if (c == '.' || c == '/' || c == '{' || c == '$') {
                     return builder.reverse().toString();
                 }
                 builder.append(c);
-                if (c == '{' && !buf.isEmpty()) {
-                    char last = buf.lastChar();
-                    if (last == '$' || last == '@' || last == '&') {
-                        builder.append(last);
-                        return builder.reverse().toString();
-                    }
-                }
             }
             if (builder.length() > 0) {
                 return builder.reverse().toString();

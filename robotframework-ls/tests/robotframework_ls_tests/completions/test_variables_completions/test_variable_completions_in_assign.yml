@@ -1,0 +1,48 @@
+- deprecated: false
+  documentation: '     ${some } '
+  insertText: 'some '
+  insertTextFormat: 2
+  kind: 6
+  label: 'some '
+  preselect: false
+  textEdit:
+    newText: 'some '
+    range:
+      end:
+        character: 11
+        line: 7
+      start:
+        character: 6
+        line: 7
+- deprecated: false
+  documentation: '1'
+  insertText: some var1
+  insertTextFormat: 2
+  kind: 6
+  label: some var1
+  preselect: false
+  textEdit:
+    newText: some var1
+    range:
+      end:
+        character: 11
+        line: 7
+      start:
+        character: 6
+        line: 7
+- deprecated: false
+  documentation: '2'
+  insertText: some var2
+  insertTextFormat: 2
+  kind: 6
+  label: some var2
+  preselect: false
+  textEdit:
+    newText: some var2
+    range:
+      end:
+        character: 11
+        line: 7
+      start:
+        character: 6
+        line: 7

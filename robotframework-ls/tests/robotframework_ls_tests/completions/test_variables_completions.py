@@ -562,3 +562,65 @@ Test
             found_var_a1 = completion["label"] == "var_a1"
 
     assert found_var_a1
+
+
+@pytest.mark.skipif(
+    get_robot_major_version() < 4,
+    reason="Completions differ on RF 3",
+)
+def test_variable_completions_in_assign(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.server_api.server import complete_all
+
+    workspace.set_root("case_vars_file", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_root.robot")
+    doc.source = """
+*** Variables ***
+${some var1}    1
+${some var2}    2
+
+*** Keywords ***
+Put Key
+    ${some }"""
+
+    # In RF 3 the line with ${some } yields a Keyword call and in RF 4
+    # it yields an EmptyLine, so, completions differ.
+
+    line, col = doc.get_last_line_col()
+    col -= 1
+    completions = complete_all(
+        CompletionContext(doc, workspace=workspace.ws, line=line, col=col)
+    )
+    data_regression.check(completions)
+
+
+@pytest.mark.skipif(
+    get_robot_major_version() < 4,
+    reason="Completions differ on RF 3",
+)
+def test_variable_completions_in_no_builtins(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.server_api.server import complete_all
+
+    workspace.set_root("case_vars_file", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_root.robot")
+    doc.source = """
+*** Variables ***
+${some var1}    1
+${some var2}    2
+
+*** Keywords ***
+Put Key
+    ${e}"""
+
+    # In RF 3 the line with ${some } yields a Keyword call and in RF 4
+    # it yields an EmptyLine, so, completions differ.
+
+    line, col = doc.get_last_line_col()
+    col -= 1
+    completions = complete_all(
+        CompletionContext(doc, workspace=workspace.ws, line=line, col=col)
+    )
+    assert len(completions) == 2

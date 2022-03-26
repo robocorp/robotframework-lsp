@@ -1,3 +1,3 @@
 *** Tasks ***
 Some Task
-    Should be   ${None}
+    Should be   ${None

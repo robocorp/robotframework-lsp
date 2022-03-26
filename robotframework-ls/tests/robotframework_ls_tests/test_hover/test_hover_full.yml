@@ -142,6 +142,16 @@
 
 
     Creates and returns a dictionary based on the given items.'
+- doc: 'opts (line:     ${opts}=    Create dictionary    create=True)'
+  hover: 'Variable: **opts**
+
+
+    Value: ${opts}=      Create dictionary      create=True'
+- doc: '${opts}= (line:     ${opts}=    Create dictionary    create=True)'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
 - doc: '     (line:     ${opts}=    Create dictionary    create=True)'
   hover: '**Create Dictionary**(\*items)
 
@@ -172,6 +182,16 @@
 
 
     '
+- doc: '${dct}= (line:     ${dct}=    Put Key    key    ${opts})'
+  hover: '**Put Key**(${key}, ${opts})
+
+
+    '
+- doc: 'dct (line:     ${dct}=    Put Key    key    ${opts})'
+  hover: 'Variable: **dct**
+
+
+    Value: ${dct}=      Put Key      key      ${opts}'
 - doc: '${dct}= (line:     ${dct}=    Put Key    key    ${opts})'
   hover: '**Put Key**(${key}, ${opts})
 
@@ -258,6 +278,16 @@
 
 
     Creates and returns a dictionary based on the given items.'
+- doc: 'ret (line:         ${ret}=    Create dictionary    ${key}=${some var})'
+  hover: 'Variable: **ret**
+
+
+    Value: ${ret}=      Create dictionary      ${key}=${some var}'
+- doc: '${ret}= (line:         ${ret}=    Create dictionary    ${key}=${some var})'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
 - doc: '     (line:         ${ret}=    Create dictionary    ${key}=${some var})'
   hover: '**Create Dictionary**(\*items)
 
@@ -291,6 +321,16 @@
 
 
     Creates and returns a dictionary based on the given items.'
+- doc: '${ret}= (line:         ${ret}=    Create dictionary)'
+  hover: '**Create Dictionary**(\*items)
+
+
+    Creates and returns a dictionary based on the given items.'
+- doc: 'ret (line:         ${ret}=    Create dictionary)'
+  hover: 'Variable: **ret**
+
+
+    Value: ${ret}=      Create dictionary      ${key}=${some var}'
 - doc: '${ret}= (line:         ${ret}=    Create dictionary)'
   hover: '**Create Dictionary**(\*items)
 
