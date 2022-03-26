@@ -8,6 +8,7 @@ from robotframework_ls.impl.protocols import (
     TokenInfo,
     AbstractVariablesCollector,
     VariableKind,
+    VarTokenInfo,
 )
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.protocols import check_implements, IDocumentSelection
@@ -147,11 +148,14 @@ class _VariableFoundFromYaml(_VariableFoundFromSettings):
 
 
 class _Collector(AbstractVariablesCollector):
-    def __init__(self, selection: IDocumentSelection, token: IRobotToken, matcher):
+    def __init__(
+        self, selection: IDocumentSelection, var_token_info: VarTokenInfo, matcher
+    ):
         self.matcher = matcher
         self.completion_items: List[CompletionItemTypedDict] = []
         self.selection = selection
-        self.token = token
+        self.token = var_token_info.token
+        self.var_token_info = var_token_info
 
     def _create_completion_item_from_variable(
         self,
@@ -169,6 +173,11 @@ class _Collector(AbstractVariablesCollector):
         from robocorp_ls_core.lsp import CompletionItemKind
 
         label = variable_found.variable_name
+
+        if self.var_token_info.context == self.var_token_info.CONTEXT_EXPRESSION:
+            # On expressions without '${...}' (just $var_name), we can't use spaces.
+            label = label.replace(" ", "_")
+
         text = label
         text = text.replace("$", "\\$")
 
@@ -182,7 +191,7 @@ class _Collector(AbstractVariablesCollector):
 
         # text_edit = None
         return CompletionItem(
-            variable_found.variable_name,
+            label,
             kind=CompletionItemKind.Variable,
             text_edit=text_edit,
             insertText=label,
@@ -567,13 +576,12 @@ def collect_local_variables(
 def complete(completion_context: ICompletionContext) -> List[CompletionItemTypedDict]:
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
 
-    token_info = completion_context.get_current_variable()
-    if token_info is not None:
-        token = token_info.token
-        value = token.value
-        if value.endswith("}"):
-            value = value[:-1]
-        collector = _Collector(completion_context.sel, token, RobotStringMatcher(value))
+    var_token_info = completion_context.get_current_variable()
+    if var_token_info is not None:
+        value = var_token_info.token.value
+        collector = _Collector(
+            completion_context.sel, var_token_info, RobotStringMatcher(value)
+        )
         collect_variables(completion_context, collector)
         return collector.completion_items
     return []

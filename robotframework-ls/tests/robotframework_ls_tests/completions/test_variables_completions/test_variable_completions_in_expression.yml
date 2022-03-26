@@ -1,0 +1,16 @@
+- deprecated: false
+  documentation: ${1}
+  insertText: var_a1
+  insertTextFormat: 2
+  kind: 6
+  label: var_a1
+  preselect: false
+  textEdit:
+    newText: var_a1
+    range:
+      end:
+        character: 16
+        line: 6
+      start:
+        character: 14
+        line: 6

@@ -498,6 +498,11 @@ def _find_subvar(stack, node, initial_token, col) -> Optional[VarTokenInfo]:
 
 
 def find_variable(section, line, col) -> Optional[VarTokenInfo]:
+    """
+    Finds the current variable token. Note that it won't include '{' nor '}'.
+    The token may also be an empty token if we have a variable without contents.
+    """
+
     token_info = find_token(section, line, col)
     if token_info is not None:
         stack = token_info.stack
@@ -512,7 +517,33 @@ def find_variable(section, line, col) -> Optional[VarTokenInfo]:
                 for part in iter_expression_variables(token):
                     if part.type == token.VARIABLE:
                         if part.col_offset <= col <= part.end_col_offset:
-                            return VarTokenInfo(stack, node, part, "$")
+                            return VarTokenInfo(
+                                stack, node, part, "$", VarTokenInfo.CONTEXT_EXPRESSION
+                            )
+
+                if "$" in token.value:
+                    char_in_token = col - token.col_offset
+                    if char_in_token >= 0:
+                        value_up_to_cursor = token.value[:char_in_token]
+                        if value_up_to_cursor.endswith("$"):
+                            # Empty variable at this point
+                            from robot.api import Token
+
+                            empty_token = Token(
+                                type=token.VARIABLE,
+                                value="",
+                                lineno=token.lineno,
+                                col_offset=col,
+                            )
+
+                            return VarTokenInfo(
+                                stack,
+                                node,
+                                empty_token,
+                                "$",
+                                VarTokenInfo.CONTEXT_EXPRESSION,
+                            )
+
         except:
             log.exception("Unable to tokenize: %s", token)
 

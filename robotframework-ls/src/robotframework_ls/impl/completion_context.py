@@ -331,6 +331,9 @@ class CompletionContext(object):
 
     @instance_cache
     def get_current_variable(self, section=None) -> Optional[VarTokenInfo]:
+        """
+        Provides the current variable token. Note that it won't include '{' nor '}'.
+        """
         from robotframework_ls.impl import ast_utils
 
         if section is None:

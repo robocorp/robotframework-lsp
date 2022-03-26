@@ -507,3 +507,58 @@ Put Key
     assert len(completions) > 10
     for completion in completions:
         assert completion["textEdit"]["range"]["end"]["character"] == col - 1
+
+
+@pytest.mark.skipif(
+    get_robot_major_version() < 5,
+    reason="Requires RF 5 onwards for WHILE.",
+)
+def test_variable_completions_in_expression(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.server_api.server import complete_all
+
+    workspace.set_root("case_vars_file", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_root.robot")
+    doc.source = """
+*** Variables ***
+${var a1}    ${1}
+
+*** Test Cases ***
+Test
+    WHILE    $va"""
+
+    completions = complete_all(CompletionContext(doc, workspace=workspace.ws))
+    data_regression.check(completions)
+
+
+@pytest.mark.skipif(
+    get_robot_major_version() < 5,
+    reason="Requires RF 5 onwards for WHILE.",
+)
+def test_variable_completions_in_expression_1(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.server_api.server import complete_all
+
+    workspace.set_root("case_vars_file", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_root.robot")
+    doc.source = """
+*** Variables ***
+${var a1}    ${1}
+
+*** Test Cases ***
+Test
+    WHILE    $"""
+
+    line, col = doc.get_last_line_col()
+    completions = complete_all(CompletionContext(doc, workspace=workspace.ws))
+    assert len(completions) > 10
+    found_var_a1 = False
+    for completion in completions:
+        assert completion["textEdit"]["range"]["end"]["character"] == col
+        assert completion["textEdit"]["range"]["end"]["line"] == line
+        if not found_var_a1:
+            found_var_a1 = completion["label"] == "var_a1"
+
+    assert found_var_a1

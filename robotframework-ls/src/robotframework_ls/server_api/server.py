@@ -34,6 +34,55 @@ import threading
 log = get_logger(__name__)
 
 
+def complete_all(
+    completion_context: ICompletionContext,
+) -> List[CompletionItemTypedDict]:
+    from robotframework_ls.impl import section_name_completions
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl import variable_completions
+    from robotframework_ls.impl import dictionary_completions
+    from robotframework_ls.impl import filesystem_section_completions
+    from robotframework_ls.impl import keyword_parameter_completions
+    from robotframework_ls.impl import auto_import_completions
+    from robotframework_ls.impl.collect_keywords import (
+        collect_keyword_name_to_keyword_found,
+    )
+    from robotframework_ls.impl import ast_utils
+
+    ret = section_name_completions.complete(completion_context)
+    if not ret:
+        ret.extend(filesystem_section_completions.complete(completion_context))
+
+    if not ret:
+        token_info = completion_context.get_current_token()
+        if token_info is not None:
+            token = ast_utils.get_keyword_name_token(
+                token_info.stack, token_info.node, token_info.token
+            )
+            if token is not None:
+                keyword_name_to_keyword_found: Dict[
+                    str, List[IKeywordFound]
+                ] = collect_keyword_name_to_keyword_found(completion_context)
+                ret.extend(keyword_completions.complete(completion_context))
+                ret.extend(
+                    auto_import_completions.complete(
+                        completion_context, keyword_name_to_keyword_found
+                    )
+                )
+                return ret
+
+    if not ret:
+        ret.extend(variable_completions.complete(completion_context))
+
+    if not ret:
+        ret.extend(dictionary_completions.complete(completion_context))
+
+    if not ret:
+        ret.extend(keyword_parameter_completions.complete(completion_context))
+
+    return ret
+
+
 class RobotFrameworkServerApi(PythonLanguageServer):
     """
     This is a custom server. It uses the same message-format used in the language
@@ -328,56 +377,14 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         return completions
 
     def _complete_from_completion_context(self, completion_context):
-        from robotframework_ls.impl import section_name_completions
-        from robotframework_ls.impl import keyword_completions
-        from robotframework_ls.impl import variable_completions
-        from robotframework_ls.impl import dictionary_completions
-        from robotframework_ls.impl import filesystem_section_completions
-        from robotframework_ls.impl import keyword_parameter_completions
-        from robotframework_ls.impl import auto_import_completions
-        from robotframework_ls.impl.collect_keywords import (
-            collect_keyword_name_to_keyword_found,
-        )
-        from robotframework_ls.impl import ast_utils
-
         with self._completion_contexts_saved_lock:
-            # Keep up to 3 saved contexts there.
+            # Keep up to 3 saved contexts there (used to resolve
+            # completion items afterwards).
             while len(self._completion_contexts_saved) > 2:
                 self._completion_contexts_saved.popleft()
             self._completion_contexts_saved.append(completion_context)
 
-        ret = section_name_completions.complete(completion_context)
-        if not ret:
-            ret.extend(filesystem_section_completions.complete(completion_context))
-
-        if not ret:
-            token_info = completion_context.get_current_token()
-            if token_info is not None:
-                token = ast_utils.get_keyword_name_token(
-                    token_info.stack, token_info.node, token_info.token
-                )
-                if token is not None:
-                    keyword_name_to_keyword_found: Dict[
-                        str, List[IKeywordFound]
-                    ] = collect_keyword_name_to_keyword_found(completion_context)
-                    ret.extend(keyword_completions.complete(completion_context))
-                    ret.extend(
-                        auto_import_completions.complete(
-                            completion_context, keyword_name_to_keyword_found
-                        )
-                    )
-                    return ret
-
-        if not ret:
-            ret.extend(variable_completions.complete(completion_context))
-
-        if not ret:
-            ret.extend(dictionary_completions.complete(completion_context))
-
-        if not ret:
-            ret.extend(keyword_parameter_completions.complete(completion_context))
-
-        return ret
+        return complete_all(completion_context)
 
     def m_section_name_complete(self, doc_uri, line, col):
         from robotframework_ls.impl import section_name_completions

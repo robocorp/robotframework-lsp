@@ -216,7 +216,10 @@ class TokenInfo:
 
 class VarTokenInfo:
 
-    __slots__ = ["stack", "node", "token", "var_identifier"]  # var_identifier is $,@,%
+    __slots__ = ["stack", "node", "token", "var_identifier", "context"]
+
+    CONTEXT_UNDEFINED = 0
+    CONTEXT_EXPRESSION = 1
 
     def __init__(
         self,
@@ -224,11 +227,17 @@ class VarTokenInfo:
         node: INode,
         token: IRobotToken,
         var_identifier: str,
+        context: int = CONTEXT_UNDEFINED,
     ):
+        """
+        :param var_identifier: One of: $,@,%
+        :param context:
+        """
         self.stack = stack
         self.node = node
         self.token = token
         self.var_identifier = var_identifier
+        self.context = context
 
     def __str__(self):
         return f"VarTokenInfo({self.token.value} -- id: {self.var_identifier} -- in: {self.node.__class__.__name__})"
@@ -883,7 +892,9 @@ class ICompletionContext(Protocol):
         pass
 
     def get_current_variable(self, section=None) -> Optional[VarTokenInfo]:
-        pass
+        """
+        Provides the current variable token. Note that it won't include '{' nor '}'.
+        """
 
     def get_resource_import_as_doc(self, resource_import) -> Optional[IRobotDocument]:
         pass
@@ -965,12 +976,20 @@ class VariableKind:
 class IVariableFound(Protocol):
     """
     :ivar variable_name:
+        This is the value that we should use when completing.
+        It's the name of the variable without `${}` chars.
+
     :ivar variable_value:
+        The value of the variable -- in general used to show information
+        regarding that variable to the user.
+
     :ivar completion_context:
         This may be a new completion context, created when a new document is
         being analyzed (the variable was created for that completion context).
+
     :ivar source:
         Source where the variable was found.
+
     :ivar lineno:
         Line where it was found (0-based).
     """
