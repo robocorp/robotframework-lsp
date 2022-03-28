@@ -14,6 +14,11 @@ Configuration settings
 
 - `robot.variables` custom variables to be considered by **Robot Framework** (used when resolving variables and automatically passed to the launch config as `--variable` entries).
 
+- `robot.lint.ignoreVariables` variables defined with this setting won't be reported as undefined variables during linting.
+
+- `robot.loadVariablesFromArgumentsFile` may point to an arguments file from which variables should be loaded for linting / code-completion.
+    - Note: the arguments file still needs to be separately set during launching too.
+
 - `robot.completions.section_headers.form`: can be used to determine if the completions should be presented in the plural or singular form.
 
 - `robot.lint.robocop.enabled`: used to enable/disable linting with [Robocop](https://robocop.readthedocs.io/en/latest/) (default: true).

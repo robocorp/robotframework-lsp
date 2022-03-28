@@ -1,3 +1,29 @@
+New in 0.43.0 (2022-03-28)
+-----------------------------
+
+- Improvements dealing with **Variables**:
+    - Undefined variables are now reported. [#334](https://github.com/robocorp/robotframework-lsp/issues/334)
+        - `robot.variables`: may be used to specify variables used for launching as well as code-completion/code analysis.
+        - `robot.lint.ignoreVariables`: may be used to set variables to be ignored in linting.
+        - `robot.loadVariablesFromArgumentsFile` may be used to load variables from an arguments file for code-completion and code analysis.
+            - Note: the arguments file still needs to be separately set during launching too.
+        - Variables are recognized in expressions as well as inner variables.
+    - Variables set with the following keywords are recognized: [#577](https://github.com/robocorp/robotframework-lsp/issues/577)
+        - Set Task Variable
+        - Set Test Variable
+        - Set Suite Variable
+        - Set Global Variable
+    - Variable files with a `.yml` are properly recognized (previously only `.yaml` was supported). 
+    - Semantic highlighting properly deals with advanced variable syntax (with variables inside variables or using a subscript).
+    - Variables in assign now have the same color as variables in other places. [#613](https://github.com/robocorp/robotframework-lsp/issues/613)
+    - Variable imports which can't be resolved are reported.
+        - May be disabled with `robot.lint.undefinedVariableImports`.
+- Fix issue in cache invalidation for dependencies. [#617](https://github.com/robocorp/robotframework-lsp/issues/617)
+- `\\` is escaped to `\` when passed in the library arguments. [#608](https://github.com/robocorp/robotframework-lsp/issues/608)
+- Fix in heuristics to match arguments which could result in wrong argument analysis in keyword calls. [#603](https://github.com/robocorp/robotframework-lsp/issues/603)
+- Hover now provides custom hints for variables, imports and parameters.
+
+
 New in 0.42.0 (2022-03-14)
 -----------------------------
 

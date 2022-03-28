@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.42.0'
+version '0.43.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -51,20 +51,33 @@ intellij {
 patchPluginXml {
     changeNotes """
     <p>
-    Release 0.42.0
+    Release 0.43.0
     </p>
     <ul>
   
-    <li>Semantic highlighting supports Gherkin style (Given, Then, ...). (patch by @weltings)</li>
-    <li>Semantic highlighting only highlights names up to a dot if a related import/resource is found to avoid conflict with Keywords with a dot in the name.(patch by @weltings)</li>
-    <li>Semantic highlighting available for variables in keyword calls.</li>
-    <li>Semantic highlighting for WHILE limit= and EXCEPT type=.</li>
-    <li>Report unresolved variables when resolving a resource/import.</li>
-    <li>Performance improvement: Don't index everything in AST when only items from the section (LibraryImport, ResourceImport, ...) are requested.</li>
-    <li>Performance improvement: Caching of dependencies.</li>
-    <li>Run Keyword If is now properly handled across all features in the language server.</li>
-    <li>None is no longer reported as undefined keyword when used as keyword call.</li>
-    <li>Misleading message saying that RF is old when it's not installed is no longer shown.</li>
+    <li>Improvements dealing with <strong>Variables</strong>:</li>
+        <li>Undefined variables are now reported.</li>
+            <li><strong>robot.variables</strong>: may be used to specify variables used for launching as well as code-completion/code analysis.</li>
+            <li><strong>robot.lint.ignoreVariables</strong>: may be used to set variables to be ignored in linting.</li>
+            <li><strong>robot.loadVariablesFromArgumentsFile</strong> may be used to load variables from an arguments file for code-completion and code analysis.</li>
+                <li>Note: the arguments file still needs to be separately set during launching too.</li>
+            <li>Variables are recognized in expressions as well as inner variables.</li>
+        <li>Variables set with the following keywords are recognized:</li>
+            <li>Set Task Variable</li>
+            <li>Set Test Variable</li>
+            <li>Set Suite Variable</li>
+            <li>Set Global Variable</li>
+        <li>Variable files with a <strong>.yml</strong> are properly recognized (previously only <strong>.yaml</strong> was supported). </li>
+        <li>Semantic highlighting properly deals with advanced variable syntax (with variables inside variables or using a subscript).</li>
+        <li>Variables in assign now have the same color as variables in other places.</li>
+        <li>Variable imports which can't be resolved are reported.</li>
+            <li>May be disabled with <strong>robot.lint.undefinedVariableImports</strong>.</li>
+    <li>Fix issue in cache invalidation for dependencies.</li>
+    <li><strong>&#47;&#47;</strong> is escaped to <strong>&#47;</strong> when passed in the library arguments.</li>
+    <li>Fix in heuristics to match arguments which could result in wrong argument analysis in keyword calls.</li>
+    <li>Hover now provides custom hints for variables, imports and parameters.</li>
+    <li>Code-lenses are no longer shown by default.</li>
+        <li>The <strong>robot.codeLens.enable</strong> setting may be used to re-enable them.</li>
 
     <br>
     Current feature set:<br>

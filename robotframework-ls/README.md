@@ -44,12 +44,12 @@ Reporting Issues
 See: [Reporting Issue](docs/reporting_issues.md) for details on how to report some issue in the `Robot Framework Language Server`.
 
 
-Features (0.42.0)
+Features (0.43.0)
 -----------------
 
 - Test Explorer support in VSCode.
 - Interactive Console: a REPL for interactively experimenting with Robot Framework (for VSCode).
-- Code analysis: checks if keywords are properly imported/defined.
+- Code analysis: checks if keywords/variables are properly imported/defined.
 - Linting with [Robocop](https://robocop.readthedocs.io/en/latest/).
 - Code completion for keywords, keyword parameters, section headers, section settings, variables, resource imports and library imports.
 - Code completion for all keywords in the workspace with auto-import of Library or Resource.

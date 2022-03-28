@@ -1,4 +1,5 @@
 black==21.9b0
+click==8.0.4
 mypy==0.910
 types-docutils
 types-PyYAML
