@@ -9,6 +9,7 @@ OPTION_ROBOT_LANGUAGE_SERVER_TCP_PORT = "robot.language-server.tcp-port"
 OPTION_ROBOT_LANGUAGE_SERVER_ARGS = "robot.language-server.args"
 
 OPTION_ROBOT_VARIABLES = "robot.variables"
+OPTION_ROBOT_VARIABLES_LOAD_FROM_ARGUMENTS_FILE = "robot.loadVariablesFromArgumentsFile"
 
 OPTION_ROBOT_LINT_ROBOCOP_ENABLED = "robot.lint.robocop.enabled"
 

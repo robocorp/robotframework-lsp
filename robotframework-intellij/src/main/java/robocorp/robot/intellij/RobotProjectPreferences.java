@@ -23,6 +23,7 @@ class RobotProjectState {
     public String robotPythonExecutable = "";
     public String robotPythonEnv = "";
     public String robotVariables = "";
+    public String robotLoadVariablesFromArgumentsFile = "";
     public String robotPythonpath = "";
     public String robotLibrariesLibdocNeedsArgs = "";
     public String robotLibrariesLibdocPreGenerate = "";
@@ -53,6 +54,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
     public static final String ROBOT_PYTHON_EXECUTABLE = "robot.python.executable";
     public static final String ROBOT_PYTHON_ENV = "robot.python.env";
     public static final String ROBOT_VARIABLES = "robot.variables";
+    public static final String ROBOT_LOAD_VARIABLES_FROM_ARGUMENTS_FILE = "robot.loadVariablesFromArgumentsFile";
     public static final String ROBOT_PYTHONPATH = "robot.pythonpath";
     public static final String ROBOT_LIBRARIES_LIBDOC_NEEDS_ARGS = "robot.libraries.libdoc.needsArgs";
     public static final String ROBOT_LIBRARIES_LIBDOC_PRE_GENERATE = "robot.libraries.libdoc.preGenerate";
@@ -85,6 +87,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         robotState.robotPythonExecutable = getRobotPythonExecutable();
         robotState.robotPythonEnv = getRobotPythonEnv();
         robotState.robotVariables = getRobotVariables();
+        robotState.robotLoadVariablesFromArgumentsFile = getRobotLoadVariablesFromArgumentsFile();
         robotState.robotPythonpath = getRobotPythonpath();
         robotState.robotLibrariesLibdocNeedsArgs = getRobotLibrariesLibdocNeedsArgs();
         robotState.robotLibrariesLibdocPreGenerate = getRobotLibrariesLibdocPreGenerate();
@@ -115,6 +118,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         setRobotPythonExecutable(robotState.robotPythonExecutable);
         setRobotPythonEnv(robotState.robotPythonEnv);
         setRobotVariables(robotState.robotVariables);
+        setRobotLoadVariablesFromArgumentsFile(robotState.robotLoadVariablesFromArgumentsFile);
         setRobotPythonpath(robotState.robotPythonpath);
         setRobotLibrariesLibdocNeedsArgs(robotState.robotLibrariesLibdocNeedsArgs);
         setRobotLibrariesLibdocPreGenerate(robotState.robotLibrariesLibdocPreGenerate);
@@ -182,6 +186,14 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         if(!robotVariables.isEmpty()){
             try {
                 jsonObject.add(ROBOT_VARIABLES, g.fromJson(robotVariables, JsonObject.class));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotLoadVariablesFromArgumentsFile.isEmpty()){
+            try {
+                jsonObject.add(ROBOT_LOAD_VARIABLES_FROM_ARGUMENTS_FILE, new JsonPrimitive(robotLoadVariablesFromArgumentsFile));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -582,6 +594,49 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         robotVariables = s;
         for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             listener.onChanged(ROBOT_VARIABLES, old, s);
+        }
+    }
+    
+    private String robotLoadVariablesFromArgumentsFile = "";
+
+    public @NotNull String getRobotLoadVariablesFromArgumentsFile() {
+        return robotLoadVariablesFromArgumentsFile;
+    }
+
+    public @Nullable JsonPrimitive getRobotLoadVariablesFromArgumentsFileAsJson() {
+        if(robotLoadVariablesFromArgumentsFile.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return new JsonPrimitive(robotLoadVariablesFromArgumentsFile);
+    }
+
+    public @NotNull String validateRobotLoadVariablesFromArgumentsFile(String robotLoadVariablesFromArgumentsFile) {
+        if(robotLoadVariablesFromArgumentsFile.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            new JsonPrimitive(robotLoadVariablesFromArgumentsFile);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLoadVariablesFromArgumentsFile(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLoadVariablesFromArgumentsFile)) {
+            return;
+        }
+        String old = robotLoadVariablesFromArgumentsFile;
+        robotLoadVariablesFromArgumentsFile = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            listener.onChanged(ROBOT_LOAD_VARIABLES_FROM_ARGUMENTS_FILE, old, s);
         }
     }
     

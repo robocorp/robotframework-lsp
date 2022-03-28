@@ -135,6 +135,11 @@ def get_json_contents():
                         "default": {},
                         "description": 'Custom variables passed to RobotFramework (used when resolving variables and automatically passed to the launch config as --variable entries).\n(i.e.: {"EXECDIR": "c:/my/proj/src"})',
                     },
+                    "robot.loadVariablesFromArgumentsFile": {
+                        "type": "string",
+                        "default": "",
+                        "description": "Load variables for code-completion and code-analysis based on an arguments file. Multiple files accepted by separating with a comma.",
+                    },
                     "robot.pythonpath": {
                         "type": "array",
                         "default": [],

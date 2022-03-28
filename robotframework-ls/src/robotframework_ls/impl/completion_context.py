@@ -1,6 +1,17 @@
 import sys
 import os
-from typing import Optional, Any, List, Tuple, Set, Callable, Dict, Union, Iterator
+from typing import (
+    Optional,
+    Any,
+    List,
+    Tuple,
+    Set,
+    Callable,
+    Dict,
+    Union,
+    Iterator,
+    Sequence,
+)
 
 from robocorp_ls_core.cache import instance_cache
 from robocorp_ls_core.constants import NULL
@@ -28,13 +39,16 @@ from robotframework_ls.impl.protocols import (
     INode,
     IVariableImportNode,
     VarTokenInfo,
+    IVariablesFromArgumentsFileLoader,
 )
 from robotframework_ls.impl.robot_workspace import RobotDocument
 from robocorp_ls_core import uris
 import itertools
 from functools import partial
 import typing
-from robotframework_ls.impl import text_utilities
+from robotframework_ls.impl.variables_from_arguments_file import (
+    VariablesFromArgumentsFileLoader,
+)
 
 
 log = get_logger(__name__)
@@ -87,16 +101,10 @@ class CompletionContext(object):
         config: Optional[IConfig] = None,
         memo: Optional[_Memo] = None,
         monitor: Optional[IMonitor] = NULL,
+        variables_from_arguments_files_loader: Sequence[
+            IVariablesFromArgumentsFileLoader
+        ] = (),
     ) -> None:
-        """
-        :param robocorp_ls_core.workspace.Document doc:
-        :param int line:
-        :param int col:
-        :param RobotWorkspace workspace:
-        :param robocorp_ls_core.config.Config config:
-        :param _Memo memo:
-        """
-
         if col is Sentinel.SENTINEL or line is Sentinel.SENTINEL:
             assert (
                 col is Sentinel.SENTINEL
@@ -130,6 +138,9 @@ class CompletionContext(object):
         self._id_to_compute_documentation: Dict[
             int, Callable[[], MarkupContentTypedDict]
         ] = {}
+        self.variables_from_arguments_files_loader = (
+            variables_from_arguments_files_loader
+        )
 
     def assign_documentation_resolve(
         self,
@@ -184,6 +195,7 @@ class CompletionContext(object):
             config=self._config,
             memo=self._memo,
             monitor=self._monitor,
+            variables_from_arguments_files_loader=self.variables_from_arguments_files_loader,
         )
         ctx._original_ctx = self
         return ctx
@@ -197,6 +209,7 @@ class CompletionContext(object):
             config=self._config,
             memo=self._memo,
             monitor=self._monitor,
+            variables_from_arguments_files_loader=self.variables_from_arguments_files_loader,
         )
         ctx._original_ctx = self
         return ctx

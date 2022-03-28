@@ -1,7 +1,7 @@
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Optional, List, Dict, Deque, Tuple
+from typing import Optional, List, Dict, Deque, Tuple, Sequence
 from robocorp_ls_core.protocols import IConfig, IMonitor, ITestInfoTypedDict, IWorkspace
 from functools import partial
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
@@ -23,6 +23,7 @@ from robotframework_ls.impl.protocols import (
     IDefinition,
     ICompletionContext,
     EvaluatableExpressionTypedDict,
+    IVariablesFromArgumentsFileLoader,
 )
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 import itertools
@@ -125,6 +126,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
         self._completion_contexts_saved_lock = threading.Lock()
         self._completion_contexts_saved: Deque[ICompletionContext] = deque()
+        self._variables_from_arguments_files_loader: Sequence[
+            IVariablesFromArgumentsFileLoader
+        ] = []
 
     @overrides(PythonLanguageServer._create_config)
     def _create_config(self) -> IConfig:
@@ -200,8 +204,39 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
     @overrides(PythonLanguageServer.m_workspace__did_change_configuration)
     def m_workspace__did_change_configuration(self, **kwargs):
+        from robotframework_ls.impl.robot_lsp_constants import (
+            OPTION_ROBOT_VARIABLES_LOAD_FROM_ARGUMENTS_FILE,
+        )
+
         PythonLanguageServer.m_workspace__did_change_configuration(self, **kwargs)
         self.libspec_manager.config = self.config
+
+        try:
+            variables_from_arguments_files = self.config.get_setting(
+                OPTION_ROBOT_VARIABLES_LOAD_FROM_ARGUMENTS_FILE, str, ""
+            ).strip()
+            if not variables_from_arguments_files:
+                self._variables_from_arguments_files_loader = []
+
+            else:
+                from robotframework_ls.impl.variables_from_arguments_file import (
+                    VariablesFromArgumentsFileLoader,
+                )
+
+                created_variables_from_arguments_files = []
+
+                for v in variables_from_arguments_files.split(","):
+                    v = v.strip()
+                    created_variables_from_arguments_files.append(
+                        VariablesFromArgumentsFileLoader(v)
+                    )
+                self._variables_from_arguments_files_loader = (
+                    created_variables_from_arguments_files
+                )
+        except:
+            log.exception(
+                f"Error getting options: {OPTION_ROBOT_VARIABLES_LOAD_FROM_ARGUMENTS_FILE}"
+            )
 
     @overrides(PythonLanguageServer.lint)
     def lint(self, *args, **kwargs):
@@ -610,6 +645,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             workspace=workspace,
             config=self.config,
             monitor=monitor,
+            variables_from_arguments_files_loader=self._variables_from_arguments_files_loader,
         )
 
     def m_signature_help(self, doc_uri: str, line: int, col: int):

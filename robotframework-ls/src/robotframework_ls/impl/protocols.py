@@ -793,6 +793,11 @@ class ICompletionContextDependencyGraph(Protocol):
         pass
 
 
+class IVariablesFromArgumentsFileLoader(Protocol):
+    def get_variables(self) -> Tuple["IVariableFound", ...]:
+        pass
+
+
 class ICompletionContext(Protocol):
     def __init__(
         self,
@@ -803,19 +808,21 @@ class ICompletionContext(Protocol):
         config=None,
         memo=None,
         monitor: IMonitor = NULL,
+        variables_from_arguments_files_loader: Sequence[
+            IVariablesFromArgumentsFileLoader
+        ] = (),
     ) -> None:
-        """
-        :param robocorp_ls_core.workspace.Document doc:
-        :param int line:
-        :param int col:
-        :param RobotWorkspace workspace:
-        :param robocorp_ls_core.config.Config config:
-        :param _Memo memo:
-        """
+        pass
 
     def resolve_completion_item(
         self, data, completion_item: CompletionItemTypedDict, monaco: bool = False
     ) -> None:
+        pass
+
+    @property
+    def variables_from_arguments_files_loader(
+        self,
+    ) -> Sequence[IVariablesFromArgumentsFileLoader]:
         pass
 
     @property
@@ -971,6 +978,7 @@ class VariableKind:
     SETTINGS = "Variable (settings)"
     PYTHON = "Variable (python)"
     YAML = "Variable (yaml)"
+    ARGUMENTS_FILE = "Arguments file"
 
 
 class IVariableFound(Protocol):

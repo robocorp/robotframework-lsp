@@ -1,4 +1,8 @@
-from robocorp_ls_core.cache import instance_cache
+from typing import Optional, List
+
+from robocorp_ls_core.lsp import CompletionItemTypedDict
+from robocorp_ls_core.protocols import check_implements, IDocumentSelection
+from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.protocols import (
     ICompletionContext,
     IRobotDocument,
@@ -10,140 +14,17 @@ from robotframework_ls.impl.protocols import (
     VariableKind,
     VarTokenInfo,
 )
-from robocorp_ls_core.robotframework_log import get_logger
-from robocorp_ls_core.protocols import check_implements, IDocumentSelection
-from typing import Optional, List
-from robotframework_ls.impl.text_utilities import normalize_robot_name, is_variable_text
-from robocorp_ls_core.lsp import CompletionItemTypedDict
+from robotframework_ls.impl.text_utilities import normalize_robot_name
+from robotframework_ls.impl.variable_types import (
+    VariableFoundFromToken,
+    VariableFoundFromPythonAst,
+    VariableFoundFromYaml,
+    VariableFoundFromSettings,
+    VariableFoundFromBuiltins,
+)
+
 
 log = get_logger(__name__)
-
-
-class _VariableFoundFromToken(object):
-    def __init__(
-        self,
-        completion_context,
-        variable_token,
-        variable_value,
-        variable_name=None,
-        variable_kind=VariableKind.VARIABLE,
-    ):
-        self.completion_context = completion_context
-        self.variable_token = variable_token
-
-        if variable_name is None:
-            variable_name = variable_token.value
-        assert not is_variable_text(variable_name)
-
-        self.variable_name = variable_name
-        if isinstance(variable_value, (list, tuple, set)):
-            if len(variable_value) == 1:
-                self.variable_value = str(next(iter(variable_value)))
-            else:
-                self.variable_value = str(variable_value)
-        else:
-            self.variable_value = str(variable_value)
-        self.variable_kind = variable_kind
-
-    @property  # type: ignore
-    @instance_cache
-    def source(self):
-        from robocorp_ls_core import uris
-
-        return uris.to_fs_path(self.completion_context.doc.uri)
-
-    @property
-    def lineno(self):
-        return self.variable_token.lineno - 1  # Make 0-based
-
-    @property
-    def end_lineno(self):
-        return self.variable_token.lineno - 1  # Make 0-based
-
-    @property
-    def col_offset(self):
-        return self.variable_token.col_offset
-
-    @property
-    def end_col_offset(self):
-        return self.variable_token.end_col_offset
-
-    def __typecheckself__(self) -> None:
-        _: IVariableFound = check_implements(self)
-
-
-class _VariableFoundFromPythonAst(object):
-    def __init__(
-        self,
-        path: str,
-        lineno: int,
-        col: int,
-        end_lineno: int,
-        end_col: int,
-        variable_value: str,
-        variable_name: str,
-    ):
-        assert not is_variable_text(variable_name)
-        self.lineno = lineno
-        self.col_offset = col
-        self.end_lineno = end_lineno
-        self.end_col_offset = end_col
-
-        self.completion_context: Optional[ICompletionContext] = None
-        self._path = path
-        self.variable_name = variable_name
-        self.variable_value = variable_value
-        self.variable_kind = VariableKind.PYTHON
-
-    @property
-    def source(self):
-        return self._path
-
-    def __typecheckself__(self) -> None:
-        _: IVariableFound = check_implements(self)
-
-
-class _VariableFoundFromSettings(object):
-    variable_kind = VariableKind.SETTINGS
-
-    def __init__(self, variable_name, variable_value, source="", lineno=0):
-        assert not is_variable_text(variable_name)
-        self.completion_context = None
-        self.variable_name = variable_name
-        self.variable_value = str(variable_value)
-        self._source = source
-        self._lineno = lineno
-
-    @property
-    def source(self):
-        return self._source
-
-    @property
-    def lineno(self):
-        return self._lineno
-
-    @property
-    def end_lineno(self):
-        return self._lineno
-
-    @property
-    def col_offset(self):
-        return 0
-
-    @property
-    def end_col_offset(self):
-        return 0
-
-    def __typecheckself__(self) -> None:
-        _: IVariableFound = check_implements(self)
-
-
-class _VariableFoundFromBuiltins(_VariableFoundFromSettings):
-    variable_kind = VariableKind.BUILTIN
-
-
-class _VariableFoundFromYaml(_VariableFoundFromSettings):
-    variable_kind = VariableKind.YAML
 
 
 class _Collector(AbstractVariablesCollector):
@@ -236,7 +117,7 @@ def _collect_completions_from_ast(
             base_token = ast_utils.convert_variable_match_base_to_token(
                 token, variable_match
             )
-            variable_found = _VariableFoundFromToken(
+            variable_found = VariableFoundFromToken(
                 completion_context,
                 base_token,
                 variable_node.value,
@@ -279,7 +160,7 @@ def _collect_completions_from_ast(
                     if var_value_tok is not None:
                         variable_value = var_value_tok.value
 
-                    variable_found = _VariableFoundFromToken(
+                    variable_found = VariableFoundFromToken(
                         completion_context,
                         base_token,
                         variable_value,
@@ -350,7 +231,7 @@ def _collect_variables_from_variable_import_doc(
                                     except:
                                         log.exception()
 
-                                    variable_found = _VariableFoundFromPythonAst(
+                                    variable_found = VariableFoundFromPythonAst(
                                         variable_import_doc.path,
                                         target.lineno - 1,
                                         target.col_offset,
@@ -391,7 +272,7 @@ def _collect_variables_from_variable_import_doc(
 
                         if collector.accepts(key):
                             collector.on_variable(
-                                _VariableFoundFromYaml(
+                                VariableFoundFromYaml(
                                     key,
                                     str(val),
                                     source=variable_import_doc.path,
@@ -485,7 +366,7 @@ def _collect_arguments(
     ):
         name = arg_token.value
         if collector.accepts(name):
-            variable_found = _VariableFoundFromToken(
+            variable_found = VariableFoundFromToken(
                 completion_context,
                 arg_token,
                 "",
@@ -505,7 +386,7 @@ def _collect_from_settings(
         robot_variables = config.get_setting(OPTION_ROBOT_VARIABLES, dict, {})
         for key, val in robot_variables.items():
             if collector.accepts(key):
-                collector.on_variable(_VariableFoundFromSettings(key, val))
+                collector.on_variable(VariableFoundFromSettings(key, val))
 
 
 def _collect_from_builtins(
@@ -515,7 +396,7 @@ def _collect_from_builtins(
 
     for key, val in get_builtin_variables():
         if collector.accepts(key):
-            collector.on_variable(_VariableFoundFromBuiltins(key, val))
+            collector.on_variable(VariableFoundFromBuiltins(key, val))
 
 
 def collect_variables(
@@ -530,6 +411,18 @@ def collect_variables(
     collect_global_variables(completion_context, collector, only_current_doc)
 
 
+def _collect_from_arguments_files(
+    completion_context: ICompletionContext, collector: IVariablesCollector
+):
+    if not completion_context.variables_from_arguments_files_loader:
+        return
+
+    for c in completion_context.variables_from_arguments_files_loader:
+        for variable in c.get_variables():
+            if collector.accepts(variable.variable_name):
+                collector.on_variable(variable)
+
+
 def collect_global_variables(
     completion_context: ICompletionContext,
     collector: IVariablesCollector,
@@ -542,6 +435,7 @@ def collect_global_variables(
     if not only_current_doc:
         _collect_from_settings(completion_context, collector)
         _collect_from_builtins(completion_context, collector)
+        _collect_from_arguments_files(completion_context, collector)
 
 
 def collect_local_variables(
@@ -564,7 +458,7 @@ def collect_local_variables(
         completion_context.check_cancelled()
         if collector.accepts(assign_node_info.token.value):
             rep = " ".join(tok.value for tok in assign_node_info.node.tokens)
-            variable_found = _VariableFoundFromToken(
+            variable_found = VariableFoundFromToken(
                 completion_context, assign_node_info.token, rep
             )
             collector.on_variable(variable_found)

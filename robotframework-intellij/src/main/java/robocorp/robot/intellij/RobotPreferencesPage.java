@@ -26,6 +26,7 @@ class RobotPreferencesComponent {
     private final JBTextField robotPythonExecutable = new JBTextField();
     private final JBTextField robotPythonEnv = new JBTextField();
     private final JBTextField robotVariables = new JBTextField();
+    private final JBTextField robotLoadVariablesFromArgumentsFile = new JBTextField();
     private final JBTextField robotPythonpath = new JBTextField();
     private final JBTextField robotLibrariesLibdocNeedsArgs = new JBTextField();
     private final JBTextField robotLibrariesLibdocPreGenerate = new JBTextField();
@@ -58,6 +59,8 @@ class RobotPreferencesComponent {
                 .addComponent(createJTextArea("Environment variables used to load user code and dependent libraries.\n(i.e.: {\"MY_ENV_VAR\": \"some_value\"})\nNote: expected format: JSON Object\n"))
                 .addLabeledComponent(new JBLabel("Variables"), robotVariables, 1, false)
                 .addComponent(createJTextArea("Custom variables passed to RobotFramework\n(used when resolving variables and automatically passed to the launch config as --variable entries).\n(i.e.: {\"EXECDIR\": \"c:/my/proj/src\"})\nNote: expected format: JSON Object\n"))
+                .addLabeledComponent(new JBLabel("Load Variables From Arguments File"), robotLoadVariablesFromArgumentsFile, 1, false)
+                .addComponent(createJTextArea("Load variables for code-completion and code-analysis based on an arguments file. Multiple files\naccepted by separating with a comma.\n"))
                 .addLabeledComponent(new JBLabel("Pythonpath"), robotPythonpath, 1, false)
                 .addComponent(createJTextArea("Entries to be added to the PYTHONPATH\n(used when resolving resources and imports and automatically passed to the launch config as\n--pythonpath entries).\n(i.e.: [\"c:/my/pro/src\"])\nNote: expected format: JSON Array\n"))
                 .addLabeledComponent(new JBLabel("Libraries Libdoc Needs Args"), robotLibrariesLibdocNeedsArgs, 1, false)
@@ -168,6 +171,15 @@ class RobotPreferencesComponent {
 
     public void setRobotVariables (@NotNull String newText) {
         robotVariables.setText(newText);
+    }
+    
+    @NotNull
+    public String getRobotLoadVariablesFromArgumentsFile() {
+        return robotLoadVariablesFromArgumentsFile.getText();
+    }
+
+    public void setRobotLoadVariablesFromArgumentsFile (@NotNull String newText) {
+        robotLoadVariablesFromArgumentsFile.setText(newText);
     }
     
     @NotNull
@@ -375,6 +387,10 @@ public class RobotPreferencesPage implements Configurable {
             return true;
         }
         
+        if(!settings.getRobotLoadVariablesFromArgumentsFile().equals(component.getRobotLoadVariablesFromArgumentsFile())){
+            return true;
+        }
+        
         if(!settings.getRobotPythonpath().equals(component.getRobotPythonpath())){
             return true;
         }
@@ -456,6 +472,7 @@ public class RobotPreferencesPage implements Configurable {
         component.setRobotPythonExecutable(settings.getRobotPythonExecutable());
         component.setRobotPythonEnv(settings.getRobotPythonEnv());
         component.setRobotVariables(settings.getRobotVariables());
+        component.setRobotLoadVariablesFromArgumentsFile(settings.getRobotLoadVariablesFromArgumentsFile());
         component.setRobotPythonpath(settings.getRobotPythonpath());
         component.setRobotLibrariesLibdocNeedsArgs(settings.getRobotLibrariesLibdocNeedsArgs());
         component.setRobotLibrariesLibdocPreGenerate(settings.getRobotLibrariesLibdocPreGenerate());
@@ -503,6 +520,10 @@ public class RobotPreferencesPage implements Configurable {
         s = settings.validateRobotVariables(component.getRobotVariables());
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Variables:\n" + s);
+        }
+        s = settings.validateRobotLoadVariablesFromArgumentsFile(component.getRobotLoadVariablesFromArgumentsFile());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Load Variables From Arguments File:\n" + s);
         }
         s = settings.validateRobotPythonpath(component.getRobotPythonpath());
         if(!s.isEmpty()) {
@@ -579,6 +600,7 @@ public class RobotPreferencesPage implements Configurable {
         settings.setRobotPythonExecutable(component.getRobotPythonExecutable());
         settings.setRobotPythonEnv(component.getRobotPythonEnv());
         settings.setRobotVariables(component.getRobotVariables());
+        settings.setRobotLoadVariablesFromArgumentsFile(component.getRobotLoadVariablesFromArgumentsFile());
         settings.setRobotPythonpath(component.getRobotPythonpath());
         settings.setRobotLibrariesLibdocNeedsArgs(component.getRobotLibrariesLibdocNeedsArgs());
         settings.setRobotLibrariesLibdocPreGenerate(component.getRobotLibrariesLibdocPreGenerate());
