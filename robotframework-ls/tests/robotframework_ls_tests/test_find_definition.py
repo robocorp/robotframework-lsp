@@ -1110,3 +1110,31 @@ Put Key
     definition = definitions[0]
     assert definition.source.endswith("case2.robot")
     assert definition.lineno == 2
+
+
+def test_find_var_with_extended_syntax(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+${foo}=    create dictionary    test=value
+log to console    ${foo["test"]}
+"""
+
+    # ${foo["test"]}
+    # Means we get a base as: foo["test"]
+    # And then we get an extended match such as 'foo' / ["test"]
+
+    line, col = doc.get_last_line_col_with_contents('log to console    ${foo["test"]}')
+    col -= len('oo["test"]}')
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = definitions[0]
+    assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 2

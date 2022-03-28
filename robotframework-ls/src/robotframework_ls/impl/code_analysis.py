@@ -380,64 +380,16 @@ def collect_analysis_errors(initial_completion_context):
     return errors
 
 
-def _is_number_var(normalized_variable_name):
-    # see: robot.variables.finders.NumberFinder
-    try:
-        bases = {"0b": 2, "0o": 8, "0x": 16}
-        if normalized_variable_name.startswith(tuple(bases)):
-            return int(
-                normalized_variable_name[2:], bases[normalized_variable_name[:2]]
-            )
-        int(normalized_variable_name)
-        return True
-    except:
-        pass  # Let's try float...
-
-    try:
-        float(normalized_variable_name)
-        return True
-    except:
-        pass
-
-    return False
-
-
-def _is_python_eval_var(normalized_variable_name):
-    return (
-        len(normalized_variable_name) >= 2
-        and normalized_variable_name[0] == "{"
-        and normalized_variable_name[-1] == "}"
-    )
-
-
 @lru_cache(maxsize=1000)
 def _skip_variable_analysis(normalized_variable_name):
 
-    if _is_number_var(normalized_variable_name):
+    if finder_is_number_var(normalized_variable_name):
         return True
 
-    if _is_python_eval_var(normalized_variable_name):
+    if finder_is_python_eval_var(normalized_variable_name):
         return True
 
     return False
-
-
-_match_extended = re.compile(
-    r"""
-    (.+?)          # base name (group 1)
-    ([^\s\w].+)    # extended part (group 2)
-""",
-    re.UNICODE | re.VERBOSE,
-).match
-
-
-def _extract_base_from_extended_var_name(normalized_variable_name):
-    m = _match_extended(normalized_variable_name)
-    if m is None:
-        return normalized_variable_name
-
-    base_name, _extended = m.groups()
-    return base_name
 
 
 def _env_vars_upper():
@@ -512,6 +464,10 @@ def _collect_undefined_variables_errors(initial_completion_context):
 
     env_vars_upper = None
 
+    from robotframework_ls.impl.variable_resolve import (
+        finder_extended_var_extract_base,
+    )
+
     for token_info in ast_utils.iter_variable_references(ast):
         initial_completion_context.check_cancelled()
 
@@ -569,9 +525,7 @@ def _collect_undefined_variables_errors(initial_completion_context):
                 found = True
                 break
 
-            extracted_base = _extract_base_from_extended_var_name(
-                normalized_variable_name
-            )
+            extracted_base = finder_extended_var_extract_base(normalized_variable_name)
             if extracted_base and extracted_base != normalized_variable_name:
                 normalized_variable_name = extracted_base
             else:

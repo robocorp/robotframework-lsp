@@ -4,13 +4,67 @@ from typing import Optional, Union, Tuple, List, Iterator
 from robotframework_ls.impl.protocols import IRobotVariableMatch, IRobotToken
 from robocorp_ls_core.protocols import Sentinel, IConfig
 from robocorp_ls_core.robotframework_log import get_logger
+import re
 
 log = get_logger(__name__)
+
+
+_match_extended = re.compile(
+    r"""
+    (.+?)          # base name (group 1)
+    ([^\s\w].+)    # extended part (group 2)
+""",
+    re.UNICODE | re.VERBOSE,
+).match
+
+
+def finder_extended_var_extract_base(normalized_variable_name):
+    # See: robot.variables.finder.ExtendedFinder
+    m = _match_extended(normalized_variable_name)
+    if m is None:
+        return normalized_variable_name
+
+    base_name, _extended = m.groups()
+    return base_name
+
+
+def finder_is_number_var(normalized_variable_name):
+    # see: robot.variables.finders.NumberFinder
+    try:
+        bases = {"0b": 2, "0o": 8, "0x": 16}
+        if normalized_variable_name.startswith(tuple(bases)):
+            return int(
+                normalized_variable_name[2:], bases[normalized_variable_name[:2]]
+            )
+        int(normalized_variable_name)
+        return True
+    except:
+        pass  # Let's try float...
+
+    try:
+        float(normalized_variable_name)
+        return True
+    except:
+        pass
+
+    return False
+
+
+def finder_is_python_eval_var(normalized_variable_name):
+    # See: robot.variables.finders.InlinePythonFinder
+    return (
+        len(normalized_variable_name) >= 2
+        and normalized_variable_name[0] == "{"
+        and normalized_variable_name[-1] == "}"
+    )
 
 
 def extract_variable_base(text: str) -> str:
     """
     Converts something as: "${S_ome.VAR}[foo]" to "S_ome.VAR".
+
+    Note: after we have a base it's matched against one of the finders
+    i.e.: direct variable match / number / empty / python / extended.
     """
     variable_match = robot_search_variable(text)
     if variable_match is not None:
