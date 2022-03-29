@@ -288,10 +288,28 @@ class _ServerApi(object):
                 language_server_ref = self._language_server_ref
 
                 def on_received_message(msg):
-                    if msg.get("method") in ("$/customProgress", "$/testsCollected"):
+                    method = msg.get("method")
+
+                    if method in ("$/customProgress", "$/testsCollected"):
                         robot_framework_language_server = language_server_ref()
                         if robot_framework_language_server is not None:
                             robot_framework_language_server.forward_msg(msg)
+
+                    # Note: note done because our caches are removed promptly
+                    # for this to work it should be invalidate but the info
+                    # should be kept around so that we lint dependencies always
+                    # not just on the first cache invalidation.
+                    # WIP: test_dependency_graph_integration_lint
+                    # elif method == "$/dependencyChanged":
+                    #     robot_framework_language_server = language_server_ref()
+                    #     if robot_framework_language_server is not None:
+                    #         params = msg.get("params")
+                    #         if params:
+                    #             uri = params.get("uri")
+                    #             if uri:
+                    #                 robot_framework_language_server.lint(
+                    #                     doc_uri=uri, is_saved=False
+                    #                 )
 
                 api = self._robotframework_api_client = RobotFrameworkApiClient(
                     w, r, server_process, on_received_message=on_received_message

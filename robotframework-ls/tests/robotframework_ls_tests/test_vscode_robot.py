@@ -14,6 +14,8 @@ from robotframework_ls.impl.robot_lsp_constants import (
 )
 from robocorp_ls_core.lsp import MarkupKind
 import typing
+from functools import partial
+import itertools
 
 
 log = logging.getLogger(__name__)
@@ -1644,3 +1646,200 @@ Another keyword
         raise TimeoutError(f"Request timed-out: ({timeout}s)")
 
     assert completions_message_matcher.msg["error"]["message"] == "Request Cancelled"
+
+
+def test_dependency_graph_integration_base(
+    language_server_tcp: ILanguageServerClient, ws_root_path
+):
+    from robocorp_ls_core import uris
+    import sys
+    from robocorp_ls_core.workspace import Document
+
+    language_server = language_server_tcp
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    internal_my_uri = uris.from_fs_path(os.path.join(ws_root_path, "my.robot"))
+    internal_resource_uri = uris.from_fs_path(
+        os.path.join(ws_root_path, "shared.resource")
+    )
+
+    if sys.platform == "win32":
+
+        def to_vscode_uri(initial_uri):
+            assert initial_uri.startswith("file:///")
+            # Make something as:
+            # file:///c:/Users/f
+            # into
+            # file:///C%3A/Users/f
+            # -- note: when normalized it's still the same
+            uri = initial_uri[:8] + initial_uri[8].upper() + "%3A" + initial_uri[10:]
+            assert uris.normalize_uri(uri) == initial_uri
+            return uri
+
+    else:
+
+        def to_vscode_uri(uri):
+            return uri
+
+    uri_my = to_vscode_uri(internal_my_uri)
+    uri_resource = to_vscode_uri(internal_resource_uri)
+
+    next_id: "partial[int]" = partial(next, itertools.count())
+
+    language_server.open_doc(uri_resource, next_id())
+
+    language_server.open_doc(uri_my, next_id())
+    contents = """
+*** Settings ***
+Resource    shared.resource
+
+*** Keyword ***
+My keyword
+    Append to list"""
+    language_server.change_doc(uri_my, next_id(), contents)
+
+    doc = Document("", source=contents)
+    line, col = doc.get_last_line_col()
+    completions = language_server.get_completions(uri_my, line, col)
+    # I.e.: show only completion which adds import
+    found = [
+        c
+        for c in completions["result"]
+        if c["label"] == "Append To List (Collections)*"
+    ]
+    assert len(found) == 1
+    found = [
+        c for c in completions["result"] if c["label"] == "Append To List (Collections)"
+    ]
+    assert len(found) == 0
+
+    language_server.change_doc(
+        uri_resource,
+        next_id(),
+        """
+*** Settings ***
+Library    Collections
+""",
+    )
+
+    completions = language_server.get_completions(uri_my, line, col)
+    # I.e.: Don't show completion which adds import (show only the one
+    # which is already in the context).
+    found = [
+        c
+        for c in completions["result"]
+        if c["label"] == "Append To List (Collections)*"
+    ]
+    assert len(found) == 0
+
+    found = [
+        c for c in completions["result"] if c["label"] == "Append To List (Collections)"
+    ]
+    assert len(found) == 1
+
+
+# def test_dependency_graph_integration_lint(
+#     language_server_tcp: ILanguageServerClient, ws_root_path
+# ):
+#     from robocorp_ls_core import uris
+#     import sys
+#     from robocorp_ls_core.workspace import Document
+#
+#     language_server = language_server_tcp
+#
+#     language_server.initialize(ws_root_path, process_id=os.getpid())
+#     internal_my_uri = uris.from_fs_path(os.path.join(ws_root_path, "my.robot"))
+#     internal_resource_uri = uris.from_fs_path(
+#         os.path.join(ws_root_path, "shared.resource")
+#     )
+#
+#     if sys.platform == "win32":
+#
+#         def to_vscode_uri(initial_uri):
+#             assert initial_uri.startswith("file:///")
+#             # Make something as:
+#             # file:///c:/Users/f
+#             # into
+#             # file:///C%3A/Users/f
+#             # -- note: when normalized it's still the same
+#             uri = initial_uri[:8] + initial_uri[8].upper() + "%3A" + initial_uri[10:]
+#             # assert uris.normalize_uri(uri) == initial_uri
+#             return uri
+#
+#     else:
+#
+#         def to_vscode_uri(uri):
+#             return uri
+#
+#     uri_my = to_vscode_uri(internal_my_uri)
+#     uri_resource = to_vscode_uri(internal_resource_uri)
+#
+#     next_id: "partial[int]" = partial(next, itertools.count())
+#
+#     message_matcher = language_server.obtain_pattern_message_matcher(
+#         {"method": "textDocument/publishDiagnostics"}
+#     )
+#
+#     language_server.open_doc(uri_resource, next_id())
+#
+#     language_server.open_doc(uri_my, next_id())
+#     contents = """
+# *** Settings ***
+# Resource    shared.resource
+#
+# *** Keyword ***
+# My keyword
+#     Append to lis"""
+#     language_server.change_doc(uri_my, next_id(), contents)
+#
+#     from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
+#     from robotframework_ls_tests.fixtures import sort_diagnostics
+#
+#     assert message_matcher.event.wait(TIMEOUT)
+#
+#     message_matcher = language_server.obtain_pattern_message_matcher(
+#         {"method": "textDocument/publishDiagnostics"}
+#     )
+#     assert message_matcher.event.wait(TIMEOUT)
+#     diag = message_matcher.msg["params"]
+#     print(diag)
+#
+#     doc = Document("", source=contents)
+#     line, col = doc.get_last_line_col()
+#     completions = language_server.get_completions(uri_my, line, col)
+#     # I.e.: show only completion which adds import
+#     found = [
+#         c
+#         for c in completions["result"]
+#         if c["label"] == "Append To List (Collections)*"
+#     ]
+#     assert len(found) == 1
+#     found = [
+#         c for c in completions["result"] if c["label"] == "Append To List (Collections)"
+#     ]
+#     assert len(found) == 0
+#
+#     language_server.change_doc(
+#         uri_resource,
+#         next_id(),
+#         """
+# *** Settings ***
+# Library    Collections
+# """,
+#     )
+#
+#     completions = language_server.get_completions(uri_my, line, col)
+#     # I.e.: Don't show completion which adds import (show only the one
+#     # which is already in the context).
+#     found = [
+#         c
+#         for c in completions["result"]
+#         if c["label"] == "Append To List (Collections)*"
+#     ]
+#     assert len(found) == 0
+#
+#     found = [
+#         c for c in completions["result"] if c["label"] == "Append To List (Collections)"
+#     ]
+#     assert len(found) == 1
+#

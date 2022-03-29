@@ -37,6 +37,13 @@ def test_to_fs_path(uri, path):
 
 
 @windows_only
+def test_normalize_uri():
+    normalized = "file:///c:/far/space%20%3Fboo"
+    assert uris.normalize_uri("file:///C%3A/far/space%20%3Fboo") == normalized
+    assert uris.from_fs_path(r"C:\far\space ?boo") == normalized
+
+
+@windows_only
 @pytest.mark.parametrize(
     "uri,path",
     [

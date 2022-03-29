@@ -1069,3 +1069,8 @@ class AbstractVariablesCollector:
 class EvaluatableExpressionTypedDict(TypedDict):
     range: RangeTypedDict
     expression: Optional[str]
+
+
+class IOnDependencyChanged(Protocol):
+    def __call__(self, uri: str):
+        pass

@@ -3,6 +3,7 @@ from robotframework_ls.impl.protocols import (
     IRobotDocument,
     ICompletionContextWorkspaceCaches,
     ICompletionContextDependencyGraph,
+    IOnDependencyChanged,
 )
 from robocorp_ls_core import uris
 from collections import OrderedDict
@@ -14,6 +15,7 @@ from robotframework_ls.impl.robot_constants import (
 from contextlib import contextmanager
 from robocorp_ls_core.options import BaseOptions
 from robocorp_ls_core.robotframework_log import get_logger
+import json
 
 T = TypeVar("T")
 
@@ -78,34 +80,53 @@ class _InvalidationTracker:
 
 
 class CompletionContextWorkspaceCaches:
-    def __init__(self):
+    def __init__(
+        self, on_dependency_changed: Optional[IOnDependencyChanged] = None
+    ) -> None:
         self._lock = threading.Lock()
         # Small cache because invalidation could become slow in a big cache
         # (and it should be enough to hold what we're currently working with).
-        self._cached: _LRU[ICompletionContextDependencyGraph] = _LRU(5)
+        self._cached: _LRU[ICompletionContextDependencyGraph] = _LRU(4)
         self.cache_hits = 0
         self.invalidations = 0
 
         self._invalidation_trackers: Set[_InvalidationTracker] = set()
+        self._on_dependency_changed = on_dependency_changed
 
     def _invalidate_uri(self, uri: str) -> None:
         with self._lock:
+            notified = set()
             for invalidation_tracker in self._invalidation_trackers:
                 invalidation_tracker.mark_uri_invalidated(uri)
 
+            did_invalidate_entry = False
+
             for key, entry in tuple(self._cached.items()):
                 if entry.do_invalidate_on_uri_change(uri):
+
+                    uri = entry.get_root_doc().uri
+                    if uri not in notified:
+                        notified.add(uri)
+                        if self._on_dependency_changed:
+                            self._on_dependency_changed(uri)
+
+                    did_invalidate_entry = True
                     invalidated: Optional[
                         ICompletionContextDependencyGraph
                     ] = self._cached.pop(key, None)
                     if BaseOptions.DEBUG_CACHE_DEPS and invalidated:
-                        import json
-
                         log.info(
                             "Invalidated: %s\n%s\n",
                             key,
                             json.dumps(invalidated.to_dict(), indent=4),
                         )
+
+            if BaseOptions.DEBUG_CACHE_DEPS and not did_invalidate_entry:
+                log.info("%s did not invalidate the caches:", uri)
+                for key, entry in tuple(self._cached.items()):
+                    log.info(
+                        json.dumps(entry.to_dict(), indent=4),
+                    )
 
     @contextmanager
     def invalidation_tracker(self):
@@ -169,7 +190,6 @@ class CompletionContextWorkspaceCaches:
 
             if BaseOptions.DEBUG_CACHE_DEPS:
                 if ret is not None:
-                    import json
 
                     log.info(
                         "Cache HIT (%s):\n%s\n",
@@ -180,7 +200,10 @@ class CompletionContextWorkspaceCaches:
                     log.info(
                         "Cache MISS (%s):\n%s\n",
                         cache_key,
-                        "  \n".join(str(x) for x in self._cached.values()),
+                        "  \n".join(
+                            json.dumps(x.to_dict(), indent=4)
+                            for x in self._cached.values()
+                        ),
                     )
 
             return ret

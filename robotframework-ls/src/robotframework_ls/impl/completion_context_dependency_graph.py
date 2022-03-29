@@ -12,6 +12,7 @@ from robotframework_ls.impl.protocols import (
 )
 from robotframework_ls.impl.robot_constants import BUILTIN_LIB
 from robocorp_ls_core.callbacks import Callback
+from robocorp_ls_core import uris
 
 
 class _Memo(object):
@@ -106,7 +107,7 @@ class CompletionContextDependencyGraph:
         library_infos: OrderedSet[LibraryDependencyInfo],
     ):
         self._doc_uri_to_library_infos[doc_uri] = library_infos
-        self._invalidate_on_uri_changes.add(doc_uri)
+        self._invalidate_on_uri_changes.add(uris.normalize_uri(doc_uri))
 
     def add_resource_infos(
         self,
@@ -120,7 +121,9 @@ class CompletionContextDependencyGraph:
         self._invalidate_on_uri_changes.add(doc_uri)
         for _, resource_doc in resource_imports_as_docs:
             if resource_doc is not None:
-                self._invalidate_on_uri_changes.add(resource_doc.uri)
+                self._invalidate_on_uri_changes.add(
+                    uris.normalize_uri(resource_doc.uri)
+                )
 
     def add_variable_infos(
         self,
@@ -134,7 +137,9 @@ class CompletionContextDependencyGraph:
         self._invalidate_on_uri_changes.add(doc_uri)
         for _, variable_doc in new_variable_imports:
             if variable_doc is not None:
-                self._invalidate_on_uri_changes.add(variable_doc.uri)
+                self._invalidate_on_uri_changes.add(
+                    uris.normalize_uri(variable_doc.uri)
+                )
 
     def get_root_doc(self) -> IRobotDocument:
         return self._root_doc
@@ -175,12 +180,12 @@ class CompletionContextDependencyGraph:
             yield from variable_imports
 
     def do_invalidate_on_uri_change(self, uri: str) -> bool:
-        if uri == self.get_root_doc().uri:
+        if uris.normalize_uri(uri) == uris.normalize_uri(self.get_root_doc().uri):
             # Changes in the root don't invalidate the dependency info (rather
             # it's used in the cache key when checking so it won't be a match).
             return False
 
-        return uri in self._invalidate_on_uri_changes
+        return uris.normalize_uri(uri) in self._invalidate_on_uri_changes
 
     @classmethod
     def _collect_library_info_from_completion_context(

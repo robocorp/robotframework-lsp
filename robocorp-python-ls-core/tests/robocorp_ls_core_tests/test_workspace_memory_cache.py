@@ -11,6 +11,53 @@ def small_vs_sleep():
     _VirtualFSThread.SLEEP_AMONG_SCANS = original
 
 
+def test_workspace_and_uris(tmpdir):
+    from robocorp_ls_core.workspace import Workspace
+    from robocorp_ls_core.watchdog_wrapper import create_observer
+    from robocorp_ls_core import uris
+    from robocorp_ls_core.lsp import TextDocumentItem
+    import os
+    import sys
+
+    ws_root_path = str(tmpdir)
+    root_uri = uris.from_fs_path(ws_root_path)
+    ws = Workspace(
+        root_uri,
+        fs_observer=create_observer("dummy", ()),
+        workspace_folders=[],
+        track_file_extensions=(".py", ".txt"),
+    )
+
+    internal_my_uri = uris.from_fs_path(os.path.join(ws_root_path, "my.robot"))
+
+    if sys.platform == "win32":
+
+        def to_vscode_uri(initial_uri):
+            assert initial_uri.startswith("file:///")
+            # Make something as:
+            # file:///c:/Users/f
+            # into
+            # file:///C%3A/Users/f
+            # -- note: when normalized it's still the same
+            uri = initial_uri[:8] + initial_uri[8].upper() + "%3A" + initial_uri[10:]
+            assert uris.normalize_uri(uri) == initial_uri
+            return uri
+
+    else:
+
+        def to_vscode_uri(uri):
+            return uri
+
+    uri_my = to_vscode_uri(internal_my_uri)
+    text_document = TextDocumentItem(uri_my)
+    doc = ws.put_document(text_document)
+    assert ws.get_document(text_document.uri, accept_from_file=False) is doc
+    assert (
+        ws.get_document(uris.normalize_uri(text_document.uri), accept_from_file=False)
+        is doc
+    )
+
+
 def test_workspace_memory_cache(tmpdir, small_vs_sleep):
     from robocorp_ls_core.workspace import Workspace
     from robocorp_ls_core import uris

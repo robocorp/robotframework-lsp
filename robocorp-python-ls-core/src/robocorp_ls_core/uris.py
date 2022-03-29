@@ -15,7 +15,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import sys
 
 """A collection of URI utilities with logic built on the VSCode URI library.
 
@@ -23,6 +22,8 @@ https://github.com/Microsoft/vscode-uri/blob/e59cab84f5df6265aed18ae5f43552d3eef
 """
 
 import re
+import sys
+from functools import lru_cache
 from robocorp_ls_core.constants import IS_WIN
 
 from urllib.parse import (
@@ -80,6 +81,7 @@ def _normalize_win_path(path):
     return path, netloc
 
 
+@lru_cache(200)
 def from_fs_path(path: str) -> str:
     """Returns a URI for the given filesystem path."""
     scheme = "file"
@@ -88,6 +90,14 @@ def from_fs_path(path: str) -> str:
     return urlunparse((scheme, netloc, path, params, query, fragment))
 
 
+@lru_cache(200)
+def normalize_uri(uri: str) -> str:
+    if uri_scheme(uri) == "file":
+        return from_fs_path(to_fs_path(uri))
+    return uri
+
+
+@lru_cache(200)
 def to_fs_path(uri: str) -> str:
     """Returns the filesystem path of the given URI.
 

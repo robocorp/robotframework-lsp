@@ -30,6 +30,7 @@ import itertools
 import typing
 import sys
 import threading
+import weakref
 
 
 log = get_logger(__name__)
@@ -255,6 +256,23 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         self, root_uri: str, fs_observer: IFSObserver, workspace_folders
     ) -> IWorkspace:
         from robotframework_ls.impl.robot_workspace import RobotWorkspace
+
+        # Note: note done because our caches are removed promptly
+        # for this to work it should be invalidate but the info
+        # should be kept around so that we lint dependencies always
+        # not just on the first cache invalidation.
+        # WIP: test_dependency_graph_integration_lint
+        # weak_self = weakref.ref(self)
+        #
+        # def on_dependency_changed(uri):
+        #     s = weak_self()
+        #     if s is not None:
+        #         endpoint = s._endpoint
+        #         if endpoint:
+        #             endpoint.notify(
+        #                 "$/dependencyChanged",
+        #                 {"uri": uri},
+        #             )
 
         robot_workspace = RobotWorkspace(
             root_uri,

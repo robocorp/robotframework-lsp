@@ -29,7 +29,7 @@ from robocorp_ls_core.protocols import (
     IConfig,
 )
 from robocorp_ls_core.robotframework_log import get_logger
-from robocorp_ls_core.uris import uri_scheme, to_fs_path, normalize_drive
+from robocorp_ls_core.uris import uri_scheme, to_fs_path, normalize_drive, normalize_uri
 import threading
 from robocorp_ls_core.lsp import (
     TextDocumentItem,
@@ -403,7 +403,7 @@ class Workspace(object):
         return self._docs.values()
 
     def get_open_docs_uris(self) -> List[str]:
-        return list(self._docs.keys())
+        return list(d.uri for d in self._docs.values())
 
     @implements(IWorkspace.iter_folders)
     def iter_folders(self) -> Iterable[IWorkspaceFolder]:
@@ -425,7 +425,7 @@ class Workspace(object):
         # Ok, thread-safe (does not mutate the _docs dict -- contents in the _filesystem_docs
         # may end up stale or we may have multiple loads when we wouldn't need,
         # but that should be ok).
-        doc = self._docs.get(doc_uri)
+        doc = self._docs.get(normalize_uri(doc_uri))
         if doc is not None:
             return doc
 
@@ -460,7 +460,8 @@ class Workspace(object):
     def put_document(self, text_document: TextDocumentItem) -> IDocument:
         self._check_in_mutate_thread()
         doc_uri = text_document.uri
-        doc = self._docs[doc_uri] = self._create_document(
+        normalized_doc_uri = normalize_uri(doc_uri)
+        doc = self._docs[normalized_doc_uri] = self._create_document(
             doc_uri, source=text_document.text, version=text_document.version
         )
         try:
@@ -472,13 +473,13 @@ class Workspace(object):
             _source = doc.source
         except:
             doc.source = ""
-        self._filesystem_docs.pop(doc_uri, None)
+        self._filesystem_docs.pop(normalized_doc_uri, None)
         return doc
 
     @implements(IWorkspace.remove_document)
     def remove_document(self, uri: str) -> None:
         self._check_in_mutate_thread()
-        self._docs.pop(uri, None)
+        self._docs.pop(normalize_uri(uri), None)
 
     @property
     def root_path(self):
@@ -495,13 +496,14 @@ class Workspace(object):
     ) -> IDocument:
         self._check_in_mutate_thread()
         doc_uri = text_doc["uri"]
-        doc = self._docs[doc_uri]
+        normalized_uri = normalize_uri(doc_uri)
+        doc = self._docs[normalized_uri]
 
         # Note: don't mutate an existing doc, always create a new one based on it
         # (so, existing references won't have racing conditions).
         new_doc = self._create_document(doc_uri, doc.source, text_doc["version"])
         new_doc.apply_change(change)
-        self._docs[doc_uri] = new_doc
+        self._docs[normalized_uri] = new_doc
         return new_doc
 
     def iter_all_doc_uris_in_workspace(

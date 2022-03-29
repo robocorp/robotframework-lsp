@@ -36,6 +36,7 @@ from robotframework_ls.impl.protocols import (
     IKeywordNode,
     ISymbolKeywordInfo,
     ICompletionContextWorkspaceCaches,
+    IOnDependencyChanged,
 )
 from robotframework_ls.impl.robot_constants import ROBOT_FILE_EXTENSIONS
 
@@ -478,6 +479,7 @@ class RobotWorkspace(Workspace):
         index_workspace=False,
         collect_tests=False,
         endpoint: Optional[IEndPoint] = None,
+        on_dependency_changed: Optional[IOnDependencyChanged] = None,
     ):
         from robotframework_ls.impl.completion_context_workspace_caches import (
             CompletionContextWorkspaceCaches,
@@ -488,7 +490,7 @@ class RobotWorkspace(Workspace):
         # It needs to be set to None in the initialization (while we setup folders).
         self.workspace_indexer: Optional[WorkspaceIndexer] = None
         self.completion_context_workspace_caches: ICompletionContextWorkspaceCaches = (
-            CompletionContextWorkspaceCaches()
+            CompletionContextWorkspaceCaches(on_dependency_changed)
         )
 
         Workspace.__init__(
