@@ -1,3 +1,9 @@
+New in 0.43.2 (2022-03-29)
+-----------------------------
+
+- Additional fix in cache invalidation for dependencies. [#617](https://github.com/robocorp/robotframework-lsp/issues/617)
+
+
 New in 0.43.0 (2022-03-28)
 -----------------------------
 

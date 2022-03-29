@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.43.0'
+version '0.43.2'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,6 +50,10 @@ intellij {
 
 patchPluginXml {
     changeNotes """
+    <p>
+    Release 0.43.2
+    </p>
+    <li>Additional fix in cache invalidation for dependencies.</li>
     <p>
     Release 0.43.0
     </p>

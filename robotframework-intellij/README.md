@@ -41,7 +41,7 @@ Developing
 
 See: [Contributing](docs/contributing.md) for how to help in the development of `Robot Framework Language Server for Intellij`.
 
-Features (0.43.0)
+Features (0.43.2)
 -----------------
 
 - Settings page for the language server (per project and global).
