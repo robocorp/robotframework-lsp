@@ -1,10 +1,11 @@
-from pathlib import Path
-from collections import Counter, defaultdict
-from importlib import import_module
-import importlib.util
 import ast
 import difflib
+import importlib.util
 import re
+from collections import Counter, defaultdict
+from importlib import import_module
+from pathlib import Path
+from typing import Pattern, List, Tuple, Dict, Optional
 
 from robot.api import Token
 from robot.parsing.model.statements import EmptyLine
@@ -13,25 +14,14 @@ try:
     from robot.api.parsing import Variable
 except ImportError:
     from robot.parsing.model.statements import Variable
-from robot.version import VERSION
 
-from robocop.rules import RuleSeverity
+from robot.version import VERSION as RF_VERSION
+from packaging import version
+
+from robocop.version import __version__
 from robocop.exceptions import InvalidExternalCheckerError
 
-IS_RF4 = int(VERSION.split(".")[0]) >= 4
-DISABLED_IN_4 = frozenset(("nested-for-loop", "invalid-comment"))
-ENABLED_IN_4 = frozenset(
-    (
-        "if-can-be-used",
-        "else-not-upper-case",
-        "variable-should-be-left-aligned",
-        "invalid-argument",
-        "invalid-if",
-        "invalid-for-loop",
-        "not-enough-whitespace-after-variable",
-        "suite-setting-should-be-left-aligned",
-    )
-)
+ROBOT_VERSION = version.parse(RF_VERSION)
 
 
 def modules_in_current_dir(path, module_name):
@@ -79,38 +69,38 @@ def modules_from_path(path, module_name=None, relative="."):
                 yield from modules_from_path(file, module_name, relative)
 
 
-def normalize_robot_name(name):
-    return name.replace(" ", "").replace("_", "").lower() if name else ""
+def normalize_robot_name(name: str, remove_prefix: Optional[str] = None) -> str:
+    name = name.replace(" ", "").replace("_", "").lower() if name else ""
+    if remove_prefix:
+        return name[name.startswith(remove_prefix) and len(remove_prefix) :]
+    return name
 
 
-def normalize_robot_var_name(name):
-    return name.replace(" ", "").replace("_", "").lower()[2:-1] if name else ""
+def normalize_robot_var_name(name: str) -> str:
+    return normalize_robot_name(name)[2:-1] if name else ""
 
 
-def keyword_col(node):
+def keyword_col(node) -> int:
     return token_col(node, Token.KEYWORD)
 
 
-def token_col(node, *token_type):
-    if IS_RF4:
-        token = node.get_token(*token_type)
-    else:
+def token_col(node, *token_type) -> int:
+    if ROBOT_VERSION.major == 3:
         for tok_type in token_type:
             token = node.get_token(tok_type)
             if token is not None:
                 break
         else:
             return 1
+    else:
+        token = node.get_token(*token_type)
+
     if token is None:
         return 1
     return token.col_offset + 1
 
 
-def rule_severity_to_diag_sev(severity):
-    return {RuleSeverity.ERROR: 1, RuleSeverity.WARNING: 2, RuleSeverity.INFO: 3}.get(severity, 4)
-
-
-def issues_to_lsp_diagnostic(issues):
+def issues_to_lsp_diagnostic(issues) -> List[Dict]:
     return [
         {
             "range": {
@@ -123,10 +113,11 @@ def issues_to_lsp_diagnostic(issues):
                     "character": max(0, issue.end_col - 1),
                 },
             },
-            "severity": rule_severity_to_diag_sev(issue.severity),
+            "severity": issue.severity.diag_severity(),
             "code": issue.rule_id,
             "source": "robocop",
             "message": issue.desc,
+            "codeDescription": {"href": f"https://robocop.readthedocs.io/en/{__version__}/rules.html#{issue.name}"},
         }
         for issue in issues
     ]
@@ -167,7 +158,7 @@ class AssignmentTypeDetector(ast.NodeVisitor):
         return token_value[token_value.find("}") + 1 :]
 
 
-def parse_assignment_sign_type(value):
+def parse_assignment_sign_type(value: str) -> str:
     types = {
         "none": "",
         "equal_sign": "=",
@@ -191,7 +182,7 @@ class RecommendationFinder:
         if not matches:
             return ""
         matches = self.get_original_candidates(matches, norm_cand)
-        suggestion = " Did you mean:\n"
+        suggestion = "Did you mean:\n"
         suggestion += "\n".join(f"    {match}" for match in matches)
         return suggestion
 
@@ -258,13 +249,13 @@ def last_non_empty_line(node):
     return node.lineno
 
 
-def next_char_is(string, i, char):
+def next_char_is(string: str, i: int, char: str) -> bool:
     if not i < len(string) - 1:
         return False
     return string[i + 1] == char
 
 
-def remove_robot_vars(name):
+def remove_robot_vars(name: str) -> str:
     var_start = set("$@%&")
     brackets = 0
     open_bracket, close_bracket = "", ""
@@ -293,7 +284,7 @@ def remove_robot_vars(name):
     return replaced
 
 
-def find_robot_vars(name):
+def find_robot_vars(name: str) -> List[Tuple[int, int]]:
     """return list of tuples with (start, end) pos of vars in name"""
     var_start = set("$@%&")
     brackets = 0
@@ -317,9 +308,28 @@ def find_robot_vars(name):
     return variables
 
 
-def pattern_type(value):
+def pattern_type(value: str) -> Pattern:
     try:
         pattern = re.compile(value)
     except re.error as err:
         raise ValueError(f"Invalid regex pattern: {err}")
     return pattern
+
+
+def get_section_name(node):
+    if not node.header:
+        #  Lines before first section are considered to be in `*** Comments ***` section even if header name is missing
+        return "*** Comments ***"
+    for token in node.header.data_tokens:
+        if ROBOT_VERSION.major > 3:
+            if token.type in node.header.handles_types:
+                return token.value
+        elif "HEADER" in token.type:
+            return token.value
+    return ""
+
+
+def get_errors(node):
+    if ROBOT_VERSION.major == 3:
+        return [node.error] if node.error else []
+    return node.errors

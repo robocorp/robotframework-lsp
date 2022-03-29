@@ -1,4 +1,5 @@
 import argparse
+from typing import Pattern, Set, Dict
 import fnmatch
 import os
 import re
@@ -11,24 +12,18 @@ from robot.utils import FileReader
 
 from robocop.exceptions import (
     ArgumentFileNotFoundError,
-    NestedArgumentFileError,
-    InvalidArgumentError,
     ConfigGeneralError,
+    InvalidArgumentError,
+    NestedArgumentFileError,
 )
 from robocop.rules import RuleSeverity
+from robocop.files import DEFAULT_EXCLUDES, find_file_in_project_root, find_project_root
 from robocop.utils import RecommendationFinder
 from robocop.version import __version__
 
 
-def translate_pattern(pattern):
+def translate_pattern(pattern: str) -> Pattern:
     return re.compile(fnmatch.translate(pattern))
-
-
-def find_severity_value(severity):
-    for sev in RuleSeverity:
-        if sev.value == severity.upper():
-            return sev
-    return RuleSeverity.INFO
 
 
 class ParseDelimitedArgAction(argparse.Action):  # pylint: disable=too-few-public-methods
@@ -53,7 +48,9 @@ class ParseFileTypes(argparse.Action):  # pylint: disable=too-few-public-methods
 
 class SetRuleThreshold(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, find_severity_value(values))
+        setattr(
+            namespace, self.dest, RuleSeverity.parser(values) if values in ("I", "W", "E") else RuleSeverity.INFO
+        )  # TODO Change severity to enum
 
 
 class SetListOption(argparse.Action):
@@ -76,16 +73,24 @@ class CustomArgParser(argparse.ArgumentParser):
             raise InvalidArgumentError(message)
 
 
+def validate_regex(pattern: str) -> Pattern:
+    try:
+        return re.compile(pattern) if pattern is not None else None
+    except re.error:
+        raise ConfigGeneralError(f"Provided regex pattern {pattern} failed to be compiled")
+
+
 class Config:
-    def __init__(self, root=None, from_cli=False):
+    def __init__(self, root=None, from_cli: bool = False):
         self.from_cli = from_cli
         self.exec_dir = os.path.abspath(".")
         self.root = Path(root) if root is not None else root
         self.include = set()
         self.exclude = set()
         self.ignore = set()
+        self.ignore_default = re.compile(DEFAULT_EXCLUDES)
         self.reports = {"return_status"}
-        self.threshold = RuleSeverity.INFO
+        self.threshold = RuleSeverity("I")
         self.configure = []
         self.format = "{source}:{line}:{col} [{severity}] {rule_id} {desc} ({name})"
         self.paths = ["."]
@@ -101,43 +106,7 @@ class Config:
         self.verbose = False
         self.config_from = ""
         self.parser = self._create_parser()
-
-    HELP_MSGS = {
-        "help_paths": "List of paths (files or directories) to be parsed by Robocop.",
-        "help_include": "Run Robocop only with specified rules. You can define rule by its name or id.\n"
-        "Glob patterns are supported.",
-        "help_exclude": "Ignore specified rules. You can define rule by its name or id.\n"
-        "Glob patterns are supported.",
-        "help_ext_rules": "List of paths with custom rules.",
-        "help_reports": "Generate reports after scan. You can enable reports by listing them in comma\n"
-        "separated list:\n"
-        "--reports rules_by_id,rules_by_error_type,scan_timer\n"
-        "To enable all reports use all:\n"
-        "--report all",
-        "help_format": "Format of output message. "
-        "You can use placeholders to change the way an issue is reported.\n"
-        "Default: {source}:{line}:{col} [{severity}] {rule_id} {desc} ({name})",
-        "help_configure": "Configure checker or report with parameter value. Usage:\n"
-        "-c message_name_or_id:param_name:param_value\nExample:\n"
-        "-c line-too-long:line_length:150\n"
-        "--configure 0101:severity:E",
-        "help_list": "List all available rules. You can use optional pattern argument.",
-        "help_list_confs": "List all available rules with configurable parameters. "
-        "You can use optional pattern argument.",
-        "help_list_reports": "List all available reports.",
-        "help_output": "Path to output file.",
-        "help_filetypes": "Comma separated list of file extensions to be scanned by Robocop",
-        "help_threshold": f"Disable rules below given threshold. Available message levels: "
-        f'{" < ".join(sev.value for sev in RuleSeverity)}',
-        "help_recursive": "Use this flag to stop scanning directories recursively.",
-        "help_argfile": "Path to file with arguments.",
-        "help_ignore": "Ignore file(s) and path(s) provided. Glob patterns are supported.",
-        "help_info": "Print this help message and exit.",
-        "help_version": "Display Robocop version.",
-        "help_verbose": "Display extra information.",
-        "directives": "1. Serve the public trust\n2. Protect the innocent\n3. Uphold the law\n4. [ACCESS " "DENIED]",
-        "epilog": "For full documentation visit: https://github.com/MarketSquare/robotframework-robocop",
-    }
+        self.parse_opts(from_cli=from_cli)
 
     def remove_severity(self):
         self.include = {self.replace_severity_values(rule) for rule in self.include}
@@ -203,7 +172,7 @@ class Config:
             prog="robocop",
             formatter_class=argparse.RawTextHelpFormatter,
             description="Static code analysis tool for Robot Framework",
-            epilog=self.HELP_MSGS["epilog"],
+            epilog="For full documentation visit: https://robocop.readthedocs.io/en/latest/",
             add_help=False,
             from_cli=self.from_cli,
         )
@@ -216,7 +185,7 @@ class Config:
             type=str,
             nargs="*",
             default=self.paths,
-            help=self.HELP_MSGS["help_paths"],
+            help="List of paths (files or directories) to be parsed by Robocop.",
         )
         optional.add_argument(
             "-i",
@@ -224,7 +193,8 @@ class Config:
             action=ParseDelimitedArgAction,
             default=self.include,
             metavar="RULES",
-            help=self.HELP_MSGS["help_include"],
+            help="Run Robocop only with specified rules. You can define rule by its name or id.\n"
+            "Glob patterns are supported.",
         )
         optional.add_argument(
             "-e",
@@ -232,35 +202,41 @@ class Config:
             action=ParseDelimitedArgAction,
             default=self.exclude,
             metavar="RULES",
-            help=self.HELP_MSGS["help_exclude"],
+            help="Ignore specified rules. You can define rule by its name or id.\nGlob patterns are supported.",
         )
         optional.add_argument(
             "-rules",
             "--ext-rules",
             action=ParseDelimitedArgAction,
             default=self.ext_rules,
-            help=self.HELP_MSGS["help_ext_rules"],
+            help="List of paths with custom rules.",
         )
         optional.add_argument(
             "-nr",
             "--no-recursive",
             dest="recursive",
             action="store_false",
-            help=self.HELP_MSGS["help_recursive"],
+            help="Use this flag to stop scanning directories recursively.",
         )
         optional.add_argument(
             "-r",
             "--reports",
             action=ParseDelimitedArgAction,
             default=self.reports,
-            help=self.HELP_MSGS["help_reports"],
+            help="Generate reports after scan.\n"
+            "You can enable reports by listing them in comma-separated list:\n"
+            "--reports rules_by_id,rules_by_error_type,scan_timer\n"
+            "To enable all reports use all:\n"
+            "--report all",
         )
         optional.add_argument(
             "-f",
             "--format",
             type=str,
             default=self.format,
-            help=self.HELP_MSGS["help_format"],
+            help="Format of output message. "
+            "You can use placeholders to change the way an issue is reported.\n"
+            "Default: {source}:{line}:{col} [{severity}] {rule_id} {desc} ({name})",
         )
         optional.add_argument(
             "-c",
@@ -268,7 +244,11 @@ class Config:
             action=ParseCheckerConfig,
             default=self.configure,
             metavar="CONFIGURABLE",
-            help=self.HELP_MSGS["help_configure"],
+            help="Configure checker or report with parameter value. Usage:\n"
+            "-c message_name_or_id:param_name:param_value\n"
+            "Examples:\n"
+            "-c line-too-long:line_length:150\n"
+            "--configure 0101:severity:E",
         )
         optional.add_argument(
             "-l",
@@ -278,7 +258,7 @@ class Config:
             const="",
             default=self.list,
             metavar="PATTERN",
-            help=self.HELP_MSGS["help_list"],
+            help="List all available rules. You can use optional PATTERN argument.",
         )
         optional.add_argument(
             "-lc",
@@ -288,14 +268,14 @@ class Config:
             const="",
             default=self.list_configurables,
             metavar="PATTERN",
-            help=self.HELP_MSGS["help_list_confs"],
+            help="List all available rules with configurable parameters. " "You can use optional PATTERN argument.",
         )
         optional.add_argument(
             "-lr",
             "--list-reports",
             action="store_true",
             default=self.list_reports,
-            help=self.HELP_MSGS["help_list_reports"],
+            help="List all available reports.",
         )
         optional.add_argument(
             "-o",
@@ -303,50 +283,65 @@ class Config:
             type=argparse.FileType("w"),
             default=self.output,
             metavar="PATH",
-            help=self.HELP_MSGS["help_output"],
+            help="Path to output file.",
         )
         optional.add_argument(
             "-ft",
             "--filetypes",
             action=ParseFileTypes,
             default=self.filetypes,
-            help=self.HELP_MSGS["help_filetypes"],
+            help="Comma-separated list of file extensions to be scanned by Robocop",
         )
         optional.add_argument(
             "-t",
             "--threshold",
             action=SetRuleThreshold,
             default=self.threshold,
-            help=self.HELP_MSGS["help_threshold"],
+            help=f"Disable rules below given threshold. Available message levels: "
+            f'{" < ".join(sev.value for sev in RuleSeverity)}',
         )
-        optional.add_argument("-A", "--argumentfile", metavar="PATH", help=self.HELP_MSGS["help_argfile"])
+        optional.add_argument("-A", "--argumentfile", metavar="PATH", help="Path to file with arguments.")
         optional.add_argument(
             "-g",
             "--ignore",
             action=ParseDelimitedArgAction,
             default=self.ignore,
             metavar="PATH",
-            help=self.HELP_MSGS["help_ignore"],
+            help="Ignore file(s) and path(s) provided. Glob patterns are supported.",
         )
-        optional.add_argument("-h", "--help", action="help", help=self.HELP_MSGS["help_info"])
+        optional.add_argument(
+            "-gd",
+            "--ignore-default",
+            type=validate_regex,
+            default=self.ignore_default,
+            metavar="PATTERN",
+            help=f"Paths ignored by default. "
+            f"A regular expression to exclude directories on file search.\n"
+            f"An empty value means no path is excluded. Default: {DEFAULT_EXCLUDES}",
+        )
+        optional.add_argument("-h", "--help", action="help", help="Print this help message and exit.")
         optional.add_argument(
             "-v",
             "--version",
             action="version",
             version=__version__,
-            help=self.HELP_MSGS["help_version"],
+            help="Display Robocop version.",
         )
-        optional.add_argument("-vv", "--verbose", action="store_true", help=self.HELP_MSGS["help_verbose"])
+        optional.add_argument(
+            "-vv", "--verbose", action="store_true", help="Display extra information during execution."
+        )
         optional.add_argument(
             "--directives",
             action="version",
-            version=self.HELP_MSGS["directives"],
+            version="1. Serve the public trust\n2. Protect the innocent\n3. Uphold the law\n4. [ACCESS " "DENIED]",
             help=argparse.SUPPRESS,
         )
 
         return parser
 
-    def parse_opts(self, args=None, from_cli=True):
+    def parse_opts(self, args=None, from_cli: bool = True):
+        if self.root is None:
+            self.root = find_project_root(self.paths)
         default_args = self.load_default_config_file()
         if default_args is None:
             self.load_pyproject_file()
@@ -370,20 +365,13 @@ class Config:
         return args
 
     def load_default_config_file(self):
-        robocop_path = self.find_file_in_project_root(".robocop")
+        robocop_path = find_file_in_project_root(".robocop", self.root)
         if robocop_path.is_file():
             return self.load_args_from_file(robocop_path)
         return None
 
-    def find_file_in_project_root(self, config_name):
-        root = self.root or Path.cwd()
-        for parent in (root, *root.parents):
-            if (parent / ".git").exists() or (parent / config_name).is_file():
-                return parent / config_name
-        return parent / config_name
-
     def load_pyproject_file(self):
-        pyproject_path = self.find_file_in_project_root("pyproject.toml")
+        pyproject_path = find_file_in_project_root("pyproject.toml", self.root)
         if not pyproject_path.is_file():
             return
         try:
@@ -395,7 +383,7 @@ class Config:
             self.config_from = pyproject_path
 
     @staticmethod
-    def replace_in_set(container, old_key, new_key):
+    def replace_in_set(container: Set, old_key: str, new_key: str):
         if old_key not in container:
             return
         container.remove(old_key)
@@ -403,25 +391,20 @@ class Config:
 
     def validate_rule_names(self, rules):
         # add rule name in form of old_name: new_name
-        deprecated = {
-            "missing-whitespace-after-setting": "not-enough-whitespace-after-setting",
-            "variable-should-left-aligned": "variable-should-be-left-aligned",
-            "0304": "0406",
-            "invalid-char-in-name": "not-allowed-char-in-name",
-        }
+        deprecated = {}
         for rule in chain(self.include, self.exclude):
             if rule in deprecated:  # update warning description to specific case
                 print(
                     f"### DEPRECATION WARNING ###\nThe name (or ID) of the rule '{rule}' is "
                     f"renamed to '{deprecated[rule]}'. "
                     f"Update your configuration if you're using old name. "
-                    f"This information will disappear in the next version (1.12.0)\n\n"
+                    f"This information will disappear in the next version (X.Y.Z)\n\n"
                 )
                 self.replace_in_set(self.include, rule, deprecated[rule])
                 self.replace_in_set(self.exclude, rule, deprecated[rule])
             elif rule not in rules:
                 similar = RecommendationFinder().find_similar(rule, rules)
-                raise ConfigGeneralError(f"Provided rule '{rule}' does not exist.{similar}")
+                raise ConfigGeneralError(f"Provided rule '{rule}' does not exist. {similar}")
 
     def is_rule_enabled(self, rule):
         if self.is_rule_disabled(rule):
@@ -436,6 +419,8 @@ class Config:
         return True
 
     def is_rule_disabled(self, rule):
+        if not rule.enabled_in_version:
+            return True
         if rule.severity < self.threshold:
             return True
         if rule.rule_id in self.exclude or rule.name in self.exclude:
@@ -449,17 +434,20 @@ class Config:
         for pattern in self.ignore:
             if path.match(pattern):
                 return True
+        if self.ignore_default:
+            match = self.ignore_default.search(str(path))
+            return bool(match and match.group(0))
         return False
 
     @staticmethod
-    def replace_severity_values(message):
-        sev = "".join(c.value for c in RuleSeverity)
-        if re.match(f"[{sev}][0-9]{{4,}}", message):
+    def replace_severity_values(rule_name: str):
+        sev = "".join(sev.value for sev in RuleSeverity)
+        if re.match(f"[{sev}][0-9]{{4,}}", rule_name):
             for char in sev:
-                message = message.replace(char, "")
-        return message
+                rule_name = rule_name.replace(char, "")
+        return rule_name
 
-    def parse_toml_to_config(self, toml_data):
+    def parse_toml_to_config(self, toml_data: Dict):
         if not toml_data:
             return False
         assign_type = {"paths", "format"}
@@ -477,7 +465,7 @@ class Config:
                 for filetype in toml_data["filetypes"]:
                     self.filetypes.add(filetype if filetype.startswith(".") else "." + filetype)
             elif key == "threshold":
-                self.threshold = find_severity_value(value)
+                self.threshold = RuleSeverity(value)
             elif key == "output":
                 self.output = open(value, "w")
             elif key == "no_recursive":

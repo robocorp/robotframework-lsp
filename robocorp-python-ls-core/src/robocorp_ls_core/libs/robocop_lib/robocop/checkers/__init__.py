@@ -3,19 +3,21 @@ Robocop rules are internally grouped into checkers. Each checker can scan for mu
 (like ``LengthChecker`` checks both for minimum and maximum length of a keyword). You can refer to
 specific rule reported by checkers by its name or id (for example `too-long-keyword` or `0501`).
 
-Checkers are categorized into following groups:
- * 01: base
- * 02: documentation
- * 03: naming
- * 04: errors
- * 05: lengths
- * 06: tags
- * 07: comments
- * 08: duplications
- * 09: misc
- * 10: spacing
- * 11-50: not yet used: reserved for future internal checkers
- * 51-99: reserved for external checkers
+.. dropdown:: Checker groups IDs:
+
+    Checkers are categorized into following groups:
+     * 01: base
+     * 02: documentation
+     * 03: naming
+     * 04: errors
+     * 05: lengths
+     * 06: tags
+     * 07: comments
+     * 08: duplications
+     * 09: misc
+     * 10: spacing
+     * 11-50: not yet used: reserved for future internal checkers
+     * 51-99: reserved for external checkers
 
 Checker has two basic types:
 
@@ -33,11 +35,11 @@ try:
     from robot.api.parsing import ModelVisitor
 except ImportError:
     from robot.parsing.model.visitor import ModelVisitor
+
 from robot.utils import FileReader
 
-from robocop.exceptions import DuplicatedRuleError
-from robocop.rules import Rule
-from robocop.utils import modules_in_current_dir, modules_from_paths
+from robocop.utils import modules_from_paths, modules_in_current_dir
+from robocop.exceptions import RuleNotFoundError, RuleParamNotFoundError, RuleReportsNotFoundError
 
 
 class BaseChecker:
@@ -47,33 +49,33 @@ class BaseChecker:
         self.disabled = False
         self.source = None
         self.lines = None
-        self.rules_map = {}
-        self.register_rules(self.rules)
         self.issues = []
+        self.rules = {}
         self.templated_suite = False
 
-    def register_rules(self, rules):
-        for key, value in rules.items():
-            rule = Rule(key, value)
-            if rule.name in self.rules_map:
-                raise DuplicatedRuleError("name", rule.name, self, self)
-            self.rules_map[rule.name] = rule
+    def param(self, rule, param_name):
+        try:
+            return self.rules[rule].config[param_name].value
+        except KeyError:
+            if rule not in self.rules:
+                raise RuleNotFoundError(rule, self) from None
+            if param_name not in self.rules[rule].config:
+                raise RuleParamNotFoundError(self.rules[rule], param_name, self) from None
 
     def report(
         self,
         rule,
-        *args,
         node=None,
         lineno=None,
         col=None,
         end_lineno=None,
         end_col=None,
         ext_disablers=None,
+        **kwargs,
     ):
-        if rule not in self.rules_map:
+        if rule not in self.rules:
             raise ValueError(f"Missing definition for message with name {rule}")
-        message = self.rules_map[rule].prepare_message(
-            *args,
+        message = self.rules[rule].prepare_message(
             source=self.source,
             node=node,
             lineno=lineno,
@@ -81,12 +83,10 @@ class BaseChecker:
             end_lineno=end_lineno,
             end_col=end_col,
             ext_disablers=ext_disablers,
+            **kwargs,
         )
         if message.enabled:
             self.issues.append(message)
-
-    def configure(self, param, value):
-        self.__dict__[param] = value
 
 
 class VisitorChecker(BaseChecker, ModelVisitor):  # noqa
@@ -136,33 +136,29 @@ class RawFileChecker(BaseChecker):  # noqa
         raise NotImplementedError
 
 
-def get_modules(linter):
-    yield from modules_in_current_dir(__file__, __name__)
-    yield from modules_from_paths(linter.config.ext_rules)
-
-
 def init(linter):
-    for module in get_modules(linter):
+    """For each module get `rules` dictionary and visitors. Instantiate each visitor and map it to the
+    rule class instance using `reports` visitor attribute."""
+    for module in get_modules(linter.config.ext_rules):
         classes = inspect.getmembers(module, inspect.isclass)
+        module_rules = {rule.name: rule for rule in getattr(module, "rules", {}).values()}
         for checker in classes:
-            if issubclass(checker[1], BaseChecker) and hasattr(checker[1], "rules") and checker[1].rules:
-                linter.register_checker(checker[1]())
+            if issubclass(checker[1], BaseChecker) and getattr(checker[1], "reports", False):
+                checker_instance = checker[1]()
+                for reported_rule in checker_instance.reports:
+                    if reported_rule not in module_rules:
+                        raise RuleReportsNotFoundError(reported_rule, checker_instance) from None
+                    checker_instance.rules[reported_rule] = module_rules[reported_rule]
+                linter.register_checker(checker_instance)
 
 
-def get_docs():
-    for module in modules_in_current_dir(__file__, __name__):
-        classes = inspect.getmembers(module, inspect.isclass)
-        for checker in classes:
-            if hasattr(checker[1], "rules") and checker[1].rules:
-                yield checker[1]
+def get_modules(ext_rules):
+    yield from modules_in_current_dir(__file__, __name__)
+    yield from modules_from_paths(ext_rules)
 
 
-def get_rules_for_atest():
+def get_rules():
     for module in modules_in_current_dir(__file__, __name__):
         module_name = module.__name__.split(".")[-1]
-        classes = inspect.getmembers(module, inspect.isclass)
-        for checker in classes:
-            if not (hasattr(checker[1], "rules") and checker[1].rules):
-                continue
-            for rule_body in checker[1].rules.values():
-                yield module_name, rule_body[0]
+        for rule in getattr(module, "rules", {}).values():
+            yield module_name, rule
