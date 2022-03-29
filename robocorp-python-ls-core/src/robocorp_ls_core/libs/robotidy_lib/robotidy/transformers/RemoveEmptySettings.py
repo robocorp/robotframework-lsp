@@ -1,9 +1,9 @@
 import ast
 
-import click
 from robot.api.parsing import ModelTransformer, Token
 
 from robotidy.decorators import check_start_end_line
+from robotidy.exceptions import InvalidParameterValueError
 
 
 # TODO: preserve comments?
@@ -38,10 +38,8 @@ class RemoveEmptySettings(ModelTransformer):
 
     def __init__(self, work_mode: str = "overwrite_ok", more_explicit: bool = True):
         if work_mode not in ("overwrite_ok", "always"):
-            raise click.BadOptionUsage(
-                option_name="transform",
-                message=f"Invalid configurable value: {work_mode} for work_mode for RemoveEmptySettings transformer."
-                f" Possible values:\n    overwrite_ok\n    always",
+            raise InvalidParameterValueError(
+                self.__class__.__name__, "work_mode", work_mode, "Possible values:\n    overwrite_ok\n    always"
             )
         self.work_mode = work_mode
         self.more_explicit = more_explicit

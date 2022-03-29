@@ -4,6 +4,7 @@ from robot.api.parsing import ModelTransformer, Token
 from robot.parsing.model import Statement
 
 from robotidy.utils import node_outside_selection, round_to_four, tokens_by_lines, left_align, is_blank_multiline
+from robotidy.exceptions import InvalidParameterValueError
 
 
 class AlignVariablesSection(ModelTransformer):
@@ -27,7 +28,7 @@ class AlignVariablesSection(ModelTransformer):
         ...             b=c
 
     You can configure how many columns should be aligned to longest token in given column. The remaining columns
-    will use fixed length separator length ``--space_count``. By default only first two columns are aligned.
+    will use fixed length separator length ``--spacecount``. By default only first two columns are aligned.
     To align first three columns:
 
        robotidy --transform AlignVariablesSection:up_to_column=3
@@ -39,8 +40,31 @@ class AlignVariablesSection(ModelTransformer):
     See https://robotidy.readthedocs.io/en/latest/transformers/AlignVariablesSection.html for more examples.
     """
 
-    def __init__(self, up_to_column: int = 2):
+    def __init__(self, up_to_column: int = 2, skip_types: str = "", min_width: int = None):
         self.up_to_column = up_to_column - 1
+        self.min_width = min_width
+        self.skip_types = self.parse_skip_types(skip_types)
+
+    def parse_skip_types(self, skip_types):
+        allow_types = {"dict": "&", "list": "@", "scalar": "$"}
+        ret = set()
+        if not skip_types:
+            return ret
+        for skip_type in skip_types.split(","):
+            if skip_type not in allow_types:
+                raise InvalidParameterValueError(
+                    self.__class__.__name__,
+                    "skip_type",
+                    skip_type,
+                    "Variable types should be provided in comma separated list:\nskip_type=dict,list,scalar",
+                )
+            ret.add(allow_types[skip_type])
+        return ret
+
+    def should_parse(self, node):
+        if not node.name:
+            return True
+        return node.name[0] not in self.skip_types
 
     def visit_VariableSection(self, node):  # noqa
         if node_outside_selection(node, self.formatting_config):
@@ -51,8 +75,10 @@ class AlignVariablesSection(ModelTransformer):
                 statements.append(child)
             elif child.type in (Token.EOL, Token.COMMENT):
                 statements.append(left_align(child))
-            else:
+            elif self.should_parse(child):
                 statements.append(list(tokens_by_lines(child)))
+            else:
+                statements.append(child)
         nodes_to_be_aligned = [st for st in statements if isinstance(st, list)]
         if not nodes_to_be_aligned:
             return node
@@ -75,11 +101,7 @@ class AlignVariablesSection(ModelTransformer):
                 up_to = self.up_to_column if self.up_to_column != -1 else len(line) - 2
                 for index, token in enumerate(line[:-2]):
                     aligned_statement.append(token)
-                    separator = (
-                        (look_up[index] - len(token.value) + 4) * " "
-                        if index < up_to
-                        else self.formatting_config.space_count * " "
-                    )
+                    separator = self.calc_separator(index, up_to, token, look_up)
                     aligned_statement.append(Token(Token.SEPARATOR, separator))
                 last_token = line[-2]
                 # remove leading whitespace before token
@@ -88,6 +110,14 @@ class AlignVariablesSection(ModelTransformer):
                 aligned_statement.append(line[-1])  # eol
             aligned_statements.append(Statement.from_tokens(aligned_statement))
         return aligned_statements
+
+    def calc_separator(self, index, up_to, token, look_up):
+        if index < up_to:
+            if self.min_width:
+                return max(self.min_width - len(token.value), self.formatting_config.space_count) * " "
+            return (look_up[index] - len(token.value) + 4) * " "
+        else:
+            return self.formatting_config.space_count * " "
 
     def create_look_up(self, statements):
         look_up = defaultdict(int)

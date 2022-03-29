@@ -1,10 +1,10 @@
 import re
 from typing import Optional
 
-import click
 from robot.api.parsing import ModelTransformer, Token
 
 from robotidy.decorators import check_start_end_line
+from robotidy.exceptions import InvalidParameterValueError
 
 
 class RenameTestCases(ModelTransformer):
@@ -40,10 +40,11 @@ class RenameTestCases(ModelTransformer):
         try:
             self.replace_pattern = re.compile(replace_pattern) if replace_pattern is not None else None
         except re.error as err:
-            raise click.BadOptionUsage(
-                option_name="transform",
-                message=f"Invalid configurable value: '{replace_pattern}' for replace_pattern in RenameTestCases"
-                f" transformer. It should be a valid regex expression. Regex error: '{err.msg}'",
+            raise InvalidParameterValueError(
+                self.__class__.__name__,
+                "replace_pattern",
+                replace_pattern,
+                f"It should be a valid regex expression. Regex error: '{err.msg}'",
             )
         self.replace_to = "" if replace_to is None else replace_to
 

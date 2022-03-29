@@ -13,6 +13,7 @@ from robotidy.utils import (
     remove_rst_formatting,
     RecommendationFinder,
 )
+from robotidy.decorators import catch_exceptions
 from robotidy.version import __version__
 
 
@@ -22,7 +23,7 @@ Version: {__version__}
 
 Robotidy is a tool for formatting Robot Framework source code.
 See examples at the end of this help message too see how you can use Robotidy.
-For more documentation check README section at https://github.com/MarketSquare/robotframework-tidy
+Full documentation available at https://robotidy.readthedocs.io .
 """
 EPILOG = """
 Examples:
@@ -65,15 +66,7 @@ class TransformType(click.ParamType):
     name = "transform"
 
     def convert(self, value, param, ctx):
-        name = ""
-        try:
-            name, args = split_args_from_name_or_path(value.replace(" ", ""))
-        except ValueError:
-            exc = (
-                f"Invalid {name} transformer configuration. "
-                f"Parameters should be provided in format name=value, delimited by :"
-            )
-            raise ValueError(exc)
+        name, args = split_args_from_name_or_path(value.replace(" ", ""))
         return name, args
 
 
@@ -226,7 +219,7 @@ def print_transformers_list():
 )
 @click.option(
     "--overwrite/--no-overwrite",
-    default=True,
+    default=None,
     help="Write changes back to file",
     show_default=True,
 )
@@ -290,6 +283,13 @@ def print_transformers_list():
     show_default=True,
 )
 @click.option(
+    "--line-length",
+    default=120,
+    type=int,
+    help="Max allowed characters per line",
+    show_default=True,
+)
+@click.option(
     "--list",
     "-l",
     is_eager=True,
@@ -312,8 +312,6 @@ def print_transformers_list():
     help="Path to output file where source file will be saved",
 )
 @click.option("-v", "--verbose", is_flag=True, help="More verbose output", show_default=True)
-@click.option("--list-transformers", is_flag=True)  # deprecated
-@click.option("--describe-transformer", default=None)  # deprecated
 @click.option(
     "--force-order",
     is_flag=True,
@@ -321,6 +319,7 @@ def print_transformers_list():
 )
 @click.version_option(version=__version__, prog_name="robotidy")
 @click.pass_context
+@catch_exceptions
 def cli(
     ctx: click.Context,
     transform: List[Tuple[str, List]],
@@ -338,19 +337,12 @@ def cli(
     separator: Optional[str],
     startline: Optional[int],
     endline: Optional[int],
+    line_length: int,
     list: bool,
     desc: Optional[str],
     output: Optional[Path],
-    list_transformers: bool,
-    describe_transformer: Optional[str],
     force_order: bool,
 ):
-    if list_transformers:
-        print("--list-transformers is deprecated in 1.3.0. Use --list instead")
-        ctx.exit(0)
-    if describe_transformer:
-        print("--describe-transformer is deprecated in 1.3.0. Use --desc NAME instead")
-        ctx.exit(0)
     if list:
         print_transformers_list()
         ctx.exit(0)
@@ -370,12 +362,17 @@ def cli(
     if config and verbose:
         click.echo(f"Loaded {config} configuration file")
 
+    if overwrite is None:
+        # None is default, with check not set -> overwrite, with check set -> overwrite only when overwrite flag is set
+        overwrite = not check
+
     formatting_config = GlobalFormattingConfig(
         space_count=spacecount,
         line_sep=lineseparator,
         start_line=startline,
         separator=separator,
         end_line=endline,
+        line_length=line_length,
     )
     tidy = Robotidy(
         transformers=transform,

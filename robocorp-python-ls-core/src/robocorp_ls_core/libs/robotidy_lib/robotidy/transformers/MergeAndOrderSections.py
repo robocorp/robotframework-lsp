@@ -1,6 +1,12 @@
 from robot.api.parsing import Token, ModelTransformer, SectionHeader, EmptyLine
 from robot.parsing.model.statements import Statement
-import click
+
+from robotidy.exceptions import InvalidParameterValueError
+
+try:
+    from robot.api.parsing import InlineIfHeader
+except ImportError:
+    InlineIfHeader = None
 
 
 class MergeAndOrderSections(ModelTransformer):
@@ -43,8 +49,7 @@ class MergeAndOrderSections(ModelTransformer):
         self.sections_order = self.parse_order(order)
         self.create_comment_section = create_comment_section
 
-    @staticmethod
-    def parse_order(order):
+    def parse_order(self, order):
         default_order = (
             Token.COMMENT_HEADER,
             Token.SETTING_HEADER,
@@ -71,11 +76,12 @@ class MergeAndOrderSections(ModelTransformer):
         for part in parts:
             parsed_order.append(map.get(part, None))
         if any(header not in parsed_order for header in default_order) and len(parsed_order) != len(default_order):
-            raise click.BadOptionUsage(
-                option_name="transform",
-                message=f"Invalid configurable value: '{order}' for order for MergeAndOrderSections transformer."
-                f" Custom order should be provided in comma separated list with all section names:\n"
-                f"order=comments,settings,variables,testcases,variables",
+            raise InvalidParameterValueError(
+                self.__class__.__name__,
+                "order",
+                order,
+                "Custom order should be provided in comma separated list with all section names:\n"
+                "order=comments,settings,variables,testcases,variables",
             )
         return parsed_order
 
@@ -101,7 +107,15 @@ class MergeAndOrderSections(ModelTransformer):
         return node
 
     @staticmethod
-    def from_last_section(node):
+    def normalize_eol(tokens):
+        new_tokens = []
+        for tok in tokens:
+            if tok.type == Token.EOL:
+                tok.value = "\n"
+            new_tokens.append(tok)
+        return new_tokens
+
+    def from_last_section(self, node):
         """Last node use different logic for new line marker. It is not possible to preserve all empty lines but
         we need at least ensure that following code::
 
@@ -112,27 +126,35 @@ class MergeAndOrderSections(ModelTransformer):
             *** Variables ****** Test Case ***
 
         """
-        if node.body:
-            last_statement = node.body[-1]
-            new_line = [Token(Token.EOL, "\n")]
-            if hasattr(last_statement, "body"):
-                if not last_statement.body:
-                    node.body[-1].body.append(EmptyLine.from_params(eol="\n"))
-                else:
-                    last_statement = last_statement.body[-1]
-                    if hasattr(last_statement, "end"):
-                        if last_statement.end:
-                            node.body[-1].body[-1].end = Statement.from_tokens(
-                                list(last_statement.end.tokens[:-1]) + new_line
-                            )
-                    else:
-                        node.body[-1].body[-1] = Statement.from_tokens(list(last_statement.tokens[:-1]) + new_line)
-            else:
-                node.body[-1] = Statement.from_tokens(list(last_statement.tokens[:-1]) + new_line)
+        # Empty sections, just *** Test Cases *** etc
+        if not node.body:
+            node.header.tokens = self.normalize_eol(node.header.tokens)
+            return node
+
+        # Settings, Variables or Comments
+        if not hasattr(node.body[-1], "body"):
+            node.body[-1].tokens = self.normalize_eol(node.body[-1].tokens)
+            return node
+
+        # Last keyword or test case
+        if not node.body[-1].body:
+            node.body[-1].body.append(EmptyLine.from_params())
+            return node
+
+        last_statement = node.body[-1].body[-1]
+        if hasattr(last_statement, "end"):
+            if (
+                InlineIfHeader
+                and hasattr(last_statement, "header")
+                and isinstance(last_statement.header, InlineIfHeader)
+            ):
+                if not last_statement.errors:
+                    node.body[-1].body[-1].body[-1].tokens = self.normalize_eol(last_statement.body[-1].tokens)
+                return node
+            if last_statement.end:  # not end if parsing errors
+                node.body[-1].body[-1].end.tokens = self.normalize_eol(last_statement.end.tokens)
         else:
-            last_token = node.header.tokens[-1]
-            if last_token.type == Token.EOL:
-                node.header = Statement.from_tokens(list(node.header.tokens[:-1]) + [Token(Token.EOL, "\n")])
+            node.body[-1].body[-1] = Statement.from_tokens(self.normalize_eol(last_statement.tokens))
         return node
 
     def get_section_type(self, section):

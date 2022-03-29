@@ -29,7 +29,7 @@ class NormalizeNewLines(ModelTransformer):
         self,
         test_case_lines: int = 1,
         keyword_lines: Optional[int] = None,
-        section_lines: int = 1,
+        section_lines: int = 2,
         separate_templated_tests: bool = False,
         consecutive_lines: int = 1,
     ):

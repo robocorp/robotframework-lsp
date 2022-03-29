@@ -2,8 +2,8 @@ import re
 import ast
 from collections import Counter
 
-import click
 from robot.api.parsing import ModelTransformer, Variable, Token
+from robotidy.exceptions import InvalidParameterValueError
 
 
 class NormalizeAssignments(ModelTransformer):
@@ -68,8 +68,7 @@ class NormalizeAssignments(ModelTransformer):
             equal_sign_type_variables, "equal_sign_type_variables"
         )
 
-    @staticmethod
-    def parse_equal_sign_type(value, name):
+    def parse_equal_sign_type(self, value, name):
         types = {
             "remove": "",
             "equal_sign": "=",
@@ -77,10 +76,11 @@ class NormalizeAssignments(ModelTransformer):
             "autodetect": None,
         }
         if value not in types:
-            raise click.BadOptionUsage(
-                option_name="transform",
-                message=f"Invalid configurable value: {value} for {name} for AssignmentNormalizer transformer."
-                f" Possible values:\n    remove\n    equal_sign\n    space_and_equal_sign",
+            raise InvalidParameterValueError(
+                self.__class__.__name__,
+                value,
+                name,
+                "Possible values:\n    remove\n    equal_sign\n    space_and_equal_sign",
             )
         return types[value]
 

@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: robotframework-tidy
-Version: 1.6.1
+Version: 2.1
 Summary: Code autoformatter for Robot Framework
 Home-page: https://github.com/MarketSquare/robotframework-tidy
 Author: MarketSquare - Robot Framework community
@@ -24,11 +24,12 @@ Classifier: Intended Audience :: Developers
 Requires-Python: >=3.7
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: robotframework (>=4.0)
-Requires-Dist: Click (>=7.0)
-Requires-Dist: toml (>=0.10.2)
+Requires-Dist: click (>=7.0)
 Requires-Dist: colorama (>=0.4.3)
-Requires-Dist: pathspec (==0.9.0)
+Requires-Dist: packaging (>=21.0)
+Requires-Dist: pathspec (<0.10.0,>=0.9.0)
+Requires-Dist: robotframework (>=4.0)
+Requires-Dist: toml (>=0.10.2)
 
 [![Unit-tests](https://img.shields.io/github/workflow/status/MarketSquare/robotframework-tidy/Unit%20tests/main)](https://github.com/MarketSquare/robotframework-tidy/actions?query=workflow%3A%22Unit+tests%22 "GitHub Workflow Unit Tests Status")
 ![Codecov](https://img.shields.io/codecov/c/github/MarketSquare/robotframework-tidy/main "Code coverage on master branch")

@@ -1,9 +1,14 @@
 from itertools import takewhile
 
-import click
 from robot.api.parsing import ModelTransformer, Token
 
+try:
+    from robot.api.parsing import InlineIfHeader
+except ImportError:
+    InlineIfHeader = None
+
 from robotidy.decorators import check_start_end_line
+from robotidy.exceptions import InvalidParameterValueError
 
 
 class NormalizeSeparators(ModelTransformer):
@@ -24,9 +29,9 @@ class NormalizeSeparators(ModelTransformer):
     def __init__(self, sections: str = None):
         self.indent = 0
         self.sections = self.parse_sections(sections)
+        self.is_inline = False
 
-    @staticmethod
-    def parse_sections(sections):
+    def parse_sections(self, sections):
         default = {"comments", "settings", "testcases", "keywords", "variables"}
         if sections is None:
             return default
@@ -39,11 +44,12 @@ class NormalizeSeparators(ModelTransformer):
             if part and part[-1] != "s":
                 part += "s"
             if part not in default:
-                raise click.BadOptionUsage(
-                    option_name="transform",
-                    message=f"Invalid configurable value: '{sections}' for sections for NormalizeSeparators transformer."
-                    f" Sections to be transformed should be provided in comma separated list with valid section"
-                    f" names:\n{sorted(default)}",
+                raise InvalidParameterValueError(
+                    self.__class__.__name__,
+                    "sections",
+                    sections,
+                    f"Sections to be transformed should be provided in comma separated "
+                    f"list with valid section names:\n{sorted(default)}",
                 )
             parsed_sections.add(part)
         return parsed_sections
@@ -72,37 +78,52 @@ class NormalizeSeparators(ModelTransformer):
     def visit_TestCaseSection(self, node):  # noqa
         return self.should_visit("testcases", node)
 
-    def visit_TestCase(self, node):  # noqa
+    def indented_block(self, node):
         self.visit_Statement(node.header)
         self.indent += 1
         node.body = [self.visit(item) for item in node.body]
         self.indent -= 1
         return node
 
-    def visit_Keyword(self, node):  # noqa
-        self.visit_Statement(node.header)
-        self.indent += 1
-        node.body = [self.visit(item) for item in node.body]
-        self.indent -= 1
-        return node
+    def visit_TestCase(self, node):  # noqa
+        return self.indented_block(node)
+
+    visit_Keyword = visit_While = visit_TestCase  # noqa
 
     def visit_For(self, node):
-        self.visit_Statement(node.header)
-        self.indent += 1
-        node.body = [self.visit(item) for item in node.body]
-        self.indent -= 1
+        node = self.indented_block(node)
         self.visit_Statement(node.end)
         return node
 
+    def visit_Try(self, node):
+        node = self.indented_block(node)
+        if node.next:
+            self.visit(node.next)
+        if node.end:
+            self.visit_Statement(node.end)
+        return node
+
     def visit_If(self, node):
+        if self.is_inline:  # nested inline if is ignored
+            return node
+        self.is_inline = InlineIfHeader and isinstance(node.header, InlineIfHeader)
         self.visit_Statement(node.header)
-        self.indent += 1
+        indent = 1
+        if self.is_inline:
+            indent = self.indent
+            self.indent = 1
+        else:
+            self.indent += 1
         node.body = [self.visit(item) for item in node.body]
-        self.indent -= 1
+        if self.is_inline:
+            self.indent = indent
+        else:
+            self.indent -= 1
         if node.orelse:
             self.visit(node.orelse)
         if node.end:
             self.visit_Statement(node.end)
+        self.is_inline = False
         return node
 
     @check_start_end_line
@@ -113,23 +134,19 @@ class NormalizeSeparators(ModelTransformer):
     def _handle_spaces(self, statement, has_pipes):
         new_tokens = []
         for line in statement.lines:
-            if has_pipes and len(line) > 1:
-                line = self._remove_consecutive_separators(line)
-            new_tokens.extend([self._normalize_spaces(i, t, len(line)) for i, t in enumerate(line)])
+            prev_sep = False
+            for index, token in enumerate(line):
+                if token.type == Token.SEPARATOR:
+                    if prev_sep:
+                        continue
+                    prev_sep = True
+                    count = self.indent if index == 0 else 1
+                    token.value = self.formatting_config.separator * count
+                else:
+                    prev_sep = False
+                if has_pipes and index == len(line) - 2:
+                    token.value = token.value.rstrip()
+                new_tokens.append(token)
         statement.tokens = new_tokens
         self.generic_visit(statement)
         return statement
-
-    @staticmethod
-    def _remove_consecutive_separators(line):
-        sep_count = len(list(takewhile(lambda t: t.type == Token.SEPARATOR, line)))
-        return line[sep_count - 1 :]
-
-    def _normalize_spaces(self, index, token, line_length):
-        if token.type == Token.SEPARATOR:
-            count = self.indent if index == 0 else 1
-            token.value = self.formatting_config.separator * count
-        # remove trailing whitespace from last token
-        if index == line_length - 2:
-            token.value = token.value.rstrip()
-        return token

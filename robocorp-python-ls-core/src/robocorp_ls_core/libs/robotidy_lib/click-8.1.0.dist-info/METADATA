@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: click
-Version: 8.0.3
+Version: 8.1.0
 Summary: Composable command line interface toolkit
 Home-page: https://palletsprojects.com/p/click/
 Author: Armin Ronacher
@@ -21,7 +21,7 @@ Classifier: Intended Audience :: Developers
 Classifier: License :: OSI Approved :: BSD License
 Classifier: Operating System :: OS Independent
 Classifier: Programming Language :: Python
-Requires-Python: >=3.6
+Requires-Python: >=3.7
 Description-Content-Type: text/x-rst
 License-File: LICENSE.rst
 Requires-Dist: colorama ; platform_system == "Windows"

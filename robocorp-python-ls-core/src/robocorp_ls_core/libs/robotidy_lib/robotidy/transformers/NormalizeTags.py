@@ -1,5 +1,6 @@
 from robot.api.parsing import ModelTransformer, Tags, Token, DefaultTags, ForceTags
-import click
+
+from robotidy.exceptions import InvalidParameterValueError
 
 
 class NormalizeTags(ModelTransformer):
@@ -31,10 +32,8 @@ class NormalizeTags(ModelTransformer):
         try:
             self.case_function = self.CASE_FUNCTIONS[self.case]
         except KeyError:
-            raise click.BadOptionUsage(
-                option_name="transform",
-                message=f"Invalid configurable value: '{case}' for case for NormalizeTags transformer. "
-                f"Supported cases: lowercase, uppercase, titlecase.\n",
+            raise InvalidParameterValueError(
+                self.__class__.__name__, "case", case, "Supported cases: lowercase, uppercase, titlecase."
             )
 
     def visit_Tags(self, node):  # noqa

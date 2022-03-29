@@ -1,8 +1,9 @@
 from collections import defaultdict
 
-import click
 from robot.api.parsing import ModelTransformer, Comment, Token, EmptyLine, LibraryImport
 from robot.libraries import STDLIBS
+
+from robotidy.exceptions import InvalidParameterValueError
 
 
 class OrderSettingsSection(ModelTransformer):
@@ -97,8 +98,7 @@ class OrderSettingsSection(ModelTransformer):
             {"force_tags": Token.FORCE_TAGS, "default_tags": Token.DEFAULT_TAGS},
         )
 
-    @staticmethod
-    def parse_group_order(order):
+    def parse_group_order(self, order):
         default = ("documentation", "imports", "settings", "tags")
         if order is None:
             return default
@@ -106,10 +106,11 @@ class OrderSettingsSection(ModelTransformer):
             return []
         parts = order.lower().split(",")
         if any(part not in default for part in parts):
-            raise click.BadOptionUsage(
-                option_name="transform",
-                message=f"Invalid configurable value: '{order}' for group_order for OrderSettingsSection transformer."
-                f" Custom order should be provided in comma separated list with valid group names:\n{default}",
+            raise InvalidParameterValueError(
+                self.__class__.__name__,
+                "group_order",
+                order,
+                f"Custom order should be provided in comma separated list with valid group names:\n{default}",
             )
         return parts
 
@@ -125,11 +126,11 @@ class OrderSettingsSection(ModelTransformer):
         try:
             return [mapping[part] for part in parts]
         except KeyError:
-            raise click.BadOptionUsage(
-                option_name="transform",
-                message=f"Invalid configurable value: '{order}' for order for OrderSettingsSection transformer."
-                f" Custom order should be provided in comma separated list with valid group names:\n"
-                f"{sorted(mapping.keys())}",
+            raise InvalidParameterValueError(
+                self.__class__.__name__,
+                "order",
+                order,
+                f"Custom order should be provided in comma separated list with valid group names:\n{sorted(mapping.keys())}",
             )
 
     def visit_File(self, node):  # noqa

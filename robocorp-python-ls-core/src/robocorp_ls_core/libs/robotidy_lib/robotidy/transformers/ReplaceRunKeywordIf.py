@@ -132,7 +132,7 @@ class ReplaceRunKeywordIf(ModelTransformer):
                 self.args_to_keyword(keyword[1:], assign, indent)
                 for keyword in self.split_args_on_delimiters(arg_tokens, ("AND",))
             ]
-        return self.args_to_keyword(arg_tokens, assign, indent)
+        return [self.args_to_keyword(arg_tokens, assign, indent)]
 
     def args_to_keyword(self, arg_tokens, assign, indent):
         separated_tokens = list(

@@ -22,6 +22,7 @@ class RobotidyAPI(Robotidy):
             line_sep=config.get("lineseparator", "native"),
             start_line=kwargs.get("startline", None) or int(config["startline"]) if "startline" in config else None,
             end_line=kwargs.get("endline", None) or int(config["endline"]) if "endline" in config else None,
+            line_length=kwargs.get("line_length", None) or int(config.get("line_length", 120)),
         )
         exclude = config.get("exclude", None)
         extend_exclude = config.get("extend_exclude", None)

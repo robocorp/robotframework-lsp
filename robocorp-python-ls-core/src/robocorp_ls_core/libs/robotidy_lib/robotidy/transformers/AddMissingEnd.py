@@ -1,5 +1,10 @@
 from robot.api.parsing import ModelTransformer, Token, End, Comment, EmptyLine
 
+try:
+    from robot.api.parsing import InlineIfHeader
+except ImportError:
+    InlineIfHeader = None
+
 from robotidy.decorators import check_start_end_line
 
 
@@ -21,10 +26,9 @@ class AddMissingEnd(ModelTransformer):
     Supports global formatting params: ``--startline`` and ``--endline``.
     """
 
-    @check_start_end_line
-    def visit_For(self, node):  # noqa
+    def fix_block(self, node, expected_type):
         self.generic_visit(node)
-        self.fix_header_name(node, Token.FOR)
+        self.fix_header_name(node, expected_type)
         outside = []
         if not node.end:  # fix statement position only if END was missing
             node.body, outside = self.collect_inside_statements(node)
@@ -32,18 +36,47 @@ class AddMissingEnd(ModelTransformer):
         return (node, *outside)
 
     @check_start_end_line
+    def visit_For(self, node):  # noqa
+        return self.fix_block(node, Token.FOR)
+
+    @check_start_end_line
+    def visit_While(self, node):  # noqa
+        return self.fix_block(node, Token.WHILE)
+
+    @check_start_end_line
+    def visit_Try(self, node):  # noqa
+        self.generic_visit(node)
+        if node.type != Token.TRY:
+            return node
+        self.fix_header_name(node, node.type)
+        outside = []
+        if not node.end:  # fix statement position only if END was missing
+            node.body, outside = self.collect_inside_statements(node)
+            try_branch = self.get_last_except(node)
+            if try_branch:
+                try_branch.body, outside_try = self.collect_inside_statements(try_branch)
+                outside += outside_try
+
+        self.fix_end(node)
+        return (node, *outside)
+
+    @check_start_end_line
     def visit_If(self, node):  # noqa
         self.generic_visit(node)
-        self.fix_header_name(node, node.type)
         if node.type != Token.IF:
             return node
-        node.body, outside = self.collect_inside_statements(node)
-        if node.orelse:
-            orelse = node.orelse
-            while orelse.orelse:
-                orelse = orelse.orelse
-            orelse.body, outside_orelse = self.collect_inside_statements(orelse)
-            outside += outside_orelse
+        if InlineIfHeader and isinstance(node.header, InlineIfHeader):
+            self.fix_header_name(node, "IF")
+            return node
+        self.fix_header_name(node, node.type)
+        outside = []
+        if not node.end:
+            node.body, outside = self.collect_inside_statements(node)
+            or_else = self.get_last_or_else(node)
+            if or_else:
+                or_else.body, outside_or_else = self.collect_inside_statements(or_else)
+                outside += outside_or_else
+
         self.fix_end(node)
         return (node, *outside)
 
@@ -53,7 +86,7 @@ class AddMissingEnd(ModelTransformer):
             indent = node.header.tokens[0]
         else:
             indent = Token(Token.SEPARATOR, self.formatting_config.separator)
-        node.end = End([indent, Token(Token.END, "END"), Token(Token.EOL)])
+        node.end = End([indent, Token(Token.END, Token.END), Token(Token.EOL)])
 
     @staticmethod
     def fix_header_name(node, header_name):
@@ -95,7 +128,16 @@ class AddMissingEnd(ModelTransformer):
     def get_last_or_else(node):
         if not node.orelse:
             return None
-        orelse = node.orelse
-        while orelse.orelse:
-            orelse = orelse.orelse
-        return orelse
+        or_else = node.orelse
+        while or_else.orelse:
+            or_else = or_else.orelse
+        return or_else
+
+    @staticmethod
+    def get_last_except(node):
+        if not node.next:
+            return None
+        try_branch = node.next
+        while try_branch.next:
+            try_branch = try_branch.next
+        return try_branch

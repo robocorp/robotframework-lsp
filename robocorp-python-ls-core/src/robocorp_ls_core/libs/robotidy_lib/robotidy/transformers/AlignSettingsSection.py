@@ -29,7 +29,7 @@ class AlignSettingsSection(ModelTransformer):
         # this should be left aligned
 
     You can configure how many columns should be aligned to longest token in given column. The remaining columns
-    will use fixed length separator length ``--space_count``. By default only first two columns are aligned.
+    will use fixed length separator length ``--spacecount``. By default only first two columns are aligned.
     To align first three columns::
 
        robotidy --transform AlignSettingsSection:up_to_column=3
@@ -48,7 +48,7 @@ class AlignSettingsSection(ModelTransformer):
 
     To disable it configure ``argument_indent`` with ``0``.
 
-    Supports global formatting params: ``--startline``, ``--endline`` and ``--space_count``
+    Supports global formatting params: ``--startline``, ``--endline`` and ``--spacecount``
     (for columns with fixed length).
 
     See https://robotidy.readthedocs.io/en/latest/transformers/AlignSettingsSection.html for more examples.
@@ -61,9 +61,10 @@ class AlignSettingsSection(ModelTransformer):
         Token.TEST_TEARDOWN,
     }
 
-    def __init__(self, up_to_column: int = 2, argument_indent: int = 4):
+    def __init__(self, up_to_column: int = 2, argument_indent: int = 4, min_width: int = None):
         self.up_to_column = up_to_column - 1
         self.argument_indent = argument_indent
+        self.min_width = min_width
 
     def visit_SettingSection(self, node):  # noqa
         if node_outside_selection(node, self.formatting_config):
@@ -100,20 +101,7 @@ class AlignSettingsSection(ModelTransformer):
                 up_to = self.up_to_column if self.up_to_column != -1 else len(line) - 2
                 for index, token in enumerate(line[:-2]):
                     aligned_statement.append(token)
-                    if index < up_to:
-                        arg_indent = self.argument_indent if keyword_arg else 0
-                        if keyword_arg and index != 0:
-                            separator = (
-                                max(
-                                    (look_up[index] - len(token.value) - arg_indent + 4),
-                                    self.formatting_config.space_count,
-                                )
-                                * " "
-                            )
-                        else:
-                            separator = (look_up[index] - len(token.value) + arg_indent + 4) * " "
-                    else:
-                        separator = self.formatting_config.space_count * " "
+                    separator = self.calc_separator(index, up_to, keyword_arg, token, look_up)
                     aligned_statement.append(Token(Token.SEPARATOR, separator))
                 last_token = line[-2]
                 # remove leading whitespace before token
@@ -122,6 +110,24 @@ class AlignSettingsSection(ModelTransformer):
                 aligned_statement.append(line[-1])  # eol
             aligned_statements.append(Statement.from_tokens(aligned_statement))
         return aligned_statements
+
+    def calc_separator(self, index, up_to, keyword_arg, token, look_up):
+        if index < up_to:
+            if self.min_width:
+                return max(self.min_width - len(token.value), self.formatting_config.space_count) * " "
+            arg_indent = self.argument_indent if keyword_arg else 0
+            if keyword_arg and index != 0:
+                return (
+                    max(
+                        (look_up[index] - len(token.value) - arg_indent + 4),
+                        self.formatting_config.space_count,
+                    )
+                    * " "
+                )
+            else:
+                return (look_up[index] - len(token.value) + arg_indent + 4) * " "
+        else:
+            return self.formatting_config.space_count * " "
 
     def create_look_up(self, statements):
         look_up = defaultdict(int)

@@ -65,11 +65,10 @@ class Robotidy:
                 if diff:
                     changed_files += 1
                 self.output_diff(model.source, old_model, new_model)
-                if not self.check:
-                    if stdin:
-                        self.print_to_stdout(new_model)
-                    else:
-                        self.save_model(model.source, model)
+                if stdin:
+                    self.print_to_stdout(new_model)
+                elif diff:
+                    self.save_model(model.source, model)
             except DataError:
                 click.echo(
                     f"Failed to decode {source}. Default supported encoding by Robot Framework is UTF-8. Skipping file"
