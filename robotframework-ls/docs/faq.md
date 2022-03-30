@@ -62,6 +62,98 @@ i.e.: generating the `.libspec` as `python -m robot.libdoc <library_name><librar
 
 After the library is changed, you may need to restart your editor/IDE to clear the related caches.
 
+How to deal with undefined variables?
+---------------------------------------
+
+Since `Robot Framework Language Server` `0.43.0`, usages of undefined variables are detected and reported 
+during the linting.
+
+The analysis of undefined variables is far from trivial as `Robot Framework`
+itself has many ways of specifying variables, including dynamic variables which are very hard to
+detect during the static analysis (which could result in false positives -- i.e.:
+cases where a variable is reported as undefined when in reality it isn't).
+
+As such, it's possible to tweak the analysis for the cases where a false positive is found by using 
+the following approaches:
+
+**1. Statically define a variable using the settings**
+
+It's possible to specify a variable using the `robot.variables`. Variables defined through this setting
+are also automatically passed as arguments to `Robot Framework`.
+
+i.e.: A definition such as: 
+
+```json
+"robot.variables": { "myfolder": "${workspaceFolder}/myfolder" },
+```  
+
+Will have the effect of automatically passing `-v myfolder:/full/path/to/myfolder` to any
+launches and the `myfolder` variable will also be detected during the linting.
+
+**2. Ignore a variable during the linting using the settings**
+
+It's possible to ignore the usage of specific variables during linting (this is
+the preferred approach when the variable is dynamically assigned and the static
+analyzer can't infer the variable creation).
+
+i.e.: A definition such as:
+
+```json
+"robot.lint.ignoreVariables": ["var1", "var2"]
+```
+
+Will have the effect of not reporting as undefined any usage of `var1` or `var2`.
+
+**3. Load variables defined in an arguments file**
+
+If variables are usually defined in an arguments file, it's possible to ask
+the language server to load those values from the arguments file (this is
+very similar to specifying the variable in the first case where we specify
+`robot.variables`, but it may be interesting to use in cases where variables
+are already passed using arguments files (note that the arguments files still
+have to be manually assigned in the launch configuration using the `args` in the launch).
+
+i.e.: A definition such as:
+
+```json
+"robot.loadVariablesFromArgumentsFile": "${workspaceFolder}/arguments.txt"
+```
+
+Will have the effect of loading all `-v var:name` and `--variable var:name` definitions
+from the arguments file.
+
+**4. Disable the undefined variables lint**
+
+Even though a lot of effort went into the analysis of undefined variables, it's
+possible that you may hit some use-case which is not well supported (for instance,
+right now it's known that not all variables from python files are correctly loaded, 
+especially cases where variables are defined dynamically as the only support right 
+now is statically analyzing python files to load variables).
+
+In such cases it's possible to disable the analysis of undefined variables altogether.
+
+
+i.e.: A definition such as:
+
+```json
+"robot.lint.variables": false
+```
+
+will disable the linting of undefined variables.
+
+
+**5. Report case which should work as bug**
+
+If you have a case where you believe the language server should detect
+properly and it's not detecting (and you're having to work around it by disabling
+linting or specifying a variable to be ignored), please create an issue in:
+
+https://github.com/robocorp/robotframework-lsp/issues
+
+So that it can be fixed in the future ;)
+
+
+
 How to specify a variable needed to resolve some library or resource import?
 -----------------------------------------------------------------------------
 

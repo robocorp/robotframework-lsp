@@ -14,14 +14,10 @@ Configuration settings
 
 - `robot.variables` custom variables to be considered by **Robot Framework** (used when resolving variables and automatically passed to the launch config as `--variable` entries).
 
-- `robot.lint.ignoreVariables` variables defined with this setting won't be reported as undefined variables during linting.
-
 - `robot.loadVariablesFromArgumentsFile` may point to an arguments file from which variables should be loaded for linting / code-completion.
     - Note: the arguments file still needs to be separately set during launching too.
 
 - `robot.completions.section_headers.form`: can be used to determine if the completions should be presented in the plural or singular form.
-
-- `robot.lint.robocop.enabled`: used to enable/disable linting with [Robocop](https://robocop.readthedocs.io/en/latest/) (default: true).
 
 - `robot.editor.4spacesTab`: used to put 4 spaces instead of using tabs or indenting to a tab level in the editor (default: true).
 
@@ -40,6 +36,27 @@ Configuration settings
     (note: builtin libraries are always pre-generated and don't need to be added here).
 
 
+
+Linting-related settings
+--------------------------
+
+- `robot.lint.enabled` can be used to disable the linting altoghether.
+
+- `robot.lint.undefinedKeywords` can be used to disable the linting of undefined keywords altoghether.
+
+- `robot.lint.robocop.enabled`: used to enable/disable linting with [Robocop](https://robocop.readthedocs.io/en/latest/) (default: false).
+
+- `robot.lint.undefinedLibraries`: used to disable the reporting of undefined libraries.
+
+- `robot.lint.undefinedResources`: used to disable the reporting of undefined resources.
+
+- `robot.lint.undefinedVariableImports`: used to disable the reporting of undefined variable imports.
+
+- `robot.lint.keywordCallArguments`: used to disable the reporting of wrong arguments in a keyword call.
+
+- `robot.lint.variables`: used to disable the reporting of undefined variables.
+
+- `robot.lint.ignoreVariables` variables defined with this setting won't be reported as undefined variables during linting.
 
 Environment variables
 ----------------------
