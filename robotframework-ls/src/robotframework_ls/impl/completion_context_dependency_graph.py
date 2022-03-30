@@ -118,7 +118,7 @@ class CompletionContextDependencyGraph:
     ):
         self._doc_uri_to_resource_imports[doc_uri] = resource_imports_as_docs
 
-        self._invalidate_on_uri_changes.add(doc_uri)
+        self._invalidate_on_uri_changes.add(uris.normalize_uri(doc_uri))
         for _, resource_doc in resource_imports_as_docs:
             if resource_doc is not None:
                 self._invalidate_on_uri_changes.add(
@@ -134,7 +134,7 @@ class CompletionContextDependencyGraph:
     ):
         self._doc_uri_to_variable_imports[doc_uri] = new_variable_imports
 
-        self._invalidate_on_uri_changes.add(doc_uri)
+        self._invalidate_on_uri_changes.add(uris.normalize_uri(doc_uri))
         for _, variable_doc in new_variable_imports:
             if variable_doc is not None:
                 self._invalidate_on_uri_changes.add(

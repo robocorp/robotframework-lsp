@@ -1276,3 +1276,33 @@ Example
     else:
         basename = None  # Default
     _collect_errors(workspace, doc, data_regression, basename=basename)
+
+
+def test_vars_from_py(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc_py = workspace.put_doc("vars.py")
+    doc_py.source = """
+from typing import Dict
+
+VALUES: Dict[str, int] = {}
+VALUES["foo"] = 1
+VALUES["bar"] = 2
+
+FOO: str = "foo"
+BAR: int = 1
+"""
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Variables    vars.py
+
+*** Test Cases ***
+Demo
+    Log    ${VALUES}
+    Log    ${FOO}
+    Log    ${BAR}
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")

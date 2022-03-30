@@ -192,6 +192,44 @@ def _collect_resource_imports_variables(
         _collect_variables_from_document_context(new_ctx, collector)
 
 
+def _gen_var_from_python_ast(variable_import_doc, collector, node, target):
+    import ast as ast_module
+
+    if isinstance(target, ast_module.Name):
+        varname = target.id
+        if collector.accepts(varname):
+            value = ""
+            try:
+                # Only available for Python 3.8 onwards...
+                end_lineno = getattr(node.value, "end_lineno", None)
+                if end_lineno is None:
+                    end_lineno = node.value.lineno
+
+                # Only available for Python 3.8 onwards...
+                end_col_offset = getattr(node.value, "end_col_offset", None)
+                if end_col_offset is None:
+                    end_col_offset = 99999999
+                value = variable_import_doc.get_range(
+                    node.value.lineno - 1,
+                    node.value.col_offset,
+                    end_lineno - 1,
+                    end_col_offset,
+                )
+            except:
+                log.exception()
+
+            variable_found = VariableFoundFromPythonAst(
+                variable_import_doc.path,
+                target.lineno - 1,
+                target.col_offset,
+                target.lineno - 1,
+                target.col_offset + len(target.id),
+                value,
+                variable_name=varname,
+            )
+            collector.on_variable(variable_found)
+
+
 def _collect_variables_from_variable_import_doc(
     variable_import_doc: IRobotDocument, collector: IVariablesCollector
 ):
@@ -202,45 +240,16 @@ def _collect_variables_from_variable_import_doc(
                 import ast as ast_module
 
                 for node in python_ast.body:
-                    if isinstance(node, ast_module.Assign):
+                    if isinstance(node, ast_module.AnnAssign):
+                        _gen_var_from_python_ast(
+                            variable_import_doc, collector, node, node.target
+                        )
+
+                    elif isinstance(node, ast_module.Assign):
                         for target in node.targets:
-                            if isinstance(target, ast_module.Name):
-                                varname = target.id
-                                if collector.accepts(varname):
-                                    value = ""
-                                    try:
-                                        # Only available for Python 3.8 onwards...
-                                        end_lineno = getattr(
-                                            node.value, "end_lineno", None
-                                        )
-                                        if end_lineno is None:
-                                            end_lineno = node.value.lineno
-
-                                        # Only available for Python 3.8 onwards...
-                                        end_col_offset = getattr(
-                                            node.value, "end_col_offset", None
-                                        )
-                                        if end_col_offset is None:
-                                            end_col_offset = 99999999
-                                        value = variable_import_doc.get_range(
-                                            node.value.lineno - 1,
-                                            node.value.col_offset,
-                                            end_lineno - 1,
-                                            end_col_offset,
-                                        )
-                                    except:
-                                        log.exception()
-
-                                    variable_found = VariableFoundFromPythonAst(
-                                        variable_import_doc.path,
-                                        target.lineno - 1,
-                                        target.col_offset,
-                                        target.lineno - 1,
-                                        target.col_offset + len(target.id),
-                                        value,
-                                        variable_name=varname,
-                                    )
-                                    collector.on_variable(variable_found)
+                            _gen_var_from_python_ast(
+                                variable_import_doc, collector, node, target
+                            )
 
         elif variable_import_doc.path.lower().endswith((".yaml", ".yml")):
             dct_contents = variable_import_doc.get_yaml_contents()
