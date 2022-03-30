@@ -297,7 +297,7 @@ def code_lens(completion_context: ICompletionContext) -> List[CodeLensTypedDict]
 
     config = completion_context.config
     if config is not None and not config.get_setting(
-        OPTION_ROBOT_SHOW_CODE_LENSES, bool, False
+        OPTION_ROBOT_SHOW_CODE_LENSES, bool, True
     ):
         return []
 

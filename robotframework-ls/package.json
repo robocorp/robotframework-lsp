@@ -420,7 +420,7 @@
                 },
                 "robot.codeLens.enable": {
                     "type": "boolean",
-                    "default": false,
+                    "default": true,
                     "description": "Enables or disables code-lenses (Run/Debug/Interactive console)"
                 }
             }

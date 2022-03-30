@@ -3,6 +3,8 @@ NEXT
 
 - Fixed issue finding variables in python files with annotated assignments (i.e.: `value: int = 10`). [#629](https://github.com/robocorp/robotframework-lsp/issues/629)
 - The debugger no longer stops in `Run Keyword And Return Status` by default. [#625](https://github.com/robocorp/robotframework-lsp/issues/625)
+- Code-lenses (Run/Debug/Interactive console) are shown by default again.
+    - The `robot.codeLens.enable` setting may be used to disable them.
 
 
 New in 0.43.2 (2022-03-29)

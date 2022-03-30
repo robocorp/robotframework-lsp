@@ -230,7 +230,7 @@ def get_json_contents():
                     },
                     "robot.codeLens.enable": {
                         "type": "boolean",
-                        "default": False,
+                        "default": True,
                         "description": "Enables or disables code-lenses (Run/Debug/Interactive console)",
                     },
                 },
