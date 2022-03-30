@@ -441,7 +441,7 @@ class Workspace(object):
                 try:
                     doc = self._create_document(doc_uri, force_load_source=True)
                 except:
-                    log.info("Unable to load contents from: %s", doc_uri)
+                    log.debug("Unable to load contents from: %s", doc_uri)
                     # Unable to load contents: file does not exist.
                     doc = None
                 else:
