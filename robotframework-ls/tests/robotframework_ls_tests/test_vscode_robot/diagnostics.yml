@@ -1,4 +1,6 @@
 - code: '0203'
+  codeDescription:
+    href: https://robocop.readthedocs.io/en/2.0.1/rules.html#missing-doc-suite
   message: Missing documentation in suite
   range:
     end:
@@ -10,6 +12,8 @@
   severity: 2
   source: robocop
 - code: '0401'
+  codeDescription:
+    href: https://robocop.readthedocs.io/en/2.0.1/rules.html#parsing-error
   message: 'Robot Framework syntax error: Unrecognized section header ''*** Invalid
     Invalid ***''. Valid sections: ''Settings'', ''Variables'', ''Keywords'' and ''Comments''.'
   range:
@@ -21,7 +25,23 @@
       line: 0
   severity: 1
   source: robocop
+- code: 0813
+  codeDescription:
+    href: https://robocop.readthedocs.io/en/2.0.1/rules.html#duplicated-setting
+  message: 'Unrecognized section header ''*** Invalid Invalid ***''. Valid sections:
+    ''Settings'', ''Variables'', ''Keywords'' and ''Comments''.'
+  range:
+    end:
+      character: 0
+      line: 0
+    start:
+      character: 0
+      line: 0
+  severity: 2
+  source: robocop
 - code: '1002'
+  codeDescription:
+    href: https://robocop.readthedocs.io/en/2.0.1/rules.html#missing-trailing-blank-line
   message: Missing trailing blank line at the end of file
   range:
     end:
