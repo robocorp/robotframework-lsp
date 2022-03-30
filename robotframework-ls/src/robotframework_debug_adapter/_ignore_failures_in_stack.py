@@ -45,6 +45,7 @@ class IgnoreFailuresInStack:
             "run keyword and ignore error",
             "run keyword and warn on failure",
             "wait until keyword succeeds",
+            "run keyword and return status",
         ):
             self.ignore_failures_inside.add(normalize_robot_name(entry))
 
