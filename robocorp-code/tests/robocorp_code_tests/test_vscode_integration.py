@@ -518,8 +518,8 @@ def test_compute_python_launch_from_robocorp_code_launch(
         "request": "launch",
         "pythonArgs": [],
         "args": [],
-        "pythonPath": "c:/temp/py.exe",
-        "console": "internalConsole",
+        "python": "c:/temp/py.exe",
+        "console": "integratedTerminal",
     }
 
 
