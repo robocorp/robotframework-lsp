@@ -7,7 +7,7 @@ import { OUTPUT_CHANNEL } from "./channel";
 export async function copySelectedToClipboard(locator?: LocatorEntry) {
     let locatorSelected: LocatorEntry | undefined = locator || (await getSelectedLocator());
     if (locatorSelected) {
-        env.clipboard.writeText(locatorSelected.name);
+        env.clipboard.writeText("alias:" + locatorSelected.name);
     }
 }
 
