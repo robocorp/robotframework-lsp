@@ -252,11 +252,11 @@ def compute_robot_launch_from_robocorp_code_launch(
             "cwd": cwd,
             "args": args,
             "pythonArgs": vmargs,
-            "console": "internalConsole",
+            "console": "integratedTerminal",
         }
 
         if python_exe:
-            result["pythonPath"] = python_exe
+            result["python"] = python_exe
 
         if module is not None:
             result["module"] = module

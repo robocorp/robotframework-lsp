@@ -203,7 +203,7 @@ ignoreFiles:
             "cwd": cwd,
             "args": [],
             "pythonArgs": [],
-            "console": "internalConsole",
+            "console": "integratedTerminal",
             "program": os.path.join(cwd, "task.py"),
         },
     }
@@ -257,9 +257,9 @@ ignoreFiles:
             "cwd": cwd,
             "args": ["arg1"],
             "pythonArgs": [],
-            "console": "internalConsole",
+            "console": "integratedTerminal",
             "program": os.path.join(cwd, "task.py"),
-            "pythonPath": "python_executable.exe",
+            "python": "python_executable.exe",
         },
     }
 
@@ -354,9 +354,9 @@ ignoreFiles:
             "cwd": cwd,
             "args": ["arg1"],
             "pythonArgs": ["-u"],
-            "console": "internalConsole",
+            "console": "integratedTerminal",
             "module": "module_name",
-            "pythonPath": "python_executable.exe",
+            "python": "python_executable.exe",
         },
     }
 
@@ -411,9 +411,9 @@ ignoreFiles:
             "cwd": cwd,
             "args": ["arg1"],
             "pythonArgs": ["-u"],
-            "console": "internalConsole",
+            "console": "integratedTerminal",
             "module": "module_name",
-            "pythonPath": "python_executable.exe",
+            "python": "python_executable.exe",
             "env": {"some_key": "some_value"},
         },
     }
