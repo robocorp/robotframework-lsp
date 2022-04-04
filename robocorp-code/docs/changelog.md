@@ -1,4 +1,4 @@
-NEXT
+New in 0.29.0 (2022-04-04)
 -----------------------------
 
 - Automatically set `"python.terminal.activateEnvironment": false`. [#636](https://github.com/robocorp/robotframework-lsp/issues/636)
@@ -7,6 +7,7 @@ NEXT
 - `Set pythonPath based on robot.yaml` was renamed to `Set python executable based on robot.yaml`.
 - When setting the default interpreter to match the python from the robot, only the internal API is used as `python.pythonPath` is now deprecetad.
 - When launching the python debugger, the python executable is properly set in the generated launch configuration with `python` instead of `pythonPath`.
+
 
 New in 0.28.0 (2022-03-14)
 -----------------------------
