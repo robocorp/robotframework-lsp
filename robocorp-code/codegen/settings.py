@@ -86,6 +86,12 @@ SETTINGS = [
         "If a file in a Robot is opened, the python extension interpreter is automatically set to match the Robot interpreter.",
         setting_type="boolean",
     ),
+    Setting(
+        "robocorp.autoSetPythonExtensionDisableActivateTerminal",
+        "true",
+        'Automatically sets the value of "python.terminal.activateEnvironment" to false to avoid wrong auto-activation when Robot terminal is created.',
+        setting_type="boolean",
+    ),
 ]
 
 

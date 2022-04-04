@@ -57,6 +57,20 @@ export async function installPythonInterpreterCheck(context: ExtensionContext) {
     }
 }
 
+export async function disablePythonTerminalActivateEnvironment() {
+    try {
+        let configurationTarget: ConfigurationTarget = ConfigurationTarget.Workspace;
+        let config = workspace.getConfiguration("python");
+        await config.update("terminal.activateEnvironment", false, configurationTarget);
+    } catch (error) {
+        logError(
+            "Error disabling python terminal activate environment.",
+            error,
+            "PYTHON_DISABLE_TERMINAL_ACTIVATE_ENVIRONMENT"
+        );
+    }
+}
+
 export async function setPythonInterpreterForPythonExtension(pythonExe: string, uri: Uri) {
     const extension = extensions.getExtension("ms-python.python");
     if (!extension) {

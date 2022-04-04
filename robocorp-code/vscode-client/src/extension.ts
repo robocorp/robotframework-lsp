@@ -116,7 +116,7 @@ import {
     ROBOCORP_CLEAR_ENV_AND_RESTART,
     ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS,
 } from "./robocorpCommands";
-import { installPythonInterpreterCheck } from "./pythonExtIntegration";
+import { disablePythonTerminalActivateEnvironment, installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
 import { connectVault, disconnectVault } from "./vault";
 import { getLanguageServerPythonInfoUncached } from "./extensionCreateEnv";
@@ -534,6 +534,11 @@ export async function activate(context: ExtensionContext) {
     let timing = new Timing();
     OUTPUT_CHANNEL.appendLine("Activating Robocorp Code extension.");
     C = new CommandRegistry(context);
+
+    if (roboConfig.getAutosetpythonextensiondisableactivateterminal()) {
+        await disablePythonTerminalActivateEnvironment();
+    }
+
     try {
         return await langServerMutex.dispatch(async () => {
             let ret = await doActivate(context, C);
