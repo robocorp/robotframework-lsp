@@ -52,7 +52,7 @@ export async function getPythonExtensionExecutable(
             return [execCommand];
         } else {
             let config = workspace.getConfiguration("python");
-            let executable = <string>await config.get("pythonPath");
+            let executable = <string>await config.get("defaultInterpreterPath");
             if (!executable) {
                 return undefined;
             }

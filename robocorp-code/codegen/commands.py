@@ -187,7 +187,7 @@ COMMANDS = [
     ),
     Command(
         "robocorp.setPythonInterpreter",
-        "Set pythonPath based on robot.yaml",
+        "Set python executable based on robot.yaml",
         add_to_package_json=True,
         server_handled=False,
     ),

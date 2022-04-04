@@ -72,7 +72,6 @@ export async function setPythonInterpreterForPythonExtension(pythonExe: string, 
         // OUTPUT_CHANNEL.appendLine("Is: " + (await extension.exports.environment.getActiveInterpreterPath(uri)));
     } else {
         let config = workspace.getConfiguration("python");
-        await config.update("pythonPath", pythonExe, configurationTarget);
         await config.update("defaultInterpreterPath", pythonExe, configurationTarget);
 
         try {
@@ -137,7 +136,7 @@ export async function getPythonExecutable(
                 return "config";
             }
             let config = workspace.getConfiguration("python");
-            return await config.get("pythonPath");
+            return await config.get("defaultInterpreterPath");
         }
     } catch (error) {
         logError(
