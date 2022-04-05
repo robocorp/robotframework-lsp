@@ -903,8 +903,6 @@ CLASSES_WTH_EXPRESSION_ARGUMENTS = ("IfHeader", "ElseIfHeader", "WhileHeader")
 
 
 def _tokenize_subvars(initial_token: IRobotToken) -> Iterator[Tuple[IRobotToken, str]]:
-    from robot.api import Token
-
     if "{" not in initial_token.value:
         return
 
@@ -957,7 +955,7 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
         "TestTimeout",
         "Variable",
         "ForHeader",
-    ) + _CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_TUPLE:
+    ) + _FIXTURE_CLASS_NAMES:
         for node_info in ast.iter_indexed(clsname):
             stack = node_info.stack
             node = node_info.node

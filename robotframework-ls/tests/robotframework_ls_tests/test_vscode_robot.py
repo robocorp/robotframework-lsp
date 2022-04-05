@@ -1537,7 +1537,7 @@ def test_rf_interactive_integrated_auto_import_completions(
     documentation = typing.cast(
         MonacoMarkdownStringTypedDict, new_completion_item["documentation"]
     )
-    assert "Adds values to the end of list" in documentation["value"]
+    assert "Adds values to the end of" in documentation["value"]
     new_completion_item["documentation"] = "<replaced_for_test>"
     del new_completion_item["data"]
     check_code_lens_data_regression(data_regression, [new_completion_item])

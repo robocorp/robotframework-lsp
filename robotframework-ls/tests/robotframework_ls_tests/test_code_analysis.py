@@ -1408,3 +1408,22 @@ Env var with default value
 """
 
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_no_error_with_vars_in_template(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Sum Test
+    [Template]    Sum ${a} And ${b} Should Be ${expected_sum}
+    1    2    3
+    3    4    7
+
+*** Keywords ***
+Sum ${a} And ${b} Should Be ${expected_sum}
+    ${sum}    Evaluate    ${a} + ${b}
+    Should Be Equal As Integers    ${sum}    ${expected_sum}"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
