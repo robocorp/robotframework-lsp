@@ -318,7 +318,6 @@ def _collect_current_doc_keywords(
 
 def _collect_libraries_keywords(
     completion_context: ICompletionContext,
-    current_doc_uri: str,
     library_infos: Iterator[LibraryDependencyInfo],
     collector: IKeywordCollector,
 ):
@@ -337,7 +336,7 @@ def _collect_libraries_keywords(
             libspec_manager.get_library_doc_or_error(
                 library_info.name,
                 create=True,
-                current_doc_uri=current_doc_uri,
+                completion_context=completion_context,
                 builtin=library_info.builtin,
                 args=library_info.args,
             )
@@ -431,7 +430,6 @@ def _collect_from_context(
     completion_context.check_cancelled()
     _collect_libraries_keywords(
         completion_context,
-        completion_context.doc.uri,
         dependency_graph.iter_libraries(completion_context.doc.uri),
         collector,
     )
@@ -494,7 +492,6 @@ def _collect_from_context(
         _collect_current_doc_keywords(new_ctx, collector)
         _collect_libraries_keywords(
             new_ctx,
-            resource_doc.uri,
             dependency_graph.iter_libraries(resource_doc.uri),
             collector,
         )

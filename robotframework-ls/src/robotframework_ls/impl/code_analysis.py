@@ -11,6 +11,7 @@ from robotframework_ls.impl.protocols import (
     ILibraryDoc,
     INode,
     IVariableFound,
+    AbstractVariablesCollector,
 )
 from robocorp_ls_core.lsp import DiagnosticSeverity, DiagnosticTag
 from robotframework_ls.impl.robot_lsp_constants import (
@@ -54,7 +55,7 @@ class _KeywordContainer(object):
         return None
 
 
-class _VariablesCollector(object):
+class _VariablesCollector(AbstractVariablesCollector):
     def __init__(self, on_unresolved_variable_import):
         self._variables_collected = set()
         self.on_unresolved_variable_import = on_unresolved_variable_import

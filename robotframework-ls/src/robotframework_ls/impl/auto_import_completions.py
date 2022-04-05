@@ -276,6 +276,7 @@ class _ImportLocationInfo:
 def _obtain_import_location_info(completion_context) -> _ImportLocationInfo:
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.libspec_manager import LibspecManager
+    from robot.api import Token
 
     import_location_info = _ImportLocationInfo()
 
@@ -294,12 +295,14 @@ def _obtain_import_location_info(completion_context) -> _ImportLocationInfo:
         if ast_utils.is_library_node_info(node_info):
             import_location_info.library_node_info = node_info
 
-            library_name = node_info.node.name
-            if library_name:
+            library_name_token = node_info.node.get_token(Token.NAME)
+            if library_name_token is not None:
                 library_doc_or_error = libspec_manager.get_library_doc_or_error(
-                    completion_context.token_value_resolving_variables(library_name),
+                    completion_context.token_value_resolving_variables(
+                        library_name_token
+                    ),
                     create=True,
-                    current_doc_uri=completion_context.doc.uri,
+                    completion_context=completion_context,
                     args=ast_utils.get_library_arguments_serialized(node_info.node),
                 )
                 library_doc = library_doc_or_error.library_doc

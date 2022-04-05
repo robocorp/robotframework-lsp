@@ -8,7 +8,6 @@ from typing import (
     Set,
     Callable,
     Dict,
-    Union,
     Iterator,
     Sequence,
 )
@@ -40,15 +39,14 @@ from robotframework_ls.impl.protocols import (
     IVariableImportNode,
     VarTokenInfo,
     IVariablesFromArgumentsFileLoader,
+    IVariableFound,
+    NodeInfo,
 )
 from robotframework_ls.impl.robot_workspace import RobotDocument
 from robocorp_ls_core import uris
 import itertools
 from functools import partial
 import typing
-from robotframework_ls.impl.variables_from_arguments_file import (
-    VariablesFromArgumentsFileLoader,
-)
 
 
 log = get_logger(__name__)
@@ -336,11 +334,100 @@ class CompletionContext(object):
             return None
         return ast_utils.find_token(section, self.sel.line, self.sel.col)
 
-    def get_all_variables(self):
+    def get_all_variables(self) -> Tuple[NodeInfo, ...]:
         from robotframework_ls.impl import ast_utils
 
         ast = self.get_ast()
         return tuple(ast_utils.iter_variables(ast))
+
+    @instance_cache
+    def get_doc_normalized_var_name_to_var_found(self) -> Dict[str, IVariableFound]:
+        from robotframework_ls.impl import ast_utils
+        from robotframework_ls.impl.variable_resolve import robot_search_variable
+        from robot.api import Token
+        from robotframework_ls.impl.variable_types import VariableFoundFromToken
+        from robotframework_ls.impl.text_utilities import normalize_robot_name
+
+        ret: Dict[str, IVariableFound] = {}
+        for variable_node_info in self.get_all_variables():
+            variable_node = variable_node_info.node
+            token = variable_node.get_token(Token.VARIABLE)
+            if token is None:
+                continue
+
+            variable_match = robot_search_variable(token.value)
+            # Filter out empty base
+            if variable_match is None or not variable_match.base:
+                continue
+
+            base_token = ast_utils.convert_variable_match_base_to_token(
+                token, variable_match
+            )
+            ret[normalize_robot_name(variable_match.base)] = VariableFoundFromToken(
+                self,
+                base_token,
+                variable_node.value,
+                variable_name=variable_match.base,
+            )
+
+        return ret
+
+    @instance_cache
+    def get_settings_normalized_var_name_to_var_found(
+        self,
+    ) -> Dict[str, IVariableFound]:
+        from robotframework_ls.impl.text_utilities import normalize_robot_name
+        from robotframework_ls.impl.variable_types import VariableFoundFromSettings
+
+        ret: Dict[str, IVariableFound] = {}
+
+        from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_VARIABLES
+
+        config = self.config
+        if config is not None:
+            robot_variables = config.get_setting(OPTION_ROBOT_VARIABLES, dict, {})
+            for key, val in robot_variables.items():
+                ret[normalize_robot_name(key)] = VariableFoundFromSettings(key, val)
+
+        return ret
+
+    @instance_cache
+    def get_builtins_normalized_var_name_to_var_found(
+        self, resolved
+    ) -> Dict[str, IVariableFound]:
+        from robotframework_ls.impl.text_utilities import normalize_robot_name
+        from robotframework_ls.impl.variable_types import VariableFoundFromBuiltins
+        from robotframework_ls.impl.robot_constants import BUILTIN_VARIABLES_RESOLVED
+
+        ret: Dict[str, IVariableFound] = {}
+
+        from robotframework_ls.impl.robot_constants import get_builtin_variables
+
+        for key, val in get_builtin_variables():
+            ret[normalize_robot_name(key)] = VariableFoundFromBuiltins(key, val)
+
+        if resolved:
+            for key, val in BUILTIN_VARIABLES_RESOLVED.items():
+                # Provide a resolved value for the ones we can resolve.
+                ret[normalize_robot_name(key)] = VariableFoundFromBuiltins(key, val)
+
+        return ret
+
+    def get_arguments_files_normalized_var_name_to_var_found(
+        self,
+    ) -> Dict[str, IVariableFound]:
+        from robotframework_ls.impl.text_utilities import normalize_robot_name
+
+        ret: Dict[str, IVariableFound] = {}
+
+        if not self.variables_from_arguments_files_loader:
+            return ret
+
+        for c in self.variables_from_arguments_files_loader:
+            for variable in c.get_variables():
+                ret[normalize_robot_name(variable.variable_name)] = variable
+
+        return ret
 
     @instance_cache
     def get_current_variable(self, section=None) -> Optional[VarTokenInfo]:
@@ -389,12 +476,10 @@ class CompletionContext(object):
                 ret.append(resource.node)
         return tuple(ret)
 
-    def token_value_resolving_variables(self, token: Union[str, IRobotToken]) -> str:
+    def token_value_resolving_variables(self, token: IRobotToken) -> str:
         from robotframework_ls.impl.variable_resolve import ResolveVariablesContext
 
-        return ResolveVariablesContext(
-            self.config, self._doc.path
-        ).token_value_resolving_variables(token)
+        return ResolveVariablesContext(self).token_value_resolving_variables(token)
 
     def token_value_and_unresolved_resolving_variables(
         self, token: IRobotToken
@@ -402,7 +487,7 @@ class CompletionContext(object):
         from robotframework_ls.impl.variable_resolve import ResolveVariablesContext
 
         return ResolveVariablesContext(
-            self.config, self._doc.path
+            self
         ).token_value_and_unresolved_resolving_variables(token)
 
     @instance_cache

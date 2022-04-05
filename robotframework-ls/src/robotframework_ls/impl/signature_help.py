@@ -33,7 +33,7 @@ def _library_signature_help(
     library_doc = libspec_manager.get_library_doc_or_error(
         name,
         create=True,
-        current_doc_uri=completion_context.doc.uri,
+        completion_context=completion_context,
         builtin=False,
         args=args,
     ).library_doc

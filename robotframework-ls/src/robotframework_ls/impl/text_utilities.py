@@ -33,7 +33,7 @@ class TextUtilities(object):
 # Note: this not only makes it faster, but also makes us use less memory as a
 # way to reuse the same 'interned" strings.
 @lru_cache(maxsize=2000)
-def normalize_robot_name(text):
+def normalize_robot_name(text: str) -> str:
     return text.lower().replace("_", "").replace(" ", "")
 
 

@@ -12,6 +12,7 @@ from typing import (
     Callable,
     Union,
     Hashable,
+    Dict,
 )
 from robocorp_ls_core.protocols import (
     Sentinel,
@@ -159,7 +160,7 @@ class INode(Protocol):
     end_col_offset: int
     tokens: List[IRobotToken]
 
-    def get_token(self, name: str) -> IRobotToken:
+    def get_token(self, name: str) -> Optional[IRobotToken]:
         pass
 
     def get_tokens(self, name: str) -> List[IRobotToken]:
@@ -898,6 +899,24 @@ class ICompletionContext(Protocol):
     def get_all_variables(self) -> Tuple[NodeInfo, ...]:
         pass
 
+    def get_doc_normalized_var_name_to_var_found(self) -> Dict[str, "IVariableFound"]:
+        pass
+
+    def get_settings_normalized_var_name_to_var_found(
+        self,
+    ) -> Dict[str, "IVariableFound"]:
+        pass
+
+    def get_builtins_normalized_var_name_to_var_found(
+        self, resolved
+    ) -> Dict[str, "IVariableFound"]:
+        pass
+
+    def get_arguments_files_normalized_var_name_to_var_found(
+        self,
+    ) -> Dict[str, "IVariableFound"]:
+        pass
+
     def get_current_variable(self, section=None) -> Optional[VarTokenInfo]:
         """
         Provides the current variable token. Note that it won't include '{' nor '}'.
@@ -936,7 +955,7 @@ class ICompletionContext(Protocol):
     def get_imported_libraries(self) -> Tuple[ILibraryImportNode, ...]:
         pass
 
-    def token_value_resolving_variables(self, token: Union[str, IRobotToken]) -> str:
+    def token_value_resolving_variables(self, token: IRobotToken) -> str:
         pass
 
     def token_value_and_unresolved_resolving_variables(

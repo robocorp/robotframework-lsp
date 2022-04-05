@@ -571,18 +571,21 @@ def test_typing_not_shown(libspec_manager, workspace, data_regression, workspace
     with open(os.path.join(workspace_dir_a, "my.libspec"), "w") as stream:
         stream.write(LIBSPEC_3)
     libspec_manager.add_workspace_folder(uris.from_fs_path(workspace_dir_a))
+    workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
+
+    doc = workspace.ws.put_document(TextDocumentItem("temp_doc.robot", text=""))
     assert (
         libspec_manager.get_library_doc_or_error(
             "case3_library",
             False,
-            uris.from_fs_path(os.path.join(workspace_dir_a, "my.robot")),
+            CompletionContext(
+                doc,
+                workspace=workspace.ws,
+            ),
         ).library_doc
         is not None
     )
 
-    workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
-
-    doc = workspace.ws.put_document(TextDocumentItem("temp_doc.robot", text=""))
     doc.source = """*** Settings ***
 Library    case3_library
 
@@ -668,7 +671,7 @@ def test_keyword_completions_lib_with_params_slash(workspace, libspec_manager, c
     doc = workspace.get_doc("case_params_on_lib2.robot")
 
     completions = keyword_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws)
+        CompletionContext(doc, workspace=workspace.ws, config=config)
     )
     if sys.platform == "win32":
         expected = r"My:\foo\bar\echo (LibWithParams2)"

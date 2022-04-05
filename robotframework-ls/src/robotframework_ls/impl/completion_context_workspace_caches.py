@@ -86,7 +86,7 @@ class CompletionContextWorkspaceCaches:
         self._lock = threading.Lock()
         # Small cache because invalidation could become slow in a big cache
         # (and it should be enough to hold what we're currently working with).
-        self._cached: _LRU[ICompletionContextDependencyGraph] = _LRU(4)
+        self._cached: _LRU[ICompletionContextDependencyGraph] = _LRU(5)
         self.cache_hits = 0
         self.invalidations = 0
 

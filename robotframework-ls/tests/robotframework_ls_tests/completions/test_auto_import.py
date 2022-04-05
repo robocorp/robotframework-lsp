@@ -117,16 +117,15 @@ User can call library
     Verify another m""",
     )
 
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
     # Needed to pre-generate the information
     workspace.ws.libspec_manager.get_library_doc_or_error(
         libname="case1_library",
         create=True,
-        current_doc_uri=workspace.get_doc("case1.robot").uri,
+        completion_context=completion_context,
     )
 
-    completions = auto_import_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws), {}
-    )
+    completions = auto_import_completions.complete(completion_context, {})
 
     assert len(completions) == 0
 
@@ -187,18 +186,16 @@ def test_completion_with_auto_import_case1_library_imported_1(
     from robotframework_ls.impl.completion_context import CompletionContext
 
     doc = setup_case2_doc
-
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
     # Needed to pre-generate the information
     workspace.ws.libspec_manager.get_library_doc_or_error(
         libname="case1_library",
         create=True,
-        current_doc_uri=workspace.get_doc("case1.robot").uri,
+        completion_context=completion_context,
     )
 
     # Get completions from the user library adding the *** Settings ***
-    completions = auto_import_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws), {}
-    )
+    completions = auto_import_completions.complete(completion_context, {})
 
     assert len(completions) == 1
     apply_completion(doc, completions[0])
@@ -221,22 +218,23 @@ def test_completion_with_auto_import_case1_library_imported_2(
     from robotframework_ls.impl.completion_context import CompletionContext
 
     doc = setup_case2_doc
-    # Needed to pre-generate the information
-    workspace.ws.libspec_manager.get_library_doc_or_error(
-        libname="case1_library",
-        create=True,
-        current_doc_uri=workspace.get_doc("case1.robot").uri,
-    )
-
     # Get completions from the user library adding the existing *** Settings ***
     doc.source = """*** Settings ***
 
 *** Test Cases ***
 User can call library
     Verify another m"""
-    completions = auto_import_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws), {}
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+
+    # Needed to pre-generate the information
+    libdoc_or_error = workspace.ws.libspec_manager.get_library_doc_or_error(
+        libname="case1_library",
+        create=True,
+        completion_context=CompletionContext(workspace.get_doc("case1.robot")),
     )
+    assert not libdoc_or_error.error
+
+    completions = auto_import_completions.complete(completion_context, {})
 
     assert len(completions) == 1
     apply_completion(doc, completions[0])
@@ -267,16 +265,17 @@ def test_completion_with_auto_import_case1_library_imported_3(
 User can call library
     Verify another m"""
 
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+
     # Needed to pre-generate the information
-    workspace.ws.libspec_manager.get_library_doc_or_error(
+    libdoc_or_error = workspace.ws.libspec_manager.get_library_doc_or_error(
         libname="case1_library",
         create=True,
-        current_doc_uri=workspace.get_doc("case1.robot").uri,
+        completion_context=CompletionContext(workspace.get_doc("case1.robot")),
     )
+    assert not libdoc_or_error.error
 
-    completions = auto_import_completions.complete(
-        CompletionContext(doc, workspace=workspace.ws), {}
-    )
+    completions = auto_import_completions.complete(completion_context, {})
 
     assert len(completions) == 1
     apply_completion(doc, completions[0])

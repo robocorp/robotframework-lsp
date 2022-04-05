@@ -7,11 +7,15 @@ from robocorp_ls_core import uris
 def test_libspec_info(libspec_manager, tmpdir):
     from robotframework_ls.impl.robot_specbuilder import LibraryDoc
     from robotframework_ls.impl.robot_specbuilder import KeywordDoc
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.robot_workspace import RobotDocument
 
     assert "BuiltIn" in libspec_manager.get_library_names()
     uri = uris.from_fs_path(str(tmpdir.join("case.robot")))
     lib_info = libspec_manager.get_library_doc_or_error(
-        "BuiltIn", create=False, current_doc_uri=uri
+        "BuiltIn",
+        create=False,
+        completion_context=CompletionContext(RobotDocument(uri, "")),
     ).library_doc
     assert isinstance(lib_info, LibraryDoc)
     assert lib_info.source is not None
@@ -49,6 +53,8 @@ def test_libspec(libspec_manager, workspace_dir, data_regression):
     from robotframework_ls.impl.robot_specbuilder import LibraryDoc
     from robotframework_ls.impl.robot_specbuilder import KeywordDoc
     from typing import List
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.robot_workspace import RobotDocument
 
     os.makedirs(workspace_dir)
     libspec_manager.add_additional_pythonpath_folder(workspace_dir)
@@ -79,7 +85,7 @@ def method6():
 
     uri = uris.from_fs_path(os.path.join(workspace_dir, "case.robot"))
     library_info: Optional[LibraryDoc] = libspec_manager.get_library_doc_or_error(
-        "check_lib", True, uri
+        "check_lib", True, CompletionContext(RobotDocument(uri, ""))
     ).library_doc
     assert library_info is not None
     keywords: List[KeywordDoc] = library_info.keywords
@@ -93,6 +99,8 @@ def test_libspec_rest(libspec_manager, workspace_dir, data_regression):
     from robotframework_ls.impl.robot_specbuilder import LibraryDoc
     from robotframework_ls.impl.robot_specbuilder import KeywordDoc
     from typing import List
+    from robotframework_ls.impl.robot_workspace import RobotDocument
+    from robotframework_ls.impl.completion_context import CompletionContext
 
     os.makedirs(workspace_dir)
     libspec_manager.add_additional_pythonpath_folder(workspace_dir)
@@ -118,7 +126,7 @@ class CheckLib:
 
     uri = uris.from_fs_path(os.path.join(workspace_dir, "case.robot"))
     library_info: Optional[LibraryDoc] = libspec_manager.get_library_doc_or_error(
-        "CheckLib", True, uri
+        "CheckLib", True, CompletionContext(RobotDocument(uri, ""))
     ).library_doc
 
     assert library_info is not None
@@ -132,6 +140,8 @@ def test_libspec_cache_no_lib(libspec_manager, workspace_dir):
     import time
     from robocorp_ls_core.basic import wait_for_condition
     import sys
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.robot_workspace import RobotDocument
 
     os.makedirs(workspace_dir)
     libspec_manager.add_additional_pythonpath_folder(workspace_dir)
@@ -141,7 +151,7 @@ def test_libspec_cache_no_lib(libspec_manager, workspace_dir):
 
     uri = uris.from_fs_path(os.path.join(workspace_dir, "case.robot"))
     library_info: Optional[LibraryDoc] = libspec_manager.get_library_doc_or_error(
-        "check_lib", True, uri
+        "check_lib", True, CompletionContext(RobotDocument(uri, ""))
     ).library_doc
     assert library_info is None
 
@@ -149,7 +159,7 @@ def test_libspec_cache_no_lib(libspec_manager, workspace_dir):
     original_cached_create_libspec = libspec_manager._cached_create_libspec
     libspec_manager._cached_create_libspec = disallow_cached_create_libspec
     library_info: Optional[LibraryDoc] = libspec_manager.get_library_doc_or_error(
-        "check_lib", True, uri
+        "check_lib", True, CompletionContext(RobotDocument(uri, ""))
     ).library_doc
     assert library_info is None
     libspec_manager._cached_create_libspec = original_cached_create_libspec
@@ -170,7 +180,7 @@ def method2(a:int):
     # Check that the cache invalidation is in place!
     wait_for_condition(
         lambda: libspec_manager.get_library_doc_or_error(
-            "check_lib", True, uri
+            "check_lib", True, CompletionContext(RobotDocument(uri, ""))
         ).library_doc
         is not None,
         msg="Did not recreate library in the available timeout.",
@@ -180,6 +190,8 @@ def method2(a:int):
 
 def test_libspec_no_rest(libspec_manager, workspace_dir):
     from robotframework_ls.impl.robot_specbuilder import LibraryDoc
+    from robotframework_ls.impl.robot_workspace import RobotDocument
+    from robotframework_ls.impl.completion_context import CompletionContext
 
     os.makedirs(workspace_dir)
     libspec_manager.add_additional_pythonpath_folder(workspace_dir)
@@ -233,7 +245,7 @@ def my_keyword():
 
     uri = uris.from_fs_path(os.path.join(workspace_dir, "case.robot"))
     library_info: Optional[LibraryDoc] = libspec_manager.get_library_doc_or_error(
-        "check_lib", True, uri
+        "check_lib", True, CompletionContext(RobotDocument(uri, ""))
     ).library_doc
     assert library_info is not None
 
@@ -245,6 +257,8 @@ def test_libspec_manager_caches(libspec_manager, workspace_dir):
     from robotframework_ls_tests.fixtures import LIBSPEC_2_A
     import time
     from robocorp_ls_core.unittest_tools.fixtures import wait_for_test_condition
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.robot_workspace import RobotDocument
 
     workspace_dir_a = os.path.join(workspace_dir, "workspace_dir_a")
     os.makedirs(workspace_dir_a)
@@ -254,14 +268,16 @@ def test_libspec_manager_caches(libspec_manager, workspace_dir):
     uri = uris.from_fs_path(os.path.join(workspace_dir, "case.robot"))
     assert (
         libspec_manager.get_library_doc_or_error(
-            "case1_library", create=False, current_doc_uri=uri
+            "case1_library",
+            create=False,
+            completion_context=CompletionContext(RobotDocument(uri, "")),
         ).library_doc
         is not None
     )
 
     libspec_manager.remove_workspace_folder(uris.from_fs_path(workspace_dir_a))
     library_info = libspec_manager.get_library_doc_or_error(
-        "case1_library", False, uri
+        "case1_library", False, CompletionContext(RobotDocument(uri, ""))
     ).library_doc
     if library_info is not None:
         raise AssertionError(
@@ -272,7 +288,7 @@ def test_libspec_manager_caches(libspec_manager, workspace_dir):
     libspec_manager.add_workspace_folder(uris.from_fs_path(workspace_dir_a))
     assert (
         libspec_manager.get_library_doc_or_error(
-            "case1_library", False, uri
+            "case1_library", False, CompletionContext(RobotDocument(uri, ""))
         ).library_doc
         is not None
     )
@@ -285,7 +301,7 @@ def test_libspec_manager_caches(libspec_manager, workspace_dir):
 
     def check_spec_found():
         library_info = libspec_manager.get_library_doc_or_error(
-            "case2_library", False, uri
+            "case2_library", False, CompletionContext(RobotDocument(uri, ""))
         ).library_doc
         return library_info is not None
 
@@ -293,7 +309,7 @@ def test_libspec_manager_caches(libspec_manager, workspace_dir):
     wait_for_test_condition(check_spec_found, sleep=1 / 5.0)
 
     library_info = libspec_manager.get_library_doc_or_error(
-        "case2_library", False, uri
+        "case2_library", False, CompletionContext(RobotDocument(uri, ""))
     ).library_doc
     assert set(x.name for x in library_info.keywords) == set(
         ["Case 2 Verify Another Model", "Case 2 Verify Model"]
@@ -307,7 +323,7 @@ def test_libspec_manager_caches(libspec_manager, workspace_dir):
 
     def check_spec_2_a():
         library_info = libspec_manager.get_library_doc_or_error(
-            "case2_library", False, uri
+            "case2_library", False, CompletionContext(RobotDocument(uri, ""))
         ).library_doc
         if library_info:
             return set(x.name for x in library_info.keywords) == set(
@@ -326,7 +342,9 @@ def test_libspec_manager_basic(workspace, libspec_manager):
     doc = workspace.get_doc("case1.robot")
 
     def get_library_doc_or_error(*args, **kwargs):
-        kwargs["current_doc_uri"] = doc.uri
+        from robotframework_ls.impl.completion_context import CompletionContext
+
+        kwargs["completion_context"] = CompletionContext(doc)
         if "create" not in kwargs:
             kwargs["create"] = True
         return libspec_manager.get_library_doc_or_error(*args, **kwargs)

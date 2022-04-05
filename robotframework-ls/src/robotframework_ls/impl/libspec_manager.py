@@ -5,7 +5,11 @@ from robocorp_ls_core.robotframework_log import get_logger
 import threading
 from typing import Optional, Dict, Set, Iterator, Union, Any
 from robocorp_ls_core.protocols import Sentinel, IEndPoint
-from robotframework_ls.impl.protocols import ILibraryDoc, ILibraryDocOrError
+from robotframework_ls.impl.protocols import (
+    ILibraryDoc,
+    ILibraryDocOrError,
+    ICompletionContext,
+)
 import itertools
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 from robotframework_ls.impl.robot_lsp_constants import (
@@ -1126,7 +1130,7 @@ class LibspecManager(object):
         self,
         libname: str,
         create: bool,
-        current_doc_uri: str,
+        completion_context: ICompletionContext,
         builtin: bool = False,
         args: Optional[str] = None,
     ) -> ILibraryDocOrError:
@@ -1136,12 +1140,12 @@ class LibspecManager(object):
             absolute path to a .py file.
         """
         from robotframework_ls.impl import robot_constants
-
-        assert current_doc_uri is not None
+        from robotframework_ls.impl import ast_utils
 
         libname_lower = libname.lower()
         target_file: str = ""
         normalized_target_file: str = ""
+        pre_error_msg: str = ""
 
         config = self.config
         libraries_libdoc_needs_args_lower: Set[str]
@@ -1171,15 +1175,24 @@ class LibspecManager(object):
                     ResolveVariablesContext,
                 )
 
-                args = ResolveVariablesContext(
-                    self.config, current_doc_uri
-                ).token_value_resolving_variables(args)
+                assert completion_context.config is config
+
+                args, unresolved = ResolveVariablesContext(
+                    completion_context
+                ).token_value_and_unresolved_resolving_variables(
+                    ast_utils.create_token(args)
+                )
+
+                pre_error_msg = (
+                    "It was not possible to statically resolve the following variables:\n%s\nFollow-up error:\n"
+                    % (", ".join(str(x) for x in unresolved),)
+                )
 
             args = args.replace("\\\\", "\\")
 
         if not builtin:
             found_target_filename = self._get_library_target_filename(
-                libname, current_doc_uri
+                libname, completion_context.doc.uri
             )
             if found_target_filename:
                 target_file = found_target_filename
@@ -1252,7 +1265,7 @@ class LibspecManager(object):
                         return self.get_library_doc_or_error(
                             libname,
                             create=False,
-                            current_doc_uri=current_doc_uri,
+                            completion_context=completion_context,
                             builtin=builtin,
                             args=args,
                         )
@@ -1270,22 +1283,22 @@ class LibspecManager(object):
                 return self.get_library_doc_or_error(
                     libname,
                     create=False,
-                    current_doc_uri=current_doc_uri,
+                    completion_context=completion_context,
                     builtin=builtin,
                     args=args,
                 )
-            return _LibraryDocOrError(None, error_msg)
+            return _LibraryDocOrError(None, pre_error_msg + error_msg)
 
         error_msg = self._get_cached_error(
             libname, is_builtin=builtin, target_file=target_file, args=args
         )
         if error_msg:
             log.debug("Unable to get library named: %s. Reason: %s", libname, error_msg)
-            return _LibraryDocOrError(None, error_msg)
+            return _LibraryDocOrError(None, pre_error_msg + error_msg)
 
         msg = f"Unable to find library named: {libname}"
         log.debug(msg)
-        return _LibraryDocOrError(None, msg)
+        return _LibraryDocOrError(None, pre_error_msg + msg)
 
 
 class _LibraryDocOrError:

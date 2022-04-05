@@ -19,8 +19,6 @@ from robotframework_ls.impl.variable_types import (
     VariableFoundFromToken,
     VariableFoundFromPythonAst,
     VariableFoundFromYaml,
-    VariableFoundFromSettings,
-    VariableFoundFromBuiltins,
 )
 
 
@@ -93,36 +91,19 @@ class _Collector(AbstractVariablesCollector):
         _: IVariablesCollector = check_implements(self)
 
 
-def _collect_completions_from_ast(
+def _collect_variables_from_ast(
     ast, completion_context: ICompletionContext, collector: IVariablesCollector
 ):
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.variable_resolve import robot_search_variable
-
-    completion_context.check_cancelled()
     from robot.api import Token
 
-    for variable_node_info in completion_context.get_all_variables():
-        variable_node = variable_node_info.node
-        token = variable_node.get_token(Token.VARIABLE)
-        if token is None:
-            continue
+    completion_context.check_cancelled()
 
-        variable_match = robot_search_variable(token.value)
-        # Filter out empty base
-        if variable_match is None or not variable_match.base:
-            continue
-
-        if collector.accepts(variable_match.base):
-            base_token = ast_utils.convert_variable_match_base_to_token(
-                token, variable_match
-            )
-            variable_found = VariableFoundFromToken(
-                completion_context,
-                base_token,
-                variable_node.value,
-                variable_name=variable_match.base,
-            )
+    for (
+        variable_found
+    ) in completion_context.get_doc_normalized_var_name_to_var_found().values():
+        if collector.accepts(variable_found.variable_name):
             collector.on_variable(variable_found)
 
     accept_sets_in = {
@@ -178,7 +159,7 @@ def _collect_current_doc_variables(
     # Get keywords defined in the file itself
 
     ast = completion_context.get_ast()
-    _collect_completions_from_ast(ast, completion_context, collector)
+    _collect_variables_from_ast(ast, completion_context, collector)
 
 
 def _collect_resource_imports_variables(
@@ -189,7 +170,7 @@ def _collect_resource_imports_variables(
         if resource_doc is None:
             continue
         new_ctx = completion_context.create_copy(resource_doc)
-        _collect_variables_from_document_context(new_ctx, collector)
+        _collect_global_variables_from_document_context(new_ctx, collector)
 
 
 def _gen_var_from_python_ast(variable_import_doc, collector, node, target):
@@ -293,7 +274,72 @@ def _collect_variables_from_variable_import_doc(
         log.exception()
 
 
-def _collect_variables_from_document_context(
+def collect_global_variables_from_document_dependencies(
+    completion_context: ICompletionContext,
+    collector: IVariablesCollector,
+):
+    dependency_graph = completion_context.collect_dependency_graph()
+
+    for resource_doc in completion_context.iter_dependency_and_init_resource_docs(
+        dependency_graph
+    ):
+        new_ctx = completion_context.create_copy(resource_doc)
+        _collect_current_doc_variables(new_ctx, collector)
+
+    for node, variable_doc in dependency_graph.iter_all_variable_imports_as_docs():
+        if variable_doc is None:
+            # Note that 'None' documents will only be given for the
+            # initial context (so, it's ok to use `completion_context`
+            # in this case).
+            from robot.api import Token
+
+            node_name_tok = node.get_token(Token.NAME)
+            if node_name_tok is not None:
+
+                (
+                    _value,
+                    token_errors,
+                ) = completion_context.token_value_and_unresolved_resolving_variables(
+                    node_name_tok
+                )
+
+                if token_errors:
+                    for token_error in token_errors:
+                        collector.on_unresolved_variable_import(
+                            completion_context,
+                            node.name,
+                            token_error.lineno,
+                            token_error.lineno,
+                            token_error.col_offset,
+                            token_error.end_col_offset,
+                            f"\nUnable to statically resolve variable: {token_error.value}.\nPlease set the `{token_error.value[2:-1]}` value in `robot.variables`.",
+                        )
+
+                else:
+                    collector.on_unresolved_variable_import(
+                        completion_context,
+                        node.name,
+                        node_name_tok.lineno,
+                        node_name_tok.lineno,
+                        node_name_tok.col_offset,
+                        node_name_tok.end_col_offset,
+                        None,
+                    )
+            else:
+                collector.on_unresolved_variable_import(
+                    completion_context,
+                    node.name,
+                    node.lineno,
+                    node.end_lineno,
+                    node.col_offset,
+                    node.end_col_offset,
+                    None,
+                )
+            continue
+        _collect_variables_from_variable_import_doc(variable_doc, collector)
+
+
+def _collect_global_variables_from_document_context(
     completion_context: ICompletionContext,
     collector: IVariablesCollector,
     only_current_doc=False,
@@ -302,65 +348,9 @@ def _collect_variables_from_document_context(
     _collect_current_doc_variables(completion_context, collector)
 
     if not only_current_doc:
-        dependency_graph = completion_context.collect_dependency_graph()
-
-        for resource_doc in completion_context.iter_dependency_and_init_resource_docs(
-            dependency_graph
-        ):
-            new_ctx = completion_context.create_copy(resource_doc)
-            _collect_current_doc_variables(new_ctx, collector)
-
-        for node, variable_doc in dependency_graph.iter_all_variable_imports_as_docs():
-            if variable_doc is None:
-                # Note that 'None' documents will only be given for the
-                # initial context (so, it's ok to use `completion_context`
-                # in this case).
-                from robot.api import Token
-
-                node_name_tok = node.get_token(Token.NAME)
-                if node_name_tok is not None:
-
-                    (
-                        _value,
-                        token_errors,
-                    ) = completion_context.token_value_and_unresolved_resolving_variables(
-                        node_name_tok
-                    )
-
-                    if token_errors:
-                        for token_error in token_errors:
-                            collector.on_unresolved_variable_import(
-                                completion_context,
-                                node.name,
-                                token_error.lineno,
-                                token_error.lineno,
-                                token_error.col_offset,
-                                token_error.end_col_offset,
-                                f"\nUnable to statically resolve variable: {token_error.value}.\nPlease set the `{token_error.value[2:-1]}` value in `robot.variables`.",
-                            )
-
-                    else:
-                        collector.on_unresolved_variable_import(
-                            completion_context,
-                            node.name,
-                            node_name_tok.lineno,
-                            node_name_tok.lineno,
-                            node_name_tok.col_offset,
-                            node_name_tok.end_col_offset,
-                            None,
-                        )
-                else:
-                    collector.on_unresolved_variable_import(
-                        completion_context,
-                        node.name,
-                        node.lineno,
-                        node.end_lineno,
-                        node.col_offset,
-                        node.end_col_offset,
-                        None,
-                    )
-                continue
-            _collect_variables_from_variable_import_doc(variable_doc, collector)
+        collect_global_variables_from_document_dependencies(
+            completion_context, collector
+        )
 
 
 def _collect_arguments(
@@ -385,29 +375,6 @@ def _collect_arguments(
             collector.on_variable(variable_found)
 
 
-def _collect_from_settings(
-    completion_context: ICompletionContext, collector: IVariablesCollector
-):
-    from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_VARIABLES
-
-    config = completion_context.config
-    if config is not None:
-        robot_variables = config.get_setting(OPTION_ROBOT_VARIABLES, dict, {})
-        for key, val in robot_variables.items():
-            if collector.accepts(key):
-                collector.on_variable(VariableFoundFromSettings(key, val))
-
-
-def _collect_from_builtins(
-    completion_context: ICompletionContext, collector: IVariablesCollector
-):
-    from robotframework_ls.impl.robot_constants import get_builtin_variables
-
-    for key, val in get_builtin_variables():
-        if collector.accepts(key):
-            collector.on_variable(VariableFoundFromBuiltins(key, val))
-
-
 def collect_variables(
     completion_context: ICompletionContext,
     collector: IVariablesCollector,
@@ -420,16 +387,26 @@ def collect_variables(
     collect_global_variables(completion_context, collector, only_current_doc)
 
 
-def _collect_from_arguments_files(
-    completion_context: ICompletionContext, collector: IVariablesCollector
-):
-    if not completion_context.variables_from_arguments_files_loader:
-        return
+def _collect_global_static_variables(completion_context, collector):
+    for (
+        var_found
+    ) in completion_context.get_settings_normalized_var_name_to_var_found().values():
+        if collector.accepts(var_found.variable_name):
+            collector.on_variable(var_found)
 
-    for c in completion_context.variables_from_arguments_files_loader:
-        for variable in c.get_variables():
-            if collector.accepts(variable.variable_name):
-                collector.on_variable(variable)
+    for var_found in completion_context.get_builtins_normalized_var_name_to_var_found(
+        False
+    ).values():
+        if collector.accepts(var_found.variable_name):
+            collector.on_variable(var_found)
+
+    for (
+        var_found
+    ) in (
+        completion_context.get_arguments_files_normalized_var_name_to_var_found().values()
+    ):
+        if collector.accepts(var_found.variable_name):
+            collector.on_variable(var_found)
 
 
 def collect_global_variables(
@@ -437,14 +414,12 @@ def collect_global_variables(
     collector: IVariablesCollector,
     only_current_doc=False,
 ):
-    _collect_variables_from_document_context(
+    _collect_global_variables_from_document_context(
         completion_context, collector, only_current_doc=only_current_doc
     )
 
     if not only_current_doc:
-        _collect_from_settings(completion_context, collector)
-        _collect_from_builtins(completion_context, collector)
-        _collect_from_arguments_files(completion_context, collector)
+        _collect_global_static_variables(completion_context, collector)
 
 
 def collect_local_variables(

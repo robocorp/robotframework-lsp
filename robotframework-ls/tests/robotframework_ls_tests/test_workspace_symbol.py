@@ -47,18 +47,21 @@ def test_workspace_symbols_same_basename(workspace, libspec_manager):
     from robotframework_ls.impl.completion_context import BaseContext
     from robocorp_ls_core.constants import NULL
     from robocorp_ls_core.config import Config
+    from robotframework_ls.impl.completion_context import CompletionContext
 
     workspace.set_root("case_same_basename", libspec_manager=libspec_manager)
     # Needed to pre-generate the information
     libspec_manager.get_library_doc_or_error(
         libname="my_library",
         create=True,
-        current_doc_uri=workspace.get_doc("tasks1.robot").uri,
+        completion_context=CompletionContext(workspace.get_doc("tasks1.robot")),
     )
     libspec_manager.get_library_doc_or_error(
         libname="my_library",
         create=True,
-        current_doc_uri=workspace.get_doc("directory/tasks2.robot").uri,
+        completion_context=CompletionContext(
+            workspace.get_doc("directory/tasks2.robot")
+        ),
     )
 
     config = Config()

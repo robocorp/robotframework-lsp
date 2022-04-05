@@ -575,7 +575,7 @@ def tokenize_variables_from_name(name):
     return tokenize_variables(create_token(name))  # May throw error if it's not OK.
 
 
-def tokenize_variables(token: IRobotToken):
+def tokenize_variables(token: IRobotToken) -> Iterator[IRobotToken]:
     return token.tokenize_variables()  # May throw error if it's not OK.
 
 

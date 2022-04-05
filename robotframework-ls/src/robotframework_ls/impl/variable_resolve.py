@@ -1,9 +1,16 @@
 import os
 from functools import lru_cache
 from typing import Optional, Union, Tuple, List, Iterator
-from robotframework_ls.impl.protocols import IRobotVariableMatch, IRobotToken
-from robocorp_ls_core.protocols import Sentinel, IConfig
+from robotframework_ls.impl.protocols import (
+    IRobotVariableMatch,
+    IRobotToken,
+    ICompletionContext,
+    AbstractVariablesCollector,
+    IVariableFound,
+)
+from robocorp_ls_core.protocols import Sentinel
 from robocorp_ls_core.robotframework_log import get_logger
+import threading
 
 log = get_logger(__name__)
 
@@ -115,21 +122,31 @@ def _not_escaping(name):
     return backslashes % 2 == 0
 
 
+class _VariablesCollector(AbstractVariablesCollector):
+    def __init__(self):
+        self.var_name_to_var_found = {}
+
+    def accepts(self, variable_name: str) -> bool:
+        return True
+
+    def on_variable(self, variable_found: IVariableFound):
+        from robotframework_ls.impl.text_utilities import normalize_robot_name
+
+        self.var_name_to_var_found[
+            normalize_robot_name(variable_found.variable_name)
+        ] = variable_found
+
+
 class ResolveVariablesContext:
-    def __init__(self, config: Optional[IConfig], doc_path: str):
-        self.config = config
-        self.doc_path = doc_path
+    _thread_local = threading.local()
 
-    def _resolve_builtin(self, var_name, value_if_not_found, log_info):
-        from robotframework_ls.impl.robot_constants import BUILTIN_VARIABLES_RESOLVED
+    def __init__(self, completion_context: ICompletionContext):
+        self.config = completion_context.config
+        self.completion_context = completion_context
 
-        ret = BUILTIN_VARIABLES_RESOLVED.get(var_name, Sentinel.SENTINEL)
-        if ret is Sentinel.SENTINEL:
-            if var_name == "CURDIR":
-                return os.path.dirname(self.doc_path)
-            log.info(*log_info)
-            return value_if_not_found
-        return ret
+    @property
+    def doc_path(self) -> str:
+        return self.completion_context.doc.path
 
     def _resolve_environment_variable(self, var_name, value_if_not_found, log_info):
         ret = os.environ.get(var_name, Sentinel.SENTINEL)
@@ -139,29 +156,79 @@ class ResolveVariablesContext:
         return ret
 
     def _convert_robot_variable(self, var_name, value_if_not_found):
-        from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_VARIABLES
+        from robotframework_ls.impl.text_utilities import normalize_robot_name
 
-        if self.config is None:
-            value = self._resolve_builtin(
-                var_name,
-                value_if_not_found,
-                (
-                    "Config not available while trying to convert robot variable: %s",
-                    var_name,
-                ),
-            )
+        normalized = normalize_robot_name(var_name)
+
+        if normalized == "curdir":
+            return os.path.dirname(self.doc_path)
+
+        completion_context = self.completion_context
+        found = completion_context.get_doc_normalized_var_name_to_var_found().get(
+            normalized
+        )
+
+        if found is not None:
+            return found.variable_value
+
+        found = completion_context.get_settings_normalized_var_name_to_var_found().get(
+            normalized
+        )
+        if found is not None:
+            return found.variable_value
+
+        found = completion_context.get_arguments_files_normalized_var_name_to_var_found().get(
+            normalized
+        )
+        if found is not None:
+            return found.variable_value
+
+        found = completion_context.get_builtins_normalized_var_name_to_var_found(
+            True
+        ).get(normalized)
+        if found is not None:
+            return found.variable_value
+
+        # At this point we have to do a search in the imports to check whether
+        # maybe the variable is defined in a dependency. Note that we can get
+        # into a recursion here as we may need to resolve other variables
+        # in order to get here.
+        # It goes something like:
+        # Resolve variable -> some variable
+        # collect dependencies (which may need to resolve variables again).
+        # In this case we have a thread-local variable to know whether this is the
+        # case and if it is bail out.
+        try:
+            resolve_info = self._thread_local.resolve_info
+        except:
+            resolve_info = self._thread_local.resolve_info = set()
+
+        if var_name in resolve_info:
+            log.info("Unable to find robot variable: %s", var_name)
+            return value_if_not_found
+
         else:
-            robot_variables = self.config.get_setting(OPTION_ROBOT_VARIABLES, dict, {})
-            value = robot_variables.get(var_name, Sentinel.SENTINEL)
-            if value is Sentinel.SENTINEL:
-                value = self._resolve_builtin(
-                    var_name,
-                    value_if_not_found,
-                    ("Unable to find robot variable: %s", var_name),
+            try:
+                resolve_info.add(var_name)
+
+                from robotframework_ls.impl.variable_completions import (
+                    collect_global_variables_from_document_dependencies,
                 )
 
-        value = str(value)
-        return value
+                collector = _VariablesCollector()
+
+                collect_global_variables_from_document_dependencies(
+                    completion_context, collector
+                )
+
+                found = collector.var_name_to_var_found.get(normalized)
+                if found is not None:
+                    return found.variable_value
+
+                log.info("Unable to find robot variable: %s", var_name)
+                return value_if_not_found
+            finally:
+                resolve_info.discard(var_name)
 
     def _convert_environment_variable(self, var_name, value_if_not_found):
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHON_ENV
@@ -188,46 +255,12 @@ class ResolveVariablesContext:
         value = str(value)
         return value
 
-    def token_value_resolving_variables(self, token: Union[str, IRobotToken]) -> str:
-        from robotframework_ls.impl import ast_utils
-
-        robot_token: IRobotToken
-        if isinstance(token, str):
-            robot_token = ast_utils.create_token(token)
-        else:
-            robot_token = token
-
-        try:
-            tokenized_vars = ast_utils.tokenize_variables(robot_token)
-        except:
-            return robot_token.value  # Unable to tokenize
-
-        parts = []
-        for v in tokenized_vars:
-            if v.type == v.NAME:
-                parts.append(str(v))
-
-            elif v.type == v.VARIABLE:
-                # Resolve variable from config
-                initial_v = v = str(v)
-                if v.startswith("${") and v.endswith("}"):
-                    v = v[2:-1]
-                    parts.append(self._convert_robot_variable(v, initial_v))
-                elif v.startswith("%{") and v.endswith("}"):
-                    v = v[2:-1]
-                    parts.append(self._convert_environment_variable(v, initial_v))
-                else:
-                    log.info("Cannot resolve variable: %s", v)
-                    parts.append(v)  # Leave unresolved.
-
-        joined_parts = "".join(parts)
-        return joined_parts
+    def token_value_resolving_variables(self, token: IRobotToken) -> str:
+        return self.token_value_and_unresolved_resolving_variables(token)[0]
 
     def token_value_and_unresolved_resolving_variables(
         self, token: IRobotToken
     ) -> Tuple[str, Tuple[IRobotToken, ...]]:
-        unresolved: List[IRobotToken] = []
-
         from robotframework_ls.impl import ast_utils
 
         robot_token: IRobotToken
@@ -241,33 +274,38 @@ class ResolveVariablesContext:
         except:
             return robot_token.value, ()  # Unable to tokenize
 
-        parts = []
+        unresolved: List[IRobotToken] = []
+
+        parts: List[str] = []
+        tok: IRobotToken
+        value: str
         for tok in tokenized_vars:
             if tok.type == tok.NAME:
                 parts.append(str(tok))
 
             elif tok.type == tok.VARIABLE:
-                # Resolve variable from config
-                initial_v = v = str(tok)
-                if v.startswith("${") and v.endswith("}"):
-                    v = v[2:-1]
-                    converted = self._convert_robot_variable(v, initial_v)
-                    parts.append(converted)
-                    if converted == initial_v:
-                        # Unable to resolve
-                        unresolved.append(tok)
+                value = str(tok)
 
-                elif v.startswith("%{") and v.endswith("}"):
-                    v = v[2:-1]
-                    converted = self._convert_environment_variable(v, initial_v)
-                    parts.append(converted)
-                    if converted == initial_v:
-                        # Unable to resolve
-                        unresolved.append(tok)
+                convert_with = None
+                if value.startswith("${") and value.endswith("}"):
+                    convert_with = self._convert_robot_variable
 
+                elif value.startswith("%{") and value.endswith("}"):
+                    convert_with = self._convert_environment_variable
+
+                if convert_with is None:
+                    log.info("Cannot resolve variable: %s", value)
+                    unresolved.append(tok)
+                    parts.append(value)  # Leave unresolved.
                 else:
-                    log.info("Cannot resolve variable: %s", v)
-                    parts.append(v)  # Leave unresolved.
+                    value = value[2:-1]
+                    converted = convert_with(value, None)
+                    if converted is None:
+                        log.info("Cannot resolve variable: %s", value)
+                        unresolved.append(tok)
+                        parts.append(value)
+                    else:
+                        parts.append(converted)
 
         joined_parts = "".join(parts)
         return joined_parts, tuple(unresolved)

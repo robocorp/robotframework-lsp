@@ -103,6 +103,7 @@ def _get_completions(
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
     from robocorp_ls_core import uris
     from robotframework_ls.impl.robot_constants import BUILTIN_LIB, RESERVED_LIB
+    from robotframework_ls.impl import ast_utils
 
     ret: List[CompletionItemTypedDict] = []
 
@@ -112,7 +113,7 @@ def _get_completions(
         value_to_cursor = value_to_cursor[: -(token.end_col_offset - sel.col)]
     if "{" in value_to_cursor:
         value_to_cursor = completion_context.token_value_resolving_variables(
-            value_to_cursor
+            ast_utils.create_token(value_to_cursor)
         )
 
     value_to_cursor_split = os.path.split(value_to_cursor)

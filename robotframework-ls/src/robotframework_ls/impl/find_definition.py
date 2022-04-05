@@ -367,7 +367,7 @@ def find_definition_extended(
             library_doc = libspec_manager.get_library_doc_or_error(
                 completion_context.token_value_resolving_variables(token),
                 create=True,
-                current_doc_uri=completion_context.doc.uri,
+                completion_context=completion_context,
                 args=ast_utils.get_library_arguments_serialized(token_info.node),
             ).library_doc
             if library_doc is not None:
