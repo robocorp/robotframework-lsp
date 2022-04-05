@@ -1354,3 +1354,30 @@ Demo
 """
 
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_vars_not_undefined(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Variables ***
+@{DEFAULT_LIST}     @{EMPTY}
+
+*** Test Cases ***
+Import Variables Should Not Cause Undefined Variables
+    @{SUITE_LIST_1} =    Set Variable    ${DEFAULT_LIST}
+    Set Suite Variable    \@{SUITE_LIST_1}    one    two
+    Set Suite Variable    @{SUITE_LIST_2}    three   four
+    Set Suite Variable    @SUITE_LIST_3    five   six
+    Should Be Equal    ${SUITE_LIST_1}[0]    one
+    Suite Variable Should Be Defined In Keyword
+
+*** Keywords ***
+Suite Variable Should Be Defined In Keyword
+    Should Be Equal    ${SUITE_LIST_1}[0]    one
+    Should Be Equal    ${SUITE_LIST_2}[0]    three
+    Should Be Equal    ${SUITE_LIST_3}[0]    five
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")

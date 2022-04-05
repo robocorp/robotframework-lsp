@@ -128,14 +128,24 @@ def _collect_variables_from_ast(
                         break
 
             if var_name_tok is not None:
-                variable_match = robot_search_variable(var_name_tok.value)
-                # Filter out empty base
-                if variable_match is None or not variable_match.base:
-                    continue
+                var_name = var_name_tok.value
+                start_offset = var_name_tok.col_offset
 
-                if collector.accepts(variable_match.base):
-                    base_token = ast_utils.convert_variable_match_base_to_token(
-                        var_name_tok, variable_match
+                if var_name.startswith("\\"):
+                    var_name = var_name[1:]
+                    start_offset += 1
+
+                if var_name.startswith(("@", "$", "&")):
+                    var_name = var_name[1:]
+                    start_offset += 1
+
+                if var_name.startswith("{") and var_name.endswith("}"):
+                    var_name = var_name[1:-1]
+                    start_offset += 1
+
+                if collector.accepts(var_name):
+                    base_token = ast_utils.copy_token_replacing(
+                        var_name_tok, col_offset=var_name_tok.col_offset, value=var_name
                     )
                     variable_value = ""
                     if var_value_tok is not None:
@@ -145,7 +155,7 @@ def _collect_variables_from_ast(
                         completion_context,
                         base_token,
                         variable_value,
-                        variable_name=variable_match.base,
+                        variable_name=var_name,
                     )
                     collector.on_variable(variable_found)
 
