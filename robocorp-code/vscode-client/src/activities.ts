@@ -793,6 +793,8 @@ export async function createRobot() {
                     // we need to ask the user about overwriting it.
                     isEmpty = false;
                     break;
+                } else {
+                    force = true;
                 }
             }
         } catch (error) {
