@@ -1395,3 +1395,16 @@ Get Return Data Amount Due
 """
 
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_env_var_with_default_value(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Env var with default value
+    Should Be Equal    %{SOME_VAR=defaultvalue}    defaultvalue
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")

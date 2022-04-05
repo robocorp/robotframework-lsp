@@ -529,6 +529,10 @@ def _collect_undefined_variables_errors(initial_completion_context):
         if token_info.var_identifier == "%":
             from robotframework_ls.impl.variable_resolve import extract_variable_base
 
+            if "=" in var_name:
+                # Consider case: %{SOME_VAR=defaultvalue}
+                continue
+
             if env_vars_upper is None:
                 env_vars_upper = _env_vars_upper()
 

@@ -1,10 +1,12 @@
 NEXT
 -----------------------------
 
-- Variables in document are considered in Libdoc arguments. [#634](https://github.com/robocorp/robotframework-lsp/issues/634) 
-- Consider escaping rules when setting variables using keywords. [#638](https://github.com/robocorp/robotframework-lsp/issues/638) 
-- Consider `Set Local Variable` to set variable. [#637](https://github.com/robocorp/robotframework-lsp/issues/637) 
-- Fixed issue finding variables in python files with annotated assignments (i.e.: `value: int = 10`). [#629](https://github.com/robocorp/robotframework-lsp/issues/629)
+- Improvements dealing with **Variables**:
+  - Variables in document are considered in Libdoc arguments. [#634](https://github.com/robocorp/robotframework-lsp/issues/634) 
+  - Escaping rules are considered when setting variables using `Set Variable XXX` keywords. [#638](https://github.com/robocorp/robotframework-lsp/issues/638) 
+  - Variables set with `Set Local Variable` are recognized. [#637](https://github.com/robocorp/robotframework-lsp/issues/637) 
+  - Consider that loading an environment variable may have a default value. [#633](https://github.com/robocorp/robotframework-lsp/issues/633) 
+  - Variables in python files with annotated assignments are supported (i.e.: `value: int = 10`). [#629](https://github.com/robocorp/robotframework-lsp/issues/629)
 - The debugger no longer stops in `Run Keyword And Return Status` by default. [#625](https://github.com/robocorp/robotframework-lsp/issues/625)
 - Code-lenses (Run/Debug/Interactive console) are shown by default again.
     - The `robot.codeLens.enable` setting may be used to disable them.
