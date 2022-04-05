@@ -1,3 +1,9 @@
+New in 0.30.0 (2022-04-05)
+-----------------------------
+
+- If only a .vscode folder is created, force creation of robot.
+
+
 New in 0.29.0 (2022-04-04)
 -----------------------------
 
