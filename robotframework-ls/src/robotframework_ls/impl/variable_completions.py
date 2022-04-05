@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Set
 
 from robocorp_ls_core.lsp import CompletionItemTypedDict
 from robocorp_ls_core.protocols import check_implements, IDocumentSelection
@@ -91,28 +91,15 @@ class _Collector(AbstractVariablesCollector):
         _: IVariablesCollector = check_implements(self)
 
 
-def _collect_variables_from_ast(
-    ast, completion_context: ICompletionContext, collector: IVariablesCollector
+def _collect_variables_from_set_keywords(
+    ast,
+    completion_context: ICompletionContext,
+    collector: IVariablesCollector,
+    accept_sets_in: Set[str],
 ):
-    from robotframework_ls.impl import ast_utils
-    from robotframework_ls.impl.variable_resolve import robot_search_variable
     from robot.api import Token
+    from robotframework_ls.impl import ast_utils
 
-    completion_context.check_cancelled()
-
-    for (
-        variable_found
-    ) in completion_context.get_doc_normalized_var_name_to_var_found().values():
-        if collector.accepts(variable_found.variable_name):
-            collector.on_variable(variable_found)
-
-    accept_sets_in = {
-        normalize_robot_name("Set Task Variable"),
-        normalize_robot_name("Set Test Variable"),
-        normalize_robot_name("Set Suite Variable"),
-        normalize_robot_name("Set Global Variable"),
-    }
-    ast = completion_context.get_ast()
     for keyword_usage in ast_utils.iter_keyword_usage_tokens(
         ast, collect_args_as_keywords=True
     ):
@@ -167,9 +154,24 @@ def _collect_current_doc_variables(
     :param CompletionContext completion_context:
     """
     # Get keywords defined in the file itself
+    completion_context.check_cancelled()
 
-    ast = completion_context.get_ast()
-    _collect_variables_from_ast(ast, completion_context, collector)
+    for (
+        variable_found
+    ) in completion_context.get_doc_normalized_var_name_to_var_found().values():
+        if collector.accepts(variable_found.variable_name):
+            collector.on_variable(variable_found)
+
+    accept_sets_in = {
+        normalize_robot_name("Set Task Variable"),
+        normalize_robot_name("Set Test Variable"),
+        normalize_robot_name("Set Suite Variable"),
+        normalize_robot_name("Set Global Variable"),
+    }
+
+    _collect_variables_from_set_keywords(
+        completion_context.get_ast(), completion_context, collector, accept_sets_in
+    )
 
 
 def _collect_resource_imports_variables(
@@ -370,7 +372,7 @@ def _collect_arguments(
 ):
     from robotframework_ls.impl import ast_utils
 
-    for arg_token, var_identifier in ast_utils.iter_keyword_arguments_as_tokens(
+    for arg_token, _var_identifier in ast_utils.iter_keyword_arguments_as_tokens(
         node, tokenize_keyword_name=True
     ):
         name = arg_token.value
@@ -458,6 +460,14 @@ def collect_local_variables(
             collector.on_variable(variable_found)
 
     _collect_arguments(completion_context, stack_node, collector)
+
+    accept_sets_in = {
+        normalize_robot_name("Set Local Variable"),
+    }
+
+    _collect_variables_from_set_keywords(
+        stack_node, completion_context, collector, accept_sets_in
+    )
 
 
 def complete(completion_context: ICompletionContext) -> List[CompletionItemTypedDict]:

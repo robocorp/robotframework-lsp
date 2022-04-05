@@ -1381,3 +1381,17 @@ Suite Variable Should Be Defined In Keyword
 """
 
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_local_vars_not_undefined(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+Get Return Data Amount Due
+  Set Local Variable  ${return_data_amount_due}  xpath://h2/div[3]
+  Log to console  ${return_data_amount_due}
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
