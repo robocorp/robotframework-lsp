@@ -759,6 +759,37 @@ def test_evaluate(debugger_api: _DebuggerAPI):
     debugger_api.read(TerminatedEvent)
 
 
+def test_evaluate_assign(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+
+    debugger_api.initialize()
+    target = debugger_api.get_dap_case_file("case_evaluate.robot")
+    debugger_api.target = target
+
+    debugger_api.launch(target, debug=True)
+    debugger_api.set_breakpoints(
+        target, debugger_api.get_line_index_with_content("Break 1")
+    )
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(name="Should Be Equal")
+
+    response = debugger_api.evaluate(
+        "${lst}=    Create list    a    b",
+        frameId=json_hit.frame_id,
+        context="repl",
+    )
+    assert response.body.result == "['a', 'b']"
+
+    response = debugger_api.evaluate(
+        "${lst}", frameId=json_hit.frame_id, context="watch"
+    )
+    assert response.body.result == "['a', 'b']"
+    debugger_api.continue_event(json_hit.thread_id)
+
+    debugger_api.read(TerminatedEvent)
+
+
 def test_launch_multiple(debugger_api: _DebuggerAPI):
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ThreadsResponse

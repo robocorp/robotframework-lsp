@@ -762,3 +762,33 @@ def test_debugger_core_evaluate(
 
     finally:
         debugger_impl.step_continue()
+
+
+def test_debugger_core_evaluate_assign(
+    debugger_api_core, robot_thread, debugger_impl
+) -> None:
+    from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
+
+    thread_id = debugger_impl.get_current_thread_id(robot_thread)
+    target = debugger_api_core.get_dap_case_file("case_evaluate.robot")
+    debugger_api_core.target = target
+    line = debugger_api_core.get_line_index_with_content("Break 1")
+    debugger_impl.set_breakpoints(target, RobotBreakpoint(line))
+
+    robot_thread.run_target(target)
+    dbg_wait_for(lambda: debugger_impl.busy_wait.waited == 1)
+
+    try:
+        frame_ids = list(debugger_impl.iter_frame_ids(thread_id))
+        # Keyword evaluation works
+        eval_info = debugger_impl.evaluate(
+            frame_ids[0], "${lst}=    Create list    a    b"
+        )
+
+        assert eval_info.future.result() == ["a", "b"]
+        # Get variable in evaluation works
+        eval_info = debugger_impl.evaluate(frame_ids[0], "${lst}", context="repl")
+        assert eval_info.future.result() == ["a", "b"]
+
+    finally:
+        debugger_impl.step_continue()

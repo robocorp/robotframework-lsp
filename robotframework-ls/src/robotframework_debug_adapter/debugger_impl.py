@@ -524,7 +524,12 @@ Evaluation
                         "Keyword calls may only be evaluated at the topmost frame."
                     )
 
-                return EvaluationResult(BuiltIn().run_keyword(name, *node.args))
+                assign = node.assign
+                from robot.running import Keyword
+
+                kw = Keyword(name, args=node.args, assign=assign)
+                ctx = info.execution_context
+                return EvaluationResult(kw.run(ctx))
 
         raise UnableToEvaluateError("Unable to evaluate: %s" % (self.expression,))
 
