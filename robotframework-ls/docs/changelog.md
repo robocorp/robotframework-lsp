@@ -9,6 +9,7 @@ NEXT
   - Variables in python files with annotated assignments are supported (i.e.: `value: int = 10`). [#629](https://github.com/robocorp/robotframework-lsp/issues/629)
   - Variables in templates are not reported as errors. [#632](https://github.com/robocorp/robotframework-lsp/issues/632)
   - Properly deal with variables with other variables inside. [#631](https://github.com/robocorp/robotframework-lsp/issues/631)
+  - Load variables from python module with `get_variables` returning a literal dict. [#639](https://github.com/robocorp/robotframework-lsp/issues/639)
 - The debugger no longer stops in `Run Keyword And Return Status` by default. [#625](https://github.com/robocorp/robotframework-lsp/issues/625)
 - Code-lenses (Run/Debug/Interactive console) are shown by default again.
     - The `robot.codeLens.enable` setting may be used to disable them.

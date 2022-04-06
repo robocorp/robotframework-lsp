@@ -1145,3 +1145,38 @@ Initialize Variables
     definition = definitions[0]
     assert definition.source.endswith("case2.robot")
     assert definition.lineno == 11
+
+
+def test_vars_from_get_variables(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc_py = workspace.put_doc("vars.py")
+    doc_py.source = """
+def get_variables(arg):
+    return {"PYTHON_VARIABLE": arg}
+"""
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Variables    vars.py    arg1
+
+*** Test Cases ***
+Demo
+    Log    ${PYTHON_VARIABLE}
+"""
+
+    line, col = doc.get_last_line_col_with_contents("    Log    ${PYTHON_VARIABLE}")
+    col -= len("}")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = definitions[0]
+    assert definition.source.endswith("vars.py")
+    assert definition.lineno == 2

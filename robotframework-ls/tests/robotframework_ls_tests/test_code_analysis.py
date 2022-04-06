@@ -1450,3 +1450,25 @@ Initialize Variables
 """
 
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_vars_from_get_variables(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc_py = workspace.put_doc("vars.py")
+    doc_py.source = """
+def get_variables(arg):
+    return {"PYTHON_VARIABLE": arg}
+"""
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Variables    vars.py    arg1
+
+*** Test Cases ***
+Demo
+    Log    ${PYTHON_VARIABLE}
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
