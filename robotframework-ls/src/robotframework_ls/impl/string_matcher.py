@@ -1,6 +1,6 @@
 from robotframework_ls.impl.text_utilities import (
     normalize_robot_name,
-    matches_robot_keyword,
+    matches_name_with_variables,
 )
 from robotframework_ls.impl.protocols import IKeywordFound
 
@@ -28,25 +28,22 @@ class RobotStringMatcher(object):
             return True
 
         if "{" in normalized:
-            return matches_robot_keyword(self.filter_text, normalized)
+            return matches_name_with_variables(self.filter_text, normalized)
 
         return False
 
     def is_same_variable_name(self, variable_name):
-        from robotframework_ls.impl.text_utilities import is_variable_text
+        return self.filter_text == normalize_robot_name(variable_name)
 
-        try:
-            filter_var_name = self._filter_var_name
-        except AttributeError:
-            if is_variable_text(self.filter_text):
-                filter_var_name = self._filter_var_name = self.filter_text[2:-1]
-            else:
-                filter_var_name = self._filter_var_name = self.filter_text
+    def is_variable_name_match(self, variable_name):
+        normalized = normalize_robot_name(variable_name)
+        if self.filter_text == normalized:
+            return True
 
-        if is_variable_text(variable_name):
-            variable_name = variable_name[2:-1]
+        if "{" in normalized:
+            return matches_name_with_variables(self.filter_text, normalized)
 
-        return filter_var_name == normalize_robot_name(variable_name)
+        return False
 
 
 class MatcherWithResourceOrLibraryName(RobotStringMatcher):

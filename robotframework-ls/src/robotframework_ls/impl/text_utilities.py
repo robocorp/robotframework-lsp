@@ -66,45 +66,41 @@ def contains_variable_text(text: str) -> bool:
     return False
 
 
-def matches_robot_keyword(keyword_name_call_text, keyword_name, _re_cache={}):
+@lru_cache(600)
+def matches_name_with_variables(name: str, name_with_variables: str) -> bool:
     """
     Checks if a given text matches a given keyword.
 
     Note: both should be already normalized.
-    Note: should NOT be called if keyword does not have '{' in it.
+    Note: should NOT be called if name_with_variables does not have '{' in it.
 
-    :param str keyword_name_call_text:
+    :param name:
         The call that has resolved variables.
+        i.e.: some call
 
-    :param str keyword_name:
-        The keyword (which has variables -- i.e.: '{').
+    :param name_with_variables:
+        The name which has variables.
+        i.e.: some ${arg}
     """
 
+    from robotframework_ls.impl import ast_utils
+
     try:
-        compiled = _re_cache[keyword_name]
-    except KeyError:
-        from robotframework_ls.impl import ast_utils
-        import re
+        tokenized_vars = ast_utils.tokenize_variables_from_name(name_with_variables)
+    except:
+        regexp = [re.escape(name_with_variables)]
+    else:
+        regexp = []
+        for t in tokenized_vars:
+            if t.type == t.VARIABLE:
+                regexp.append("(.*)")
+            else:
+                regexp.append(re.escape(t.value))
 
-        try:
-            tokenized_vars = ast_utils.tokenize_variables_from_name(keyword_name)
-        except:
-            regexp = [re.escape(keyword_name)]
-        else:
-            regexp = []
-            for t in tokenized_vars:
-                if t.type == t.VARIABLE:
-                    regexp.append("(.*)")
-                else:
-                    regexp.append(re.escape(t.value))
+    regexp.append("$")
 
-        regexp.append("$")
-
-        regexp = "".join(regexp)
-        _re_cache[keyword_name] = re.compile(regexp)
-        compiled = _re_cache[keyword_name]
-
-    return compiled.match(keyword_name_call_text)
+    compiled = re.compile("".join(regexp))
+    return bool(compiled.match(name))
 
 
 def iter_dotted_names(text: str):

@@ -280,7 +280,7 @@ class _FindDefinitionVariablesCollector(AbstractVariablesCollector):
         self.matcher = robot_string_matcher
 
     def accepts(self, variable_name: str) -> bool:
-        return self.matcher.is_same_variable_name(variable_name)
+        return self.matcher.is_variable_name_match(variable_name)
 
     def on_variable(self, variable_found: IVariableFound):
         definition = _DefinitionFromVariable(variable_found)

@@ -1427,3 +1427,26 @@ Sum ${a} And ${b} Should Be ${expected_sum}
     Should Be Equal As Integers    ${sum}    ${expected_sum}"""
 
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 4 onwards.")
+def test_no_error_with_constructed_vars(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Some Test Case
+    [Setup]    Initialize Variables
+    Log    ${SOME_VARIABLE_0}
+    Log    ${SOME_VARIABLE_1}
+    Log    ${SOME_VARIABLE_2}
+
+*** Keywords ***
+Initialize Variables
+    FOR    ${index}    IN RANGE    3
+        Set Test Variable    ${SOME_VARIABLE_${index}}    Value ${index}
+    END
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")

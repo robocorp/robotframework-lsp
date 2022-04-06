@@ -39,7 +39,7 @@ class _KeywordContainer(object):
             self._names_with_variables[normalized_name] = keyword_found
 
     def get_keyword(self, normalized_keyword_name: str) -> Optional[IKeywordFound]:
-        from robotframework_ls.impl.text_utilities import matches_robot_keyword
+        from robotframework_ls.impl.text_utilities import matches_name_with_variables
 
         keyword_found = self._name_to_keyword.get(normalized_keyword_name)
 
@@ -49,7 +49,7 @@ class _KeywordContainer(object):
         # We do not have an exact match, still, we need to check if we may
         # have a match in keywords that accept variables.
         for name, keyword_found in self._names_with_variables.items():
-            if matches_robot_keyword(normalized_keyword_name, name):
+            if matches_name_with_variables(normalized_keyword_name, name):
                 return keyword_found
 
         return None
@@ -58,12 +58,16 @@ class _KeywordContainer(object):
 class _VariablesCollector(AbstractVariablesCollector):
     def __init__(self, on_unresolved_variable_import):
         self._variables_collected = set()
+        self._template_variables_collected = []
         self.on_unresolved_variable_import = on_unresolved_variable_import
 
     def accepts(self, variable_name: str) -> bool:
-        from robotframework_ls.impl.variable_resolve import normalize_variable_name
+        from robotframework_ls.impl.text_utilities import normalize_robot_name
 
-        self._variables_collected.add(normalize_variable_name(variable_name))
+        normalized = normalize_robot_name(variable_name)
+        if "{" in normalized:
+            self._template_variables_collected.append(normalized)
+        self._variables_collected.add(normalized)
         # We don't want to create the IVariableFound, just the names should be
         # enough for our usage.
         return False
@@ -72,7 +76,16 @@ class _VariablesCollector(AbstractVariablesCollector):
         pass
 
     def contains_variable(self, variable_name):
-        return variable_name in self._variables_collected
+        from robotframework_ls.impl.text_utilities import matches_name_with_variables
+
+        if variable_name in self._variables_collected:
+            return True
+
+        for template_var in self._template_variables_collected:
+            if matches_name_with_variables(variable_name, template_var):
+                return True
+
+        return False
 
 
 class _AnalysisKeywordsCollector(object):

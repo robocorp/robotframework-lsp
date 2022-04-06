@@ -1110,3 +1110,38 @@ Put Key
     definition = definitions[0]
     assert definition.source.endswith("case2.robot")
     assert definition.lineno == 2
+
+
+def test_find_definition_with_constructed_vars(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Some Test Case
+    [Setup]    Initialize Variables
+    Log    ${SOME_VARIABLE_0}
+    Log    ${SOME_VARIABLE_1}
+    Log    ${SOME_VARIABLE_2}
+
+*** Keywords ***
+Initialize Variables
+    FOR    ${index}    IN RANGE    3
+        Set Test Variable    ${SOME_VARIABLE_${index}}    Value ${index}
+    END
+"""
+
+    line, col = doc.get_last_line_col_with_contents("    Log    ${SOME_VARIABLE_0}")
+    col -= len("E_0}")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = definitions[0]
+    assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 11
