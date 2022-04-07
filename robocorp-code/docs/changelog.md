@@ -11,7 +11,7 @@ New in 0.29.0 (2022-04-04)
   - This fixes the case where the `ms-python` extension tries to activate an environment when starting a Robot terminal.
   - It's possible to disable this by setting `"robocorp.autoSetPythonExtensionDisableActivateTerminal": false`.
 - `Set pythonPath based on robot.yaml` was renamed to `Set python executable based on robot.yaml`.
-- When setting the default interpreter to match the python from the robot, only the internal API is used as `python.pythonPath` is now deprecetad.
+- When setting the default interpreter to match the python from the robot, only the internal API is used as `python.pythonPath` is now deprecated.
 - When launching the python debugger, the python executable is properly set in the generated launch configuration with `python` instead of `pythonPath`.
 
 
