@@ -296,8 +296,8 @@ class DebugAdapterComm(object):
 
         arguments: SetBreakpointsArguments = request.arguments
         source: Source = arguments.source
-        name = source.name
-        if name and name.lower().endswith((".py", ".pyw")):
+        path = source.path
+        if path and path.lower().endswith((".py", ".pyw")):
             self._launch_process.resend_request_to_pydevd(request)
         else:
             self._launch_process.resend_request_to_robot(request)

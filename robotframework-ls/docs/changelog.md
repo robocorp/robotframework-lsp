@@ -12,7 +12,8 @@ NEXT
   - Load variables from python module with `get_variables` returning a literal dict. [#639](https://github.com/robocorp/robotframework-lsp/issues/639)
 - Improvements in debugger:
   - The debugger no longer stops in `Run Keyword And Return Status` by default. [#625](https://github.com/robocorp/robotframework-lsp/issues/625)
-  - Assign to variable in debug console repl (i.e.: `${lst}=    Create list    a    b`). 
+  - Assign to variable in debug console repl (i.e.: `${lst}=    Create list    a    b`).
+  - Fixed case where breakpoints in `.py` files wouldn't be added. 
 - Code-lenses (Run/Debug/Interactive console) are shown by default again.
     - The `robot.codeLens.enable` setting may be used to disable them.
 

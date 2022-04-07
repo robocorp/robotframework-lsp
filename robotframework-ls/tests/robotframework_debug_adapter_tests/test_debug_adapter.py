@@ -168,6 +168,31 @@ def test_simple_debug_launch_stop_on_pydevd(debugger_api: _DebuggerAPI):
         debugger_api.read(TerminatedEvent)
 
 
+def test_launch_pydevd_change_breakpoints(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+
+    debugger_api.initialize()
+    target = debugger_api.get_dap_case_file("case_python.robot")
+    mypylib = debugger_api.get_dap_case_file("mypylib.py")
+
+    debugger_api.launch(target, debug=True)
+    threads_response = (
+        debugger_api.list_threads()
+    )  #: :type thread_response: ThreadsResponse
+    assert len(threads_response.body.threads) == 1
+    bp1 = debugger_api.get_line_index_with_content("break on a = 1", filename=mypylib)
+    bp2 = debugger_api.get_line_index_with_content("break on b = 2", filename=mypylib)
+    debugger_api.set_breakpoints(mypylib, [bp1, bp2])
+    debugger_api.configuration_done()
+
+    json_hit = debugger_api.wait_for_thread_stopped(file="mypylib.py", line=bp1)
+    debugger_api.set_breakpoints(mypylib, [])
+
+    msg = debugger_api.continue_event(json_hit.thread_id, accept_terminated=True)
+    if not isinstance(msg, TerminatedEvent):
+        debugger_api.read(TerminatedEvent)
+
+
 def test_simple_debug_launch_stop_on_robot_and_pydevd(debugger_api: _DebuggerAPI):
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ThreadsResponse
