@@ -1,3 +1,23 @@
+New in 0.44.0 (2022-04-07)
+-----------------------------
+
+- Improvements dealing with **Variables**:
+  - Variables in document are considered in Libdoc arguments. [#634](https://github.com/robocorp/robotframework-lsp/issues/634) 
+  - Escaping rules are considered when setting variables using `Set Variable XXX` keywords. [#638](https://github.com/robocorp/robotframework-lsp/issues/638) 
+  - Variables set with `Set Local Variable` are recognized. [#637](https://github.com/robocorp/robotframework-lsp/issues/637) 
+  - Consider that loading an environment variable may have a default value. [#633](https://github.com/robocorp/robotframework-lsp/issues/633) 
+  - Variables in python files with annotated assignments are supported (i.e.: `value: int = 10`). [#629](https://github.com/robocorp/robotframework-lsp/issues/629)
+  - Variables in templates are not reported as errors. [#632](https://github.com/robocorp/robotframework-lsp/issues/632)
+  - Properly deal with variables with other variables inside. [#631](https://github.com/robocorp/robotframework-lsp/issues/631)
+  - Load variables from python module with `get_variables` returning a literal dict. [#639](https://github.com/robocorp/robotframework-lsp/issues/639)
+- Improvements in debugger:
+  - The debugger no longer stops in `Run Keyword And Return Status` by default. [#625](https://github.com/robocorp/robotframework-lsp/issues/625)
+  - Assign to variable in debug console repl (i.e.: `${lst}=    Create list    a    b`).
+  - Fixed case where breakpoints in `.py` files wouldn't be added. 
+- Upgraded vendored `robocop` to `2.0.1`. 
+- Upgraded vendored `robotframework-tidy` to `2.1.0`. 
+
+
 New in 0.43.2 (2022-03-29)
 -----------------------------
 

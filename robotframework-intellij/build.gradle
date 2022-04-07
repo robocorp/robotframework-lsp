@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.43.2'
+version '0.44.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,38 +50,25 @@ intellij {
 
 patchPluginXml {
     changeNotes """
-    <p>
-    Release 0.43.2
-    </p>
-    <li>Additional fix in cache invalidation for dependencies.</li>
-    <p>
-    Release 0.43.0
+    Release 0.44.0
     </p>
     <ul>
   
-    <li>Improvements dealing with <strong>Variables</strong>:</li>
-        <li>Undefined variables are now reported.</li>
-            <li><strong>robot.variables</strong>: may be used to specify variables used for launching as well as code-completion/code analysis.</li>
-            <li><strong>robot.lint.ignoreVariables</strong>: may be used to set variables to be ignored in linting.</li>
-            <li><strong>robot.loadVariablesFromArgumentsFile</strong> may be used to load variables from an arguments file for code-completion and code analysis.</li>
-                <li>Note: the arguments file still needs to be separately set during launching too.</li>
-            <li>Variables are recognized in expressions as well as inner variables.</li>
-        <li>Variables set with the following keywords are recognized:</li>
-            <li>Set Task Variable</li>
-            <li>Set Test Variable</li>
-            <li>Set Suite Variable</li>
-            <li>Set Global Variable</li>
-        <li>Variable files with a <strong>.yml</strong> are properly recognized (previously only <strong>.yaml</strong> was supported). </li>
-        <li>Semantic highlighting properly deals with advanced variable syntax (with variables inside variables or using a subscript).</li>
-        <li>Variables in assign now have the same color as variables in other places.</li>
-        <li>Variable imports which can't be resolved are reported.</li>
-            <li>May be disabled with <strong>robot.lint.undefinedVariableImports</strong>.</li>
-    <li>Fix issue in cache invalidation for dependencies.</li>
-    <li><strong>&#47;&#47;</strong> is escaped to <strong>&#47;</strong> when passed in the library arguments.</li>
-    <li>Fix in heuristics to match arguments which could result in wrong argument analysis in keyword calls.</li>
-    <li>Hover now provides custom hints for variables, imports and parameters.</li>
-    <li>Code-lenses are no longer shown by default.</li>
-        <li>The <strong>robot.codeLens.enable</strong> setting may be used to re-enable them.</li>
+    <li><strong>Improvements dealing with Variables:</strong></li>
+      <li>Variables in document are considered in Libdoc arguments.</li>
+      <li>Escaping rules are considered when setting variables using <strong>Set Variable XXX</strong> keywords.</li>
+      <li>Variables set with <strong>Set Local Variable</strong> are recognized.</li>
+      <li>Consider that loading an environment variable may have a default value.</li>
+      <li>Variables in python files with annotated assignments are supported (i.e.: <strong>value: int = 10</strong>).</li>
+      <li>Variables in templates are not reported as errors.</li>
+      <li>Properly deal with variables with other variables inside.</li>
+      <li>Load variables from python module with <strong>get_variables</strong> returning a literal dict.</li>
+    <li><strong>Improvements in debugger:</strong></li>
+      <li>The debugger no longer stops in <strong>Run Keyword And Return Status</strong> by default.</li>
+      <li>Assign to variable in debug console repl.</li>
+      <li>Fixed case where breakpoints in <strong>.py</strong> files wouldn't be added.</li>
+    <li>Upgraded vendored <strong>robocop</strong> to <strong>2.0.1</strong>. </li>
+    <li>Upgraded vendored <strong>robotframework-tidy</strong> to <strong>2.1.0</strong>. </li>
 
     <br>
     Current feature set:<br>

@@ -1,4 +1,4 @@
-NEXT
+New in 0.44.0 (2022-04-07)
 -----------------------------
 
 - Improvements dealing with **Variables**:
@@ -16,6 +16,8 @@ NEXT
   - Fixed case where breakpoints in `.py` files wouldn't be added. 
 - Code-lenses (Run/Debug/Interactive console) are shown by default again.
     - The `robot.codeLens.enable` setting may be used to disable them.
+- Upgraded vendored `robocop` to `2.0.1`. 
+- Upgraded vendored `robotframework-tidy` to `2.1.0`. 
 
 
 New in 0.43.2 (2022-03-29)
