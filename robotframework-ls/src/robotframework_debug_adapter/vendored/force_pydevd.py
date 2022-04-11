@@ -82,12 +82,10 @@ if not pydevd_available:
         "vendored_pydevd",
         [
             "_pydev_bundle",
-            "_pydev_imps",
             "_pydev_runfiles",
             "_pydevd_bundle",
             "_pydevd_frame_eval",
             "pydev_ipython",
-            "pydevd_concurrency_analyser",
             "pydevd_plugins",
             "pydevd",
         ],
