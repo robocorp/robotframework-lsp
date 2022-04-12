@@ -7,6 +7,7 @@ from robotframework_ls.impl.protocols import (
     IKeywordFound,
     IKeywordCollector,
     AbstractKeywordCollector,
+    KeywordUsageInfo,
 )
 from robocorp_ls_core.lsp import (
     TextEditTypedDict,
@@ -19,19 +20,28 @@ log = get_logger(__name__)
 
 
 class _Collector(AbstractKeywordCollector):
-    def __init__(self, completion_context: ICompletionContext, token):
+    def __init__(
+        self, completion_context: ICompletionContext, keyword_usage: KeywordUsageInfo
+    ):
         from robotframework_ls.impl.string_matcher import RobotStringMatcher
         from robotframework_ls.impl.string_matcher import (
             build_matchers_with_resource_or_library_scope,
         )
         from robotframework_ls.robot_config import create_convert_keyword_format_func
 
-        token_str = token.value
+        token_str = keyword_usage.token.value
 
         self.completion_items: List[CompletionItemTypedDict] = []
         self.completion_context = completion_context
         self.selection = completion_context.sel
-        self.token = token
+        self.token = keyword_usage.token
+
+        # i.e.: if we have arguments already don't add arguments again.
+        self._add_arguments = True
+        for t in keyword_usage.node.tokens:
+            if t.type == t.ARGUMENT and t.value:
+                self._add_arguments = False
+                break
 
         self._matcher = RobotStringMatcher(token_str)
         self._scope_matchers = build_matchers_with_resource_or_library_scope(token_str)
@@ -60,15 +70,23 @@ class _Collector(AbstractKeywordCollector):
             label = self._convert_keyword_format(label)
 
         text = label
-        arg: IKeywordArg
-        for i, arg in enumerate(keyword_found.keyword_args):
-            if arg.is_keyword_arg or arg.is_star_arg or arg.default_value is not None:
-                continue
 
-            arg_name = arg.arg_name
-            arg_name = arg_name.replace("$", "\\$").replace("{", "").replace("}", "")
+        if self._add_arguments:
+            arg: IKeywordArg
+            for i, arg in enumerate(keyword_found.keyword_args):
+                if (
+                    arg.is_keyword_arg
+                    or arg.is_star_arg
+                    or arg.default_value is not None
+                ):
+                    continue
 
-            text += "    ${%s:%s}" % (i + 1, arg_name)
+                arg_name = arg.arg_name
+                arg_name = (
+                    arg_name.replace("$", "\\$").replace("{", "").replace("}", "")
+                )
+
+                text += "    ${%s:%s}" % (i + 1, arg_name)
 
         text_edit: TextEditTypedDict = {
             "range": {
@@ -126,11 +144,13 @@ def complete(completion_context: ICompletionContext) -> List[CompletionItemTyped
 
     token_info = completion_context.get_current_token()
     if token_info is not None:
-        token = ast_utils.get_keyword_name_token(
+        keyword_usage = ast_utils.create_keyword_usage_info_from_token(
             token_info.stack, token_info.node, token_info.token
         )
-        if token is not None:
-            collector = _Collector(completion_context, token)
+        if keyword_usage is not None and not keyword_usage.token.value.strip().endswith(
+            "}"
+        ):
+            collector = _Collector(completion_context, keyword_usage)
             collect_keywords(completion_context, collector)
 
             return collector.completion_items

@@ -929,3 +929,50 @@ My Test
     assert sorted([comp["label"] for comp in completions]) == [
         f"{lib_param.title()} Method (LibWithParams)"
     ]
+
+
+def apply_completion(doc, completion):
+    text_edit = completion["textEdit"]
+    doc.apply_text_edits([text_edit])
+
+
+def test_apply_keyword_with_existing_arguments(workspace):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    workspace.set_root("case2")
+    doc = workspace.put_doc(
+        "case2.robot",
+        """*** Keywords ***
+My Keyword
+    [Arguments]    ${v1}    ${v2}
+    Log to console    ${v1}${v2}
+
+*** Test Case ***
+My Test
+    My Keyw    $v1    $v2""",
+    )
+
+    line, col = doc.get_last_line_col()
+    col -= len("    $v1    $v2")
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws, line=line, col=col)
+    )
+    assert sorted([comp["label"] for comp in completions]) == [
+        "My Keyword (case2)",
+    ]
+
+    apply_completion(doc, completions[0])
+
+    assert (
+        doc.source
+        == """*** Keywords ***
+My Keyword
+    [Arguments]    ${v1}    ${v2}
+    Log to console    ${v1}${v2}
+
+*** Test Case ***
+My Test
+    My Keyword    $v1    $v2"""
+    )
