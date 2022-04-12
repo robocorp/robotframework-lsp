@@ -184,6 +184,7 @@ VARIABLE_OPERATOR_INDEX = TOKEN_TYPE_TO_INDEX["variableOperator"]
 SETTING_INDEX = TOKEN_TYPE_TO_INDEX["setting"]
 PARAMETER_NAME_INDEX = TOKEN_TYPE_TO_INDEX["parameterName"]
 DOCUMENTATION_INDEX = TOKEN_TYPE_TO_INDEX["documentation"]
+CONTROL_INDEX = TOKEN_TYPE_TO_INDEX["control"]
 
 
 def _tokenize_changing_argument_to_type(tokenize_variables_generator, use_type):
@@ -252,15 +253,16 @@ def _tokenize_token(
 
             in_expression = is_node_with_expression_argument(node)
             if scope.args_as_keywords_handler is not None:
-                if scope.args_as_keywords_handler.consider_current_argument_token_as_keyword(
-                    use_token
-                ):
+                tok_type = scope.args_as_keywords_handler.next_tok_type(use_token)
+                if tok_type == scope.args_as_keywords_handler.KEYWORD:
                     use_token_type = KEYWORD
 
-                if not in_expression:
-                    in_expression = (
-                        scope.args_as_keywords_handler.was_last_expression_argument
-                    )
+                elif tok_type == scope.args_as_keywords_handler.EXPRESSION:
+                    in_expression = True
+
+                elif tok_type == scope.args_as_keywords_handler.CONTROL:
+                    yield use_token, CONTROL_INDEX
+                    return
 
             if in_expression:
                 for token in iter_expression_tokens(use_token, "argumentValue"):

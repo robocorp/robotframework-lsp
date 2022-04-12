@@ -1027,27 +1027,31 @@ def _same_line_col(tok1: IRobotToken, tok2: IRobotToken):
 
 
 def _build_keyword_usage(
-    stack, node, yield_only_for_token, current_tokens, found_at_index
+    stack, node, yield_only_for_token, current_tokens
 ) -> Optional[KeywordUsageInfo]:
     # Note: just check for line/col because the token could be changed
     # (for instance, an EOL ' ' could be added to the token).
 
-    if yield_only_for_token is None or _same_line_col(
-        yield_only_for_token, current_tokens[found_at_index]
-    ):
-        current_token = current_tokens[found_at_index]
-        current_token = copy_token_replacing(current_token, type=current_token.KEYWORD)
-        new_tokens = [current_token]
-        new_tokens.extend(current_tokens[found_at_index + 1 :])
+    if yield_only_for_token is not None:
+        for tok in current_tokens:
+            if _same_line_col(yield_only_for_token, tok):
+                break
+        else:
+            return None
 
-        return KeywordUsageInfo(
-            stack,
-            node.__class__(new_tokens),
-            current_token,
-            current_token.value,
-            True,
-        )
-    return None
+    keyword_at_index = 0
+    keyword_token = current_tokens[keyword_at_index]
+    keyword_token = copy_token_replacing(keyword_token, type=keyword_token.KEYWORD)
+    new_tokens = [keyword_token]
+    new_tokens.extend(current_tokens[keyword_at_index + 1 :])
+
+    return KeywordUsageInfo(
+        stack,
+        node.__class__(new_tokens),
+        keyword_token,
+        keyword_token.value,
+        True,
+    )
 
 
 def _iter_keyword_usage_tokens_uncached_from_args(
@@ -1055,34 +1059,42 @@ def _iter_keyword_usage_tokens_uncached_from_args(
 ):
     # We may have multiple matches, so, we need to setup the appropriate book-keeping
     current_tokens = []
-    found_at_index = -1
 
     for token in node.tokens:
         if token.type == token.ARGUMENT:
-            current_tokens.append(token)
-            if args_as_keywords_handler.consider_current_argument_token_as_keyword(
-                token
+            next_tok_type = args_as_keywords_handler.next_tok_type(token)
+
+            if next_tok_type in (
+                args_as_keywords_handler.CONTROL,
+                args_as_keywords_handler.EXPRESSION,
             ):
-                found_at_index = len(current_tokens) - 1
-            else:
-                if args_as_keywords_handler.started_match:
-                    del current_tokens[-1]  # Don't add the ELSE IF/ELSE argument.
-                    usage_info = _build_keyword_usage(
-                        stack,
-                        node,
-                        yield_only_for_token,
-                        current_tokens,
-                        found_at_index,
-                    )
-                    if usage_info is not None:
-                        yield usage_info
-                    current_tokens = []
-                    found_at_index = -1
+                # Don't add IF/ELSE IF/AND nor the condition.
+                continue
+
+            if next_tok_type != args_as_keywords_handler.KEYWORD:
+                # Argument was now added to current_tokens.
+                current_tokens.append(token)
+
+                continue
+
+            if current_tokens:
+                # Starting a new one (build for the previous).
+                usage_info = _build_keyword_usage(
+                    stack,
+                    node,
+                    yield_only_for_token,
+                    current_tokens,
+                )
+                if usage_info is not None:
+                    yield usage_info
+
+            current_tokens = [token]
+
     else:
         # Do one last iteration at the end to deal with the last one.
-        if found_at_index >= 0 and len(current_tokens) > found_at_index:
+        if current_tokens:
             usage_info = _build_keyword_usage(
-                stack, node, yield_only_for_token, current_tokens, found_at_index
+                stack, node, yield_only_for_token, current_tokens
             )
             if usage_info is not None:
                 yield usage_info
@@ -1162,12 +1174,19 @@ def create_keyword_usage_info_from_token(
 
 
 class _ConsiderArgsAsKeywordNames:
+    NONE = 0
+    KEYWORD = 1
+    EXPRESSION = 2
+    CONTROL = 3
+
     def __init__(
         self,
+        node,
         normalized_keyword_name,
         consider_keyword_at_index,
         consider_condition_at_index,
     ):
+        self._node = node
         self._normalized_keyword_name = normalized_keyword_name
         self._consider_keyword_at_index = consider_keyword_at_index
         self._consider_condition_at_index = consider_condition_at_index
@@ -1176,68 +1195,145 @@ class _ConsiderArgsAsKeywordNames:
         # Run Keyword If is special because it has 'ELSE IF' / 'ELSE'
         # which will then be be (cond, keyword) or just (keyword), so
         # we need to provide keyword usages as needed.
-        self.multiple_matches = self._normalized_keyword_name == "runkeywordif"
+        if self._normalized_keyword_name == "runkeywordif":
+            self.next_tok_type = self._next_tok_type_run_keyword_if
+        elif self._normalized_keyword_name == "runkeywords":
+            found = False
+            for token in node.tokens:
+                if "AND" == token.value:
+                    found = True
+                    break
+            if found:
+                self.next_tok_type = self._next_tok_type_run_keywords
+            else:
+                self.next_tok_type = self._consider_each_arg_as_keyword
 
         self._stack_kind = None
         self._stack = None
-        self.started_match = False
-        self.was_last_expression_argument = False
+        self._started_match = False
 
-    def consider_current_argument_token_as_keyword(self, token) -> bool:
+    def next_tok_type_as_str(self, token) -> str:
+        tok_type = self.next_tok_type(token)
+        if tok_type == self.NONE:
+            return "<none>"
+        if tok_type == self.EXPRESSION:
+            return "<expression>"
+        if tok_type == self.KEYWORD:
+            return "<keyword>"
+        if tok_type == self.CONTROL:
+            return "<control>"
+        raise AssertionError(f"Unexpected: {tok_type}")
+
+    def next_tok_type(self, token) -> int:  # pylint: disable=method-hidden
+        assert token.type == token.ARGUMENT
+        self._current_arg += 1
+
+        if self._current_arg == self._consider_condition_at_index:
+            return self.EXPRESSION
+
+        if self._current_arg == self._consider_keyword_at_index:
+            return self.KEYWORD
+
+        return self.NONE
+
+    def _next_tok_type_run_keyword_if(self, token):
         assert token.type == token.ARGUMENT
 
         self._current_arg += 1
 
-        if self.multiple_matches:
-            if token.value == "ELSE IF":
-                self.started_match = True
-                self._stack = []
-                self._stack_kind = token.value
-            elif token.value == "ELSE":
-                self.started_match = True
-                self._stack = []
-                self._stack_kind = token.value
+        if token.value == "ELSE IF":
+            self._started_match = True
+            self._stack = []
+            self._stack_kind = token.value
+            return self.CONTROL
+        elif token.value == "ELSE":
+            self._started_match = True
+            self._stack = []
+            self._stack_kind = token.value
+            return self.CONTROL
 
-            else:
-                self.started_match = False
-                if self._stack is not None:
-                    self._stack.append(token)
-
+        else:
+            self._started_match = False
             if self._stack is not None:
-                if self._stack_kind == "ELSE IF":
-                    self.was_last_expression_argument = len(self._stack) == 1
-                    return len(self._stack) == 2
+                self._stack.append(token)
 
-                if self._stack_kind == "ELSE":
-                    self.was_last_expression_argument = False
-                    return len(self._stack) == 1
+        if self._stack is not None:
+            if self._stack_kind == "ELSE IF":
+                if len(self._stack) == 1:
+                    return self.EXPRESSION
+                return self.KEYWORD if len(self._stack) == 2 else self.NONE
 
-        self.was_last_expression_argument = (
-            self._current_arg == self._consider_condition_at_index
-        )
-        return self._current_arg == self._consider_keyword_at_index
+            if self._stack_kind == "ELSE":
+                return self.KEYWORD if len(self._stack) == 1 else self.NONE
+
+        if self._current_arg == self._consider_condition_at_index:
+            return self.EXPRESSION
+
+        if self._current_arg == self._consider_keyword_at_index:
+            return self.KEYWORD
+
+        return self.NONE
+
+    def _consider_each_arg_as_keyword(self, token):
+        assert token.type == token.ARGUMENT
+        return self.KEYWORD
+
+    def _next_tok_type_run_keywords(self, token):
+        assert token.type == token.ARGUMENT
+
+        self._current_arg += 1
+
+        if token.value == "AND":
+            self._started_match = True
+            self._stack = []
+            self._stack_kind = token.value
+            return self.CONTROL
+
+        else:
+            self._started_match = False
+            if self._stack is not None:
+                self._stack.append(token)
+
+        if self._stack is not None:
+            if self._stack_kind == "AND":
+                return self.KEYWORD if len(self._stack) == 1 else self.NONE
+
+        if self._current_arg == self._consider_keyword_at_index:
+            return self.KEYWORD
+        return self.NONE
 
 
 def get_args_as_keywords_handler(node) -> Optional[_ConsiderArgsAsKeywordNames]:
-    if isinstance_name(node, "KeywordCall"):
-        node_keyword_name = node.keyword
-        if node_keyword_name:
-            normalized_keyword_name = normalize_robot_name(node_keyword_name)
-            consider_keyword_at_index = KEYWORD_NAME_TO_KEYWORD_INDEX.get(
-                normalized_keyword_name
+    from robot.api import Token
+
+    if node.__class__.__name__ == "KeywordCall":
+        token_type = Token.KEYWORD
+
+    elif node.__class__.__name__ in CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET:
+        token_type = Token.NAME
+
+    else:
+        return None
+
+    node_keyword_name = node.get_token(token_type)
+    if node_keyword_name and node_keyword_name.value:
+        normalized_keyword_name = normalize_robot_name(node_keyword_name.value)
+        consider_keyword_at_index = KEYWORD_NAME_TO_KEYWORD_INDEX.get(
+            normalized_keyword_name
+        )
+        consider_condition_at_index = KEYWORD_NAME_TO_CONDITION_INDEX.get(
+            normalized_keyword_name
+        )
+        if (
+            consider_keyword_at_index is not None
+            or consider_condition_at_index is not None
+        ):
+            return _ConsiderArgsAsKeywordNames(
+                node,
+                normalized_keyword_name,
+                consider_keyword_at_index,
+                consider_condition_at_index,
             )
-            consider_condition_at_index = KEYWORD_NAME_TO_CONDITION_INDEX.get(
-                normalized_keyword_name
-            )
-            if (
-                consider_keyword_at_index is not None
-                or consider_condition_at_index is not None
-            ):
-                return _ConsiderArgsAsKeywordNames(
-                    normalized_keyword_name,
-                    consider_keyword_at_index,
-                    consider_condition_at_index,
-                )
     return None
 
 

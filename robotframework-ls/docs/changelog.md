@@ -1,3 +1,13 @@
+NEXT
+-----------------------------
+
+- Handle `Run Keywords` properly. [#642](https://github.com/robocorp/robotframework-lsp/issues/642)
+- Proper semantic highlighting for `ELSE/ELSE IF` in `Run Keyword If`.
+- Proper semantic highlighting for `AND` in `Run Keywords`.
+- Hover over arguments from `Run Keyword` targets works properly.
+- Updated `robotframework-tidy` to fix case which converted `*Tasks*` to `*Test Cases*`.
+
+
 New in 0.44.0 (2022-04-07)
 -----------------------------
 

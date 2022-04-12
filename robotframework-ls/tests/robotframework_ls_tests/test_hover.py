@@ -26,6 +26,52 @@ Log It
     assert contents["kind"] == "markdown"
 
 
+def test_hover_argument(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.hover import hover
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc(
+        "case4.robot",
+        doc.source
+        + """
+*** Test Cases ***
+Log It
+    Log    Something""",
+    )
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    result = hover(completion_context)
+    assert result
+
+    contents = result["contents"]
+    assert contents["value"].startswith("Parameter: *`message`* in Keyword Call.")
+
+
+def test_hover_argument_in_run_keyword(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.hover import hover
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc(
+        "case4.robot",
+        doc.source
+        + """
+*** Test Cases ***
+Log It
+    Run Keyword    Log    Something""",
+    )
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    result = hover(completion_context)
+    assert result
+
+    contents = result["contents"]
+    assert contents["value"].startswith("Parameter: *`message`* in Keyword Call.")
+
+
 def test_hover_basic_in_keyword_argument(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.hover import hover
@@ -47,6 +93,51 @@ Log It
 
     contents = result["contents"]
     assert "Log" in contents["value"]
+    assert contents["kind"] == "markdown"
+
+
+def test_hover_suite_setup(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.hover import hover
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.put_doc(
+        "case4.robot",
+        """
+*** Settings ***
+Suite Setup    Run Keyword    Log""",
+    )
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    result = hover(completion_context)
+    assert result
+
+    contents = result["contents"]
+    assert "Log" in contents["value"]
+    assert contents["kind"] == "markdown"
+
+
+def test_hover_in_run_keywords(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.hover import hover
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case4.robot")
+    doc = workspace.put_doc(
+        "case4.robot",
+        doc.source
+        + """
+*** Test Cases ***
+Log It
+    Run Keywords    Log    22    AND    Log to Console""",
+    )
+
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    result = hover(completion_context)
+    assert result
+
+    contents = result["contents"]
+    assert "Log To Console" in contents["value"]
     assert contents["kind"] == "markdown"
 
 

@@ -1,6 +1,7 @@
 # WARNING: auto-generated file. Do NOT edit.
 # If this file needs to be edited, change `codegen_kewords_in_args.py` and rerun.
 KEYWORD_NAME_TO_KEYWORD_INDEX = {
+    "runkeywords": 1,  # run_keywords
     "repeatkeyword": 2,  # repeat_keyword
     "runkeyword": 1,  # run_keyword
     "runkeywordandcontinueonfailure": 1,  # run_keyword_and_continue_on_failure

@@ -13,7 +13,7 @@ def main():
     # Import to force the registry.
     from robot.libraries.BuiltIn import BuiltIn
 
-    KEYWORD_NAME_TO_KEYWORD_INDEX = {}
+    KEYWORD_NAME_TO_KEYWORD_INDEX = {"run_keywords": 1}
     KEYWORD_NAME_TO_CONDITION_INDEX = {}
 
     for method in dir(BuiltIn):

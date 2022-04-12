@@ -425,7 +425,7 @@ Some test
             ("Cond1", "variable"),
             ("}", "variableOperator"),
             ("No operation", "keywordNameCall"),
-            ("ELSE", "argumentValue"),
+            ("ELSE", "control"),
             ("No operation", "keywordNameCall"),
         ],
     )
@@ -447,13 +447,13 @@ Some test
             ("Cond1", "variable"),
             ("}", "variableOperator"),
             ("No operation", "keywordNameCall"),
-            ("ELSE IF", "argumentValue"),
+            ("ELSE IF", "control"),
             ("${", "variableOperator"),
             ("cond", "variable"),
             ("}", "variableOperator"),
             ("No operation", "keywordNameCall"),
             ("arg", "argumentValue"),
-            ("ELSE", "argumentValue"),
+            ("ELSE", "control"),
             ("No operation", "keywordNameCall"),
             ("arg", "argumentValue"),
         ],
@@ -1126,5 +1126,26 @@ Dictionary Variable
             ("][", "variableOperator"),
             ("Zip", "variable"),
             ("]", "variableOperator"),
+        ],
+    )
+
+
+def test_semantic_and_in_run_keywords(workspace):
+    check_simple(
+        workspace,
+        """
+*** Settings ***
+Suite Teardown     Run Keywords    Log     Tear1     AND     Log     Tear2
+
+""",
+        [
+            ("*** Settings ***", "header"),
+            ("Suite Teardown", "setting"),
+            ("Run Keywords", "keywordNameCall"),
+            ("Log", "keywordNameCall"),
+            ("Tear1", "argumentValue"),
+            ("AND", "control"),
+            ("Log", "keywordNameCall"),
+            ("Tear2", "argumentValue"),
         ],
     )

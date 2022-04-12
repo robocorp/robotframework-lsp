@@ -1180,3 +1180,57 @@ Demo
     definition = definitions[0]
     assert definition.source.endswith("vars.py")
     assert definition.lineno == 2
+
+
+def test_find_definition_suite_setup(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Suite Setup    Keyword1
+
+*** Keyword ***
+Keyword 1
+"""
+
+    line, col = doc.get_last_line_col_with_contents("Suite Setup    Keyword1")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = definitions[0]
+    assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 5
+
+
+def test_find_definition_run_keyword_suite_setup(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Suite Setup    Run Keyword    Keyword1
+
+*** Keyword ***
+Keyword 1
+"""
+
+    line, col = doc.get_last_line_col_with_contents(
+        "Suite Setup    Run Keyword    Keyword1"
+    )
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = definitions[0]
+    assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 5
