@@ -292,6 +292,7 @@ export async function setupTestExplorerSupport() {
 
         // We want the events both in run and debug in this case.
         args.push("--listener=robotframework_debug_adapter.events_listener.EventsListenerV2");
+        args.push("--listener=robotframework_debug_adapter.events_listener.EventsListenerV3");
 
         // Include/exclude tests based on RFLS_PRERUN_FILTERING env variable.
         let envFiltering: string | undefined = undefined;
@@ -430,28 +431,32 @@ export async function setupTestExplorerSupport() {
 
     vscode.debug.onDidReceiveDebugSessionCustomEvent((event: vscode.DebugSessionCustomEvent) => {
         // OUTPUT_CHANNEL.appendLine("Received event: " + event.event + " -- " + JSON.stringify(event.body));
-        if (isRelatedSession(event.session)) {
-            const runId = event.session.configuration.runId;
-            const testRun = runIdToTestRun.get(runId);
-            if (testRun) {
-                switch (event.event) {
-                    case "startSuite":
-                        handleSuiteStart(testRun, event);
-                        break;
-                    case "endSuite":
-                        handleSuiteEnd(testRun, event);
-                        break;
-                    case "startTest":
-                        handleTestStart(testRun, event);
-                        break;
-                    case "endTest":
-                        handleTestEnd(testRun, event);
-                        break;
-                    case "logMessage":
-                        handleLogMessage(testRun, event);
-                        break;
+        try {
+            if (isRelatedSession(event.session)) {
+                const runId = event.session.configuration.runId;
+                const testRun = runIdToTestRun.get(runId);
+                if (testRun) {
+                    switch (event.event) {
+                        case "startSuite":
+                            handleSuiteStart(testRun, event);
+                            break;
+                        case "endSuite":
+                            handleSuiteEnd(testRun, event);
+                            break;
+                        case "startTest":
+                            handleTestStart(testRun, event);
+                            break;
+                        case "endTest":
+                            handleTestEnd(testRun, event);
+                            break;
+                        case "logMessage":
+                            handleLogMessage(testRun, event);
+                            break;
+                    }
                 }
             }
+        } catch (err) {
+            logError("Error handling debug session event", err, "HANDLE_DEBUG_SESSION_EVENT");
         }
     });
 }

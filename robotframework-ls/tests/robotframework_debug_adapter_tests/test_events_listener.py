@@ -17,7 +17,8 @@ def test_events_listener_basic(debugger_api: _DebuggerAPI):
         target,
         debug=False,
         args=[
-            "--listener=robotframework_debug_adapter.events_listener.EventsListenerV2"
+            "--listener=robotframework_debug_adapter.events_listener.EventsListenerV2",
+            "--listener=robotframework_debug_adapter.events_listener.EventsListenerV3",
         ],
     )
 
@@ -49,14 +50,16 @@ def test_events_listener_failure(debugger_api: _DebuggerAPI):
         target,
         debug=False,
         args=[
-            "--listener=robotframework_debug_adapter.events_listener.EventsListenerV2"
+            "--listener=robotframework_debug_adapter.events_listener.EventsListenerV2",
+            "--listener=robotframework_debug_adapter.events_listener.EventsListenerV3",
         ],
     )
 
     debugger_api.configuration_done()
 
     assert debugger_api.read(StartSuiteEvent)
-    assert debugger_api.read(StartTestEvent)
+    start_test_event = debugger_api.read(StartTestEvent)
+    assert start_test_event.body.source.endswith("case_failure.robot")
 
     log_message_body = debugger_api.read(LogMessageEvent).body
     assert "No keyword with name" in log_message_body.message
@@ -98,7 +101,8 @@ def test_events_listener_output(debugger_api: _DebuggerAPI):
         target,
         debug=False,
         args=[
-            "--listener=robotframework_debug_adapter.events_listener.EventsListenerV2"
+            "--listener=robotframework_debug_adapter.events_listener.EventsListenerV2",
+            "--listener=robotframework_debug_adapter.events_listener.EventsListenerV3",
         ],
     )
 
@@ -140,7 +144,8 @@ def test_events_listener_ignore(debugger_api: _DebuggerAPI):
         target,
         debug=False,
         args=[
-            "--listener=robotframework_debug_adapter.events_listener.EventsListenerV2"
+            "--listener=robotframework_debug_adapter.events_listener.EventsListenerV2",
+            "--listener=robotframework_debug_adapter.events_listener.EventsListenerV3",
         ],
     )
 

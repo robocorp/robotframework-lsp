@@ -6,6 +6,7 @@ NEXT
 - Proper semantic highlighting for `AND` in `Run Keywords`.
 - Hover over arguments from `Run Keyword` targets works properly.
 - Updated `robotframework-tidy` to fix case which converted `*Tasks*` to `*Test Cases*`.
+- Properly mark tests passed/failed in test view with `Robot Framework 3.x`. [#644](https://github.com/robocorp/robotframework-lsp/issues/644)
 
 
 New in 0.44.0 (2022-04-07)
