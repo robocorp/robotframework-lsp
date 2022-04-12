@@ -1149,3 +1149,34 @@ Suite Teardown     Run Keywords    Log     Tear1     AND     Log     Tear2
             ("Tear2", "argumentValue"),
         ],
     )
+
+
+def test_semantic_with_slash(workspace):
+    check_simple(
+        workspace,
+        """
+*** Settings ***
+Library    OperatingSystem
+
+*** Test Case ***
+My Test
+    OperatingSystem.Create File    c:/temp/a.txt
+    OperatingSystem.Append To File    c:/temp/a.txt    xxx=\\n
+""",
+        [
+            ("*** Settings ***", "header"),
+            ("Library", "setting"),
+            ("OperatingSystem", "name"),
+            ("*** Test Case ***", "header"),
+            ("My Test", "testCaseName"),
+            ("OperatingSystem", "name"),
+            (".Create File", "keywordNameCall"),
+            ("c:/temp/a.txt", "argumentValue"),
+            ("OperatingSystem", "name"),
+            (".Append To File", "keywordNameCall"),
+            ("c:/temp/a.txt", "argumentValue"),
+            ("xxx", "parameterName"),
+            ("=", "variableOperator"),
+            ("\\n", "argumentValue"),
+        ],
+    )

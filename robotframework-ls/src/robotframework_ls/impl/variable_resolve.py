@@ -93,6 +93,7 @@ def _find_split_index(string: str, eq_i: int) -> int:
         if not variables and "\\" not in string:
             return eq_i
 
+        relative_index = 0
         for robot_match, relative_index in variables:
             before, string = (
                 robot_match.before,
