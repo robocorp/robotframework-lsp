@@ -22,6 +22,8 @@ from robocop.version import __version__
 from robocop.exceptions import InvalidExternalCheckerError
 
 ROBOT_VERSION = version.parse(RF_VERSION)
+if not hasattr(ROBOT_VERSION, "major"):
+    ROBOT_VERSION.major = ROBOT_VERSION.release[0]
 
 
 def modules_in_current_dir(path, module_name):
