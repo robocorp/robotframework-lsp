@@ -1,3 +1,10 @@
+New in 0.31.0 (2022-04-13)
+-----------------------------
+
+- Locators: `robocorp-inspector` was upgraded to `0.6.4`.
+- `RCC` was upgraded to to `v11.9.16`.
+
+
 New in 0.30.0 (2022-04-05)
 -----------------------------
 
