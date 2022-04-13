@@ -1,4 +1,4 @@
-NEXT
+New in 0.45.0 (2022-04-13)
 -----------------------------
 
 - Fixed issue which could make autocomplete delete code (only in Intellij). [#484](https://github.com/robocorp/robotframework-lsp/issues/484)

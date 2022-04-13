@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.44.0'
+version '0.45.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,25 +50,18 @@ intellij {
 
 patchPluginXml {
     changeNotes """
-    Release 0.44.0
+    Release 0.45.0
     </p>
     <ul>
   
-    <li><strong>Improvements dealing with Variables:</strong></li>
-      <li>Variables in document are considered in Libdoc arguments.</li>
-      <li>Escaping rules are considered when setting variables using <strong>Set Variable XXX</strong> keywords.</li>
-      <li>Variables set with <strong>Set Local Variable</strong> are recognized.</li>
-      <li>Consider that loading an environment variable may have a default value.</li>
-      <li>Variables in python files with annotated assignments are supported (i.e.: <strong>value: int = 10</strong>).</li>
-      <li>Variables in templates are not reported as errors.</li>
-      <li>Properly deal with variables with other variables inside.</li>
-      <li>Load variables from python module with <strong>get_variables</strong> returning a literal dict.</li>
-    <li><strong>Improvements in debugger:</strong></li>
-      <li>The debugger no longer stops in <strong>Run Keyword And Return Status</strong> by default.</li>
-      <li>Assign to variable in debug console repl.</li>
-      <li>Fixed case where breakpoints in <strong>.py</strong> files wouldn't be added.</li>
-    <li>Upgraded vendored <strong>robocop</strong> to <strong>2.0.1</strong>. </li>
-    <li>Upgraded vendored <strong>robotframework-tidy</strong> to <strong>2.1.0</strong>. </li>
+    <li>Fixed issue which could make autocomplete delete code (only in Intellij).</li>
+    <li>Handle <strong>Run Keywords</strong> properly.</li>
+    <li>Proper semantic highlighting for <strong>ELSE/ELSE IF</strong> in <strong>Run Keyword If</strong>.</li>
+    <li>Proper semantic highlighting for <strong>AND</strong> in <strong>Run Keywords</strong>.</li>
+    <li>Hover over arguments from <strong>Run Keyword</strong> targets works properly.</li>
+    <li>Properly mark tests passed/failed in test view with <strong>Robot Framework 3.x</strong>.</li>
+    <li>Fix to <strong>robotframework-tidy</strong> to no longer convert <strong>*Tasks*</strong> to <strong>*Test Cases*</strong>.</li>
+    <li>Fix issue in semantic highlighting when a slash was encountered.</li>
 
     <br>
     Current feature set:<br>
