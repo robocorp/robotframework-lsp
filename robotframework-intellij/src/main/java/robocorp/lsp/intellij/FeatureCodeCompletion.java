@@ -19,6 +19,7 @@
 package robocorp.lsp.intellij;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -54,6 +55,9 @@ import java.util.regex.Pattern;
 // https://intellij-support.jetbrains.com/hc/en-us/community/posts/360010327299-Code-completion-without-applying-initial-lookupString
 // (Code-completion without applying initial lookupString)
 public class FeatureCodeCompletion extends CompletionContributor {
+
+    public static AutoCompletionPolicy AUTO_COMPLETION_POLICY = AutoCompletionPolicy.SETTINGS_DEPENDENT;
+
     private static final Logger LOG = Logger.getInstance(FeatureCodeCompletion.class);
 
     private static final AtomicReference<CompletableFuture<Either<List<CompletionItem>, CompletionList>>> currentCompletion = new AtomicReference<>();
@@ -210,12 +214,12 @@ public class FeatureCodeCompletion extends CompletionContributor {
                     try {
                         if (res.getLeft() != null) {
                             for (CompletionItem item : res.getLeft()) {
-                                LookupElement lookupElement = createLookupItem(item);
+                                LookupElement lookupElement = createLookupItem(item, offset);
                                 completionResult.addElement(lookupElement);
                             }
                         } else if (res.getRight() != null) {
                             for (CompletionItem item : res.getRight().getItems()) {
-                                LookupElement lookupElement = createLookupItem(item);
+                                LookupElement lookupElement = createLookupItem(item, offset);
                                 completionResult.addElement(lookupElement);
                             }
                         }
@@ -233,13 +237,13 @@ public class FeatureCodeCompletion extends CompletionContributor {
         }
     }
 
-    private @NotNull LookupElement createLookupItem(final CompletionItem item) {
+    private @NotNull LookupElement createLookupItem(final CompletionItem item, final int requestedAtOffset) {
         final CompletionItemKind kind = item.getKind();
         final String label = item.getLabel();
         final Icon icon = LanguageServerIcons.getCompletionIcon(kind);
         final String lookupString = label;
 
-        return new LookupElement() {
+        LookupElement ret = new LookupElement() {
 
             @Override
             public @NotNull String getLookupString() {
@@ -263,34 +267,43 @@ public class FeatureCodeCompletion extends CompletionContributor {
                 return false;
             }
 
+            public AutoCompletionPolicy getAutoCompletionPolicy() {
+                return AUTO_COMPLETION_POLICY;
+            }
+
             @Override
             public void handleInsert(@NotNull InsertionContext context) {
+                EditorUtils.runWriteAction(() -> {
+                    doHandleInsert(context);
+                });
+            }
+
+            private void doHandleInsert(@NotNull InsertionContext context) {
                 Either<TextEdit, InsertReplaceEdit> either = item.getTextEdit();
                 if (!either.isLeft()) {
                     throw new RuntimeException("Expected only TextEdit, not InsertReplaceEdit.");
                 }
                 TextEdit textEdit = either.getLeft();
                 Document document = context.getDocument();
-                int startOffset = context.getStartOffset();
+                int tailOffset = context.getTailOffset();
                 Position startPos = textEdit.getRange().getStart();
-                int startPosOffset = EditorUtils.LSPPosToOffset(document, startPos);
-
-                if (startPosOffset > startOffset) {
-                    // i.e.: Don't remove what wasn't added in the first place.
-                    startOffset = startPosOffset;
-                }
 
                 int lineStartOffset = document.getLineStartOffset(startPos.getLine());
-                String currLineText = document.getText(new TextRange(lineStartOffset, startOffset));
+                String lineTextToCursor = "";
+                if (lineStartOffset < tailOffset) {
+                    lineTextToCursor = document.getText(new TextRange(lineStartOffset, tailOffset));
+                }
 
-                document.deleteString(startOffset, context.getTailOffset());
+                if (requestedAtOffset != tailOffset) {
+                    document.deleteString(requestedAtOffset, tailOffset);
+                }
 
                 ArrayList<TextEdit> lst = new ArrayList<>();
                 String originalText = textEdit.getNewText();
                 int i;
                 if ((i = originalText.indexOf('\n')) != -1) {
                     // i.e.: properly indent the other lines
-                    String indentationFromLine = StringUtils.getIndentationFromLine(currLineText);
+                    String indentationFromLine = StringUtils.getIndentationFromLine(lineTextToCursor);
                     List<String> lines = StringUtils.splitInLines(originalText);
                     Iterator<String> it = lines.iterator();
                     FastStringBuffer buf = new FastStringBuffer(it.next(), indentationFromLine.length() * 10); // First is added as is.
@@ -386,6 +399,9 @@ public class FeatureCodeCompletion extends CompletionContributor {
                 TemplateManager.getInstance(project).startTemplate(editor, template);
             }
         };
+
+        ret.putUserData(CodeCompletionHandlerBase.DIRECT_INSERTION, true);
+        return ret;
     }
 
     public static final Pattern SNIPPET_PLACEHOLDER_REGEX = Pattern.compile("(\\$\\{\\d+:?([^{^}]*)}|\\$\\d+)");

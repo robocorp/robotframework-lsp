@@ -1,5 +1,6 @@
 package robocorp.lsp.intellij;
 
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import org.eclipse.lsp4j.Diagnostic;
@@ -9,6 +10,12 @@ import java.util.List;
 
 public class CompletionTest extends LSPTesCase {
     private static final Logger LOG = Logger.getInstance(CompletionTest.class);
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        FeatureCodeCompletion.AUTO_COMPLETION_POLICY = AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE;
+    }
 
     @Override
     protected void tearDown() throws Exception {
@@ -22,7 +29,15 @@ public class CompletionTest extends LSPTesCase {
         int textLength = editor.getDocument().getTextLength();
         editor.getCaretModel().moveToOffset(textLength);
         myFixture.testCompletion("casevariable.robot", "casevariable_after.robot");
+    }
 
+    @Test
+    public void testVariableCompletion2() throws Exception {
+        myFixture.configureByFile("casevariable2.robot");
+        Editor editor = myFixture.getEditor();
+        int textLength = editor.getDocument().getTextLength();
+        editor.getCaretModel().moveToOffset(textLength - "}   ${DUMMY_VAR1}".length());
+        myFixture.testCompletion("casevariable2.robot", "casevariable2_after.robot");
     }
 
     @Test

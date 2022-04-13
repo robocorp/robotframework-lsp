@@ -1,3 +1,16 @@
+NEXT
+-----------------------------
+
+- Fixed issue which could make autocomplete delete code (only in Intellij). [#484](https://github.com/robocorp/robotframework-lsp/issues/484)
+- Handle `Run Keywords` properly. [#642](https://github.com/robocorp/robotframework-lsp/issues/642)
+- Proper semantic highlighting for `ELSE/ELSE IF` in `Run Keyword If`.
+- Proper semantic highlighting for `AND` in `Run Keywords`.
+- Hover over arguments from `Run Keyword` targets works properly.
+- Properly mark tests passed/failed in test view with `Robot Framework 3.x`. [#644](https://github.com/robocorp/robotframework-lsp/issues/644)
+- Fix to `robotframework-tidy` to no longer convert `*Tasks*` to `*Test Cases*`.
+- Fix issue in semantic highlighting when a slash was encountered. [#647](https://github.com/robocorp/robotframework-lsp/issues/647)
+ 
+
 New in 0.44.0 (2022-04-07)
 -----------------------------
 

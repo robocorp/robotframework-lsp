@@ -7,7 +7,6 @@ NEXT
 - Hover over arguments from `Run Keyword` targets works properly.
 - Properly mark tests passed/failed in test view with `Robot Framework 3.x`. [#644](https://github.com/robocorp/robotframework-lsp/issues/644)
 - Fix to `robotframework-tidy` to no longer convert `*Tasks*` to `*Test Cases*`.
-- Fix to `robocop` to work with Python 3.7.
 - Fix issue in semantic highlighting when a slash was encountered. [#647](https://github.com/robocorp/robotframework-lsp/issues/647)
 
 
