@@ -23,7 +23,7 @@ import {
     getWorkspaceDescription,
     selectWorkspace,
 } from "./ask";
-import { feedback, feedbackRobocorpCodeError } from "./rcc";
+import { feedback, feedbackRobocorpCodeError, getEndpointUrl } from "./rcc";
 import { refreshCloudTreeView } from "./viewsRobocorp";
 
 export async function cloudLogin(): Promise<boolean> {
@@ -39,7 +39,8 @@ export async function cloudLogin(): Promise<boolean> {
             return false;
         }
         if (!credentials) {
-            env.openExternal(Uri.parse("https://cloud.robocorp.com/settings/access-credentials"));
+            const cloudBaseUrl = await getEndpointUrl("cloud-ui");
+            env.openExternal(Uri.parse(cloudBaseUrl + "settings/access-credentials"));
             continue;
         }
         let commandResult: ActionResult<any> = await commands.executeCommand(

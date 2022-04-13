@@ -36,6 +36,7 @@ import { fileExists, getExtensionRelativeFile, uriExists } from "./files";
 import {
     feedbackAnyError,
     feedbackRobocorpCodeError,
+    getEndpointUrl,
     getRccLocation,
     getRobocorpHome,
     submitIssue,
@@ -351,13 +352,15 @@ function registerRobocorpCodeCommands(C: CommandRegistry) {
     C.register(ROBOCORP_UPDATE_LAUNCH_ENV, updateLaunchEnvironment);
     C.register(ROBOCORP_CONNECT_VAULT, connectVault);
     C.register(ROBOCORP_DISCONNECT_VAULT, disconnectVault);
-    C.register(ROBOCORP_OPEN_CLOUD_HOME, () => {
-        commands.executeCommand("vscode.open", Uri.parse("https://cloud.robocorp.com/home"));
+    C.register(ROBOCORP_OPEN_CLOUD_HOME, async () => {
+        const cloudBaseUrl = await getEndpointUrl("cloud-ui");
+        commands.executeCommand("vscode.open", Uri.parse(cloudBaseUrl + "home"));
     });
-    C.register(ROBOCORP_OPEN_VAULT_HELP, () => {
+    C.register(ROBOCORP_OPEN_VAULT_HELP, async () => {
+        const cloudBaseUrl = await getEndpointUrl("docs");
         commands.executeCommand(
             "vscode.open",
-            Uri.parse("https://robocorp.com/docs/development-guide/variables-and-secrets/vault")
+            Uri.parse(cloudBaseUrl + "development-guide/variables-and-secrets/vault")
         );
     });
     C.register(ROBOCORP_OPEN_EXTERNALLY, async (item: FSEntry) => {

@@ -11,6 +11,8 @@ import { Timing, sleep } from "./time";
 import { execFilePromise, ExecFileReturn, mergeEnviron } from "./subprocess";
 import * as roboConfig from "./robocorpSettings";
 
+let lastPrintedRobocorpHome: string = "";
+
 export async function getRobocorpHome(): Promise<string> {
     let robocorpHome: string = roboConfig.getHome();
     if (!robocorpHome || robocorpHome.length == 0) {
@@ -24,7 +26,10 @@ export async function getRobocorpHome(): Promise<string> {
             }
         }
     }
-    OUTPUT_CHANNEL.appendLine("ROBOCORP_HOME: " + robocorpHome);
+    if (lastPrintedRobocorpHome != robocorpHome) {
+        lastPrintedRobocorpHome = robocorpHome;
+        OUTPUT_CHANNEL.appendLine("ROBOCORP_HOME: " + robocorpHome);
+    }
     return robocorpHome;
 }
 
@@ -401,7 +406,11 @@ export async function submitIssue(
                 args.push("-a");
                 args.push(file);
             }
-            await execFilePromise(rccLocation, args, {});
+
+            const robocorpHome = await getRobocorpHome();
+            const env = createEnvWithRobocorpHome(robocorpHome);
+
+            await execFilePromise(rccLocation, args, { "env": env });
         }
     } catch (err) {
         errored = true;
@@ -427,7 +436,11 @@ interface IEnvInfo {
 export async function feedback(name: string) {
     const rccLocation = await getRccLocation();
     let args: string[] = ["feedback", "metric", "-t", "vscode", "-n", name, "-v", "+1"];
-    await execFilePromise(rccLocation, args, {}, { "hideCommandLine": true });
+
+    const robocorpHome = await getRobocorpHome();
+    const env = createEnvWithRobocorpHome(robocorpHome);
+
+    await execFilePromise(rccLocation, args, { "env": env }, { "hideCommandLine": true });
 }
 
 export async function feedbackRobocorpCodeError(errorCode: string) {
@@ -443,7 +456,11 @@ export async function feedbackRobocorpCodeError(errorCode: string) {
 export async function feedbackAnyError(errorSource: string, errorCode: string) {
     const rccLocation = await getRccLocation();
     let args: string[] = ["feedback", "metric", "-t", "vscode", "-n", errorSource, "-v", errorCode];
-    await execFilePromise(rccLocation, args, {}, { "hideCommandLine": true });
+
+    const robocorpHome = await getRobocorpHome();
+    const env = createEnvWithRobocorpHome(robocorpHome);
+
+    await execFilePromise(rccLocation, args, { "env": env }, { "hideCommandLine": true });
 }
 
 /**
@@ -567,4 +584,43 @@ export async function collectBaseEnv(
     }
 
     return { "env": finalEnv, "robocorpHome": robocorpHome, "rccLocation": rccLocation };
+}
+
+// Returns something as: https://cloud.robocorp.com/
+// The baseUrl is something as: "cloud-ui" or "docs".
+export async function getEndpointUrl(baseUrl): Promise<string> {
+    try {
+        const robocorpHome = await getRobocorpHome();
+        const env = createEnvWithRobocorpHome(robocorpHome);
+
+        const rccLocation = await getRccLocation();
+        let args: string[] = ["config", "settings", "--json"];
+        const execReturn: ExecFileReturn = await execFilePromise(
+            rccLocation,
+            args,
+            { "env": env },
+            { "hideCommandLine": true }
+        );
+        const stdout = execReturn.stdout;
+        if (stdout) {
+            const configSettings = JSON.parse(stdout);
+            let url = configSettings["endpoints"][baseUrl];
+            if (!url.endsWith("/")) {
+                url += "/";
+            }
+            return url;
+        } else {
+            throw new Error("No stdout from rcc config settings. stderr: " + execReturn.stderr);
+        }
+    } catch (error) {
+        logError("Error getting cloud base url.", error, "RCC_GET_CLOUD_BASE_URL");
+    }
+
+    if (baseUrl == "cloud-ui") {
+        return "https://cloud.robocorp.com/";
+    }
+    if (baseUrl == "docs") {
+        return "https://robocorp.com/docs/";
+    }
+    throw new Error("Unable to get endpoint url: " + baseUrl);
 }
