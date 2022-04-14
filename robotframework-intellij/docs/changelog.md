@@ -1,3 +1,9 @@
+New in 0.45.2 (2022-04-14)
+-----------------------------
+
+- Bugfix release handling `Wait Until Keyword Succeeds` properly. [#650](https://github.com/robocorp/robotframework-lsp/issues/650)
+
+
 New in 0.45.0 (2022-04-13)
 -----------------------------
 
