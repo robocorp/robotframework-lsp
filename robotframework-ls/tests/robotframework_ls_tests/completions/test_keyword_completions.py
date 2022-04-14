@@ -754,6 +754,76 @@ def test_keyword_completions_on_keyword_arguments_run_keyword_if(
     _check_should_be_completions(doc, workspace.ws)
 
 
+def test_keyword_completions_on_wait_until_keyword_succeeds(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+Some defined keyword
+    [Arguments]    ${foo}    ${bar}
+
+    Log To Console    ${foo} ${bar}
+    
+ret
+    ${ret}=    Wait Until Keyword Succeeds    5m    10s    Some defin"""
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    for c in completions:
+        c.pop("data", None)
+    data_regression.check(completions)
+
+
+def test_keyword_completions_on_wait_until_keyword_succeeds_with_params(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.server_api.server import complete_all
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+Some defined keyword
+    [Arguments]    ${foo}    ${bar}
+
+    Log To Console    ${foo} ${bar}
+    
+ret
+    ${ret}=    Wait Until Keyword Succeeds    5m    10s    Some defined keyword    f"""
+    completions = complete_all(CompletionContext(doc, workspace=workspace.ws))
+    data_regression.check(completions)
+
+
+def test_keyword_completions_on_wait_until_keyword_succeeds_with_params_2(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.server_api.server import complete_all
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+Some defined keyword
+    [Arguments]    ${foo}    ${bar}
+
+    Log To Console    ${foo} ${bar}
+    
+ret
+    ${ret}=    Wait Until Keyword Succeeds    5m    10s    Some defined keyword    """
+    completions = complete_all(CompletionContext(doc, workspace=workspace.ws))
+    data_regression.check(completions)
+
+
 def test_keyword_completions_on_keyword_arguments_run_keyword_if_space_at_end(
     workspace, libspec_manager
 ):

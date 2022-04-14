@@ -1,0 +1,32 @@
+- deprecated: false
+  documentation: ${foo}
+  insertText: foo=
+  insertTextFormat: 1
+  kind: 5
+  label: foo=
+  preselect: false
+  textEdit:
+    newText: foo=
+    range:
+      end:
+        character: 83
+        line: 8
+      start:
+        character: 83
+        line: 8
+- deprecated: false
+  documentation: ${bar}
+  insertText: bar=
+  insertTextFormat: 1
+  kind: 5
+  label: bar=
+  preselect: false
+  textEdit:
+    newText: bar=
+    range:
+      end:
+        character: 83
+        line: 8
+      start:
+        character: 83
+        line: 8

@@ -1,0 +1,16 @@
+- deprecated: false
+  documentation: ${foo}
+  insertText: foo=
+  insertTextFormat: 1
+  kind: 5
+  label: foo=
+  preselect: false
+  textEdit:
+    newText: oo=
+    range:
+      end:
+        character: 84
+        line: 8
+      start:
+        character: 84
+        line: 8

@@ -1,0 +1,13 @@
+- insertText: Some defined keyword    ${1:\$foo}    ${2:\$bar}
+  insertTextFormat: 2
+  kind: 3
+  label: Some defined keyword (case2)
+  textEdit:
+    newText: Some defined keyword    ${1:\$foo}    ${2:\$bar}
+    range:
+      end:
+        character: 69
+        line: 8
+      start:
+        character: 59
+        line: 8

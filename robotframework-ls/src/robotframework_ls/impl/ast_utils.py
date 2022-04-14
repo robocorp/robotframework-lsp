@@ -1027,20 +1027,27 @@ def _same_line_col(tok1: IRobotToken, tok2: IRobotToken):
 
 
 def _build_keyword_usage(
-    stack, node, yield_only_for_token, current_tokens
+    stack, node, yield_only_for_token, current_tokens, yield_only_over_keyword_name
 ) -> Optional[KeywordUsageInfo]:
     # Note: just check for line/col because the token could be changed
     # (for instance, an EOL ' ' could be added to the token).
-
-    if yield_only_for_token is not None:
-        for tok in current_tokens:
-            if _same_line_col(yield_only_for_token, tok):
-                break
-        else:
-            return None
+    if not current_tokens:
+        return None
 
     keyword_at_index = 0
     keyword_token = current_tokens[keyword_at_index]
+
+    if yield_only_for_token is not None:
+        if yield_only_over_keyword_name:
+            if not _same_line_col(yield_only_for_token, keyword_token):
+                return None
+        else:
+            for tok in current_tokens:
+                if _same_line_col(yield_only_for_token, tok):
+                    break
+            else:
+                return None
+
     keyword_token = copy_token_replacing(keyword_token, type=keyword_token.KEYWORD)
     new_tokens = [keyword_token]
     new_tokens.extend(current_tokens[keyword_at_index + 1 :])
@@ -1055,12 +1062,25 @@ def _build_keyword_usage(
 
 
 def _iter_keyword_usage_tokens_uncached_from_args(
-    stack, node, args_as_keywords_handler, yield_only_for_token=None
+    stack,
+    node,
+    args_as_keywords_handler,
+    yield_only_for_token: Optional[IRobotToken] = None,
+    yield_only_over_keyword_name: bool = True,
 ):
     # We may have multiple matches, so, we need to setup the appropriate book-keeping
     current_tokens = []
 
-    for token in node.tokens:
+    iter_in = iter(node.tokens)
+
+    for token in iter_in:
+        if token.type == token.ARGUMENT:
+            next_tok_type = args_as_keywords_handler.next_tok_type(token)
+            if next_tok_type == args_as_keywords_handler.KEYWORD:
+                current_tokens.append(token)
+                break
+
+    for token in iter_in:
         if token.type == token.ARGUMENT:
             next_tok_type = args_as_keywords_handler.next_tok_type(token)
 
@@ -1074,7 +1094,6 @@ def _iter_keyword_usage_tokens_uncached_from_args(
             if next_tok_type != args_as_keywords_handler.KEYWORD:
                 # Argument was now added to current_tokens.
                 current_tokens.append(token)
-
                 continue
 
             if current_tokens:
@@ -1084,6 +1103,7 @@ def _iter_keyword_usage_tokens_uncached_from_args(
                     node,
                     yield_only_for_token,
                     current_tokens,
+                    yield_only_over_keyword_name,
                 )
                 if usage_info is not None:
                     yield usage_info
@@ -1094,7 +1114,11 @@ def _iter_keyword_usage_tokens_uncached_from_args(
         # Do one last iteration at the end to deal with the last one.
         if current_tokens:
             usage_info = _build_keyword_usage(
-                stack, node, yield_only_for_token, current_tokens
+                stack,
+                node,
+                yield_only_for_token,
+                current_tokens,
+                yield_only_over_keyword_name,
             )
             if usage_info is not None:
                 yield usage_info
@@ -1167,6 +1191,7 @@ def create_keyword_usage_info_from_token(
                 node,
                 args_as_keywords_handler,
                 yield_only_for_token=token,
+                yield_only_over_keyword_name=False,
             ):
                 return v
 
@@ -1338,10 +1363,17 @@ def get_args_as_keywords_handler(node) -> Optional[_ConsiderArgsAsKeywordNames]:
 
 
 def get_keyword_name_token(
-    stack: Tuple[INode, ...], node: INode, token: IRobotToken
+    stack: Tuple[INode, ...],
+    node: INode,
+    token: IRobotToken,
+    accept_only_over_keyword_name: bool = True,
 ) -> Optional[IRobotToken]:
     """
     If the given token is a keyword call name, return the token, otherwise return None.
+
+    :param accept_only_over_keyword_name:
+        If True we'll only accept the token if it's over the keyword name.
+        If False we'll accept the token even if it's over a keyword parameter.
 
     :note: this goes hand-in-hand with iter_keyword_usage_tokens.
     """
@@ -1359,6 +1391,7 @@ def get_keyword_name_token(
                 node,
                 args_as_keywords_handler,
                 yield_only_for_token=token,
+                yield_only_over_keyword_name=accept_only_over_keyword_name,
             ):
                 return token
     return None

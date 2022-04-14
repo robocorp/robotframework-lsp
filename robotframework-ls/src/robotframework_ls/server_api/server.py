@@ -30,7 +30,6 @@ import itertools
 import typing
 import sys
 import threading
-import weakref
 
 
 log = get_logger(__name__)

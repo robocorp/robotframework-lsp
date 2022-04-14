@@ -1472,3 +1472,22 @@ Demo
 """
 
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_wait_until_keyword_succeeds(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+ret
+    ${ret}=    Wait Until Keyword Succeeds    5m    10s    Echo Post    foo    bar
+    ${ret}=    Wait Until Keyword Succeeds    5m    10s    Undefinedkeyword    foo    bar
+
+echo post
+    [Arguments]    ${foo}    ${bar}
+
+    Log To Console    ${foo} ${bar}
+"""
+
+    _collect_errors(workspace, doc, data_regression)
