@@ -939,6 +939,14 @@ def _tokenize_subvars(initial_token: IRobotToken) -> Iterator[Tuple[IRobotToken,
                     yield token, robot_match.identifier
 
 
+def _add_match(found: set, tok: IRobotToken) -> bool:
+    key = tok.col_offset, tok.lineno
+    if key in found:
+        return False
+    found.add(key)
+    return True
+
+
 @_convert_ast_to_indexer
 def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
     # TODO: This right now makes everything globally, we should have 2 versions,
@@ -948,6 +956,7 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
     # global variables...
 
     # Note: we collect only the references, not the definitions here!
+    found = set()
     for clsname in (
         "KeywordCall",
         "LibraryImport",
@@ -969,10 +978,29 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
                                 # We need to check for inner variables (as in
                                 # this case we validate those).
                                 for t, var_identifier in _tokenize_subvars(tok):
+                                    if not _add_match(found, t):
+                                        continue
                                     yield VarTokenInfo(stack, node, t, var_identifier)
 
             except:
                 log.exception("Unable to tokenize: %s", token)
+
+    for usage_info in _iter_keyword_usage_tokens_first_level_uncached(ast):
+        args_as_keywords_handler = get_args_as_keywords_handler(usage_info.node)
+        if args_as_keywords_handler is None:
+            continue
+
+        stack = usage_info.stack
+        node = usage_info.node
+        for token in usage_info.node.tokens:
+            if token.type == token.ARGUMENT:
+                next_tok_type = args_as_keywords_handler.next_tok_type(token)
+                if next_tok_type == args_as_keywords_handler.EXPRESSION:
+                    for tok in iter_expression_variables(token):
+                        if tok.type == token.VARIABLE:
+                            if not _add_match(found, tok):
+                                continue
+                            yield VarTokenInfo(stack, node, tok, "$")
 
     for clsname in CLASSES_WTH_EXPRESSION_ARGUMENTS:
         for node_info in ast.iter_indexed(clsname):
@@ -985,6 +1013,8 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
                     if token.type == token.ARGUMENT:
                         for tok in iter_expression_variables(token):
                             if tok.type == token.VARIABLE:
+                                if not _add_match(found, tok):
+                                    continue
                                 yield VarTokenInfo(stack, node, tok, "$")
             except:
                 log.exception("Unable to tokenize: %s", token)
@@ -1004,6 +1034,8 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
                 continue
 
             for t, varid in iter_in:
+                if not _add_match(found, t):
+                    continue
                 yield VarTokenInfo(stack, node, t, varid)
 
 
@@ -1124,7 +1156,7 @@ def _iter_keyword_usage_tokens_uncached_from_args(
                 yield usage_info
 
 
-def _iter_keyword_usage_tokens_uncached(ast, collect_args_as_keywords):
+def _iter_keyword_usage_tokens_first_level_uncached(ast) -> Iterator[KeywordUsageInfo]:
     for clsname in ("KeywordCall",) + _CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_TUPLE:
         for node_info in ast.iter_indexed(clsname):
             stack = node_info.stack
@@ -1133,16 +1165,21 @@ def _iter_keyword_usage_tokens_uncached(ast, collect_args_as_keywords):
             if usage_info is not None:
                 yield usage_info
 
-                if collect_args_as_keywords:
-                    args_as_keywords_handler = get_args_as_keywords_handler(
-                        usage_info.node
-                    )
-                    if args_as_keywords_handler is None:
-                        continue
 
-                    yield from _iter_keyword_usage_tokens_uncached_from_args(
-                        stack, node, args_as_keywords_handler
-                    )
+def _iter_keyword_usage_tokens_uncached(
+    ast, collect_args_as_keywords: bool
+) -> Iterator[KeywordUsageInfo]:
+    for usage_info in _iter_keyword_usage_tokens_first_level_uncached(ast):
+        yield usage_info
+
+        if collect_args_as_keywords:
+            args_as_keywords_handler = get_args_as_keywords_handler(usage_info.node)
+            if args_as_keywords_handler is None:
+                continue
+
+            yield from _iter_keyword_usage_tokens_uncached_from_args(
+                usage_info.stack, usage_info.node, args_as_keywords_handler
+            )
 
 
 def _create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:

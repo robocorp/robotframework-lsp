@@ -1491,3 +1491,17 @@ echo post
 """
 
     _collect_errors(workspace, doc, data_regression)
+
+
+def test_variable_pass_execution_if(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+foo
+    Pass Execution If    ${undefined1}    message
+    Pass Execution If    $undefined2    message
+"""
+
+    _collect_errors(workspace, doc, data_regression)
