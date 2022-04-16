@@ -1519,3 +1519,18 @@ foo
 """
 
     _collect_errors(workspace, doc, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() < 5, reason="Requires RF 5 onwards.")
+def test_variable_inline_if(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+foo
+    ${a}=    Evaluate    1
+    IF  $a<${undefined1}    Log    message
+    IF  $a<$undefined2    Log    message
+"""
+    _collect_errors(workspace, doc, data_regression)

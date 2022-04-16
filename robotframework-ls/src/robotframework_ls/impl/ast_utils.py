@@ -899,7 +899,12 @@ CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET = frozenset(
     _CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_TUPLE
 )
 
-CLASSES_WTH_EXPRESSION_ARGUMENTS = ("IfHeader", "ElseIfHeader", "WhileHeader")
+CLASSES_WTH_EXPRESSION_ARGUMENTS = (
+    "IfHeader",
+    "ElseIfHeader",
+    "WhileHeader",
+    "InlineIfHeader",
+)
 
 
 def _tokenize_subvars(initial_token: IRobotToken) -> Iterator[Tuple[IRobotToken, str]]:
