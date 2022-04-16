@@ -14,7 +14,7 @@ def main():
     from robot.libraries.BuiltIn import BuiltIn
 
     KEYWORD_NAME_TO_KEYWORD_INDEX = {"run_keywords": 1}
-    KEYWORD_NAME_TO_CONDITION_INDEX = {}
+    KEYWORD_NAME_TO_CONDITION_INDEX = {"evaluate": 1}
 
     for method in dir(BuiltIn):
         if method.startswith("_"):

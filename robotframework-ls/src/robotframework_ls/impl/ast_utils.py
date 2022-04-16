@@ -956,7 +956,7 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
     # global variables...
 
     # Note: we collect only the references, not the definitions here!
-    found = set()
+    found: set = set()
     for clsname in (
         "KeywordCall",
         "LibraryImport",

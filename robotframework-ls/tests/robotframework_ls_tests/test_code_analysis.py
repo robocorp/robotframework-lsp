@@ -1505,3 +1505,17 @@ foo
 """
 
     _collect_errors(workspace, doc, data_regression)
+
+
+def test_variable_pass_evaluate(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+foo
+    Evaluate    ${undefined1}
+    Evaluate    $undefined2
+"""
+
+    _collect_errors(workspace, doc, data_regression)
