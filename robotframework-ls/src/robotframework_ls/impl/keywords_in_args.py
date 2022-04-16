@@ -2,6 +2,8 @@
 # If this file needs to be edited, change `codegen_kewords_in_args.py` and rerun.
 KEYWORD_NAME_TO_KEYWORD_INDEX = {
     "runkeywords": 1,  # run_keywords
+    "runkeywordifallcriticaltestspassed": 1,  # run_keyword_if_all_critical_tests_passed
+    "runkeywordifanycriticaltestsfailed": 1,  # run_keyword_if_any_critical_tests_failed
     "repeatkeyword": 2,  # repeat_keyword
     "runkeyword": 1,  # run_keyword
     "runkeywordandcontinueonfailure": 1,  # run_keyword_and_continue_on_failure
@@ -12,9 +14,7 @@ KEYWORD_NAME_TO_KEYWORD_INDEX = {
     "runkeywordandreturnstatus": 1,  # run_keyword_and_return_status
     "runkeywordandwarnonfailure": 1,  # run_keyword_and_warn_on_failure
     "runkeywordif": 2,  # run_keyword_if
-    "runkeywordifallcriticaltestspassed": 1,  # run_keyword_if_all_critical_tests_passed
     "runkeywordifalltestspassed": 1,  # run_keyword_if_all_tests_passed
-    "runkeywordifanycriticaltestsfailed": 1,  # run_keyword_if_any_critical_tests_failed
     "runkeywordifanytestsfailed": 1,  # run_keyword_if_any_tests_failed
     "runkeywordiftestfailed": 1,  # run_keyword_if_test_failed
     "runkeywordiftestpassed": 1,  # run_keyword_if_test_passed
@@ -24,6 +24,11 @@ KEYWORD_NAME_TO_KEYWORD_INDEX = {
 }
 KEYWORD_NAME_TO_CONDITION_INDEX = {
     "evaluate": 1,  # evaluate
+    "setglobalvariable": 1,  # set_global_variable
+    "setlocalvariable": 1,  # set_local_variable
+    "setsuitevariable": 1,  # set_suite_variable
+    "settaskvariable": 1,  # set_task_variable
+    "settestvariable": 1,  # set_test_variable
     "continueforloopif": 1,  # continue_for_loop_if
     "exitforloopif": 1,  # exit_for_loop_if
     "passexecutionif": 1,  # pass_execution_if

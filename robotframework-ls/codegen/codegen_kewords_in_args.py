@@ -13,8 +13,22 @@ def main():
     # Import to force the registry.
     from robot.libraries.BuiltIn import BuiltIn
 
-    KEYWORD_NAME_TO_KEYWORD_INDEX = {"run_keywords": 1}
-    KEYWORD_NAME_TO_CONDITION_INDEX = {"evaluate": 1}
+    KEYWORD_NAME_TO_KEYWORD_INDEX = {
+        "run_keywords": 1,
+        # These aren't in all RF versions, so, hardcode it.
+        "run_keyword_if_all_critical_tests_passed": 1,
+        "run_keyword_if_any_critical_tests_failed": 1,
+    }
+    KEYWORD_NAME_TO_CONDITION_INDEX = {
+        "evaluate": 1,
+        # Variables mays use the format : Set Global Variable    $var_name
+        # So, we need to acknowledge that...
+        "set_global_variable": 1,
+        "set_local_variable": 1,
+        "set_suite_variable": 1,
+        "set_task_variable": 1,
+        "set_test_variable": 1,
+    }
 
     for method in dir(BuiltIn):
         if method.startswith("_"):

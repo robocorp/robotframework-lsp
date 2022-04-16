@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, List, Tuple
 import re
 
 from robocorp_ls_core.protocols import check_implements
@@ -19,6 +19,7 @@ from robotframework_ls.impl.robot_lsp_constants import (
     OPTION_ROBOT_LINT_IGNORE_VARIABLES,
 )
 from functools import lru_cache
+import sys
 
 
 log = get_logger(__name__)
@@ -57,33 +58,40 @@ class _KeywordContainer(object):
 
 class _VariablesCollector(AbstractVariablesCollector):
     def __init__(self, on_unresolved_variable_import):
-        self._variables_collected = set()
-        self._template_variables_collected = []
+        self._variables_collected: Dict[str, List[IVariableFound]] = {}
+        self._template_variables_collected: List[Tuple[str, IVariableFound]] = []
         self.on_unresolved_variable_import = on_unresolved_variable_import
 
     def accepts(self, variable_name: str) -> bool:
-        from robotframework_ls.impl.text_utilities import normalize_robot_name
-
-        normalized = normalize_robot_name(variable_name)
-        if "{" in normalized:
-            self._template_variables_collected.append(normalized)
-        self._variables_collected.add(normalized)
-        # We don't want to create the IVariableFound, just the names should be
-        # enough for our usage.
-        return False
+        return True
 
     def on_variable(self, variable_found: IVariableFound):
-        pass
+        from robotframework_ls.impl.text_utilities import normalize_robot_name
 
-    def contains_variable(self, variable_name):
+        normalized = normalize_robot_name(variable_found.variable_name)
+        if "{" in normalized:
+            self._template_variables_collected.append((normalized, variable_found))
+
+        lst = self._variables_collected.get(normalized)
+        if lst is None:
+            lst = self._variables_collected[normalized] = []
+        lst.append(variable_found)
+
+    def contains_variable(self, variable_name, var_line):
         from robotframework_ls.impl.text_utilities import matches_name_with_variables
 
-        if variable_name in self._variables_collected:
-            return True
+        variables_found: List[IVariableFound] = self._variables_collected.get(
+            variable_name
+        )
+        if variables_found:
+            for v in variables_found:
+                if v.lineno < var_line:
+                    return True
 
-        for template_var in self._template_variables_collected:
-            if matches_name_with_variables(variable_name, template_var):
-                return True
+        for template_var, v in self._template_variables_collected:
+            if v.lineno < var_line:
+                if matches_name_with_variables(variable_name, template_var):
+                    return True
 
         return False
 
@@ -539,6 +547,7 @@ def _collect_undefined_variables_errors(initial_completion_context):
             continue
 
         var_name = token_info.token.value
+        var_line = token_info.token.lineno - 1  # We want it 0-based
         if token_info.var_identifier == "%":
             from robotframework_ls.impl.variable_resolve import extract_variable_base
 
@@ -560,6 +569,8 @@ def _collect_undefined_variables_errors(initial_completion_context):
 
         normalized_variable_name = normalize_variable_name(var_name)
 
+        locals_collector = None
+
         found = False
         while not found:
             if normalized_variable_name in ignore_variables:
@@ -570,20 +581,24 @@ def _collect_undefined_variables_errors(initial_completion_context):
                 found = True
                 break
 
-            if globals_collector.contains_variable(normalized_variable_name):
+            if globals_collector.contains_variable(
+                normalized_variable_name, sys.maxsize
+            ):
                 found = True
                 break
 
-            locals_collector = _VariablesCollector(lambda *args, **kwargs: None)
-            local_ctx = initial_completion_context.create_copy_with_selection(
-                line=token_info.token.lineno - 1,
-                col=token_info.token.col_offset - 1,
-            )
+            if locals_collector is None:
+                locals_collector = _VariablesCollector(lambda *args, **kwargs: None)
+                local_ctx = initial_completion_context.create_copy_with_selection(
+                    line=token_info.token.lineno - 1,
+                    col=token_info.token.col_offset - 1,
+                )
 
-            variable_completions.collect_local_variables(
-                local_ctx, locals_collector, token_info
-            )
-            if locals_collector.contains_variable(normalized_variable_name):
+                variable_completions.collect_local_variables(
+                    local_ctx, locals_collector, token_info
+                )
+
+            if locals_collector.contains_variable(normalized_variable_name, var_line):
                 found = True
                 break
 

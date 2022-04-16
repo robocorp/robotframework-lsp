@@ -998,6 +998,12 @@ class VariableKind:
     PYTHON = "Variable (python)"
     YAML = "Variable (yaml)"
     ARGUMENTS_FILE = "Arguments file"
+    LOCAL_ASSIGN_VARIABLE = "Variable (local assign)"
+    LOCAL_SET_VARIABLE = "Variable (local set)"
+    TASK_SET_VARIABLE = "Variable (task set)"
+    TEST_SET_VARIABLE = "Variable (test set)"
+    SUITE_SET_VARIABLE = "Variable (suite set)"
+    GLOBAL_SET_VARIABLE = "Variable (global)"
 
 
 class IVariableFound(Protocol):

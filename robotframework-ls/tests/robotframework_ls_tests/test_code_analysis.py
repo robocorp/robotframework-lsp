@@ -1534,3 +1534,31 @@ foo
     IF  $a<$undefined2    Log    message
 """
     _collect_errors(workspace, doc, data_regression)
+
+
+def test_variable_defined_afterwards(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+foo
+    ${a}    Evaluate    1
+    ${b}    Evaluate    $a+$b
+    ${c}    Evaluate    $b+1
+"""
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_set_local_variable(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Tasks ***
+Minimal task
+    Set local variable    $Cond1    1
+    Log to Console    ${Cond1}
+    Set local variable    ${Cond2}    2
+    Log to Console    ${Cond2}
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")

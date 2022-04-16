@@ -25,6 +25,7 @@ from robotframework_ls.impl.protocols import (
     IRobotVariableMatch,
     VarTokenInfo,
     IKeywordArg,
+    VariableKind,
 )
 from robotframework_ls.impl.text_utilities import normalize_robot_name
 from robocorp_ls_core.basic import isinstance_name
@@ -850,6 +851,18 @@ def get_documentation_as_markdown(ast) -> str:
         return documentation
 
 
+KEYWORD_SET_LOCAL_TO_VAR_KIND = {
+    normalize_robot_name("Set Local Variable"): VariableKind.LOCAL_SET_VARIABLE,
+}
+
+KEYWORD_SET_GLOBAL_TO_VAR_KIND = {
+    normalize_robot_name("Set Task Variable"): VariableKind.TASK_SET_VARIABLE,
+    normalize_robot_name("Set Test Variable"): VariableKind.TEST_SET_VARIABLE,
+    normalize_robot_name("Set Suite Variable"): VariableKind.SUITE_SET_VARIABLE,
+    normalize_robot_name("Set Global Variable"): VariableKind.GLOBAL_SET_VARIABLE,
+}
+
+
 @_convert_ast_to_indexer
 def iter_local_assigns(ast) -> Iterator:
     from robot.api import Token
@@ -944,6 +957,19 @@ def _tokenize_subvars(initial_token: IRobotToken) -> Iterator[Tuple[IRobotToken,
                     yield token, robot_match.identifier
 
 
+def _is_store_keyword(node):
+    from robot.api import Token
+
+    keyword_name_tok = node.get_token(Token.KEYWORD)
+    if not keyword_name_tok:
+        return False
+    normalized = normalize_robot_name(keyword_name_tok.value)
+    return (
+        normalized in KEYWORD_SET_LOCAL_TO_VAR_KIND
+        or normalized in KEYWORD_SET_GLOBAL_TO_VAR_KIND
+    )
+
+
 def _add_match(found: set, tok: IRobotToken) -> bool:
     key = tok.col_offset, tok.lineno
     if key in found:
@@ -975,16 +1001,23 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
             node = node_info.node
             token = None
             try:
+                arg_i = 0
                 for token in node.tokens:
+                    if token.type == token.ARGUMENT:
+                        arg_i += 1
+                        if arg_i == 1 and clsname == "KeywordCall":
+                            if _is_store_keyword(node_info.node):
+                                continue
+
                     if token.type in (token.ARGUMENT, token.NAME):
                         for tok in tokenize_variables(token):
                             if tok.type == token.VARIABLE:
-
                                 # We need to check for inner variables (as in
                                 # this case we validate those).
                                 for t, var_identifier in _tokenize_subvars(tok):
                                     if not _add_match(found, t):
                                         continue
+
                                     yield VarTokenInfo(stack, node, t, var_identifier)
 
             except:
@@ -997,8 +1030,14 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
 
         stack = usage_info.stack
         node = usage_info.node
+        arg_i = 0
         for token in usage_info.node.tokens:
             if token.type == token.ARGUMENT:
+                arg_i += 1
+                if arg_i == 1:
+                    if _is_store_keyword(usage_info.node):
+                        continue
+
                 next_tok_type = args_as_keywords_handler.next_tok_type(token)
                 if next_tok_type == args_as_keywords_handler.EXPRESSION:
                     for tok in iter_expression_variables(token):
@@ -1039,7 +1078,7 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
                 continue
 
             for t, varid in iter_in:
-                if not _add_match(found, t):
+                if not _add_match(node_info.node, found, t):
                     continue
                 yield VarTokenInfo(stack, node, t, varid)
 
