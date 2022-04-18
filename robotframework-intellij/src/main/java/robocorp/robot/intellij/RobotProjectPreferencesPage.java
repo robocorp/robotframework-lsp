@@ -370,7 +370,12 @@ public class RobotProjectPreferencesPage implements Configurable {
 
     @Override
     public boolean isModified() {
-        RobotProjectPreferences settings = RobotProjectPreferences.getInstance(project);
+        RobotProjectPreferences settings = null;
+        try {
+            settings = RobotProjectPreferences.getInstance(project);
+        } catch (CancelledException e) {
+            return false;
+        }
         
         if(!settings.getRobotLanguageServerPython().equals(component.getRobotLanguageServerPython())){
             return true;
@@ -473,7 +478,12 @@ public class RobotProjectPreferencesPage implements Configurable {
 
     @Override
     public void reset() {
-        RobotProjectPreferences settings = RobotProjectPreferences.getInstance(project);
+        RobotProjectPreferences settings = null;
+        try {
+            settings = RobotProjectPreferences.getInstance(project);
+        } catch (CancelledException e) {
+            return;
+        }
         
         component.setRobotLanguageServerPython(settings.getRobotLanguageServerPython());
         component.setRobotLanguageServerArgs(settings.getRobotLanguageServerArgs());
@@ -503,7 +513,12 @@ public class RobotProjectPreferencesPage implements Configurable {
 
     @Override
     public void apply() throws ConfigurationException {
-        RobotProjectPreferences settings = RobotProjectPreferences.getInstance(project);
+        RobotProjectPreferences settings = null;
+        try {
+            settings = RobotProjectPreferences.getInstance(project);
+        } catch (CancelledException e) {
+            return;
+        }
         String s;
         
         s = settings.validateRobotLanguageServerPython(component.getRobotLanguageServerPython());

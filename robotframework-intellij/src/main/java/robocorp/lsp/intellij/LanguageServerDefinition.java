@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
+import robocorp.robot.intellij.CancelledException;
 
 import java.io.*;
 import java.net.Socket;
@@ -42,21 +43,21 @@ public abstract class LanguageServerDefinition {
     /**
      * Subclasses must override to return the settings to be sent to the language server.
      */
-    public abstract Object getPreferences(Project project);
+    public abstract Object getPreferences(Project project) throws CancelledException;
 
     public interface IPreferencesListener {
-        void onChanged(String property, String oldValue, String newValue);
+        void onChanged(String property, String oldValue, String newValue) throws CancelledException;
     }
 
     /**
      * Subclasses must notify when a setting has changed so that it can be sent to the language server.
      */
-    public abstract void unregisterPreferencesListener(Project project, IPreferencesListener preferencesListener);
+    public abstract void unregisterPreferencesListener(Project project, IPreferencesListener preferencesListener) throws CancelledException;
 
     /**
      * Subclasses must notify when a setting has changed so that it can be sent to the language server.
      */
-    public abstract void registerPreferencesListener(Project project, IPreferencesListener preferencesListener);
+    public abstract void registerPreferencesListener(Project project, IPreferencesListener preferencesListener) throws CancelledException;
 
     private static final class SocketStreamProvider {
 

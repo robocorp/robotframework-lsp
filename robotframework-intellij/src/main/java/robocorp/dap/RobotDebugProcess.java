@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -29,6 +30,7 @@ import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import robocorp.dap.stack.*;
+import robocorp.robot.intellij.CancelledException;
 import robocorp.robot.intellij.RobotProjectPreferences;
 
 import java.io.File;
@@ -197,7 +199,7 @@ public class RobotDebugProcess extends XDebugProcess {
 
     }
 
-    protected RobotDebugProcess(Executor executor, @NotNull XDebugSession session, ProcessHandler processHandler) throws InterruptedException, ExecutionException, TimeoutException {
+    protected RobotDebugProcess(Executor executor, @NotNull XDebugSession session, ProcessHandler processHandler) throws InterruptedException, ExecutionException, TimeoutException, CancelledException {
         super(session);
         this.processHandler = processHandler;
         RobotRunProfileStateRobotDAPStarter.RobotProcessHandler baseProcessHandler = (RobotRunProfileStateRobotDAPStarter.RobotProcessHandler) processHandler;
@@ -257,6 +259,8 @@ public class RobotDebugProcess extends XDebugProcess {
                     }
                 }
             }
+        } catch (CancelledException e) {
+            throw e;
         } catch (Exception e) {
             LOG.error("Error getting robot.variables", e);
         }

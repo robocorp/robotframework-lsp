@@ -6,7 +6,7 @@ import robocorp.lsp.intellij.LanguageServerDefinition;
 
 public class RobotLanguageDefinitionProvider implements ILanguageDefinitionContributor {
     @Override
-    public LanguageServerDefinition getLanguageDefinition(Project project) {
+    public LanguageServerDefinition getLanguageDefinition(Project project) throws CancelledException {
         return RobotFrameworkLanguage.INSTANCE.getLanguageDefinition(project);
     }
 }

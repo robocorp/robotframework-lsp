@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -56,7 +57,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         return languageServerPython;
     }
 
-    public void setRobotFrameworkLSUserHome(String robotFrameworkLSUserHome) {
+    public void setRobotFrameworkLSUserHome(String robotFrameworkLSUserHome) throws CancelledException {
         this.robotFrameworkLSUserHome = robotFrameworkLSUserHome;
         // reset the current process builder when it changes
         synchronized (projectToDefinitionLock) {
@@ -71,7 +72,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         super("RobotFramework");
     }
 
-    private int getPortFromPreferences(Project project) {
+    private int getPortFromPreferences(Project project) throws CancelledException {
         RobotProjectPreferences projectPreferences = RobotProjectPreferences.getInstance(project);
         if (projectPreferences != null) {
             String tcpPort = projectPreferences.getRobotLanguageServerTcpPort();
@@ -83,11 +84,11 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
                 }
             }
         }
-
         RobotPreferences appPreferences = RobotPreferences.getInstance();
         if (appPreferences == null) {
             return 0;
         }
+
         String robotLanguageServerTcpPort = appPreferences.getRobotLanguageServerTcpPort().trim();
         int port = 0;
         if (!robotLanguageServerTcpPort.isEmpty()) {
@@ -101,11 +102,10 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
     }
 
     @Nullable
-    private ProcessBuilder createProcessBuilderFromPreferences(Project project) {
+    private ProcessBuilder createProcessBuilderFromPreferences(Project project) throws CancelledException {
         File main = getLSPMainScript();
 
         RobotProjectPreferences projectPreferences = RobotProjectPreferences.getInstance(project);
-
         @Nullable RobotPreferences robotAppPreferences = RobotPreferences.getInstance();
 
         // ---------------- Get Python executable
@@ -267,8 +267,14 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         }
         showingDialogToConfigureExecutable = true;
         try {
-            final @Nullable RobotPreferences preferences = RobotPreferences.getInstance();
-            final @Nullable RobotProjectPreferences projectPreferences = RobotProjectPreferences.getInstance(project);
+            final @Nullable RobotPreferences preferences;
+            final @Nullable RobotProjectPreferences projectPreferences;
+            try {
+                preferences = RobotPreferences.getInstance();
+                projectPreferences = RobotProjectPreferences.getInstance(project);
+            } catch (CancelledException e) {
+                return;
+            }
             if (preferences == null) {
                 LOG.error("Unable to get preferences.");
                 return;
@@ -506,7 +512,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         return null;
     }
 
-    public LanguageServerDefinition getLanguageDefinition(final Project project) {
+    public LanguageServerDefinition getLanguageDefinition(final Project project) throws CancelledException {
         synchronized (projectToDefinitionLock) {
             LanguageServerDefinition definition = projectToDefinition.get(project);
             if (definition == null) {
@@ -517,7 +523,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         }
     }
 
-    private LanguageServerDefinition createLanguageServerDefinition(final Project project) {
+    private LanguageServerDefinition createLanguageServerDefinition(final Project project) throws CancelledException {
         // Note: for the real-world use-case packing the language server see:
         // https://intellij-support.jetbrains.com/hc/en-us/community/posts/206917225-Plugin-installation-as-unpacked-folder
         // Use to get proper path?
@@ -531,7 +537,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
         ) {
 
             @Override
-            public Object getPreferences(Project project) {
+            public Object getPreferences(Project project) throws CancelledException {
                 // Get the basic app preferences.
                 @Nullable RobotPreferences robotAppPreferences = RobotPreferences.getInstance();
                 JsonObject jsonObject;
@@ -554,7 +560,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
             }
 
             @Override
-            public void registerPreferencesListener(Project project, IPreferencesListener preferencesListener) {
+            public void registerPreferencesListener(Project project, IPreferencesListener preferencesListener) throws CancelledException {
                 @Nullable RobotPreferences robotAppPreferences = RobotPreferences.getInstance();
                 if (robotAppPreferences != null) {
                     robotAppPreferences.addListener(preferencesListener);
@@ -566,7 +572,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
             }
 
             @Override
-            public void unregisterPreferencesListener(Project project, IPreferencesListener preferencesListener) {
+            public void unregisterPreferencesListener(Project project, IPreferencesListener preferencesListener) throws CancelledException {
                 @Nullable RobotPreferences robotAppPreferences = RobotPreferences.getInstance();
                 if (robotAppPreferences != null) {
                     robotAppPreferences.removeListener(preferencesListener);

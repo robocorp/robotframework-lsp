@@ -1,5 +1,6 @@
 package robocorp.dap;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
@@ -7,6 +8,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpointTypeBase;
 import org.jetbrains.annotations.NotNull;
 import robocorp.lsp.intellij.EditorUtils;
 import robocorp.lsp.intellij.LanguageServerDefinition;
+import robocorp.robot.intellij.CancelledException;
 
 /**
  * Class that configures a breakpoint for robot framework.
@@ -25,6 +27,7 @@ import robocorp.lsp.intellij.LanguageServerDefinition;
  */
 public class RobotLineBreakpoint extends XLineBreakpointTypeBase {
     public static final String ID = "robot-line";
+    private static final Logger LOG = Logger.getInstance(RobotLineBreakpoint.class);
 
     protected RobotLineBreakpoint() {
         super(ID, "Robot Line Breakpoint", new RobotDebuggerEditorsProvider());
@@ -35,7 +38,13 @@ public class RobotLineBreakpoint extends XLineBreakpointTypeBase {
         if (file.getName().endsWith(".py")) {
             return true;
         }
-        LanguageServerDefinition languageDefinition = EditorUtils.getLanguageDefinition(file, project);
+        LanguageServerDefinition languageDefinition = null;
+        try {
+            languageDefinition = EditorUtils.getLanguageDefinition(file, project);
+        } catch (CancelledException e) {
+            LOG.info("Get language definition cancelled adding breakpoint. Checking just with name");
+            return file.getName().endsWith(".robot") || file.getName().endsWith(".resource");
+        }
         if (languageDefinition != null && languageDefinition.ext.contains(".robot")) {
             return true;
         }

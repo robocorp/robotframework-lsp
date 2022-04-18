@@ -14,6 +14,7 @@ import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.Position;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import robocorp.robot.intellij.CancelledException;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -33,10 +34,9 @@ public class EditorToLSPEditor {
         private final String uri;
         private final String extensionForLanguageServerQuery;
         private final String projectPath;
-        private final Project project;
         private volatile List<Diagnostic> diagnostics = new ArrayList<>();
 
-        public EditorAsLSPEditor(Editor editor) {
+        public EditorAsLSPEditor(Editor editor) throws CancelledException {
             this.editor = new WeakReference<>(editor);
             VirtualFile file = EditorUtils.getVirtualFile(editor);
             if (file == null) {
@@ -44,11 +44,10 @@ public class EditorToLSPEditor {
                 uri = null;
                 extensionForLanguageServerQuery = null;
                 projectPath = null;
-                project = null;
                 return;
             }
             uri = Uris.toUri(file);
-            project = editor.getProject();
+            @Nullable Project project = editor.getProject();
 
             // loads to project
             if (project != null) {
@@ -85,7 +84,11 @@ public class EditorToLSPEditor {
         @Nullable
         @Override
         public Project getProject() {
-            return project;
+            Editor editor = this.editor.get();
+            if (editor == null) {
+                throw new RuntimeException("Editor already disposed.");
+            }
+            return editor.getProject();
         }
 
         @Override
@@ -170,12 +173,13 @@ public class EditorToLSPEditor {
             if (definition == null || extensionForLanguageServerQuery == null) {
                 return null;
             }
+            @Nullable Project project = getProject();
             LanguageServerCommunication comm = languageServerManager.getLanguageServerCommunication(extensionForLanguageServerQuery, getProjectPath(), project);
             return comm;
         }
     }
 
-    public static ILSPEditor wrap(Editor editor) {
+    public static ILSPEditor wrap(Editor editor) throws CancelledException {
         return new EditorAsLSPEditor(editor);
     }
 

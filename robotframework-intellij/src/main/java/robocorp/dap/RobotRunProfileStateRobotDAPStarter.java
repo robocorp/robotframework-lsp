@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import robocorp.lsp.intellij.LanguageServerDefinition;
+import robocorp.robot.intellij.CancelledException;
 import robocorp.robot.intellij.RobotFrameworkLanguage;
 import robocorp.robot.intellij.RobotPreferences;
 
@@ -67,11 +68,21 @@ public class RobotRunProfileStateRobotDAPStarter extends CommandLineState {
         }
 
         Project project = runProfile.getProject();
-        LanguageServerDefinition languageServerDefinition = RobotFrameworkLanguage.INSTANCE.getLanguageDefinition(project);
+        LanguageServerDefinition languageServerDefinition;
+        try {
+            languageServerDefinition = RobotFrameworkLanguage.INSTANCE.getLanguageDefinition(project);
+        } catch (CancelledException e) {
+            throw new ExecutionException("Cancelled while getting language definition.");
+        }
         if (languageServerDefinition == null) {
             throw new ExecutionException("Unable to find language server definition for project: " + project);
         }
-        Object preferences = languageServerDefinition.getPreferences(project);
+        Object preferences;
+        try {
+            preferences = languageServerDefinition.getPreferences(project);
+        } catch (CancelledException e) {
+            throw new ExecutionException("Cancelled while getting preferences.");
+        }
         if (!(preferences instanceof JsonObject)) {
             throw new ExecutionException("Expected preferences to be a JsonObject. Found: " + preferences);
         }

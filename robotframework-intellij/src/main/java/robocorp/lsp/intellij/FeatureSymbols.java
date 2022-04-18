@@ -38,6 +38,7 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.WorkspaceSymbolParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import robocorp.robot.intellij.CancelledException;
 
 import javax.swing.*;
 import java.io.File;
@@ -182,7 +183,7 @@ public class FeatureSymbols implements ChooseByNameContributorEx {
                         }
                     }
                 }
-            } catch (ProcessCanceledException | CancellationException e) {
+            } catch (ProcessCanceledException | CancellationException | CancelledException e) {
                 // ignore
             } catch (Exception e) {
                 LOG.error(e);

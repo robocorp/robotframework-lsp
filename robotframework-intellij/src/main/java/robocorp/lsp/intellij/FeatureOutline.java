@@ -21,6 +21,7 @@ import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import robocorp.robot.intellij.CancelledException;
 
 import javax.swing.*;
 import java.lang.ref.WeakReference;
@@ -246,7 +247,13 @@ public class FeatureOutline implements PsiStructureViewFactory {
             if (basePath == null) {
                 return;
             }
-            LanguageServerDefinition languageDefinition = EditorUtils.getLanguageDefinition(virtualFile, project);
+            LanguageServerDefinition languageDefinition = null;
+            try {
+                languageDefinition = EditorUtils.getLanguageDefinition(virtualFile, project);
+            } catch (CancelledException e) {
+                LOG.info("Cancelled getting language definition (on FeatureOutline).");
+                return;
+            }
             if (languageDefinition == null) {
                 return;
             }

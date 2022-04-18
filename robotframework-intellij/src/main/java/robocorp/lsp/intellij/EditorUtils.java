@@ -38,6 +38,7 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import robocorp.robot.intellij.CancelledException;
 import robocorp.robot.intellij.RobotPsiFile;
 
 import javax.swing.text.BadLocationException;
@@ -128,7 +129,7 @@ public class EditorUtils {
         return file;
     }
 
-    public static @Nullable LanguageServerDefinition getLanguageDefinition(@NotNull VirtualFile file, @NotNull Project project) {
+    public static @Nullable LanguageServerDefinition getLanguageDefinition(@NotNull VirtualFile file, @NotNull Project project) throws CancelledException {
         FileType fileType = file.getFileType();
         if (fileType instanceof LanguageFileType) {
             Language language = ((LanguageFileType) fileType).getLanguage();
@@ -140,7 +141,7 @@ public class EditorUtils {
         return null;
     }
 
-    public static @Nullable LanguageServerDefinition getLanguageDefinition(RobotPsiFile robotPsiFile) {
+    public static @Nullable LanguageServerDefinition getLanguageDefinition(RobotPsiFile robotPsiFile) throws CancelledException {
         Language language = robotPsiFile.getLanguage();
         if (language instanceof ILSPLanguage) {
             return ((ILSPLanguage) language).getLanguageDefinition(robotPsiFile.getProject());

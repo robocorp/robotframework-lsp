@@ -1,5 +1,6 @@
 package robocorp.lsp.intellij;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
@@ -7,6 +8,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import robocorp.robot.intellij.CancelledException;
 
 public class LanguageServerEditorListener implements EditorFactoryListener {
     private static final Logger LOG = Logger.getInstance(LanguageServerEditorListener.class);
@@ -18,7 +20,21 @@ public class LanguageServerEditorListener implements EditorFactoryListener {
     @Override
     public void editorCreated(@NotNull EditorFactoryEvent event) {
         Editor editor = event.getEditor();
-        editorCreated(EditorToLSPEditor.wrap(editor));
+
+        try {
+            editorCreated(EditorToLSPEditor.wrap(editor));
+            return;
+        } catch (CancelledException e) {
+            // If it was cancelled try it (once) later on...
+        }
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+            try {
+                editorCreated(EditorToLSPEditor.wrap(editor));
+            } catch (CancelledException e) {
+                LOG.info("Cancelled (in invokeLater) creating an EditorToLSPEditor connection.");
+            }
+        });
     }
 
     @Override

@@ -12,6 +12,7 @@ import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import robocorp.robot.intellij.CancelledException;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -53,7 +54,7 @@ class InternalConnection {
                 languageServerStreams.stop();
             }
 
-        } catch (ProcessCanceledException | CompletionException | CancellationException e) {
+        } catch (ProcessCanceledException | CompletionException | CancellationException | CancelledException e) {
             // ignore
         } catch (Exception e) {
             LOG.error(e);
@@ -79,9 +80,14 @@ class InternalConnection {
     }
 
     private volatile State state = State.initial;
+    private volatile String lastCrashMessage = "";
 
     public State getState() {
         return state;
+    }
+
+    public String getLastCrashMessage() {
+        return lastCrashMessage;
     }
 
     private static InitializeParams getInitParams(@NotNull String projectRootPath) {
@@ -139,7 +145,12 @@ class InternalConnection {
             ApplicationManager.getApplication().invokeLater(() -> {
                 if (counter.get() == currValue) {
                     // i.e.: if we receive multiple notifications at once, notify only once in the last notification.
-                    this.didChangeConfiguration(new DidChangeConfigurationParams(languageServerDefinition.getPreferences(project)));
+                    try {
+                        Object preferences = languageServerDefinition.getPreferences(project);
+                        this.didChangeConfiguration(new DidChangeConfigurationParams(preferences));
+                    } catch (CancelledException e) {
+                        // ignore
+                    }
                 }
             });
         };
@@ -159,7 +170,8 @@ class InternalConnection {
             LanguageServerDefinition.LanguageServerStreams languageServerStreams = languageServerDefinition.createConnectionProvider();
             if (languageServerStreams == null) {
                 // Configuration is not valid. Bail out.
-                LOG.info("languageServerDefinition.createConnectionProvider() returned null, marking as crashed.");
+                lastCrashMessage = "languageServerDefinition.createConnectionProvider() returned null, marking as crashed.";
+                LOG.info(lastCrashMessage);
                 state = State.crashed;
                 return;
             }
@@ -206,8 +218,13 @@ class InternalConnection {
             this.languageServer.initialized(new InitializedParams());
             state = State.initialized;
 
+        } catch (CancelledException e) {
+            lastCrashMessage = "Cancelled while initializing. Marking as crashed.";
+            LOG.info(lastCrashMessage);
+            state = State.crashed;
         } catch (Exception e) {
-            LOG.info("Exception while initializing. Marking as crashed.");
+            lastCrashMessage = "Exception: " + e + "while initializing. Marking as crashed.";
+            LOG.info(e);
             EditorUtils.logError(LOG, e);
             state = State.crashed;
         }
@@ -367,7 +384,13 @@ public class LanguageServerCommunication {
                     return;
                 } else {
                     crashCount += 1;
-                    EditorUtils.logError(LOG, "Expected state to be initialized. Current state is: " + state);
+                    internalConnection.getLastCrashMessage();
+                    if (state == InternalConnection.State.crashed) {
+                        EditorUtils.logError(LOG, "Expected state to be initialized. Current state is crashed. Last message: " + internalConnection.getLastCrashMessage());
+
+                    } else {
+                        EditorUtils.logError(LOG, "Expected state to be initialized. Current state is: " + state);
+                    }
                 }
             }
         }

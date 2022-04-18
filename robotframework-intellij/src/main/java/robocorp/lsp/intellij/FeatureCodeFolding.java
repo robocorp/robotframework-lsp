@@ -17,6 +17,7 @@ import org.eclipse.lsp4j.FoldingRangeRequestParams;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.jetbrains.annotations.NotNull;
 import robocorp.lsp.psi.LSPGenericPsiElement;
+import robocorp.robot.intellij.CancelledException;
 import robocorp.robot.intellij.RobotElementType;
 import robocorp.robot.intellij.RobotPsiFile;
 
@@ -34,7 +35,13 @@ public class FeatureCodeFolding extends CustomFoldingBuilder {
         }
         if (root instanceof RobotPsiFile) {
             RobotPsiFile robotPsiFile = (RobotPsiFile) root;
-            LanguageServerDefinition languageDefinition = EditorUtils.getLanguageDefinition(robotPsiFile);
+            LanguageServerDefinition languageDefinition = null;
+            try {
+                languageDefinition = EditorUtils.getLanguageDefinition(robotPsiFile);
+            } catch (CancelledException e) {
+                LOG.info("Cancelled getting language definition (building Folding regions).");
+                return;
+            }
             if (languageDefinition == null) {
                 return;
             }

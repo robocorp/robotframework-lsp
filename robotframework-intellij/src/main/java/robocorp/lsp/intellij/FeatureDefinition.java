@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import robocorp.lsp.psi.LSPGenericPsiElement;
 import robocorp.lsp.psi.LSPPsiAstElement;
+import robocorp.robot.intellij.CancelledException;
 
 import java.io.File;
 import java.util.List;
@@ -44,7 +45,13 @@ public class FeatureDefinition {
         if (basePath == null) {
             return null;
         }
-        LanguageServerDefinition languageDefinition = EditorUtils.getLanguageDefinition(virtualFile, project);
+        LanguageServerDefinition languageDefinition = null;
+        try {
+            languageDefinition = EditorUtils.getLanguageDefinition(virtualFile, project);
+        } catch (CancelledException e) {
+            LOG.info("Cancelled getting language definition (on FeatureDefinition)");
+            return null;
+        }
         if (languageDefinition == null) {
             return null;
         }
