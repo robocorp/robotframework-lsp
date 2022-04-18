@@ -971,6 +971,10 @@ def _is_store_keyword(node):
 
 
 def _add_match(found: set, tok: IRobotToken) -> bool:
+    """
+    Helper to avoid returning 2 matches in the same position if 2 different
+    heuristics overlap what they can return.
+    """
     key = tok.col_offset, tok.lineno
     if key in found:
         return False
@@ -1078,7 +1082,7 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
                 continue
 
             for t, varid in iter_in:
-                if not _add_match(node_info.node, found, t):
+                if not _add_match(found, t):
                     continue
                 yield VarTokenInfo(stack, node, t, varid)
 

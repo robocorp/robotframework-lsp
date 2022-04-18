@@ -132,7 +132,7 @@ def _collect_variables_from_set_keywords(
 
                 if collector.accepts(var_name):
                     base_token = ast_utils.copy_token_replacing(
-                        var_name_tok, col_offset=var_name_tok.col_offset, value=var_name
+                        var_name_tok, col_offset=start_offset, value=var_name
                     )
                     variable_value = ""
                     if var_value_tok is not None:

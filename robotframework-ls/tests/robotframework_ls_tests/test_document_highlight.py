@@ -157,7 +157,7 @@ Test case 1
     )
 
 
-def test_document_highlight_variable_in_default_ard(
+def test_document_highlight_variable_in_default_arg(
     workspace, libspec_manager, data_regression
 ):
     from robotframework_ls.impl.completion_context import CompletionContext
@@ -182,6 +182,80 @@ Put Key
     line = doc.find_line_with_contents(line_contents)
     completion_context = CompletionContext(
         doc, workspace=workspace.ws, line=line, col=len(line_contents)
+    )
+    result = doc_highlight(completion_context)
+    assert len(result) == 2
+    data_regression.check(
+        sorted(
+            result,
+            key=lambda entry: (
+                entry["range"]["start"]["line"],
+                entry["range"]["start"]["character"],
+            ),
+        )
+    )
+
+
+def test_document_highlight_variable_set_method(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.doc_highlight import doc_highlight
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.put_doc(
+        "my.robot",
+        """
+*** Tasks ***
+Minimal task
+    Set local variable    $Cond1    1
+    Log to Console    ${Cond1}
+    Set local variable    ${Cond2}    2
+    Log to Console    ${Cond2}
+""",
+    )
+
+    line_contents = "    Log to Console    ${Cond2}"
+    line = doc.find_line_with_contents(line_contents)
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=len(line_contents)
+    )
+    result = doc_highlight(completion_context)
+    assert len(result) == 2
+    data_regression.check(
+        sorted(
+            result,
+            key=lambda entry: (
+                entry["range"]["start"]["line"],
+                entry["range"]["start"]["character"],
+            ),
+        )
+    )
+
+
+def test_document_highlight_variable_set_method2(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.doc_highlight import doc_highlight
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.put_doc(
+        "my.robot",
+        """
+*** Tasks ***
+Minimal task
+    Set local variable    $Cond1    1
+    Log to Console    ${Cond1}
+    Set local variable    ${Cond2}    2
+    Log to Console    ${Cond2}
+""",
+    )
+
+    line_contents = "    Log to Console    ${Cond1}"
+    line = doc.find_line_with_contents(line_contents)
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=len(line_contents) - 2
     )
     result = doc_highlight(completion_context)
     assert len(result) == 2
