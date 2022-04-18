@@ -4,6 +4,6 @@ dependencies:
   - python=3.8.10
   - pip=20.1
   - pip:
-    - robocorp-inspector==0.6.4
+    - robocorp-inspector==0.6.5
     - robotframework==4.1
 
