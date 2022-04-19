@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.45.2'
+version '0.46.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,25 +50,18 @@ intellij {
 
 patchPluginXml {
     changeNotes """
-    Release 0.45.2
-    </p>
-    
-    <ul>
-    <li>Bugfix release handling <strong>Wait Until Keyword Succeeds</strong> properly.</li>
-    </ul>
-    
-    Release 0.45.0
+    Release 0.46.0
     </p>
     <ul>
   
-    <li>Fixed issue which could make autocomplete delete code (only in Intellij).</li>
-    <li>Handle <strong>Run Keywords</strong> properly.</li>
-    <li>Proper semantic highlighting for <strong>ELSE/ELSE IF</strong> in <strong>Run Keyword If</strong>.</li>
-    <li>Proper semantic highlighting for <strong>AND</strong> in <strong>Run Keywords</strong>.</li>
-    <li>Hover over arguments from <strong>Run Keyword</strong> targets works properly.</li>
-    <li>Properly mark tests passed/failed in test view with <strong>Robot Framework 3.x</strong>.</li>
-    <li>Fix to <strong>robotframework-tidy</strong> to no longer convert <strong>*Tasks*</strong> to <strong>*Test Cases*</strong>.</li>
-    <li>Fix issue in semantic highlighting when a slash was encountered.</li>
+    <li>[Intellij] Support Intellij 221.</li>
+    <li>[Intellij] Consider that getting the preferences may throw a ProcessCanceledException.</li>
+    <li>Fix position of variable loaded in SetVariable methods to the var name position and not delimiter start.</li>
+    <li>If a variable is defined after its usage inside a keyword it's properly marked as undefined.</li>
+    <li>Variables in short format in Set XXX Variable keywords are accepted.</li>
+    <li>Variables are properly collected from inline if.</li>
+    <li>Variables in Evaluate are properly collected.</li>
+    <li>Variables from expressions in conditions are properly collected.</li>
 
     <br>
     Current feature set:<br>

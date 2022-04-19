@@ -1,3 +1,16 @@
+New in 0.46.0 (2022-04-19)
+-----------------------------
+
+- [Intellij] Support Intellij 221. [#652](https://github.com/robocorp/robotframework-lsp/issues/652)
+- [Intellij] Consider that getting the preferences may throw a ProcessCanceledException.
+- Fix position of variable loaded in SetVariable methods to the var name position and not delimiter start.
+- If a variable is defined after its usage inside a keyword it's properly marked as undefined.
+- Variables in short format in Set XXX Variable keywords are accepted.
+- Variables are properly collected from inline if.
+- Variables in Evaluate are properly collected.
+- Variables from expressions in conditions are properly collected.
+
+
 New in 0.45.2 (2022-04-14)
 -----------------------------
 
