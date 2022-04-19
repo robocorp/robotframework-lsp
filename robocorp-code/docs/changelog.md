@@ -1,4 +1,4 @@
-NEXT
+New in 0.32.0 (2022-04-19)
 -----------------------------
 
 - Locators: `robocorp-inspector` was upgraded to `0.6.5`.
