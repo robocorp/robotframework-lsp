@@ -111,3 +111,31 @@ def test_references_multiple(workspace, libspec_manager, data_regression):
     assert result
 
     check_data_regression(result, data_regression)
+
+
+def test_references_variables(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.references import references
+
+    workspace.set_root("case2", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc(
+        "case2.robot",
+        """
+*** Keywords ***
+Example 
+    ${foo}=    Set Variable    ${None}
+    IF    $foo
+        Log To Console    foo
+    END
+    ${bar}=    Set Variable    ${None}
+    Log To Console    ${bar}
+    """,
+    )
+    line = doc.find_line_with_contents("    ${foo}=    Set Variable    ${None}")
+    col = 7
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+    result = references(completion_context, include_declaration=True)
+    assert result
+    check_data_regression(result, data_regression)

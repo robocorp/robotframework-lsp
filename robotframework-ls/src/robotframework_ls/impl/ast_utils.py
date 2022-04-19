@@ -577,7 +577,8 @@ def tokenize_variables_from_name(name):
 
 
 def tokenize_variables(token: IRobotToken) -> Iterator[IRobotToken]:
-    return token.tokenize_variables()  # May throw error if it's not OK.
+    # May throw error if it's not OK.
+    return token.tokenize_variables()
 
 
 def _tokenize_variables_even_when_invalid(token: IRobotToken, col: int):
@@ -586,7 +587,7 @@ def _tokenize_variables_even_when_invalid(token: IRobotToken, col: int):
     the given column by applying some heuristics to find open variables.
     """
     try:
-        return token.tokenize_variables()
+        return tokenize_variables(token)
     except:
         pass
 

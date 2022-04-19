@@ -10,6 +10,7 @@ from robotframework_ls.impl.protocols import (
     IRobotToken,
     IVariableFound,
     AbstractVariablesCollector,
+    VarTokenInfo,
 )
 from robocorp_ls_core.protocols import check_implements, IDocumentSelection
 from typing import Optional, Sequence, List
@@ -290,6 +291,21 @@ class _FindDefinitionVariablesCollector(AbstractVariablesCollector):
         _: IVariablesCollector = check_implements(self)
 
 
+def find_variable_definition(
+    completion_context: ICompletionContext, var_token_info: VarTokenInfo
+) -> Optional[Sequence[IDefinition]]:
+    from robotframework_ls.impl.string_matcher import RobotStringMatcher
+    from robotframework_ls.impl.variable_completions import collect_variables
+
+    token = var_token_info.token
+    value = token.value
+    collector = _FindDefinitionVariablesCollector(
+        completion_context.sel, token, RobotStringMatcher(value)
+    )
+    collect_variables(completion_context, collector)
+    return collector.matches
+
+
 def find_keyword_definition(
     completion_context: ICompletionContext, token_info: TokenInfo
 ) -> Optional[Sequence[IKeywordDefinition]]:
@@ -346,8 +362,6 @@ def find_definition_extended(
         at this place (callers are responsible for validating entries).
     """
     from robotframework_ls.impl import ast_utils
-    from robotframework_ls.impl.string_matcher import RobotStringMatcher
-    from robotframework_ls.impl.variable_completions import collect_variables
     from robotframework_ls.impl.libspec_manager import LibspecManager
 
     token_info = completion_context.get_current_token()
@@ -411,14 +425,10 @@ def find_definition_extended(
 
     var_token_info = completion_context.get_current_variable()
     if var_token_info is not None:
-        token = var_token_info.token
-        value = token.value
-        collector = _FindDefinitionVariablesCollector(
-            completion_context.sel, token, RobotStringMatcher(value)
-        )
-        collect_variables(completion_context, collector)
-        return _DefinitionInfo(
-            collector.matches, ast_utils.create_range_from_token(token)
-        )
+        var_matches = find_variable_definition(completion_context, var_token_info)
+        if var_matches:
+            return _DefinitionInfo(
+                var_matches, ast_utils.create_range_from_token(var_token_info.token)
+            )
 
     return None

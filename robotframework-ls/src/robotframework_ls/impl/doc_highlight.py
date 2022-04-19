@@ -96,7 +96,6 @@ def _highlight_variables(
 
     for range_ref in iter_variable_references_in_doc(
         completion_context,
-        completion_context.doc,
         normalized_name,
     ):
         completion_context.check_cancelled()

@@ -668,9 +668,22 @@ class IKeywordDefinition(IDefinition, Protocol):
     keyword_found: IKeywordFound
 
 
+class IVariableDefinition(IDefinition, Protocol):
+
+    variable_found: "IVariableFound"
+
+
 def cast_to_keyword_definition(definition: IDefinition) -> Optional[IKeywordDefinition]:
     if hasattr(definition, "keyword_found"):
         return typing.cast(IKeywordDefinition, definition)
+    return None
+
+
+def cast_to_variable_definition(
+    definition: IDefinition,
+) -> Optional[IVariableDefinition]:
+    if hasattr(definition, "variable_found"):
+        return typing.cast(IVariableDefinition, definition)
     return None
 
 

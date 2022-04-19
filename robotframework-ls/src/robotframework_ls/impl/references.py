@@ -10,6 +10,7 @@ from robotframework_ls.impl.protocols import (
     IVariableFound,
     cast_to_keyword_definition,
     AbstractVariablesCollector,
+    cast_to_variable_definition,
 )
 import typing
 from robocorp_ls_core.protocols import check_implements
@@ -45,19 +46,17 @@ class _VariableDefinitionsCollector(AbstractVariablesCollector):
 
 def iter_variable_references_in_doc(
     completion_context: ICompletionContext,
-    doc: IRobotDocument,
     normalized_name: str,
 ) -> Iterator[RangeTypedDict]:
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.ast_utils import create_range_from_token
-    from robotframework_ls.impl.variable_completions import collect_variables
-
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
     from robocorp_ls_core.lsp import PositionTypedDict
+    from robotframework_ls.impl.variable_completions import collect_variables
 
     robot_string_matcher = RobotStringMatcher(normalized_name)
 
-    ast = doc.get_ast()
+    ast = completion_context.get_ast()
     if ast is not None:
         for node_info in ast_utils.iter_variable_references(ast):
             completion_context.check_cancelled()
@@ -183,6 +182,20 @@ def references(
     completion_context: ICompletionContext, include_declaration: bool
 ) -> List[LocationTypedDict]:
 
+    var_token_info = completion_context.get_current_variable()
+    if var_token_info is not None:
+        from robotframework_ls.impl.find_definition import find_variable_definition
+
+        var_definitions = find_variable_definition(completion_context, var_token_info)
+        if var_definitions:
+            for var_definition in var_definitions:
+                as_variable_definition = cast_to_variable_definition(var_definition)
+                if as_variable_definition:
+                    variable_found = as_variable_definition.variable_found
+                    return _references_for_variable_found(
+                        completion_context, variable_found
+                    )
+
     token_info = completion_context.get_current_token()
     if token_info is None:
         return []
@@ -215,6 +228,65 @@ def references(
         )
 
     return []
+
+
+def _references_for_variable_found(
+    initial_completion_context: ICompletionContext,
+    variable_found: IVariableFound,
+):
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
+
+    ret: List[LocationTypedDict] = []
+
+    normalized_name = normalize_robot_name(variable_found.variable_name)
+
+    from robotframework_ls.impl.workspace_symbols import iter_symbols_caches
+
+    # Ininial doc (need to get local scope).
+    ref_range: RangeTypedDict
+    for ref_range in iter_variable_references_in_doc(
+        initial_completion_context, normalized_name
+    ):
+        ret.append({"uri": initial_completion_context.doc.uri, "range": ref_range})
+
+    for symbols_cache in iter_symbols_caches(
+        None,
+        initial_completion_context,
+        force_all_docs_in_workspace=True,
+        timeout=999999,
+    ):
+        initial_completion_context.check_cancelled()
+        # if symbols_cache.has_variable(normalized_name):
+        doc: Optional[IRobotDocument] = symbols_cache.get_doc()
+        if doc is None:
+            uri = symbols_cache.get_uri()
+            if uri is None:
+                continue
+
+            doc = typing.cast(
+                Optional[IRobotDocument],
+                initial_completion_context.workspace.get_document(
+                    doc_uri=uri, accept_from_file=True
+                ),
+            )
+
+            if doc is None:
+                log.debug(
+                    "Unable to load document for getting references with uri: %s",
+                    uri,
+                )
+                continue
+        if initial_completion_context.doc.uri == doc.uri:
+            continue  # Skip (already analyzed).
+
+        new_completion_context = initial_completion_context.create_copy(doc)
+
+        for ref_range in iter_variable_references_in_doc(
+            new_completion_context, normalized_name
+        ):
+            ret.append({"uri": doc.uri, "range": ref_range})
+
+    return ret
 
 
 def _references_for_keyword_found(
