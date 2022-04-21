@@ -11,8 +11,9 @@ from robotframework_ls.impl.protocols import (
     IVariableFound,
     AbstractVariablesCollector,
     VarTokenInfo,
+    IVariableDefinition,
 )
-from robocorp_ls_core.protocols import check_implements, IDocumentSelection
+from robocorp_ls_core.protocols import check_implements
 from typing import Optional, Sequence, List
 from robocorp_ls_core.lsp import RangeTypedDict, MarkupContentTypedDict, MarkupKind
 from robocorp_ls_core.basic import isinstance_name
@@ -273,17 +274,41 @@ class _FindDefinitionKeywordCollector(AbstractKeywordCollector):
 
 class _FindDefinitionVariablesCollector(AbstractVariablesCollector):
     def __init__(
-        self, sel: IDocumentSelection, token: IRobotToken, robot_string_matcher
+        self, completion_context: ICompletionContext, var_token_info: VarTokenInfo
     ):
-        self.matches: List[IDefinition] = []
-        self.sel = sel
-        self.token = token
-        self.matcher = robot_string_matcher
+        from robotframework_ls.impl.string_matcher import RobotStringMatcher
+
+        self.matches: List[IVariableDefinition] = []
+        self.var_token_info = var_token_info
+
+        token: IRobotToken = var_token_info.token
+        value = token.value
+        self.stack = var_token_info.stack
+        self.matcher = RobotStringMatcher(value)
+        self.completion_context = completion_context
 
     def accepts(self, variable_name: str) -> bool:
         return self.matcher.is_variable_name_match(variable_name)
 
     def on_variable(self, variable_found: IVariableFound):
+        from robotframework_ls.impl.ast_utils import matches_stack
+
+        is_local_variable = variable_found.is_local_variable
+        if is_local_variable:
+            if self.completion_context.doc.path != variable_found.source:
+                return
+
+            if not matches_stack(self.stack, variable_found.stack):
+                return
+
+            if variable_found.lineno > self.var_token_info.token.lineno - 1:
+                return
+
+            if variable_found.lineno == self.var_token_info.token.lineno - 1:
+                # We need to check the column too.
+                if variable_found.col_offset > self.var_token_info.token.col_offset:
+                    return
+
         definition = _DefinitionFromVariable(variable_found)
         self.matches.append(definition)
 
@@ -293,15 +318,14 @@ class _FindDefinitionVariablesCollector(AbstractVariablesCollector):
 
 def find_variable_definition(
     completion_context: ICompletionContext, var_token_info: VarTokenInfo
-) -> Optional[Sequence[IDefinition]]:
-    from robotframework_ls.impl.string_matcher import RobotStringMatcher
+) -> Optional[Sequence[IVariableDefinition]]:
     from robotframework_ls.impl.variable_completions import collect_variables
 
     token = var_token_info.token
-    value = token.value
-    collector = _FindDefinitionVariablesCollector(
-        completion_context.sel, token, RobotStringMatcher(value)
+    completion_context = completion_context.create_copy_with_selection(
+        line=token.lineno - 1, col=token.col_offset
     )
+    collector = _FindDefinitionVariablesCollector(completion_context, var_token_info)
     collect_variables(completion_context, collector)
     return collector.matches
 

@@ -1039,7 +1039,22 @@ Test
     )
 
     definitions = find_definition(completion_context)
-    assert len(definitions) == 2  # In global and local
+    assert len(definitions) == 1  # The global is found.
+    for definition in definitions:
+        assert definition.source.endswith("case2.robot")
+        assert definition.lineno == 2
+
+    # Now, check directly at the ${var_a}=
+    line, col = doc.get_last_line_col_with_contents(
+        "        ${var_a}=    Evaluate    $var_a + 1"
+    )
+    col -= len("a}=    Evaluate    $var_a + 1")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 2  # Both declarations are found.
     for definition in definitions:
         assert definition.source.endswith("case2.robot")
         assert definition.lineno in (2, 8)

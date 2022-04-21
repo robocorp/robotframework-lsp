@@ -11,6 +11,7 @@ from robotframework_ls.impl.protocols import (
     cast_to_keyword_definition,
     AbstractVariablesCollector,
     cast_to_variable_definition,
+    VarTokenInfo,
 )
 import typing
 from robocorp_ls_core.protocols import check_implements
@@ -46,28 +47,72 @@ class _VariableDefinitionsCollector(AbstractVariablesCollector):
 
 def iter_variable_references_in_doc(
     completion_context: ICompletionContext,
-    normalized_name: str,
+    variable_found: IVariableFound,
 ) -> Iterator[RangeTypedDict]:
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.ast_utils import create_range_from_token
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
     from robocorp_ls_core.lsp import PositionTypedDict
     from robotframework_ls.impl.variable_completions import collect_variables
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
+    from robotframework_ls.impl.variable_completions import collect_local_variables
+    from robotframework_ls.impl.ast_utils import get_local_variable_stack_and_node
 
+    normalized_name = normalize_robot_name(variable_found.variable_name)
     robot_string_matcher = RobotStringMatcher(normalized_name)
+
+    # Collector for any variable with the same name.
+    collector = _VariableDefinitionsCollector(robot_string_matcher)
 
     ast = completion_context.get_ast()
     if ast is not None:
-        for node_info in ast_utils.iter_variable_references(ast):
-            completion_context.check_cancelled()
-            if robot_string_matcher.is_same_variable_name(node_info.token.value):
-                yield create_range_from_token(node_info.token)
+        # Get references.
+        var_token_info: VarTokenInfo
+        if variable_found.is_local_variable:
+            # For local variables we must have the stack
+            stack = variable_found.stack
+            assert stack
 
-        collector = _VariableDefinitionsCollector(robot_string_matcher)
-        collect_variables(completion_context, collector, only_current_doc=True)
+            # Just search the current stack.
+            stack, stack_node = get_local_variable_stack_and_node(stack)
+
+            for var_token_info in ast_utils.iter_variable_references(stack_node):
+                completion_context.check_cancelled()
+
+                if not robot_string_matcher.is_same_variable_name(
+                    var_token_info.token.value
+                ):
+                    continue
+
+                yield create_range_from_token(var_token_info.token)
+
+            # Get definitions (only local).
+            cp = completion_context.create_copy_with_selection(
+                line=variable_found.lineno, col=variable_found.col_offset
+            )
+            token_info = cp.get_current_token()
+            assert token_info
+            collect_local_variables(cp, collector, token_info)
+
+        else:
+            # i.e.: For globals collect all globals as well as locals overriding
+            # the global value.
+            for var_token_info in ast_utils.iter_variable_references(ast):
+                completion_context.check_cancelled()
+
+                if not robot_string_matcher.is_same_variable_name(
+                    var_token_info.token.value
+                ):
+                    continue
+
+                yield create_range_from_token(var_token_info.token)
+
+            # Get definitions (all).
+            collect_variables(completion_context, collector, only_current_doc=True)
 
         variable: IVariableFound
         for variable in collector.matches:
+
             start: PositionTypedDict = {
                 "line": variable.lineno,
                 "character": variable.col_offset,
@@ -178,23 +223,45 @@ def iter_keyword_references_in_doc(
                 }
 
 
+def collect_variable_references(
+    completion_context: ICompletionContext, var_token_info: VarTokenInfo
+):
+    from robotframework_ls.impl.find_definition import find_variable_definition
+
+    var_definitions = find_variable_definition(completion_context, var_token_info)
+    if not var_definitions:
+        return []
+
+    variable_found_lst: List[IVariableFound] = []
+
+    for var_definition in var_definitions:
+        as_variable_definition = cast_to_variable_definition(var_definition)
+        if as_variable_definition:
+            v = as_variable_definition.variable_found
+            variable_found_lst.append(v)
+
+    if not variable_found_lst:
+        return []
+
+    for v in variable_found_lst:
+        if not v.is_local_variable:
+            # I.e.: prefer globals (in which case we'll also collect shadowed
+            # assigns in local scopes).
+            variable_found = v
+            break
+    else:
+        variable_found = next(iter(variable_found_lst))
+
+    return _references_for_variable_found(completion_context, variable_found)
+
+
 def references(
     completion_context: ICompletionContext, include_declaration: bool
 ) -> List[LocationTypedDict]:
 
     var_token_info = completion_context.get_current_variable()
     if var_token_info is not None:
-        from robotframework_ls.impl.find_definition import find_variable_definition
-
-        var_definitions = find_variable_definition(completion_context, var_token_info)
-        if var_definitions:
-            for var_definition in var_definitions:
-                as_variable_definition = cast_to_variable_definition(var_definition)
-                if as_variable_definition:
-                    variable_found = as_variable_definition.variable_found
-                    return _references_for_variable_found(
-                        completion_context, variable_found
-                    )
+        return collect_variable_references(completion_context, var_token_info)
 
     token_info = completion_context.get_current_token()
     if token_info is None:
@@ -234,20 +301,21 @@ def _references_for_variable_found(
     initial_completion_context: ICompletionContext,
     variable_found: IVariableFound,
 ):
-    from robotframework_ls.impl.text_utilities import normalize_robot_name
-
     ret: List[LocationTypedDict] = []
 
-    normalized_name = normalize_robot_name(variable_found.variable_name)
+    is_local_variable = variable_found.is_local_variable
 
     from robotframework_ls.impl.workspace_symbols import iter_symbols_caches
 
-    # Ininial doc (need to get local scope).
+    # Initial doc (need to get local scope).
     ref_range: RangeTypedDict
     for ref_range in iter_variable_references_in_doc(
-        initial_completion_context, normalized_name
+        initial_completion_context, variable_found
     ):
         ret.append({"uri": initial_completion_context.doc.uri, "range": ref_range})
+
+    if is_local_variable:
+        return ret
 
     for symbols_cache in iter_symbols_caches(
         None,
@@ -282,7 +350,7 @@ def _references_for_variable_found(
         new_completion_context = initial_completion_context.create_copy(doc)
 
         for ref_range in iter_variable_references_in_doc(
-            new_completion_context, normalized_name
+            new_completion_context, variable_found
         ):
             ret.append({"uri": doc.uri, "range": ref_range})
 

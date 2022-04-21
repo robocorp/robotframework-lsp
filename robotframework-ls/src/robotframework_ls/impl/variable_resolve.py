@@ -1,6 +1,6 @@
 import os
 from functools import lru_cache
-from typing import Optional, Union, Tuple, List, Iterator
+from typing import Optional, Tuple, List, Iterator
 from robotframework_ls.impl.protocols import (
     IRobotVariableMatch,
     IRobotToken,

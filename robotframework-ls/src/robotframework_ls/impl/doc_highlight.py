@@ -1,6 +1,6 @@
 from robocorp_ls_core.lsp import DocumentHighlightTypedDict
 from typing import Optional, List
-from robotframework_ls.impl.protocols import ICompletionContext
+from robotframework_ls.impl.protocols import ICompletionContext, VarTokenInfo
 
 
 def _highlight_keyword(
@@ -85,18 +85,33 @@ def _highlight_keyword(
 
 
 def _highlight_variables(
-    completion_context: ICompletionContext, curr_token_info
+    completion_context: ICompletionContext, curr_token_info: VarTokenInfo
 ) -> List[DocumentHighlightTypedDict]:
-    from robotframework_ls.impl.text_utilities import normalize_robot_name
     from robocorp_ls_core.lsp import DocumentHighlightKind
     from robotframework_ls.impl.references import iter_variable_references_in_doc
+    from robotframework_ls.impl.find_definition import find_variable_definition
 
     ret: List[DocumentHighlightTypedDict] = []
-    normalized_name = normalize_robot_name(curr_token_info.token.value)
+
+    found_definitions = find_variable_definition(completion_context, curr_token_info)
+
+    if not found_definitions:
+        return ret
+
+    if len(found_definitions) > 1:
+        # Give preference for a global definition (in which case we'll provide
+        # both globals as well as locals overriding the global).
+        for definition in found_definitions:
+            if not definition.variable_found.is_local_variable:
+                break
+        else:
+            definition = next(iter(found_definitions))
+    else:
+        definition = next(iter(found_definitions))
 
     for range_ref in iter_variable_references_in_doc(
         completion_context,
-        normalized_name,
+        definition.variable_found,
     ):
         completion_context.check_cancelled()
         ret.append({"range": range_ref, "kind": DocumentHighlightKind.Text})

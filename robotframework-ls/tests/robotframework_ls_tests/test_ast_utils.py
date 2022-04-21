@@ -59,12 +59,12 @@ def test_iter_nodes():
         )
     assert lst in (
         [
-            "[] - SettingSectionHeader",
-            "[] - ResourceImport",
+            "['SettingSection'] - SettingSectionHeader",
+            "['SettingSection'] - ResourceImport",
         ],
         [  # version 4.0.4 onwards
-            "[] - SectionHeader",
-            "[] - ResourceImport",
+            "['SettingSection'] - SectionHeader",
+            "['SettingSection'] - ResourceImport",
         ],
     )
 
@@ -316,3 +316,42 @@ my
         "CallThis = <keyword>",
         "CallThis2 = <keyword>",
     ]
+
+
+def test_keyword_usage_stack():
+    from robotframework_ls.impl import ast_utils
+    from robotframework_ls.impl.robot_workspace import RobotDocument
+
+    document = RobotDocument(
+        "uri",
+        """
+*** Tasks ***
+Minimal task
+    Set local variable    $Cond1    1
+    Log to Console    ${Cond1}
+    Set local variable    ${Cond2}    2
+    Log to Console    ${Cond2}
+""",
+    )
+
+    ast = document.get_ast()
+    test_sections = list(ast_utils.iter_test_case_sections(ast))
+    assert len(test_sections) == 1
+    test_section = next(iter(test_sections)).node
+
+    tests = list(ast_utils.iter_tests(ast))
+    assert len(tests) == 1
+    test = next(iter(tests)).node
+
+    for keyword_usage in ast_utils.iter_keyword_usage_tokens(
+        ast, collect_args_as_keywords=True
+    ):
+        assert keyword_usage.stack == (
+            test_section,
+            test,
+        )
+
+    for keyword_usage in ast_utils.iter_keyword_usage_tokens(
+        test, collect_args_as_keywords=True
+    ):
+        assert keyword_usage.stack == (test,)

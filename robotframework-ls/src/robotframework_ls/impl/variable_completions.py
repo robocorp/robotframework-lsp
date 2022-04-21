@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Tuple, Sequence
 
 from robocorp_ls_core.lsp import CompletionItemTypedDict
 from robocorp_ls_core.protocols import check_implements, IDocumentSelection
@@ -13,6 +13,7 @@ from robotframework_ls.impl.protocols import (
     AbstractVariablesCollector,
     VariableKind,
     VarTokenInfo,
+    INode,
 )
 from robotframework_ls.impl.text_utilities import normalize_robot_name
 from robotframework_ls.impl.variable_types import (
@@ -143,7 +144,8 @@ def _collect_variables_from_set_keywords(
                         base_token,
                         variable_value,
                         variable_name=var_name,
-                        variable_kind=accept_sets_in,
+                        variable_kind=var_kind,
+                        stack=keyword_usage.stack,
                     )
                     collector.on_variable(variable_found)
 
@@ -311,6 +313,11 @@ def _collect_global_variables_from_document_context(
     collector: IVariablesCollector,
     only_current_doc=False,
 ):
+    """
+    :param only_current_doc:
+        If true we won't collect variables from dependencies.
+    """
+
     completion_context.check_cancelled()
     _collect_current_doc_variables(completion_context, collector)
 
@@ -322,7 +329,8 @@ def _collect_global_variables_from_document_context(
 
 def _collect_arguments(
     completion_context: ICompletionContext,
-    node,
+    stack: Tuple[INode, ...],
+    node: INode,
     collector: IVariablesCollector,
 ):
     from robotframework_ls.impl import ast_utils
@@ -338,6 +346,7 @@ def _collect_arguments(
                 "",
                 variable_name=name,
                 variable_kind=VariableKind.ARGUMENT,
+                stack=stack,
             )
             collector.on_variable(variable_found)
 
@@ -346,15 +355,25 @@ def collect_variables(
     completion_context: ICompletionContext,
     collector: IVariablesCollector,
     only_current_doc=False,
-):
+) -> None:
     token_info = completion_context.get_current_token()
+    # Note: we'll collect all variables in the current context -- i.e.:
+    # Keyword/Test Case locals + globals -- regardless of whether we're inside a
+    # variable right now (so, we can just use get_current_token() and not
+    # get_current_variable()).
     if token_info is not None:
         collect_local_variables(completion_context, collector, token_info)
 
     collect_global_variables(completion_context, collector, only_current_doc)
 
 
-def _collect_global_static_variables(completion_context, collector):
+def _collect_global_static_variables(
+    completion_context: ICompletionContext,
+    collector: IVariablesCollector,
+) -> None:
+    """
+    Collects variables from builtins and settings.
+    """
     for (
         var_found
     ) in completion_context.get_settings_normalized_var_name_to_var_found().values():
@@ -381,6 +400,10 @@ def collect_global_variables(
     collector: IVariablesCollector,
     only_current_doc=False,
 ):
+    """
+    :param only_current_doc:
+        If true we won't collect variables from dependencies nor builtins/settings.
+    """
     _collect_global_variables_from_document_context(
         completion_context, collector, only_current_doc=only_current_doc
     )
@@ -396,15 +419,15 @@ def collect_local_variables(
 ):
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.ast_utils import KEYWORD_SET_LOCAL_TO_VAR_KIND
+    from robotframework_ls.impl.ast_utils import get_local_variable_stack_and_node
+
+    stack: Tuple[INode, ...]
 
     if token_info.stack:
-        for stack_node in reversed(token_info.stack):
-            if stack_node.__class__.__name__ in ("Keyword", "TestCase"):
-                break
-        else:
-            stack_node = token_info.stack[0]
+        stack, stack_node = get_local_variable_stack_and_node(token_info.stack)
     else:
         stack_node = completion_context.get_ast_current_section()
+        stack = (stack_node,)
 
     for assign_node_info in ast_utils.iter_local_assigns(stack_node):
         completion_context.check_cancelled()
@@ -415,10 +438,11 @@ def collect_local_variables(
                 assign_node_info.token,
                 rep,
                 variable_kind=VariableKind.LOCAL_ASSIGN_VARIABLE,
+                stack=stack,
             )
             collector.on_variable(variable_found)
 
-    _collect_arguments(completion_context, stack_node, collector)
+    _collect_arguments(completion_context, stack, stack_node, collector)
 
     _collect_variables_from_set_keywords(
         stack_node, completion_context, collector, KEYWORD_SET_LOCAL_TO_VAR_KIND

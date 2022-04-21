@@ -10,7 +10,6 @@ from typing import (
     Generic,
     Iterator,
     Callable,
-    Union,
     Hashable,
     Dict,
 )
@@ -116,12 +115,12 @@ class IRobotToken(Protocol):
 
     type: str
     value: str
-    lineno: int
-    col_offset: int
+    lineno: int  # 1-based
+    col_offset: int  # 0-based
     error: Any
 
     @property
-    def end_col_offset(self) -> int:
+    def end_col_offset(self) -> int:  # 0-based
         pass
 
     def tokenize_variables(self) -> Iterator["IRobotToken"]:
@@ -1019,6 +1018,13 @@ class VariableKind:
     GLOBAL_SET_VARIABLE = "Variable (global)"
 
 
+LOCAL_ASSIGNS_VARIABLE_KIND = {
+    VariableKind.ARGUMENT,
+    VariableKind.LOCAL_ASSIGN_VARIABLE,
+    VariableKind.LOCAL_SET_VARIABLE,
+}
+
+
 class IVariableFound(Protocol):
     """
     :ivar variable_name:
@@ -1038,12 +1044,22 @@ class IVariableFound(Protocol):
 
     :ivar lineno:
         Line where it was found (0-based).
+
+    :ivar stack:
+        The stack where the variable was found (only available if it was
+        found in a robot file where the ast is available -- i.e.: settings,
+        yaml, python, etc. variables don't have a stack available).
     """
 
     variable_name: str = ""
     variable_value: str = ""
     variable_kind: str = VariableKind.VARIABLE
     completion_context: Optional[ICompletionContext] = None
+    stack: Optional[Tuple[INode, ...]] = None
+
+    @property
+    def is_local_variable(self) -> bool:
+        pass
 
     @property
     def source(self) -> str:

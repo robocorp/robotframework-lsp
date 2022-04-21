@@ -368,6 +368,7 @@ class CompletionContext(object):
                 base_token,
                 variable_node.value,
                 variable_name=variable_match.base,
+                stack=variable_node_info.stack,
             )
 
         return ret

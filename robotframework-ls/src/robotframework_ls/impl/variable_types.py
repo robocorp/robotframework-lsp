@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 from robocorp_ls_core.cache import instance_cache
 from robocorp_ls_core.protocols import check_implements
@@ -6,6 +6,8 @@ from robotframework_ls.impl.protocols import (
     VariableKind,
     IVariableFound,
     ICompletionContext,
+    INode,
+    LOCAL_ASSIGNS_VARIABLE_KIND,
 )
 
 
@@ -17,8 +19,10 @@ class VariableFoundFromToken(object):
         variable_value,
         variable_name=None,
         variable_kind=VariableKind.VARIABLE,
+        stack: Tuple[INode, ...] = None,
     ):
         self.completion_context = completion_context
+        self.stack = stack
         self.variable_token = variable_token
 
         if variable_name is None:
@@ -33,6 +37,15 @@ class VariableFoundFromToken(object):
         else:
             self.variable_value = str(variable_value)
         self.variable_kind = variable_kind
+        self._is_local_variable = self.variable_kind in LOCAL_ASSIGNS_VARIABLE_KIND
+        if self._is_local_variable:
+            assert (
+                stack
+            ), f"Stack not available for local variable: {self.variable_name} at line: {self.lineno}"
+
+    @property
+    def is_local_variable(self):
+        return self._is_local_variable
 
     @property  # type: ignore
     @instance_cache
@@ -87,6 +100,11 @@ class VariableFoundFromPythonAst(object):
         self.variable_name = variable_name
         self.variable_value = variable_value
         self.variable_kind = VariableKind.PYTHON
+        self.stack: Optional[Tuple[INode, ...]] = None
+
+    @property
+    def is_local_variable(self):
+        return False
 
     @property
     def source(self):
@@ -110,6 +128,11 @@ class VariableFoundFromSettings(object):
         self.variable_value = str(variable_value)
         self._source = source
         self._lineno = lineno
+        self.stack: Optional[Tuple[INode, ...]] = None
+
+    @property
+    def is_local_variable(self):
+        return False
 
     @property
     def source(self):

@@ -10,6 +10,7 @@ from typing import (
     Callable,
     Dict,
     Iterable,
+    Sequence,
 )
 
 import ast as ast_module
@@ -372,6 +373,54 @@ else:
     _AST_CLASS = ast_module.AST
 
 
+def get_local_variable_stack_and_node(
+    stack: Sequence[INode],
+) -> Tuple[Tuple[INode, ...], INode]:
+    """
+    Provides the stack to search local variables in (i.e.: the keyword/test case).
+
+    Note that this requires a valid stack.
+    """
+    assert stack, "This method requires a valid stack."
+
+    stack_lst: List[INode] = []
+    for local_stack_node in reversed(stack):
+        stack_lst.append(local_stack_node)
+        if local_stack_node.__class__.__name__ in ("Keyword", "TestCase"):
+            stack = tuple(stack_lst)
+            break
+    else:
+        stack = (local_stack_node,)
+        local_stack_node = stack[0]
+    return stack, local_stack_node
+
+
+def matches_stack(
+    def_stack: Optional[Sequence[INode]], stack: Optional[Sequence[INode]]
+) -> bool:
+    """
+    Note: just checks the stack, the source must be already validated at this point.
+    """
+    if stack is not None:
+        if def_stack is None:
+            return False
+
+        if stack:
+            if not def_stack:
+                return False
+
+            if stack[-1].lineno == def_stack[-1].lineno:
+                return True
+
+            # Not directly the same (we could be inside some for/while, so, let's
+            # see if we can get the keyword/testcase from the stack).
+            _, node1 = get_local_variable_stack_and_node(stack)
+            _, node2 = get_local_variable_stack_and_node(def_stack)
+            return node1.lineno == node2.lineno
+
+    return True
+
+
 def _iter_nodes(
     node, internal_stack: Optional[List[INode]] = None, recursive=True
 ) -> Iterator[Tuple[List[INode], INode]]:
@@ -382,6 +431,8 @@ def _iter_nodes(
     stack: List[INode]
     if internal_stack is None:
         stack = []
+        if node.__class__.__name__ != "File":
+            stack.append(node)
     else:
         stack = internal_stack
 
@@ -865,7 +916,7 @@ KEYWORD_SET_GLOBAL_TO_VAR_KIND = {
 
 
 @_convert_ast_to_indexer
-def iter_local_assigns(ast) -> Iterator:
+def iter_local_assigns(ast) -> Iterator[VarTokenInfo]:
     from robot.api import Token
 
     for clsname, assign_token_type in (
