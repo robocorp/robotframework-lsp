@@ -134,6 +134,12 @@ COMMANDS: List[Command] = [
         server_handled=True,
         hide_from_command_palette=True,
     ),
+    Command(
+        "robot.rfInfo.internal",
+        "Collects information on the Robot Framework version being used.",
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
 ]
 
 

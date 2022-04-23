@@ -40,6 +40,7 @@ import { fileExists } from "./files";
 import { clearTestItems, handleTestsCollected, ITestInfoFromUri, setupTestExplorerSupport } from "./testview";
 import { getPythonExtensionExecutable } from "./pythonExtIntegration";
 import { registerDebugger } from "./debugger";
+import { debounce } from "./common";
 
 interface ExecuteWorkspaceCommandArgs {
     command: string;
@@ -636,7 +637,48 @@ function registerOnDidChangeConfiguration(context: ExtensionContext): void {
     );
 }
 
+let RF_STATUS_BAR_ITEM: vscode.StatusBarItem = undefined;
+let onChangedEditorUpdateRFStatusBarItem = debounce(() => {
+    if (!RF_STATUS_BAR_ITEM) {
+        return;
+    }
+    const activeTextEditor = window.activeTextEditor;
+    if (!activeTextEditor) {
+        RF_STATUS_BAR_ITEM.hide();
+        return;
+    }
+    if (activeTextEditor.document.languageId !== "robotframework") {
+        RF_STATUS_BAR_ITEM.hide();
+        return;
+    }
+    if (!languageServerClient) {
+        RF_STATUS_BAR_ITEM.hide();
+        return;
+    }
+    const uri = activeTextEditor.document.uri;
+    commands.executeCommand("robot.rfInfo.internal", { "uri": uri.toString() }).then((rfInfo) => {
+        if (!rfInfo) {
+            RF_STATUS_BAR_ITEM.hide();
+            return;
+        }
+        RF_STATUS_BAR_ITEM.text = "RF: v" + rfInfo["version"];
+        let tooltip = "Robot Framework version: " + rfInfo["version"] + "\nPython: " + rfInfo["python"];
+        const interpreterId = rfInfo["interpreter_id"];
+        if (interpreterId) {
+            tooltip += "\nTarget: " + interpreterId;
+        }
+        tooltip += "\n(source: Robot Framework Language Server)";
+        RF_STATUS_BAR_ITEM.tooltip = tooltip;
+        RF_STATUS_BAR_ITEM.show();
+    });
+}, 100);
+
 export async function activate(context: ExtensionContext) {
+    RF_STATUS_BAR_ITEM = window.createStatusBarItem(vscode.StatusBarAlignment.Right);
+    window.onDidChangeActiveTextEditor((editor) => {
+        onChangedEditorUpdateRFStatusBarItem();
+    });
+
     await languageServerClientMutex.dispatch(async () => {
         extensionContext = context;
 
@@ -674,6 +716,7 @@ export async function activate(context: ExtensionContext) {
             // ask for the executable in a dialog (and then we'd go
             // through the usual start and a restart at the same time).
             registerOnDidChangeConfiguration(context);
+            onChangedEditorUpdateRFStatusBarItem();
         }
     });
 }

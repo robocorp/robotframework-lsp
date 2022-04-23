@@ -35,6 +35,7 @@ from robotframework_ls.commands import (
     ROBOT_GET_RFLS_HOME_DIR,
     ROBOT_START_INDEXING_INTERNAL,
     ROBOT_WAIT_FULL_TEST_COLLECTION_INTERNAL,
+    ROBOT_RF_INFO_INTERNAL,
 )
 
 
@@ -499,6 +500,34 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         from robotframework_ls import robot_config
 
         return robot_config.get_robotframework_ls_home()
+
+    @command_dispatcher(ROBOT_RF_INFO_INTERNAL)
+    def _get_rf_info_internal(self, *arguments):
+        doc_uri = arguments[0]["uri"]
+
+        api = self._server_manager._get_others_api(doc_uri)
+        if api is not None:
+            info = api.get_interpreter_info()
+            rf_api_client = api.get_robotframework_api_client()
+            if rf_api_client is not None:
+
+                def func(monitor):
+                    ret = self._threaded_api_request(
+                        rf_api_client,
+                        "request_rf_info",
+                        doc_uri=doc_uri,
+                        monitor=monitor,
+                    )
+                    if info is not None:
+                        if isinstance(ret, dict):
+                            ret["interpreter_id"] = info.get_interpreter_id()
+                    return ret
+
+                func = require_monitor(func)
+                return func
+
+        log.info("Unable to get RF info (no api available).")
+        return None
 
     @command_dispatcher("robot.listTests")
     def _list_tests(self, *arguments):

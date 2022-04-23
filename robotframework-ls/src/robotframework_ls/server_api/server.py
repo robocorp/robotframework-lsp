@@ -773,6 +773,11 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         func = require_monitor(func)
         return func
 
+    def m_rf_info(self, doc_uri: str):
+        from robotframework_ls.impl.robot_version import get_robot_version
+
+        return {"version": get_robot_version(), "python": sys.executable}
+
     def _threaded_evaluatable_expression(
         self, doc_uri: str, position: PositionTypedDict, monitor: IMonitor
     ) -> Optional[EvaluatableExpressionTypedDict]:

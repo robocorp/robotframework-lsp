@@ -384,6 +384,11 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
         :Note: async complete.
         """
 
+    def request_rf_info(self, doc_uri: str) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+
 
 class ITestInfoTypedDict(TypedDict):
     uri: str

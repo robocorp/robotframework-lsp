@@ -112,6 +112,9 @@ class _ServerApi(object):
         self._config.update(config.get_full_settings())
         self._check_reinitialize_and_forward_settings_if_needed()
 
+    def get_interpreter_info(self) -> Optional[IInterpreterInfo]:
+        return self._interpreter_info
+
     def set_interpreter_info(self, interpreter_info: IInterpreterInfo) -> None:
         from robotframework_ls.config_extension import apply_interpreter_info_to_config
 

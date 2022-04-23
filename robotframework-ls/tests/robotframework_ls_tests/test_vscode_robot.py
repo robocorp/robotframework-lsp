@@ -16,6 +16,7 @@ from robocorp_ls_core.lsp import MarkupKind
 import typing
 from functools import partial
 import itertools
+import sys
 
 
 log = logging.getLogger(__name__)
@@ -922,6 +923,32 @@ Log It2
     ret = language_server.execute_command("robot.listTests", [{"uri": uri}])
     found = ret["result"]
     data_regression.check(found)
+
+
+def test_rf_info_integrated(
+    language_server_io: ILanguageServerClient, ws_root_path, data_regression
+):
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    txt = """
+*** Test Case ***
+Log It
+    Log    
+
+*** Task ***
+Log It2
+    Log    
+
+"""
+    language_server.open_doc(uri, 1, txt)
+
+    ret = language_server.execute_command("robot.rfInfo.internal", [{"uri": uri}])
+    found = ret["result"]
+    assert isinstance(found, dict)
+    assert int(found["version"].split(".")[0]) >= 3
+    assert found["python"] == sys.executable
 
 
 def test_document_symbol_integrated(

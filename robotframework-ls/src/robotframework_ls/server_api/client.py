@@ -329,6 +329,12 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             self._build_msg("evaluatableExpression", doc_uri=doc_uri, position=position)
         )
 
+    def request_rf_info(self, doc_uri) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(self._build_msg("rfInfo", doc_uri=doc_uri))
+
     def request_hover(
         self, doc_uri: str, line: int, col: int
     ) -> Optional[IIdMessageMatcher]:

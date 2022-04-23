@@ -50,7 +50,8 @@
         "onCommand:robot.clearCachesAndRestartProcesses.start.internal",
         "onCommand:robot.clearCachesAndRestartProcesses.finish.internal",
         "onCommand:robot.startIndexing.internal",
-        "onCommand:robot.waitFullTestCollection.internal"
+        "onCommand:robot.waitFullTestCollection.internal",
+        "onCommand:robot.rfInfo.internal"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -147,6 +148,11 @@
                 "command": "robot.waitFullTestCollection.internal",
                 "title": "Schedules and Waits for a full test collection",
                 "category": "Robot Framework"
+            },
+            {
+                "command": "robot.rfInfo.internal",
+                "title": "Collects information on the Robot Framework version being used.",
+                "category": "Robot Framework"
             }
         ],
         "menus": {
@@ -221,6 +227,10 @@
                 },
                 {
                     "command": "robot.waitFullTestCollection.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robot.rfInfo.internal",
                     "when": "false"
                 }
             ]
