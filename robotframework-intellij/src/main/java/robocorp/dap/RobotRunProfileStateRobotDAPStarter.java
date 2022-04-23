@@ -16,6 +16,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,9 +173,12 @@ public class RobotRunProfileStateRobotDAPStarter extends CommandLineState {
 
         @Override
         protected void notifyProcessTerminated(int exitCode) {
-            print("\n", ConsoleViewContentType.SYSTEM_OUTPUT);
-            print("Robot Run Terminated (code: " + exitCode + ")", ConsoleViewContentType.SYSTEM_OUTPUT);
-
+            ApplicationManager.getApplication().invokeLater(
+                    () -> {
+                        print("\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+                        print("Robot Run Terminated (code: " + exitCode + ")", ConsoleViewContentType.SYSTEM_OUTPUT);
+                    }
+            );
             super.notifyProcessTerminated(exitCode);
         }
 
