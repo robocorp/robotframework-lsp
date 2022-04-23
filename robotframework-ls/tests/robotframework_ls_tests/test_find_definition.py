@@ -902,7 +902,6 @@ def test_find_definition_remote_library(workspace, libspec_manager, remote_libra
     assert definition.lineno == -2
 
 
-@pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 4 onwards.")
 def test_var_from_for(workspace, libspec_manager):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.find_definition import find_definition

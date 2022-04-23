@@ -1193,7 +1193,6 @@ Example
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
-@pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 4 onwards.")
 def test_var_from_for(workspace, libspec_manager, data_regression):
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case2.robot")
@@ -1208,7 +1207,6 @@ Example
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
-@pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 4 onwards.")
 def test_var_from_args_used_in_for(workspace, libspec_manager, data_regression):
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case2.robot")
@@ -1224,7 +1222,6 @@ Sample Keyword
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
-@pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 4 onwards.")
 def test_var_undefinded_in_for(workspace, libspec_manager, data_regression):
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case2.robot")
@@ -1429,7 +1426,6 @@ Sum ${a} And ${b} Should Be ${expected_sum}
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
-@pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 4 onwards.")
 def test_no_error_with_constructed_vars(workspace, libspec_manager, data_regression):
     workspace.set_root("case2", libspec_manager=libspec_manager)
 

@@ -869,7 +869,8 @@ def iter_local_assigns(ast) -> Iterator:
 
     for clsname, assign_token_type in (
         ("KeywordCall", Token.ASSIGN),
-        ("ForHeader", Token.VARIABLE),
+        ("ForHeader", Token.VARIABLE),  # RF 4+
+        ("ForLoopHeader", Token.VARIABLE),  # RF 3
         ("ExceptHeader", Token.VARIABLE),
         ("InlineIfHeader", Token.ASSIGN),
     ):
@@ -998,7 +999,8 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
         "ResourceImport",
         "TestTimeout",
         "Variable",
-        "ForHeader",
+        "ForHeader",  # RF 4+
+        "ForLoopHeader",  # RF 3
     ) + _FIXTURE_CLASS_NAMES:
         for node_info in ast.iter_indexed(clsname):
             stack = node_info.stack

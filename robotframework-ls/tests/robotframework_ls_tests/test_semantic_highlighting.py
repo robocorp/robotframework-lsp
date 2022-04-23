@@ -943,6 +943,35 @@ Some keyword
     )
 
 
+def test_semantic_highlighting_for(workspace):
+    check_simple(
+        workspace,
+        """*** Keywords ***
+Some keyword
+    FOR    ${e1}    ${e2}    IN       &{DCT}
+        No operation
+    END
+""",
+        [
+            ("*** Keywords ***", "header"),
+            ("Some keyword", "keywordNameDefinition"),
+            ("FOR", "control"),
+            ("${", "variableOperator"),
+            ("e1", "variable"),
+            ("}", "variableOperator"),
+            ("${", "variableOperator"),
+            ("e2", "variable"),
+            ("}", "variableOperator"),
+            ("IN", "control"),
+            ("&{", "variableOperator"),
+            ("DCT", "variable"),
+            ("}", "variableOperator"),
+            ("No operation", "keywordNameCall"),
+            ("END", "control"),
+        ],
+    )
+
+
 @pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 5 onwards")
 def test_semantic_highlighting_expressions(workspace):
     check_simple(
