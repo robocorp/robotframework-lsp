@@ -50,7 +50,7 @@ jobs:
           
       - name: Black check robotframework-ls
         run: |
-          black --check ./robotframework-ls --exclude=vendored
+          black --check ./robotframework-ls --exclude=vendored --exclude=atest_v5
           
       - name: Black check robotframework-interactive
         run: |

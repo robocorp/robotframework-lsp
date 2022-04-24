@@ -565,8 +565,8 @@ Test
 
 
 @pytest.mark.skipif(
-    get_robot_major_version() < 4,
-    reason="Completions differ on RF 3",
+    get_robot_major_version() < 5,
+    reason="Completions differ on RF 3/4",
 )
 def test_variable_completions_in_assign(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.completion_context import CompletionContext
@@ -583,7 +583,7 @@ ${some var2}    2
 Put Key
     ${some }"""
 
-    # In RF 3 the line with ${some } yields a Keyword call and in RF 4
+    # In RF 3/4 the line with ${some } yields a Keyword call and in RF 5
     # it yields an EmptyLine, so, completions differ.
 
     line, col = doc.get_last_line_col()
@@ -595,8 +595,8 @@ Put Key
 
 
 @pytest.mark.skipif(
-    get_robot_major_version() < 4,
-    reason="Completions differ on RF 3",
+    get_robot_major_version() < 5,
+    reason="Completions differ on RF 3/4",
 )
 def test_variable_completions_in_no_builtins(
     workspace, libspec_manager, data_regression
@@ -615,7 +615,7 @@ ${some var2}    2
 Put Key
     ${e}"""
 
-    # In RF 3 the line with ${some } yields a Keyword call and in RF 4
+    # In RF 3/4 the line with ${some } yields a Keyword call and in RF 5
     # it yields an EmptyLine, so, completions differ.
 
     line, col = doc.get_last_line_col()
