@@ -12,6 +12,7 @@ from robotframework_ls.impl.protocols import (
     INode,
     IVariableFound,
     AbstractVariablesCollector,
+    VariableKind,
 )
 from robocorp_ls_core.lsp import DiagnosticSeverity, DiagnosticTag
 from robotframework_ls.impl.robot_lsp_constants import (
@@ -77,7 +78,7 @@ class _VariablesCollector(AbstractVariablesCollector):
             lst = self._variables_collected[normalized] = []
         lst.append(variable_found)
 
-    def contains_variable(self, variable_name, var_line):
+    def contains_variable(self, variable_name, var_line, var_col_offset):
         from robotframework_ls.impl.text_utilities import matches_name_with_variables
 
         variables_found: List[IVariableFound] = self._variables_collected.get(
@@ -86,6 +87,13 @@ class _VariablesCollector(AbstractVariablesCollector):
         if variables_found:
             for v in variables_found:
                 if v.lineno < var_line:
+                    return True
+
+                if (
+                    v.lineno == var_line
+                    and v.variable_kind == VariableKind.ARGUMENT
+                    and v.col_offset < var_col_offset
+                ):
                     return True
 
         for template_var, v in self._template_variables_collected:
@@ -548,6 +556,8 @@ def _collect_undefined_variables_errors(initial_completion_context):
 
         var_name = token_info.token.value
         var_line = token_info.token.lineno - 1  # We want it 0-based
+        var_col_offset = token_info.token.col_offset
+
         if token_info.var_identifier == "%":
             from robotframework_ls.impl.variable_resolve import extract_variable_base
 
@@ -582,7 +592,7 @@ def _collect_undefined_variables_errors(initial_completion_context):
                 break
 
             if globals_collector.contains_variable(
-                normalized_variable_name, sys.maxsize
+                normalized_variable_name, sys.maxsize, 0
             ):
                 found = True
                 break
@@ -591,14 +601,16 @@ def _collect_undefined_variables_errors(initial_completion_context):
                 locals_collector = _VariablesCollector(lambda *args, **kwargs: None)
                 local_ctx = initial_completion_context.create_copy_with_selection(
                     line=token_info.token.lineno - 1,
-                    col=token_info.token.col_offset - 1,
+                    col=token_info.token.col_offset,
                 )
 
                 variable_completions.collect_local_variables(
                     local_ctx, locals_collector, token_info
                 )
 
-            if locals_collector.contains_variable(normalized_variable_name, var_line):
+            if locals_collector.contains_variable(
+                normalized_variable_name, var_line, var_col_offset
+            ):
                 found = True
                 break
 

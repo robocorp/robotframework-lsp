@@ -355,3 +355,29 @@ Minimal task
         test, collect_args_as_keywords=True
     ):
         assert keyword_usage.stack == (test,)
+
+
+def test_variable_references_stack():
+    from robotframework_ls.impl.robot_workspace import RobotDocument
+    from robotframework_ls.impl import ast_utils
+    from robocorp_ls_core.basic import isinstance_name
+
+    document = RobotDocument(
+        "uri",
+        """
+*** Variables ***
+${VAR}            Variable value
+
+*** Keywords ***
+Keyword 1
+    [Arguments]    ${a}=a    ${b}=b    ${c}=${a}
+""",
+    )
+
+    ast = document.get_ast()
+    refs = list(ast_utils.iter_variable_references(ast))
+    assert len(refs) == 1
+    var_info = next(iter(refs))
+    assert var_info.token.value == "a"
+    assert len(var_info.stack) == 1
+    assert isinstance_name(var_info.stack[0], "Keyword")

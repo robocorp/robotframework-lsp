@@ -1558,3 +1558,54 @@ Minimal task
     Log to Console    ${Cond2}
 """
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_code_analysis_default_var_based_on_previous(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Demo
+    Default With Variable Based On Earlier Argument
+
+*** Keywords ***
+Default With Variable Based On Earlier Argument
+    [Arguments]    ${a}=a    ${b}=b    ${c}=${a}+${b}    ${d}=${c.upper()}    ${e}=\${d}on\\t escape (\\${a})
+    Should Be Equal    ${a}+${b}    ${c}
+    Should Be Equal    ${c.upper()}    ${d}
+    Should Be Equal    ${e}    \${d}on\\t escape (\\${a})
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_code_analysis_default_var_based_on_previous_2(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Variables ***
+${VAR}            Variable value
+
+*** Keywords ***
+Default With Variable Based On Earlier Argument
+    [Arguments]    ${a}=a    ${b}=b    ${c}=${a}+${b}
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_code_analysis_default_var_not_based_on_next(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+Default With Variable Not Based On Next Argument
+    [Arguments]    ${a}=${b}    ${b}=${a}
+    Log to Console    ${a}+${b}
+
+"""
+    _collect_errors(workspace, doc, data_regression)
