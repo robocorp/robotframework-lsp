@@ -1,0 +1,4 @@
+{
+  "python.terminal.activateEnvironment": false,
+  "robot.pythonpath": ["${workspaceFolder}"]
+}
