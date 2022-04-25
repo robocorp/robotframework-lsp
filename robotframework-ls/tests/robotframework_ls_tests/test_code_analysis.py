@@ -1703,3 +1703,31 @@ Test
     Log to console    %{PI_NUMBER}
 """
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_vars_in_parameters_defined(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Example
+    I execute "ls"
+    I execute "ls" with "-lh"
+    I type 1 + 2
+    I type 53 - 11
+    Today is 2011-06-27
+
+*** Keywords ***
+I execute "${cmd:[^"]+}"
+    Log to console    ${cmd}
+
+I execute "${cmd}" with "${opts}"
+    Log to console    ${cmd} ${opts}    shell=True
+
+I type ${num1:\d+} ${operator:[+-]} ${num2:\d+}
+    Log to console    ${num1}    ${operator}    ${num2}
+
+Today is ${date:\d{4}-\d{2}-\d{2}}
+    Log to console    ${date}
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")

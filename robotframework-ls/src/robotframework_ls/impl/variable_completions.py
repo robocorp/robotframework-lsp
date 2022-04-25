@@ -352,6 +352,9 @@ def _collect_arguments(
         node, tokenize_keyword_name=True
     ):
         name = arg_token.value
+        # Arguments may have a ':' after which a regexp is used to match a given name.
+        # i.e.: I type ${num1:\d+} ${operator:[+-]} ${num2:\d+}
+        name = name.split(":", 1)[0]
         if collector.accepts(name):
             variable_found = VariableFoundFromToken(
                 completion_context,
