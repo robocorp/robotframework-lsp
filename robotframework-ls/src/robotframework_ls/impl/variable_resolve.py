@@ -57,6 +57,13 @@ def robot_search_variable(text: str) -> Optional[IRobotVariableMatch]:
     return None
 
 
+def has_variable(text: str) -> bool:
+    robot_match = robot_search_variable(text)
+    if robot_match is None:
+        return False
+    return bool(robot_match.base)
+
+
 def iter_robot_variable_matches(
     string: str,
 ) -> Iterator[Tuple[IRobotVariableMatch, int]]:
@@ -94,16 +101,17 @@ def _find_split_index(string: str, eq_i: int) -> int:
             return eq_i
 
         relative_index = 0
+        robot_match_len = 0
         for robot_match, relative_index in variables:
-            before, string = (
-                robot_match.before,
-                robot_match.after,
-            )
+            before = robot_match.before
+            string = robot_match.after
             try:
                 return _find_split_index_from_part(before) + relative_index
             except ValueError:
                 pass
-        return _find_split_index_from_part(string) + relative_index
+            robot_match_len = robot_match.end - robot_match.start + len(before)
+
+        return _find_split_index_from_part(string) + relative_index + robot_match_len
     except ValueError:
         return -1
 

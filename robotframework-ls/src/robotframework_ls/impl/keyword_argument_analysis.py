@@ -169,6 +169,7 @@ class KeywordArgumentAnalysis:
         from collections import deque
         from robotframework_ls.impl.text_utilities import is_variable_text
         from robotframework_ls.impl.variable_resolve import find_split_index
+        from robotframework_ls.impl.variable_resolve import has_variable
 
         # Pre-requisite.
         keyword_token = usage_info.get_token_to_report_argument_missing()
@@ -264,6 +265,11 @@ class KeywordArgumentAnalysis:
                     break
 
                 name = token_arg.value[:eq_index]
+
+                if has_variable(name):
+                    # If an argument has variables, skip the analysis.
+                    return
+
                 found_definition_arg = definition_keyword_name_to_arg.get(name, None)
                 if found_definition_arg is not None:
                     if definition_arg_matched.get(found_definition_arg):
@@ -317,6 +323,10 @@ class KeywordArgumentAnalysis:
             eq_index = find_split_index(token_arg.value)
             if eq_index >= 0:
                 name = token_arg.value[:eq_index]
+                if has_variable(name):
+                    # If an argument has variables, skip the analysis.
+                    return
+
                 found_definition_arg = definition_keyword_name_to_arg.pop(name, None)
                 if not found_definition_arg:
                     if self.found_keyword_arg is not None:

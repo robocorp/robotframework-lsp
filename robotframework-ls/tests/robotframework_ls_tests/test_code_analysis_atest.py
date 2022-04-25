@@ -174,7 +174,7 @@ if get_robot_major_version() == 5:
 
 
 @pytest.mark.skipif(get_robot_major_version() != 5, reason="RF-5 only test")
-@pytest.mark.parametrize("p", _paths)
+@pytest.mark.parametrize("p", _paths, ids=[x.name for x in _paths])
 def test_atest_keywords(atest_keywords_ws, p, request):
     from robocorp_ls_core import uris
 

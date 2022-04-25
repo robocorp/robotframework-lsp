@@ -40,3 +40,25 @@ def test_robot_match_2():
         ("b", "item", 13),
         ("]", "]", 14),
     ]
+
+
+def test_find_split_index():
+    from robotframework_ls.impl.variable_resolve import find_split_index
+
+    assert find_split_index(r"a") == -1
+    assert find_split_index(r"a\=0") == -1
+    assert find_split_index(r"${=a}\=0") == -1
+    assert find_split_index(r"b\=${b}\=${a}\=0") == -1
+    assert find_split_index(r"b\=${a}\=0") == -1
+    assert find_split_index(r"a\=0") == -1
+    assert find_split_index(r"${a}\=0") == -1
+    assert find_split_index(r"${=a}\=0") == -1
+    assert find_split_index(r"a\=0\=2") == -1
+
+    assert find_split_index(r"b\=${b}\=${a}=0") == 13
+    assert find_split_index(r"b\=${a}=0") == 7
+    assert find_split_index(r"b=${a}=0") == 1
+    assert find_split_index(r"a=0") == 1
+    assert find_split_index(r"${a}=0") == 4
+    assert find_split_index(r"${=a}=0") == 5
+    assert find_split_index(r"a=0\=2") == 1

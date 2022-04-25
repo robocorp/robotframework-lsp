@@ -1609,3 +1609,54 @@ Default With Variable Not Based On Next Argument
 
 """
     _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_args_with_vars(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+Keyword 1
+    [Arguments]    ${a}=a    ${b}=b
+    No Operation
+    
+*** Test Cases ***
+Test
+    ${a}=    Evaluate    "a"
+    Keyword1    b=2    ${a}=A
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_code_analysis_args_with_vars_2(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+Keyword 1
+    [Arguments]    ${a}    ${b}
+    No Operation
+    
+*** Test Cases ***
+Test
+    ${a}=    Evaluate    "a"
+    Keyword1    b=2    ${a}=A
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_code_analysis_args_with_vars_3(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+Keyword 1
+    [Arguments]    ${a}    ${b}
+    No Operation
+    
+*** Test Cases ***
+Test
+    ${a}=    Evaluate    "a"
+    Keyword1    ${a}=A    b=2
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
