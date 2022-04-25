@@ -84,13 +84,15 @@ class _VariablesCollector(AbstractVariablesCollector):
             lst = self._variables_collected[normalized] = []
         lst.append(variable_found)
 
-    def contains_env_variable(self, variable_name_upper):
+    def contains_env_variable(self, variable_name_upper: str) -> bool:
         return variable_name_upper in self._env_variables_collected
 
-    def contains_variable(self, variable_name, var_line, var_col_offset):
+    def contains_variable(
+        self, variable_name: str, var_line: int, var_col_offset: int
+    ) -> bool:
         from robotframework_ls.impl.text_utilities import matches_name_with_variables
 
-        variables_found: List[IVariableFound] = self._variables_collected.get(
+        variables_found: Optional[List[IVariableFound]] = self._variables_collected.get(
             variable_name
         )
         if variables_found:

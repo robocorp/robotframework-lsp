@@ -22,8 +22,8 @@ jobs:
       matrix:
         name: [
           "windows-py37-pip-v3",
-          "ubuntu-py38-master",
           "ubuntu-py38-pip-v4",
+          "ubuntu-py310-master",
 #           "ubuntu-pypy3-master",
 #           "macos-py37",
         ]
@@ -32,11 +32,11 @@ jobs:
           - name: "windows-py37-pip-v3"
             python: "3.7"
             os: windows-latest
-          - name: "ubuntu-py38-master"
-            python: "3.8"
-            os: ubuntu-latest
           - name: "ubuntu-py38-pip-v4"
             python: "3.8"
+            os: ubuntu-latest
+          - name: "ubuntu-py310-master"
+            python: "3.10"
             os: ubuntu-latest
 #           - name: "ubuntu-pypy3-master"
 #             python: "pypy3"
