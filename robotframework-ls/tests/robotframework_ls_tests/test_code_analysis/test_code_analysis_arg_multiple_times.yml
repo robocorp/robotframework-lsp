@@ -1,0 +1,10 @@
+- message: 'Argument already specified previously: a'
+  range:
+    end:
+      character: 33
+      line: 9
+    start:
+      character: 30
+      line: 9
+  severity: 1
+  source: robotframework

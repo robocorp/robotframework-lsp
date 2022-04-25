@@ -1660,3 +1660,20 @@ Test
     Keyword1    ${a}=A    b=2
 """
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_code_analysis_arg_multiple_times(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+Keyword 1
+    [Arguments]    ${a}    ${b}
+    No Operation
+    
+*** Test Cases ***
+Test
+    # This is valid in RF, but it's strange, so, let's complain about it.
+    Keyword1    a=1    b=2    a=3
+"""
+    _collect_errors(workspace, doc, data_regression)

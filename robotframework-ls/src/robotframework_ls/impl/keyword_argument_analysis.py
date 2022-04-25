@@ -6,6 +6,7 @@ from typing import Optional, List, Deque, Iterator, Dict, Union, Sequence
 import itertools
 from robocorp_ls_core.lsp import Error
 from robocorp_ls_core.constants import Null, NULL
+import typing
 
 
 class _Match:
@@ -207,6 +208,12 @@ class KeywordArgumentAnalysis:
 
             definition_keyword_name_to_arg[arg_name] = definition_arg
 
+        # The keys from definition_keyword_name_to_arg but without mutating
+        # it during the analysis.
+        all_definition_keyword_names: typing.FrozenSet[str] = frozenset(
+            definition_keyword_name_to_arg.keys()
+        )
+
         tokens_args_to_iterate = self._iter_args(usage_info.node.tokens)
         # Fill positional args
         for token_arg in tokens_args_to_iterate:
@@ -335,12 +342,20 @@ class KeywordArgumentAnalysis:
                         )
                     else:
                         if collect_errors:
-                            error = create_error_from_node(
-                                usage_info.node,
-                                f"Unexpected named argument: {name}",
-                                tokens=[token_arg],
-                            )
-                            yield error
+                            if name in all_definition_keyword_names:
+                                error = create_error_from_node(
+                                    usage_info.node,
+                                    f"Argument already specified previously: {name}",
+                                    tokens=[token_arg],
+                                )
+                                yield error
+                            else:
+                                error = create_error_from_node(
+                                    usage_info.node,
+                                    f"Unexpected named argument: {name}",
+                                    tokens=[token_arg],
+                                )
+                                yield error
 
                 else:
                     usage_token_id_to_definition_arg_match[id(token_arg)] = _Match(
