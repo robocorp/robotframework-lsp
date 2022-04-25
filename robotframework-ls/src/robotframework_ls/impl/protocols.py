@@ -1016,6 +1016,7 @@ class VariableKind:
     TEST_SET_VARIABLE = "Variable (test set)"
     SUITE_SET_VARIABLE = "Variable (suite set)"
     GLOBAL_SET_VARIABLE = "Variable (global)"
+    ENV_SET_VARIABLE = "Variable (environment)"
 
 
 LOCAL_ASSIGNS_VARIABLE_KIND = {
@@ -1105,8 +1106,19 @@ class IVariablesCollector(Protocol):
     ):
         pass
 
+    def on_env_variable(self, variable_found: IVariableFound):
+        """
+        Called for environment variables using the
+        'Set Keyword Variable' keyword.
+
+        Note: doesn't call `accepts` first.
+        """
+
 
 class AbstractVariablesCollector:
+    def on_env_variable(self, variable_found: IVariableFound):
+        pass
+
     def on_unresolved_variable_import(
         self,
         completion_context: "ICompletionContext",

@@ -915,6 +915,11 @@ KEYWORD_SET_GLOBAL_TO_VAR_KIND = {
 }
 
 
+KEYWORD_SET_ENV_TO_VAR_KIND = {
+    normalize_robot_name("Set Environment Variable"): VariableKind.ENV_SET_VARIABLE,
+}
+
+
 @_convert_ast_to_indexer
 def iter_local_assigns(ast) -> Iterator[VarTokenInfo]:
     from robot.api import Token

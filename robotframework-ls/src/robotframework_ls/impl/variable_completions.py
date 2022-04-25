@@ -20,6 +20,7 @@ from robotframework_ls.impl.variable_types import (
     VariableFoundFromToken,
     VariableFoundFromYaml,
 )
+from robotframework_ls.impl.ast_utils import KEYWORD_SET_ENV_TO_VAR_KIND
 
 
 log = get_logger(__name__)
@@ -96,6 +97,7 @@ def _collect_variables_from_set_keywords(
     completion_context: ICompletionContext,
     collector: IVariablesCollector,
     accept_sets_in: Dict[str, str],
+    env_vars: bool = False,
 ):
     from robot.api import Token
     from robotframework_ls.impl import ast_utils
@@ -123,7 +125,7 @@ def _collect_variables_from_set_keywords(
                     var_name = var_name[1:]
                     start_offset += 1
 
-                if var_name.startswith(("@", "$", "&")):
+                if var_name.startswith(("@", "$", "&", "%")):
                     var_name = var_name[1:]
                     start_offset += 1
 
@@ -131,7 +133,7 @@ def _collect_variables_from_set_keywords(
                     var_name = var_name[1:-1]
                     start_offset += 1
 
-                if collector.accepts(var_name):
+                if env_vars or collector.accepts(var_name):
                     base_token = ast_utils.copy_token_replacing(
                         var_name_tok, col_offset=start_offset, value=var_name
                     )
@@ -147,7 +149,10 @@ def _collect_variables_from_set_keywords(
                         variable_kind=var_kind,
                         stack=keyword_usage.stack,
                     )
-                    collector.on_variable(variable_found)
+                    if env_vars:
+                        collector.on_env_variable(variable_found)
+                    else:
+                        collector.on_variable(variable_found)
 
 
 def _collect_current_doc_variables(
@@ -172,6 +177,14 @@ def _collect_current_doc_variables(
         completion_context,
         collector,
         KEYWORD_SET_GLOBAL_TO_VAR_KIND,
+    )
+
+    _collect_variables_from_set_keywords(
+        completion_context.get_ast(),
+        completion_context,
+        collector,
+        KEYWORD_SET_ENV_TO_VAR_KIND,
+        env_vars=True,
     )
 
 

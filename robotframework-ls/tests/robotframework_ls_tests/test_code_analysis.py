@@ -1688,3 +1688,18 @@ Test
     Log to console                  ${{{1}}}
 """
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_environment_var_set(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Library                  OperatingSystem
+
+*** Test Cases ***
+Test
+    Set Environment Variable         PI_NUMBER    3.14
+    Log to console    %{PI_NUMBER}
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")

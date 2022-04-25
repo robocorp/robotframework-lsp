@@ -63,8 +63,14 @@ class _VariablesCollector(AbstractVariablesCollector):
         self._template_variables_collected: List[Tuple[str, IVariableFound]] = []
         self.on_unresolved_variable_import = on_unresolved_variable_import
 
+        self._env_variables_collected: Dict[str, IVariableFound] = {}
+
     def accepts(self, variable_name: str) -> bool:
         return True
+
+    def on_env_variable(self, variable_found: IVariableFound):
+        upper = variable_found.variable_name.upper()
+        self._env_variables_collected[upper] = variable_found
 
     def on_variable(self, variable_found: IVariableFound):
         from robotframework_ls.impl.text_utilities import normalize_robot_name
@@ -77,6 +83,9 @@ class _VariablesCollector(AbstractVariablesCollector):
         if lst is None:
             lst = self._variables_collected[normalized] = []
         lst.append(variable_found)
+
+    def contains_env_variable(self, variable_name_upper):
+        return variable_name_upper in self._env_variables_collected
 
     def contains_variable(self, variable_name, var_line, var_col_offset):
         from robotframework_ls.impl.text_utilities import matches_name_with_variables
@@ -568,7 +577,12 @@ def _collect_undefined_variables_errors(initial_completion_context):
             if env_vars_upper is None:
                 env_vars_upper = _env_vars_upper()
 
-            if extract_variable_base(var_name).upper() not in env_vars_upper:
+            var_name_upper = extract_variable_base(var_name).upper()
+
+            if (
+                var_name_upper not in env_vars_upper
+                and not globals_collector.contains_env_variable(var_name_upper)
+            ):
                 # Environment variable
                 yield create_error_from_node(
                     token_info.node,
