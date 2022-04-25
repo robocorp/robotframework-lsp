@@ -26,7 +26,11 @@ def extract_variable_base(text: str) -> str:
             return base
 
     if len(text) >= 3:
-        if text.endswith("}") and text[1] == "{":
+        if (
+            text.endswith("}")
+            and text[1] == "{"
+            and text.startswith(("$", "@", "&", "%"))
+        ):
             return text[2:-1]
     return text
 

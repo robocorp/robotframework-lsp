@@ -1677,3 +1677,14 @@ Test
     Keyword1    a=1    b=2    a=3
 """
     _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_var_ok(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Test
+    Log to console                  ${{{1}}}
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
