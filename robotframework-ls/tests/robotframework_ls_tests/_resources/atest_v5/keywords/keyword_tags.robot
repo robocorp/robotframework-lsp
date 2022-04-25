@@ -22,6 +22,7 @@ Library keyword tags with documentation and attribute
 Invalid library keyword tags
     [Documentation]    FAIL No keyword with name 'Invalid library keyword tags' found.
     Invalid library keyword tags
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Undefined keyword: Invalid library keyword tags.
 
 User keyword tags with `[Tags]` setting
     User keyword tags with setting

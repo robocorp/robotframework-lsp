@@ -28,8 +28,11 @@ Order does not matter
 
 Last named wins
     ${ret} =    Two Args    first=foo    second=bar    second=!!!    first=WIN
+#!                                                     ^^^^^^^^^^ Argument already specified previously: second
+#!                                                                   ^^^^^^^^^ Argument already specified previously: first
     Should Be Equal    ${ret}    WIN, !!!
     ${ret} =    Four Args    b=B    d=D    c=C    a=A    a=X    ${b}=Y    c=Z
+#!                                                       ^^^ Argument already specified previously: a
     ...    ${a}=W    d=?    c=N    b=I    d=!
     Should Be Equal    ${ret}    W, I, N, !
 
@@ -120,6 +123,7 @@ Naming without varargs works
 Positional after named 1
     [Documentation]    FAIL Keyword 'DynamicWithoutKwargs.Args & Varargs' got positional argument after named arguments.
     Args & Varargs    foo    b=bar    dar
+#!                                    ^^^ Positional argument not allowed after named arguments: dar
 
 Positional after named 2
     [Documentation]    FAIL Keyword 'DynamicWithoutKwargs.Args & Varargs' got positional argument after named arguments.
@@ -128,15 +132,19 @@ Positional after named 2
 Positional after named 3
     [Documentation]    FAIL Keyword 'DynamicWithoutKwargs.Two Args' got positional argument after named arguments.
     Two Args    first=1    oops
+#!                         ^^^^ Positional argument not allowed after named arguments: oops
 
 Missing argument
     [Documentation]    FAIL Keyword 'DynamicWithoutKwargs.Args & Varargs' missing value for argument 'a'.
     Args & Varargs    b=value
+#!  ^^^^^^^^^^^^^^ Mandatory argument missing: a
 
 Both positional and named value 1
     [Documentation]    FAIL Keyword 'DynamicWithoutKwargs.Two Args' got multiple values for argument 'first'.
     Two Args    1    first=oops
+#!                   ^^^^^^^^^^ Multiple values for argument: first
 
 Both positional and named value 2
     [Documentation]    FAIL Keyword 'DynamicWithoutKwargs.Args & Varargs' got multiple values for argument 'a'.
     Args & Varargs    A    B   a=ooops
+#!                             ^^^^^^^ Multiple values for argument: a

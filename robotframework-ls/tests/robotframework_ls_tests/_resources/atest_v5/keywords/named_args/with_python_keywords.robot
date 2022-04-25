@@ -26,6 +26,7 @@ Mandatory And Named As Named
 Same Argument As Positional And Named Fails
     [Documentation]    FAIL Keyword 'KwargsLibrary.One Named' got multiple values for argument 'named'.
     One Named    positional    named=named
+#!                             ^^^^^^^^^^^ Unexpected argument: named=named
 
 Mandatory, Named And Varargs As Positional
     ${ret}=    Mandatory Named And Varargs    mandatory    d1    d2\=d2
@@ -40,6 +41,7 @@ Naming arguments with varargs is supported when varargs are not used
 Naming arguments is not supported when varargs are used
     [Documentation]    FAIL Keyword 'KwargsLibrary.Mandatory Named And Varargs' got positional argument after named arguments.
     Mandatory Named And Varargs    d1    d2=d2    vararg
+#!                                                ^^^^^^ Positional argument not allowed after named arguments: vararg
 
 Naming arguments before possible varargs is not supported with empty lists either
     [Documentation]    FAIL Keyword 'KwargsLibrary.Mandatory Named And Varargs' got positional argument after named arguments.
@@ -69,6 +71,7 @@ Non-existing argument does not trigger named usage
 Run Keyword's own named arguments are not resolved
     [Documentation]    FAIL No keyword with name 'name=No Operation' found.
     Run Keyword    name=No Operation
+#!                 ^^^^^^^^^^^^^^^^^ Undefined keyword: name=No Operation.
 
 Inside Run Keyword named arguments are resolved
     ${ret}=    Run Keyword    Four Named    foo    d=quux    b=kääx
@@ -101,6 +104,7 @@ Kwargs with escaped equal sign 1
 Kwargs with escaped equal sign 2
     [Documentation]    FAIL Keyword 'python_library.Lib Kwargs' expected 0 non-named arguments, got 1.
     Lib Kwargs    a\=b\\\=c\\\\\=d\\\\\\\=e
+#!                ^^^^^^^^^^^^^^^^^^^^^^^^^ Unexpected positional argument: a\=b\\\=c\\\\\=d\\\\\\\=e
 
 Kwargs with positional and named
     ${result} =    Lib Mandatory Named And Kwargs    mandatory
@@ -213,6 +217,7 @@ Dict is not converted to kwargs
     [Documentation]    FAIL Keyword 'python_library.Lib Kwargs' expected 0 non-named arguments, got 1.
     ${dict} =    Create Dictionary   a=1    b=2
     lib_kwargs    ${dict}
+#!                ^^^^^^^ Unexpected positional argument: ${dict}
 
 *** Keywords ***
 Execute working combinations with everything

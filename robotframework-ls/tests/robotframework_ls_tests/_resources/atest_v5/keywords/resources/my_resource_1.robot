@@ -22,6 +22,7 @@ Keyword In Resource Overrides Libraries
 
 Using Test Case File User Keywords In Resource
     Using TestCase file UserKeywords
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Undefined keyword: Using TestCase file UserKeywords.
 
 Using Resource File User Keywords In Resource 1
     Keyword ONLY in Resource _1_
@@ -30,13 +31,19 @@ Using Resource File User Keywords In Resource 1
 
 Using Resource File User Keywords In Resource 2
     Keyword ONLY in Resource _2_
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Undefined keyword: Keyword ONLY in Resource _2_.
     my_resource_2.keyword only in resource 2
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Undefined keyword: my_resource_2.keyword only in resource 2.
     MY_ RESOURCE_ 2 . keywordonlyinresource2
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Undefined keyword: MY_ RESOURCE_ 2 . keywordonlyinresource2.
 
 Using Base Keywords In Resource
     Keyword only in library 1
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^ Undefined keyword: Keyword only in library 1.
     mylibrary1.keyword ONLY IN library1
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Undefined keyword: mylibrary1.keyword ONLY IN library1.
     M Y L I B R A R Y 1 . keywordonlyinlibrary1
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Undefined keyword: M Y L I B R A R Y 1 . keywordonlyinlibrary1.
 
 Overrided in test case file with full name
     Log    Keyword in resource 1

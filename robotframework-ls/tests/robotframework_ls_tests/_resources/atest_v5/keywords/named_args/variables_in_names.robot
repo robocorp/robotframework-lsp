@@ -44,10 +44,12 @@ Named args and kwargs with variables
 Non-existing variable as named arg name
     [Documentation]    FAIL Variable '${nonexisting}' not found.
     Lib Mandatory And Named    ${nonexisting}=non-existing
+#!                               ^^^^^^^^^^^ Undefined variable: nonexisting
 
 Non-existing variable as kwargs name
     [Documentation]    FAIL Variable '${nonexisting}' not found.
     Lib Kwargs    ${nonexisting}=non-existing
+#!                  ^^^^^^^^^^^ Undefined variable: nonexisting
 
 Variable with non-string value as named arg name
     ${result} =    Lib Mandatory And Named    ${1}=non-string

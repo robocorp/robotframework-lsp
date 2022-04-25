@@ -123,6 +123,7 @@ Embedded And Positional Arguments Do Not Work Together
     [Documentation]    FAIL Positional arguments are not allowed when using embedded arguments.
     Given this "usage" with @{EMPTY} works    @{EMPTY}
     Then User Invalid Selects Invalid From Webshop    invalid
+#!                                                    ^^^^^^^ Unexpected argument: invalid
 
 Keyword with embedded args cannot be used as "normal" keyword
     [Documentation]    FAIL Variable '\${user}' not found.
@@ -131,6 +132,7 @@ Keyword with embedded args cannot be used as "normal" keyword
 Embedded argument count must match accepted arguments
     [Documentation]  FAIL No keyword with name 'Wrong number of embedded args' found.
     Wrong number of embedded args
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Undefined keyword: Wrong number of embedded args.
 
 Optional Non-Embedded Args Are Okay
     Optional Non-Embedded Args Are Okay

@@ -57,9 +57,15 @@ def embed_errors_into_file(ws, doc, config=None) -> IDocument:
         start = "#!" + (" " * (character - 2))
         if line == endline:
             cols = endcharacter - character
-            text = start + (("^" * cols) + " " + error["message"]) + delimiter
+            prefix = start + ("^" * cols) + " "
         else:
-            text = start + ("^-> <next line> " + error["message"]) + delimiter
+            prefix = start + "^-> <next line> "
+
+        msg = error["message"]
+        lines = [x for x in msg.splitlines() if x.strip()]
+        text = ""
+        for l in lines:
+            text += prefix + l + delimiter
 
         r: RangeTypedDict = {
             "start": {"line": line, "character": 0},
@@ -129,7 +135,7 @@ def atest_keywords_ws(tmp_path_factory):
     config.update(
         {
             "robot": {
-                "pythonpath": [CASE_ROOT],
+                "pythonpath": [CASE_ROOT, os.path.join(CASE_ROOT, "resources")],
                 "libraries": {"libdoc": {"needsArgs": ["*"]}},
             }
         }

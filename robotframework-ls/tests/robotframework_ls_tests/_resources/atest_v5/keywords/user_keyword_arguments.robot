@@ -20,23 +20,37 @@ Correct Number Of Arguments When No Defaults Or Varargs
 Too Few Arguments When No Defaults Or Varargs 1
     [Documentation]    FAIL Keyword 'A 1' expected 1 argument, got 0.
     A 1
+#!  ^^^ Mandatory argument missing: arg
 
 Too Few Arguments When No Defaults Or Varargs 2
     [Documentation]    FAIL Keyword 'A 3' expected 3 arguments, got 2.
     A 3    a1    a2
+#!  ^^^ Mandatory argument missing: arg3
 
 Too Many Arguments When No Defaults Or Varargs 1
     [Documentation]    FAIL Keyword 'A 0' expected 0 arguments, got 10.
     A 0    This    is    too    much    !    Really
+#!         ^^^^ Unexpected argument: This
+#!                 ^^ Unexpected argument: is
+#!                       ^^^ Unexpected argument: too
+#!                              ^^^^ Unexpected argument: much
+#!                                      ^ Unexpected argument: !
+#!                                           ^^^^^^ Unexpected argument: Really
     ...    way    too    much    !!!!!
+#!         ^^^ Unexpected argument: way
+#!                ^^^ Unexpected argument: too
+#!                       ^^^^ Unexpected argument: much
+#!                               ^^^^^ Unexpected argument: !!!!!
 
 Too Many Arguments When No Defaults Or Varargs 2
     [Documentation]    FAIL Keyword 'A 1' expected 1 argument, got 2.
     A 1    Too    much
+#!                ^^^^ Unexpected argument: much
 
 Too Many Arguments When No Defaults Or Varargs 3
     [Documentation]    FAIL Keyword 'A 3' expected 3 arguments, got 4.
     A 3    a1    a2    a3    a4
+#!                           ^^ Unexpected argument: a4
 
 Correct Number Of Arguments With Defaults
     ${ret} =    A 0 1
@@ -53,14 +67,17 @@ Correct Number Of Arguments With Defaults
 Too Few Arguments With Defaults
     [Documentation]    FAIL Keyword 'A 1 3' expected 1 to 3 arguments, got 0.
     A 1 3
+#!  ^^^^^ Mandatory argument missing: arg1
 
 Too Many Arguments With Defaults 1
     [Documentation]    FAIL Keyword 'A 0 1' expected 0 to 1 arguments, got 2.
     A 0 1    Too    much
+#!                  ^^^^ Unexpected argument: much
 
 Too Many Arguments With Defaults 2
     [Documentation]    FAIL Keyword 'A 1 3' expected 1 to 3 arguments, got 4.
     A 1 3    This    is    too    much
+#!                                ^^^^ Unexpected argument: much
 
 Correct Number Of Arguments With Varargs
     ${ret} =    A 0 N
@@ -78,6 +95,7 @@ Correct Number Of Arguments With Varargs
 Too Few Arguments With Varargs
     [Documentation]    FAIL Keyword 'A 1 N' expected at least 1 argument, got 0.
     A 1 N
+#!  ^^^^^ Mandatory argument missing: arg
 
 Correct Number Of Arguments With Defaults And Varargs
     ${ret} =    A 1 2 N    Required arg
@@ -88,6 +106,7 @@ Correct Number Of Arguments With Defaults And Varargs
 Too Few Arguments With Defaults And Varargs
     [Documentation]    FAIL Keyword 'A 1 2 N' expected at least 1 argument, got 0.
     A 1 2 N
+#!  ^^^^^^^ Mandatory argument missing: arg1
 
 Default With Variable
     ${ret} =    Default With Variable    Given value
@@ -198,11 +217,13 @@ Invalid Arguments Spec - Invalid argument syntax
     [Documentation]    FAIL
     ...    Invalid argument specification: Invalid argument syntax 'no deco'.
     Invalid argument syntax
+#!  ^^^^^^^^^^^^^^^^^^^^^^^ Mandatory argument missing: no deco
 
 Invalid Arguments Spec - Non-default after defaults
     [Documentation]    FAIL
     ...    Invalid argument specification: Non-default argument after default arguments.
     Non-default after defaults
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^ Mandatory argument missing: positional
 
 Invalid Arguments Spec - Default with varargs
     [Documentation]    FAIL
@@ -218,6 +239,7 @@ Invalid Arguments Spec - Kwargs not last
     [Documentation]    FAIL
     ...    Invalid argument specification: Only last argument can be kwargs.
     Kwargs not last
+#!  ^^^^^^^^^^^^^^^ Mandatory argument missing: positional
 
 Invalid Arguments Spec - Multiple errors
     [Documentation]    FAIL
@@ -227,6 +249,9 @@ Invalid Arguments Spec - Multiple errors
     ...    - Cannot have multiple varargs.
     ...    - Only last argument can be kwargs.
     Multiple errors
+#!  ^^^^^^^^^^^^^^^ Mandatory argument missing: invalid
+#!  ^^^^^^^^^^^^^^^ Mandatory argument missing: required
+#!  ^^^^^^^^^^^^^^^ Mandatory argument missing: x
 
 *** Keywords ***
 A 0
@@ -272,6 +297,7 @@ Default With Variable
 
 Default With Non-Existing Variable
     [Arguments]    ${arg}=${NON EXISTING}
+#!                          ^^^^^^^^^^^^ Undefined variable: NON EXISTING
 
 Default With None Variable
     [Arguments]    ${arg}=${None}

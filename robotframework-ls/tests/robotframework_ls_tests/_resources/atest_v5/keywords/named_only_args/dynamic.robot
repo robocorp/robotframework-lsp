@@ -25,23 +25,31 @@ Mandatory Can Be After Default
 
 Last given value has precedence
     Kw Only Arg    kwo=ignored    kwo=ignored2    kwo=used
+#!                                ^^^^^^^^^^^^ Argument already specified previously: kwo
+#!                                                ^^^^^^^^ Argument already specified previously: kwo
     Args Should Have Been    kwo=used
 
 Missing value
     [Documentation]    FAIL Keyword 'DynamicKwOnlyArgs.Kw Only Arg' missing named-only argument 'kwo'.
     Kw Only Arg
+#!  ^^^^^^^^^^^ Mandatory argument missing: kwo
 
 Missing multiple values
     [Documentation]    FAIL Keyword 'DynamicKwOnlyArgs.Many Kw Only Args' missing named-only arguments 'first' and 'third'.
     Many Kw Only Args    second=xxx
+#!  ^^^^^^^^^^^^^^^^^ Mandatory argument missing: first
+#!  ^^^^^^^^^^^^^^^^^ Mandatory argument missing: third
 
 Unexpected keyword argumemt
     [Documentation]    FAIL Keyword 'DynamicKwOnlyArgs.Kw Only Arg' got unexpected named argument 'invalid'.
     Kw Only Arg    kwo=value    invalid=ooops
+#!                              ^^^^^^^^^^^^^ Unexpected named argument: invalid
 
 Multiple unexpected keyword argumemt
     [Documentation]    FAIL Keyword 'DynamicKwOnlyArgs.Kw Only Arg' got unexpected named arguments 'invalid' and 'ooops'.
     Kw Only Arg    kwo=value    invalid=ooops    ooops=invalid
+#!                              ^^^^^^^^^^^^^ Unexpected named argument: invalid
+#!                                               ^^^^^^^^^^^^^ Unexpected named argument: ooops
 
 Unexpected positional argument 1
     [Documentation]    FAIL Keyword 'DynamicKwOnlyArgs.Kw Only Arg' expected 0 non-named arguments, got 1.
@@ -50,6 +58,7 @@ Unexpected positional argument 1
 Unexpected positional argument 2
     [Documentation]    FAIL Keyword 'DynamicKwOnlyArgs.Kw Only Arg' expected 0 non-named arguments, got 1.
     Kw Only Arg    ooops    kwo=value
+#!                          ^^^^^^^^^ Unexpected argument: kwo=value
 
 With varargs
     Kw Only Arg With Varargs    kwo=xxx
@@ -70,3 +79,4 @@ With other arguments
 Using kw-only arguments is not possible if 'run_keyword' accepts no kwargs
     [Documentation]    FAIL No keyword with name 'No kwargs' found.
     No kwargs    kwo=value
+#!  ^^^^^^^^^ Undefined keyword: No kwargs.

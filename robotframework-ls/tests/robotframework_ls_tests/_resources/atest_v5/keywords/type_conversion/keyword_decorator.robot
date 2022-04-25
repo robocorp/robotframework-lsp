@@ -517,11 +517,13 @@ Invalid type spec causes error
     [Documentation]    FAIL No keyword with name 'Invalid type spec' found.
     [Tags]    negative
     Invalid type spec
+#!  ^^^^^^^^^^^^^^^^^ Undefined keyword: Invalid type spec.
 
 Non-matching argument name causes error
     [Documentation]    FAIL No keyword with name 'Non matching name' found.
     [Tags]    negative
     Non matching name
+#!  ^^^^^^^^^^^^^^^^^ Undefined keyword: Non matching name.
 
 Type can be given to `return` without an error
     Return type          42                        42

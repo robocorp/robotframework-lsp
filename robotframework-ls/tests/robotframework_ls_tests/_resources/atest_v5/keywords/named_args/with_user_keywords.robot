@@ -63,6 +63,7 @@ Naming without the varargs works
 Varargs with naming does not work
     [Documentation]    FAIL Keyword 'Named arguments with varargs' got positional argument after named arguments.
     Named arguments with varargs    foo    b=bar    dar
+#!                                                  ^^^ Positional argument not allowed after named arguments: dar
 
 Varargs with naming does not work with empty lists either
     [Documentation]    FAIL Keyword 'Named arguments with varargs' got positional argument after named arguments.

@@ -63,6 +63,7 @@ Custom non-ASCII name
 Old Name Doesn't Work If Name Set Using 'robot_name'
     [Documentation]  FAIL No keyword with name 'Name Set In Method Signature' found.
     Name Set In Method Signature
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Undefined keyword: Name Set In Method Signature.
 
 Keyword can just be marked without changing its name
     No Custom Name Given 1

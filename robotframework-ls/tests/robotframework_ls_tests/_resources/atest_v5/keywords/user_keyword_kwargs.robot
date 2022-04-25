@@ -85,14 +85,17 @@ Kwargs are dot-accessible
 Too few positional arguments
     [Documentation]    FAIL Keyword 'Positional and kwargs' expected 2 non-named arguments, got 1.
     Positional and kwargs    one positional is not enough
+#!  ^^^^^^^^^^^^^^^^^^^^^ Mandatory argument missing: arg2
 
 Too many positional arguments
     [Documentation]    FAIL Keyword 'Kwargs only' expected 0 non-named arguments, got 3.
     Kwargs only    positional    not    accepted
+#!                 ^^^^^^^^^^ Unexpected positional argument: positional
 
 Positional after kwargs
     [Documentation]    FAIL Keyword 'Varags and kwargs' got positional argument after named arguments.
     Varags and kwargs    key=value    positional
+#!                                    ^^^^^^^^^^ Positional argument not allowed after named arguments: positional
 
 Non-String Keys
     [Documentation]    FAIL Argument names must be strings.
@@ -121,6 +124,7 @@ Caller does not see modifications to kwargs
 Invalid arguments spec: Positional after kwargs
     [Documentation]    FAIL Invalid argument specification: Only last argument can be kwargs.
     Positional after kwargs
+#!  ^^^^^^^^^^^^^^^^^^^^^^^ Mandatory argument missing: positional
 
 Invalid arguments spec: Varargs after kwargs
     [Documentation]    FAIL Invalid argument specification: Only last argument can be kwargs.

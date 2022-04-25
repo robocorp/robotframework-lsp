@@ -32,6 +32,7 @@ In user keyword in resource file
 Correct Name Shown In Keyword Not Found Error
     [Documentation]  FAIL No keyword with name 'Given this keyword does not exist' found.
     Given this keyword does not exist
+#!        ^^^^^^^^^^^^^^^^^^^^^^^^^^^ Undefined keyword: this keyword does not exist.
 
 Keyword can be used with and without prefix
     GiveN we don't drink too many beers

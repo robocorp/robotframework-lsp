@@ -34,23 +34,31 @@ Annotation and default value
 
 Last given value has precedence
     ${result} =    Kw Only Arg    kwo=ignored    kwo=ignored2    kwo=used
+#!                                               ^^^^^^^^^^^^ Argument already specified previously: kwo
+#!                                                               ^^^^^^^^ Argument already specified previously: kwo
     Should Be Equal    ${result}    used
 
 Missing value
     [Documentation]    FAIL Keyword 'KwOnlyArgs.Kw Only Arg' missing named-only argument 'kwo'.
     Kw Only Arg
+#!  ^^^^^^^^^^^ Mandatory argument missing: kwo
 
 Missing multiple values
     [Documentation]    FAIL Keyword 'KwOnlyArgs.Many Kw Only Args' missing named-only arguments 'first' and 'third'.
     Many Kw Only Args    second=xxx
+#!  ^^^^^^^^^^^^^^^^^ Mandatory argument missing: first
+#!  ^^^^^^^^^^^^^^^^^ Mandatory argument missing: third
 
 Unexpected keyword argument
     [Documentation]    FAIL Keyword 'KwOnlyArgs.Kw Only Arg' got unexpected named argument 'invalid'.
     Kw Only Arg    kwo=value    invalid=ooops
+#!                              ^^^^^^^^^^^^^ Unexpected named argument: invalid
 
 Multiple unexpected keyword argument
     [Documentation]    FAIL Keyword 'KwOnlyArgs.Kw Only Arg' got unexpected named arguments 'invalid' and 'ooops'.
     Kw Only Arg    kwo=value    invalid=ooops    ooops=invalid
+#!                              ^^^^^^^^^^^^^ Unexpected named argument: invalid
+#!                                               ^^^^^^^^^^^^^ Unexpected named argument: ooops
 
 Unexpected positional argument 1
     [Documentation]    FAIL Keyword 'KwOnlyArgs.Kw Only Arg' expected 0 non-named arguments, got 1.
@@ -59,6 +67,7 @@ Unexpected positional argument 1
 Unexpected positional argument 2
     [Documentation]    FAIL Keyword 'KwOnlyArgs.Kw Only Arg' expected 0 non-named arguments, got 1.
     Kw Only Arg    ooops    kwo=value
+#!                          ^^^^^^^^^ Unexpected argument: kwo=value
 
 With varargs
     ${result} =    Kw Only Arg With Varargs    kwo=xxx
@@ -88,6 +97,7 @@ Argument name as variable
 Argument name as non-existing variable
     [Documentation]    FAIL Variable '${i do not exist}' not found.
     Kw Only Arg    ${i do not exist}=value
+#!                   ^^^^^^^^^^^^^^ Undefined variable: i do not exist
 
 With positional argument containing equal sign
     ${result} =    Kw Only Arg With Varargs    One more time    a=1    <=    2    kwo=No escaping needed!

@@ -19,6 +19,7 @@ Named syntax is not used
     ${result} =    One argument    arg=arg
     Should be equal    ${result}    ARG=ARG
     ${result} =    With normal    posonly=foo    bar
+#!                                               ^^^ Positional argument not allowed after named arguments: bar
     Should be equal    ${result}    posonly=foo-bar
     ${result} =    With normal    posonly=foo    normal=bar
     Should be equal    ${result}    posonly=foo-bar
@@ -36,18 +37,23 @@ Type conversion
 Too few arguments 1
     [Documentation]    FAIL Keyword 'PositionalOnly.Three Arguments' expected 3 arguments, got 2.
     Three arguments    1    2
+#!  ^^^^^^^^^^^^^^^ Mandatory argument missing: c
 
 Too few arguments 2
     [Documentation]    FAIL Keyword 'PositionalOnly.Defaults' expected 1 to 2 arguments, got 0.
     Defaults
+#!  ^^^^^^^^ Mandatory argument missing: required
 
 Too many arguments 1
     [Documentation]    FAIL Keyword 'PositionalOnly.One Argument' expected 1 argument, got 3.
     One argument    too    many    args
+#!                         ^^^^ Unexpected argument: many
+#!                                 ^^^^ Unexpected argument: args
 
 Too many arguments 2
     [Documentation]    FAIL Keyword 'PositionalOnly.With Normal' expected 2 arguments, got 3.
     With normal    too    many    args
+#!                                ^^^^ Unexpected argument: args
 
 Named argument syntax doesn't work after valid named arguments
     [Documentation]    FAIL Keyword 'PositionalOnly.With Normal' does not accept argument 'posonly' as named argument.

@@ -12,6 +12,7 @@ Wrapped function with wrong number of arguments
     [Documentation]    FAIL
     ...    Keyword 'WrappedFunctions.Wrapped Function With Arguments' expected 1 to 2 arguments, got 0.
     Wrapped function with arguments
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Mandatory argument missing: a
 
 Wrapped methods
     Wrapped method
@@ -22,3 +23,4 @@ Wrapped method with wrong number of arguments
     [Documentation]    FAIL
     ...    Keyword 'WrappedMethods.Wrapped Method With Arguments' expected 1 to 2 arguments, got 0.
     Wrapped method with arguments
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Mandatory argument missing: a

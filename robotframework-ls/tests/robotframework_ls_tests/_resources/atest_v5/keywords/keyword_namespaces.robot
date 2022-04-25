@@ -59,9 +59,14 @@ Keyword From Resource Overrides Keywords From Libraries
 Keyword From Custom Library Overrides Keywords From Standard Library
     Comment
     Copy Directory
+#!  ^^^^^^^^^^^^^^ Mandatory argument missing: destination
+#!  ^^^^^^^^^^^^^^ Mandatory argument missing: source
 
 Keyword From Custom Library Overrides Keywords From Standard Library Even When Std Lib Imported With Different Name
     ${ret} =    Replace String
+#!              ^^^^^^^^^^^^^^ Mandatory argument missing: replace_with
+#!              ^^^^^^^^^^^^^^ Mandatory argument missing: search_for
+#!              ^^^^^^^^^^^^^^ Mandatory argument missing: string
     Should Be Equal    ${ret}    I replace nothing!
     ${ret} =    My With Name.Replace String
     Should Be Equal    ${ret}    I replace nothing!

@@ -63,6 +63,7 @@ Non-Existing Variable in Embedded Arguments and Positional Arguments
 Non-Existing Variable in Embedded Arguments and in Positional Arguments
     [Documentation]    FAIL Variable '\${nonex pos}' not found.
     User ${nonex emb} Selects ${variables} From Webshop    ${nonex pos}
+#!                                                           ^^^^^^^^^ Undefined variable: nonex pos
 
 Custom Embedded Argument Regexp
     [Documentation]    FAIL No keyword with name 'Result of a + b is fail' found.
@@ -146,6 +147,7 @@ Embedded And Positional Arguments Do Not Work Together
     [Documentation]    FAIL Keyword 'User \${user} Selects \${item} From Webshop' expected 0 arguments, got 1.
     Given this "usage" with @{EMPTY} works    @{EMPTY}
     Then User Invalid Selects Invalid From Webshop    invalid
+#!                                                    ^^^^^^^ Unexpected argument: invalid
 
 Keyword with embedded args cannot be used as "normal" keyword
     [Documentation]    FAIL Variable '${user}' not found.
@@ -276,9 +278,11 @@ Grouping ${x:Cu(st|ts)(om)?} ${y:Regexp\(?erts\)?}
 
 Regexp extensions like ${x:(?x)re} are not supported
     This is not executed
+#!  ^^^^^^^^^^^^^^^^^^^^ Undefined keyword: This is not executed.
 
 Invalid ${x:(} Regexp
     This is not executed
+#!  ^^^^^^^^^^^^^^^^^^^^ Undefined keyword: This is not executed.
 
 It is ${vehicle:a (car|ship)}
     Log    ${vehicle}

@@ -30,6 +30,7 @@ Less types than arguments is ok
 More types than arguments causes error
     [Documentation]    FAIL No keyword with name 'Too many types' found.
     Too many types
+#!  ^^^^^^^^^^^^^^ Undefined keyword: Too many types.
 
 Varargs and kwargs
     Varargs and kwargs    1    2    3    4    kw=5

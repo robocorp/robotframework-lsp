@@ -14,7 +14,9 @@ Use with correct arguments
 Use with incorrect arguments
     [Documentation]    Error depends on the interpreter.
     Eq    too    many    args
+#!                       ^^^^ Unexpected argument: args
 
 Built-ins not set to attributes are not exposes
     [Documentation]    FAIL    No keyword with name 'Sum' found.
     Sum
+#!  ^^^ Undefined keyword: Sum.

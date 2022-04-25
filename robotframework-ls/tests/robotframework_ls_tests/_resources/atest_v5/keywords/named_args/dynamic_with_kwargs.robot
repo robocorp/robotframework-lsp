@@ -32,8 +32,11 @@ Order does not matter
 
 Last named wins
     ${ret} =    Two Args    first=foo    second=bar    second=!!!    first=WIN
+#!                                                     ^^^^^^^^^^ Argument already specified previously: second
+#!                                                                   ^^^^^^^^^ Argument already specified previously: first
     Should Be Equal    ${ret}    first:WIN, second:!!!
     ${ret} =    Four Args    b=B    d=D    c=C    a=A    a=X    ${b}=Y    c=Z
+#!                                                       ^^^ Argument already specified previously: a
     ...    ${a}=W    d=?    c=N    b=I    d=!
     Should Be Equal    ${ret}    a:W, b:I, c:N, d:!
     ${ret} =    Kwargs    b=B    d=D    c=C    a=A    a=X    b=Y    c=Z
@@ -150,6 +153,7 @@ Naming without varargs works
 Positional after named 1
     [Documentation]    FAIL Keyword 'DynamicWithKwargs.Args & Varargs' got positional argument after named arguments.
     Args & Varargs    foo    b=bar    dar
+#!                                    ^^^ Positional argument not allowed after named arguments: dar
 
 Positional after named 2
     [Documentation]    FAIL Keyword 'DynamicWithKwargs.Args & Varargs' got positional argument after named arguments.
@@ -158,26 +162,32 @@ Positional after named 2
 Positional after named 3
     [Documentation]    FAIL Keyword 'DynamicWithKwargs.Two Args' got positional argument after named arguments.
     Two Args    first=1    oops
+#!                         ^^^^ Positional argument not allowed after named arguments: oops
 
 Positional after named 4
     [Documentation]    FAIL Keyword 'DynamicWithKwargs.Args & Kwargs' got positional argument after named arguments.
     Args & Kwargs    kw=value    ooops
+#!                               ^^^^^ Positional argument not allowed after named arguments: ooops
 
 Missing argument 1
     [Documentation]    FAIL Keyword 'DynamicWithKwargs.Args & Varargs' missing value for argument 'a'.
     Args & Varargs    b=value
+#!  ^^^^^^^^^^^^^^ Mandatory argument missing: a
 
 Missing argument 2
     [Documentation]    FAIL Keyword 'DynamicWithKwargs.Args & Kwargs' missing value for argument 'a'.
     Args & Kwargs    b=value    kw=value    c=value
+#!  ^^^^^^^^^^^^^ Mandatory argument missing: a
 
 Multiple values for argument 1
     [Documentation]    FAIL Keyword 'DynamicWithKwargs.Two Args' got multiple values for argument 'first'.
     Two Args    1    first=oops
+#!                   ^^^^^^^^^^ Multiple values for argument: first
 
 Multiple values for argument 2
     [Documentation]    FAIL Keyword 'DynamicWithKwargs.Args & Varargs' got multiple values for argument 'a'.
     Args & Varargs    A    B   a=ooops
+#!                             ^^^^^^^ Multiple values for argument: a
 
 Multiple values for argument 3
     [Documentation]    FAIL Keyword 'DynamicWithKwargs.Args & Kwargs' got multiple values for argument 'a'.
