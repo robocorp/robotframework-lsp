@@ -5,6 +5,7 @@ import logging
 from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 from robotframework_ls.constants import NULL
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
+import sys
 
 __file__ = os.path.abspath(__file__)  # @ReservedAssignment
 
@@ -353,6 +354,13 @@ class RemoteLibraryExample(object):
 
 @pytest.fixture
 def remote_library(server_port):
+    if sys.version_info[0:2] >= (3, 10):
+        # Hack to get robotremoteserver to work in Python 3.10!
+        from collections.abc import Mapping
+        import collections
+
+        collections.Mapping = Mapping
+
     from robotremoteserver import RobotRemoteServer
     import threading
 
