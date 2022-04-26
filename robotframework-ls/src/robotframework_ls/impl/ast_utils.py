@@ -1063,9 +1063,9 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
             stack = node_info.stack
             node = node_info.node
             token = None
-            try:
-                arg_i = 0
-                for token in node.tokens:
+            arg_i = 0
+            for token in node.tokens:
+                try:
                     if token.type == token.ARGUMENT:
                         arg_i += 1
                         if arg_i == 1 and clsname == "KeywordCall":
@@ -1083,8 +1083,8 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
 
                                     yield VarTokenInfo(stack, node, t, var_identifier)
 
-            except:
-                log.exception("Unable to tokenize: %s", token)
+                except:
+                    log.exception("Unable to tokenize: %s", token)
 
     for usage_info in _iter_keyword_usage_tokens_first_level_uncached(ast):
         args_as_keywords_handler = get_args_as_keywords_handler(usage_info.node)
@@ -1115,16 +1115,16 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
             node = node_info.node
             token = None
 
-            try:
-                for token in node.tokens:
+            for token in node.tokens:
+                try:
                     if token.type == token.ARGUMENT:
                         for tok in iter_expression_variables(token):
                             if tok.type == token.VARIABLE:
                                 if not _add_match(found, tok):
                                     continue
                                 yield VarTokenInfo(stack, node, tok, "$")
-            except:
-                log.exception("Unable to tokenize: %s", token)
+                except:
+                    log.exception("Unable to tokenize: %s", token)
 
     for node_info in ast.iter_indexed("Keyword"):
         stack = [node_info.node]
