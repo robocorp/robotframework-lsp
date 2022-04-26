@@ -207,6 +207,9 @@ def _list_paths_in_folder(caseroot):
             continue
 
         if p.name.endswith((".robot", ".resource")):
+            if p.name == "common_resource.robot":
+                continue
+
             paths.append(p)
     return paths
 
