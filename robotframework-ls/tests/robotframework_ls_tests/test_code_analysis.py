@@ -1787,6 +1787,20 @@ Environment Variable With Internal Variables
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
+def test_undefined_reference_default_arg_value(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+Keyword
+    [Arguments]     ${bar}=${foo}
+    Log     ${bar}
+    """
+    _collect_errors(workspace, doc, data_regression)
+
+
 def test_vars_in_get_variables(workspace, libspec_manager, data_regression):
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("list_and_dict_variable_file.py")

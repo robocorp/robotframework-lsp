@@ -1176,7 +1176,13 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
                 except:
                     log.exception("Unable to tokenize: %s", token)
 
-    for node_info in ast.iter_indexed("Keyword"):
+    iter_keyword_node_info: Iterator[NodeInfo]
+    if isinstance_name(ast.ast, "Keyword"):
+        iter_keyword_node_info = iter((NodeInfo((ast.ast,), ast.ast),))
+    else:
+        iter_keyword_node_info = ast.iter_indexed("Keyword")
+
+    for node_info in iter_keyword_node_info:
         stack = [node_info.node]
         for token in _iter_keyword_arguments_tokens(
             node_info.node, tokenize_keyword_name=True
