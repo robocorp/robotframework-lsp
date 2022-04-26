@@ -1731,3 +1731,62 @@ Today is ${date:\d{4}-\d{2}-\d{2}}
     Log to console    ${date}
 """
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_literal_val(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Integer Variables With Base
+    Log to console    ${0B0}
+    Log to console    ${0O0}
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_vars_in_get_variables(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("list_and_dict_variable_file.py")
+    doc.source = """
+from collections import OrderedDict
+
+
+def get_variables(*args):
+    if args:
+        return dict((args[i], args[i+1]) for i in range(0, len(args), 2))
+    list_ = ['1', '2', 3]
+    tuple_ = tuple(list_)
+    dict_ = {'a': 1, 2: 'b', 'nested': {'key': 'value'}}
+    ordered = OrderedDict((chr(o), o) for o in range(97, 107))
+    open_file = open(__file__)
+    closed_file = open(__file__)
+    closed_file.close()
+    return {'LIST__list': list_,
+            'LIST__tuple': tuple_,
+            'LIST__generator': (i for i in range(5)),
+            'DICT__dict': dict_,
+            'DICT__ordered': ordered,
+            'scalar_list': list_,
+            'scalar_tuple': tuple_,
+            'scalar_generator': (i for i in range(5)),
+            'scalar_dict': dict_,
+            'failing_generator': failing_generator,
+            'failing_dict': FailingDict({1: 2}),
+            'open_file': open_file,
+            'closed_file': closed_file}
+"""
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Variables           ./list_and_dict_variable_file.py
+
+*** Variables ***
+@{EXP LIST}         1    2    ${3}
+
+*** Test Cases ***
+Valid list
+    Should Be Equal    ${LIST}    ${EXP LIST}
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")

@@ -20,6 +20,10 @@ def _gen_var_from_python_ast(variable_import_doc, collector, value_node, target_
 
         if varname is not None:
             varname = str(varname)
+            if varname.startswith("DICT__"):
+                varname = varname[6:]
+            elif varname.startswith("LIST__"):
+                varname = varname[6:]
             if collector.accepts(varname):
                 value = ""
                 try:

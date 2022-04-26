@@ -4,6 +4,7 @@ import os
 from typing import List
 from pathlib import Path
 from robocorp_ls_core.protocols import IDocument
+from contextlib import contextmanager
 
 
 def embed_errors_into_file(ws, doc, config=None) -> IDocument:
@@ -104,21 +105,19 @@ Undefined arg
 
 
 _RESOURCES_DIR = os.path.join(os.path.dirname(__file__), "_resources")
-CASE_ROOT = os.path.join(_RESOURCES_DIR, "atest_v5", "keywords")
+_CASE_ROOT_KEYWORDS = os.path.join(_RESOURCES_DIR, "atest_v5", "keywords")
+_CASE_ROOT_VARIABLES = os.path.join(_RESOURCES_DIR, "atest_v5", "variables")
 
 
-@pytest.fixture(scope="session")
-def atest_keywords_ws(tmp_path_factory):
+@contextmanager
+def _make_ws(tmpdir, caseroot, pythonpath):
     from robocorp_ls_core.watchdog_wrapper import create_observer
     from robotframework_ls.impl.libspec_manager import LibspecManager
     from robotframework_ls.impl import workspace_symbols as workspace_symbols_module
-    from py.path import local
     from robotframework_ls.robot_config import RobotConfig
     from robocorp_ls_core import uris
     from robotframework_ls.impl.robot_workspace import RobotWorkspace
     from robocorp_ls_core.lsp import WorkspaceFolder
-
-    tmpdir = local(tmp_path_factory.mktemp("atest_keywords_tmp"))
 
     workspace_symbols_module.WORKSPACE_SYMBOLS_TIMEOUT = 5
 
@@ -135,7 +134,7 @@ def atest_keywords_ws(tmp_path_factory):
     config.update(
         {
             "robot": {
-                "pythonpath": [CASE_ROOT, os.path.join(CASE_ROOT, "resources")],
+                "pythonpath": pythonpath,
                 "libraries": {"libdoc": {"needsArgs": ["*"]}},
             }
         }
@@ -143,19 +142,53 @@ def atest_keywords_ws(tmp_path_factory):
     libspec_manager.config = config
 
     workspace_folder = WorkspaceFolder(
-        uris.from_fs_path(CASE_ROOT), os.path.basename(CASE_ROOT)
+        uris.from_fs_path(caseroot), os.path.basename(caseroot)
     )
     ws = RobotWorkspace(
-        uris.from_fs_path(CASE_ROOT),
+        uris.from_fs_path(caseroot),
         fs_observer=fs_observer,
         libspec_manager=libspec_manager,
         workspace_folders=[workspace_folder],
     )
 
-    yield ws
+    try:
+        yield ws
+    finally:
+        libspec_manager.dispose()
+        ws.dispose()
 
-    libspec_manager.dispose()
-    ws.dispose()
+
+@pytest.fixture(scope="session")
+def atest_keywords_ws(tmp_path_factory):
+
+    from py.path import local
+
+    tmpdir = local(tmp_path_factory.mktemp("atest_keywords_tmp"))
+    with _make_ws(
+        tmpdir,
+        _CASE_ROOT_KEYWORDS,
+        [
+            _CASE_ROOT_KEYWORDS,
+            os.path.join(_CASE_ROOT_KEYWORDS, "resources"),
+        ],
+    ) as ws:
+        yield ws
+
+
+@pytest.fixture(scope="session")
+def atest_variables_ws(tmp_path_factory):
+
+    from py.path import local
+
+    tmpdir = local(tmp_path_factory.mktemp("atest_variables_tmp"))
+    with _make_ws(
+        tmpdir,
+        _CASE_ROOT_VARIABLES,
+        [
+            _CASE_ROOT_VARIABLES,
+        ],
+    ) as ws:
+        yield ws
 
 
 def _ACCEPT_PATH(p):
@@ -163,11 +196,9 @@ def _ACCEPT_PATH(p):
     return True
 
 
-# Note: we set it using parametrize so that we can run tests in parallel for
-# each file instead of just sequentially.
-_paths: List[Path] = []
-if get_robot_major_version() == 5:
-    for p in Path(CASE_ROOT).rglob("*"):
+def _list_paths_in_folder(caseroot):
+    paths = []
+    for p in Path(caseroot).rglob("*"):
         if not _ACCEPT_PATH(p):
             if "GITHUB_ACTIONS" in os.environ:
                 raise AssertionError(
@@ -176,15 +207,22 @@ if get_robot_major_version() == 5:
             continue
 
         if p.name.endswith((".robot", ".resource")):
-            _paths.append(p)
+            paths.append(p)
+    return paths
 
 
-@pytest.mark.skipif(get_robot_major_version() != 5, reason="RF-5 only test")
-@pytest.mark.parametrize("p", _paths, ids=[x.name for x in _paths])
-def test_atest_keywords(atest_keywords_ws, p, request):
+# Note: we set it using parametrize so that we can run tests in parallel for
+# each file instead of just sequentially.
+_paths_keywords: List[Path] = []
+_paths_variables: List[Path] = []
+if get_robot_major_version() == 5:
+    _paths_keywords = _list_paths_in_folder(_CASE_ROOT_KEYWORDS)
+    _paths_variables = _list_paths_in_folder(_CASE_ROOT_VARIABLES)
+
+
+def _check_path(ws, p, request):
     from robocorp_ls_core import uris
 
-    ws = atest_keywords_ws
     config = ws.libspec_manager.config
     uri = uris.from_fs_path(str(p))
     doc = ws.get_document(uri, accept_from_file=True)
@@ -206,3 +244,15 @@ def test_atest_keywords(atest_keywords_ws, p, request):
             diff = ["FILES DIFFER"]
             diff += diff_lines
             raise AssertionError("\n".join(diff))
+
+
+@pytest.mark.skipif(get_robot_major_version() != 5, reason="RF-5 only test")
+@pytest.mark.parametrize("p", _paths_keywords, ids=[x.name for x in _paths_keywords])
+def test_atest_keywords(atest_keywords_ws, p, request):
+    _check_path(atest_keywords_ws, p, request)
+
+
+@pytest.mark.skipif(get_robot_major_version() != 5, reason="RF-5 only test")
+@pytest.mark.parametrize("p", _paths_variables, ids=[x.name for x in _paths_variables])
+def test_atest_variables(atest_variables_ws, p, request):
+    _check_path(atest_variables_ws, p, request)

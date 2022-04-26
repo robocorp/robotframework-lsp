@@ -426,9 +426,8 @@ def _is_number_var(normalized_variable_name):
     try:
         bases = {"0b": 2, "0o": 8, "0x": 16}
         if normalized_variable_name.startswith(tuple(bases)):
-            return int(
-                normalized_variable_name[2:], bases[normalized_variable_name[:2]]
-            )
+            int(normalized_variable_name[2:], bases[normalized_variable_name[:2]])
+            return True
         int(normalized_variable_name)
         return True
     except:

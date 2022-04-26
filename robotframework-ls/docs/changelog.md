@@ -11,6 +11,8 @@ NEXT
 - Consider that an argument default values may be based on a previous argument. [#664](https://github.com/robocorp/robotframework-lsp/issues/664)
 - Properly consider local/global context when dealing with variables.
 - Properly recognize loop variables in RF 3. [#661](https://github.com/robocorp/robotframework-lsp/issues/661)
+- Properly recognize variable that evaluates to 0.
+- Properly recognize variables from Python that start with `DICT__` or `LIST__`.
 
 
 New in 0.46.0 (2022-04-19)
