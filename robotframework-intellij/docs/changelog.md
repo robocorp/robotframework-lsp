@@ -1,3 +1,17 @@
+NEXT
+-----------------------------
+
+- [Intellij] Launch exit info added to console UI in the UI thread. [#662](https://github.com/robocorp/robotframework-lsp/issues/662)
+- Variables in arguments now properly regexp sections.
+- Environment variables set using `Set Environment Variable` are now recognized.
+- Fix issue where variable with a set literal wasn't properly recognized.
+- If an argument is specified multiple times a better error message is shown.
+- Fix false positive when argument names are specified with variable names in it.
+- Consider that an argument default values may be based on a previous argument. [#664](https://github.com/robocorp/robotframework-lsp/issues/664)
+- Properly consider local/global context when dealing with variables.
+- Properly recognize loop variables in RF 3. [#661](https://github.com/robocorp/robotframework-lsp/issues/661)
+
+
 New in 0.46.0 (2022-04-19)
 -----------------------------
 
