@@ -2,6 +2,7 @@ from typing import List
 from robocorp_ls_core.protocols import IDocument
 import pytest
 from robotframework_ls.impl.robot_version import get_robot_major_version
+import itertools
 
 
 def check(found, expected):
@@ -18,9 +19,33 @@ def check(found, expected):
 
         stream = StringIO()
         ast_utils.print_ast(CompletionContext(doc).get_ast(), stream=stream)
+
+        compare_stream = StringIO()
+        found_diff = False
+        compare_stream.write("Found".ljust(40))
+        compare_stream.write("Expected".ljust(40))
+        compare_stream.write("\n")
+        for a, b in itertools.zip_longest(decoded, expected, fillvalue=""):
+            if not found_diff and str(a) != str(b):
+                found_diff = True  # Just highlight the first difference
+                compare_stream.write("! ")
+            else:
+                compare_stream.write("  ")
+
+            compare_stream.write(str(a).ljust(40))
+            compare_stream.write(str(b).ljust(40))
+            compare_stream.write("\n")
+
         raise AssertionError(
-            "Expected:\n%s\n\nFound:\n%s\n\nAst:\n%s\n\nRobot: %s %s"
-            % (expected, decoded, stream.getvalue(), robot.get_version(), robot)
+            "Ast:\n%s\n\nRobot: %s %s\nExpected:\n%s\n\nFound:\n%s\n\n\nCompare:\n%s"
+            % (
+                stream.getvalue(),
+                robot.get_version(),
+                robot,
+                expected,
+                decoded,
+                compare_stream.getvalue(),
+            )
         )
 
 
@@ -371,7 +396,35 @@ Some test
             ("A", "variable"),
             ("}[", "variableOperator"),
             ("${", "variableOperator"),
-            ('{["\\["]}', "variable"),
+            ("{", "variableOperator"),
+            ('["\\["]', "argumentValue"),
+            ("}", "variableOperator"),
+            ("}", "variableOperator"),
+            ("]", "variableOperator"),
+        ],
+    )
+
+
+def test_semantic_highlighting_var_with_modifier_4(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Some test
+    Log    ${A}[${{$a}}]
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Some test", "testCaseName"),
+            ("Log", "keywordNameCall"),
+            ("${", "variableOperator"),
+            ("A", "variable"),
+            ("}[", "variableOperator"),
+            ("${", "variableOperator"),
+            ("{", "variableOperator"),
+            ("$", "variableOperator"),
+            ("a", "variable"),
+            ("}", "variableOperator"),
             ("}", "variableOperator"),
             ("]", "variableOperator"),
         ],
@@ -1014,7 +1067,6 @@ Example
     )
 
 
-@pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 5 onwards")
 def test_semantic_highlighting_expression_evaluate(workspace):
     check_simple(
         workspace,
@@ -1081,7 +1133,7 @@ Example
             ("${", "variableOperator"),
             ("b", "variable"),
             ("}", "variableOperator"),
-            ("}}", "variableOperator"),
+            ("}", "variableOperator"),
             ("}", "variableOperator"),
         ],
     )
@@ -1207,5 +1259,33 @@ My Test
             ("xxx", "parameterName"),
             ("=", "variableOperator"),
             ("\\n", "argumentValue"),
+        ],
+    )
+
+
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 4 onwards")
+def test_semantic_var_in_expr(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Demo
+    IF    ${{$var1 != "1"}}
+        Fail
+    END
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Demo", "testCaseName"),
+            ("IF", "control"),
+            ("${", "variableOperator"),
+            ("{", "variableOperator"),
+            ("$", "variableOperator"),
+            ("var1", "variable"),
+            (' != "1"', "argumentValue"),
+            ("}", "variableOperator"),
+            ("}", "variableOperator"),
+            ("Fail", "keywordNameCall"),
+            ("END", "control"),
         ],
     )

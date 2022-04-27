@@ -190,7 +190,7 @@ def test_ast_extract_expression_tokens(data_regression):
     from robot.api import Token
 
     collected = []
-    for token in ast_utils.iter_expression_tokens(
+    for token, _var_identifier in ast_utils.iter_expression_tokens(
         Token(Token.ARGUMENT, "$v1 > ${v2} > ${v3} > $v4", 1, 0)
     ):
         collected.append(

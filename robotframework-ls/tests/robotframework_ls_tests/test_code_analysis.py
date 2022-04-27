@@ -1307,6 +1307,21 @@ Example
     _collect_errors(workspace, doc, data_regression)
 
 
+def test_inner_var_2(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Variables ***
+${per}            PER
+
+*** Test Cases ***
+Example
+    Should Be True    @{${PER}SONS} == ['John', 'Jane']
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
 def test_options(workspace, libspec_manager, data_regression):
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case2.robot")
@@ -1741,6 +1756,33 @@ def test_literal_val(workspace, libspec_manager, data_regression):
 Integer Variables With Base
     Log to console    ${0B0}
     Log to console    ${0O0}
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_var_used_to_resolve_env_var(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Library         OperatingSystem
+
+*** Test Cases ***
+Environment Variable With Internal Variables
+    Set Environment Variable  yet_another_env_var  THIS_ENV_VAR
+    ${normal_var} =  Set Variable  IS_SET
+    Should Be Equal  %{%{yet_another_env_var}_${normal_var}}  Env var value
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_py_expr(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Environment Variable With Internal Variables
+    Should Be True    repr(${12345}) == '12345'
 """
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 

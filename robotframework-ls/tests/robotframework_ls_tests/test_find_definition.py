@@ -1248,3 +1248,31 @@ Keyword 1
     definition = definitions[0]
     assert definition.source.endswith("case2.robot")
     assert definition.lineno == 5
+
+
+def test_find_definition_expression_var(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Demo
+    ${var1}    Set Variable    2
+    IF    ${{$var1 != "1"}}
+        Fail
+    END
+"""
+
+    line = doc.find_line_with_contents('    IF    ${{$var1 != "1"}}')
+    col = len("    IF    ${{$v")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = definitions[0]
+    assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 3

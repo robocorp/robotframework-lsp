@@ -177,3 +177,33 @@ Example2
     result = references(completion_context, include_declaration=True)
     assert result
     check_data_regression(result, data_regression)
+
+
+@pytest.mark.skipif(
+    get_robot_major_version() < 4, reason="If only available in RF 4 onwards."
+)
+def test_references_variables_in_expr(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.references import references
+
+    workspace.set_root("case2", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc(
+        "case2.robot",
+        """
+*** Test Cases ***
+Demo
+    ${var1}    Set Variable    2
+    IF    ${{$var1 != "1"}}
+        Fail
+    END
+    """,
+    )
+    line = doc.find_line_with_contents('    IF    ${{$var1 != "1"}}')
+    col = len("    IF    ${{$v")
+
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+    result = references(completion_context, include_declaration=True)
+    assert result
+    check_data_regression(result, data_regression)

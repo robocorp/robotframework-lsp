@@ -348,13 +348,8 @@ def _collect_arguments(
 ):
     from robotframework_ls.impl import ast_utils
 
-    for arg_token, _var_identifier in ast_utils.iter_keyword_arguments_as_tokens(
-        node, tokenize_keyword_name=True
-    ):
+    for arg_token in ast_utils.iter_keyword_arguments_as_tokens(node):
         name = arg_token.value
-        # Arguments may have a ':' after which a regexp is used to match a given name.
-        # i.e.: I type ${num1:\d+} ${operator:[+-]} ${num2:\d+}
-        name = name.split(":", 1)[0]
         if collector.accepts(name):
             variable_found = VariableFoundFromToken(
                 completion_context,

@@ -159,6 +159,9 @@ RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX = {
     ERROR: TOKEN_TYPE_TO_INDEX["error"],
     FATAL_ERROR: TOKEN_TYPE_TO_INDEX["error"],
     OPTION: TOKEN_TYPE_TO_INDEX["argumentValue"],
+    # Special: we don't have a token regarding such operators in RF, so, add
+    # 'variableOperator' as being valid for both.
+    "variableOperator": TOKEN_TYPE_TO_INDEX["variableOperator"],
 }
 
 
@@ -265,10 +268,8 @@ def _tokenize_token(
                     return
 
             if in_expression:
-                for token in iter_expression_tokens(use_token, "argumentValue"):
-                    token_type_index = scope.get_index_from_internal_token_type(
-                        token.type
-                    )
+                for token, _var_identifier in iter_expression_tokens(use_token):
+                    token_type_index = scope.get_index_from_rf_token_type(token.type)
                     if token_type_index is not None:
                         yield token, token_type_index
                 return
@@ -372,46 +373,16 @@ def _tokenize_subvars(var_token, token_type_index, scope):
         yield var_token, token_type_index
         return
 
-    if var_token.value.startswith("{") and var_token.value.endswith("}"):
-        from robotframework_ls.impl.ast_utils import split_token_in_3
-        from robotframework_ls.impl.ast_utils import iter_expression_tokens
+    from robotframework_ls.impl import ast_utils
 
-        # i.e.: We're dealing with an expression.
-        first, second, third = split_token_in_3(
-            var_token,
-            "variableOperator",
-            "argumentValue",
-            "variableOperator",
-            1,
-            -1,
-        )
+    var_type = var_token.type
+    if var_type == "variableOperator":
+        var_type = var_token.VARIABLE
 
-        yield first, VARIABLE_OPERATOR_INDEX
-
-        for token in iter_expression_tokens(second, "argumentValue"):
-            token_type_index = scope.get_index_from_internal_token_type(token.type)
-            if token_type_index is not None:
-                yield token, token_type_index
-
-        yield third, VARIABLE_OPERATOR_INDEX
-        return
-
-    from robotframework_ls.impl.ast_utils import RobotMatchTokensGenerator
-
-    robot_match_generator = RobotMatchTokensGenerator(var_token, "variable")
-    from robotframework_ls.impl.variable_resolve import iter_robot_variable_matches
-
-    for robot_match, relative_index in iter_robot_variable_matches(var_token.value):
-        for token in robot_match_generator.gen_tokens_from_robot_match(
-            robot_match,
-            relative_index,
-        ):
-            token_type_index = scope.get_index_from_internal_token_type(token.type)
-            if token_type_index is not None:
-                yield token, token_type_index
-
-    for token in robot_match_generator.gen_default_type(len(var_token.value)):
-        token_type_index = scope.get_index_from_internal_token_type(token.type)
+    for token, _var_identifier in ast_utils._tokenize_subvars_tokens(
+        var_token, var_type=var_type
+    ):
+        token_type_index = scope.get_index_from_rf_token_type(token.type)
         if token_type_index is not None:
             yield token, token_type_index
 

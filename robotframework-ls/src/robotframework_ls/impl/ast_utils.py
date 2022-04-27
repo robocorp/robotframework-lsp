@@ -538,7 +538,12 @@ def find_token(section, line, col) -> Optional[TokenInfo]:
 
 def _find_subvar(stack, node, initial_token, col) -> Optional[VarTokenInfo]:
     for token, var_identifier in _tokenize_subvars(initial_token):
+        if token.type == token.ARGUMENT:
+            continue
+
         if token.col_offset <= col <= token.end_col_offset:
+            if initial_token.type == initial_token.ASSIGN:
+                token = copy_token_replacing(token, type=initial_token.ASSIGN)
             return VarTokenInfo(stack, node, token, var_identifier)
 
     from robotframework_ls.impl import robot_constants
@@ -778,7 +783,7 @@ def iter_keyword_arguments_as_str(ast, tokenize_keyword_name=False) -> Iterator[
 @_convert_ast_to_indexer
 def _iter_keyword_arguments_tokens(
     ast, tokenize_keyword_name=False
-) -> Iterator[Tuple[IRobotToken, str]]:
+) -> Iterator[IRobotToken]:
     """
     This API provides tokens as they are.
 
@@ -786,6 +791,9 @@ def _iter_keyword_arguments_tokens(
 
     So, this is internal as the outer world is tailored to
     dealing with what's actually needed.
+
+    Note that it may return Token.ARGUMENT types (if defined in [Argument]) or
+    Token.VARIABLE (if defined in keyword name).
     """
     for node_info in ast.iter_indexed("Arguments"):
         for token in node_info.node.tokens:
@@ -809,26 +817,47 @@ def _iter_keyword_arguments_tokens(
                             yield tok
 
 
-def iter_keyword_arguments_as_tokens(
-    ast, tokenize_keyword_name=False
-) -> Iterator[Tuple[IRobotToken, str]]:
+def iter_keyword_arguments_as_tokens(ast) -> Iterator[IRobotToken]:
     """
-    API tailored at getting argument names.
+    API tailored at getting variables from keyword arguments.
 
     It converts an argument such as:
-    ${my.store}=${my.load}[first][second]
+    "[Arguments]    ${my.store}=${my.load}[first][second]"
 
     and yields something as:
 
-    my.store
+    "my.store"
+
+    It may also convert keyword arguments in the keyword name such as:
+
+    "Today is ${date:\d{4}-\d{2}-\d{2}}"
+
+    to "date"
     """
-    for token in _iter_keyword_arguments_tokens(ast, tokenize_keyword_name):
-        for t in _tokenize_subvars(token):
-            # The first one is the variable store (the other is the
-            # variable load on a default argument)
-            # We are only interested in the former in this API.
+    from robotframework_ls.impl.variable_resolve import iter_robot_variable_matches
+    from robot.api import Token
+
+    for initial_token in _iter_keyword_arguments_tokens(
+        ast, tokenize_keyword_name=True
+    ):
+        for robot_match, _relative_index in iter_robot_variable_matches(
+            initial_token.value
+        ):
+            i = initial_token.value.find(robot_match.base, robot_match.start)
+
+            t = Token(
+                initial_token.type,
+                robot_match.base,
+                initial_token.lineno,
+                initial_token.col_offset + i,
+                initial_token.error,
+            )
+            if initial_token.type == initial_token.VARIABLE:
+                i = t.value.find(":")
+                if i > 0:
+                    t = copy_token_with_subpart(t, 0, i)
             yield t
-            break  # Just break the inner for.
+            break  # Go to next arg.
 
 
 def iter_keyword_arguments_as_kwarg(
@@ -982,37 +1011,56 @@ def _tokenize_subvars(initial_token: IRobotToken) -> Iterator[Tuple[IRobotToken,
     if "{" not in initial_token.value:
         return
 
+    for tok, var_identifier in _tokenize_subvars_tokens(initial_token):
+        if tok.type in (tok.ARGUMENT, tok.VARIABLE):
+            yield tok, var_identifier
+
+
+def _tokenize_subvars_tokens(
+    initial_token: IRobotToken,
+    op_type: str = "variableOperator",
+    var_type: Optional[str] = None,
+    default_var_identifier: str = "",
+) -> Iterator[Tuple[IRobotToken, str]]:
+
+    from robot.api import Token
+
+    if var_type is None:
+        var_type = Token.ARGUMENT
+
+    if "{" not in initial_token.value:
+        yield initial_token, default_var_identifier
+        return
+
     if initial_token.value.startswith("{") and initial_token.value.endswith("}"):
         # i.e.: We're dealing with an expression.
-        _first, second, _third = split_token_in_3(
+        first, second, third = split_token_in_3(
             initial_token,
-            "variableOperator",
-            "argumentValue",
-            "variableOperator",
+            op_type,
+            var_type,
+            op_type,
             1,
             -1,
         )
-
-        for tok in iter_expression_variables(second):
-            yield tok, "$"
+        yield first, ""
+        yield from iter_expression_tokens(second)
+        yield third, ""
         return
 
-    skip_type = ""
-    robot_match_generator = RobotMatchTokensGenerator(initial_token, skip_type)
+    robot_match_generator = RobotMatchTokensGenerator(initial_token, var_type)
     from robotframework_ls.impl.variable_resolve import iter_robot_variable_matches
 
     for robot_match, relative_index in iter_robot_variable_matches(initial_token.value):
-        for token in robot_match_generator.gen_tokens_from_robot_match(
-            robot_match, relative_index, skip_type, initial_token.type
-        ):
-            if token.type == initial_token.type:
-                found = False
-                for v in _tokenize_subvars(token):
-                    found = True
-                    yield v
 
-                if not found:
-                    yield token, robot_match.identifier
+        yield from robot_match_generator.gen_default_type(
+            relative_index + len(robot_match.before)
+        )
+
+        yield from robot_match_generator.gen_tokens_from_robot_match(
+            robot_match, relative_index, var_type=var_type
+        )
+
+    yield from robot_match_generator.gen_default_type(len(initial_token.value))
 
 
 def _is_store_keyword(node):
@@ -1078,6 +1126,8 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
                                 # We need to check for inner variables (as in
                                 # this case we validate those).
                                 for t, var_identifier in _tokenize_subvars(tok):
+                                    if t.type != token.VARIABLE:
+                                        continue
                                     if not _add_match(found, t):
                                         continue
 
@@ -1142,6 +1192,8 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
                 continue
 
             for t, varid in iter_in:
+                if t.type != t.VARIABLE:
+                    continue
                 if not _add_match(found, t):
                     continue
                 yield VarTokenInfo(stack, node, t, varid)
@@ -1805,20 +1857,12 @@ def split_token_in_3(
         col_offset=token.col_offset + start_pos,
     )
 
-    if end_pos < 0:
-        third = copy_token_replacing(
-            token,
-            type=third_token_type,
-            value=token.value[:end_pos],
-            col_offset=second.end_col_offset,
-        )
-    else:
-        third = copy_token_replacing(
-            token,
-            type=third_token_type,
-            value=token.value[end_pos:],
-            col_offset=second.end_col_offset,
-        )
+    third = copy_token_replacing(
+        token,
+        type=third_token_type,
+        value=token.value[end_pos:],
+        col_offset=second.end_col_offset,
+    )
 
     return first, second, third
 
@@ -1860,9 +1904,9 @@ def get_library_arguments_serialized(library) -> Optional[str]:
 def iter_expression_variables(expression_token: IRobotToken) -> Iterator[IRobotToken]:
     from robot.api import Token
 
-    for tok in iter_expression_tokens(expression_token):
-        if tok.type == "variable":
-            yield copy_token_replacing(tok, type=Token.VARIABLE)
+    for tok, _var_identifier in iter_expression_tokens(expression_token):
+        if tok.type == Token.VARIABLE:
+            yield tok
 
 
 class RobotMatchTokensGenerator:
@@ -1871,7 +1915,7 @@ class RobotMatchTokensGenerator:
         self.token = token
         self.last_gen_end_offset = 0
 
-    def gen_default_type(self, until_offset: int) -> Iterable[IRobotToken]:
+    def gen_default_type(self, until_offset: int) -> Iterable[Tuple[IRobotToken, str]]:
         token = self.token
         if until_offset > self.last_gen_end_offset:
             from robot.api import Token
@@ -1884,16 +1928,21 @@ class RobotMatchTokensGenerator:
                     token.lineno,
                     token.col_offset + self.last_gen_end_offset,
                     token.error,
-                )
+                ), ""
+            self.last_gen_end_offset = until_offset
 
     def gen_tokens_from_robot_match(
         self,
         robot_match: IRobotVariableMatch,
         last_relative_index: int,
         op_type: str = "variableOperator",
-        var_type: str = "variable",
-    ) -> Iterable[IRobotToken]:
+        var_type: Optional[str] = None,
+    ) -> Iterable[Tuple[IRobotToken, str]]:
         from robot.api import Token
+
+        curr_var_type = var_type
+        if curr_var_type is None:
+            curr_var_type = Token.VARIABLE
 
         token = self.token
         if not robot_match.base:
@@ -1913,15 +1962,28 @@ class RobotMatchTokensGenerator:
             token.lineno,
             token.col_offset + start_offset,
             token.error,
-        )
+        ), ""
 
-        yield Token(
-            var_type,
-            robot_match.base,
-            token.lineno,
-            token.col_offset + i,
-            token.error,
+        subvar_tokens = tuple(
+            _tokenize_subvars_tokens(
+                Token(
+                    curr_var_type,
+                    robot_match.base,
+                    token.lineno,
+                    token.col_offset + i,
+                    token.error,
+                ),
+                op_type,
+                var_type,
+                robot_match.identifier,
+            )
         )
+        if len(subvar_tokens) == 1:
+            tok, var_kind = subvar_tokens[0]
+            tok = copy_token_replacing(tok, type=tok.VARIABLE)
+            yield (tok, var_kind)
+        else:
+            yield from iter(subvar_tokens)
 
         base = robot_match.base
         assert base is not None
@@ -1934,105 +1996,123 @@ class RobotMatchTokensGenerator:
             token.lineno,
             token.col_offset + j,
             token.error,
-        )
+        ), ""
 
         self.last_gen_end_offset = j + len(val)
 
 
-def iter_expression_tokens(
-    expression_token: IRobotToken, default_type="argument"
-) -> Iterator[IRobotToken]:
-    from robotframework_ls.impl.variable_resolve import iter_robot_variable_matches
+def _gen_tokens_in_py_expr(
+    py_expr,
+    expression_token,
+):
     from tokenize import generate_tokens, NAME, ERRORTOKEN
     from io import StringIO
     from robot.api import Token
 
-    robot_match_generator = RobotMatchTokensGenerator(expression_token, default_type)
+    var_type = Token.VARIABLE
+    op_type = "variableOperator"
 
-    # Note: tokens yielded are tokens which are internal LS types (not RF types).
-    # Use: iter_expression_variables to get the vars with RF types.
+    gen_var_token_info = None
+    try:
+        for token_info in generate_tokens(StringIO(py_expr).readline):
+            if token_info.type == ERRORTOKEN and token_info.string == "$":
+                gen_var_token_info = token_info
 
+            elif gen_var_token_info is not None and token_info.type == NAME:
+                if gen_var_token_info.start[1] == token_info.start[1] - 1:
+                    start_offset = gen_var_token_info.start[1]
+
+                    yield Token(
+                        op_type,
+                        gen_var_token_info.string,
+                        expression_token.lineno,
+                        expression_token.col_offset + start_offset,
+                        expression_token.error,
+                    ), ""
+
+                    yield Token(
+                        var_type,
+                        token_info.string,
+                        expression_token.lineno,
+                        expression_token.col_offset + token_info.start[1],
+                        expression_token.error,
+                    ), "$"
+
+    except:
+        log.exception(f"Unable to evaluate python expression from: {expression_token}")
+
+
+def iter_expression_tokens(
+    expression_token: IRobotToken,
+    default_type=None,
+) -> Iterator[Tuple[IRobotToken, str]]:
     # See: robot.variables.evaluation.evaluate_expression
 
-    iter_robot_match = iter_robot_variable_matches(expression_token.value)
-    last_robot_match = None
+    from robotframework_ls.impl.variable_resolve import iter_robot_variable_matches
 
-    try:
-        last_robot_match, last_relative_index = next(iter_robot_match)
-    except StopIteration:
-        pass
+    if default_type is None:
+        default_type = expression_token.ARGUMENT
 
-    gen_var_token_info: Any = None
-    for token_info in generate_tokens(StringIO(expression_token.value).readline):
-        if token_info.type == ERRORTOKEN and token_info.string == "$":
-            gen_var_token_info = token_info
+    expression_to_evaluate: List[str] = []
 
-        elif gen_var_token_info is not None and token_info.type == NAME:
-            if gen_var_token_info.start[1] == token_info.start[1] - 1:
+    robot_matches_and_relative_index = list(
+        iter_robot_variable_matches(expression_token.value)
+    )
 
-                while True:
-                    if last_robot_match is None or last_robot_match.base is None:
-                        break
+    robot_match = None
+    for robot_match, relative_index in robot_matches_and_relative_index:
+        expression_to_evaluate.append(robot_match.before)
+        expression_to_evaluate.append("1" * (robot_match.end - robot_match.start))
 
-                    if (
-                        last_robot_match.start + last_relative_index
-                        < gen_var_token_info.start[1]
-                    ):
-                        yield from robot_match_generator.gen_tokens_from_robot_match(
-                            last_robot_match, last_relative_index
-                        )
+    if robot_match is None:
+        after = expression_token.value
+    else:
+        after = robot_match.after
 
-                        last_robot_match = None
+    if after.strip():
+        expression_to_evaluate.append(after)
 
-                        try:
-                            last_robot_match, last_relative_index = next(
-                                iter_robot_match
-                            )
-                        except StopIteration:
-                            pass
-                    else:
-                        break
+    python_toks_and_identifiers = []
+    if expression_to_evaluate:
+        expr = "".join(expression_to_evaluate)
+        if expr.strip():
+            python_toks_and_identifiers.extend(
+                _gen_tokens_in_py_expr(expr, expression_token)
+            )
 
-                start_offset = gen_var_token_info.start[1]
-                yield from robot_match_generator.gen_default_type(start_offset)
+    robot_match_generator = RobotMatchTokensGenerator(expression_token, default_type)
 
-                yield Token(
-                    "variableOperator",
-                    gen_var_token_info.string,
-                    expression_token.lineno,
-                    expression_token.col_offset + start_offset,
-                    expression_token.error,
-                )
+    # Now, let's put the vars from python and the robot matches we have in a
+    # sorted list so that we can iterate properly.
+    from robot.api import Token
 
-                yield Token(
-                    "variable",
-                    token_info.string,
-                    expression_token.lineno,
-                    expression_token.col_offset + token_info.start[1],
-                    expression_token.error,
-                )
+    def key(obj):
+        # obj is either a tuple(robot match/relative index) or a tuple(Token/var identifier)
+        if isinstance(obj[0], Token):
+            return obj[0].col_offset
 
-                robot_match_generator.last_gen_end_offset = token_info.start[1] + len(
-                    token_info.string
-                )
+        robot_match: IRobotVariableMatch = obj[0]
+        relative_index = obj[1]
+        return relative_index + robot_match.start + expression_token.col_offset
 
-            gen_var_token_info = None
+    lst = sorted(
+        python_toks_and_identifiers + robot_matches_and_relative_index, key=key
+    )
 
-    while True:
-        if last_robot_match is None or last_robot_match.base is None:
-            break
+    # obj is either a tuple(robot match/relative index) or a tuple(Token/var identifier)
+    obj: Any
+    for obj in lst:
+        if isinstance(obj[0], Token):
+            yield from robot_match_generator.gen_default_type(
+                obj[0].col_offset - expression_token.col_offset
+            )
+            yield obj
+            robot_match_generator.last_gen_end_offset = (
+                obj[0].end_col_offset - expression_token.col_offset
+            )
 
-        yield from robot_match_generator.gen_tokens_from_robot_match(
-            last_robot_match, last_relative_index
-        )
-
-        last_robot_match = None
-
-        try:
-            last_robot_match, last_relative_index = next(iter_robot_match)
-        except StopIteration:
-            pass
-
+        else:
+            yield from robot_match_generator.gen_tokens_from_robot_match(*obj)
     yield from robot_match_generator.gen_default_type(len(expression_token.value))
 
 
