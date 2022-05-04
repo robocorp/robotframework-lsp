@@ -37,7 +37,7 @@ Multiply
 Failing When Base Name Does Not Exist
     [Documentation]    FAIL Resolving variable '\${nonexisting.whatever}' failed: Variable '\${nonexisting}' not found.
     Log    ${nonexisting.whatever}
-#!           ^^^^^^^^^^^^^^^^^^^^ Undefined variable: nonexisting.whatever
+#!           ^^^^^^^^^^^ Undefined variable: nonexisting
 
 Failing When Base Name Starts With Existing Variable 1
     [Documentation]    FAIL Variable '\${nonexisting}' not found.

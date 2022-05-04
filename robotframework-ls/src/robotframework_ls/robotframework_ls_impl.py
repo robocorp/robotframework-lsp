@@ -1,5 +1,9 @@
 from robocorp_ls_core.python_ls import PythonLanguageServer
-from robocorp_ls_core.basic import overrides, log_and_silence_errors
+from robocorp_ls_core.basic import (
+    overrides,
+    log_and_silence_errors,
+    log_but_dont_silence_errors,
+)
 import os
 import time
 from robotframework_ls.constants import DEFAULT_COMPLETIONS_TIMEOUT
@@ -30,6 +34,8 @@ from robocorp_ls_core.lsp import (
     TextDocumentPositionParamsTypedDict,
     PositionTypedDict,
     CompletionItemTypedDict,
+    RenameParamsTypedDict,
+    PrepareRenameParamsTypedDict,
 )
 from robotframework_ls.commands import (
     ROBOT_GET_RFLS_HOME_DIR,
@@ -37,6 +43,7 @@ from robotframework_ls.commands import (
     ROBOT_WAIT_FULL_TEST_COLLECTION_INTERNAL,
     ROBOT_RF_INFO_INTERNAL,
 )
+from robocorp_ls_core.jsonrpc.exceptions import JsonRpcException
 
 
 log = get_logger(__name__)
@@ -364,7 +371,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             },
             "hoverProvider": True,
             "referencesProvider": True,
-            "renameProvider": False,
+            "renameProvider": {
+                "prepareProvider": True,
+            },
             "foldingRangeProvider": True,
             # Note that there are no auto-trigger characters (there's no good
             # character as there's no `(` for parameters and putting it as a
@@ -699,7 +708,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             doc_uri, line, col
         )
 
-    @log_and_silence_errors(log)
+    @log_but_dont_silence_errors(log)
     def _threaded_api_request(
         self,
         rf_api_client: IRobotFrameworkApiClient,
@@ -748,9 +757,13 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                 if result:
                     return result
 
+                error = msg.get("error")
+                if error:
+                    raise JsonRpcException(**error)
+
         return None
 
-    @log_and_silence_errors(log)
+    @log_but_dont_silence_errors(log)
     def _threaded_api_request_no_doc(
         self,
         rf_api_client: IRobotFrameworkApiClient,
@@ -832,6 +845,27 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         line, col = kwargs["position"]["line"], kwargs["position"]["character"]
         return self.async_api_forward(
             "request_find_definition", "api", doc_uri, line=line, col=col
+        )
+
+    def m_text_document__rename(self, **kwargs):
+        rename_params: RenameParamsTypedDict = kwargs
+        # Note: 0-based
+        doc_uri: str = rename_params["textDocument"]["uri"]
+        line: int = rename_params["position"]["line"]
+        col: int = rename_params["position"]["character"]
+        new_name = rename_params["newName"]
+        return self.async_api_forward(
+            "request_rename", "api", doc_uri, line=line, col=col, new_name=new_name
+        )
+
+    def m_text_document__prepare_rename(self, **kwargs):
+        rename_params: PrepareRenameParamsTypedDict = kwargs
+        # Note: 0-based
+        doc_uri: str = rename_params["textDocument"]["uri"]
+        line: int = rename_params["position"]["line"]
+        col: int = rename_params["position"]["character"]
+        return self.async_api_forward(
+            "request_prepare_rename", "api", doc_uri, line=line, col=col
         )
 
     def m_text_document__signature_help(self, **kwargs):

@@ -1,0 +1,17 @@
+- - case2.robot
+  - - newText: Rara
+      range:
+        end:
+          character: 28
+          line: 7
+        start:
+          character: 16
+          line: 7
+    - newText: Rara
+      range:
+        end:
+          character: 18
+          line: 8
+        start:
+          character: 4
+          line: 8

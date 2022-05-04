@@ -268,7 +268,7 @@ def _tokenize_token(
                     return
 
             if in_expression:
-                for token, _var_identifier in iter_expression_tokens(use_token):
+                for token, _var_info in iter_expression_tokens(use_token):
                     token_type_index = scope.get_index_from_rf_token_type(token.type)
                     if token_type_index is not None:
                         yield token, token_type_index
@@ -379,7 +379,7 @@ def _tokenize_subvars(var_token, token_type_index, scope):
     if var_type == "variableOperator":
         var_type = var_token.VARIABLE
 
-    for token, _var_identifier in ast_utils._tokenize_subvars_tokens(
+    for token, _var_info in ast_utils._tokenize_subvars_tokens(
         var_token, var_type=var_type
     ):
         token_type_index = scope.get_index_from_rf_token_type(token.type)

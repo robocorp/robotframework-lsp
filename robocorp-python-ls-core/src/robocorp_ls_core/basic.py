@@ -320,6 +320,24 @@ def log_and_silence_errors(logger, return_on_error=None):
     return inner
 
 
+def log_but_dont_silence_errors(logger):
+    def inner(func):
+        @functools.wraps(func)
+        def new_func(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except JsonRpcRequestCancelled:
+                logger.info("Cancelled handling: %s", func)
+                raise  # Don't silence cancelled exceptions
+            except:
+                logger.exception("Error calling: %s", func)
+                raise
+
+        return new_func
+
+    return inner
+
+
 @contextmanager
 def after(obj, method_name, callback):
     original_method = getattr(obj, method_name)

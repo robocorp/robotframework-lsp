@@ -974,9 +974,30 @@ Log It2
     data_regression.check(found)
 
 
+def test_rename_integrated(
+    language_server_io: ILanguageServerClient, ws_root_path, data_regression
+):
+    from robocorp_ls_core.workspace import Document
+
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    txt = """
+*** Keywords ***
+Keyword
+    [Arguments]     ${foo}    ${bar}=${foo}
+    Log     ${foo}"""
+    language_server.open_doc(uri, 1, txt)
+
+    line, col = Document("uri", txt).get_last_line_col()
+
+    ret = language_server.request_rename(uri, line, col - 2, "newName")
+    data_regression.check(ret["result"]["changes"])
+
+
 def test_shadowing_libraries(language_server_io: ILanguageServerClient, workspace_dir):
     from robocorp_ls_core import uris
-    from pathlib import Path
     from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
 
     language_server = language_server_io

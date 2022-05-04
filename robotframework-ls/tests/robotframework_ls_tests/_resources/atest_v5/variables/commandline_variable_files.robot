@@ -26,7 +26,7 @@ Arguments To Variable Files Using Semicolon Separator
     Should Be Equal  ${SEMICOLON}  separator
 #!                     ^^^^^^^^^ Undefined variable: SEMICOLON
     Should Be Equal  ${SEMI:COLON}  separator:with:colons
-#!                     ^^^^^^^^^^ Undefined variable: SEMI:COLON
+#!                     ^^^^ Undefined variable: SEMI
 
 Variable File From PYTHONPATH
     Should Be Equal  ${PYTHONPATH VAR 0}  Varfile found from PYTHONPATH

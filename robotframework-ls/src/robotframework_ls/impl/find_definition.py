@@ -284,18 +284,30 @@ class _FindDefinitionVariablesCollector(AbstractVariablesCollector):
         token: IRobotToken = var_token_info.token
         value = token.value
         self.stack = var_token_info.stack
-        self.matcher = RobotStringMatcher(value)
-        self.completion_context = completion_context
+        self._matcher = RobotStringMatcher(value)
+
+        self._matcher_with_extended_part = None
+        if var_token_info.var_info.extended_part.strip():
+            full_name = value + var_token_info.var_info.extended_part
+            self._matcher_with_extended_part = RobotStringMatcher(full_name)
+
+        self._completion_context = completion_context
 
     def accepts(self, variable_name: str) -> bool:
-        return self.matcher.is_variable_name_match(variable_name)
+        if self._matcher.is_variable_name_match(variable_name):
+            return True
+        if self._matcher_with_extended_part is not None:
+            return self._matcher_with_extended_part.is_variable_name_match(
+                variable_name
+            )
+        return False
 
     def on_variable(self, variable_found: IVariableFound):
         from robotframework_ls.impl.ast_utils import matches_stack
 
         is_local_variable = variable_found.is_local_variable
         if is_local_variable:
-            if self.completion_context.doc.path != variable_found.source:
+            if self._completion_context.doc.path != variable_found.source:
                 return
 
             if not matches_stack(self.stack, variable_found.stack):

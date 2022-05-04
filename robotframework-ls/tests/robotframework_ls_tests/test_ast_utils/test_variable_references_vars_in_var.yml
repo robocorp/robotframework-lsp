@@ -1,0 +1,2 @@
+- 'VarTokenInfo(aa (in KeywordCall) - AdditionalVarInfo($ -- extended: +${bb}))'
+- VarTokenInfo(bb (in KeywordCall) - AdditionalVarInfo($))

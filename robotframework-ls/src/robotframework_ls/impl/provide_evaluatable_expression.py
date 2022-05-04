@@ -29,8 +29,11 @@ def provide_evaluatable_expression(
     var_token_info = completion_context.get_current_variable()
     if var_token_info is not None:
         token = var_token_info.token
+        var_identifier = var_token_info.var_info.var_identifier
+        if not var_identifier:
+            var_identifier = "$"
         return _create_evaluatable_expression_from_token(
-            token, var_token_info.var_identifier + "{" + token.value + "}"
+            token, var_identifier + "{" + token.value + "}"
         )
 
     token_info = completion_context.get_current_token()

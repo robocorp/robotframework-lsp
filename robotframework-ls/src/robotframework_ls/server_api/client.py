@@ -263,6 +263,28 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             self._build_msg("findDefinition", doc_uri=doc_uri, line=line, col=col)
         )
 
+    def request_rename(
+        self, doc_uri: str, line: int, col: int, new_name: str
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(
+            self._build_msg(
+                "rename", doc_uri=doc_uri, line=line, col=col, new_name=new_name
+            )
+        )
+
+    def request_prepare_rename(
+        self, doc_uri: str, line: int, col: int
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(
+            self._build_msg("prepareRename", doc_uri=doc_uri, line=line, col=col)
+        )
+
     def request_source_format(
         self, text_document, options
     ) -> Optional[IIdMessageMatcher]:

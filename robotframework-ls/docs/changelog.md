@@ -1,6 +1,7 @@
 NEXT
 -----------------------------
 
+- Rename for variables and keywords. [#531](https://github.com/robocorp/robotframework-lsp/issues/531)
 - Find references for variables.
 - Information on the Robot Framework version is shown in the bottom bar. [#659](https://github.com/robocorp/robotframework-lsp/issues/659)
 - Variables in arguments now properly regexp sections.

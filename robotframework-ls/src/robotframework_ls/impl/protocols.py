@@ -30,6 +30,7 @@ from robocorp_ls_core.lsp import (
     RangeTypedDict,
     MarkupContentTypedDict,
     CompletionItemTypedDict,
+    LSPMessages,
 )
 import typing
 from robocorp_ls_core.ordered_set import OrderedSet
@@ -214,33 +215,57 @@ class TokenInfo:
     __repr__ = __str__
 
 
-class VarTokenInfo:
-
-    __slots__ = ["stack", "node", "token", "var_identifier", "context"]
+class AdditionalVarInfo:
 
     CONTEXT_UNDEFINED = 0
     CONTEXT_EXPRESSION = 1
+
+    __slots__ = ["var_identifier", "context", "extended_part"]
+
+    def __init__(
+        self,
+        var_identifier: str = "",
+        context: int = CONTEXT_UNDEFINED,
+        extended_part: str = "",
+    ):
+        """
+        :param var_identifier: One of: $,@,%
+        """
+
+        self.var_identifier = var_identifier
+        self.context = context
+        self.extended_part = extended_part
+
+    def __str__(self):
+        info = [f"AdditionalVarInfo({self.var_identifier}"]
+        if self.context:
+            info.append(f" -- ctx: {self.context}")
+        if self.extended_part:
+            info.append(f" -- extended: {self.extended_part}")
+        info.append(")")
+        return "".join(info)
+
+    __repr__ = __str__
+
+
+class VarTokenInfo:
+
+    __slots__ = ["stack", "node", "token", "var_info"]
 
     def __init__(
         self,
         stack: Tuple[INode, ...],
         node: INode,
         token: IRobotToken,
-        var_identifier: str,
-        context: int = CONTEXT_UNDEFINED,
+        var_info: AdditionalVarInfo,
     ):
-        """
-        :param var_identifier: One of: $,@,%
-        :param context:
-        """
         self.stack = stack
         self.node = node
         self.token = token
-        self.var_identifier = var_identifier
-        self.context = context
+        self.var_info = var_info
 
     def __str__(self):
-        return f"VarTokenInfo({self.token.value} -- id: {self.var_identifier} -- in: {self.node.__class__.__name__})"
+        return f"VarTokenInfo({self.token.value} (in {self.node.__class__.__name__}) - {self.var_info})"
 
     __repr__ = __str__
 
@@ -830,6 +855,12 @@ class ICompletionContext(Protocol):
     def resolve_completion_item(
         self, data, completion_item: CompletionItemTypedDict, monaco: bool = False
     ) -> None:
+        pass
+
+    @property
+    def lsp_messages(
+        self,
+    ) -> Optional[LSPMessages]:
         pass
 
     @property

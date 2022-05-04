@@ -1,6 +1,9 @@
-from typing import Dict, Optional, List, Tuple
+from functools import lru_cache
 import re
+import sys
+from typing import Dict, Optional, List, Tuple
 
+from robocorp_ls_core.lsp import DiagnosticSeverity, DiagnosticTag
 from robocorp_ls_core.protocols import check_implements
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.ast_utils import MAX_ERRORS
@@ -14,13 +17,10 @@ from robotframework_ls.impl.protocols import (
     AbstractVariablesCollector,
     VariableKind,
 )
-from robocorp_ls_core.lsp import DiagnosticSeverity, DiagnosticTag
 from robotframework_ls.impl.robot_lsp_constants import (
     OPTION_ROBOT_LINT_VARIABLES,
     OPTION_ROBOT_LINT_IGNORE_VARIABLES,
 )
-from functools import lru_cache
-import sys
 
 
 log = get_logger(__name__)
@@ -421,63 +421,18 @@ def collect_analysis_errors(initial_completion_context):
     return errors
 
 
-def _is_number_var(normalized_variable_name):
-    # see: robot.variables.finders.NumberFinder
-    try:
-        bases = {"0b": 2, "0o": 8, "0x": 16}
-        if normalized_variable_name.startswith(tuple(bases)):
-            int(normalized_variable_name[2:], bases[normalized_variable_name[:2]])
-            return True
-        int(normalized_variable_name)
-        return True
-    except:
-        pass  # Let's try float...
-
-    try:
-        float(normalized_variable_name)
-        return True
-    except:
-        pass
-
-    return False
-
-
-def _is_python_eval_var(normalized_variable_name):
-    return (
-        len(normalized_variable_name) >= 2
-        and normalized_variable_name[0] == "{"
-        and normalized_variable_name[-1] == "}"
-    )
-
-
 @lru_cache(maxsize=1000)
 def _skip_variable_analysis(normalized_variable_name):
+    from robotframework_ls.impl.variable_resolve import is_number_var
+    from robotframework_ls.impl.variable_resolve import is_python_eval_var
 
-    if _is_number_var(normalized_variable_name):
+    if is_number_var(normalized_variable_name):
         return True
 
-    if _is_python_eval_var(normalized_variable_name):
+    if is_python_eval_var(normalized_variable_name):
         return True
 
     return False
-
-
-_match_extended = re.compile(
-    r"""
-    (.+?)          # base name (group 1)
-    ([^\s\w].+)    # extended part (group 2)
-""",
-    re.UNICODE | re.VERBOSE,
-).match
-
-
-def _extract_base_from_extended_var_name(normalized_variable_name):
-    m = _match_extended(normalized_variable_name)
-    if m is None:
-        return normalized_variable_name
-
-    base_name, _extended = m.groups()
-    return base_name
 
 
 def _env_vars_upper():
@@ -490,6 +445,7 @@ def _collect_undefined_variables_errors(initial_completion_context):
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.variable_resolve import normalize_variable_name
     from robotframework_ls.impl.ast_utils import create_error_from_node
+    from robotframework_ls.impl.variable_resolve import robot_search_variable
 
     config = initial_completion_context.config
     if config is not None and not config.get_setting(
@@ -568,17 +524,17 @@ def _collect_undefined_variables_errors(initial_completion_context):
         var_line = token_info.token.lineno - 1  # We want it 0-based
         var_col_offset = token_info.token.col_offset
 
-        if token_info.var_identifier == "%":
-            from robotframework_ls.impl.variable_resolve import extract_variable_base
+        if token_info.var_info.var_identifier == "%":
 
-            if "=" in var_name:
-                # Consider case: %{SOME_VAR=defaultvalue}
+            if "=" in var_name + token_info.var_info.extended_part:
+                # Consider case: %{SOME_VAR=}
+                # Consider case: %{SOME_VAR=default val}
                 continue
 
             if env_vars_upper is None:
                 env_vars_upper = _env_vars_upper()
 
-            var_name_upper = extract_variable_base(var_name).upper()
+            var_name_upper = var_name.upper()
 
             if (
                 var_name_upper not in env_vars_upper
@@ -592,12 +548,23 @@ def _collect_undefined_variables_errors(initial_completion_context):
                 )
             continue
 
-        normalized_variable_name = normalize_variable_name(var_name)
+        check_names = [normalize_variable_name(var_name)]
+        if token_info.var_info.extended_part.strip():
+
+            robot_match_in_ext = robot_search_variable(
+                token_info.var_info.extended_part
+            )
+            if robot_match_in_ext is not None and robot_match_in_ext.base:
+                continue
+
+            check_names.append(
+                normalize_variable_name(var_name + token_info.var_info.extended_part)
+            )
 
         locals_collector = None
 
         found = False
-        while not found:
+        for normalized_variable_name in check_names:
             if normalized_variable_name in ignore_variables:
                 found = True
                 break
@@ -627,14 +594,6 @@ def _collect_undefined_variables_errors(initial_completion_context):
                 normalized_variable_name, var_line, var_col_offset
             ):
                 found = True
-                break
-
-            extracted_base = _extract_base_from_extended_var_name(
-                normalized_variable_name
-            )
-            if extracted_base and extracted_base != normalized_variable_name:
-                normalized_variable_name = extracted_base
-            else:
                 break
 
         if not found:

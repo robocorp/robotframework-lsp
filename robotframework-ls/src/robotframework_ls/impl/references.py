@@ -36,7 +36,7 @@ class _VariableDefinitionsCollector(AbstractVariablesCollector):
         self.matches: List[IVariableFound] = []
 
     def accepts(self, variable_name):
-        return self.robot_string_matcher.is_same_variable_name(variable_name)
+        return self.robot_string_matcher.is_variable_name_match(variable_name)
 
     def on_variable(self, variable_found: IVariableFound):
         self.matches.append(variable_found)
@@ -79,7 +79,7 @@ def iter_variable_references_in_doc(
             for var_token_info in ast_utils.iter_variable_references(stack_node):
                 completion_context.check_cancelled()
 
-                if not robot_string_matcher.is_same_variable_name(
+                if not robot_string_matcher.is_variable_name_match(
                     var_token_info.token.value
                 ):
                     continue
@@ -100,7 +100,7 @@ def iter_variable_references_in_doc(
             for var_token_info in ast_utils.iter_variable_references(ast):
                 completion_context.check_cancelled()
 
-                if not robot_string_matcher.is_same_variable_name(
+                if not robot_string_matcher.is_variable_name_match(
                     var_token_info.token.value
                 ):
                     continue
@@ -121,8 +121,8 @@ def iter_variable_references_in_doc(
                 "line": variable.lineno,
                 "character": variable.end_col_offset,
             }
-            code_lens_range: RangeTypedDict = {"start": start, "end": end}
-            yield code_lens_range
+            variable_range: RangeTypedDict = {"start": start, "end": end}
+            yield variable_range
 
 
 def iter_keyword_references_in_doc(

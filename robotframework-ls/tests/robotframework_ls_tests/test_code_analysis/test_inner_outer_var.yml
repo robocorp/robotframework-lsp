@@ -1,0 +1,10 @@
+- message: 'Undefined variable: nonexisting'
+  range:
+    end:
+      character: 35
+      line: 3
+    start:
+      character: 24
+      line: 3
+  severity: 1
+  source: robotframework

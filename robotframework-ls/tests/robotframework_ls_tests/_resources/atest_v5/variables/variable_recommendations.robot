@@ -96,7 +96,7 @@ Misspelled Period
     ...    ${INDENT}\${INDENT}
     ...    ${INDENT}\${INTEGER}
     Log    ${INT.EGER}
-#!           ^^^^^^^^ Undefined variable: INT.EGER
+#!           ^^^ Undefined variable: INT
 
 Misspelled Camel Case
     [Documentation]    FAIL    Variable '@{OneeItem}' not found. Did you mean:
@@ -133,14 +133,14 @@ Misspelled Extended Variable Parent
     [Documentation]    FAIL    Resolving variable '${OBJJ.name}' failed: Variable '${OBJJ}' not found. Did you mean:
     ...    ${INDENT}\${OBJ}
     Log    ${OBJJ.name}
-#!           ^^^^^^^^^ Undefined variable: OBJJ.name
+#!           ^^^^ Undefined variable: OBJJ
 
 Misspelled Extended Variable Parent As List
     [Documentation]    Extended variables are always searched as scalars.
     ...    FAIL    Resolving variable '@{OBJJ.name}' failed: Variable '${OBJJ}' not found. Did you mean:
     ...    ${INDENT}\${OBJ}
     Log    @{OBJJ.name}
-#!           ^^^^^^^^^ Undefined variable: OBJJ.name
+#!           ^^^^ Undefined variable: OBJJ
 
 Misspelled Extended Variable Child
     [Documentation]    FAIL    Resolving variable '${OBJ.nmame}' failed: AttributeError: 'ExampleObject' object has no attribute 'nmame'
@@ -166,7 +166,7 @@ Invalid Multiple Whitespace
     [Documentation]    FAIL    Resolving variable '${SPACVE * 5}' failed: Variable '${SPACVE }' not found. Did you mean:
     ...    ${INDENT}\${SPACE}
     Log    ${SPACVE * 5}
-#!           ^^^^^^^^^^ Undefined variable: SPACVE * 5
+#!           ^^^^^^ Undefined variable: SPACVE
 
 Non Existing Env Var
     [Documentation]    FAIL    Environment variable '%{THIS_ENV_VAR_DOES_NOT_EXIST}' not found.

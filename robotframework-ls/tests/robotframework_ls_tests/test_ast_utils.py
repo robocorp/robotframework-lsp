@@ -190,7 +190,7 @@ def test_ast_extract_expression_tokens(data_regression):
     from robot.api import Token
 
     collected = []
-    for token, _var_identifier in ast_utils.iter_expression_tokens(
+    for token, _var_info in ast_utils.iter_expression_tokens(
         Token(Token.ARGUMENT, "$v1 > ${v2} > ${v3} > $v4", 1, 0)
     ):
         collected.append(
@@ -381,3 +381,50 @@ Keyword 1
     assert var_info.token.value == "a"
     assert len(var_info.stack) == 1
     assert isinstance_name(var_info.stack[0], "Keyword")
+
+
+def regression_check(data_regression, refs):
+    from robocorp_ls_core.basic import isinstance_name
+
+    refs = sorted(refs, key=lambda var_info: var_info.token.value)
+    found = []
+    for var_info in refs:
+        found.append(str(var_info))
+        assert isinstance_name(var_info.stack[-1], "Keyword")
+    data_regression.check(found)
+
+
+def test_variable_references_vars_in_var(data_regression):
+    from robotframework_ls.impl.robot_workspace import RobotDocument
+    from robotframework_ls.impl import ast_utils
+
+    document = RobotDocument(
+        "uri",
+        """
+*** Keywords ***
+Keyword 1
+    Log    ${aa+${bb}}
+""",
+    )
+
+    ast = document.get_ast()
+    refs = list(ast_utils.iter_variable_references(ast))
+    regression_check(data_regression, refs)
+
+
+def test_variable_references_vars_in_var_2(data_regression):
+    from robotframework_ls.impl.robot_workspace import RobotDocument
+    from robotframework_ls.impl import ast_utils
+
+    document = RobotDocument(
+        "uri",
+        """
+*** Keywords ***
+Keyword 1
+    Log    @{OBJJ.name}
+""",
+    )
+
+    ast = document.get_ast()
+    refs = list(ast_utils.iter_variable_references(ast))
+    regression_check(data_regression, refs)

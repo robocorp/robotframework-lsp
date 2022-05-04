@@ -14,6 +14,7 @@ from robotframework_ls.impl.protocols import (
     VariableKind,
     VarTokenInfo,
     INode,
+    AdditionalVarInfo,
 )
 from robotframework_ls.impl.text_utilities import normalize_robot_name
 from robotframework_ls.impl.variable_types import (
@@ -53,7 +54,7 @@ class _Collector(AbstractVariablesCollector):
 
         label = variable_found.variable_name
 
-        if self.var_token_info.context == self.var_token_info.CONTEXT_EXPRESSION:
+        if self.var_token_info.var_info.context == AdditionalVarInfo.CONTEXT_EXPRESSION:
             # On expressions without '${...}' (just $var_name), we can't use spaces.
             label = label.replace(" ", "_")
 

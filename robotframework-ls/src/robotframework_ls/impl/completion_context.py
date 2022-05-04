@@ -14,7 +14,11 @@ from typing import (
 
 from robocorp_ls_core.cache import instance_cache
 from robocorp_ls_core.constants import NULL
-from robocorp_ls_core.lsp import CompletionItemTypedDict, MarkupContentTypedDict
+from robocorp_ls_core.lsp import (
+    CompletionItemTypedDict,
+    MarkupContentTypedDict,
+    LSPMessages,
+)
 from robocorp_ls_core.protocols import (
     IMonitor,
     Sentinel,
@@ -102,6 +106,7 @@ class CompletionContext(object):
         variables_from_arguments_files_loader: Sequence[
             IVariablesFromArgumentsFileLoader
         ] = (),
+        lsp_messages: Optional[LSPMessages] = None,
     ) -> None:
         if col is Sentinel.SENTINEL or line is Sentinel.SENTINEL:
             assert (
@@ -132,6 +137,7 @@ class CompletionContext(object):
         self._original_ctx: Optional[CompletionContext] = None
         self._monitor = monitor or NULL
         self.type = CompletionType.regular
+        self.lsp_messages = lsp_messages
 
         self._id_to_compute_documentation: Dict[
             int, Callable[[], MarkupContentTypedDict]
@@ -194,6 +200,7 @@ class CompletionContext(object):
             memo=self._memo,
             monitor=self._monitor,
             variables_from_arguments_files_loader=self.variables_from_arguments_files_loader,
+            lsp_messages=self.lsp_messages,
         )
         ctx._original_ctx = self
         return ctx
@@ -208,6 +215,7 @@ class CompletionContext(object):
             memo=self._memo,
             monitor=self._monitor,
             variables_from_arguments_files_loader=self.variables_from_arguments_files_loader,
+            lsp_messages=self.lsp_messages,
         )
         ctx._original_ctx = self
         return ctx

@@ -1787,6 +1787,65 @@ Environment Variable With Internal Variables
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
+def test_inner_outer_var(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Environment Variable With Internal Variables
+    Log    ${whatever ${nonexisting}}
+"""
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_embedded_arg(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Check
+    Given this "someItem" anotherArg
+
+*** Keywords ***
+${prefix:Given|When|Then} this "${item}" ${no good name for this arg ...}
+    Log to console    ${item}-${no good name for this arg ...}
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_no_var_found_extended(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Check
+    Log    @{OBJJ.name}
+"""
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_empty_default_env_var(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Check
+    Log    %{undefined=}
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_empty_var(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Check
+    Log    %{}
+"""
+    _collect_errors(workspace, doc, data_regression)
+
+
 def test_undefined_reference_default_arg_value(
     workspace, libspec_manager, data_regression
 ):

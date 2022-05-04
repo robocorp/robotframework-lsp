@@ -329,6 +329,20 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
         :Note: async complete.
         """
 
+    def request_rename(
+        self, doc_uri: str, line: int, col: int, new_name: str
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+
+    def request_prepare_rename(
+        self, doc_uri: str, line: int, col: int
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+
     def request_source_format(
         self, text_document, options
     ) -> Optional[IIdMessageMatcher]:
@@ -515,6 +529,12 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
         pass
 
     def request_document_symbol(self, uri: str):
+        pass
+
+    def request_rename(self, uri: str, line: int, col: int, new_name: str):
+        pass
+
+    def request_prepare_rename(self, uri: str, line: int, col: int):
         pass
 
     def request_workspace_symbols(self, query: Optional[str] = None):

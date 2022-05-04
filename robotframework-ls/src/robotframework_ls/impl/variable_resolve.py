@@ -11,8 +11,56 @@ from robotframework_ls.impl.protocols import (
 from robocorp_ls_core.protocols import Sentinel
 from robocorp_ls_core.robotframework_log import get_logger
 import threading
+import re
 
 log = get_logger(__name__)
+
+
+def is_number_var(normalized_variable_name):
+    # see: robot.variables.finders.NumberFinder
+    try:
+        bases = {"0b": 2, "0o": 8, "0x": 16}
+        if normalized_variable_name.startswith(tuple(bases)):
+            int(normalized_variable_name[2:], bases[normalized_variable_name[:2]])
+            return True
+        int(normalized_variable_name)
+        return True
+    except:
+        pass  # Let's try float...
+
+    try:
+        float(normalized_variable_name)
+        return True
+    except:
+        pass
+
+    return False
+
+
+def is_python_eval_var(normalized_variable_name):
+    return (
+        len(normalized_variable_name) >= 2
+        and normalized_variable_name[0] == "{"
+        and normalized_variable_name[-1] == "}"
+    )
+
+
+_match_extended = re.compile(
+    r"""
+    (.+?)          # base name (group 1)
+    ([^\s\w].+)    # extended part (group 2)
+""",
+    re.UNICODE | re.VERBOSE,
+).match
+
+
+def extract_var_name_from_extended_base_name(normalized_variable_name):
+    m = _match_extended(normalized_variable_name)
+    if m is None:
+        return normalized_variable_name
+
+    base_name, _extended = m.groups()
+    return base_name
 
 
 def extract_variable_base(text: str) -> str:

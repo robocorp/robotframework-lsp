@@ -1,0 +1,25 @@
+untitled:Untitled-1:
+- newText: newName
+  range:
+    end:
+      character: 17
+      line: 4
+    start:
+      character: 14
+      line: 4
+- newText: newName
+  range:
+    end:
+      character: 42
+      line: 3
+    start:
+      character: 39
+      line: 3
+- newText: newName
+  range:
+    end:
+      character: 25
+      line: 3
+    start:
+      character: 22
+      line: 3

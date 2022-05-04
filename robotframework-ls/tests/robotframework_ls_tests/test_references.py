@@ -231,3 +231,61 @@ Keyword
     result = references(completion_context, include_declaration=True)
     assert result
     check_data_regression(result, data_regression)
+
+
+def test_references_var_in_exp(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.references import references
+
+    workspace.set_root("case2", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc(
+        "case2.robot",
+        """
+*** Test Cases ***
+Check
+    ${aa}=    Evaluate    2
+    Log to console    ${aa + 1}
+    """,
+    )
+    line = doc.find_line_with_contents("    Log to console    ${aa + 1}")
+    col = len("    Log to console    ${a")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+    result = references(completion_context, include_declaration=True)
+    assert result
+    check_data_regression(result, data_regression)
+
+
+def test_references_var_with_constructed_vars(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.references import references
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Some Test Case
+    [Setup]    Initialize Variables
+    Log    ${SOME_VARIABLE_0}
+    Log    ${SOME_VARIABLE_1}
+    Log    ${SOME_VARIABLE_2}
+
+*** Keywords ***
+Initialize Variables
+    FOR    ${index}    IN RANGE    3
+        Set Test Variable    ${SOME_VARIABLE_${index}}    Value ${index}
+    END
+"""
+
+    line, col = doc.get_last_line_col_with_contents("    Log    ${SOME_VARIABLE_0}")
+    col -= len("E_0}")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    result = references(completion_context, include_declaration=True)
+    check_data_regression(result, data_regression)

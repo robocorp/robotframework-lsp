@@ -8,6 +8,7 @@ from robotframework_ls.impl.protocols import IKeywordFound
 class RobotStringMatcher(object):
     def __init__(self, filter_text):
         self.filter_text = normalize_robot_name(filter_text)
+        self._has_variable = None
 
     def accepts(self, word):
         if not self.filter_text:
@@ -32,16 +33,24 @@ class RobotStringMatcher(object):
 
         return False
 
-    def is_same_variable_name(self, variable_name):
-        return self.filter_text == normalize_robot_name(variable_name)
-
     def is_variable_name_match(self, variable_name):
         normalized = normalize_robot_name(variable_name)
         if self.filter_text == normalized:
             return True
 
         if "{" in normalized:
-            return matches_name_with_variables(self.filter_text, normalized)
+            if matches_name_with_variables(self.filter_text, normalized):
+                return True
+
+        if self._has_variable is None:
+            from robotframework_ls.impl.variable_resolve import has_variable
+
+            self._has_variable = has_variable(self.filter_text)
+
+        if self._has_variable:
+            # We need the other way around if the definition has variables.
+            if matches_name_with_variables(normalized, self.filter_text):
+                return True
 
         return False
 

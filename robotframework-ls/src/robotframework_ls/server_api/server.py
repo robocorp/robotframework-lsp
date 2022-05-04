@@ -2,7 +2,13 @@ from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.robotframework_log import get_logger
 from typing import Optional, List, Dict, Deque, Tuple, Sequence
-from robocorp_ls_core.protocols import IConfig, IMonitor, ITestInfoTypedDict, IWorkspace
+from robocorp_ls_core.protocols import (
+    IConfig,
+    IMonitor,
+    ITestInfoTypedDict,
+    IWorkspace,
+    ActionResultDict,
+)
 from functools import partial
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
 from robocorp_ls_core.lsp import (
@@ -17,6 +23,8 @@ from robocorp_ls_core.lsp import (
     DocumentHighlightTypedDict,
     RangeTypedDict,
     CompletionItemTypedDict,
+    ResponseTypedDict,
+    WorkspaceEditTypedDict,
 )
 from robotframework_ls.impl.protocols import (
     IKeywordFound,
@@ -30,6 +38,7 @@ import itertools
 import typing
 import sys
 import threading
+from robocorp_ls_core.jsonrpc.exceptions import JsonRpcException
 
 
 log = get_logger(__name__)
@@ -455,6 +464,46 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return []
         return keyword_completions.complete(completion_context)
 
+    def m_rename(self, doc_uri: str, line: int, col: int, new_name: str):
+        func = partial(self._threaded_rename, doc_uri, line, col, new_name)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_rename(
+        self, doc_uri: str, line: int, col: int, new_name: str, monitor: IMonitor
+    ) -> WorkspaceEditTypedDict:
+        from robotframework_ls.impl.rename import rename
+
+        completion_context = self._create_completion_context(
+            doc_uri, line, col, monitor
+        )
+        if completion_context is None:
+            raise JsonRpcException(
+                "Error: unable to rename (context could not be created).", 1
+            )
+
+        return rename(completion_context, new_name)
+
+    def m_prepare_rename(self, doc_uri: str, line: int, col: int):
+        func = partial(self._threaded_prepare_rename, doc_uri, line, col)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_prepare_rename(
+        self, doc_uri: str, line: int, col: int, monitor: IMonitor
+    ) -> WorkspaceEditTypedDict:
+        from robotframework_ls.impl.rename import prepare_rename
+
+        completion_context = self._create_completion_context(
+            doc_uri, line, col, monitor
+        )
+        if completion_context is None:
+            raise JsonRpcException(
+                "Error: unable to prepare rename (context could not be created).", 1
+            )
+
+        return prepare_rename(completion_context)
+
     def m_find_definition(self, doc_uri, line, col):
         func = partial(self._threaded_find_definition, doc_uri, line, col)
         func = require_monitor(func)
@@ -663,6 +712,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             config=self.config,
             monitor=monitor,
             variables_from_arguments_files_loader=self._variables_from_arguments_files_loader,
+            lsp_messages=self._lsp_messages,
         )
 
     def m_signature_help(self, doc_uri: str, line: int, col: int):

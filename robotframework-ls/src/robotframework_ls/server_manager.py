@@ -293,7 +293,11 @@ class _ServerApi(object):
                 def on_received_message(msg):
                     method = msg.get("method")
 
-                    if method in ("$/customProgress", "$/testsCollected"):
+                    if method in (
+                        "$/customProgress",
+                        "$/testsCollected",
+                        "window/showMessage",
+                    ):
                         robot_framework_language_server = language_server_ref()
                         if robot_framework_language_server is not None:
                             robot_framework_language_server.forward_msg(msg)

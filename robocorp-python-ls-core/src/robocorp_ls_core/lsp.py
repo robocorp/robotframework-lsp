@@ -20,7 +20,7 @@ https://github.com/microsoft/language-server-protocol/tree/gh-pages/_specificati
 https://microsoft.github.io/language-server-protocol/specification
 """
 from __future__ import annotations
-from typing import List, Union, Optional, Any, Tuple
+from typing import List, Union, Optional, Any, Tuple, Dict
 import typing
 
 from robocorp_ls_core.protocols import IEndPoint, IFuture, TypedDict
@@ -426,6 +426,35 @@ class TextEditTypedDict(TypedDict):
     newText: str
 
 
+class AnnotatedTextEditTypedDict(TypedDict):
+    range: RangeTypedDict
+    newText: str
+    annotationId: str  # ChangeAnnotationIdentifier
+
+
+class OptionalVersionedTextDocumentIdentifierTypedDict(TypedDict):
+    uri: str
+    version: Optional[int]
+
+
+class TextDocumentEditTypedDict(TypedDict):
+    textDocument: OptionalVersionedTextDocumentIdentifierTypedDict
+    edits: List[Union[TextEditTypedDict, AnnotatedTextEditTypedDict]]
+
+
+class WorkspaceEditTypedDict(TypedDict, total=False):
+    # Changes to existing docs.
+    changes: Dict[str, List[TextEditTypedDict]]
+
+    # Changes + resources changes (rename, delete, create)
+    # Requires workspace.workspaceEdit.documentChanges client capability
+    documentChanges: Any
+
+    # Changes with descriptions
+    # Requires workspace.changeAnnotationSupport client capability
+    changeAnnotations: Any
+
+
 class SymbolInformationTypedDict(TypedDict, total=False):
     """
     :ivar location:
@@ -466,6 +495,20 @@ class TextDocumentIdentifierTypedDict(TypedDict):
 class TextDocumentPositionParamsTypedDict(TypedDict, total=False):
     textDocument: TextDocumentIdentifierTypedDict
     position: PositionTypedDict
+
+
+class PrepareRenameParamsTypedDict(TextDocumentPositionParamsTypedDict):
+    pass
+
+
+class RenameParamsTypedDict(TypedDict, total=False):
+    textDocument: TextDocumentIdentifierTypedDict
+    position: PositionTypedDict
+
+    # The new name of the symbol. If the given name is not valid the
+    # request must return a [ResponseError](#ResponseError) with an
+    # appropriate message set.
+    newName: str
 
 
 class MarkupContentTypedDict(TypedDict):

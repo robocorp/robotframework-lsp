@@ -58,7 +58,7 @@ Internal variables
 
 Extended variables
     ${result} =    Create Dictionary    &{CLASS FROM VAR FILE.attribute}
-#!                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Undefined variable: CLASS FROM VAR FILE.attribute
+#!                                        ^^^^^^^^^^^^^^^^^^^ Undefined variable: CLASS FROM VAR FILE
     Dictionaries Should Be Equal    ${result}    ${DICT}
     ${result} =    Create Dictionary    &{OBJECT FROM VAR FILE.attribute}
     Dictionaries Should Be Equal    ${result}    ${DICT}

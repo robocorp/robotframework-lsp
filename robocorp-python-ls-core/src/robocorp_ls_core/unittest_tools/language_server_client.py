@@ -341,6 +341,39 @@ class LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    @implements(ILanguageServerClient.request_rename)
+    def request_rename(self, uri: str, line: int, col: int, new_name: str):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "textDocument/rename",
+                "params": {
+                    "textDocument": {
+                        "uri": uri,
+                    },
+                    "position": {"line": line, "character": col},
+                    "newName": new_name,
+                },
+            }
+        )
+
+    @implements(ILanguageServerClient.request_prepare_rename)
+    def request_prepare_rename(self, uri: str, line: int, col: int):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "textDocument/prepareRename",
+                "params": {
+                    "textDocument": {
+                        "uri": uri,
+                    },
+                    "position": {"line": line, "character": col},
+                },
+            }
+        )
+
     @implements(ILanguageServerClient.request_workspace_symbols)
     def request_workspace_symbols(self, query: Optional[str] = None):
         return self.request(
