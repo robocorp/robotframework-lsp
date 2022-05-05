@@ -13,6 +13,7 @@ class FilteringTestsSuiteVisitor(SuiteVisitor):
     def __init__(
         self, tests_filtering: Optional[Dict[str, Dict[str, Set[str]]]] = None
     ) -> None:
+        log.info("Initializing FilteringTestsSuiteVisitor")
         super().__init__()
         # filename -> test names
         self.include: Dict[str, Set[str]] = {}
@@ -21,11 +22,25 @@ class FilteringTestsSuiteVisitor(SuiteVisitor):
         self._include_contains_cache: dict = {}
         self._exclude_contains_cache: dict = {}
 
-        if tests_filtering is None:
-            s = os.getenv("RFLS_PRERUN_FILTER_TESTS", "")
-            if s:
-                log.info("Found tests filtering: %s", s)
-                tests_filtering = json.loads(s)
+        if tests_filtering is not None:
+            log.info(
+                "FilteringTestsSuiteVisitor initial tests_filtering: %s",
+                tests_filtering,
+            )
+        else:
+            s = os.getenv("RFLS_PRERUN_FILTER_TESTS", None)
+            if s is None:
+                log.info(
+                    "RFLS_PRERUN_FILTER_TESTS not specified in environment variables."
+                )
+            elif not s:
+                log.info("RFLS_PRERUN_FILTER_TESTS empty in environment variables.")
+            else:
+                log.info("RFLS_PRERUN_FILTER_TESTS environment variable value: %s", s)
+                try:
+                    tests_filtering = json.loads(s)
+                except:
+                    log.exception("Error parsing RFLS_PRERUN_FILTER_TESTS as json")
 
         def add(tup, container):
             source, test_name = tup

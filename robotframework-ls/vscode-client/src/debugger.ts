@@ -70,6 +70,11 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
         let args: Array<string> = debugConfiguration.args;
         let config = workspace.getConfiguration("robot");
         let pythonpath: Array<string> = getArrayStrFromConfigExpandingVars(config, "pythonpath");
+        for (const pythonpathEntry of pythonpath) {
+            if (pythonpathEntry.length === 0) {
+                OUTPUT_CHANNEL.appendLine("Empty pythonpath entry in robot.pythonpath settings.");
+            }
+        }
         let variables: object = config.get("variables");
         debugConfiguration.target = removeEscaping(debugConfiguration.target);
         let targetRobot: any = debugConfiguration.target;
@@ -80,6 +85,11 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
         // If it's not specified in the language, let's check if some plugin wants to provide an implementation.
         let interpreter: InterpreterInfo = await commands.executeCommand("robot.resolveInterpreter", targetRobot);
         if (interpreter) {
+            for (const pythonpathEntry of interpreter.additionalPythonpathEntries) {
+                if (pythonpathEntry.length === 0) {
+                    OUTPUT_CHANNEL.appendLine("Empty pythonpath entry loaded from robot in: " + targetRobot);
+                }
+            }
             pythonpath = pythonpath.concat(interpreter.additionalPythonpathEntries);
 
             if (interpreter.environ) {
@@ -113,8 +123,12 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
 
         let newArgs = [];
         pythonpath.forEach((element) => {
-            newArgs.push("--pythonpath");
-            newArgs.push(element);
+            if (element.length > 0) {
+                // Note: we have already warned about the empty entries
+                // (so, just don't add empty entries to the command line).
+                newArgs.push("--pythonpath");
+                newArgs.push(element);
+            }
         });
 
         for (let key in variables) {
