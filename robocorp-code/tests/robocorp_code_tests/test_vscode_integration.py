@@ -490,6 +490,7 @@ def test_compute_robot_launch_from_robocorp_code_launch(
         "request": "launch",
         "args": ["-d", "output", "--logtitle", "Task log"],
         "terminal": "integrated",
+        "internalConsoleOptions": "neverOpen",
     }
 
 
@@ -520,6 +521,7 @@ def test_compute_python_launch_from_robocorp_code_launch(
         "args": [],
         "python": "c:/temp/py.exe",
         "console": "integratedTerminal",
+        "internalConsoleOptions": "neverOpen",
     }
 
 

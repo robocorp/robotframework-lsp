@@ -174,6 +174,12 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
                 debugConfiguration.cwd = wsFolder?.uri?.fsPath;
             }
         }
+        const terminal = debugConfiguration.terminal;
+        if (terminal === "integrated") {
+            if (!debugConfiguration.internalConsoleOptions) {
+                debugConfiguration.internalConsoleOptions = "neverOpen";
+            }
+        }
         return debugConfiguration;
     }
 }

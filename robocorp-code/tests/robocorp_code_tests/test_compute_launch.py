@@ -46,6 +46,7 @@ ignoreFiles:
             "cwd": str(tmpdir),
             "args": [],
             "terminal": "integrated",
+            "internalConsoleOptions": "neverOpen",
         },
     }
 
@@ -95,6 +96,7 @@ ignoreFiles:
             "cwd": str(tmpdir),
             "args": ["task name"],
             "terminal": "integrated",
+            "internalConsoleOptions": "neverOpen",
         },
     }
 
@@ -152,6 +154,7 @@ ignoreFiles:
                 "my Task",
             ],
             "terminal": "integrated",
+            "internalConsoleOptions": "neverOpen",
         },
     }
 
@@ -205,6 +208,7 @@ ignoreFiles:
             "pythonArgs": [],
             "console": "integratedTerminal",
             "program": os.path.join(cwd, "task.py"),
+            "internalConsoleOptions": "neverOpen",
         },
     }
 
@@ -260,6 +264,7 @@ ignoreFiles:
             "console": "integratedTerminal",
             "program": os.path.join(cwd, "task.py"),
             "python": "python_executable.exe",
+            "internalConsoleOptions": "neverOpen",
         },
     }
 
@@ -357,6 +362,7 @@ ignoreFiles:
             "console": "integratedTerminal",
             "module": "module_name",
             "python": "python_executable.exe",
+            "internalConsoleOptions": "neverOpen",
         },
     }
 
@@ -415,5 +421,6 @@ ignoreFiles:
             "module": "module_name",
             "python": "python_executable.exe",
             "env": {"some_key": "some_value"},
+            "internalConsoleOptions": "neverOpen",
         },
     }

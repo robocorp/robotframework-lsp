@@ -201,6 +201,7 @@ def compute_robot_launch_from_robocorp_code_launch(
             "cwd": cwd,
             "args": args,
             "terminal": "integrated",
+            "internalConsoleOptions": "neverOpen",
         }
         if env:
             result["env"] = env
@@ -253,6 +254,7 @@ def compute_robot_launch_from_robocorp_code_launch(
             "args": args,
             "pythonArgs": vmargs,
             "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
         }
 
         if python_exe:
