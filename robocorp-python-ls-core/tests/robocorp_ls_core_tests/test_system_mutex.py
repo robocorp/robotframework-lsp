@@ -1,4 +1,4 @@
-def test_system_mutex():
+def test_system_mutex(a):
     from robocorp_ls_core.system_mutex import SystemMutex
     from robocorp_ls_core.system_mutex import timed_acquire_mutex
     from robocorp_ls_core.subprocess_wrapper import subprocess
@@ -7,6 +7,8 @@ def test_system_mutex():
     import time
     import threading
     import weakref
+    from _pytest.outcomes import Failed
+    from robocorp_ls_core.system_mutex import _mutex_name_to_info
 
     mutex_name = "mutex_name_test_system_mutex"
 
@@ -47,25 +49,51 @@ def test_system_mutex():
         SystemMutex("mutex/")  # Invalid name
 
     time_to_release_mutex = 2
+    released_mutex = [False]
 
     def release_mutex():
         time.sleep(time_to_release_mutex)
+        released_mutex[0] = True
         mutex4.release_mutex()
 
     t = threading.Thread(target=release_mutex)
     t.start()
 
+    def raise_assertion_info_if_prev_acquired_not_detected(mutex_name):
+        prev_system_mutex = _mutex_name_to_info.get(mutex_name)
+        if prev_system_mutex is None:
+            found = []
+            for e in _mutex_name_to_info.items():
+                found.append((f"{e[0]}: {e[1]}"))
+
+            raise AssertionError(f"Did not find mutex name: {mutex_name} in {found}")
+
+        raise AssertionError(
+            f"Mutex info found:\n"
+            f"  acquired: {system_mutex.get_mutex_aquired()}\n"
+            f"  system_mutex.disposed: {system_mutex.disposed}\n"
+            f"  system_mutex.thread_id: {system_mutex.thread_id}\n"
+            f"  get_tid(): {threading.get_ident()}\n"
+        )
+
     initial_time = time.time()
     with timed_acquire_mutex(
         mutex_name, check_reentrant=False
     ):  # The current mutex will be released in a thread, so, check_reentrant=False.
+        assert released_mutex[0], "Error: entered before mutex was released!"
         acquired_time = time.time()
 
-        # Should timeout as the lock is already acquired.
-        with pytest.raises(RuntimeError) as exc:
-            with timed_acquire_mutex(mutex_name, timeout=1):
-                pass
-        assert "not a reentrant mutex" in str(exc)
+        # At this point the lock is acquired (and it was done in this thread).
+        # So, check that we get the error saying that it's not possible to get
+        # a reentrant lock.
+        try:
+            with pytest.raises(RuntimeError) as exc:
+                with timed_acquire_mutex(mutex_name, timeout=1):
+                    pass
+        except Failed:
+            raise_assertion_info_if_prev_acquired_not_detected(mutex_name)
+        else:
+            assert "not a reentrant mutex" in str(exc)
 
         # Must also fail from another process.
         code = """
