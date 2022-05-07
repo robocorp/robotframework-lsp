@@ -1,4 +1,4 @@
-def test_system_mutex(a):
+def test_system_mutex():
     from robocorp_ls_core.system_mutex import SystemMutex
     from robocorp_ls_core.system_mutex import timed_acquire_mutex
     from robocorp_ls_core.subprocess_wrapper import subprocess
