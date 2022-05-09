@@ -1,0 +1,22 @@
+- - casedef.robot
+  - - range:
+        end:
+          character: 25
+          line: 8
+        start:
+          character: 22
+          line: 8
+    - range:
+        end:
+          character: 21
+          line: 4
+        start:
+          character: 18
+          line: 4
+    - range:
+        end:
+          character: 29
+          line: 3
+        start:
+          character: 26
+          line: 3

@@ -306,3 +306,41 @@ Example2
             ),
         )
     )
+
+
+def test_document_highlight_argument_in_caller(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.doc_highlight import doc_highlight
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.put_doc(
+        "my.robot",
+        """
+*** Keywords ***
+My Keyword
+    [Arguments]    ${Foo}
+    Log    ${fOo}
+
+*** Test Case ***
+My Test
+    My Keyword    foO=22
+    """,
+    )
+    line = doc.find_line_with_contents("    Log    ${fOo}")
+    col = len("    Log    ${fOo}") - 2
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+    result = doc_highlight(completion_context)
+    assert len(result) == 3
+    data_regression.check(
+        sorted(
+            result,
+            key=lambda entry: (
+                entry["range"]["start"]["line"],
+                entry["range"]["start"]["character"],
+            ),
+        )
+    )

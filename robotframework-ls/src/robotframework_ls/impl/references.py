@@ -1,6 +1,6 @@
-from typing import List, Optional, Dict, Iterator
+from typing import List, Optional, Dict, Iterator, Tuple
 
-from robocorp_ls_core.lsp import LocationTypedDict, RangeTypedDict
+from robocorp_ls_core.lsp import LocationTypedDict, RangeTypedDict, PositionTypedDict
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.protocols import (
     ICompletionContext,
@@ -12,6 +12,8 @@ from robotframework_ls.impl.protocols import (
     AbstractVariablesCollector,
     cast_to_variable_definition,
     VarTokenInfo,
+    VariableKind,
+    KeywordUsageInfo,
 )
 import typing
 from robocorp_ls_core.protocols import check_implements
@@ -48,11 +50,13 @@ class _VariableDefinitionsCollector(AbstractVariablesCollector):
 def iter_variable_references_in_doc(
     completion_context: ICompletionContext,
     variable_found: IVariableFound,
+    argument_var_references_computer: Optional[
+        "_NamedArgumentVarReferencesComputer"
+    ] = None,
 ) -> Iterator[RangeTypedDict]:
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.ast_utils import create_range_from_token
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
-    from robocorp_ls_core.lsp import PositionTypedDict
     from robotframework_ls.impl.variable_completions import collect_variables
     from robotframework_ls.impl.text_utilities import normalize_robot_name
     from robotframework_ls.impl.variable_completions import collect_local_variables
@@ -63,6 +67,19 @@ def iter_variable_references_in_doc(
 
     # Collector for any variable with the same name.
     collector = _VariableDefinitionsCollector(robot_string_matcher)
+
+    if argument_var_references_computer is None:
+        argument_var_references_computer = _NamedArgumentVarReferencesComputer(
+            completion_context, variable_found
+        )
+
+    if argument_var_references_computer.check_keyword_usage_normalized_name:
+        lst: List[LocationTypedDict] = []
+        argument_var_references_computer.add_references_to_named_keyword_arguments_from_doc(
+            completion_context, lst
+        )
+        for entry in lst:
+            yield entry["range"]
 
     ast = completion_context.get_ast()
     if ast is not None:
@@ -125,12 +142,12 @@ def iter_variable_references_in_doc(
             yield variable_range
 
 
-def iter_keyword_references_in_doc(
+def iter_keyword_usage_references_in_doc(
     completion_context: ICompletionContext,
     doc: IRobotDocument,
     normalized_name: str,
     keyword_found: Optional[IKeywordFound],
-) -> Iterator[RangeTypedDict]:
+) -> Iterator[Tuple[KeywordUsageInfo, bool, str, str]]:
     """
     :param keyword_found: if given, we'll match if the definition actually
     maps to the proper place (if not given, we'll just match based on the name
@@ -199,28 +216,55 @@ def iter_keyword_references_in_doc(
                     if not found_once_in_this_doc:
                         continue
 
-                token = keyword_usage_info.token
-                if found_dot_in_usage:
-                    # We need to create a new token because we just want to match the name part.
-                    col_offset = token.col_offset + (
-                        len(keword_name_possibly_dotted) - len(keword_name_not_dotted)
-                    )
-                    end_col_offset = token.end_col_offset
-                else:
-                    col_offset = token.col_offset
-                    end_col_offset = token.end_col_offset
+                yield (
+                    keyword_usage_info,
+                    found_dot_in_usage,
+                    keword_name_possibly_dotted,
+                    keword_name_not_dotted,
+                )
 
-                # Ok, we found it, let's add it to the result.
-                yield {
-                    "start": {
-                        "line": line,
-                        "character": col_offset,
-                    },
-                    "end": {
-                        "line": line,
-                        "character": end_col_offset,
-                    },
-                }
+
+def iter_keyword_references_in_doc(
+    completion_context: ICompletionContext,
+    doc: IRobotDocument,
+    normalized_name: str,
+    keyword_found: Optional[IKeywordFound],
+) -> Iterator[RangeTypedDict]:
+    for (
+        keyword_usage_info,
+        found_dot_in_usage,
+        keword_name_possibly_dotted,
+        keword_name_not_dotted,
+    ) in iter_keyword_usage_references_in_doc(
+        completion_context, doc, normalized_name, keyword_found
+    ):
+
+        token = keyword_usage_info.token
+
+        line = token.lineno - 1
+
+        token = keyword_usage_info.token
+        if found_dot_in_usage:
+            # We need to create a new token because we just want to match the name part.
+            col_offset = token.col_offset + (
+                len(keword_name_possibly_dotted) - len(keword_name_not_dotted)
+            )
+            end_col_offset = token.end_col_offset
+        else:
+            col_offset = token.col_offset
+            end_col_offset = token.end_col_offset
+
+        # Ok, we found it, let's add it to the result.
+        yield {
+            "start": {
+                "line": line,
+                "character": col_offset,
+            },
+            "end": {
+                "line": line,
+                "character": end_col_offset,
+            },
+        }
 
 
 def collect_variable_references(
@@ -297,6 +341,100 @@ def references(
     return []
 
 
+class _NamedArgumentVarReferencesComputer:
+    """
+    A helper to handle the case where we also need to rename named arguments.
+
+    To do this we need to:
+    1. Get references to the keyword
+    2. Check if any of its arguments has something as 'var_name=xxx'.
+    3. Create the reference to the 'var_name'.
+    """
+
+    def __init__(
+        self,
+        initial_completion_context: ICompletionContext,
+        variable_found: IVariableFound,
+    ):
+        from robotframework_ls.impl.ast_utils import get_local_variable_stack_and_node
+        from robotframework_ls.impl.find_definition import find_keyword_definition
+        from robotframework_ls.impl.text_utilities import normalize_robot_name
+
+        self.check_keyword_usage_keyword_found = None
+        self.check_keyword_usage_normalized_name = None
+        self.var_name_normalized = normalize_robot_name(variable_found.variable_name)
+
+        if (
+            variable_found.variable_kind == VariableKind.ARGUMENT
+            and variable_found.stack
+        ):
+            _, keyword_or_test_case_node = get_local_variable_stack_and_node(
+                variable_found.stack
+            )
+            if keyword_or_test_case_node.__class__.__name__ == "Keyword":
+                cp = initial_completion_context.create_copy_with_selection(
+                    keyword_or_test_case_node.lineno - 1,
+                    keyword_or_test_case_node.col_offset,
+                )
+                cp_token_info = cp.get_current_token()
+                if cp_token_info:
+                    found = find_keyword_definition(
+                        cp,
+                        cp_token_info,
+                    )
+
+                    for keyword_found_definition in found or ():
+                        self.check_keyword_usage_keyword_found = (
+                            keyword_found_definition.keyword_found
+                        )
+                        self.check_keyword_usage_normalized_name = normalize_robot_name(
+                            keyword_found_definition.keyword_name
+                        )
+                        break
+
+    def add_references_to_named_keyword_arguments_from_doc(
+        self, new_completion_context: ICompletionContext, ret: List[LocationTypedDict]
+    ):
+        from robotframework_ls.impl.variable_resolve import find_split_index
+        from robotframework_ls.impl.text_utilities import normalize_robot_name
+
+        if not self.check_keyword_usage_normalized_name:
+            return
+
+        for (
+            keyword_usage_info,
+            _found_dot_in_usage,
+            _keword_name_possibly_dotted,
+            _keword_name_not_dotted,
+        ) in iter_keyword_usage_references_in_doc(
+            new_completion_context,
+            new_completion_context.doc,
+            self.check_keyword_usage_normalized_name,
+            self.check_keyword_usage_keyword_found,
+        ):
+            for token in keyword_usage_info.node.tokens:
+                if token.type == token.ARGUMENT:
+                    split_eq = find_split_index(token.value)
+                    if split_eq > 0:
+                        arg_name = normalize_robot_name(token.value[:split_eq])
+                        if arg_name == self.var_name_normalized:
+                            start: PositionTypedDict = {
+                                "line": token.lineno - 1,
+                                "character": token.col_offset,
+                            }
+                            end: PositionTypedDict = {
+                                "line": token.lineno - 1,
+                                "character": token.col_offset + split_eq,
+                            }
+                            ref_range: RangeTypedDict = {"start": start, "end": end}
+                            ret.append(
+                                {
+                                    "uri": new_completion_context.doc.uri,
+                                    "range": ref_range,
+                                }
+                            )
+
+
 def _references_for_variable_found(
     initial_completion_context: ICompletionContext,
     variable_found: IVariableFound,
@@ -307,14 +445,23 @@ def _references_for_variable_found(
 
     from robotframework_ls.impl.workspace_symbols import iter_symbols_caches
 
+    named_argument_var_references_computer = _NamedArgumentVarReferencesComputer(
+        initial_completion_context, variable_found
+    )
+
     # Initial doc (need to get local scope).
     ref_range: RangeTypedDict
     for ref_range in iter_variable_references_in_doc(
-        initial_completion_context, variable_found
+        initial_completion_context,
+        variable_found,
+        named_argument_var_references_computer,
     ):
         ret.append({"uri": initial_completion_context.doc.uri, "range": ref_range})
 
-    if is_local_variable:
+    if (
+        is_local_variable
+        and not named_argument_var_references_computer.check_keyword_usage_keyword_found
+    ):
         return ret
 
     for symbols_cache in iter_symbols_caches(
@@ -324,7 +471,18 @@ def _references_for_variable_found(
         timeout=999999,
     ):
         initial_completion_context.check_cancelled()
+
+        if (
+            is_local_variable
+            and named_argument_var_references_computer.check_keyword_usage_normalized_name
+        ):
+            if not symbols_cache.has_keyword_usage(
+                named_argument_var_references_computer.check_keyword_usage_normalized_name
+            ):
+                continue
+
         # if symbols_cache.has_variable(normalized_name):
+
         doc: Optional[IRobotDocument] = symbols_cache.get_doc()
         if doc is None:
             uri = symbols_cache.get_uri()
@@ -344,15 +502,24 @@ def _references_for_variable_found(
                     uri,
                 )
                 continue
+
         if initial_completion_context.doc.uri == doc.uri:
             continue  # Skip (already analyzed).
 
         new_completion_context = initial_completion_context.create_copy(doc)
-
-        for ref_range in iter_variable_references_in_doc(
-            new_completion_context, variable_found
-        ):
-            ret.append({"uri": doc.uri, "range": ref_range})
+        if not is_local_variable:
+            # Collect references to global variables as well as named arguments.
+            for ref_range in iter_variable_references_in_doc(
+                new_completion_context,
+                variable_found,
+                named_argument_var_references_computer,
+            ):
+                ret.append({"uri": doc.uri, "range": ref_range})
+        else:
+            # We still need to collect references to named arguments.
+            named_argument_var_references_computer.add_references_to_named_keyword_arguments_from_doc(
+                new_completion_context, ret
+            )
 
     return ret
 

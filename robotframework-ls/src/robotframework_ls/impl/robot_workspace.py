@@ -415,10 +415,16 @@ class WorkspaceIndexer(object):
             else:
 
                 def iter_in():
+                    doc_uris = set()
+                    for doc_uri in workspace.get_open_docs_uris():
+                        doc_uris.add(doc_uri)
+                        yield doc_uri
+
                     for uri in workspace.iter_all_doc_uris_in_workspace(
                         ROBOT_FILE_EXTENSIONS
                     ):
-                        yield uri
+                        if uri not in doc_uris:
+                            yield uri
 
         for uri in iter_in():
             if not uri:

@@ -233,6 +233,78 @@ Keyword
     check_data_regression(result, data_regression)
 
 
+def test_references_variables_named_arguments_different_doc(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.references import references
+
+    workspace.set_root("case2", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc(
+        "casedef.robot",
+        """
+*** Keywords ***
+My Keyword
+        [Arguments]     ${Foo}
+        Log     ${fOo}
+    """,
+    )
+
+    workspace.put_doc(
+        "caseref.robot",
+        """
+*** Settings ***
+Resource    casedef.robot
+
+*** Test Case ***
+My Test
+        My Keyword    foO=22
+    """,
+    )
+
+    line = doc.find_line_with_contents("        Log     ${fOo}")
+    col = len("        Log     ${f")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+    result = references(completion_context, include_declaration=True)
+    assert result
+    assert len(result) == 3
+    check_data_regression(result, data_regression)
+
+
+def test_references_variables_named_arguments_same_doc(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.references import references
+
+    workspace.set_root("case2", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc(
+        "casedef.robot",
+        """
+*** Keywords ***
+My Keyword
+        [Arguments]     ${Foo}
+        Log     ${fOo}
+
+*** Test Case ***
+My Test
+        My Keyword    foO=22
+    """,
+    )
+
+    line = doc.find_line_with_contents("        Log     ${fOo}")
+    col = len("        Log     ${f")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+    result = references(completion_context, include_declaration=True)
+    assert result
+    assert len(result) == 3
+    check_data_regression(result, data_regression)
+
+
 def test_references_var_in_exp(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.references import references
