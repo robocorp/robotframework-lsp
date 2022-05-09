@@ -38,6 +38,7 @@ class RobotProjectState {
     public String robotLintKeywordCallArguments = "";
     public String robotLintVariables = "";
     public String robotLintIgnoreVariables = "";
+    public String robotLintIgnoreEnvironmentVariables = "";
     public String robotCompletionsSectionHeadersForm = "";
     public String robotCompletionsKeywordsFormat = "";
     public String robotWorkspaceSymbolsOnlyForOpenDocs = "";
@@ -69,6 +70,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
     public static final String ROBOT_LINT_KEYWORD_CALL_ARGUMENTS = "robot.lint.keywordCallArguments";
     public static final String ROBOT_LINT_VARIABLES = "robot.lint.variables";
     public static final String ROBOT_LINT_IGNORE_VARIABLES = "robot.lint.ignoreVariables";
+    public static final String ROBOT_LINT_IGNORE_ENVIRONMENT_VARIABLES = "robot.lint.ignoreEnvironmentVariables";
     public static final String ROBOT_COMPLETIONS_SECTION_HEADERS_FORM = "robot.completions.section_headers.form";
     public static final String ROBOT_COMPLETIONS_KEYWORDS_FORMAT = "robot.completions.keywords.format";
     public static final String ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS = "robot.workspaceSymbolsOnlyForOpenDocs";
@@ -102,6 +104,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         robotState.robotLintKeywordCallArguments = getRobotLintKeywordCallArguments();
         robotState.robotLintVariables = getRobotLintVariables();
         robotState.robotLintIgnoreVariables = getRobotLintIgnoreVariables();
+        robotState.robotLintIgnoreEnvironmentVariables = getRobotLintIgnoreEnvironmentVariables();
         robotState.robotCompletionsSectionHeadersForm = getRobotCompletionsSectionHeadersForm();
         robotState.robotCompletionsKeywordsFormat = getRobotCompletionsKeywordsFormat();
         robotState.robotWorkspaceSymbolsOnlyForOpenDocs = getRobotWorkspaceSymbolsOnlyForOpenDocs();
@@ -133,6 +136,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         setRobotLintKeywordCallArguments(robotState.robotLintKeywordCallArguments);
         setRobotLintVariables(robotState.robotLintVariables);
         setRobotLintIgnoreVariables(robotState.robotLintIgnoreVariables);
+        setRobotLintIgnoreEnvironmentVariables(robotState.robotLintIgnoreEnvironmentVariables);
         setRobotCompletionsSectionHeadersForm(robotState.robotCompletionsSectionHeadersForm);
         setRobotCompletionsKeywordsFormat(robotState.robotCompletionsKeywordsFormat);
         setRobotWorkspaceSymbolsOnlyForOpenDocs(robotState.robotWorkspaceSymbolsOnlyForOpenDocs);
@@ -318,6 +322,15 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
             Gson g = new Gson();
             try {
                 jsonObject.add(ROBOT_LINT_IGNORE_VARIABLES, g.fromJson(robotLintIgnoreVariables, JsonArray.class));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotLintIgnoreEnvironmentVariables.isEmpty()){
+            Gson g = new Gson();
+            try {
+                jsonObject.add(ROBOT_LINT_IGNORE_ENVIRONMENT_VARIABLES, g.fromJson(robotLintIgnoreEnvironmentVariables, JsonArray.class));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -1303,6 +1316,53 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             try {
                 listener.onChanged(ROBOT_LINT_IGNORE_VARIABLES, old, s);
+            } catch (CancelledException e) {
+                // just ignore at this point
+            }
+        }
+    }
+    
+    private String robotLintIgnoreEnvironmentVariables = "";
+
+    public @NotNull String getRobotLintIgnoreEnvironmentVariables() {
+        return robotLintIgnoreEnvironmentVariables;
+    }
+
+    public @Nullable JsonArray getRobotLintIgnoreEnvironmentVariablesAsJson() {
+        if(robotLintIgnoreEnvironmentVariables.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return g.fromJson(robotLintIgnoreEnvironmentVariables, JsonArray.class);
+    }
+
+    public @NotNull String validateRobotLintIgnoreEnvironmentVariables(String robotLintIgnoreEnvironmentVariables) {
+        if(robotLintIgnoreEnvironmentVariables.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            g.fromJson(robotLintIgnoreEnvironmentVariables, JsonArray.class);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLintIgnoreEnvironmentVariables(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLintIgnoreEnvironmentVariables)) {
+            return;
+        }
+        String old = robotLintIgnoreEnvironmentVariables;
+        robotLintIgnoreEnvironmentVariables = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            try {
+                listener.onChanged(ROBOT_LINT_IGNORE_ENVIRONMENT_VARIABLES, old, s);
             } catch (CancelledException e) {
                 // just ignore at this point
             }

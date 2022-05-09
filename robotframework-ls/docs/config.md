@@ -58,6 +58,8 @@ Linting-related settings
 
 - `robot.lint.ignoreVariables` variables defined with this setting won't be reported as undefined variables during linting.
 
+- `robot.lint.ignoreEnvironmentVariables` environment variables defined with this setting won't be reported as undefined environment variables during linting.
+
 Environment variables
 ----------------------
 

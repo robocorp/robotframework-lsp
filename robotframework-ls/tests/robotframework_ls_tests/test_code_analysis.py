@@ -1105,6 +1105,26 @@ Some test
     _collect_errors(workspace, doc, data_regression, config=config, basename="no_error")
 
 
+def test_code_analysis_ignore_report_undefined_environment_variables(
+    workspace, libspec_manager, data_regression
+):
+
+    from robotframework_ls.robot_config import RobotConfig
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Case ***
+Some test
+    Log to console    %{UNRESOLVED}
+"""
+
+    config = RobotConfig()
+    config.update({"robot.lint.ignoreEnvironmentVariables": ["unresolved"]})
+
+    _collect_errors(workspace, doc, data_regression, config=config, basename="no_error")
+
+
 def test_extended_variable_syntax(workspace, libspec_manager, data_regression):
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case2.robot")

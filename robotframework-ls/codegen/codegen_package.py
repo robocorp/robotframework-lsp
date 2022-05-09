@@ -206,6 +206,11 @@ def get_json_contents():
                         "default": [],
                         "description": 'Don\'t report undefined variables for these variables (i.e.: ["Var1", "Var2"]).',
                     },
+                    "robot.lint.ignoreEnvironmentVariables": {
+                        "type": "array",
+                        "default": [],
+                        "description": 'Don\'t report undefined environment variables for these variables (i.e.: ["VAR1", "VAR2"]).',
+                    },
                     "robot.completions.section_headers.form": {
                         "type": "string",
                         "default": "plural",

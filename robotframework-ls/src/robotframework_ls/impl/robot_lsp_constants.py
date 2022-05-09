@@ -22,6 +22,7 @@ OPTION_ROBOT_LINT_KEYWORD_CALL_ARGUMENTS = "robot.lint.keywordCallArguments"
 
 OPTION_ROBOT_LINT_VARIABLES = "robot.lint.variables"
 OPTION_ROBOT_LINT_IGNORE_VARIABLES = "robot.lint.ignoreVariables"
+OPTION_ROBOT_LINT_IGNORE_ENVIRONMENT_VARIABLES = "robot.lint.ignoreEnvironmentVariables"
 
 
 OPTION_ROBOT_CODE_FORMATTER = "robot.codeFormatter"

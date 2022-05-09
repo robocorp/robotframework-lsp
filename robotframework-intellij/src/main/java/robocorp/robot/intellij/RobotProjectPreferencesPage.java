@@ -40,6 +40,7 @@ class RobotProjectPreferencesComponent {
     private final JBTextField robotLintKeywordCallArguments = new JBTextField();
     private final JBTextField robotLintVariables = new JBTextField();
     private final JBTextField robotLintIgnoreVariables = new JBTextField();
+    private final JBTextField robotLintIgnoreEnvironmentVariables = new JBTextField();
     private final JBTextField robotCompletionsSectionHeadersForm = new JBTextField();
     private final JBTextField robotCompletionsKeywordsFormat = new JBTextField();
     private final JBTextField robotWorkspaceSymbolsOnlyForOpenDocs = new JBTextField();
@@ -87,6 +88,8 @@ class RobotProjectPreferencesComponent {
                 .addComponent(createJTextArea("Reports issues in undefined variables.\nNote: expected 'true' or 'false'\n"))
                 .addLabeledComponent(new JBLabel("Lint Ignore Variables"), robotLintIgnoreVariables, 1, false)
                 .addComponent(createJTextArea("Don't report undefined variables for these variables\n(i.e.: [\"Var1\", \"Var2\"]).\nNote: expected format: JSON Array\n"))
+                .addLabeledComponent(new JBLabel("Lint Ignore Environment Variables"), robotLintIgnoreEnvironmentVariables, 1, false)
+                .addComponent(createJTextArea("Don't report undefined environment variables for these variables\n(i.e.: [\"VAR1\", \"VAR2\"]).\nNote: expected format: JSON Array\n"))
                 .addLabeledComponent(new JBLabel("Completions Section Headers Form"), robotCompletionsSectionHeadersForm, 1, false)
                 .addComponent(createJTextArea("Defines how completions should be shown for section headers\n(i.e.: *** Setting(s) ***). One of: plural, singular, both.\n"))
                 .addLabeledComponent(new JBLabel("Completions Keywords Format"), robotCompletionsKeywordsFormat, 1, false)
@@ -300,6 +303,15 @@ class RobotProjectPreferencesComponent {
     }
     
     @NotNull
+    public String getRobotLintIgnoreEnvironmentVariables() {
+        return robotLintIgnoreEnvironmentVariables.getText();
+    }
+
+    public void setRobotLintIgnoreEnvironmentVariables (@NotNull String newText) {
+        robotLintIgnoreEnvironmentVariables.setText(newText);
+    }
+    
+    @NotNull
     public String getRobotCompletionsSectionHeadersForm() {
         return robotCompletionsSectionHeadersForm.getText();
     }
@@ -457,6 +469,10 @@ public class RobotProjectPreferencesPage implements Configurable {
             return true;
         }
         
+        if(!settings.getRobotLintIgnoreEnvironmentVariables().equals(component.getRobotLintIgnoreEnvironmentVariables())){
+            return true;
+        }
+        
         if(!settings.getRobotCompletionsSectionHeadersForm().equals(component.getRobotCompletionsSectionHeadersForm())){
             return true;
         }
@@ -505,6 +521,7 @@ public class RobotProjectPreferencesPage implements Configurable {
         component.setRobotLintKeywordCallArguments(settings.getRobotLintKeywordCallArguments());
         component.setRobotLintVariables(settings.getRobotLintVariables());
         component.setRobotLintIgnoreVariables(settings.getRobotLintIgnoreVariables());
+        component.setRobotLintIgnoreEnvironmentVariables(settings.getRobotLintIgnoreEnvironmentVariables());
         component.setRobotCompletionsSectionHeadersForm(settings.getRobotCompletionsSectionHeadersForm());
         component.setRobotCompletionsKeywordsFormat(settings.getRobotCompletionsKeywordsFormat());
         component.setRobotWorkspaceSymbolsOnlyForOpenDocs(settings.getRobotWorkspaceSymbolsOnlyForOpenDocs());
@@ -601,6 +618,10 @@ public class RobotProjectPreferencesPage implements Configurable {
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Lint Ignore Variables:\n" + s);
         }
+        s = settings.validateRobotLintIgnoreEnvironmentVariables(component.getRobotLintIgnoreEnvironmentVariables());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Lint Ignore Environment Variables:\n" + s);
+        }
         s = settings.validateRobotCompletionsSectionHeadersForm(component.getRobotCompletionsSectionHeadersForm());
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Completions Section Headers Form:\n" + s);
@@ -638,6 +659,7 @@ public class RobotProjectPreferencesPage implements Configurable {
         settings.setRobotLintKeywordCallArguments(component.getRobotLintKeywordCallArguments());
         settings.setRobotLintVariables(component.getRobotLintVariables());
         settings.setRobotLintIgnoreVariables(component.getRobotLintIgnoreVariables());
+        settings.setRobotLintIgnoreEnvironmentVariables(component.getRobotLintIgnoreEnvironmentVariables());
         settings.setRobotCompletionsSectionHeadersForm(component.getRobotCompletionsSectionHeadersForm());
         settings.setRobotCompletionsKeywordsFormat(component.getRobotCompletionsKeywordsFormat());
         settings.setRobotWorkspaceSymbolsOnlyForOpenDocs(component.getRobotWorkspaceSymbolsOnlyForOpenDocs());

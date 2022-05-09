@@ -20,6 +20,7 @@ from robotframework_ls.impl.protocols import (
 from robotframework_ls.impl.robot_lsp_constants import (
     OPTION_ROBOT_LINT_VARIABLES,
     OPTION_ROBOT_LINT_IGNORE_VARIABLES,
+    OPTION_ROBOT_LINT_IGNORE_ENVIRONMENT_VARIABLES,
 )
 
 
@@ -493,6 +494,15 @@ def _collect_undefined_variables_errors(initial_completion_context):
             for x in config.get_setting(OPTION_ROBOT_LINT_IGNORE_VARIABLES, list, [])
         )
 
+    ignore_environment_variables = set()
+    if config is not None:
+        ignore_environment_variables.update(
+            str(x).upper()
+            for x in config.get_setting(
+                OPTION_ROBOT_LINT_IGNORE_ENVIRONMENT_VARIABLES, list, []
+            )
+        )
+
     ast = initial_completion_context.get_ast()
 
     globals_collector = _VariablesCollector(
@@ -541,10 +551,12 @@ def _collect_undefined_variables_errors(initial_completion_context):
                 # Consider case: %{SOME_VAR=default val}
                 continue
 
+            var_name_upper = var_name.upper()
+            if var_name_upper in ignore_environment_variables:
+                continue
+
             if env_vars_upper is None:
                 env_vars_upper = _env_vars_upper()
-
-            var_name_upper = var_name.upper()
 
             if (
                 var_name_upper not in env_vars_upper
