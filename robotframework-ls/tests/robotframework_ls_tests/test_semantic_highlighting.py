@@ -578,6 +578,25 @@ Comment part 2
     )
 
 
+def test_semantic_highlighting_comment_keyword(workspace):
+    check_simple(
+        workspace,
+        """*** Test Cases ***
+Check
+    Comment    ${var} Set Variable Test
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Check", "testCaseName"),
+            ("Comment", "keywordNameCall"),
+            ("${", "variableOperator"),
+            ("var", "variable"),
+            ("}", "variableOperator"),
+            (" Set Variable Test", "documentation"),
+        ],
+    )
+
+
 def test_semantic_highlighting_catenate(workspace):
     check_simple(
         workspace,

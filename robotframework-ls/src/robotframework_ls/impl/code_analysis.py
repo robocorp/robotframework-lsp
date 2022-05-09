@@ -509,6 +509,7 @@ def _collect_undefined_variables_errors(initial_completion_context):
     env_vars_upper = None
 
     for token_info in ast_utils.iter_variable_references(ast):
+
         initial_completion_context.check_cancelled()
 
         if token_info.node.__class__.__name__ in (
@@ -518,6 +519,15 @@ def _collect_undefined_variables_errors(initial_completion_context):
         ):
             # These ones are handled differently as it ends up in an unresolved
             # import.
+            continue
+
+        if (
+            token_info.node.__class__.__name__ == "KeywordCall"
+            and token_info.node.keyword == "Comment"
+        ):
+            # Special handling for 'Comment' keyword (variables are not
+            # resolved when calling the 'Comment' keyword).
+            # https://github.com/robocorp/robotframework-lsp/issues/665
             continue
 
         var_name = token_info.token.value

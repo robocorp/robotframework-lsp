@@ -1846,6 +1846,17 @@ Check
     _collect_errors(workspace, doc, data_regression)
 
 
+def test_comment_keyword_vars(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Check
+    Comment    ${var} Set Variable Test
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
 def test_undefined_reference_default_arg_value(
     workspace, libspec_manager, data_regression
 ):

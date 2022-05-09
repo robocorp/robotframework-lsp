@@ -250,7 +250,9 @@ def _tokenize_token(
 
     # Step 1: cast to KEYWORD if needed.
     if use_token_type == ARGUMENT:
-        in_documentation = node.__class__.__name__ == "Documentation"
+        in_documentation = node.__class__.__name__ == "Documentation" or (
+            node.__class__.__name__ == "KeywordCall" and node.keyword == "Comment"
+        )
 
         if not in_documentation:
 
