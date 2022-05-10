@@ -674,6 +674,36 @@ let onChangedEditorUpdateRFStatusBarItem = debounce(() => {
 }, 100);
 
 export async function activate(context: ExtensionContext) {
+    // These extensions do the same things that the RFLS does and end up conflicting
+    // (so, sometimes there are reports saying that the language server
+    // isn't working when the issue is that a conflicting extension is
+    // installed -- notify users about that).
+    const conflictingExtensions = {
+        "TomiTurtiainen.rf-intellisense": "Robot Framework Intellisense",
+        "keith.robotframework": "robot framework language",
+        "Snooz82.rf-intellisense": "Robot Framework Intellisense FORK",
+        "d-biehl.robotcode": "Robot Code",
+        "vivainio.robotframework": "robotframework",
+    };
+
+    let conflicting = "";
+    for (const [key, value] of Object.entries(conflictingExtensions)) {
+        if (extensions.getExtension(key) !== undefined) {
+            if (conflicting.length > 0) {
+                conflicting += ", ";
+            }
+            conflicting += `"${value}"`;
+        }
+    }
+
+    if (conflicting !== "") {
+        const errorMsg =
+            '"Robot Framework Language Server" conflicts with the following extension(s): ' +
+            conflicting +
+            " - please uninstall the conflicting extension(s).";
+        OUTPUT_CHANNEL.append(errorMsg);
+        window.showErrorMessage(errorMsg);
+    }
     RF_STATUS_BAR_ITEM = window.createStatusBarItem(vscode.StatusBarAlignment.Right);
     window.onDidChangeActiveTextEditor((editor) => {
         onChangedEditorUpdateRFStatusBarItem();
