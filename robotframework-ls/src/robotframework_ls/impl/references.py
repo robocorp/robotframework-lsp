@@ -74,11 +74,11 @@ def iter_variable_references_in_doc(
         )
 
     if argument_var_references_computer.check_keyword_usage_normalized_name:
-        lst: List[LocationTypedDict] = []
+        lst = _PreventDuplicatesInList()
         argument_var_references_computer.add_references_to_named_keyword_arguments_from_doc(
             completion_context, lst
         )
-        for entry in lst:
+        for entry in lst.lst:
             yield entry["range"]
 
     ast = completion_context.get_ast()
@@ -393,7 +393,9 @@ class _NamedArgumentVarReferencesComputer:
                         break
 
     def add_references_to_named_keyword_arguments_from_doc(
-        self, new_completion_context: ICompletionContext, ret: List[LocationTypedDict]
+        self,
+        new_completion_context: ICompletionContext,
+        ret: "_PreventDuplicatesInList",
     ):
         from robotframework_ls.impl.variable_resolve import find_split_index
         from robotframework_ls.impl.text_utilities import normalize_robot_name
@@ -435,11 +437,30 @@ class _NamedArgumentVarReferencesComputer:
                             )
 
 
+class _PreventDuplicatesInList:
+    def __init__(self):
+        self.lst: List[LocationTypedDict] = []
+        self._found = set()
+
+    def append(self, location: LocationTypedDict):
+        key = (
+            location["uri"],
+            location["range"]["start"]["line"],
+            location["range"]["start"]["character"],
+            location["range"]["end"]["line"],
+            location["range"]["end"]["character"],
+        )
+        if key in self._found:
+            return
+        self._found.add(key)
+        self.lst.append(location)
+
+
 def _references_for_variable_found(
     initial_completion_context: ICompletionContext,
     variable_found: IVariableFound,
 ):
-    ret: List[LocationTypedDict] = []
+    ret = _PreventDuplicatesInList()
 
     is_local_variable = variable_found.is_local_variable
 
@@ -462,7 +483,7 @@ def _references_for_variable_found(
         is_local_variable
         and not named_argument_var_references_computer.check_keyword_usage_keyword_found
     ):
-        return ret
+        return ret.lst
 
     for symbols_cache in iter_symbols_caches(
         None,
@@ -521,7 +542,7 @@ def _references_for_variable_found(
                 new_completion_context, ret
             )
 
-    return ret
+    return ret.lst
 
 
 def _references_for_keyword_found(
@@ -532,7 +553,7 @@ def _references_for_keyword_found(
     from robocorp_ls_core import uris
     from robotframework_ls.impl.text_utilities import normalize_robot_name
 
-    ret: List[LocationTypedDict] = []
+    ret = _PreventDuplicatesInList()
 
     normalized_name = normalize_robot_name(keyword_found.keyword_name)
     # Ok, we have the keyword definition, now, we must actually look for the
@@ -587,4 +608,4 @@ def _references_for_keyword_found(
             ):
                 ret.append({"uri": doc.uri, "range": ref_range})
 
-    return ret
+    return ret.lst
