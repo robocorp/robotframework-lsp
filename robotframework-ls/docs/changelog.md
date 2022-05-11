@@ -1,3 +1,9 @@
+New in 0.47.2 (2022-05-11)
+-----------------------------
+
+- Fix issue where a reference could be reported more than once.
+
+
 New in 0.47.0 (2022-05-11)
 -----------------------------
 

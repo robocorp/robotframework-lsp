@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.47.0'
+version '0.47.2'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,7 +50,7 @@ intellij {
 
 patchPluginXml {
     changeNotes """
-    Release 0.47.0
+    Release 0.47.2
     </p>
     <ul>
   
