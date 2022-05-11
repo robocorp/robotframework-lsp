@@ -44,7 +44,7 @@ Reporting Issues
 See: [Reporting Issue](docs/reporting_issues.md) for details on how to report some issue in the `Robot Framework Language Server`.
 
 
-Features (0.46.0)
+Features (0.47.0)
 -----------------
 
 - Test Explorer support in VSCode.
@@ -55,9 +55,11 @@ Features (0.46.0)
 - Code completion for all keywords in the workspace with auto-import of Library or Resource.
 - Casing of keywords from libraries used in code-completion can be configured.
 - Go to definition for keywords, variables, resource imports and library imports.
+- Find references for keywords and variables.
+- Rename keywords and variables.
 - Symbols browser for keywords in workspace (activated through `Ctrl + T`).
 - Document symbols.
-- Highlight of keywords/variables.
+- Highlight of keywords and variables.
 - Syntax highlighting (using `semanticTokens`).
 - Syntax validation.
 - Signature Help (activated through `Ctrl + Shift + Space`).

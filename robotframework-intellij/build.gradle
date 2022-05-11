@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.46.0'
+version '0.47.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,18 +50,24 @@ intellij {
 
 patchPluginXml {
     changeNotes """
-    Release 0.46.0
+    Release 0.47.0
     </p>
     <ul>
   
-    <li>[Intellij] Support Intellij 221.</li>
-    <li>[Intellij] Consider that getting the preferences may throw a ProcessCanceledException.</li>
-    <li>Fix position of variable loaded in SetVariable methods to the var name position and not delimiter start.</li>
-    <li>If a variable is defined after its usage inside a keyword it's properly marked as undefined.</li>
-    <li>Variables in short format in Set XXX Variable keywords are accepted.</li>
-    <li>Variables are properly collected from inline if.</li>
-    <li>Variables in Evaluate are properly collected.</li>
-    <li>Variables from expressions in conditions are properly collected.</li>
+    <li>[Intellij] Launch exit info added to console UI in the UI thread.</li>
+    <li>Properly deal with arguments containing regexp matches.</li>
+    <li>Environment variables set using <strong>Set Environment Variable</strong> are now recognized.</li>
+    <li>Fix issue where variable with a set literal wasn't properly recognized.</li>
+    <li>If an argument is specified multiple times a better error message is shown.</li>
+    <li>Fix false positive when argument names are specified with variable names in it.</li>
+    <li>Consider that an argument default values may be based on a previous argument.</li>
+    <li>Properly consider local/global context when dealing with variables.</li>
+    <li>Properly recognize loop variables in RF 3.</li>
+    <li>Properly recognize variable that evaluates to 0.</li>
+    <li>Properly recognize variables from Python that start with <strong>DICT__</strong> or <strong>LIST__</strong>.</li>
+    <li>Fix syntax highlight of inline python evaluation inside of variables in IF statements.</li>
+    <li>Properly consider that the <strong>Comment</strong> keyword arguments should be handled as comments.</li>
+
 
     <br>
     Current feature set:<br>
