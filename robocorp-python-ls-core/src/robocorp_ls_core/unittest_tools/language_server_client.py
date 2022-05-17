@@ -12,6 +12,7 @@ from robocorp_ls_core.lsp import (
     CompletionsResponseTypedDict,
     CompletionItemTypedDict,
     CompletionResolveResponseTypedDict,
+    PositionTypedDict,
 )
 
 
@@ -305,6 +306,17 @@ class LanguageServerClient(LanguageServerClientBase):
                 "id": self.next_id(),
                 "method": "textDocument/foldingRange",
                 "params": {"textDocument": {"uri": uri}},
+            }
+        )
+
+    @implements(ILanguageServerClient.request_selection_range)
+    def request_selection_range(self, doc_uri: str, positions: List[PositionTypedDict]):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "textDocument/selectionRange",
+                "params": {"textDocument": {"uri": doc_uri}, "positions": positions},
             }
         )
 

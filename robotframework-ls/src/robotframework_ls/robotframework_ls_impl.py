@@ -36,6 +36,7 @@ from robocorp_ls_core.lsp import (
     CompletionItemTypedDict,
     RenameParamsTypedDict,
     PrepareRenameParamsTypedDict,
+    SelectionRangeParamsTypedDict,
 )
 from robotframework_ls.commands import (
     ROBOT_GET_RFLS_HOME_DIR,
@@ -359,6 +360,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             "documentRangeFormattingProvider": False,
             "documentSymbolProvider": True,
             "definitionProvider": True,
+            "selectionRangeProvider": True,
             "executeCommandProvider": {
                 "commands": [
                     "robot.addPluginsDir",
@@ -901,6 +903,15 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         doc_uri = kwargs["textDocument"]["uri"]
 
         return self.async_api_forward("request_folding_range", "others", doc_uri)
+
+    def m_text_document__selection_range(self, **kwargs):
+        params: SelectionRangeParamsTypedDict = kwargs
+        # Note: 0-based
+        doc_uri: str = params["textDocument"]["uri"]
+        positions = params["positions"]
+        return self.async_api_forward(
+            "request_selection_range", "others", doc_uri, positions=positions
+        )
 
     def m_text_document__code_lens(self, **kwargs):
         doc_uri = kwargs["textDocument"]["uri"]

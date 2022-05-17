@@ -362,6 +362,13 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
         :Note: async complete.
         """
 
+    def request_selection_range(
+        self, doc_uri: str, positions: List["PositionTypedDict"]
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+
     def request_hover(
         self, doc_uri: str, line: int, col: int
     ) -> Optional[IIdMessageMatcher]:
@@ -520,6 +527,11 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
         pass
 
     def request_folding_range(self, uri: str):
+        pass
+
+    def request_selection_range(
+        self, doc_uri: str, positions: List["PositionTypedDict"]
+    ):
         pass
 
     def request_code_lens(self, uri: str):

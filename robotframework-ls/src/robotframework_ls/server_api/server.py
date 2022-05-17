@@ -25,6 +25,7 @@ from robocorp_ls_core.lsp import (
     CompletionItemTypedDict,
     ResponseTypedDict,
     WorkspaceEditTypedDict,
+    SelectionRangeTypedDict,
 )
 from robotframework_ls.impl.protocols import (
     IKeywordFound,
@@ -748,6 +749,22 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return []
 
         return folding_range(completion_context)
+
+    def m_selection_range(self, doc_uri: str, positions: List[PositionTypedDict]):
+        func = partial(self._threaded_selection_range, doc_uri, positions)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_selection_range(
+        self, doc_uri: str, positions: List[PositionTypedDict], monitor: IMonitor
+    ) -> List[SelectionRangeTypedDict]:
+        from robotframework_ls.impl.selection_range import selection_range
+
+        completion_context = self._create_completion_context(doc_uri, 0, 0, monitor)
+        if completion_context is None:
+            return []
+
+        return selection_range(completion_context, positions)
 
     def m_code_lens(self, doc_uri: str):
         func = partial(self._threaded_code_lens, doc_uri)

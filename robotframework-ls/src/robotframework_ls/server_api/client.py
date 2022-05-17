@@ -1,4 +1,4 @@
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 from robocorp_ls_core.client_base import LanguageServerClientBase
 from robocorp_ls_core.protocols import (
@@ -308,6 +308,16 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         :Note: async complete.
         """
         return self.request_async(self._build_msg("foldingRange", doc_uri=doc_uri))
+
+    def request_selection_range(
+        self, doc_uri, positions: List[PositionTypedDict]
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(
+            self._build_msg("selectionRange", doc_uri=doc_uri, positions=positions)
+        )
 
     def request_code_lens(self, doc_uri) -> Optional[IIdMessageMatcher]:
         """

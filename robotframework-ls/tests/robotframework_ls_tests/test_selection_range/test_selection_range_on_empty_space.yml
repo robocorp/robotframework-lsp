@@ -1,0 +1,31 @@
+- parent:
+    parent:
+      parent:
+        range:
+          end:
+            character: 41
+            line: 5
+          start:
+            character: 0
+            line: 3
+      range:
+        end:
+          character: 41
+          line: 5
+        start:
+          character: 0
+          line: 4
+    range:
+      end:
+        character: 41
+        line: 5
+      start:
+        character: 0
+        line: 5
+  range:
+    end:
+      character: 4
+      line: 5
+    start:
+      character: 0
+      line: 5

@@ -357,6 +357,15 @@ class Range(_Base):
     def __ne__(self, other):
         return not (self == other)
 
+    @classmethod
+    def create_from_range_typed_dict(cls, dct: RangeTypedDict) -> "Range":
+        start = Position(dct["start"]["line"], dct["start"]["character"])
+        end = Position(dct["end"]["line"], dct["end"]["character"])
+        return Range(start, end)
+
+    def is_inside(self, another_range: "Range") -> bool:
+        return self.start >= another_range.start and self.end <= another_range.end
+
 
 class TextDocumentContentChangeEvent(_Base):
     def __init__(
@@ -499,6 +508,11 @@ class TextDocumentPositionParamsTypedDict(TypedDict, total=False):
 
 class PrepareRenameParamsTypedDict(TextDocumentPositionParamsTypedDict):
     pass
+
+
+class SelectionRangeParamsTypedDict(TypedDict):
+    textDocument: TextDocumentIdentifierTypedDict
+    positions: List[PositionTypedDict]
 
 
 class RenameParamsTypedDict(TypedDict, total=False):
@@ -747,6 +761,13 @@ class CodeLensTypedDict(TypedDict, total=False):
     # A data entry field that is preserved on a code lens item between a code
     # lens and a code lens resolve request.
     data: Optional[Any]
+
+
+class SelectionRangeTypedDict(TypedDict, total=False):
+    range: RangeTypedDict
+
+    # Actually "SelectionRangeTypedDict", but mypy doesn't support it.
+    parent: Optional[Any]
 
 
 class FoldingRangeTypedDict(TypedDict, total=False):

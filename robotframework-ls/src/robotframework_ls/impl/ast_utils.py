@@ -39,6 +39,7 @@ import functools
 import weakref
 import threading
 import typing
+import itertools
 
 
 log = get_logger(__name__)
@@ -466,6 +467,28 @@ def _iter_nodes(
                 yield stack, value
 
 
+def _iter_nodes_reverse(node) -> Iterator[INode]:
+    """
+    Iterate over nodes in reverse order.
+    """
+    for field in reversed(node._fields):
+        try:
+            value = getattr(node, field)
+        except AttributeError:
+            continue
+
+        if isinstance(value, list):
+            for item in reversed(value):
+                if isinstance(item, _AST_CLASS):
+                    # i.e.: First go into
+                    yield from _iter_nodes_reverse(item)
+                    # And the provide current
+                    yield item
+
+        elif isinstance(value, _AST_CLASS):
+            yield from _iter_nodes_reverse(value)
+
+
 def iter_all_nodes_recursive(node: INode) -> Iterator[Tuple[List[INode], INode]]:
     """
     This function will iterate over all the nodes. Use only if there's no
@@ -551,7 +574,12 @@ def _find_subvar(stack, node, initial_token, col) -> Optional[VarTokenInfo]:
 
     for p in robot_constants.VARIABLE_PREFIXES:
         if initial_token.value.startswith(p + "{"):
-            if initial_token.value.endswith("}"):
+            if (
+                initial_token.type == initial_token.ASSIGN
+                and initial_token.value.endswith("}=")
+            ):
+                var_token = copy_token_with_subpart(initial_token, 2, -2)
+            elif initial_token.value.endswith("}"):
                 var_token = copy_token_with_subpart(initial_token, 2, -1)
             else:
                 var_token = copy_token_with_subpart(
@@ -1753,7 +1781,7 @@ def copy_token_with_subpart(token, start, end):
     )
 
 
-def create_range_from_token(token) -> RangeTypedDict:
+def create_range_from_token(token: IRobotToken) -> RangeTypedDict:
     start: PositionTypedDict = {"line": token.lineno - 1, "character": token.col_offset}
     end: PositionTypedDict = {
         "line": token.lineno - 1,
@@ -1761,6 +1789,80 @@ def create_range_from_token(token) -> RangeTypedDict:
     }
     taken_range: RangeTypedDict = {"start": start, "end": end}
     return taken_range
+
+
+def create_range_from_tokens(
+    token: IRobotToken, end_token: IRobotToken
+) -> RangeTypedDict:
+    start: PositionTypedDict = {"line": token.lineno - 1, "character": token.col_offset}
+    end: PositionTypedDict = {
+        "line": end_token.lineno - 1,
+        "character": end_token.end_col_offset,
+    }
+    taken_range: RangeTypedDict = {"start": start, "end": end}
+    return taken_range
+
+
+def create_range_from_node(node: INode, accept_empty=True) -> Optional[RangeTypedDict]:
+    first_token = None
+    last_found_tokens = None
+
+    # Find the first token
+    for n in itertools.chain(
+        iter((node,)), (x[1] for x in _iter_nodes(node, recursive=True))
+    ):
+        try:
+            last_found_tokens = n.tokens
+        except AttributeError:
+            continue
+
+        if not last_found_tokens:
+            continue
+
+        if accept_empty:
+            first_token = next(iter(last_found_tokens))
+        else:
+            for t in last_found_tokens:
+                if t.type in (t.EOL, t.EOS, t.SEPARATOR):
+                    continue
+                first_token = t
+                break
+
+        if first_token is not None:
+            break
+
+    if first_token is None:
+        return None
+
+    # Ok, we found the first one, now, let's find the last one.
+    last_token = None
+    last_found_tokens = None
+
+    for n in itertools.chain(iter((node,)), _iter_nodes_reverse(node)):
+        try:
+            last_found_tokens = n.tokens
+        except AttributeError:
+            continue
+
+        if not last_found_tokens:
+            continue
+
+        if accept_empty:
+            last_token = next(reversed(last_found_tokens))
+        else:
+            for t in reversed(last_found_tokens):
+                if t.type in (t.EOL, t.EOS, t.SEPARATOR):
+                    continue
+                last_token = t
+                break
+
+        if last_token is not None:
+            break
+
+    if last_token is None:
+        return None
+
+    return create_range_from_tokens(first_token, last_token)
 
 
 def create_token(name):
