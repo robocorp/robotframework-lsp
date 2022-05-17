@@ -472,7 +472,7 @@
                 "args": {
                     "text": "    "
                 },
-                "when": "editorTextFocus && editorLangId == robotframework && !editorHasSelection && !inSnippetMode && !suggestWidgetVisible && config.robot.editor.4spacesTab"
+                "when": "editorTextFocus && editorLangId == robotframework && !editorHasSelection && !inSnippetMode && !suggestWidgetVisible && config.robot.editor.4spacesTab && !inlineSuggestionVisible"
             }
         ],
         "breakpoints": [

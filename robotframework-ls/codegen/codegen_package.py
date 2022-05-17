@@ -264,7 +264,7 @@ def get_json_contents():
                     "key": "tab",
                     "command": "type",
                     "args": {"text": "    "},
-                    "when": "editorTextFocus && editorLangId == robotframework && !editorHasSelection && !inSnippetMode && !suggestWidgetVisible && config.robot.editor.4spacesTab",
+                    "when": "editorTextFocus && editorLangId == robotframework && !editorHasSelection && !inSnippetMode && !suggestWidgetVisible && config.robot.editor.4spacesTab && !inlineSuggestionVisible",
                 }
             ],
             "breakpoints": [{"language": "robotframework"}],
