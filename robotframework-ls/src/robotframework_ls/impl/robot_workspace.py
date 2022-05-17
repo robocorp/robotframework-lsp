@@ -37,6 +37,8 @@ from robotframework_ls.impl.protocols import (
     ISymbolKeywordInfo,
     ICompletionContextWorkspaceCaches,
     IOnDependencyChanged,
+    AbstractVariablesCollector,
+    IVariableFound,
 )
 from robotframework_ls.impl.robot_constants import ROBOT_FILE_EXTENSIONS
 
@@ -106,6 +108,9 @@ def _compute_symbols_from_ast(completion_context: ICompletionContext) -> ISymbol
     from robocorp_ls_core.lsp import SymbolKind
     from robotframework_ls.impl.text_utilities import normalize_robot_name
     from robotframework_ls.impl.code_lens import list_tests
+    from robotframework_ls.impl.variable_completions import (
+        collect_current_doc_global_variables,
+    )
 
     doc = completion_context.doc
 
@@ -137,7 +142,7 @@ def _compute_symbols_from_ast(completion_context: ICompletionContext) -> ISymbol
             }
         )
 
-    keywords_used = set()
+    keywords_used: Set[str] = set()
     for keyword_usage_info in ast_utils.iter_keyword_usage_tokens(
         ast, collect_args_as_keywords=True
     ):
@@ -148,6 +153,15 @@ def _compute_symbols_from_ast(completion_context: ICompletionContext) -> ISymbol
         {"name": x["name"], "range": x["range"]} for x in test_info
     ]
 
+    global_variables_collector = _GlobalVariablesCollector()
+    collect_current_doc_global_variables(completion_context, global_variables_collector)
+
+    variable_references: Set[str] = set()
+    for variable_reference in ast_utils.iter_variable_references(ast):
+        v = variable_reference.token.value
+        if v:
+            variable_references.add(normalize_robot_name(v))
+
     return _SymbolsCacheForAST(
         symbols,
         None,
@@ -156,7 +170,23 @@ def _compute_symbols_from_ast(completion_context: ICompletionContext) -> ISymbol
         uri=uri,
         test_info=test_info_for_cache,
         keywords=keywords,
+        global_variables_defined=global_variables_collector.global_variables_defined,
+        variable_references=variable_references,
     )
+
+
+class _GlobalVariablesCollector(AbstractVariablesCollector):
+    def __init__(self):
+        self.global_variables_defined: Set[str] = set()
+
+    def accepts(self, variable_name: str) -> bool:
+        from robotframework_ls.impl.text_utilities import normalize_robot_name
+
+        self.global_variables_defined.add(normalize_robot_name(variable_name))
+        return False
+
+    def on_variable(self, variable_found: IVariableFound):
+        pass
 
 
 class _ReindexInfo(object):
@@ -240,6 +270,8 @@ class WorkspaceIndexer(object):
         endpoint: Optional[IEndPoint],
         collect_tests: bool = False,
     ) -> None:
+        from robotframework_ls.impl._symbols_cache import SymbolsCacheReverseIndex
+
         self._robot_workspace = weakref.ref(robot_workspace)
         robot_workspace.on_file_changed.register(self._on_file_changed)
         self._endpoint = endpoint
@@ -247,6 +279,7 @@ class WorkspaceIndexer(object):
         self._clear_caches = threading.Event()
         self._reindex_manager = _ReindexManager()
         self._disposed = threading.Event()
+        self.symbols_cache_reverse_index = SymbolsCacheReverseIndex()
 
         if collect_tests:
             assert endpoint is not None
@@ -262,6 +295,7 @@ class WorkspaceIndexer(object):
         if filename and filename.endswith(ROBOT_FILE_EXTENSIONS):
             uri = uris.from_fs_path(filename)
             self._reindex_manager.request_uri_collection(uri)
+            self.symbols_cache_reverse_index.notify_uri_changed(uri)
 
     def wait_for_full_test_collection(self):
         assert (
@@ -367,12 +401,15 @@ class WorkspaceIndexer(object):
     def dispose(self):
         self._disposed.set()
         self._reindex_manager.dispose()
+        self.symbols_cache_reverse_index.dispose()
 
     def on_updated_document(self, doc_uri: str):
         self._reindex_manager.request_uri_collection(doc_uri)
+        self.symbols_cache_reverse_index.notify_uri_changed(doc_uri)
 
     def on_updated_folders(self):
         self._reindex_manager.request_full_collection()
+        self.symbols_cache_reverse_index.request_full_reindex()
 
     def iter_uri_and_symbols_cache(
         self,

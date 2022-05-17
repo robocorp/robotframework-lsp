@@ -45,6 +45,7 @@ from robotframework_ls.impl.protocols import (
     IVariablesFromArgumentsFileLoader,
     IVariableFound,
     NodeInfo,
+    ISymbolsCacheReverseIndex,
 )
 from robotframework_ls.impl.robot_workspace import RobotDocument
 from robocorp_ls_core import uris
@@ -139,6 +140,11 @@ class CompletionContext(object):
         self.type = CompletionType.regular
         self.lsp_messages = lsp_messages
 
+        # Note: it's None until it's requested in obtain_symbols_cache_reverse_index().
+        # At that point it's obtained and synchronized accordingly (then, any copy
+        # from this context should use that same version without synchronizing again).
+        self._symbols_cache_reverse_index: Optional[ISymbolsCacheReverseIndex] = None
+
         self._id_to_compute_documentation: Dict[
             int, Callable[[], MarkupContentTypedDict]
         ] = {}
@@ -190,26 +196,18 @@ class CompletionContext(object):
         self._monitor.check_cancelled()
 
     def create_copy_with_selection(self, line: int, col: int) -> ICompletionContext:
-        doc = self._doc
+        return self.create_copy_doc_line_col(doc=self._doc, line=line, col=col)
+
+    def create_copy(self, doc: IRobotDocument) -> ICompletionContext:
+        return self.create_copy_doc_line_col(doc, line=0, col=0)
+
+    def create_copy_doc_line_col(
+        self, doc: IRobotDocument, line: int, col: int
+    ) -> ICompletionContext:
         ctx = CompletionContext(
             doc,
             line=line,
             col=col,
-            workspace=self._workspace,
-            config=self._config,
-            memo=self._memo,
-            monitor=self._monitor,
-            variables_from_arguments_files_loader=self.variables_from_arguments_files_loader,
-            lsp_messages=self.lsp_messages,
-        )
-        ctx._original_ctx = self
-        return ctx
-
-    def create_copy(self, doc: IRobotDocument) -> ICompletionContext:
-        ctx = CompletionContext(
-            doc,
-            line=0,
-            col=0,
             workspace=self._workspace,
             config=self._config,
             memo=self._memo,
@@ -743,6 +741,33 @@ class CompletionContext(object):
         )
 
         return CompletionContextDependencyGraph.from_completion_context(self)
+
+    def obtain_symbols_cache_reverse_index(self) -> Optional[ISymbolsCacheReverseIndex]:
+        original_ctx = self._original_ctx
+        if original_ctx is not None:
+            # The parent must be the one containing it.
+            return original_ctx.obtain_symbols_cache_reverse_index()
+
+        symbols_cache_reverse_index = self._symbols_cache_reverse_index
+        if symbols_cache_reverse_index is not None:
+            # Should be already synchronized in this case.
+            return symbols_cache_reverse_index
+
+        from robotframework_ls.impl.robot_workspace import RobotWorkspace
+
+        workspace: Optional[RobotWorkspace] = typing.cast(
+            Optional[RobotWorkspace], self.workspace
+        )
+        if not workspace:
+            return None
+
+        workspace_indexer = workspace.workspace_indexer
+        if not workspace_indexer:
+            return None
+
+        symbols_cache_reverse_index = workspace_indexer.symbols_cache_reverse_index
+        symbols_cache_reverse_index.synchronize(self)
+        return symbols_cache_reverse_index
 
     def __typecheckself__(self) -> None:
         from robocorp_ls_core.protocols import check_implements

@@ -12,6 +12,7 @@ from typing import (
     Callable,
     Hashable,
     Dict,
+    Set,
 )
 from robocorp_ls_core.protocols import (
     Sentinel,
@@ -413,9 +414,18 @@ class ISymbolKeywordInfo(Protocol):
 
 class ISymbolsCache(Protocol):
     def get_uri(self) -> Optional[str]:
-        pass
+        """
+        If we're referencing a library (and have the symbols from a libspec),
+        the uri may be None.
+        """
 
     def has_keyword_usage(self, normalized_keyword_name: str) -> bool:
+        pass
+
+    def has_global_variable_definition(self, normalized_variable_name: str) -> bool:
+        pass
+
+    def has_variable_reference(self, normalized_variable_name: str) -> bool:
         pass
 
     def get_json_list(self) -> List[ISymbolsJsonListEntry]:
@@ -767,6 +777,16 @@ class LibraryDependencyInfo:
         return ret
 
 
+class ISymbolsCacheReverseIndex(Protocol):
+    def get_global_variable_uri_definitions(
+        self, normalized_var_name: str
+    ) -> Optional[Set[str]]:
+        pass
+
+    def has_global_variable(self, normalized_var_name: str) -> bool:
+        pass
+
+
 class ICompletionContextDependencyGraph(Protocol):
     def add_library_infos(
         self,
@@ -884,6 +904,11 @@ class ICompletionContext(Protocol):
         pass
 
     def create_copy(self, doc: IRobotDocument) -> "ICompletionContext":
+        pass
+
+    def create_copy_doc_line_col(
+        self, doc: IRobotDocument, line: int, col: int
+    ) -> "ICompletionContext":
         pass
 
     @property
@@ -1029,6 +1054,9 @@ class ICompletionContext(Protocol):
     def iter_dependency_and_init_resource_docs(
         self, dependency_graph
     ) -> Iterator[IRobotDocument]:
+        pass
+
+    def obtain_symbols_cache_reverse_index(self) -> Optional[ISymbolsCacheReverseIndex]:
         pass
 
 

@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict, Tuple, Sequence
+from typing import Optional, List, Dict, Tuple
 
 from robocorp_ls_core.lsp import CompletionItemTypedDict
 from robocorp_ls_core.protocols import check_implements, IDocumentSelection
@@ -156,22 +156,18 @@ def _collect_variables_from_set_keywords(
                         collector.on_variable(variable_found)
 
 
-def _collect_current_doc_variables(
+def collect_current_doc_global_variables(
     completion_context: ICompletionContext, collector: IVariablesCollector
 ):
     """
-    :param CompletionContext completion_context:
+    Collects global variables used in keywords such as:
+        Set Global Variable
+        Set Suite Variable
+
+    As well as environment variables used in:
+        Set Environment Variable
     """
     from robotframework_ls.impl.ast_utils import KEYWORD_SET_GLOBAL_TO_VAR_KIND
-
-    # Get keywords defined in the file itself
-    completion_context.check_cancelled()
-
-    for (
-        variable_found
-    ) in completion_context.get_doc_normalized_var_name_to_var_found().values():
-        if collector.accepts(variable_found.variable_name):
-            collector.on_variable(variable_found)
 
     _collect_variables_from_set_keywords(
         completion_context.get_ast(),
@@ -187,6 +183,21 @@ def _collect_current_doc_variables(
         KEYWORD_SET_ENV_TO_VAR_KIND,
         env_vars=True,
     )
+
+
+def _collect_current_doc_variables(
+    completion_context: ICompletionContext, collector: IVariablesCollector
+):
+    # Get keywords defined in the file itself
+    completion_context.check_cancelled()
+
+    for (
+        variable_found
+    ) in completion_context.get_doc_normalized_var_name_to_var_found().values():
+        if collector.accepts(variable_found.variable_name):
+            collector.on_variable(variable_found)
+
+    collect_current_doc_global_variables(completion_context, collector)
 
 
 def _collect_resource_imports_variables(

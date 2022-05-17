@@ -1,0 +1,30 @@
+- - case2.robot
+  - - range:
+        end:
+          character: 28
+          line: 4
+        start:
+          character: 13
+          line: 4
+    - range:
+        end:
+          character: 42
+          line: 3
+        start:
+          character: 29
+          line: 3
+- - case2a.robot
+  - - range:
+        end:
+          character: 42
+          line: 3
+        start:
+          character: 29
+          line: 3
+    - range:
+        end:
+          character: 42
+          line: 4
+        start:
+          character: 29
+          line: 4

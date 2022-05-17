@@ -361,3 +361,35 @@ Initialize Variables
 
     result = references(completion_context, include_declaration=True)
     check_data_regression(result, data_regression)
+
+
+def test_references_global_vars(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.references import references
+
+    workspace.set_root("case2", libspec_manager=libspec_manager, index_workspace=True)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Some Test Case
+    Set Global Variable    ${someglobalvar}
+    Log    ${SOME_GLOBAL_VAR}
+"""
+
+    doc2 = workspace.put_doc("case2a.robot")
+    doc2.source = """
+*** Keywords ***
+Some Keyword
+    Set Global Variable    ${someglobalvar}
+    Set Global Variable    ${someglobalvar}
+"""
+
+    line, col = doc.get_last_line_col_with_contents("    Log    ${SOME_GLOBAL_VAR}")
+    col -= 2
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    result = references(completion_context, include_declaration=True)
+    check_data_regression(result, data_regression)

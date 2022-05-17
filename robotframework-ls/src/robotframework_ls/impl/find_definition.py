@@ -12,11 +12,13 @@ from robotframework_ls.impl.protocols import (
     AbstractVariablesCollector,
     VarTokenInfo,
     IVariableDefinition,
+    IRobotDocument,
 )
 from robocorp_ls_core.protocols import check_implements
 from typing import Optional, Sequence, List
 from robocorp_ls_core.lsp import RangeTypedDict, MarkupContentTypedDict, MarkupKind
 from robocorp_ls_core.basic import isinstance_name
+import typing
 
 
 class _DefinitionFromKeyword(object):
@@ -332,6 +334,10 @@ def find_variable_definition(
     completion_context: ICompletionContext, var_token_info: VarTokenInfo
 ) -> Optional[Sequence[IVariableDefinition]]:
     from robotframework_ls.impl.variable_completions import collect_variables
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
+    from robotframework_ls.impl.variable_completions import (
+        collect_current_doc_global_variables,
+    )
 
     token = var_token_info.token
     completion_context = completion_context.create_copy_with_selection(
@@ -339,6 +345,30 @@ def find_variable_definition(
     )
     collector = _FindDefinitionVariablesCollector(completion_context, var_token_info)
     collect_variables(completion_context, collector)
+
+    if not collector.matches:
+        # We haven't been able to find it in our scope (nor dependencies).
+        # Let's find out if it's a global variable...
+        symbols_cache_reverse_index = (
+            completion_context.obtain_symbols_cache_reverse_index()
+        )
+        if symbols_cache_reverse_index:
+            found_in_uris = (
+                symbols_cache_reverse_index.get_global_variable_uri_definitions(
+                    normalize_robot_name(token.value)
+                )
+            )
+            if found_in_uris:
+                for uri in found_in_uris:
+                    doc = completion_context.workspace.get_document(
+                        uri, accept_from_file=True
+                    )
+                    if doc is not None:
+                        cp = completion_context.create_copy(
+                            typing.cast(IRobotDocument, doc)
+                        )
+                        collect_current_doc_global_variables(cp, collector)
+
     return collector.matches
 
 

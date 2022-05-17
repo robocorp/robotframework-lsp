@@ -155,7 +155,6 @@ def iter_keyword_usage_references_in_doc(
     """
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.find_definition import find_definition
-    from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.text_utilities import normalize_robot_name
 
     ast = doc.get_ast()
@@ -188,13 +187,8 @@ def iter_keyword_usage_references_in_doc(
                         # Verify if it's actually the same one (not one defined in
                         # a different place with the same name).
 
-                        new_ctx = CompletionContext(
-                            doc,
-                            line,
-                            token.col_offset,
-                            workspace=completion_context.workspace,
-                            config=completion_context.config,
-                            monitor=completion_context.monitor,
+                        new_ctx = completion_context.create_copy_doc_line_col(
+                            doc, line, token.col_offset
                         )
                         definitions = find_definition(new_ctx)
                         for definition in definitions:
@@ -460,6 +454,8 @@ def _references_for_variable_found(
     initial_completion_context: ICompletionContext,
     variable_found: IVariableFound,
 ):
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
+
     ret = _PreventDuplicatesInList()
 
     is_local_variable = variable_found.is_local_variable
@@ -485,6 +481,8 @@ def _references_for_variable_found(
     ):
         return ret.lst
 
+    normalized_variable_name = normalize_robot_name(variable_found.variable_name)
+
     for symbols_cache in iter_symbols_caches(
         None,
         initial_completion_context,
@@ -493,6 +491,7 @@ def _references_for_variable_found(
     ):
         initial_completion_context.check_cancelled()
 
+        # If it's a local variable we may still need to search for named arguments...
         if (
             is_local_variable
             and named_argument_var_references_computer.check_keyword_usage_normalized_name
@@ -502,7 +501,11 @@ def _references_for_variable_found(
             ):
                 continue
 
-        # if symbols_cache.has_variable(normalized_name):
+        elif not is_local_variable:
+            if not symbols_cache.has_global_variable_definition(
+                normalized_variable_name
+            ) and not symbols_cache.has_variable_reference(normalized_variable_name):
+                continue
 
         doc: Optional[IRobotDocument] = symbols_cache.get_doc()
         if doc is None:
