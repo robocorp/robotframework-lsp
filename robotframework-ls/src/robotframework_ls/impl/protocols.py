@@ -171,6 +171,7 @@ class INode(Protocol):
 class ILibraryImportNode(INode, Protocol):
     name: str
     alias: Optional[str]
+    args: Optional[Sequence[str]]
 
 
 class IKeywordNode(INode, Protocol):

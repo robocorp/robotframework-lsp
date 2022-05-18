@@ -287,10 +287,13 @@ def _obtain_ast_indexer(ast):
 def _convert_ast_to_indexer(func):
     @functools.wraps(func)
     def new_func(ast, *args, **kwargs):
-        try:
-            indexer = ast.__ast_indexer__
-        except:
-            indexer = ast.__ast_indexer__ = _ASTIndexer(ast)
+        if hasattr(ast, "iter_indexed"):
+            indexer = ast
+        else:
+            try:
+                indexer = ast.__ast_indexer__
+            except:
+                indexer = ast.__ast_indexer__ = _ASTIndexer(ast)
 
         return func(indexer, *args, **kwargs)
 
@@ -761,7 +764,52 @@ def is_setting_section_node_info(node_info: NodeInfo) -> bool:
 
 @_convert_ast_to_indexer
 def iter_library_imports(ast) -> Iterator[NodeInfo[ILibraryImportNode]]:
+    cache_key = "iter_library_imports"
+    yield from ast.iter_cached(cache_key, _iter_library_imports_uncached)
+
+
+def _iter_library_imports_uncached(ast):
+    from robot.api.parsing import LibraryImport
+
     yield from ast.iter_indexed("LibraryImport")
+    for keyword_usage_info in iter_keyword_usage_tokens(
+        ast, collect_args_as_keywords=True
+    ):
+        if normalize_robot_name(keyword_usage_info.name) == "importlibrary":
+            # Create a LibraryImport node based on the keyword usage.
+            use_tokens = []
+            iter_in = iter(keyword_usage_info.node.tokens)
+            for token in iter_in:
+                if token.type == token.KEYWORD:
+                    # Skip the 'Import Library' keyword name.
+                    break
+            else:
+                continue
+
+            # Get the first non-separator token
+            for token in iter_in:
+                if token.type == token.SEPARATOR:
+                    continue
+                use_tokens.append(copy_token_replacing(token, type=token.NAME))
+                break
+
+            for token in iter_in:
+                if token.type == token.ARGUMENT and token.value == "WITH NAME":
+                    use_tokens.append(copy_token_replacing(token, type=token.WITH_NAME))
+                    for token in iter_in:
+                        if token.type == token.ARGUMENT:
+                            use_tokens.append(
+                                copy_token_replacing(token, type=token.NAME)
+                            )
+                        else:
+                            use_tokens.append(token)
+
+                else:
+                    use_tokens.append(token)
+
+            if use_tokens:
+                node = LibraryImport(use_tokens)
+                yield NodeInfo(keyword_usage_info.stack, node)
 
 
 @_convert_ast_to_indexer

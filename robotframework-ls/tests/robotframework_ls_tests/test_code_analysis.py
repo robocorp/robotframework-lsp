@@ -1936,3 +1936,29 @@ Valid list
     Should Be Equal    ${LIST}    ${EXP LIST}
 """
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_import_library_keyword(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Test case 1
+    ${lst}=    Evaluate    []
+    Import library    Collections
+    Append to list    ${lst}    1    2
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_import_library_keyword_with_name(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Test case 1
+    ${lst}=    Evaluate    []
+    Import library    Collections    WITH NAME    Col
+    Col.Append to list    ${lst}    1    2
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")

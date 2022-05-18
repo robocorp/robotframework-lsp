@@ -1308,3 +1308,22 @@ Demo
             ("END", "control"),
         ],
     )
+
+
+def test_semantic_import_library(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Test case 1
+    Import library    Collections    WITH NAME    Col
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Test case 1", "testCaseName"),
+            ("Import library", "keywordNameCall"),
+            ("Collections", "argumentValue"),
+            ("WITH NAME", "control"),
+            ("Col", "argumentValue"),
+        ],
+    )

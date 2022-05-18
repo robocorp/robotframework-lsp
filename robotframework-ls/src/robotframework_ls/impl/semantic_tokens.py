@@ -230,6 +230,8 @@ def semantic_tokens_range(context, range):
 def _tokenize_token(
     node, use_token, scope: "_SemanticTokensScope"
 ) -> Iterator[Tuple[IRobotToken, int]]:
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
+
     if use_token.type in (use_token.EOL, use_token.SEPARATOR):
         # Fast way out for the most common tokens (which have no special handling).
         return
@@ -321,6 +323,12 @@ def _tokenize_token(
             if in_documentation:
                 equals_pos = -1
             else:
+                if first_token.value == "WITH NAME":
+                    value = node.get_value(use_token.KEYWORD)
+                    if value and normalize_robot_name(value) == "importlibrary":
+                        yield first_token, CONTROL_INDEX
+                        return
+
                 equals_pos = find_split_index(first_token.value)
                 if equals_pos != -1:
                     # Found an equals... let's check if it's not a 'catenate', which
