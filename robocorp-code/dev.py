@@ -201,6 +201,8 @@ class Dev(object):
             content = f.read()
 
         tag = self.get_tag()
+        if not tag:
+            raise AssertionError("Could not get tag!")
 
         new_content = re.sub(
             r"\(docs/",

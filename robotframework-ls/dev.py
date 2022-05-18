@@ -237,10 +237,15 @@ class Dev(object):
         readme = os.path.join(os.path.dirname(__file__), "README.md")
         with open(readme, "r") as f:
             content = f.read()
+
+        tag = self.get_tag()
+        if not tag:
+            raise AssertionError("Could not get tag!")
+
         new_content = re.sub(
             r"\(docs/",
             r"(https://github.com/robocorp/robotframework-lsp/tree/%s/robotframework-ls/docs/"
-            % (self.get_tag(),),
+            % (tag,),
             content,
         )
         with open(readme, "w") as f:
