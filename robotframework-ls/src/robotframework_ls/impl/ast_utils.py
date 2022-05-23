@@ -769,7 +769,10 @@ def iter_library_imports(ast) -> Iterator[NodeInfo[ILibraryImportNode]]:
 
 
 def _iter_library_imports_uncached(ast):
-    from robot.api.parsing import LibraryImport
+    try:
+        from robot.api.parsing import LibraryImport
+    except ImportError:
+        from robot.parsing.model.statements import LibraryImport
 
     yield from ast.iter_indexed("LibraryImport")
     for keyword_usage_info in iter_keyword_usage_tokens(
