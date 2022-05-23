@@ -262,6 +262,35 @@ my
     ]
 
 
+def test_for_each_input_work_item():
+    from robotframework_ls.impl.robot_workspace import RobotDocument
+    from robotframework_ls.impl import ast_utils
+
+    document = RobotDocument(
+        "uri",
+        """
+*** Keyword **
+my
+    For each input work item    No operation    items_limit=0    return_results=False    invalid_arg=True""",
+    )
+    ast = document.get_ast()
+    found = []
+    for node_info in ast_utils.iter_indexed(ast, "KeywordCall"):
+        handler = ast_utils.get_args_as_keywords_handler(node_info.node)
+        for tok in node_info.node.tokens:
+            if tok.type == tok.ARGUMENT:
+                found.append(
+                    f"{tok.value} = {handler.next_tok_type_as_str(tok)}",
+                )
+
+    assert found == [
+        "No operation = <keyword>",
+        "items_limit=0 = <ignore>",
+        "return_results=False = <ignore>",
+        "invalid_arg=True = <none>",
+    ]
+
+
 def test_run_keywords_1():
     from robotframework_ls.impl.robot_workspace import RobotDocument
     from robotframework_ls.impl import ast_utils

@@ -1,0 +1,20 @@
+- message: 'Unexpected argument: invalid_arg=True'
+  range:
+    end:
+      character: 105
+      line: 9
+    start:
+      character: 89
+      line: 9
+  severity: 1
+  source: robotframework
+- message: 'Unexpected argument: invalid_arg1'
+  range:
+    end:
+      character: 60
+      line: 10
+    start:
+      character: 48
+      line: 10
+  severity: 1
+  source: robotframework

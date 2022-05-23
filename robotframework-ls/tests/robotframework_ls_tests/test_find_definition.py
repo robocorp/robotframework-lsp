@@ -1304,3 +1304,36 @@ ${prefix:Given|When|Then} this ${no good name for this arg ...}
     definition = definitions[0]
     assert definition.source.endswith("case2.robot")
     assert definition.lineno == 3
+
+
+def test_find_definition_for_each_input_work_item(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.find_definition import find_definition
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keyword ***
+Log Payloads
+    @{lengths} =     For Each Input Work Item    Log Payload
+    Log   Payload lengths: @{lengths}
+    
+Log Payload
+    ${payload} =     Get Work Item Payload
+    Log To Console    ${payload}
+    ${len} =     Get Length    ${payload}
+    [Return]    ${len}
+"""
+
+    line, col = doc.get_last_line_col_with_contents(
+        "    @{lengths} =     For Each Input Work Item    Log Payload"
+    )
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    definitions = find_definition(completion_context)
+    assert len(definitions) == 1
+    definition = definitions[0]
+    assert definition.source.endswith("case2.robot")
+    assert definition.lineno == 6

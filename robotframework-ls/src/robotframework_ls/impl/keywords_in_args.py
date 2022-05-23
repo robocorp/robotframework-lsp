@@ -4,6 +4,7 @@ KEYWORD_NAME_TO_KEYWORD_INDEX = {
     "runkeywords": 1,  # run_keywords
     "runkeywordifallcriticaltestspassed": 1,  # run_keyword_if_all_critical_tests_passed
     "runkeywordifanycriticaltestsfailed": 1,  # run_keyword_if_any_critical_tests_failed
+    "foreachinputworkitem": 1,  # for_each_input_work_item
     "repeatkeyword": 2,  # repeat_keyword
     "runkeyword": 1,  # run_keyword
     "runkeywordandcontinueonfailure": 1,  # run_keyword_and_continue_on_failure

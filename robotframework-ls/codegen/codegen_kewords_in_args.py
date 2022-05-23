@@ -18,6 +18,7 @@ def main():
         # These aren't in all RF versions, so, hardcode it.
         "run_keyword_if_all_critical_tests_passed": 1,
         "run_keyword_if_any_critical_tests_failed": 1,
+        "for_each_input_work_item": 1,
     }
     KEYWORD_NAME_TO_CONDITION_INDEX = {
         "evaluate": 1,

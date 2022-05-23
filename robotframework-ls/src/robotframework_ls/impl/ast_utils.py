@@ -1374,6 +1374,7 @@ def _iter_keyword_usage_tokens_uncached_from_args(
             if next_tok_type in (
                 args_as_keywords_handler.CONTROL,
                 args_as_keywords_handler.EXPRESSION,
+                args_as_keywords_handler.IGNORE,
             ):
                 # Don't add IF/ELSE IF/AND nor the condition.
                 continue
@@ -1495,6 +1496,7 @@ class _ConsiderArgsAsKeywordNames:
     KEYWORD = 1
     EXPRESSION = 2
     CONTROL = 3
+    IGNORE = 4
 
     def __init__(
         self,
@@ -1514,6 +1516,8 @@ class _ConsiderArgsAsKeywordNames:
         # we need to provide keyword usages as needed.
         if self._normalized_keyword_name == "runkeywordif":
             self.next_tok_type = self._next_tok_type_run_keyword_if
+        elif self._normalized_keyword_name == "foreachinputworkitem":
+            self.next_tok_type = self._next_tok_type_for_each_input_work_item
         elif self._normalized_keyword_name == "runkeywords":
             found = False
             for token in node.tokens:
@@ -1539,6 +1543,8 @@ class _ConsiderArgsAsKeywordNames:
             return "<keyword>"
         if tok_type == self.CONTROL:
             return "<control>"
+        if tok_type == self.IGNORE:
+            return "<ignore>"
         raise AssertionError(f"Unexpected: {tok_type}")
 
     def next_tok_type(self, token) -> int:  # pylint: disable=method-hidden
@@ -1550,6 +1556,23 @@ class _ConsiderArgsAsKeywordNames:
 
         if self._current_arg == self._consider_keyword_at_index:
             return self.KEYWORD
+
+        return self.NONE
+
+    def _next_tok_type_for_each_input_work_item(self, token):
+        from robotframework_ls.impl.variable_resolve import find_split_index
+
+        assert token.type == token.ARGUMENT
+        self._current_arg += 1
+
+        if self._current_arg == self._consider_keyword_at_index:
+            return self.KEYWORD
+
+        i = find_split_index(token.value)
+        if i > 0:
+            v = normalize_robot_name(token.value[:i])
+            if v in ("itemslimit", "returnresults"):
+                return self.IGNORE
 
         return self.NONE
 

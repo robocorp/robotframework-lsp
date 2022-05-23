@@ -1962,3 +1962,45 @@ Test case 1
     Col.Append to list    ${lst}    1    2
 """
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_for_each_input_work_item(workspace, libspec_manager, data_regression):
+    from pathlib import Path
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case2.robot")
+    p = Path(doc.path)
+    p = p.parent
+    my_library_path = p / "my_library2.py"
+    my_library_path.write_text(
+        """
+def for_each_input_work_item(
+    keyword_or_func,
+    *args,
+    items_limit: int = 0,
+    return_results: bool = True,
+    **kwargs,
+):
+    print('OK')
+""",
+        "utf-8",
+    )
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Setting ***
+Library    my_library2.py
+    
+*** Test Cases ***
+Test case 1
+    For each input work item    No operation
+    For each input work item    No operation    items_limit=0
+    For each input work item    No operation    items_limit=0    return_results=False
+    For each input work item    No operation    items_limit=0    return_results=False    invalid_arg=True
+    For each input work item    No operation    invalid_arg1    items_limit=0    return_results=False
+    
+*** Keywords ***
+Some Keyword
+    No operation
+"""
+    _collect_errors(workspace, doc, data_regression)
