@@ -2,9 +2,10 @@ import { commands, Progress, ProgressLocation, window } from "vscode";
 import { OUTPUT_CHANNEL } from "./channel";
 import * as pathModule from "path";
 import { listAndAskRobotSelection, resolveInterpreter } from "./activities";
-import * as roboCommands from "./robocorpCommands";
 import { getRccLocation } from "./rcc";
 import { mergeEnviron } from "./subprocess";
+import { getAutosetpythonextensiondisableactivateterminal } from "./robocorpSettings";
+import { disablePythonTerminalActivateEnvironment } from "./pythonExtIntegration";
 
 export async function askAndCreateRccTerminal() {
     let robot: LocalRobotMetadataInfo = await listAndAskRobotSelection(
@@ -42,6 +43,12 @@ export async function createRccTerminal(robotInfo: LocalRobotMetadataInfo) {
             if (!interpreter || !interpreter.pythonExe) {
                 window.showWarningMessage("Unable to obtain interpreter information from: " + robotInfo.filePath);
                 return;
+            }
+
+            // If vscode-python is installed, we need to disable the terminal activation as it
+            // conflicts with the robot environment.
+            if (getAutosetpythonextensiondisableactivateterminal()) {
+                await disablePythonTerminalActivateEnvironment();
             }
 
             let env = mergeEnviron();

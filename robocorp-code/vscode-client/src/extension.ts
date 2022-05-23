@@ -538,10 +538,6 @@ export async function activate(context: ExtensionContext) {
     OUTPUT_CHANNEL.appendLine("Activating Robocorp Code extension.");
     C = new CommandRegistry(context);
 
-    if (roboConfig.getAutosetpythonextensiondisableactivateterminal()) {
-        await disablePythonTerminalActivateEnvironment();
-    }
-
     try {
         return await langServerMutex.dispatch(async () => {
             let ret = await doActivate(context, C);

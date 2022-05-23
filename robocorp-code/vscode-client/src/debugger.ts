@@ -20,6 +20,7 @@ import {
     ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL,
 } from "./robocorpCommands";
 import { globalCachedPythonInfo } from "./extension";
+import { disablePythonTerminalActivateEnvironment } from "./pythonExtIntegration";
 
 interface ActionResult {
     success: boolean;
@@ -85,6 +86,12 @@ export class RobocorpCodeDebugConfigurationProvider implements DebugConfiguratio
             }
         } catch (error) {
             // The command may not be available.
+        }
+
+        // If vscode-python is installed, we need to disable the terminal activation as it
+        // conflicts with the robot environment.
+        if (roboConfig.getAutosetpythonextensiondisableactivateterminal()) {
+            await disablePythonTerminalActivateEnvironment();
         }
 
         if (debugConfiguration.noDebug) {
