@@ -5,14 +5,14 @@ from pathlib import Path
 
 from robot.api import Token
 from robot.parsing.model.blocks import TestCaseSection
-from robot.parsing.model.statements import KeywordCall, Return
+from robot.parsing.model.statements import KeywordCall, Return, Teardown
 
 try:
-    from robot.api.parsing import Variable, Comment, EmptyLine, If
+    from robot.api.parsing import Comment, EmptyLine, If, Variable
 except ImportError:
-    from robot.parsing.model.statements import Variable, Comment, EmptyLine
+    from robot.parsing.model.statements import Comment, EmptyLine, Variable
 try:
-    from robot.api.parsing import ReturnStatement, InlineIfHeader, Break, Continue
+    from robot.api.parsing import Break, Continue, InlineIfHeader, ReturnStatement
 except ImportError:
     ReturnStatement, InlineIfHeader, Break, Continue = None, None, None, None
 from robot.libraries import STDLIBS
@@ -184,7 +184,7 @@ rules = {
     "0912": Rule(
         rule_id="0912",
         name="empty-variable",
-        msg="Use built-in variable ${EMPTY} instead of leaving variable without value or using backslash",
+        msg="Use built-in variable {{ var_type }}{EMPTY} instead of leaving variable without value or using backslash",
         severity=RuleSeverity.INFO,
         docs="""
         Example of rule violation::
@@ -264,7 +264,7 @@ rules = {
             name="max_width",
             default=80,
             converter=int,
-            desc="Maximum width of IF (in characters) below which it will be recommended to use inline IF",
+            desc="maximum width of IF (in characters) below which it will be recommended to use inline IF",
         ),
         rule_id="0916",
         name="inline-if-can-be-used",
@@ -314,7 +314,7 @@ class ReturnChecker(VisitorChecker):
             elif ReturnStatement and isinstance(child, ReturnStatement):  # type: ignore[arg-type]
                 return_setting_node = child
                 error = "RETURN is not defined at the end of keyword"
-            elif not isinstance(child, (EmptyLine, Comment)):
+            elif not isinstance(child, (EmptyLine, Comment, Teardown)):
                 if return_setting_node is not None:
                     keyword_after_return = True
 
@@ -368,8 +368,9 @@ class IfBlockCanBeUsed(VisitorChecker):
 class ConsistentAssignmentSignChecker(VisitorChecker):
     """Checker for inconsistent assignment signs.
 
-    By default this checker will try to autodetect most common assignment sign (separately for *** Variables *** section
-    and (*** Test Cases ***, *** Keywords ***) sections and report any not consistent type of sign in particular file.
+    By default, this checker will try to autodetect most common assignment sign (separately for *** Variables ***
+    section and *** Test Cases ***, *** Keywords *** sections) and report any inconsistent type of sign in particular
+    file.
 
     To force one type of sign type you, can configure two rules::
 
@@ -493,11 +494,12 @@ class EmptyVariableChecker(VisitorChecker):
         if get_errors(node):
             return
         if not node.value:  # catch variable declaration without any value
-            self.report("empty-variable", node=node)
+            self.report("empty-variable", var_type=node.name[0], node=node)
         for token in node.get_tokens(Token.ARGUMENT):
             if not token.value or token.value == "\\":
                 self.report(
                     "empty-variable",
+                    var_type="$",
                     node=token,
                     lineno=token.lineno,
                     col=token.col_offset,

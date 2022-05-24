@@ -5,7 +5,7 @@ import re
 from collections import Counter, defaultdict
 from importlib import import_module
 from pathlib import Path
-from typing import Pattern, List, Tuple, Dict, Optional
+from typing import Dict, List, Optional, Pattern, Tuple
 
 from robot.api import Token
 from robot.parsing.model.statements import EmptyLine
@@ -15,15 +15,13 @@ try:
 except ImportError:
     from robot.parsing.model.statements import Variable
 
-from robot.version import VERSION as RF_VERSION
 from packaging import version
+from robot.version import VERSION as RF_VERSION
 
-from robocop.version import __version__
 from robocop.exceptions import InvalidExternalCheckerError
+from robocop.version import __version__
 
 ROBOT_VERSION = version.parse(RF_VERSION)
-if not hasattr(ROBOT_VERSION, "major"):
-    ROBOT_VERSION.major = ROBOT_VERSION.release[0]
 
 
 def modules_in_current_dir(path, module_name):
@@ -123,6 +121,10 @@ def issues_to_lsp_diagnostic(issues) -> List[Dict]:
         }
         for issue in issues
     ]
+
+
+def str2bool(v):
+    return v.lower() in ("yes", "true", "1")
 
 
 class AssignmentTypeDetector(ast.NodeVisitor):

@@ -6,8 +6,8 @@ from collections import defaultdict
 from pathlib import Path
 
 from robot.api import Token
-from robot.parsing.model.statements import Arguments, KeywordCall
 from robot.parsing.model.blocks import Keyword
+from robot.parsing.model.statements import Arguments, KeywordCall
 
 from robocop.checkers import VisitorChecker
 from robocop.rules import Rule, RuleParam, RuleSeverity
@@ -53,7 +53,7 @@ rules = {
         ),
         rule_id="0302",
         name="wrong-case-in-keyword-name",
-        msg="Keyword name '{{ keyword_name }}' should use title case",
+        msg="Keyword name '{{ keyword_name }}' does not follow case convention",
         severity=RuleSeverity.WARNING,
     ),
     "0303": Rule(
@@ -262,7 +262,6 @@ rules = {
         msg="'{{ statement_name }}' is deprecated since Robot Framework version "
         "{{ version }}, use '{{ alternative }}' instead",
         severity=RuleSeverity.WARNING,
-        version=">=4.0",
     ),
 }
 
@@ -361,7 +360,7 @@ class KeywordNamingChecker(VisitorChecker):
     bdd = {"given", "when", "and", "but", "then"}
 
     def __init__(self):
-        self.letter_pattern = re.compile(r"\W|_", re.UNICODE)
+        self.letter_pattern = re.compile(r"[^\w()-]|_", re.UNICODE)
         self.inside_if_block = False
         super().__init__()
 
@@ -644,7 +643,6 @@ class DeprecatedStatementChecker(VisitorChecker):
 
     reports = ("deprecated-statement",)
     deprecated_keywords = {
-        4: {"runkeywordunless": "IF"},
         5: {
             "runkeywordunless": "IF",
             "runkeywordif": "IF",
@@ -667,6 +665,8 @@ class DeprecatedStatementChecker(VisitorChecker):
 
     def visit_Return(self, node):  # noqa
         """For RETURN use visit_ReturnStatement - visit_Return will most likely visit RETURN in the future"""
+        if ROBOT_VERSION.major < 5:
+            return
         self.report(
             "deprecated-statement",
             statement_name="[Return]",

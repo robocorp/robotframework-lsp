@@ -11,8 +11,7 @@ from robot.parsing.model.visitor import ModelVisitor
 
 from robocop.checkers import RawFileChecker, VisitorChecker
 from robocop.rules import Rule, RuleParam, RuleSeverity
-from robocop.utils import token_col, get_section_name, get_errors
-from robocop.utils.misc import ROBOT_VERSION
+from robocop.utils import get_errors, get_section_name, token_col
 
 rules = {
     "1001": Rule(
@@ -314,7 +313,8 @@ class EmptyLinesChecker(VisitorChecker):
                         allowed_empty_lines=self.param("consecutive-empty-lines", "empty_lines"),
                         node=prev_node,
                     )
-                empty_lines = 0
+                if not isinstance(child, Comment):
+                    empty_lines = 0
         return empty_lines
 
     def visit_Statement(self, node):  # noqa
