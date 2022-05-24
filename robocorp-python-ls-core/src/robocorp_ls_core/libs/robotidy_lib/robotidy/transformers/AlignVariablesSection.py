@@ -3,8 +3,9 @@ from collections import defaultdict
 from robot.api.parsing import ModelTransformer, Token
 from robot.parsing.model import Statement
 
-from robotidy.utils import node_outside_selection, round_to_four, tokens_by_lines, left_align, is_blank_multiline
+from robotidy.disablers import skip_section_if_disabled
 from robotidy.exceptions import InvalidParameterValueError
+from robotidy.utils import is_blank_multiline, left_align, round_to_four, tokens_by_lines
 
 
 class AlignVariablesSection(ModelTransformer):
@@ -66,12 +67,11 @@ class AlignVariablesSection(ModelTransformer):
             return True
         return node.name[0] not in self.skip_types
 
+    @skip_section_if_disabled
     def visit_VariableSection(self, node):  # noqa
-        if node_outside_selection(node, self.formatting_config):
-            return node
         statements = []
         for child in node.body:
-            if node_outside_selection(child, self.formatting_config):
+            if self.disablers.is_node_disabled(child):
                 statements.append(child)
             elif child.type in (Token.EOL, Token.COMMENT):
                 statements.append(left_align(child))

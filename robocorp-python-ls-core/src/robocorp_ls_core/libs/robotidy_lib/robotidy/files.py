@@ -1,11 +1,10 @@
-from typing import Iterable, Dict, Any, List, Iterator, Tuple, Pattern, Optional
-from pathlib import Path
-import toml
 from functools import lru_cache
+from pathlib import Path
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Pattern, Tuple
 
 import click
+import toml
 from pathspec import PathSpec
-
 
 DEFAULT_EXCLUDES = r"/(\.direnv|\.eggs|\.git|\.hg|\.nox|\.tox|\.venv|venv|\.svn)/"
 INCLUDE_EXT = (".robot", ".resource")

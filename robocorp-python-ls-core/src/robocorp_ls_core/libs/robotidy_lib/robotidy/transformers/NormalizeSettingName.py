@@ -1,7 +1,7 @@
 from robot.api.parsing import ModelTransformer, Token
 from robot.utils.normalizing import normalize_whitespace
 
-from robotidy.decorators import check_start_end_line
+from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
 
 
 class NormalizeSettingName(ModelTransformer):
@@ -36,7 +36,11 @@ class NormalizeSettingName(ModelTransformer):
     See https://robotidy.readthedocs.io/en/latest/transformers/NormalizeSettingName.html for more examples.
     """
 
-    @check_start_end_line
+    @skip_section_if_disabled
+    def visit_Section(self, node):  # noqa
+        return self.generic_visit(node)
+
+    @skip_if_disabled
     def visit_Statement(self, node):  # noqa
         if node.type not in Token.SETTING_TOKENS:
             return node

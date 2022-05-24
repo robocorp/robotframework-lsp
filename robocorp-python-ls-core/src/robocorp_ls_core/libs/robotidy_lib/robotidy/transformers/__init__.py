@@ -9,12 +9,13 @@ If you don't want to run your transformer by default and only when calling robot
 then add ``ENABLED = False`` class attribute inside.
 """
 from itertools import chain
-from robot.utils.importer import Importer
+
+import click
 from robot.errors import DataError
+from robot.utils.importer import Importer
 
-from robotidy.utils import RecommendationFinder
-from robotidy.exceptions import InvalidParameterError, InvalidParameterFormatError, ImportTransformerError
-
+from robotidy.exceptions import ImportTransformerError, InvalidParameterError, InvalidParameterFormatError
+from robotidy.utils import ROBOT_VERSION, RecommendationFinder
 
 TRANSFORMERS = [
     "AddMissingEnd",
@@ -120,7 +121,30 @@ def validate_config(config, allowed_mapped):
         ) from None
 
 
-def load_transformers(allowed_transformers, config, allow_disabled=False, force_order=False):
+def can_run_in_robot_version(transformer, overwritten, target_version):
+    if not hasattr(transformer, "MIN_VERSION"):
+        return True
+    if target_version >= transformer.MIN_VERSION:
+        return True
+    if overwritten:
+        # --transform TransformerDisabledInVersion or --configure TransformerDisabledInVersion:enabled=True
+        if target_version == ROBOT_VERSION.major:
+            click.echo(
+                f"{transformer.__class__.__name__} transformer requires Robot Framework {transformer.MIN_VERSION}.* "
+                f"version but you have {ROBOT_VERSION} installed. "
+                f"Upgrade installed Robot Framework if you want to use this transformer."
+            )
+        else:
+            click.echo(
+                f"{transformer.__class__.__name__} transformer requires Robot Framework {transformer.MIN_VERSION}.* "
+                f"version but you set --target-version rf{target_version}. "
+                f"Set --target-version to rf{transformer.MIN_VERSION} or do not forcefully enable this transformer "
+                f"with --transform / enable parameter."
+            )
+    return False
+
+
+def load_transformers(allowed_transformers, config, target_version, allow_disabled=False, force_order=False):
     """Dynamically load all classes from this file with attribute `name` defined in allowed_transformers"""
     loaded_transformers = []
     allowed_mapped = {name: args for name, args in allowed_transformers} if allowed_transformers else {}
@@ -134,11 +158,17 @@ def load_transformers(allowed_transformers, config, allow_disabled=False, force_
                     continue
                 enabled = getattr(imported_class, "ENABLED", True) or args.get("enabled", False)
                 if allowed_mapped or allow_disabled or enabled:
-                    loaded_transformers.append(imported_class)
+                    overwritten = name in allowed_mapped or args.get("enabled", False)
+                    if can_run_in_robot_version(imported_class, overwritten=overwritten, target_version=target_version):
+                        loaded_transformers.append(imported_class)
+                    elif allow_disabled:
+                        setattr(imported_class, "ENABLED", False)
+                        loaded_transformers.append(imported_class)
     for name in allowed_mapped:
         if force_order or name not in TRANSFORMERS:
             args = get_args(name, allowed_mapped, config)
             imported_class = load_transformer(name, args)
             if imported_class is not None:
-                loaded_transformers.append(imported_class)
+                if can_run_in_robot_version(imported_class, overwritten=True, target_version=target_version):
+                    loaded_transformers.append(imported_class)
     return loaded_transformers

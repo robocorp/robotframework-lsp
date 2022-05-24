@@ -1,6 +1,6 @@
-from robot.api.parsing import ModelTransformer, SectionHeader, Token
+from robot.api.parsing import ModelTransformer, Token
 
-from robotidy.decorators import check_start_end_line
+from robotidy.disablers import skip_section_if_disabled
 
 
 class NormalizeSectionHeaderName(ModelTransformer):
@@ -33,7 +33,10 @@ class NormalizeSectionHeaderName(ModelTransformer):
     def __init__(self, uppercase: bool = False):
         self.uppercase = uppercase
 
-    @check_start_end_line
+    @skip_section_if_disabled
+    def visit_Section(self, node):  # noqa
+        return self.generic_visit(node)
+
     def visit_SectionHeader(self, node):  # noqa
         if node.name and "task" in node.name.lower():
             name = "*** Tasks ***"

@@ -1,17 +1,22 @@
-import os
 import ast
-from typing import List, Optional, Iterable
+from enum import Enum
 import difflib
+import os
+from typing import Iterable, List, Optional
 
+from click import style
 from packaging import version
-from robot.version import VERSION as RF_VERSION
-from robot.api.parsing import ModelVisitor, Token, If, IfHeader, End
+from robot.api.parsing import End, If, IfHeader, ModelVisitor, Token
 from robot.parsing.model import Statement
 from robot.utils.robotio import file_writer
-from click import style
-
+from robot.version import VERSION as RF_VERSION
 
 ROBOT_VERSION = version.parse(RF_VERSION)
+
+
+class TargetVersion(Enum):
+    RF4 = 4
+    RF5 = 5
 
 
 class StatementLinesCollector(ModelVisitor):
@@ -83,34 +88,6 @@ def normalize_name(name):
 
 def after_last_dot(name):
     return name.split(".")[-1]
-
-
-def node_within_lines(node_start, node_end, start_line, end_line):
-    if start_line:
-        if node_start < start_line:
-            return False
-        if end_line:
-            if node_end > end_line:
-                return False
-        else:
-            if start_line != node_start:
-                return False
-    return True
-
-
-def node_outside_selection(node, formatting_config):
-    """
-    Contrary to ``node_within_lines`` it just checks if node is fully outside selected lines.
-    Partial selection is useful for transformers like aligning code.
-    """
-    if (
-        formatting_config.start_line
-        and formatting_config.start_line > node.end_lineno
-        or formatting_config.end_line
-        and formatting_config.end_line < node.lineno
-    ):
-        return True
-    return False
 
 
 def split_args_from_name_or_path(name):

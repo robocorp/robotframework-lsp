@@ -7,7 +7,7 @@ try:
 except ImportError:
     InlineIfHeader = None
 
-from robotidy.decorators import check_start_end_line
+from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
 from robotidy.exceptions import InvalidParameterValueError
 
 
@@ -63,18 +63,23 @@ class NormalizeSeparators(ModelTransformer):
             return self.generic_visit(node)
         return node
 
+    @skip_section_if_disabled
     def visit_CommentSection(self, node):  # noqa
         return self.should_visit("comments", node)
 
+    @skip_section_if_disabled
     def visit_SettingSection(self, node):  # noqa
         return self.should_visit("settings", node)
 
+    @skip_section_if_disabled
     def visit_VariableSection(self, node):  # noqa
         return self.should_visit("variables", node)
 
+    @skip_section_if_disabled
     def visit_KeywordSection(self, node):  # noqa
         return self.should_visit("keywords", node)
 
+    @skip_section_if_disabled
     def visit_TestCaseSection(self, node):  # noqa
         return self.should_visit("testcases", node)
 
@@ -126,7 +131,7 @@ class NormalizeSeparators(ModelTransformer):
         self.is_inline = False
         return node
 
-    @check_start_end_line
+    @skip_if_disabled
     def visit_Statement(self, statement):  # noqa
         has_pipes = statement.tokens[0].value.startswith("|")
         return self._handle_spaces(statement, has_pipes)

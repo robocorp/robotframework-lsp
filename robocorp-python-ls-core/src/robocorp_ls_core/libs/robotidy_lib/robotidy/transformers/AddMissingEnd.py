@@ -1,11 +1,11 @@
-from robot.api.parsing import ModelTransformer, Token, End, Comment, EmptyLine
+from robot.api.parsing import Comment, EmptyLine, End, ModelTransformer, Token
 
 try:
     from robot.api.parsing import InlineIfHeader
 except ImportError:
     InlineIfHeader = None
 
-from robotidy.decorators import check_start_end_line
+from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
 
 
 class AddMissingEnd(ModelTransformer):
@@ -35,15 +35,19 @@ class AddMissingEnd(ModelTransformer):
         self.fix_end(node)
         return (node, *outside)
 
-    @check_start_end_line
+    @skip_section_if_disabled
+    def visit_Section(self, node):  # noqa
+        return self.generic_visit(node)
+
+    @skip_if_disabled
     def visit_For(self, node):  # noqa
         return self.fix_block(node, Token.FOR)
 
-    @check_start_end_line
+    @skip_if_disabled
     def visit_While(self, node):  # noqa
         return self.fix_block(node, Token.WHILE)
 
-    @check_start_end_line
+    @skip_if_disabled
     def visit_Try(self, node):  # noqa
         self.generic_visit(node)
         if node.type != Token.TRY:
@@ -60,7 +64,7 @@ class AddMissingEnd(ModelTransformer):
         self.fix_end(node)
         return (node, *outside)
 
-    @check_start_end_line
+    @skip_if_disabled
     def visit_If(self, node):  # noqa
         self.generic_visit(node)
         if node.type != Token.IF:

@@ -1,15 +1,7 @@
-from robot.api.parsing import (
-    Token,
-    ModelTransformer,
-    End,
-    If,
-    IfHeader,
-    ElseHeader,
-    ElseIfHeader,
-    KeywordCall,
-)
-from robotidy.utils import normalize_name, after_last_dot
-from robotidy.decorators import check_start_end_line
+from robot.api.parsing import ElseHeader, ElseIfHeader, End, If, IfHeader, KeywordCall, ModelTransformer, Token
+
+from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
+from robotidy.utils import after_last_dot, normalize_name
 
 
 def insert_separators(indent, tokens, separator):
@@ -70,7 +62,11 @@ class ReplaceRunKeywordIf(ModelTransformer):
     See https://robotidy.readthedocs.io/en/latest/transformers/ReplaceRunKeywordIf.html for more examples.
     """
 
-    @check_start_end_line
+    @skip_section_if_disabled
+    def visit_Section(self, node):  # noqa
+        return self.generic_visit(node)
+
+    @skip_if_disabled
     def visit_KeywordCall(self, node):  # noqa
         if not node.keyword:
             return node

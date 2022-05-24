@@ -1,6 +1,6 @@
-from robot.api.parsing import ModelTransformer, EmptyLine, Comment, Token
+from robot.api.parsing import Comment, EmptyLine, ModelTransformer, Token
 
-from robotidy.decorators import check_start_end_line
+from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
 from robotidy.exceptions import InvalidParameterValueError
 
 
@@ -127,11 +127,15 @@ class OrderSettings(ModelTransformer):
             self.get_order(test_after, testcase_order_after, test_map),
         )
 
-    @check_start_end_line
+    @skip_section_if_disabled
+    def visit_Section(self, node):  # noqa
+        return self.generic_visit(node)
+
+    @skip_if_disabled
     def visit_Keyword(self, node):  # noqa
         return self.order_settings(node, self.keyword_settings, self.keyword_before, self.keyword_after)
 
-    @check_start_end_line
+    @skip_if_disabled
     def visit_TestCase(self, node):  # noqa
         return self.order_settings(node, self.test_settings, self.test_before, self.test_after)
 

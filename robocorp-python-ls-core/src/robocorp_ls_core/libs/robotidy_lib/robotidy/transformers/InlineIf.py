@@ -1,14 +1,14 @@
 from itertools import chain
 
-from robot.api.parsing import ModelTransformer, If, IfHeader, ElseHeader, ElseIfHeader, Token, KeywordCall, Comment, End
+from robot.api.parsing import Comment, ElseHeader, ElseIfHeader, End, If, IfHeader, KeywordCall, ModelTransformer, Token
 
 try:
-    from robot.api.parsing import ReturnStatement, Break, Continue, InlineIfHeader
+    from robot.api.parsing import Break, Continue, InlineIfHeader, ReturnStatement
 except ImportError:
     ReturnStatement, Break, Continue, InlineIfHeader = None, None, None, None
 
-from robotidy.utils import ROBOT_VERSION, normalize_name, get_comments, flatten_multiline
-from robotidy.decorators import check_start_end_line
+from robotidy.disablers import skip_section_if_disabled
+from robotidy.utils import ROBOT_VERSION, flatten_multiline, get_comments, normalize_name
 
 
 class InlineIf(ModelTransformer):
@@ -54,15 +54,20 @@ class InlineIf(ModelTransformer):
     See https://robotidy.readthedocs.io/en/latest/transformers/InlineIf.html for more examples.
     """
 
-    ENABLED = ROBOT_VERSION.major >= 5
+    MIN_VERSION = 5
 
     def __init__(self, line_length: int = 80, skip_else: bool = False):
         self.line_length = line_length
         self.skip_else = skip_else
 
-    @check_start_end_line
+    @skip_section_if_disabled
+    def visit_Section(self, node):  # noqa
+        return self.generic_visit(node)
+
     def visit_If(self, node: If):  # noqa
         if node.errors or getattr(node.end, "errors", None):
+            return node
+        if self.disablers.is_node_disabled(node, full_match=False):
             return node
         if self.is_inline(node):
             return self.handle_inline(node)

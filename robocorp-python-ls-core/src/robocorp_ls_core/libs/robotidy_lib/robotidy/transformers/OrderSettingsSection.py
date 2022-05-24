@@ -1,8 +1,9 @@
 from collections import defaultdict
 
-from robot.api.parsing import ModelTransformer, Comment, Token, EmptyLine, LibraryImport
+from robot.api.parsing import Comment, EmptyLine, LibraryImport, ModelTransformer, Token
 from robot.libraries import STDLIBS
 
+from robotidy.disablers import skip_section_if_disabled
 from robotidy.exceptions import InvalidParameterValueError
 
 
@@ -23,20 +24,14 @@ class OrderSettingsSection(ModelTransformer):
       - ``imports_order = preserved``
       - ``settings_order = suite_setup,suite_teardown,test_setup,test_teardown,test_timeout,test_template``
 
-    By default order of imports is preserved. You can overwrite this behaviour:
-
-        robotidy --configure OrderSettingsSections:imports_order=library,resource,variables
-
-    You can also preserve order inside any group by passing ``preserved`` instead of setting names:
-
-        robotidy --configure OrderSettingsSections:settings_order=preserved
+    By default order of imports is preserved. Read more on configuring this behaviour in the documentation in
+    ``Imports order`` section.
 
     Setting names omitted from custom order will be removed from the file. In following example we are missing metadata
     therefore all metadata will be removed:
 
         robotidy --configure OrderSettingsSection:documentation_order=documentation
 
-    Libraries are grouped into built in libraries and custom libraries.
     Parsing errors (such as Resources instead of Resource, duplicated settings) are moved to the end of section.
 
     See https://robotidy.readthedocs.io/en/latest/transformers/OrderSettingsSection.html for more examples.
@@ -137,6 +132,7 @@ class OrderSettingsSection(ModelTransformer):
         self.last_section = node.sections[-1] if node.sections else None
         return self.generic_visit(node)
 
+    @skip_section_if_disabled
     def visit_SettingSection(self, node):  # noqa
         if not node.body:
             return

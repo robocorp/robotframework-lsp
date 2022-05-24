@@ -1,20 +1,20 @@
 from typing import Iterable
 
-from robot.api.parsing import ModelTransformer, Token, EmptyLine, Comment
+from robot.api.parsing import Comment, EmptyLine, ModelTransformer, Token
 
 try:
     from robot.api.parsing import ReturnStatement
 except ImportError:
     ReturnStatement = None
 
+from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
 from robotidy.utils import (
-    normalize_name,
-    after_last_dot,
     ROBOT_VERSION,
-    wrap_in_if_and_replace_statement,
+    after_last_dot,
     create_statement_from_tokens,
+    normalize_name,
+    wrap_in_if_and_replace_statement,
 )
-from robotidy.decorators import check_start_end_line
 
 
 class ReplaceReturns(ModelTransformer):
@@ -50,10 +50,14 @@ class ReplaceReturns(ModelTransformer):
     See https://robotidy.readthedocs.io/en/latest/transformers/ReplaceReturns.html for more examples.
     """
 
-    ENABLED = ROBOT_VERSION.major >= 5
+    MIN_VERSION = 5
 
     def __init__(self):
         self.return_statement = None
+
+    @skip_section_if_disabled
+    def visit_Section(self, node):  # noqa
+        return self.generic_visit(node)
 
     def visit_Keyword(self, node):  # noqa
         self.return_statement = None
@@ -70,7 +74,7 @@ class ReplaceReturns(ModelTransformer):
             node.body.extend(skip_lines)
         return node
 
-    @check_start_end_line
+    @skip_if_disabled
     def visit_KeywordCall(self, node):  # noqa
         if not node.keyword or node.errors:
             return node
@@ -83,11 +87,11 @@ class ReplaceReturns(ModelTransformer):
             return wrap_in_if_and_replace_statement(node, ReturnStatement, self.formatting_config.separator)
         return node
 
-    @check_start_end_line
+    @skip_if_disabled
     def visit_Return(self, node):  # noqa
         self.return_statement = node
 
-    @check_start_end_line
+    @skip_if_disabled
     def visit_Error(self, node):  # noqa
         """Remove duplicate [Return]"""
         for error in node.errors:

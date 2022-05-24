@@ -1,18 +1,18 @@
 from robot.api.parsing import (
-    ModelTransformer,
-    Token,
-    EmptyLine,
     Comment,
-    ModelVisitor,
-    ForHeader,
-    End,
-    IfHeader,
     ElseHeader,
     ElseIfHeader,
+    EmptyLine,
+    End,
+    ForHeader,
+    IfHeader,
+    ModelTransformer,
+    ModelVisitor,
+    Token,
 )
 
-from robotidy.decorators import check_start_end_line
-from robotidy.utils import round_to_four, is_suite_templated
+from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
+from robotidy.utils import is_suite_templated, round_to_four
 
 
 class AlignTestCases(ModelTransformer):
@@ -67,16 +67,16 @@ class AlignTestCases(ModelTransformer):
 
     visit_Else = visit_ElseIf = visit_For = visit_If
 
-    @check_start_end_line
+    @skip_section_if_disabled
     def visit_TestCaseSection(self, node):  # noqa
         if len(node.header.data_tokens) == 1 and self.only_with_headers:
             return node
-        counter = ColumnWidthCounter(self.formatting_config)
+        counter = ColumnWidthCounter(self.disablers)
         counter.visit(node)
         self.widths = counter.widths
         return self.generic_visit(node)
 
-    @check_start_end_line
+    @skip_if_disabled
     def visit_Statement(self, statement):  # noqa
         if statement.type == Token.TESTCASE_NAME:
             self.test_name_len = len(statement.tokens[0].value)
@@ -143,9 +143,9 @@ class AlignTestCases(ModelTransformer):
 
 
 class ColumnWidthCounter(ModelVisitor):
-    def __init__(self, formatting_config):
+    def __init__(self, disablers):
         self.widths = []
-        self.formatting_config = formatting_config
+        self.disablers = disablers
         self.test_name_lineno = -1
         self.any_one_line_test = False
         self.header_with_cols = False
@@ -156,7 +156,7 @@ class ColumnWidthCounter(ModelVisitor):
             self.widths[0] = 0
         self.widths = [round_to_four(length) for length in self.widths]
 
-    @check_start_end_line
+    @skip_if_disabled
     def visit_Statement(self, statement):  # noqa
         if statement.type == Token.COMMENT:
             return

@@ -1,5 +1,6 @@
-from robot.api.parsing import ModelTransformer, EmptyLine, Comment, CommentSection
-from robotidy.decorators import check_start_end_line
+from robot.api.parsing import Comment, CommentSection, EmptyLine, ModelTransformer
+
+from robotidy.disablers import skip_section_if_disabled
 
 
 class DiscardEmptySections(ModelTransformer):
@@ -20,7 +21,7 @@ class DiscardEmptySections(ModelTransformer):
         # If False then sections with only with comments are considered to be empty
         self.allow_only_comments = allow_only_comments
 
-    @check_start_end_line
+    @skip_section_if_disabled
     def visit_Section(self, node):  # noqa
         anything_but = (
             EmptyLine if self.allow_only_comments or isinstance(node, CommentSection) else (Comment, EmptyLine)

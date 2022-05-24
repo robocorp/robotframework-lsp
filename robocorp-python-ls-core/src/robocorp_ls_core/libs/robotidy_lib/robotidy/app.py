@@ -3,20 +3,16 @@ import sys
 from collections import defaultdict
 from difflib import unified_diff
 from pathlib import Path
-from typing import List, Tuple, Dict, Optional, Pattern
+from typing import Dict, List, Optional, Pattern, Tuple
 
 import click
 from robot.api import get_model
 from robot.errors import DataError
 
+from robotidy.disablers import RegisterDisablers
 from robotidy.files import get_paths
 from robotidy.transformers import load_transformers
-from robotidy.utils import (
-    StatementLinesCollector,
-    decorate_diff_with_color,
-    GlobalFormattingConfig,
-    ModelWriter,
-)
+from robotidy.utils import GlobalFormattingConfig, ModelWriter, StatementLinesCollector, decorate_diff_with_color
 
 
 class Robotidy:
@@ -34,6 +30,8 @@ class Robotidy:
         check: bool,
         output: Optional[Path],
         force_order: bool,
+        target_version: int,
+        color: bool,
     ):
         self.sources = get_paths(src, exclude, extend_exclude)
         self.overwrite = overwrite
@@ -42,14 +40,18 @@ class Robotidy:
         self.verbose = verbose
         self.formatting_config = formatting_config
         self.output = output
+        self.color = color
         transformers_config = self.convert_configure(transformers_config)
-        self.transformers = load_transformers(transformers, transformers_config, force_order=force_order)
+        self.transformers = load_transformers(
+            transformers, transformers_config, force_order=force_order, target_version=target_version
+        )
         for transformer in self.transformers:
             # inject global settings TODO: handle it better
             setattr(transformer, "formatting_config", self.formatting_config)
 
     def transform_files(self):
         changed_files = 0
+        disabler_finder = RegisterDisablers(self.formatting_config.start_line, self.formatting_config.end_line)
         for source in self.sources:
             try:
                 stdin = False
@@ -61,7 +63,10 @@ class Robotidy:
                 elif self.verbose:
                     click.echo(f"Transforming {source} file")
                 model = get_model(source)
-                diff, old_model, new_model = self.transform(model)
+                disabler_finder.visit(model)
+                if disabler_finder.file_disabled:
+                    continue
+                diff, old_model, new_model = self.transform(model, disabler_finder.disablers)
                 if diff:
                     changed_files += 1
                 self.output_diff(model.source, old_model, new_model)
@@ -78,9 +83,10 @@ class Robotidy:
             return 0
         return 1
 
-    def transform(self, model):
+    def transform(self, model, disablers):
         old_model = StatementLinesCollector(model)
         for transformer in self.transformers:
+            setattr(transformer, "disablers", disablers)  # set dynamically to allow using external transformers
             transformer.visit(model)
         new_model = StatementLinesCollector(model)
         return new_model != old_model, old_model, new_model
@@ -123,8 +129,11 @@ class Robotidy:
         lines = list(unified_diff(old, new, fromfile=f"{path}\tbefore", tofile=f"{path}\tafter"))
         if not lines:
             return
-        colorized_output = decorate_diff_with_color(lines)
-        click.echo(colorized_output.encode("ascii", "ignore").decode("ascii"), color=True)
+        if self.color:
+            output = decorate_diff_with_color(lines)
+        else:
+            output = "".join(lines)
+        click.echo(output.encode("ascii", "ignore").decode("ascii"), color=self.color)
 
     @staticmethod
     def convert_configure(configure: List[Tuple[str, List]]) -> Dict[str, List]:

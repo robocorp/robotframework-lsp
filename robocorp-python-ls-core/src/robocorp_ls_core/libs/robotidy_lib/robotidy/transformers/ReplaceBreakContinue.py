@@ -3,12 +3,12 @@ from typing import Iterable
 from robot.api.parsing import ModelTransformer, Token
 
 try:
-    from robot.api.parsing import Continue, Break
+    from robot.api.parsing import Break, Continue
 except ImportError:
     Continue, Break = None, None
 
-from robotidy.utils import normalize_name, after_last_dot, wrap_in_if_and_replace_statement, ROBOT_VERSION
-from robotidy.decorators import check_start_end_line
+from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
+from robotidy.utils import ROBOT_VERSION, after_last_dot, normalize_name, wrap_in_if_and_replace_statement
 
 
 class ReplaceBreakContinue(ModelTransformer):
@@ -46,7 +46,7 @@ class ReplaceBreakContinue(ModelTransformer):
     See https://robotidy.readthedocs.io/en/latest/transformers/ReplaceBreakContinue.html for more examples.
     """
 
-    ENABLED = ROBOT_VERSION.major >= 5
+    MIN_VERSION = 5
 
     def __init__(self):
         self.in_loop = False
@@ -55,11 +55,15 @@ class ReplaceBreakContinue(ModelTransformer):
         self.in_loop = False
         return self.generic_visit(node)
 
+    @skip_section_if_disabled
+    def visit_Section(self, node):  # noqa
+        return self.generic_visit(node)
+
     @staticmethod
     def create_statement_from_tokens(statement, tokens: Iterable, indent: Token):
         return statement([indent, Token(statement.type), *tokens])
 
-    @check_start_end_line
+    @skip_if_disabled
     def visit_KeywordCall(self, node):  # noqa
         if not self.in_loop or not node.keyword or node.errors:
             return node

@@ -1,7 +1,8 @@
 from typing import Optional
 
-from robot.api.parsing import ModelTransformer, EmptyLine, Token
+from robot.api.parsing import EmptyLine, ModelTransformer, Token
 
+from robotidy.disablers import skip_section_if_disabled
 from robotidy.utils import is_suite_templated
 
 
@@ -48,6 +49,7 @@ class NormalizeNewLines(ModelTransformer):
         self.last_section = node.sections[-1] if node.sections else None
         return self.generic_visit(node)
 
+    @skip_section_if_disabled
     def visit_Section(self, node):  # noqa
         self.trim_empty_lines(node)
         empty_line = EmptyLine.from_params()
@@ -75,6 +77,12 @@ class NormalizeNewLines(ModelTransformer):
         if node is not self.last_keyword:
             node.body.extend([EmptyLine.from_params()] * self.keyword_lines)
         return self.generic_visit(node)
+
+    def visit_If(self, node):  # noqa
+        self.trim_empty_lines(node)
+        return self.generic_visit(node)
+
+    visit_For = visit_While = visit_Try = visit_If
 
     def visit_Statement(self, node):  # noqa
         tokens = []

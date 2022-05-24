@@ -2,7 +2,7 @@ import ast
 
 from robot.api.parsing import ModelTransformer, Token
 
-from robotidy.decorators import check_start_end_line
+from robotidy.disablers import skip_section_if_disabled
 from robotidy.exceptions import InvalidParameterValueError
 
 
@@ -52,10 +52,15 @@ class RemoveEmptySettings(ModelTransformer):
             Token.TAGS,
         }
 
-    @check_start_end_line
+    @skip_section_if_disabled
+    def visit_Section(self, node):  # noqa
+        return self.generic_visit(node)
+
     def visit_Statement(self, node):  # noqa
         # when not setting type or setting type but not empty
         if node.type not in Token.SETTING_TOKENS or len(node.data_tokens) != 1:
+            return node
+        if self.disablers.is_node_disabled(node):
             return node
         # when empty and not overwriting anything - remove
         if (

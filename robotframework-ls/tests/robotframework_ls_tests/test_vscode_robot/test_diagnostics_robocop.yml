@@ -1,6 +1,6 @@
 - code: '0203'
   codeDescription:
-    href: https://robocop.readthedocs.io/en/2.0.1/rules.html#missing-doc-suite
+    href: https://robocop.readthedocs.io/en/2.0.2/rules.html#missing-doc-suite
   message: Missing documentation in suite
   range:
     end:
@@ -13,7 +13,7 @@
   source: robocop
 - code: '0704'
   codeDescription:
-    href: https://robocop.readthedocs.io/en/2.0.1/rules.html#ignored-data
+    href: https://robocop.readthedocs.io/en/2.0.2/rules.html#ignored-data
   message: Ignored data found in file
   range:
     end:
@@ -26,7 +26,7 @@
   source: robocop
 - code: '0202'
   codeDescription:
-    href: https://robocop.readthedocs.io/en/2.0.1/rules.html#missing-doc-test-case
+    href: https://robocop.readthedocs.io/en/2.0.2/rules.html#missing-doc-test-case
   message: Missing documentation in 'Test' test case
   range:
     end:
@@ -39,7 +39,7 @@
   source: robocop
 - code: '1001'
   codeDescription:
-    href: https://robocop.readthedocs.io/en/2.0.1/rules.html#trailing-whitespace
+    href: https://robocop.readthedocs.io/en/2.0.2/rules.html#trailing-whitespace
   message: Trailing whitespace at the end of line
   range:
     end:
@@ -52,7 +52,7 @@
   source: robocop
 - code: '0202'
   codeDescription:
-    href: https://robocop.readthedocs.io/en/2.0.1/rules.html#missing-doc-test-case
+    href: https://robocop.readthedocs.io/en/2.0.2/rules.html#missing-doc-test-case
   message: Missing documentation in 'Test' test case
   range:
     end:
@@ -65,7 +65,7 @@
   source: robocop
 - code: 0801
   codeDescription:
-    href: https://robocop.readthedocs.io/en/2.0.1/rules.html#duplicated-test-case
+    href: https://robocop.readthedocs.io/en/2.0.2/rules.html#duplicated-test-case
   message: Multiple test cases with name 'Test' (first occurrence in line 3)
   range:
     end:

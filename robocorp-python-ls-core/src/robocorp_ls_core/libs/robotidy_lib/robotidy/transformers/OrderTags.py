@@ -1,4 +1,6 @@
-from robot.api.parsing import ModelTransformer, Tags, Token, DefaultTags, ForceTags
+from robot.api.parsing import DefaultTags, ForceTags, ModelTransformer, Tags, Token
+
+from robotidy.disablers import skip_section_if_disabled
 
 
 class OrderTags(ModelTransformer):
@@ -50,6 +52,10 @@ class OrderTags(ModelTransformer):
         self.default_tags = default_tags
         self.force_tags = force_tags
 
+    @skip_section_if_disabled
+    def visit_Section(self, node):  # noqa
+        return self.generic_visit(node)
+
     def visit_Tags(self, node):  # noqa
         return self.order_tags(node, Tags, indent=True)
 
@@ -60,6 +66,8 @@ class OrderTags(ModelTransformer):
         return self.order_tags(node, ForceTags) if self.force_tags else node
 
     def order_tags(self, node, tag_class, indent=False):
+        if self.disablers.is_node_disabled(node):
+            return node
         ordered_tags = sorted(
             (tag.value for tag in node.data_tokens[1:]),
             key=self.key,
