@@ -1,3 +1,18 @@
+New in 0.48.0 (NEXT)
+-----------------------------
+
+- Consider as defined a reference to any variable set as a global variable anywhere on the workspace. [#641](https://github.com/robocorp/robotframework-lsp/issues/641)
+- GitHub CoPilot inline suggestions are applied when tab is activated instead of adding 4-spaces.
+- Fixed integration with robotframework-tidy which could make formatting the same code a second time misbehave. [#687](https://github.com/robocorp/robotframework-lsp/issues/687)
+- Properly consider that `For each input work item` from `rpaframework` receives a keyword as the first parameter. [#684](https://github.com/robocorp/robotframework-lsp/issues/684)
+- Added support for `Import Library` keyword. [#675](https://github.com/robocorp/robotframework-lsp/issues/675)
+- Implemented expand and shrink selection (use `Shift+Alt+Right` to select outer scope and `Shift+Alt+left` to deselect).
+- A simpler TextMate grammar is now used to work better with bracket pair colorization (which is enabled by default in VSCode `1.67`).
+    - Note that initially very little code will be highlighted until semantic highlighting takes over.
+- Updated `robotframework-tidy` to `2.2.0`.
+- Updated `Robocop` to `2.0.2`.
+
+
 New in 0.47.2 (2022-05-11)
 -----------------------------
 

@@ -1,3 +1,10 @@
+New in 0.33.0 (NEXT)
+-----------------------------
+
+- `python.terminal.activateEnvironment` is only set to false when making a launch or creating a Robot terminal.
+- Debug console is no longer opened when launching in the terminal.
+
+
 New in 0.32.0 (2022-04-19)
 -----------------------------
 
