@@ -31,3 +31,44 @@ Check
     data_regression.check(
         [x.to_dict() for x in text_edits], basename="test_formatting_basic_text_edits"
     )
+
+
+def test_robotframework_tidy_formatting():
+    from robotframework_ls_tests.fixtures import initialize_robotframework_server_api
+    from robocorp_ls_core.jsonrpc.monitor import Monitor
+    from robotframework_ls.impl.robot_lsp_constants import (
+        OPTION_ROBOT_CODE_FORMATTER_ROBOTIDY,
+    )
+    from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_CODE_FORMATTER
+
+    api = initialize_robotframework_server_api()
+    api.m_workspace__did_change_configuration(
+        settings={OPTION_ROBOT_CODE_FORMATTER: OPTION_ROBOT_CODE_FORMATTER_ROBOTIDY}
+    )
+    uri = "untitled"
+
+    api.m_text_document__did_open(textDocument={"uri": uri})
+
+    # This should be formatted as expected already!
+    text = """*** Test Cases ***
+Demo2
+    No operation
+
+
+*** Keywords ***
+Some keyword
+""".replace(
+        "\r\n", "\n"
+    ).replace(
+        "\r", "\n"
+    )
+
+    api.m_text_document__did_change(
+        textDocument={"uri": uri},
+        contentChanges=[{"text": text}],
+    )
+
+    monitor = Monitor()
+    for _i in range(3):
+        changes = api._threaded_code_format({"uri": uri}, None, monitor)
+        assert not changes

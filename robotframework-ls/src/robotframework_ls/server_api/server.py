@@ -664,7 +664,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
             from robocorp_ls_core.robotidy_wrapper import robot_tidy_source_format
 
-            ast = completion_context.get_ast()
+            # Code-formatting will change the AST (even if no changes are done),
+            # so, we need to create a new one for this function.
+            ast = completion_context.doc.generate_ast_uncached()
             path = completion_context.doc.path
             dirname = "."
             try:

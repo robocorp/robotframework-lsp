@@ -689,6 +689,10 @@ class RobotDocument(Document):
             raise AssertionError(
                 "The AST can only be accessed in the RobotFrameworkServerApi, not in the RobotFrameworkLanguageServer."
             )
+
+        return self.generate_ast_uncached()
+
+    def generate_ast_uncached(self):
         from robot.api import get_model, get_resource_model, get_init_model  # noqa
 
         try:
