@@ -1,0 +1,6 @@
+- 'name:Log1, is_arg_usage: True, tokens: Log1, bar'
+- 'name:Run keyword, is_arg_usage: True, tokens: Run keyword, Log1, bar'
+- 'name:Log2, is_arg_usage: True, tokens: Log2, foo'
+- 'name:Run Keyword, is_arg_usage: True, tokens: Run Keyword, Log2, foo'
+- 'name:Run keywords, is_arg_usage: False, tokens:     , Run keywords,     , Run keyword,     ,
+  Log1,     , bar,     , AND,     , Run Keyword,     , Log2,     , foo, '

@@ -259,15 +259,15 @@ def _tokenize_token(
         if not in_documentation:
 
             in_expression = is_node_with_expression_argument(node)
-            if scope.args_as_keywords_handler is not None:
-                tok_type = scope.args_as_keywords_handler.next_tok_type(use_token)
-                if tok_type == scope.args_as_keywords_handler.KEYWORD:
+            if scope.keyword_usage_handler is not None:
+                tok_type = scope.keyword_usage_handler.get_token_type(use_token)
+                if tok_type == scope.keyword_usage_handler.KEYWORD:
                     use_token_type = KEYWORD
 
-                elif tok_type == scope.args_as_keywords_handler.EXPRESSION:
+                elif tok_type == scope.keyword_usage_handler.EXPRESSION:
                     in_expression = True
 
-                elif tok_type == scope.args_as_keywords_handler.CONTROL:
+                elif tok_type == scope.keyword_usage_handler.CONTROL:
                     yield use_token, CONTROL_INDEX
                     return
 
@@ -513,13 +513,15 @@ class _SemanticTokensScope:
         self.imported_libraries = set(_iter_dependent_names(context))
 
         # Note: it's set for the node and then reused for all the tokens in that same node.
-        self.args_as_keywords_handler: Any = None
+        self.keyword_usage_handler: Any = None
 
         self.get_index_from_rf_token_type = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.get
         self.get_index_from_internal_token_type = TOKEN_TYPE_TO_INDEX.__getitem__
 
 
 def semantic_tokens_full(context: ICompletionContext):
+    from robotframework_ls.impl import ast_utils_keyword_usage
+
     try:
         ast = context.doc.get_ast()
     except:
@@ -536,13 +538,13 @@ def semantic_tokens_full(context: ICompletionContext):
     last_column = 0
 
     scope = _SemanticTokensScope(context)
-    for _stack, node in ast_utils.iter_all_nodes_recursive(ast):
+    for stack, node in ast_utils.iter_all_nodes_recursive(ast):
         if monitor:
             monitor.check_cancelled()
         tokens = getattr(node, "tokens", None)
         if tokens:
-            scope.args_as_keywords_handler = ast_utils.get_args_as_keywords_handler(
-                node
+            scope.keyword_usage_handler = (
+                ast_utils_keyword_usage.obtain_keyword_usage_handler(stack, node)
             )
 
             for token in tokens:

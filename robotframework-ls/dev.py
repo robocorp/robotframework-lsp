@@ -240,7 +240,9 @@ class Dev(object):
 
         tag = self.get_tag()
         if not tag:
-            raise AssertionError("Could not get tag!")
+            raise AssertionError(
+                "Could not get tag! (are you checking out with full tag history?)"
+            )
 
         new_content = re.sub(
             r"\(docs/",

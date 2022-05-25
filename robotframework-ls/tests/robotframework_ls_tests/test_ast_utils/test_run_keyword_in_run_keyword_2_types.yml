@@ -1,0 +1,8 @@
+- Run keywords, KEYWORD, 0
+- Run keyword, ARGUMENT, 1
+- Log1, ARGUMENT, 1
+- bar, ARGUMENT, 0
+- AND, ARGUMENT, 3
+- Run Keyword, ARGUMENT, 1
+- Log2, ARGUMENT, 1
+- foo, ARGUMENT, 0

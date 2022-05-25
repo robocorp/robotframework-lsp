@@ -31,10 +31,6 @@ from robotframework_ls.impl.protocols import (
 )
 from robotframework_ls.impl.text_utilities import normalize_robot_name
 from robocorp_ls_core.basic import isinstance_name
-from robotframework_ls.impl.keywords_in_args import (
-    KEYWORD_NAME_TO_KEYWORD_INDEX,
-    KEYWORD_NAME_TO_CONDITION_INDEX,
-)
 import functools
 import weakref
 import threading
@@ -770,9 +766,9 @@ def iter_library_imports(ast) -> Iterator[NodeInfo[ILibraryImportNode]]:
 
 def _iter_library_imports_uncached(ast):
     try:
-        from robot.api.parsing import LibraryImport
+        from robot.api.parsing import LibraryImport  # noqa
     except ImportError:
-        from robot.parsing.model.statements import LibraryImport
+        from robot.parsing.model.statements import LibraryImport  # noqa
 
     yield from ast.iter_indexed("LibraryImport")
     for keyword_usage_info in iter_keyword_usage_tokens(
@@ -1177,6 +1173,10 @@ def _add_match(found: set, tok: IRobotToken) -> bool:
 
 @_convert_ast_to_indexer
 def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
+    from robotframework_ls.impl.ast_utils_keyword_usage import (
+        obtain_keyword_usage_handler,
+    )
+
     # TODO: This right now makes everything globally, we should have 2 versions,
     # one to resolve references which are global and another to resolve references
     # just inside some scope when dealing with local variables.
@@ -1223,28 +1223,30 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
                 except:
                     log.exception("Unable to tokenize: %s", token)
 
-    for usage_info in _iter_keyword_usage_tokens_first_level_uncached(ast):
-        args_as_keywords_handler = get_args_as_keywords_handler(usage_info.node)
-        if args_as_keywords_handler is None:
-            continue
+    for node_info in _iter_node_info_which_may_have_usage_info(ast):
+        stack = node_info.stack
+        node = node_info.node
+        keyword_usage_handler = obtain_keyword_usage_handler(stack, node)
+        if keyword_usage_handler is not None:
+            for usage_info in keyword_usage_handler.iter_keyword_usages_from_node():
 
-        stack = usage_info.stack
-        node = usage_info.node
-        arg_i = 0
-        for token in usage_info.node.tokens:
-            if token.type == token.ARGUMENT:
-                arg_i += 1
-                if arg_i == 1:
-                    if _is_store_keyword(usage_info.node):
-                        continue
-
-                next_tok_type = args_as_keywords_handler.next_tok_type(token)
-                if next_tok_type == args_as_keywords_handler.EXPRESSION:
-                    for tok in iter_expression_variables(token):
-                        if tok.type == token.VARIABLE:
-                            if not _add_match(found, tok):
+                arg_i = 0
+                for token in usage_info.node.tokens:
+                    if token.type == token.ARGUMENT:
+                        arg_i += 1
+                        if arg_i == 1:
+                            if _is_store_keyword(usage_info.node):
                                 continue
-                            yield VarTokenInfo(stack, node, tok, AdditionalVarInfo("$"))
+
+                        next_tok_type = keyword_usage_handler.get_token_type(token)
+                        if next_tok_type == keyword_usage_handler.EXPRESSION:
+                            for tok in iter_expression_variables(token):
+                                if tok.type == token.VARIABLE:
+                                    if not _add_match(found, tok):
+                                        continue
+                                    yield VarTokenInfo(
+                                        stack, node, tok, AdditionalVarInfo("$")
+                                    )
 
     for clsname in CLASSES_WTH_EXPRESSION_ARGUMENTS:
         for node_info in ast.iter_indexed(clsname):
@@ -1313,157 +1315,27 @@ def _same_line_col(tok1: IRobotToken, tok2: IRobotToken):
     return tok1.lineno == tok2.lineno and tok1.col_offset == tok2.col_offset
 
 
-def _build_keyword_usage(
-    stack, node, yield_only_for_token, current_tokens, yield_only_over_keyword_name
-) -> Optional[KeywordUsageInfo]:
-    # Note: just check for line/col because the token could be changed
-    # (for instance, an EOL ' ' could be added to the token).
-    if not current_tokens:
-        return None
-
-    keyword_at_index = 0
-    keyword_token = current_tokens[keyword_at_index]
-
-    if yield_only_for_token is not None:
-        if yield_only_over_keyword_name:
-            if not _same_line_col(yield_only_for_token, keyword_token):
-                return None
-        else:
-            for tok in current_tokens:
-                if _same_line_col(yield_only_for_token, tok):
-                    break
-            else:
-                return None
-
-    keyword_token = copy_token_replacing(keyword_token, type=keyword_token.KEYWORD)
-    new_tokens = [keyword_token]
-    new_tokens.extend(current_tokens[keyword_at_index + 1 :])
-
-    return KeywordUsageInfo(
-        stack,
-        node.__class__(new_tokens),
-        keyword_token,
-        keyword_token.value,
-        True,
-    )
-
-
-def _iter_keyword_usage_tokens_uncached_from_args(
-    stack,
-    node,
-    args_as_keywords_handler,
-    yield_only_for_token: Optional[IRobotToken] = None,
-    yield_only_over_keyword_name: bool = True,
-):
-    # We may have multiple matches, so, we need to setup the appropriate book-keeping
-    current_tokens = []
-
-    iter_in = iter(node.tokens)
-
-    for token in iter_in:
-        if token.type == token.ARGUMENT:
-            next_tok_type = args_as_keywords_handler.next_tok_type(token)
-            if next_tok_type == args_as_keywords_handler.KEYWORD:
-                current_tokens.append(token)
-                break
-
-    for token in iter_in:
-        if token.type == token.ARGUMENT:
-            next_tok_type = args_as_keywords_handler.next_tok_type(token)
-
-            if next_tok_type in (
-                args_as_keywords_handler.CONTROL,
-                args_as_keywords_handler.EXPRESSION,
-                args_as_keywords_handler.IGNORE,
-            ):
-                # Don't add IF/ELSE IF/AND nor the condition.
-                continue
-
-            if next_tok_type != args_as_keywords_handler.KEYWORD:
-                # Argument was now added to current_tokens.
-                current_tokens.append(token)
-                continue
-
-            if current_tokens:
-                # Starting a new one (build for the previous).
-                usage_info = _build_keyword_usage(
-                    stack,
-                    node,
-                    yield_only_for_token,
-                    current_tokens,
-                    yield_only_over_keyword_name,
-                )
-                if usage_info is not None:
-                    yield usage_info
-
-            current_tokens = [token]
-
-    else:
-        # Do one last iteration at the end to deal with the last one.
-        if current_tokens:
-            usage_info = _build_keyword_usage(
-                stack,
-                node,
-                yield_only_for_token,
-                current_tokens,
-                yield_only_over_keyword_name,
-            )
-            if usage_info is not None:
-                yield usage_info
-
-
-def _iter_keyword_usage_tokens_first_level_uncached(ast) -> Iterator[KeywordUsageInfo]:
+@_convert_ast_to_indexer
+def _iter_node_info_which_may_have_usage_info(ast):
     for clsname in ("KeywordCall",) + _CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_TUPLE:
-        for node_info in ast.iter_indexed(clsname):
-            stack = node_info.stack
-            node = node_info.node
-            usage_info = _create_keyword_usage_info(stack, node)
-            if usage_info is not None:
-                yield usage_info
+        yield from ast.iter_indexed(clsname)
 
 
 def _iter_keyword_usage_tokens_uncached(
     ast, collect_args_as_keywords: bool
 ) -> Iterator[KeywordUsageInfo]:
-    for usage_info in _iter_keyword_usage_tokens_first_level_uncached(ast):
-        yield usage_info
+    from robotframework_ls.impl.ast_utils_keyword_usage import (
+        obtain_keyword_usage_handler,
+    )
 
-        if collect_args_as_keywords:
-            args_as_keywords_handler = get_args_as_keywords_handler(usage_info.node)
-            if args_as_keywords_handler is None:
-                continue
-
-            yield from _iter_keyword_usage_tokens_uncached_from_args(
-                usage_info.stack, usage_info.node, args_as_keywords_handler
-            )
-
-
-def _create_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
-    """
-    If this is a keyword usage node, return information on it, otherwise,
-    returns None.
-
-    :note: this goes hand-in-hand with get_keyword_name_token.
-    """
-    from robot.api import Token
-
-    if node.__class__.__name__ == "KeywordCall":
-        token_type = Token.KEYWORD
-
-    elif node.__class__.__name__ in CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET:
-        token_type = Token.NAME
-
-    else:
-        return None
-
-    node, token = _strip_node_and_token_bdd_prefix(node, token_type)
-    if token is None:
-        return None
-
-    keyword_name = token.value
-    if keyword_name.lower() == "none":
-        return None
-    return KeywordUsageInfo(tuple(stack), node, token, keyword_name)
+    for node_info in _iter_node_info_which_may_have_usage_info(ast):
+        stack = node_info.stack
+        node = node_info.node
+        keyword_usage_handler = obtain_keyword_usage_handler(
+            stack, node, recursive=collect_args_as_keywords
+        )
+        if keyword_usage_handler is not None:
+            yield from keyword_usage_handler.iter_keyword_usages_from_node()
 
 
 def create_keyword_usage_info_from_token(
@@ -1477,204 +1349,17 @@ def create_keyword_usage_info_from_token(
     if we're in an argument that isn't itself a keyword call.
     """
     if token.type == token.ARGUMENT:
-        args_as_keywords_handler = get_args_as_keywords_handler(node)
-        if args_as_keywords_handler is not None:
-            for v in _iter_keyword_usage_tokens_uncached_from_args(
-                stack,
-                node,
-                args_as_keywords_handler,
-                yield_only_for_token=token,
-                yield_only_over_keyword_name=False,
-            ):
-                return v
-
-    return _create_keyword_usage_info(stack, node)
-
-
-class _ConsiderArgsAsKeywordNames:
-    NONE = 0
-    KEYWORD = 1
-    EXPRESSION = 2
-    CONTROL = 3
-    IGNORE = 4
-
-    def __init__(
-        self,
-        node,
-        normalized_keyword_name,
-        consider_keyword_at_index,
-        consider_condition_at_index,
-    ):
-        self._node = node
-        self._normalized_keyword_name = normalized_keyword_name
-        self._consider_keyword_at_index = consider_keyword_at_index
-        self._consider_condition_at_index = consider_condition_at_index
-        self._current_arg = 0
-
-        # Run Keyword If is special because it has 'ELSE IF' / 'ELSE'
-        # which will then be be (cond, keyword) or just (keyword), so
-        # we need to provide keyword usages as needed.
-        if self._normalized_keyword_name == "runkeywordif":
-            self.next_tok_type = self._next_tok_type_run_keyword_if
-        elif self._normalized_keyword_name == "foreachinputworkitem":
-            self.next_tok_type = self._next_tok_type_for_each_input_work_item
-        elif self._normalized_keyword_name == "runkeywords":
-            found = False
-            for token in node.tokens:
-                if "AND" == token.value:
-                    found = True
-                    break
-            if found:
-                self.next_tok_type = self._next_tok_type_run_keywords
-            else:
-                self.next_tok_type = self._consider_each_arg_as_keyword
-
-        self._stack_kind = None
-        self._stack = None
-        self._started_match = False
-
-    def next_tok_type_as_str(self, token) -> str:
-        tok_type = self.next_tok_type(token)
-        if tok_type == self.NONE:
-            return "<none>"
-        if tok_type == self.EXPRESSION:
-            return "<expression>"
-        if tok_type == self.KEYWORD:
-            return "<keyword>"
-        if tok_type == self.CONTROL:
-            return "<control>"
-        if tok_type == self.IGNORE:
-            return "<ignore>"
-        raise AssertionError(f"Unexpected: {tok_type}")
-
-    def next_tok_type(self, token) -> int:  # pylint: disable=method-hidden
-        assert token.type == token.ARGUMENT
-        self._current_arg += 1
-
-        if self._current_arg == self._consider_condition_at_index:
-            return self.EXPRESSION
-
-        if self._current_arg == self._consider_keyword_at_index:
-            return self.KEYWORD
-
-        return self.NONE
-
-    def _next_tok_type_for_each_input_work_item(self, token):
-        from robotframework_ls.impl.variable_resolve import find_split_index
-
-        assert token.type == token.ARGUMENT
-        self._current_arg += 1
-
-        if self._current_arg == self._consider_keyword_at_index:
-            return self.KEYWORD
-
-        i = find_split_index(token.value)
-        if i > 0:
-            v = normalize_robot_name(token.value[:i])
-            if v in ("itemslimit", "returnresults"):
-                return self.IGNORE
-
-        return self.NONE
-
-    def _next_tok_type_run_keyword_if(self, token):
-        assert token.type == token.ARGUMENT
-
-        self._current_arg += 1
-
-        if token.value == "ELSE IF":
-            self._started_match = True
-            self._stack = []
-            self._stack_kind = token.value
-            return self.CONTROL
-        elif token.value == "ELSE":
-            self._started_match = True
-            self._stack = []
-            self._stack_kind = token.value
-            return self.CONTROL
-
-        else:
-            self._started_match = False
-            if self._stack is not None:
-                self._stack.append(token)
-
-        if self._stack is not None:
-            if self._stack_kind == "ELSE IF":
-                if len(self._stack) == 1:
-                    return self.EXPRESSION
-                return self.KEYWORD if len(self._stack) == 2 else self.NONE
-
-            if self._stack_kind == "ELSE":
-                return self.KEYWORD if len(self._stack) == 1 else self.NONE
-
-        if self._current_arg == self._consider_condition_at_index:
-            return self.EXPRESSION
-
-        if self._current_arg == self._consider_keyword_at_index:
-            return self.KEYWORD
-
-        return self.NONE
-
-    def _consider_each_arg_as_keyword(self, token):
-        assert token.type == token.ARGUMENT
-        return self.KEYWORD
-
-    def _next_tok_type_run_keywords(self, token):
-        assert token.type == token.ARGUMENT
-
-        self._current_arg += 1
-
-        if token.value == "AND":
-            self._started_match = True
-            self._stack = []
-            self._stack_kind = token.value
-            return self.CONTROL
-
-        else:
-            self._started_match = False
-            if self._stack is not None:
-                self._stack.append(token)
-
-        if self._stack is not None:
-            if self._stack_kind == "AND":
-                return self.KEYWORD if len(self._stack) == 1 else self.NONE
-
-        if self._current_arg == self._consider_keyword_at_index:
-            return self.KEYWORD
-        return self.NONE
-
-
-def get_args_as_keywords_handler(node) -> Optional[_ConsiderArgsAsKeywordNames]:
-    from robot.api import Token
-
-    if node.__class__.__name__ == "KeywordCall":
-        token_type = Token.KEYWORD
-
-    elif node.__class__.__name__ in CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET:
-        token_type = Token.NAME
-
-    else:
-        return None
-
-    node_keyword_name = node.get_token(token_type)
-    if node_keyword_name and node_keyword_name.value:
-        normalized_keyword_name = normalize_robot_name(node_keyword_name.value)
-        consider_keyword_at_index = KEYWORD_NAME_TO_KEYWORD_INDEX.get(
-            normalized_keyword_name
+        from robotframework_ls.impl.ast_utils_keyword_usage import (
+            obtain_keyword_usage_for_token,
         )
-        consider_condition_at_index = KEYWORD_NAME_TO_CONDITION_INDEX.get(
-            normalized_keyword_name
-        )
-        if (
-            consider_keyword_at_index is not None
-            or consider_condition_at_index is not None
-        ):
-            return _ConsiderArgsAsKeywordNames(
-                node,
-                normalized_keyword_name,
-                consider_keyword_at_index,
-                consider_condition_at_index,
-            )
-    return None
+
+        return obtain_keyword_usage_for_token(stack, node, token)
+
+    from robotframework_ls.impl.ast_utils_keyword_usage import (
+        _create_root_keyword_usage_info,
+    )
+
+    return _create_root_keyword_usage_info(stack, node)
 
 
 def get_keyword_name_token(
@@ -1699,16 +1384,17 @@ def get_keyword_name_token(
         return _strip_token_bdd_prefix(token)
 
     if token.type == token.ARGUMENT and not token.value.strip().endswith("}"):
-        args_as_keywords_handler = get_args_as_keywords_handler(node)
-        if args_as_keywords_handler is not None:
-            for _ in _iter_keyword_usage_tokens_uncached_from_args(
-                stack,
-                node,
-                args_as_keywords_handler,
-                yield_only_for_token=token,
-                yield_only_over_keyword_name=accept_only_over_keyword_name,
-            ):
-                return token
+        from robotframework_ls.impl.ast_utils_keyword_usage import (
+            obtain_keyword_usage_for_token,
+        )
+
+        keyword_usage = obtain_keyword_usage_for_token(stack, node, token)
+        if keyword_usage is not None:
+            if accept_only_over_keyword_name:
+                if _same_line_col(keyword_usage.token, token):
+                    return token
+            else:
+                return keyword_usage.token
     return None
 
 

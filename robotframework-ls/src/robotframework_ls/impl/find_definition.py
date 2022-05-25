@@ -388,7 +388,6 @@ def find_keyword_definition(
         token_info.stack,
         token_info.node,
         token_info.token,
-        accept_only_over_keyword_name=False,
     )
     if token is None:
         if token_info.token.type == token_info.token.KEYWORD_NAME:

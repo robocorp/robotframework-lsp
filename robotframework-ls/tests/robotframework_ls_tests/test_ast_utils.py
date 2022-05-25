@@ -205,146 +205,170 @@ def test_ast_extract_expression_tokens(data_regression):
     data_regression.check(collected)
 
 
-def test_in_expression():
+def check_value_and_tok_type(text, expected):
     from robotframework_ls.impl.robot_workspace import RobotDocument
     from robotframework_ls.impl import ast_utils
+    from robotframework_ls.impl.ast_utils_keyword_usage import (
+        obtain_keyword_usage_handler,
+    )
 
     document = RobotDocument(
         "uri",
-        """
-*** Keyword **
-my
-    Run Keyword If   $v1 == ${v2}    CallThis""",
+        text,
     )
     ast = document.get_ast()
     found = []
     for node_info in ast_utils.iter_indexed(ast, "KeywordCall"):
-        handler = ast_utils.get_args_as_keywords_handler(node_info.node)
+        keyword_usage_handler = obtain_keyword_usage_handler(
+            node_info.stack, node_info.node
+        )
         for tok in node_info.node.tokens:
             if tok.type == tok.ARGUMENT:
                 found.append(
-                    f"{tok.value} = {handler.next_tok_type_as_str(tok)}",
+                    f"{tok.value} = {keyword_usage_handler.get_token_type_as_str(tok)}",
                 )
 
-    assert found == [
-        "$v1 == ${v2} = <expression>",
-        "CallThis = <keyword>",
-    ]
+    assert found == expected
+
+
+def test_in_expression():
+    check_value_and_tok_type(
+        """
+*** Keyword **
+my
+    Run Keyword If   $v1 == ${v2}    CallThis
+    """,
+        [
+            "$v1 == ${v2} = <expression>",
+            "CallThis = <keyword>",
+        ],
+    )
 
 
 def test_in_expression_else_if():
-    from robotframework_ls.impl.robot_workspace import RobotDocument
-    from robotframework_ls.impl import ast_utils
-
-    document = RobotDocument(
-        "uri",
+    check_value_and_tok_type(
         """
 *** Keyword **
 my
     Run Keyword If   $v1 == ${v2}    CallThis    ELSE IF    $v1 == ${v2}    CallThis""",
+        [
+            "$v1 == ${v2} = <expression>",
+            "CallThis = <keyword>",
+            "ELSE IF = <control>",
+            "$v1 == ${v2} = <expression>",
+            "CallThis = <keyword>",
+        ],
     )
-    ast = document.get_ast()
-    found = []
-    for node_info in ast_utils.iter_indexed(ast, "KeywordCall"):
-        handler = ast_utils.get_args_as_keywords_handler(node_info.node)
-        for tok in node_info.node.tokens:
-            if tok.type == tok.ARGUMENT:
-                found.append(
-                    f"{tok.value} = {handler.next_tok_type_as_str(tok)}",
-                )
-
-    assert found == [
-        "$v1 == ${v2} = <expression>",
-        "CallThis = <keyword>",
-        "ELSE IF = <control>",
-        "$v1 == ${v2} = <expression>",
-        "CallThis = <keyword>",
-    ]
 
 
 def test_for_each_input_work_item():
-    from robotframework_ls.impl.robot_workspace import RobotDocument
-    from robotframework_ls.impl import ast_utils
-
-    document = RobotDocument(
-        "uri",
+    check_value_and_tok_type(
         """
 *** Keyword **
 my
     For each input work item    No operation    items_limit=0    return_results=False    invalid_arg=True""",
+        [
+            "No operation = <keyword>",
+            "items_limit=0 = <ignore>",
+            "return_results=False = <ignore>",
+            "invalid_arg=True = <none>",
+        ],
     )
-    ast = document.get_ast()
-    found = []
-    for node_info in ast_utils.iter_indexed(ast, "KeywordCall"):
-        handler = ast_utils.get_args_as_keywords_handler(node_info.node)
-        for tok in node_info.node.tokens:
-            if tok.type == tok.ARGUMENT:
-                found.append(
-                    f"{tok.value} = {handler.next_tok_type_as_str(tok)}",
-                )
-
-    assert found == [
-        "No operation = <keyword>",
-        "items_limit=0 = <ignore>",
-        "return_results=False = <ignore>",
-        "invalid_arg=True = <none>",
-    ]
 
 
 def test_run_keywords_1():
-    from robotframework_ls.impl.robot_workspace import RobotDocument
-    from robotframework_ls.impl import ast_utils
-
-    document = RobotDocument(
-        "uri",
+    check_value_and_tok_type(
         """
 *** Keyword **
 my
     Run Keywords   CallThis    Arg    AND    CallThis2""",
+        [
+            "CallThis = <keyword>",
+            "Arg = <none>",
+            "AND = <control>",
+            "CallThis2 = <keyword>",
+        ],
     )
-    ast = document.get_ast()
-    found = []
-    for node_info in ast_utils.iter_indexed(ast, "KeywordCall"):
-        handler = ast_utils.get_args_as_keywords_handler(node_info.node)
-        for tok in node_info.node.tokens:
-            if tok.type == tok.ARGUMENT:
-                found.append(
-                    f"{tok.value} = {handler.next_tok_type_as_str(tok)}",
-                )
-
-    assert found == [
-        "CallThis = <keyword>",
-        "Arg = <none>",
-        "AND = <control>",
-        "CallThis2 = <keyword>",
-    ]
 
 
 def test_run_keywords_2():
-    from robotframework_ls.impl.robot_workspace import RobotDocument
-    from robotframework_ls.impl import ast_utils
-
-    document = RobotDocument(
-        "uri",
+    check_value_and_tok_type(
         """
 *** Keyword **
 my
     Run Keywords   CallThis    CallThis2""",
+        [
+            "CallThis = <keyword>",
+            "CallThis2 = <keyword>",
+        ],
+    )
+
+
+def check_keyword_usage_handler(text, data_regression, prefix_basename):
+    from robotframework_ls.impl.robot_workspace import RobotDocument
+    from robotframework_ls.impl import ast_utils
+    from robotframework_ls.impl.ast_utils_keyword_usage import (
+        obtain_keyword_usage_handler,
+    )
+
+    document = RobotDocument(
+        "uri",
+        text,
     )
     ast = document.get_ast()
     found = []
+    found_types = []
+    line_col_to_usage = {}
     for node_info in ast_utils.iter_indexed(ast, "KeywordCall"):
-        handler = ast_utils.get_args_as_keywords_handler(node_info.node)
-        for tok in node_info.node.tokens:
-            if tok.type == tok.ARGUMENT:
-                found.append(
-                    f"{tok.value} = {handler.next_tok_type_as_str(tok)}",
-                )
+        keyword_usage_handler = obtain_keyword_usage_handler(
+            node_info.stack, node_info.node
+        )
 
-    assert found == [
-        "CallThis = <keyword>",
-        "CallThis2 = <keyword>",
-    ]
+        for keyword_usage in keyword_usage_handler.iter_keyword_usages_from_node():
+            toks = []
+            for t in keyword_usage.node.tokens:
+                key = (t.lineno, t.col_offset)
+                if key not in line_col_to_usage:
+                    line_col_to_usage[key] = keyword_usage
+                toks.append(t.value)
+            found.append(
+                f"name:{keyword_usage.name}, is_arg_usage: {keyword_usage._is_argument_usage}, tokens: {', '.join(toks)}"
+            )
+
+        for token, token_type in keyword_usage_handler.iter_tokens_with_type():
+            if token.value.strip():
+                found_types.append(f"{token.value.strip()}, {token.type}, {token_type}")
+
+    data_regression.check(found, basename=prefix_basename + "_usages")
+    data_regression.check(found_types, basename=prefix_basename + "_types")
+
+    for (line, col), kw_usage in line_col_to_usage.items():
+        assert (
+            keyword_usage_handler.get_keyword_usage_for_token_line_col(line, col)
+            == kw_usage
+        )
+
+
+def test_run_keyword_in_run_keyword(data_regression):
+    check_keyword_usage_handler(
+        """
+*** Keyword **
+my
+    Run keyword    Run keyword    Run Keyword    Log    foo""",
+        data_regression,
+        "test_run_keyword_in_run_keyword",
+    )
+
+
+def test_run_keyword_in_run_keyword_2(data_regression):
+    check_keyword_usage_handler(
+        """
+*** Keyword **
+my
+    Run keywords    Run keyword    Log1    bar    AND    Run Keyword    Log2    foo""",
+        data_regression,
+        "test_run_keyword_in_run_keyword_2",
+    )
 
 
 def test_keyword_usage_stack():

@@ -7,6 +7,7 @@ New in 0.48.0 (NEXT)
 - Properly consider that `For each input work item` from `rpaframework` receives a keyword as the first parameter. [#684](https://github.com/robocorp/robotframework-lsp/issues/684)
 - Added support for `Import Library` keyword. [#675](https://github.com/robocorp/robotframework-lsp/issues/675)
 - Implemented expand and shrink selection (use `Shift+Alt+Right` to select outer scope and `Shift+Alt+left` to deselect).
+- Properly support constructs with nested usage of `Run Keyword` inside `Run Keyword`. [#686](https://github.com/robocorp/robotframework-lsp/issues/686)
 - A simpler TextMate grammar is now used to work better with bracket pair colorization (which is enabled by default in VSCode `1.67`).
     - Note that initially very little code will be highlighted until semantic highlighting takes over.
 - Updated `robotframework-tidy` to `2.2.0`.

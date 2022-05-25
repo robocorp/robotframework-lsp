@@ -1327,3 +1327,23 @@ Test case 1
             ("Col", "argumentValue"),
         ],
     )
+
+
+def test_semantic_run_keyword_in_run_keyword(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Test case 1
+    Run keyword    Run keyword    Run Keyword    Log    foo
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Test case 1", "testCaseName"),
+            ("Run keyword", "keywordNameCall"),
+            ("Run keyword", "keywordNameCall"),
+            ("Run Keyword", "keywordNameCall"),
+            ("Log", "keywordNameCall"),
+            ("foo", "argumentValue"),
+        ],
+    )

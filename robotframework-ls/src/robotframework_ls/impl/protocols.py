@@ -291,7 +291,7 @@ class KeywordUsageInfo:
     ):
         self.stack = stack
         self.node = node
-        self.token = token
+        self.token = token  # This is actually the keyword name token.
         self.name = name
         self._is_argument_usage = is_argument_usage
 
