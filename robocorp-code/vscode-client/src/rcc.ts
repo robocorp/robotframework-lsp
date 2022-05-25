@@ -447,6 +447,8 @@ export async function feedbackRobocorpCodeError(errorCode: string) {
     await feedbackAnyError("vscode.code.error", errorCode);
 }
 
+const reportedErrorCodes = new Set();
+
 /**
  * Submit feedback on some predefined error code.
  *
@@ -454,6 +456,13 @@ export async function feedbackRobocorpCodeError(errorCode: string) {
  * @param errorCode The error code to be shown.
  */
 export async function feedbackAnyError(errorSource: string, errorCode: string) {
+    // Make sure that only one error is reported per error code.
+    const errorCodeKey = `${errorSource}.${errorCode}`;
+    if (reportedErrorCodes.has(errorCodeKey)) {
+        return;
+    }
+    reportedErrorCodes.add(errorCodeKey);
+
     const rccLocation = await getRccLocation();
     let args: string[] = ["feedback", "metric", "-t", "vscode", "-n", errorSource, "-v", errorCode];
 

@@ -187,6 +187,7 @@ class Rcc(object):
 
         self._last_verified_account_info: Optional[AccountInfo] = None
         self.rcc_listeners: List[IRccListener] = []
+        self._feedback_metrics_reported = set()
 
     @property
     def last_verified_account_info(self) -> Optional[AccountInfo]:
@@ -1010,6 +1011,12 @@ class Rcc(object):
 
     @implements(IRcc.feedack_metric)
     def feedack_metric(self, name, value="+1") -> ActionResult[str]:
+        key = f"{name}.{value}"
+        if key in self._feedback_metrics_reported:
+            return ActionResult(True)
+
+        self._feedback_metrics_reported.add(key)
+
         return self._run_rcc(
             ["feedback", "metric", "-t", "vscode", "-n", name, "-v", value],
             mutex_name=None,

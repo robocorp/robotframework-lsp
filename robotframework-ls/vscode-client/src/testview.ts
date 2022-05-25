@@ -456,7 +456,7 @@ export async function setupTestExplorerSupport() {
                 }
             }
         } catch (err) {
-            logError("Error handling debug session event", err, "HANDLE_DEBUG_SESSION_EVENT");
+            logError("Error handling debug session event: " + JSON.stringify(event), err, "HANDLE_DEBUG_SESSION_EVENT");
         }
     });
 }
@@ -498,7 +498,13 @@ function handleLogMessage(testRun: vscode.TestRun, event: vscode.DebugSessionCus
     //     }
     // }
 
-    message = `[${level}]: ${message.replaceAll(/(?:\r\n|\r|\n)/g, "\r\n")}`;
+    try {
+        message = message.replaceAll(/(?:\r\n|\r|\n)/g, "\r\n");
+    } catch (err) {
+        logError("Error handling log message: " + JSON.stringify(event.body), err, "HANDLE_LOG_MESSAGE");
+    }
+
+    message = `[${level}]: ${message}`;
 
     switch (level) {
         case "WARN":
