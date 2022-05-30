@@ -28,6 +28,7 @@ class _Collector(AbstractKeywordCollector):
             build_matchers_with_resource_or_library_scope,
         )
         from robotframework_ls.robot_config import create_convert_keyword_format_func
+        from robot.api import Token
 
         token_str = keyword_usage.token.value
 
@@ -36,12 +37,16 @@ class _Collector(AbstractKeywordCollector):
         self.selection = completion_context.sel
         self.token = keyword_usage.token
 
-        # i.e.: if we have arguments already don't add arguments again.
         self._add_arguments = True
-        for t in keyword_usage.node.tokens:
-            if t.type == t.ARGUMENT and t.value:
-                self._add_arguments = False
-                break
+        if keyword_usage.node.type in (Token.TEMPLATE, Token.TEST_TEMPLATE):
+            # i.e.: In templates the arguments are added in the test.
+            self._add_arguments = False
+        else:
+            # i.e.: if we have arguments already don't add arguments again.
+            for t in keyword_usage.node.tokens:
+                if t.type == t.ARGUMENT and t.value:
+                    self._add_arguments = False
+                    break
 
         self._matcher = RobotStringMatcher(token_str)
         self._scope_matchers = build_matchers_with_resource_or_library_scope(token_str)

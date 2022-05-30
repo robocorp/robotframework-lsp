@@ -1046,3 +1046,44 @@ My Keyword
 My Test
     My Keyword    $v1    $v2"""
     )
+
+
+def test_keyword_without_arguments_on_template(workspace):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    workspace.set_root("case2")
+    doc = workspace.put_doc(
+        "case2.robot",
+        """*** Keywords ***
+My Keyword
+    [Arguments]    ${v1}    ${v2}
+    Log to console    ${v1}${v2}
+
+*** Test Case ***
+My Test
+    [Template]    My Keyw""",
+    )
+
+    line, col = doc.get_last_line_col()
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws, line=line, col=col)
+    )
+    assert sorted([comp["label"] for comp in completions]) == [
+        "My Keyword (case2)",
+    ]
+
+    apply_completion(doc, completions[0])
+
+    assert (
+        doc.source
+        == """*** Keywords ***
+My Keyword
+    [Arguments]    ${v1}    ${v2}
+    Log to console    ${v1}${v2}
+
+*** Test Case ***
+My Test
+    [Template]    My Keyword"""
+    )
