@@ -1,3 +1,17 @@
+New in 0.48.0 (2022-05-30)
+-----------------------------
+
+- Consider as defined a reference to any variable set as a global variable anywhere on the workspace. [#641](https://github.com/robocorp/robotframework-lsp/issues/641)
+- Code analysis for template arguments.
+- Arguments aren't added when applying completions for keywords in `[Template]`.
+- Fixed integration with `robotframework-tidy` which could make formatting the same code a second time misbehave. [#687](https://github.com/robocorp/robotframework-lsp/issues/687)
+- Properly consider that `For each input work item` from `rpaframework` receives a keyword as the first parameter. [#684](https://github.com/robocorp/robotframework-lsp/issues/684)
+- Added support for `Import Library` keyword. [#675](https://github.com/robocorp/robotframework-lsp/issues/675)
+- Properly support constructs with nested usage of `Run Keyword` inside `Run Keyword`. [#686](https://github.com/robocorp/robotframework-lsp/issues/686)
+- Updated `robotframework-tidy` to `2.2.0`.
+- Updated `Robocop` to `2.0.2`.
+
+
 New in 0.47.2 (2022-05-11)
 -----------------------------
 

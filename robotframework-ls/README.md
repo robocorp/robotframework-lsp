@@ -44,7 +44,7 @@ Reporting Issues
 See: [Reporting Issue](docs/reporting_issues.md) for details on how to report some issue in the `Robot Framework Language Server`.
 
 
-Features (0.47.2)
+Features (0.48.0)
 -----------------
 
 - Test Explorer support in VSCode.
