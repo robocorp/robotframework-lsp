@@ -2004,3 +2004,133 @@ Some Keyword
     No operation
 """
     _collect_errors(workspace, doc, data_regression)
+
+
+def test_templates_in_test_case(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Normal test case
+    Example keyword    first argument    second argument
+    Example keyword    first argument    second argument    third is error
+
+Templated test case
+    [Template]    Example keyword
+    first argument    second argument
+    first argument    second argument    third is error
+
+*** Keywords ***
+Example keyword
+    [Arguments]    ${arg1}    ${arg2}
+    Log to console    ${arg1} - ${arg2}
+    """
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_templates_in_setup(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Test Template    Example keyword
+
+*** Test Cases ***
+Normal test case
+    first argument    second argument
+    first argument    second argument    third is error
+
+Templated test case
+    [Template]    Example keyword 2
+    first argument    second argument
+    first argument    second argument    third is error
+
+*** Keywords ***
+Example keyword
+    [Arguments]    ${arg1}    ${arg2}
+    Log to console    ${arg1} - ${arg2}
+
+Example keyword 2
+    [Arguments]    ${arg1}    ${arg2}    ${arg3}
+    Log to console    ${arg1} - ${arg2} - ${arg3}
+    """
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_templates_none(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Test Template    Example keyword
+
+*** Test Cases ***
+Normal test case
+    first argument    second argument
+    first argument    second argument    third is error
+
+Templated test case
+    [Template]    None
+    Example keyword 2    first argument    second argument
+    Example keyword 2    first argument    second argument    third is needed
+
+*** Keywords ***
+Example keyword
+    [Arguments]    ${arg1}    ${arg2}
+    Log to console    ${arg1} - ${arg2}
+
+Example keyword 2
+    [Arguments]    ${arg1}    ${arg2}    ${arg3}
+    Log to console    ${arg1} - ${arg2} - ${arg3}
+    """
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_templates_undefined(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Test Template    undefined
+
+*** Test Cases ***
+Normal test case
+    first argument    second argument
+    first argument    second argument    third is error
+
+Templated test case
+    [Template]    undefined 2
+    first argument    second argument
+    first argument    second argument    third is error
+    """
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_templates_kw_with_args(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Template with kw with args 1
+    [Template]    Add ${a} and ${b} equals ${c}
+    1    2    3
+    # Note that this should be reported as an error, but we currently
+    # don't support it (to do in the future).
+    1    2    3    4
+    
+Template with kw with args 2
+    [Template]    Add 1 and ${b} equals ${c}
+    1    2
+    # Note that this should be reported as an error, but we currently
+    # don't support it (to do in the future).
+    1    2    3
+
+*** Keywords ***
+Add ${a} and ${b} equals ${c}
+    Log to console    ${a} ${b} ${c}
+    """
+    _collect_errors(workspace, doc, data_regression, basename="no_error")

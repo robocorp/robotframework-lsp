@@ -25,9 +25,12 @@ class SkipAnalysisControlFlowException(Exception):
 
 
 class UsageInfoForKeywordArgumentAnalysis:
-    def __init__(self, node, token_to_report_missing_argument):
+    def __init__(self, node, token_to_report_missing_argument, argument_tokens=None):
         self.node = node
         self._token_to_report_missing_argument = token_to_report_missing_argument
+        if argument_tokens is None:
+            argument_tokens = self.node.tokens
+        self.argument_tokens = argument_tokens
 
     def get_token_to_report_argument_missing(self):
         return self._token_to_report_missing_argument
@@ -214,7 +217,7 @@ class KeywordArgumentAnalysis:
             definition_keyword_name_to_arg.keys()
         )
 
-        tokens_args_to_iterate = self._iter_args(usage_info.node.tokens)
+        tokens_args_to_iterate = self._iter_args(usage_info.argument_tokens)
         # Fill positional args
         for token_arg in tokens_args_to_iterate:
             if not definition_keyword_args_deque:
@@ -411,7 +414,7 @@ class KeywordArgumentAnalysis:
         after_last_arg: List[Token] = []
         usage_info_arg_tokens: List[Token] = []
 
-        for token in usage_info.node.tokens:
+        for token in usage_info.argument_tokens:
             if token.type == Token.ARGUMENT:
                 usage_info_arg_tokens.append(token)
                 usage_info_argument_index += 1

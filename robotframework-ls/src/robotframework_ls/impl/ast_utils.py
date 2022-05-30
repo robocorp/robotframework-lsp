@@ -2046,9 +2046,45 @@ def iter_expression_tokens(
     yield from robot_match_generator.gen_default_type(len(expression_token.value))
 
 
-def is_node_with_expression_argument(node):
+def is_node_with_expression_argument(node) -> bool:
     if node.__class__.__name__ == "KeywordCall":
         kw_name = node.keyword
         return kw_name and normalize_robot_name(kw_name) == "evaluate"
     else:
         return node.__class__.__name__ in CLASSES_WTH_EXPRESSION_ARGUMENTS
+
+
+def iter_arguments_from_template(
+    stack: Tuple[INode, ...], node: INode
+) -> Iterator[NodeInfo]:
+    if not stack:
+        log.critical(
+            "Unable to iterate arguments from template because the stack is empty."
+        )
+        return
+
+    from robot.api import Token
+
+    if node.type == Token.TEMPLATE:
+        for entry in reversed(stack):
+            if isinstance_name(entry, "TestCase"):
+                for node_info in iter_indexed(entry, "TemplateArguments"):
+                    for token in node_info.node.tokens:
+                        if token.type == token.ARGUMENT:
+                            yield node_info
+                            break
+        return
+
+    if node.type == Token.TEST_TEMPLATE:
+        # We need to collect all the TemplateArguments and skip the ones from
+        # tests which have a customized template.
+        for node_info in iter_indexed(stack[0], "TestCase"):
+            if tuple(iter_indexed(node_info.node, "Template")):
+                # i.e.: This test case has a custom template
+                continue
+
+            for node_info in iter_indexed(node_info.node, "TemplateArguments"):
+                for token in node_info.node.tokens:
+                    if token.type == token.ARGUMENT:
+                        yield node_info
+                        break

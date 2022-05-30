@@ -1,0 +1,20 @@
+- message: 'Unexpected argument: third is error'
+  range:
+    end:
+      character: 55
+      line: 7
+    start:
+      character: 41
+      line: 7
+  severity: 1
+  source: robotframework
+- message: 'Mandatory argument missing: arg3'
+  range:
+    end:
+      character: 21
+      line: 11
+    start:
+      character: 4
+      line: 11
+  severity: 1
+  source: robotframework

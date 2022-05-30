@@ -155,6 +155,7 @@ class IRobotVariableMatch(Protocol):
 
 
 class INode(Protocol):
+    type: str
     lineno: int
     end_lineno: int
     col_offset: int
@@ -297,9 +298,9 @@ class KeywordUsageInfo:
 
     def __repr__(self):
         if self._is_argument_usage:
-            return f"KeywordUsageInfo({self.name} (argument usage))"
+            return f"KeywordUsageInfo({self.name} - {self.node.__class__.__name__} (argument usage))"
         else:
-            return f"KeywordUsageInfo({self.name})"
+            return f"KeywordUsageInfo({self.name} - {self.node.__class__.__name__})"
 
     __str__ = __repr__
 

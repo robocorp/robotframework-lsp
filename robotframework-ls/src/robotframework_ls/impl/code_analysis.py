@@ -379,16 +379,13 @@ def collect_analysis_errors(initial_completion_context):
                     KeywordArgumentAnalysis,
                 )
 
-                # Ok, we found the keyword, let's check if the arguments are correct.
-                keyword_argument_analysis = KeywordArgumentAnalysis(
-                    keyword_found.keyword_args
-                )
-
-                keyword_token = None
-                if keyword_token is None:
-                    keyword_token = keyword_usage_info.node.get_token(Token.KEYWORD)
-
+                keyword_token = keyword_usage_info.node.get_token(Token.KEYWORD)
                 if keyword_token is not None:
+                    # Ok, we found the keyword, let's check if the arguments are correct.
+                    keyword_argument_analysis = KeywordArgumentAnalysis(
+                        keyword_found.keyword_args
+                    )
+
                     for error in keyword_argument_analysis.collect_keyword_usage_errors(
                         UsageInfoForKeywordArgumentAnalysis(
                             keyword_usage_info.node,
@@ -396,6 +393,35 @@ def collect_analysis_errors(initial_completion_context):
                         )
                     ):
                         errors.append(error)
+                else:
+                    # Not a keyword usage, check for other cases (template/fixtures).
+                    if keyword_usage_info.node.type in (
+                        Token.TEMPLATE,
+                        Token.TEST_TEMPLATE,
+                    ):
+                        # For templates the arguments are actually gotten from the test.
+                        stack = keyword_usage_info.stack
+                        if keyword_usage_info.node.type == Token.TEST_TEMPLATE:
+                            stack = [ast]
+                        for (
+                            template_arguments_node_info
+                        ) in ast_utils.iter_arguments_from_template(
+                            stack, keyword_usage_info.node
+                        ):
+                            keyword_argument_analysis = KeywordArgumentAnalysis(
+                                keyword_found.keyword_args
+                            )
+                            args_tokens = template_arguments_node_info.node.tokens
+                            for (
+                                error
+                            ) in keyword_argument_analysis.collect_keyword_usage_errors(
+                                UsageInfoForKeywordArgumentAnalysis(
+                                    template_arguments_node_info.node,
+                                    args_tokens[-1],
+                                    args_tokens,
+                                )
+                            ):
+                                errors.append(error)
 
                 if keyword_found.is_deprecated():
                     error = create_error_from_node(
@@ -411,7 +437,7 @@ def collect_analysis_errors(initial_completion_context):
                 # i.e.: Collect at most 100 errors
                 break
         except:
-            log.exception("Error collecting exceptions")
+            log.exception("Exception collecting errors")
 
     for error in _collect_undefined_variables_errors(initial_completion_context):
         errors.append(error)

@@ -46,6 +46,7 @@ def is_variable_text(text: str) -> bool:
     return False
 
 
+@lru_cache(maxsize=1000)
 def contains_variable_text(text: str) -> bool:
     if "{" not in text:
         return False
@@ -66,7 +67,7 @@ def contains_variable_text(text: str) -> bool:
     return False
 
 
-@lru_cache(600)
+@lru_cache(1000)
 def matches_name_with_variables(name: str, name_with_variables: str) -> bool:
     """
     Checks if a given text matches a given keyword.

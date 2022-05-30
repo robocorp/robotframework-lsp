@@ -1,0 +1,20 @@
+- message: 'Unexpected argument: third is error'
+  range:
+    end:
+      character: 74
+      line: 4
+    start:
+      character: 60
+      line: 4
+  severity: 1
+  source: robotframework
+- message: 'Unexpected argument: third is error'
+  range:
+    end:
+      character: 55
+      line: 9
+    start:
+      character: 41
+      line: 9
+  severity: 1
+  source: robotframework
