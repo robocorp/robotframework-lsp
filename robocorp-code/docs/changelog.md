@@ -1,4 +1,4 @@
-New in 0.33.0 (NEXT)
+New in 0.33.0 (2022-05-30)
 -----------------------------
 
 - `python.terminal.activateEnvironment` is only set to false when making a launch or creating a Robot terminal.
