@@ -116,6 +116,7 @@ import {
     ROBOCORP_OPEN_VAULT_HELP,
     ROBOCORP_CLEAR_ENV_AND_RESTART,
     ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS,
+    ROBOCORP_SHOW_OUTPUT,
 } from "./robocorpCommands";
 import { disablePythonTerminalActivateEnvironment, installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -230,12 +231,16 @@ const serverOptions: ServerOptions = async function () {
     }
 };
 
-function notifyOfInitializationErrorShowOutputTab(msg?: string) {
+async function notifyOfInitializationErrorShowOutputTab(msg?: string) {
     OUTPUT_CHANNEL.show();
     if (!msg) {
         msg = "Unable to activate Robocorp Code extension. Please see: Output > Robocorp Code for more details.";
     }
     window.showErrorMessage(msg);
+    const selection = await window.showErrorMessage(msg, "Show Output > Robocorp Code");
+    if (selection) {
+        OUTPUT_CHANNEL.show();
+    }
 }
 
 class CommandRegistry {
@@ -572,6 +577,8 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
                 errorMessage
             )
     );
+
+    C.registerWithoutStub(ROBOCORP_SHOW_OUTPUT, () => OUTPUT_CHANNEL.show());
 
     // i.e.: allow other extensions to also use our error feedback api.
     C.registerWithoutStub(ROBOCORP_ERROR_FEEDBACK_INTERNAL, (errorSource: string, errorCode: string) =>

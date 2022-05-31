@@ -4,6 +4,7 @@ import { CloudEntry, treeViewIdToTreeDataProvider } from "./viewsCommon";
 import { ROBOCORP_SUBMIT_ISSUE } from "./robocorpCommands";
 import { TREE_VIEW_ROBOCORP_CLOUD_TREE } from "./robocorpViews";
 import { getWorkspaceDescription } from "./ask";
+import { logError } from "./channel";
 
 export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry> {
     private _onDidChangeTreeData: vscode.EventEmitter<CloudEntry | null> = new vscode.EventEmitter<CloudEntry | null>();
@@ -15,67 +16,84 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
         this._onDidChangeTreeData.fire(null);
     }
 
-    async getChildren(element?: CloudEntry): Promise<CloudEntry[]> {
-        if (!element) {
-            let accountInfoResult: ActionResult<any> = await vscode.commands.executeCommand(
-                roboCommands.ROBOCORP_GET_LINKED_ACCOUNT_INFO_INTERNAL
+    private async _fillRoots(ret: CloudEntry[]) {
+        let accountInfoResult: ActionResult<any> = await vscode.commands.executeCommand(
+            roboCommands.ROBOCORP_GET_LINKED_ACCOUNT_INFO_INTERNAL
+        );
+
+        if (!accountInfoResult.success) {
+            ret.push({
+                "label": "Link to Control Room",
+                "iconPath": "link",
+                "viewItemContextValue": "cloudLoginItem",
+                "command": {
+                    "title": "Link to Control Room",
+                    "command": roboCommands.ROBOCORP_CLOUD_LOGIN,
+                },
+            });
+        } else {
+            let accountInfo = accountInfoResult.result;
+            ret.push({
+                "label": "Linked: " + accountInfo["fullname"] + " (" + accountInfo["email"] + ")",
+                "iconPath": "link",
+                "viewItemContextValue": "cloudLogoutItem",
+            });
+
+            let vaultInfoResult: ActionResult<any> = await vscode.commands.executeCommand(
+                roboCommands.ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL
             );
-            let ret: CloudEntry[] = [];
-            if (!accountInfoResult.success) {
+
+            if (!vaultInfoResult || !vaultInfoResult.success || !vaultInfoResult.result) {
                 ret.push({
-                    "label": "Link to Control Room",
-                    "iconPath": "link",
-                    "viewItemContextValue": "cloudLoginItem",
-                    "command": {
-                        "title": "Link to Control Room",
-                        "command": roboCommands.ROBOCORP_CLOUD_LOGIN,
-                    },
+                    "label": "Vault: disconnected.",
+                    "iconPath": "unlock",
+                    "viewItemContextValue": "vaultDisconnected",
                 });
             } else {
-                let accountInfo = accountInfoResult.result;
+                const result: IVaultInfo = vaultInfoResult.result;
                 ret.push({
-                    "label": "Linked: " + accountInfo["fullname"] + " (" + accountInfo["email"] + ")",
-                    "iconPath": "link",
-                    "viewItemContextValue": "cloudLogoutItem",
+                    "label": "Vault: connected to: " + getWorkspaceDescription(result),
+                    "iconPath": "lock",
+                    "viewItemContextValue": "vaultConnected",
                 });
-
-                let vaultInfoResult: ActionResult<any> = await vscode.commands.executeCommand(
-                    roboCommands.ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL
-                );
-
-                if (!vaultInfoResult || !vaultInfoResult.success || !vaultInfoResult.result) {
-                    ret.push({
-                        "label": "Vault: disconnected.",
-                        "iconPath": "unlock",
-                        "viewItemContextValue": "vaultDisconnected",
-                    });
-                } else {
-                    const result: IVaultInfo = vaultInfoResult.result;
-                    ret.push({
-                        "label": "Vault: connected to: " + getWorkspaceDescription(result),
-                        "iconPath": "lock",
-                        "viewItemContextValue": "vaultConnected",
-                    });
-                }
             }
-            ret.push({
-                "label": "Robot Development Guide",
-                "iconPath": "book",
-                "command": {
-                    "title": "Open https://robocorp.com/docs/development-guide",
-                    "command": "vscode.open",
-                    "arguments": [vscode.Uri.parse("https://robocorp.com/docs/development-guide")],
-                },
-            });
-            ret.push({
-                "label": "Keyword Libraries Documentation",
-                "iconPath": "notebook",
-                "command": {
-                    "title": "Open https://robocorp.com/docs/libraries",
-                    "command": "vscode.open",
-                    "arguments": [vscode.Uri.parse("https://robocorp.com/docs/libraries")],
-                },
-            });
+        }
+    }
+
+    async getChildren(element?: CloudEntry): Promise<CloudEntry[]> {
+        if (!element) {
+            let ret: CloudEntry[] = [];
+            try {
+                await this._fillRoots(ret);
+                ret.push({
+                    "label": "Robot Development Guide",
+                    "iconPath": "book",
+                    "command": {
+                        "title": "Open https://robocorp.com/docs/development-guide",
+                        "command": "vscode.open",
+                        "arguments": [vscode.Uri.parse("https://robocorp.com/docs/development-guide")],
+                    },
+                });
+                ret.push({
+                    "label": "Keyword Libraries Documentation",
+                    "iconPath": "notebook",
+                    "command": {
+                        "title": "Open https://robocorp.com/docs/libraries",
+                        "command": "vscode.open",
+                        "arguments": [vscode.Uri.parse("https://robocorp.com/docs/libraries")],
+                    },
+                });
+            } catch (error) {
+                logError("Error getting children", error, "VIEWS_CLOUD_COMPUTE_ROOTS");
+                ret.push({
+                    "label": "Error initializing. Click to see Output > Robocorp Code.",
+                    "iconPath": "error",
+                    "command": {
+                        "title": "See output",
+                        "command": roboCommands.ROBOCORP_SHOW_OUTPUT,
+                    },
+                });
+            }
             ret.push({
                 "label": "Submit issue to Robocorp",
                 "iconPath": "report",

@@ -522,6 +522,12 @@ COMMANDS = [
         add_to_package_json=True,
         server_handled=False,
     ),
+    Command(
+        "robocorp.showOutput",
+        "Show Robocorp Code > Output logs",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
 ]
 
 
