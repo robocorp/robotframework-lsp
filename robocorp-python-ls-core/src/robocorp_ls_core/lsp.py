@@ -839,6 +839,16 @@ class LSPMessages(object):
             self.M_SHOW_MESSAGE, params={"type": msg_type, "message": message}
         )
 
+    def execute_workspace_command(self, command, arguments):
+        command_future = self._endpoint.request(
+            "$/executeWorkspaceCommand",
+            {
+                "command": command,
+                "arguments": arguments,
+            },
+        )
+        return command_future
+
     def show_message_request(
         self,
         message: str,

@@ -5,7 +5,12 @@ import weakref
 
 from robocorp_ls_core.basic import implements, as_str, is_process_alive
 from robocorp_ls_core.constants import NULL
-from robocorp_ls_core.protocols import IConfig, IConfigProvider, Sentinel
+from robocorp_ls_core.protocols import (
+    IConfig,
+    IConfigProvider,
+    Sentinel,
+    RCCActionResult,
+)
 from robocorp_ls_core.robotframework_log import get_logger, get_log_level
 from robocorp_code.protocols import (
     IRcc,
@@ -180,7 +185,7 @@ class Rcc(object):
     # It should store the contents of conda which couldn't be resolved.
     # After being stored once here, it'll only be tried again when
     # the user restarts the language server (or changes the conda config).
-    broken_conda_configs: Set[str] = set()
+    broken_conda_configs: Dict[str, ActionResult] = {}
 
     def __init__(self, config_provider: IConfigProvider) -> None:
         self._config_provider = weakref.ref(config_provider)
@@ -251,7 +256,7 @@ class Rcc(object):
         stderr=Sentinel.SENTINEL,
         show_interactive_output: bool = False,
         hide_in_log: Optional[str] = None,
-    ) -> ActionResult[str]:
+    ) -> RCCActionResult:
         """
         Returns an ActionResult where the result is the stdout of the executed command.
 
@@ -328,7 +333,7 @@ class Rcc(object):
                             # info to our current progress (if any).
                             if progress_reporter is not None:
                                 progress_reporter.set_additional_info(
-                                    content.decode("utf-8")
+                                    content.decode("utf-8", "replace")
                                 )
                         except:
                             log.exception("Error reporting interactive output.")
@@ -351,7 +356,7 @@ class Rcc(object):
             if log_errors:
                 log.exception(msg)
             if not error_msg:
-                return ActionResult(success=False, message=msg)
+                return RCCActionResult(cmdline, success=False, message=msg)
             else:
                 additional_info = [error_msg]
                 if stdout or stderr:
@@ -370,17 +375,19 @@ class Rcc(object):
                         additional_info.append("\nDetails: ")
                         additional_info.append(stderr)
 
-                return ActionResult(success=False, message="".join(additional_info))
+                return RCCActionResult(
+                    cmdline, success=False, message="".join(additional_info)
+                )
 
         except TimeoutExpired:
             msg = f"Timed out ({timeout}s elapsed) when running: {cmdline}"
             log.exception(msg)
-            return ActionResult(success=False, message=msg)
+            return RCCActionResult(cmdline, success=False, message=msg)
 
         except Exception:
             msg = f"Error running: {cmdline}"
             log.exception(msg)
-            return ActionResult(success=False, message=msg)
+            return RCCActionResult(cmdline, success=False, message=msg)
 
         output = boutput.decode("utf-8", "replace")
 
@@ -392,7 +399,7 @@ class Rcc(object):
                 msg = msg.replace(hide_in_log, "<HIDDEN_IN_LOG>")
             log.info(msg)
 
-        return ActionResult(success=True, message=None, result=output)
+        return RCCActionResult(cmdline, success=True, message=None, result=output)
 
     @implements(IRcc.get_template_names)
     def get_template_names(self) -> ActionResult[List[RobotTemplate]]:
@@ -788,6 +795,7 @@ class Rcc(object):
         env_json_path: Optional[Path],
         timeout=None,
         holotree_manager=None,
+        on_env_creation_error=None,
     ) -> ActionResult[IRobotYamlEnvInfo]:
         from robocorp_code.holetree_manager import HolotreeManager
         from robocorp_code.rcc_space_info import format_conda_contents_to_compare
@@ -799,8 +807,11 @@ class Rcc(object):
             conda_yaml_contents
         )
 
-        if formatted_conda_yaml_contents in self.broken_conda_configs:
-            msg = f"Environment from broken conda.yaml requested: {conda_yaml_path}"
+        broken_action_result = self.broken_conda_configs.get(
+            formatted_conda_yaml_contents
+        )
+        if broken_action_result is not None:
+            msg = f"Environment from previously broken conda.yaml requested: {conda_yaml_path}.\n-- VSCode restart required to retry."
             log.critical(msg)
             return ActionResult(False, msg, None)
 
@@ -907,17 +918,6 @@ class Rcc(object):
 
         # It was just created, let's get the env info and save it as needed.
         def return_failure(msg: Optional[str]) -> ActionResult[IRobotYamlEnvInfo]:
-            self.broken_conda_configs.add(formatted_conda_yaml_contents)
-
-            with space_info.acquire_lock():
-                # If some failure happened, mark this as just created (so, it
-                # can be reused).
-                # But still, mark this conda yaml explicitly as invalid (i.e.:
-                # it's expected that trying to resolve it again won't work, so,
-                # the user must either restart vscode or change the conda yaml
-                # for it to be requested again).
-                space_info.state_path.write_text(SpaceState.CREATED.value, "utf-8")
-
             log.critical(
                 (
                     "Unable to create environment from:\n%s\n"
@@ -930,7 +930,22 @@ class Rcc(object):
             if not msg:
                 msg = "<unknown reason>"
             log.critical(msg)
-            return ActionResult(False, msg, None)
+            action_result: ActionResult[IRobotYamlEnvInfo] = ActionResult(
+                False, msg, None
+            )
+
+            self.broken_conda_configs[formatted_conda_yaml_contents] = action_result
+
+            with space_info.acquire_lock():
+                # If some failure happened, mark this as just created (so, it
+                # can be reused).
+                # But still, mark this conda yaml explicitly as invalid (i.e.:
+                # it's expected that trying to resolve it again won't work, so,
+                # the user must either restart vscode or change the conda yaml
+                # for it to be requested again).
+                space_info.state_path.write_text(SpaceState.CREATED.value, "utf-8")
+
+            return action_result
 
         args = [
             "holotree",
@@ -953,6 +968,8 @@ class Rcc(object):
             )
 
             if not ret.success:
+                if on_env_creation_error is not None:
+                    on_env_creation_error(ret)
                 return return_failure(ret.message)
 
             contents: Optional[str] = ret.result

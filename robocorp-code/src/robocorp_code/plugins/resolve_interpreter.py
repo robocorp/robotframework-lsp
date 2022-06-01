@@ -10,6 +10,7 @@ as well as robocorp-code).
 import os.path
 import sys
 import itertools
+from robocorp_ls_core.protocols import RCCActionResult
 
 try:
     from robocorp_code.rcc import Rcc  # noqa
@@ -101,14 +102,73 @@ class _CachedInterpreterInfo(object):
         pm: PluginManager,
     ):
         from robocorp_ls_core.ep_providers import EPConfigurationProvider
+        from robocorp_ls_core.ep_providers import EPEndPointProvider
+        from robocorp_ls_core.protocols import IEndPoint
+        from robocorp_ls_core.lsp import LSPMessages
+        from robocorp_code.commands import ROBOCORP_SHOW_INTERPRETER_ENV_ERROR
 
         self._mtime: _CachedInterpreterMTime = self._obtain_mtime(
             robot_yaml_file_info, conda_config_file_info, env_json_path_file_info
         )
 
         configuration_provider: EPConfigurationProvider = pm[EPConfigurationProvider]
+        endpoint_provider: EPEndPointProvider = pm[EPEndPointProvider]
         rcc = Rcc(configuration_provider)
         interpreter_id = str(robot_yaml_file_info.file_path)
+
+        def on_env_creation_error(result: RCCActionResult):
+            import tempfile
+
+            cmdline = result.command_line
+
+            # Note: called only on environment creation (not on all failures).
+            endpoint: IEndPoint = endpoint_provider.endpoint
+            with tempfile.NamedTemporaryFile(
+                delete=False, suffix=".log", prefix="robocorp_code_env_error_"
+            ) as f:
+                file_contents = f"""
+Robocorp Code: Unable to create environment
+=============================================
+
+There was an error creating the environment for:
+
+"{conda_config_file_info.file_path}"
+
+The full output to diagnose the error is shown below. 
+The most common reasons and fixes for this failure are:
+
+1. Dependencies specified are not resolvable.
+    
+    In this case, open "{conda_config_file_info.file_path}"
+    and update the dependencies accordingly (after saving
+    the environment will be automatically updated).
+    
+2. There's some intermittent network failure or some active firewall.
+
+    In this case, fix the network connectivity issue and restart VSCode to retry.
+
+If you still can't get it to work, please submit an issue to Robocorp using the
+command: "Robocorp: Submit issue to Robocorp".
+
+
+Full error message
+====================
+
+{result.message} 
+"""
+                f.write(file_contents.encode("utf-8"))
+                message = result.message
+                if message:
+                    f.write(message.encode("utf-8"))
+
+            lsp_messages = LSPMessages(endpoint)
+            lsp_messages.execute_workspace_command(
+                ROBOCORP_SHOW_INTERPRETER_ENV_ERROR,
+                {
+                    "fileWithError": str(f.name),
+                    "condaYaml": str(conda_config_file_info.file_path),
+                },
+            )
 
         result = rcc.get_robot_yaml_env_info(
             robot_yaml_file_info.file_path,
@@ -117,6 +177,7 @@ class _CachedInterpreterInfo(object):
             env_json_path_file_info.file_path
             if env_json_path_file_info is not None
             else None,
+            on_env_creation_error=on_env_creation_error,
         )
         if not result.success:
             raise RuntimeError(f"Unable to get env details. Error: {result.message}.")

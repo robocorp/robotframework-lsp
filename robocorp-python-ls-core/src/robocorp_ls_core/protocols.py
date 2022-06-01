@@ -12,6 +12,7 @@ from typing import (
     Type,
     Iterable,
     Tuple,
+    Sequence,
 )
 from typing import TypeVar
 import typing
@@ -855,6 +856,22 @@ class ActionResult(Generic[T]):
         return f"ActionResult(success={self.success!r}, message={self.message!r}, result={self.result!r})"
 
     __repr__ = __str__
+
+
+class RCCActionResult(ActionResult[str]):
+
+    # A string-representation of the command line.
+    command_line: str
+
+    def __init__(
+        self,
+        command_line: str,
+        success: bool,
+        message: Optional[str] = None,
+        result: Optional[str] = None,
+    ):
+        ActionResult.__init__(self, success, message, result)
+        self.command_line = command_line
 
 
 class EnvEntry(TypedDict):

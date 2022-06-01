@@ -331,6 +331,7 @@ class IRcc(Protocol):
         env_json_path: Optional[Path],
         timeout=None,
         holotree_manager=None,
+        on_env_creation_error=None,
     ) -> ActionResult[IRobotYamlEnvInfo]:
         """
         :returns: the result of getting the robot environment. It's expected that

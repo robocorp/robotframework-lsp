@@ -117,6 +117,7 @@ import {
     ROBOCORP_CLEAR_ENV_AND_RESTART,
     ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS,
     ROBOCORP_SHOW_OUTPUT,
+    ROBOCORP_SHOW_INTERPRETER_ENV_ERROR,
 } from "./robocorpCommands";
 import { disablePythonTerminalActivateEnvironment, installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -556,6 +557,11 @@ export async function activate(context: ExtensionContext) {
     }
 }
 
+interface ExecuteWorkspaceCommandArgs {
+    command: string;
+    arguments: any;
+}
+
 export async function doActivate(context: ExtensionContext, C: CommandRegistry) {
     // Note: register the submit issue actions early on so that we can later actually
     // report startup errors.
@@ -579,6 +585,10 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
     );
 
     C.registerWithoutStub(ROBOCORP_SHOW_OUTPUT, () => OUTPUT_CHANNEL.show());
+    C.registerWithoutStub(ROBOCORP_SHOW_INTERPRETER_ENV_ERROR, async (params) => {
+        const fileWithError = params.fileWithError;
+        vscode.window.showTextDocument(Uri.file(fileWithError));
+    });
 
     // i.e.: allow other extensions to also use our error feedback api.
     C.registerWithoutStub(ROBOCORP_ERROR_FEEDBACK_INTERNAL, (errorSource: string, errorCode: string) =>
@@ -654,6 +664,21 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
                 context.subscriptions.push(
                     langServer.onNotification("$/linkedAccountChanged", () => {
                         refreshCloudTreeView();
+                    })
+                );
+                context.subscriptions.push(
+                    langServer.onRequest("$/executeWorkspaceCommand", async (args: ExecuteWorkspaceCommandArgs) => {
+                        // OUTPUT_CHANNEL.appendLine(args.command + " - " + args.arguments);
+                        let ret;
+                        try {
+                            ret = await commands.executeCommand(args.command, args.arguments);
+                        } catch (err) {
+                            if (!(err.message && err.message.endsWith("not found"))) {
+                                // Log if the error wasn't that the command wasn't found
+                                logError("Error executing workspace command.", err, "EXT_EXECUTE_WS_COMMAND");
+                            }
+                        }
+                        return ret;
                     })
                 );
             }

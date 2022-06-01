@@ -91,6 +91,7 @@
         "onCommand:robocorp.openVaultHelp",
         "onCommand:robocorp.clearEnvAndRestart",
         "onCommand:robocorp.showOutput",
+        "onCommand:robocorp.showInterpreterEnvError",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -540,6 +541,11 @@
                 "command": "robocorp.showOutput",
                 "title": "Show Robocorp Code > Output logs",
                 "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.showInterpreterEnvError",
+                "title": "Show error related to interpreter env creation",
+                "category": "Robocorp"
             }
         ],
         "menus": {
@@ -866,6 +872,10 @@
                 },
                 {
                     "command": "robocorp.openVaultHelp",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.showInterpreterEnvError",
                     "when": "false"
                 }
             ]
