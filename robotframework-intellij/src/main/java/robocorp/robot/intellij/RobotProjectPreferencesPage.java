@@ -43,6 +43,7 @@ class RobotProjectPreferencesComponent {
     private final JBTextField robotLintIgnoreEnvironmentVariables = new JBTextField();
     private final JBTextField robotCompletionsSectionHeadersForm = new JBTextField();
     private final JBTextField robotCompletionsKeywordsFormat = new JBTextField();
+    private final JBTextField robotCompletionsKeywordsArgumentsSeparator = new JBTextField();
     private final JBTextField robotWorkspaceSymbolsOnlyForOpenDocs = new JBTextField();
     private final JBTextField robotCodeLensEnable = new JBTextField();
 
@@ -94,6 +95,8 @@ class RobotProjectPreferencesComponent {
                 .addComponent(createJTextArea("Defines how completions should be shown for section headers\n(i.e.: *** Setting(s) ***). One of: plural, singular, both.\n"))
                 .addLabeledComponent(new JBLabel("Completions Keywords Format"), robotCompletionsKeywordsFormat, 1, false)
                 .addComponent(createJTextArea("Defines how keyword completions should be applied.\nOne of: First upper, Title Case, ALL UPPER, all lower.\n"))
+                .addLabeledComponent(new JBLabel("Completions Keywords Arguments Separator"), robotCompletionsKeywordsArgumentsSeparator, 1, false)
+                .addComponent(createJTextArea("Defines the string used to separate arguments when applying a Keyword completion with arguments.\n"))
                 .addLabeledComponent(new JBLabel("Workspace Symbols Only For Open Docs"), robotWorkspaceSymbolsOnlyForOpenDocs, 1, false)
                 .addComponent(createJTextArea("Collecting workspace symbols can be resource intensive on big projects and may slow down code-\ncompletion, in this case, it's possible collect info only for open files on big projects.\nNote: expected 'true' or 'false'\n"))
                 .addLabeledComponent(new JBLabel("Code Lens Enable"), robotCodeLensEnable, 1, false)
@@ -330,6 +333,15 @@ class RobotProjectPreferencesComponent {
     }
     
     @NotNull
+    public String getRobotCompletionsKeywordsArgumentsSeparator() {
+        return robotCompletionsKeywordsArgumentsSeparator.getText();
+    }
+
+    public void setRobotCompletionsKeywordsArgumentsSeparator (@NotNull String newText) {
+        robotCompletionsKeywordsArgumentsSeparator.setText(newText);
+    }
+    
+    @NotNull
     public String getRobotWorkspaceSymbolsOnlyForOpenDocs() {
         return robotWorkspaceSymbolsOnlyForOpenDocs.getText();
     }
@@ -481,6 +493,10 @@ public class RobotProjectPreferencesPage implements Configurable {
             return true;
         }
         
+        if(!settings.getRobotCompletionsKeywordsArgumentsSeparator().equals(component.getRobotCompletionsKeywordsArgumentsSeparator())){
+            return true;
+        }
+        
         if(!settings.getRobotWorkspaceSymbolsOnlyForOpenDocs().equals(component.getRobotWorkspaceSymbolsOnlyForOpenDocs())){
             return true;
         }
@@ -524,6 +540,7 @@ public class RobotProjectPreferencesPage implements Configurable {
         component.setRobotLintIgnoreEnvironmentVariables(settings.getRobotLintIgnoreEnvironmentVariables());
         component.setRobotCompletionsSectionHeadersForm(settings.getRobotCompletionsSectionHeadersForm());
         component.setRobotCompletionsKeywordsFormat(settings.getRobotCompletionsKeywordsFormat());
+        component.setRobotCompletionsKeywordsArgumentsSeparator(settings.getRobotCompletionsKeywordsArgumentsSeparator());
         component.setRobotWorkspaceSymbolsOnlyForOpenDocs(settings.getRobotWorkspaceSymbolsOnlyForOpenDocs());
         component.setRobotCodeLensEnable(settings.getRobotCodeLensEnable());
     }
@@ -630,6 +647,10 @@ public class RobotProjectPreferencesPage implements Configurable {
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Completions Keywords Format:\n" + s);
         }
+        s = settings.validateRobotCompletionsKeywordsArgumentsSeparator(component.getRobotCompletionsKeywordsArgumentsSeparator());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Completions Keywords Arguments Separator:\n" + s);
+        }
         s = settings.validateRobotWorkspaceSymbolsOnlyForOpenDocs(component.getRobotWorkspaceSymbolsOnlyForOpenDocs());
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Workspace Symbols Only For Open Docs:\n" + s);
@@ -662,6 +683,7 @@ public class RobotProjectPreferencesPage implements Configurable {
         settings.setRobotLintIgnoreEnvironmentVariables(component.getRobotLintIgnoreEnvironmentVariables());
         settings.setRobotCompletionsSectionHeadersForm(component.getRobotCompletionsSectionHeadersForm());
         settings.setRobotCompletionsKeywordsFormat(component.getRobotCompletionsKeywordsFormat());
+        settings.setRobotCompletionsKeywordsArgumentsSeparator(component.getRobotCompletionsKeywordsArgumentsSeparator());
         settings.setRobotWorkspaceSymbolsOnlyForOpenDocs(component.getRobotWorkspaceSymbolsOnlyForOpenDocs());
         settings.setRobotCodeLensEnable(component.getRobotCodeLensEnable());
     }

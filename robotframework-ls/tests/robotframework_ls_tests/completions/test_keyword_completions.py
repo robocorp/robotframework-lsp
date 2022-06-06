@@ -1048,6 +1048,56 @@ My Test
     )
 
 
+def test_apply_keyword_arguments_customized(workspace):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.robot_config import RobotConfig
+    from robotframework_ls.impl.robot_lsp_constants import (
+        OPTION_ROBOT_COMPLETION_KEYWORDS_ARGUMENTS_SEPARATOR,
+    )
+
+    workspace.set_root("case2")
+    config = RobotConfig()
+    config.update({OPTION_ROBOT_COMPLETION_KEYWORDS_ARGUMENTS_SEPARATOR: "\t"})
+
+    doc = workspace.put_doc(
+        "case2.robot",
+        """*** Keywords ***
+My Keyword
+    [Arguments]    ${v1}    ${v2}
+    Log to console    ${v1}${v2}
+
+*** Test Case ***
+My Test
+    My Keyw""",
+    )
+
+    line, col = doc.get_last_line_col()
+
+    completions = keyword_completions.complete(
+        CompletionContext(
+            doc, workspace=workspace.ws, line=line, col=col, config=config
+        )
+    )
+    assert sorted([comp["label"] for comp in completions]) == [
+        "My Keyword (case2)",
+    ]
+
+    apply_completion(doc, completions[0])
+
+    assert (
+        doc.source
+        == """*** Keywords ***
+My Keyword
+    [Arguments]    ${v1}    ${v2}
+    Log to console    ${v1}${v2}
+
+*** Test Case ***
+My Test
+    My Keyword\t${1:\$v1}\t${2:\$v2}"""
+    )
+
+
 def test_keyword_without_arguments_on_template(workspace):
     from robotframework_ls.impl import keyword_completions
     from robotframework_ls.impl.completion_context import CompletionContext

@@ -41,6 +41,7 @@ class RobotProjectState {
     public String robotLintIgnoreEnvironmentVariables = "";
     public String robotCompletionsSectionHeadersForm = "";
     public String robotCompletionsKeywordsFormat = "";
+    public String robotCompletionsKeywordsArgumentsSeparator = "";
     public String robotWorkspaceSymbolsOnlyForOpenDocs = "";
     public String robotCodeLensEnable = "";
 }
@@ -73,6 +74,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
     public static final String ROBOT_LINT_IGNORE_ENVIRONMENT_VARIABLES = "robot.lint.ignoreEnvironmentVariables";
     public static final String ROBOT_COMPLETIONS_SECTION_HEADERS_FORM = "robot.completions.section_headers.form";
     public static final String ROBOT_COMPLETIONS_KEYWORDS_FORMAT = "robot.completions.keywords.format";
+    public static final String ROBOT_COMPLETIONS_KEYWORDS_ARGUMENTS_SEPARATOR = "robot.completions.keywords.argumentsSeparator";
     public static final String ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS = "robot.workspaceSymbolsOnlyForOpenDocs";
     public static final String ROBOT_CODE_LENS_ENABLE = "robot.codeLens.enable";
 
@@ -107,6 +109,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         robotState.robotLintIgnoreEnvironmentVariables = getRobotLintIgnoreEnvironmentVariables();
         robotState.robotCompletionsSectionHeadersForm = getRobotCompletionsSectionHeadersForm();
         robotState.robotCompletionsKeywordsFormat = getRobotCompletionsKeywordsFormat();
+        robotState.robotCompletionsKeywordsArgumentsSeparator = getRobotCompletionsKeywordsArgumentsSeparator();
         robotState.robotWorkspaceSymbolsOnlyForOpenDocs = getRobotWorkspaceSymbolsOnlyForOpenDocs();
         robotState.robotCodeLensEnable = getRobotCodeLensEnable();
         return robotState;
@@ -139,6 +142,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         setRobotLintIgnoreEnvironmentVariables(robotState.robotLintIgnoreEnvironmentVariables);
         setRobotCompletionsSectionHeadersForm(robotState.robotCompletionsSectionHeadersForm);
         setRobotCompletionsKeywordsFormat(robotState.robotCompletionsKeywordsFormat);
+        setRobotCompletionsKeywordsArgumentsSeparator(robotState.robotCompletionsKeywordsArgumentsSeparator);
         setRobotWorkspaceSymbolsOnlyForOpenDocs(robotState.robotWorkspaceSymbolsOnlyForOpenDocs);
         setRobotCodeLensEnable(robotState.robotCodeLensEnable);
     }
@@ -349,6 +353,15 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
             
             try {
                 jsonObject.add(ROBOT_COMPLETIONS_KEYWORDS_FORMAT, new JsonPrimitive(robotCompletionsKeywordsFormat));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotCompletionsKeywordsArgumentsSeparator.isEmpty()){
+            
+            try {
+                jsonObject.add(ROBOT_COMPLETIONS_KEYWORDS_ARGUMENTS_SEPARATOR, new JsonPrimitive(robotCompletionsKeywordsArgumentsSeparator));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -1478,6 +1491,53 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             try {
                 listener.onChanged(ROBOT_COMPLETIONS_KEYWORDS_FORMAT, old, s);
+            } catch (CancelledException e) {
+                // just ignore at this point
+            }
+        }
+    }
+    
+    private String robotCompletionsKeywordsArgumentsSeparator = "";
+
+    public @NotNull String getRobotCompletionsKeywordsArgumentsSeparator() {
+        return robotCompletionsKeywordsArgumentsSeparator;
+    }
+
+    public @Nullable JsonPrimitive getRobotCompletionsKeywordsArgumentsSeparatorAsJson() {
+        if(robotCompletionsKeywordsArgumentsSeparator.isEmpty()){
+            return null;
+        }
+        
+        return new JsonPrimitive(robotCompletionsKeywordsArgumentsSeparator);
+    }
+
+    public @NotNull String validateRobotCompletionsKeywordsArgumentsSeparator(String robotCompletionsKeywordsArgumentsSeparator) {
+        if(robotCompletionsKeywordsArgumentsSeparator.isEmpty()) {
+            return "";
+        }
+        try {
+            
+            new JsonPrimitive(robotCompletionsKeywordsArgumentsSeparator);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotCompletionsKeywordsArgumentsSeparator(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotCompletionsKeywordsArgumentsSeparator)) {
+            return;
+        }
+        String old = robotCompletionsKeywordsArgumentsSeparator;
+        robotCompletionsKeywordsArgumentsSeparator = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            try {
+                listener.onChanged(ROBOT_COMPLETIONS_KEYWORDS_ARGUMENTS_SEPARATOR, old, s);
             } catch (CancelledException e) {
                 // just ignore at this point
             }

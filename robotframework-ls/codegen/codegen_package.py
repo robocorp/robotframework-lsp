@@ -223,6 +223,11 @@ def get_json_contents():
                         "description": "Defines how keyword completions should be applied.\nOne of: First upper, Title Case, ALL UPPER, all lower.",
                         "enum": ["First upper", "Title Case", "ALL UPPER", "all lower"],
                     },
+                    "robot.completions.keywords.argumentsSeparator": {
+                        "type": "string",
+                        "default": "    ",
+                        "description": "Defines the string used to separate arguments when applying a Keyword completion with arguments.",
+                    },
                     "robot.workspaceSymbolsOnlyForOpenDocs": {
                         "type": "boolean",
                         "default": False,

@@ -29,6 +29,9 @@ class _Collector(AbstractKeywordCollector):
         )
         from robotframework_ls.robot_config import create_convert_keyword_format_func
         from robot.api import Token
+        from robotframework_ls.impl.robot_lsp_constants import (
+            OPTION_ROBOT_COMPLETION_KEYWORDS_ARGUMENTS_SEPARATOR,
+        )
 
         token_str = keyword_usage.token.value
 
@@ -48,6 +51,12 @@ class _Collector(AbstractKeywordCollector):
                     self._add_arguments = False
                     break
 
+        config = completion_context.config
+        self._arguments_separator = "    "
+        if config:
+            self._arguments_separator = config.get_setting(
+                OPTION_ROBOT_COMPLETION_KEYWORDS_ARGUMENTS_SEPARATOR, str, "    "
+            )
         self._matcher = RobotStringMatcher(token_str)
         self._scope_matchers = build_matchers_with_resource_or_library_scope(token_str)
         config = completion_context.config
@@ -91,7 +100,7 @@ class _Collector(AbstractKeywordCollector):
                     arg_name.replace("$", "\\$").replace("{", "").replace("}", "")
                 )
 
-                text += "    ${%s:%s}" % (i + 1, arg_name)
+                text = f"{text}{self._arguments_separator}${{{i + 1}:{arg_name}}}"
 
         text_edit: TextEditTypedDict = {
             "range": {

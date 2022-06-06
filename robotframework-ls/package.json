@@ -423,6 +423,11 @@
                         "all lower"
                     ]
                 },
+                "robot.completions.keywords.argumentsSeparator": {
+                    "type": "string",
+                    "default": "    ",
+                    "description": "Defines the string used to separate arguments when applying a Keyword completion with arguments."
+                },
                 "robot.workspaceSymbolsOnlyForOpenDocs": {
                     "type": "boolean",
                     "default": false,
