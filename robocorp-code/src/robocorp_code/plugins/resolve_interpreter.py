@@ -119,8 +119,6 @@ class _CachedInterpreterInfo(object):
         def on_env_creation_error(result: RCCActionResult):
             import tempfile
 
-            cmdline = result.command_line
-
             # Note: called only on environment creation (not on all failures).
             endpoint: IEndPoint = endpoint_provider.endpoint
             with tempfile.NamedTemporaryFile(
@@ -134,7 +132,7 @@ There was an error creating the environment for:
 
 "{conda_config_file_info.file_path}"
 
-The full output to diagnose the error is shown below. 
+The full output to diagnose the issue is shown below. 
 The most common reasons and fixes for this failure are:
 
 1. Dependencies specified are not resolvable.
@@ -145,10 +143,20 @@ The most common reasons and fixes for this failure are:
     
 2. There's some intermittent network failure or some active firewall.
 
-    In this case, fix the network connectivity issue and restart VSCode to retry.
+    In this case, fix the network connectivity issue and chose one of the options below:
+    
+    - Retry restarting VSCode using the command:
+    
+      "Developer: Reload Window"
+    
+    - Clear all environments and restart Robocorp code (advised if you suspect 
+      that some environment was partially created and is corrupt):
+      
+      "Robocorp: Clear Robocorp (RCC) environments and restart Robocorp Code"
 
-If you still can't get it to work, please submit an issue to Robocorp using the
-command: "Robocorp: Submit issue to Robocorp".
+If you still can't get it to work, please submit an issue to Robocorp using the command:
+ 
+  "Robocorp: Submit issue to Robocorp".
 
 
 Full error message
