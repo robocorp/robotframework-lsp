@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.48.0'
+version '0.48.2'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,8 +50,15 @@ intellij {
 
 patchPluginXml {
     changeNotes """
+    Release 0.48.2
+    
+    <ul>
+    <li>New setting <strong>robot.completions.keywords.argumentsSeparator</strong> allows customizing spacing betwen keyword and arguments when auto-completing Keyword with arguments.</li>
+    </ul>
+    
     Release 0.48.0
     </p>
+    
     <ul>
   
     <li>Consider as defined a reference to any variable set as a global variable anywhere on the workspace.</li>

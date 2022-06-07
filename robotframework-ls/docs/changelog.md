@@ -1,4 +1,4 @@
-NEXT
+New in 0.48.2 (2022-06-07)
 -----------------------------
 
 - New setting `"robot.completions.keywords.argumentsSeparator"` allows customizing spacing betwen keyword and arguments when auto-completing Keyword with arguments. [#683](https://github.com/robocorp/robotframework-lsp/issues/683)
