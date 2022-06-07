@@ -7,6 +7,7 @@ import { getSelectedLocator, getSelectedRobot, LocatorEntry, RobotEntry } from "
 import { execFilePromise, ExecFileReturn, mergeEnviron } from "./subprocess";
 import { OUTPUT_CHANNEL } from "./channel";
 import { ChildProcess } from "child_process";
+import { feedback } from "./rcc";
 
 let _openingInspector: boolean = false;
 let _startingRootWindowNotified: boolean = false;
@@ -130,6 +131,9 @@ export async function _internalOpenRobocorpInspector(locatorType?: string, locat
                 append("" + data);
             });
         };
+
+        feedback("vscode.inspector.opened", locatorType);
+
         const pythonExecutablePath =
             process.platform === "darwin"
                 ? path.join(path.dirname(inspectorLaunchInfo.pythonExe), "pythonw")

@@ -433,9 +433,9 @@ interface IEnvInfo {
     rccLocation: string;
 }
 
-export async function feedback(name: string) {
+export async function feedback(name: string, value: string = "+1") {
     const rccLocation = await getRccLocation();
-    let args: string[] = ["feedback", "metric", "-t", "vscode", "-n", name, "-v", "+1"];
+    let args: string[] = ["feedback", "metric", "-t", "vscode", "-n", name, "-v", value];
 
     const robocorpHome = await getRobocorpHome();
     const env = createEnvWithRobocorpHome(robocorpHome);

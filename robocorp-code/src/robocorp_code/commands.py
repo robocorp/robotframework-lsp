@@ -55,6 +55,7 @@ ROBOCORP_SEND_METRIC = "robocorp.sendMetric"  # Send metric
 ROBOCORP_SUBMIT_ISSUE_INTERNAL = "robocorp.submitIssue.internal"  # Submit issue (internal)
 ROBOCORP_SUBMIT_ISSUE = "robocorp.submitIssue"  # Submit issue to Robocorp
 ROBOCORP_ERROR_FEEDBACK_INTERNAL = "robocorp.errorFeedback.internal"  # Error feedback (internal)
+ROBOCORP_FEEDBACK_INTERNAL = "robocorp.feedback.internal"  # Feedback (internal)
 ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL = "robocorp.configuration.diagnostics.internal"  # Robot Configuration Diagnostics (internal)
 ROBOCORP_CONFIGURATION_DIAGNOSTICS = "robocorp.configuration.diagnostics"  # Robot Configuration Diagnostics
 ROBOCORP_RCC_TERMINAL_NEW = "robocorp.rccTerminalNew"  # Terminal with Robot environment

@@ -408,6 +408,12 @@ COMMANDS = [
         hide_from_command_palette=True,
     ),
     Command(
+        "robocorp.feedback.internal",
+        "Feedback (internal)",
+        server_handled=False,
+        hide_from_command_palette=True,
+    ),
+    Command(
         "robocorp.configuration.diagnostics.internal",
         "Robot Configuration Diagnostics (internal)",
         server_handled=True,

@@ -13,7 +13,7 @@
 
 import { commands, ExtensionContext, window } from "vscode";
 import * as vscode from "vscode";
-import { logError, OUTPUT_CHANNEL } from "../channel";
+import { feedback, logError, OUTPUT_CHANNEL } from "../channel";
 import { languageServerClient } from "../extension";
 
 const RF_INTERACTIVE_LOCAL_RESOURCE_ROOT = process.env.RF_INTERACTIVE_LOCAL_RESOURCE_ROOT;
@@ -85,6 +85,11 @@ class InteractiveShellPanel {
         );
         if (RF_INTERACTIVE_LOCAL_RESOURCE_ROOT) {
             localResourceRoot = vscode.Uri.file(RF_INTERACTIVE_LOCAL_RESOURCE_ROOT);
+        } else {
+            feedback(
+                "vscode.iconsole.used",
+                vscode.extensions.getExtension("robocorp.robotframework-lsp").packageJSON.version
+            );
         }
 
         const panel = vscode.window.createWebviewPanel(

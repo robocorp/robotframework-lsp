@@ -118,6 +118,7 @@ import {
     ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS,
     ROBOCORP_SHOW_OUTPUT,
     ROBOCORP_SHOW_INTERPRETER_ENV_ERROR,
+    ROBOCORP_FEEDBACK_INTERNAL,
 } from "./robocorpCommands";
 import { disablePythonTerminalActivateEnvironment, installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -127,6 +128,7 @@ import { registerDebugger } from "./debugger";
 import { clearRCCEnvironments, clearRobocorpCodeCaches, computeEnvsToCollect } from "./clear";
 import { Mutex } from "./mutex";
 import { mergeEnviron } from "./subprocess";
+import { feedback } from "./rcc";
 
 interface InterpreterInfo {
     pythonExe: string;
@@ -594,6 +596,8 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
     C.registerWithoutStub(ROBOCORP_ERROR_FEEDBACK_INTERNAL, (errorSource: string, errorCode: string) =>
         feedbackAnyError(errorSource, errorCode)
     );
+    // i.e.: allow other extensions to also use our feedback api.
+    C.registerWithoutStub(ROBOCORP_FEEDBACK_INTERNAL, (name: string, value: string) => feedback(name, value));
 
     C.registerWithoutStub(ROBOCORP_CLEAR_ENV_AND_RESTART, clearEnvAndRestart);
     // Register other commands (which will have an error message shown depending on whether

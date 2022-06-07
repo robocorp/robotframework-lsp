@@ -11,6 +11,14 @@ export async function errorFeedback(errorCode: string) {
     }
 }
 
+export async function feedback(name: string, value: string) {
+    try {
+        await commands.executeCommand("robocorp.feedback.internal", name, value);
+    } catch (err) {
+        // that's ok, it may not be there.
+    }
+}
+
 export function logError(msg: string, err: Error, errorCode: string) {
     errorFeedback(errorCode);
     OUTPUT_CHANNEL.appendLine(msg);

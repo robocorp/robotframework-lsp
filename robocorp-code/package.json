@@ -73,6 +73,7 @@
         "onCommand:robocorp.submitIssue.internal",
         "onCommand:robocorp.submitIssue",
         "onCommand:robocorp.errorFeedback.internal",
+        "onCommand:robocorp.feedback.internal",
         "onCommand:robocorp.configuration.diagnostics.internal",
         "onCommand:robocorp.configuration.diagnostics",
         "onCommand:robocorp.rccTerminalNew",
@@ -448,6 +449,11 @@
             {
                 "command": "robocorp.errorFeedback.internal",
                 "title": "Error feedback (internal)",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.feedback.internal",
+                "title": "Feedback (internal)",
                 "category": "Robocorp"
             },
             {
@@ -832,6 +838,10 @@
                 },
                 {
                     "command": "robocorp.errorFeedback.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.feedback.internal",
                     "when": "false"
                 },
                 {

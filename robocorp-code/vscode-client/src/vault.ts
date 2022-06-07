@@ -2,6 +2,7 @@ import * as roboCommands from "./robocorpCommands";
 import * as vscode from "vscode";
 import { cloudLogin } from "./activities";
 import { selectWorkspace } from "./ask";
+import { feedback } from "./rcc";
 
 export async function connectVault() {
     let isLoginNeededActionResult: ActionResult<boolean> = await vscode.commands.executeCommand(
@@ -42,6 +43,7 @@ export async function connectVault() {
         vscode.window.showInformationMessage("Error connecting to vault: " + setVaultResult.message);
         return;
     }
+    feedback("vscode.vault", "connected");
     vscode.window.showInformationMessage("Connected to vault.");
 }
 
@@ -60,5 +62,6 @@ export async function disconnectVault() {
         vscode.window.showInformationMessage("Error disconnecting from vault: " + setVaultResult.message);
         return;
     }
+    feedback("vscode.vault", "disconnected");
     vscode.window.showInformationMessage("Disconnected from vault.");
 }
