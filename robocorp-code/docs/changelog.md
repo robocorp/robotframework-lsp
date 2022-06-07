@@ -1,3 +1,9 @@
+New in 0.34.0 (2022-06-07)
+-----------------------------
+
+- When an error happens creating env, details (and possible solutions) are shown in an editor.
+
+
 New in 0.33.0 (2022-05-30)
 -----------------------------
 
