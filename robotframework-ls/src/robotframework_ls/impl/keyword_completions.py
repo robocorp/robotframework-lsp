@@ -56,7 +56,7 @@ class _Collector(AbstractKeywordCollector):
         if config:
             self._arguments_separator = config.get_setting(
                 OPTION_ROBOT_COMPLETION_KEYWORDS_ARGUMENTS_SEPARATOR, str, "    "
-            )
+            ).replace(r"\t", "\t")
         self._matcher = RobotStringMatcher(token_str)
         self._scope_matchers = build_matchers_with_resource_or_library_scope(token_str)
         config = completion_context.config

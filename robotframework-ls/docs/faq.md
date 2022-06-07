@@ -345,3 +345,23 @@ When the `Interactive Console` is opened, an initial task will be considered run
 -- **Note**: it's also possible to send the contents of `*** Test Case ***` or `*** Task ***`, but a new task won't actually be started, instead, the keyword calls in this case will be executed as a block in the context of the `Test/Task` that is already running.
 -- **Note**: to add a library/resource import it must be sent along with the `*** Settings ***` header.
 -- **Note**: To print some variable, use the `Log` keyword with `console=True`. i.e.: `Log    ${var}    console=True`
+
+
+How can I use a different separator
+------------------------------------
+
+By default the `Robot Framework Language Server` will use 4 spaces as the separator
+between arguments, but it's possible to use a different separator (such as tabs or 2 spaces).
+
+To customize this the setting:
+
+`"robot.completions.keywords.argumentsSeparator"` must be set to the wanted value
+so that the completions that automatically add arguments use the required separator
+(for `tabs` use `\t` as the value).
+
+Afterwards, the client itself needs to be set independently to handle tab to add
+the proper amount of spacing (or tabs).
+
+In VSCode this requires setting `"robot.editor.4spacesTab"` to `false` besides
+adjusting other editor-related settings.
+
