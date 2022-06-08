@@ -105,7 +105,7 @@ Updating RCC
 
 - Open a shell at the proper place (something as `X:\vscode-robot\robotframework-lsp\robocorp-code`)
 
-- Update version (`python -m dev set-rcc-version v11.9.16`).
+- Update version (`python -m dev set-rcc-version v11.14.2`).
 
 - Remove the rcc executable from the `bin` folder to redownload the next time the extension is executed.
 
