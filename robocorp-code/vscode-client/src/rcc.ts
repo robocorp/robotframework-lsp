@@ -120,7 +120,7 @@ async function downloadRcc(
             relativePath = "/linux32/rcc";
         }
     }
-    const RCC_VERSION = "v11.14.2";
+    const RCC_VERSION = "v11.14.5";
     const prefix = "https://downloads.robocorp.com/rcc/releases/" + RCC_VERSION;
     const url: string = prefix + relativePath;
     return await download(url, progress, token, location);
@@ -573,6 +573,7 @@ export async function collectBaseEnv(
             // base environment .zip and import it.
             const env = createEnvWithRobocorpHome(robocorpHome);
             try {
+                
                 let execFileReturn: ExecFileReturn;
                 try {
                     execFileReturn = await execFilePromise(
@@ -582,7 +583,7 @@ export async function collectBaseEnv(
                         { "showOutputInteractively": true }
                     );
                     OUTPUT_CHANNEL.appendLine("Enabled shared holotree");
-                } catch (err) {
+                } catch (err) { 
                     let response = await window.showWarningMessage(
                         "It was not possible to enable the holotree shared mode. How do you want to proceed?",
                         "Retry as admin",
