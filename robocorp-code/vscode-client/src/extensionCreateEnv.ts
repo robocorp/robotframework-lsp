@@ -20,6 +20,45 @@ import { Timing } from "./time";
 import { execFilePromise, ExecFileReturn } from "./subprocess";
 import { sleep } from "./time";
 
+export async function runAsAdmin(rccLocation: string, args: string[], env) {
+    try {
+        // Now, at this point we resolve the links to have a canonical location, because
+        // we'll execute with a different user (i.e.: admin), we first resolve substs
+        // which may not be available for that user (i.e.: a subst can be applied to one
+        // account and not to the other) because path.resolve and fs.realPathSync don't
+        // seem to resolve substed drives, we do it manually here.
+
+        if (rccLocation.charAt(1) == ":") {
+            // Check that we actually have a drive there.
+            try {
+                let resolved: string = fs.readlinkSync(rccLocation.charAt(0) + ":");
+                rccLocation = path.join(resolved, rccLocation.slice(2));
+            } catch (error) {
+                // ignore (it's not a link)
+            }
+        }
+
+        rccLocation = path.resolve(rccLocation);
+        rccLocation = fs.realpathSync(rccLocation);
+    } catch (error) {
+        OUTPUT_CHANNEL.appendLine("Error (handled) resolving rcc canonical location: " + error);
+    }
+    rccLocation = rccLocation.split("\\").join("/"); // escape for the shell execute
+    let argsAsStr = args.join(" ");
+    let result: ExecFileReturn = await execFilePromise(
+        "C:/Windows/System32/mshta.exe", // i.e.: Windows scripting
+        [
+            "javascript: var shell = new ActiveXObject('shell.application');" + // create a shell
+                "shell.ShellExecute('" +
+                rccLocation +
+                "', '" +
+                argsAsStr +
+                "', '', 'runas', 1);close();", // runas will run in elevated mode
+        ],
+        { env: env }
+    );
+}
+
 async function enableWindowsLongPathSupport(rccLocation: string) {
     try {
         try {
@@ -28,39 +67,7 @@ async function enableWindowsLongPathSupport(rccLocation: string) {
             await sleep(100);
         } catch (error) {
             // Expected error (it means we need an elevated shell to run the command).
-            try {
-                // Now, at this point we resolve the links to have a canonical location, because
-                // we'll execute with a different user (i.e.: admin), we first resolve substs
-                // which may not be available for that user (i.e.: a subst can be applied to one
-                // account and not to the other) because path.resolve and fs.realPathSync don't
-                // seem to resolve substed drives, we do it manually here.
-
-                if (rccLocation.charAt(1) == ":") {
-                    // Check that we actually have a drive there.
-                    try {
-                        let resolved: string = fs.readlinkSync(rccLocation.charAt(0) + ":");
-                        rccLocation = path.join(resolved, rccLocation.slice(2));
-                    } catch (error) {
-                        // ignore (it's not a link)
-                    }
-                }
-
-                rccLocation = path.resolve(rccLocation);
-                rccLocation = fs.realpathSync(rccLocation);
-            } catch (error) {
-                OUTPUT_CHANNEL.appendLine("Error (handled) resolving rcc canonical location: " + error);
-            }
-            rccLocation = rccLocation.split("\\").join("/"); // escape for the shell execute
-            let result: ExecFileReturn = await execFilePromise(
-                "C:/Windows/System32/mshta.exe", // i.e.: Windows scripting
-                [
-                    "javascript: var shell = new ActiveXObject('shell.application');" + // create a shell
-                        "shell.ShellExecute('" +
-                        rccLocation +
-                        "', 'configure longpaths --enable', '', 'runas', 1);close();", // runas will run in elevated mode
-                ],
-                { env: { ...process.env } }
-            );
+            runAsAdmin(rccLocation, ["configure", "longpaths", "--enable"], { ...process.env });
             // Wait a second for the command to be executed as admin before proceeding.
             await sleep(1000);
         }
@@ -299,7 +306,7 @@ export async function createDefaultEnv(
 
     progress.report({ message: "Update env (may take a few minutes)." });
     // Get information on a base package with our basic dependencies (this can take a while...).
-    let rccEnvPromise = collectBaseEnv(robotConda, robocorpHome);
+    let rccEnvPromise = collectBaseEnv(robotConda, robocorpHome, rccDiagnostics);
     let timing = new Timing();
 
     let finishedCondaRun = false;

@@ -10,6 +10,7 @@ import { logError, OUTPUT_CHANNEL } from "./channel";
 import { Timing, sleep } from "./time";
 import { execFilePromise, ExecFileReturn, mergeEnviron } from "./subprocess";
 import * as roboConfig from "./robocorpSettings";
+import { runAsAdmin } from "./extensionCreateEnv";
 
 let lastPrintedRobocorpHome: string = "";
 
@@ -122,12 +123,71 @@ async function downloadRcc(
     const RCC_VERSION = "v11.14.2";
     const prefix = "https://downloads.robocorp.com/rcc/releases/" + RCC_VERSION;
     const url: string = prefix + relativePath;
+    return await download(url, progress, token, location);
+}
 
+function getBaseAsZipBasename() {
+    let basename: string;
+    if (process.platform == "win32") {
+        if (process.arch === "x64" || process.env.hasOwnProperty("PROCESSOR_ARCHITEW6432")) {
+            // Check if node is a 64 bit process or if it's a 32 bit process running in a 64 bit processor.
+            basename = "2d95df0bd92d1b9d_windows_amd64.zip";
+        } else {
+            // Do we even have a way to test a 32 bit build?
+            throw Error("Win 32 bits not supported.");
+        }
+    } else if (process.platform == "darwin") {
+        basename = "757e16c5c6df1f7a_darwin_amd64.zip";
+    } else {
+        // Linux
+        if (process.arch === "x64") {
+            basename = "83fdf1ee2006f644_linux_amd64.zip";
+        } else {
+            throw Error("Linux 32 bits not supported.");
+        }
+    }
+    return basename;
+}
+
+/**
+ * Provides the place where the zip with the base environment should be downloaded.
+ */
+async function getBaseAsZipDownloadLocation(): Promise<string> {
+    const robocorpHome = await getRobocorpHome();
+    let robocorpCodePath = path.join(robocorpHome, ".robocorp_code");
+    return path.join(robocorpCodePath, getBaseAsZipBasename());
+}
+
+async function downloadBaseAsZip(
+    progress: Progress<{ message?: string; increment?: number }>,
+    token: CancellationToken,
+    zipDownloadLocation: string
+) {
+    let timing = new Timing();
+    let httpSettings = workspace.getConfiguration("http");
+    configureXHR(httpSettings.get<string>("proxy"), httpSettings.get<boolean>("proxyStrictSSL"));
+    const basename = getBaseAsZipBasename();
+    const url: string = "https://downloads.robocorp.com/holotree/bin/" + basename;
+    const ret = await download(url, progress, token, zipDownloadLocation);
+
+    OUTPUT_CHANNEL.appendLine(
+        "Took: " + timing.getTotalElapsedAsStr() + " to download base environment (" + zipDownloadLocation + ")."
+    );
+
+    return ret;
+}
+
+async function download(
+    url: string,
+    progress: Progress<{ message?: string; increment?: number }>,
+    token: CancellationToken,
+    location: string
+) {
     // Downloads can go wrong (so, retry a few times before giving up).
     const maxTries = 3;
     let timing: Timing = new Timing();
 
-    OUTPUT_CHANNEL.appendLine("Downloading rcc from: " + url);
+    OUTPUT_CHANNEL.appendLine("Downloading from: " + url);
     for (let i = 0; i < maxTries; i++) {
         function onProgress(currLen: number, totalLen: number) {
             if (timing.elapsedFromLastMeasurement(300) || currLen == totalLen) {
@@ -269,11 +329,13 @@ export interface CheckDiagnostic {
 
 export class RCCDiagnostics {
     failedChecks: CheckDiagnostic[];
+    holotreeShared: boolean;
     private roboHomeOk: boolean;
 
-    constructor(checks: CheckDiagnostic[]) {
+    constructor(checks: CheckDiagnostic[], details: Map<string, string>) {
         this.roboHomeOk = true;
         this.failedChecks = [];
+        this.holotreeShared = details["holotree-shared"] == "true";
 
         for (const check of checks) {
             if (check.status != STATUS_OK) {
@@ -318,7 +380,8 @@ export async function runConfigDiagnostics(
 
         let outputAsJSON = JSON.parse(configureLongpathsOutput.stdout);
         let checks: CheckDiagnostic[] = outputAsJSON.checks;
-        return new RCCDiagnostics(checks);
+        let details: Map<string, string> = outputAsJSON.details;
+        return new RCCDiagnostics(checks, details);
     } catch (error) {
         logError("Error getting RCC diagnostics.", error, "RCC_DIAGNOSTICS");
         return undefined;
@@ -480,7 +543,8 @@ export async function feedbackAnyError(errorSource: string, errorCode: string) {
  */
 export async function collectBaseEnv(
     condaFilePath: string,
-    robocorpHome: string | undefined
+    robocorpHome: string | undefined,
+    rccDiagnostics: RCCDiagnostics
 ): Promise<IEnvInfo | undefined> {
     const text: string = (await fs.promises.readFile(condaFilePath, "utf-8")).replace(/(?:\r\n|\r)/g, "\n");
     const hash = crypto.createHash("sha256").update(text, "utf8").digest("hex");
@@ -501,6 +565,65 @@ export async function collectBaseEnv(
     if (!rccLocation) {
         window.showErrorMessage("Unable to find RCC.");
         return;
+    }
+    const USE_PROGRAM_DATA_SHARED = true;
+    if (USE_PROGRAM_DATA_SHARED) {
+        if (!rccDiagnostics.holotreeShared) {
+            // i.e.: if the shared mode is still not enabled, enable it, download the
+            // base environment .zip and import it.
+            const env = createEnvWithRobocorpHome(robocorpHome);
+            try {
+                let execFileReturn: ExecFileReturn;
+                try {
+                    execFileReturn = await execFilePromise(
+                        rccLocation,
+                        ["holotree", "shared", "--enable"],
+                        { "env": env },
+                        { "showOutputInteractively": true }
+                    );
+                    OUTPUT_CHANNEL.appendLine("Enabled shared holotree");
+                } catch (err) {
+                    let response = await window.showWarningMessage(
+                        "It was not possible to enable the holotree shared mode. How do you want to proceed?",
+                        "Retry as admin",
+                        "Cancel"
+                    );
+                    if (response == "Retry as admin") {
+                        runAsAdmin(rccLocation, ["holotree", "shared", "--enable"], env);
+                    }
+                }
+
+                execFileReturn = await execFilePromise(
+                    rccLocation,
+                    ["holotree", "init"],
+                    { "env": env },
+                    { "showOutputInteractively": true }
+                );
+                OUTPUT_CHANNEL.appendLine("Set user to use shared holotree");
+
+                const zipDownloadLocation = await getBaseAsZipDownloadLocation();
+                if (!(await fileExists(zipDownloadLocation))) {
+                    await window.withProgress(
+                        {
+                            location: ProgressLocation.Notification,
+                            title: "Download base environment.",
+                            cancellable: false,
+                        },
+                        async (progress, token) => await downloadBaseAsZip(progress, token, zipDownloadLocation)
+                    );
+                }
+                let timing = new Timing();
+                execFileReturn = await execFilePromise(
+                    rccLocation,
+                    ["holotree", "import", zipDownloadLocation],
+                    { "env": env },
+                    { "showOutputInteractively": true }
+                );
+                OUTPUT_CHANNEL.appendLine("Took: " + timing.getTotalElapsedAsStr() + " to import base holotree.");
+            } catch (err) {
+                logError("Error while enabling shared holotree.", err, "ERROR_ENABLE_SHARED_HOLOTREE");
+            }
+        }
     }
 
     // If the robot is located in a directory that has '/devdata/env.json', we must automatically
