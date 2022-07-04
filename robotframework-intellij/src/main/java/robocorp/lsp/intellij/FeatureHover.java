@@ -11,7 +11,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.petebevin.markdown.MarkdownProcessor;
+import org.markdownj.MarkdownProcessor;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
