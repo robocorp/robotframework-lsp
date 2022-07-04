@@ -1,7 +1,11 @@
-NEXT
+New in 0.35.0 (2022-07-04)
 -----------------------------
 
-- `RCC` was upgraded to to `v11.14.2`. 
+- `RCC` was upgraded to to `v11.14.5`.
+- RCC is now configured to put the holotree contents in a location shared by multiple users (which allows 
+  for the import of pre-created environments from a .zip file). 
+- The base environment created for the extension bootstrap is now imported from a base environment downloaded from .zip
+  (which is *much* faster).
 
 
 New in 0.34.0 (2022-06-07)
