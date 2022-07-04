@@ -2,17 +2,20 @@ package robocorp.lsp.intellij;
 
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.petebevin.markdown.MarkdownProcessor;
 import org.apache.commons.lang.StringEscapeUtils;
-import org.eclipse.lsp4j.Hover;
-import org.eclipse.lsp4j.HoverParams;
-import org.eclipse.lsp4j.MarkedString;
-import org.eclipse.lsp4j.MarkupContent;
+import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import robocorp.lsp.psi.LSPGenericPsiElement;
 
@@ -25,6 +28,11 @@ public class FeatureHover implements DocumentationProvider {
     private static final Logger LOG = Logger.getInstance(FeatureHover.class);
 
     public FeatureHover() {
+    }
+
+    @Override
+    public @Nullable PsiElement getCustomDocumentationElement(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement contextElement, int targetOffset) {
+        return new LSPGenericPsiElement(editor.getProject(), file, contextElement.getText(), targetOffset, targetOffset);
     }
 
     @Override
@@ -45,7 +53,17 @@ public class FeatureHover implements DocumentationProvider {
                 if (comm == null) {
                     return null;
                 }
-                CompletableFuture<Hover> future = comm.hover(new HoverParams(lspGenericPsiElement.originalId, lspGenericPsiElement.originalPos));
+                CompletableFuture<Hover> future;
+                if (lspGenericPsiElement.originalId != null && lspGenericPsiElement.originalPos != null) {
+                    future = comm.hover(new HoverParams(lspGenericPsiElement.originalId, lspGenericPsiElement.originalPos));
+                } else {
+                    VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
+                    String uri = Uris.toUri(virtualFile);
+                    final TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+                    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+                    final Position position = EditorUtils.offsetToLSPPos(document, ((LSPGenericPsiElement) element).startOffset);
+                    future = comm.hover(new HoverParams(textDocument, position));
+                }
                 if (future == null) {
                     return null;
                 }

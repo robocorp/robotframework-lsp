@@ -14,7 +14,9 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import robocorp.lsp.intellij.EditorUtils;
 import robocorp.lsp.intellij.LanguageServerDefinition;
+import robocorp.robot.intellij.CancelledException;
 
 public class LSPGenericPsiElement extends PsiElementBase implements PsiNameIdentifierOwner, NavigatablePsiElement {
 
@@ -69,7 +71,17 @@ public class LSPGenericPsiElement extends PsiElementBase implements PsiNameIdent
         this.startRange = null;
         this.originalId = null;
         this.originalPos = null;
-        this.languageDefinition = null;
+
+        LanguageServerDefinition langDef = null;
+
+        VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile != null || project != null) {
+            try {
+                langDef = EditorUtils.getLanguageDefinition(virtualFile, project);
+            } catch (CancelledException e) {
+            }
+        }
+        this.languageDefinition = langDef;
     }
 
     @Override
