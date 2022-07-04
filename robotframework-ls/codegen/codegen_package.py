@@ -1,9 +1,5 @@
 import os.path
 
-# We need 1.63.0 for pre-releases.
-VSCODE_ENGINE_VERSION = os.environ.get("VSCODE_ENGINE_VERSION", "1.61.0")
-
-
 def get_menus():
     from commands import COMMANDS
 
@@ -362,18 +358,18 @@ def get_json_contents():
         },
         "dependencies": {
             "path-exists": "^4.0.0",
-            "vscode-languageclient": "^7.0.0",
+            "vscode-languageclient": "^8.0.1",
             "jsonc-parser": "^2.0.3",
         },
         "devDependencies": {
             "@types/mocha": "^2.2.32",
             "@types/node": "^13.0.00",
-            "@types/vscode": VSCODE_ENGINE_VERSION,
+            "@types/vscode": "1.65.0",
             "prettier": "2.4.1",
             "vscode-test": "1.5.1",
             "typescript": "^4.5.4",
         },
-        "engines": {"vscode": f"^{VSCODE_ENGINE_VERSION}"},
+        "engines": {"vscode": f"^1.65.0"},
     }
     return base_package_contents
 

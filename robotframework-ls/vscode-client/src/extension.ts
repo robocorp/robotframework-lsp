@@ -55,6 +55,10 @@ function createClientOptions(initializationOptions: object): LanguageClientOptio
         },
         outputChannel: OUTPUT_CHANNEL,
         initializationOptions: initializationOptions,
+        markdown: {
+            isTrusted: false,
+            supportHtml: true,
+        },
     };
     return clientOptions;
 }
@@ -406,12 +410,17 @@ async function startLanguageServer(): Promise<LanguageClient> {
     // Important: register listeners before starting (otherwise startup progress is not shown).
     await registerLanguageServerListeners(langServer);
 
-    extensionContext.subscriptions.push(langServer.start());
+    const startPromise = langServer.start();
+    extensionContext.subscriptions.push({
+        "dispose": async () => {
+            await langServer.stop();
+        },
+    });
 
     // i.e.: if we return before it's ready, the language server commands
     // may not be available.
     OUTPUT_CHANNEL.appendLine("Waiting for RobotFramework (python) Language Server to finish activating...");
-    await langServer.onReady();
+    await startPromise;
     // ask it to start indexing only after ready.
     commands.executeCommand("robot.startIndexing.internal");
 
@@ -468,8 +477,7 @@ async function restartLanguageServer() {
                         } catch (err) {
                             logError("Error stopping language server.", err, "EXT_STOP_ROBOT_LS");
                         }
-                        languageServerClient.start();
-                        await languageServerClient.onReady();
+                        await languageServerClient.start();
                         // ask it to start indexing only after ready.
                         commands.executeCommand("robot.startIndexing.internal");
                         OUTPUT_CHANNEL.appendLine(
@@ -578,8 +586,6 @@ async function clearCachesAndRestartProcessesStart(): Promise<boolean> {
 async function clearCachesAndRestartProcessesFinish() {
     try {
         await languageServerClient.start();
-
-        await languageServerClient.onReady();
         // ask it to start indexing only after ready.
         await commands.executeCommand("robot.startIndexing.internal");
     } catch (err) {

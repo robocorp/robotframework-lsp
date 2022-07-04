@@ -45,7 +45,6 @@ jobs:
     - name: Update vscode required version
       run: python codegen/codegen_package.py
       env:
-        VSCODE_ENGINE_VERSION: 1.63.0
         PYTHONPATH: src
 
     - name: Vendor robocorp_ls_core/robotframework_interactive
