@@ -594,10 +594,6 @@ Put Key
     data_regression.check(completions)
 
 
-@pytest.mark.skipif(
-    get_robot_major_version() < 5,
-    reason="Completions differ on RF 3/4",
-)
 def test_variable_completions_in_no_builtins(
     workspace, libspec_manager, data_regression
 ):

@@ -456,6 +456,10 @@ def collect_local_variables(
         completion_context.check_cancelled()
         if collector.accepts(assign_node_info.token.value):
             rep = " ".join(tok.value for tok in assign_node_info.node.tokens)
+            if assign_node_info.node.__class__.__name__ == "KeywordCall":
+                if assign_node_info.token.lineno == token_info.token.lineno:
+                    if not assign_node_info.node.keyword:
+                        continue  # Skip the definition we're currently on.
             variable_found = VariableFoundFromToken(
                 completion_context,
                 assign_node_info.token,

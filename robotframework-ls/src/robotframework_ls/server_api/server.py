@@ -7,7 +7,6 @@ from robocorp_ls_core.protocols import (
     IMonitor,
     ITestInfoTypedDict,
     IWorkspace,
-    ActionResultDict,
 )
 from functools import partial
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
@@ -23,7 +22,6 @@ from robocorp_ls_core.lsp import (
     DocumentHighlightTypedDict,
     RangeTypedDict,
     CompletionItemTypedDict,
-    ResponseTypedDict,
     WorkspaceEditTypedDict,
     SelectionRangeTypedDict,
 )

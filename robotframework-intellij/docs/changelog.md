@@ -1,3 +1,10 @@
+NEXT
+-----------------------------
+
+- Support for CommonMark and not just plain Markdown.
+- Provide hover docs even if definition cannot be found.
+
+
 New in 0.48.2 (2022-06-07)
 -----------------------------
 
