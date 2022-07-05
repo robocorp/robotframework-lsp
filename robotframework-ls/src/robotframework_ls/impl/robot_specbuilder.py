@@ -549,18 +549,13 @@ class SpecDocBuilder(object):
         version = spec.find("version")
         specversion = spec.get("specversion")
 
-        doc = ""
-        d = spec.find("doc")
-        if d and d.text:
-            doc = d.text
-            
         libdoc = LibraryDoc(
             path,
             name=spec.get("name"),
             type=spec.get("type"),
             version=version.text if version is not None else "",
             specversion=specversion if specversion is not None else "",
-            doc=doc,
+            doc=spec.find("doc").text or "",
             scope=self._get_scope(spec),
             named_args=self._get_named_args(spec),
             doc_format=spec.get("format", "ROBOT"),

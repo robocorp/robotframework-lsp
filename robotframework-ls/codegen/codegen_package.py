@@ -1,5 +1,6 @@
 import os.path
 
+
 def get_menus():
     from commands import COMMANDS
 

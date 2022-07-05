@@ -56,7 +56,6 @@ function createClientOptions(initializationOptions: object): LanguageClientOptio
         outputChannel: OUTPUT_CHANNEL,
         initializationOptions: initializationOptions,
         markdown: {
-            isTrusted: false,
             supportHtml: true,
         },
     };

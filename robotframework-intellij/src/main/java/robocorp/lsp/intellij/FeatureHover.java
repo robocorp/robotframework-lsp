@@ -11,7 +11,9 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.markdownj.MarkdownProcessor;
+import org.commonmark.node.*;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -92,8 +94,10 @@ public class FeatureHover implements DocumentationProvider {
                     MarkupContent right = contents.getRight();
                     if ("markdown".equals(right.getKind())) {
                         String mdContent = right.getValue();
-                        MarkdownProcessor processor = new MarkdownProcessor();
-                        return processor.markdown(mdContent);
+                        Parser parser = Parser.builder().build();
+                        Node document = parser.parse(mdContent);
+                        HtmlRenderer renderer = HtmlRenderer.builder().build();
+                        return renderer.render(document);
                     } else {
                         return StringEscapeUtils.escapeHtml(right.getValue());
                     }
