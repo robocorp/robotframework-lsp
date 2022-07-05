@@ -57,17 +57,22 @@ def create_section_doc_symbol(
 ):
     from robotframework_ls.impl.ast_utils import create_range_from_token
 
-    token = ast.header.get_token(header_token_type)
-    if token is not None:
-        symbol_range = create_range_from_token(token)
-        doc_symbol: DocumentSymbolTypedDict = {
-            "name": str(token).replace("*", "").strip(),
-            "kind": symbol_kind,
-            "range": symbol_range,
-            "selectionRange": symbol_range,
-            "children": collect_children(ast),
-        }
-        ret.append(doc_symbol)
+    if not isinstance(header_token_type, tuple):
+        header_token_type = (header_token_type,)
+
+    for t in header_token_type:
+        token = ast.header.get_token(t)
+        if token is not None:
+            symbol_range = create_range_from_token(token)
+            doc_symbol: DocumentSymbolTypedDict = {
+                "name": str(token).replace("*", "").strip(),
+                "kind": symbol_kind,
+                "range": symbol_range,
+                "selectionRange": symbol_range,
+                "children": collect_children(ast),
+            }
+            ret.append(doc_symbol)
+            break
 
 
 def document_symbol(
@@ -91,7 +96,10 @@ def document_symbol(
 
     for node_info in ast_utils.iter_nodes(ast, "TestCaseSection"):
         create_section_doc_symbol(
-            ret, node_info.node, Token.TESTCASE_HEADER, SymbolKind.Namespace
+            ret,
+            node_info.node,
+            (Token.TESTCASE_HEADER, getattr(Token, "TASK_HEADER", None)),
+            SymbolKind.Namespace,
         )
 
     for node_info in ast_utils.iter_nodes(ast, "KeywordSection"):

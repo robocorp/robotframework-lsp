@@ -59,8 +59,10 @@ def _setup_doc(workspace, source, root="case1", name="case1.robot"):
 def _create_ctx_and_check(workspace, doc, expected):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
+    from robotframework_ls.impl import ast_utils
 
     context = CompletionContext(doc, workspace=workspace.ws)
+    ast_utils.print_ast(context.get_ast())
     semantic_tokens = semantic_tokens_full(context)
     check(
         (semantic_tokens, doc),
