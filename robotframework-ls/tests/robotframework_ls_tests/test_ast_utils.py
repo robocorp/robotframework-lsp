@@ -171,9 +171,10 @@ def test_ast_extract_expression_variables(data_regression):
     from robot.api import Token
 
     collected = []
-    for token in ast_utils.iter_expression_variables(
+    for token, var_info in ast_utils.iter_expression_variables(
         Token(Token.ARGUMENT, "$v1 > $v2 > ${v3}", 1, 0)
     ):
+        assert var_info.var_identifier == "$"
         collected.append(
             {
                 "value": token.value,

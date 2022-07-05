@@ -239,6 +239,15 @@ class AdditionalVarInfo:
         self.context = context
         self.extended_part = extended_part
 
+    def copy(self, **kwargs):
+        new_kwargs = {
+            "var_identifier": self.var_identifier,
+            "context": self.context,
+            "extended_part": self.extended_part,
+        }
+        new_kwargs.update(kwargs)
+        return AdditionalVarInfo(**new_kwargs)
+
     def __str__(self):
         info = [f"AdditionalVarInfo({self.var_identifier}"]
         if self.context:

@@ -607,15 +607,15 @@ def find_variable(section, line, col) -> Optional[VarTokenInfo]:
                 token.type == token.ARGUMENT
                 and node.__class__.__name__ in CLASSES_WTH_EXPRESSION_ARGUMENTS
             ):
-                for part in iter_expression_variables(token):
+                for part, var_info in iter_expression_variables(token):
                     if part.type == token.VARIABLE:
                         if part.col_offset <= col <= part.end_col_offset:
                             return VarTokenInfo(
                                 stack,
                                 node,
                                 part,
-                                AdditionalVarInfo(
-                                    "$", AdditionalVarInfo.CONTEXT_EXPRESSION
+                                var_info.copy(
+                                    context=AdditionalVarInfo.CONTEXT_EXPRESSION
                                 ),
                             )
 
@@ -1240,13 +1240,11 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
 
                         next_tok_type = keyword_usage_handler.get_token_type(token)
                         if next_tok_type == keyword_usage_handler.EXPRESSION:
-                            for tok in iter_expression_variables(token):
+                            for tok, var_info in iter_expression_variables(token):
                                 if tok.type == token.VARIABLE:
                                     if not _add_match(found, tok):
                                         continue
-                                    yield VarTokenInfo(
-                                        stack, node, tok, AdditionalVarInfo("$")
-                                    )
+                                    yield VarTokenInfo(stack, node, tok, var_info)
 
     for clsname in CLASSES_WTH_EXPRESSION_ARGUMENTS:
         for node_info in ast.iter_indexed(clsname):
@@ -1257,13 +1255,11 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
             for token in node.tokens:
                 try:
                     if token.type == token.ARGUMENT:
-                        for tok in iter_expression_variables(token):
+                        for tok, var_info in iter_expression_variables(token):
                             if tok.type == token.VARIABLE:
                                 if not _add_match(found, tok):
                                     continue
-                                yield VarTokenInfo(
-                                    stack, node, tok, AdditionalVarInfo("$")
-                                )
+                                yield VarTokenInfo(stack, node, tok, var_info)
                 except:
                     log.exception("Unable to tokenize: %s", token)
 
@@ -1778,12 +1774,14 @@ def get_library_arguments_serialized(library) -> Optional[str]:
     return "::".join(library.args) if library.args else None
 
 
-def iter_expression_variables(expression_token: IRobotToken) -> Iterator[IRobotToken]:
+def iter_expression_variables(
+    expression_token: IRobotToken,
+) -> Iterator[Tuple[IRobotToken, AdditionalVarInfo]]:
     from robot.api import Token
 
-    for tok, _var_info in iter_expression_tokens(expression_token):
+    for tok, var_info in iter_expression_tokens(expression_token):
         if tok.type == Token.VARIABLE:
-            yield tok
+            yield tok, var_info
 
 
 class RobotMatchTokensGenerator:

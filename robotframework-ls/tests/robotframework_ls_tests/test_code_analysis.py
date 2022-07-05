@@ -2134,3 +2134,18 @@ Add ${a} and ${b} equals ${c}
     Log to console    ${a} ${b} ${c}
     """
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="Requires RF 4 onwards.")
+def test_var_with_math_operators(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Test Cases ***
+Template with kw with args 1
+    ${a-b}=    Evaluate    22
+    IF    ${a-b} == ${a-b}
+        Log to console    ${a-b}    
+    END
+    """
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
