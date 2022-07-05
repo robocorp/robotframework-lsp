@@ -49,7 +49,13 @@ class RobotFrameworkFacade(object):
 
     @property
     def TestDefaults(self):
-        from robot.running.builder.testsettings import TestDefaults  # type:ignore
+        try:
+            # RF 5.1 onwards.
+            from robot.running.builder.settings import (
+                Defaults as TestDefaults,  # type:ignore
+            )
+        except ImportError:
+            from robot.running.builder.testsettings import TestDefaults  # type:ignore
 
         return TestDefaults
 
