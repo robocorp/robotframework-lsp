@@ -1,8 +1,10 @@
-from typing import Set
+from typing import Set, Optional
 import os
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.text_utilities import normalize_robot_name
 from robocorp_ls_core.options import is_true_in_env
+import sys
+from robotframework_ls.impl.robot_version import get_robot_major_version
 
 log = get_logger(__name__)
 
@@ -24,7 +26,8 @@ class IgnoreFailuresInStack:
         "run keyword and expect error",
         "run keyword and ignore error",
         "run keyword and warn on failure",
-        "wait until keyword succeeds"
+        "wait until keyword succeeds",
+        "try..except",
     ]
 
     It's also possible to set `RFLS_IGNORE_FAILURES_IN_KEYWORDS_OVERRIDE=1` to provide
@@ -46,6 +49,7 @@ class IgnoreFailuresInStack:
             "run keyword and warn on failure",
             "wait until keyword succeeds",
             "run keyword and return status",
+            "try..except",
         ):
             self.ignore_failures_inside.add(normalize_robot_name(entry))
 
@@ -75,10 +79,26 @@ class IgnoreFailuresInStack:
                         self.ignore_failures_inside.add(normalize_robot_name(entry))
 
     def ignore(self) -> bool:
+        from types import FrameType
+
         for name in self._stack:
             normalized = normalize_robot_name(name)
             if normalized in self.ignore_failures_inside:
                 return True
+
+        if get_robot_major_version() >= 5:
+            # Allow for try..except in RF 5.
+            if "try..except" in self.ignore_failures_inside:
+                curframe: Optional[FrameType] = sys._getframe()
+                while curframe is not None:
+                    # RF makes the try..except invisible for us.
+                    # The listener specifically skips it in
+                    # robot.output.listeners.Listeners.start_keyword
+                    # So, our approach is search whether we're inside some try..except
+                    # using the current stack.
+                    if curframe.f_code.co_name == "_run_try":
+                        return True
+                    curframe = curframe.f_back
         return False
 
     def push(self, name: str):

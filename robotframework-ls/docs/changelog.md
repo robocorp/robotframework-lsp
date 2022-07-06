@@ -5,6 +5,7 @@ NEXT
 - Fix issue where replacement offset in section completion was wrong. [#700](https://github.com/robocorp/robotframework-lsp/issues/700)
 - Properly consider extended part of variables in expressions (fixes issue which could make variable not be resolved). [#702](https://github.com/robocorp/robotframework-lsp/issues/702)
 - Resolve variable files imported as modules. [#699](https://github.com/robocorp/robotframework-lsp/issues/699)
+- By default Failures/Errors inside a try..except won't suspend execution while debugging. [#698](https://github.com/robocorp/robotframework-lsp/issues/698)
 - Fixes to support Robot Framework 5.1:
   - Deal with `robot.running.builder.testsettings.TestDefaults` renamed to `robot.running.builder.settings.Defaults`.
   - Consider new `TASK_HEADER` in AST.

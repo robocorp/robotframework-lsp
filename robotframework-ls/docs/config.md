@@ -85,7 +85,8 @@ Environment variables that affect the debugger:
         "Run keyword and expect error",
         "Run keyword and ignore error",
         "Run keyword and warn on failure",
-        "Wait until keyword succeeds"
+        "Wait until keyword succeeds",
+        "Try..except"
     ]
     ```
 

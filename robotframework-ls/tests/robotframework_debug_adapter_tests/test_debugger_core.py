@@ -579,6 +579,23 @@ def test_debugger_core_dont_stop_on_handled_failure_in_keyword(
     assert code == 0
 
 
+@pytest.mark.skipif(not IS_ROBOT_5_ONWARDS, reason="This is valid for RF5 onwards.")
+def test_debugger_core_dont_stop_on_handled_failure_in_except(
+    debugger_api, run_robot_cli, debugger_impl
+) -> None:
+    target = debugger_api.get_dap_case_file("case_failure_handled_except.robot")
+
+    debugger_impl.break_on_log_failure = True
+    debugger_impl.break_on_log_error = True
+    busy_wait = DummyBusyWait(debugger_impl)
+    debugger_impl.busy_wait = busy_wait
+
+    code = run_robot_cli(target)
+
+    assert busy_wait.waited == 0
+    assert code == 0
+
+
 def test_debugger_core_stop_on_failure_in_import(
     debugger_api, run_robot_cli, debugger_impl
 ) -> None:
