@@ -52,6 +52,7 @@ from robocorp_ls_core import uris
 import itertools
 from functools import partial
 import typing
+from robotframework_ls.impl.robot_version import get_robot_major_version
 
 
 log = get_logger(__name__)
@@ -499,8 +500,12 @@ class CompletionContext(object):
 
     @instance_cache
     def get_resource_import_as_doc(
-        self, resource_import: INode
+        self, resource_import: INode, check_as_module=False
     ) -> Optional[IRobotDocument]:
+        """
+        :param check_as_module: If true we'll also check if we have matches as a
+            python module (i.e.: Variable    my.mod   will be searched as `my/mod.py`).
+        """
         from robot.api import Token
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
 
@@ -508,59 +513,65 @@ class CompletionContext(object):
         token = resource_import.get_token(Token.NAME)
         if token is not None:
             name_with_resolved_vars = self.token_value_resolving_variables(token)
-
-            if not os.path.isabs(name_with_resolved_vars):
-                # It's a relative resource, resolve its location based on the
-                # current file.
-                check_paths = [
-                    os.path.normpath(
-                        os.path.join(
-                            os.path.dirname(self.doc.path), name_with_resolved_vars
+            check: Tuple[str, ...]
+            if check_as_module:
+                check = (
+                    name_with_resolved_vars,
+                    name_with_resolved_vars.replace(".", os.sep) + ".py",
+                )
+            else:
+                check = (name_with_resolved_vars,)
+            for n in check:
+                if not os.path.isabs(n):
+                    # It's a relative resource, resolve its location based on the
+                    # current file.
+                    check_paths = [
+                        os.path.normpath(
+                            os.path.join(os.path.dirname(self.doc.path), n)
                         )
-                    )
-                ]
-                config = self.config
-                if config is not None:
-                    for additional_pythonpath_entry in config.get_setting(
-                        OPTION_ROBOT_PYTHONPATH, list, []
-                    ):
+                    ]
+                    config = self.config
+                    if config is not None:
+                        for additional_pythonpath_entry in config.get_setting(
+                            OPTION_ROBOT_PYTHONPATH, list, []
+                        ):
+                            check_paths.append(
+                                os.path.normpath(
+                                    os.path.join(
+                                        additional_pythonpath_entry,
+                                        n,
+                                    )
+                                )
+                            )
+
+                    for path in sys.path:
                         check_paths.append(
                             os.path.normpath(
                                 os.path.join(
-                                    additional_pythonpath_entry,
-                                    name_with_resolved_vars,
+                                    path,
+                                    n,
                                 )
                             )
                         )
 
-                for path in sys.path:
-                    check_paths.append(
-                        os.path.normpath(
-                            os.path.join(
-                                path,
-                                name_with_resolved_vars,
-                            )
-                        )
-                    )
+                    # Make the entries in the list unique (keeping order).
+                    seen: Set[str] = set()
+                    add_it_and_return_none = seen.add
+                    check_paths = [
+                        x
+                        for x in check_paths
+                        if x not in seen and not add_it_and_return_none(x)
+                    ]
 
-                # Make the entries in the list unique (keeping order).
-                seen: Set[str] = set()
-                add_it_and_return_none = seen.add
-                check_paths = [
-                    x
-                    for x in check_paths
-                    if x not in seen and not add_it_and_return_none(x)
-                ]
+                else:
+                    check_paths = [n]
 
-            else:
-                check_paths = [name_with_resolved_vars]
-
-            for resource_path in check_paths:
-                doc_uri = uris.from_fs_path(resource_path)
-                resource_doc = ws.get_document(doc_uri, accept_from_file=True)
-                if resource_doc is None:
-                    continue
-                return typing.cast(IRobotDocument, resource_doc)
+                for resource_path in check_paths:
+                    doc_uri = uris.from_fs_path(resource_path)
+                    resource_doc = ws.get_document(doc_uri, accept_from_file=True)
+                    if resource_doc is None:
+                        continue
+                    return typing.cast(IRobotDocument, resource_doc)
 
             log.info(
                 "Unable to find: %s (checked paths: %s)",
@@ -573,7 +584,10 @@ class CompletionContext(object):
     def get_variable_import_as_doc(
         self, variables_import: INode
     ) -> Optional[IRobotDocument]:
-        return self.get_resource_import_as_doc(variables_import)
+        check_as_module = False
+        if get_robot_major_version() >= 5:
+            check_as_module = True
+        return self.get_resource_import_as_doc(variables_import, check_as_module)
 
     @instance_cache
     def get_resource_imports_as_docs(

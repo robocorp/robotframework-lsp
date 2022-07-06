@@ -4,6 +4,7 @@ NEXT
 - VSCode `1.65.0` is now required to support HTML in markdown contents.
 - Fix issue where replacement offset in section completion was wrong. [#700](https://github.com/robocorp/robotframework-lsp/issues/700)
 - Properly consider extended part of variables in expressions (fixes issue which could make variable not be resolved). [#702](https://github.com/robocorp/robotframework-lsp/issues/702)
+- Resolve variable files imported as modules. [#699](https://github.com/robocorp/robotframework-lsp/issues/699)
 - Fixes to support Robot Framework 5.1:
   - Deal with `robot.running.builder.testsettings.TestDefaults` renamed to `robot.running.builder.settings.Defaults`.
   - Consider new `TASK_HEADER` in AST.

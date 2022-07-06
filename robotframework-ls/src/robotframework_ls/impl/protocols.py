@@ -1001,7 +1001,9 @@ class ICompletionContext(Protocol):
         Provides the current variable token. Note that it won't include '{' nor '}'.
         """
 
-    def get_resource_import_as_doc(self, resource_import) -> Optional[IRobotDocument]:
+    def get_resource_import_as_doc(
+        self, resource_import: INode, check_as_module: bool = False
+    ) -> Optional[IRobotDocument]:
         pass
 
     def get_variable_imports(self) -> Tuple[INode, ...]:
