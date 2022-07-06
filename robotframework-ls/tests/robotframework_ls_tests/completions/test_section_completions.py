@@ -47,6 +47,44 @@ Docum""",
     data_regression.check(completions, basename="settings_docum_names")
 
 
+def test_section_name_settings_completions_inline(data_regression):
+    from robotframework_ls.impl import section_name_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.robot_workspace import RobotDocument
+
+    doc = RobotDocument(
+        "unused",
+        source="""
+
+*** Test Cases ***
+Test 
+    No Operation
+    []No Operation""",
+    )
+    last_line = doc.get_line_count() - 1
+    col = len("    [")
+    completions = section_name_completions.complete(
+        CompletionContext(doc, line=last_line, col=col)
+    )
+    # data_regression.check(completions, basename="settings_names")
+    for c in completions:
+        if c["label"] == "[Teardown]":
+            doc.apply_text_edits([c["textEdit"]])
+            break
+    else:
+        raise AssertionError("Did not find teardown.")
+
+    assert (
+        doc.source
+        == """
+
+*** Test Cases ***
+Test 
+    No Operation
+    [Teardown]No Operation"""
+    )
+
+
 def test_section_name_keywords_completions(data_regression):
     from robotframework_ls.impl import section_name_completions
     from robotframework_ls.impl.completion_context import CompletionContext

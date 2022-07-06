@@ -67,18 +67,21 @@ def complete(completion_context: ICompletionContext):
     section = requisites.section
     matcher = requisites.matcher
     replace_from_col = requisites.replace_from_col
-    replace_to_col = requisites.replace_to_col
     selection = requisites.selection
+    replace_to_col = requisites.replace_to_col
+
+    line = selection.current_line
+    sel_ends_with_close = line[selection.col :].startswith("]")
 
     ret = []
     for word in sorted(itertools.chain(section.names, section.aliases)):
         if matcher.accepts(word):
+            col_delta = 0
             if section.names_in_brackets:
-                label = "[%s]" % (word,)
-                line = selection.current_line
-                replacement = "[%s]" % (word,)
-                if line[selection.col :].startswith("]"):
-                    replace_to_col += 1
+                label = f"[{word}]"
+                replacement = label
+                if sel_ends_with_close:
+                    col_delta = 1
 
             else:
                 label = word
@@ -87,7 +90,7 @@ def complete(completion_context: ICompletionContext):
             text_edit = TextEdit(
                 Range(
                     start=Position(selection.line, replace_from_col),
-                    end=Position(selection.line, replace_to_col),
+                    end=Position(selection.line, replace_to_col + col_delta),
                 ),
                 replacement,
             )
