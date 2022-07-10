@@ -225,13 +225,9 @@ class ResolveVariablesContext:
             return os.path.dirname(self.doc_path)
 
         completion_context = self.completion_context
-        found = completion_context.get_doc_normalized_var_name_to_var_found().get(
-            normalized
-        )
 
-        if found is not None:
-            return found.variable_value
-
+        # Settings and argument files have higher priority (arguments override things
+        # in the document).
         found = completion_context.get_settings_normalized_var_name_to_var_found().get(
             normalized
         )
@@ -241,6 +237,13 @@ class ResolveVariablesContext:
         found = completion_context.get_arguments_files_normalized_var_name_to_var_found().get(
             normalized
         )
+        if found is not None:
+            return found.variable_value
+
+        found = completion_context.get_doc_normalized_var_name_to_var_found().get(
+            normalized
+        )
+
         if found is not None:
             return found.variable_value
 

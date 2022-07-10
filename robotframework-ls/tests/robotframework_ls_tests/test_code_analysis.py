@@ -2172,3 +2172,41 @@ Template with kw with args 1
     END
     """
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_code_analysis_preference_to_robot_variables(
+    workspace, libspec_manager, data_regression
+):
+
+    from robotframework_ls.robot_config import RobotConfig
+    import os
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("keywords.resource")
+    doc.source = """
+*** Keywords ***
+Common Keyword
+    Log to console    Common keyword"""
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Resource        ${RESOURCES_PATH}${/}keywords.resource
+
+Force Tags      vscode
+
+
+*** Variables ***
+${RESOURCES_PATH}      22   # Defined in RF Language Server extension settings
+
+
+*** Test Cases ***
+Dummy Test Case
+    Common Keyword
+"""
+
+    config = RobotConfig()
+    config.update({"robot.variables": {"RESOURCES_PATH": os.path.dirname(doc.path)}})
+    libspec_manager.config = config
+
+    _collect_errors(workspace, doc, data_regression, config=config, basename="no_error")
