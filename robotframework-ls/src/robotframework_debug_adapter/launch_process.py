@@ -723,13 +723,16 @@ class LaunchProcess(object):
         t.start()
 
     def disconnect(self, disconnect_request: DisconnectRequest) -> None:
-        from robocorp_ls_core.basic import kill_process_and_subprocesses
+        from robocorp_ls_core.options import is_true_in_env
 
-        if self._popen is not None:
-            if self._popen.returncode is None:
-                kill_process_and_subprocesses(self._popen.pid)
-        else:
-            kill_process_and_subprocesses(self._track_process_pid)
+        if is_true_in_env("RFLS_KILL_ZOMBIE_PROCESSES"):
+            from robocorp_ls_core.basic import kill_process_and_subprocesses
+
+            if self._popen is not None:
+                if self._popen.returncode is None:
+                    kill_process_and_subprocesses(self._popen.pid)
+            else:
+                kill_process_and_subprocesses(self._track_process_pid)
 
     def send_to_stdin(self, expression):
         popen = self._popen
