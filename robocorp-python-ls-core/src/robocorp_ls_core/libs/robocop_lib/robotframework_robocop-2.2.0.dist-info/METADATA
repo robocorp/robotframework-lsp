@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: robotframework-robocop
-Version: 2.0.2
+Version: 2.2.0
 Summary: Static code analysis tool (linter) for Robot Framework
 Home-page: https://github.com/MarketSquare/robotframework-robocop
 Author: Bartlomiej Hirsz, Mateusz Nojek
@@ -24,6 +24,7 @@ Classifier: Topic :: Software Development :: Testing
 Classifier: Topic :: Software Development :: Quality Assurance
 Classifier: Topic :: Utilities
 Classifier: Intended Audience :: Developers
+Requires-Python: >=3.6
 Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: jinja2 (<4.0,>=3.0)
