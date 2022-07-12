@@ -36,14 +36,24 @@ def collect_robocop_diagnostics(
     from robocop.utils import issues_to_lsp_diagnostic
 
     filename_parent = Path(filename).parent
-    if filename_parent.exists():
-        config = Config(root=filename_parent)
-    else:
-        # Unsaved files.
-        config = Config(root=project_root)
-    robocop_runner = robocop.Robocop(config=config)
-    robocop_runner.reload_config()
+    # Set the working directory to the project root (tricky handling: Robocop
+    # relies on cwd to deal with the --ext-rules
+    # See: https://github.com/robocorp/robotframework-lsp/issues/703).
+    initial_cwd = os.getcwd()
+    try:
+        if os.path.exists(project_root):
+            os.chdir(project_root)
 
-    issues = robocop_runner.run_check(ast_model, filename, source)
-    diag_issues = issues_to_lsp_diagnostic(issues)
+        if filename_parent.exists():
+            config = Config(root=filename_parent)
+        else:
+            # Unsaved files.
+            config = Config(root=project_root)
+        robocop_runner = robocop.Robocop(config=config)
+        robocop_runner.reload_config()
+
+        issues = robocop_runner.run_check(ast_model, filename, source)
+        diag_issues = issues_to_lsp_diagnostic(issues)
+    finally:
+        os.chdir(initial_cwd)
     return diag_issues

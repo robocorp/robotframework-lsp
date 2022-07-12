@@ -1,6 +1,6 @@
 - code: '0203'
   codeDescription:
-    href: https://robocop.readthedocs.io/en/2.0.2/rules.html#missing-doc-suite
+    href: https://robocop.readthedocs.io/en/2.2.0/rules.html#missing-doc-suite
   message: Missing documentation in suite
   range:
     end:
@@ -13,7 +13,7 @@
   source: robocop
 - code: '0401'
   codeDescription:
-    href: https://robocop.readthedocs.io/en/2.0.2/rules.html#parsing-error
+    href: https://robocop.readthedocs.io/en/2.2.0/rules.html#parsing-error
   message: 'Robot Framework syntax error: Unrecognized section header ''*** foo bar
     ***''. Valid sections: ''Settings'', ''Variables'', ''Keywords'' and ''Comments''.'
   range:
@@ -27,7 +27,7 @@
   source: robocop
 - code: 0813
   codeDescription:
-    href: https://robocop.readthedocs.io/en/2.0.2/rules.html#duplicated-setting
+    href: https://robocop.readthedocs.io/en/2.2.0/rules.html#duplicated-setting
   message: 'Unrecognized section header ''*** foo bar ***''. Valid sections: ''Settings'',
     ''Variables'', ''Keywords'' and ''Comments''.'
   range:
@@ -41,7 +41,7 @@
   source: robocop
 - code: '1002'
   codeDescription:
-    href: https://robocop.readthedocs.io/en/2.0.2/rules.html#missing-trailing-blank-line
+    href: https://robocop.readthedocs.io/en/2.2.0/rules.html#missing-trailing-blank-line
   message: Missing trailing blank line at the end of file
   range:
     end:
