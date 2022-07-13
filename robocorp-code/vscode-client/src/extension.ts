@@ -662,8 +662,16 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
                 // which case the progress won't be shown on some cases where it should be shown.
                 context.subscriptions.push(
                     langServer.onNotification("$/customProgress", (args: ProgressReport) => {
-                        // OUTPUT_CHANNEL.appendLine(args.id + ' - ' + args.kind + ' - ' + args.title + ' - ' + args.message + ' - ' + args.increment);
-                        handleProgressMessage(args);
+                        // OUTPUT_CHANNEL.appendLine(args.id + " - " + args.kind + " - " + args.title + " - " + args.message + " - " + args.increment);
+                        let progressReporter = handleProgressMessage(args);
+                        if (progressReporter) {
+                            if (args.kind == "begin") {
+                                const progressId = args.id;
+                                progressReporter.token.onCancellationRequested(() => {
+                                    langServer.sendNotification("cancelProgress", { progressId: progressId });
+                                });
+                            }
+                        }
                     })
                 );
                 context.subscriptions.push(

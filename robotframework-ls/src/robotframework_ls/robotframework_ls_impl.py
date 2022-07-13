@@ -1009,3 +1009,11 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         return self.async_api_forward(
             "request_document_highlight", "others", doc_uri, line=line, col=col
         )
+
+    def m_cancel_progress(self, progressId):
+        if not PythonLanguageServer.m_cancel_progress(self, progressId=progressId):
+            for api in self._server_manager.collect_apis():
+                # We don't keep track of which server started which progress,
+                # so, we send it to all the APIs.
+                api.forward_async("cancelProgress", {"progressId": progressId})
+        return True

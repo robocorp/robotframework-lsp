@@ -139,6 +139,10 @@ class IEndPoint(Protocol):
 
 
 class IProgressReporter(Protocol):
+    @property
+    def cancelled(self) -> bool:
+        pass
+
     def set_additional_info(self, additional_info: str) -> None:
         """
         The progress reporter shows the title and elapsed time automatically.

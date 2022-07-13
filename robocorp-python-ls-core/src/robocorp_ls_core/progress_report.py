@@ -2,7 +2,7 @@ import threading
 
 from robocorp_ls_core.protocols import IEndPoint, IDirCache, IProgressReporter
 from contextlib import contextmanager
-from typing import Optional, Iterator
+from typing import Optional, Iterator, Dict
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.basic import implements
 
@@ -19,6 +19,9 @@ def _next_id():
     return str(uuid.uuid4())
 
 
+_progress_id_to_progress_reporter: Dict[str, "_ProgressReporter"] = {}
+
+
 class _ProgressReporter(object):
 
     _MIN_TIME = 0.25
@@ -29,6 +32,7 @@ class _ProgressReporter(object):
         title: str,
         dir_cache: Optional[IDirCache],
         elapsed_time_key=None,
+        cancellable: bool = False,
     ) -> None:
         from robocorp_ls_core.timeouts import TimeoutTracker
         import time
@@ -46,6 +50,8 @@ class _ProgressReporter(object):
         self._initial_time = time.time()
 
         self._additional_info: str = ""
+        self._cancellable = cancellable
+        self._cancelled = False
 
         self._dir_cache = dir_cache
         self._last_elapsed_time_key = (
@@ -65,13 +71,29 @@ class _ProgressReporter(object):
         self.timeout_tracker = TimeoutTracker.get_singleton()
         self.timeout_tracker.call_on_timeout(self._MIN_TIME, self._on_first_timeout)
 
+    @property
+    def id(self):
+        return self._id
+
+    def cancel(self):
+        self._cancelled = True
+
+    @property
+    def cancelled(self) -> bool:
+        return self._cancelled
+
     def _on_first_timeout(self):
         with self._lock:
             if not self._finished and not self._started:
                 self._started = True
                 self.endpoint.notify(
                     "$/customProgress",
-                    {"kind": "begin", "id": self._id, "title": self.title},
+                    {
+                        "kind": "begin",
+                        "id": self._id,
+                        "title": self.title,
+                        "cancellable": self._cancellable,
+                    },
                 )
                 if self._expected_time:
                     update_time = self._expected_time / 30.0
@@ -201,12 +223,21 @@ class ProgressWrapperForTotalWork:
         )
 
 
+def cancel(progress_id: str) -> bool:
+    progress_reporter = _progress_id_to_progress_reporter.get(progress_id)
+    if progress_reporter:
+        progress_reporter.cancel()
+        return True
+    return False
+
+
 @contextmanager
 def progress_context(
     endpoint: IEndPoint,
     title: str,
     dir_cache: Optional[IDirCache],
     elapsed_time_key=None,
+    cancellable: bool = False,
 ) -> Iterator[IProgressReporter]:
     """
     Creates a progress context which submits $/customProgress notifications to the
@@ -224,8 +255,13 @@ def progress_context(
         cache dir.
     """
     progress_reporter = _ProgressReporter(
-        endpoint, title, dir_cache, elapsed_time_key=elapsed_time_key
+        endpoint,
+        title,
+        dir_cache,
+        elapsed_time_key=elapsed_time_key,
+        cancellable=cancellable,
     )
+    _progress_id_to_progress_reporter[progress_reporter.id] = progress_reporter
     try:
         stack = _progress_context._stack
     except AttributeError:
@@ -235,5 +271,6 @@ def progress_context(
     try:
         yield progress_reporter
     finally:
+        del _progress_id_to_progress_reporter[progress_reporter.id]
         del stack[-1]
         progress_reporter.finish()

@@ -428,3 +428,16 @@ class PythonLanguageServer(MethodDispatcher):
 
     def m_workspace__did_change_watched_files(self, changes=None, **_kwargs):
         pass
+
+    def m_cancel_progress(self, progressId) -> bool:
+        """
+        Returns whether there was a match and we cancelled something from
+        this process.
+        """
+        from robocorp_ls_core import progress_report
+
+        if progress_report.cancel(progressId):
+            log.info("Cancel progress %s", progressId)
+            return True
+
+        return False

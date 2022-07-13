@@ -1,18 +1,23 @@
-import { window, ProgressLocation, Progress } from "vscode";
+import { window, ProgressLocation, Progress, CancellationToken } from "vscode";
 
 class ProgressReporter {
     promise: Thenable<Progress<{ message?: string; increment?: number }>>;
     resolve;
     progress: Progress<{ message?: string; increment?: number }>;
+    token: CancellationToken;
 
     start(args: ProgressReport) {
-        window.withProgress({ location: ProgressLocation.Notification, title: args.title, cancellable: false }, (p) => {
-            this.progress = p;
-            this.promise = new Promise((resolve, reject) => {
-                this.resolve = resolve;
-            });
-            return this.promise;
-        });
+        window.withProgress(
+            { location: ProgressLocation.Notification, title: args.title, cancellable: true },
+            (p: Progress<{ message?: string; increment?: number }>, token: CancellationToken) => {
+                this.progress = p;
+                this.token = token;
+                this.promise = new Promise((resolve, reject) => {
+                    this.resolve = resolve;
+                });
+                return this.promise;
+            }
+        );
     }
 
     report(args: ProgressReport) {
@@ -47,14 +52,14 @@ export function handleProgressMessage(args: ProgressReport) {
             let reporter: ProgressReporter = new ProgressReporter();
             reporter.start(args);
             id_to_progress[args.id] = reporter;
-            break;
+            return reporter;
 
         case "report":
             let prev: ProgressReporter = id_to_progress[args.id];
             if (prev) {
                 prev.report(args);
             }
-            break;
+            return prev;
 
         case "end":
             let last: ProgressReporter = id_to_progress[args.id];
@@ -62,6 +67,6 @@ export function handleProgressMessage(args: ProgressReport) {
                 last.end();
                 id_to_progress.delete(args.id);
             }
-            break;
+            return last;
     }
 }

@@ -303,7 +303,9 @@ class _CacheInfo(object):
 
         endpoint = pm[EPEndPointProvider].endpoint
 
-        with progress_context(endpoint, "Obtain env for robot.yaml", dir_cache=None):
+        with progress_context(
+            endpoint, "Obtain env for robot.yaml", dir_cache=None, cancellable=True
+        ):
             # If it got here, it's not cached or the cache doesn't match.
             # This may take a while...
             interpreter_info = cls._cached_interpreter_info[

@@ -1,18 +1,23 @@
-import { window, ProgressLocation, Progress } from "vscode";
+import { window, ProgressLocation, Progress, CancellationToken } from "vscode";
 
 class ProgressReporter {
     promise: Thenable<Progress<{ message?: string; increment?: number }>>;
     resolve;
     progress: Progress<{ message?: string; increment?: number }>;
+    token: CancellationToken;
 
     start(args: ProgressReport) {
-        window.withProgress({ location: ProgressLocation.Notification, title: args.title, cancellable: false }, (p) => {
-            this.progress = p;
-            this.promise = new Promise((resolve, reject) => {
-                this.resolve = resolve;
-            });
-            return this.promise;
-        });
+        window.withProgress(
+            { location: ProgressLocation.Notification, title: args.title, cancellable: true },
+            (p: Progress<{ message?: string; increment?: number }>, token: CancellationToken) => {
+                this.progress = p;
+                this.token = token;
+                this.promise = new Promise((resolve, reject) => {
+                    this.resolve = resolve;
+                });
+                return this.promise;
+            }
+        );
     }
 
     report(args: ProgressReport) {
@@ -35,7 +40,7 @@ let id_to_progress: Map<number | string, ProgressReporter> = new Map();
 
 export interface ProgressReport {
     kind: string; // 'begin' | 'end' | 'report'
-    id: number | string; // the id of the progress
+    id: number | string; // the id of the progress (number if generated from language server, string otherwise).
     title?: string; // the title of the progress
     message?: string; // Only used for the 'report': The message for the progress.
     increment?: number; // Only used for the 'report': How much to increment it (0-100). Summed to previous inrcements.
@@ -47,14 +52,14 @@ export function handleProgressMessage(args: ProgressReport) {
             let reporter: ProgressReporter = new ProgressReporter();
             reporter.start(args);
             id_to_progress[args.id] = reporter;
-            break;
+            return reporter;
 
         case "report":
             let prev: ProgressReporter = id_to_progress[args.id];
             if (prev) {
                 prev.report(args);
             }
-            break;
+            return prev;
 
         case "end":
             let last: ProgressReporter = id_to_progress[args.id];
@@ -62,6 +67,6 @@ export function handleProgressMessage(args: ProgressReport) {
                 last.end();
                 id_to_progress.delete(args.id);
             }
-            break;
+            return last;
     }
 }

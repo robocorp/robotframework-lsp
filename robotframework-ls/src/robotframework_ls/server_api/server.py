@@ -1200,3 +1200,12 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         workspace = self._workspace
         if workspace is not None:
             workspace.dispose()
+
+    def m_cancel_progress(self, progressId):
+        from robocorp_ls_core import progress_report
+
+        if progress_report.cancel(progressId):
+            log.info("Cancel progress %s", progressId)
+            return True
+
+        return False
