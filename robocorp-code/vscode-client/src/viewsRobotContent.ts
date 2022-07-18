@@ -16,7 +16,7 @@ export async function getCurrRobotTreeContentDir(): Promise<FSEntry | undefined>
     }
 
     let parentEntry: FSEntry | undefined = undefined;
-    let selection: FSEntry[] = robotContentTree.selection;
+    let selection: readonly FSEntry[] = robotContentTree.selection;
     if (selection.length > 0) {
         parentEntry = selection[0];
         if (!parentEntry.filePath) {
@@ -74,7 +74,7 @@ export async function renameResourceInRobotContentTree() {
         return undefined;
     }
 
-    let selection: FSEntry[] = robotContentTree.selection;
+    let selection: readonly FSEntry[] = robotContentTree.selection;
     if (!selection) {
         await vscode.window.showInformationMessage("No resources selected for rename.");
         return;
@@ -122,7 +122,7 @@ export async function deleteResourceInRobotContentTree() {
         return undefined;
     }
 
-    let selection: FSEntry[] = robotContentTree.selection;
+    let selection: readonly FSEntry[] = robotContentTree.selection;
     if (!selection) {
         await vscode.window.showInformationMessage("No resources selected for deletion.");
         return;

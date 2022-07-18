@@ -81,17 +81,26 @@ export async function setPythonInterpreterForPythonExtension(pythonExe: string, 
     let configurationTarget: ConfigurationTarget = ConfigurationTarget.Workspace;
 
     OUTPUT_CHANNEL.appendLine("Setting the python executable path for vscode-python to be:\n" + pythonExe);
-    if (extension?.exports?.environment?.setActiveInterpreter !== undefined) {
-        await extension.exports.environment.setActiveInterpreter(pythonExe, uri);
+    if (extension?.exports?.environment?.setActiveEnvironment !== undefined) {
+        await extension.exports.environment.setActiveEnvironment(pythonExe, uri);
         // OUTPUT_CHANNEL.appendLine("Is: " + (await extension.exports.environment.getActiveInterpreterPath(uri)));
     } else {
-        let config = workspace.getConfiguration("python");
-        await config.update("defaultInterpreterPath", pythonExe, configurationTarget);
+        if (extension?.exports?.environment?.setActiveInterpreter !== undefined) {
+            await extension.exports.environment.setActiveInterpreter(pythonExe, uri);
+            // OUTPUT_CHANNEL.appendLine("Is: " + (await extension.exports.environment.getActiveInterpreterPath(uri)));
+        } else {
+            let config = workspace.getConfiguration("python");
+            await config.update("defaultInterpreterPath", pythonExe, configurationTarget);
 
-        try {
-            await commands.executeCommand("python.clearWorkspaceInterpreter");
-        } catch (err) {
-            logError("Error calling python.clearWorkspaceInterpreter", err, "ACT_CLEAR_PYTHON_WORKSPACE_INTERPRETER");
+            try {
+                await commands.executeCommand("python.clearWorkspaceInterpreter");
+            } catch (err) {
+                logError(
+                    "Error calling python.clearWorkspaceInterpreter",
+                    err,
+                    "ACT_CLEAR_PYTHON_WORKSPACE_INTERPRETER"
+                );
+            }
         }
     }
 }

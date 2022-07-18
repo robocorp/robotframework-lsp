@@ -26,7 +26,7 @@ import { CloudTreeDataProvider } from "./viewsRobocorp";
 import { RobotsTreeDataProvider } from "./viewsRobots";
 import { LocatorsTreeDataProvider } from "./viewsLocators";
 
-function empty<T>(array: T[]) {
+function empty<T>(array: readonly T[]) {
     return array === undefined || array.length === 0;
 }
 
@@ -70,7 +70,7 @@ export async function runSelectedRobot(noDebug: boolean, taskRobotEntry?: RobotE
 async function onChangedRobotSelection(
     robotsTree: vscode.TreeView<RobotEntry>,
     treeDataProvider: RobotsTreeDataProvider,
-    selection: RobotEntry[]
+    selection: readonly RobotEntry[]
 ) {
     if (selection === undefined) {
         selection = [];

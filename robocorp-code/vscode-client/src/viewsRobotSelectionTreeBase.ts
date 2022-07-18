@@ -11,7 +11,7 @@ export async function getCurrRobotDir(): Promise<FSEntry | undefined> {
     }
 
     let parentEntry: FSEntry | undefined = undefined;
-    let selection: FSEntry[] = robotContentTree.selection;
+    let selection: readonly FSEntry[] = robotContentTree.selection;
     if (selection.length > 0) {
         parentEntry = selection[0];
         if (!parentEntry.filePath) {

@@ -152,13 +152,13 @@ async function verifyLongPathSupportOnWindows(rccLocation: string): Promise<bool
                     return false;
                 }
 
-                result = await window.showInformationMessage(
+                let resultOkLongPath = await window.showInformationMessage(
                     "Press Ok after Long Path support is manually enabled.",
                     { "modal": true },
                     "Ok"
                     // Auto-cancel in modal
                 );
-                if (!result) {
+                if (!resultOkLongPath) {
                     OUTPUT_CHANNEL.appendLine(
                         "Extension will not be activated because Windows long paths support not enabled."
                     );
