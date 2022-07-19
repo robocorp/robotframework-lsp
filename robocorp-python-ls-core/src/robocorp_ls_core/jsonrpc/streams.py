@@ -108,6 +108,7 @@ class _JsonRpcStreamReaderThread(threading.Thread):
                 if isinstance(msg, dict):
                     # Note: parsing is done on a thread so that we can read
                     # while processing so that we can give priority to `cancelProgress`.
+
                     if msg.get("method") == "cancelProgress":
                         try:
                             self._message_consumer(msg)
@@ -121,6 +122,11 @@ class _JsonRpcStreamReaderThread(threading.Thread):
                     log.debug("Read (non dict data): %s", data)
 
                 self._queue.put(msg)
+
+                if isinstance(msg, dict):
+                    # When we receive an exit we stop reading.
+                    if msg.get("method") == "exit":
+                        return
         except ConnectionResetError:
             pass  # Just ignore this one (connection was closed)
         except Exception:
@@ -144,7 +150,10 @@ class JsonRpcStreamReader(object):
         self._reader_thread = None
 
     def close(self):
-        self._rfile.close()
+        pass
+        # We don't close the reader because it can deadlock if someone
+        # is currently reading.
+        # self._rfile.close()
 
     def listen(self, message_consumer):
         """Blocking call to listen for messages on the rfile.
