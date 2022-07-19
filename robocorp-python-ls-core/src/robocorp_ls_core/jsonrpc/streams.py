@@ -88,6 +88,8 @@ class _JsonRpcStreamReaderThread(threading.Thread):
         self._rfile = rfile
         self._queue = queue
         self._message_consumer = message_consumer
+        self.name = "_JsonRpcStreamReaderThread"
+        self.daemon = True
 
     def run(self):
         try:
@@ -126,11 +128,20 @@ class _JsonRpcStreamReaderThread(threading.Thread):
         finally:
             self._queue.put(None)
 
+    @property
+    def _name(self):
+        return f"{self.__name} (closed: {self._rfile.closed})"
+
+    @_name.setter
+    def _name(self, name):
+        self.__name = name
+
 
 class JsonRpcStreamReader(object):
     def __init__(self, rfile):
         self._rfile = rfile
         self._queue = queue.Queue()
+        self._reader_thread = None
 
     def close(self):
         self._rfile.close()
@@ -141,8 +152,10 @@ class JsonRpcStreamReader(object):
         Args:
             message_consumer (fn): function that is passed each message as it is read off the socket.
         """
-        thread = _JsonRpcStreamReaderThread(self._rfile, self._queue, message_consumer)
-        thread.start()
+        self._reader_thread = _JsonRpcStreamReaderThread(
+            self._rfile, self._queue, message_consumer
+        )
+        self._reader_thread.start()
         try:
             while True:
                 msg = self._queue.get()
