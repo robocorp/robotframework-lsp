@@ -2,6 +2,8 @@ NEXT
 -----------------------------
 
 - VSCode 1.65.0 is now required to support HTML in markdown contents.
+- Cancellation support for RCC environment creation.
+- Fix python environment activation (since vscode-python changed the `setActiveInterpreter` API to `setActiveEnvironment`).
 
 
 New in 0.35.0 (2022-07-04)
