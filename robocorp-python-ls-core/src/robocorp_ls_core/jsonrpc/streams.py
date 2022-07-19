@@ -19,6 +19,7 @@ from robocorp_ls_core.robotframework_log import get_logger
 from typing import Optional
 import json
 from robocorp_ls_core.options import BaseOptions
+import queue
 
 log = get_logger(__name__)
 
@@ -81,19 +82,14 @@ def _read_len(stream, content_length) -> bytes:
         # len(buf) < content_length (just keep on going).
 
 
-class JsonRpcStreamReader(object):
-    def __init__(self, rfile):
+class _JsonRpcStreamReaderThread(threading.Thread):
+    def __init__(self, rfile, queue, message_consumer):
+        threading.Thread.__init__(self)
         self._rfile = rfile
+        self._queue = queue
+        self._message_consumer = message_consumer
 
-    def close(self):
-        self._rfile.close()
-
-    def listen(self, message_consumer):
-        """Blocking call to listen for messages on the rfile.
-
-        Args:
-            message_consumer (fn): function that is passed each message as it is read off the socket.
-        """
+    def run(self):
         try:
             while not self._rfile.closed:
                 data = read(self._rfile)
@@ -108,16 +104,56 @@ class JsonRpcStreamReader(object):
                     continue
 
                 if isinstance(msg, dict):
+                    # Note: parsing is done on a thread so that we can read
+                    # while processing so that we can give priority to `cancelProgress`.
+                    if msg.get("method") == "cancelProgress":
+                        try:
+                            self._message_consumer(msg)
+                        except:
+                            log.exception("Error processing JSON message %s", msg)
+                        continue
+
                     if msg.get("command") not in BaseOptions.HIDE_COMMAND_MESSAGES:
                         log.debug("Read: %s", data)
                 else:
                     log.debug("Read (non dict data): %s", data)
 
+                self._queue.put(msg)
+        except ConnectionResetError:
+            pass  # Just ignore this one (connection was closed)
+        except Exception:
+            log.exception("Error in JsonRpcStreamReader.")
+        finally:
+            self._queue.put(None)
+
+
+class JsonRpcStreamReader(object):
+    def __init__(self, rfile):
+        self._rfile = rfile
+        self._queue = queue.Queue()
+
+    def close(self):
+        self._rfile.close()
+
+    def listen(self, message_consumer):
+        """Blocking call to listen for messages on the rfile.
+
+        Args:
+            message_consumer (fn): function that is passed each message as it is read off the socket.
+        """
+        thread = _JsonRpcStreamReaderThread(self._rfile, self._queue, message_consumer)
+        thread.start()
+        try:
+            while True:
+                msg = self._queue.get()
+                if msg is None:
+                    break
                 try:
                     message_consumer(msg)
                 except:
-                    log.exception("Error processing JSON message %s", data)
+                    log.exception("Error processing JSON message %s", msg)
                     continue
+
         except ConnectionResetError:
             pass  # Just ignore this one (connection was closed)
         except Exception:

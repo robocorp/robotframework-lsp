@@ -343,6 +343,7 @@ class Rcc(object):
                         timeout=timeout,
                         on_stderr=on_output,
                         on_stdout=on_output,
+                        progress_reporter=progress_reporter,
                         **kwargs,
                     )
 

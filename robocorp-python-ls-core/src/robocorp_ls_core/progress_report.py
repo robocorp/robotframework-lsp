@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from typing import Optional, Iterator, Dict
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.basic import implements
+import os
 
 
 log = get_logger(__name__)
@@ -16,7 +17,7 @@ def _next_id():
     # other.
     import uuid
 
-    return str(uuid.uuid4())
+    return str(uuid.uuid4()) + "-" + str(os.getpid())
 
 
 _progress_id_to_progress_reporter: Dict[str, "_ProgressReporter"] = {}

@@ -51,7 +51,7 @@ def check_output_interactive(
             contents_list.append(line)
             callback(line)
 
-    def check_cancelled(process, progress_reporter: IProgressReporter):
+    def check_progress_cancelled(process, progress_reporter: IProgressReporter):
         try:
             while process.poll() is None:
                 try:
@@ -60,9 +60,10 @@ def check_output_interactive(
                     if progress_reporter.cancelled:
                         retcode = process.poll()
                         if retcode is None:
-                            msg = f"Progress was cancelled. Killing pid: {process.pid}.".encode(
-                                "utf-8"
-                            )
+                            msg_str = f"Progress was cancelled (RCC pid: {process.pid} was killed).\n"
+                            msg = msg_str.encode("utf-8")
+                            log.info(msg_str)
+                            stderr_contents.insert(0, msg)
                             stderr_contents.append(msg)
                             on_stderr(msg)
                             kill_process_and_subprocesses(process.pid)
@@ -72,14 +73,23 @@ def check_output_interactive(
     with subprocess.Popen(*popenargs, **kwargs) as process:
         threads = [
             threading.Thread(
-                target=stream_reader, args=(process.stdout, on_stdout, stdout_contents)
+                target=stream_reader,
+                args=(process.stdout, on_stdout, stdout_contents),
+                name="stream_reader_stdout",
             ),
             threading.Thread(
-                target=stream_reader, args=(process.stderr, on_stderr, stderr_contents)
+                target=stream_reader,
+                args=(process.stderr, on_stderr, stderr_contents),
+                name="stream_reader_stderr",
             ),
         ]
         if progress_reporter is not None:
-            threading.Thread(target=check_cancelled, args=(process, progress_reporter))
+            t = threading.Thread(
+                target=check_progress_cancelled,
+                args=(process, progress_reporter),
+                name="check_progress_cancelled",
+            )
+            t.start()
 
         for t in threads:
             t.start()

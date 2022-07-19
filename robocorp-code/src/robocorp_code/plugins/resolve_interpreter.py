@@ -11,6 +11,7 @@ import os.path
 import sys
 import itertools
 from robocorp_ls_core.protocols import RCCActionResult
+from robocorp_ls_core.progress_report import get_current_progress_reporter
 
 try:
     from robocorp_code.rcc import Rcc  # noqa
@@ -115,6 +116,7 @@ class _CachedInterpreterInfo(object):
         endpoint_provider: EPEndPointProvider = pm[EPEndPointProvider]
         rcc = Rcc(configuration_provider)
         interpreter_id = str(robot_yaml_file_info.file_path)
+        progress_reporter = get_current_progress_reporter()
 
         def on_env_creation_error(result: RCCActionResult):
             import tempfile
@@ -124,7 +126,40 @@ class _CachedInterpreterInfo(object):
             with tempfile.NamedTemporaryFile(
                 delete=False, suffix=".log", prefix="robocorp_code_env_error_"
             ) as f:
-                file_contents = f"""
+                if progress_reporter is not None and progress_reporter.cancelled:
+                    file_contents = f"""
+Robocorp Code: environment creation cancelled
+===============================================
+
+The process to create the the environment for:
+
+"{conda_config_file_info.file_path}"
+
+was cancelled.
+
+In this case, open "{conda_config_file_info.file_path}"
+and update the dependencies accordingly (after saving
+the environment will be automatically updated).
+    
+If the environment file should be already correct, chose one of the options below:
+    
+- Retry restarting VSCode using the command:
+
+  "Developer: Reload Window"
+
+- Clear all environments and restart Robocorp code (advised if you suspect 
+  that some environment was partially created and is corrupt):
+  
+  "Robocorp: Clear Robocorp (RCC) environments and restart Robocorp Code"
+
+Full error message
+====================
+
+{result.message} 
+"""
+
+                else:
+                    file_contents = f"""
 Robocorp Code: Unable to create environment
 =============================================
 
