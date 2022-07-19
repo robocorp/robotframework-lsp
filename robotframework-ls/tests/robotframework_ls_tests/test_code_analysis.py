@@ -2210,3 +2210,10 @@ Dummy Test Case
     libspec_manager.config = config
 
     _collect_errors(workspace, doc, data_regression, config=config, basename="no_error")
+
+
+def test_variables_cls(workspace, libspec_manager, data_regression):
+    workspace.set_root("case_vars_file", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case_vars_file_cls.robot", accept_from_file=True)
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")

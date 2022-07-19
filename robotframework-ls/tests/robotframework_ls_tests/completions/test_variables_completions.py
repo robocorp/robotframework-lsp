@@ -620,3 +620,32 @@ Put Key
         CompletionContext(doc, workspace=workspace.ws, line=line, col=col)
     )
     assert len(completions) == 2
+
+
+def test_variable_completions_cls(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.server_api.server import complete_all
+
+    workspace.set_root("case_vars_file", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_vars_file_cls.robot")
+    doc.source = """
+*** Settings ***
+Variables    ./robotvars_cls.py
+
+
+*** Test Cases ***
+Test
+    Log    ${MyVars}    console=True
+    Log    ${MyVar"""
+
+    line, col = doc.get_last_line_col()
+    completions = complete_all(
+        CompletionContext(doc, workspace=workspace.ws, line=line, col=col)
+    )
+    import sys
+
+    if sys.version_info[:2] <= (3, 7):
+        basename = "test_variable_completions_cls_37"
+    else:
+        basename = "test_variable_completions_cls_38"
+    data_regression.check(completions, basename=basename)

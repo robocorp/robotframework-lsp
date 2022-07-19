@@ -7,7 +7,9 @@ from robotframework_ls.impl.variable_types import VariableFoundFromPythonAst
 log = get_logger(__name__)
 
 
-def _gen_var_from_python_ast(variable_import_doc, collector, value_node, target_node):
+def _gen_var_from_python_ast(
+    variable_import_doc, collector, value_node, target_node, prefix
+):
     try:
         import ast as ast_module
 
@@ -18,13 +20,22 @@ def _gen_var_from_python_ast(variable_import_doc, collector, value_node, target_
         elif isinstance(target_node, ast_module.Name):
             varname = target_node.id
 
+        elif isinstance(target_node, ast_module.ClassDef):
+            varname = target_node.name
+
         if varname is not None:
             varname = str(varname)
             if varname.startswith("DICT__"):
                 varname = varname[6:]
             elif varname.startswith("LIST__"):
                 varname = varname[6:]
-            if collector.accepts(varname):
+
+            if prefix:
+                fullname = prefix + varname
+            else:
+                fullname = varname
+
+            if collector.accepts(fullname):
                 value = ""
                 try:
                     # Only available for Python 3.8 onwards...
@@ -52,7 +63,7 @@ def _gen_var_from_python_ast(variable_import_doc, collector, value_node, target_
                     target_node.lineno - 1,
                     target_node.col_offset + len(varname),
                     value,
-                    variable_name=varname,
+                    variable_name=fullname,
                 )
                 collector.on_variable(variable_found)
     except:
@@ -64,18 +75,28 @@ def _gen_var_from_python_ast(variable_import_doc, collector, value_node, target_
 
 
 def collect_variables_from_python_ast(
-    python_ast, python_doc: IDocument, collector: IVariablesCollector
+    python_ast, python_doc: IDocument, collector: IVariablesCollector, prefix=""
 ):
     import ast as ast_module
 
     try:
         for node in python_ast.body:
             if isinstance(node, ast_module.AnnAssign):
-                _gen_var_from_python_ast(python_doc, collector, node.value, node.target)
+                _gen_var_from_python_ast(
+                    python_doc, collector, node.value, node.target, prefix=prefix
+                )
 
             elif isinstance(node, ast_module.Assign):
                 for target in node.targets:
-                    _gen_var_from_python_ast(python_doc, collector, node.value, target)
+                    _gen_var_from_python_ast(
+                        python_doc, collector, node.value, target, prefix=prefix
+                    )
+
+            elif isinstance(node, ast_module.ClassDef):
+                _gen_var_from_python_ast(python_doc, collector, node, node, prefix="")
+                collect_variables_from_python_ast(
+                    node, python_doc, collector, prefix=node.name + "."
+                )
 
             elif isinstance(node, ast_module.FunctionDef):
                 if node.name in ("get_variables", "getVariables"):
@@ -85,7 +106,7 @@ def collect_variables_from_python_ast(
                             if isinstance(b.value, ast_module.Dict):
                                 for key, value in zip(b.value.keys, b.value.values):
                                     _gen_var_from_python_ast(
-                                        python_doc, collector, value, key
+                                        python_doc, collector, value, key, prefix=prefix
                                     )
     except:
         log.exception("Error collecting variables from Python AST.")
