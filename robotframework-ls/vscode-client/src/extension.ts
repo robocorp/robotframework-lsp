@@ -34,7 +34,7 @@ import { registerRunCommands } from "./run";
 import { registerLinkProviders } from "./linkProvider";
 import { getStrFromConfigExpandingVars } from "./expandVars";
 import { registerInteractiveCommands } from "./interactive/rfInteractive";
-import { errorFeedback, logError, OUTPUT_CHANNEL } from "./channel";
+import { errorFeedback, logError, OUTPUT_CHANNEL, feedback } from "./channel";
 import { Mutex } from "./mutex";
 import { fileExists } from "./files";
 import { clearTestItems, handleTestsCollected, ITestInfoFromUri, setupTestExplorerSupport } from "./testview";
@@ -686,6 +686,47 @@ let onChangedEditorUpdateRFStatusBarItem = debounce(() => {
     });
 }, 100);
 
+async function openFlowExplorer(flowBundleHTMLFolderPath: string) {
+    const DEFAULT_ERROR_MSG = `
+            Could not open Robot Flow Explorer.
+            Please check the output logs for more details.
+            `;
+    const DEFAULT_UNABLE_TO_OPEN_MSG = `
+            Unable to open the Robot Flow Explorer.
+            Please select a robot file or make sure that Robot Framework is installed properly and try again.
+            `;
+    try {
+        feedback("vscode.flowExplorer.used", "+1");
+        const activeTextEditor = window.activeTextEditor;
+        if (!activeTextEditor || !languageServerClient || activeTextEditor.document.languageId !== "robotframework") {
+            window.showErrorMessage(DEFAULT_UNABLE_TO_OPEN_MSG);
+            return;
+        }
+        const filePath = activeTextEditor.document.fileName;
+        const openResult: { uri: string | null; err: string | null; warn: string | null } | null =
+            await commands.executeCommand("robot.openFlowExplorer.internal", {
+                "currentFileUri": filePath,
+                "htmlBundleFolderPath": flowBundleHTMLFolderPath,
+            });
+        if (!openResult || openResult.err) {
+            logError("Error while opening the Robot Flow Explorer", Error(openResult.err), "EXT_OPEN_FLOW_EXPLORER");
+            window.showErrorMessage(DEFAULT_ERROR_MSG);
+            OUTPUT_CHANNEL.show();
+            return;
+        }
+        if (openResult.warn) {
+            window.showWarningMessage(openResult.warn);
+        }
+        window.showInformationMessage("Opening Robot Flow Explorer in browser...");
+        vscode.env.openExternal(vscode.Uri.parse(openResult.uri));
+    } catch (err) {
+        logError("Error while opening the Robot Flow Explorer", err, "EXT_OPEN_FLOW_EXPLORER");
+        window.showErrorMessage(DEFAULT_ERROR_MSG);
+        OUTPUT_CHANNEL.show();
+        return;
+    }
+}
+
 export async function activate(context: ExtensionContext) {
     // These extensions do the same things that the RFLS does and end up conflicting
     // (so, sometimes there are reports saying that the language server
@@ -740,6 +781,13 @@ export async function activate(context: ExtensionContext) {
                 clearCachesAndRestartProcessesFinish
             )
         );
+        context.subscriptions.push(
+            commands.registerCommand("robot.openFlowExplorer", async () => {
+                const flowBundleHTMLFolderPath = context.asAbsolutePath("assets");
+                return openFlowExplorer(flowBundleHTMLFolderPath);
+            })
+        );
+
         registerDebugger();
         await registerRunCommands(context);
         await registerLinkProviders(context);

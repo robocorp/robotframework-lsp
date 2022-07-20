@@ -22,6 +22,8 @@ ROBOT_WAIT_FULL_TEST_COLLECTION_INTERNAL = "robot.waitFullTestCollection.interna
 ROBOT_RF_INFO_INTERNAL = "robot.rfInfo.internal"  # Collects information on the Robot Framework version being used.
 ROBOT_LINT_WORKSPACE = "robot.lint.workspace"  # Lint all files in the workspace.
 ROBOT_LINT_EXPLORER = "robot.lint.explorer"  # Lint
+ROBOT_OPEN_FLOW_EXPLORER = "robot.openFlowExplorer"  # Open the Robot Flow Explorer
+ROBOT_OPEN_FLOW_EXPLORER_INTERNAL = "robot.openFlowExplorer.internal"  # Open the Robot Flow Explorer Internals
 
 ALL_SERVER_COMMANDS: List[str] = [
     ROBOT_INTERNAL_RFINTERACTIVE_START,
@@ -36,6 +38,7 @@ ALL_SERVER_COMMANDS: List[str] = [
     ROBOT_RF_INFO_INTERNAL,
     ROBOT_LINT_WORKSPACE,
     ROBOT_LINT_EXPLORER,
+    ROBOT_OPEN_FLOW_EXPLORER_INTERNAL,
 ]
 
 # fmt: on

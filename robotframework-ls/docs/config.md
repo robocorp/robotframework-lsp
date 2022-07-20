@@ -4,10 +4,10 @@ Configuration settings
 - `robot.language-server.python` this is the python executable used to launch the
   **Language Server** itself. It must point to a python (3.7+) executable. **Note:**
   after changing this setting, the editor needs to be restarted.
-  
-- `robot.python.executable` must point to a python executable where **Robot Framework** and user 
+
+- `robot.python.executable` must point to a python executable where **Robot Framework** and user
   libraries are installed (note that it only needs to be set if it's different from `robot.language-server.python`).
-  
+
 - `robot.python.env` can be used to set the environment variables used by the `robot.python.executable`.
 
 - `robot.pythonpath` entries to be added to the PYTHONPATH for **Robot Framework** (used when resolving resources and libraries and automatically passed to the launch config as `--pythonpath` entries).
@@ -25,6 +25,8 @@ Configuration settings
 
 - `robot.codeFormatter`: used to configure the code-formatter to be used.
 
+- `robot.flowExplorerTheme`: used to configure the Robot Flow Explorer theme to be used.
+
 - `robot.codeLens.enable`: used to configure whether code-lenses should be shown.
       Code lenses available are:
           - Run/Debug (to run or debug a Test/Task)
@@ -32,7 +34,7 @@ Configuration settings
 
 - `robot.libraries.libdoc.needsArgs`: a list of the libraries for which the arguments need to be passed for the libdoc generation.
 
-- `robot.libraries.libdoc.preGenerate`: a list of the libraries for which the libdoc should be pre-generated 
+- `robot.libraries.libdoc.preGenerate`: a list of the libraries for which the libdoc should be pre-generated
     (note: builtin libraries are always pre-generated and don't need to be added here).
 
 
@@ -67,10 +69,10 @@ Environment variables that affect the debugger:
 
 - `RFLS_KILL_ZOMBIE_PROCESSES`: Set to `true` to kill zombie processes automatically after running
     Robot Framework (default is false since `0.49.0`).
-    
+
 - `RFLS_BREAK_ON_FAILURE`: Set to `true` to stop on failures when debugging in Intellij
     (In VSCode this is handled by the `Robot Log FAIL` in the breakpoints).
-    
+
 - `RFLS_BREAK_ON_ERROR`: Set to `true` to stop on errors when debugging in Intellij
     (In VSCode this is handled by the `Robot Log ERROR` in the breakpoints).
 
@@ -95,10 +97,10 @@ Environment variables that affect the debugger:
 
 - `RFLS_IGNORE_FAILURES_IN_KEYWORDS_OVERRIDE`: Set to `true` to only load the `RFLS_IGNORE_FAILURES_IN_KEYWORDS` from
     `RFLS_IGNORE_FAILURES_IN_KEYWORDS` and not use any pre-defined entry.
-    
+
 - `ROBOTFRAMEWORK_DAP_LOG_FILENAME`: Path to a filename where logs should be written.
 
-    
+
 - `ROBOTFRAMEWORK_DAP_LOG_LEVEL`: Log level for the logging (0 to 3).
 
 
@@ -107,7 +109,7 @@ Development/debug settings
 
 - `robot.language-server.tcp-port`: if specified, connect to the language server previously started at the given port. **Note:**
   after changing this setting, the editor needs to be restarted.
-  
+
 - `robot.language-server.args`: arguments to be passed to the robotframework language server (i.e.: `["-vv", "--log-file=~/robotframework_ls.log"]`). **Note:**
   after changing this setting, the editor needs to be restarted.
 

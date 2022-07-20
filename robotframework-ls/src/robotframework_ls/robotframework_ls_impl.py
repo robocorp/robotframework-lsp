@@ -1,3 +1,7 @@
+import json
+import re
+import tempfile
+from robocorp_ls_core.command_dispatcher import _CommandDispatcher
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import (
     overrides,
@@ -42,6 +46,7 @@ from robocorp_ls_core.lsp import (
 )
 from robotframework_ls.commands import (
     ROBOT_GET_RFLS_HOME_DIR,
+    ROBOT_OPEN_FLOW_EXPLORER_INTERNAL,
     ROBOT_START_INDEXING_INTERNAL,
     ROBOT_WAIT_FULL_TEST_COLLECTION_INTERNAL,
     ROBOT_RF_INFO_INTERNAL,
@@ -56,6 +61,9 @@ log = get_logger(__name__)
 
 _LINT_DEBOUNCE_IN_SECONDS_LOW = 0.2
 _LINT_DEBOUNCE_IN_SECONDS_HIGH = 0.8
+
+_FLOW_EXPLORER_BUNDLE_HTML_FILE_NAME = "robot_flow_explorer_bundle.html"
+_FLOW_EXPLORER_BUNDLE_JS_FILE_NAME = "robot_flow_explorer_bundle.js"
 
 
 class _CurrLintInfo(object):
@@ -278,8 +286,6 @@ class _LintManager(object):
             self.schedule_lint(next_uri_to_lint, True, 0.0)
 
 
-from robocorp_ls_core.command_dispatcher import _CommandDispatcher
-
 command_dispatcher = _CommandDispatcher()
 
 
@@ -477,7 +483,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         server_capabilities = {
             "codeActionProvider": False,
             "codeLensProvider": {"resolveProvider": True},
-            "completionProvider": {"resolveProvider": True},  # Docs are lazily computed
+            # Docs are lazily computed
+            "completionProvider": {"resolveProvider": True},
             "documentFormattingProvider": True,
             "documentHighlightProvider": True,
             "documentRangeFormattingProvider": False,
@@ -705,6 +712,80 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         log.info("Unable to get RF info (no api available).")
         return None
+
+    @command_dispatcher(ROBOT_OPEN_FLOW_EXPLORER_INTERNAL)
+    def _open_flow_explorer(self, *arguments):
+        from robotframework_ls.impl.rf_model_builder import (
+            DEFAULT_WARNING_MESSAGE,
+            IS_ROBOT_FRAMEWORK_3,
+            RFModelBuilder,
+        )
+        from robotframework_ls.constants import (
+            DEFAULT_ROBOT_FLOW_EXPLORER_HTML_TEMPLATE,
+            DEFAULT_ROBOT_FLOW_EXPLORER_OPTIONS,
+        )
+        from robocorp_ls_core.uris import from_fs_path
+        from robocorp_ls_core.robotframework_log import get_log_level
+        from robotframework_ls.impl.robot_lsp_constants import (
+            OPTION_ROBOT_FLOW_EXPLORER_THEME_DARK,
+        )
+        from robotframework_ls.impl.robot_generated_lsp_constants import (
+            OPTION_ROBOT_FLOW_EXPLORER_THEME,
+        )
+
+        current_doc_uri = arguments[0]["currentFileUri"]
+        html_bundle_flow_folder_path = arguments[0]["htmlBundleFolderPath"]
+        log.info(
+            "Dispatched flow explorer internal command with args:",
+            str(current_doc_uri),
+            str(html_bundle_flow_folder_path),
+        )
+        # construct warning message
+        warning = DEFAULT_WARNING_MESSAGE if IS_ROBOT_FRAMEWORK_3 else None
+        # build model
+        try:
+            log.info("Building deep model for visualization...")
+            model = RFModelBuilder(robot_file_path=current_doc_uri).build()
+            if get_log_level() >= 2:
+                log.debug("Model:", json.dumps(model))
+        except Exception as e:
+            log.error("An Exception occurred while creating the deep model:", e)
+            return {"uri": None, "err": str(e), "warn": None}
+
+        log.info("Generating web page for visualization...")
+        # identify the selected theme & construct options
+        rfe_theme = self._config.get_setting(
+            OPTION_ROBOT_FLOW_EXPLORER_THEME,
+            str,
+            OPTION_ROBOT_FLOW_EXPLORER_THEME_DARK,
+        )
+        rfe_options = DEFAULT_ROBOT_FLOW_EXPLORER_OPTIONS.copy()
+        rfe_options["theme"] = rfe_theme
+
+        # filling in the HTML template
+        # adding the new model as data to Flow Explorer
+        replacement_html = DEFAULT_ROBOT_FLOW_EXPLORER_HTML_TEMPLATE.substitute(
+            rfe_options=json.dumps(rfe_options),
+            rfe_data=json.dumps(model),
+            rfe_favicon_path=Path(
+                os.path.join(html_bundle_flow_folder_path, "favicon.png")
+            ).as_uri(),
+            rfe_js_path=Path(
+                os.path.join(
+                    html_bundle_flow_folder_path, _FLOW_EXPLORER_BUNDLE_JS_FILE_NAME
+                )
+            ).as_uri(),
+        )
+        # create the temporary HTML file to display
+        with tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".html"
+        ) as temp_file:
+            Path(temp_file.name).write_text(replacement_html)
+            return {
+                "uri": from_fs_path(temp_file.name),
+                "err": None,
+                "warn": warning,
+            }
 
     @command_dispatcher("robot.listTests")
     def _list_tests(self, *arguments):

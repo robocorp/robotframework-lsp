@@ -53,7 +53,9 @@
         "onCommand:robot.waitFullTestCollection.internal",
         "onCommand:robot.rfInfo.internal",
         "onCommand:robot.lint.workspace",
-        "onCommand:robot.lint.explorer"
+        "onCommand:robot.lint.explorer",
+        "onCommand:robot.openFlowExplorer",
+        "onCommand:robot.openFlowExplorer.internal"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -165,6 +167,16 @@
                 "command": "robot.lint.explorer",
                 "title": "Lint",
                 "category": "Robot Framework"
+            },
+            {
+                "command": "robot.openFlowExplorer",
+                "title": "Open the Robot Flow Explorer",
+                "category": "Robot Framework"
+            },
+            {
+                "command": "robot.openFlowExplorer.internal",
+                "title": "Open the Robot Flow Explorer Internals",
+                "category": "Robot Framework"
             }
         ],
         "submenus": [
@@ -263,6 +275,10 @@
                 },
                 {
                     "command": "robot.lint.explorer",
+                    "when": "false"
+                },
+                {
+                    "command": "robot.openFlowExplorer.internal",
                     "when": "false"
                 }
             ]
@@ -382,6 +398,15 @@
                     "enum": [
                         "robotidy",
                         "builtinTidy"
+                    ]
+                },
+                "robot.flowExplorerTheme": {
+                    "type": "string",
+                    "default": "dark",
+                    "description": "Allows the configuration of the Robot Flow Explorer theme to be used.\nOne of: dark, light.",
+                    "enum": [
+                        "dark",
+                        "light"
                     ]
                 },
                 "robot.lint.robocop.enabled": {
