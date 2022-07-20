@@ -1,4 +1,4 @@
-NEXT
+New in 0.49.0 (2022-07-20)
 -----------------------------
 
 - VSCode `1.65.0` is now required (to support HTML in markdown contents).
@@ -10,6 +10,7 @@ NEXT
 - Vendored Robocop upgraded to 2.2.0. [#703](https://github.com/robocorp/robotframework-lsp/issues/703)
 - Robocop is always run with the project root as the cwd. [#703](https://github.com/robocorp/robotframework-lsp/issues/703)
 - By default Failures/Errors inside a TRY..EXCEPT statement won't suspend execution while debugging. [#698](https://github.com/robocorp/robotframework-lsp/issues/698)
+- Variables are loaded from classes in Python files. [#704](https://github.com/robocorp/robotframework-lsp/issues/704)
 - Fixes to support Robot Framework 5.1:
   - Deal with `robot.running.builder.testsettings.TestDefaults` renamed to `robot.running.builder.settings.Defaults`.
   - Consider new `TASK_HEADER` in AST.

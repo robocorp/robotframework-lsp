@@ -1,8 +1,21 @@
-NEXT
+New in 0.49.0 (2022-07-20)
 -----------------------------
 
-- Support for CommonMark and not just plain Markdown.
-- Provide hover docs even if definition cannot be found.
+- [Intellij] Support for CommonMark and not just plain Markdown.
+- [Intellij] Provide hover docs even if definition cannot be found.
+- Zombie processes are no longer automatically killed after doing a Robot Framework launch. [#358](https://github.com/robocorp/robotframework-lsp/issues/358)
+  - It's possible to enable the previous behavior by setting an environment variable such as: `RFLS_KILL_ZOMBIE_PROCESSES=1`.
+- Fix issue where replacement offset in section completion was wrong. [#700](https://github.com/robocorp/robotframework-lsp/issues/700)
+- Properly consider extended part of variables in expressions (fixes issue which could make variable not be resolved). [#702](https://github.com/robocorp/robotframework-lsp/issues/702)
+- Resolve variable files imported as modules. [#699](https://github.com/robocorp/robotframework-lsp/issues/699)
+- Vendored Robocop upgraded to 2.2.0. [#703](https://github.com/robocorp/robotframework-lsp/issues/703)
+- Robocop is always run with the project root as the cwd. [#703](https://github.com/robocorp/robotframework-lsp/issues/703)
+- By default Failures/Errors inside a TRY..EXCEPT statement won't suspend execution while debugging. [#698](https://github.com/robocorp/robotframework-lsp/issues/698)
+- Variables are loaded from classes in Python files. [#704](https://github.com/robocorp/robotframework-lsp/issues/704)
+- Fixes to support Robot Framework 5.1:
+  - Deal with `robot.running.builder.testsettings.TestDefaults` renamed to `robot.running.builder.settings.Defaults`.
+  - Consider new `TASK_HEADER` in AST.
+  - Consider that `KeywordCall` is given instead of `EmptyLine` in invalid assign in keyword.
 
 
 New in 0.48.2 (2022-06-07)
