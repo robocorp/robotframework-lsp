@@ -1,4 +1,4 @@
-NEXT
+New in 0.36.0 (2022-07-20)
 -----------------------------
 
 - VSCode 1.65.0 is now required to support HTML in markdown contents.
