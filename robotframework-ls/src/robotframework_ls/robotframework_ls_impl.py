@@ -1,3 +1,7 @@
+import json
+import re
+from robotframework_ls.impl.rf_model_builder import RFModelBuilder
+from robocorp_ls_core.command_dispatcher import _CommandDispatcher
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import (
     overrides,
@@ -42,6 +46,7 @@ from robocorp_ls_core.lsp import (
 )
 from robotframework_ls.commands import (
     ROBOT_GET_RFLS_HOME_DIR,
+    ROBOT_OPEN_FLOW_EXPLORER_INTERNAL,
     ROBOT_START_INDEXING_INTERNAL,
     ROBOT_WAIT_FULL_TEST_COLLECTION_INTERNAL,
     ROBOT_RF_INFO_INTERNAL,
@@ -56,6 +61,8 @@ log = get_logger(__name__)
 
 _LINT_DEBOUNCE_IN_SECONDS_LOW = 0.2
 _LINT_DEBOUNCE_IN_SECONDS_HIGH = 0.8
+
+_FLOW_EXPLORER_BUNDLE_HTML_FILE_NAME = "robot_flow_explorer_bundle.html"
 
 
 class _CurrLintInfo(object):
@@ -278,8 +285,6 @@ class _LintManager(object):
             self.schedule_lint(next_uri_to_lint, True, 0.0)
 
 
-from robocorp_ls_core.command_dispatcher import _CommandDispatcher
-
 command_dispatcher = _CommandDispatcher()
 
 
@@ -477,7 +482,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         server_capabilities = {
             "codeActionProvider": False,
             "codeLensProvider": {"resolveProvider": True},
-            "completionProvider": {"resolveProvider": True},  # Docs are lazily computed
+            # Docs are lazily computed
+            "completionProvider": {"resolveProvider": True},
             "documentFormattingProvider": True,
             "documentHighlightProvider": True,
             "documentRangeFormattingProvider": False,
@@ -705,6 +711,44 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         log.info("Unable to get RF info (no api available).")
         return None
+
+    @command_dispatcher(ROBOT_OPEN_FLOW_EXPLORER_INTERNAL)
+    def _open_flow_explorer(self, *arguments):
+        current_doc_uri = arguments[0]["currentFileUri"]
+        html_bundle_flow_folder_path = arguments[0]["htmlBundleFolderPath"]
+        html_bundle_flow_file_path = os.path.join(
+            html_bundle_flow_folder_path, _FLOW_EXPLORER_BUNDLE_HTML_FILE_NAME
+        )
+        tmp_bundle_flow_file_path = os.path.join(
+            html_bundle_flow_folder_path, "tmp_" + _FLOW_EXPLORER_BUNDLE_HTML_FILE_NAME
+        )
+        log.info(
+            "Dispatched flow explorer internal command with args:",
+            str(current_doc_uri),
+            str(html_bundle_flow_folder_path),
+        )
+
+        try:
+            log.info("Building deep model for visualization...")
+            model = RFModelBuilder(robot_file_path=current_doc_uri).build()
+            log.debug("Model:", json.dumps(model))
+        except Exception as e:
+            log.error("An Exception occurred while creating the deep model:", e)
+            return None
+
+        log.info("Generating web page for visualization...")
+        original_html = Path(html_bundle_flow_file_path).read_text()
+        script_open_tag = '<script id="data" type="application/json">'
+        script_close_tag = "</script>"
+        script_json_model = script_open_tag + json.dumps(model) + script_close_tag
+        replacement_html = re.sub(
+            script_open_tag + r"([.\s\S]*?)" + script_close_tag,
+            script_json_model,
+            original_html,
+        )
+        Path(tmp_bundle_flow_file_path).write_text(replacement_html)
+
+        return Path(tmp_bundle_flow_file_path).as_uri()
 
     @command_dispatcher("robot.listTests")
     def _list_tests(self, *arguments):

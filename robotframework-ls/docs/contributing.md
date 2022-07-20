@@ -19,7 +19,7 @@ bootstrap your development environment.
 Code/environment
 ==================
 
-Fork the repository at GitHub (https://github.com/robocorp/robotframework-lsp) 
+Fork the repository at GitHub (https://github.com/robocorp/robotframework-lsp)
 and then clone the sources of your fork with git to your local machine.
 
 After getting the code, the following steps are needed:
@@ -69,7 +69,7 @@ echo $PWD/robocorp-code/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
 echo $PWD/robocorp-python-ls-core/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
 ```
 
-Head to the root directory (where `package.json` is located) and run: 
+Head to the root directory (where `package.json` is located) and run:
 `yarn install`.
 
 
@@ -92,15 +92,15 @@ Codebase style/guidelines
 Please take into account the following guidelines of the `Robot Framework Language Server` codebase:
 
 - The codebase follows a [TDD](https://en.wikipedia.org/wiki/Test-driven_development) style and all code added must be added with the related tests.
-- Imports should be local (and not top-level) whenever possible in the `Robot Framework Language Server` codebase 
-  (so, unless it's a really common import across the whole codebase or something required to be top-level 
+- Imports should be local (and not top-level) whenever possible in the `Robot Framework Language Server` codebase
+  (so, unless it's a really common import across the whole codebase or something required to be top-level
   -- such as typing -- it should be local).
 - Typing: most of the typing should be done through protocols and not nominal typing (see the `protocols.py` across the codebase).
 - Typing for the language server specification is done at: `robocorp_ls_core.lsp`.
-- Classes that are intended to implement some protocol should use `robocorp_ls_core.protocols.check_implements` 
+- Classes that are intended to implement some protocol should use `robocorp_ls_core.protocols.check_implements`
   (see docstrings on that function on how to use it).
-- Features should be self contained (so, for instance,  document symbols is in `document_symbol.py` and 
-  semantic highlighting is in `semantic_highlighting.py`). Unless a feature really becomes huge 
+- Features should be self contained (so, for instance,  document symbols is in `document_symbol.py` and
+  semantic highlighting is in `semantic_highlighting.py`). Unless a feature really becomes huge
   (such as code-completion), most of the code should reside in the same module and functions are usually
   preferred over classes -- but not always ;).
 - `robotframework_ls.robotframework_ls_impl.RobotFrameworkLanguageServer` is just a facade to distribute requests

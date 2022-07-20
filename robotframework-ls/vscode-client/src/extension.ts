@@ -686,6 +686,53 @@ let onChangedEditorUpdateRFStatusBarItem = debounce(() => {
     });
 }, 100);
 
+async function openFlowExplorer(flowBundleHTMLFolderPath: string) {
+    try {
+        window.showInformationMessage("Opening Robot Flow Explorer in browser...");
+        const activeTextEditor = window.activeTextEditor;
+        if (!activeTextEditor) {
+            RF_STATUS_BAR_ITEM.hide();
+            return;
+        }
+        if (activeTextEditor.document.languageId !== "robotframework") {
+            RF_STATUS_BAR_ITEM.hide();
+            return;
+        }
+        if (!languageServerClient) {
+            RF_STATUS_BAR_ITEM.hide();
+            return;
+        }
+        const filePath = activeTextEditor.document.fileName;
+        const openResult: string | null = await commands.executeCommand("robot.openFlowExplorer.internal", {
+            "currentFileUri": filePath,
+            "htmlBundleFolderPath": flowBundleHTMLFolderPath,
+        });
+        if (typeof openResult === "string") {
+            vscode.env.openExternal(vscode.Uri.parse(openResult));
+            return;
+        }
+        window.showErrorMessage(
+            `
+            Could not open Robot Flow Explorer.
+            Please check the output logs for more details.
+            `
+        );
+    } catch (err) {
+        logError("Error while opening the Robot Flow Explorer", err, "EXT_OPEN_FLOW_EXPLORER");
+        window
+            .showWarningMessage(
+                'There was an error opening RobotFlow Explorer. Please use the "Reload Window" action to finish restarting the language server.',
+                ...["Reload Window"]
+            )
+            .then((selection) => {
+                if (selection === "Reload Window") {
+                    commands.executeCommand("workbench.action.reloadWindow");
+                }
+            });
+        return;
+    }
+}
+
 export async function activate(context: ExtensionContext) {
     // These extensions do the same things that the RFLS does and end up conflicting
     // (so, sometimes there are reports saying that the language server
@@ -740,6 +787,13 @@ export async function activate(context: ExtensionContext) {
                 clearCachesAndRestartProcessesFinish
             )
         );
+        context.subscriptions.push(
+            commands.registerCommand("robot.openFlowExplorer", async () => {
+                const flowBundleHTMLFolderPath = context.asAbsolutePath("assets");
+                return openFlowExplorer(flowBundleHTMLFolderPath);
+            })
+        );
+
         registerDebugger();
         await registerRunCommands(context);
         await registerLinkProviders(context);

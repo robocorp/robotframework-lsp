@@ -137,3 +137,6 @@ robotframework-intellij/.gradle
 
 # virtual environment
 .venv/
+
+# ignore the asset momentarily
+*/assets/*

@@ -3,7 +3,7 @@
     "displayName": "Robot Framework Language Server",
     "description": "VSCode extension support for Robot Framework",
     "author": "Fabio Zadrozny",
-    "homepage": "https://github.com/robocorp/robotframework-lsp/blob/robotframework-lsp-1.0.0/robotframework-ls/README.md",
+    "homepage": "https://github.com/robocorp/robotframework-lsp/blob/robotframework-lsp-0.48.2/robotframework-ls/README.md",
     "repository": {
         "type": "git",
         "url": "https://github.com/robocorp/robotframework-lsp.git"
@@ -12,7 +12,7 @@
         "url": "https://github.com/robocorp/robotframework-lsp/issues"
     },
     "license": "Apache 2.0",
-    "version": "1.0.0",
+    "version": "0.48.2",
     "icon": "images/icon.png",
     "publisher": "robocorp",
     "categories": [
@@ -51,7 +51,8 @@
         "onCommand:robot.clearCachesAndRestartProcesses.finish.internal",
         "onCommand:robot.startIndexing.internal",
         "onCommand:robot.waitFullTestCollection.internal",
-        "onCommand:robot.rfInfo.internal"
+        "onCommand:robot.rfInfo.internal",
+        "onCommand:robot.openFlowExplorer"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -155,69 +156,38 @@
                 "category": "Robot Framework"
             },
             {
-                "command": "robot.lint.workspace",
-                "title": "Lint all files in the workspace.",
-                "category": "Robot Framework"
-            },
-            {
-                "command": "robot.lint.explorer",
-                "title": "Lint",
-                "category": "Robot Framework"
-            },
-            {
                 "command": "robot.openFlowExplorer",
-                "title": "Open the Robot Flow Explorer",
+                "title": "Opens the Robot Flow Explorer visualization",
                 "category": "Robot Framework"
-            },
-            {
-                "command": "robot.openFlowExplorer.internal",
-                "title": "Open the Robot Flow Explorer Internals",
-                "category": "Robot Framework"
-            }
-        ],
-        "submenus": [
-            {
-                "id": "robotsubmenu",
-                "label": "Robot Framework"
             }
         ],
         "menus": {
             "editor/title/run": [
                 {
                     "command": "robot.runSuite",
+                    "title": "Run Tests/Tasks Suite",
                     "group": "1_run@robot_run1",
                     "when": "resourceExtname == .robot && !isInDiffEditor"
                 },
                 {
                     "command": "robot.debugSuite",
+                    "title": "Debug Tests/Tasks Suite",
                     "group": "1_run@robot_run2",
                     "when": "resourceExtname == .robot && !isInDiffEditor"
                 }
             ],
             "explorer/context": [
                 {
-                    "submenu": "robotsubmenu",
-                    "group": "9_robot.group"
-                }
-            ],
-            "robotsubmenu": [
-                {
                     "command": "robot.runSuite",
-                    "group": "1_run@1",
-                    "submenu": "robotsubmenu",
+                    "title": "Run Tests/Tasks Suite",
+                    "group": "9_robot_run@1",
                     "when": "resourceExtname == .robot || explorerResourceIsFolder"
                 },
                 {
                     "command": "robot.debugSuite",
-                    "group": "1_run@2",
-                    "submenu": "robotsubmenu",
+                    "title": "Debug Tests/Tasks Suite",
+                    "group": "9_robot_run@2",
                     "when": "resourceExtname == .robot || explorerResourceIsFolder"
-                },
-                {
-                    "command": "robot.lint.explorer",
-                    "group": "2_analysis",
-                    "submenu": "robotsubmenu",
-                    "when": "resourceExtname == .robot || resourceExtname == .resource || explorerResourceIsFolder"
                 }
             ],
             "commandPalette": [
@@ -267,14 +237,6 @@
                 },
                 {
                     "command": "robot.rfInfo.internal",
-                    "when": "false"
-                },
-                {
-                    "command": "robot.lint.explorer",
-                    "when": "false"
-                },
-                {
-                    "command": "robot.openFlowExplorer.internal",
                     "when": "false"
                 }
             ]
@@ -431,11 +393,6 @@
                     "default": true,
                     "description": "Reports issues in keyword call arguments."
                 },
-                "robot.lint.keywordResolvesToMultipleKeywords": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Reports whenever a keyword call would resolve to more than one keyword."
-                },
                 "robot.lint.variables": {
                     "type": "boolean",
                     "default": true,
@@ -491,11 +448,6 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Enables or disables code-lenses (Run/Debug/Interactive console)"
-                },
-                "robot.interactiveConsole.arguments": {
-                    "type": "array",
-                    "default": [],
-                    "description": "The arguments with the options to be used to start an interactive console. i.e.: [\"--output\", \"${workspaceRoot}/interactive_output.xml\"]"
                 }
             }
         },
