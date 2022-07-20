@@ -240,6 +240,11 @@ def get_json_contents():
                         "default": True,
                         "description": "Enables or disables code-lenses (Run/Debug/Interactive console)",
                     },
+                    "robot.interactiveConsole.arguments": {
+                        "type": "array",
+                        "default": [],
+                        "description": 'The arguments with the options to be used to start an interactive console. i.e.: ["--output", "${workspaceRoot}/interactive_output.xml"]',
+                    },
                 },
             },
             "languages": [

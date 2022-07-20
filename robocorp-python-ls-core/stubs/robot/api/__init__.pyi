@@ -376,3 +376,6 @@ class SuiteVisitor:
         Default implementation does nothing.
         """
         pass
+
+def get_model(source, data_only=False, curdir=None, lang=None):
+    pass

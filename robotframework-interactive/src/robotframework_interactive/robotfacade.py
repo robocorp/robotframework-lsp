@@ -1,3 +1,6 @@
+from typing import Sequence, Dict, Any
+
+
 class RobotFrameworkFacade(object):
     """
     Nothing on Robot Framework is currently typed, so, this is a facade
@@ -81,3 +84,17 @@ class RobotFrameworkFacade(object):
         from robot.running.userkeyword import EmbeddedArgumentsHandler  # type:ignore
 
         return EmbeddedArgumentsHandler
+
+    def parse_arguments_options(self, arguments: Sequence[str]) -> Dict[str, Any]:
+        from robot.run import RobotFramework  # type:ignore
+
+        arguments = list(arguments)
+
+        # Add the target as an arg (which is to be ignored as
+        # we just want the options in this API).
+        arguments.append("<ignore>")
+
+        opts, _ = RobotFramework().parse_arguments(
+            arguments,
+        )
+        return opts

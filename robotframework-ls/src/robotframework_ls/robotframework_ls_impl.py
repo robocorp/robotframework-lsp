@@ -45,6 +45,7 @@ from robotframework_ls.commands import (
     ROBOT_RF_INFO_INTERNAL,
 )
 from robocorp_ls_core.jsonrpc.exceptions import JsonRpcException
+import weakref
 
 
 log = get_logger(__name__)
@@ -217,7 +218,21 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         self._pm.set_instance(
             EPEndPointProvider, DefaultEndPointProvider(self._endpoint)
         )
-        self._rf_interpreters_manager = _RfInterpretersManager(self._endpoint, self._pm)
+
+        weak_self = weakref.ref(self)
+
+        def get_workspace_root_path():
+            s = weak_self()  # We don't want a cyclic reference.
+            if s is None:
+                return None
+            ws = s.workspace
+            if ws is not None:
+                return ws.root_path
+            return None
+
+        self._rf_interpreters_manager = _RfInterpretersManager(
+            self._endpoint, self._pm, get_workspace_root_path=get_workspace_root_path
+        )
 
         watch_impl = os.environ.get("ROBOTFRAMEWORK_LS_WATCH_IMPL", "auto")
         if watch_impl not in ("watchdog", "fsnotify", "auto"):

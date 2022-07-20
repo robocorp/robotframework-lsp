@@ -52,6 +52,11 @@ from robotframework_interactive.protocols import (
     ActionResultDict,
 )
 import weakref
+from typing import List, Dict, Any, Optional
+from robocorp_ls_core.protocols import IConfig
+from robocorp_ls_core.robotframework_log import get_logger
+
+log = get_logger(__name__)
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
@@ -158,16 +163,18 @@ class _CustomErrorReporter(NodeVisitor):
 
 
 class RobotFrameworkInterpreter(object):
-    def __init__(self):
+    def __init__(self, config: IConfig, workspace_root_path: Optional[str] = None):
         from robotframework_interactive import main_loop
 
         main_loop.MainLoopCallbackHolder.ON_MAIN_LOOP = self.interpreter_main_loop
         facade = RobotFrameworkFacade()
         TestSuite = facade.TestSuite
 
+        self._config = config
         self._test_suite = TestSuite.from_file_system(
             os.path.join(os.path.dirname(__file__), "robot_interactive_console.robot")
         )
+        self._workspace_root_path = workspace_root_path
         self.on_stdout = Callback()
         self.on_stderr = Callback()
         self.on_exception_handled = CallbackWithReturn()
@@ -215,7 +222,7 @@ class RobotFrameworkInterpreter(object):
             "KeywordSection": None,
         }
 
-        sys.stdin = _CustomStdIn(self)
+        sys.stdin = _CustomStdIn(self)  # type:ignore
 
     @property
     def waiting_for_input(self):
@@ -257,13 +264,51 @@ class RobotFrameworkInterpreter(object):
         return ("\n".join(full_doc)).strip()
 
     def initialize(self, on_main_loop: IOnReadyCall):
-        self._on_main_loop = on_main_loop
+        from robotframework_interactive.server.rf_interpreter_ls_config import (
+            OPTION_ROBOT_VARIABLES,
+        )
+        from robotframework_interactive.server.rf_interpreter_ls_config import (
+            OPTION_ROBOT_INTERACTIVE_CONSOLE_ARGUMENTS,
+        )
+
+        self._on_main_loop = on_main_loop  # type:ignore
 
         stdout = self._stdout
         stderr = self._stderr
-        options = dict(
-            output=os.path.abspath("output.xml"), stdout=stdout, stderr=stderr
+
+        args: List[str] = self._config.get_setting(
+            OPTION_ROBOT_INTERACTIVE_CONSOLE_ARGUMENTS, list, []
         )
+
+        robot_variables = self._config.get_setting(OPTION_ROBOT_VARIABLES, dict, {})
+        for key, val in robot_variables.items():
+            args.append("--variable")
+            args.append(f"{key}:{val}")
+
+        facade = RobotFrameworkFacade()
+        if self._workspace_root_path:
+            output = os.path.join(
+                self._workspace_root_path,
+                "interactive_console_output.xml",
+            )
+        else:
+            output = os.path.join(
+                os.path.abspath("interactive_console_output.xml"),
+            )
+        options: Dict[str, Any] = dict(
+            output=output,
+        )
+        try:
+            options.update(facade.parse_arguments_options(args))
+        except:
+            log.exception(
+                "Error parsing arguments starting interactive console: %s", args
+            )
+
+        log.info("Initializing robot framework interpreter with options: %s", options)
+
+        options["stdout"] = stdout
+        options["stderr"] = stderr
 
         self._test_suite.run(**options)
 
@@ -370,8 +415,8 @@ class RobotFrameworkInterpreter(object):
         try:
             # When writing to the console, RF uses sys.__stdout__, so, we
             # need to hijack it too...
-            sys.__stdout__ = self._stdout
-            sys.__stderr__ = self._stderr
+            sys.__stdout__ = self._stdout  # type:ignore
+            sys.__stderr__ = self._stderr  # type:ignore
             return self._evaluate(code)
         except Exception as e:
             if not self.on_exception_handled(e):

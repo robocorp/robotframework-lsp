@@ -293,6 +293,12 @@ def camel_to_snake(name):
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
 
 
+IGNORE_PREFERENCES_NOT_APPLICABLE_TO_INTELLIJ = (
+    'robot.editor.4spacesTab',
+    'robot.interactiveConsole.arguments'
+    )
+
+
 def main():
     import json
     from jinja2 import Template
@@ -304,7 +310,7 @@ def main():
         package_json = json.load(stream)
         properties = package_json['contributes']['configuration']['properties']
         for prop_name, prop_value in properties.items():
-            if prop_name == 'robot.editor.4spacesTab':
+            if prop_name in IGNORE_PREFERENCES_NOT_APPLICABLE_TO_INTELLIJ:
                 continue
 
             description = prop_value.get('description', '').replace('"', '\\"')
@@ -312,7 +318,7 @@ def main():
             final_desc = ''
             description = description.replace('\n', ' ')
             description = description.replace('(', '\\n(')
-            description = description.replace('\\n(s)', '(s)') # Undo the (s) case
+            description = description.replace('\\n(s)', '(s)')  # Undo the (s) case
             for i, d in enumerate(description.split('\\n')):
                 if i > 0:
                     final_desc += '\\n'
@@ -320,7 +326,7 @@ def main():
                 if prop_name == 'robot.completions.keywords.format':
                     i = d.index('One of')
                     d = '\\n'.join((d[:i].strip(), d[i:].strip()))
-                    
+
                 else:
                     d = '\\n'.join(textwrap.wrap(d, line_len))
                 final_desc += d

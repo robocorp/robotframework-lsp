@@ -38,7 +38,11 @@ def interpreter(change_test_dir, request):
     when the interpreter is in the main loop we return from that paused state
     and at tear-down we stop that thread.
     """
-    interpreter = RobotFrameworkInterpreter()
+    from robotframework_interactive.server.rf_interpreter_ls_config import (
+        RfInterpreterRobotConfig,
+    )
+
+    interpreter = RobotFrameworkInterpreter(RfInterpreterRobotConfig())
 
     stream_stdout = StringIO()
     stream_stderr = StringIO()
@@ -317,3 +321,15 @@ def test_redefine_keyword(interpreter: _InterpreterInfo):
         "    MyKeyword\n"
         "    MyKeyword"
     )
+
+
+def test_arguments():
+    from robotframework_interactive import robotfacade
+
+    facade = robotfacade.RobotFrameworkFacade()
+
+    opts = facade.parse_arguments_options(["--output", "foo"])
+    assert opts == {"output": "foo"}
+
+    with pytest.raises(Exception):
+        opts = facade.parse_arguments_options(["--invalid-arg", "foo"])

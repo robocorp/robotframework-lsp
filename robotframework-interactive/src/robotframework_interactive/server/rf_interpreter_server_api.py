@@ -5,7 +5,7 @@ from robocorp_ls_core.robotframework_log import get_logger
 import threading
 from robotframework_interactive.protocols import IMessage, IRobotFrameworkInterpreter
 from robocorp_ls_core.options import DEFAULT_TIMEOUT, USE_TIMEOUTS, NO_TIMEOUT
-from typing import Optional, Callable, Union
+from typing import Optional, Callable, Union, Dict, Any
 import sys
 import traceback
 import json
@@ -34,7 +34,13 @@ class RfInterpreterServerApi(PythonLanguageServer):
 
         return Config()
 
-    def m_interpreter__start(self, uri: str) -> ActionResultDict:
+    def m_interpreter__start(
+        self, uri: str, settings: Dict[str, Any], workspace_root_path: Optional[str]
+    ) -> ActionResultDict:
+        from robotframework_interactive.server.rf_interpreter_ls_config import (
+            RfInterpreterRobotConfig,
+        )
+
         if self._interpreter_initialized:
             return {
                 "success": False,
@@ -51,7 +57,9 @@ class RfInterpreterServerApi(PythonLanguageServer):
         try:
             from robotframework_interactive.interpreter import RobotFrameworkInterpreter
 
-            interpreter = RobotFrameworkInterpreter()
+            config = RfInterpreterRobotConfig()
+            config.update(settings)
+            interpreter = RobotFrameworkInterpreter(config, workspace_root_path)
             self._interpreter = interpreter
 
             def on_output(msg: str, category: str):

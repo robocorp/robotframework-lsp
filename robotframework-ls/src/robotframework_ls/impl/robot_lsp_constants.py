@@ -1,3 +1,7 @@
+# Note: there's a copy of these settings at:
+# robotframework_interactive.server.rf_interpreter_ls_config
+# which should be kept up-to-date with this one.
+
 from typing import List
 
 OPTION_ROBOT_PYTHON_EXECUTABLE = "robot.python.executable"
@@ -10,6 +14,8 @@ OPTION_ROBOT_LANGUAGE_SERVER_ARGS = "robot.language-server.args"
 
 OPTION_ROBOT_VARIABLES = "robot.variables"
 OPTION_ROBOT_VARIABLES_LOAD_FROM_ARGUMENTS_FILE = "robot.loadVariablesFromArgumentsFile"
+
+OPTION_ROBOT_INTERACTIVE_CONSOLE_ARGUMENTS = "robot.interactiveConsole.arguments"
 
 OPTION_ROBOT_LINT_ROBOCOP_ENABLED = "robot.lint.robocop.enabled"
 

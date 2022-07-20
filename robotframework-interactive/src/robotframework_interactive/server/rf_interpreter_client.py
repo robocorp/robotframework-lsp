@@ -1,6 +1,7 @@
 from robocorp_ls_core.client_base import LanguageServerClientBase
 from robocorp_ls_core.protocols import ActionResultDict
 from robocorp_ls_core.options import DEFAULT_TIMEOUT
+from typing import Any, Dict, Optional
 
 
 class SubprocessDiedError(Exception):
@@ -91,7 +92,9 @@ class RfInterpreterApiClient(LanguageServerClientBase):
                 return {"success": False, "message": str(error), "result": None}
             return {"success": False, "message": str(result), "result": None}
 
-    def interpreter_start(self, uri: str) -> ActionResultDict:
+    def interpreter_start(
+        self, uri: str, settings: Dict[str, Any], workspace_root_path: Optional[str]
+    ) -> ActionResultDict:
         self._check_process_alive()
         msg_id = self.next_id()
         return self._unpack_result_as_action_result_dict(
@@ -100,7 +103,11 @@ class RfInterpreterApiClient(LanguageServerClientBase):
                     "jsonrpc": "2.0",
                     "id": msg_id,
                     "method": "interpreter/start",
-                    "params": {"uri": uri},
+                    "params": {
+                        "uri": uri,
+                        "settings": settings,
+                        "workspace_root_path": workspace_root_path,
+                    },
                 },
                 timeout=None,
             )

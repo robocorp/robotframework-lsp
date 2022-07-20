@@ -34,11 +34,17 @@ class _RfInfo:
 
 
 class _RfInterpretersManager:
-    def __init__(self, endpoint: IEndPoint, pm: PluginManager):
+    def __init__(
+        self,
+        endpoint: IEndPoint,
+        pm: PluginManager,
+        get_workspace_root_path=lambda: None,
+    ):
         self._interpreter_id_to_rf_info: Dict[int, _RfInfo] = {}
         self._next_interpreter_id = partial(next, itertools.count(0))
         self._endpoint = endpoint
         self._pm = pm
+        self._get_workspace_root_path = get_workspace_root_path
 
     def interpreter_start(
         self, arguments, config: IConfig
@@ -189,7 +195,9 @@ class _RfInterpretersManager:
                         "params": {"output": json.dumps(info), "category": "json_info"},
                     }
                 )
-                rf_interpreter_server_manager.interpreter_start(uri)
+                rf_interpreter_server_manager.interpreter_start(
+                    uri, workspace_root_path=self._get_workspace_root_path()
+                )
                 ls_thread_pool = futures.ThreadPoolExecutor(max_workers=2)
                 self._interpreter_id_to_rf_info[interpreter_id] = _RfInfo(
                     rf_interpreter_server_manager, commands_thread_pool, ls_thread_pool
