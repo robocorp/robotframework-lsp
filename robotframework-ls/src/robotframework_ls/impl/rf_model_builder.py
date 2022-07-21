@@ -14,7 +14,6 @@ from robot.running.builder.parsers import NoInitFileDirectoryParser
 from robot.parsing import get_init_model, get_model, get_resource_model
 from robot.errors import DataError  # type: ignore
 from robot.running.builder.parsers import BaseParser, format_name
-from robot.running.builder.testsettings import TestDefaults
 from robot.running.builder.transformers import (
     ResourceBuilder,
     SettingsBuilder,
@@ -24,6 +23,19 @@ from robot.running.model import ResourceFile, TestSuite
 from robot.utils import FileReader, read_rest_data  # type: ignore
 from robocorp_ls_core.robotframework_log import get_logger
 from robot.parsing import SuiteStructureBuilder
+
+from robotframework_ls.impl.robot_version import get_robot_major_version
+
+# We don't even support version 2, so, this is ok.
+IS_ROBOT_3_ONWARDS = get_robot_major_version() >= 3
+IS_ROBOT_4_ONWARDS = get_robot_major_version() >= 4
+IS_ROBOT_5_ONWARDS = get_robot_major_version() >= 5
+
+try:
+    from robot.running.builder.settings import Defaults as TestDefaults
+except:
+    from robot.running.builder.testsettings import TestDefaults
+
 
 log = get_logger(__name__)
 
@@ -193,6 +205,7 @@ class KeywordModelParser(BodyParser):
             "args": keyword.args,
             "returns": keyword.return_,
             "timeout": keyword.timeout,
+            "error": keyword.error,
             "lineno": keyword.lineno,
             "body": [],
         }
@@ -286,7 +299,15 @@ class SuiteStructureParser(_SuiteStructureParser):
         self._errors = {}
 
         kwargs.setdefault("included_extensions", ("robot",))
-        super().__init__(*args, **kwargs)
+        if IS_ROBOT_5_ONWARDS:
+            ssp = _SuiteStructureParser(*args, **kwargs)
+            self.rpa = ssp.rpa
+            self._rpa_given = ssp._rpa_given
+            self.suite = ssp.suite
+            self._stack = ssp._stack
+            self.parsers = ssp.parsers
+        else:
+            super().__init__(included_extensions=("robot",))
 
     def _get_parsers(self, extensions, process_curdir):
         del process_curdir
