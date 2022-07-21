@@ -32,7 +32,7 @@ IS_ROBOT_FRAMEWORK_5_ONWARDS = get_robot_major_version() >= 5
 
 DEFAULT_WARNING_MESSAGE = """
 Detected a Robot Framework incompatible version.
-Please be advised that the Robot Flow Explorer might not render as expected.
+Be advised that the Robot Flow Explorer might not render as expected.
 For proper results please upgrade to the latest version.
 """
 

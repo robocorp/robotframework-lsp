@@ -1,10 +1,6 @@
 import json
 import re
-from robotframework_ls.impl.rf_model_builder import (
-    DEFAULT_WARNING_MESSAGE,
-    IS_ROBOT_FRAMEWORK_3,
-    RFModelBuilder,
-)
+import tempfile
 from robocorp_ls_core.command_dispatcher import _CommandDispatcher
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import (
@@ -718,14 +714,18 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
     @command_dispatcher(ROBOT_OPEN_FLOW_EXPLORER_INTERNAL)
     def _open_flow_explorer(self, *arguments):
+        from robotframework_ls.impl.rf_model_builder import (
+            DEFAULT_WARNING_MESSAGE,
+            IS_ROBOT_FRAMEWORK_3,
+            RFModelBuilder,
+        )
+        from robocorp_ls_core.uris import from_fs_path
+        from robocorp_ls_core.robotframework_log import get_log_level
+
         current_doc_uri = arguments[0]["currentFileUri"]
         html_bundle_flow_folder_path = arguments[0]["htmlBundleFolderPath"]
-        # create temporary file as a final endpoint to display
         html_bundle_flow_file_path = os.path.join(
             html_bundle_flow_folder_path, _FLOW_EXPLORER_BUNDLE_HTML_FILE_NAME
-        )
-        tmp_bundle_flow_file_path = os.path.join(
-            html_bundle_flow_folder_path, "tmp_" + _FLOW_EXPLORER_BUNDLE_HTML_FILE_NAME
         )
         log.info(
             "Dispatched flow explorer internal command with args:",
@@ -741,7 +741,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         try:
             log.info("Building deep model for visualization...")
             model = RFModelBuilder(robot_file_path=current_doc_uri).build()
-            log.debug("Model:", json.dumps(model))
+            if get_log_level() >= 2:
+                log.debug("Model:", json.dumps(model))
         except Exception as e:
             log.error("An Exception occurred while creating the deep model:", e)
             return {"uri": None, "err": str(e), "warn": None}
@@ -750,6 +751,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         # adding the new model as data to Flow Explorer
         log.info("Generating web page for visualization...")
         original_html = Path(html_bundle_flow_file_path).read_text()
+        # replace the JSON model
         script_open_tag = '<script id="data" type="application/json">'
         script_close_tag = "</script>"
         script_json_model = script_open_tag + json.dumps(model) + script_close_tag
@@ -758,12 +760,31 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             script_json_model,
             original_html,
         )
-        Path(tmp_bundle_flow_file_path).write_text(replacement_html)
-        return {
-            "uri": Path(tmp_bundle_flow_file_path).as_uri(),
-            "err": None,
-            "warn": warning,
-        }
+        # replace the favicon path
+        replacement_html = re.sub(
+            "favicon.png",
+            Path(os.path.join(html_bundle_flow_folder_path, "favicon.png")).as_posix(),
+            replacement_html,
+        )
+        # replace the index.js path
+        replacement_html = re.sub(
+            "index_bundle.js",
+            Path(
+                os.path.join(html_bundle_flow_folder_path, "index_bundle.js")
+            ).as_posix(),
+            replacement_html,
+        )
+
+        # create the temporary HTML file to display
+        with tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".html"
+        ) as temp_file:
+            Path(temp_file.name).write_text(replacement_html)
+            return {
+                "uri": from_fs_path(temp_file.name),
+                "err": None,
+                "warn": warning,
+            }
 
     @command_dispatcher("robot.listTests")
     def _list_tests(self, *arguments):

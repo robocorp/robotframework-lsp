@@ -687,19 +687,14 @@ let onChangedEditorUpdateRFStatusBarItem = debounce(() => {
 }, 100);
 
 async function openFlowExplorer(flowBundleHTMLFolderPath: string) {
+    const DEFAULT_ERROR_MSG = `
+            Could not open Robot Flow Explorer.
+            Please check the output logs for more details.
+            `;
     try {
         window.showInformationMessage("Opening Robot Flow Explorer in browser...");
         const activeTextEditor = window.activeTextEditor;
-        if (!activeTextEditor) {
-            RF_STATUS_BAR_ITEM.hide();
-            return;
-        }
-        if (activeTextEditor.document.languageId !== "robotframework") {
-            RF_STATUS_BAR_ITEM.hide();
-            return;
-        }
-        if (!languageServerClient) {
-            RF_STATUS_BAR_ITEM.hide();
+        if (!activeTextEditor || !languageServerClient || activeTextEditor.document.languageId !== "robotframework") {
             return;
         }
         const filePath = activeTextEditor.document.fileName;
@@ -709,13 +704,8 @@ async function openFlowExplorer(flowBundleHTMLFolderPath: string) {
                 "htmlBundleFolderPath": flowBundleHTMLFolderPath,
             });
 
-        if (openResult.err) {
-            window.showErrorMessage(
-                `
-            Could not open Robot Flow Explorer.
-            Please check the output logs for more details.
-            `
-            );
+        if (!openResult || openResult.err) {
+            window.showErrorMessage(DEFAULT_ERROR_MSG);
             return;
         }
         if (openResult.warn) {
@@ -724,16 +714,7 @@ async function openFlowExplorer(flowBundleHTMLFolderPath: string) {
         vscode.env.openExternal(vscode.Uri.parse(openResult.uri));
     } catch (err) {
         logError("Error while opening the Robot Flow Explorer", err, "EXT_OPEN_FLOW_EXPLORER");
-        window
-            .showWarningMessage(
-                'There was an error opening RobotFlow Explorer. Please use the "Reload Window" action to finish restarting the language server.',
-                ...["Reload Window"]
-            )
-            .then((selection) => {
-                if (selection === "Reload Window") {
-                    commands.executeCommand("workbench.action.reloadWindow");
-                }
-            });
+        window.showErrorMessage(DEFAULT_ERROR_MSG);
         return;
     }
 }
