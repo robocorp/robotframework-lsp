@@ -27,9 +27,14 @@ from robot.parsing import SuiteStructureBuilder
 from robotframework_ls.impl.robot_version import get_robot_major_version
 
 # We don't even support version 2, so, this is ok.
-IS_ROBOT_3_ONWARDS = get_robot_major_version() >= 3
-IS_ROBOT_4_ONWARDS = get_robot_major_version() >= 4
-IS_ROBOT_5_ONWARDS = get_robot_major_version() >= 5
+IS_ROBOT_FRAMEWORK_3 = get_robot_major_version() == 3
+IS_ROBOT_FRAMEWORK_5_ONWARDS = get_robot_major_version() >= 5
+
+DEFAULT_WARNING_MESSAGE = """
+Detected a Robot Framework incompatible version.
+Please be advised that the Robot Flow Explorer might not render as expected.
+For proper results please upgrade to the latest version.
+"""
 
 try:
     from robot.running.builder.settings import Defaults as TestDefaults
@@ -71,12 +76,17 @@ class BodyParser(SuiteVisitor):
             "body": [],
         }
 
-        if keyword.type == "KEYWORD":
+        if keyword.type.lower() == "keyword":
             self.current["body"].append(model)
-        elif keyword.type == "SETUP":
+        elif keyword.type.lower() == "setup":
             self.current["setup"] = model
-        elif keyword.type == "TEARDOWN":
+        elif keyword.type.lower() == "teardown":
             self.current["teardown"] = model
+        elif IS_ROBOT_FRAMEWORK_3:
+            if keyword.type.lower() == "for":
+                self.start_for(keyword)
+            else:
+                self.current["body"].append(model)
         else:
             raise RuntimeError(f"Unhandled keyword type: {keyword.type}")
 
@@ -97,6 +107,11 @@ class BodyParser(SuiteVisitor):
 
         self.current["body"].append(model)
         self.stack.append(model)
+
+        if IS_ROBOT_FRAMEWORK_3:
+            for kw in for_.keywords.all:
+                self.start_keyword(kw)
+                self.end_keyword(kw)
 
     def end_for(self, for_):
         self.stack.pop()
@@ -197,6 +212,7 @@ class KeywordModelParser(BodyParser):
         self.model = None
 
     def parse(self, keyword):
+        model_keywords = keyword.keywords
         self.model = {
             "type": "user-keyword",
             "name": keyword.name,
@@ -205,15 +221,18 @@ class KeywordModelParser(BodyParser):
             "args": keyword.args,
             "returns": keyword.return_,
             "timeout": keyword.timeout,
-            "error": keyword.error,
+            "error": keyword.error if not IS_ROBOT_FRAMEWORK_3 else [],
             "lineno": keyword.lineno,
             "body": [],
         }
 
         self.stack.append(self.model)
 
-        keyword.body.visit(self)
-        keyword.teardown.visit(self)
+        if not IS_ROBOT_FRAMEWORK_3:
+            keyword.body.visit(self)
+            keyword.teardown.visit(self)
+        else:
+            keyword.keywords.visit(self)
 
         return self.model
 
@@ -299,7 +318,7 @@ class SuiteStructureParser(_SuiteStructureParser):
         self._errors = {}
 
         kwargs.setdefault("included_extensions", ("robot",))
-        if IS_ROBOT_5_ONWARDS:
+        if IS_ROBOT_FRAMEWORK_5_ONWARDS:
             ssp = _SuiteStructureParser(*args, **kwargs)
             self.rpa = ssp.rpa
             self._rpa_given = ssp._rpa_given

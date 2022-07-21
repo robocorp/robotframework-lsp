@@ -1,6 +1,10 @@
 import json
 import re
-from robotframework_ls.impl.rf_model_builder import RFModelBuilder
+from robotframework_ls.impl.rf_model_builder import (
+    DEFAULT_WARNING_MESSAGE,
+    IS_ROBOT_FRAMEWORK_3,
+    RFModelBuilder,
+)
 from robocorp_ls_core.command_dispatcher import _CommandDispatcher
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import (
@@ -716,6 +720,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def _open_flow_explorer(self, *arguments):
         current_doc_uri = arguments[0]["currentFileUri"]
         html_bundle_flow_folder_path = arguments[0]["htmlBundleFolderPath"]
+        # create temporary file as a final endpoint to display
         html_bundle_flow_file_path = os.path.join(
             html_bundle_flow_folder_path, _FLOW_EXPLORER_BUNDLE_HTML_FILE_NAME
         )
@@ -727,15 +732,22 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             str(current_doc_uri),
             str(html_bundle_flow_folder_path),
         )
+        # construct warning message
+        warning = None
+        if IS_ROBOT_FRAMEWORK_3:
+            warning = DEFAULT_WARNING_MESSAGE
 
+        # build model
         try:
             log.info("Building deep model for visualization...")
             model = RFModelBuilder(robot_file_path=current_doc_uri).build()
             log.debug("Model:", json.dumps(model))
         except Exception as e:
             log.error("An Exception occurred while creating the deep model:", e)
-            return None
+            return {"uri": None, "err": str(e), "warn": None}
 
+        # replacing the data script in the bundle html
+        # adding the new model as data to Flow Explorer
         log.info("Generating web page for visualization...")
         original_html = Path(html_bundle_flow_file_path).read_text()
         script_open_tag = '<script id="data" type="application/json">'
@@ -747,8 +759,11 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             original_html,
         )
         Path(tmp_bundle_flow_file_path).write_text(replacement_html)
-
-        return Path(tmp_bundle_flow_file_path).as_uri()
+        return {
+            "uri": Path(tmp_bundle_flow_file_path).as_uri(),
+            "err": None,
+            "warn": warning,
+        }
 
     @command_dispatcher("robot.listTests")
     def _list_tests(self, *arguments):

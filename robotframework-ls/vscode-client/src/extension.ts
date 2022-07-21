@@ -703,20 +703,25 @@ async function openFlowExplorer(flowBundleHTMLFolderPath: string) {
             return;
         }
         const filePath = activeTextEditor.document.fileName;
-        const openResult: string | null = await commands.executeCommand("robot.openFlowExplorer.internal", {
-            "currentFileUri": filePath,
-            "htmlBundleFolderPath": flowBundleHTMLFolderPath,
-        });
-        if (typeof openResult === "string") {
-            vscode.env.openExternal(vscode.Uri.parse(openResult));
-            return;
-        }
-        window.showErrorMessage(
-            `
+        const openResult: { uri: string | null; err: string | null; warn: string | null } | null =
+            await commands.executeCommand("robot.openFlowExplorer.internal", {
+                "currentFileUri": filePath,
+                "htmlBundleFolderPath": flowBundleHTMLFolderPath,
+            });
+
+        if (openResult.err) {
+            window.showErrorMessage(
+                `
             Could not open Robot Flow Explorer.
             Please check the output logs for more details.
             `
-        );
+            );
+            return;
+        }
+        if (openResult.warn) {
+            window.showWarningMessage(openResult.warn);
+        }
+        vscode.env.openExternal(vscode.Uri.parse(openResult.uri));
     } catch (err) {
         logError("Error while opening the Robot Flow Explorer", err, "EXT_OPEN_FLOW_EXPLORER");
         window
