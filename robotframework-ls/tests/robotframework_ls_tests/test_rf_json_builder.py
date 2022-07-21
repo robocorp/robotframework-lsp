@@ -12,6 +12,7 @@ from robotframework_ls.impl.rf_model_builder import (
 )
 from robotframework_ls import robotframework_ls_impl as rfli
 from urllib.parse import urlparse
+from urllib.request import url2pathname
 
 DEFAULT_JSON_BOT = """{
   "type": "suite",
@@ -549,9 +550,7 @@ def test_open_flow_explorer():
         )
 
         return_uri = urlparse(return_path["uri"])
-        tmp_bundle_html_file_path = Path(
-            os.path.join(return_uri.netloc, return_uri.path)
-        )
+        tmp_bundle_html_file_path = Path(url2pathname(return_uri.path))
         assert tmp_bundle_html_file_path.exists()
 
         file_contents = tmp_bundle_html_file_path.read_text()
@@ -579,9 +578,7 @@ def test_open_flow_explorer_rf3():
         )
 
         return_uri = urlparse(return_path["uri"])
-        tmp_bundle_html_file_path = Path(
-            os.path.join(return_uri.netloc, return_uri.path)
-        )
+        tmp_bundle_html_file_path = Path(url2pathname(return_uri.path))
         assert tmp_bundle_html_file_path.exists()
 
         file_contents = tmp_bundle_html_file_path.read_text()
