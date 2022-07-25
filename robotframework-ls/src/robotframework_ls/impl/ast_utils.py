@@ -669,16 +669,18 @@ def tokenize_variables_from_name(name):
 
 def tokenize_variables(token: IRobotToken) -> Iterator[IRobotToken]:
     # May throw error if it's not OK.
-    return token.tokenize_variables()
+    return iter(tuple(token.tokenize_variables()))
 
 
-def _tokenize_variables_even_when_invalid(token: IRobotToken, col: int):
+def _tokenize_variables_even_when_invalid(
+    token: IRobotToken, col: int
+) -> Iterator[IRobotToken]:
     """
     If Token.tokenize_variables() fails, this can still provide the variable under
     the given column by applying some heuristics to find open variables.
     """
     try:
-        return tokenize_variables(token)
+        return iter(tuple(tokenize_variables(token)))
     except:
         pass
 
@@ -706,15 +708,18 @@ def _tokenize_variables_even_when_invalid(token: IRobotToken, col: int):
                     break
                 varname.append(c)
 
-            return [
-                Token(
-                    type=token.VARIABLE,
-                    value="".join(varname),
-                    lineno=token.lineno,
-                    col_offset=token.col_offset + open_at - 1,
-                    error=token.error,
-                )
-            ]
+            return iter(
+                [
+                    Token(
+                        type=token.VARIABLE,
+                        value="".join(varname),
+                        lineno=token.lineno,
+                        col_offset=token.col_offset + open_at - 1,
+                        error=token.error,
+                    )
+                ]
+            )
+    return iter(())
 
 
 LIBRARY_IMPORT_CLASSES = ("LibraryImport",)

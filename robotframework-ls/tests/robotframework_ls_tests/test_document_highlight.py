@@ -344,3 +344,19 @@ My Test
             ),
         )
     )
+
+
+def test_document_highlight_unclosed_var(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.doc_highlight import doc_highlight
+
+    workspace.set_root("case4", libspec_manager=libspec_manager)
+    doc = workspace.put_doc(
+        "my.robot",
+        """
+*** Settings ***
+Variables           ${CURDIR}${/common vari""",
+    )
+    completion_context = CompletionContext(doc, workspace=workspace.ws)
+    result = doc_highlight(completion_context)
+    assert len(result) == 0
