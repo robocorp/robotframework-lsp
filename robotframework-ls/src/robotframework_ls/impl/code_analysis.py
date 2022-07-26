@@ -22,6 +22,7 @@ from robotframework_ls.impl.robot_lsp_constants import (
     OPTION_ROBOT_LINT_IGNORE_VARIABLES,
     OPTION_ROBOT_LINT_IGNORE_ENVIRONMENT_VARIABLES,
 )
+from robotframework_ls.impl.robot_constants import STDLIBS_LOWER
 
 
 log = get_logger(__name__)
@@ -29,33 +30,40 @@ log = get_logger(__name__)
 
 class _KeywordContainer(object):
     def __init__(self) -> None:
-        self._name_to_keyword: Dict[str, IKeywordFound] = {}
-        self._names_with_variables: Dict[str, IKeywordFound] = {}
+        self._name_to_keywords: Dict[str, List[IKeywordFound]] = {}
+        self._names_with_variables: Dict[str, List[IKeywordFound]] = {}
 
     def add_keyword(self, keyword_found: IKeywordFound) -> None:
         from robotframework_ls.impl.text_utilities import normalize_robot_name
 
         normalized_name = normalize_robot_name(keyword_found.keyword_name)
-        self._name_to_keyword[normalized_name] = keyword_found
+        lst = self._name_to_keywords.get(normalized_name)
+        if lst is None:
+            lst = self._name_to_keywords[normalized_name] = []
+        lst.append(keyword_found)
 
         if "{" in normalized_name:
-            self._names_with_variables[normalized_name] = keyword_found
+            lst = self._names_with_variables.get(normalized_name)
+            if lst is None:
+                lst = self._names_with_variables[normalized_name] = []
+            lst.append(keyword_found)
 
-    def get_keyword(self, normalized_keyword_name: str) -> Optional[IKeywordFound]:
+    def get_keywords(self, normalized_keyword_name: str) -> List[IKeywordFound]:
         from robotframework_ls.impl.text_utilities import matches_name_with_variables
 
-        keyword_found = self._name_to_keyword.get(normalized_keyword_name)
+        keyword_found = self._name_to_keywords.get(normalized_keyword_name)
 
+        ret = []
         if keyword_found is not None:
-            return keyword_found
+            ret.extend(keyword_found)
 
         # We do not have an exact match, still, we need to check if we may
         # have a match in keywords that accept variables.
         for name, keyword_found in self._names_with_variables.items():
             if matches_name_with_variables(normalized_keyword_name, name):
-                return keyword_found
+                ret.extend(keyword_found)
 
-        return None
+        return ret
 
 
 class _VariablesCollector(AbstractVariablesCollector):
@@ -167,12 +175,10 @@ class _AnalysisKeywordsCollector(object):
 
         keyword_container.add_keyword(keyword_found)
 
-    def get_keyword(self, normalized_keyword_name: str) -> Optional[IKeywordFound]:
+    def get_keywords(self, normalized_keyword_name: str) -> List[IKeywordFound]:
         from robotframework_ls.impl import text_utilities
 
-        keyword_found = self._keywords_container.get_keyword(normalized_keyword_name)
-        if keyword_found is not None:
-            return keyword_found
+        ret = []
 
         # Note: the name could be something as `alias.keywordname` or
         # 'libraryname.keywordname`. In this case, we need to verify if there's
@@ -191,11 +197,14 @@ class _AnalysisKeywordsCollector(object):
                 containers.append(keywords_container)
 
             for keywords_container in containers:
-                keyword_found = keywords_container.get_keyword(remainder)
-                if keyword_found is not None:
-                    return keyword_found
+                ret.extend(keywords_container.get_keywords(remainder))
 
-        return None
+        if not ret:
+            # Finding with a dotted name has higher priority over finding it
+            # without the qualifier.
+            ret.extend(self._keywords_container.get_keywords(normalized_keyword_name))
+
+        return ret
 
     def __typecheckself__(self) -> None:
         _: IKeywordCollector = check_implements(self)
@@ -345,9 +354,14 @@ def collect_analysis_errors(initial_completion_context):
         if contains_variable_text(keyword_usage_info.name):
             continue
         normalized_name = normalize_robot_name(keyword_usage_info.name)
-        keyword_found = collector.get_keyword(normalized_name)
+        keywords_found = collector.get_keywords(normalized_name)
+        if not keywords_found and keyword_usage_info.prefix:
+            keywords_found = collector.get_keywords(
+                normalize_robot_name(keyword_usage_info.prefix + normalized_name)
+            )
+
         try:
-            if not keyword_found:
+            if not keywords_found:
                 from robotframework_ls.impl.robot_lsp_constants import (
                     OPTION_ROBOT_LINT_UNDEFINED_KEYWORDS,
                 )
@@ -366,6 +380,93 @@ def collect_analysis_errors(initial_completion_context):
                 errors.append(error)
 
             else:
+                new_keywords_found = []
+                if len(keywords_found) > 1:
+                    # We still can't be sure, it's possible that we found the
+                    # same keyword multiple times. Let's check where they're found.
+                    node = keyword_usage_info.node
+                    found_in = set()
+                    count_not_in_stdlib = 0
+                    found_in_current = False
+
+                    for keyword_found in keywords_found:
+                        if (
+                            keyword_found.source
+                            == initial_completion_context.original_doc.path
+                        ):
+                            found_in_current = True
+                            for keyword_found in keywords_found:
+                                # If it's defined in the current file,
+                                # it overrides any other scope.
+                                new_keywords_found = [
+                                    k
+                                    for k in keywords_found
+                                    if k.source
+                                    == initial_completion_context.original_doc.path
+                                ]
+                                for k in new_keywords_found:
+                                    library_name = k.library_name
+                                    library_alias = k.library_alias
+                                    if library_alias:
+                                        found_in.add(library_alias)
+                                    else:
+                                        if library_name:
+                                            found_in.add(library_name)
+                                        else:
+                                            resource_name = keyword_found.resource_name
+                                            found_in.add(resource_name)
+                                count_not_in_stdlib = len(new_keywords_found)
+                            break
+
+                        library_name = keyword_found.library_name
+                        if (
+                            not library_name
+                            or library_name.lower() not in STDLIBS_LOWER
+                        ):
+                            count_not_in_stdlib += 1
+                            # A builtin lib is always overridden by any other place,
+                            # so, don't add it to the new_keywords_found unless
+                            # it was found in a non-stdlib library/resource.
+                            new_keywords_found.append(keyword_found)
+
+                        library_alias = keyword_found.library_alias
+                        if library_alias:
+                            found_in.add(library_alias)
+                        else:
+                            if library_name:
+                                found_in.add(library_name)
+                            else:
+                                resource_name = keyword_found.resource_name
+                                found_in.add(resource_name)
+
+                    if count_not_in_stdlib > 1:
+                        if found_in_current:
+                            msg = f"Multiple keywords matching: '{keyword_usage_info.name}' in current file."
+                        else:
+
+                            found_in_str = "'" + "', '".join(sorted(found_in)) + "'"
+                            if len(found_in) == 1:
+                                msg = f"Multiple keywords matching: '{keyword_usage_info.name}' in {found_in_str}."
+                            else:
+                                if "." in keyword_usage_info.name:
+                                    msg = f"Multiple keywords matching: '{keyword_usage_info.name}' in {found_in_str}."
+                                else:
+                                    msg = (
+                                        f"Multiple keywords matching: '{keyword_usage_info.name}' in {found_in_str}.\n"
+                                        f"Please provide the name with the full qualifier (i.e.: "
+                                        f"'{sorted(found_in)[0] + '.' + keyword_usage_info.name}')."
+                                    )
+                        error = create_error_from_node(
+                            node,
+                            msg,
+                            tokens=[keyword_usage_info.token],
+                        )
+                        errors.append(error)
+                        continue
+                if new_keywords_found:
+                    keywords_found = new_keywords_found
+                keyword_found = keywords_found[0]
+
                 from robotframework_ls.impl.robot_lsp_constants import (
                     OPTION_ROBOT_LINT_KEYWORD_CALL_ARGUMENTS,
                 )

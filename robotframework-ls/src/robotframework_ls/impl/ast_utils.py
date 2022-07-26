@@ -1382,7 +1382,7 @@ def get_keyword_name_token(
         token.type == token.NAME
         and node.__class__.__name__ in CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET
     ):
-        return _strip_token_bdd_prefix(token)
+        return _strip_token_bdd_prefix(token)[1]
 
     if token.type == token.ARGUMENT and not token.value.strip().endswith("}"):
         from robotframework_ls.impl.ast_utils_keyword_usage import (
@@ -1457,7 +1457,9 @@ def _copy_of_node_replacing_token(node, token, token_type):
     return node.__class__(new_tokens)
 
 
-def _strip_node_and_token_bdd_prefix(node, token_type):
+def _strip_node_and_token_bdd_prefix(
+    node: INode, token_type: str
+) -> Tuple[str, INode, Optional[IRobotToken]]:
     """
     This is a workaround because the parsing does not separate a BDD prefix from
     the keyword name. If the parsing is improved to do that separation in the future
@@ -1465,41 +1467,40 @@ def _strip_node_and_token_bdd_prefix(node, token_type):
     """
     original_token = node.get_token(token_type)
     if original_token is None:
-        return node, None
-    token = _strip_token_bdd_prefix(original_token)
+        return "", node, None
+    prefix, token = _strip_token_bdd_prefix(original_token)
     if token is original_token:
         # i.e.: No change was done.
-        return node, token
-    return _copy_of_node_replacing_token(node, token, token_type), token
+        return prefix, node, token
+    return prefix, _copy_of_node_replacing_token(node, token, token_type), token
 
 
-def _strip_token_bdd_prefix(token):
+def _strip_token_bdd_prefix(token: IRobotToken) -> Tuple[str, IRobotToken]:
     """
     This is a workaround because the parsing does not separate a BDD prefix from
     the keyword name. If the parsing is improved to do that separation in the future
     we can stop doing this.
 
-    :return Token:
-        Returns a new token with the bdd prefix stripped or the original token passed.
+    :return: the prefix and a new token with the bdd prefix stripped or the
+    original token passed (if no prefix was detected).
     """
     from robotframework_ls.impl.robot_constants import BDD_PREFIXES
     from robot.api import Token
 
-    if token is None:
-        return token
+    assert token is not None
 
     text = token.value.lower()
     for prefix in BDD_PREFIXES:
         if text.startswith(prefix):
             new_name = token.value[len(prefix) :]
-            return Token(
+            return prefix, Token(
                 type=token.type,
                 value=new_name,
                 lineno=token.lineno,
                 col_offset=token.col_offset + len(prefix),
                 error=token.error,
             )
-    return token
+    return "", token
 
 
 def _append_eol_to_prev_token(last_token, eol_token_contents):

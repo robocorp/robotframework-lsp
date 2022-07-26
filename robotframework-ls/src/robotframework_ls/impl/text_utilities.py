@@ -85,6 +85,7 @@ def matches_name_with_variables(name: str, name_with_variables: str) -> bool:
     """
 
     from robotframework_ls.impl import ast_utils
+    from robotframework_ls.impl.variable_resolve import extract_variable_base
 
     try:
         tokenized_vars = ast_utils.tokenize_variables_from_name(name_with_variables)
@@ -94,14 +95,84 @@ def matches_name_with_variables(name: str, name_with_variables: str) -> bool:
         regexp = []
         for t in tokenized_vars:
             if t.type == t.VARIABLE:
-                regexp.append("(.*)")
+                variable_base = extract_variable_base(t.value)
+                i = variable_base.find(":")
+                if i > 0:
+                    custom_regexp = variable_base[i + 1 :]
+                    try:
+                        pattern = _EmbeddedArgumentParser.format_custom_regexp(
+                            f"{custom_regexp}"
+                        )
+                    except Exception:
+                        log.exception(
+                            f"Error formatting regexp: {custom_regexp} when matching: {name_with_variables}."
+                        )
+                        return False
+
+                    regexp.append(f"({pattern})")
+
+                else:
+                    regexp.append("(.*?)")  # default pattern
             else:
                 regexp.append(re.escape(t.value))
 
     regexp.append("$")
 
-    compiled = re.compile("".join(regexp))
+    pattern = "".join(regexp)
+    try:
+        compiled = re.compile(pattern, re.IGNORECASE)
+    except Exception:
+        log.exception(
+            f"Unable to compile regexp: {pattern} when matching: {name_with_variables}."
+        )
+        return False
+
     return bool(compiled.match(name))
+
+
+class _EmbeddedArgumentParser:
+    # Based on robot.running.arguments.embedded.EmbeddedArgumentParser
+    _regexp_extension = re.compile(r"(?<!\\)\(\?.+\)")
+    _regexp_group_start = re.compile(r"(?<!\\)\((.*?)\)")
+    _escaped_curly = re.compile(r"(\\+)([{}])")
+    _regexp_group_escape = r"(?:\1)"
+    _default_pattern = ".*?"
+    _variable_pattern = r"\$\{[^\}]+\}"
+
+    @classmethod
+    def format_custom_regexp(cls, pattern):
+        for formatter in (
+            cls._regexp_extensions_are_not_allowed,
+            cls._make_groups_non_capturing,
+            cls._unescape_curly_braces,
+            cls._add_automatic_variable_pattern,
+        ):
+            pattern = formatter(pattern)
+        return pattern
+
+    @classmethod
+    def _regexp_extensions_are_not_allowed(cls, pattern):
+        if not cls._regexp_extension.search(pattern):
+            return pattern
+        raise RuntimeError(
+            "Regexp extensions are not allowed in embedded " "arguments."
+        )
+
+    @classmethod
+    def _make_groups_non_capturing(cls, pattern):
+        return cls._regexp_group_start.sub(cls._regexp_group_escape, pattern)
+
+    @classmethod
+    def _unescape_curly_braces(cls, pattern):
+        def unescaper(match):
+            backslashes = len(match.group(1))
+            return "\\" * (backslashes // 2 * 2) + match.group(2)
+
+        return cls._escaped_curly.sub(unescaper, pattern)
+
+    @classmethod
+    def _add_automatic_variable_pattern(cls, pattern):
+        return "%s|%s" % (pattern, cls._variable_pattern)
 
 
 def iter_dotted_names(text: str):

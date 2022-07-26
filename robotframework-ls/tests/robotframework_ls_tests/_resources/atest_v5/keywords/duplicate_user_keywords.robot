@@ -8,10 +8,12 @@ ${INDENT}         ${SPACE * 4}
 Using keyword defined twice fails
     [Documentation]    FAIL Keyword with same name defined multiple times.
     Defined twice
+#!  ^^^^^^^^^^^^^ Multiple keywords matching: 'Defined twice' in current file.
 
 Using keyword defined thrice fails as well
     [Documentation]    FAIL Keyword with same name defined multiple times.
     Defined thrice
+#!  ^^^^^^^^^^^^^^ Multiple keywords matching: 'Defined thrice' in current file.
 
 Keyword with embedded arguments defined twice fails at run-time: Called with embedded args
     [Documentation]    FAIL
@@ -19,6 +21,7 @@ Keyword with embedded arguments defined twice fails at run-time: Called with emb
     ...    ${INDENT}Embedded \${arguments match} TWICE
     ...    ${INDENT}Embedded \${arguments} twice
     Embedded arguments twice
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^ Multiple keywords matching: 'Embedded arguments twice' in current file.
 
 Keyword with embedded arguments defined twice fails at run-time: Called with exact name
     [Documentation]    FAIL
@@ -30,6 +33,7 @@ Keyword with embedded arguments defined twice fails at run-time: Called with exa
 Using keyword defined multiple times in resource fails
     [Documentation]    FAIL Keyword with same name defined multiple times.
     Defined twice in resource
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^ Multiple keywords matching: 'Defined twice in resource' in 'dupe_keywords'.
 
 Keyword with embedded arguments defined multiple times in resource fails at run-time
     [Documentation]    FAIL
@@ -37,6 +41,7 @@ Keyword with embedded arguments defined multiple times in resource fails at run-
     ...    ${INDENT}Embedded \${arguments match} TWICE IN RESOURCE
     ...    ${INDENT}Embedded \${arguments} twice in resource
     Embedded arguments twice in resource
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Multiple keywords matching: 'Embedded arguments twice in resource' in 'dupe_keywords'.
 
 *** Keywords ***
 Defined twice

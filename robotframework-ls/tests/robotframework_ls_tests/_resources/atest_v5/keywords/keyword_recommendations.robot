@@ -374,33 +374,55 @@ Missing separator between keyword and arguments with multiple matches
 *** Keywords ***
 A User Keyword
     No Operation
+#!  ^^^^^^^^^^^^ Multiple keywords matching: 'No Operation' in 'BuiltIn', 'Rec Library 2 With Custom Name', 'RecLibrary1'.
+#!  ^^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'BuiltIn.No Operation').
 
 Similar User Keyword 1
     No Operation
+#!  ^^^^^^^^^^^^ Multiple keywords matching: 'No Operation' in 'BuiltIn', 'Rec Library 2 With Custom Name', 'RecLibrary1'.
+#!  ^^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'BuiltIn.No Operation').
 
 Similar User Keyword 2
     No Operation
+#!  ^^^^^^^^^^^^ Multiple keywords matching: 'No Operation' in 'BuiltIn', 'Rec Library 2 With Custom Name', 'RecLibrary1'.
+#!  ^^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'BuiltIn.No Operation').
 
 Similar User Keyword 3
     No Operation
+#!  ^^^^^^^^^^^^ Multiple keywords matching: 'No Operation' in 'BuiltIn', 'Rec Library 2 With Custom Name', 'RecLibrary1'.
+#!  ^^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'BuiltIn.No Operation').
 
 Embedded User ${hello} Argument ${world} Keyword 1
     No Operation
+#!  ^^^^^^^^^^^^ Multiple keywords matching: 'No Operation' in 'BuiltIn', 'Rec Library 2 With Custom Name', 'RecLibrary1'.
+#!  ^^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'BuiltIn.No Operation').
 
 Embedded User ${foo} Argument ${bar} Keyword 2
     No Operation
+#!  ^^^^^^^^^^^^ Multiple keywords matching: 'No Operation' in 'BuiltIn', 'Rec Library 2 With Custom Name', 'RecLibrary1'.
+#!  ^^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'BuiltIn.No Operation').
 
 Unique ${i} Kw ${j}
     No Operation
+#!  ^^^^^^^^^^^^ Multiple keywords matching: 'No Operation' in 'BuiltIn', 'Rec Library 2 With Custom Name', 'RecLibrary1'.
+#!  ^^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'BuiltIn.No Operation').
 
 Key.word.with periods.
     No Operation
+#!  ^^^^^^^^^^^^ Multiple keywords matching: 'No Operation' in 'BuiltIn', 'Rec Library 2 With Custom Name', 'RecLibrary1'.
+#!  ^^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'BuiltIn.No Operation').
 
 hyvää yötä
     No Operation
+#!  ^^^^^^^^^^^^ Multiple keywords matching: 'No Operation' in 'BuiltIn', 'Rec Library 2 With Custom Name', 'RecLibrary1'.
+#!  ^^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'BuiltIn.No Operation').
 
 Really long keyword that does not end for quite a while
     No Operation
+#!  ^^^^^^^^^^^^ Multiple keywords matching: 'No Operation' in 'BuiltIn', 'Rec Library 2 With Custom Name', 'RecLibrary1'.
+#!  ^^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'BuiltIn.No Operation').
 
 Similar Kw 5
     No Operation
+#!  ^^^^^^^^^^^^ Multiple keywords matching: 'No Operation' in 'BuiltIn', 'Rec Library 2 With Custom Name', 'RecLibrary1'.
+#!  ^^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'BuiltIn.No Operation').

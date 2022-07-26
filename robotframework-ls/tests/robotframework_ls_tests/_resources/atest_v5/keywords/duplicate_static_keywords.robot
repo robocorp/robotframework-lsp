@@ -19,6 +19,7 @@ Keyword with embedded arguments defined twice fails at run-time: Called with emb
     ...    ${INDENT}Embedded \${arguments match} TWICE
     ...    ${INDENT}Embedded \${arguments} twice
     Embedded arguments twice
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^ Multiple keywords matching: 'Embedded arguments twice' in 'DupeKeywords'.
 
 Keyword with embedded arguments defined twice fails at run-time: Called with exact name
     [Documentation]    FAIL

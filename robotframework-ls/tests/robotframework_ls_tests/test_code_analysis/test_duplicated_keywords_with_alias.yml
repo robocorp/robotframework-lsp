@@ -1,0 +1,13 @@
+- message: 'Multiple keywords matching: ''No Operation'' in ''BuiltIn'', ''RecLibrary1'',
+    ''foobar''.
+
+    Please provide the name with the full qualifier (i.e.: ''BuiltIn.No Operation'').'
+  range:
+    end:
+      character: 16
+      line: 7
+    start:
+      character: 4
+      line: 7
+  severity: 1
+  source: robotframework

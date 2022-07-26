@@ -283,13 +283,7 @@ class VarTokenInfo:
 
 
 class KeywordUsageInfo:
-    __slots__ = [
-        "stack",
-        "node",
-        "token",
-        "name",
-        "_is_argument_usage",
-    ]
+    __slots__ = ["stack", "node", "token", "name", "_is_argument_usage", "prefix"]
 
     def __init__(
         self,
@@ -298,12 +292,14 @@ class KeywordUsageInfo:
         token: IRobotToken,
         name: str,
         is_argument_usage: bool = False,
+        prefix: str = "",
     ):
         self.stack = stack
         self.node = node
         self.token = token  # This is actually the keyword name token.
         self.name = name
         self._is_argument_usage = is_argument_usage
+        self.prefix = prefix
 
     def __repr__(self):
         if self._is_argument_usage:

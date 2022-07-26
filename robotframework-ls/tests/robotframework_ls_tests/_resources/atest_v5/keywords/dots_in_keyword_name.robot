@@ -73,6 +73,7 @@ Conflicting names with dots
     Conflict                              # in 'library.with.dots.in.name'
     in.name.Conflict                      # in 'library.with.dots'
     library.with.dots.in.name.Conflict    # matches both of the above
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Multiple keywords matching: 'library.with.dots.in.name.Conflict' in 'library.with.dots', 'library.with.dots.in.name'.
 
 *** Keywords ***
 Dots.in.name

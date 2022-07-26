@@ -55,6 +55,7 @@ Custom Embedded Argument Regexp
     Result of 1 + 1 is 2
     Result of 43 - 1 is 42
     Result of a + b is fail
+#!  ^^^^^^^^^^^^^^^^^^^^^^^ Undefined keyword: Result of a + b is fail.
 
 Custom Regexp With Curly Braces
     Today is 2011-06-21
@@ -111,6 +112,7 @@ Keyword Matching Multiple Keywords In Library File
     foo-lib-bar
     foo+lib+bar+lib+zap
     foo+lib+bar-lib-zap
+#!  ^^^^^^^^^^^^^^^^^^^ Multiple keywords matching: 'foo+lib+bar-lib-zap' in 'embedded_args_in_lk_1'.
 
 Keyword Matching Multiple Keywords In Different Library Files
     [Documentation]    FAIL Multiple keywords with name 'foo*lib*bar' found. \
@@ -118,6 +120,8 @@ Keyword Matching Multiple Keywords In Different Library Files
     ...    ${INDENT}embedded_args_in_lk_1.foo*lib*bar
     ...    ${INDENT}embedded_args_in_lk_2.foo*lib*bar
     foo*lib*bar
+#!  ^^^^^^^^^^^ Multiple keywords matching: 'foo*lib*bar' in 'embedded_args_in_lk_1', 'embedded_args_in_lk_2'.
+#!  ^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'embedded_args_in_lk_1.foo*lib*bar').
 
 Embedded And Positional Arguments Do Not Work Together
     [Documentation]    FAIL Positional arguments are not allowed when using embedded arguments.
@@ -153,6 +157,7 @@ Same name with different regexp matching multiple fails
     ...    ${INDENT}It is ${animal:a (cat|cow)}
     ...    ${INDENT}It is ${animal:a (dog|cat)}
     It is a cat
+#!  ^^^^^^^^^^^ Multiple keywords matching: 'It is a cat' in 'embedded_args_in_lk_1'.
 
 Same name with same regexp fails
     [Documentation]    FAIL
@@ -160,3 +165,4 @@ Same name with same regexp fails
     ...    ${INDENT}It is totally ${same}
     ...    ${INDENT}It is totally ${same}
     It is totally same
+#!  ^^^^^^^^^^^^^^^^^^ Multiple keywords matching: 'It is totally same' in 'embedded_args_in_lk_1'.

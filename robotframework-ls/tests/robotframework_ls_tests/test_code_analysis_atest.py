@@ -210,6 +210,9 @@ def _list_paths_in_folder(caseroot):
             if p.name == "common_resource.robot":
                 continue
 
+            # if p.name != "dots_in_keyword_name.robot":
+            #     continue
+
             paths.append(p)
     return paths
 
@@ -250,7 +253,11 @@ def _check_path(ws, p, request):
 
 
 @pytest.mark.skipif(get_robot_major_version() != 5, reason="RF-5 only test")
-@pytest.mark.parametrize("p", _paths_keywords, ids=[x.name for x in _paths_keywords])
+@pytest.mark.parametrize(
+    "p",
+    _paths_keywords,
+    ids=[x.name for x in _paths_keywords],
+)
 def test_atest_keywords(atest_keywords_ws, p, request):
     _check_path(atest_keywords_ws, p, request)
 

@@ -34,6 +34,8 @@ Non-Unique Keywords Without Full Name Fails 1
     ...    ${SPACE*4}my_resource_1.Keyword In Both Resources
     ...    ${SPACE*4}my_resource_2.Keyword In Both Resources
     Keyword In Both Resources
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^ Multiple keywords matching: 'Keyword In Both Resources' in 'my_resource_1', 'my_resource_2'.
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'my_resource_1.Keyword In Both Resources').
 
 Non-Unique Keywords Without Full Name Fails 2
     [Documentation]    FAIL Multiple keywords with name 'Keyword In Both Libraries' found. \
@@ -41,6 +43,8 @@ Non-Unique Keywords Without Full Name Fails 2
     ...    ${SPACE*4}My With Name.Keyword In Both Libraries
     ...    ${SPACE*4}MyLibrary1.Keyword In Both Libraries
     Keyword In Both Libraries
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^ Multiple keywords matching: 'Keyword In Both Libraries' in 'My With Name', 'MyLibrary1'.
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'My With Name.Keyword In Both Libraries').
 
 Non-Unique Keywords Without Full Name Fails 3
     [Documentation]    FAIL Multiple keywords with name 'Keyword In All Resources And Libraries' found. \
@@ -48,6 +52,8 @@ Non-Unique Keywords Without Full Name Fails 3
     ...    ${SPACE*4}my_resource_1.Keyword In All Resources And Libraries
     ...    ${SPACE*4}my_resource_2.Keyword In All Resources And Libraries
     Keyword In All Resources And Libraries
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Multiple keywords matching: 'Keyword In All Resources And Libraries' in 'My With Name', 'MyLibrary1', 'my_resource_1', 'my_resource_2'.
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'My With Name.Keyword In All Resources And Libraries').
 
 Keyword From Test Case File Overrides Keywords From Resources And Libraries
     Keyword Everywhere
@@ -55,18 +61,15 @@ Keyword From Test Case File Overrides Keywords From Resources And Libraries
 
 Keyword From Resource Overrides Keywords From Libraries
     Keyword In Resource Overrides Libraries
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Multiple keywords matching: 'Keyword In Resource Overrides Libraries' in 'My With Name', 'MyLibrary1', 'my_resource_1'.
+#!  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'My With Name.Keyword In Resource Overrides Libraries').
 
 Keyword From Custom Library Overrides Keywords From Standard Library
     Comment
     Copy Directory
-#!  ^^^^^^^^^^^^^^ Mandatory argument missing: destination
-#!  ^^^^^^^^^^^^^^ Mandatory argument missing: source
 
 Keyword From Custom Library Overrides Keywords From Standard Library Even When Std Lib Imported With Different Name
     ${ret} =    Replace String
-#!              ^^^^^^^^^^^^^^ Mandatory argument missing: replace_with
-#!              ^^^^^^^^^^^^^^ Mandatory argument missing: search_for
-#!              ^^^^^^^^^^^^^^ Mandatory argument missing: string
     Should Be Equal    ${ret}    I replace nothing!
     ${ret} =    My With Name.Replace String
     Should Be Equal    ${ret}    I replace nothing!
@@ -83,6 +86,8 @@ Keyword In More Than One Custom Library And Standard Library
     ...    ${SPACE*4}My With Name.No Operation
     ...    ${SPACE*4}MyLibrary1.No Operation
     No Operation
+#!  ^^^^^^^^^^^^ Multiple keywords matching: 'No Operation' in 'BuiltIn', 'My With Name', 'MyLibrary1'.
+#!  ^^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'BuiltIn.No Operation').
 
 Keywords are first searched from test case file even if they contain dot
     my_resource_1.Overrided in test case file with full name

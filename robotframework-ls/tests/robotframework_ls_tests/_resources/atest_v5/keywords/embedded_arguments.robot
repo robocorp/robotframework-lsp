@@ -72,6 +72,7 @@ Custom Embedded Argument Regexp
     Result of 1 + 1 is 2
     Result of 43 - 1 is 42
     Result of a + b is fail
+#!  ^^^^^^^^^^^^^^^^^^^^^^^ Undefined keyword: Result of a + b is fail.
 
 Custom Regexp With Curly Braces
     Today is 2011-06-21
@@ -165,6 +166,7 @@ Keyword Matching Multiple Keywords In Test Case File
     foo-tc-bar
     foo+tc+bar+tc+zap
     foo+tc+bar-tc-zap
+#!  ^^^^^^^^^^^^^^^^^ Multiple keywords matching: 'foo+tc+bar-tc-zap' in current file.
 
 Keyword Matching Multiple Keywords In One Resource File
     [Documentation]    FAIL Resource file 'embedded_args_in_uk_1.robot' contains multiple keywords matching name 'foo+r1+bar-r1-zap':
@@ -173,6 +175,7 @@ Keyword Matching Multiple Keywords In One Resource File
     foo+r1+bar
     foo-r1-bar
     foo+r1+bar-r1-zap
+#!  ^^^^^^^^^^^^^^^^^ Multiple keywords matching: 'foo+r1+bar-r1-zap' in 'embedded_args_in_uk_1'.
 
 Keyword Matching Multiple Keywords In Different Resource Files
     [Documentation]    FAIL Multiple keywords with name 'foo-r1-bar-r2-zap' found. \
@@ -182,12 +185,16 @@ Keyword Matching Multiple Keywords In Different Resource Files
     foo-r1-bar
     foo-r2-bar
     foo-r1-bar-r2-zap
+#!  ^^^^^^^^^^^^^^^^^ Multiple keywords matching: 'foo-r1-bar-r2-zap' in 'embedded_args_in_uk_1', 'embedded_args_in_uk_2'.
+#!  ^^^^^^^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'embedded_args_in_uk_1.foo-r1-bar-r2-zap').
 
 Keyword Matching Multiple Keywords In One And Different Resource Files
     [Documentation]    FAIL Resource file 'embedded_args_in_uk_1.robot' contains multiple keywords matching name '-r1-r2-+r1+':
     ...    ${INDENT}\${a}+r1+\${b}
     ...    ${INDENT}\${a}-r1-\${b}
     -r1-r2-+r1+
+#!  ^^^^^^^^^^^ Multiple keywords matching: '-r1-r2-+r1+' in 'embedded_args_in_uk_1', 'embedded_args_in_uk_2'.
+#!  ^^^^^^^^^^^ Please provide the name with the full qualifier (i.e.: 'embedded_args_in_uk_1.-r1-r2-+r1+').
 
 Same name with different regexp works
     It is a car
@@ -200,6 +207,7 @@ Same name with different regexp matching multiple fails
     ...    ${INDENT}It is \${animal:a (cat|cow)}
     ...    ${INDENT}It is \${animal:a (dog|cat)}
     It is a cat
+#!  ^^^^^^^^^^^ Multiple keywords matching: 'It is a cat' in current file.
 
 Same name with same regexp fails
     [Documentation]    FAIL

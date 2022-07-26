@@ -185,14 +185,14 @@ def _create_root_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
     else:
         return None
 
-    node, token = _strip_node_and_token_bdd_prefix(node, token_type)
+    prefix, node, token = _strip_node_and_token_bdd_prefix(node, token_type)
     if token is None:
         return None
 
     keyword_name = token.value
     if keyword_name.lower() == "none":
         return None
-    return KeywordUsageInfo(tuple(stack), node, token, keyword_name)
+    return KeywordUsageInfo(tuple(stack), node, token, keyword_name, prefix=prefix)
 
 
 def _build_keyword_usage(stack, node, current_tokens) -> Optional[KeywordUsageInfo]:

@@ -1,0 +1,10 @@
+- message: 'Multiple keywords matching: ''Some Keyword'' in ''my''.'
+  range:
+    end:
+      character: 16
+      line: 6
+    start:
+      character: 4
+      line: 6
+  severity: 1
+  source: robotframework

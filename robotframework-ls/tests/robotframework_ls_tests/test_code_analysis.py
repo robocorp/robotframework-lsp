@@ -2266,3 +2266,198 @@ COMMON_2: 20
     )
     assert event.wait(5)
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_duplicated_keywords(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case1.robot")
+
+    doc.source = """
+*** Keywords ***
+My Keyword
+    No Operation
+"""
+
+    doc2 = workspace.put_doc("case2.robot")
+
+    doc2.source = """
+*** Keywords ***
+My Keyword
+    No Operation
+"""
+
+    doc3 = workspace.put_doc("case3.robot")
+
+    doc3.source = """
+*** Settings ***
+Resource    case1.robot
+Resource    case2.robot
+
+*** Test Case ***
+My Test
+    My Keyword
+"""
+    _collect_errors(workspace, doc3, data_regression)
+
+    doc3.source = """
+*** Settings ***
+Resource    case1.robot
+Resource    case2.robot
+
+*** Test Case ***
+My Test
+    case1.My Keyword
+    case2.My Keyword
+"""
+    _collect_errors(workspace, doc3, data_regression, basename="no_error")
+
+
+def test_duplicated_keywords_with_alias(workspace, libspec_manager, data_regression):
+    workspace.set_root("case_duplicated", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case.robot")
+
+    doc.source = """
+*** Settings ***
+Library    ./RecLibrary1.py
+Library    ./RecLibrary2.py    WITH NAME    foobar
+
+*** Test Case ***
+My Test
+    No Operation
+"""
+    _collect_errors(workspace, doc, data_regression)
+
+    doc.source = """
+*** Settings ***
+Library    ./RecLibrary1.py
+Library    ./RecLibrary2.py    WITH NAME    foobar
+
+*** Test Case ***
+My Test
+    foobar.No Operation
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_duplicated_overrides_builtin(workspace, libspec_manager, data_regression):
+    workspace.set_root("case_duplicated", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case.robot")
+
+    doc.source = """
+*** Settings ***
+Library    ./RecLibrary1.py
+
+*** Test Case ***
+My Test
+    No Operation
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_duplicated_in_same_file(workspace, libspec_manager, data_regression):
+    workspace.set_root("case_duplicated", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("my.resource")
+    doc.source = """
+*** keywords ***
+Some keyword
+    No Operation
+    
+Some Keyword
+    No Operation
+"""
+
+    doc = workspace.put_doc("case.robot")
+
+    doc.source = """
+*** Settings ***
+Resource    ./my.resource
+
+*** Test Case ***
+My Test
+    Some Keyword
+"""
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_duplicated_in_same_file_redefined(workspace, libspec_manager, data_regression):
+    workspace.set_root("case_duplicated", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("my.resource")
+    doc.source = """
+*** keywords ***
+Some keyword
+    No Operation
+    
+Some Keyword
+    No Operation
+"""
+
+    doc = workspace.put_doc("case.robot")
+
+    doc.source = """
+*** Settings ***
+Resource    ./my.resource
+
+*** Test Case ***
+My Test
+    Some Keyword
+    
+*** keywords ***
+Some keyword
+    No Operation
+    
+Some Keyword
+    No Operation
+"""
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_duplicated_overridden_in_file(workspace, libspec_manager, data_regression):
+    workspace.set_root("case_duplicated", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case.robot")
+
+    doc.source = """
+*** Settings ***
+Library    ./RecLibrary1.py
+Library    ./RecLibrary2.py    WITH NAME    foobar
+
+*** Test Case ***
+My Test
+    No Operation
+
+*** Keyword ***
+No Operation
+    Log to console    foo
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_given_in_keyword_name(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case.robot")
+
+    doc.source = """
+*** Test Case ***
+My Test
+    Given something
+
+*** Keyword ***
+Given something
+    Log to console    foo
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_keyword_regexp(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case.robot")
+
+    doc.source = """
+*** Test Case ***
+My Test
+    Today is Tuesday and tomorrow is Wednesday
+
+*** Keyword ***
+Today is ${day1:\w\{6,9\}} and tomorrow is ${day2:\w{6,9}}
+    No operation
+"""
+    _collect_errors(workspace, doc, data_regression, basename="no_error")

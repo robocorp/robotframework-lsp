@@ -217,6 +217,7 @@ STDLIBS = frozenset(
     )
 )
 
+STDLIBS_LOWER = frozenset(x.lower() for x in STDLIBS)
 
 ## Token types gotten from: robot.parsing.lexer.tokens.Token
 

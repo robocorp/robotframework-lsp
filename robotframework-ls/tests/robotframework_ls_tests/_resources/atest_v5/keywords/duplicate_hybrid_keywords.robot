@@ -15,6 +15,7 @@ Keyword with embedded arguments defined multiple times fails at run-time
     ...    ${INDENT}EMBEDDED \${ARG}
     ...    ${INDENT}Embedded \${twice}
     Embedded twice
+#!  ^^^^^^^^^^^^^^ Multiple keywords matching: 'Embedded twice' in 'DupeHybridKeywords'.
 
 Exact duplicate is accepted
     Exact dupe is OK

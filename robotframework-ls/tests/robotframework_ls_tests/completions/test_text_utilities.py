@@ -48,6 +48,23 @@ def test_matches_name_with_variables():
     )
 
 
+def test_matches_name_with_variables_with_custom_regexp():
+    from robotframework_ls.impl.text_utilities import matches_name_with_variables
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
+
+    keyword_name_call_text = r"Today is 2022-22-22"
+    keyword_name = r"Today is ${date:\d{4}-\d{2}-\d{2}}"
+    assert matches_name_with_variables(
+        normalize_robot_name(keyword_name_call_text), normalize_robot_name(keyword_name)
+    )
+
+    keyword_name_call_text = r"Today is not"
+    keyword_name = r"Today is ${date:\d{4}-\d{2}-\d{2}}"
+    assert not matches_name_with_variables(
+        normalize_robot_name(keyword_name_call_text), normalize_robot_name(keyword_name)
+    )
+
+
 def test_iter_dotted_names():
     from robotframework_ls.impl.text_utilities import iter_dotted_names
 
