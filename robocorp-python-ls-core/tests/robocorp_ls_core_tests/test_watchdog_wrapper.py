@@ -16,12 +16,6 @@ def test_watchdog_macos():
     assert os.path.exists(
         os.path.join(
             watchdog_wrapper._get_watchdog_lib_dir(),
-            "_watchdog_fsevents.cpython-37m-darwin.so",
-        )
-    )
-    assert os.path.exists(
-        os.path.join(
-            watchdog_wrapper._get_watchdog_lib_dir(),
             "_watchdog_fsevents.cpython-38-darwin.so",
         )
     )
@@ -29,6 +23,12 @@ def test_watchdog_macos():
         os.path.join(
             watchdog_wrapper._get_watchdog_lib_dir(),
             "_watchdog_fsevents.cpython-39-darwin.so",
+        )
+    )
+    assert os.path.exists(
+        os.path.join(
+            watchdog_wrapper._get_watchdog_lib_dir(),
+            "_watchdog_fsevents.cpython-310-darwin.so",
         )
     )
 
@@ -90,6 +90,79 @@ def test_watchdog_rename_folder(tmpdir, backend):
     finally:
         watch.stop_tracking()
         notifier.dispose()
+        observer.dispose()
+
+
+@pytest.mark.parametrize("backend", ["watchdog", "fsnotify"])
+def test_watchdog_conflicts(tmpdir, backend):
+    from robocorp_ls_core import watchdog_wrapper
+    from robocorp_ls_core.watchdog_wrapper import PathInfo
+    from robocorp_ls_core.unittest_tools.fixtures import wait_for_test_condition
+    import os
+
+    dir_rec = tmpdir.join("dir_rec")
+    dir_rec.mkdir()
+
+    found = set()
+
+    def on_change(filepath, *args):
+        found.add(os.path.basename(filepath))
+
+    found2 = set()
+
+    def on_change2(filepath, *args):
+        found2.add(os.path.basename(filepath))
+
+    observer = watchdog_wrapper.create_observer(backend, None)
+
+    notifier = watchdog_wrapper.create_notifier(on_change, timeout=0.1)
+    notifier2 = watchdog_wrapper.create_notifier(on_change2, timeout=0.1)
+
+    watch = observer.notify_on_any_change(
+        [
+            PathInfo(dir_rec, True),
+        ],
+        notifier.on_change,
+    )
+    watch2 = observer.notify_on_any_change(
+        [
+            PathInfo(dir_rec, False),
+        ],
+        notifier2.on_change,
+    )
+
+    # It can take a bit of time for listeners to be setup
+    time.sleep(2)
+
+    try:
+        dir_rec.join("mya.txt").write("foo")
+        dir_rec.join("inner").mkdir()
+        dir_rec.join("inner").join("myb.txt").write("bar")
+
+        def collect_basenames():
+            return found
+
+        def check1():
+            expected = {"mya.txt", "myb.txt"}
+            return collect_basenames().issuperset(expected)
+
+        wait_for_test_condition(
+            check1,
+            msg=lambda: f"Basenames found: {collect_basenames()}",
+        )
+
+        def check2():
+            return found2.issuperset({"mya.txt"}) and "myb.txt" not in found2
+
+        wait_for_test_condition(
+            check2,
+            msg=lambda: f"Basenames found: {found2}",
+        )
+    finally:
+        watch.stop_tracking()
+        watch2.stop_tracking()
+        notifier.dispose()
+        notifier2.dispose()
         observer.dispose()
 
 

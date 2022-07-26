@@ -11,6 +11,7 @@ import threading
 from robotframework_ls.impl.robot_constants import (
     ROBOT_AND_TXT_FILE_EXTENSIONS,
     LIBRARY_FILE_EXTENSIONS,
+    VARIABLE_FILE_EXTENSIONS,
 )
 from contextlib import contextmanager
 from robocorp_ls_core.options import BaseOptions
@@ -155,6 +156,9 @@ class CompletionContextWorkspaceCaches:
                 # If a library changes, we consider all caches invalid because
                 # we don't hold an association to know which library maps to
                 # which files at this level.
+                self.clear_caches()
+
+            elif lower.endswith(VARIABLE_FILE_EXTENSIONS):
                 self.clear_caches()
 
     def on_updated_document(self, uri: str, document: Optional[IRobotDocument]):

@@ -80,6 +80,21 @@ def _get_watchdog_lib_dir():
     watchdog_dir = os.path.join(parent_dir, "libs", "watchdog_lib")
     if not os.path.exists(watchdog_dir):
         raise RuntimeError("Expected: %s to exist." % (watchdog_dir,))
+
+    internal = os.path.join(watchdog_dir, "watchdog")
+    if not os.path.exists(internal):
+        raise RuntimeError(
+            "Expected: %s to exist (contents: %s)."
+            % (internal, os.listdir(watchdog_dir))
+        )
+
+    watchdog_init = os.path.join(internal, "__init__.py")
+    if not os.path.exists(watchdog_init):
+        raise RuntimeError(
+            "Expected: %s to exist (contents: %s)."
+            % (watchdog_init, os.listdir(internal))
+        )
+
     return watchdog_dir
 
 
@@ -203,12 +218,22 @@ class _DummyWatchList(object):
 
 class _FSNotifyWatchList(object):
     def __init__(self, new_tracked_paths, new_notifications, observer):
-        self._new_tracked_paths = new_tracked_paths
+        """
+        :param List[fsnotify.TrackedPath] new_tracked_paths:
+
+        :param Tuple[str, Callback, Tuple[...], bool] new_notifications:
+            (path.path, on_change, call_args, recursive)
+
+        :param _FSNotifyObserver observer:
+        """
+        import fsnotify
+
+        self._new_tracked_paths: List[fsnotify.TrackedPath] = new_tracked_paths
         self._new_notifications = new_notifications
         self._observer = weakref.ref(observer)
 
     def stop_tracking(self):
-        observer = self._observer()
+        observer: Optional[_FSNotifyObserver] = self._observer()
         if observer is not None and self._new_tracked_paths:
             observer._stop_tracking(self._new_tracked_paths, self._new_notifications)
         self._new_tracked_paths = []
@@ -259,7 +284,7 @@ class _FSNotifyObserver(threading.Thread):
 
         self._all_paths_to_track: List[fsnotify.TrackedPath] = []
         self._lock = threading.Lock()
-        self._notifications: List[Tuple[str, Any, List[Any]]] = []
+        self._notifications: List[Tuple[str, Any, List[Any], bool]] = []
         self._was_started = False
 
     def dispose(self):
@@ -267,15 +292,37 @@ class _FSNotifyObserver(threading.Thread):
             self._disposed.set()
             self._watcher.dispose()
 
+    _dir_separators: Tuple[str, ...] = ("/",)
+    if sys.platform == "win32":
+        _dir_separators = ("\\", "/")
+
     def run(self):
         log.debug("Started listening on _FSNotifyObserver.")
         try:
             while not self._disposed.is_set():
+                dir_separators = self._dir_separators
                 for _change, src_path in self._watcher.iter_changes():
-                    lower = src_path.lower()
-                    for path, on_change, call_args in self._notifications:
-                        if lower.startswith(path.lower()):
-                            on_change(normalize_drive(src_path), *call_args)
+                    src_path_lower = src_path.lower()
+                    for path, on_change, call_args, recursive in self._notifications:
+                        path_lower = path.lower()
+                        if src_path_lower.startswith(path_lower):
+                            if len(src_path_lower) == len(path_lower):
+                                pass
+                            elif src_path_lower[len(path_lower)] in dir_separators:
+                                pass
+                            else:
+                                continue
+
+                            if recursive:
+                                on_change(normalize_drive(src_path), *call_args)
+                            else:
+                                remainder = src_path_lower[len(path_lower) + 1 :]
+                                count_dir_sep = 0
+                                for dir_sep in dir_separators:
+                                    count_dir_sep += remainder.count(dir_sep)
+                                if count_dir_sep == 0:
+                                    on_change(normalize_drive(src_path), *call_args)
+
         except:
             log.exception("Error collecting changes in _FSNotifyObserver.")
         finally:
@@ -322,7 +369,9 @@ class _FSNotifyObserver(threading.Thread):
             for path in paths:
                 tracked_path = fsnotify.TrackedPath(path.path, path.recursive)
                 new_paths_to_track.append(tracked_path)
-                new_notifications.append((path.path, used_on_change, call_args))
+                new_notifications.append(
+                    (path.path, used_on_change, call_args, path.recursive)
+                )
 
             self._notifications.extend(new_notifications)
             self._all_paths_to_track.extend(new_paths_to_track)
@@ -344,14 +393,22 @@ class _FSNotifyObserver(threading.Thread):
 
 
 class _WatchdogWatchList(object):
-    def __init__(self, watches, observer):
+    def __init__(self, watches, observer, info_to_count):
         self.watches = watches
+        self._info_to_count = info_to_count
         self._observer = weakref.ref(observer)
 
     def stop_tracking(self):
         observer = self._observer()
         if observer is not None:
             for watch in self.watches:
+                count = self._info_to_count[watch.key]
+                if count > 1:
+                    self._info_to_count[watch.key] = count - 1
+                    continue
+                else:
+                    del self._info_to_count[watch.key]
+
                 try:
                     observer.unschedule(watch)
                 except Exception:
@@ -371,6 +428,7 @@ class _WatchdogObserver(object):
         self._observer = Observer()
         self._started = False
         self._extensions = extensions
+        self._info_to_count = {}
 
     def dispose(self):
         self._observer.stop()
@@ -424,6 +482,13 @@ class _WatchdogObserver(object):
                 FileSystemEventHandler.__init__(self)
 
             def on_any_event(self, event):
+                # with open("c:/temp/out.txt", "a+") as stream:
+                #     stream.write(f"Event src: {event.src_path}\n")
+                #     try:
+                #         stream.write(f"Event dest: {event.dest_path}\n")
+                #     except:
+                #         pass
+
                 if extensions is not None:
                     for ext in extensions:
                         if event.src_path.endswith(ext):
@@ -442,15 +507,26 @@ class _WatchdogObserver(object):
 
         handler = _Handler()
         watches = []
+
         for path_info in paths:
-            watches.append(
-                self._observer.schedule(
-                    handler, path_info.path, recursive=path_info.recursive
-                )
+            # with open("c:/temp/out.txt", "a+") as stream:
+            #     stream.write(
+            #         f"schedule: {path_info.path}, recursive: {path_info.recursive}\n"
+            #     )
+
+            watch = self._observer.schedule(
+                handler, path_info.path, recursive=path_info.recursive
             )
+            key = watch.key
+            if key not in self._info_to_count:
+                self._info_to_count[key] = 1
+            else:
+                self._info_to_count[key] = self._info_to_count[key] + 1
+
+            watches.append(watch)
 
         self._start()
-        return _WatchdogWatchList(watches, self._observer)
+        return _WatchdogWatchList(watches, self._observer, self._info_to_count)
 
     def __typecheckself__(self) -> None:
         from robocorp_ls_core.protocols import check_implements

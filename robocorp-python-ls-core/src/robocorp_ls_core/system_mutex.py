@@ -235,12 +235,13 @@ else:  # Linux
                             handle.close()
                         except Exception:
                             traceback.print_exc()
-                        try:
-                            # Removing is pretty much optional (but let's do it to keep the
-                            # filesystem cleaner).
-                            os.unlink(filename)
-                        except Exception:
-                            pass
+                        # Don't remove it (so that it doesn't get another inode afterwards).
+                        # try:
+                        #     # Removing is pretty much optional (but let's do it to keep the
+                        #     # filesystem cleaner).
+                        #     os.unlink(filename)
+                        # except Exception:
+                        #     pass
 
                 # Don't use __del__: this approach doesn't have as many pitfalls.
                 self._ref = weakref.ref(self, release_mutex)

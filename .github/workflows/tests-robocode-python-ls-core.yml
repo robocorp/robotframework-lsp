@@ -21,19 +21,19 @@ jobs:
       matrix:
         name: [
           "windows-py37",
-          "ubuntu-py38",
-          "macos-py37"
+          "ubuntu-py39",
+          "macos-py38"
         ]
         
         include:
           - name: "windows-py37"
             python: "3.7"
             os: windows-latest
-          - name: "ubuntu-py38"
-            python: "3.8"
+          - name: "ubuntu-py39"
+            python: "3.9"
             os: ubuntu-latest
-          - name: "macos-py37"
-            python: "3.7"
+          - name: "macos-py38"
+            python: "3.8"
             os: macos-latest
 
     steps:

@@ -1,8 +1,7 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding: utf-8
 #
 # Copyright 2011 Yesudeep Mangalapilly <yesudeep@gmail.com>
-# Copyright 2012 Google, Inc.
+# Copyright 2012 Google, Inc & contributors.
 # Copyright 2014 Thomas Amland
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,9 +19,11 @@
 import threading
 import os.path
 import time
+import platform
 
 from watchdog.events import (
     DirCreatedEvent,
+    DirDeletedEvent,
     DirMovedEvent,
     DirModifiedEvent,
     FileCreatedEvent,
@@ -58,12 +59,18 @@ class WindowsApiEmitter(EventEmitter):
     """
 
     def __init__(self, event_queue, watch, timeout=DEFAULT_EMITTER_TIMEOUT):
-        EventEmitter.__init__(self, event_queue, watch, timeout)
+        super().__init__(event_queue, watch, timeout)
         self._lock = threading.Lock()
         self._handle = None
 
     def on_thread_start(self):
         self._handle = get_directory_handle(self.watch.path)
+
+    if platform.python_implementation() == 'PyPy':
+        def start(self):
+            """PyPy needs some time before receiving events, see #792."""
+            super().start()
+            time.sleep(0.01)
 
     def on_thread_stop(self):
         if self._handle:
@@ -122,6 +129,7 @@ class WindowsApiEmitter(EventEmitter):
                 elif winapi_event.is_removed:
                     self.queue_event(FileDeletedEvent(src_path))
                 elif winapi_event.is_removed_self:
+                    self.queue_event(DirDeletedEvent(self.watch.path))
                     self.stop()
 
 
@@ -132,5 +140,4 @@ class WindowsApiObserver(BaseObserver):
     """
 
     def __init__(self, timeout=DEFAULT_OBSERVER_TIMEOUT):
-        BaseObserver.__init__(self, emitter_class=WindowsApiEmitter,
-                              timeout=timeout)
+        super().__init__(emitter_class=WindowsApiEmitter, timeout=timeout)

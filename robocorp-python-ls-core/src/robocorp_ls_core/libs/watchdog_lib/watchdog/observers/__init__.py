@@ -1,8 +1,7 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding: utf-8
 #
 # Copyright 2011 Yesudeep Mangalapilly <yesudeep@gmail.com>
-# Copyright 2012 Google, Inc.
+# Copyright 2012 Google, Inc & contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +19,7 @@
 :module: watchdog.observers
 :synopsis: Observer that picks a native implementation if available.
 :author: yesudeep@google.com (Yesudeep Mangalapilly)
-
+:author: contact@tiger-222.fr (Mickaël Schoentgen)
 
 Classes
 =======
@@ -39,8 +38,8 @@ of :class:`Observer`.  Here is a list of implemented observer classes.:
 Class          Platforms                        Note
 ============== ================================ ==============================
 |Inotify|      Linux 2.6.13+                    ``inotify(7)`` based observer
-|FSEvents|     Mac OS X                         FSEvents based observer
-|Kqueue|       Mac OS X and BSD with kqueue(2)  ``kqueue(2)`` based observer
+|FSEvents|     macOS                            FSEvents based observer
+|Kqueue|       macOS and BSD with kqueue(2)     ``kqueue(2)`` based observer
 |WinApi|       MS Windows                       Windows API-based observer
 |Polling|      Any                              fallback implementation
 ============== ================================ ==============================
@@ -49,7 +48,6 @@ Class          Platforms                        Note
 .. |FSEvents|    replace:: :class:`.fsevents.FSEventsObserver`
 .. |Kqueue|      replace:: :class:`.kqueue.KqueueObserver`
 .. |WinApi|      replace:: :class:`.read_directory_changes.WindowsApiObserver`
-.. |WinApiAsync| replace:: :class:`.read_directory_changes_async.WindowsApiAsyncObserver`
 .. |Polling|     replace:: :class:`.polling.PollingObserver`
 
 """

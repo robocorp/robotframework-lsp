@@ -1,8 +1,7 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding: utf-8
 #
 # Copyright 2011 Yesudeep Mangalapilly <yesudeep@gmail.com>
-# Copyright 2012 Google, Inc.
+# Copyright 2012 Google, Inc & contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -67,8 +66,6 @@ Some extremely useful articles and documentation:
 
 """
 
-from __future__ import with_statement
-
 import os
 import threading
 from .inotify_buffer import InotifyBuffer
@@ -89,10 +86,10 @@ from watchdog.events import (
     FileModifiedEvent,
     FileMovedEvent,
     FileCreatedEvent,
+    FileClosedEvent,
     generate_sub_moved_events,
     generate_sub_created_events,
 )
-from watchdog.utils import unicode_paths
 
 
 class InotifyEmitter(EventEmitter):
@@ -112,17 +109,18 @@ class InotifyEmitter(EventEmitter):
     """
 
     def __init__(self, event_queue, watch, timeout=DEFAULT_EMITTER_TIMEOUT):
-        EventEmitter.__init__(self, event_queue, watch, timeout)
+        super().__init__(event_queue, watch, timeout)
         self._lock = threading.Lock()
         self._inotify = None
 
     def on_thread_start(self):
-        path = unicode_paths.encode(self.watch.path)
+        path = os.fsencode(self.watch.path)
         self._inotify = InotifyBuffer(path, self.watch.is_recursive)
 
     def on_thread_stop(self):
         if self._inotify:
             self._inotify.close()
+            self._inotify = None
 
     def queue_events(self, timeout, full_events=False):
         # If "full_events" is true, then the method will report unmatched move events as separate events
@@ -174,12 +172,23 @@ class InotifyEmitter(EventEmitter):
                 cls = DirCreatedEvent if event.is_directory else FileCreatedEvent
                 self.queue_event(cls(src_path))
                 self.queue_event(DirModifiedEvent(os.path.dirname(src_path)))
+            elif event.is_close_write and not event.is_directory:
+                cls = FileClosedEvent
+                self.queue_event(cls(src_path))
+                self.queue_event(DirModifiedEvent(os.path.dirname(src_path)))
+            # elif event.is_close_nowrite and not event.is_directory:
+            #     cls = FileClosedEvent
+            #     self.queue_event(cls(src_path))
+            elif event.is_delete_self and src_path == self.watch.path:
+                cls = DirDeletedEvent if event.is_directory else FileDeletedEvent
+                self.queue_event(cls(src_path))
+                self.stop()
 
     def _decode_path(self, path):
-        """ Decode path only if unicode string was passed to this emitter. """
+        """Decode path only if unicode string was passed to this emitter. """
         if isinstance(self.watch.path, bytes):
             return path
-        return unicode_paths.decode(path)
+        return os.fsdecode(path)
 
 
 class InotifyFullEmitter(InotifyEmitter):
@@ -199,7 +208,7 @@ class InotifyFullEmitter(InotifyEmitter):
         ``float``
     """
     def __init__(self, event_queue, watch, timeout=DEFAULT_EMITTER_TIMEOUT):
-        InotifyEmitter.__init__(self, event_queue, watch, timeout)
+        super().__init__(event_queue, watch, timeout)
 
     def queue_events(self, timeout, events=True):
         InotifyEmitter.queue_events(self, timeout, full_events=events)
@@ -212,8 +221,5 @@ class InotifyObserver(BaseObserver):
     """
 
     def __init__(self, timeout=DEFAULT_OBSERVER_TIMEOUT, generate_full_events=False):
-        if (generate_full_events):
-            BaseObserver.__init__(self, emitter_class=InotifyFullEmitter, timeout=timeout)
-        else:
-            BaseObserver.__init__(self, emitter_class=InotifyEmitter,
-                                  timeout=timeout)
+        cls = InotifyFullEmitter if generate_full_events else InotifyEmitter
+        super().__init__(emitter_class=cls, timeout=timeout)

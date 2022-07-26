@@ -1,0 +1,20 @@
+- message: 'Unresolved variable import: ${CURDIR}${/}not there now${/}common variables.yaml'
+  range:
+    end:
+      character: 71
+      line: 2
+    start:
+      character: 20
+      line: 2
+  severity: 1
+  source: robotframework
+- message: 'Undefined variable: COMMON_2'
+  range:
+    end:
+      character: 21
+      line: 7
+    start:
+      character: 13
+      line: 7
+  severity: 1
+  source: robotframework

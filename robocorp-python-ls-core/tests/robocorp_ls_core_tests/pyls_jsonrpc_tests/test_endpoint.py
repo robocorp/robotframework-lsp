@@ -350,10 +350,10 @@ def test_consume_request_cancel(endpoint, dispatcher, consumer):
 def test_log_slow_calls(endpoint, dispatcher, consumer, monkeypatch):
     from robocorp_ls_core.robotframework_log import configure_logger
 
-    monkeypatch.setattr(endpoint, "SHOW_THREAD_DUMP_AFTER_TIMEOUT", 0.5)
+    monkeypatch.setattr(endpoint, "SHOW_THREAD_DUMP_AFTER_TIMEOUT", 0.4)
 
     def async_slow_handler():
-        time.sleep(1)
+        time.sleep(1.5)
         return 1234
 
     s = io.StringIO()
@@ -380,7 +380,7 @@ def test_log_slow_calls(endpoint, dispatcher, consumer, monkeypatch):
 
         await_assertion(check_result, timeout=3)
 
-    assert "time.sleep(1)" in s.getvalue()
+    assert "time.sleep(1.5)" in s.getvalue()
     assert "in async_slow_handler" in s.getvalue()
 
 

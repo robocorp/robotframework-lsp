@@ -1,8 +1,7 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding: utf-8
 #
 # Copyright 2011 Yesudeep Mangalapilly <yesudeep@gmail.com>
-# Copyright 2012 Google, Inc.
+# Copyright 2012 Google, Inc & contributors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,15 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import with_statement
+import queue
 import threading
+from pathlib import Path
+
 from watchdog.utils import BaseThread
-from watchdog.utils.compat import queue
 from watchdog.utils.bricks import SkipRepeatsQueue
-try:
-    from pathlib import Path as _PATH_CLASSES
-except ImportError:
-    _PATH_CLASSES = ()
 
 DEFAULT_EMITTER_TIMEOUT = 1    # in seconds.
 DEFAULT_OBSERVER_TIMEOUT = 1   # in seconds.
@@ -40,7 +36,7 @@ class EventQueue(SkipRepeatsQueue):
     """
 
 
-class ObservedWatch(object):
+class ObservedWatch:
     """An scheduled watch.
 
     :param path:
@@ -50,7 +46,7 @@ class ObservedWatch(object):
     """
 
     def __init__(self, path, recursive):
-        if isinstance(path, _PATH_CLASSES):
+        if isinstance(path, Path):
             self._path = str(path)
         else:
             self._path = path
@@ -105,7 +101,7 @@ class EventEmitter(BaseThread):
     """
 
     def __init__(self, event_queue, watch, timeout=DEFAULT_EMITTER_TIMEOUT):
-        BaseThread.__init__(self)
+        super().__init__()
         self._event_queue = event_queue
         self._watch = watch
         self._timeout = timeout
@@ -158,20 +154,31 @@ class EventDispatcher(BaseThread):
     that dispatch events from an event queue to appropriate event handlers.
 
     :param timeout:
-        Event queue blocking timeout (in seconds).
+        Timeout value (in seconds) passed to emitters
+        constructions in the child class BaseObserver.
     :type timeout:
         ``float``
     """
 
+    _stop_event = object()
+    """Event inserted into the queue to signal a requested stop."""
+
     def __init__(self, timeout=DEFAULT_OBSERVER_TIMEOUT):
-        BaseThread.__init__(self)
+        super().__init__()
         self._event_queue = EventQueue()
         self._timeout = timeout
 
     @property
     def timeout(self):
-        """Event queue block timeout."""
+        """Timeout value to construct emitters with."""
         return self._timeout
+
+    def stop(self):
+        BaseThread.stop(self)
+        try:
+            self.event_queue.put_nowait(EventDispatcher._stop_event)
+        except queue.Full:
+            pass
 
     @property
     def event_queue(self):
@@ -180,7 +187,7 @@ class EventDispatcher(BaseThread):
         thread."""
         return self._event_queue
 
-    def dispatch_events(self, event_queue, timeout):
+    def dispatch_events(self, event_queue):
         """Override this method to consume events from an event queue, blocking
         on the queue for the specified timeout before raising :class:`queue.Empty`.
 
@@ -188,11 +195,6 @@ class EventDispatcher(BaseThread):
             Event queue to populate with one set of events.
         :type event_queue:
             :class:`EventQueue`
-        :param timeout:
-            Interval period (in seconds) to wait before timing out on the
-            event queue.
-        :type timeout:
-            ``float``
         :raises:
             :class:`queue.Empty`
         """
@@ -200,7 +202,7 @@ class EventDispatcher(BaseThread):
     def run(self):
         while self.should_keep_running():
             try:
-                self.dispatch_events(self.event_queue, self.timeout)
+                self.dispatch_events(self.event_queue)
             except queue.Empty:
                 continue
 
@@ -209,7 +211,7 @@ class BaseObserver(EventDispatcher):
     """Base observer."""
 
     def __init__(self, emitter_class, timeout=DEFAULT_OBSERVER_TIMEOUT):
-        EventDispatcher.__init__(self, timeout)
+        super().__init__(timeout)
         self._emitter_class = emitter_class
         self._lock = threading.RLock()
         self._watches = set()
@@ -261,7 +263,7 @@ class BaseObserver(EventDispatcher):
             except Exception:
                 self._remove_emitter(emitter)
                 raise
-        super(BaseObserver, self).start()
+        super().start()
 
     def schedule(self, event_handler, path, recursive=False):
         """
@@ -296,9 +298,9 @@ class BaseObserver(EventDispatcher):
                 emitter = self._emitter_class(event_queue=self.event_queue,
                                               watch=watch,
                                               timeout=self.timeout)
-                self._add_emitter(emitter)
                 if self.is_alive():
                     emitter.start()
+                self._add_emitter(emitter)
             self._watches.add(watch)
         return watch
 
@@ -364,8 +366,11 @@ class BaseObserver(EventDispatcher):
     def on_thread_stop(self):
         self.unschedule_all()
 
-    def dispatch_events(self, event_queue, timeout):
-        event, watch = event_queue.get(block=True, timeout=timeout)
+    def dispatch_events(self, event_queue):
+        entry = event_queue.get(block=True)
+        if entry is EventDispatcher._stop_event:
+            return
+        event, watch = entry
 
         with self._lock:
             # To allow unschedule/stop and safe removal of event handlers

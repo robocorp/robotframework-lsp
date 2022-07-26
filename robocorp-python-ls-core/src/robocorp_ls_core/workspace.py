@@ -319,7 +319,7 @@ class Workspace(object):
         root_uri: str,
         fs_observer: IFSObserver,
         workspace_folders: Optional[List[IWorkspaceFolder]] = None,
-        track_file_extensions=(".robot", ".resource"),
+        track_file_extensions=(".robot", ".resource", ".py", ".yml", ".yaml"),
     ) -> None:
         from robocorp_ls_core.lsp import WorkspaceFolder
         from robocorp_ls_core.callbacks import Callback

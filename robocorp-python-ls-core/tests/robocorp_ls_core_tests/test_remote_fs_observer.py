@@ -69,6 +69,117 @@ def test_remote_fs_observer(remote_fs_observer, tmpdir):
         observer.dispose()
 
 
+def test_remote_fs_observer_conflicts(remote_fs_observer, tmpdir):
+    from robocorp_ls_core import watchdog_wrapper
+    from robocorp_ls_core.watchdog_wrapper import PathInfo
+    from robocorp_ls_core.unittest_tools.fixtures import wait_for_test_condition
+    from robocorp_ls_core.watchdog_wrapper import IFSObserver
+    import os
+
+    tmpdir.join("dir").mkdir()
+
+    found_not_recursive = []
+    found_recursive = []
+    found_recursive2 = []
+
+    def on_change_not_recursive(filepath, *args):
+        found_not_recursive.append(os.path.basename(filepath))
+
+    def on_change_recursive(filepath, *args):
+        found_recursive.append(os.path.basename(filepath))
+
+    def on_change_recursive2(filepath, *args):
+        found_recursive2.append(os.path.basename(filepath))
+
+    notifier_not_recursive = watchdog_wrapper.create_notifier(
+        on_change_not_recursive, timeout=0.1
+    )
+    notifier_recursive = watchdog_wrapper.create_notifier(
+        on_change_recursive, timeout=0.1
+    )
+    notifier_recursive2 = watchdog_wrapper.create_notifier(
+        on_change_recursive2, timeout=0.1
+    )
+
+    observer: IFSObserver = remote_fs_observer
+
+    watch_not_recursive = observer.notify_on_any_change(
+        [
+            PathInfo(tmpdir.join("dir"), False),
+        ],
+        notifier_not_recursive.on_change,
+    )
+    watch_recursive = observer.notify_on_any_change(
+        [
+            PathInfo(tmpdir.join("dir"), True),
+        ],
+        notifier_recursive.on_change,
+    )
+    watch_recursive2 = observer.notify_on_any_change(
+        [
+            PathInfo(tmpdir.join("dir"), True),
+        ],
+        notifier_recursive2.on_change,
+    )
+
+    # This should be almost a no-op.
+    observer.notify_on_any_change(
+        [
+            PathInfo(tmpdir.join("dir"), True),
+        ],
+        lambda *args, **kwargs: None,
+    ).stop_tracking()
+
+    # Sleep a bit because things may take a bit of time to be setup in the
+    # other process.
+    import time
+
+    time.sleep(2)
+    try:
+        tmpdir.join("dir").join("mya.txt").write("foo")
+        tmpdir.join("dir").join("dir_inside").mkdir()
+        tmpdir.join("dir").join("dir_inside").join("myb.txt").write("bar")
+
+        def check_recursive():
+            expected = {"mya.txt", "myb.txt"}
+            return set(found_recursive).issuperset(expected)
+
+        wait_for_test_condition(
+            check_recursive,
+            msg=lambda: f"Basenames found: {found_recursive}",
+        )
+
+        def check_recursive2():
+            expected = {"mya.txt", "myb.txt"}
+            return set(found_recursive2).issuperset(expected)
+
+        wait_for_test_condition(
+            check_recursive2,
+            msg=lambda: f"Basenames found: {found_recursive2}",
+        )
+
+        def check_not_recursive():
+            expected = {"mya.txt"}
+            return (
+                set(found_not_recursive).issuperset(expected)
+                and "myb.txt" not in found_not_recursive
+            )
+
+        wait_for_test_condition(
+            check_not_recursive,
+            msg=lambda: f"Basenames found: {found_not_recursive}",
+        )
+
+    finally:
+        watch_not_recursive.stop_tracking()
+        watch_recursive.stop_tracking()
+        watch_recursive2.stop_tracking()
+        notifier_not_recursive.dispose()
+        notifier_recursive.dispose()
+        notifier_recursive2.dispose()
+        observer.dispose()
+
+
 def test_glob_matches_path():
     from robocorp_ls_core.load_ignored_dirs import glob_matches_path
     import sys

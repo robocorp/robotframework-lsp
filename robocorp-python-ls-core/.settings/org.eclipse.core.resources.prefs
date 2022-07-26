@@ -2,5 +2,3 @@ eclipse.preferences.version=1
 encoding//.settings/org.python.pydev.analysis.yaml=UTF-8
 encoding//.settings/org.python.pydev.yaml=UTF-8
 encoding//src/robocorp_ls_core/debug_adapter_core/dap/dap_schema.py=utf-8
-encoding//src/robocorp_ls_core/libs/watchdog_lib/watchdog/events.py=utf-8
-encoding//src/robocorp_ls_core/libs/watchdog_lib/watchdog/observers/api.py=utf-8

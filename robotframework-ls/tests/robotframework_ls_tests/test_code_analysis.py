@@ -2224,3 +2224,45 @@ def test_variables_curdir(workspace, libspec_manager, data_regression):
     doc = workspace.get_doc("case_vars_curdir.robot", accept_from_file=True)
 
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_resolve_caches(workspace, libspec_manager, data_regression):
+    import os
+    import pathlib
+    import threading
+
+    workspace.set_root("case_vars_file", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_vars_curdir.robot")
+
+    doc.source = """
+*** Settings ***
+Variables           ${CURDIR}${/}not there now${/}common variables.yaml
+
+
+*** Test Cases ***
+Test
+    Log    ${COMMON_2}    console=True
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+    event = threading.Event()
+
+    def on_file_changed(src_path):
+        if src_path.lower().endswith(".yaml"):
+            event.set()
+
+    workspace.ws.on_file_changed.register(on_file_changed)
+
+    path = os.path.dirname(doc.path)
+    p = pathlib.Path(os.path.join(path, "not there now", "common variables.yaml"))
+    p.parent.mkdir()
+
+    p.write_text(
+        """
+COMMON_1: 10
+COMMON_2: 20
+""",
+        encoding="utf-8",
+    )
+    assert event.wait(5)
+    _collect_errors(workspace, doc, data_regression, basename="no_error")

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 #
 # Copyright 2014 Thomas Amland <thomas.amland@gmail.com>
 #
@@ -30,7 +30,7 @@ class InotifyBuffer(BaseThread):
     delay = 0.5
 
     def __init__(self, path, recursive=False):
-        BaseThread.__init__(self)
+        super().__init__()
         self._queue = DelayedQueue(self.delay)
         self._inotify = Inotify(path, recursive)
         self.start()
@@ -88,6 +88,13 @@ class InotifyBuffer(BaseThread):
             inotify_events = self._inotify.read_events()
             grouped_events = self._group_events(inotify_events)
             for inotify_event in grouped_events:
+                if not isinstance(inotify_event, tuple) and inotify_event.is_ignored:
+                    if inotify_event.src_path == self._inotify.path:
+                        # Watch was removed explicitly (inotify_rm_watch(2)) or automatically (file
+                        # was deleted, or filesystem was unmounted), stop watching for events
+                        deleted_self = True
+                    continue
+
                 # Only add delay for unmatched move_from events
                 delay = not isinstance(inotify_event, tuple) and inotify_event.is_moved_from
                 self._queue.put(inotify_event, delay)

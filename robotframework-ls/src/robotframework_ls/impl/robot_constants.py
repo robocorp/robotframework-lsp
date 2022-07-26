@@ -11,7 +11,13 @@ VARIABLE_PREFIXES = ("@", "%", "$", "&")
 ROBOT_FILE_EXTENSIONS = (".robot", ".resource")
 ROBOT_AND_TXT_FILE_EXTENSIONS = ROBOT_FILE_EXTENSIONS + (".txt",)
 LIBRARY_FILE_EXTENSIONS = (".py",)
-ALL_RELATED_FILE_EXTENSIONS = ROBOT_AND_TXT_FILE_EXTENSIONS + LIBRARY_FILE_EXTENSIONS
+
+# Extensions which may have keywords
+ALL_KEYWORD_RELATED_FILE_EXTENSIONS = (
+    ROBOT_AND_TXT_FILE_EXTENSIONS + LIBRARY_FILE_EXTENSIONS
+)
+
+VARIABLE_FILE_EXTENSIONS = (".yaml", ".yml")
 
 # From: robot.variables.scopes.GlobalVariables._set_built_in_variables
 # (var name and description)

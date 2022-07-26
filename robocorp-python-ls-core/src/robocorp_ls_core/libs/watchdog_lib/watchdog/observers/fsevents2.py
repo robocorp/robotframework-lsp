@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 #
 # Copyright 2014 Thomas Amland <thomas.amland@gmail.com>
 #
@@ -17,14 +17,14 @@
 """
 :module: watchdog.observers.fsevents2
 :synopsis: FSEvents based emitter implementation.
-:platforms: Mac OS X
+:platforms: macOS
 """
 
 import os
 import logging
+import queue
 import unicodedata
 from threading import Thread
-from watchdog.utils.compat import queue
 
 from watchdog.events import (
     FileDeletedEvent,
@@ -87,7 +87,7 @@ class FSEventsQueue(Thread):
         self._run_loop = None
 
         if isinstance(path, bytes):
-            path = path.decode('utf-8')
+            path = os.fsdecode(path)
         self._path = unicodedata.normalize('NFC', path)
 
         context = None
@@ -97,7 +97,7 @@ class FSEventsQueue(Thread):
             kFSEventStreamEventIdSinceNow, latency,
             kFSEventStreamCreateFlagNoDefer | kFSEventStreamCreateFlagFileEvents)
         if self._stream_ref is None:
-            raise IOError("FSEvents. Could not create stream.")
+            raise OSError("FSEvents. Could not create stream.")
 
     def run(self):
         pool = AppKit.NSAutoreleasePool.alloc().init()
@@ -107,7 +107,7 @@ class FSEventsQueue(Thread):
         if not FSEventStreamStart(self._stream_ref):
             FSEventStreamInvalidate(self._stream_ref)
             FSEventStreamRelease(self._stream_ref)
-            raise IOError("FSEvents. Could not start stream.")
+            raise OSError("FSEvents. Could not start stream.")
 
         CFRunLoopRun()
         FSEventStreamStop(self._stream_ref)
@@ -139,7 +139,7 @@ class FSEventsQueue(Thread):
         return self._queue.get()
 
 
-class NativeEvent(object):
+class NativeEvent:
     def __init__(self, path, flags, event_id):
         self.path = path
         self.flags = flags
@@ -183,7 +183,7 @@ class FSEventsEmitter(EventEmitter):
     """
 
     def __init__(self, event_queue, watch, timeout=DEFAULT_EMITTER_TIMEOUT):
-        EventEmitter.__init__(self, event_queue, watch, timeout)
+        super().__init__(event_queue, watch, timeout)
         self._fsevents = FSEventsQueue(watch.path)
         self._fsevents.start()
 
@@ -205,7 +205,7 @@ class FSEventsEmitter(EventEmitter):
                 # Internal moves appears to always be consecutive in the same
                 # buffer and have IDs differ by exactly one (while others
                 # don't) making it possible to pair up the two events coming
-                # from a singe move operation. (None of this is documented!)
+                # from a single move operation. (None of this is documented!)
                 # Otherwise, guess whether file was moved in or out.
                 # TODO: handle id wrapping
                 if (i + 1 < len(events) and events[i + 1].is_renamed
@@ -225,7 +225,7 @@ class FSEventsEmitter(EventEmitter):
                     self.queue_event(DirModifiedEvent(os.path.dirname(event.path)))
                 # TODO: generate events for tree
 
-            elif event.is_modified or event.is_inode_meta_mod or event.is_xattr_mod :
+            elif event.is_modified or event.is_inode_meta_mod or event.is_xattr_mod:
                 cls = DirModifiedEvent if event.is_directory else FileModifiedEvent
                 self.queue_event(cls(event.path))
 
@@ -243,4 +243,4 @@ class FSEventsEmitter(EventEmitter):
 
 class FSEventsObserver2(BaseObserver):
     def __init__(self, timeout=DEFAULT_OBSERVER_TIMEOUT):
-        BaseObserver.__init__(self, emitter_class=FSEventsEmitter, timeout=timeout)
+        super().__init__(emitter_class=FSEventsEmitter, timeout=timeout)
