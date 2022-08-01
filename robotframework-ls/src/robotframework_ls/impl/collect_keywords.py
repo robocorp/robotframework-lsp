@@ -380,7 +380,7 @@ def _collect_libraries_keywords(
 
                 if node_name_tok is not None:
                     (
-                        _value,
+                        value,
                         token_errors,
                     ) = completion_context.token_value_and_unresolved_resolving_variables(
                         node_name_tok
@@ -395,6 +395,7 @@ def _collect_libraries_keywords(
                                 token_error.col_offset,
                                 token_error.end_col_offset,
                                 f"\nUnable to statically resolve variable: {token_error.value}.\nPlease set the `{token_error.value[2:-1]}` value in `robot.variables`.",
+                                value,
                             )
                     else:
                         collector.on_unresolved_library(
@@ -405,6 +406,7 @@ def _collect_libraries_keywords(
                             node_name_tok.col_offset,
                             node_name_tok.end_col_offset,
                             error_msg,
+                            value,
                         )
                 else:
                     collector.on_unresolved_library(
@@ -415,6 +417,7 @@ def _collect_libraries_keywords(
                         node.col_offset,
                         node.end_col_offset,
                         error_msg,
+                        "",
                     )
 
 
@@ -447,7 +450,7 @@ def _collect_from_context(
             if node_name_tok is not None:
 
                 (
-                    _value,
+                    value,
                     token_errors,
                 ) = completion_context.token_value_and_unresolved_resolving_variables(
                     node_name_tok
@@ -463,6 +466,7 @@ def _collect_from_context(
                             token_error.col_offset,
                             token_error.end_col_offset,
                             f"\nUnable to statically resolve variable: {token_error.value}.\nPlease set the `{token_error.value[2:-1]}` value in `robot.variables`.",
+                            value,
                         )
 
                 else:
@@ -474,6 +478,7 @@ def _collect_from_context(
                         node_name_tok.col_offset,
                         node_name_tok.end_col_offset,
                         None,
+                        value,
                     )
             else:
                 collector.on_unresolved_resource(
@@ -484,6 +489,7 @@ def _collect_from_context(
                     node.col_offset,
                     node.end_col_offset,
                     None,
+                    "",
                 )
             continue
         completion_context.check_cancelled()

@@ -2,7 +2,9 @@ from robotframework_ls.impl.robot_version import get_robot_major_version
 import pytest
 
 
-def _collect_errors(workspace, doc, data_regression, basename=None, config=None):
+def _collect_errors(
+    workspace, doc, data_regression, basename=None, config=None, transform_errors=None
+):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.code_analysis import collect_analysis_errors
 
@@ -12,6 +14,8 @@ def _collect_errors(workspace, doc, data_regression, basename=None, config=None)
         error.to_lsp_diagnostic()
         for error in collect_analysis_errors(completion_context)
     ]
+    if transform_errors is not None:
+        errors = transform_errors(errors)
 
     def key(diagnostic):
         return (
@@ -2244,7 +2248,28 @@ Test
     Log    ${COMMON_2}    console=True
 """
 
-    _collect_errors(workspace, doc, data_regression)
+    def transform_errors(errors):
+        ret = []
+        for dct in errors:
+            message = dct["message"]
+            # Change something as:
+            # Note: resolved name: c:\\Users\\xxx\\pytest-5350\\res áéíóú0\\case_vars_file\\not there now\\common variables.yaml
+            # to:
+            # Note: resolved name: xxx
+            if "resolved name" in message:
+                import re
+
+                assert "common variables.yaml" in message
+
+                message = re.sub(
+                    "Note: resolved name: (.*)", "Note: resolved name: xxx", message
+                )
+                dct["message"] = message
+
+            ret.append(dct)
+        return ret
+
+    _collect_errors(workspace, doc, data_regression, transform_errors=transform_errors)
     event = threading.Event()
 
     def on_file_changed(src_path):
@@ -2461,3 +2486,38 @@ Today is ${day1:\w\{6,9\}} and tomorrow is ${day2:\w{6,9}}
     No operation
 """
     _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+@pytest.mark.parametrize("found", [False, True])
+def test_code_analysis_environment_variable_in_resource_import(
+    workspace, libspec_manager, data_regression, found
+):
+
+    import os
+
+    if found:
+        os.environ["ENV_VAR_IN_RESOURCE_IMPORT"] = "./my"
+    else:
+        os.environ["ENV_VAR_IN_RESOURCE_IMPORT"] = "./my_not_found"
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("my/keywords.resource")
+    doc.source = """
+*** Keywords ***
+Common Keyword
+    Log to console    Common keyword"""
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Resource        %{ENV_VAR_IN_RESOURCE_IMPORT}/keywords.resource
+
+
+*** Test Cases ***
+Dummy Test Case
+    Common Keyword
+"""
+
+    _collect_errors(
+        workspace, doc, data_regression, basename="no_error" if found else None
+    )

@@ -291,7 +291,7 @@ def collect_global_variables_from_document_dependencies(
             if node_name_tok is not None:
 
                 (
-                    _value,
+                    value,
                     token_errors,
                 ) = completion_context.token_value_and_unresolved_resolving_variables(
                     node_name_tok
@@ -307,6 +307,7 @@ def collect_global_variables_from_document_dependencies(
                             token_error.col_offset,
                             token_error.end_col_offset,
                             f"\nUnable to statically resolve variable: {token_error.value}.\nPlease set the `{token_error.value[2:-1]}` value in `robot.variables`.",
+                            value,
                         )
 
                 else:
@@ -318,6 +319,7 @@ def collect_global_variables_from_document_dependencies(
                         node_name_tok.col_offset,
                         node_name_tok.end_col_offset,
                         None,
+                        value,
                     )
             else:
                 collector.on_unresolved_variable_import(
@@ -328,6 +330,7 @@ def collect_global_variables_from_document_dependencies(
                     node.col_offset,
                     node.end_col_offset,
                     None,
+                    "",
                 )
             continue
         _collect_variables_from_variable_import_doc(variable_doc, collector)

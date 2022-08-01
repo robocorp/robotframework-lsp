@@ -1,4 +1,6 @@
-- message: 'Unresolved variable import: ${CURDIR}${/}not there now${/}common variables.yaml'
+- message: 'Unresolved variable import: ${CURDIR}${/}not there now${/}common variables.yaml
+
+    Note: resolved name: xxx'
   range:
     end:
       character: 71

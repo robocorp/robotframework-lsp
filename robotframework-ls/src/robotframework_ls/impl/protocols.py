@@ -625,6 +625,7 @@ class IKeywordCollector(Protocol):
         col_offset: int,
         end_col_offset: int,
         error_msg: Optional[str],
+        resolved_name: str,
     ):
         pass
 
@@ -637,6 +638,7 @@ class IKeywordCollector(Protocol):
         col_offset: int,
         end_col_offset: int,
         error_msg: Optional[str],
+        resolved_name: str,
     ):
         pass
 
@@ -659,6 +661,7 @@ class AbstractKeywordCollector:
         col_offset: int,
         end_col_offset: int,
         error_msg: Optional[str],
+        resolved_name: str,
     ):
         pass
 
@@ -671,6 +674,7 @@ class AbstractKeywordCollector:
         col_offset: int,
         end_col_offset: int,
         error_msg: Optional[str],
+        resolved_name: str,
     ):
         pass
 
@@ -1171,6 +1175,7 @@ class IVariablesCollector(Protocol):
         col_offset: int,
         end_col_offset: int,
         error_msg: Optional[str],
+        resolved_name: str,
     ):
         pass
 
@@ -1196,6 +1201,7 @@ class AbstractVariablesCollector:
         col_offset: int,
         end_col_offset: int,
         error_msg: Optional[str],
+        resolved_name: str,
     ):
         pass
 

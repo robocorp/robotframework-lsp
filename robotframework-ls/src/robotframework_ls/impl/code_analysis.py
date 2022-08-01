@@ -272,6 +272,7 @@ def collect_analysis_errors(initial_completion_context):
         col_offset: int,
         end_col_offset: int,
         error_msg: Optional[str],
+        resolved_name: str,
     ):
         from robotframework_ls.impl.robot_lsp_constants import (
             OPTION_ROBOT_LINT_UNDEFINED_LIBRARIES,
@@ -304,6 +305,9 @@ def collect_analysis_errors(initial_completion_context):
                     if re.search(pattern, error_msg):
                         additional = f'\nConsider adding the needed paths to the "robot.pythonpath" setting\nand calling the "Robot Framework: Clear caches and restart" action.'
 
+                    if "{" in library_name and resolved_name:
+                        error_msg += f"\nNote: resolved name: {resolved_name}"
+
             errors.append(
                 ast_utils.Error(
                     f"Unresolved library: {library_name}.{error_msg}{additional}".strip(),
@@ -314,12 +318,13 @@ def collect_analysis_errors(initial_completion_context):
 
     def on_unresolved_resource(
         completion_context: ICompletionContext,
-        library_name: str,
+        resource_name: str,
         lineno: int,
         end_lineno: int,
         col_offset: int,
         end_col_offset: int,
         error_msg: Optional[str],
+        resolved_name: str,
     ):
         from robotframework_ls.impl.robot_lsp_constants import (
             OPTION_ROBOT_LINT_UNDEFINED_RESOURCES,
@@ -335,7 +340,9 @@ def collect_analysis_errors(initial_completion_context):
             start = (lineno - 1, col_offset)
             end = (end_lineno - 1, end_col_offset)
             if not error_msg:
-                error_msg = f"Unresolved resource: {library_name}"
+                error_msg = f"Unresolved resource: {resource_name}"
+                if "{" in resource_name and resolved_name:
+                    error_msg += f"\nNote: resolved name: {resolved_name}"
 
             errors.append(ast_utils.Error(error_msg, start, end))
 
@@ -585,12 +592,13 @@ def _collect_undefined_variables_errors(initial_completion_context):
 
     def on_unresolved_variable_import(
         completion_context: ICompletionContext,
-        library_name: str,
+        variable_import_name: str,
         lineno: int,
         end_lineno: int,
         col_offset: int,
         end_col_offset: int,
         error_msg: Optional[str],
+        resolved_name: str,
     ):
         from robotframework_ls.impl.robot_lsp_constants import (
             OPTION_ROBOT_LINT_UNDEFINED_VARIABLE_IMPORTS,
@@ -606,7 +614,9 @@ def _collect_undefined_variables_errors(initial_completion_context):
             start = (lineno - 1, col_offset)
             end = (end_lineno - 1, end_col_offset)
             if not error_msg:
-                error_msg = f"Unresolved variable import: {library_name}"
+                error_msg = f"Unresolved variable import: {variable_import_name}"
+                if "{" in variable_import_name and resolved_name:
+                    error_msg += f"\nNote: resolved name: {resolved_name}"
 
             unresolved_variable_import_errors.append(
                 ast_utils.Error(error_msg, start, end)
