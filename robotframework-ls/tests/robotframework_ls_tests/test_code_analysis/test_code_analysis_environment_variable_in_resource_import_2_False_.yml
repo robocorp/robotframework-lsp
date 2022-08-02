@@ -1,0 +1,12 @@
+- message: 'Unresolved resource: ${RESOURCES}/keywords.resource
+
+    Note: resolved name: ./my_not_found/bar/keywords.resource'
+  range:
+    end:
+      character: 42
+      line: 2
+    start:
+      character: 12
+      line: 2
+  severity: 1
+  source: robotframework

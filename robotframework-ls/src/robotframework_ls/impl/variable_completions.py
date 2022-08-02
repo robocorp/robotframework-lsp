@@ -298,7 +298,7 @@ def collect_global_variables_from_document_dependencies(
                 )
 
                 if token_errors:
-                    for token_error in token_errors:
+                    for token_error, error_msg in token_errors:
                         collector.on_unresolved_variable_import(
                             completion_context,
                             node.name,
@@ -306,7 +306,7 @@ def collect_global_variables_from_document_dependencies(
                             token_error.lineno,
                             token_error.col_offset,
                             token_error.end_col_offset,
-                            f"\nUnable to statically resolve variable: {token_error.value}.\nPlease set the `{token_error.value[2:-1]}` value in `robot.variables`.",
+                            error_msg,
                             value,
                         )
 

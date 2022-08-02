@@ -386,7 +386,7 @@ def _collect_libraries_keywords(
                         node_name_tok
                     )
                     if token_errors:
-                        for token_error in token_errors:
+                        for token_error, error_msg in token_errors:
                             collector.on_unresolved_library(
                                 completion_context,
                                 node.name,
@@ -394,7 +394,7 @@ def _collect_libraries_keywords(
                                 token_error.lineno,
                                 token_error.col_offset,
                                 token_error.end_col_offset,
-                                f"\nUnable to statically resolve variable: {token_error.value}.\nPlease set the `{token_error.value[2:-1]}` value in `robot.variables`.",
+                                error_msg,
                                 value,
                             )
                     else:
@@ -457,7 +457,7 @@ def _collect_from_context(
                 )
 
                 if token_errors:
-                    for token_error in token_errors:
+                    for token_error, error_msg in token_errors:
                         collector.on_unresolved_resource(
                             completion_context,
                             node.name,
@@ -465,7 +465,7 @@ def _collect_from_context(
                             token_error.lineno,
                             token_error.col_offset,
                             token_error.end_col_offset,
-                            f"\nUnable to statically resolve variable: {token_error.value}.\nPlease set the `{token_error.value[2:-1]}` value in `robot.variables`.",
+                            error_msg,
                             value,
                         )
 

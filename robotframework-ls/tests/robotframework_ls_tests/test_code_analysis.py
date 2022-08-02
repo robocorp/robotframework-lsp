@@ -2490,15 +2490,13 @@ Today is ${day1:\w\{6,9\}} and tomorrow is ${day2:\w{6,9}}
 
 @pytest.mark.parametrize("found", [False, True])
 def test_code_analysis_environment_variable_in_resource_import(
-    workspace, libspec_manager, data_regression, found
+    workspace, libspec_manager, data_regression, found, monkeypatch
 ):
 
-    import os
-
     if found:
-        os.environ["ENV_VAR_IN_RESOURCE_IMPORT"] = "./my"
+        monkeypatch.setenv("ENV_VAR_IN_RESOURCE_IMPORT", "./my")
     else:
-        os.environ["ENV_VAR_IN_RESOURCE_IMPORT"] = "./my_not_found"
+        monkeypatch.setenv("ENV_VAR_IN_RESOURCE_IMPORT", "./my_not_found")
 
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("my/keywords.resource")
@@ -2521,3 +2519,82 @@ Dummy Test Case
     _collect_errors(
         workspace, doc, data_regression, basename="no_error" if found else None
     )
+
+
+@pytest.mark.parametrize("found", [True, False])
+def test_code_analysis_environment_variable_in_resource_import_2(
+    workspace, libspec_manager, data_regression, found, monkeypatch
+):
+    if found:
+        monkeypatch.setenv("ENV_VAR_IN_RESOURCE_IMPORT", "./my")
+    else:
+        monkeypatch.setenv("ENV_VAR_IN_RESOURCE_IMPORT", "./my_not_found")
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("my/bar/keywords.resource")
+    doc.source = """
+*** Keywords ***
+Common Keyword
+    Log to console    Common keyword"""
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Resource    ${RESOURCES}/keywords.resource
+
+
+*** Variables ***
+${RESOURCES}    %{ENV_VAR_IN_RESOURCE_IMPORT}/bar
+"""
+
+    _collect_errors(
+        workspace, doc, data_regression, basename="no_error" if found else None
+    )
+
+
+def test_code_analysis_environment_variable_in_resource_import_3(
+    workspace, libspec_manager, data_regression
+):
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("my/bar/keywords.resource")
+    doc.source = """
+*** Keywords ***
+Common Keyword
+    Log to console    Common keyword"""
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Resource    ${RESOURCES}/keywords.resource
+
+
+*** Variables ***
+${RESOURCES}    %{ENV_VAR_IN_RESOURCE_IMPORT}/bar
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_environment_variable_in_resource_import_4(
+    workspace, libspec_manager, data_regression
+):
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("my/bar/keywords.resource")
+    doc.source = """
+*** Keywords ***
+Common Keyword
+    Log to console    Common keyword"""
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Resource    ${RESOURCES}/keywords.resource
+
+
+*** Variables ***
+${RESOURCES}    %{not_there1}${not_there2}/bar
+"""
+
+    _collect_errors(workspace, doc, data_regression)

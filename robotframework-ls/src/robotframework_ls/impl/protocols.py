@@ -1041,7 +1041,7 @@ class ICompletionContext(Protocol):
 
     def token_value_and_unresolved_resolving_variables(
         self, token: IRobotToken
-    ) -> Tuple[str, Tuple[IRobotToken, ...]]:
+    ) -> Tuple[str, Tuple[Tuple[IRobotToken, str], ...]]:
         pass
 
     def get_current_keyword_definition_and_usage_info(

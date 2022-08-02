@@ -1,6 +1,6 @@
 import os
 from functools import lru_cache
-from typing import Optional, Tuple, List, Iterator
+from typing import Optional, Tuple, List, Iterator, Union
 from robotframework_ls.impl.protocols import (
     IRobotVariableMatch,
     IRobotToken,
@@ -294,7 +294,9 @@ class ResolveVariablesContext:
             finally:
                 resolve_info.discard(var_name)
 
-    def _convert_environment_variable(self, var_name, value_if_not_found):
+    def _convert_environment_variable(
+        self, var_name, value_if_not_found
+    ) -> Optional[str]:
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHON_ENV
 
         if self.config is None:
@@ -316,15 +318,29 @@ class ResolveVariablesContext:
                     ("Unable to find environment variable: %s", var_name),
                 )
 
-        value = str(value)
-        return value
+        if value is None:
+            return None
+        return str(value)
 
     def token_value_resolving_variables(self, token: IRobotToken) -> str:
         return self.token_value_and_unresolved_resolving_variables(token)[0]
 
     def token_value_and_unresolved_resolving_variables(
-        self, token: IRobotToken
-    ) -> Tuple[str, Tuple[IRobotToken, ...]]:
+        self, token: Union[IRobotToken, str], count=0
+    ) -> Tuple[str, Tuple[Tuple[IRobotToken, str], ...]]:
+        """
+        :return: The new value of the token (with resolved variables) and if
+        some variable was unresolved, a tuple of tuples with the token of the
+        unresolved variable as well as the related error message.
+
+        i.e.:
+            (
+                'resolved/var',
+                (
+                    (unresolved_token, error_msg), (unresolved_token, error_msg)
+                )
+            )
+        """
         from robotframework_ls.impl import ast_utils
 
         robot_token: IRobotToken
@@ -338,7 +354,7 @@ class ResolveVariablesContext:
         except:
             return robot_token.value, ()  # Unable to tokenize
 
-        unresolved: List[IRobotToken] = []
+        unresolved: List[Tuple[IRobotToken, str]] = []
 
         parts: List[str] = []
         tok: IRobotToken
@@ -348,28 +364,87 @@ class ResolveVariablesContext:
                 parts.append(str(tok))
 
             elif tok.type == tok.VARIABLE:
+                if count > 6:
+                    unresolved.append(
+                        (
+                            tok,
+                            f"\nRecursion detected when resolving variable: {tok.value}.",
+                        )
+                    )
+                    return str(tok), tuple(unresolved)
                 value = str(tok)
 
-                convert_with = None
-                if value.startswith("${") and value.endswith("}"):
-                    convert_with = self._convert_robot_variable
-
-                elif value.startswith("%{") and value.endswith("}"):
-                    convert_with = self._convert_environment_variable
-
-                if convert_with is None:
-                    log.info("Cannot resolve variable: %s", value)
-                    unresolved.append(tok)
-                    parts.append(value)  # Leave unresolved.
+                resolved, new_value = self._resolve_tok_var(value)
+                if new_value is None:
+                    new_value = value
+                if not resolved:
+                    unresolved.append(
+                        (
+                            tok,
+                            f"\nUnable to statically resolve variable: {tok.value}.\nPlease set the `{tok.value[2:-1]}` value in `robot.variables`.",
+                        )
+                    )
                 else:
-                    value = value[2:-1]
-                    converted = convert_with(value, None)
-                    if converted is None:
-                        log.info("Cannot resolve variable: %s", value)
-                        unresolved.append(tok)
-                        parts.append(value)
-                    else:
-                        parts.append(converted)
+                    # Ok, it was resolved, but we need to check if we need
+                    # to resolve new values from that value (and do it
+                    # recursively if needed).
+                    for _ in range(6):
+                        if "{" in new_value:
+                            (
+                                v2,
+                                unresolved_tokens,
+                            ) = self.token_value_and_unresolved_resolving_variables(
+                                new_value, count + 1
+                            )
+                            if unresolved_tokens:
+                                if len(unresolved_tokens) == 1:
+                                    t = next(iter(unresolved_tokens))[0]
+                                    unresolved.append(
+                                        (
+                                            tok,
+                                            f"\nUnable to statically resolve variable: {tok.value} because dependent variable: {t.value} was not resolved.",
+                                        )
+                                    )
+                                else:
+                                    lst = []
+                                    for t, _error_msg in unresolved_tokens:
+                                        lst.append(t.value)
+
+                                    unresolved.append(
+                                        (
+                                            tok,
+                                            f"\nUnable to statically resolve variable: {tok.value} because dependent variables: {', '.join(lst)} were not resolved.",
+                                        )
+                                    )
+                                break
+
+                            if v2 == new_value:
+                                break
+                            new_value = v2
+                parts.append(new_value)
 
         joined_parts = "".join(parts)
         return joined_parts, tuple(unresolved)
+
+    def _resolve_tok_var(self, value: str) -> Tuple[bool, str]:
+        """
+        :return: whether the variable was resolved and its value (same as input if unresolved).
+        """
+        convert_with = None
+        if value.startswith("${") and value.endswith("}"):
+            convert_with = self._convert_robot_variable
+
+        elif value.startswith("%{") and value.endswith("}"):
+            convert_with = self._convert_environment_variable
+
+        if convert_with is None:
+            log.info("Cannot resolve variable: %s", value)
+            return False, value  # Leave unresolved.
+        else:
+            inner_value = value[2:-1]
+            converted = convert_with(inner_value, None)
+            if converted is None:
+                log.info("Cannot resolve variable: %s", value)
+                return False, value
+            else:
+                return True, converted

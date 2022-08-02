@@ -491,7 +491,7 @@ class CompletionContext(object):
 
     def token_value_and_unresolved_resolving_variables(
         self, token: IRobotToken
-    ) -> Tuple[str, Tuple[IRobotToken, ...]]:
+    ) -> Tuple[str, Tuple[Tuple[IRobotToken, str], ...]]:
         from robotframework_ls.impl.variable_resolve import ResolveVariablesContext
 
         return ResolveVariablesContext(

@@ -1,0 +1,23 @@
+- message: '
+
+    Unable to statically resolve variable: ${RESOURCES} because dependent variable:
+    %{ENV_VAR_IN_RESOURCE_IMPORT} was not resolved.'
+  range:
+    end:
+      character: 24
+      line: 2
+    start:
+      character: 12
+      line: 2
+  severity: 1
+  source: robotframework
+- message: 'Undefined environment variable: ENV_VAR_IN_RESOURCE_IMPORT'
+  range:
+    end:
+      character: 44
+      line: 6
+    start:
+      character: 18
+      line: 6
+  severity: 1
+  source: robotframework

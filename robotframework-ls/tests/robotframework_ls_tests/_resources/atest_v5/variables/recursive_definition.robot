@@ -1,15 +1,10 @@
 *** Settings ***
 Test Template     Variable should not exist
 Resource          ${IMPORT 1}.robot
-#!                ^^^^^^^^^^^^^^^^^ Unresolved resource: ${IMPORT 1}.robot
-#!                ^^^^^^^^^^^^^^^^^ Note: resolved name: ${IMPORT 2}.robot
+#!                ^^^^^^^^^^^ Unable to statically resolve variable: ${IMPORT 1} because dependent variable: ${IMPORT 2} was not resolved.
 Library           ${IMPORT 2}.py
-#!                ^^^^^^^^^^^^^^ Unresolved library: ${IMPORT 2}.py.
-#!                ^^^^^^^^^^^^^^ Error generating libspec:
-#!                ^^^^^^^^^^^^^^ Importing library '${IMPORT 1}' failed: ModuleNotFoundError: No module named '${IMPORT 1}'
-#!                ^^^^^^^^^^^^^^ Note: resolved name: ${IMPORT 1}.py
-#!                ^^^^^^^^^^^^^^ Consider adding the needed paths to the "robot.pythonpath" setting
-#!                ^^^^^^^^^^^^^^ and calling the "Robot Framework: Clear caches and restart" action.
+#!                ^^^^^^^^^^^ Unresolved library: ${IMPORT 2}.py.
+#!                ^^^^^^^^^^^ Unable to statically resolve variable: ${IMPORT 2} because dependent variable: ${IMPORT 1} was not resolved.
 
 *** Variables ***
 ${DIRECT}         ${DIRECT}

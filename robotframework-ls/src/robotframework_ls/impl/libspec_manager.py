@@ -1185,7 +1185,7 @@ class LibspecManager(object):
 
                 pre_error_msg = (
                     "It was not possible to statically resolve the following variables:\n%s\nFollow-up error:\n"
-                    % (", ".join(str(x) for x in unresolved),)
+                    % (", ".join(str(x[0]) for x in unresolved),)
                 )
 
             args = args.replace("\\\\", "\\")

@@ -98,7 +98,7 @@ jobs:
       working-directory: ./robotframework-ls/tests
       env:
         PYTHONPATH: .
-        RUN_TESTS_TIMEOUT: 300
+        RUN_TESTS_TIMEOUT: 500
       run: python -u ../../robocorp-python-ls-core/tests/run_tests.py -rfE -otests_output -vv .
     - uses: actions/upload-artifact@v1
       with:

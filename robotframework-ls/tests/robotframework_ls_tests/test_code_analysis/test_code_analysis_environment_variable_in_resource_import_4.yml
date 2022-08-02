@@ -1,0 +1,33 @@
+- message: '
+
+    Unable to statically resolve variable: ${RESOURCES} because dependent variables:
+    %{not_there1}, ${not_there2} were not resolved.'
+  range:
+    end:
+      character: 24
+      line: 2
+    start:
+      character: 12
+      line: 2
+  severity: 1
+  source: robotframework
+- message: 'Undefined environment variable: not_there1'
+  range:
+    end:
+      character: 28
+      line: 6
+    start:
+      character: 18
+      line: 6
+  severity: 1
+  source: robotframework
+- message: 'Undefined variable: not_there2'
+  range:
+    end:
+      character: 41
+      line: 6
+    start:
+      character: 31
+      line: 6
+  severity: 1
+  source: robotframework

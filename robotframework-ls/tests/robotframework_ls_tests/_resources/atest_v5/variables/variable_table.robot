@@ -40,15 +40,10 @@ ${NONEX 3}        This ${NON EXISTING VARIABLE} is used in imports.
 
 *** Settings ***
 Resource          ${NONEX 3}
-#!                ^^^^^^^^^^ Unresolved resource: ${NONEX 3}
-#!                ^^^^^^^^^^ Note: resolved name: This ${NON EXISTING VARIABLE} is used in imports.
+#!                ^^^^^^^^^^ Unable to statically resolve variable: ${NONEX 3} because dependent variable: ${NON EXISTING VARIABLE} was not resolved.
 Library           ${NONEX 3}
 #!                ^^^^^^^^^^ Unresolved library: ${NONEX 3}.
-#!                ^^^^^^^^^^ Error generating libspec:
-#!                ^^^^^^^^^^ Importing library 'This ${NON EXISTING VARIABLE} is used in imports.' failed: ModuleNotFoundError: No module named 'This ${NON EXISTING VARIABLE} is used in imports'
-#!                ^^^^^^^^^^ Note: resolved name: This ${NON EXISTING VARIABLE} is used in imports.
-#!                ^^^^^^^^^^ Consider adding the needed paths to the "robot.pythonpath" setting
-#!                ^^^^^^^^^^ and calling the "Robot Framework: Clear caches and restart" action.
+#!                ^^^^^^^^^^ Unable to statically resolve variable: ${NONEX 3} because dependent variable: ${NON EXISTING VARIABLE} was not resolved.
 
 *** Test Case ***
 Scalar String
