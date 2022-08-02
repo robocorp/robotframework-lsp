@@ -1,6 +1,12 @@
 NEXT
 -----------------------------
 
+- Consider default value when resolving environment variable. [#715](https://github.com/robocorp/robotframework-lsp/issues/715)
+- Recursively resolve variables and provide better error messages on failure conditions. [#715](https://github.com/robocorp/robotframework-lsp/issues/715)
+- If a resource/library/variable import is not found and its name has variables, show the resolved name.
+- Report error when multiple keywords with the same name are found. [#432](https://github.com/robocorp/robotframework-lsp/issues/432)
+- Fix issues in file system notifications. [#710](https://github.com/robocorp/robotframework-lsp/issues/710)
+- Fixed issue where doc highlight could raise error with unclosed variable.
 - Interactive console
   - `robot.interactiveConsole.arguments` can be used to customize the arguments initializing the interactive console. [#648](https://github.com/robocorp/robotframework-lsp/issues/648)
   - `robot.variables` defined are now automatically loaded in the interactive console.

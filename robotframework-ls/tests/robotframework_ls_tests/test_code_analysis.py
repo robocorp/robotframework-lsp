@@ -2552,6 +2552,31 @@ ${RESOURCES}    %{ENV_VAR_IN_RESOURCE_IMPORT}/bar
     )
 
 
+def test_code_analysis_environment_variable_default_value(
+    workspace, libspec_manager, data_regression, monkeypatch
+):
+    monkeypatch.setenv("ENV_VAR_IN_RESOURCE_IMPORT", "./my")
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("my/bar/keywords.resource")
+    doc.source = """
+*** Keywords ***
+Common Keyword
+    Log to console    Common keyword"""
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Resource    %{RESOURCES_ENV=${RESOURCES}}/keywords.resource
+
+
+*** Variables ***
+${RESOURCES}    %{ENV_VAR_IN_RESOURCE_IMPORT}/bar
+"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
 def test_code_analysis_environment_variable_in_resource_import_3(
     workspace, libspec_manager, data_regression
 ):

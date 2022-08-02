@@ -299,6 +299,11 @@ class ResolveVariablesContext:
     ) -> Optional[str]:
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHON_ENV
 
+        i = var_name.find("=")
+        if i > 0:
+            value_if_not_found = var_name[i + 1 :]
+            var_name = var_name[:i]
+
         if self.config is None:
             value = self._resolve_environment_variable(
                 var_name,
