@@ -144,6 +144,10 @@ class LaunchProcessDebugAdapterRobotTargetComm(BaseLaunchProcessTargetComm):
 
     on_logMessage_event = _forward_event_to_client
 
+    def is_terminated(self):
+        with self._terminated_lock:
+            return self._terminated_event.is_set()
+
     def on_terminated_event(self, event: Optional[TerminatedEvent]) -> None:
         with self._terminated_lock:
             if self._terminated_event.is_set():

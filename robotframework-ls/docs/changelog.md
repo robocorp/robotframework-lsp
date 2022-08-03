@@ -1,6 +1,7 @@
 NEXT
 -----------------------------
 
+- If the user presses the stop button during a launch, subprocesses are killed regardless of the value of `RFLS_KILL_ZOMBIE_PROCESSES`.
 - Consider default value when resolving environment variable. [#715](https://github.com/robocorp/robotframework-lsp/issues/715)
 - Recursively resolve variables and provide better error messages on failure conditions. [#715](https://github.com/robocorp/robotframework-lsp/issues/715)
 - If a resource/library/variable import is not found and its name has variables, show the resolved name.

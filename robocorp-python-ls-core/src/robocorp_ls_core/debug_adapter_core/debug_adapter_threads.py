@@ -264,6 +264,8 @@ def writer_thread(stream, queue, debug_prefix="write", update_ids_to_dap=False):
             )
             stream.write(as_bytes)
             stream.flush()
+    except ConnectionResetError:
+        pass  # No need to log this
     except:
         log.exception("Error writing message.")
     finally:
