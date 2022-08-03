@@ -36,6 +36,7 @@ class RobotProjectState {
     public String robotLintUndefinedResources = "";
     public String robotLintUndefinedVariableImports = "";
     public String robotLintKeywordCallArguments = "";
+    public String robotLintKeywordResolvesToMultipleKeywords = "";
     public String robotLintVariables = "";
     public String robotLintIgnoreVariables = "";
     public String robotLintIgnoreEnvironmentVariables = "";
@@ -69,6 +70,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
     public static final String ROBOT_LINT_UNDEFINED_RESOURCES = "robot.lint.undefinedResources";
     public static final String ROBOT_LINT_UNDEFINED_VARIABLE_IMPORTS = "robot.lint.undefinedVariableImports";
     public static final String ROBOT_LINT_KEYWORD_CALL_ARGUMENTS = "robot.lint.keywordCallArguments";
+    public static final String ROBOT_LINT_KEYWORD_RESOLVES_TO_MULTIPLE_KEYWORDS = "robot.lint.keywordResolvesToMultipleKeywords";
     public static final String ROBOT_LINT_VARIABLES = "robot.lint.variables";
     public static final String ROBOT_LINT_IGNORE_VARIABLES = "robot.lint.ignoreVariables";
     public static final String ROBOT_LINT_IGNORE_ENVIRONMENT_VARIABLES = "robot.lint.ignoreEnvironmentVariables";
@@ -104,6 +106,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         robotState.robotLintUndefinedResources = getRobotLintUndefinedResources();
         robotState.robotLintUndefinedVariableImports = getRobotLintUndefinedVariableImports();
         robotState.robotLintKeywordCallArguments = getRobotLintKeywordCallArguments();
+        robotState.robotLintKeywordResolvesToMultipleKeywords = getRobotLintKeywordResolvesToMultipleKeywords();
         robotState.robotLintVariables = getRobotLintVariables();
         robotState.robotLintIgnoreVariables = getRobotLintIgnoreVariables();
         robotState.robotLintIgnoreEnvironmentVariables = getRobotLintIgnoreEnvironmentVariables();
@@ -137,6 +140,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         setRobotLintUndefinedResources(robotState.robotLintUndefinedResources);
         setRobotLintUndefinedVariableImports(robotState.robotLintUndefinedVariableImports);
         setRobotLintKeywordCallArguments(robotState.robotLintKeywordCallArguments);
+        setRobotLintKeywordResolvesToMultipleKeywords(robotState.robotLintKeywordResolvesToMultipleKeywords);
         setRobotLintVariables(robotState.robotLintVariables);
         setRobotLintIgnoreVariables(robotState.robotLintIgnoreVariables);
         setRobotLintIgnoreEnvironmentVariables(robotState.robotLintIgnoreEnvironmentVariables);
@@ -308,6 +312,15 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
             
             try {
                 jsonObject.add(ROBOT_LINT_KEYWORD_CALL_ARGUMENTS, new JsonPrimitive(Boolean.parseBoolean(robotLintKeywordCallArguments)));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotLintKeywordResolvesToMultipleKeywords.isEmpty()){
+            
+            try {
+                jsonObject.add(ROBOT_LINT_KEYWORD_RESOLVES_TO_MULTIPLE_KEYWORDS, new JsonPrimitive(Boolean.parseBoolean(robotLintKeywordResolvesToMultipleKeywords)));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -1235,6 +1248,53 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             try {
                 listener.onChanged(ROBOT_LINT_KEYWORD_CALL_ARGUMENTS, old, s);
+            } catch (CancelledException e) {
+                // just ignore at this point
+            }
+        }
+    }
+    
+    private String robotLintKeywordResolvesToMultipleKeywords = "";
+
+    public @NotNull String getRobotLintKeywordResolvesToMultipleKeywords() {
+        return robotLintKeywordResolvesToMultipleKeywords;
+    }
+
+    public @Nullable JsonPrimitive getRobotLintKeywordResolvesToMultipleKeywordsAsJson() {
+        if(robotLintKeywordResolvesToMultipleKeywords.isEmpty()){
+            return null;
+        }
+        
+        return new JsonPrimitive(Boolean.parseBoolean(robotLintKeywordResolvesToMultipleKeywords));
+    }
+
+    public @NotNull String validateRobotLintKeywordResolvesToMultipleKeywords(String robotLintKeywordResolvesToMultipleKeywords) {
+        if(robotLintKeywordResolvesToMultipleKeywords.isEmpty()) {
+            return "";
+        }
+        try {
+            
+            new JsonPrimitive(Boolean.parseBoolean(robotLintKeywordResolvesToMultipleKeywords));
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLintKeywordResolvesToMultipleKeywords(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLintKeywordResolvesToMultipleKeywords)) {
+            return;
+        }
+        String old = robotLintKeywordResolvesToMultipleKeywords;
+        robotLintKeywordResolvesToMultipleKeywords = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            try {
+                listener.onChanged(ROBOT_LINT_KEYWORD_RESOLVES_TO_MULTIPLE_KEYWORDS, old, s);
             } catch (CancelledException e) {
                 // just ignore at this point
             }

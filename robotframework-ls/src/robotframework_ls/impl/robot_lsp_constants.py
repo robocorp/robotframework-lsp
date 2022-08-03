@@ -25,6 +25,9 @@ OPTION_ROBOT_LINT_UNDEFINED_LIBRARIES = "robot.lint.undefinedLibraries"
 OPTION_ROBOT_LINT_UNDEFINED_RESOURCES = "robot.lint.undefinedResources"
 OPTION_ROBOT_LINT_UNDEFINED_VARIABLE_IMPORTS = "robot.lint.undefinedVariableImports"
 OPTION_ROBOT_LINT_KEYWORD_CALL_ARGUMENTS = "robot.lint.keywordCallArguments"
+OPTION_ROBOT_LINT_KEYWORD_RESOLVES_TO_MULTIPLE_KEYWORDS = (
+    "robot.lint.keywordResolvesToMultipleKeywords"
+)
 
 OPTION_ROBOT_LINT_VARIABLES = "robot.lint.variables"
 OPTION_ROBOT_LINT_IGNORE_VARIABLES = "robot.lint.ignoreVariables"

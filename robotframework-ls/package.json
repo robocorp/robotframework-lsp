@@ -387,6 +387,11 @@
                     "default": true,
                     "description": "Reports issues in keyword call arguments."
                 },
+                "robot.lint.keywordResolvesToMultipleKeywords": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Reports whenever a keyword call would resolve to more than one keyword."
+                },
                 "robot.lint.variables": {
                     "type": "boolean",
                     "default": true,

@@ -193,6 +193,11 @@ def get_json_contents():
                         "default": True,
                         "description": "Reports issues in keyword call arguments.",
                     },
+                    "robot.lint.keywordResolvesToMultipleKeywords": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": "Reports whenever a keyword call would resolve to more than one keyword.",
+                    },
                     "robot.lint.variables": {
                         "type": "boolean",
                         "default": True,

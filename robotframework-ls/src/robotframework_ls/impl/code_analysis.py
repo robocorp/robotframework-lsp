@@ -463,13 +463,26 @@ def collect_analysis_errors(initial_completion_context):
                                         f"Please provide the name with the full qualifier (i.e.: "
                                         f"'{sorted(found_in)[0] + '.' + keyword_usage_info.name}')."
                                     )
-                        error = create_error_from_node(
-                            node,
-                            msg,
-                            tokens=[keyword_usage_info.token],
+                        from robotframework_ls.impl.robot_lsp_constants import (
+                            OPTION_ROBOT_LINT_KEYWORD_RESOLVES_TO_MULTIPLE_KEYWORDS,
                         )
-                        errors.append(error)
+
+                        if config is None or config.get_setting(
+                            OPTION_ROBOT_LINT_KEYWORD_RESOLVES_TO_MULTIPLE_KEYWORDS,
+                            bool,
+                            True,
+                        ):
+                            error = create_error_from_node(
+                                node,
+                                msg,
+                                tokens=[keyword_usage_info.token],
+                            )
+                            errors.append(error)
+
+                        # We can't do argument analysis because the keyword is
+                        # duplicated and we don't know which one to use.
                         continue
+
                 if new_keywords_found:
                     keywords_found = new_keywords_found
                 keyword_found = keywords_found[0]

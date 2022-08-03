@@ -38,6 +38,7 @@ class RobotPreferencesComponent {
     private final JBTextField robotLintUndefinedResources = new JBTextField();
     private final JBTextField robotLintUndefinedVariableImports = new JBTextField();
     private final JBTextField robotLintKeywordCallArguments = new JBTextField();
+    private final JBTextField robotLintKeywordResolvesToMultipleKeywords = new JBTextField();
     private final JBTextField robotLintVariables = new JBTextField();
     private final JBTextField robotLintIgnoreVariables = new JBTextField();
     private final JBTextField robotLintIgnoreEnvironmentVariables = new JBTextField();
@@ -85,6 +86,8 @@ class RobotPreferencesComponent {
                 .addComponent(createJTextArea("Reports undefined variable imports when linting.\nNote: expected 'true' or 'false'\n"))
                 .addLabeledComponent(new JBLabel("Lint Keyword Call Arguments"), robotLintKeywordCallArguments, 1, false)
                 .addComponent(createJTextArea("Reports issues in keyword call arguments.\nNote: expected 'true' or 'false'\n"))
+                .addLabeledComponent(new JBLabel("Lint Keyword Resolves To Multiple Keywords"), robotLintKeywordResolvesToMultipleKeywords, 1, false)
+                .addComponent(createJTextArea("Reports whenever a keyword call would resolve to more than one keyword.\nNote: expected 'true' or 'false'\n"))
                 .addLabeledComponent(new JBLabel("Lint Variables"), robotLintVariables, 1, false)
                 .addComponent(createJTextArea("Reports issues in undefined variables.\nNote: expected 'true' or 'false'\n"))
                 .addLabeledComponent(new JBLabel("Lint Ignore Variables"), robotLintIgnoreVariables, 1, false)
@@ -288,6 +291,15 @@ class RobotPreferencesComponent {
     }
     
     @NotNull
+    public String getRobotLintKeywordResolvesToMultipleKeywords() {
+        return robotLintKeywordResolvesToMultipleKeywords.getText();
+    }
+
+    public void setRobotLintKeywordResolvesToMultipleKeywords (@NotNull String newText) {
+        robotLintKeywordResolvesToMultipleKeywords.setText(newText);
+    }
+    
+    @NotNull
     public String getRobotLintVariables() {
         return robotLintVariables.getText();
     }
@@ -464,6 +476,10 @@ public class RobotPreferencesPage implements Configurable {
             return true;
         }
         
+        if(!settings.getRobotLintKeywordResolvesToMultipleKeywords().equals(component.getRobotLintKeywordResolvesToMultipleKeywords())){
+            return true;
+        }
+        
         if(!settings.getRobotLintVariables().equals(component.getRobotLintVariables())){
             return true;
         }
@@ -526,6 +542,7 @@ public class RobotPreferencesPage implements Configurable {
         component.setRobotLintUndefinedResources(settings.getRobotLintUndefinedResources());
         component.setRobotLintUndefinedVariableImports(settings.getRobotLintUndefinedVariableImports());
         component.setRobotLintKeywordCallArguments(settings.getRobotLintKeywordCallArguments());
+        component.setRobotLintKeywordResolvesToMultipleKeywords(settings.getRobotLintKeywordResolvesToMultipleKeywords());
         component.setRobotLintVariables(settings.getRobotLintVariables());
         component.setRobotLintIgnoreVariables(settings.getRobotLintIgnoreVariables());
         component.setRobotLintIgnoreEnvironmentVariables(settings.getRobotLintIgnoreEnvironmentVariables());
@@ -618,6 +635,10 @@ public class RobotPreferencesPage implements Configurable {
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Lint Keyword Call Arguments:\n" + s);
         }
+        s = settings.validateRobotLintKeywordResolvesToMultipleKeywords(component.getRobotLintKeywordResolvesToMultipleKeywords());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Lint Keyword Resolves To Multiple Keywords:\n" + s);
+        }
         s = settings.validateRobotLintVariables(component.getRobotLintVariables());
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Lint Variables:\n" + s);
@@ -669,6 +690,7 @@ public class RobotPreferencesPage implements Configurable {
         settings.setRobotLintUndefinedResources(component.getRobotLintUndefinedResources());
         settings.setRobotLintUndefinedVariableImports(component.getRobotLintUndefinedVariableImports());
         settings.setRobotLintKeywordCallArguments(component.getRobotLintKeywordCallArguments());
+        settings.setRobotLintKeywordResolvesToMultipleKeywords(component.getRobotLintKeywordResolvesToMultipleKeywords());
         settings.setRobotLintVariables(component.getRobotLintVariables());
         settings.setRobotLintIgnoreVariables(component.getRobotLintIgnoreVariables());
         settings.setRobotLintIgnoreEnvironmentVariables(component.getRobotLintIgnoreEnvironmentVariables());
