@@ -1,6 +1,7 @@
 NEXT
 -----------------------------
 
+- Provided a way to manually request linting for all files on the workspace or explorer selection (by right-clicking selection in explorer). [#611](https://github.com/robocorp/robotframework-lsp/issues/611)
 - If the user presses the stop button during a launch, subprocesses are killed regardless of the value of `RFLS_KILL_ZOMBIE_PROCESSES`.
 - Consider default value when resolving environment variable. [#715](https://github.com/robocorp/robotframework-lsp/issues/715)
 - Recursively resolve variables and provide better error messages on failure conditions. [#715](https://github.com/robocorp/robotframework-lsp/issues/715)

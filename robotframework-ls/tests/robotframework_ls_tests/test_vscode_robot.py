@@ -137,6 +137,53 @@ Test
     )
 
 
+def test_diagnostics_workspace(language_server_io, workspace):
+    from robotframework_ls.commands import ROBOT_LINT_WORKSPACE, ROBOT_LINT_EXPLORER
+    from robocorp_ls_core.basic import wait_for_expected_func_return
+
+    language_server = language_server_io
+    workspace.set_root("case_workspace_lint")
+    language_server.initialize(workspace.ws.root_path, process_id=os.getpid())
+
+    message_matcher = language_server.obtain_pattern_message_matcher(
+        {"method": "textDocument/publishDiagnostics"}, remove_on_match=False
+    )
+
+    found_diagnostics_in_uris = set()
+    original = message_matcher.notify
+
+    def on_notify(msg):
+        if msg is not None:
+            from robocorp_ls_core import uris
+
+            uri = msg["params"]["uri"]
+            found_diagnostics_in_uris.add(os.path.basename(uris.to_fs_path(uri)))
+        return original(msg)
+
+    message_matcher.notify = on_notify
+
+    for _i in range(2):
+        found_diagnostics_in_uris.clear()
+        language_server.execute_command(ROBOT_LINT_WORKSPACE, [])
+
+        wait_for_expected_func_return(
+            lambda: found_diagnostics_in_uris,
+            {"root.robot", "my1.robot", "my2.robot"},
+        )
+
+    for _i in range(2):
+        found_diagnostics_in_uris.clear()
+        language_server.execute_command(
+            ROBOT_LINT_EXPLORER,
+            [None, [{"fsPath": os.path.join(workspace.ws.root_path, "sub")}]],
+        )
+
+        wait_for_expected_func_return(
+            lambda: found_diagnostics_in_uris,
+            {"my1.robot", "my2.robot"},
+        )
+
+
 def test_section_completions_integrated(language_server, ws_root_path, data_regression):
     language_server.initialize(ws_root_path, process_id=os.getpid())
     uri = "untitled:Untitled-1"

@@ -20,6 +20,8 @@ ROBOT_CLEAR_CACHES_AND_RESTART_PROCESSES_FINISH_INTERNAL = "robot.clearCachesAnd
 ROBOT_START_INDEXING_INTERNAL = "robot.startIndexing.internal"  # Starts the indexing service
 ROBOT_WAIT_FULL_TEST_COLLECTION_INTERNAL = "robot.waitFullTestCollection.internal"  # Schedules and Waits for a full test collection
 ROBOT_RF_INFO_INTERNAL = "robot.rfInfo.internal"  # Collects information on the Robot Framework version being used.
+ROBOT_LINT_WORKSPACE = "robot.lint.workspace"  # Lint all files in the workspace.
+ROBOT_LINT_EXPLORER = "robot.lint.explorer"  # Lint
 
 ALL_SERVER_COMMANDS: List[str] = [
     ROBOT_INTERNAL_RFINTERACTIVE_START,
@@ -32,6 +34,8 @@ ALL_SERVER_COMMANDS: List[str] = [
     ROBOT_START_INDEXING_INTERNAL,
     ROBOT_WAIT_FULL_TEST_COLLECTION_INTERNAL,
     ROBOT_RF_INFO_INTERNAL,
+    ROBOT_LINT_WORKSPACE,
+    ROBOT_LINT_EXPLORER,
 ]
 
 # fmt: on

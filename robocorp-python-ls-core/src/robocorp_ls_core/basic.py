@@ -392,6 +392,10 @@ def check_min_version(version: str, min_version: Tuple[int, int]) -> bool:
 
 
 def wait_for_condition(condition, msg=None, timeout=DEFAULT_TIMEOUT, sleep=1 / 20.0):
+    """
+    Note: wait_for_expected_func_return is usually a better API to use as
+    the error message is automatically built.
+    """
     import time
 
     curtime = time.time()

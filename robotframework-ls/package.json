@@ -51,7 +51,9 @@
         "onCommand:robot.clearCachesAndRestartProcesses.finish.internal",
         "onCommand:robot.startIndexing.internal",
         "onCommand:robot.waitFullTestCollection.internal",
-        "onCommand:robot.rfInfo.internal"
+        "onCommand:robot.rfInfo.internal",
+        "onCommand:robot.lint.workspace",
+        "onCommand:robot.lint.explorer"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -153,35 +155,61 @@
                 "command": "robot.rfInfo.internal",
                 "title": "Collects information on the Robot Framework version being used.",
                 "category": "Robot Framework"
+            },
+            {
+                "command": "robot.lint.workspace",
+                "title": "Lint all files in the workspace.",
+                "category": "Robot Framework"
+            },
+            {
+                "command": "robot.lint.explorer",
+                "title": "Lint",
+                "category": "Robot Framework"
+            }
+        ],
+        "submenus": [
+            {
+                "id": "robotsubmenu",
+                "label": "Robot Framework"
             }
         ],
         "menus": {
             "editor/title/run": [
                 {
                     "command": "robot.runSuite",
-                    "title": "Run Tests/Tasks Suite",
                     "group": "1_run@robot_run1",
                     "when": "resourceExtname == .robot && !isInDiffEditor"
                 },
                 {
                     "command": "robot.debugSuite",
-                    "title": "Debug Tests/Tasks Suite",
                     "group": "1_run@robot_run2",
                     "when": "resourceExtname == .robot && !isInDiffEditor"
                 }
             ],
             "explorer/context": [
                 {
+                    "submenu": "robotsubmenu",
+                    "group": "9_robot.group"
+                }
+            ],
+            "robotsubmenu": [
+                {
                     "command": "robot.runSuite",
-                    "title": "Run Tests/Tasks Suite",
-                    "group": "9_robot_run@1",
+                    "group": "1_run@1",
+                    "submenu": "robotsubmenu",
                     "when": "resourceExtname == .robot || explorerResourceIsFolder"
                 },
                 {
                     "command": "robot.debugSuite",
-                    "title": "Debug Tests/Tasks Suite",
-                    "group": "9_robot_run@2",
+                    "group": "1_run@2",
+                    "submenu": "robotsubmenu",
                     "when": "resourceExtname == .robot || explorerResourceIsFolder"
+                },
+                {
+                    "command": "robot.lint.explorer",
+                    "group": "2_analysis",
+                    "submenu": "robotsubmenu",
+                    "when": "resourceExtname == .robot || resourceExtname == .resource || explorerResourceIsFolder"
                 }
             ],
             "commandPalette": [
@@ -231,6 +259,10 @@
                 },
                 {
                     "command": "robot.rfInfo.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robot.lint.explorer",
                     "when": "false"
                 }
             ]

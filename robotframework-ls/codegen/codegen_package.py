@@ -1,6 +1,10 @@
 import os.path
 
 
+def get_submenus():
+    return [{"id": "robotsubmenu", "label": "Robot Framework"}]
+
+
 def get_menus():
     from commands import COMMANDS
 
@@ -8,29 +12,36 @@ def get_menus():
         "editor/title/run": [
             {
                 "command": "robot.runSuite",
-                "title": "Run Tests/Tasks Suite",
                 "group": "1_run@robot_run1",
                 "when": "resourceExtname == .robot && !isInDiffEditor",
             },
             {
                 "command": "robot.debugSuite",
-                "title": "Debug Tests/Tasks Suite",
                 "group": "1_run@robot_run2",
                 "when": "resourceExtname == .robot && !isInDiffEditor",
             },
         ],
         "explorer/context": [
+            {"submenu": "robotsubmenu", "group": "9_robot.group"},
+        ],
+        "robotsubmenu": [
             {
                 "command": "robot.runSuite",
-                "title": "Run Tests/Tasks Suite",
-                "group": "9_robot_run@1",
+                "group": "1_run@1",
+                "submenu": "robotsubmenu",
                 "when": "resourceExtname == .robot || explorerResourceIsFolder",
             },
             {
                 "command": "robot.debugSuite",
-                "title": "Debug Tests/Tasks Suite",
-                "group": "9_robot_run@2",
+                "group": "1_run@2",
+                "submenu": "robotsubmenu",
                 "when": "resourceExtname == .robot || explorerResourceIsFolder",
+            },
+            {
+                "command": "robot.lint.explorer",
+                "group": "2_analysis",
+                "submenu": "robotsubmenu",
+                "when": "resourceExtname == .robot || resourceExtname == .resource || explorerResourceIsFolder",
             },
         ],
     }
@@ -69,6 +80,7 @@ def get_json_contents():
         "galleryBanner": {"theme": "dark", "color": "#000000"},
         "contributes": {
             "commands": get_commands_for_json(),
+            "submenus": get_submenus(),
             "menus": get_menus(),
             "semanticTokenScopes": [
                 {

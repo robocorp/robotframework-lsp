@@ -149,6 +149,9 @@ class JsonRpcStreamReader(object):
         self._queue = queue.Queue()
         self._reader_thread = None
 
+    def get_read_queue(self):
+        return self._queue
+
     def close(self):
         pass
         # We don't close the reader because it can deadlock if someone
@@ -170,8 +173,14 @@ class JsonRpcStreamReader(object):
                 msg = self._queue.get()
                 if msg is None:
                     break
+
                 try:
-                    message_consumer(msg)
+                    if hasattr(msg, "__call__"):
+                        # Clients can use get_read_queue().put(lambda: ...)
+                        # to process something in the main thread with a callable.
+                        msg()
+                    else:
+                        message_consumer(msg)
                 except:
                     log.exception("Error processing JSON message %s", msg)
                     continue

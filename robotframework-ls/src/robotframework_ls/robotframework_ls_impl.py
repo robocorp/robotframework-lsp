@@ -8,13 +8,15 @@ import os
 import time
 from robotframework_ls.constants import DEFAULT_COMPLETIONS_TIMEOUT
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Any, Optional, Dict
+from typing import Any, Optional, Dict, Sequence, Generator, Set, ContextManager
 from robocorp_ls_core.protocols import (
     IConfig,
     IWorkspace,
     IIdMessageMatcher,
     IRobotFrameworkApiClient,
     IMonitor,
+    IEndPoint,
+    IProgressReporter,
 )
 from pathlib import Path
 from robotframework_ls.ep_providers import (
@@ -43,6 +45,8 @@ from robotframework_ls.commands import (
     ROBOT_START_INDEXING_INTERNAL,
     ROBOT_WAIT_FULL_TEST_COLLECTION_INTERNAL,
     ROBOT_RF_INFO_INTERNAL,
+    ROBOT_LINT_WORKSPACE,
+    ROBOT_LINT_EXPLORER,
 )
 from robocorp_ls_core.jsonrpc.exceptions import JsonRpcException
 import weakref
@@ -120,19 +124,31 @@ def run_in_new_thread(func, thread_name):
 
 
 class _LintManager(object):
-    def __init__(self, server_manager, lsp_messages) -> None:
+    def __init__(
+        self, server_manager, lsp_messages, endpoint: IEndPoint, read_queue
+    ) -> None:
         import threading
+        import queue
         from robotframework_ls.server_manager import ServerManager
 
         self._server_manager: ServerManager = server_manager
         self._lsp_messages = lsp_messages
+        self._endpoint = endpoint
+        self._read_queue: queue.Queue = read_queue
 
         self._next_id = partial(next, itertools.count())
-        self._doc_id_to_info: Dict[str, _CurrLintInfo] = {}
+
         self._lock = threading.Lock()
+        self._doc_id_to_info: Dict[str, _CurrLintInfo] = {}  # requires lock
+        self._uris_to_lint: Set[str] = set()  # requires lock
+
+        self._progress_context: Optional[ContextManager[IProgressReporter]] = None
+        self._progress_reporter: Optional[IProgressReporter] = None
 
     def schedule_lint(self, doc_uri: str, is_saved: bool, timeout: float) -> None:
         self.cancel_lint(doc_uri)
+
+        # Note: this call must be done in the main thread.
         rf_lint_api_client = self._server_manager.get_lint_rf_api_client(doc_uri)
         if rf_lint_api_client is None:
             log.info("Unable to get lint api for: %s", doc_uri)
@@ -141,13 +157,62 @@ class _LintManager(object):
         lock = self._lock
         doc_id_to_info = self._doc_id_to_info
 
+        weak_self = weakref.ref(self)
+
         def on_finish(curr_info: _CurrLintInfo):
+            from robocorp_ls_core.progress_report import progress_context
+
             # When it's finished, remove it from our references (if it's still
             # the current one...).
+            #
+            # Also, if we have remaining items which were manually scheduled,
+            # we need to lint those.
             try:
+                s = weak_self()
+                next_uri_to_lint = None
+                remaining_count = 0
                 with lock:
                     if doc_id_to_info.get(curr_info.doc_uri) is curr_info:
                         del doc_id_to_info[curr_info.doc_uri]
+
+                    if s is not None:
+                        if self._progress_reporter is not None:
+                            if self._progress_reporter.cancelled:
+                                s._uris_to_lint.clear()
+
+                        if s._uris_to_lint:
+                            next_uri_to_lint = s._uris_to_lint.pop()
+                            remaining_count = len(self._uris_to_lint)
+
+                    if self._progress_context is None:
+                        if remaining_count > 0:
+                            self._progress_context = progress_context(
+                                self._endpoint,
+                                "Linting files... ",
+                                None,
+                                cancellable=True,
+                            )
+                            self._progress_reporter = self._progress_context.__enter__()
+                    else:
+                        if remaining_count == 0:
+                            self._progress_context.__exit__(None, None, None)
+                            self._progress_context = None
+                            self._progress_reporter = None
+                        else:
+                            if self._progress_reporter is not None:
+                                self._progress_reporter.set_additional_info(
+                                    f"(remaining: {remaining_count})"
+                                )
+
+                if next_uri_to_lint and s is not None:
+                    # As schedule lint must be done in the main thread, we
+                    # we put an item in the queue to process the main thread.
+                    def _schedule():
+                        s = weak_self()
+                        if s is not None:
+                            s.schedule_lint(next_uri_to_lint, True, 0.0)
+
+                    self._read_queue.put(_schedule)
             except:
                 log.exception("Unhandled error on lint finish.")
 
@@ -173,6 +238,44 @@ class _LintManager(object):
                 log.debug("Cancel lint for: %s", doc_uri)
 
                 curr_info.cancel()
+
+    def schedule_manual_lint(self, lint_paths: Sequence[str]) -> None:
+        """
+        This method is called to lint the given paths and provide the diagnostics
+        as needed.
+
+        It doesn't require files to be open and folders are recursively checked
+        for files (.robot and .resource files).
+
+        :param lint_paths: The paths that should be linted.
+        """
+        from robocorp_ls_core import uris
+
+        new_uris_to_lint_set = set()
+
+        for path in lint_paths:
+            if path.lower().endswith((".robot", ".resource")):
+                uri = uris.from_fs_path(str(path))
+                new_uris_to_lint_set.add(uri)
+                continue
+
+            p = Path(path)
+            if not p.is_dir():
+                continue
+
+            for f in p.rglob("*"):
+                if f.suffix.lower() in (".robot", ".resource"):
+                    uri = uris.from_fs_path(str(f))
+                    new_uris_to_lint_set.add(uri)
+
+        next_uri_to_lint = None
+        with self._lock:
+            self._uris_to_lint.update(new_uris_to_lint_set)
+            if new_uris_to_lint_set:
+                next_uri_to_lint = new_uris_to_lint_set.pop()
+
+        if next_uri_to_lint:
+            self.schedule_lint(next_uri_to_lint, True, 0.0)
 
 
 from robocorp_ls_core.command_dispatcher import _CommandDispatcher
@@ -278,7 +381,12 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         remote_observer.start_server(log_file=log_file, verbose=verbose)
 
         self._server_manager = ServerManager(self._pm, language_server=self)
-        self._lint_manager = _LintManager(self._server_manager, self._lsp_messages)
+        self._lint_manager = _LintManager(
+            self._server_manager,
+            self._lsp_messages,
+            self._endpoint,
+            self._jsonrpc_stream_reader.get_read_queue(),
+        )
         self._robot_framework_ls_completion_impl = _RobotFrameworkLsCompletionImpl(
             self._server_manager, self
         )
@@ -440,6 +548,47 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     @command_dispatcher(ROBOT_START_INDEXING_INTERNAL)
     def _start_indexing(self, *arguments):
         self._server_manager.get_regular_rf_api_client("")
+
+    @command_dispatcher(ROBOT_LINT_WORKSPACE)
+    def _lint_workspace(self, *arguments):
+        folder_paths = self.workspace.get_folder_paths()
+        self._lint_manager.schedule_manual_lint(folder_paths)
+
+    @command_dispatcher(ROBOT_LINT_EXPLORER)
+    def _lint_explorer(self, current_item, selection=None):
+        if not selection:
+            log.critical("The selection must be given for %s", ROBOT_LINT_EXPLORER)
+            return
+
+        if not isinstance(selection, (list, tuple)):
+            log.critical(
+                "The selection must be a list or tuple for %s. Found: %r",
+                ROBOT_LINT_EXPLORER,
+                selection,
+            )
+            return
+
+        paths_to_analyze = set()
+        for item in selection:
+            if not isinstance(item, dict):
+                log.critical(
+                    "Expected item to be a dict for %s. Found: %r",
+                    ROBOT_LINT_EXPLORER,
+                    item,
+                )
+                continue
+
+            fs_path = item.get("fsPath")
+            if not fs_path:
+                log.critical(
+                    "Expected item to be a dict with fsPath for %s. Found: %r",
+                    ROBOT_LINT_EXPLORER,
+                    item,
+                )
+                continue
+
+            paths_to_analyze.add(fs_path)
+        self._lint_manager.schedule_manual_lint(paths_to_analyze)
 
     def m_robot__provide_evaluatable_expression(
         self, uri: str, position: PositionTypedDict

@@ -18,9 +18,10 @@ log = get_logger(__name__)
 
 
 class _MessageMatcher(object):
-    def __init__(self):
+    def __init__(self, remove_on_match=True):
         self.event = threading.Event()
         self.msg = None
+        self.remove_on_match = remove_on_match
 
     def notify(self, msg):
         # msg can be None if the communication was finished in the meanwhile.
@@ -46,11 +47,11 @@ class _IdMessageMatcher(_MessageMatcher):
 
 
 class _PatternMessageMatcher(_MessageMatcher):
-    def __init__(self, message_pattern):
+    def __init__(self, message_pattern: Dict[str, Any], remove_on_match: bool = True):
         self.message_pattern = message_pattern
-        _MessageMatcher.__init__(self)
+        _MessageMatcher.__init__(self, remove_on_match=remove_on_match)
 
-    def matches(self, msg):
+    def matches(self, msg: Dict[str, Any]):
         for key, val in self.message_pattern.items():
             if msg.get(key) != val:
                 return False
@@ -217,7 +218,8 @@ class _ReaderThread(threading.Thread):
                     notify_matchers.append(message_matcher)
 
             for message_matcher in notify_matchers:
-                del self._pattern_message_matchers[id(message_matcher)]
+                if message_matcher.remove_on_match:
+                    del self._pattern_message_matchers[id(message_matcher)]
 
             if "id" in msg:
                 message_matcher = self._id_message_matchers.pop(msg["id"], None)
@@ -255,7 +257,9 @@ class _ReaderThread(threading.Thread):
             except:
                 log.exception("Error processing: %s", msg)
 
-    def obtain_pattern_message_matcher(self, message_pattern):
+    def obtain_pattern_message_matcher(
+        self, message_pattern: Dict[str, Any], remove_on_match: bool = True
+    ):
         """
         :param message_pattern:
             Obtains a matcher which will be notified when the given message pattern is
@@ -267,7 +271,9 @@ class _ReaderThread(threading.Thread):
         with self._lock:
             if self._finished:
                 return None
-            message_matcher = _PatternMessageMatcher(message_pattern)
+            message_matcher = _PatternMessageMatcher(
+                message_pattern, remove_on_match=remove_on_match
+            )
             self._pattern_message_matchers[id(message_matcher)] = message_matcher
             return message_matcher
 
@@ -377,8 +383,12 @@ class LanguageServerClientBase(object):
         return message_matcher.msg
 
     @implements(ILanguageServerClientBase.obtain_pattern_message_matcher)
-    def obtain_pattern_message_matcher(self, message_pattern):
-        return self._reader_thread.obtain_pattern_message_matcher(message_pattern)
+    def obtain_pattern_message_matcher(
+        self, message_pattern, remove_on_match: bool = True
+    ):
+        return self._reader_thread.obtain_pattern_message_matcher(
+            message_pattern, remove_on_match=remove_on_match
+        )
 
     @implements(ILanguageServerClientBase.obtain_id_message_matcher)
     def obtain_id_message_matcher(self, message_id):

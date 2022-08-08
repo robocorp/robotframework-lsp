@@ -140,6 +140,17 @@ COMMANDS: List[Command] = [
         server_handled=True,
         hide_from_command_palette=True,
     ),
+    Command(
+        "robot.lint.workspace",
+        "Lint all files in the workspace.",
+        server_handled=True,
+    ),
+    Command(
+        "robot.lint.explorer",
+        "Lint",
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
 ]
 
 
