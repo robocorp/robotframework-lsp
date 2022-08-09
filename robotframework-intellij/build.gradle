@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '0.49.0'
+version '1.0.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,36 +50,22 @@ intellij {
 
 patchPluginXml {
     changeNotes """
-    Release 0.48.2
-    
-    <ul>
-    <li>New setting <strong>robot.completions.keywords.argumentsSeparator</strong> allows customizing spacing betwen keyword and arguments when auto-completing Keyword with arguments.</li>
-    </ul>
-    
-    Release 0.49.0
+    Release 1.0.0
     </p>
     
     <ul>
   
-    <li>[Intellij] Support for CommonMark and not just plain Markdown.</li>
-    <li>[Intellij] Provide hover docs even if definition cannot be found.</li>
-    <li>Zombie processes are no longer automatically killed after doing a Robot Framework launch.</li>
+    <li>Support for PyCharm 22.2</li>
+    <li>Consider default value when resolving environment variable.</li>
+    <li>Recursively resolve variables and provide better error messages on failure conditions.</li>
+    <li>If a resource/library/variable import is not found and its name has variables, show the resolved name.</li>
+    <li>Report error when multiple keywords with the same name are found.</li>
     <ul>
-        <li>It's possible to enable the previous behavior by setting an environment variable such as: <strong>RFLS_KILL_ZOMBIE_PROCESSES=1</strong>.</li>
+      <li>Can be disabled with: <strong>robot.lint.keywordResolvesToMultipleKeywords: false</strong></li>
     </ul>
-    <li>Fix issue where replacement offset in section completion was wrong.</li>
-    <li>Properly consider extended part of variables in expressions (fixes issue which could make variable not be resolved).</li>
-    <li>Resolve variable files imported as modules.</li>
-    <li>Vendored Robocop upgraded to 2.2.0.</li>
-    <li>Robocop is always run with the project root as the cwd.</li>
-    <li>By default Failures/Errors inside a TRY..EXCEPT statement won't suspend execution while debugging.</li>
-    <li>Variables are loaded from classes in Python files.</li>
-    <li>Fixes to support Robot Framework 5.1:</li>
-    <ul>
-        <li>Deal with <strong>robot.running.builder.testsettings.TestDefaults</strong> renamed to <strong>robot.running.builder.settings.Defaults</strong>.</li>
-        <li>Consider new <strong>TASK_HEADER</strong> in AST.</li>
-        <li>Consider that <strong>KeywordCall</strong> is given instead of <strong>EmptyLine</strong> in invalid assign in keyword.</li>
-    </ul>
+    <li>Fix issues in file system notifications.</li>
+    <li>Fixed issue where doc highlight could raise error with unclosed variable.</li>
+    <li>Fixed issue where a given library would be considered more than once when collecting keywords.</li>
 
     <br>
     Current feature set:<br>

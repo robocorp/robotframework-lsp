@@ -1,3 +1,17 @@
+New in 1.0.0 (2022-08-09)
+-----------------------------
+
+- Support for PyCharm 22.2
+- Consider default value when resolving environment variable. [#715](https://github.com/robocorp/robotframework-lsp/issues/715)
+- Recursively resolve variables and provide better error messages on failure conditions. [#715](https://github.com/robocorp/robotframework-lsp/issues/715)
+- If a resource/library/variable import is not found and its name has variables, show the resolved name.
+- Report error when multiple keywords with the same name are found. [#432](https://github.com/robocorp/robotframework-lsp/issues/432)
+  - Can be disabled with: `robot.lint.keywordResolvesToMultipleKeywords: false`
+- Fix issues in file system notifications. [#710](https://github.com/robocorp/robotframework-lsp/issues/710)
+- Fixed issue where doc highlight could raise error with unclosed variable.
+- Fixed issue where a given library would be considered more than once when collecting keywords.
+
+
 New in 0.49.0 (2022-07-20)
 -----------------------------
 

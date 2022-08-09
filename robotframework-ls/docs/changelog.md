@@ -1,4 +1,4 @@
-NEXT
+New in 1.0.0 (2022-08-09)
 -----------------------------
 
 - Provided a way to manually request linting. [#611](https://github.com/robocorp/robotframework-lsp/issues/611)
