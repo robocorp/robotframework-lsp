@@ -2364,6 +2364,14 @@ My Test
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
+def test_no_duplicated_keywords_different_imports(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case_duplicated_from_lib", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("root.robot", True)
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
 def test_duplicated_overrides_builtin(workspace, libspec_manager, data_regression):
     workspace.set_root("case_duplicated", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case.robot")

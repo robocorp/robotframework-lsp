@@ -11,7 +11,7 @@ from robotframework_ls.impl.protocols import (
     LibraryDependencyInfo,
     AbstractKeywordCollector,
 )
-from typing import Sequence, List, Dict, Optional, Iterator
+from typing import Sequence, List, Dict, Optional, Iterator, Any
 from robotframework_ls.impl.text_utilities import build_keyword_docs_with_signature
 from robocorp_ls_core.lsp import MarkupContentTypedDict, MarkupKind
 
@@ -320,6 +320,7 @@ def _collect_libraries_keywords(
     completion_context: ICompletionContext,
     library_infos: Iterator[LibraryDependencyInfo],
     collector: IKeywordCollector,
+    memo: Dict[Any, Any],
 ):
     from robotframework_ls.impl.libspec_manager import LibspecManager
     from robotframework_ls.impl.protocols import ILibraryDocOrError
@@ -342,7 +343,19 @@ def _collect_libraries_keywords(
             )
         )
         library_doc = library_doc_or_error.library_doc
+
         if library_doc is not None:
+            key: Any = library_doc.source
+            if not key:
+                key = library_doc
+            key = (key, library_info.alias)
+
+            visited = memo.get(key, False)
+            if visited:
+                continue
+            else:
+                memo[key] = True
+
             #: :type keyword: KeywordDoc
             for keyword in library_doc.keywords:
                 keyword_name = keyword.name
@@ -431,10 +444,12 @@ def _collect_from_context(
     _collect_current_doc_keywords(completion_context, collector)
 
     completion_context.check_cancelled()
+    memo: Dict[Any, Any] = {}
     _collect_libraries_keywords(
         completion_context,
         dependency_graph.iter_libraries(completion_context.doc.uri),
         collector,
+        memo,
     )
 
     for node, resource_doc in dependency_graph.iter_all_resource_imports_with_docs():
@@ -500,6 +515,7 @@ def _collect_from_context(
             new_ctx,
             dependency_graph.iter_libraries(resource_doc.uri),
             collector,
+            memo,
         )
 
 
