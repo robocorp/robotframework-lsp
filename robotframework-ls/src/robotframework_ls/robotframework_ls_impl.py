@@ -580,12 +580,14 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
             fs_path = item.get("fsPath")
             if not fs_path:
-                log.critical(
-                    "Expected item to be a dict with fsPath for %s. Found: %r",
-                    ROBOT_LINT_EXPLORER,
-                    item,
-                )
-                continue
+                fs_path = item.get("path")
+                if not fs_path:
+                    log.critical(
+                        "Expected item to be a dict with fsPath or path for %s. Found: %r",
+                        ROBOT_LINT_EXPLORER,
+                        item,
+                    )
+                    continue
 
             paths_to_analyze.add(fs_path)
         self._lint_manager.schedule_manual_lint(paths_to_analyze)

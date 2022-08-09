@@ -1,7 +1,9 @@
 NEXT
 -----------------------------
 
-- Provided a way to manually request linting for all files on the workspace or explorer selection (by right-clicking selection in explorer). [#611](https://github.com/robocorp/robotframework-lsp/issues/611)
+- Provided a way to manually request linting. [#611](https://github.com/robocorp/robotframework-lsp/issues/611)
+  - For all files on the workspace using the command: `Robot Framework: Lint all files in the workspace`.
+  - Given explorer selection (by right-clicking selection in explorer) and selecting `Robot Framework > Lint`.
 - If the user presses the stop button during a launch, subprocesses are killed regardless of the value of `RFLS_KILL_ZOMBIE_PROCESSES`.
 - Consider default value when resolving environment variable. [#715](https://github.com/robocorp/robotframework-lsp/issues/715)
 - Recursively resolve variables and provide better error messages on failure conditions. [#715](https://github.com/robocorp/robotframework-lsp/issues/715)
@@ -10,6 +12,7 @@ NEXT
   - Can be disabled with: `robot.lint.keywordResolvesToMultipleKeywords: false`
 - Fix issues in file system notifications. [#710](https://github.com/robocorp/robotframework-lsp/issues/710)
 - Fixed issue where doc highlight could raise error with unclosed variable.
+- Fixed issue where a given library would be considered more than once when collecting keywords.
 - Interactive console
   - `robot.interactiveConsole.arguments` can be used to customize the arguments initializing the interactive console. [#648](https://github.com/robocorp/robotframework-lsp/issues/648)
   - `robot.variables` defined are now automatically loaded in the interactive console.
