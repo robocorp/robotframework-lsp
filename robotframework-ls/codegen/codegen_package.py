@@ -58,6 +58,7 @@ def get_json_contents():
     from robotframework_ls import __version__
     from commands import get_commands_for_json
     from commands import get_activation_events_for_json
+    from settings import get_settings_for_json
 
     base_package_contents = {
         "name": "robotframework-lsp",
@@ -113,156 +114,7 @@ def get_json_contents():
             "configuration": {
                 "title": "Robot Framework Language Server Configuration",
                 "type": "object",
-                "properties": {
-                    "robot.language-server.python": {
-                        "type": "string",
-                        "default": "",
-                        "description": "Path to the python executable used to start the Robot Framework Language Server (the default is searching python on the PATH).\nRequires a restart to take effect.",
-                    },
-                    "robot.language-server.args": {
-                        "type": "array",
-                        "default": [],
-                        "description": 'Arguments to be passed to the Robot Framework Language Server (i.e.: ["-vv", "--log-file=~/robotframework_ls.log"]).\nRequires a restart to take effect.',
-                    },
-                    "robot.language-server.tcp-port": {
-                        "type": "number",
-                        "default": 0,
-                        "description": "If the port is specified, connect to the language server previously started at the given port.\nRequires a restart to take effect.",
-                    },
-                    "robot.python.executable": {
-                        "type": "string",
-                        "default": "",
-                        "description": "Secondary python executable used to load user code and dependent libraries (the default is using the same python used for the language server).",
-                    },
-                    "robot.python.env": {
-                        "type": "object",
-                        "default": {},
-                        "description": 'Environment variables used to load user code and dependent libraries.\n(i.e.: {"MY_ENV_VAR": "some_value"})',
-                    },
-                    "robot.variables": {
-                        "type": "object",
-                        "default": {},
-                        "description": 'Custom variables passed to RobotFramework (used when resolving variables and automatically passed to the launch config as --variable entries).\n(i.e.: {"EXECDIR": "c:/my/proj/src"})',
-                    },
-                    "robot.loadVariablesFromArgumentsFile": {
-                        "type": "string",
-                        "default": "",
-                        "description": "Load variables for code-completion and code-analysis based on an arguments file. Multiple files accepted by separating with a comma.",
-                    },
-                    "robot.pythonpath": {
-                        "type": "array",
-                        "default": [],
-                        "description": 'Entries to be added to the PYTHONPATH (used when resolving resources and imports and automatically passed to the launch config as --pythonpath entries).\n(i.e.: ["c:/my/pro/src"])',
-                    },
-                    "robot.libraries.libdoc.needsArgs": {
-                        "type": "array",
-                        "default": ["remote", "fakerlib"],
-                        "description": 'Libraries which will generate a different set of keywords based on the arguments provided.\n(i.e.: ["remote", "fakerlib"])',
-                    },
-                    "robot.libraries.libdoc.preGenerate": {
-                        "type": "array",
-                        "default": [],
-                        "description": "List of libraries which should have the libspec pre-generated.",
-                    },
-                    "robot.codeFormatter": {
-                        "type": "string",
-                        "default": "builtinTidy",
-                        "description": "Allows the configuration of the code-formatter engine to be used.\nOne of: robotidy, builtinTidy.",
-                        "enum": ["robotidy", "builtinTidy"],
-                    },
-                    "robot.lint.robocop.enabled": {
-                        "type": "boolean",
-                        "default": False,
-                        "description": "Specifies whether to lint with Robocop.",
-                    },
-                    "robot.lint.enabled": {
-                        "type": "boolean",
-                        "default": True,
-                        "description": "Determines whether linting should be enabled.",
-                    },
-                    "robot.lint.undefinedKeywords": {
-                        "type": "boolean",
-                        "default": True,
-                        "description": "Reports undefined keywords when linting.",
-                    },
-                    "robot.lint.undefinedLibraries": {
-                        "type": "boolean",
-                        "default": True,
-                        "description": "Reports undefined libraries when linting.",
-                    },
-                    "robot.lint.undefinedResources": {
-                        "type": "boolean",
-                        "default": True,
-                        "description": "Reports undefined resources when linting.",
-                    },
-                    "robot.lint.undefinedVariableImports": {
-                        "type": "boolean",
-                        "default": True,
-                        "description": "Reports undefined variable imports when linting.",
-                    },
-                    "robot.lint.keywordCallArguments": {
-                        "type": "boolean",
-                        "default": True,
-                        "description": "Reports issues in keyword call arguments.",
-                    },
-                    "robot.lint.keywordResolvesToMultipleKeywords": {
-                        "type": "boolean",
-                        "default": True,
-                        "description": "Reports whenever a keyword call would resolve to more than one keyword.",
-                    },
-                    "robot.lint.variables": {
-                        "type": "boolean",
-                        "default": True,
-                        "description": "Reports issues in undefined variables.",
-                    },
-                    "robot.lint.ignoreVariables": {
-                        "type": "array",
-                        "default": [],
-                        "description": 'Don\'t report undefined variables for these variables (i.e.: ["Var1", "Var2"]).',
-                    },
-                    "robot.lint.ignoreEnvironmentVariables": {
-                        "type": "array",
-                        "default": [],
-                        "description": 'Don\'t report undefined environment variables for these variables (i.e.: ["VAR1", "VAR2"]).',
-                    },
-                    "robot.completions.section_headers.form": {
-                        "type": "string",
-                        "default": "plural",
-                        "description": "Defines how completions should be shown for section headers (i.e.: *** Setting(s) ***).\nOne of: plural, singular, both.",
-                        "enum": ["plural", "singular", "both"],
-                    },
-                    "robot.completions.keywords.format": {
-                        "type": "string",
-                        "default": "",
-                        "description": "Defines how keyword completions should be applied.\nOne of: First upper, Title Case, ALL UPPER, all lower.",
-                        "enum": ["First upper", "Title Case", "ALL UPPER", "all lower"],
-                    },
-                    "robot.completions.keywords.argumentsSeparator": {
-                        "type": "string",
-                        "default": "    ",
-                        "description": "Defines the string used to separate arguments when applying a Keyword completion with arguments.",
-                    },
-                    "robot.workspaceSymbolsOnlyForOpenDocs": {
-                        "type": "boolean",
-                        "default": False,
-                        "description": "Collecting workspace symbols can be resource intensive on big projects and may slow down code-completion, in this case, it's possible collect info only for open files on big projects.",
-                    },
-                    "robot.editor.4spacesTab": {
-                        "type": "boolean",
-                        "default": True,
-                        "description": "Replaces the key stroke of tab with 4 spaces. Set to 'false' to active VSCode default.",
-                    },
-                    "robot.codeLens.enable": {
-                        "type": "boolean",
-                        "default": True,
-                        "description": "Enables or disables code-lenses (Run/Debug/Interactive console)",
-                    },
-                    "robot.interactiveConsole.arguments": {
-                        "type": "array",
-                        "default": [],
-                        "description": 'The arguments with the options to be used to start an interactive console. i.e.: ["--output", "${workspaceRoot}/interactive_output.xml"]',
-                    },
-                },
+                "properties": get_settings_for_json(),
             },
             "languages": [
                 {
@@ -446,6 +298,68 @@ def write_py_commands():
     print("Written: %s" % (commands_py_file,))
 
 
+def write_py_settings():
+    from convert import convert_case_to_constant
+    import settings
+
+    settings_template = [
+        """# Warning: Don't edit file (autogenerated from python -m dev codegen).
+"""
+    ]
+
+    setting_constant_template = '%s = "%s"'
+
+    # Create the constants
+    for setting_name in settings.SETTINGS.keys():
+        settings_template.append(
+            setting_constant_template
+            % ("OPTION_" + convert_case_to_constant(setting_name), setting_name)
+        )
+
+    settings_template.append(
+        """
+ALL_ROBOT_OPTIONS = frozenset(
+    ("""
+    )
+
+    for setting_name in settings.SETTINGS.keys():
+        settings_template.append(
+            f"        OPTION_{convert_case_to_constant(setting_name)},"
+        )
+
+    settings_template.append(
+        """    )
+)
+"""
+    )
+
+    for settings_py_file in (
+        os.path.join(
+            vscode_py_src_dir,
+            "robotframework_ls",
+            "impl",
+            "robot_generated_lsp_constants.py",
+        ),
+        os.path.join(
+            vscode_py_src_dir,
+            "..",
+            "..",
+            "robotframework-interactive",
+            "src",
+            "robotframework_interactive",
+            "server",
+            "rf_interpreter_generated_lsp_constants.py",
+        ),
+    ):
+
+        with open(settings_py_file, "w") as stream:
+            stream.write("# fmt: off\n")
+            stream.write("\n".join(settings_template))
+            stream.write("\n# fmt: on\n")
+
+        print("Written: %s" % (settings_py_file,))
+
+
 root_dir = os.path.dirname(os.path.dirname(__file__))
 vscode_js_client_src_dir = os.path.join(root_dir, "vscode-client", "src")
 vscode_py_src_dir = os.path.join(root_dir, "src")
@@ -471,6 +385,8 @@ def main():
     write_to_package_json()
 
     write_py_commands()
+
+    write_py_settings()
 
     run_intellij_codegen()
 
