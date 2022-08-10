@@ -293,7 +293,11 @@ def code_lens_resolve(
 
 def code_lens(completion_context: ICompletionContext) -> List[CodeLensTypedDict]:
     import os
-    from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_SHOW_CODE_LENSES
+    from robotframework_ls.impl.robot_lsp_constants import (
+        OPTION_ROBOT_SHOW_CODE_LENSES,
+        OPTION_ROBOT_CODE_LENS_RUN_ENABLE,
+        OPTION_ROBOT_CODE_LENS_INTERACTIVE_CONSOLE_ENABLE,
+    )
 
     config = completion_context.config
     if config is not None and not config.get_setting(
@@ -308,6 +312,15 @@ def code_lens(completion_context: ICompletionContext) -> List[CodeLensTypedDict]
     if not path.endswith(ROBOT_FILE_EXTENSIONS):
         return []
 
-    code_lenses = code_lens_runs(completion_context)
-    code_lenses.extend(code_lens_rf_interactive(completion_context))
+    code_lenses = []
+
+    if config is None or config.get_setting(
+        OPTION_ROBOT_CODE_LENS_RUN_ENABLE, bool, True
+    ):
+        code_lenses.extend(code_lens_runs(completion_context))
+
+    if config is None or config.get_setting(
+        OPTION_ROBOT_CODE_LENS_INTERACTIVE_CONSOLE_ENABLE, bool, True
+    ):
+        code_lenses.extend(code_lens_rf_interactive(completion_context))
     return code_lenses

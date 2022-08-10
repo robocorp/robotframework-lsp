@@ -294,8 +294,11 @@ def camel_to_snake(name):
 
 
 IGNORE_PREFERENCES_NOT_APPLICABLE_TO_INTELLIJ = (
-    'robot.editor.4spacesTab',
-    'robot.interactiveConsole.arguments'
+    "robot.editor.4spacesTab",
+    "robot.interactiveConsole.arguments",
+    "robot.codeLens.enable",
+    "robot.codeLens.run.enable",
+    "robot.codeLens.interactiveConsole.enable",
     )
 
 

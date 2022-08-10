@@ -46,7 +46,6 @@ class RobotProjectPreferencesComponent {
     private final JBTextField robotCompletionsKeywordsFormat = new JBTextField();
     private final JBTextField robotCompletionsKeywordsArgumentsSeparator = new JBTextField();
     private final JBTextField robotWorkspaceSymbolsOnlyForOpenDocs = new JBTextField();
-    private final JBTextField robotCodeLensEnable = new JBTextField();
 
     public RobotProjectPreferencesComponent() {
         panel = FormBuilder.createFormBuilder()
@@ -102,8 +101,6 @@ class RobotProjectPreferencesComponent {
                 .addComponent(createJTextArea("Defines the string used to separate arguments when applying a Keyword completion with arguments.\n"))
                 .addLabeledComponent(new JBLabel("Workspace Symbols Only For Open Docs"), robotWorkspaceSymbolsOnlyForOpenDocs, 1, false)
                 .addComponent(createJTextArea("Collecting workspace symbols can be resource intensive on big projects and may slow down code-\ncompletion, in this case, it's possible collect info only for open files on big projects.\nNote: expected 'true' or 'false'\n"))
-                .addLabeledComponent(new JBLabel("Code Lens Enable"), robotCodeLensEnable, 1, false)
-                .addComponent(createJTextArea("Enables or disables code-lenses\n(Run/Debug/Interactive console)\nNote: expected 'true' or 'false'\n"))
                 
                 .addComponentFillVertically(new JPanel(), 0)
                 .getPanel();
@@ -362,15 +359,6 @@ class RobotProjectPreferencesComponent {
         robotWorkspaceSymbolsOnlyForOpenDocs.setText(newText);
     }
     
-    @NotNull
-    public String getRobotCodeLensEnable() {
-        return robotCodeLensEnable.getText();
-    }
-
-    public void setRobotCodeLensEnable (@NotNull String newText) {
-        robotCodeLensEnable.setText(newText);
-    }
-    
 
 }
 
@@ -517,10 +505,6 @@ public class RobotProjectPreferencesPage implements Configurable {
             return true;
         }
         
-        if(!settings.getRobotCodeLensEnable().equals(component.getRobotCodeLensEnable())){
-            return true;
-        }
-        
         return false;
     }
 
@@ -559,7 +543,6 @@ public class RobotProjectPreferencesPage implements Configurable {
         component.setRobotCompletionsKeywordsFormat(settings.getRobotCompletionsKeywordsFormat());
         component.setRobotCompletionsKeywordsArgumentsSeparator(settings.getRobotCompletionsKeywordsArgumentsSeparator());
         component.setRobotWorkspaceSymbolsOnlyForOpenDocs(settings.getRobotWorkspaceSymbolsOnlyForOpenDocs());
-        component.setRobotCodeLensEnable(settings.getRobotCodeLensEnable());
     }
 
     @Override
@@ -676,10 +659,6 @@ public class RobotProjectPreferencesPage implements Configurable {
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Workspace Symbols Only For Open Docs:\n" + s);
         }
-        s = settings.validateRobotCodeLensEnable(component.getRobotCodeLensEnable());
-        if(!s.isEmpty()) {
-            throw new ConfigurationException("Error in Code Lens Enable:\n" + s);
-        }
         
         settings.setRobotLanguageServerPython(component.getRobotLanguageServerPython());
         settings.setRobotLanguageServerArgs(component.getRobotLanguageServerArgs());
@@ -707,6 +686,5 @@ public class RobotProjectPreferencesPage implements Configurable {
         settings.setRobotCompletionsKeywordsFormat(component.getRobotCompletionsKeywordsFormat());
         settings.setRobotCompletionsKeywordsArgumentsSeparator(component.getRobotCompletionsKeywordsArgumentsSeparator());
         settings.setRobotWorkspaceSymbolsOnlyForOpenDocs(component.getRobotWorkspaceSymbolsOnlyForOpenDocs());
-        settings.setRobotCodeLensEnable(component.getRobotCodeLensEnable());
     }
 }

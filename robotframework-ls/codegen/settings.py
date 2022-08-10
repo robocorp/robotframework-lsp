@@ -140,7 +140,17 @@ SETTINGS = {
     "robot.codeLens.enable": {
         "type": "boolean",
         "default": True,
-        "description": "Enables or disables code-lenses (Run/Debug/Interactive console)",
+        "description": "Enables or disables all Robot Framework code-lenses.",
+    },
+    "robot.codeLens.run.enable": {
+        "type": "boolean",
+        "default": True,
+        "description": "Enables or disables the Run/Debug code-lenses.",
+    },
+    "robot.codeLens.interactiveConsole.enable": {
+        "type": "boolean",
+        "default": True,
+        "description": "Enables or disables the Interactive Console code-lenses.",
     },
     "robot.interactiveConsole.arguments": {
         "type": "array",
