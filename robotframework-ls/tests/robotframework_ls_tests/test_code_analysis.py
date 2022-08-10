@@ -2631,3 +2631,28 @@ ${RESOURCES}    %{not_there1}${not_there2}/bar
 """
 
     _collect_errors(workspace, doc, data_regression)
+
+
+def test_code_analysis_unused_keyword(workspace, libspec_manager, data_regression):
+    from robotframework_ls.robot_config import RobotConfig
+    from robotframework_ls.impl.robot_generated_lsp_constants import (
+        OPTION_ROBOT_LINT_UNUSED_KEYWORD,
+    )
+
+    config = RobotConfig()
+    config.update({OPTION_ROBOT_LINT_UNUSED_KEYWORD: True})
+    libspec_manager.config = config
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("my/bar/keywords.resource")
+    doc.source = """
+*** Keywords ***
+Common Keyword
+    Log to console    Common keyword
+    
+Keyword 2
+    Log to console    Common keyword
+    
+    """
+
+    _collect_errors(workspace, doc, data_regression, config=config)

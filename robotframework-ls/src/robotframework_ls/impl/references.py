@@ -316,7 +316,7 @@ def references(
                     as_keyword_definition = cast_to_keyword_definition(definition)
                     if as_keyword_definition:
                         keyword_found = as_keyword_definition.keyword_found
-                        return _references_for_keyword_found(
+                        return references_for_keyword_found(
                             completion_context, keyword_found, include_declaration
                         )
 
@@ -328,7 +328,7 @@ def references(
         keyword_definition, _usage_info = current_keyword_definition_and_usage_info
 
         keyword_found = keyword_definition.keyword_found
-        return _references_for_keyword_found(
+        return references_for_keyword_found(
             completion_context, keyword_found, include_declaration
         )
 
@@ -548,11 +548,11 @@ def _references_for_variable_found(
     return ret.lst
 
 
-def _references_for_keyword_found(
+def references_for_keyword_found(
     completion_context: ICompletionContext,
     keyword_found: IKeywordFound,
     include_declaration: bool,
-):
+) -> list:
     from robocorp_ls_core import uris
     from robotframework_ls.impl.text_utilities import normalize_robot_name
 

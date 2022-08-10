@@ -110,6 +110,11 @@ SETTINGS = {
         "default": [],
         "description": 'Don\'t report undefined environment variables for these variables (i.e.: ["VAR1", "VAR2"]).',
     },
+    "robot.lint.unusedKeyword": {
+        "type": "boolean",
+        "default": False,
+        "description": "Reports whether a keyword is not used anywhere in the workspace.",
+    },
     "robot.completions.section_headers.form": {
         "type": "string",
         "default": "plural",

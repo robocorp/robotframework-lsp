@@ -42,6 +42,7 @@ class RobotProjectPreferencesComponent {
     private final JBTextField robotLintVariables = new JBTextField();
     private final JBTextField robotLintIgnoreVariables = new JBTextField();
     private final JBTextField robotLintIgnoreEnvironmentVariables = new JBTextField();
+    private final JBTextField robotLintUnusedKeyword = new JBTextField();
     private final JBTextField robotCompletionsSectionHeadersForm = new JBTextField();
     private final JBTextField robotCompletionsKeywordsFormat = new JBTextField();
     private final JBTextField robotCompletionsKeywordsArgumentsSeparator = new JBTextField();
@@ -93,6 +94,8 @@ class RobotProjectPreferencesComponent {
                 .addComponent(createJTextArea("Don't report undefined variables for these variables\n(i.e.: [\"Var1\", \"Var2\"]).\nNote: expected format: JSON Array\n"))
                 .addLabeledComponent(new JBLabel("Lint Ignore Environment Variables"), robotLintIgnoreEnvironmentVariables, 1, false)
                 .addComponent(createJTextArea("Don't report undefined environment variables for these variables\n(i.e.: [\"VAR1\", \"VAR2\"]).\nNote: expected format: JSON Array\n"))
+                .addLabeledComponent(new JBLabel("Lint Unused Keyword"), robotLintUnusedKeyword, 1, false)
+                .addComponent(createJTextArea("Reports whether a keyword is not used anywhere in the workspace.\nNote: expected 'true' or 'false'\n"))
                 .addLabeledComponent(new JBLabel("Completions Section Headers Form"), robotCompletionsSectionHeadersForm, 1, false)
                 .addComponent(createJTextArea("Defines how completions should be shown for section headers\n(i.e.: *** Setting(s) ***). One of: plural, singular, both.\n"))
                 .addLabeledComponent(new JBLabel("Completions Keywords Format"), robotCompletionsKeywordsFormat, 1, false)
@@ -324,6 +327,15 @@ class RobotProjectPreferencesComponent {
     }
     
     @NotNull
+    public String getRobotLintUnusedKeyword() {
+        return robotLintUnusedKeyword.getText();
+    }
+
+    public void setRobotLintUnusedKeyword (@NotNull String newText) {
+        robotLintUnusedKeyword.setText(newText);
+    }
+    
+    @NotNull
     public String getRobotCompletionsSectionHeadersForm() {
         return robotCompletionsSectionHeadersForm.getText();
     }
@@ -489,6 +501,10 @@ public class RobotProjectPreferencesPage implements Configurable {
             return true;
         }
         
+        if(!settings.getRobotLintUnusedKeyword().equals(component.getRobotLintUnusedKeyword())){
+            return true;
+        }
+        
         if(!settings.getRobotCompletionsSectionHeadersForm().equals(component.getRobotCompletionsSectionHeadersForm())){
             return true;
         }
@@ -539,6 +555,7 @@ public class RobotProjectPreferencesPage implements Configurable {
         component.setRobotLintVariables(settings.getRobotLintVariables());
         component.setRobotLintIgnoreVariables(settings.getRobotLintIgnoreVariables());
         component.setRobotLintIgnoreEnvironmentVariables(settings.getRobotLintIgnoreEnvironmentVariables());
+        component.setRobotLintUnusedKeyword(settings.getRobotLintUnusedKeyword());
         component.setRobotCompletionsSectionHeadersForm(settings.getRobotCompletionsSectionHeadersForm());
         component.setRobotCompletionsKeywordsFormat(settings.getRobotCompletionsKeywordsFormat());
         component.setRobotCompletionsKeywordsArgumentsSeparator(settings.getRobotCompletionsKeywordsArgumentsSeparator());
@@ -643,6 +660,10 @@ public class RobotProjectPreferencesPage implements Configurable {
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Lint Ignore Environment Variables:\n" + s);
         }
+        s = settings.validateRobotLintUnusedKeyword(component.getRobotLintUnusedKeyword());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Lint Unused Keyword:\n" + s);
+        }
         s = settings.validateRobotCompletionsSectionHeadersForm(component.getRobotCompletionsSectionHeadersForm());
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Completions Section Headers Form:\n" + s);
@@ -682,6 +703,7 @@ public class RobotProjectPreferencesPage implements Configurable {
         settings.setRobotLintVariables(component.getRobotLintVariables());
         settings.setRobotLintIgnoreVariables(component.getRobotLintIgnoreVariables());
         settings.setRobotLintIgnoreEnvironmentVariables(component.getRobotLintIgnoreEnvironmentVariables());
+        settings.setRobotLintUnusedKeyword(component.getRobotLintUnusedKeyword());
         settings.setRobotCompletionsSectionHeadersForm(component.getRobotCompletionsSectionHeadersForm());
         settings.setRobotCompletionsKeywordsFormat(component.getRobotCompletionsKeywordsFormat());
         settings.setRobotCompletionsKeywordsArgumentsSeparator(component.getRobotCompletionsKeywordsArgumentsSeparator());

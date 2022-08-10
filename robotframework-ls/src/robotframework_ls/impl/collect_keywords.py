@@ -274,8 +274,8 @@ class _KeywordFoundFromLibrary(object):
         _: IKeywordFound = check_implements(self)
 
 
-def _collect_completions_from_ast(
-    ast, completion_context: ICompletionContext, collector
+def collect_keywords_from_ast(
+    ast, completion_context: ICompletionContext, collector: IKeywordCollector
 ):
     from robotframework_ls.impl import ast_utils
     from robocorp_ls_core.lsp import CompletionItemKind
@@ -313,7 +313,7 @@ def _collect_current_doc_keywords(
     # Get keywords defined in the file itself
 
     ast = completion_context.get_ast()
-    _collect_completions_from_ast(ast, completion_context, collector)
+    collect_keywords_from_ast(ast, completion_context, collector)
 
 
 def _collect_libraries_keywords(

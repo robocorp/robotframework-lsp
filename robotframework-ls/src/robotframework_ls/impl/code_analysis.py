@@ -16,6 +16,7 @@ from robotframework_ls.impl.protocols import (
     IVariableFound,
     AbstractVariablesCollector,
     VariableKind,
+    AbstractKeywordCollector,
 )
 from robotframework_ls.impl.robot_lsp_constants import (
     OPTION_ROBOT_LINT_VARIABLES,
@@ -560,13 +561,77 @@ def collect_analysis_errors(initial_completion_context):
         except:
             log.exception("Exception collecting errors")
 
+    if len(errors) >= MAX_ERRORS:
+        return errors
+
     for error in _collect_undefined_variables_errors(initial_completion_context):
         errors.append(error)
         if len(errors) >= MAX_ERRORS:
             # i.e.: Collect at most 100 errors
             break
 
+    if len(errors) >= MAX_ERRORS:
+        return errors
+
+    _collect_unused_keyword_errors(initial_completion_context, errors)
+
     return errors
+
+
+class _NoReferencesErrorsKeywordsCollector(AbstractKeywordCollector):
+    def __init__(self, errors):
+        from robocorp_ls_core.lsp import Error
+
+        self.errors: List[Error] = errors
+
+    def accepts(self, keyword_name: str) -> bool:
+        return True
+
+    def on_keyword(self, keyword_found: IKeywordFound):
+        from robocorp_ls_core.lsp import Error
+
+        if len(self.errors) >= MAX_ERRORS:
+            # i.e.: Collect at most 100 errors
+            return
+
+        from robotframework_ls.impl.references import references_for_keyword_found
+
+        completion_context = keyword_found.completion_context
+        assert completion_context
+        references = references_for_keyword_found(
+            completion_context, keyword_found, include_declaration=False
+        )
+        if not references:
+            start = (keyword_found.lineno, keyword_found.col_offset)
+            end = (keyword_found.end_lineno, keyword_found.end_col_offset)
+
+            error = Error(
+                f"The keyword: '{keyword_found.keyword_name}' is not used in the workspace.",
+                start,
+                end,
+                DiagnosticSeverity.Warning,
+            )
+            self.errors.append(error)
+
+
+def _collect_unused_keyword_errors(completion_context: ICompletionContext, errors):
+    from robotframework_ls.impl.robot_lsp_constants import (
+        OPTION_ROBOT_LINT_UNUSED_KEYWORD,
+    )
+
+    config = completion_context.config
+
+    if config is not None and config.get_setting(
+        OPTION_ROBOT_LINT_UNUSED_KEYWORD,
+        bool,
+        False,
+    ):
+
+        from robotframework_ls.impl.collect_keywords import collect_keywords_from_ast
+
+        ast = completion_context.get_ast()
+        collector = _NoReferencesErrorsKeywordsCollector(errors)
+        collect_keywords_from_ast(ast, completion_context, collector)
 
 
 @lru_cache(maxsize=1000)
