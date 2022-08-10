@@ -22,11 +22,15 @@ Steps to do a new release
 
 - Send release msg. i.e.:
 
-Hi @channel, `Robot Framework Language Server 1.0.0` is now available.
+Hi @channel,
 
-Changes in this release:
+I'm happy to announce the release of `Robot Framework Language Server 1.0.0`.
 
-...
+## *New features*
+
+
+## *Bugfixes*
+
 
 Official clients supported: `VSCode` and `Intellij`.
 Other editors supporting language servers can get it with: `pip install robotframework-lsp`.

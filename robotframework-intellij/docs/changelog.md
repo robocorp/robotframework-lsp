@@ -1,15 +1,22 @@
 New in 1.0.0 (2022-08-09)
 -----------------------------
 
+### New features
+
 - Support for PyCharm 22.2
-- Consider default value when resolving environment variable. [#715](https://github.com/robocorp/robotframework-lsp/issues/715)
-- Recursively resolve variables and provide better error messages on failure conditions. [#715](https://github.com/robocorp/robotframework-lsp/issues/715)
-- If a resource/library/variable import is not found and its name has variables, show the resolved name.
-- Report error when multiple keywords with the same name are found. [#432](https://github.com/robocorp/robotframework-lsp/issues/432)
-  - Can be disabled with: `robot.lint.keywordResolvesToMultipleKeywords: false`
-- Fix issues in file system notifications. [#710](https://github.com/robocorp/robotframework-lsp/issues/710)
-- Fixed issue where doc highlight could raise error with unclosed variable.
-- Fixed issue where a given library would be considered more than once when collecting keywords.
+- When a keyword call would resolve to more than one keyword definition with the same name an error is reported. [#432](https://github.com/robocorp/robotframework-lsp/issues/432)
+- Note: it can be disabled with `"robot.lint.keywordResolvesToMultipleKeywords": false`.
+- If a resource/library/variable import is not found and its name has variables, the resolved name is shown.
+
+### Bugfixes
+
+- If the stop button is pressed in a launch, subprocesses are killed regardless of the value of `RFLS_KILL_ZOMBIE_PROCESSES`.
+- The default value (which may resolve to a variable) is considered when resolving environment variables. [#715](https://github.com/robocorp/robotframework-lsp/issues/715)
+- File system notifications properly track changes to `.yaml` files.[#710](https://github.com/robocorp/robotframework-lsp/issues/710)
+- File system notifications properly handle tracking conflicts when a folder is tracked more than once recursively and not recursively in the same subtree. [#710](https://github.com/robocorp/robotframework-lsp/issues/710)
+- Variables are properly resolved recursively. [#715](https://github.com/robocorp/robotframework-lsp/issues/715)
+- Doc highlight no longer raises error with unclosed variable.
+- A library is no longer considered more than once when collecting keywords.
 
 
 New in 0.49.0 (2022-07-20)
