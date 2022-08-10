@@ -1,13 +1,14 @@
 from robocorp_ls_core.basic import implements
 from robocorp_ls_core.constants import NULL
-from robocorp_ls_core.protocols import IDirCache, check_implements, T
+from robocorp_ls_core.protocols import IDirCache, check_implements, T, Sentinel
 from robocorp_ls_core.robotframework_log import get_logger
 
 from collections import namedtuple
 from pathlib import Path
-from typing import Any, Generic, Callable, Optional
+from typing import Any, Generic, Callable, Optional, TypeVar
 import functools
 import os
+import collections
 
 
 log = get_logger(__name__)
@@ -39,8 +40,6 @@ def instance_cache(func):
 
     @functools.wraps(func)
     def new_func(self, *args, **kwargs):
-        from robocorp_ls_core.protocols import Sentinel
-
         try:
             cache = getattr(self, "__instance_cache__")
         except:
@@ -207,3 +206,111 @@ class CachedFileInfo(Generic[T]):
 
     def is_cache_valid(self) -> bool:
         return self._mtime_info == self._get_mtime_cache_info(self.file_path)
+
+
+KT = TypeVar("KT")  # Key type.
+VT = TypeVar("VT")  # Value type.
+
+
+class LRUCache(Generic[KT, VT]):
+    """
+    A cache which has a max size and a size to resize to when we'd go over the
+    limit available in the LRU.
+
+    It's possible to customize the maximum size of the cache and to give a
+    custom weight for each entry.
+
+    Note that this is not an exact-value capacity. It's possible that the
+    capacity is exceeded in a case where an item added and the resize_to +
+    item_size exceeds the max_size.
+
+    This cache is NOT thread safe (users must lock if needed).
+
+    It's designed so that it's a dict where the key points to a list with
+        [key, value, access_time, entry_size]
+    """
+
+    def __init__(
+        self,
+        max_size: int = 100,
+        resize_to: Optional[int] = None,
+        get_size: Callable[[Any], int] = lambda obj: 1,
+    ):
+        assert max_size >= 1
+        self.max_size = max_size
+
+        if resize_to is None:
+            resize_to = int(max_size * 0.7)
+        assert resize_to < max_size
+
+        self.resize_to = resize_to
+        self._get_size = get_size
+
+        self._dict: Any = collections.OrderedDict()
+        self._current_size_usage = 0
+
+    def clear(self) -> None:
+        self._current_size_usage = 0
+        self._dict.clear()
+
+    @property
+    def current_size_usage(self) -> int:
+        return self._current_size_usage
+
+    def __getitem__(self, key: KT) -> VT:
+        item = self._dict[key]
+        self._dict.move_to_end(key)
+        return item[0]
+
+    def __contains__(self, key: KT) -> bool:
+        try:
+            self[key]
+            return True
+        except KeyError:
+            return False
+
+    def __len__(self) -> int:
+        return len(self._dict)
+
+    def __delitem__(self, key: KT) -> None:
+        entry = self._dict.pop(key)
+        self._current_size_usage -= entry[-1]
+
+    def pop(self, key: KT, default=Sentinel.SENTINEL) -> Optional[Any]:
+        try:
+            entry = self._dict.pop(key)
+            self._current_size_usage -= entry[-1]
+            return entry[0]
+        except KeyError:
+            if default is not Sentinel.SENTINEL:
+                return default
+            raise
+
+    def __setitem__(self, key: KT, value: VT) -> None:
+        item = self._dict.get(key)
+        if item is None:
+            new_size = self._get_size(value)
+
+            if self._current_size_usage + new_size > self.max_size:
+                # Note that we may exceed the size cache because we'll resize
+                # to the target value without accounting for the size of
+                # the new entry (and that's ok for this use case).
+                self._resize_to()
+
+            self._current_size_usage += new_size
+            item = [value, new_size]
+            self._dict[key] = item
+        else:
+            item[0] = value
+            self._dict.move_to_end(key)
+
+    def get(self, key: KT, default: Optional[Any] = None) -> Optional[Any]:
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def _resize_to(self) -> None:
+        while self._current_size_usage > self.resize_to:
+            _key, entry = self._dict.popitem(last=False)
+            self._current_size_usage -= entry[-1]

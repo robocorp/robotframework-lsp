@@ -323,6 +323,7 @@ class Workspace(object):
     ) -> None:
         from robocorp_ls_core.lsp import WorkspaceFolder
         from robocorp_ls_core.callbacks import Callback
+        from robocorp_ls_core.cache import LRUCache
 
         self._main_thread = threading.current_thread()
 
@@ -337,7 +338,36 @@ class Workspace(object):
         self._docs: Dict[str, IDocument] = {}
 
         # Contains the docs pointing to the filesystem.
-        self._filesystem_docs: Dict[str, IDocument] = {}
+        def _get_size(doc: IDocument):
+            # In a simplistic way we say that each char in a document occupies
+            # 8 bytes and then multiply this by 7.5 to account for the supposed
+            # amount of memory used by the AST which is cached along in the document
+            return 8 * len(doc.source) * 7.5
+
+        one_gb_in_bytes = int(1e9)
+        target_memory_in_bytes: int = one_gb_in_bytes  # Default value
+
+        target_memory_in_bytes_str = os.environ.get(
+            "RFLS_FILES_TARGET_MEMORY_IN_BYTES", None
+        )
+        if target_memory_in_bytes_str:
+            try:
+                target_memory_in_bytes = int(target_memory_in_bytes_str)
+            except:
+                log.critical(
+                    "Expected RFLS_FILES_TARGET_MEMORY_IN_BYTES to evaluate to an int. Found: %s",
+                    target_memory_in_bytes,
+                )
+
+        fifty_mb_in_bytes = int(5e7)
+        if target_memory_in_bytes <= fifty_mb_in_bytes:
+            target_memory_in_bytes = fifty_mb_in_bytes
+
+        # Whenever we reach 1GB of used memory we clear up to use 700 MB.
+        self._filesystem_docs: LRUCache[str, IDocument] = LRUCache(
+            target_memory_in_bytes, get_size=_get_size
+        )
+        self._filesystem_docs_lock = threading.Lock()
 
         self.on_file_changed = Callback()
 
@@ -422,31 +452,31 @@ class Workspace(object):
 
     @implements(IWorkspace.get_document)
     def get_document(self, doc_uri: str, accept_from_file: bool) -> Optional[IDocument]:
-        # Ok, thread-safe (does not mutate the _docs dict -- contents in the _filesystem_docs
-        # may end up stale or we may have multiple loads when we wouldn't need,
-        # but that should be ok).
+        # Ok, thread-safe (does not mutate the _docs dict so the GIL keeps us
+        # safe -- contents in the _filesystem_docs need a lock though).
         doc = self._docs.get(normalize_uri(doc_uri))
         if doc is not None:
             return doc
 
         if accept_from_file:
-            doc = self._filesystem_docs.get(doc_uri)
+            with self._filesystem_docs_lock:
+                doc = self._filesystem_docs.get(doc_uri)
 
-            if doc is not None:
-                if not doc.is_source_in_sync():
-                    self._filesystem_docs.pop(doc_uri, None)
-                    doc = None
+                if doc is not None:
+                    if not doc.is_source_in_sync():
+                        self._filesystem_docs.pop(doc_uri, None)
+                        doc = None
 
-            if doc is None:
-                try:
-                    doc = self._create_document(doc_uri, force_load_source=True)
-                except:
-                    log.debug("Unable to load contents from: %s", doc_uri)
-                    # Unable to load contents: file does not exist.
-                    doc = None
-                else:
-                    doc.immutable = True
-                    self._filesystem_docs[doc_uri] = doc
+                if doc is None:
+                    try:
+                        doc = self._create_document(doc_uri, force_load_source=True)
+                    except:
+                        log.debug("Unable to load contents from: %s", doc_uri)
+                        # Unable to load contents: file does not exist.
+                        doc = None
+                    else:
+                        doc.immutable = True
+                        self._filesystem_docs[doc_uri] = doc
 
         return doc
 
@@ -473,7 +503,8 @@ class Workspace(object):
             _source = doc.source
         except:
             doc.source = ""
-        self._filesystem_docs.pop(normalized_doc_uri, None)
+        with self._filesystem_docs_lock:
+            self._filesystem_docs.pop(normalized_doc_uri, None)
         return doc
 
     @implements(IWorkspace.remove_document)
@@ -528,7 +559,8 @@ class Workspace(object):
             self.remove_folder(folder_uri)
 
         self._docs = {}
-        self._filesystem_docs = {}
+        with self._filesystem_docs_lock:
+            self._filesystem_docs.clear()
 
     def __typecheckself__(self) -> None:
         from robocorp_ls_core.protocols import check_implements

@@ -81,7 +81,7 @@ def _normalize_win_path(path):
     return path, netloc
 
 
-@lru_cache(200)
+@lru_cache(500)
 def from_fs_path(path: str) -> str:
     """Returns a URI for the given filesystem path."""
     scheme = "file"
@@ -90,14 +90,14 @@ def from_fs_path(path: str) -> str:
     return urlunparse((scheme, netloc, path, params, query, fragment))
 
 
-@lru_cache(200)
+@lru_cache(500)
 def normalize_uri(uri: str) -> str:
     if uri_scheme(uri) == "file":
         return from_fs_path(to_fs_path(uri))
     return uri
 
 
-@lru_cache(200)
+@lru_cache(500)
 def to_fs_path(uri: str) -> str:
     """Returns the filesystem path of the given URI.
 
