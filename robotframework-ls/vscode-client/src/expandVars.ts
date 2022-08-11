@@ -1,5 +1,5 @@
 import { workspace, WorkspaceConfiguration } from "vscode";
-import { OUTPUT_CHANNEL } from "./channel";
+import { logError, OUTPUT_CHANNEL } from "./channel";
 
 interface IGetVar {
     (name: string): string;
@@ -10,28 +10,41 @@ interface IGetVar {
  * available, so, we need to reimplement it...
  */
 export function expandVars(template: string) {
-    let getVar: IGetVar = function getVar(name: string) {
-        if (name == "${workspace}" || name == "${workspaceRoot}" || name == "${workspaceFolder}") {
-            let workspaceFolders = workspace.workspaceFolders;
-            if (workspaceFolders && workspaceFolders.length > 0) {
-                return workspaceFolders[0].uri.fsPath;
-            }
-        } else if ((name.startsWith("${env.") || name.startsWith("${env:")) && name.endsWith("}")) {
-            let varName = name.substring(6, name.length - 1);
-            let value = process.env[varName];
-            if (value) {
-                return value;
-            }
+    try {
+        if (typeof template !== "string") {
+            OUTPUT_CHANNEL.appendLine(
+                "Converting " + template + "(type:" + typeof template + ") to string to expand variables."
+            );
+            template = "" + template;
         }
-        OUTPUT_CHANNEL.appendLine("Unable to resolve variable: " + name);
-        return name;
-    };
-    let ret = template.replace(/\${([^{}]*)}/g, getVar);
-    if (ret.startsWith("~")) {
-        const homedir = require("os").homedir();
-        return homedir + ret.substr(1);
+        let getVar: IGetVar = function getVar(name: string) {
+            if (name == "${workspace}" || name == "${workspaceRoot}" || name == "${workspaceFolder}") {
+                let workspaceFolders = workspace.workspaceFolders;
+                if (workspaceFolders && workspaceFolders.length > 0) {
+                    return workspaceFolders[0].uri.fsPath;
+                }
+            } else if ((name.startsWith("${env.") || name.startsWith("${env:")) && name.endsWith("}")) {
+                let varName = name.substring(6, name.length - 1);
+                let value = process.env[varName];
+                if (value) {
+                    return value;
+                }
+            }
+            OUTPUT_CHANNEL.appendLine("Unable to resolve variable: " + name);
+            return name;
+        };
+
+        let ret = template.replace(/\${([^{}]*)}/g, getVar);
+        if (ret.startsWith("~")) {
+            const homedir = require("os").homedir();
+            return homedir + ret.substr(1);
+        }
+        return ret;
+    } catch (err) {
+        const msg = "Error when expanding variable: " + template + " (type: " + typeof template + ")";
+        logError(msg, err, "ERROR_EXPANDING_VARIABLE");
+        throw new Error(msg);
     }
-    return ret;
 }
 
 export function getStrFromConfigExpandingVars(config: WorkspaceConfiguration, name: string): string | undefined {
