@@ -51,7 +51,11 @@
         "onCommand:robot.clearCachesAndRestartProcesses.finish.internal",
         "onCommand:robot.startIndexing.internal",
         "onCommand:robot.waitFullTestCollection.internal",
-        "onCommand:robot.rfInfo.internal"
+        "onCommand:robot.rfInfo.internal",
+        "onCommand:robot.lint.workspace",
+        "onCommand:robot.lint.explorer",
+        "onCommand:robot.openFlowExplorer",
+        "onCommand:robot.openFlowExplorer.internal"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -394,6 +398,15 @@
                     "enum": [
                         "robotidy",
                         "builtinTidy"
+                    ]
+                },
+                "robot.flowExplorerTheme": {
+                    "type": "string",
+                    "default": "dark",
+                    "description": "Allows the configuration of the Robot Flow Explorer theme to be used.\nOne of: dark, light.",
+                    "enum": [
+                        "dark",
+                        "light"
                     ]
                 },
                 "robot.lint.robocop.enabled": {

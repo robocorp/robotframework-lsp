@@ -719,24 +719,28 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             IS_ROBOT_FRAMEWORK_3,
             RFModelBuilder,
         )
+        from robotframework_ls.constants import (
+            DEFAULT_ROBOTFLOWEXPLORER_HTML_TEMPLATE,
+            DEFAULT_ROBOTFLOWEXPLORER_OPTIONS,
+        )
         from robocorp_ls_core.uris import from_fs_path
         from robocorp_ls_core.robotframework_log import get_log_level
+        from robotframework_ls.impl.robot_lsp_constants import (
+            OPTION_ROBOT_FLOW_EXPLORER_THEME_DARK,
+        )
+        from robotframework_ls.impl.robot_generated_lsp_constants import (
+            OPTION_ROBOT_FLOW_EXPLORER_THEME,
+        )
 
         current_doc_uri = arguments[0]["currentFileUri"]
         html_bundle_flow_folder_path = arguments[0]["htmlBundleFolderPath"]
-        html_bundle_flow_file_path = os.path.join(
-            html_bundle_flow_folder_path, _FLOW_EXPLORER_BUNDLE_HTML_FILE_NAME
-        )
         log.info(
             "Dispatched flow explorer internal command with args:",
             str(current_doc_uri),
             str(html_bundle_flow_folder_path),
         )
         # construct warning message
-        warning = None
-        if IS_ROBOT_FRAMEWORK_3:
-            warning = DEFAULT_WARNING_MESSAGE
-
+        warning = DEFAULT_WARNING_MESSAGE if IS_ROBOT_FRAMEWORK_3 else None
         # build model
         try:
             log.info("Building deep model for visualization...")
@@ -750,31 +754,28 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         # replacing the data script in the bundle html
         # adding the new model as data to Flow Explorer
         log.info("Generating web page for visualization...")
-        original_html = Path(html_bundle_flow_file_path).read_text()
-        # replace the JSON model
-        script_open_tag = '<script id="data" type="application/json">'
-        script_close_tag = "</script>"
-        script_json_model = script_open_tag + json.dumps(model) + script_close_tag
-        replacement_html = re.sub(
-            script_open_tag + r"([.\s\S]*?)" + script_close_tag,
-            script_json_model,
-            original_html,
+        # identify the selected theme & construct options
+        rfe_theme = self._config.get_setting(
+            OPTION_ROBOT_FLOW_EXPLORER_THEME,
+            str,
+            OPTION_ROBOT_FLOW_EXPLORER_THEME_DARK,
         )
-        # replace the favicon path
-        replacement_html = re.sub(
-            "favicon.png",
-            Path(os.path.join(html_bundle_flow_folder_path, "favicon.png")).as_posix(),
-            replacement_html,
-        )
-        # replace the index.js path
-        replacement_html = re.sub(
-            "index_bundle.js",
-            Path(
-                os.path.join(html_bundle_flow_folder_path, "index_bundle.js")
-            ).as_posix(),
-            replacement_html,
-        )
+        rfe_options = DEFAULT_ROBOTFLOWEXPLORER_OPTIONS.copy()
+        rfe_options["theme"] = rfe_theme
 
+        # fill in the template
+        replacement_html = DEFAULT_ROBOTFLOWEXPLORER_HTML_TEMPLATE.substitute(
+            rfe_options=json.dumps(rfe_options),
+            rfe_data=json.dumps(model),
+            rfe_favicon_path=Path(
+                os.path.join(html_bundle_flow_folder_path, "favicon.png")
+            ).as_posix(),
+            rfe_js_path=Path(
+                os.path.join(
+                    html_bundle_flow_folder_path, "robot_flow_explorer_bundle.js"
+                )
+            ).as_posix(),
+        )
         # create the temporary HTML file to display
         with tempfile.NamedTemporaryFile(
             mode="w", delete=False, suffix=".html"

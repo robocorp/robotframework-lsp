@@ -31,6 +31,7 @@ class RobotProjectPreferencesComponent {
     private final JBTextField robotLibrariesLibdocNeedsArgs = new JBTextField();
     private final JBTextField robotLibrariesLibdocPreGenerate = new JBTextField();
     private final JBTextField robotCodeFormatter = new JBTextField();
+    private final JBTextField robotFlowExplorerTheme = new JBTextField();
     private final JBTextField robotLintRobocopEnabled = new JBTextField();
     private final JBTextField robotLintEnabled = new JBTextField();
     private final JBTextField robotLintUndefinedKeywords = new JBTextField();
@@ -72,6 +73,8 @@ class RobotProjectPreferencesComponent {
                 .addComponent(createJTextArea("List of libraries which should have the libspec pre-generated.\nNote: expected format: JSON Array\n"))
                 .addLabeledComponent(new JBLabel("Code Formatter"), robotCodeFormatter, 1, false)
                 .addComponent(createJTextArea("Allows the configuration of the code-formatter engine to be used. One of: robotidy, builtinTidy.\n"))
+                .addLabeledComponent(new JBLabel("Flow Explorer Theme"), robotFlowExplorerTheme, 1, false)
+                .addComponent(createJTextArea("Allows the configuration of the Robot Flow Explorer theme to be used. One of: dark, light.\n"))
                 .addLabeledComponent(new JBLabel("Lint Robocop Enabled"), robotLintRobocopEnabled, 1, false)
                 .addComponent(createJTextArea("Specifies whether to lint with Robocop.\nNote: expected 'true' or 'false'\n"))
                 .addLabeledComponent(new JBLabel("Lint Enabled"), robotLintEnabled, 1, false)
@@ -225,6 +228,15 @@ class RobotProjectPreferencesComponent {
 
     public void setRobotCodeFormatter (@NotNull String newText) {
         robotCodeFormatter.setText(newText);
+    }
+    
+    @NotNull
+    public String getRobotFlowExplorerTheme() {
+        return robotFlowExplorerTheme.getText();
+    }
+
+    public void setRobotFlowExplorerTheme (@NotNull String newText) {
+        robotFlowExplorerTheme.setText(newText);
     }
     
     @NotNull
@@ -457,6 +469,10 @@ public class RobotProjectPreferencesPage implements Configurable {
             return true;
         }
         
+        if(!settings.getRobotFlowExplorerTheme().equals(component.getRobotFlowExplorerTheme())){
+            return true;
+        }
+        
         if(!settings.getRobotLintRobocopEnabled().equals(component.getRobotLintRobocopEnabled())){
             return true;
         }
@@ -544,6 +560,7 @@ public class RobotProjectPreferencesPage implements Configurable {
         component.setRobotLibrariesLibdocNeedsArgs(settings.getRobotLibrariesLibdocNeedsArgs());
         component.setRobotLibrariesLibdocPreGenerate(settings.getRobotLibrariesLibdocPreGenerate());
         component.setRobotCodeFormatter(settings.getRobotCodeFormatter());
+        component.setRobotFlowExplorerTheme(settings.getRobotFlowExplorerTheme());
         component.setRobotLintRobocopEnabled(settings.getRobotLintRobocopEnabled());
         component.setRobotLintEnabled(settings.getRobotLintEnabled());
         component.setRobotLintUndefinedKeywords(settings.getRobotLintUndefinedKeywords());
@@ -615,6 +632,10 @@ public class RobotProjectPreferencesPage implements Configurable {
         s = settings.validateRobotCodeFormatter(component.getRobotCodeFormatter());
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Code Formatter:\n" + s);
+        }
+        s = settings.validateRobotFlowExplorerTheme(component.getRobotFlowExplorerTheme());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Flow Explorer Theme:\n" + s);
         }
         s = settings.validateRobotLintRobocopEnabled(component.getRobotLintRobocopEnabled());
         if(!s.isEmpty()) {
@@ -692,6 +713,7 @@ public class RobotProjectPreferencesPage implements Configurable {
         settings.setRobotLibrariesLibdocNeedsArgs(component.getRobotLibrariesLibdocNeedsArgs());
         settings.setRobotLibrariesLibdocPreGenerate(component.getRobotLibrariesLibdocPreGenerate());
         settings.setRobotCodeFormatter(component.getRobotCodeFormatter());
+        settings.setRobotFlowExplorerTheme(component.getRobotFlowExplorerTheme());
         settings.setRobotLintRobocopEnabled(component.getRobotLintRobocopEnabled());
         settings.setRobotLintEnabled(component.getRobotLintEnabled());
         settings.setRobotLintUndefinedKeywords(component.getRobotLintUndefinedKeywords());

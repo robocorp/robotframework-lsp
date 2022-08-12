@@ -34,7 +34,7 @@ import { registerRunCommands } from "./run";
 import { registerLinkProviders } from "./linkProvider";
 import { getStrFromConfigExpandingVars } from "./expandVars";
 import { registerInteractiveCommands } from "./interactive/rfInteractive";
-import { errorFeedback, logError, OUTPUT_CHANNEL } from "./channel";
+import { errorFeedback, logError, OUTPUT_CHANNEL, feedback } from "./channel";
 import { Mutex } from "./mutex";
 import { fileExists } from "./files";
 import { clearTestItems, handleTestsCollected, ITestInfoFromUri, setupTestExplorerSupport } from "./testview";
@@ -692,9 +692,12 @@ async function openFlowExplorer(flowBundleHTMLFolderPath: string) {
             Please check the output logs for more details.
             `;
     try {
+        feedback("vscode.flowExplorer.used", "+1");
         window.showInformationMessage("Opening Robot Flow Explorer in browser...");
         const activeTextEditor = window.activeTextEditor;
         if (!activeTextEditor || !languageServerClient || activeTextEditor.document.languageId !== "robotframework") {
+            window.showErrorMessage(`Unable to open the Robot Flow Explorer.
+            Please select a robot file or make sure the Robot Framework is installed properly and try again.`);
             return;
         }
         const filePath = activeTextEditor.document.fileName;
@@ -705,7 +708,9 @@ async function openFlowExplorer(flowBundleHTMLFolderPath: string) {
             });
 
         if (!openResult || openResult.err) {
+            logError("Error while opening the Robot Flow Explorer", Error(openResult.err), "EXT_OPEN_FLOW_EXPLORER");
             window.showErrorMessage(DEFAULT_ERROR_MSG);
+            OUTPUT_CHANNEL.show();
             return;
         }
         if (openResult.warn) {
@@ -715,6 +720,7 @@ async function openFlowExplorer(flowBundleHTMLFolderPath: string) {
     } catch (err) {
         logError("Error while opening the Robot Flow Explorer", err, "EXT_OPEN_FLOW_EXPLORER");
         window.showErrorMessage(DEFAULT_ERROR_MSG);
+        OUTPUT_CHANNEL.show();
         return;
     }
 }

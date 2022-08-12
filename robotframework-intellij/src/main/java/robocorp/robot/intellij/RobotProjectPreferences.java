@@ -29,6 +29,7 @@ class RobotProjectState {
     public String robotLibrariesLibdocNeedsArgs = "";
     public String robotLibrariesLibdocPreGenerate = "";
     public String robotCodeFormatter = "";
+    public String robotFlowExplorerTheme = "";
     public String robotLintRobocopEnabled = "";
     public String robotLintEnabled = "";
     public String robotLintUndefinedKeywords = "";
@@ -63,6 +64,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
     public static final String ROBOT_LIBRARIES_LIBDOC_NEEDS_ARGS = "robot.libraries.libdoc.needsArgs";
     public static final String ROBOT_LIBRARIES_LIBDOC_PRE_GENERATE = "robot.libraries.libdoc.preGenerate";
     public static final String ROBOT_CODE_FORMATTER = "robot.codeFormatter";
+    public static final String ROBOT_FLOW_EXPLORER_THEME = "robot.flowExplorerTheme";
     public static final String ROBOT_LINT_ROBOCOP_ENABLED = "robot.lint.robocop.enabled";
     public static final String ROBOT_LINT_ENABLED = "robot.lint.enabled";
     public static final String ROBOT_LINT_UNDEFINED_KEYWORDS = "robot.lint.undefinedKeywords";
@@ -99,6 +101,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         robotState.robotLibrariesLibdocNeedsArgs = getRobotLibrariesLibdocNeedsArgs();
         robotState.robotLibrariesLibdocPreGenerate = getRobotLibrariesLibdocPreGenerate();
         robotState.robotCodeFormatter = getRobotCodeFormatter();
+        robotState.robotFlowExplorerTheme = getRobotFlowExplorerTheme();
         robotState.robotLintRobocopEnabled = getRobotLintRobocopEnabled();
         robotState.robotLintEnabled = getRobotLintEnabled();
         robotState.robotLintUndefinedKeywords = getRobotLintUndefinedKeywords();
@@ -133,6 +136,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         setRobotLibrariesLibdocNeedsArgs(robotState.robotLibrariesLibdocNeedsArgs);
         setRobotLibrariesLibdocPreGenerate(robotState.robotLibrariesLibdocPreGenerate);
         setRobotCodeFormatter(robotState.robotCodeFormatter);
+        setRobotFlowExplorerTheme(robotState.robotFlowExplorerTheme);
         setRobotLintRobocopEnabled(robotState.robotLintRobocopEnabled);
         setRobotLintEnabled(robotState.robotLintEnabled);
         setRobotLintUndefinedKeywords(robotState.robotLintUndefinedKeywords);
@@ -249,6 +253,15 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
             
             try {
                 jsonObject.add(ROBOT_CODE_FORMATTER, new JsonPrimitive(robotCodeFormatter));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotFlowExplorerTheme.isEmpty()){
+            
+            try {
+                jsonObject.add(ROBOT_FLOW_EXPLORER_THEME, new JsonPrimitive(robotFlowExplorerTheme));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -919,6 +932,59 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             try {
                 listener.onChanged(ROBOT_CODE_FORMATTER, old, s);
+            } catch (CancelledException e) {
+                // just ignore at this point
+            }
+        }
+    }
+    
+    private String robotFlowExplorerTheme = "";
+
+    public @NotNull String getRobotFlowExplorerTheme() {
+        return robotFlowExplorerTheme;
+    }
+
+    public @Nullable JsonPrimitive getRobotFlowExplorerThemeAsJson() {
+        if(robotFlowExplorerTheme.isEmpty()){
+            return null;
+        }
+        
+        return new JsonPrimitive(robotFlowExplorerTheme);
+    }
+
+    public @NotNull String validateRobotFlowExplorerTheme(String robotFlowExplorerTheme) {
+        if(robotFlowExplorerTheme.isEmpty()) {
+            return "";
+        }
+        try {
+            
+            new JsonPrimitive(robotFlowExplorerTheme);
+             
+            if(robotFlowExplorerTheme.equalsIgnoreCase("dark")){
+                return "";
+            }
+            if(robotFlowExplorerTheme.equalsIgnoreCase("light")){
+                return "";
+            }
+            return "Unexpected value: " + robotFlowExplorerTheme;
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotFlowExplorerTheme(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotFlowExplorerTheme)) {
+            return;
+        }
+        String old = robotFlowExplorerTheme;
+        robotFlowExplorerTheme = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            try {
+                listener.onChanged(ROBOT_FLOW_EXPLORER_THEME, old, s);
             } catch (CancelledException e) {
                 // just ignore at this point
             }

@@ -55,6 +55,12 @@ SETTINGS = {
         "description": "Allows the configuration of the code-formatter engine to be used.\nOne of: robotidy, builtinTidy.",
         "enum": ["robotidy", "builtinTidy"],
     },
+    "robot.flowExplorerTheme": {
+        "type": "string",
+        "default": "dark",
+        "description": "Allows the configuration of the Robot Flow Explorer theme to be used.\nOne of: dark, light.",
+        "enum": ["dark", "light"],
+    },
     "robot.lint.robocop.enabled": {
         "type": "boolean",
         "default": False,
