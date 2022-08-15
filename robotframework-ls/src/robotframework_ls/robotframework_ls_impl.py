@@ -63,6 +63,7 @@ _LINT_DEBOUNCE_IN_SECONDS_LOW = 0.2
 _LINT_DEBOUNCE_IN_SECONDS_HIGH = 0.8
 
 _FLOW_EXPLORER_BUNDLE_HTML_FILE_NAME = "robot_flow_explorer_bundle.html"
+_FLOW_EXPLORER_BUNDLE_JS_FILE_NAME = "robot_flow_explorer_bundle.js"
 
 
 class _CurrLintInfo(object):
@@ -720,8 +721,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             RFModelBuilder,
         )
         from robotframework_ls.constants import (
-            DEFAULT_ROBOTFLOWEXPLORER_HTML_TEMPLATE,
-            DEFAULT_ROBOTFLOWEXPLORER_OPTIONS,
+            DEFAULT_ROBOT_FLOW_EXPLORER_HTML_TEMPLATE,
+            DEFAULT_ROBOT_FLOW_EXPLORER_OPTIONS,
         )
         from robocorp_ls_core.uris import from_fs_path
         from robocorp_ls_core.robotframework_log import get_log_level
@@ -751,8 +752,6 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             log.error("An Exception occurred while creating the deep model:", e)
             return {"uri": None, "err": str(e), "warn": None}
 
-        # replacing the data script in the bundle html
-        # adding the new model as data to Flow Explorer
         log.info("Generating web page for visualization...")
         # identify the selected theme & construct options
         rfe_theme = self._config.get_setting(
@@ -760,21 +759,22 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             str,
             OPTION_ROBOT_FLOW_EXPLORER_THEME_DARK,
         )
-        rfe_options = DEFAULT_ROBOTFLOWEXPLORER_OPTIONS.copy()
+        rfe_options = DEFAULT_ROBOT_FLOW_EXPLORER_OPTIONS.copy()
         rfe_options["theme"] = rfe_theme
 
-        # fill in the template
-        replacement_html = DEFAULT_ROBOTFLOWEXPLORER_HTML_TEMPLATE.substitute(
+        # filling in the HTML template
+        # adding the new model as data to Flow Explorer
+        replacement_html = DEFAULT_ROBOT_FLOW_EXPLORER_HTML_TEMPLATE.substitute(
             rfe_options=json.dumps(rfe_options),
             rfe_data=json.dumps(model),
             rfe_favicon_path=Path(
                 os.path.join(html_bundle_flow_folder_path, "favicon.png")
-            ).as_posix(),
+            ).as_uri(),
             rfe_js_path=Path(
                 os.path.join(
-                    html_bundle_flow_folder_path, "robot_flow_explorer_bundle.js"
+                    html_bundle_flow_folder_path, _FLOW_EXPLORER_BUNDLE_JS_FILE_NAME
                 )
-            ).as_posix(),
+            ).as_uri(),
         )
         # create the temporary HTML file to display
         with tempfile.NamedTemporaryFile(

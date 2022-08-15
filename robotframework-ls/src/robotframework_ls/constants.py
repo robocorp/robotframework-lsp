@@ -10,7 +10,7 @@ if not USE_TIMEOUTS:
 
 # Robot Flow Explorer template used as wrapper for the React Application
 # Substitute the $rfe_options & $rfe_data to render properly
-DEFAULT_ROBOTFLOWEXPLORER_HTML_TEMPLATE: Template = Template(
+DEFAULT_ROBOT_FLOW_EXPLORER_HTML_TEMPLATE: Template = Template(
     """
 <!DOCTYPE html>
 <html lang="en">
@@ -35,4 +35,4 @@ DEFAULT_ROBOTFLOWEXPLORER_HTML_TEMPLATE: Template = Template(
 """
 )
 
-DEFAULT_ROBOTFLOWEXPLORER_OPTIONS: dict = {"theme": "light", "showCopyright": True}
+DEFAULT_ROBOT_FLOW_EXPLORER_OPTIONS: dict = {"theme": "light", "showCopyright": True}

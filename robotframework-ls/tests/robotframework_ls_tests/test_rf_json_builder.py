@@ -88,6 +88,8 @@ def test_build_deep_model_infinite_fail(datadir):
     "original_html_file.html",
 )
 def test_open_flow_explorer(tmpdir, datadir):
+    import re
+
     return_path = (
         robotframework_ls_impl.RobotFrameworkLanguageServer._open_flow_explorer(
             MockRFLS(),
@@ -110,6 +112,10 @@ def test_open_flow_explorer(tmpdir, datadir):
     assert '<script id="data" type="application/json">' in file_contents
     assert "Main Implemented Keyword" in file_contents
     assert "Third Implemented Keyword" in file_contents
+    assert len(re.findall(r"file://.*\/favicon.png", file_contents)) == 1
+    assert (
+        len(re.findall(r"file://.*\/robot_flow_explorer_bundle.js", file_contents)) == 1
+    )
 
 
 @mock.patch.object(
