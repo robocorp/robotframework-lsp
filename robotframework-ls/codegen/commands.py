@@ -153,13 +153,13 @@ COMMANDS: List[Command] = [
     ),
     Command(
         "robot.openFlowExplorer",
-        "Open the Robot Flow Explorer",
+        "Open Robot Flow Explorer",
         server_handled=False,
         hide_from_command_palette=False,
     ),
     Command(
         "robot.openFlowExplorer.internal",
-        "Open the Robot Flow Explorer Internals",
+        "Open Robot Flow Explorer Internals",
         server_handled=True,
         hide_from_command_palette=True,
     ),

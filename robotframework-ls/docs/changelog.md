@@ -1,3 +1,20 @@
+NEXT
+-----------------------------
+
+### New features
+
+- `Robot Flow Visualization`: a new visualization which shows the Robot execution as a graph (currently in the browser).
+    - Generated for the tasks/tests in the current file through the command: `Robot Framework: Open Robot Flow Explorer`
+- Code analysis setting to check if keyword is not used anywhere in the workspace.
+    - Opt-in through the `robot.lint.unusedKeyword:true` setting. [#722](https://github.com/robocorp/robotframework-lsp/issues/722)
+- It's now possible to enable `Run/Debug` and `Interactive Console` code-lenses individually.
+- An LRU based on file size now prevents unlimited usage of RAM when caching files loaded from the filesystem. [#720](https://github.com/robocorp/robotframework-lsp/issues/720)
+    - It's possible to customize the size of the target memory for this LRU through the `RFLS_FILES_TARGET_MEMORY_IN_BYTES` environment variable.
+
+### Bugfixes
+
+- A non-string value is converted to string before expanding variables. [#727](https://github.com/robocorp/robotframework-lsp/issues/727)
+
 New in 1.0.0 (2022-08-09)
 -----------------------------
 

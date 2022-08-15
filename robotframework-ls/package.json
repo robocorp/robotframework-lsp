@@ -170,12 +170,12 @@
             },
             {
                 "command": "robot.openFlowExplorer",
-                "title": "Open the Robot Flow Explorer",
+                "title": "Open Robot Flow Explorer",
                 "category": "Robot Framework"
             },
             {
                 "command": "robot.openFlowExplorer.internal",
-                "title": "Open the Robot Flow Explorer Internals",
+                "title": "Open Robot Flow Explorer Internals",
                 "category": "Robot Framework"
             }
         ],
