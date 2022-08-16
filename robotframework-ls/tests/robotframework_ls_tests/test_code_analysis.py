@@ -2293,6 +2293,40 @@ COMMON_2: 20
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
+def test_duplicated_keywords_still_analyze_args(
+    workspace, libspec_manager, data_regression
+):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case1.robot")
+
+    doc.source = """
+*** Keywords ***
+My Keyword
+    No Operation
+"""
+
+    doc2 = workspace.put_doc("case2.robot")
+
+    doc2.source = """
+*** Keywords ***
+My Keyword
+    No Operation
+"""
+
+    doc3 = workspace.put_doc("case3.robot")
+
+    doc3.source = """
+*** Settings ***
+Resource    case1.robot
+Resource    case2.robot
+
+*** Test Case ***
+My Test
+    My Keyword    invalid arg
+"""
+    _collect_errors(workspace, doc3, data_regression)
+
+
 def test_duplicated_keywords(workspace, libspec_manager, data_regression):
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case1.robot")

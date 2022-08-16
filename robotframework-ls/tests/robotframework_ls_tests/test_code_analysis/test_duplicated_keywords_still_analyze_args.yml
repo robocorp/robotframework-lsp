@@ -1,0 +1,22 @@
+- message: 'Multiple keywords matching: ''My Keyword'' in ''case1'', ''case2''.
+
+    Please provide the name with the full qualifier (i.e.: ''case1.My Keyword'').'
+  range:
+    end:
+      character: 14
+      line: 7
+    start:
+      character: 4
+      line: 7
+  severity: 1
+  source: robotframework
+- message: 'Unexpected argument: invalid arg'
+  range:
+    end:
+      character: 29
+      line: 7
+    start:
+      character: 18
+      line: 7
+  severity: 1
+  source: robotframework

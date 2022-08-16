@@ -388,7 +388,7 @@ def collect_analysis_errors(initial_completion_context):
                 errors.append(error)
 
             else:
-                new_keywords_found = []
+                new_keywords_found: List[IKeywordFound] = []
                 if len(keywords_found) > 1:
                     # We still can't be sure, it's possible that we found the
                     # same keyword multiple times. Let's check where they're found.
@@ -480,14 +480,6 @@ def collect_analysis_errors(initial_completion_context):
                             )
                             errors.append(error)
 
-                        # We can't do argument analysis because the keyword is
-                        # duplicated and we don't know which one to use.
-                        continue
-
-                if new_keywords_found:
-                    keywords_found = new_keywords_found
-                keyword_found = keywords_found[0]
-
                 from robotframework_ls.impl.robot_lsp_constants import (
                     OPTION_ROBOT_LINT_KEYWORD_CALL_ARGUMENTS,
                 )
@@ -501,59 +493,75 @@ def collect_analysis_errors(initial_completion_context):
                     KeywordArgumentAnalysis,
                 )
 
-                keyword_token = keyword_usage_info.node.get_token(Token.KEYWORD)
-                if keyword_token is not None:
-                    # Ok, we found the keyword, let's check if the arguments are correct.
-                    keyword_argument_analysis = KeywordArgumentAnalysis(
-                        keyword_found.keyword_args
-                    )
+                if new_keywords_found:
+                    keywords_found = new_keywords_found
 
-                    for error in keyword_argument_analysis.collect_keyword_usage_errors(
-                        UsageInfoForKeywordArgumentAnalysis(
-                            keyword_usage_info.node,
-                            keyword_token,
+                # Still do the keyword analysis even if multiple keywords match
+                # See: https://github.com/robocorp/robotframework-lsp/issues/724
+                found_error_in_arg_analysis = False
+                for keyword_found in keywords_found:
+                    if found_error_in_arg_analysis:
+                        break
+
+                    keyword_token = keyword_usage_info.node.get_token(Token.KEYWORD)
+                    if keyword_token is not None:
+                        # Ok, we found the keyword, let's check if the arguments are correct.
+                        keyword_argument_analysis = KeywordArgumentAnalysis(
+                            keyword_found.keyword_args
                         )
-                    ):
-                        errors.append(error)
-                else:
-                    # Not a keyword usage, check for other cases (template/fixtures).
-                    if keyword_usage_info.node.type in (
-                        Token.TEMPLATE,
-                        Token.TEST_TEMPLATE,
-                    ):
-                        # For templates the arguments are actually gotten from the test.
-                        stack = keyword_usage_info.stack
-                        if keyword_usage_info.node.type == Token.TEST_TEMPLATE:
-                            stack = [ast]
-                        for (
-                            template_arguments_node_info
-                        ) in ast_utils.iter_arguments_from_template(
-                            stack, keyword_usage_info.node
-                        ):
-                            keyword_argument_analysis = KeywordArgumentAnalysis(
-                                keyword_found.keyword_args
-                            )
-                            args_tokens = template_arguments_node_info.node.tokens
-                            for (
-                                error
-                            ) in keyword_argument_analysis.collect_keyword_usage_errors(
-                                UsageInfoForKeywordArgumentAnalysis(
-                                    template_arguments_node_info.node,
-                                    args_tokens[-1],
-                                    args_tokens,
-                                )
-                            ):
-                                errors.append(error)
 
-                if keyword_found.is_deprecated():
-                    error = create_error_from_node(
-                        keyword_usage_info.node,
-                        f"Keyword: {keyword_usage_info.name} is deprecated",
-                        tokens=[keyword_usage_info.token],
-                    )
-                    error.severity = DiagnosticSeverity.Hint
-                    error.tags = [DiagnosticTag.Deprecated]
-                    errors.append(error)
+                        for (
+                            error
+                        ) in keyword_argument_analysis.collect_keyword_usage_errors(
+                            UsageInfoForKeywordArgumentAnalysis(
+                                keyword_usage_info.node,
+                                keyword_token,
+                            )
+                        ):
+                            errors.append(error)
+                            found_error_in_arg_analysis = True
+                    else:
+                        # Not a keyword usage, check for other cases (template/fixtures).
+                        if keyword_usage_info.node.type in (
+                            Token.TEMPLATE,
+                            Token.TEST_TEMPLATE,
+                        ):
+                            # For templates the arguments are actually gotten from the test.
+                            stack = keyword_usage_info.stack
+                            if keyword_usage_info.node.type == Token.TEST_TEMPLATE:
+                                stack = [ast]
+                            for (
+                                template_arguments_node_info
+                            ) in ast_utils.iter_arguments_from_template(
+                                stack, keyword_usage_info.node
+                            ):
+                                keyword_argument_analysis = KeywordArgumentAnalysis(
+                                    keyword_found.keyword_args
+                                )
+                                args_tokens = template_arguments_node_info.node.tokens
+                                for (
+                                    error
+                                ) in keyword_argument_analysis.collect_keyword_usage_errors(
+                                    UsageInfoForKeywordArgumentAnalysis(
+                                        template_arguments_node_info.node,
+                                        args_tokens[-1],
+                                        args_tokens,
+                                    )
+                                ):
+                                    errors.append(error)
+                                    found_error_in_arg_analysis = True
+
+                for keyword_found in keywords_found:
+                    if keyword_found.is_deprecated():
+                        error = create_error_from_node(
+                            keyword_usage_info.node,
+                            f"Keyword: {keyword_usage_info.name} is deprecated",
+                            tokens=[keyword_usage_info.token],
+                        )
+                        error.severity = DiagnosticSeverity.Hint
+                        error.tags = [DiagnosticTag.Deprecated]
+                        errors.append(error)
+                        break
 
             if len(errors) >= MAX_ERRORS:
                 # i.e.: Collect at most 100 errors
