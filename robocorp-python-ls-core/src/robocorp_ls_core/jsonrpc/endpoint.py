@@ -49,7 +49,7 @@ def require_monitor(func):
 
 class Endpoint(object):
 
-    SHOW_THREAD_DUMP_AFTER_TIMEOUT = 5
+    SHOW_THREAD_DUMP_AFTER_TIMEOUT = 8
 
     def __init__(self, dispatcher, consumer, id_generator=lambda: str(uuid.uuid4())):
         """A JSON RPC endpoint for managing messages sent to/from the client.

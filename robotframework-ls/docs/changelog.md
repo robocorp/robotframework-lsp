@@ -15,6 +15,7 @@ NEXT
 ### Bugfixes
 
 - A non-string value is converted to string before expanding variables. [#727](https://github.com/robocorp/robotframework-lsp/issues/727)
+- Operations no longer timeout, rather, they just print to the log (as the timeouts weren't always ideal for slower machines). [#733](https://github.com/robocorp/robotframework-lsp/issues/733)
 
 New in 1.0.0 (2022-08-09)
 -----------------------------

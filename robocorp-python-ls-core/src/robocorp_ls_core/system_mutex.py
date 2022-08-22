@@ -325,7 +325,12 @@ class _MutexHandle(object):
 
 
 def timed_acquire_mutex(
-    mutex_name, timeout=20, sleep_time=0.15, check_reentrant=True, base_dir=None
+    mutex_name,
+    timeout=20,
+    sleep_time=0.15,
+    check_reentrant=True,
+    base_dir=None,
+    raise_error_on_timeout=False,
 ) -> ContextManager:
     """
     Acquires the mutex given its name, a number of attempts and a time to sleep between each attempt.
@@ -344,6 +349,7 @@ def timed_acquire_mutex(
         a different thread.
     """
     finish_at = time.time() + timeout
+    logged = False
     while True:
         last_attempt = time.time() >= finish_at
         mutex = SystemMutex(
@@ -354,10 +360,24 @@ def timed_acquire_mutex(
         )
         if not mutex.get_mutex_aquired():
             if last_attempt:
-                log.info("Unable to obtain mutex: %s", mutex_name)
-                raise RuntimeError(
-                    "Could not get mutex: %s after: %s secs." % (mutex_name, timeout)
-                )
+                if not logged:
+                    logged = True
+
+                    will_retry_msg = ""
+                    if not raise_error_on_timeout:
+                        will_retry_msg = " (will keep trying)"
+
+                    log.info(
+                        "The mutex %s still hasn't been acquired after %s seconds%s.\nMutex info: %s",
+                        mutex_name,
+                        timeout,
+                        will_retry_msg,
+                        mutex.mutex_creation_info,
+                    )
+                    if raise_error_on_timeout:
+                        raise RuntimeError(
+                            f"Could not get mutex: {mutex_name} after: {timeout} secs."
+                        )
 
             time.sleep(sleep_time)
 
