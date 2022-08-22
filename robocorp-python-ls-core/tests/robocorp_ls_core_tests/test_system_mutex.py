@@ -1,3 +1,6 @@
+import threading
+
+
 def test_system_mutex():
     from robocorp_ls_core.system_mutex import SystemMutex
     from robocorp_ls_core.system_mutex import timed_acquire_mutex
@@ -114,6 +117,27 @@ def test_gen_mutex_name_from_path():
     mutex_name = "my/snth\\nsth"
     mutex_name = generate_mutex_name(mutex_name, prefix="my_")
     assert mutex_name == "my_f9c932bf450ef164"
+
+
+def test_system_mutex_error_on_timeout():
+    from robocorp_ls_core.system_mutex import SystemMutex
+    import os
+
+    mutex = SystemMutex("test_system_mutex_error_on_timeout")
+    assert mutex.get_mutex_aquired()
+    mutex_creation_info = [""]
+
+    def thread():
+        mutex2 = SystemMutex("test_system_mutex_error_on_timeout")
+        assert not mutex2.get_mutex_aquired()
+        mutex_creation_info[0] = mutex2.mutex_creation_info
+
+    t = threading.Thread(target=thread)
+    t.start()
+    t.join()
+    info = mutex_creation_info[0]
+    assert str(os.getpid()) in info
+    assert 'mutex = SystemMutex("test_system_mutex_error_on_timeout")' in info
 
 
 def test_system_mutex_locked_on_subprocess():

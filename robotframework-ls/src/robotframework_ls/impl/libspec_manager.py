@@ -44,7 +44,7 @@ def _get_additional_info_filename(spec_filename):
 
 
 @contextmanager
-def timed_acquire_mutex_for_spec_filename(spec_filename):
+def _timed_acquire_mutex_for_spec_filename(spec_filename):
     from robocorp_ls_core.system_mutex import timed_acquire_mutex
 
     try:
@@ -73,7 +73,7 @@ def _load_library_doc_and_mtime(libspec_manager, spec_filename: str, obtain_mute
 
     ctx: Any
     if obtain_mutex:
-        ctx = timed_acquire_mutex_for_spec_filename(spec_filename)
+        ctx = _timed_acquire_mutex_for_spec_filename(spec_filename)
     else:
         ctx = NULL
     with ctx:
@@ -868,7 +868,7 @@ class LibspecManager(object):
         from robocorp_ls_core.subprocess_wrapper import subprocess
         from robocorp_ls_core.robotframework_log import get_log_level
 
-        acquire_mutex = timed_acquire_mutex_for_spec_filename
+        acquire_mutex = _timed_acquire_mutex_for_spec_filename
 
         if _internal_force_text:
             # In this case this is a recursive call and we already have the lock.

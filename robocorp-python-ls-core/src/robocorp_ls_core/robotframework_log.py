@@ -278,3 +278,4 @@ def log_args_and_python(log, argv, module):
         sys.prefix,
         sys.executable,
     )
+    log.info("CPUs: %s", os.cpu_count())

@@ -34,6 +34,7 @@ from robocorp_ls_core.constants import NULL
 from robocorp_ls_core.robotframework_log import get_logger
 import threading
 from typing import ContextManager
+import io
 
 
 log = get_logger(__name__)
@@ -79,6 +80,29 @@ def _verify_prev_acquired_in_thread(mutex_name):
             )
 
 
+def _collect_mutex_allocation_msg(mutex_name):
+    try:
+        write_contents = []
+        try:
+            write_contents.append(str(os.getpid()))
+        except Exception:
+            write_contents.append("unable to get pid")
+
+        write_contents.append("\nMutex name:")
+        write_contents.append(mutex_name)
+
+        s = io.StringIO()
+        traceback.print_stack(file=s, f=sys._getframe().f_back.f_back)
+        write_contents.append("\n--- Stack ---\n")
+        write_contents.append(s.getvalue())
+        return "\n".join(write_contents)
+    except:
+        try:
+            return str(os.getpid())
+        except Exception:
+            return "<unable to get pid>"
+
+
 if sys.platform == "win32":
 
     import os
@@ -97,6 +121,8 @@ if sys.platform == "win32":
             check_valid_mutex_name(mutex_name)
             self.mutex_name = mutex_name
             self.thread_id = get_tid()
+            self.mutex_creation_info = ""
+
             filename = os.path.join(base_dir, mutex_name)
             try:
                 os.unlink(filename)
@@ -105,11 +131,8 @@ if sys.platform == "win32":
             try:
                 handle = os.open(filename, os.O_CREAT | os.O_EXCL | os.O_RDWR)
                 try:
-                    try:
-                        pid = str(os.getpid())
-                    except Exception:
-                        pid = "unable to get pid"
-                    os.write(handle, pid)
+                    contents = _collect_mutex_allocation_msg(mutex_name)
+                    os.write(handle, contents.encode("utf-8", "replace"))
                 except Exception:
                     pass  # Ignore this as it's pretty much optional
             except Exception:
@@ -117,6 +140,12 @@ if sys.platform == "win32":
                 self._acquired = False
                 if check_reentrant:
                     _verify_prev_acquired_in_thread(mutex_name)
+
+                try:
+                    with open(filename) as stream:
+                        self.mutex_creation_info = stream.read()
+                except:
+                    self.mutex_creation_info = "<unable to read>"
             else:
 
                 def release_mutex(*args, **kwargs):
@@ -176,12 +205,14 @@ else:  # Linux
                 base_dir = tempfile.gettempdir()
             check_valid_mutex_name(mutex_name)
             self.mutex_name = mutex_name
+            self.mutex_creation_info = ""
             self.thread_id = get_tid()
             filename = os.path.join(base_dir, mutex_name)
             try:
                 handle = open(filename, "a+")
                 fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                handle.write(str(os.getpid()) + "\n")
+                contents = _collect_mutex_allocation_msg(mutex_name)
+                handle.write(contents)
                 handle.flush()
             except Exception:
                 self._release_mutex = NULL
@@ -193,12 +224,18 @@ else:  # Linux
                 except Exception:
                     pass
 
+                try:
+                    with open(filename) as stream:
+                        self.mutex_creation_info = stream.read()
+                except:
+                    self.mutex_creation_info = "<unable to read>"
+
                 # It was unable to get the lock
                 if log_info:
                     try:
                         try:
                             with open(filename, "r") as stream:
-                                curr_pid = stream.read().strip().split("\n")[-1]
+                                curr_pid = stream.readline().strip()[-1]
                         except:
                             log.exception("Unable to get locking pid.")
                             curr_pid = "<unable to get locking pid>"
@@ -228,6 +265,13 @@ else:  # Linux
                     if not getattr(release_mutex, "called", False):
                         release_mutex.called = True
                         try:
+                            handle.seek(0)
+                            handle.truncate()
+                            handle.write("Releasing lock\n")
+                            handle.flush()
+                        except Exception:
+                            traceback.print_exc()
+                        try:
                             fcntl.flock(handle, fcntl.LOCK_UN)
                         except Exception:
                             traceback.print_exc()
@@ -237,8 +281,6 @@ else:  # Linux
                             traceback.print_exc()
                         # Don't remove it (so that it doesn't get another inode afterwards).
                         # try:
-                        #     # Removing is pretty much optional (but let's do it to keep the
-                        #     # filesystem cleaner).
                         #     os.unlink(filename)
                         # except Exception:
                         #     pass
