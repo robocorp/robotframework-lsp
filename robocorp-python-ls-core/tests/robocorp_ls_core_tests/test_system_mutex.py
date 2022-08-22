@@ -1,6 +1,3 @@
-import threading
-
-
 def test_system_mutex():
     from robocorp_ls_core.system_mutex import SystemMutex
     from robocorp_ls_core.system_mutex import timed_acquire_mutex
@@ -81,7 +78,7 @@ def test_system_mutex():
 
     initial_time = time.time()
     with timed_acquire_mutex(
-        mutex_name, check_reentrant=False
+        mutex_name, check_reentrant=False, raise_error_on_timeout=True
     ):  # The current mutex will be released in a thread, so, check_reentrant=False.
         assert released_mutex[0], "Error: entered before mutex was released!"
         acquired_time = time.time()
@@ -91,7 +88,9 @@ def test_system_mutex():
         # a reentrant lock.
         try:
             with pytest.raises(RuntimeError) as exc:
-                with timed_acquire_mutex(mutex_name, timeout=1):
+                with timed_acquire_mutex(
+                    mutex_name, timeout=1, raise_error_on_timeout=True
+                ):
                     pass
         except Failed:
             raise_assertion_info_if_prev_acquired_not_detected(mutex_name)
@@ -102,7 +101,7 @@ def test_system_mutex():
         code = """
 from robocorp_ls_core.system_mutex import timed_acquire_mutex
 mutex_name = "mutex_name_test_system_mutex"
-with timed_acquire_mutex(mutex_name, timeout=1):
+with timed_acquire_mutex(mutex_name, timeout=1, raise_error_on_timeout=True):
     pass
 """
         with pytest.raises(subprocess.CalledProcessError):
@@ -122,6 +121,7 @@ def test_gen_mutex_name_from_path():
 def test_system_mutex_error_on_timeout():
     from robocorp_ls_core.system_mutex import SystemMutex
     import os
+    import threading
 
     mutex = SystemMutex("test_system_mutex_error_on_timeout")
     assert mutex.get_mutex_aquired()
@@ -138,6 +138,52 @@ def test_system_mutex_error_on_timeout():
     info = mutex_creation_info[0]
     assert str(os.getpid()) in info
     assert 'mutex = SystemMutex("test_system_mutex_error_on_timeout")' in info
+
+
+def test_system_mutex_timed_acquire_no_error_on_timeout():
+    from robocorp_ls_core.system_mutex import SystemMutex
+    import threading
+    from robocorp_ls_core.system_mutex import timed_acquire_mutex
+
+    event_mutex_acquired = threading.Event()
+    event_terminate_thread = threading.Event()
+
+    def thread():
+        mutex2 = SystemMutex("test_system_mutex_timed_acquire_no_error_on_timeout")
+        assert mutex2.get_mutex_aquired()
+        event_mutex_acquired.set()
+        event_terminate_thread.wait()
+
+    t = threading.Thread(target=thread)
+    t.start()
+    event_mutex_acquired.wait()
+
+    mutex = SystemMutex("test_system_mutex_timed_acquire_no_error_on_timeout")
+    assert not mutex.get_mutex_aquired()
+
+    # Here we check that a message is printed to stderr instead of raising
+    # an error on timeout.
+    class _CustomSysSTderr:
+        def __init__(self):
+            self._msg = []
+
+        def write(self, msg):
+            self._msg.append(msg)
+            if "acquired after 1 seconds" in "".join(self._msg):
+                event_terminate_thread.set()
+
+    import sys
+
+    original_stderr = sys.stderr
+    try:
+        sys.stderr = _CustomSysSTderr()
+        with timed_acquire_mutex(
+            "test_system_mutex_timed_acquire_no_error_on_timeout", timeout=1
+        ):
+            pass
+
+    finally:
+        sys.stderr = original_stderr
 
 
 def test_system_mutex_locked_on_subprocess():
