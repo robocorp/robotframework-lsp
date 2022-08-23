@@ -1,0 +1,84 @@
+- deprecated: false
+  insertText: '*** Casos De Teste ***'
+  kind: 7
+  label: '*** Casos De Teste ***'
+  preselect: false
+  textEdit:
+    newText: '*** Casos De Teste ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0
+- deprecated: false
+  insertText: '*** Comentários ***'
+  kind: 7
+  label: '*** Comentários ***'
+  preselect: false
+  textEdit:
+    newText: '*** Comentários ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0
+- deprecated: false
+  insertText: '*** Configurações ***'
+  kind: 7
+  label: '*** Configurações ***'
+  preselect: false
+  textEdit:
+    newText: '*** Configurações ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0
+- deprecated: false
+  insertText: '*** Palavras-Chave ***'
+  kind: 7
+  label: '*** Palavras-Chave ***'
+  preselect: false
+  textEdit:
+    newText: '*** Palavras-Chave ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0
+- deprecated: false
+  insertText: '*** Tarefas ***'
+  kind: 7
+  label: '*** Tarefas ***'
+  preselect: false
+  textEdit:
+    newText: '*** Tarefas ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0
+- deprecated: false
+  insertText: '*** Variáveis ***'
+  kind: 7
+  label: '*** Variáveis ***'
+  preselect: false
+  textEdit:
+    newText: '*** Variáveis ***'
+    range:
+      end:
+        character: 2
+        line: 0
+      start:
+        character: 0
+        line: 0

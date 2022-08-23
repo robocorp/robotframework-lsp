@@ -1,3 +1,6 @@
+import typing
+from typing import Any, Set, Optional, List, Dict, Iterator
+
 class Token:
     SETTING_HEADER: str
     VARIABLE_HEADER: str
@@ -379,3 +382,74 @@ class SuiteVisitor:
 
 def get_model(source, data_only=False, curdir=None, lang=None):
     pass
+
+def get_resource_model(source, data_only=False, curdir=None, lang=None):
+    pass
+
+def get_init_model(source, data_only=False, curdir=None, lang=None):
+    pass
+
+class Language:
+    @classmethod
+    def __subclasses__(cls) -> typing.Type["Language"]:
+        pass
+    @classmethod
+    def from_name(cls, name) -> "Language":
+        pass
+    @property
+    def code(self) -> str:
+        pass
+    @property
+    def name(self) -> str:
+        pass
+    @property
+    def settings(self) -> dict:
+        pass
+    settings_header: str = ""
+    variables_header: str = ""
+    test_cases_header: str = ""
+    tasks_header: str = ""
+    keywords_header: str = ""
+    comments_header: str = ""
+    library_setting: str = ""
+    resource_setting: str = ""
+    variables_setting: str = ""
+    documentation_setting: str = ""
+    metadata_setting: str = ""
+    suite_setup_setting: str = ""
+    suite_teardown_setting: str = ""
+    test_setup_setting: str = ""
+    task_setup_setting: str = ""
+    test_teardown_setting: str = ""
+    task_teardown_setting: str = ""
+    test_template_setting: str = ""
+    task_template_setting: str = ""
+    test_timeout_setting: str = ""
+    task_timeout_setting: str = ""
+    test_tags_setting: str = ""
+    task_tags_setting: str = ""
+    keyword_tags_setting: str = ""
+    tags_setting: str = ""
+    setup_setting: str = ""
+    teardown_setting: str = ""
+    template_setting: str = ""
+    timeout_setting: str = ""
+    arguments_setting: str = ""
+    given_prefix: Set[str] = set()
+    when_prefix: Set[str] = set()
+    then_prefix: Set[str] = set()
+    and_prefix: Set[str] = set()
+    but_prefix: Set[str] = set()
+    @property
+    def bdd_prefixes(self):
+        pass
+
+class Languages:
+
+    languages: List[Language]
+    headers: Dict[str, str]
+    settigs: dict
+    def __init__(self, languages: Optional[List[Language]] = None) -> None: ...
+    def reset(self, languages: Optional[List[Language]] = None) -> None: ...
+    def add_language(self, name: str) -> None: ...
+    def __iter__(self) -> Iterator[Language]: ...

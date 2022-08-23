@@ -185,6 +185,8 @@ def test_diagnostics_workspace(language_server_io, workspace):
 
 
 def test_section_completions_integrated(language_server, ws_root_path, data_regression):
+    from robotframework_ls.impl.robot_version import robot_version_supports_language
+
     language_server.initialize(ws_root_path, process_id=os.getpid())
     uri = "untitled:Untitled-1"
     language_server.open_doc(uri, 1)
@@ -197,6 +199,8 @@ def test_section_completions_integrated(language_server, ws_root_path, data_regr
 
     check("completion_settings_plural")
 
+    supports_language = robot_version_supports_language()
+
     language_server.settings(
         {
             "settings": {
@@ -204,12 +208,20 @@ def test_section_completions_integrated(language_server, ws_root_path, data_regr
             }
         }
     )
-    check("completion_settings_singular")
+    if supports_language:
+        # Only plural form for RF 5.1
+        check("completion_settings_plural")
+    else:
+        check("completion_settings_singular")
 
     language_server.settings(
         {"settings": {"robot": {"completions": {"section_headers": {"form": "both"}}}}}
     )
-    check("completion_settings_both")
+    if supports_language:
+        # Only plural form for RF 5.1
+        check("completion_settings_plural")
+    else:
+        check("completion_settings_both")
 
     language_server.settings(
         {
@@ -218,7 +230,11 @@ def test_section_completions_integrated(language_server, ws_root_path, data_regr
             }
         }
     )
-    check("completion_settings_plural")
+    if supports_language:
+        # Only plural form for RF 5.1
+        check("completion_settings_plural")
+    else:
+        check("completion_settings_plural")
 
 
 def test_keyword_completions_integrated_pythonpath_resource(

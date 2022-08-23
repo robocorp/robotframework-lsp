@@ -60,7 +60,14 @@ export function getArrayStrFromConfigExpandingVars(
     config: WorkspaceConfiguration,
     name: string
 ): Array<string> | undefined {
-    let array: Array<string> = config.get<Array<string>>(name);
+    let arrayOrStr: Array<string> | string = config.get<Array<string> | string>(name);
+    let array: Array<string>;
+    if (typeof arrayOrStr === "string") {
+        array = [arrayOrStr];
+    } else {
+        array = arrayOrStr;
+    }
+
     if (array) {
         if (!Array.isArray(array)) {
             OUTPUT_CHANNEL.appendLine("Expected string[] for configuration: " + name);

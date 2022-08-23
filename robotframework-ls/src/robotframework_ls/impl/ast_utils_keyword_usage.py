@@ -210,9 +210,11 @@ def _build_keyword_usage(stack, node, current_tokens) -> Optional[KeywordUsageIn
     new_tokens = [keyword_token]
     new_tokens.extend(current_tokens[keyword_at_index + 1 :])
 
+    new_node = node.__class__(new_tokens)
+    new_node.__localization_info__ = node.__localization_info__
     return KeywordUsageInfo(
         stack,
-        node.__class__(new_tokens),
+        new_node,
         keyword_token,
         keyword_token.value,
         True,

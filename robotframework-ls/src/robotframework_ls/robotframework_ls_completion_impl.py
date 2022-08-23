@@ -50,8 +50,6 @@ class _RobotFrameworkLsCompletionImpl(object):
         col: int,
         monitor: IMonitor,
     ) -> list:
-        from robotframework_ls.impl.completion_context import CompletionContext
-        from robotframework_ls.impl import section_completions
         from robocorp_ls_core.client_base import wait_for_message_matchers
 
         ls = self._weak_robot_framework_ls()
@@ -69,15 +67,11 @@ class _RobotFrameworkLsCompletionImpl(object):
             log.critical("Unable to find document (%s) for completions." % (doc_uri,))
             return []
 
-        ctx = CompletionContext(document, line, col, config=ls.config, workspace=ws)
         completions = []
 
         # Asynchronous completion.
         message_matchers: List[Optional[IIdMessageMatcher]] = []
         message_matchers.append(rf_api_client.request_complete_all(doc_uri, line, col))
-
-        # These run locally (no need to get from the server).
-        completions.extend(section_completions.complete(ctx))
 
         accepted_message_matchers = wait_for_message_matchers(
             message_matchers,

@@ -215,9 +215,12 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         from robotframework_ls.impl.robot_lsp_constants import (
             OPTION_ROBOT_VARIABLES_LOAD_FROM_ARGUMENTS_FILE,
         )
+        from robotframework_ls.impl import robot_localization
 
         PythonLanguageServer.m_workspace__did_change_configuration(self, **kwargs)
         self.libspec_manager.config = self.config
+
+        robot_localization.set_global_from_config(self.config)
 
         try:
             variables_from_arguments_files = self.config.get_setting(
@@ -429,11 +432,13 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if completion_context is None:
             return []
 
-        from robotframework_ls.impl import snippets_completions
+        from robotframework_ls.impl import snippets_completions, section_completions
 
         completions = snippets_completions.complete(completion_context)
         monitor.check_cancelled()
         completions.extend(self._complete_from_completion_context(completion_context))
+        completions.extend(section_completions.complete(completion_context))
+
         return completions
 
     def _complete_from_completion_context(self, completion_context):

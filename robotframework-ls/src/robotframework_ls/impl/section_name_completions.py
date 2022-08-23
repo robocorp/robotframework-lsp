@@ -1,5 +1,6 @@
-from robotframework_ls.impl.protocols import ICompletionContext
+from robotframework_ls.impl.protocols import ICompletionContext, ILocalizationInfo
 from typing import Optional
+from robotframework_ls.impl.text_utilities import normalize_robot_name
 
 
 class _Requisites(object):
@@ -12,13 +13,14 @@ class _Requisites(object):
 
 
 def get_requisites(completion_context: ICompletionContext) -> Optional[_Requisites]:
-    section_name = completion_context.get_current_section_name()
-    if not section_name:
+    section_node = completion_context.get_ast_current_section()
+    if section_node is None:
         return None
 
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
+    from robotframework_ls.impl.section_completions import get_section_constant
 
-    section = completion_context.get_section(section_name)
+    section = get_section_constant(completion_context, section_node)
     if section is None:
         return None
 
@@ -51,7 +53,6 @@ def get_requisites(completion_context: ICompletionContext) -> Optional[_Requisit
 
 
 def complete(completion_context: ICompletionContext):
-    import itertools
     from robocorp_ls_core.lsp import (
         TextEdit,
         Range,
@@ -59,6 +60,7 @@ def complete(completion_context: ICompletionContext):
         CompletionItem,
         CompletionItemKind,
     )
+    from robotframework_ls.impl.robot_version import robot_version_supports_language
 
     requisites = get_requisites(completion_context)
     if requisites is None:
@@ -74,7 +76,33 @@ def complete(completion_context: ICompletionContext):
     sel_ends_with_close = line[selection.col :].startswith("]")
 
     ret = []
-    for word in sorted(itertools.chain(section.names, section.aliases)):
+    if robot_version_supports_language():
+        from robot.api import Language
+
+        locinfo: ILocalizationInfo = completion_context.get_ast_localization_info()
+        current_section_name = normalize_robot_name(
+            completion_context.get_current_section_name()
+        )
+
+        def _translated_words():
+            lang: Language
+            for lang in locinfo.iter_languages_on_write():
+                markers = section.markers_for_lang(lang)
+                for marker in markers:
+                    if normalize_robot_name(marker) == current_section_name:
+                        yield from iter(section.names_for_lang(lang))
+                        return
+
+            # If it didn't return (is this possible?), provide all.
+            for lang in locinfo.iter_languages_on_write():
+                yield from iter(section.names_for_lang(lang))
+
+        words = tuple(_translated_words())
+
+    else:
+        words = section.get_names_in_section_pre_rf_5_1()
+
+    for word in sorted(words):
         if matcher.accepts(word):
             col_delta = 0
             if section.names_in_brackets:

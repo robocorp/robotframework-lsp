@@ -11,6 +11,12 @@ NEXT
 - An LRU based on file size now prevents unlimited usage of RAM when caching files loaded from the filesystem. [#720](https://github.com/robocorp/robotframework-lsp/issues/720)
     - It's possible to customize the size of the target memory for this LRU through the `RFLS_FILES_TARGET_MEMORY_IN_BYTES` environment variable.
 - If a keyword call resolves to multiple keywords, the argument analysis is done for all the matches. [#724](https://github.com/robocorp/robotframework-lsp/issues/724).
+- (Experimental) Support for localization in Robot Framework 5.1. [#728](https://github.com/robocorp/robotframework-lsp/issues/728).
+    - The language may be set just for a file (with `language: <lang>` on the top of the file).
+    - The language may be specified globally through the setting: `robot.language`.
+    - Support for completions with translated section names and settings.
+    - Support for syntax highlighting translated bdd prefixes.
+    - The language(s) set in the `robot.language` configuration are automatically added as parameter on new launches.
 
 ### Bugfixes
 

@@ -1,0 +1,234 @@
+- deprecated: false
+  kind: 14
+  label: Documentation
+  preselect: false
+  textEdit:
+    newText: Documentation
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- deprecated: false
+  kind: 14
+  label: Keyword Tags
+  preselect: false
+  textEdit:
+    newText: Keyword Tags
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- deprecated: false
+  kind: 14
+  label: Library
+  preselect: false
+  textEdit:
+    newText: Library
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- deprecated: false
+  kind: 14
+  label: Metadata
+  preselect: false
+  textEdit:
+    newText: Metadata
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- deprecated: false
+  kind: 14
+  label: Resource
+  preselect: false
+  textEdit:
+    newText: Resource
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- deprecated: false
+  kind: 14
+  label: Suite Setup
+  preselect: false
+  textEdit:
+    newText: Suite Setup
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- deprecated: false
+  kind: 14
+  label: Suite Teardown
+  preselect: false
+  textEdit:
+    newText: Suite Teardown
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- deprecated: false
+  kind: 14
+  label: Task Setup
+  preselect: false
+  textEdit:
+    newText: Task Setup
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- deprecated: false
+  kind: 14
+  label: Task Tags
+  preselect: false
+  textEdit:
+    newText: Task Tags
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- deprecated: false
+  kind: 14
+  label: Task Teardown
+  preselect: false
+  textEdit:
+    newText: Task Teardown
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- deprecated: false
+  kind: 14
+  label: Task Template
+  preselect: false
+  textEdit:
+    newText: Task Template
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- deprecated: false
+  kind: 14
+  label: Task Timeout
+  preselect: false
+  textEdit:
+    newText: Task Timeout
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- deprecated: false
+  kind: 14
+  label: Test Setup
+  preselect: false
+  textEdit:
+    newText: Test Setup
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- deprecated: false
+  kind: 14
+  label: Test Tags
+  preselect: false
+  textEdit:
+    newText: Test Tags
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- deprecated: false
+  kind: 14
+  label: Test Teardown
+  preselect: false
+  textEdit:
+    newText: Test Teardown
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- deprecated: false
+  kind: 14
+  label: Test Template
+  preselect: false
+  textEdit:
+    newText: Test Template
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- deprecated: false
+  kind: 14
+  label: Test Timeout
+  preselect: false
+  textEdit:
+    newText: Test Timeout
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3
+- deprecated: false
+  kind: 14
+  label: Variables
+  preselect: false
+  textEdit:
+    newText: Variables
+    range:
+      end:
+        character: 0
+        line: 3
+      start:
+        character: 0
+        line: 3

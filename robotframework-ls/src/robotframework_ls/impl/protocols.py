@@ -13,6 +13,7 @@ from typing import (
     Hashable,
     Dict,
     Set,
+    Union,
 )
 from robocorp_ls_core.protocols import (
     Sentinel,
@@ -867,6 +868,30 @@ class IVariablesFromArgumentsFileLoader(Protocol):
         pass
 
 
+class ILocalizationInfo(Protocol):
+    def __init__(self, language_codes: Union[Tuple[str, ...], str]):
+        pass
+
+    @property
+    def language_codes(self) -> Tuple[str, ...]:
+        pass
+
+    def iter_bdd_prefixes_on_read(self) -> Iterator[str]:
+        """
+        Note that we specify the reason for iterating because for instance, when
+        writing code we could want just the completions for the specified
+        language in the file and while reading (i.e.: analyzing) we'd want it
+        for all languages.
+        """
+
+    def iter_languages_on_write(
+        self,
+    ) -> Iterator[Any]:  # Actually Iterator[robot.api.Language]
+        """
+        Provides the languages used when writing a doc (i.e.: completions, ...).
+        """
+
+
 class ICompletionContext(Protocol):
     def __init__(
         self,
@@ -956,18 +981,10 @@ class ICompletionContext(Protocol):
     def get_ast(self) -> Any:
         pass
 
-    def get_ast_current_section(self) -> Any:
+    def get_ast_current_section(self) -> Optional[INode]:
         """
         :rtype: robot.parsing.model.blocks.Section|NoneType
         """
-
-    def get_section(self, section_name: str) -> Any:
-        """
-        :rtype: robot_constants.Section
-        """
-
-    def get_accepted_section_header_words(self) -> List[str]:
-        pass
 
     def get_current_section_name(self) -> Optional[str]:
         pass
@@ -1070,6 +1087,12 @@ class ICompletionContext(Protocol):
         pass
 
     def obtain_symbols_cache_reverse_index(self) -> Optional[ISymbolsCacheReverseIndex]:
+        pass
+
+    def apply_localization_info_to_keywords(self):
+        pass
+
+    def get_ast_localization_info(self) -> ILocalizationInfo:
         pass
 
 

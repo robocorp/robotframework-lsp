@@ -1,0 +1,13 @@
+- deprecated: false
+  kind: 14
+  label: Documentação
+  preselect: false
+  textEdit:
+    newText: Documentação
+    range:
+      end:
+        character: 5
+        line: 4
+      start:
+        character: 0
+        line: 4

@@ -1,7 +1,10 @@
 from typing import List
 from robocorp_ls_core.protocols import IDocument
 import pytest
-from robotframework_ls.impl.robot_version import get_robot_major_version
+from robotframework_ls.impl.robot_version import (
+    get_robot_major_version,
+    robot_version_supports_language,
+)
 import itertools
 
 
@@ -117,6 +120,46 @@ Some test
             ("Some test", "testCaseName"),
             ("Some_REsource", "name"),
             (".Some Keyword", "keywordNameCall"),
+        ],
+    )
+
+
+def test_semantic_highlighting_gherkin(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+Some test
+    Given No Operation
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("Some test", "testCaseName"),
+            ("Given ", "control"),
+            ("No Operation", "keywordNameCall"),
+        ],
+    )
+
+
+def test_semantic_highlighting_gherkin_custom_lang(workspace):
+    if not robot_version_supports_language():
+        raise pytest.skip("Test requires language support.")
+    from robotframework_ls.impl.robot_localization import set_global_localization_info
+    from robotframework_ls.impl.robot_localization import LocalizationInfo
+
+    set_global_localization_info(LocalizationInfo("pt-br"))
+    check_simple(
+        workspace,
+        """
+*** Casos de teste ***
+Some test
+    Quando No Operation
+""",
+        [
+            ("*** Casos de teste ***", "header"),
+            ("Some test", "testCaseName"),
+            ("Quando ", "control"),
+            ("No Operation", "keywordNameCall"),
         ],
     )
 

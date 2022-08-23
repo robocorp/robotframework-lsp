@@ -76,6 +76,7 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
             }
         }
         let variables: object = config.get("variables");
+        let language: Array<string> = getArrayStrFromConfigExpandingVars(config, "language");
         debugConfiguration.target = removeEscaping(debugConfiguration.target);
         let targetRobot: any = debugConfiguration.target;
         if (targetRobot instanceof Array && targetRobot.length > 0) {
@@ -130,6 +131,15 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
                 newArgs.push(element);
             }
         });
+
+        if (language) {
+            language.forEach((element) => {
+                if (element.length > 0) {
+                    newArgs.push("--language");
+                    newArgs.push(element);
+                }
+            });
+        }
 
         for (let key in variables) {
             if (variables.hasOwnProperty(key)) {

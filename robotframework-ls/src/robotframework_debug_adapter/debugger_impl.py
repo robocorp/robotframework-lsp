@@ -456,6 +456,7 @@ class _EvaluationInfo(object):
         from robot.libraries.BuiltIn import BuiltIn  # type: ignore
         from robot.api import get_model  # type: ignore
         from robotframework_ls.impl import ast_utils
+        from robotframework_ls.impl.robot_localization import LocalizationInfo
 
         # We can't really use
         # BuiltIn().evaluate(expression, modules, namespace)
@@ -500,6 +501,7 @@ Evaluation
             self.expression,
         )
         model = get_model(s)
+        ast_utils.set_localization_info_in_model(model, LocalizationInfo("en"))
         usage_info = list(
             ast_utils.iter_keyword_usage_tokens(model, collect_args_as_keywords=False)
         )

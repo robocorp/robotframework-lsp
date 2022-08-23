@@ -36,13 +36,20 @@ class DocumentSelection(object):
         return self.doc.get_line(self.line)
 
     @property
-    def line_to_column(self):
+    def line_to_column(self) -> str:
         current_line = self.current_line
         if not current_line:
             return ""
         line_start = current_line[: self.col]
 
         return line_start
+
+    @property
+    def line_to_end(self) -> str:
+        current_line = self.current_line
+        if not current_line:
+            return ""
+        return current_line[self.col :]
 
     @property
     def word_at_column(self) -> str:

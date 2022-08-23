@@ -36,6 +36,7 @@ import weakref
 import threading
 import typing
 import itertools
+from robotframework_ls.impl.robot_localization import LocalizationInfo
 
 
 log = get_logger(__name__)
@@ -1083,6 +1084,10 @@ _CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_TUPLE = _FIXTURE_CLASS_NAMES + (
     "Template",
 )
 
+_CLASSES_KEYWORDS_AND_OTHERS_WITH_ARGUMENTS_AS_KEYWORD_CALLS = (
+    "KeywordCall",
+) + _CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_TUPLE
+
 CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET = frozenset(
     _CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_TUPLE
 )
@@ -1318,7 +1323,7 @@ def _same_line_col(tok1: IRobotToken, tok2: IRobotToken):
 
 @_convert_ast_to_indexer
 def _iter_node_info_which_may_have_usage_info(ast):
-    for clsname in ("KeywordCall",) + _CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_TUPLE:
+    for clsname in _CLASSES_KEYWORDS_AND_OTHERS_WITH_ARGUMENTS_AS_KEYWORD_CALLS:
         yield from ast.iter_indexed(clsname)
 
 
@@ -1328,6 +1333,8 @@ def _iter_keyword_usage_tokens_uncached(
     from robotframework_ls.impl.ast_utils_keyword_usage import (
         obtain_keyword_usage_handler,
     )
+
+    apply_localization_info_to_keywords(ast)
 
     for node_info in _iter_node_info_which_may_have_usage_info(ast):
         stack = node_info.stack
@@ -1382,7 +1389,8 @@ def get_keyword_name_token(
         token.type == token.NAME
         and node.__class__.__name__ in CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET
     ):
-        return _strip_token_bdd_prefix(token)[1]
+        locinfo = get_localization_info_from_model(node)
+        return _strip_token_bdd_prefix(token, locinfo)[1]
 
     if token.type == token.ARGUMENT and not token.value.strip().endswith("}"):
         from robotframework_ls.impl.ast_utils_keyword_usage import (
@@ -1458,7 +1466,8 @@ def _copy_of_node_replacing_token(node, token, token_type):
 
 
 def _strip_node_and_token_bdd_prefix(
-    node: INode, token_type: str
+    node: INode,
+    token_type: str,
 ) -> Tuple[str, INode, Optional[IRobotToken]]:
     """
     This is a workaround because the parsing does not separate a BDD prefix from
@@ -1468,14 +1477,18 @@ def _strip_node_and_token_bdd_prefix(
     original_token = node.get_token(token_type)
     if original_token is None:
         return "", node, None
-    prefix, token = _strip_token_bdd_prefix(original_token)
+
+    locinfo = get_localization_info_from_model(node)
+    prefix, token = _strip_token_bdd_prefix(original_token, locinfo)
     if token is original_token:
         # i.e.: No change was done.
         return prefix, node, token
     return prefix, _copy_of_node_replacing_token(node, token, token_type), token
 
 
-def _strip_token_bdd_prefix(token: IRobotToken) -> Tuple[str, IRobotToken]:
+def _strip_token_bdd_prefix(
+    token: IRobotToken, locinfo: LocalizationInfo
+) -> Tuple[str, IRobotToken]:
     """
     This is a workaround because the parsing does not separate a BDD prefix from
     the keyword name. If the parsing is improved to do that separation in the future
@@ -1484,22 +1497,27 @@ def _strip_token_bdd_prefix(token: IRobotToken) -> Tuple[str, IRobotToken]:
     :return: the prefix and a new token with the bdd prefix stripped or the
     original token passed (if no prefix was detected).
     """
-    from robotframework_ls.impl.robot_constants import BDD_PREFIXES
     from robot.api import Token
 
     assert token is not None
 
     text = token.value.lower()
-    for prefix in BDD_PREFIXES:
+    for prefix in locinfo.iter_bdd_prefixes_on_read():
         if text.startswith(prefix):
-            new_name = token.value[len(prefix) :]
-            return prefix, Token(
-                type=token.type,
-                value=new_name,
-                lineno=token.lineno,
-                col_offset=token.col_offset + len(prefix),
-                error=token.error,
-            )
+            try:
+                next_is_space = text[len(prefix)] == " "
+            except IndexError:
+                continue
+
+            if next_is_space:
+                new_name = token.value[len(prefix) + 1 :]
+                return prefix, Token(
+                    type=token.type,
+                    value=new_name,
+                    lineno=token.lineno,
+                    col_offset=token.col_offset + len(prefix) + 1,
+                    error=token.error,
+                )
     return "", token
 
 
@@ -2092,3 +2110,55 @@ def iter_arguments_from_template(
                     if token.type == token.ARGUMENT:
                         yield node_info
                         break
+
+
+def set_localization_info_in_model(ast, localization_info: LocalizationInfo):
+    """
+    Sets information regarding localization of the AST in the model (File).
+    """
+    assert (
+        ast.__class__.__name__ == "File"
+    ), f"Expected File. Found: {ast.__class__.__name__}"
+
+    ast.__localization_info__ = localization_info
+
+    file_weak_ref = weakref.ref(ast)
+    for _stack, node in _iter_nodes(ast):
+        node.__file_weak_ref__ = file_weak_ref  # type:ignore
+        node.__localization_info__ = localization_info  # type:ignore
+
+
+def apply_localization_info_to_keywords(ast):
+    """
+    Sets the localization info from the File to the Keywords in the model
+    (if still not done).
+    """
+    if hasattr(ast, "iter_indexed"):
+        ast = ast.ast
+
+    if ast.__class__.__name__ != "File":
+        # Nodes directly beneath the file have a reference to the file.
+        try:
+            file_weak_ref = ast.__file_weak_ref__
+        except AttributeError:
+            return
+        ast = file_weak_ref()
+        if ast is None:
+            return
+
+    try:
+        if ast.__localization_applied_to_keywords__:
+            return
+    except AttributeError:
+        ast.__localization_applied_to_keywords__ = True
+
+    localization_info = ast.__localization_info__
+
+    for node_info in _iter_node_info_which_may_have_usage_info(ast):
+        # We only need to set it here because this is where the bdd
+        # prefixes will be needed.
+        node_info.node.__localization_info__ = localization_info
+
+
+def get_localization_info_from_model(ast) -> LocalizationInfo:
+    return ast.__localization_info__

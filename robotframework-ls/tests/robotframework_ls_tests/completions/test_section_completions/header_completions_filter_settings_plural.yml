@@ -1,0 +1,14 @@
+- deprecated: false
+  insertText: '*** Settings ***'
+  kind: 7
+  label: '*** Settings ***'
+  preselect: false
+  textEdit:
+    newText: '*** Settings ***'
+    range:
+      end:
+        character: 8
+        line: 0
+      start:
+        character: 0
+        line: 0

@@ -21,6 +21,7 @@ from robotframework_ls.impl.robot_constants import (
     OPTION,
     ASSIGN,
 )
+from robotframework_ls.impl.robot_localization import LocalizationInfo
 
 
 TOKEN_TYPES = [
@@ -69,14 +70,13 @@ del value
 
 
 def _extract_gherkin_token_from_keyword(
+    scope: "_SemanticTokensScope",
     keyword_token: IRobotToken,
 ) -> Tuple[Optional[IRobotToken], IRobotToken]:
-    import re
     from robotframework_ls.impl.ast_utils import split_token_change_first
 
-    result = re.match(
-        r"^((Given|When|Then|And|But)\s+)", keyword_token.value, flags=re.IGNORECASE
-    )
+    regexp = scope.get_gherkin_regexp()
+    result = regexp.match(keyword_token.value)
     if result:
         gherkin_token_length = len(result.group(1))
         return split_token_change_first(keyword_token, "control", gherkin_token_length)
@@ -289,7 +289,7 @@ def _tokenize_token(
         token_keyword = use_token
 
         token_gherkin_prefix, token_keyword = _extract_gherkin_token_from_keyword(
-            token_keyword
+            scope, token_keyword
         )
         if token_gherkin_prefix:
             yield token_gherkin_prefix, scope.get_index_from_internal_token_type(
@@ -508,9 +508,14 @@ def _tokenized_args(token, token_type_index, in_documentation, scope):
 
 
 class _SemanticTokensScope:
-    def __init__(self, context: ICompletionContext):
+    def __init__(
+        self, context: ICompletionContext, localization_info: LocalizationInfo
+    ):
+        import re
+
         # It's the same for all files.
         self.imported_libraries = set(_iter_dependent_names(context))
+        self.localization_info = localization_info
 
         # Note: it's set for the node and then reused for all the tokens in that same node.
         self.keyword_usage_handler: Any = None
@@ -518,9 +523,23 @@ class _SemanticTokensScope:
         self.get_index_from_rf_token_type = RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX.get
         self.get_index_from_internal_token_type = TOKEN_TYPE_TO_INDEX.__getitem__
 
+        regexp = ["^(("]
+        for prefix in localization_info.iter_bdd_prefixes_on_read():
+            if len(regexp) > 1:
+                regexp.append("|")
+            regexp.append(re.escape(prefix))
+        regexp.append(")\s+)")
+
+        self._gherkin_regexp = re.compile("".join(regexp), flags=re.IGNORECASE)
+
+    def get_gherkin_regexp(self):
+        "^((Given|When|Then|And|But)\s+)"
+        return self._gherkin_regexp
+
 
 def semantic_tokens_full(context: ICompletionContext):
     from robotframework_ls.impl import ast_utils_keyword_usage
+    from robotframework_ls.impl.ast_utils import get_localization_info_from_model
 
     try:
         ast = context.doc.get_ast()
@@ -537,7 +556,9 @@ def semantic_tokens_full(context: ICompletionContext):
     last_line = 0
     last_column = 0
 
-    scope = _SemanticTokensScope(context)
+    localization_info = get_localization_info_from_model(ast)
+
+    scope = _SemanticTokensScope(context, localization_info)
     for stack, node in ast_utils.iter_all_nodes_recursive(ast):
         if monitor:
             monitor.check_cancelled()

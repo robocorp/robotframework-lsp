@@ -309,6 +309,12 @@ class WorkspaceIndexer(object):
         return True
 
     def _on_thread(self) -> None:
+        try:
+            self._on_thread_internal()
+        except:
+            log.exception("Error in workpace indexer.")
+
+    def _on_thread_internal(self) -> None:
         if not self._collect_tests:
             for _uri, symbols_cache in self.iter_uri_and_symbols_cache():
                 # Do a single collection at startup, afterwards only
@@ -692,37 +698,70 @@ class RobotDocument(Document):
 
         return self.generate_ast_uncached()
 
-    def generate_ast_uncached(self):
-        from robot.api import get_model, get_resource_model, get_init_model  # noqa
+    def generate_ast_uncached(self) -> None:
+        from robot.api import get_model, get_resource_model, get_init_model
+        from robotframework_ls.impl.robot_localization import (
+            get_global_localization_info,
+        )
+        from robotframework_ls.impl import ast_utils
+        from robotframework_ls.impl.robot_version import robot_version_supports_language
+        from robotframework_ls.impl.robot_localization import LocalizationInfo
 
         try:
-            source = self.source
+            source: str = self.source
         except:
             log.exception("Error getting source for: %s" % (self.uri,))
             source = ""
 
+        language_codes: List[str] = []
         try:
+            kwargs: Dict[str, Any] = {}
+
+            if robot_version_supports_language():
+                # Input localization
+                localization_info = get_global_localization_info()
+                from robot.api import Languages
+
+                languages = Languages()
+                for code in localization_info.language_codes:
+                    languages.add_language(code)
+                initial_languages = set(iter(languages))
+
+                kwargs["lang"] = languages
+
             t = self.get_type()
             if t == self.TYPE_TEST_CASE:
-                ast = get_model(source)
+                ast = get_model(source, **kwargs)
 
             elif t == self.TYPE_RESOURCE:
-                ast = get_resource_model(source)
+                ast = get_resource_model(source, **kwargs)
 
             elif t == self.TYPE_INIT:
-                ast = get_init_model(source)
+                ast = get_init_model(source, **kwargs)
 
             else:
                 log.critical("Unrecognized section: %s", t)
-                ast = get_model(source)
+                ast = get_model(source, **kwargs)
+
+            # Output localization
+            if robot_version_supports_language():
+                for lang in languages:
+                    if lang not in initial_languages:
+                        language_codes.append(lang.code)
+
+            localization_info = LocalizationInfo(tuple(language_codes))
 
             ast.source = self.path
+            ast_utils.set_localization_info_in_model(ast, localization_info)
             return ast
         except:
-            log.critical(f"Error parsing {self.uri}")
+            log.exception(f"Error parsing {self.uri}")
             # Note: we always want to return a valid AST here (the
             # AST itself should have the error).
             ast = get_model(f"*** Unable to parse: {self.uri} ***")
+
+            localization_info = LocalizationInfo(tuple(language_codes))
+            ast_utils.set_localization_info_in_model(ast, localization_info)
             ast.source = self.path
             return ast
 

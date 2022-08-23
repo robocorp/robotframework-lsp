@@ -168,6 +168,11 @@ SETTINGS = {
         "default": [],
         "description": 'The arguments with the options to be used to start an interactive console. i.e.: ["--output", "${workspaceRoot}/interactive_output.xml"]',
     },
+    "robot.language": {
+        "type": "array",
+        "default": [],
+        "description": "Language(s) to be used in Robot Framework (passed as the --language argument for robot when launching).",
+    },
 }
 
 

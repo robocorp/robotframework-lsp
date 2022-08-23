@@ -46,6 +46,7 @@ from robotframework_ls.impl.protocols import (
     IVariableFound,
     NodeInfo,
     ISymbolsCacheReverseIndex,
+    ILocalizationInfo,
 )
 from robotframework_ls.impl.robot_workspace import RobotDocument
 from robocorp_ls_core import uris
@@ -261,7 +262,7 @@ class CompletionContext(object):
         return self.doc.get_ast()
 
     @instance_cache
-    def get_ast_current_section(self) -> Any:
+    def get_ast_current_section(self) -> Optional[INode]:
         """
         :rtype: robot.parsing.model.blocks.Section|NoneType
         """
@@ -270,18 +271,6 @@ class CompletionContext(object):
         ast = self.get_ast()
         section = ast_utils.find_section(ast, self.sel.line)
         return section
-
-    def get_accepted_section_header_words(self) -> List[str]:
-        """
-        :rtype: list(str)
-        """
-        sections = self._get_accepted_sections()
-        ret = []
-        for section in sections:
-            for marker in section.markers:
-                ret.append(marker.title())
-        ret.sort()
-        return ret
 
     def get_current_section_name(self) -> Optional[str]:
         """
@@ -298,39 +287,6 @@ class CompletionContext(object):
                 section_name = header.value  # older version of 3.2
 
         return section_name
-
-    def _get_accepted_sections(self) -> list:
-        """
-        :rtype: list(robot_constants.Section)
-        """
-        from robotframework_ls.impl import robot_constants
-
-        t = self.get_type()
-        if t == self.TYPE_TEST_CASE:
-            return robot_constants.TEST_CASE_FILE_SECTIONS
-
-        elif t == self.TYPE_RESOURCE:
-            return robot_constants.RESOURCE_FILE_SECTIONS
-
-        elif t == self.TYPE_INIT:
-            return robot_constants.INIT_FILE_SECTIONS
-
-        else:
-            log.critical("Unrecognized section: %s", t)
-            return robot_constants.TEST_CASE_FILE_SECTIONS
-
-    def get_section(self, section_name: str) -> Any:
-        """
-        :rtype: robot_constants.Section
-        """
-        section_name = section_name.lower()
-        accepted_sections = self._get_accepted_sections()
-
-        for section in accepted_sections:
-            for marker in section.markers:
-                if marker.lower() == section_name:
-                    return section
-        return None
 
     @instance_cache
     def get_current_token(self) -> Optional[TokenInfo]:
@@ -782,6 +738,16 @@ class CompletionContext(object):
         symbols_cache_reverse_index = workspace_indexer.symbols_cache_reverse_index
         symbols_cache_reverse_index.synchronize(self)
         return symbols_cache_reverse_index
+
+    def apply_localization_info_to_keywords(self):
+        from robotframework_ls.impl import ast_utils
+
+        ast_utils.apply_localization_info_to_keywords(self.get_ast())
+
+    def get_ast_localization_info(self) -> ILocalizationInfo:
+        from robotframework_ls.impl import ast_utils
+
+        return ast_utils.get_localization_info_from_model(self.get_ast())
 
     def __typecheckself__(self) -> None:
         from robocorp_ls_core.protocols import check_implements

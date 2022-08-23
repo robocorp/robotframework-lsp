@@ -338,6 +338,10 @@ def find_variable_definition(
     from robotframework_ls.impl.variable_completions import (
         collect_current_doc_global_variables,
     )
+    from robotframework_ls.impl import ast_utils
+
+    if var_token_info.stack:
+        ast_utils.apply_localization_info_to_keywords(var_token_info.stack[0])
 
     token = var_token_info.token
     completion_context = completion_context.create_copy_with_selection(
@@ -383,6 +387,9 @@ def find_keyword_definition(
     """
     from robotframework_ls.impl.collect_keywords import collect_keywords
     from robotframework_ls.impl import ast_utils
+
+    if token_info.stack:
+        ast_utils.apply_localization_info_to_keywords(token_info.stack[0])
 
     token = ast_utils.get_keyword_name_token(
         token_info.stack,

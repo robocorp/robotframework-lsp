@@ -136,6 +136,17 @@ def pytest_report_header(config):
     print(f"RF Location: {robot.__file__}")
 
 
+@pytest.fixture(autouse=True, scope="function")
+def reset_robot_localization():
+    yield
+
+    from robotframework_ls.impl import robot_localization
+    from robotframework_ls.impl.robot_localization import LocalizationInfo
+
+    # When the test finishes, reset the globalization.
+    robot_localization.set_global_localization_info(LocalizationInfo("en"))
+
+
 @pytest.fixture(autouse=True, scope="session")
 def sync_builtins(tmpdir_factory):
     """

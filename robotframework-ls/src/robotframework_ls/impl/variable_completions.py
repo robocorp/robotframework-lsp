@@ -452,8 +452,11 @@ def collect_local_variables(
     if token_info.stack:
         stack, stack_node = get_local_variable_stack_and_node(token_info.stack)
     else:
-        stack_node = completion_context.get_ast_current_section()
-        stack = (stack_node,)
+        current_section = completion_context.get_ast_current_section()
+        if current_section is None:
+            stack = ()  # Note: shouldn't happen in practice.
+        else:
+            stack = (stack_node,)
 
     for assign_node_info in ast_utils.iter_local_assigns(stack_node):
         completion_context.check_cancelled()

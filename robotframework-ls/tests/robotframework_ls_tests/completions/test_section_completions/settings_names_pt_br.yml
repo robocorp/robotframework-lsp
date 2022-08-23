@@ -1,0 +1,234 @@
+- deprecated: false
+  kind: 14
+  label: Biblioteca
+  preselect: false
+  textEdit:
+    newText: Biblioteca
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4
+- deprecated: false
+  kind: 14
+  label: Configuração da Suíte
+  preselect: false
+  textEdit:
+    newText: Configuração da Suíte
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4
+- deprecated: false
+  kind: 14
+  label: Documentação
+  preselect: false
+  textEdit:
+    newText: Documentação
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4
+- deprecated: false
+  kind: 14
+  label: Finalização de Suíte
+  preselect: false
+  textEdit:
+    newText: Finalização de Suíte
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4
+- deprecated: false
+  kind: 14
+  label: Finalização de Tarefa
+  preselect: false
+  textEdit:
+    newText: Finalização de Tarefa
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4
+- deprecated: false
+  kind: 14
+  label: Finalização de Teste
+  preselect: false
+  textEdit:
+    newText: Finalização de Teste
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4
+- deprecated: false
+  kind: 14
+  label: Inicialização de Tarefa
+  preselect: false
+  textEdit:
+    newText: Inicialização de Tarefa
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4
+- deprecated: false
+  kind: 14
+  label: Inicialização de Teste
+  preselect: false
+  textEdit:
+    newText: Inicialização de Teste
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4
+- deprecated: false
+  kind: 14
+  label: Keyword Tags
+  preselect: false
+  textEdit:
+    newText: Keyword Tags
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4
+- deprecated: false
+  kind: 14
+  label: Metadados
+  preselect: false
+  textEdit:
+    newText: Metadados
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4
+- deprecated: false
+  kind: 14
+  label: Modelo de Tarefa
+  preselect: false
+  textEdit:
+    newText: Modelo de Tarefa
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4
+- deprecated: false
+  kind: 14
+  label: Modelo de Teste
+  preselect: false
+  textEdit:
+    newText: Modelo de Teste
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4
+- deprecated: false
+  kind: 14
+  label: Recurso
+  preselect: false
+  textEdit:
+    newText: Recurso
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4
+- deprecated: false
+  kind: 14
+  label: Task Tags
+  preselect: false
+  textEdit:
+    newText: Task Tags
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4
+- deprecated: false
+  kind: 14
+  label: Tempo Limite de Tarefa
+  preselect: false
+  textEdit:
+    newText: Tempo Limite de Tarefa
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4
+- deprecated: false
+  kind: 14
+  label: Tempo Limite de Teste
+  preselect: false
+  textEdit:
+    newText: Tempo Limite de Teste
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4
+- deprecated: false
+  kind: 14
+  label: Test Tags
+  preselect: false
+  textEdit:
+    newText: Test Tags
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4
+- deprecated: false
+  kind: 14
+  label: Variável
+  preselect: false
+  textEdit:
+    newText: Variável
+    range:
+      end:
+        character: 0
+        line: 4
+      start:
+        character: 0
+        line: 4

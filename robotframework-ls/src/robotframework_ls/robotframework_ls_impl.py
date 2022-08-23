@@ -808,7 +808,10 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     @overrides(PythonLanguageServer.m_workspace__did_change_configuration)
     @log_and_silence_errors(log)
     def m_workspace__did_change_configuration(self, **kwargs) -> None:
+        from robotframework_ls.impl import robot_localization
+
         PythonLanguageServer.m_workspace__did_change_configuration(self, **kwargs)
+        robot_localization.set_global_from_config(self.config)
         self._server_manager.set_config(self.config)
 
     # --- Methods to forward to the api

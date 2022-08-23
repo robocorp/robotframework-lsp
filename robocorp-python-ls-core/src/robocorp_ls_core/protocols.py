@@ -696,7 +696,11 @@ class IDocumentSelection(Protocol):
         pass
 
     @property
-    def line_to_column(self):
+    def line_to_column(self) -> str:
+        pass
+
+    @property
+    def line_to_end(self) -> str:
         pass
 
     @property
