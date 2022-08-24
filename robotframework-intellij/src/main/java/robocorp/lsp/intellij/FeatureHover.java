@@ -11,10 +11,10 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.commonmark.node.*;
+import org.apache.commons.lang.StringEscapeUtils;
+import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,11 @@ public class FeatureHover implements DocumentationProvider {
 
     @Override
     public @Nullable PsiElement getCustomDocumentationElement(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement contextElement, int targetOffset) {
-        return new LSPGenericPsiElement(editor.getProject(), file, contextElement.getText(), targetOffset, targetOffset);
+        String text = "";
+        if (contextElement != null) {
+            text = contextElement.getText();
+        }
+        return new LSPGenericPsiElement(editor.getProject(), file, text, targetOffset, targetOffset);
     }
 
     @Override
@@ -102,7 +106,8 @@ public class FeatureHover implements DocumentationProvider {
                         return StringEscapeUtils.escapeHtml(right.getValue());
                     }
                 }
-            } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException | TimeoutException e) {
+            } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException |
+                     TimeoutException e) {
                 // If it was cancelled, just ignore it (don't log).
             } catch (Exception e) {
                 LOG.error(e);
