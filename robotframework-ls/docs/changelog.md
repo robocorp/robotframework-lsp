@@ -27,6 +27,7 @@ NEXT
 - [Intellij] `$Prompt$` macro properly replaced when launching. [#737](https://github.com/robocorp/robotframework-lsp/issues/737)
 - Operations no longer timeout, rather, they just print to the log (as the timeouts weren't always ideal for slower machines). [#733](https://github.com/robocorp/robotframework-lsp/issues/733)
 - Fixed issue where references wouldn't be found properly.
+- Variables imported from module folder (`module/__init__.py`) are properly recognized. [#734](https://github.com/robocorp/robotframework-lsp/issues/734) 
 
 
 New in 1.0.0 (2022-08-09)

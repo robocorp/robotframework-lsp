@@ -474,9 +474,11 @@ class CompletionContext(object):
             name_with_resolved_vars = self.token_value_resolving_variables(token)
             check: Tuple[str, ...]
             if check_as_module:
+                name_with_os_sep = name_with_resolved_vars.replace(".", os.sep)
                 check = (
                     name_with_resolved_vars,
-                    name_with_resolved_vars.replace(".", os.sep) + ".py",
+                    name_with_os_sep + ".py",
+                    f"{name_with_os_sep}{os.sep}__init__.py",
                 )
             else:
                 check = (name_with_resolved_vars,)
