@@ -742,11 +742,6 @@ class CompletionContext(object):
         symbols_cache_reverse_index.synchronize(self)
         return symbols_cache_reverse_index
 
-    def apply_localization_info_to_keywords(self):
-        from robotframework_ls.impl import ast_utils
-
-        ast_utils.apply_localization_info_to_keywords(self.get_ast())
-
     def get_ast_localization_info(self) -> ILocalizationInfo:
         from robotframework_ls.impl import ast_utils
 

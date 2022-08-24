@@ -1089,9 +1089,6 @@ class ICompletionContext(Protocol):
     def obtain_symbols_cache_reverse_index(self) -> Optional[ISymbolsCacheReverseIndex]:
         pass
 
-    def apply_localization_info_to_keywords(self):
-        pass
-
     def get_ast_localization_info(self) -> ILocalizationInfo:
         pass
 

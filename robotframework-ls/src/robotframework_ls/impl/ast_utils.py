@@ -1334,8 +1334,6 @@ def _iter_keyword_usage_tokens_uncached(
         obtain_keyword_usage_handler,
     )
 
-    apply_localization_info_to_keywords(ast)
-
     for node_info in _iter_node_info_which_may_have_usage_info(ast):
         stack = node_info.stack
         node = node_info.node
@@ -1389,7 +1387,7 @@ def get_keyword_name_token(
         token.type == token.NAME
         and node.__class__.__name__ in CLASSES_WITH_ARGUMENTS_AS_KEYWORD_CALLS_AS_SET
     ):
-        locinfo = get_localization_info_from_model(node)
+        locinfo = get_localization_info_from_model(stack[0])
         return _strip_token_bdd_prefix(token, locinfo)[1]
 
     if token.type == token.ARGUMENT and not token.value.strip().endswith("}"):
@@ -1466,6 +1464,7 @@ def _copy_of_node_replacing_token(node, token, token_type):
 
 
 def _strip_node_and_token_bdd_prefix(
+    stack: List[INode],
     node: INode,
     token_type: str,
 ) -> Tuple[str, INode, Optional[IRobotToken]]:
@@ -1478,7 +1477,7 @@ def _strip_node_and_token_bdd_prefix(
     if original_token is None:
         return "", node, None
 
-    locinfo = get_localization_info_from_model(node)
+    locinfo = get_localization_info_from_model(stack[0])
     prefix, token = _strip_token_bdd_prefix(original_token, locinfo)
     if token is original_token:
         # i.e.: No change was done.
@@ -2128,37 +2127,10 @@ def set_localization_info_in_model(ast, localization_info: LocalizationInfo):
         node.__localization_info__ = localization_info  # type:ignore
 
 
-def apply_localization_info_to_keywords(ast):
-    """
-    Sets the localization info from the File to the Keywords in the model
-    (if still not done).
-    """
-    if hasattr(ast, "iter_indexed"):
-        ast = ast.ast
-
-    if ast.__class__.__name__ != "File":
-        # Nodes directly beneath the file have a reference to the file.
-        try:
-            file_weak_ref = ast.__file_weak_ref__
-        except AttributeError:
-            return
-        ast = file_weak_ref()
-        if ast is None:
-            return
-
-    try:
-        if ast.__localization_applied_to_keywords__:
-            return
-    except AttributeError:
-        ast.__localization_applied_to_keywords__ = True
-
-    localization_info = ast.__localization_info__
-
-    for node_info in _iter_node_info_which_may_have_usage_info(ast):
-        # We only need to set it here because this is where the bdd
-        # prefixes will be needed.
-        node_info.node.__localization_info__ = localization_info
-
-
 def get_localization_info_from_model(ast) -> LocalizationInfo:
+    """
+    Note that the ast should usually be the file or one of the sections right
+    below it (such as the settings) where the localization info was set (usually
+    it's the stack[0] passed with the node).
+    """
     return ast.__localization_info__

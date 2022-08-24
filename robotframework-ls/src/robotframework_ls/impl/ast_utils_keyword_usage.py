@@ -185,7 +185,7 @@ def _create_root_keyword_usage_info(stack, node) -> Optional[KeywordUsageInfo]:
     else:
         return None
 
-    prefix, node, token = _strip_node_and_token_bdd_prefix(node, token_type)
+    prefix, node, token = _strip_node_and_token_bdd_prefix(stack, node, token_type)
     if token is None:
         return None
 
@@ -211,7 +211,6 @@ def _build_keyword_usage(stack, node, current_tokens) -> Optional[KeywordUsageIn
     new_tokens.extend(current_tokens[keyword_at_index + 1 :])
 
     new_node = node.__class__(new_tokens)
-    new_node.__localization_info__ = node.__localization_info__
     return KeywordUsageInfo(
         stack,
         new_node,
