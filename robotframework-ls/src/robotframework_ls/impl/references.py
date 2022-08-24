@@ -606,8 +606,9 @@ def references_for_keyword_found(
                     continue
 
             ref_range: RangeTypedDict
+            cp = completion_context.create_copy(doc)
             for ref_range in iter_keyword_references_in_doc(
-                completion_context, doc, normalized_name, keyword_found
+                cp, doc, normalized_name, keyword_found
             ):
                 ret.append({"uri": doc.uri, "range": ref_range})
 

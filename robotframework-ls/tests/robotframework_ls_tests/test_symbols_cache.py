@@ -98,3 +98,76 @@ Some Keyword
 
     reverse_index.synchronize(context)
     assert reverse_index._reindex_count == 4
+
+
+def test_symbols_cache_reindex_on_demand(workspace, libspec_manager):
+    from robocorp_ls_core.lsp import TextDocumentItem
+    from robocorp_ls_core.lsp import TextDocumentContentChangeEvent
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc(
+        "case2.robot",
+        """
+*** Test Cases ***
+My Test
+    Log    Something
+""",
+    )
+
+    doc2 = workspace.put_doc(
+        "case2a.robot",
+        """
+*** Keywords ***
+Some Keyword
+    Log Something
+""",
+    )
+
+    workspace_indexer = workspace.ws.workspace_indexer
+    assert workspace_indexer is None
+
+    workspace_indexer = workspace.ws.setup_workspace_indexer()
+    workspace_indexer = workspace.ws.workspace_indexer
+    assert workspace_indexer
+
+    uri_to_cache = {}
+    for uri, symbols_cache in workspace_indexer.iter_uri_and_symbols_cache():
+        uri_to_cache[uri] = symbols_cache
+
+    assert set(uri_to_cache.keys()) == {doc.uri, doc2.uri}
+    assert uri_to_cache[doc2.uri].has_keyword_usage(
+        normalize_robot_name("log something")
+    )
+
+    text_document_item = TextDocumentItem(
+        doc2.uri,
+    )
+    workspace.ws.update_document(
+        text_document_item,
+        TextDocumentContentChangeEvent(
+            range=None,
+            rangeLength=None,
+            text="""
+*** Keywords ***
+Some Keyword
+    New Keyword
+
+New Keyword
+    Log Something
+""",
+        ),
+    )
+
+    new_uri_to_cache = {}
+    for uri, symbols_cache in workspace_indexer.iter_uri_and_symbols_cache():
+        new_uri_to_cache[uri] = symbols_cache
+
+    assert set(new_uri_to_cache.keys()) == {doc.uri, doc2.uri}
+
+    assert new_uri_to_cache[doc2.uri].has_keyword_usage(
+        normalize_robot_name("log something")
+    )
+    assert new_uri_to_cache[doc2.uri].has_keyword_usage(
+        normalize_robot_name("new keyword")
+    )

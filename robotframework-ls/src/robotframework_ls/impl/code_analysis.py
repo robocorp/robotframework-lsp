@@ -24,6 +24,7 @@ from robotframework_ls.impl.robot_lsp_constants import (
     OPTION_ROBOT_LINT_IGNORE_ENVIRONMENT_VARIABLES,
 )
 from robotframework_ls.impl.robot_constants import STDLIBS_LOWER
+import typing
 
 
 log = get_logger(__name__)
@@ -626,6 +627,7 @@ def _collect_unused_keyword_errors(completion_context: ICompletionContext, error
     from robotframework_ls.impl.robot_lsp_constants import (
         OPTION_ROBOT_LINT_UNUSED_KEYWORD,
     )
+    from robotframework_ls.impl.robot_workspace import RobotWorkspace
 
     config = completion_context.config
 
@@ -636,6 +638,22 @@ def _collect_unused_keyword_errors(completion_context: ICompletionContext, error
     ):
 
         from robotframework_ls.impl.collect_keywords import collect_keywords_from_ast
+
+        # The lint process usually does not have workspace indexing turned on,
+        # but it's needed for finding unused references, so, turn it on now.
+
+        workspace: Optional[RobotWorkspace] = typing.cast(
+            Optional[RobotWorkspace], completion_context.workspace
+        )
+        if not workspace:
+            log.critical("Not analyzing unused keywords because workspace is None.")
+            return
+
+        workspace_indexer = workspace.workspace_indexer
+        if workspace_indexer is None:
+            workspace.setup_workspace_indexer()
+            workspace_indexer = workspace.workspace_indexer
+            assert workspace_indexer is not None
 
         ast = completion_context.get_ast()
         collector = _NoReferencesErrorsKeywordsCollector(errors)

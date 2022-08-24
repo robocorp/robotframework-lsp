@@ -111,6 +111,7 @@ def _compute_symbols_from_ast(completion_context: ICompletionContext) -> ISymbol
     from robotframework_ls.impl.variable_completions import (
         collect_current_doc_global_variables,
     )
+    from robotframework_ls.impl import text_utilities
 
     doc = completion_context.doc
 
@@ -146,7 +147,15 @@ def _compute_symbols_from_ast(completion_context: ICompletionContext) -> ISymbol
     for keyword_usage_info in ast_utils.iter_keyword_usage_tokens(
         ast, collect_args_as_keywords=True
     ):
-        keywords_used.add(normalize_robot_name(keyword_usage_info.name))
+        normalized = normalize_robot_name(keyword_usage_info.name)
+        keywords_used.add(normalized)
+
+        for name, remainder in text_utilities.iter_dotted_names(
+            normalize_robot_name(keyword_usage_info.name)
+        ):
+            if not name or not remainder:
+                continue
+            keywords_used.add(remainder)
 
     test_info = list_tests(completion_context)
     test_info_for_cache: List[ITestInfoFromSymbolsCacheTypedDict] = [
@@ -494,6 +503,10 @@ class WorkspaceIndexer(object):
                 yield uri, None  # i.e.: No longer there...
                 continue
 
+            # Note that this can be accessed in multiple threads... We let it
+            # compute at the same time but only one will be saved in the end
+            # (which means we'll spend some more cpu cycles but we shouldn't
+            # have any bad behavior due to it).
             symbols_cache = doc.symbols_cache
             if symbols_cache is None:
                 from robotframework_ls.impl.completion_context import (
@@ -546,9 +559,12 @@ class RobotWorkspace(Workspace):
             self, root_uri, fs_observer, workspace_folders=workspace_folders
         )
         self._generate_ast = generate_ast
+        self._lock_setup_workspace_indexer = threading.Lock()
         if collect_tests:
             assert endpoint is not None
-            assert index_workspace
+            assert (
+                index_workspace
+            ), "Can only collect tests when the workspace indexing is setup too."
 
         if index_workspace:
             self.workspace_indexer = WorkspaceIndexer(
@@ -560,6 +576,11 @@ class RobotWorkspace(Workspace):
         self.on_file_changed.register(
             self.completion_context_workspace_caches.on_file_changed
         )
+
+    def setup_workspace_indexer(self):
+        with self._lock_setup_workspace_indexer:
+            assert self.workspace_indexer is None
+            self.workspace_indexer = WorkspaceIndexer(self, None, collect_tests=False)
 
     @overrides(Workspace.put_document)
     def put_document(self, text_document: TextDocumentItem) -> IDocument:

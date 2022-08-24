@@ -2690,3 +2690,187 @@ Keyword 2
     """
 
     _collect_errors(workspace, doc, data_regression, config=config)
+
+
+def test_code_analysis_unused_change(
+    workspace, libspec_manager, data_regression, workspace_dir
+):
+    from robotframework_ls.robot_config import RobotConfig
+    from robotframework_ls.impl.robot_generated_lsp_constants import (
+        OPTION_ROBOT_LINT_UNUSED_KEYWORD,
+    )
+
+    config = RobotConfig()
+    config.update({OPTION_ROBOT_LINT_UNUSED_KEYWORD: True})
+    libspec_manager.config = config
+
+    workspace.set_absolute_path_root(workspace_dir, libspec_manager=libspec_manager)
+    doc = workspace.put_doc(
+        "my.resource",
+        """
+*** Keywords ***
+Common Keyword
+    Log to console    Something
+    
+Unused Keyword
+    Common Keyword    #Just to mark it as used.
+    """,
+    )
+
+    _collect_errors(
+        workspace,
+        doc,
+        data_regression,
+        config=config,
+        basename="test_code_analysis_unused_change_unused",
+    )
+
+    _doc_use_unused = workspace.put_doc(
+        "use_it_now.robot",
+        """
+*** Settings ***
+Resource    ./my.resource
+
+*** Test Cases ***
+Mark unused used
+    Unused keyword
+    """,
+    )
+
+    _collect_errors(
+        workspace,
+        doc,
+        data_regression,
+        config=config,
+        basename="no_error",
+    )
+
+
+def test_code_analysis_unused_resource_import(
+    workspace, libspec_manager, data_regression, workspace_dir
+):
+    from robotframework_ls.robot_config import RobotConfig
+    from robotframework_ls.impl.robot_generated_lsp_constants import (
+        OPTION_ROBOT_LINT_UNUSED_KEYWORD,
+    )
+
+    config = RobotConfig()
+    config.update({OPTION_ROBOT_LINT_UNUSED_KEYWORD: True})
+    libspec_manager.config = config
+
+    workspace.set_absolute_path_root(workspace_dir, libspec_manager=libspec_manager)
+
+    doc1 = workspace.put_doc(
+        "res1.resource",
+        """
+*** Keywords ***
+Use this keyword
+    Log to console    Something
+    """,
+    )
+    doc2 = workspace.put_doc(
+        "res2.resource",
+        """
+*** Keywords ***
+Use this keyword
+    Log to console    Something
+    """,
+    )
+
+    _doc_use_unused = workspace.put_doc(
+        "use_it_now.robot",
+        """
+*** Settings ***
+Resource    ./res1.resource
+Resource    ./res2.resource
+
+*** Test Cases ***
+Mark as used used
+    res1.use this keyword
+    res2.use this keyword
+    """,
+    )
+
+    _collect_errors(
+        workspace,
+        doc1,
+        data_regression,
+        config=config,
+        basename="no_error",
+    )
+    _collect_errors(
+        workspace,
+        doc2,
+        data_regression,
+        config=config,
+        basename="no_error",
+    )
+
+
+def test_code_analysis_unused_change_on_disk(
+    workspace, libspec_manager, data_regression, workspace_dir
+):
+    from robotframework_ls.robot_config import RobotConfig
+    from robotframework_ls.impl.robot_generated_lsp_constants import (
+        OPTION_ROBOT_LINT_UNUSED_KEYWORD,
+    )
+    from robocorp_ls_core.basic import wait_for_non_error_condition
+    import os
+
+    config = RobotConfig()
+    config.update({OPTION_ROBOT_LINT_UNUSED_KEYWORD: True})
+    libspec_manager.config = config
+
+    workspace.set_absolute_path_root(workspace_dir, libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc(
+        "my.resource",
+        """
+*** Keywords ***
+Common Keyword
+    Log to console    Something
+    
+Unused Keyword
+    Common Keyword    #Just to mark it as used.
+    """,
+    )
+
+    _collect_errors(
+        workspace,
+        doc,
+        data_regression,
+        config=config,
+        basename="test_code_analysis_unused_change_unused",
+    )
+
+    import pathlib
+
+    os.makedirs(workspace_dir, exist_ok=True)
+    use_it_now = pathlib.Path(workspace_dir) / "use_it_now.robot"
+    use_it_now.write_text(
+        """
+*** Settings ***
+Resource    ./my.resource
+
+*** Test Cases ***
+Mark unused used
+    Unused keyword
+    """
+    )
+
+    def check():
+        try:
+            _collect_errors(
+                workspace,
+                doc,
+                data_regression,
+                config=config,
+                basename="no_error",
+            )
+        except Exception as e:
+            return str(e)
+        return None
+
+    # It'll turn out ok when our indexes are updated based on changes in the
+    # filesystem.
+    wait_for_non_error_condition(check)

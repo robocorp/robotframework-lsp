@@ -140,6 +140,9 @@ class _LocalizationInfoHolder:
 
 
 def set_global_localization_info(localization_info: LocalizationInfo):
+    log.debug(
+        "Setting global localization language: %s", localization_info.language_codes
+    )
     _LocalizationInfoHolder.localization_info = localization_info
 
 

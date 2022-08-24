@@ -1,0 +1,10 @@
+- message: 'The keyword: ''Unused Keyword'' is not used in the workspace.'
+  range:
+    end:
+      character: 14
+      line: 5
+    start:
+      character: 0
+      line: 5
+  severity: 2
+  source: robotframework

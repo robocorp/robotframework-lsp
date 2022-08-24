@@ -154,6 +154,9 @@ class CompletionContext(object):
             variables_from_arguments_files_loader
         )
 
+    def __str__(self):
+        return f"CompletionContext({self.doc.uri})"
+
     def assign_documentation_resolve(
         self,
         completion_item: CompletionItemTypedDict,
