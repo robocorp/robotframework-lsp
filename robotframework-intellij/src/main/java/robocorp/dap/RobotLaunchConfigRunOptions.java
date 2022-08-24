@@ -40,7 +40,13 @@ public class RobotLaunchConfigRunOptions extends LocatableRunConfigurationOption
             DataContext context = executionEnvironment.getDataContext();
             if (str != null && str.contains("$")) {
                 try {
-                    return MacroManager.getInstance().expandMacrosInString(str, true, context);
+                    MacroManager instance = MacroManager.getInstance();
+                    // It seems that the proper usage is doing 2 runs (the boolean
+                    // passed to expandMacrosInString identifies whether it's the
+                    // first or second pass and the second pass enables running
+                    // macros such as $Prompt$).
+                    str = instance.expandMacrosInString(str, true, context);
+                    str = instance.expandMacrosInString(str, false, context);
                 } catch (Macro.ExecutionCancelledException e) {
                     LOG.info(e);
                 }
