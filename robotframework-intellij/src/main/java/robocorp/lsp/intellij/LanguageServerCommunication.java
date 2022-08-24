@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageServer;
@@ -64,9 +65,9 @@ class InternalConnection {
     }
 
     public ServerCapabilities getServerCapabilities() {
-        if (initializeResult != null)
+        if (initializeResult != null) {
             return initializeResult.getCapabilities();
-        else {
+        } else {
             return null;
         }
     }
@@ -123,8 +124,7 @@ class InternalConnection {
         textDocumentClientCapabilities.setRename(new RenameCapabilities());
         textDocumentClientCapabilities.setSignatureHelp(new SignatureHelpCapabilities());
         textDocumentClientCapabilities.setSynchronization(new SynchronizationCapabilities(true, true, true));
-        initParams.setCapabilities(
-                new ClientCapabilities(workspaceClientCapabilities, textDocumentClientCapabilities, null));
+        initParams.setCapabilities(new ClientCapabilities(workspaceClientCapabilities, textDocumentClientCapabilities, null));
         initParams.setInitializationOptions(null);
 
         return initParams;
@@ -179,8 +179,7 @@ class InternalConnection {
             InputStream inputStream = languageServerStreams.getInputStream();
             OutputStream outputStream = languageServerStreams.getOutputStream();
             LOG.info("Setting up language server communication.");
-            Launcher<LanguageServer> launcher = LSPLauncher.createClientLauncher(
-                    client, inputStream, outputStream);
+            Launcher<LanguageServer> launcher = LSPLauncher.createClientLauncher(client, inputStream, outputStream);
 
             this.languageServer = launcher.getRemoteProxy();
             this.lifecycleFuture = launcher.startListening();
@@ -270,6 +269,15 @@ public class LanguageServerCommunication {
         @Override
         public void telemetryEvent(Object object) {
 
+        }
+
+        @JsonNotification("$/testsCollected")
+        void testsCollected(Object object) {
+        }
+
+        @JsonNotification("$/customProgress")
+        void customProgress(Object object) {
+            // TODO: We could add support for showing our custom progress in the language server.
         }
 
         @Override

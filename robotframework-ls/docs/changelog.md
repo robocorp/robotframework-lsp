@@ -3,11 +3,13 @@ NEXT
 
 ### New features
 
-- `Robot Flow Visualization`: a new visualization which shows the Robot execution as a graph (currently in the browser).
+- [VSCode] `Robot Flow Visualization`: a new visualization which shows the Robot execution as a graph (currently in the browser).
     - Generated for the tasks/tests in the current file through the command: `Robot Framework: Open Robot Flow Explorer`
+- [VSCode] It's now possible to enable `Run/Debug` and `Interactive Console` code-lenses individually.
+- [Intellij] When pressing space a completion is no longer applied automatically.
+- [Intellij] The plugin will re-register file associations to `.resource` and `.robot`. [#605](https://github.com/robocorp/robotframework-lsp/issues/605)
 - Code analysis setting to check if keyword is not used anywhere in the workspace.
     - Opt-in through the `robot.lint.unusedKeyword:true` setting. [#722](https://github.com/robocorp/robotframework-lsp/issues/722)
-- It's now possible to enable `Run/Debug` and `Interactive Console` code-lenses individually.
 - An LRU based on file size now prevents unlimited usage of RAM when caching files loaded from the filesystem. [#720](https://github.com/robocorp/robotframework-lsp/issues/720)
     - It's possible to customize the size of the target memory for this LRU through the `RFLS_FILES_TARGET_MEMORY_IN_BYTES` environment variable.
 - If a keyword call resolves to multiple keywords, the argument analysis is done for all the matches. [#724](https://github.com/robocorp/robotframework-lsp/issues/724).
@@ -20,9 +22,9 @@ NEXT
 
 ### Bugfixes
 
-- A non-string value is converted to string before expanding variables. [#727](https://github.com/robocorp/robotframework-lsp/issues/727)
+- [VSCode] A non-string value is converted to string before expanding variables. [#727](https://github.com/robocorp/robotframework-lsp/issues/727)
 - Operations no longer timeout, rather, they just print to the log (as the timeouts weren't always ideal for slower machines). [#733](https://github.com/robocorp/robotframework-lsp/issues/733)
-- Fixed issue where references wouldn't be properly found (which also affected computing unused keywords).
+- Fixed issue where references wouldn't be found properly.
 
 
 New in 1.0.0 (2022-08-09)

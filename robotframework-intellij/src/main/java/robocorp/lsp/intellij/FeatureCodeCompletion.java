@@ -40,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -159,6 +160,11 @@ public class FeatureCodeCompletion extends CompletionContributor {
     }
 
     @Override
+    public @Nullable AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {
+        return super.handleAutoCompletionPossibility(context);
+    }
+
+    @Override
     public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
         final Editor editor = parameters.getEditor();
         final int offset = parameters.getOffset();
@@ -229,7 +235,8 @@ public class FeatureCodeCompletion extends CompletionContributor {
 
                     return null;
                 }, progressIndicator);
-            } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException ignored) {
+            } catch (ProcessCanceledException | CompletionException | CancellationException |
+                     InterruptedException ignored) {
                 // Cancelled (InterruptedException is thrown when completion.cancel(true) is called from another thread).
             } catch (Exception e) {
                 LOG.error("Unable to get completions", e);
@@ -243,171 +250,188 @@ public class FeatureCodeCompletion extends CompletionContributor {
         final Icon icon = LanguageServerIcons.getCompletionIcon(kind);
         final String lookupString = label;
 
-        LookupElement ret = new LookupElement() {
-
-            @Override
-            public @NotNull String getLookupString() {
-                return lookupString;
-            }
-
-            @Override
-            public boolean requiresCommittedDocuments() {
-                return false;
-            }
-
-            @Override
-            public void renderElement(LookupElementPresentation presentation) {
-                presentation.setItemText(label);
-                presentation.setItemTextBold(kind == CompletionItemKind.Keyword);
-                presentation.setIcon(icon);
-            }
-
-            @Override
-            public boolean isCaseSensitive() {
-                return false;
-            }
-
-            public AutoCompletionPolicy getAutoCompletionPolicy() {
-                return AUTO_COMPLETION_POLICY;
-            }
-
-            @Override
-            public void handleInsert(@NotNull InsertionContext context) {
-                EditorUtils.runWriteAction(() -> {
-                    doHandleInsert(context);
-                });
-            }
-
-            private void doHandleInsert(@NotNull InsertionContext context) {
-                Either<TextEdit, InsertReplaceEdit> either = item.getTextEdit();
-                if (!either.isLeft()) {
-                    throw new RuntimeException("Expected only TextEdit, not InsertReplaceEdit.");
-                }
-                TextEdit textEdit = either.getLeft();
-                Document document = context.getDocument();
-                int tailOffset = context.getTailOffset();
-                Position startPos = textEdit.getRange().getStart();
-
-                int lineStartOffset = document.getLineStartOffset(startPos.getLine());
-                String lineTextToCursor = "";
-                if (lineStartOffset < tailOffset) {
-                    lineTextToCursor = document.getText(new TextRange(lineStartOffset, tailOffset));
-                }
-
-                if (requestedAtOffset != tailOffset) {
-                    document.deleteString(requestedAtOffset, tailOffset);
-                }
-
-                ArrayList<TextEdit> lst = new ArrayList<>();
-                String originalText = textEdit.getNewText();
-                int i;
-                if ((i = originalText.indexOf('\n')) != -1) {
-                    // i.e.: properly indent the other lines
-                    String indentationFromLine = StringUtils.getIndentationFromLine(lineTextToCursor);
-                    List<String> lines = StringUtils.splitInLines(originalText);
-                    Iterator<String> it = lines.iterator();
-                    FastStringBuffer buf = new FastStringBuffer(it.next(), indentationFromLine.length() * 10); // First is added as is.
-                    while (it.hasNext()) {
-                        buf.append(indentationFromLine);
-                        buf.append(it.next());
-                    }
-                    originalText = buf.toString();
-                }
-                if (item.getInsertTextFormat() == InsertTextFormat.Snippet) {
-                    textEdit.setNewText(removePlaceholders(originalText));
-                }
-                lst.add(textEdit);
-                List<TextEdit> additionalTextEdits = item.getAdditionalTextEdits();
-                if (additionalTextEdits != null) {
-                    lst.addAll(additionalTextEdits);
-                }
-                try {
-                    EditorUtils.applyTextEdits(document, lst);
-                    context.commitDocument();
-                } catch (BadLocationException e) {
-                    LOG.error(e);
-                }
-
-                // Calculate the new cursor offset.
-                Position offsetPos = new Position(startPos.getLine(), startPos.getCharacter());
-                if (additionalTextEdits != null) {
-                    for (TextEdit t : additionalTextEdits) {
-                        if (t.getRange().getStart().getLine() < offsetPos.getLine()) {
-                            int newLines = StringUtil.countNewLines(t.getNewText());
-                            offsetPos.setLine(offsetPos.getLine() + newLines);
-                        }
-                    }
-                }
-                int offset = EditorUtils.LSPPosToOffset(document, offsetPos) + textEdit.getNewText().length();
-                context.getEditor().getCaretModel().moveToOffset(offset);
-                if (item.getInsertTextFormat() == InsertTextFormat.Snippet) {
-                    prepareAndRunSnippet(context, originalText);
-                }
-            }
-
-            private void prepareAndRunSnippet(@NotNull InsertionContext context, @NotNull String insertText) {
-                Editor editor = context.getEditor();
-                Project project = editor.getProject();
-                if (project == null) {
-                    return;
-                }
-                List<SnippetVariable> variables = new ArrayList<>();
-                // Extracts variables using placeholder REGEX pattern.
-                Matcher varMatcher = SNIPPET_PLACEHOLDER_REGEX.matcher(insertText);
-                while (varMatcher.find()) {
-                    variables.add(new SnippetVariable(varMatcher.group(), varMatcher.start(), varMatcher.end()));
-                }
-                if (variables.isEmpty()) {
-                    return;
-                }
-
-                variables.sort(Comparator.comparingInt(o -> o.startIndex));
-                String finalInsertText = insertText;
-                for (SnippetVariable var : variables) {
-                    finalInsertText = finalInsertText.replace(var.lspSnippetText, "XXX_REPLACE_XXX_ROBOT_LSP_XXX");
-                }
-
-                String[] splitInsertText = finalInsertText.split("XXX_REPLACE_XXX_ROBOT_LSP_XXX");
-                finalInsertText = String.join("", splitInsertText);
-
-                TemplateImpl template = (TemplateImpl) TemplateManager.getInstance(project).createTemplate(finalInsertText,
-                        "groupLSP");
-                template.parseSegments();
-
-                // prevent "smart" indent of next line...
-                template.setToIndent(false);
-
-                int varIndex = 0;
-                for (SnippetVariable var : variables) {
-                    var.variableValue = var.variableValue.replace("\\$", "$");
-                    String text = splitInsertText[varIndex];
-                    template.addTextSegment(text);
-                    String name = varIndex + "_" + var.variableValue;
-                    template.addVariable(name, new TextExpression(var.variableValue),
-                            new TextExpression(var.variableValue), true, false);
-                    varIndex++;
-                }
-                // If the snippet text ends with a placeholder, there will be no string segment left to append after the last
-                // variable.
-                if (splitInsertText.length != variables.size()) {
-                    template.addTextSegment(splitInsertText[splitInsertText.length - 1]);
-                }
-                template.setInline(true);
-                if (variables.size() > 0) {
-                    EditorModificationUtil.moveCaretRelatively(editor, -template.getTemplateText().length());
-                }
-                TemplateManager.getInstance(project).startTemplate(editor, template);
-            }
-        };
+        LookupElement ret = new LanguageServerLookupElement(lookupString, label, kind, icon, item, requestedAtOffset);
 
         ret.putUserData(CodeCompletionHandlerBase.DIRECT_INSERTION, true);
         return ret;
     }
 
-    public static final Pattern SNIPPET_PLACEHOLDER_REGEX = Pattern.compile("(\\$\\{\\d+:?([^{^}]*)}|\\$\\d+)");
+    public static class LanguageServerLookupElement extends LookupElement {
 
-    private String removePlaceholders(String text) {
-        return SNIPPET_PLACEHOLDER_REGEX.matcher(text).replaceAll("").replace("\\$", "$");
+        private final String lookupString;
+        private final String label;
+        private final CompletionItemKind kind;
+        private final Icon icon;
+        private final CompletionItem item;
+        private final int requestedAtOffset;
+
+        public LanguageServerLookupElement(String lookupString, String label, CompletionItemKind kind, Icon icon, CompletionItem item, int requestedAtOffset) {
+            this.lookupString = lookupString;
+            this.label = label;
+            this.kind = kind;
+            this.icon = icon;
+            this.item = item;
+            this.requestedAtOffset = requestedAtOffset;
+        }
+
+        @Override
+        public @NotNull String getLookupString() {
+            return lookupString;
+        }
+
+        @Override
+        public boolean requiresCommittedDocuments() {
+            return false;
+        }
+
+        @Override
+        public void renderElement(LookupElementPresentation presentation) {
+            presentation.setItemText(label);
+            presentation.setItemTextBold(kind == CompletionItemKind.Keyword);
+            presentation.setIcon(icon);
+        }
+
+        @Override
+        public boolean isCaseSensitive() {
+            return false;
+        }
+
+        public AutoCompletionPolicy getAutoCompletionPolicy() {
+            return AUTO_COMPLETION_POLICY;
+        }
+
+        @Override
+        public void handleInsert(@NotNull InsertionContext context) {
+            EditorUtils.runWriteAction(() -> {
+                doHandleInsert(context);
+            });
+        }
+
+        private void doHandleInsert(@NotNull InsertionContext context) {
+            Either<TextEdit, InsertReplaceEdit> either = item.getTextEdit();
+            if (!either.isLeft()) {
+                throw new RuntimeException("Expected only TextEdit, not InsertReplaceEdit.");
+            }
+            TextEdit textEdit = either.getLeft();
+            Document document = context.getDocument();
+            int tailOffset = context.getTailOffset();
+            Position startPos = textEdit.getRange().getStart();
+
+            int lineStartOffset = document.getLineStartOffset(startPos.getLine());
+            String lineTextToCursor = "";
+            if (lineStartOffset < tailOffset) {
+                lineTextToCursor = document.getText(new TextRange(lineStartOffset, tailOffset));
+            }
+
+            if (requestedAtOffset != tailOffset) {
+                document.deleteString(requestedAtOffset, tailOffset);
+            }
+
+            ArrayList<TextEdit> lst = new ArrayList<>();
+            String originalText = textEdit.getNewText();
+            int i;
+            if ((i = originalText.indexOf('\n')) != -1) {
+                // i.e.: properly indent the other lines
+                String indentationFromLine = StringUtils.getIndentationFromLine(lineTextToCursor);
+                List<String> lines = StringUtils.splitInLines(originalText);
+                Iterator<String> it = lines.iterator();
+                FastStringBuffer buf = new FastStringBuffer(it.next(), indentationFromLine.length() * 10); // First is added as is.
+                while (it.hasNext()) {
+                    buf.append(indentationFromLine);
+                    buf.append(it.next());
+                }
+                originalText = buf.toString();
+            }
+            if (item.getInsertTextFormat() == InsertTextFormat.Snippet) {
+                textEdit.setNewText(removePlaceholders(originalText));
+            }
+            lst.add(textEdit);
+            List<TextEdit> additionalTextEdits = item.getAdditionalTextEdits();
+            if (additionalTextEdits != null) {
+                lst.addAll(additionalTextEdits);
+            }
+            try {
+                EditorUtils.applyTextEdits(document, lst);
+                context.commitDocument();
+            } catch (BadLocationException e) {
+                LOG.error(e);
+            }
+
+            // Calculate the new cursor offset.
+            Position offsetPos = new Position(startPos.getLine(), startPos.getCharacter());
+            if (additionalTextEdits != null) {
+                for (TextEdit t : additionalTextEdits) {
+                    if (t.getRange().getStart().getLine() < offsetPos.getLine()) {
+                        int newLines = StringUtil.countNewLines(t.getNewText());
+                        offsetPos.setLine(offsetPos.getLine() + newLines);
+                    }
+                }
+            }
+            int offset = EditorUtils.LSPPosToOffset(document, offsetPos) + textEdit.getNewText().length();
+            context.getEditor().getCaretModel().moveToOffset(offset);
+            if (item.getInsertTextFormat() == InsertTextFormat.Snippet) {
+                prepareAndRunSnippet(context, originalText);
+            }
+        }
+
+        private static final Pattern SNIPPET_PLACEHOLDER_REGEX = Pattern.compile("(\\$\\{\\d+:?([^{^}]*)}|\\$\\d+)");
+
+        private static String removePlaceholders(String text) {
+            return SNIPPET_PLACEHOLDER_REGEX.matcher(text).replaceAll("").replace("\\$", "$");
+        }
+
+        private void prepareAndRunSnippet(@NotNull InsertionContext context, @NotNull String insertText) {
+            Editor editor = context.getEditor();
+            Project project = editor.getProject();
+            if (project == null) {
+                return;
+            }
+            List<SnippetVariable> variables = new ArrayList<>();
+            // Extracts variables using placeholder REGEX pattern.
+            Matcher varMatcher = SNIPPET_PLACEHOLDER_REGEX.matcher(insertText);
+            while (varMatcher.find()) {
+                variables.add(new SnippetVariable(varMatcher.group(), varMatcher.start(), varMatcher.end()));
+            }
+            if (variables.isEmpty()) {
+                return;
+            }
+
+            variables.sort(Comparator.comparingInt(o -> o.startIndex));
+            String finalInsertText = insertText;
+            for (SnippetVariable var : variables) {
+                finalInsertText = finalInsertText.replace(var.lspSnippetText, "XXX_REPLACE_XXX_ROBOT_LSP_XXX");
+            }
+
+            String[] splitInsertText = finalInsertText.split("XXX_REPLACE_XXX_ROBOT_LSP_XXX");
+            finalInsertText = String.join("", splitInsertText);
+
+            TemplateImpl template = (TemplateImpl) TemplateManager.getInstance(project).createTemplate(finalInsertText,
+                    "groupLSP");
+            template.parseSegments();
+
+            // prevent "smart" indent of next line...
+            template.setToIndent(false);
+
+            int varIndex = 0;
+            for (SnippetVariable var : variables) {
+                var.variableValue = var.variableValue.replace("\\$", "$");
+                String text = splitInsertText[varIndex];
+                template.addTextSegment(text);
+                String name = varIndex + "_" + var.variableValue;
+                template.addVariable(name, new TextExpression(var.variableValue),
+                        new TextExpression(var.variableValue), true, false);
+                varIndex++;
+            }
+            // If the snippet text ends with a placeholder, there will be no string segment left to append after the last
+            // variable.
+            if (splitInsertText.length != variables.size()) {
+                template.addTextSegment(splitInsertText[splitInsertText.length - 1]);
+            }
+            template.setInline(true);
+            if (variables.size() > 0) {
+                EditorModificationUtil.moveCaretRelatively(editor, -template.getTemplateText().length());
+            }
+            TemplateManager.getInstance(project).startTemplate(editor, template);
+        }
     }
-
 }
