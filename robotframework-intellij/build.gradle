@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '1.0.0'
+version '1.1.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,55 +50,83 @@ intellij {
 
 patchPluginXml {
     changeNotes """
-    Release 1.0.0
+    <p>
+    <strong>Release 1.1.0</strong>
     </p>
     
     <ul>
-  
-    <li>Support for PyCharm 22.2</li>
-    <li>Consider default value when resolving environment variable.</li>
-    <li>Recursively resolve variables and provide better error messages on failure conditions.</li>
-    <li>If a resource/library/variable import is not found and its name has variables, show the resolved name.</li>
-    <li>Report error when multiple keywords with the same name are found.</li>
+    <li><strong>New features</strong></li>
     <ul>
-      <li>Can be disabled with: <strong>robot.lint.keywordResolvesToMultipleKeywords: false</strong></li>
+        <li>[Intellij] When pressing space a completion is no longer applied automatically.</li>
+        <li>[Intellij] The plugin will re-register file associations to <strong>.resource</strong> and <strong>.robot</strong>.</li>
+        <li>Code analysis setting to check if keyword is not used anywhere in the workspace.</li>
+        <ul>
+            <li>Opt-in through the <strong>robot.lint.unusedKeyword:true</strong> setting.</li>
+        </ul>
+        <li>An LRU based on file size now prevents unlimited usage of RAM when caching files loaded from the filesystem.</li>
+        <ul>
+            <li>It's possible to customize the size of the target memory for this LRU through the <strong>RFLS_FILES_TARGET_MEMORY_IN_BYTES</strong> environment variable.</li>
+        </ul>
+        <li>If a keyword call resolves to multiple keywords, the argument analysis is done for all the matches.</li>
+        <li>(Experimental) Support for localization in Robot Framework 5.1.</li>
+        <ul>
+            <li>The language may be set just for a file (with <strong>language: lang</strong> on the top of the file).</li>
+            <li>The language may be specified globally through the setting: <strong>robot.language</strong>.</li>
+            <li>Support for completions with translated section names and settings.</li>
+            <li>Support for syntax highlighting translated bdd prefixes.</li>
+            <li>The language(s) set in the <strong>robot.language</strong> configuration are automatically added as parameter on new launches.</li>
+        </ul>
     </ul>
-    <li>Fix issues in file system notifications.</li>
-    <li>Fixed issue where doc highlight could raise error with unclosed variable.</li>
-    <li>Fixed issue where a given library would be considered more than once when collecting keywords.</li>
+    
+    <li><strong>Bugfixes</strong></li>
+    <ul>
+    <li>[Intellij] Fixed <strong>NullPointerException</strong> on hover.</li>
+    <li>[Intellij] <strong>&dollar;Prompt&dollar;</strong> macro properly replaced when launching.</li>
+    <li>Operations no longer timeout, rather, they just print to the log (as the timeouts weren't always ideal for slower machines).</li>
+    <li>Fixed issue where references wouldn't be found properly.</li>
+    <li>Variables imported from module folder (<strong>module/__init__.py</strong>) are properly recognized.</li>
+    </ul>
+    
+    
+    <strong>
+    See changelog for all versions at:<br>
+    <br>
+    <a href="https://github.com/robocorp/robotframework-lsp/blob/master/robotframework-intellij/docs/changelog.md">Changelog at GitHub</a>.
+    </strong>
+
 
     <br>
-    Current feature set:<br>
+    <strong>Current feature set:</strong><br>
     <ul>
-    <li>Settings page for the language server</li>
-    <li>Code completion</li>
-    <li>Code analysis</li>
-    <li>Go to definition</li>
-    <li>Hover</li>
-    <li>Code folding</li>
-    <li>Browse Keywords (symbols)</li>
-    <li>Syntax highlighting (with <strong>semanticTokens/full</strong> request)</li>
-    <li>Debugger:</li>
-    <ul>    
-      <li>Add line breakpoints in <strong>.robot</strong> or <strong>.py</strong> files.</li>
-      <li>Break when an error or failure is logged with the following environment variables:</li>
-      <ul>
-        <li><strong>RFLS_BREAK_ON_FAILURE=1</strong></li>
-        <li><strong>RFLS_BREAK_ON_ERROR=1</strong></li>
-      </ul>
-      <li>Evaluate keywords.</li>
-      <li>Pause at breakpoints to inspect the stack and see variables.</li>
-      <li>Step in.</li>
-      <li>Step over.</li>
-      <li>Step return.</li>
-      <li>Continue.</li>
-    </ul>    
-
+        <li>Settings page for the language server</li>
+        <li>Code completion</li>
+        <li>Code analysis</li>
+        <li>Go to definition</li>
+        <li>Hover</li>
+        <li>Code folding</li>
+        <li>Browse Keywords (symbols)</li>
+        <li>Syntax highlighting (with <strong>semanticTokens/full</strong> request)</li>
+        <li>Debugger:</li>
+        <ul>    
+          <li>Add line breakpoints in <strong>.robot</strong> or <strong>.py</strong> files.</li>
+          <li>Break when an error or failure is logged with the following environment variables:</li>
+          <ul>
+            <li><strong>RFLS_BREAK_ON_FAILURE=1</strong></li>
+            <li><strong>RFLS_BREAK_ON_ERROR=1</strong></li>
+          </ul>
+          <li>Evaluate keywords.</li>
+          <li>Pause at breakpoints to inspect the stack and see variables.</li>
+          <li>Step in.</li>
+          <li>Step over.</li>
+          <li>Step return.</li>
+          <li>Continue.</li>
+        </ul>    
+    </ul>
+    
     </ul>
     <br>
     <strong>
-    Important: The Intellij Language Server integration is currently in alpha for early access.<br>
-    Please report any issues found during testing at:<br>
+    Issues may be reported at:<br>
     <br>
     <a href="https://github.com/robocorp/robotframework-lsp/issues">https://github.com/robocorp/robotframework-lsp/issues</a>.
     </strong>
