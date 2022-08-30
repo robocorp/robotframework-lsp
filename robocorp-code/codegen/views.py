@@ -173,28 +173,28 @@ TREE_VIEW_CONTAINERS = [
                 },
             ),
             TreeView(
-                id="robocorp-locators-tree",
-                name="Locators",
-                contextual_title="Locators",
+                id="robocorp-resources-tree",
+                name="Resources",
+                contextual_title="Resources",
                 menus={
-                    "view/title": [
+                    "view/item/context": [
+                        # Locators (root)
                         Menu(
                             "robocorp.newRobocorpInspectorBrowser",
-                            MenuGroup.NAVIGATION,
-                            "robocorp-code:single-robot-selected",
+                            MenuGroup.INLINE,
+                            "robocorp-code:single-robot-selected && viewItem == locatorsRoot",
                         ),
                         Menu(
                             "robocorp.newRobocorpInspectorImage",
-                            MenuGroup.NAVIGATION,
-                            "robocorp-code:single-robot-selected",
+                            MenuGroup.INLINE,
+                            "robocorp-code:single-robot-selected && viewItem == locatorsRoot",
                         ),
                         Menu(
                             "robocorp.newRobocorpInspectorWindows",
-                            MenuGroup.NAVIGATION,
-                            "robocorp-code:single-robot-selected",
+                            MenuGroup.INLINE,
+                            "robocorp-code:single-robot-selected && viewItem == locatorsRoot",
                         ),
-                    ],
-                    "view/item/context": [
+                        # Locators (entries)
                         Menu(
                             "robocorp.editRobocorpInspectorLocator",
                             MenuGroup.INLINE,
@@ -210,37 +210,18 @@ TREE_VIEW_CONTAINERS = [
                             MenuGroup.INLINE,
                             when="robocorp-code:single-robot-selected && viewItem == locatorEntry",
                         ),
-                    ],
-                },
-            ),
-            TreeView(
-                id="robocorp-work-items-tree",
-                name="Work Items",
-                contextual_title="Work Items",
-                menus={
-                    "view/title": [
+                        # Work items (root)
                         Menu(
                             "robocorp.newWorkItemInWorkItemsView",
-                            MenuGroup.NAVIGATION,
-                            when="robocorp-code:single-robot-selected",
+                            MenuGroup.INLINE,
+                            when="robocorp-code:single-robot-selected && viewItem == workItemsRoot",
                         ),
                         Menu(
                             "robocorp.helpWorkItems",
-                            MenuGroup.NAVIGATION,
-                            when="robocorp-code:single-robot-selected",
+                            MenuGroup.INLINE,
+                            when="robocorp-code:single-robot-selected && viewItem == workItemsRoot",
                         ),
-                    ],
-                    "view/item/context": [
-                        Menu(
-                            "robocorp.newWorkItemInWorkItemsView",
-                            "0_new",
-                            when="robocorp-code:single-robot-selected",
-                        ),
-                        Menu(
-                            "robocorp.deleteWorkItemInWorkItemsView",
-                            "1_change",
-                            when="viewItem == outputWorkItem || viewItem == inputWorkItem",
-                        ),
+                        # Work items (entries)
                         Menu(
                             "robocorp.deleteWorkItemInWorkItemsView",
                             MenuGroup.INLINE,
@@ -251,7 +232,7 @@ TREE_VIEW_CONTAINERS = [
                             MenuGroup.INLINE,
                             when="viewItem == outputWorkItem",
                         ),
-                    ],
+                    ]
                 },
             ),
             TreeView(

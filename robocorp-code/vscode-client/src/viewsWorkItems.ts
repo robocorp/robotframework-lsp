@@ -8,12 +8,12 @@ import {
     getSelectedRobot,
     RobotEntry,
     treeViewIdToTreeDataProvider,
-    treeViewIdToTreeView,
 } from "./viewsCommon";
-import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE } from "./robocorpViews";
+import {  TREE_VIEW_ROBOCORP_RESOURCES_TREE } from "./robocorpViews";
 import { getCurrRobotDir, RobotSelectionTreeDataProviderBase } from "./viewsRobotSelectionTreeBase";
 import { resolveInterpreter } from "./activities";
 import { feedback } from "./rcc";
+import { ResourcesTreeDataProvider } from "./viewsResources";
 
 const WORK_ITEM_TEMPLATE = `[
   {
@@ -35,9 +35,10 @@ export interface WorkItemFSEntry extends FSEntry {
 }
 
 async function getWorkItemInfo(): Promise<WorkItemsInfo | null> {
-    let workItemsTreeDataProvider: WorkItemsTreeDataProvider = <WorkItemsTreeDataProvider>(
-        treeViewIdToTreeDataProvider.get(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE)
+    const resourcesTreeDataProvider: ResourcesTreeDataProvider = <ResourcesTreeDataProvider>(
+        treeViewIdToTreeDataProvider.get(TREE_VIEW_ROBOCORP_RESOURCES_TREE)
     );
+    const workItemsTreeDataProvider = resourcesTreeDataProvider.workItemsTreeDataProvider;
 
     if (workItemsTreeDataProvider) {
         let workItemsInfo = workItemsTreeDataProvider.getWorkItemsInfo();

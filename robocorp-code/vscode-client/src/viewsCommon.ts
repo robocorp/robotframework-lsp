@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { TREE_VIEW_ROBOCORP_LOCATORS_TREE, TREE_VIEW_ROBOCORP_ROBOTS_TREE } from "./robocorpViews";
+import { getLocatorSingleTreeSelection } from "./viewsResources";
 
 /**
  * Note: if type is error|info the name is the message to be shown.
@@ -57,7 +57,7 @@ export interface SingleTreeSelectionOpts {
     moreThanOneSelectionMessage?: string;
 }
 
-async function getSingleTreeSelection<T>(treeId: string, opts?: any): Promise<T | undefined> {
+export async function getSingleTreeSelection<T>(treeId: string, opts?: any): Promise<T | undefined> {
     const noSelectionMessage: string | undefined = opts?.noSelectionMessage;
     const moreThanOneSelectionMessage: string | undefined = opts?.moreThanOneSelectionMessage;
 
@@ -105,7 +105,7 @@ export function getSelectedRobot(opts?: SingleTreeSelectionOpts): RobotEntry | u
 }
 
 export async function getSelectedLocator(opts?: SingleTreeSelectionOpts): Promise<LocatorEntry | undefined> {
-    return await getSingleTreeSelection<LocatorEntry | undefined>(TREE_VIEW_ROBOCORP_LOCATORS_TREE, opts);
+    return await getLocatorSingleTreeSelection(opts);
 }
 
 export function basename(s) {

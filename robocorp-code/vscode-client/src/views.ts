@@ -1,9 +1,8 @@
 import {
     TREE_VIEW_ROBOCORP_CLOUD_TREE,
-    TREE_VIEW_ROBOCORP_LOCATORS_TREE,
     TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE,
     TREE_VIEW_ROBOCORP_ROBOTS_TREE,
-    TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE,
+    TREE_VIEW_ROBOCORP_RESOURCES_TREE,
 } from "./robocorpViews";
 import * as vscode from "vscode";
 import { ExtensionContext } from "vscode";
@@ -25,6 +24,7 @@ import {
 import { CloudTreeDataProvider } from "./viewsRobocorp";
 import { RobotsTreeDataProvider } from "./viewsRobots";
 import { LocatorsTreeDataProvider } from "./viewsLocators";
+import { ResourcesTreeDataProvider } from "./viewsResources";
 
 function empty<T>(array: readonly T[]) {
     return array === undefined || array.length === 0;
@@ -174,27 +174,16 @@ export function registerViews(context: ExtensionContext) {
         )
     );
 
-    // Locators
-    let locatorsDataProvider = new LocatorsTreeDataProvider();
-    let locatorsTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_LOCATORS_TREE, {
-        "treeDataProvider": locatorsDataProvider,
-    });
-    treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_LOCATORS_TREE, locatorsTree);
-    treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_LOCATORS_TREE, locatorsDataProvider);
-
-    context.subscriptions.push(onSelectedRobotChanged((e) => locatorsDataProvider.onRobotsTreeSelectionChanged(e)));
-
-    // Work items tree data provider definition
-    const workItemsTreeDataProvider = new WorkItemsTreeDataProvider();
-    const workItemsTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE, {
-        "treeDataProvider": workItemsTreeDataProvider,
+    // Resources
+    let resourcesDataProvider = new ResourcesTreeDataProvider();
+    let resourcesTree = vscode.window.createTreeView(TREE_VIEW_ROBOCORP_RESOURCES_TREE, {
+        "treeDataProvider": resourcesDataProvider,
         "canSelectMany": true,
     });
-    treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE, workItemsTree);
-    treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_WORK_ITEMS_TREE, workItemsTreeDataProvider);
-    context.subscriptions.push(
-        onSelectedRobotChanged((e) => workItemsTreeDataProvider.onRobotsTreeSelectionChanged(e))
-    );
+    treeViewIdToTreeView.set(TREE_VIEW_ROBOCORP_RESOURCES_TREE, resourcesTree);
+    treeViewIdToTreeDataProvider.set(TREE_VIEW_ROBOCORP_RESOURCES_TREE, resourcesDataProvider);
+
+    context.subscriptions.push(onSelectedRobotChanged((e) => resourcesDataProvider.onRobotsTreeSelectionChanged(e)));
 
     let robotsWatcher: vscode.FileSystemWatcher = vscode.workspace.createFileSystemWatcher("**/robot.yaml");
 
@@ -213,7 +202,7 @@ export function registerViews(context: ExtensionContext) {
     let onChangeLocatorsJson = debounce(() => {
         // Note: this doesn't currently work if the parent folder is renamed or removed.
         // (https://github.com/microsoft/vscode/pull/110858)
-        refreshTreeView(TREE_VIEW_ROBOCORP_LOCATORS_TREE);
+        refreshTreeView(TREE_VIEW_ROBOCORP_RESOURCES_TREE);
     }, 300);
 
     locatorsWatcher.onDidChange(onChangeLocatorsJson);
@@ -221,7 +210,7 @@ export function registerViews(context: ExtensionContext) {
     locatorsWatcher.onDidDelete(onChangeLocatorsJson);
 
     context.subscriptions.push(robotsTree);
-    context.subscriptions.push(locatorsTree);
+    context.subscriptions.push(resourcesTree);
     context.subscriptions.push(robotsWatcher);
     context.subscriptions.push(locatorsWatcher);
 }

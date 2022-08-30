@@ -97,8 +97,7 @@
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
         "onView:robocorp-robot-content-tree",
-        "onView:robocorp-locators-tree",
-        "onView:robocorp-work-items-tree",
+        "onView:robocorp-resources-tree",
         "onView:robocorp-cloud-tree",
         "onLanguage:json",
         "onLanguage:yaml"
@@ -182,14 +181,9 @@
                     "contextualTitle": "Robot Content"
                 },
                 {
-                    "id": "robocorp-locators-tree",
-                    "name": "Locators",
-                    "contextualTitle": "Locators"
-                },
-                {
-                    "id": "robocorp-work-items-tree",
-                    "name": "Work Items",
-                    "contextualTitle": "Work Items"
+                    "id": "robocorp-resources-tree",
+                    "name": "Resources",
+                    "contextualTitle": "Resources"
                 },
                 {
                     "id": "robocorp-cloud-tree",
@@ -580,31 +574,6 @@
                     "command": "robocorp.refreshRobotContentView",
                     "when": "view == robocorp-robot-content-tree",
                     "group": "navigation"
-                },
-                {
-                    "command": "robocorp.newRobocorpInspectorBrowser",
-                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
-                    "group": "navigation"
-                },
-                {
-                    "command": "robocorp.newRobocorpInspectorImage",
-                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
-                    "group": "navigation"
-                },
-                {
-                    "command": "robocorp.newRobocorpInspectorWindows",
-                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected",
-                    "group": "navigation"
-                },
-                {
-                    "command": "robocorp.newWorkItemInWorkItemsView",
-                    "when": "view == robocorp-work-items-tree && robocorp-code:single-robot-selected",
-                    "group": "navigation"
-                },
-                {
-                    "command": "robocorp.helpWorkItems",
-                    "when": "view == robocorp-work-items-tree && robocorp-code:single-robot-selected",
-                    "group": "navigation"
                 }
             ],
             "view/item/context": [
@@ -699,38 +668,53 @@
                     "group": "2_change"
                 },
                 {
+                    "command": "robocorp.newRobocorpInspectorBrowser",
+                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == locatorsRoot",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.newRobocorpInspectorImage",
+                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == locatorsRoot",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.newRobocorpInspectorWindows",
+                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == locatorsRoot",
+                    "group": "inline"
+                },
+                {
                     "command": "robocorp.editRobocorpInspectorLocator",
-                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected && viewItem == locatorEntry",
+                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == locatorEntry",
                     "group": "inline"
                 },
                 {
                     "command": "robocorp.copyLocatorToClipboard.internal",
-                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected && viewItem == locatorEntry",
+                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == locatorEntry",
                     "group": "inline"
                 },
                 {
                     "command": "robocorp.removeLocatorFromJson",
-                    "when": "view == robocorp-locators-tree && robocorp-code:single-robot-selected && viewItem == locatorEntry",
+                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == locatorEntry",
                     "group": "inline"
                 },
                 {
                     "command": "robocorp.newWorkItemInWorkItemsView",
-                    "when": "view == robocorp-work-items-tree && robocorp-code:single-robot-selected",
-                    "group": "0_new"
+                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == workItemsRoot",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.helpWorkItems",
+                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == workItemsRoot",
+                    "group": "inline"
                 },
                 {
                     "command": "robocorp.deleteWorkItemInWorkItemsView",
-                    "when": "view == robocorp-work-items-tree && viewItem == outputWorkItem || viewItem == inputWorkItem",
-                    "group": "1_change"
-                },
-                {
-                    "command": "robocorp.deleteWorkItemInWorkItemsView",
-                    "when": "view == robocorp-work-items-tree && viewItem == outputWorkItem || viewItem == inputWorkItem",
+                    "when": "view == robocorp-resources-tree && viewItem == outputWorkItem || viewItem == inputWorkItem",
                     "group": "inline"
                 },
                 {
                     "command": "robocorp.convertOutputWorkItemToInput",
-                    "when": "view == robocorp-work-items-tree && viewItem == outputWorkItem",
+                    "when": "view == robocorp-resources-tree && viewItem == outputWorkItem",
                     "group": "inline"
                 },
                 {
