@@ -157,7 +157,26 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
 
             // Get child elements.
             if (element.type === RobotEntryType.Task) {
-                return []; // Tasks don't have children.
+                return [
+                    {
+                        "label": "Run",
+                        "uri": element.uri,
+                        "robot": element.robot,
+                        "taskName": element.taskName,
+                        "iconPath": "run",
+                        "type": RobotEntryType.Run,
+                        "parent": element,
+                    },
+                    {
+                        "label": "Debug",
+                        "uri": element.uri,
+                        "robot": element.robot,
+                        "taskName": element.taskName,
+                        "iconPath": "debug",
+                        "type": RobotEntryType.Debug,
+                        "parent": element,
+                    },
+                ];
             }
             let yamlContents = element.robot.yamlContents;
             if (!yamlContents) {
@@ -215,12 +234,28 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
     getTreeItem(element: RobotEntry): vscode.TreeItem {
         const isTask: boolean = element.type === RobotEntryType.Task;
         const treeItem = new vscode.TreeItem(element.label, vscode.TreeItemCollapsibleState.Collapsed);
-        if (element.type === RobotEntryType.Robot) {
+        if (element.type === RobotEntryType.Run) {
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
+            treeItem.contextValue = "taskItemRun";
+            treeItem.command = {
+                "title": "Run",
+                "command": roboCommands.ROBOCORP_ROBOTS_VIEW_TASK_RUN,
+                "arguments": [element],
+            };
+        } else if (element.type === RobotEntryType.Debug) {
+            treeItem.command = {
+                "title": "Debug",
+                "command": roboCommands.ROBOCORP_ROBOTS_VIEW_TASK_DEBUG,
+                "arguments": [element],
+            };
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
+            treeItem.contextValue = "taskItemDebug";
+        } else if (element.type === RobotEntryType.Robot) {
             treeItem.contextValue = "robotItem";
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         } else if (isTask) {
             treeItem.contextValue = "taskItem";
-            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         } else if (element.type === RobotEntryType.Error) {
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
         }

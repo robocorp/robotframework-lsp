@@ -16,6 +16,8 @@ export enum RobotEntryType {
     Robot,
     Task,
     Error,
+    Run,
+    Debug,
 }
 
 export interface CloudEntry {
