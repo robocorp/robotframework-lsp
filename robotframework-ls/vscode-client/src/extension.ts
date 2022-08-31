@@ -686,7 +686,7 @@ let onChangedEditorUpdateRFStatusBarItem = debounce(() => {
     });
 }, 100);
 
-async function openFlowExplorer(flowBundleHTMLFolderPath: string) {
+async function openFlowExplorer(flowBundleHTMLFolderPath: string, filePath?: string) {
     const DEFAULT_ERROR_MSG = `
             Could not open Robot Flow Explorer.
             Please check the output logs for more details.
@@ -697,12 +697,19 @@ async function openFlowExplorer(flowBundleHTMLFolderPath: string) {
             `;
     try {
         feedback("vscode.flowExplorer.used", "+1");
-        const activeTextEditor = window.activeTextEditor;
-        if (!activeTextEditor || !languageServerClient || activeTextEditor.document.languageId !== "robotframework") {
-            window.showErrorMessage(DEFAULT_UNABLE_TO_OPEN_MSG);
-            return;
+        if (!filePath) {
+            const activeTextEditor = window.activeTextEditor;
+            if (
+                !activeTextEditor ||
+                !languageServerClient ||
+                activeTextEditor.document.languageId !== "robotframework"
+            ) {
+                window.showErrorMessage(DEFAULT_UNABLE_TO_OPEN_MSG);
+                return;
+            }
+            filePath = activeTextEditor.document.fileName;
         }
-        const filePath = activeTextEditor.document.fileName;
+
         const openResult: { uri: string | null; err: string | null; warn: string | null } | null =
             await commands.executeCommand("robot.openFlowExplorer.internal", {
                 "currentFileUri": filePath,
@@ -782,9 +789,9 @@ export async function activate(context: ExtensionContext) {
             )
         );
         context.subscriptions.push(
-            commands.registerCommand("robot.openFlowExplorer", async () => {
+            commands.registerCommand("robot.openFlowExplorer", async (filePath?: string) => {
                 const flowBundleHTMLFolderPath = context.asAbsolutePath("assets");
-                return openFlowExplorer(flowBundleHTMLFolderPath);
+                return openFlowExplorer(flowBundleHTMLFolderPath, filePath);
             })
         );
 
