@@ -75,6 +75,7 @@ ROBOCORP_OPEN_VAULT_HELP = "robocorp.openVaultHelp"  # Open vault help
 ROBOCORP_CLEAR_ENV_AND_RESTART = "robocorp.clearEnvAndRestart"  # Clear Robocorp (RCC) environments and restart Robocorp Code
 ROBOCORP_SHOW_OUTPUT = "robocorp.showOutput"  # Show Robocorp Code > Output logs
 ROBOCORP_SHOW_INTERPRETER_ENV_ERROR = "robocorp.showInterpreterEnvError"  # Show error related to interpreter env creation
+ROBOCORP_OPEN_FLOW_EXPLORER_TREE_SELECTION = "robocorp.openFlowExplorerTreeSelection"  # Open Flow Explorer
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,

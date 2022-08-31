@@ -93,6 +93,7 @@
         "onCommand:robocorp.clearEnvAndRestart",
         "onCommand:robocorp.showOutput",
         "onCommand:robocorp.showInterpreterEnvError",
+        "onCommand:robocorp.openFlowExplorerTreeSelection",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -546,6 +547,12 @@
                 "command": "robocorp.showInterpreterEnvError",
                 "title": "Show error related to interpreter env creation",
                 "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.openFlowExplorerTreeSelection",
+                "title": "Open Flow Explorer",
+                "category": "Robocorp",
+                "icon": "$(type-hierarchy-sub)"
             }
         ],
         "menus": {
@@ -593,13 +600,18 @@
                     "group": "inline"
                 },
                 {
-                    "command": "robocorp.cloudUploadRobotTreeSelection",
+                    "command": "robocorp.rccTerminalCreateRobotTreeSelection",
                     "when": "view == robocorp-robots-tree && viewItem == robotItem",
                     "group": "inline"
                 },
                 {
-                    "command": "robocorp.rccTerminalCreateRobotTreeSelection",
-                    "when": "view == robocorp-robots-tree && viewItem == robotItem",
+                    "command": "robocorp.cloudUploadRobotTreeSelection",
+                    "when": "view == robocorp-robots-tree && viewItem == actionsInRobotItem",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.openFlowExplorerTreeSelection",
+                    "when": "view == robocorp-robots-tree && viewItem == actionsInRobotItem",
                     "group": "inline"
                 },
                 {
@@ -870,6 +882,10 @@
                 },
                 {
                     "command": "robocorp.showInterpreterEnvError",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.openFlowExplorerTreeSelection",
                     "when": "false"
                 }
             ]

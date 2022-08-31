@@ -74,3 +74,4 @@ export const ROBOCORP_OPEN_VAULT_HELP = "robocorp.openVaultHelp";  // Open vault
 export const ROBOCORP_CLEAR_ENV_AND_RESTART = "robocorp.clearEnvAndRestart";  // Clear Robocorp (RCC) environments and restart Robocorp Code
 export const ROBOCORP_SHOW_OUTPUT = "robocorp.showOutput";  // Show Robocorp Code > Output logs
 export const ROBOCORP_SHOW_INTERPRETER_ENV_ERROR = "robocorp.showInterpreterEnvError";  // Show error related to interpreter env creation
+export const ROBOCORP_OPEN_FLOW_EXPLORER_TREE_SELECTION = "robocorp.openFlowExplorerTreeSelection";  // Open Flow Explorer

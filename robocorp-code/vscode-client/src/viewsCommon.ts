@@ -18,6 +18,9 @@ export enum RobotEntryType {
     Error,
     Run,
     Debug,
+    ActionsInRobot,
+    OpenFlowExplorer,
+    UploadRobot,
 }
 
 export interface CloudEntry {

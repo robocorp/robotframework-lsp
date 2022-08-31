@@ -151,10 +151,6 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
 
     async computeChildren(element?: RobotEntry): Promise<RobotEntry[]> {
         if (element) {
-            if (element.type === RobotEntryType.Error) {
-                return [];
-            }
-
             // Get child elements.
             if (element.type === RobotEntryType.Task) {
                 return [
@@ -178,25 +174,61 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                     },
                 ];
             }
-            let yamlContents = element.robot.yamlContents;
-            if (!yamlContents) {
+            if (element.type === RobotEntryType.Robot) {
+                let yamlContents = element.robot.yamlContents;
+                let robotChildren = [];
+                if (yamlContents) {
+                    let tasks: object[] = yamlContents["tasks"];
+                    if (tasks) {
+                        const robotInfo = element.robot;
+                        robotChildren = Object.keys(tasks).map((task: string) => ({
+                            "label": task,
+                            "uri": vscode.Uri.file(robotInfo.filePath),
+                            "robot": robotInfo,
+                            "taskName": task,
+                            "iconPath": "debug-alt-small",
+                            "type": RobotEntryType.Task,
+                            "parent": element,
+                        }));
+                    }
+                }
+                robotChildren.push({
+                    "label": "Actions",
+                    "uri": element.uri,
+                    "robot": element.robot,
+                    "iconPath": "tools",
+                    "type": RobotEntryType.ActionsInRobot,
+                    "parent": element,
+                });
+                return robotChildren;
+            }
+            if (element.type === RobotEntryType.ActionsInRobot) {
+                return [
+                    {
+                        "label": "Open Flow Explorer",
+                        "uri": element.uri,
+                        "robot": element.robot,
+                        "iconPath": "type-hierarchy-sub",
+                        "type": RobotEntryType.OpenFlowExplorer,
+                        "parent": element,
+                    },
+                    {
+                        "label": "Upload Robot to Control Room",
+                        "uri": element.uri,
+                        "robot": element.robot,
+                        "iconPath": "cloud-upload",
+                        "type": RobotEntryType.UploadRobot,
+                        "parent": element,
+                    },
+                ];
+            }
+
+            if (element.type === RobotEntryType.Error) {
                 return [];
             }
 
-            let tasks: object[] = yamlContents["tasks"];
-            if (!tasks) {
-                return [];
-            }
-            const robotInfo = element.robot;
-            return Object.keys(tasks).map((task: string) => ({
-                "label": task,
-                "uri": vscode.Uri.file(robotInfo.filePath),
-                "robot": robotInfo,
-                "taskName": task,
-                "iconPath": "debug-alt-small",
-                "type": RobotEntryType.Task,
-                "parent": element,
-            }));
+            OUTPUT_CHANNEL.appendLine("Unhandled in viewsRobots.ts: " + element.type);
+            return [];
         }
 
         if (!_globalSentMetric) {
@@ -250,6 +282,23 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
             };
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
             treeItem.contextValue = "taskItemDebug";
+        } else if (element.type === RobotEntryType.ActionsInRobot) {
+            treeItem.contextValue = "actionsInRobotItem";
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+        } else if (element.type === RobotEntryType.OpenFlowExplorer) {
+            treeItem.command = {
+                "title": "Open flow Explorer",
+                "command": "robot.openFlowExplorer",
+                "arguments": [element.robot.directory],
+            };
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        } else if (element.type === RobotEntryType.UploadRobot) {
+            treeItem.command = {
+                "title": "Upload Robot to Control Room",
+                "command": roboCommands.ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION,
+                "arguments": [element],
+            };
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
         } else if (element.type === RobotEntryType.Robot) {
             treeItem.contextValue = "robotItem";
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
