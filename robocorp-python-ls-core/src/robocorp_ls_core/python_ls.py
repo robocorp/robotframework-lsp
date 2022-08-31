@@ -274,6 +274,9 @@ class PythonLanguageServer(MethodDispatcher):
 
     def m_shutdown(self, **_kwargs):
         self._shutdown = True
+        workspace = self._workspace
+        if workspace is not None:
+            workspace.dispose()
 
     def m_exit(self, **_kwargs):
         self._endpoint.shutdown()
