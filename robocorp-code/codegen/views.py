@@ -70,12 +70,12 @@ TREE_VIEW_CONTAINERS = [
                             MenuGroup.INLINE,
                             "viewItem == robotItem",
                         ),
+                        # Inline in actions
                         Menu(
                             "robocorp.rccTerminalCreateRobotTreeSelection",
                             MenuGroup.INLINE,
-                            "viewItem == robotItem",
+                            "viewItem == actionsInRobotItem",
                         ),
-                        # Inline in actions
                         Menu(
                             "robocorp.cloudUploadRobotTreeSelection",
                             MenuGroup.INLINE,

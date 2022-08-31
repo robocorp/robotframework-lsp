@@ -21,6 +21,7 @@ export enum RobotEntryType {
     ActionsInRobot,
     OpenFlowExplorer,
     UploadRobot,
+    RobotTerminal,
 }
 
 export interface CloudEntry {

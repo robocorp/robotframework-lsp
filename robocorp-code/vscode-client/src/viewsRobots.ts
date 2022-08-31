@@ -205,19 +205,27 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
             if (element.type === RobotEntryType.ActionsInRobot) {
                 return [
                     {
-                        "label": "Open Flow Explorer",
-                        "uri": element.uri,
-                        "robot": element.robot,
-                        "iconPath": "type-hierarchy-sub",
-                        "type": RobotEntryType.OpenFlowExplorer,
-                        "parent": element,
-                    },
-                    {
                         "label": "Upload Robot to Control Room",
                         "uri": element.uri,
                         "robot": element.robot,
                         "iconPath": "cloud-upload",
                         "type": RobotEntryType.UploadRobot,
+                        "parent": element,
+                    },
+                    {
+                        "label": "Open Robot Terminal",
+                        "uri": element.uri,
+                        "robot": element.robot,
+                        "iconPath": "terminal",
+                        "type": RobotEntryType.RobotTerminal,
+                        "parent": element,
+                    },
+                    {
+                        "label": "Open Flow Explorer",
+                        "uri": element.uri,
+                        "robot": element.robot,
+                        "iconPath": "type-hierarchy-sub",
+                        "type": RobotEntryType.OpenFlowExplorer,
                         "parent": element,
                     },
                 ];
@@ -285,9 +293,16 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
         } else if (element.type === RobotEntryType.ActionsInRobot) {
             treeItem.contextValue = "actionsInRobotItem";
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+        } else if (element.type === RobotEntryType.RobotTerminal) {
+            treeItem.command = {
+                "title": "Open Robot Terminal",
+                "command": roboCommands.ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION,
+                "arguments": [element],
+            };
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
         } else if (element.type === RobotEntryType.OpenFlowExplorer) {
             treeItem.command = {
-                "title": "Open flow Explorer",
+                "title": "Open Flow Explorer",
                 "command": "robot.openFlowExplorer",
                 "arguments": [element.robot.directory],
             };

@@ -601,7 +601,7 @@
                 },
                 {
                     "command": "robocorp.rccTerminalCreateRobotTreeSelection",
-                    "when": "view == robocorp-robots-tree && viewItem == robotItem",
+                    "when": "view == robocorp-robots-tree && viewItem == actionsInRobotItem",
                     "group": "inline"
                 },
                 {
