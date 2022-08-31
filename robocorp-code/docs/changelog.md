@@ -1,7 +1,7 @@
 NEXT
 -----------------------------
 
-- RCC was upgraded to `v11.21.0`.
+- RCC was upgraded to `v11.22.0`.
 
 
 New in 0.36.0 (2022-07-20)

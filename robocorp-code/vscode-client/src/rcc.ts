@@ -120,7 +120,7 @@ async function downloadRcc(
             relativePath = "/linux32/rcc";
         }
     }
-    const RCC_VERSION = "v11.21.0";
+    const RCC_VERSION = "v11.22.0";
     const prefix = "https://downloads.robocorp.com/rcc/releases/" + RCC_VERSION;
     const url: string = prefix + relativePath;
     return await download(url, progress, token, location);
