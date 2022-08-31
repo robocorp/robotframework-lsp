@@ -221,6 +221,14 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                         "parent": element,
                     },
                     {
+                        "label": "Configure Robot (robot.yaml)",
+                        "uri": element.uri,
+                        "robot": element.robot,
+                        "iconPath": "go-to-file",
+                        "type": RobotEntryType.OpenRobotYaml,
+                        "parent": element,
+                    },
+                    {
                         "label": "Open Flow Explorer",
                         "uri": element.uri,
                         "robot": element.robot,
@@ -293,6 +301,13 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
         } else if (element.type === RobotEntryType.ActionsInRobot) {
             treeItem.contextValue = "actionsInRobotItem";
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+        } else if (element.type === RobotEntryType.OpenRobotYaml) {
+            treeItem.command = {
+                "title": "Configure Robot (robot.yaml)",
+                "command": roboCommands.ROBOCORP_OPEN_ROBOT_TREE_SELECTION,
+                "arguments": [element],
+            };
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
         } else if (element.type === RobotEntryType.RobotTerminal) {
             treeItem.command = {
                 "title": "Open Robot Terminal",

@@ -391,7 +391,7 @@
             },
             {
                 "command": "robocorp.openRobotTreeSelection",
-                "title": "Open robot.yaml",
+                "title": "Configure Robot (robot.yaml)",
                 "category": "Robocorp",
                 "icon": "$(go-to-file)"
             },
@@ -596,7 +596,7 @@
                 },
                 {
                     "command": "robocorp.openRobotTreeSelection",
-                    "when": "view == robocorp-robots-tree && viewItem == robotItem",
+                    "when": "view == robocorp-robots-tree && viewItem == actionsInRobotItem",
                     "group": "inline"
                 },
                 {

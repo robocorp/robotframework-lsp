@@ -333,7 +333,7 @@ COMMANDS = [
     ),
     Command(
         "robocorp.openRobotTreeSelection",
-        "Open robot.yaml",
+        "Configure Robot (robot.yaml)",
         add_to_package_json=True,
         server_handled=False,
         hide_from_command_palette=True,
