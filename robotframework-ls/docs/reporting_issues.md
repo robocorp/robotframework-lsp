@@ -75,3 +75,28 @@ Add the following entries:
 **Important** : After the logs are collected, **remove** (or comment) the `Language Server Args` setting 
 or unset the `ROBOTFRAMEWORK_LS_LOG_FILE` environment variable to **stop the logging** 
 (having the logging on makes the language server considerably slower). 
+
+
+Report performance issues
+---------------------------
+
+If somehow the language server is consuming too much CPU or something is taking
+too long for some action, profile information should be provided in the issue
+report to be able to track down the issue.
+
+To do that:
+
+1. Download and install [PyVmMonitor](https://www.pyvmmonitor.com/download.html) -- you can use the 15 day trial.
+
+2. Attach it to the process which has the high CPU usage (it can do it on the fly so you shouldn't need
+any special setup). Please follow the steps from: [https://www.pyvmmonitor.com/attach_to.html](https://www.pyvmmonitor.com/attach_to.html). 
+
+Note: in Windows you can right-click the tabs in the `Task Manager` and select `PID` and `CPU` to find out which `PID` should be profiled.
+
+<kbd>![Task Manager Select Columns](./images/task_manager_select_columns.png)</kbd>
+
+3. Save the pstats and attach them to this issue.
+
+![PyVmMonitor Save PStats](./images/pyvmmonitor_save_pstats.png)
+
+
