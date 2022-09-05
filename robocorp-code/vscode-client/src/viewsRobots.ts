@@ -229,6 +229,14 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                         "parent": element,
                     },
                     {
+                        "label": "Configure Dependencies (conda.yaml)",
+                        "uri": element.uri,
+                        "robot": element.robot,
+                        "iconPath": "list-tree",
+                        "type": RobotEntryType.OpenRobotCondaYaml,
+                        "parent": element,
+                    },
+                    {
                         "label": "Open Flow Explorer",
                         "uri": element.uri,
                         "robot": element.robot,
@@ -305,6 +313,13 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
             treeItem.command = {
                 "title": "Configure Robot (robot.yaml)",
                 "command": roboCommands.ROBOCORP_OPEN_ROBOT_TREE_SELECTION,
+                "arguments": [element],
+            };
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        } else if (element.type === RobotEntryType.OpenRobotCondaYaml) {
+            treeItem.command = {
+                "title": "Configure Dependencies (conda.yaml)",
+                "command": roboCommands.ROBOCORP_OPEN_ROBOT_CONDA_TREE_SELECTION,
                 "arguments": [element],
             };
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;

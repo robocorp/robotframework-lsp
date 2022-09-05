@@ -348,6 +348,14 @@ COMMANDS = [
         icon="$(go-to-file)",
     ),
     Command(
+        "robocorp.openRobotCondaTreeSelection",
+        "Configure Dependencies (conda.yaml)",
+        add_to_package_json=True,
+        server_handled=False,
+        hide_from_command_palette=True,
+        icon="$(list-tree)",
+    ),
+    Command(
         "robocorp.openExternally",
         "Open externally",
         add_to_package_json=True,

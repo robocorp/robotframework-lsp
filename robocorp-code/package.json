@@ -64,6 +64,7 @@
         "onCommand:robocorp.editRobocorpInspectorLocator",
         "onCommand:robocorp.copyLocatorToClipboard.internal",
         "onCommand:robocorp.openRobotTreeSelection",
+        "onCommand:robocorp.openRobotCondaTreeSelection",
         "onCommand:robocorp.openExternally",
         "onCommand:robocorp.openInVSCode",
         "onCommand:robocorp.revealInExplorer",
@@ -356,7 +357,7 @@
             },
             {
                 "command": "robocorp.openLocatorsJson",
-                "title": "Open locators json",
+                "title": "Open locators.json",
                 "category": "Robocorp",
                 "icon": "$(go-to-file)"
             },
@@ -401,6 +402,12 @@
                 "title": "Configure Robot (robot.yaml)",
                 "category": "Robocorp",
                 "icon": "$(go-to-file)"
+            },
+            {
+                "command": "robocorp.openRobotCondaTreeSelection",
+                "title": "Configure Dependencies (conda.yaml)",
+                "category": "Robocorp",
+                "icon": "$(list-tree)"
             },
             {
                 "command": "robocorp.openExternally",
@@ -603,6 +610,11 @@
                 },
                 {
                     "command": "robocorp.openRobotTreeSelection",
+                    "when": "view == robocorp-robots-tree && viewItem == actionsInRobotItem",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.openRobotCondaTreeSelection",
                     "when": "view == robocorp-robots-tree && viewItem == actionsInRobotItem",
                     "group": "inline"
                 },
@@ -818,6 +830,10 @@
                 },
                 {
                     "command": "robocorp.openRobotTreeSelection",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.openRobotCondaTreeSelection",
                     "when": "false"
                 },
                 {

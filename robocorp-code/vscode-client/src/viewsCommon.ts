@@ -23,6 +23,7 @@ export enum RobotEntryType {
     UploadRobot,
     RobotTerminal,
     OpenRobotYaml,
+    OpenRobotCondaYaml,
 }
 
 export interface CloudEntry {

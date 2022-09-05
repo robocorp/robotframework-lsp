@@ -72,6 +72,11 @@ TREE_VIEW_CONTAINERS = [
                             "viewItem == actionsInRobotItem",
                         ),
                         Menu(
+                            "robocorp.openRobotCondaTreeSelection",
+                            MenuGroup.INLINE,
+                            "viewItem == actionsInRobotItem",
+                        ),
+                        Menu(
                             "robocorp.rccTerminalCreateRobotTreeSelection",
                             MenuGroup.INLINE,
                             "viewItem == actionsInRobotItem",

@@ -41,6 +41,21 @@ export async function openRobotTreeSelection(robot?: RobotEntry) {
     }
 }
 
+export async function openRobotCondaTreeSelection(robot?: RobotEntry) {
+    if (!robot) {
+        robot = getSelectedRobot();
+    }
+    if (robot) {
+        const yamlContents = robot.robot.yamlContents;
+        if (yamlContents) {
+            const condaConfigFile = yamlContents["condaConfigFile"];
+            if (condaConfigFile) {
+                vscode.window.showTextDocument(vscode.Uri.file(path.join(robot.robot.directory, condaConfigFile)));
+            }
+        }
+    }
+}
+
 export async function openLocatorsJsonTreeSelection() {
     // Json
     const robot = getSelectedRobot();

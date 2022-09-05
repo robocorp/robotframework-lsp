@@ -121,6 +121,7 @@ import {
     ROBOCORP_FEEDBACK_INTERNAL,
     ROBOCORP_OPEN_FLOW_EXPLORER_TREE_SELECTION,
     ROBOCORP_OPEN_LOCATORS_JSON,
+    ROBOCORP_OPEN_ROBOT_CONDA_TREE_SELECTION,
 } from "./robocorpCommands";
 import { disablePythonTerminalActivateEnvironment, installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -347,6 +348,7 @@ function registerRobocorpCodeCommands(C: CommandRegistry) {
     );
     C.register(ROBOCORP_REMOVE_LOCATOR_FROM_JSON, (locator?: LocatorEntry) => removeLocator(locator));
     C.register(ROBOCORP_OPEN_ROBOT_TREE_SELECTION, (robot: RobotEntry) => views.openRobotTreeSelection(robot));
+    C.register(ROBOCORP_OPEN_ROBOT_CONDA_TREE_SELECTION, (robot: RobotEntry) => views.openRobotCondaTreeSelection(robot));
     C.register(ROBOCORP_OPEN_LOCATORS_JSON, (locatorRoot) => views.openLocatorsJsonTreeSelection());
     C.register(ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION, (robot: RobotEntry) =>
         views.cloudUploadRobotTreeSelection(robot)
