@@ -56,6 +56,7 @@
         "onCommand:robocorp.getLocatorsJsonInfo",
         "onCommand:robocorp.removeLocatorFromJson.internal",
         "onCommand:robocorp.removeLocatorFromJson",
+        "onCommand:robocorp.openLocatorsJson",
         "onCommand:robocorp.openCloudHome",
         "onCommand:robocorp.newRobocorpInspectorBrowser",
         "onCommand:robocorp.newRobocorpInspectorImage",
@@ -354,6 +355,12 @@
                 "icon": "$(trash)"
             },
             {
+                "command": "robocorp.openLocatorsJson",
+                "title": "Open locators json",
+                "category": "Robocorp",
+                "icon": "$(go-to-file)"
+            },
+            {
                 "command": "robocorp.openCloudHome",
                 "title": "Open cloud home",
                 "category": "Robocorp",
@@ -363,19 +370,19 @@
                 "command": "robocorp.newRobocorpInspectorBrowser",
                 "title": "Add Browser Locator",
                 "category": "Robocorp",
-                "icon": "$(globe)"
+                "icon": "$(add)"
             },
             {
                 "command": "robocorp.newRobocorpInspectorImage",
                 "title": "Add Image Locator",
                 "category": "Robocorp",
-                "icon": "$(desktop-download)"
+                "icon": "$(add)"
             },
             {
                 "command": "robocorp.newRobocorpInspectorWindows",
                 "title": "Add Windows Locator",
                 "category": "Robocorp",
-                "icon": "$(window)"
+                "icon": "$(add)"
             },
             {
                 "command": "robocorp.editRobocorpInspectorLocator",
@@ -486,7 +493,7 @@
                 "command": "robocorp.newWorkItemInWorkItemsView",
                 "title": "New Work Item",
                 "category": "Robocorp",
-                "icon": "$(new-file)"
+                "icon": "$(add)"
             },
             {
                 "command": "robocorp.deleteWorkItemInWorkItemsView",
@@ -681,17 +688,22 @@
                 },
                 {
                     "command": "robocorp.newRobocorpInspectorBrowser",
-                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == locatorsRoot",
+                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == newBrowserLocator",
                     "group": "inline"
                 },
                 {
                     "command": "robocorp.newRobocorpInspectorImage",
-                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == locatorsRoot",
+                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == newImageLocator",
                     "group": "inline"
                 },
                 {
                     "command": "robocorp.newRobocorpInspectorWindows",
-                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == locatorsRoot",
+                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == newWindowsLocator",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.openLocatorsJson",
+                    "when": "view == robocorp-resources-tree && viewItem == locatorsRoot",
                     "group": "inline"
                 },
                 {
@@ -710,13 +722,13 @@
                     "group": "inline"
                 },
                 {
-                    "command": "robocorp.newWorkItemInWorkItemsView",
+                    "command": "robocorp.helpWorkItems",
                     "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == workItemsRoot",
                     "group": "inline"
                 },
                 {
-                    "command": "robocorp.helpWorkItems",
-                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == workItemsRoot",
+                    "command": "robocorp.newWorkItemInWorkItemsView",
+                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == inputWorkItemDir",
                     "group": "inline"
                 },
                 {
@@ -786,6 +798,10 @@
                 },
                 {
                     "command": "robocorp.removeLocatorFromJson",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.openLocatorsJson",
                     "when": "false"
                 },
                 {

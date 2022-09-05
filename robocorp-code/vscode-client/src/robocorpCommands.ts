@@ -37,6 +37,7 @@ export const ROBOCORP_REFRESH_CLOUD_VIEW = "robocorp.refreshCloudView";  // Refr
 export const ROBOCORP_GET_LOCATORS_JSON_INFO = "robocorp.getLocatorsJsonInfo";  // Obtain information from the locators.json given a robot.yaml
 export const ROBOCORP_REMOVE_LOCATOR_FROM_JSON_INTERNAL = "robocorp.removeLocatorFromJson.internal";  // Remove a named locator from locators.json
 export const ROBOCORP_REMOVE_LOCATOR_FROM_JSON = "robocorp.removeLocatorFromJson";  // Remove Locator
+export const ROBOCORP_OPEN_LOCATORS_JSON = "robocorp.openLocatorsJson";  // Open locators json
 export const ROBOCORP_OPEN_CLOUD_HOME = "robocorp.openCloudHome";  // Open cloud home
 export const ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER = "robocorp.newRobocorpInspectorBrowser";  // Add Browser Locator
 export const ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE = "robocorp.newRobocorpInspectorImage";  // Add Image Locator

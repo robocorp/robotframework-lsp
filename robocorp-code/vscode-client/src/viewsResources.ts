@@ -68,8 +68,10 @@ export class ResourcesTreeDataProvider extends RobotSelectionTreeDataProviderBas
             const item = new vscode.TreeItem(element.name, vscode.TreeItemCollapsibleState.Expanded);
             if (element.subTree === SUBTREE_LOCATORS) {
                 item.contextValue = "locatorsRoot";
+                item.iconPath = new vscode.ThemeIcon("inspect");
             } else if (element.subTree === SUBTREE_WORK_ITEMS) {
                 item.contextValue = "workItemsRoot";
+                item.iconPath = new vscode.ThemeIcon("combine");
             }
             return item;
         }

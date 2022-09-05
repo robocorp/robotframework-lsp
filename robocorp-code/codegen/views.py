@@ -188,17 +188,23 @@ TREE_VIEW_CONTAINERS = [
                         Menu(
                             "robocorp.newRobocorpInspectorBrowser",
                             MenuGroup.INLINE,
-                            "robocorp-code:single-robot-selected && viewItem == locatorsRoot",
+                            "robocorp-code:single-robot-selected && viewItem == newBrowserLocator",
                         ),
                         Menu(
                             "robocorp.newRobocorpInspectorImage",
                             MenuGroup.INLINE,
-                            "robocorp-code:single-robot-selected && viewItem == locatorsRoot",
+                            "robocorp-code:single-robot-selected && viewItem == newImageLocator",
                         ),
                         Menu(
                             "robocorp.newRobocorpInspectorWindows",
                             MenuGroup.INLINE,
-                            "robocorp-code:single-robot-selected && viewItem == locatorsRoot",
+                            "robocorp-code:single-robot-selected && viewItem == newWindowsLocator",
+                        ),
+                        # Locators (root)
+                        Menu(
+                            "robocorp.openLocatorsJson",
+                            MenuGroup.INLINE,
+                            "viewItem == locatorsRoot",
                         ),
                         # Locators (entries)
                         Menu(
@@ -218,14 +224,15 @@ TREE_VIEW_CONTAINERS = [
                         ),
                         # Work items (root)
                         Menu(
-                            "robocorp.newWorkItemInWorkItemsView",
-                            MenuGroup.INLINE,
-                            when="robocorp-code:single-robot-selected && viewItem == workItemsRoot",
-                        ),
-                        Menu(
                             "robocorp.helpWorkItems",
                             MenuGroup.INLINE,
                             when="robocorp-code:single-robot-selected && viewItem == workItemsRoot",
+                        ),
+                        # Work items (new)
+                        Menu(
+                            "robocorp.newWorkItemInWorkItemsView",
+                            MenuGroup.INLINE,
+                            when="robocorp-code:single-robot-selected && viewItem == inputWorkItemDir",
                         ),
                         # Work items (entries)
                         Menu(

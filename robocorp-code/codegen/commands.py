@@ -285,6 +285,14 @@ COMMANDS = [
         icon="$(trash)",
     ),
     Command(
+        "robocorp.openLocatorsJson",
+        "Open locators.json",
+        add_to_package_json=True,
+        hide_from_command_palette=True,
+        server_handled=False,
+        icon="$(go-to-file)",
+    ),
+    Command(
         "robocorp.openCloudHome",
         "Open cloud home",
         add_to_package_json=True,
@@ -299,21 +307,21 @@ COMMANDS = [
         "Add Browser Locator",
         add_to_package_json=True,
         server_handled=False,
-        icon="$(globe)",
+        icon="$(add)",
     ),
     Command(
         "robocorp.newRobocorpInspectorImage",
         "Add Image Locator",
         add_to_package_json=True,
         server_handled=False,
-        icon="$(desktop-download)",
+        icon="$(add)",
     ),
     Command(
         "robocorp.newRobocorpInspectorWindows",
         "Add Windows Locator",
         add_to_package_json=True,
         server_handled=False,
-        icon="$(window)",
+        icon="$(add)",
     ),
     Command(
         "robocorp.editRobocorpInspectorLocator",
@@ -454,7 +462,7 @@ COMMANDS = [
         "New Work Item",
         add_to_package_json=True,
         server_handled=False,
-        icon="$(new-file)",
+        icon="$(add)",
         hide_from_command_palette=False,
     ),
     Command(

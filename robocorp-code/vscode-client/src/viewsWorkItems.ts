@@ -25,7 +25,13 @@ export interface WorkItemFSEntry extends FSEntry {
     name: string;
     isDirectory: boolean;
     filePath: string;
-    kind: "outputWorkItem" | "inputWorkItem" | "outputWorkItemDir" | "inputWorkItemDir" | undefined;
+    kind:
+        | "outputWorkItem"
+        | "inputWorkItem"
+        | "outputWorkItemDir"
+        | "inputWorkItemDir"
+        | "createInputWorkItem"
+        | undefined;
     workItem?: WorkItem; // Only available for outputWorkItem and inputWorkItem
 }
 
@@ -354,6 +360,14 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
                     workItem: workItem,
                 };
             });
+
+            elements.push({
+                name: "Create New Work Item ...",
+                isDirectory: false,
+                filePath: undefined,
+                kind: "createInputWorkItem",
+                workItem: undefined,
+            });
         }
 
         if (element.name === "work-items-out") {
@@ -401,6 +415,19 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
         }
         if (element.kind) {
             treeItem.contextValue = element.kind;
+
+            if (element.kind === "createInputWorkItem") {
+                treeItem.iconPath = new vscode.ThemeIcon("add");
+                treeItem.command = {
+                    "title": "New Work Item",
+                    "command": "robocorp.newWorkItemInWorkItemsView",
+                    "arguments": [],
+                };
+            } else if (element.kind === "outputWorkItemDir") {
+                treeItem.iconPath = new vscode.ThemeIcon("sign-out");
+            } else if (element.kind === "inputWorkItemDir") {
+                treeItem.iconPath = new vscode.ThemeIcon("sign-in");
+            }
         }
         return treeItem;
     }

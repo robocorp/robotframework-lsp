@@ -25,6 +25,8 @@ import { CloudTreeDataProvider } from "./viewsRobocorp";
 import { RobotsTreeDataProvider } from "./viewsRobots";
 import { LocatorsTreeDataProvider } from "./viewsLocators";
 import { ResourcesTreeDataProvider } from "./viewsResources";
+import * as path from "path";
+import { verifyFileExists } from "./files";
 
 function empty<T>(array: readonly T[]) {
     return array === undefined || array.length === 0;
@@ -36,6 +38,17 @@ export async function openRobotTreeSelection(robot?: RobotEntry) {
     }
     if (robot) {
         vscode.window.showTextDocument(robot.uri);
+    }
+}
+
+export async function openLocatorsJsonTreeSelection() {
+    // Json
+    const robot = getSelectedRobot();
+    if (robot) {
+        let locatorJson = path.join(robot.robot.directory, "locators.json");
+        if (verifyFileExists(locatorJson, false)) {
+            vscode.window.showTextDocument(vscode.Uri.file(locatorJson));
+        }
     }
 }
 
