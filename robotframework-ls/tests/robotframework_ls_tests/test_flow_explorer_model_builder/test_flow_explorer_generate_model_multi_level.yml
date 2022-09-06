@@ -1,0 +1,32 @@
+keywords: []
+name: My
+setup: null
+source: my.robot
+tasks:
+- body:
+  - args: []
+    assign: []
+    body:
+    - args: []
+      assign: []
+      body:
+      - args:
+        - Something
+        assign: []
+        body: []
+        name: Log (BuiltIn)
+        subtype: KEYWORD
+        type: keyword
+      name: Call 2 (my)
+      subtype: KEYWORD
+      type: keyword
+    name: Call 1 (my)
+    subtype: KEYWORD
+    type: keyword
+  doc: ''
+  name: My.My first task
+  setup: null
+  teardown: null
+  type: task
+teardown: null
+type: suite

@@ -1,0 +1,46 @@
+keywords: []
+name: My
+setup: null
+source: my.robot
+tasks:
+- body:
+  - body:
+    - body:
+      - args: []
+        assign: []
+        body:
+        - args: []
+          assign: []
+          body:
+          - args:
+            - Comment in keyword
+            assign: []
+            body: []
+            name: Comment (BuiltIn)
+            subtype: KEYWORD
+            type: keyword
+          name: Another keyword (my)
+          subtype: KEYWORD
+          type: keyword
+        name: Main Implemented Keyword (my)
+        subtype: KEYWORD
+        type: keyword
+      condition: ${TRUE} AND ${False}
+      type: if-branch
+    - body:
+      - args:
+        - Some comment
+        assign: []
+        body: []
+        name: Comment (BuiltIn)
+        subtype: KEYWORD
+        type: keyword
+      type: else-branch
+    type: if
+  doc: ''
+  name: My.Main Task
+  setup: null
+  teardown: null
+  type: task
+teardown: null
+type: suite

@@ -739,16 +739,20 @@ class RobotDocument(Document):
             kwargs: Dict[str, Any] = {}
 
             if robot_version_supports_language():
-                # Input localization
-                localization_info = get_global_localization_info()
-                from robot.api import Languages
+                try:
+                    # Input localization
+                    localization_info = get_global_localization_info()
+                    from robot.api import Languages
 
-                languages = Languages()
-                for code in localization_info.language_codes:
-                    languages.add_language(code)
-                initial_languages = set(iter(languages))
+                    languages = Languages()
+                    for code in localization_info.language_codes:
+                        languages.add_language(code)
 
-                kwargs["lang"] = languages
+                    kwargs["lang"] = languages
+                except Exception:
+                    log.exception(
+                        "Error: Unable to use expected language API in this version of Robot Framework."
+                    )
 
             t = self.get_type()
             if t == self.TYPE_TEST_CASE:
@@ -766,9 +770,7 @@ class RobotDocument(Document):
 
             # Output localization
             if robot_version_supports_language():
-                for lang in languages:
-                    if lang not in initial_languages:
-                        language_codes.append(lang.code)
+                language_codes.extend(getattr(ast, "languages", ()))
 
             localization_info = LocalizationInfo(tuple(language_codes))
 

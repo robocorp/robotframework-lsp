@@ -334,7 +334,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
             treeItem.command = {
                 "title": "Open Flow Explorer",
                 "command": "robot.openFlowExplorer",
-                "arguments": [element.robot.directory],
+                "arguments": [vscode.Uri.file(element.robot.directory).toString()],
             };
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
         } else if (element.type === RobotEntryType.UploadRobot) {

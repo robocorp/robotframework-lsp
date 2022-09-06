@@ -163,6 +163,12 @@ COMMANDS: List[Command] = [
         server_handled=True,
         hide_from_command_palette=True,
     ),
+    Command(
+        "robot.generateFlowExplorerModel",
+        "Generate Robot Flow Explorer Model",
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
 ]
 
 

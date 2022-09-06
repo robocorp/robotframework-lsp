@@ -1321,6 +1321,13 @@ def _same_line_col(tok1: IRobotToken, tok2: IRobotToken):
     return tok1.lineno == tok2.lineno and tok1.col_offset == tok2.col_offset
 
 
+def is_keyword_usage_node(ast):
+    return (
+        ast.__class__.__name__
+        in _CLASSES_KEYWORDS_AND_OTHERS_WITH_ARGUMENTS_AS_KEYWORD_CALLS
+    )
+
+
 @_convert_ast_to_indexer
 def _iter_node_info_which_may_have_usage_info(ast):
     for clsname in _CLASSES_KEYWORDS_AND_OTHERS_WITH_ARGUMENTS_AS_KEYWORD_CALLS:
@@ -2134,3 +2141,9 @@ def get_localization_info_from_model(ast) -> LocalizationInfo:
     it's the stack[0] passed with the node).
     """
     return ast.__localization_info__
+
+
+def iter_argument_tokens(ast) -> Iterator[INode]:
+    for token in ast.tokens:
+        if token.type == token.ARGUMENT:
+            yield token

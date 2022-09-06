@@ -334,6 +334,11 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
         :Note: async complete.
         """
 
+    def request_flow_explorer_model(self, doc_uri) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+
     def request_rename(
         self, doc_uri: str, line: int, col: int, new_name: str
     ) -> Optional[IIdMessageMatcher]:

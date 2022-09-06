@@ -521,6 +521,13 @@ class IKeywordFound(Protocol):
         pass
 
     @property
+    def keyword_ast(self) -> Optional[INode]:
+        """
+        Only available when we do have a keyword AST (i.e.: not for library
+        keywords).
+        """
+
+    @property
     def keyword_args(self) -> Sequence[IKeywordArg]:
         pass
 

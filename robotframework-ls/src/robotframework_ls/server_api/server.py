@@ -1,12 +1,13 @@
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import overrides
-from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.robotframework_log import get_logger, get_log_level
 from typing import Optional, List, Dict, Deque, Tuple, Sequence
 from robocorp_ls_core.protocols import (
     IConfig,
     IMonitor,
     ITestInfoTypedDict,
     IWorkspace,
+    ActionResultDict,
 )
 from functools import partial
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
@@ -38,6 +39,7 @@ import typing
 import sys
 import threading
 from robocorp_ls_core.jsonrpc.exceptions import JsonRpcException
+import os
 
 
 log = get_logger(__name__)
@@ -507,6 +509,59 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             )
 
         return prepare_rename(completion_context)
+
+    def m_flow_explorer_model(self, uri):
+        func = partial(self._threaded_flow_explorer_model, uri)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_flow_explorer_model(self, uri, monitor) -> ActionResultDict:
+        import json
+        from robocorp_ls_core import uris
+
+        # Note: it may actually be a directory (in which case we have to
+        # collect the robots inside it).
+        target_path = uris.to_fs_path(uri)
+
+        completion_contexts: List[ICompletionContext] = []
+        if not os.path.exists(target_path) or not os.path.isdir(target_path):
+            completion_context = self._create_completion_context(uri, 0, 0, monitor)
+            if completion_context is None:
+                # It's a single file and we don't have a context.
+                return {
+                    "success": False,
+                    "message": f"File: {target_path} does not exist.",
+                    "result": None,
+                }
+            completion_contexts.append(completion_context)
+
+        else:
+            # We're dealing with a directory.
+            for f in os.listdir(target_path):
+                if f.endswith(".robot"):
+                    f_uri = uris.from_fs_path(os.path.join(target_path, f))
+                    completion_context = self._create_completion_context(
+                        f_uri, 0, 0, monitor
+                    )
+                    if completion_context is None:
+                        continue
+                    completion_contexts.append(completion_context)
+
+            if not completion_contexts:
+                return {
+                    "success": False,
+                    "message": f"Unable to load any .robot files from: '{target_path}'.",
+                    "result": None,
+                }
+
+        from robotframework_ls.impl.flow_explorer_model_builder import (
+            build_flow_explorer_model,
+        )
+
+        model = build_flow_explorer_model(completion_contexts)
+        if get_log_level() >= 2:
+            log.debug("Model:", json.dumps(model))
+        return {"success": True, "message": None, "result": model}
 
     def m_find_definition(self, doc_uri, line, col):
         func = partial(self._threaded_find_definition, doc_uri, line, col)

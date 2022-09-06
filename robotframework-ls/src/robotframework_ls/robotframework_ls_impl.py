@@ -21,6 +21,7 @@ from robocorp_ls_core.protocols import (
     IMonitor,
     IEndPoint,
     IProgressReporter,
+    ActionResultDict,
 )
 from pathlib import Path
 from robotframework_ls.ep_providers import (
@@ -52,6 +53,7 @@ from robotframework_ls.commands import (
     ROBOT_RF_INFO_INTERNAL,
     ROBOT_LINT_WORKSPACE,
     ROBOT_LINT_EXPLORER,
+    ROBOT_GENERATE_FLOW_EXPLORER_MODEL,
 )
 from robocorp_ls_core.jsonrpc.exceptions import JsonRpcException
 import weakref
@@ -61,9 +63,6 @@ log = get_logger(__name__)
 
 _LINT_DEBOUNCE_IN_SECONDS_LOW = 0.2
 _LINT_DEBOUNCE_IN_SECONDS_HIGH = 0.8
-
-_FLOW_EXPLORER_BUNDLE_HTML_FILE_NAME = "robot_flow_explorer_bundle.html"
-_FLOW_EXPLORER_BUNDLE_JS_FILE_NAME = "robot_flow_explorer_bundle.js"
 
 
 class _CurrLintInfo(object):
@@ -713,19 +712,33 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         log.info("Unable to get RF info (no api available).")
         return None
 
+    @command_dispatcher(ROBOT_GENERATE_FLOW_EXPLORER_MODEL)
+    def _generate_flow_explorer_model(self, opts: Dict[str, Any]):
+        """
+        :param opts:
+            A dictionary with the options to generate the flow explorer model.
+            Options available:
+                - uri: target uri mapping to the robot or directory with multiple
+                  robots from where the model should be generated.
+
+        """
+        uri = opts["uri"]
+
+        return self.async_api_forward("request_flow_explorer_model", "api", doc_uri=uri)
+
     @command_dispatcher(ROBOT_OPEN_FLOW_EXPLORER_INTERNAL)
-    def _open_flow_explorer(self, *arguments):
-        from robotframework_ls.impl.rf_model_builder import (
-            DEFAULT_WARNING_MESSAGE,
-            IS_ROBOT_FRAMEWORK_3,
-            RFModelBuilder,
-        )
+    def _open_flow_explorer(self, opts) -> ActionResultDict:
+        """
+        :param dict opts:
+            Keys:
+                "currentFileUri": uri for target (may also be folder).
+                "htmlBundleFolderPath":folder which contains the html/js assets.
+        """
         from robotframework_ls.constants import (
             DEFAULT_ROBOT_FLOW_EXPLORER_HTML_TEMPLATE,
             DEFAULT_ROBOT_FLOW_EXPLORER_OPTIONS,
         )
         from robocorp_ls_core.uris import from_fs_path
-        from robocorp_ls_core.robotframework_log import get_log_level
         from robotframework_ls.impl.robot_lsp_constants import (
             OPTION_ROBOT_FLOW_EXPLORER_THEME_DARK,
         )
@@ -733,59 +746,63 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             OPTION_ROBOT_FLOW_EXPLORER_THEME,
         )
 
-        current_doc_uri = arguments[0]["currentFileUri"]
-        html_bundle_flow_folder_path = arguments[0]["htmlBundleFolderPath"]
+        current_doc_uri = opts["currentFileUri"]
+        html_bundle_flow_folder_path = opts["htmlBundleFolderPath"]
         log.info(
             "Dispatched flow explorer internal command with args:",
             str(current_doc_uri),
             str(html_bundle_flow_folder_path),
         )
-        # construct warning message
-        warning = DEFAULT_WARNING_MESSAGE if IS_ROBOT_FRAMEWORK_3 else None
-        # build model
-        try:
-            log.info("Building deep model for visualization...")
-            model = RFModelBuilder(robot_file_path=current_doc_uri).build()
-            if get_log_level() >= 2:
-                log.debug("Model:", json.dumps(model))
-        except Exception as e:
-            log.error("An Exception occurred while creating the deep model:", e)
-            return {"uri": None, "err": str(e), "warn": None}
 
-        log.info("Generating web page for visualization...")
-        # identify the selected theme & construct options
-        rfe_theme = self._config.get_setting(
-            OPTION_ROBOT_FLOW_EXPLORER_THEME,
-            str,
-            OPTION_ROBOT_FLOW_EXPLORER_THEME_DARK,
-        )
-        rfe_options = DEFAULT_ROBOT_FLOW_EXPLORER_OPTIONS.copy()
-        rfe_options["theme"] = rfe_theme
+        def finish_and_convert_result(result: ActionResultDict) -> ActionResultDict:
+            log.info("Generating web page for visualization...")
 
-        # filling in the HTML template
-        # adding the new model as data to Flow Explorer
-        replacement_html = DEFAULT_ROBOT_FLOW_EXPLORER_HTML_TEMPLATE.substitute(
-            rfe_options=json.dumps(rfe_options),
-            rfe_data=json.dumps(model),
-            rfe_favicon_path=Path(
-                os.path.join(html_bundle_flow_folder_path, "favicon.png")
-            ).as_uri(),
-            rfe_js_path=Path(
-                os.path.join(
-                    html_bundle_flow_folder_path, _FLOW_EXPLORER_BUNDLE_JS_FILE_NAME
-                )
-            ).as_uri(),
+            if not result["success"]:
+                return result
+
+            # identify the selected theme & construct options
+            rfe_theme = self._config.get_setting(
+                OPTION_ROBOT_FLOW_EXPLORER_THEME,
+                str,
+                OPTION_ROBOT_FLOW_EXPLORER_THEME_DARK,
+            )
+            rfe_options = DEFAULT_ROBOT_FLOW_EXPLORER_OPTIONS.copy()
+            rfe_options["theme"] = rfe_theme
+            model = result["result"]
+
+            # filling in the HTML template
+            # adding the new model as data to Flow Explorer
+            replacement_html = DEFAULT_ROBOT_FLOW_EXPLORER_HTML_TEMPLATE.substitute(
+                rfe_options=json.dumps(rfe_options),
+                rfe_data=json.dumps(model),
+                rfe_favicon_path=Path(
+                    os.path.join(html_bundle_flow_folder_path, "favicon.png")
+                ).as_uri(),
+                rfe_js_path=Path(
+                    os.path.join(
+                        html_bundle_flow_folder_path, "robot_flow_explorer_bundle.js"
+                    )
+                ).as_uri(),
+            )
+            # create the temporary HTML file to display
+            with tempfile.NamedTemporaryFile(
+                mode="w", delete=False, suffix=".html"
+            ) as temp_file:
+                Path(temp_file.name).write_text(replacement_html, encoding="utf-8")
+                return {
+                    "result": from_fs_path(temp_file.name),
+                    "success": True,
+                    "message": None,
+                }
+
+        return self.async_api_forward(
+            "request_flow_explorer_model",
+            "api",
+            doc_uri=current_doc_uri,
+            uri=current_doc_uri,
+            __add_doc_uri_in_args__=False,
+            __convert_result__=finish_and_convert_result,
         )
-        # create the temporary HTML file to display
-        with tempfile.NamedTemporaryFile(
-            mode="w", delete=False, suffix=".html"
-        ) as temp_file:
-            Path(temp_file.name).write_text(replacement_html)
-            return {
-                "uri": from_fs_path(temp_file.name),
-                "err": None,
-                "warn": warning,
-            }
 
     @command_dispatcher("robot.listTests")
     def _list_tests(self, *arguments):
@@ -969,6 +986,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         monitor: IMonitor,
         __timeout__=DEFAULT_COMPLETIONS_TIMEOUT,
         __log__=False,
+        __convert_result__=None,
         **kwargs,
     ):
         from robocorp_ls_core.client_base import wait_for_message_matcher
@@ -1007,6 +1025,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                 if __log__:
                     log.info("Result: %s", result)
                 if result:
+                    if __convert_result__ is not None:
+                        result = __convert_result__(result)
                     return result
 
                 error = msg.get("error")
@@ -1021,6 +1041,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         rf_api_client: IRobotFrameworkApiClient,
         request_method_name: str,
         monitor: Optional[IMonitor],
+        __convert_result__=None,
         **kwargs,
     ):
         from robocorp_ls_core.client_base import wait_for_message_matcher
@@ -1043,6 +1064,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             if msg is not None:
                 result = msg.get("result")
                 if result:
+                    if __convert_result__ is not None:
+                        result = __convert_result__(result)
                     return result
 
         return None

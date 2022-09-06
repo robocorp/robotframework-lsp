@@ -253,6 +253,12 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             self._build_msg("resolveCompletionItem", completion_item=completion_item)
         )
 
+    def request_flow_explorer_model(self, uri) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(self._build_msg("flowExplorerModel", uri=uri))
+
     def request_find_definition(
         self, doc_uri, line, col
     ) -> Optional[IIdMessageMatcher]:

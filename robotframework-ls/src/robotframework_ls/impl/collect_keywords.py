@@ -10,6 +10,7 @@ from robotframework_ls.impl.protocols import (
     IKeywordArg,
     LibraryDependencyInfo,
     AbstractKeywordCollector,
+    INode,
 )
 from typing import Sequence, List, Dict, Optional, Iterator, Any
 from robotframework_ls.impl.text_utilities import build_keyword_docs_with_signature
@@ -56,6 +57,10 @@ class _KeywordFoundFromAst(object):
     @property
     def keyword_name(self):
         return self._keyword_name
+
+    @property
+    def keyword_ast(self) -> Optional[INode]:
+        return self._keyword_node
 
     @property
     def keyword_args(self) -> Sequence[IKeywordArg]:
@@ -185,6 +190,10 @@ class _KeywordFoundFromLibrary(object):
     @property
     def keyword_name(self):
         return self._keyword_name
+
+    @property
+    def keyword_ast(self) -> Optional[INode]:
+        return None
 
     @property
     def keyword_args(self) -> Sequence[IKeywordArg]:

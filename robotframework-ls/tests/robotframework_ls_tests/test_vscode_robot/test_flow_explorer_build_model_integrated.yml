@@ -1,0 +1,36 @@
+message: null
+result:
+  keywords: []
+  name: Untitled:Untitled-1
+  setup: null
+  source: untitled:Untitled-1
+  tasks:
+  - body:
+    - args:
+      - Something
+      assign: []
+      body: []
+      name: Log (BuiltIn)
+      subtype: KEYWORD
+      type: keyword
+    doc: ''
+    name: Untitled:Untitled-1.My first task
+    setup: null
+    teardown: null
+    type: task
+  - body:
+    - args:
+      - Something
+      assign: []
+      body: []
+      name: Log (BuiltIn)
+      subtype: KEYWORD
+      type: keyword
+    doc: ''
+    name: Untitled:Untitled-1.My second task
+    setup: null
+    teardown: null
+    type: task
+  teardown: null
+  type: suite
+success: true

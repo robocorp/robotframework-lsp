@@ -47,16 +47,6 @@ def test_get_lang_from_source():
     locinfo = ast_utils.get_localization_info_from_model(ast)
     assert locinfo.language_codes == ("pt-BR",)
 
-    source = """
-    language: pt-br
-    language: fi
-    language: foo
-    """
-    doc = RobotDocument("uri", source)
-    ast = doc.get_ast()
-    locinfo = ast_utils.get_localization_info_from_model(ast)
-    assert locinfo.language_codes == ("pt-BR", "fi")
-
 
 def test_rf_localization_api():
     from robotframework_ls.impl.robot_version import robot_version_supports_language

@@ -55,7 +55,8 @@
         "onCommand:robot.lint.workspace",
         "onCommand:robot.lint.explorer",
         "onCommand:robot.openFlowExplorer",
-        "onCommand:robot.openFlowExplorer.internal"
+        "onCommand:robot.openFlowExplorer.internal",
+        "onCommand:robot.generateFlowExplorerModel"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -177,6 +178,11 @@
                 "command": "robot.openFlowExplorer.internal",
                 "title": "Open Robot Flow Explorer Internals",
                 "category": "Robot Framework"
+            },
+            {
+                "command": "robot.generateFlowExplorerModel",
+                "title": "Generate Robot Flow Explorer Model",
+                "category": "Robot Framework"
             }
         ],
         "submenus": [
@@ -279,6 +285,10 @@
                 },
                 {
                     "command": "robot.openFlowExplorer.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robot.generateFlowExplorerModel",
                     "when": "false"
                 }
             ]

@@ -5,7 +5,7 @@ import threading
 
 import pytest
 
-from robocorp_ls_core.protocols import ILanguageServerClient
+from robocorp_ls_core.protocols import ILanguageServerClient, ActionResultDict
 from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_STOP
 from robotframework_ls.impl.robot_lsp_constants import (
@@ -312,6 +312,82 @@ Check It
     language_server_tcp.settings({"settings": {"robot": {"pythonpath": []}}})
 
     data_regression.check(request_completion())
+
+
+def test_flow_explorer_build_model_integrated(
+    language_server_tcp: ILanguageServerClient, ws_root_path, data_regression
+):
+    from robotframework_ls.commands import ROBOT_GENERATE_FLOW_EXPLORER_MODEL
+
+    language_server = language_server_tcp
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    language_server.open_doc(uri, 1)
+    contents = """
+*** Tasks ***
+My first task
+    Log     Something
+    
+My second task
+    Log     Something
+    
+"""
+    language_server.change_doc(uri, 2, contents)
+
+    model = language_server.execute_command(
+        ROBOT_GENERATE_FLOW_EXPLORER_MODEL, [{"uri": uri}]
+    )
+    data_regression.check(model["result"])
+
+
+def test_flow_explorer_open_integrated(
+    language_server_tcp: ILanguageServerClient, ws_root_path, data_regression
+):
+    from robotframework_ls.commands import ROBOT_OPEN_FLOW_EXPLORER_INTERNAL
+    from robocorp_ls_core import uris
+
+    language_server = language_server_tcp
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+
+    Path(ws_root_path).mkdir(exist_ok=True)
+    my1 = Path(ws_root_path) / "my1.robot"
+    my1.write_text(
+        """
+*** Tasks ***
+My first task
+    Log     Something
+    
+My second task
+    Log     Something
+""",
+        "utf-8",
+    )
+
+    my2 = Path(ws_root_path) / "my2.robot"
+    my2.write_text(
+        """
+*** Tasks ***
+My third task
+    Log     Something
+""",
+        "utf-8",
+    )
+
+    result: ActionResultDict = language_server.execute_command(
+        ROBOT_OPEN_FLOW_EXPLORER_INTERNAL,
+        [
+            {
+                "currentFileUri": uris.from_fs_path(str(ws_root_path)),
+                "htmlBundleFolderPath": ws_root_path,
+            }
+        ],
+    )["result"]
+
+    assert result["success"]
+    uri = result["result"]
+    path = uris.to_fs_path(uri)
+    assert path.endswith(".html")
+    assert os.path.exists(path)
 
 
 def test_completions_after_library(

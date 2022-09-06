@@ -686,18 +686,18 @@ let onChangedEditorUpdateRFStatusBarItem = debounce(() => {
     });
 }, 100);
 
-async function openFlowExplorer(flowBundleHTMLFolderPath: string, filePath?: string) {
+async function openFlowExplorer(flowBundleHTMLFolderPath: string, uri?: string) {
     const DEFAULT_ERROR_MSG = `
             Could not open Robot Flow Explorer.
             Please check the output logs for more details.
             `;
     const DEFAULT_UNABLE_TO_OPEN_MSG = `
             Unable to open the Robot Flow Explorer.
-            Please select a robot file or make sure that Robot Framework is installed properly and try again.
+            Please open robot file and try again.
             `;
     try {
         feedback("vscode.flowExplorer.used", "+1");
-        if (!filePath) {
+        if (!uri) {
             const activeTextEditor = window.activeTextEditor;
             if (
                 !activeTextEditor ||
@@ -707,25 +707,29 @@ async function openFlowExplorer(flowBundleHTMLFolderPath: string, filePath?: str
                 window.showErrorMessage(DEFAULT_UNABLE_TO_OPEN_MSG);
                 return;
             }
-            filePath = activeTextEditor.document.fileName;
+            uri = activeTextEditor.document.uri.toString();
         }
 
-        const openResult: { uri: string | null; err: string | null; warn: string | null } | null =
+        const openResult: { result: string; success: boolean; message: string | null } | null =
             await commands.executeCommand("robot.openFlowExplorer.internal", {
-                "currentFileUri": filePath,
+                "currentFileUri": uri,
                 "htmlBundleFolderPath": flowBundleHTMLFolderPath,
             });
-        if (!openResult || openResult.err) {
-            logError("Error while opening the Robot Flow Explorer", Error(openResult.err), "EXT_OPEN_FLOW_EXPLORER");
+        if (!openResult || !openResult.success) {
+            if (!openResult.message) {
+                openResult.message = "<unspecified>";
+            }
+            logError(
+                "Error while opening the Robot Flow Explorer",
+                Error(openResult.message),
+                "EXT_OPEN_FLOW_EXPLORER"
+            );
             window.showErrorMessage(DEFAULT_ERROR_MSG);
             OUTPUT_CHANNEL.show();
             return;
         }
-        if (openResult.warn) {
-            window.showWarningMessage(openResult.warn);
-        }
         window.showInformationMessage("Opening Robot Flow Explorer in browser...");
-        vscode.env.openExternal(vscode.Uri.parse(openResult.uri));
+        vscode.env.openExternal(vscode.Uri.parse(openResult.result));
     } catch (err) {
         logError("Error while opening the Robot Flow Explorer", err, "EXT_OPEN_FLOW_EXPLORER");
         window.showErrorMessage(DEFAULT_ERROR_MSG);
@@ -789,9 +793,9 @@ export async function activate(context: ExtensionContext) {
             )
         );
         context.subscriptions.push(
-            commands.registerCommand("robot.openFlowExplorer", async (filePath?: string) => {
+            commands.registerCommand("robot.openFlowExplorer", async (uri?: string) => {
                 const flowBundleHTMLFolderPath = context.asAbsolutePath("assets");
-                return openFlowExplorer(flowBundleHTMLFolderPath, filePath);
+                return openFlowExplorer(flowBundleHTMLFolderPath, uri);
             })
         );
 
