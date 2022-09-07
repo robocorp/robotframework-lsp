@@ -1,0 +1,23 @@
+keywords: []
+name: My
+setup: null
+source: my.robot
+tasks:
+- body:
+  - body:
+    - args:
+      - Executed until the default loop limit (10000) is hit.
+      assign: []
+      body: []
+      name: Comment (BuiltIn)
+      subtype: KEYWORD
+      type: keyword
+    condition: 'True'
+    type: while
+  doc: ''
+  name: My.Main Task
+  setup: null
+  teardown: null
+  type: task
+teardown: null
+type: suite

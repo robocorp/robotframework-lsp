@@ -1,0 +1,27 @@
+keywords: []
+name: My
+setup: null
+source: my.robot
+tasks:
+- body:
+  - body:
+    - args:
+      - ${robot}
+      assign: []
+      body: []
+      name: Comment (BuiltIn)
+      subtype: KEYWORD
+      type: keyword
+    kind: IN
+    type: for
+    values:
+    - '@{ROBOTS}'
+    variables:
+    - ${robot}
+  doc: ''
+  name: My.Main Task
+  setup: null
+  teardown: null
+  type: task
+teardown: null
+type: suite

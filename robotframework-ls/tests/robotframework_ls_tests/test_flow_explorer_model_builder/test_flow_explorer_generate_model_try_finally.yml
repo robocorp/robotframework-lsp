@@ -7,15 +7,23 @@ tasks:
   - body:
     - body:
       - args:
-        - Some comment
+        - All good!
         assign: []
         body: []
-        name: Comment (BuiltIn)
+        name: Log (BuiltIn)
         subtype: KEYWORD
         type: keyword
-      condition: ${TRUE} AND ${False}
-      type: if-branch
-    type: if
+      type: try-branch
+    - body:
+      - args:
+        - FINALLY is always executed.
+        assign: []
+        body: []
+        name: Log (BuiltIn)
+        subtype: KEYWORD
+        type: keyword
+      type: finally-branch
+    type: try
   doc: ''
   name: My.Main Task
   setup: null

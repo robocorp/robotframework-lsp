@@ -1,0 +1,60 @@
+keywords: []
+name: My
+setup: null
+source: my.robot
+tasks:
+- body:
+  - body:
+    - body:
+      - args:
+        - Error message
+        assign: []
+        body: []
+        name: Fail (BuiltIn)
+        subtype: KEYWORD
+        type: keyword
+      type: try-branch
+    - body:
+      - args:
+        - EXCEPT with Error message
+        assign: []
+        body: []
+        name: Comment (BuiltIn)
+        subtype: KEYWORD
+        type: keyword
+      type: except-branch
+    - body:
+      - args:
+        - EXCEPT with Another Error message
+        assign: []
+        body: []
+        name: Comment (BuiltIn)
+        subtype: KEYWORD
+        type: keyword
+      type: except-branch
+    - body:
+      - args:
+        - Executed if no exceptions occur.
+        assign: []
+        body: []
+        name: Log (BuiltIn)
+        subtype: KEYWORD
+        type: keyword
+      type: else-branch
+    - body:
+      - args:
+        - FINALLY is always executed.
+        assign: []
+        body: []
+        name: Log (BuiltIn)
+        subtype: KEYWORD
+        type: keyword
+      type: finally-branch
+    type: try
+  doc: ''
+  name: My.Main Task
+  setup: null
+  teardown: null
+  type: task
+teardown: null
+type: suite

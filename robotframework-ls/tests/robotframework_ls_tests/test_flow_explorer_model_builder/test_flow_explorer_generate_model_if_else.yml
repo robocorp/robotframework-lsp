@@ -1,0 +1,34 @@
+keywords: []
+name: My
+setup: null
+source: my.robot
+tasks:
+- body:
+  - body:
+    - body:
+      - args:
+        - This line IS executed. ELSE IF and ELSE are ignored.
+        assign: []
+        body: []
+        name: Log (BuiltIn)
+        subtype: KEYWORD
+        type: keyword
+      condition: 1 == 1
+      type: if-branch
+    - body:
+      - args:
+        - This line is NOT executed since the IF expression evaluated to True.
+        assign: []
+        body: []
+        name: Log (BuiltIn)
+        subtype: KEYWORD
+        type: keyword
+      type: else-branch
+    type: if
+  doc: ''
+  name: My.Main Task
+  setup: null
+  teardown: null
+  type: task
+teardown: null
+type: suite

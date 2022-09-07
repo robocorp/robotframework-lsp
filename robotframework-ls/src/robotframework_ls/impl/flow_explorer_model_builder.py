@@ -20,7 +20,7 @@ def build_flow_explorer_model(completion_contexts: List[ICompletionContext]) -> 
         ast = completion_context.get_ast()
 
         # Uncomment to print ast.
-        # ast_utils.print_ast(ast)
+        ast_utils.print_ast(ast)
 
         if ast:
             suite_name = _compute_suite_name(completion_context)
@@ -49,9 +49,7 @@ def build_flow_explorer_model(completion_contexts: List[ICompletionContext]) -> 
                     "body": test_body,
                 }
                 tasks.append(test)
-                for node_info in ast_utils.iter_all_nodes(
-                    test_node_info.node, recursive=False
-                ):
+                for node_info in ast_utils.iter_all_nodes(test_node_info.node, recursive=False):
                     _build_hierarchy(
                         completion_context,
                         node_info.stack,
@@ -99,9 +97,7 @@ def _build_hierarchy(
                 parent_body.append(keyword)
 
                 # Now, we need to follow the keyword and build its own structure
-                token_info = TokenInfo(
-                    keyword_usage.stack, keyword_usage.node, keyword_usage.token
-                )
+                token_info = TokenInfo(keyword_usage.stack, keyword_usage.node, keyword_usage.token)
                 definitions = find_keyword_definition(
                     completion_context.create_copy_with_selection(
                         keyword_usage.token.lineno - 1,
@@ -117,13 +113,9 @@ def _build_hierarchy(
                     definition = next(iter(definitions))
                     keyword_found: IKeywordFound = definition.keyword_found
                     if keyword_found.library_name:
-                        keyword[
-                            "name"
-                        ] = f"{keyword_usage_node.keyword} ({keyword_found.library_name})"
+                        keyword["name"] = f"{keyword_usage_node.keyword} ({keyword_found.library_name})"
                     elif keyword_found.resource_name:
-                        keyword[
-                            "name"
-                        ] = f"{keyword_usage_node.keyword} ({keyword_found.resource_name})"
+                        keyword["name"] = f"{keyword_usage_node.keyword} ({keyword_found.resource_name})"
 
                     # If it was found in a library we don't recurse anymore.
                     keyword_ast = keyword_found.keyword_ast
@@ -135,9 +127,7 @@ def _build_hierarchy(
 
                     suite_name = _compute_suite_name(definition_completion_context)
                     # Ok, it isn't a library keyword (as we have its AST). Keep recursing.
-                    for node_info in ast_utils.iter_all_nodes(
-                        keyword_ast, recursive=False
-                    ):
+                    for node_info in ast_utils.iter_all_nodes(keyword_ast, recursive=False):
                         _build_hierarchy(
                             definition_completion_context,
                             node_info.stack,
@@ -152,9 +142,7 @@ def _build_hierarchy(
         if_info: Dict[str, Any] = {"type": "if", "body": if_body}
         parent_body.append(if_info)
 
-        condition = " ".join(
-            str(tok) for tok in ast_utils.iter_argument_tokens(curr_ast.header)
-        )
+        condition = " ".join(str(tok) for tok in ast_utils.iter_argument_tokens(curr_ast.header))
         if_branch_body: list = []
         if_branch_info: Dict[str, Any] = {
             "type": "if-branch",
@@ -172,8 +160,28 @@ def _build_hierarchy(
                 memo,
             )
 
-        # To finish, handle the orelse.
         orelse = curr_ast.orelse
+
+        if orelse and isinstance_name(orelse.header, "ElseIfHeader"):
+            condition = " ".join(str(tok) for tok in ast_utils.iter_argument_tokens(orelse.header))
+            else_if_body: list = []
+            else_if_info: Dict[str, Any] = {"type": "else-if-branch", "condition": condition, "body": else_if_body}
+
+            if_body.append(else_if_info)
+            for body_ast in orelse.body:
+                _build_hierarchy(
+                    completion_context,
+                    curr_stack + (orelse,),
+                    body_ast,
+                    suite_name,
+                    else_if_body,
+                    memo,
+                )
+
+            # switch to the else branch
+            orelse = orelse.orelse
+
+        # To finish, handle the orelse.
         if orelse:
             orelse_body: list = []
             orelse_info: Dict[str, Any] = {
@@ -190,3 +198,94 @@ def _build_hierarchy(
                     orelse_body,
                     memo,
                 )
+    elif isinstance_name(curr_ast, "For"):
+        for_body: list = []
+        for_info: Dict[str, Any] = {
+            "type": "for",
+            "kind": curr_ast.flavor,
+            "values": list(curr_ast.values),
+            "variables": list(curr_ast.variables),
+            "body": for_body,
+        }
+        parent_body.append(for_info)
+        for body_ast in curr_ast.body:
+            _build_hierarchy(
+                completion_context,
+                curr_stack + (curr_ast,),
+                body_ast,
+                suite_name,
+                for_body,
+                memo,
+            )
+    elif isinstance_name(curr_ast, "While"):
+        condition = " ".join(str(tok) for tok in ast_utils.iter_argument_tokens(curr_ast.header))
+        while_body: list = []
+        while_info: Dict[str, Any] = {
+            "type": "while",
+            "condition": condition,
+            "body": while_body,
+        }
+        parent_body.append(while_info)
+        for body_ast in curr_ast.body:
+            _build_hierarchy(
+                completion_context,
+                curr_stack + (curr_ast,),
+                body_ast,
+                suite_name,
+                while_body,
+                memo,
+            )
+    elif isinstance_name(curr_ast, "Try"):
+        try_body: list = []
+        try_info: Dict[str, Any] = {
+            "type": "try",
+            "body": try_body,
+        }
+        parent_body.append(try_info)
+        try_branch_body: list = []
+        try_branch_info: Dict[str, Any] = {
+            "type": "try-branch",
+            "body": try_branch_body,
+        }
+        try_body.append(try_branch_info)
+
+        for body_ast in curr_ast.body:
+            _build_hierarchy(
+                completion_context,
+                curr_stack + (curr_ast,),
+                body_ast,
+                suite_name,
+                try_branch_body,
+                memo,
+            )
+
+        def explore_try(ast):
+            if ast:
+                next_type = None
+                if isinstance_name(ast.header, "ExceptHeader"):
+                    next_type = "except-branch"
+                elif isinstance_name(ast.header, "FinallyHeader"):
+                    next_type = "finally-branch"
+                elif isinstance_name(ast.header, "ElseHeader"):
+                    next_type = "else-branch"
+                if not next_type:
+                    return
+                next_branch_body: list = []
+                next_branch_info: Dict[str, Any] = {
+                    "type": next_type,
+                    "body": next_branch_body,
+                }
+                for body_ast in ast.body:
+                    _build_hierarchy(
+                        completion_context,
+                        curr_stack + (ast,),
+                        body_ast,
+                        suite_name,
+                        next_branch_body,
+                        memo,
+                    )
+                try_body.append(next_branch_info)
+                if ast.next:
+                    explore_try(ast.next)
+
+        explore_try(curr_ast.next)
