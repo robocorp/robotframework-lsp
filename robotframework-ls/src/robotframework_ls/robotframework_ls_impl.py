@@ -1,5 +1,4 @@
 import json
-import re
 import tempfile
 from robocorp_ls_core.command_dispatcher import _CommandDispatcher
 from robocorp_ls_core.python_ls import PythonLanguageServer
@@ -12,7 +11,7 @@ import os
 import time
 from robotframework_ls.constants import DEFAULT_COMPLETIONS_TIMEOUT
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Any, Optional, Dict, Sequence, Generator, Set, ContextManager
+from typing import Any, Optional, Dict, Sequence, Set, ContextManager
 from robocorp_ls_core.protocols import (
     IConfig,
     IWorkspace,

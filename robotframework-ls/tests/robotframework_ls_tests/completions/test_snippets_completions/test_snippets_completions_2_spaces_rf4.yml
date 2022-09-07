@@ -1,0 +1,58 @@
+- deprecated: false
+  documentation: "Snippet of a FOR IN ENUMERATE loop.\n\nA for loop that iterates\
+    \ over a list of values and assigns the iteration index to the first and the value\
+    \ to the second variable per iteration.\n\nFOR  ${${1:index}}  ${${2:element}}\
+    \  IN ENUMERATE  @{${3:LIST}}\n    Log  ${${1:index}}: ${${2:element}}\n    $0\n\
+    END"
+  insertText: "FOR  ${${1:index}}  ${${2:element}}  IN ENUMERATE  @{${3:LIST}}\n \
+    \   Log  ${${1:index}}: ${${2:element}}\n    $0\nEND"
+  insertTextFormat: 2
+  kind: 15
+  label: FOR IN ENUMERATE
+  preselect: false
+  textEdit:
+    newText: "FOR  ${${1:index}}  ${${2:element}}  IN ENUMERATE  @{${3:LIST}}\n  \
+      \  Log  ${${1:index}}: ${${2:element}}\n    $0\nEND"
+    range:
+      end:
+        character: 1
+        line: 0
+      start:
+        character: 0
+        line: 0
+- deprecated: false
+  documentation: "Snippet of an IF..ELSE..END statement\n\nIF  ${${1:var1}} == ${${1:var2}}\n\
+    \    ${3:Call Keyword}\nELSE\n    $0\nEND"
+  insertText: "IF  ${${1:var1}} == ${${1:var2}}\n    ${3:Call Keyword}\nELSE\n   \
+    \ $0\nEND"
+  insertTextFormat: 2
+  kind: 15
+  label: IF ELSE STATEMENT
+  preselect: false
+  textEdit:
+    newText: "IF  ${${1:var1}} == ${${1:var2}}\n    ${3:Call Keyword}\nELSE\n    $0\n\
+      END"
+    range:
+      end:
+        character: 1
+        line: 0
+      start:
+        character: 0
+        line: 0
+- deprecated: false
+  documentation: "Snippet of an IF..END statement.\n\nIF  ${${1:var1}} == ${${1:var2}}\n\
+    \    $0\nEND"
+  insertText: "IF  ${${1:var1}} == ${${1:var2}}\n    $0\nEND"
+  insertTextFormat: 2
+  kind: 15
+  label: IF STATEMENT
+  preselect: false
+  textEdit:
+    newText: "IF  ${${1:var1}} == ${${1:var2}}\n    $0\nEND"
+    range:
+      end:
+        character: 1
+        line: 0
+      start:
+        character: 0
+        line: 0

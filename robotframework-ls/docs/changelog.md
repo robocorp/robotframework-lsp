@@ -3,8 +3,13 @@ NEXT
 
 ### New features
 
-- Completions presented for `Variables` under `*** Settings ***`. [#744](https://github.com/robocorp/robotframework-lsp/issues/744).
+- Completions presented for `Variables` under `*** Settings ***`. [#744](https://github.com/robocorp/robotframework-lsp/issues/744)
 - Flow Explorer can now follow keywords defined in other files.
+
+### Bugfixes
+
+- Snippets take into account the value of `robot.completions.keywords.argumentsSeparator`. [#723](https://github.com/robocorp/robotframework-lsp/issues/723)
+
 
 New in 1.1.0 (2022-08-24)
 -----------------------------
@@ -18,8 +23,8 @@ New in 1.1.0 (2022-08-24)
     - Opt-in through the `robot.lint.unusedKeyword:true` setting. [#722](https://github.com/robocorp/robotframework-lsp/issues/722)
 - An LRU based on file size now prevents unlimited usage of RAM when caching files loaded from the filesystem. [#720](https://github.com/robocorp/robotframework-lsp/issues/720)
     - It's possible to customize the size of the target memory for this LRU through the `RFLS_FILES_TARGET_MEMORY_IN_BYTES` environment variable.
-- If a keyword call resolves to multiple keywords, the argument analysis is done for all the matches. [#724](https://github.com/robocorp/robotframework-lsp/issues/724).
-- (Experimental) Support for localization in Robot Framework 5.1. [#728](https://github.com/robocorp/robotframework-lsp/issues/728).
+- If a keyword call resolves to multiple keywords, the argument analysis is done for all the matches. [#724](https://github.com/robocorp/robotframework-lsp/issues/724)
+- (Experimental) Support for localization in Robot Framework 5.1. [#728](https://github.com/robocorp/robotframework-lsp/issues/728)
     - The language may be set just for a file (with `language: <lang>` on the top of the file).
     - The language may be specified globally through the setting: `robot.language`.
     - Support for completions with translated section names and settings.
