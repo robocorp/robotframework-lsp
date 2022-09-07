@@ -1,0 +1,16 @@
+- deprecated: false
+  documentation: ''
+  insertText: var_in_pythonpath.py
+  insertTextFormat: 2
+  kind: 9
+  label: var_in_pythonpath.py
+  preselect: false
+  textEdit:
+    newText: var_in_pythonpath.py
+    range:
+      end:
+        character: 37
+        line: 1
+      start:
+        character: 32
+        line: 1

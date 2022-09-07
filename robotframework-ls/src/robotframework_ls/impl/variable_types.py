@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any
 
 from robocorp_ls_core.cache import instance_cache
 from robocorp_ls_core.protocols import check_implements
@@ -120,14 +120,16 @@ class VariableFoundFromPythonAst(object):
 
 
 class VariableFoundFromSettings(object):
-    variable_kind = VariableKind.SETTINGS
+    variable_kind: str = VariableKind.SETTINGS
 
-    def __init__(self, variable_name, variable_value, source="", lineno=0):
-        self.completion_context = None
-        self.variable_name = variable_name
-        self.variable_value = str(variable_value)
-        self._source = source
-        self._lineno = lineno
+    def __init__(
+        self, variable_name: str, variable_value: Any, source: str = "", lineno: int = 0
+    ):
+        self.completion_context: Optional[ICompletionContext] = None
+        self.variable_name: str = variable_name
+        self.variable_value: str = str(variable_value)
+        self._source: str = source
+        self._lineno: int = lineno
         self.stack: Optional[Tuple[INode, ...]] = None
 
     @property

@@ -217,3 +217,43 @@ Library    librari"""
     # The libspec generation will run in a thread at startup, thus, we need
     # to wait for this condition to be reached.
     wait_for_expected_func_return(check, ["libraries.lib_in_pythonpath"])
+
+
+def test_variables_completions_basic(
+    data_regression, workspace, cases, libspec_manager, workspace_dir
+):
+    from robotframework_ls.impl import filesystem_section_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    cases.copy_to("case_search_pythonpath_variable", workspace_dir)
+
+    # Must be .py, .yaml and .yml files or just plain python modules (such as my.module).
+    workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
+    doc = workspace.put_doc("my.robot")
+    doc.source = """*** Settings ***
+Variables           ./var"""
+
+    completions = filesystem_section_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    data_regression.check(completions)
+
+
+def test_variables_completions_py(
+    data_regression, workspace, cases, libspec_manager, workspace_dir
+):
+    from robotframework_ls.impl import filesystem_section_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    cases.copy_to("case_search_pythonpath_variable", workspace_dir)
+
+    # Must be .py, .yaml and .yml files or just plain python modules (such as my.module).
+    workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
+    doc = workspace.put_doc("my.robot")
+    doc.source = """*** Settings ***
+Variables           ./variables/var_i"""
+
+    completions = filesystem_section_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+    data_regression.check(completions)

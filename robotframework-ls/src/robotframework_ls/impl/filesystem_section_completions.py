@@ -1,12 +1,13 @@
 import os.path
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from robotframework_ls.impl.protocols import ICompletionContext
 from robocorp_ls_core.lsp import CompletionItemTypedDict
 from robocorp_ls_core.basic import normalize_filename
 from robotframework_ls.impl.robot_constants import (
     ROBOT_AND_TXT_FILE_EXTENSIONS,
     LIBRARY_FILE_EXTENSIONS,
+    VARIABLE_FILE_EXTENSIONS,
 )
 
 log = get_logger(__name__)
@@ -98,8 +99,17 @@ def _add_completions_from_dir(
 
 
 def _get_completions(
-    completion_context, token, match_libs, extensions, skip_current
+    completion_context: ICompletionContext,
+    token,
+    match_libs,
+    extensions: Tuple[str, ...],
+    skip_current: bool,
 ) -> List[CompletionItemTypedDict]:
+    """
+    :param skip_current:
+        If we'd get a match for the current (.robot or .resource)
+        file it will not be added.
+    """
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
     from robocorp_ls_core import uris
     from robotframework_ls.impl.robot_constants import BUILTIN_LIB, RESERVED_LIB
@@ -185,10 +195,34 @@ def _get_library_completions(
     )
 
 
+def _get_variable_completions(
+    completion_context, token
+) -> List[CompletionItemTypedDict]:
+    return _get_completions(
+        completion_context,
+        token,
+        True,
+        LIBRARY_FILE_EXTENSIONS + VARIABLE_FILE_EXTENSIONS,
+        skip_current=False,
+    )
+
+
 class _Requisites(object):
-    def __init__(self, token, is_library: bool):
+    def __init__(self, token, found_type: str):
         self.token = token
-        self.is_library = is_library
+        self._type = found_type
+
+    @property
+    def is_library(self):
+        return self._type == "library"
+
+    @property
+    def is_resource(self):
+        return self._type == "resource"
+
+    @property
+    def is_variables(self):
+        return self._type == "variables"
 
 
 def get_requisites(completion_context: ICompletionContext) -> Optional[_Requisites]:
@@ -196,23 +230,32 @@ def get_requisites(completion_context: ICompletionContext) -> Optional[_Requisit
 
     token_info = completion_context.get_current_token()
     if token_info is not None:
+        # Library
         token = ast_utils.get_library_import_name_token(
             token_info.node, token_info.token
         )
         if token is not None:
-            return _Requisites(token, True)
-        else:
-            token = ast_utils.get_resource_import_name_token(
-                token_info.node, token_info.token
-            )
-            if token is not None:
-                return _Requisites(token, False)
+            return _Requisites(token, "library")
+
+        # Resource
+        token = ast_utils.get_resource_import_name_token(
+            token_info.node, token_info.token
+        )
+        if token is not None:
+            return _Requisites(token, "resource")
+
+        # Variable
+        token = ast_utils.get_variables_import_name_token(
+            token_info.node, token_info.token
+        )
+        if token is not None:
+            return _Requisites(token, "variables")
     return None
 
 
 def complete(completion_context: ICompletionContext) -> List[CompletionItemTypedDict]:
     """
-    Provides the completions for 'Library' and 'Resource' imports.
+    Provides the completions for 'Library', 'Resource' and 'Variables' imports.
     """
     try:
 
@@ -222,8 +265,12 @@ def complete(completion_context: ICompletionContext) -> List[CompletionItemTyped
 
         if requisites.is_library:
             return _get_library_completions(completion_context, requisites.token)
-        else:
+
+        elif requisites.is_resource:
             return _get_resource_completions(completion_context, requisites.token)
+
+        elif requisites.is_variables:
+            return _get_variable_completions(completion_context, requisites.token)
 
     except:
         log.exception()

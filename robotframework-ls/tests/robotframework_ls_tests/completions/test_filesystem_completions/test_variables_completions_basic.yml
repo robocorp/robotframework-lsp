@@ -1,0 +1,32 @@
+- deprecated: false
+  documentation: ''
+  insertText: var_in_init/
+  insertTextFormat: 2
+  kind: 9
+  label: var_in_init/
+  preselect: false
+  textEdit:
+    newText: var_in_init/
+    range:
+      end:
+        character: 25
+        line: 1
+      start:
+        character: 22
+        line: 1
+- deprecated: false
+  documentation: ''
+  insertText: variables/
+  insertTextFormat: 2
+  kind: 9
+  label: variables/
+  preselect: false
+  textEdit:
+    newText: variables/
+    range:
+      end:
+        character: 25
+        line: 1
+      start:
+        character: 22
+        line: 1
