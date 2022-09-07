@@ -1,4 +1,32 @@
-keywords: []
+keywords:
+- body:
+  - args: []
+    assign: []
+    body:
+    - args:
+      - Comment in keyword
+      assign: []
+      body: []
+      name: Comment (builtin)
+      subtype: KEYWORD
+      type: keyword
+    name: Another keyword (my)
+    subtype: KEYWORD
+    type: keyword
+  doc: ''
+  name: Main Implemented Keyword (my)
+  type: user-keyword
+- body:
+  - args:
+    - Comment in keyword
+    assign: []
+    body: []
+    name: Comment (builtin)
+    subtype: KEYWORD
+    type: keyword
+  doc: ''
+  name: Another keyword (my)
+  type: user-keyword
 name: My
 setup: null
 source: my.robot
@@ -10,7 +38,7 @@ tasks:
         - Catastrophic failure!
         assign: []
         body: []
-        name: Fail (BuiltIn)
+        name: Fail (builtin)
         subtype: KEYWORD
         type: keyword
       type: try-branch
@@ -19,7 +47,7 @@ tasks:
         - Catches any exception.
         assign: []
         body: []
-        name: Log (BuiltIn)
+        name: Log (builtin)
         subtype: KEYWORD
         type: keyword
       type: except-branch
@@ -28,7 +56,7 @@ tasks:
         - FINALLY is always executed.
         assign: []
         body: []
-        name: Log (BuiltIn)
+        name: Log (builtin)
         subtype: KEYWORD
         type: keyword
       type: finally-branch

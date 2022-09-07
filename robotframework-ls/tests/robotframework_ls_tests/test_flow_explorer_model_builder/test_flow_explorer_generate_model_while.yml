@@ -1,4 +1,32 @@
-keywords: []
+keywords:
+- body:
+  - args: []
+    assign: []
+    body:
+    - args:
+      - Comment in keyword
+      assign: []
+      body: []
+      name: Comment (builtin)
+      subtype: KEYWORD
+      type: keyword
+    name: Another keyword (my)
+    subtype: KEYWORD
+    type: keyword
+  doc: ''
+  name: Main Implemented Keyword (my)
+  type: user-keyword
+- body:
+  - args:
+    - Comment in keyword
+    assign: []
+    body: []
+    name: Comment (builtin)
+    subtype: KEYWORD
+    type: keyword
+  doc: ''
+  name: Another keyword (my)
+  type: user-keyword
 name: My
 setup: null
 source: my.robot
@@ -9,7 +37,7 @@ tasks:
       - Executed until the default loop limit (10000) is hit.
       assign: []
       body: []
-      name: Comment (BuiltIn)
+      name: Comment (builtin)
       subtype: KEYWORD
       type: keyword
     condition: 'True'

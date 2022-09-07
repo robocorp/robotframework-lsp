@@ -1,4 +1,14 @@
-keywords: []
+keywords:
+- body:
+  - args: []
+    assign: []
+    body: []
+    name: Call 2
+    subtype: KEYWORD
+    type: keyword
+  doc: ''
+  name: Call 1 (my)
+  type: user-keyword
 name: My
 setup: null
 source: my.robot

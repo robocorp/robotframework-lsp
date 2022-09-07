@@ -4,55 +4,56 @@ keywords:
     assign: []
     body:
     - args:
-      - Something
+      - Comment in keyword
       assign: []
       body: []
-      name: Log (builtin)
+      name: Comment (builtin)
       subtype: KEYWORD
       type: keyword
-    name: Call 2 (my)
+    name: Another keyword (my)
     subtype: KEYWORD
     type: keyword
   doc: ''
-  name: Call 1 (my)
+  name: Main Implemented Keyword (my)
   type: user-keyword
 - body:
   - args:
-    - Something
+    - Comment in keyword
     assign: []
     body: []
-    name: Log (builtin)
+    name: Comment (builtin)
     subtype: KEYWORD
     type: keyword
   doc: ''
-  name: Call 2 (my)
+  name: Another keyword (my)
   type: user-keyword
 name: My
 setup: null
 source: my.robot
 tasks:
 - body:
-  - args: []
-    assign: []
-    body:
-    - args: []
-      assign: []
-      body:
+  - body:
+    - body:
+      - type: break
+      condition: 1 == 1
+      type: if-branch
+    - body:
       - args:
-        - Something
+        - Something on else.
         assign: []
         body: []
         name: Log (builtin)
         subtype: KEYWORD
         type: keyword
-      name: Call 2 (my)
-      subtype: KEYWORD
-      type: keyword
-    name: Call 1 (my)
+      type: else-branch
+    type: if
+  - args:
+    - This is teardown zone.
+    name: Log
     subtype: KEYWORD
     type: keyword
   doc: ''
-  name: My.My first task
+  name: My.Main Task
   setup: null
   teardown: null
   type: task

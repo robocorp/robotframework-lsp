@@ -37,10 +37,10 @@ def build_flow_explorer_model(completion_contexts: List[ICompletionContext]) -> 
             }
             suites.append(suite)
 
-            for test_node_info in ast_utils.iter_tests(ast):
-                test_name = f"{suite_name}.{test_node_info.node.name}"
+            for test in ast_utils.iter_tests(ast):
+                test_name = f"{test.node.name} ({suite_name.lower()})"
                 test_body: list = []
-                test = {
+                test_info = {
                     "type": "task",
                     "name": test_name,
                     "doc": "",
@@ -48,14 +48,34 @@ def build_flow_explorer_model(completion_contexts: List[ICompletionContext]) -> 
                     "teardown": None,
                     "body": test_body,
                 }
-                tasks.append(test)
-                for node_info in ast_utils.iter_all_nodes(test_node_info.node, recursive=False):
+                tasks.append(test_info)
+                for node_info in ast_utils.iter_all_nodes(test.node, recursive=False):
                     _build_hierarchy(
                         completion_context,
                         node_info.stack,
                         node_info.node,
                         suite_name,
                         test_body,
+                        {},
+                    )
+            for user_keyword in ast_utils.iter_keywords(ast):
+                user_keyword_name = f"{user_keyword.node.name} ({suite_name.lower()})"
+                user_keyword_body: list = []
+                user_keyword_info = {
+                    "type": "user-keyword",
+                    "name": user_keyword_name,
+                    "doc": "",
+                    "body": user_keyword_body,
+                }
+
+                keywords.append(user_keyword_info)
+                for node_info in ast_utils.iter_all_nodes(user_keyword.node, recursive=False):
+                    _build_hierarchy(
+                        completion_context,
+                        node_info.stack,
+                        node_info.node,
+                        suite_name,
+                        user_keyword_body,
                         {},
                     )
 
@@ -87,56 +107,64 @@ def _build_hierarchy(
                 keyword_body: list = []
                 keyword_usage_node: Any = keyword_usage.node
 
-                keyword = {
-                    "type": "keyword",
-                    "subtype": "KEYWORD",
-                    "assign": keyword_usage_node.assign,
-                    "args": keyword_usage_node.args,
-                    "body": keyword_body,
-                }
-                parent_body.append(keyword)
+                if isinstance_name(keyword_usage_node, "KeywordCall"):
+                    keyword = {
+                        "type": "keyword",
+                        "subtype": "KEYWORD",
+                        "assign": keyword_usage_node.assign,
+                        "args": keyword_usage_node.args,
+                        "body": keyword_body,
+                    }
+                    parent_body.append(keyword)
 
-                # Now, we need to follow the keyword and build its own structure
-                token_info = TokenInfo(keyword_usage.stack, keyword_usage.node, keyword_usage.token)
-                definitions = find_keyword_definition(
-                    completion_context.create_copy_with_selection(
-                        keyword_usage.token.lineno - 1,
-                        keyword_usage.token.col_offset,
-                    ),
-                    token_info,
-                )
+                    # Now, we need to follow the keyword and build its own structure
+                    token_info = TokenInfo(keyword_usage.stack, keyword_usage.node, keyword_usage.token)
+                    definitions = find_keyword_definition(
+                        completion_context.create_copy_with_selection(
+                            keyword_usage.token.lineno - 1,
+                            keyword_usage.token.col_offset,
+                        ),
+                        token_info,
+                    )
 
-                # Fallback name if we don't know where it's defined.
-                keyword["name"] = f"{keyword_usage_node.keyword}"
-                if definitions:
-                    # Use the first one
-                    definition = next(iter(definitions))
-                    keyword_found: IKeywordFound = definition.keyword_found
-                    if keyword_found.library_name:
-                        keyword["name"] = f"{keyword_usage_node.keyword} ({keyword_found.library_name})"
-                    elif keyword_found.resource_name:
-                        keyword["name"] = f"{keyword_usage_node.keyword} ({keyword_found.resource_name})"
+                    # Fallback name if we don't know where it's defined.
+                    keyword["name"] = f"{keyword_usage_node.keyword}"
+                    if definitions:
+                        # Use the first one
+                        definition = next(iter(definitions))
+                        keyword_found: IKeywordFound = definition.keyword_found
+                        if keyword_found.library_name:
+                            keyword["name"] = f"{keyword_usage_node.keyword} ({keyword_found.library_name.lower()})"
+                        elif keyword_found.resource_name:
+                            keyword["name"] = f"{keyword_usage_node.keyword} ({keyword_found.resource_name.lower()})"
 
-                    # If it was found in a library we don't recurse anymore.
-                    keyword_ast = keyword_found.keyword_ast
-                    if keyword_ast is None:
-                        continue
-                    definition_completion_context = keyword_found.completion_context
-                    if definition_completion_context is None:
-                        continue
+                        # If it was found in a library we don't recurse anymore.
+                        keyword_ast = keyword_found.keyword_ast
+                        if keyword_ast is None:
+                            continue
+                        definition_completion_context = keyword_found.completion_context
+                        if definition_completion_context is None:
+                            continue
 
-                    suite_name = _compute_suite_name(definition_completion_context)
-                    # Ok, it isn't a library keyword (as we have its AST). Keep recursing.
-                    for node_info in ast_utils.iter_all_nodes(keyword_ast, recursive=False):
-                        _build_hierarchy(
-                            definition_completion_context,
-                            node_info.stack,
-                            node_info.node,
-                            suite_name,
-                            keyword_body,
-                            memo,
-                        )
-
+                        suite_name = _compute_suite_name(definition_completion_context)
+                        # Ok, it isn't a library keyword (as we have its AST). Keep recursing.
+                        for node_info in ast_utils.iter_all_nodes(keyword_ast, recursive=False):
+                            _build_hierarchy(
+                                definition_completion_context,
+                                node_info.stack,
+                                node_info.node,
+                                suite_name,
+                                keyword_body,
+                                memo,
+                            )
+                elif isinstance_name(keyword_usage_node, "Teardown") or isinstance_name(keyword_usage_node, "Setup"):
+                    keyword = {
+                        "type": "keyword",
+                        "subtype": "KEYWORD",
+                        "args": keyword_usage_node.args,
+                        "name": keyword_usage_node.name,
+                    }
+                    parent_body.append(keyword)
     elif isinstance_name(curr_ast, "If"):
         if_body: list = []
         if_info: Dict[str, Any] = {"type": "if", "body": if_body}
@@ -162,24 +190,27 @@ def _build_hierarchy(
 
         orelse = curr_ast.orelse
 
-        if orelse and isinstance_name(orelse.header, "ElseIfHeader"):
-            condition = " ".join(str(tok) for tok in ast_utils.iter_argument_tokens(orelse.header))
-            else_if_body: list = []
-            else_if_info: Dict[str, Any] = {"type": "else-if-branch", "condition": condition, "body": else_if_body}
+        def explore_elseifs(elseifbranch):
+            if elseifbranch and isinstance_name(elseifbranch.header, "ElseIfHeader"):
+                condition = " ".join(str(tok) for tok in ast_utils.iter_argument_tokens(elseifbranch.header))
+                else_if_body: list = []
+                else_if_info: Dict[str, Any] = {"type": "else-if-branch", "condition": condition, "body": else_if_body}
 
-            if_body.append(else_if_info)
-            for body_ast in orelse.body:
-                _build_hierarchy(
-                    completion_context,
-                    curr_stack + (orelse,),
-                    body_ast,
-                    suite_name,
-                    else_if_body,
-                    memo,
-                )
+                if_body.append(else_if_info)
+                for body_ast in elseifbranch.body:
+                    _build_hierarchy(
+                        completion_context,
+                        curr_stack + (elseifbranch,),
+                        body_ast,
+                        suite_name,
+                        else_if_body,
+                        memo,
+                    )
+                elseifbranch = elseifbranch.orelse
+                if elseifbranch and isinstance_name(elseifbranch.header, "ElseIfHeader"):
+                    explore_elseifs(elseifbranch)
 
-            # switch to the else branch
-            orelse = orelse.orelse
+        explore_elseifs(orelse)
 
         # To finish, handle the orelse.
         if orelse:
@@ -289,3 +320,18 @@ def _build_hierarchy(
                     explore_try(ast.next)
 
         explore_try(curr_ast.next)
+    elif isinstance_name(curr_ast, "Break"):
+        break_info: Dict[str, Any] = {
+            "type": "break",
+        }
+        parent_body.append(break_info)
+    elif isinstance_name(curr_ast, "Continue"):
+        continue_info: Dict[str, Any] = {
+            "type": "continue",
+        }
+        parent_body.append(continue_info)
+    elif isinstance_name(curr_ast, "ReturnStatement"):
+        return_info: Dict[str, Any] = {
+            "type": "return",
+        }
+        parent_body.append(return_info)

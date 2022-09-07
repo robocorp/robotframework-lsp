@@ -34,32 +34,21 @@ tasks:
 - body:
   - body:
     - body:
-      - args: []
-        assign: []
-        body: []
-        name: Fail (builtin)
-        subtype: KEYWORD
-        type: keyword
-      type: try-branch
+      - type: break
+      condition: 1 == 1
+      type: if-branch
     - body:
-      - args:
-        - EXCEPT with Error message
-        assign: []
-        body: []
-        name: Comment (builtin)
-        subtype: KEYWORD
-        type: keyword
-      type: except-branch
+      - type: return
+      condition: 2 == 2
+      type: else-if-branch
     - body:
-      - args:
-        - EXCEPT with Another Error message
-        assign: []
-        body: []
-        name: Comment (builtin)
-        subtype: KEYWORD
-        type: keyword
-      type: except-branch
-    type: try
+      - type: continue
+      condition: 3 == 3
+      type: else-if-branch
+    - body:
+      - type: return
+      type: else-branch
+    type: if
   doc: ''
   name: My.Main Task
   setup: null

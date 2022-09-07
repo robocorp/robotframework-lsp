@@ -383,3 +383,90 @@ Another keyword
     ws.put_document(TextDocumentItem(uri, text=contents))
 
     _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() <= 4, reason="BREAK/RETURN/CONTINUE not available in RF 4.")
+def test_flow_explorer_generate_model_break_return_continue(rf_server_api, data_regression):
+    from robocorp_ls_core.lsp import TextDocumentItem
+
+    contents = """
+*** Tasks ***
+Main Task
+    IF    1 == 1
+        BREAK
+    ELSE IF    2 == 2
+        RETURN
+    ELSE IF    3 == 3
+        CONTINUE
+    ELSE
+        Log    This line is NOT executed since the IF expression evaluated to True.
+    END
+
+*** Keywords ***
+Main Implemented Keyword
+    Another keyword
+
+Another keyword
+    Comment  Comment in keyword
+"""
+    uri = "my.robot"
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="TEARDOWN not available in RF 3.")
+def test_flow_explorer_generate_model_teardown(rf_server_api, data_regression):
+    from robocorp_ls_core.lsp import TextDocumentItem
+
+    contents = """
+*** Tasks ***
+Main Task
+    IF    1 == 1
+        BREAK
+    ELSE
+        Log    Something on else.
+    END
+    [Teardown]  Log    This is teardown zone.
+
+*** Keywords ***
+Main Implemented Keyword
+    Another keyword
+
+Another keyword
+    Comment  Comment in keyword
+"""
+    uri = "my.robot"
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="SETUP not available in RF 3.")
+def test_flow_explorer_generate_model_setup(rf_server_api, data_regression):
+    from robocorp_ls_core.lsp import TextDocumentItem
+
+    contents = """
+*** Tasks ***
+Main Task
+    [Setup]  Log    This is setup zone.
+    IF    1 == 1
+        BREAK
+    ELSE
+        Log    Something on else.
+    END
+
+*** Keywords ***
+Main Implemented Keyword
+    Another keyword
+
+Another keyword
+    Comment  Comment in keyword
+"""
+    uri = "my.robot"
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)

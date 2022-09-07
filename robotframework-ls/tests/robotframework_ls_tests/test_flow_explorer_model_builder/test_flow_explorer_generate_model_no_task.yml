@@ -1,4 +1,32 @@
-keywords: []
+keywords:
+- body:
+  - args: []
+    assign: []
+    body:
+    - args:
+      - Something
+      assign: []
+      body: []
+      name: Log (builtin)
+      subtype: KEYWORD
+      type: keyword
+    name: Call 2 (my)
+    subtype: KEYWORD
+    type: keyword
+  doc: ''
+  name: Call 1 (my)
+  type: user-keyword
+- body:
+  - args:
+    - Something
+    assign: []
+    body: []
+    name: Log (builtin)
+    subtype: KEYWORD
+    type: keyword
+  doc: ''
+  name: Call 2 (my)
+  type: user-keyword
 name: My
 setup: null
 source: my.robot
