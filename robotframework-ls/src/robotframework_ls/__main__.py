@@ -102,12 +102,14 @@ def main(
         binary_stdio,
     )
 
+    verify_robot_imports = False
     if language_server_class is None:
         from robotframework_ls.robotframework_ls_impl import (
             RobotFrameworkLanguageServer,
         )
 
         language_server_class = RobotFrameworkLanguageServer
+        verify_robot_imports = True
 
     parser = argparse.ArgumentParser()
     add_arguments(parser)
@@ -143,6 +145,19 @@ def main(
             args.host, args.port, language_server_class, after_bind=after_bind
         )
     else:
+        if verify_robot_imports:
+            # We just add the verification in the stdio mode (because the tcp is
+            # used in tests where we start it as a thread).
+
+            # "robot" should only be imported in the subprocess which is spawned
+            # specifically for that robot framework version (we should only
+            # parse the AST at those subprocesses -- if the import is done at
+            # the main process something needs to be re-engineered to forward
+            # the request to a subprocess).
+            from robocorp_ls_core.basic import notify_about_import
+
+            notify_about_import("robot")
+
         stdin, stdout = binary_stdio()
         start_io_lang_server(stdin, stdout, language_server_class)
 

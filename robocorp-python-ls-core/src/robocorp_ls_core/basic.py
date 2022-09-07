@@ -503,3 +503,53 @@ def make_unique(lst):
 @lru_cache(maxsize=3000)
 def normalize_filename(filename):
     return os.path.abspath(os.path.normpath(os.path.normcase(filename)))
+
+
+class _RestoreCtxManager(object):
+    def __init__(self, original_import):
+        self._original_import = original_import
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        import builtins
+
+        builtins.__import__ = self._original_import
+
+
+def notify_about_import(import_name):
+    """
+    :param str import_name:
+        The name of the import we don't want in this process.
+
+    Use case: `robot` should not be imported in the Robot Framework Language
+    Server process. It should only be imported in the subprocess which is
+    spawned specifically for that robot framework version (we should only parse
+    the AST at those subprocesses -- if the import is done at the main process
+    something needs to be re-engineered to forward the request to a subprocess).
+
+    If used as a context manager restores the previous __import__.
+    """
+    import builtins
+
+    original_import = builtins.__import__
+
+    import_name_with_dot = import_name + "."
+
+    def new_import(name, *args, **kwargs):
+        if name == import_name or name.startswith(import_name_with_dot):
+            from io import StringIO
+            import traceback
+
+            stream = StringIO()
+            stream.write(f"'{name}' should not be imported in this process.\nStack:\n")
+
+            traceback.print_stack(file=stream)
+
+            log.critical(stream.getvalue())
+
+        return original_import(name, *args, **kwargs)
+
+    builtins.__import__ = new_import
+    return _RestoreCtxManager(original_import)
