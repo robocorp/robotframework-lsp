@@ -182,7 +182,9 @@ Another keyword
     _build_model_and_check(rf_server_api, uri, data_regression)
 
 
-@pytest.mark.skipif(get_robot_major_version() <= 4, reason="ELSEIF not available in RF 4.")
+@pytest.mark.skipif(
+    get_robot_major_version() <= 4, reason="ELSEIF not available in RF 4."
+)
 def test_flow_explorer_generate_model_if_elseif(rf_server_api, data_regression):
     from robocorp_ls_core.lsp import TextDocumentItem
 
@@ -242,7 +244,9 @@ Another keyword
     _build_model_and_check(rf_server_api, uri, data_regression)
 
 
-@pytest.mark.skipif(get_robot_major_version() <= 4, reason="WHILE not available in RF 4.")
+@pytest.mark.skipif(
+    get_robot_major_version() <= 4, reason="WHILE not available in RF 4."
+)
 def test_flow_explorer_generate_model_while(rf_server_api, data_regression):
     from robocorp_ls_core.lsp import TextDocumentItem
 
@@ -324,7 +328,9 @@ Another keyword
 
 
 @pytest.mark.skipif(get_robot_major_version() <= 4, reason="TRY not available in RF 4.")
-def test_flow_explorer_generate_model_try_except_finally(rf_server_api, data_regression):
+def test_flow_explorer_generate_model_try_except_finally(
+    rf_server_api, data_regression
+):
     from robocorp_ls_core.lsp import TextDocumentItem
 
     contents = """
@@ -353,7 +359,9 @@ Another keyword
 
 
 @pytest.mark.skipif(get_robot_major_version() <= 4, reason="TRY not available in RF 4.")
-def test_flow_explorer_generate_model_try_except_else_finally(rf_server_api, data_regression):
+def test_flow_explorer_generate_model_try_except_else_finally(
+    rf_server_api, data_regression
+):
     from robocorp_ls_core.lsp import TextDocumentItem
 
     contents = """
@@ -385,8 +393,13 @@ Another keyword
     _build_model_and_check(rf_server_api, uri, data_regression)
 
 
-@pytest.mark.skipif(get_robot_major_version() <= 4, reason="BREAK/RETURN/CONTINUE not available in RF 4.")
-def test_flow_explorer_generate_model_break_return_continue(rf_server_api, data_regression):
+@pytest.mark.skipif(
+    get_robot_major_version() <= 4,
+    reason="BREAK/RETURN/CONTINUE not available in RF 4.",
+)
+def test_flow_explorer_generate_model_break_return_continue(
+    rf_server_api, data_regression
+):
     from robocorp_ls_core.lsp import TextDocumentItem
 
     contents = """
@@ -416,7 +429,9 @@ Another keyword
     _build_model_and_check(rf_server_api, uri, data_regression)
 
 
-@pytest.mark.skipif(get_robot_major_version() < 4, reason="TEARDOWN not available in RF 3.")
+@pytest.mark.skipif(
+    get_robot_major_version() < 4, reason="TEARDOWN not available in RF 3."
+)
 def test_flow_explorer_generate_model_teardown(rf_server_api, data_regression):
     from robocorp_ls_core.lsp import TextDocumentItem
 
@@ -444,7 +459,9 @@ Another keyword
     _build_model_and_check(rf_server_api, uri, data_regression)
 
 
-@pytest.mark.skipif(get_robot_major_version() < 4, reason="SETUP not available in RF 3.")
+@pytest.mark.skipif(
+    get_robot_major_version() < 4, reason="SETUP not available in RF 3."
+)
 def test_flow_explorer_generate_model_setup(rf_server_api, data_regression):
     from robocorp_ls_core.lsp import TextDocumentItem
 
