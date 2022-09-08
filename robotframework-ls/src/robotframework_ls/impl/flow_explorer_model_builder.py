@@ -236,6 +236,7 @@ def _build_hierarchy(
         explore_elseifs(orelse)
 
         # To finish, handle the orelse.
+        orelse = orelse.orelse if orelse and orelse.orelse else orelse
         if orelse:
             orelse_body: list = []
             orelse_info: Dict[str, Any] = {
@@ -318,8 +319,10 @@ def _build_hierarchy(
         def explore_try(ast):
             if ast:
                 next_type = None
+                next_patterns = None
                 if isinstance_name(ast.header, "ExceptHeader"):
                     next_type = "except-branch"
+                    next_patterns = ast.patterns
                 elif isinstance_name(ast.header, "FinallyHeader"):
                     next_type = "finally-branch"
                 elif isinstance_name(ast.header, "ElseHeader"):
@@ -331,6 +334,8 @@ def _build_hierarchy(
                     "type": next_type,
                     "body": next_branch_body,
                 }
+                if next_patterns:
+                    next_branch_info["patterns"] = next_patterns
                 for body_ast in ast.body:
                     _build_hierarchy(
                         completion_context,

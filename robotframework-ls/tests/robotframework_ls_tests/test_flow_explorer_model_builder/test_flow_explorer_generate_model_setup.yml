@@ -53,7 +53,7 @@ tasks:
       type: else-branch
     type: if
   doc: ''
-  name: My.Main Task
+  name: Main Task (my)
   setup: null
   teardown: null
   type: task

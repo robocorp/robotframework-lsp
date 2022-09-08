@@ -193,11 +193,11 @@ def test_flow_explorer_generate_model_if_elseif(rf_server_api, data_regression):
 *** Tasks ***
 Main Task
     IF    1 == 1
-        Log    This line IS executed. ELSE IF and ELSE are ignored.
+        Log    If branch
     ELSE IF    2 == 2
-        Log    This line is NOT executed since the IF expression evaluated to True.
+        Log    Else If branch
     ELSE
-        Log    This line is NOT executed since the IF expression evaluated to True.
+        Log    Else branch
     END
 
 

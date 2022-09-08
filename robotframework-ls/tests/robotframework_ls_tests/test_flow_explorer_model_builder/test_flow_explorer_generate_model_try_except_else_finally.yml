@@ -50,6 +50,8 @@ tasks:
         name: Comment (builtin)
         subtype: KEYWORD
         type: keyword
+      patterns:
+      - Error message
       type: except-branch
     - body:
       - args:
@@ -59,6 +61,8 @@ tasks:
         name: Comment (builtin)
         subtype: KEYWORD
         type: keyword
+      patterns:
+      - Another Error message
       type: except-branch
     - body:
       - args:
@@ -80,7 +84,7 @@ tasks:
       type: finally-branch
     type: try
   doc: ''
-  name: My.Main Task
+  name: Main Task (my)
   setup: null
   teardown: null
   type: task

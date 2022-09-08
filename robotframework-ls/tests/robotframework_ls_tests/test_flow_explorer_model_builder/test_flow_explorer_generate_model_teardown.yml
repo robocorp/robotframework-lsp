@@ -53,7 +53,7 @@ tasks:
     subtype: KEYWORD
     type: keyword
   doc: ''
-  name: My.Main Task
+  name: Main Task (my)
   setup: null
   teardown: null
   type: task
