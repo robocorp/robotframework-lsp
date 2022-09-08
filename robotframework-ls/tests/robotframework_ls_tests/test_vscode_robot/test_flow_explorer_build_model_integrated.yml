@@ -10,11 +10,10 @@ result:
       - Something
       assign: []
       body: []
-      name: Log (BuiltIn)
-      subtype: KEYWORD
+      name: Log (builtin)
       type: keyword
     doc: ''
-    name: Untitled:Untitled-1.My first task
+    name: My first task (untitled:untitled-1)
     setup: null
     teardown: null
     type: task
@@ -23,11 +22,10 @@ result:
       - Something
       assign: []
       body: []
-      name: Log (BuiltIn)
-      subtype: KEYWORD
+      name: Log (builtin)
       type: keyword
     doc: ''
-    name: Untitled:Untitled-1.My second task
+    name: My second task (untitled:untitled-1)
     setup: null
     teardown: null
     type: task

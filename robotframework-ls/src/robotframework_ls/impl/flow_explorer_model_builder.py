@@ -4,6 +4,22 @@ import os
 from robocorp_ls_core.basic import isinstance_name
 
 
+class _RecursionStack:
+    stack: List[str] = []
+
+    def check(self, s: str) -> bool:
+        for layer in self.stack:
+            if layer == s:
+                return True
+        return False
+
+    def push(self, s: str):
+        self.stack.append(s)
+
+    def pop(self):
+        self.stack.pop()
+
+
 def _compute_suite_name(completion_context: ICompletionContext) -> str:
     suite_name = os.path.splitext(os.path.basename(completion_context.doc.uri))[0]
     suite_name = suite_name.title()
@@ -15,12 +31,13 @@ def build_flow_explorer_model(completion_contexts: List[ICompletionContext]) -> 
 
     suites: list = []
     model: dict = {"suites": suites}
+    recursion_stack: _RecursionStack = _RecursionStack()
 
     for completion_context in completion_contexts:
         ast = completion_context.get_ast()
 
         # Uncomment to print ast.
-        ast_utils.print_ast(ast)
+        # ast_utils.print_ast(ast)
 
         if ast:
             suite_name = _compute_suite_name(completion_context)
@@ -50,6 +67,7 @@ def build_flow_explorer_model(completion_contexts: List[ICompletionContext]) -> 
                 }
                 tasks.append(test_info)
                 for node_info in ast_utils.iter_all_nodes(test.node, recursive=False):
+                    recursion_stack.push(test_name)
                     _build_hierarchy(
                         completion_context,
                         node_info.stack,
@@ -57,7 +75,10 @@ def build_flow_explorer_model(completion_contexts: List[ICompletionContext]) -> 
                         suite_name,
                         test_body,
                         {},
+                        recursion_stack,
+                        keywords,
                     )
+                    recursion_stack.pop()
             for user_keyword in ast_utils.iter_keywords(ast):
                 user_keyword_name = f"{user_keyword.node.name} ({suite_name.lower()})"
                 user_keyword_body: list = []
@@ -68,18 +89,28 @@ def build_flow_explorer_model(completion_contexts: List[ICompletionContext]) -> 
                     "body": user_keyword_body,
                 }
 
-                keywords.append(user_keyword_info)
-                for node_info in ast_utils.iter_all_nodes(
-                    user_keyword.node, recursive=False
-                ):
-                    _build_hierarchy(
-                        completion_context,
-                        node_info.stack,
-                        node_info.node,
-                        suite_name,
-                        user_keyword_body,
-                        {},
-                    )
+                # Keywords var will be populated when building hierarchy if importing statements
+                # Checking to see if it already exists before appending
+                for keyw in keywords:
+                    if keyw["name"] == user_keyword_name:
+                        break
+                else:
+                    keywords.append(user_keyword_info)
+                    for node_info in ast_utils.iter_all_nodes(
+                        user_keyword.node, recursive=False
+                    ):
+                        recursion_stack.push(user_keyword_name)
+                        _build_hierarchy(
+                            completion_context,
+                            node_info.stack,
+                            node_info.node,
+                            suite_name,
+                            user_keyword_body,
+                            {},
+                            recursion_stack,
+                            keywords,
+                        )
+                        recursion_stack.pop()
 
     if len(suites) == 1:
         # Special case (for now): If we only have one suite make it top-level
@@ -94,6 +125,8 @@ def _build_hierarchy(
     suite_name: str,
     parent_body: List[Any],
     memo: dict,
+    recursion_stack: _RecursionStack,
+    user_keywords: List[Any] = None,
 ):
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl import ast_utils_keyword_usage
@@ -112,7 +145,6 @@ def _build_hierarchy(
                 if isinstance_name(keyword_usage_node, "KeywordCall"):
                     keyword = {
                         "type": "keyword",
-                        "subtype": "KEYWORD",
                         "assign": keyword_usage_node.assign,
                         "args": keyword_usage_node.args,
                         "body": keyword_body,
@@ -133,6 +165,7 @@ def _build_hierarchy(
 
                     # Fallback name if we don't know where it's defined.
                     keyword["name"] = f"{keyword_usage_node.keyword}"
+
                     if definitions:
                         # Use the first one
                         definition = next(iter(definitions))
@@ -153,12 +186,17 @@ def _build_hierarchy(
                         definition_completion_context = keyword_found.completion_context
                         if definition_completion_context is None:
                             continue
+                        # If found in recursion stack we don't recurse anymore.
+                        if recursion_stack and recursion_stack.check(keyword["name"]):
+                            continue
 
                         suite_name = _compute_suite_name(definition_completion_context)
                         # Ok, it isn't a library keyword (as we have its AST). Keep recursing.
                         for node_info in ast_utils.iter_all_nodes(
                             keyword_ast, recursive=False
                         ):
+                            if recursion_stack:
+                                recursion_stack.push(keyword["name"])
                             _build_hierarchy(
                                 definition_completion_context,
                                 node_info.stack,
@@ -166,7 +204,20 @@ def _build_hierarchy(
                                 suite_name,
                                 keyword_body,
                                 memo,
+                                recursion_stack=recursion_stack,
                             )
+                            if recursion_stack:
+                                recursion_stack.pop()
+                        # If the current keyword has body, the it is a User Keyword
+                        if len(keyword_body) > 0 and user_keywords is not None:
+                            for uk in user_keywords:
+                                if uk["name"] == keyword["name"]:
+                                    break
+                            else:
+                                keyword_copy = keyword.copy()
+                                keyword_copy["type"] = "user-keyword"
+                                user_keywords.append(keyword_copy)
+
                 elif isinstance_name(keyword_usage_node, "Teardown") or isinstance_name(
                     keyword_usage_node, "Setup"
                 ):
@@ -200,6 +251,7 @@ def _build_hierarchy(
                 suite_name,
                 if_branch_body,
                 memo,
+                recursion_stack=recursion_stack,
             )
 
         orelse = curr_ast.orelse
@@ -226,6 +278,7 @@ def _build_hierarchy(
                         suite_name,
                         else_if_body,
                         memo,
+                        recursion_stack=recursion_stack,
                     )
                 elseifbranch = elseifbranch.orelse
                 if elseifbranch and isinstance_name(
@@ -252,6 +305,7 @@ def _build_hierarchy(
                     suite_name,
                     orelse_body,
                     memo,
+                    recursion_stack=recursion_stack,
                 )
     elif isinstance_name(curr_ast, "For"):
         for_body: list = []
@@ -271,6 +325,7 @@ def _build_hierarchy(
                 suite_name,
                 for_body,
                 memo,
+                recursion_stack=recursion_stack,
             )
     elif isinstance_name(curr_ast, "While"):
         condition = " ".join(
@@ -291,6 +346,7 @@ def _build_hierarchy(
                 suite_name,
                 while_body,
                 memo,
+                recursion_stack=recursion_stack,
             )
     elif isinstance_name(curr_ast, "Try"):
         try_body: list = []
@@ -314,6 +370,7 @@ def _build_hierarchy(
                 suite_name,
                 try_branch_body,
                 memo,
+                recursion_stack=recursion_stack,
             )
 
         def explore_try(ast):
@@ -344,6 +401,7 @@ def _build_hierarchy(
                         suite_name,
                         next_branch_body,
                         memo,
+                        recursion_stack=recursion_stack,
                     )
                 try_body.append(next_branch_info)
                 if ast.next:

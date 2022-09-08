@@ -8,23 +8,21 @@ keywords:
       assign: []
       body: []
       name: Comment (builtin)
-      subtype: KEYWORD
       type: keyword
     name: Another keyword (my)
-    subtype: KEYWORD
     type: keyword
   doc: ''
   name: Main Implemented Keyword (my)
   type: user-keyword
-- body:
+- args: []
+  assign: []
+  body:
   - args:
     - Comment in keyword
     assign: []
     body: []
     name: Comment (builtin)
-    subtype: KEYWORD
     type: keyword
-  doc: ''
   name: Another keyword (my)
   type: user-keyword
 name: My
@@ -43,7 +41,6 @@ tasks:
         assign: []
         body: []
         name: Log (builtin)
-        subtype: KEYWORD
         type: keyword
       type: else-branch
     type: if

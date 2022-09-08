@@ -9,7 +9,6 @@ tasks:
     assign: []
     body: []
     name: Log (builtin)
-    subtype: KEYWORD
     type: keyword
   doc: ''
   name: My first task (my)
@@ -22,7 +21,6 @@ tasks:
     assign: []
     body: []
     name: Log (builtin)
-    subtype: KEYWORD
     type: keyword
   doc: ''
   name: My second task (my)

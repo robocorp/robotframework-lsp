@@ -1,0 +1,114 @@
+keywords:
+- body:
+  - args:
+    - This is the first User Keyword
+    assign: []
+    body: []
+    name: Log (builtin)
+    type: keyword
+  - args: []
+    assign: []
+    body: []
+    name: First K (library)
+    type: keyword
+  doc: ''
+  name: First K (library)
+  type: user-keyword
+- body:
+  - args:
+    - This is the second User Keyword
+    assign: []
+    body: []
+    name: Log (builtin)
+    type: keyword
+  - args: []
+    assign: []
+    body:
+    - args:
+      - This is the first User Keyword
+      assign: []
+      body: []
+      name: Log (builtin)
+      type: keyword
+    - args: []
+      assign: []
+      body: []
+      name: First K (library)
+      type: keyword
+    name: First K (library)
+    type: keyword
+  - args: []
+    assign: []
+    body: []
+    name: Second K (library)
+    type: keyword
+  doc: ''
+  name: Second K (library)
+  type: user-keyword
+name: Library
+setup: null
+source: library.robot
+tasks:
+- body:
+  - body:
+    - body:
+      - args: []
+        assign: []
+        body:
+        - args:
+          - This is the first User Keyword
+          assign: []
+          body: []
+          name: Log (builtin)
+          type: keyword
+        - args: []
+          assign: []
+          body: []
+          name: First K (library)
+          type: keyword
+        name: First K (library)
+        type: keyword
+      condition: 1 == 1
+      type: if-branch
+    - body:
+      - args: []
+        assign: []
+        body:
+        - args:
+          - This is the second User Keyword
+          assign: []
+          body: []
+          name: Log (builtin)
+          type: keyword
+        - args: []
+          assign: []
+          body:
+          - args:
+            - This is the first User Keyword
+            assign: []
+            body: []
+            name: Log (builtin)
+            type: keyword
+          - args: []
+            assign: []
+            body: []
+            name: First K (library)
+            type: keyword
+          name: First K (library)
+          type: keyword
+        - args: []
+          assign: []
+          body: []
+          name: Second K (library)
+          type: keyword
+        name: Second K (library)
+        type: keyword
+      type: else-branch
+    type: if
+  doc: ''
+  name: Main Second Task (library)
+  setup: null
+  teardown: null
+  type: task
+teardown: null
+type: suite

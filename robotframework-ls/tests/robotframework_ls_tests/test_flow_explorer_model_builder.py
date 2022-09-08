@@ -40,9 +40,8 @@ def _build_model_and_check(rf_server_api, uri, data_regression, basename=None):
     data_regression.check(model, basename=basename)
 
     # Uncomment to print model.
-    import json
-
-    print(json.dumps(model))
+    # import json
+    # print(json.dumps(model))
 
 
 def test_flow_explorer_generate_model_basic(rf_server_api, tmpdir, data_regression):
@@ -188,7 +187,6 @@ Another keyword
 def test_flow_explorer_generate_model_if_elseif(rf_server_api, data_regression):
     from robocorp_ls_core.lsp import TextDocumentItem
 
-    print("ROBOT VERSION:", get_robot_major_version())
     contents = """
 *** Tasks ***
 Main Task
@@ -430,7 +428,7 @@ Another keyword
 
 
 @pytest.mark.skipif(
-    get_robot_major_version() < 4, reason="TEARDOWN not available in RF 3."
+    get_robot_major_version() <= 4, reason="TEARDOWN not available in RF 4."
 )
 def test_flow_explorer_generate_model_teardown(rf_server_api, data_regression):
     from robocorp_ls_core.lsp import TextDocumentItem
@@ -460,7 +458,7 @@ Another keyword
 
 
 @pytest.mark.skipif(
-    get_robot_major_version() < 4, reason="SETUP not available in RF 3."
+    get_robot_major_version() <= 4, reason="SETUP not available in RF 4."
 )
 def test_flow_explorer_generate_model_setup(rf_server_api, data_regression):
     from robocorp_ls_core.lsp import TextDocumentItem
@@ -483,6 +481,219 @@ Another keyword
     Comment  Comment in keyword
 """
     uri = "my.robot"
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+def test_flow_explorer_generate_model_import1(rf_server_api, data_regression, tmpdir):
+    from robocorp_ls_core.lsp import TextDocumentItem
+    from robocorp_ls_core import uris
+
+    contents = """
+*** Keywords ***
+First Implemented Keyword
+    Comment  First Implemented Keyword - Comment
+    Second Implemented keyword
+
+Second Implemented keyword
+    Comment  Second Implemented Keyword - Comment
+"""
+
+    uri = uris.from_fs_path(str(tmpdir.join("library.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    contents = """
+*** Settings ***
+Resource    library.robot
+
+*** Tasks ***
+Main Task
+    First Implemented Keyword
+    Second Implemented keyword
+
+"""
+    uri = uris.from_fs_path(str(tmpdir.join("my.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="IF not available in RF 3.")
+def test_flow_explorer_generate_model_import2(rf_server_api, data_regression, tmpdir):
+    from robocorp_ls_core.lsp import TextDocumentItem
+    from robocorp_ls_core import uris
+
+    contents = """
+*** Keywords ***
+First Implemented Keyword
+    Comment  First Implemented Keyword - Comment
+    Second Implemented keyword
+
+Second Implemented keyword
+    Comment  Second Implemented Keyword - Comment
+"""
+
+    uri = uris.from_fs_path(str(tmpdir.join("library.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    contents = """
+*** Settings ***
+Resource    library.robot
+
+*** Tasks ***
+Main First Task
+    First Implemented Keyword
+    Second Implemented keyword
+
+Main Second Task
+    IF    1 == 1    First K    ELSE    Second K
+
+*** Keywords ***
+First K
+    Log    This is the first User Keyword
+    First Implemented Keyword
+
+Second K
+    Log    This is the second User Keyword
+    Second Implemented keyword
+
+
+"""
+    uri = uris.from_fs_path(str(tmpdir.join("my.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="IF not available in RF 3.")
+def test_flow_explorer_generate_model_circular_use1(
+    rf_server_api, data_regression, tmpdir
+):
+    from robocorp_ls_core.lsp import TextDocumentItem
+    from robocorp_ls_core import uris
+
+    contents = """
+*** Tasks ***
+Main Second Task
+    IF    1 == 1    First K    ELSE    Second K
+
+*** Keywords ***
+First K
+    Log    This is the first User Keyword
+    Second K
+
+Second K
+    Log    This is the second User Keyword
+    First K
+"""
+
+    uri = uris.from_fs_path(str(tmpdir.join("library.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="IF not available in RF 3.")
+def test_flow_explorer_generate_model_circular_use2(
+    rf_server_api, data_regression, tmpdir
+):
+    from robocorp_ls_core.lsp import TextDocumentItem
+    from robocorp_ls_core import uris
+
+    contents = """
+*** Tasks ***
+Main Second Task
+    IF    1 == 1    First K    ELSE    Second K
+
+*** Keywords ***
+First K
+    Log    This is the first User Keyword
+    First K
+
+Second K
+    Log    This is the second User Keyword
+    First K
+    Second K
+"""
+
+    uri = uris.from_fs_path(str(tmpdir.join("library.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="IF not available in RF 3.")
+def test_flow_explorer_generate_model_circular_use3(
+    rf_server_api, data_regression, tmpdir
+):
+    from robocorp_ls_core.lsp import TextDocumentItem
+    from robocorp_ls_core import uris
+
+    contents = """
+*** Keywords ***
+First Implemented Keyword
+    Comment  First Implemented Keyword - Comment
+    Second Implemented keyword
+
+Second Implemented keyword
+    Comment  Second Implemented Keyword - Comment
+"""
+
+    uri = uris.from_fs_path(str(tmpdir.join("library.1.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    contents = """
+*** Settings ***
+Resource    library.1.robot
+
+*** Keywords ***
+Third Implemented Keyword
+    Comment  Third Implemented Keyword - Comment
+    Second Implemented keyword
+
+"""
+
+    uri = uris.from_fs_path(str(tmpdir.join("library.2.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    contents = """
+*** Settings ***
+Resource    library.1.robot
+Resource    library.2.robot
+
+*** Tasks ***
+Main First Task
+    First Implemented Keyword
+    Second Implemented keyword
+    Third Implemented Keyword
+
+Main Second Task
+    IF    1 == 1    First K    ELSE    Second K
+
+*** Keywords ***
+First K
+    Log    This is the first User Keyword
+    First Implemented Keyword
+
+Second K
+    Log    This is the second User Keyword
+    Second Implemented keyword
+
+Third K
+    Log    This is the third User Keyword
+    Third Implemented Keyword
+
+"""
+    uri = uris.from_fs_path(str(tmpdir.join("my.robot")))
     ws = rf_server_api.workspace
     ws.put_document(TextDocumentItem(uri, text=contents))
 
