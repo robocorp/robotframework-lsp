@@ -521,7 +521,7 @@ Main Task
     _build_model_and_check(rf_server_api, uri, data_regression)
 
 
-@pytest.mark.skipif(get_robot_major_version() < 4, reason="IF not available in RF 3.")
+@pytest.mark.skipif(get_robot_major_version() <= 4, reason="IF not available in RF 4.")
 def test_flow_explorer_generate_model_import2(rf_server_api, data_regression, tmpdir):
     from robocorp_ls_core.lsp import TextDocumentItem
     from robocorp_ls_core import uris
@@ -570,7 +570,7 @@ Second K
     _build_model_and_check(rf_server_api, uri, data_regression)
 
 
-@pytest.mark.skipif(get_robot_major_version() < 4, reason="IF not available in RF 3.")
+@pytest.mark.skipif(get_robot_major_version() <= 4, reason="IF not available in RF 4.")
 def test_flow_explorer_generate_model_circular_use1(
     rf_server_api, data_regression, tmpdir
 ):
@@ -599,7 +599,7 @@ Second K
     _build_model_and_check(rf_server_api, uri, data_regression)
 
 
-@pytest.mark.skipif(get_robot_major_version() < 4, reason="IF not available in RF 3.")
+@pytest.mark.skipif(get_robot_major_version() <= 4, reason="IF not available in RF 4.")
 def test_flow_explorer_generate_model_circular_use2(
     rf_server_api, data_regression, tmpdir
 ):
@@ -629,7 +629,7 @@ Second K
     _build_model_and_check(rf_server_api, uri, data_regression)
 
 
-@pytest.mark.skipif(get_robot_major_version() < 4, reason="IF not available in RF 3.")
+@pytest.mark.skipif(get_robot_major_version() <= 4, reason="IF not available in RF 4.")
 def test_flow_explorer_generate_model_circular_use3(
     rf_server_api, data_regression, tmpdir
 ):
