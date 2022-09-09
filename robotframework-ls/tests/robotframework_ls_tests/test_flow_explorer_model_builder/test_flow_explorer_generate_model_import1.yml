@@ -3,6 +3,17 @@ keywords:
   assign: []
   body:
   - args:
+    - Second Implemented Keyword - Comment
+    assign: []
+    body: []
+    name: Comment (builtin)
+    type: keyword
+  name: Second Implemented keyword (library)
+  type: user-keyword
+- args: []
+  assign: []
+  body:
+  - args:
     - First Implemented Keyword - Comment
     assign: []
     body: []
@@ -20,17 +31,6 @@ keywords:
     name: Second Implemented keyword (library)
     type: keyword
   name: First Implemented Keyword (library)
-  type: user-keyword
-- args: []
-  assign: []
-  body:
-  - args:
-    - Second Implemented Keyword - Comment
-    assign: []
-    body: []
-    name: Comment (builtin)
-    type: keyword
-  name: Second Implemented keyword (library)
   type: user-keyword
 name: My
 setup: null

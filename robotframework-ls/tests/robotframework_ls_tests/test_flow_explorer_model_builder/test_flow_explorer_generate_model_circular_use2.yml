@@ -1,5 +1,7 @@
 keywords:
-- body:
+- args: []
+  assign: []
+  body:
   - args:
     - This is the first User Keyword
     assign: []
@@ -11,10 +13,11 @@ keywords:
     body: []
     name: First K (library)
     type: keyword
-  doc: ''
   name: First K (library)
   type: user-keyword
-- body:
+- args: []
+  assign: []
+  body:
   - args:
     - This is the second User Keyword
     assign: []
@@ -42,7 +45,6 @@ keywords:
     body: []
     name: Second K (library)
     type: keyword
-  doc: ''
   name: Second K (library)
   type: user-keyword
 name: Library

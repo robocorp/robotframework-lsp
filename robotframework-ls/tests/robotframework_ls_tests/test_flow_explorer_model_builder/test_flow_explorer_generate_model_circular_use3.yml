@@ -3,6 +3,17 @@ keywords:
   assign: []
   body:
   - args:
+    - Second Implemented Keyword - Comment
+    assign: []
+    body: []
+    name: Comment (builtin)
+    type: keyword
+  name: Second Implemented keyword (library.1)
+  type: user-keyword
+- args: []
+  assign: []
+  body:
+  - args:
     - First Implemented Keyword - Comment
     assign: []
     body: []
@@ -20,17 +31,6 @@ keywords:
     name: Second Implemented keyword (library.1)
     type: keyword
   name: First Implemented Keyword (library.1)
-  type: user-keyword
-- args: []
-  assign: []
-  body:
-  - args:
-    - Second Implemented Keyword - Comment
-    assign: []
-    body: []
-    name: Comment (builtin)
-    type: keyword
-  name: Second Implemented keyword (library.1)
   type: user-keyword
 - args: []
   assign: []
@@ -54,7 +54,9 @@ keywords:
     type: keyword
   name: Third Implemented Keyword (library.2)
   type: user-keyword
-- body:
+- args: []
+  assign: []
+  body:
   - args:
     - This is the first User Keyword
     assign: []
@@ -83,10 +85,11 @@ keywords:
       type: keyword
     name: First Implemented Keyword (library.1)
     type: keyword
-  doc: ''
   name: First K (my)
   type: user-keyword
-- body:
+- args: []
+  assign: []
+  body:
   - args:
     - This is the second User Keyword
     assign: []
@@ -104,7 +107,6 @@ keywords:
       type: keyword
     name: Second Implemented keyword (library.1)
     type: keyword
-  doc: ''
   name: Second K (my)
   type: user-keyword
 - body:

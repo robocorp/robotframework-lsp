@@ -2,6 +2,17 @@ keywords:
 - args: []
   assign: []
   body:
+  - args:
+    - Something
+    assign: []
+    body: []
+    name: Log (builtin)
+    type: keyword
+  name: Call 2 (my)
+  type: user-keyword
+- args: []
+  assign: []
+  body:
   - args: []
     assign: []
     body:
@@ -14,16 +25,6 @@ keywords:
     name: Call 2 (my)
     type: keyword
   name: Call 1 (my)
-  type: user-keyword
-- body:
-  - args:
-    - Something
-    assign: []
-    body: []
-    name: Log (builtin)
-    type: keyword
-  doc: ''
-  name: Call 2 (my)
   type: user-keyword
 name: My
 setup: null

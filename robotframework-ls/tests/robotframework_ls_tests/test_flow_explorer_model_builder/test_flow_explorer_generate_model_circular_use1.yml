@@ -1,5 +1,23 @@
 keywords:
-- body:
+- args: []
+  assign: []
+  body:
+  - args:
+    - This is the second User Keyword
+    assign: []
+    body: []
+    name: Log (builtin)
+    type: keyword
+  - args: []
+    assign: []
+    body: []
+    name: First K (library)
+    type: keyword
+  name: Second K (library)
+  type: user-keyword
+- args: []
+  assign: []
+  body:
   - args:
     - This is the first User Keyword
     assign: []
@@ -22,24 +40,7 @@ keywords:
       type: keyword
     name: Second K (library)
     type: keyword
-  doc: ''
   name: First K (library)
-  type: user-keyword
-- args: []
-  assign: []
-  body:
-  - args:
-    - This is the second User Keyword
-    assign: []
-    body: []
-    name: Log (builtin)
-    type: keyword
-  - args: []
-    assign: []
-    body: []
-    name: First K (library)
-    type: keyword
-  name: Second K (library)
   type: user-keyword
 name: Library
 setup: null
