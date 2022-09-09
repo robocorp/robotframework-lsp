@@ -7,22 +7,35 @@ keywords:
       - Comment in keyword
       assign: []
       body: []
+      doc: ''
+      internal_name: comment(builtin)
+      kind: simple
       name: Comment (builtin)
       type: keyword
+    doc: ''
+    internal_name: anotherkeyword(my)
+    kind: simple
     name: Another keyword (my)
     type: keyword
   doc: ''
+  internal_name: mainimplementedkeyword(my)
+  kind: implemented
   name: Main Implemented Keyword (my)
   type: user-keyword
 - args: []
-  assign: []
   body:
   - args:
     - Comment in keyword
     assign: []
     body: []
+    doc: ''
+    internal_name: comment(builtin)
+    kind: simple
     name: Comment (builtin)
     type: keyword
+  doc: ''
+  internal_name: anotherkeyword(my)
+  kind: implemented
   name: Another keyword (my)
   type: user-keyword
 name: My
@@ -36,6 +49,9 @@ tasks:
         - This line IS executed. ELSE IF and ELSE are ignored.
         assign: []
         body: []
+        doc: ''
+        internal_name: log(builtin)
+        kind: simple
         name: Log (builtin)
         type: keyword
       condition: 1 == 1
@@ -45,11 +61,15 @@ tasks:
         - This line is NOT executed since the IF expression evaluated to True.
         assign: []
         body: []
+        doc: ''
+        internal_name: log(builtin)
+        kind: simple
         name: Log (builtin)
         type: keyword
       type: else-branch
     type: if
   doc: ''
+  internal_name: maintask(my)
   name: Main Task (my)
   setup: null
   teardown: null

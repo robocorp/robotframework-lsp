@@ -2,13 +2,18 @@ keywords:
 - args:
   - Arg1
   - Arg2
-  assign: []
   body:
   - args: []
     assign: []
     body: []
+    doc: ''
+    internal_name: call2
+    kind: simple
     name: Call 2
     type: keyword
+  doc: ''
+  internal_name: call1(my)
+  kind: implemented
   name: Call 1 (my)
   type: user-keyword
 name: My
@@ -24,11 +29,18 @@ tasks:
     - args: []
       assign: []
       body: []
+      doc: ''
+      internal_name: call2
+      kind: simple
       name: Call 2
       type: keyword
+    doc: ''
+    internal_name: call1(my)
+    kind: simple
     name: Call 1 (my)
     type: keyword
   doc: ''
+  internal_name: myfirsttask(my)
   name: My first task (my)
   setup: null
   teardown: null

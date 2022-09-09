@@ -698,3 +698,29 @@ Third K
     ws.put_document(TextDocumentItem(uri, text=contents))
 
     _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() <= 4, reason="IF not available in RF 4.")
+def test_flow_explorer_generate_model_keywords_name(
+    rf_server_api, data_regression, tmpdir
+):
+    from robocorp_ls_core.lsp import TextDocumentItem
+    from robocorp_ls_core import uris
+
+    contents = """
+*** Keywords ***
+my keyword
+    no operation
+
+*** Test Cases ***
+My test
+    my keyword
+    mykeyword
+    My Keyword
+"""
+
+    uri = uris.from_fs_path(str(tmpdir.join("test.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)

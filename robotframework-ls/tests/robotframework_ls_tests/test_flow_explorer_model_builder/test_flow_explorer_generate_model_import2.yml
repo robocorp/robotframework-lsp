@@ -1,22 +1,29 @@
 keywords:
 - args: []
-  assign: []
   body:
   - args:
     - Second Implemented Keyword - Comment
     assign: []
     body: []
+    doc: ''
+    internal_name: comment(builtin)
+    kind: simple
     name: Comment (builtin)
     type: keyword
+  doc: ''
+  internal_name: secondimplementedkeyword(library)
+  kind: implemented
   name: Second Implemented keyword (library)
   type: user-keyword
 - args: []
-  assign: []
   body:
   - args:
     - First Implemented Keyword - Comment
     assign: []
     body: []
+    doc: ''
+    internal_name: comment(builtin)
+    kind: simple
     name: Comment (builtin)
     type: keyword
   - args: []
@@ -26,19 +33,30 @@ keywords:
       - Second Implemented Keyword - Comment
       assign: []
       body: []
+      doc: ''
+      internal_name: comment(builtin)
+      kind: simple
       name: Comment (builtin)
       type: keyword
+    doc: ''
+    internal_name: secondimplementedkeyword(library)
+    kind: simple
     name: Second Implemented keyword (library)
     type: keyword
+  doc: ''
+  internal_name: firstimplementedkeyword(library)
+  kind: implemented
   name: First Implemented Keyword (library)
   type: user-keyword
 - args: []
-  assign: []
   body:
   - args:
     - This is the first User Keyword
     assign: []
     body: []
+    doc: ''
+    internal_name: log(builtin)
+    kind: simple
     name: Log (builtin)
     type: keyword
   - args: []
@@ -48,6 +66,9 @@ keywords:
       - First Implemented Keyword - Comment
       assign: []
       body: []
+      doc: ''
+      internal_name: comment(builtin)
+      kind: simple
       name: Comment (builtin)
       type: keyword
     - args: []
@@ -57,21 +78,35 @@ keywords:
         - Second Implemented Keyword - Comment
         assign: []
         body: []
+        doc: ''
+        internal_name: comment(builtin)
+        kind: simple
         name: Comment (builtin)
         type: keyword
+      doc: ''
+      internal_name: secondimplementedkeyword(library)
+      kind: simple
       name: Second Implemented keyword (library)
       type: keyword
+    doc: ''
+    internal_name: firstimplementedkeyword(library)
+    kind: simple
     name: First Implemented Keyword (library)
     type: keyword
+  doc: ''
+  internal_name: firstk(my)
+  kind: implemented
   name: First K (my)
   type: user-keyword
 - args: []
-  assign: []
   body:
   - args:
     - This is the second User Keyword
     assign: []
     body: []
+    doc: ''
+    internal_name: log(builtin)
+    kind: simple
     name: Log (builtin)
     type: keyword
   - args: []
@@ -81,10 +116,19 @@ keywords:
       - Second Implemented Keyword - Comment
       assign: []
       body: []
+      doc: ''
+      internal_name: comment(builtin)
+      kind: simple
       name: Comment (builtin)
       type: keyword
+    doc: ''
+    internal_name: secondimplementedkeyword(library)
+    kind: simple
     name: Second Implemented keyword (library)
     type: keyword
+  doc: ''
+  internal_name: secondk(my)
+  kind: implemented
   name: Second K (my)
   type: user-keyword
 name: My
@@ -99,6 +143,9 @@ tasks:
       - First Implemented Keyword - Comment
       assign: []
       body: []
+      doc: ''
+      internal_name: comment(builtin)
+      kind: simple
       name: Comment (builtin)
       type: keyword
     - args: []
@@ -108,10 +155,19 @@ tasks:
         - Second Implemented Keyword - Comment
         assign: []
         body: []
+        doc: ''
+        internal_name: comment(builtin)
+        kind: simple
         name: Comment (builtin)
         type: keyword
+      doc: ''
+      internal_name: secondimplementedkeyword(library)
+      kind: simple
       name: Second Implemented keyword (library)
       type: keyword
+    doc: ''
+    internal_name: firstimplementedkeyword(library)
+    kind: simple
     name: First Implemented Keyword (library)
     type: keyword
   - args: []
@@ -121,11 +177,18 @@ tasks:
       - Second Implemented Keyword - Comment
       assign: []
       body: []
+      doc: ''
+      internal_name: comment(builtin)
+      kind: simple
       name: Comment (builtin)
       type: keyword
+    doc: ''
+    internal_name: secondimplementedkeyword(library)
+    kind: simple
     name: Second Implemented keyword (library)
     type: keyword
   doc: ''
+  internal_name: mainfirsttask(my)
   name: Main First Task (my)
   setup: null
   teardown: null
@@ -140,6 +203,9 @@ tasks:
           - This is the first User Keyword
           assign: []
           body: []
+          doc: ''
+          internal_name: log(builtin)
+          kind: simple
           name: Log (builtin)
           type: keyword
         - args: []
@@ -149,6 +215,9 @@ tasks:
             - First Implemented Keyword - Comment
             assign: []
             body: []
+            doc: ''
+            internal_name: comment(builtin)
+            kind: simple
             name: Comment (builtin)
             type: keyword
           - args: []
@@ -158,12 +227,24 @@ tasks:
               - Second Implemented Keyword - Comment
               assign: []
               body: []
+              doc: ''
+              internal_name: comment(builtin)
+              kind: simple
               name: Comment (builtin)
               type: keyword
+            doc: ''
+            internal_name: secondimplementedkeyword(library)
+            kind: simple
             name: Second Implemented keyword (library)
             type: keyword
+          doc: ''
+          internal_name: firstimplementedkeyword(library)
+          kind: simple
           name: First Implemented Keyword (library)
           type: keyword
+        doc: ''
+        internal_name: firstk(my)
+        kind: simple
         name: First K (my)
         type: keyword
       condition: 1 == 1
@@ -176,6 +257,9 @@ tasks:
           - This is the second User Keyword
           assign: []
           body: []
+          doc: ''
+          internal_name: log(builtin)
+          kind: simple
           name: Log (builtin)
           type: keyword
         - args: []
@@ -185,15 +269,25 @@ tasks:
             - Second Implemented Keyword - Comment
             assign: []
             body: []
+            doc: ''
+            internal_name: comment(builtin)
+            kind: simple
             name: Comment (builtin)
             type: keyword
+          doc: ''
+          internal_name: secondimplementedkeyword(library)
+          kind: simple
           name: Second Implemented keyword (library)
           type: keyword
+        doc: ''
+        internal_name: secondk(my)
+        kind: simple
         name: Second K (my)
         type: keyword
       type: else-branch
     type: if
   doc: ''
+  internal_name: mainsecondtask(my)
   name: Main Second Task (my)
   setup: null
   teardown: null

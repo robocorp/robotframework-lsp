@@ -7,22 +7,35 @@ keywords:
       - Something
       assign: []
       body: []
+      doc: ''
+      internal_name: log(builtin)
+      kind: simple
       name: Log (builtin)
       type: keyword
+    doc: ''
+    internal_name: call2(my)
+    kind: simple
     name: Call 2 (my)
     type: keyword
   doc: ''
+  internal_name: call1(my)
+  kind: implemented
   name: Call 1 (my)
   type: user-keyword
 - args: []
-  assign: []
   body:
   - args:
     - Something
     assign: []
     body: []
+    doc: ''
+    internal_name: log(builtin)
+    kind: simple
     name: Log (builtin)
     type: keyword
+  doc: ''
+  internal_name: call2(my)
+  kind: implemented
   name: Call 2 (my)
   type: user-keyword
 name: My

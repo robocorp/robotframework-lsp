@@ -8,9 +8,13 @@ tasks:
     - Something
     assign: []
     body: []
+    doc: ''
+    internal_name: log(builtin)
+    kind: simple
     name: Log (builtin)
     type: keyword
   doc: ''
+  internal_name: myfirsttask(my)
   name: My first task (my)
   setup: null
   teardown: null
@@ -20,9 +24,13 @@ tasks:
     - Something
     assign: []
     body: []
+    doc: ''
+    internal_name: log(builtin)
+    kind: simple
     name: Log (builtin)
     type: keyword
   doc: ''
+  internal_name: mysecondtask(my)
   name: My second task (my)
   setup: null
   teardown: null

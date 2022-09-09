@@ -7,22 +7,35 @@ keywords:
       - Comment in keyword
       assign: []
       body: []
+      doc: ''
+      internal_name: comment(builtin)
+      kind: simple
       name: Comment (builtin)
       type: keyword
+    doc: ''
+    internal_name: anotherkeyword(my)
+    kind: simple
     name: Another keyword (my)
     type: keyword
   doc: ''
+  internal_name: mainimplementedkeyword(my)
+  kind: implemented
   name: Main Implemented Keyword (my)
   type: user-keyword
 - args: []
-  assign: []
   body:
   - args:
     - Comment in keyword
     assign: []
     body: []
+    doc: ''
+    internal_name: comment(builtin)
+    kind: simple
     name: Comment (builtin)
     type: keyword
+  doc: ''
+  internal_name: anotherkeyword(my)
+  kind: implemented
   name: Another keyword (my)
   type: user-keyword
 name: My
@@ -48,6 +61,7 @@ tasks:
       type: else-branch
     type: if
   doc: ''
+  internal_name: maintask(my)
   name: Main Task (my)
   setup: null
   teardown: null

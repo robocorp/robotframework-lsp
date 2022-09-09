@@ -1,51 +1,59 @@
-from contextlib import contextmanager
-from robotframework_ls.impl.protocols import ICompletionContext, IKeywordFound, INode
-from typing import List, Any, Dict, Tuple
 import os
+from contextlib import contextmanager
+from typing import List, Any, Dict, Set, Tuple, TypedDict
+
 from robocorp_ls_core.basic import isinstance_name
+from robotframework_ls.impl.protocols import ICompletionContext, IKeywordFound, INode
+from robotframework_ls.impl.text_utilities import (
+    normalize_robot_name as get_internal_name,
+)
+
+
+class _UserKeywordType(TypedDict):
+    type: str
+    name: str
+    internal_name: str
+    kind: str
+    doc: str
+    args: List[str]
+    body: List[Dict]
 
 
 class _KeywordRecursionStack:
-    _stack: Dict
+    _stack: Set[str]
 
     def __init__(self) -> None:
-        self._stack = {}
+        self._stack = set()
 
-    def has(self, keyword_name: str) -> bool:
-        return keyword_name in self._stack
-
-    def push(self, keyword_name: str) -> None:
-        self._stack.update({keyword_name: None})
-
-    def pop(self, keyword_name: str) -> None:
-        self._stack.pop(keyword_name)
+    def __contains__(self, keyword_name: str) -> bool:
+        return get_internal_name(keyword_name) in self._stack
 
     @contextmanager
     def scoped(self, keyword_name):
-        self.push(keyword_name)
+        self._stack.add(get_internal_name(keyword_name))
         yield
-        self.pop(keyword_name)
+        self._stack.remove(get_internal_name(keyword_name))
 
 
 class _UserKeywordCollector:
-    _user_keywords: List[Any]
-    _name_collection: Dict
+    _user_keywords: List[_UserKeywordType]
+    _name_collection: Set[str]
 
     def __init__(self) -> None:
         self._user_keywords = []
-        self._name_collection = {}
+        self._name_collection = set()
 
     @property
-    def keywords(self) -> List[Any]:
+    def keywords(self) -> List[_UserKeywordType]:
         return self._user_keywords
 
-    def has(self, keyword_name) -> bool:
-        return keyword_name in self._name_collection
+    def __contains__(self, keyword_name: str) -> bool:
+        return get_internal_name(keyword_name) in self._name_collection
 
-    def append(self, keyword: Any) -> None:
+    def append(self, keyword: _UserKeywordType) -> None:
         if "name" in keyword:
             self._user_keywords.append(keyword)
-            self._name_collection.update({keyword["name"]: None})
+            self._name_collection.add(get_internal_name(keyword["name"]))
 
 
 def _compute_suite_name(completion_context: ICompletionContext) -> str:
@@ -89,6 +97,7 @@ def build_flow_explorer_model(completion_contexts: List[ICompletionContext]) -> 
                 test_info = {
                     "type": "task",
                     "name": test_name,
+                    "internal_name": get_internal_name(test_name),
                     "doc": "",
                     "setup": None,
                     "teardown": None,
@@ -112,17 +121,16 @@ def build_flow_explorer_model(completion_contexts: List[ICompletionContext]) -> 
                 user_keyword_body: list = []
                 user_keyword_info = {
                     "type": "user-keyword",
+                    "kind": "implemented",
                     "name": user_keyword_name,
+                    "internal_name": get_internal_name(user_keyword_name),
                     "doc": "",
                     "body": user_keyword_body,
                 }
 
                 # Keywords var will be populated when building hierarchy if importing statements
                 # Checking to see if it already exists before appending
-                for keyw in keywords:
-                    if keyw["name"] == user_keyword_name:
-                        break
-                else:
+                if get_internal_name(user_keyword_name) not in user_keywords_collector:
                     keywords.append(user_keyword_info)
                     for node_info in ast_utils.iter_all_nodes(
                         user_keyword.node, recursive=False
@@ -172,9 +180,11 @@ def _build_hierarchy(
                 if isinstance_name(keyword_usage_node, "KeywordCall"):
                     keyword = {
                         "type": "keyword",
+                        "kind": "simple",
                         "assign": keyword_usage_node.assign,
                         "args": keyword_usage_node.args,
                         "body": keyword_body,
+                        "doc": "",
                     }
                     parent_body.append(keyword)
 
@@ -192,7 +202,7 @@ def _build_hierarchy(
 
                     # Fallback name if we don't know where it's defined.
                     keyword["name"] = f"{keyword_usage_node.keyword}"
-
+                    keyword["internal_name"] = get_internal_name(keyword["name"])
                     if definitions:
                         # Use the first one
                         definition = next(iter(definitions))
@@ -205,6 +215,7 @@ def _build_hierarchy(
                             keyword[
                                 "name"
                             ] = f"{keyword_usage_node.keyword} ({keyword_found.resource_name.lower()})"
+                        keyword["internal_name"] = get_internal_name(keyword["name"])
 
                         # If it was found in a library we don't recurse anymore.
                         keyword_ast = keyword_found.keyword_ast
@@ -214,7 +225,8 @@ def _build_hierarchy(
                         if definition_completion_context is None:
                             continue
                         # If found in recursion stack we don't recurse anymore.
-                        if recursion_stack.has(keyword["name"]):
+                        if keyword["name"] in recursion_stack:
+                            keyword["kind"] = "recursion-leaf"
                             continue
                         suite_name = _compute_suite_name(definition_completion_context)
                         # Ok, it isn't a library keyword (as we have its AST). Keep recursing.
@@ -233,12 +245,21 @@ def _build_hierarchy(
                                     user_keywords_collector=user_keywords_collector,
                                 )
                         # If the current keyword has body, the it is a User Keyword
-                        if len(keyword_body) > 0 and not user_keywords_collector.has(
-                            keyword_name=keyword["name"]
+                        if (
+                            len(keyword_body) > 0
+                            and get_internal_name(keyword["name"])
+                            not in user_keywords_collector
                         ):
-                            keyword_copy = keyword.copy()
-                            keyword_copy["type"] = "user-keyword"
-                            user_keywords_collector.append(keyword=keyword_copy)
+                            user_keyword: _UserKeywordType = {
+                                "type": "user-keyword",
+                                "kind": "implemented",
+                                "body": keyword["body"],
+                                "name": keyword["name"],
+                                "internal_name": keyword["internal_name"],
+                                "doc": keyword["doc"],
+                                "args": keyword["args"],
+                            }
+                            user_keywords_collector.append(user_keyword)
 
                 elif isinstance_name(keyword_usage_node, "Teardown") or isinstance_name(
                     keyword_usage_node, "Setup"

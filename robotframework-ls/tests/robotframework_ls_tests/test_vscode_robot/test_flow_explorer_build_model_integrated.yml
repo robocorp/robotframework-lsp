@@ -10,9 +10,13 @@ result:
       - Something
       assign: []
       body: []
+      doc: ''
+      internal_name: log(builtin)
+      kind: simple
       name: Log (builtin)
       type: keyword
     doc: ''
+    internal_name: myfirsttask(untitled:untitled-1)
     name: My first task (untitled:untitled-1)
     setup: null
     teardown: null
@@ -22,9 +26,13 @@ result:
       - Something
       assign: []
       body: []
+      doc: ''
+      internal_name: log(builtin)
+      kind: simple
       name: Log (builtin)
       type: keyword
     doc: ''
+    internal_name: mysecondtask(untitled:untitled-1)
     name: My second task (untitled:untitled-1)
     setup: null
     teardown: null

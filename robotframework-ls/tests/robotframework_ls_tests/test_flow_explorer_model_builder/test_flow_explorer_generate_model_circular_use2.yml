@@ -1,27 +1,37 @@
 keywords:
 - args: []
-  assign: []
   body:
   - args:
     - This is the first User Keyword
     assign: []
     body: []
+    doc: ''
+    internal_name: log(builtin)
+    kind: simple
     name: Log (builtin)
     type: keyword
   - args: []
     assign: []
     body: []
+    doc: ''
+    internal_name: firstk(library)
+    kind: recursion-leaf
     name: First K (library)
     type: keyword
+  doc: ''
+  internal_name: firstk(library)
+  kind: implemented
   name: First K (library)
   type: user-keyword
 - args: []
-  assign: []
   body:
   - args:
     - This is the second User Keyword
     assign: []
     body: []
+    doc: ''
+    internal_name: log(builtin)
+    kind: simple
     name: Log (builtin)
     type: keyword
   - args: []
@@ -31,20 +41,35 @@ keywords:
       - This is the first User Keyword
       assign: []
       body: []
+      doc: ''
+      internal_name: log(builtin)
+      kind: simple
       name: Log (builtin)
       type: keyword
     - args: []
       assign: []
       body: []
+      doc: ''
+      internal_name: firstk(library)
+      kind: recursion-leaf
       name: First K (library)
       type: keyword
+    doc: ''
+    internal_name: firstk(library)
+    kind: simple
     name: First K (library)
     type: keyword
   - args: []
     assign: []
     body: []
+    doc: ''
+    internal_name: secondk(library)
+    kind: recursion-leaf
     name: Second K (library)
     type: keyword
+  doc: ''
+  internal_name: secondk(library)
+  kind: implemented
   name: Second K (library)
   type: user-keyword
 name: Library
@@ -61,13 +86,22 @@ tasks:
           - This is the first User Keyword
           assign: []
           body: []
+          doc: ''
+          internal_name: log(builtin)
+          kind: simple
           name: Log (builtin)
           type: keyword
         - args: []
           assign: []
           body: []
+          doc: ''
+          internal_name: firstk(library)
+          kind: recursion-leaf
           name: First K (library)
           type: keyword
+        doc: ''
+        internal_name: firstk(library)
+        kind: simple
         name: First K (library)
         type: keyword
       condition: 1 == 1
@@ -80,6 +114,9 @@ tasks:
           - This is the second User Keyword
           assign: []
           body: []
+          doc: ''
+          internal_name: log(builtin)
+          kind: simple
           name: Log (builtin)
           type: keyword
         - args: []
@@ -89,25 +126,41 @@ tasks:
             - This is the first User Keyword
             assign: []
             body: []
+            doc: ''
+            internal_name: log(builtin)
+            kind: simple
             name: Log (builtin)
             type: keyword
           - args: []
             assign: []
             body: []
+            doc: ''
+            internal_name: firstk(library)
+            kind: recursion-leaf
             name: First K (library)
             type: keyword
+          doc: ''
+          internal_name: firstk(library)
+          kind: simple
           name: First K (library)
           type: keyword
         - args: []
           assign: []
           body: []
+          doc: ''
+          internal_name: secondk(library)
+          kind: recursion-leaf
           name: Second K (library)
           type: keyword
+        doc: ''
+        internal_name: secondk(library)
+        kind: simple
         name: Second K (library)
         type: keyword
       type: else-branch
     type: if
   doc: ''
+  internal_name: mainsecondtask(library)
   name: Main Second Task (library)
   setup: null
   teardown: null
