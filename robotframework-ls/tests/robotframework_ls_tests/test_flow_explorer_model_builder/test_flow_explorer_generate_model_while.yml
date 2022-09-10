@@ -44,19 +44,17 @@ source: my.robot
 tasks:
 - body:
   - body:
-    - body:
-      - args:
-        - Some comment
-        assign: []
-        body: []
-        doc: ''
-        internal_name: comment(builtin)
-        kind: simple
-        name: Comment (builtin)
-        type: keyword
-      condition: ${TRUE} AND ${False}
-      type: if-branch
-    type: if
+    - args:
+      - Executed until the default loop limit (10000) is hit.
+      assign: []
+      body: []
+      doc: ''
+      internal_name: comment(builtin)
+      kind: simple
+      name: Comment (builtin)
+      type: keyword
+    condition: 'True'
+    type: while
   doc: ''
   internal_name: maintask(my)
   name: Main Task (my)

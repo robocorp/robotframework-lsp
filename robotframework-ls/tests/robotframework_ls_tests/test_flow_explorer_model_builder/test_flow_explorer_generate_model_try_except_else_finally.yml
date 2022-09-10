@@ -46,7 +46,18 @@ tasks:
   - body:
     - body:
       - args:
-        - Some comment
+        - Error message
+        assign: []
+        body: []
+        doc: ''
+        internal_name: fail(builtin)
+        kind: simple
+        name: Fail (builtin)
+        type: keyword
+      type: try-branch
+    - body:
+      - args:
+        - EXCEPT with Error message
         assign: []
         body: []
         doc: ''
@@ -54,9 +65,45 @@ tasks:
         kind: simple
         name: Comment (builtin)
         type: keyword
-      condition: ${TRUE} AND ${False}
-      type: if-branch
-    type: if
+      patterns:
+      - Error message
+      type: except-branch
+    - body:
+      - args:
+        - EXCEPT with Another Error message
+        assign: []
+        body: []
+        doc: ''
+        internal_name: comment(builtin)
+        kind: simple
+        name: Comment (builtin)
+        type: keyword
+      patterns:
+      - Another Error message
+      type: except-branch
+    - body:
+      - args:
+        - Executed if no exceptions occur.
+        assign: []
+        body: []
+        doc: ''
+        internal_name: log(builtin)
+        kind: simple
+        name: Log (builtin)
+        type: keyword
+      type: else-branch
+    - body:
+      - args:
+        - FINALLY is always executed.
+        assign: []
+        body: []
+        doc: ''
+        internal_name: log(builtin)
+        kind: simple
+        name: Log (builtin)
+        type: keyword
+      type: finally-branch
+    type: try
   doc: ''
   internal_name: maintask(my)
   name: Main Task (my)

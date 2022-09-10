@@ -46,17 +46,38 @@ tasks:
   - body:
     - body:
       - args:
-        - Some comment
+        - Catastrophic failure!
         assign: []
         body: []
         doc: ''
-        internal_name: comment(builtin)
+        internal_name: fail(builtin)
         kind: simple
-        name: Comment (builtin)
+        name: Fail (builtin)
         type: keyword
-      condition: ${TRUE} AND ${False}
-      type: if-branch
-    type: if
+      type: try-branch
+    - body:
+      - args:
+        - Catches any exception.
+        assign: []
+        body: []
+        doc: ''
+        internal_name: log(builtin)
+        kind: simple
+        name: Log (builtin)
+        type: keyword
+      type: except-branch
+    - body:
+      - args:
+        - FINALLY is always executed.
+        assign: []
+        body: []
+        doc: ''
+        internal_name: log(builtin)
+        kind: simple
+        name: Log (builtin)
+        type: keyword
+      type: finally-branch
+    type: try
   doc: ''
   internal_name: maintask(my)
   name: Main Task (my)

@@ -43,19 +43,27 @@ setup: null
 source: my.robot
 tasks:
 - body:
+  - args:
+    - This is setup zone.
+    name: Log
+    subtype: KEYWORD
+    type: keyword
   - body:
     - body:
+      - type: break
+      condition: 1 == 1
+      type: if-branch
+    - body:
       - args:
-        - Some comment
+        - Something on else.
         assign: []
         body: []
         doc: ''
-        internal_name: comment(builtin)
+        internal_name: log(builtin)
         kind: simple
-        name: Comment (builtin)
+        name: Log (builtin)
         type: keyword
-      condition: ${TRUE} AND ${False}
-      type: if-branch
+      type: else-branch
     type: if
   doc: ''
   internal_name: maintask(my)

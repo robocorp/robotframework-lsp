@@ -24,7 +24,7 @@ _BASIC_TEXT = """
 *** Tasks ***
 My first task
     Log     Something
-    
+
 My second task
     Log     Something
 """
@@ -41,7 +41,6 @@ def _build_model_and_check(rf_server_api, uri, data_regression, basename=None):
 
     # Uncomment to print model.
     # import json
-    #
     # print(json.dumps(model))
 
 
@@ -70,6 +69,24 @@ def test_flow_explorer_generate_model_in_memory(rf_server_api, data_regression):
     )
 
 
+def test_flow_explorer_generate_model_no_task(rf_server_api, data_regression):
+    from robocorp_ls_core.lsp import TextDocumentItem
+
+    contents = """
+*** Keywords ***
+Call 1
+    Call 2
+
+Call 2
+    Log     Something
+"""
+    uri = "my.robot"
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
 def test_flow_explorer_generate_model_multi_level(rf_server_api, data_regression):
     from robocorp_ls_core.lsp import TextDocumentItem
 
@@ -78,10 +95,10 @@ def test_flow_explorer_generate_model_multi_level(rf_server_api, data_regression
 My first task
     Call 1
 
-*** Keywords ***    
+*** Keywords ***
 Call 1
     Call 2
-    
+
 Call 2
     Log     Something
 """
@@ -100,7 +117,7 @@ def test_flow_explorer_generate_model_arguments(rf_server_api, data_regression):
 My first task
     Call 1    Arg1    Arg2
 
-*** Keywords ***    
+*** Keywords ***
 Call 1
     [Arguments]    ${arg1}    ${arg2}
     Call 2
@@ -119,20 +136,590 @@ def test_flow_explorer_generate_model_if(rf_server_api, data_regression):
     contents = """
 *** Tasks ***
 Main Task
-  IF  ${TRUE} AND ${False}
-  Main Implemented Keyword
-  ELSE
-  Comment  Some comment
-  END
+    IF  ${TRUE} AND ${False}
+        Comment  Some comment
+    END
 
 *** Keywords ***
 Main Implemented Keyword
     Another keyword
-    
+
 Another keyword
-  Comment  Comment in keyword
+    Comment  Comment in keyword
 """
     uri = "my.robot"
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="IF not available in RF 3.")
+def test_flow_explorer_generate_model_if_else(rf_server_api, data_regression):
+    from robocorp_ls_core.lsp import TextDocumentItem
+
+    contents = """
+*** Tasks ***
+Main Task
+    IF    1 == 1
+        Log    This line IS executed. ELSE IF and ELSE are ignored.
+    ELSE
+        Log    This line is NOT executed since the IF expression evaluated to True.
+    END
+
+*** Keywords ***
+Main Implemented Keyword
+    Another keyword
+
+Another keyword
+    Comment  Comment in keyword
+"""
+    uri = "my.robot"
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(
+    get_robot_major_version() <= 4, reason="ELSEIF not available in RF 4."
+)
+def test_flow_explorer_generate_model_if_elseif(rf_server_api, data_regression):
+    from robocorp_ls_core.lsp import TextDocumentItem
+
+    contents = """
+*** Tasks ***
+Main Task
+    IF    1 == 1
+        Log    If branch
+    ELSE IF    2 == 2
+        Log    Else If branch
+    ELSE
+        Log    Else branch
+    END
+
+
+*** Keywords ***
+Main Implemented Keyword
+    Another keyword
+
+Another keyword
+    Comment  Comment in keyword
+"""
+    uri = "my.robot"
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() < 4, reason="FOR not available in RF 3.")
+def test_flow_explorer_generate_model_for(rf_server_api, data_regression):
+    from robocorp_ls_core.lsp import TextDocumentItem
+
+    contents = """
+*** Variables ***
+@{ROBOTS}=      Bender    Johnny5    Terminator    Robocop
+
+
+*** Tasks ***
+Main Task
+    FOR    ${robot}    IN    @{ROBOTS}
+        Comment    ${robot}
+    END
+
+*** Keywords ***
+Main Implemented Keyword
+    Another keyword
+
+Another keyword
+    Comment  Comment in keyword
+"""
+    uri = "my.robot"
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(
+    get_robot_major_version() <= 4, reason="WHILE not available in RF 4."
+)
+def test_flow_explorer_generate_model_while(rf_server_api, data_regression):
+    from robocorp_ls_core.lsp import TextDocumentItem
+
+    contents = """
+*** Tasks ***
+Main Task
+    WHILE    True
+        Comment    Executed until the default loop limit (10000) is hit.
+    END
+
+*** Keywords ***
+Main Implemented Keyword
+    Another keyword
+
+Another keyword
+    Comment  Comment in keyword
+"""
+    uri = "my.robot"
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() <= 4, reason="TRY not available in RF 4.")
+def test_flow_explorer_generate_model_try(rf_server_api, data_regression):
+    from robocorp_ls_core.lsp import TextDocumentItem
+
+    contents = """
+*** Tasks ***
+Main Task
+    TRY
+        Fail
+    EXCEPT    Error message
+        Comment    EXCEPT with Error message
+    EXCEPT    Another Error message
+        Comment    EXCEPT with Another Error message
+    END
+
+*** Keywords ***
+Main Implemented Keyword
+    Another keyword
+
+Another keyword
+    Comment  Comment in keyword
+"""
+    uri = "my.robot"
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() <= 4, reason="TRY not available in RF 4.")
+def test_flow_explorer_generate_model_try_finally(rf_server_api, data_regression):
+    from robocorp_ls_core.lsp import TextDocumentItem
+
+    contents = """
+*** Tasks ***
+Main Task
+    TRY
+        Log    All good!
+    FINALLY
+        Log    FINALLY is always executed.
+    END
+
+*** Keywords ***
+Main Implemented Keyword
+    Another keyword
+
+Another keyword
+    Comment  Comment in keyword
+"""
+    uri = "my.robot"
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() <= 4, reason="TRY not available in RF 4.")
+def test_flow_explorer_generate_model_try_except_finally(
+    rf_server_api, data_regression
+):
+    from robocorp_ls_core.lsp import TextDocumentItem
+
+    contents = """
+*** Tasks ***
+Main Task
+    TRY
+        Fail    Catastrophic failure!
+    EXCEPT
+        Log    Catches any exception.
+    FINALLY
+        Log    FINALLY is always executed.
+    END
+
+*** Keywords ***
+Main Implemented Keyword
+    Another keyword
+
+Another keyword
+    Comment  Comment in keyword
+"""
+    uri = "my.robot"
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() <= 4, reason="TRY not available in RF 4.")
+def test_flow_explorer_generate_model_try_except_else_finally(
+    rf_server_api, data_regression
+):
+    from robocorp_ls_core.lsp import TextDocumentItem
+
+    contents = """
+*** Tasks ***
+Main Task
+    TRY
+        Fail    Error message
+    EXCEPT    Error message
+        Comment    EXCEPT with Error message
+    EXCEPT    Another Error message
+        Comment    EXCEPT with Another Error message
+    ELSE
+        Log    Executed if no exceptions occur.
+    FINALLY
+        Log    FINALLY is always executed.
+    END
+
+*** Keywords ***
+Main Implemented Keyword
+    Another keyword
+
+Another keyword
+    Comment  Comment in keyword
+"""
+    uri = "my.robot"
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(
+    get_robot_major_version() <= 4,
+    reason="BREAK/RETURN/CONTINUE not available in RF 4.",
+)
+def test_flow_explorer_generate_model_break_return_continue(
+    rf_server_api, data_regression
+):
+    from robocorp_ls_core.lsp import TextDocumentItem
+
+    contents = """
+*** Tasks ***
+Main Task
+    IF    1 == 1
+        BREAK
+    ELSE IF    2 == 2
+        RETURN
+    ELSE IF    3 == 3
+        CONTINUE
+    ELSE
+        Log    This line is NOT executed since the IF expression evaluated to True.
+    END
+
+*** Keywords ***
+Main Implemented Keyword
+    Another keyword
+
+Another keyword
+    Comment  Comment in keyword
+"""
+    uri = "my.robot"
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(
+    get_robot_major_version() <= 4, reason="TEARDOWN not available in RF 4."
+)
+def test_flow_explorer_generate_model_teardown(rf_server_api, data_regression):
+    from robocorp_ls_core.lsp import TextDocumentItem
+
+    contents = """
+*** Tasks ***
+Main Task
+    IF    1 == 1
+        BREAK
+    ELSE
+        Log    Something on else.
+    END
+    [Teardown]  Log    This is teardown zone.
+
+*** Keywords ***
+Main Implemented Keyword
+    Another keyword
+
+Another keyword
+    Comment  Comment in keyword
+"""
+    uri = "my.robot"
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(
+    get_robot_major_version() <= 4, reason="SETUP not available in RF 4."
+)
+def test_flow_explorer_generate_model_setup(rf_server_api, data_regression):
+    from robocorp_ls_core.lsp import TextDocumentItem
+
+    contents = """
+*** Tasks ***
+Main Task
+    [Setup]  Log    This is setup zone.
+    IF    1 == 1
+        BREAK
+    ELSE
+        Log    Something on else.
+    END
+
+*** Keywords ***
+Main Implemented Keyword
+    Another keyword
+
+Another keyword
+    Comment  Comment in keyword
+"""
+    uri = "my.robot"
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+def test_flow_explorer_generate_model_import1(rf_server_api, data_regression, tmpdir):
+    from robocorp_ls_core.lsp import TextDocumentItem
+    from robocorp_ls_core import uris
+
+    contents = """
+*** Keywords ***
+First Implemented Keyword
+    Comment  First Implemented Keyword - Comment
+    Second Implemented keyword
+
+Second Implemented keyword
+    Comment  Second Implemented Keyword - Comment
+"""
+
+    uri = uris.from_fs_path(str(tmpdir.join("library.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    contents = """
+*** Settings ***
+Resource    library.robot
+
+*** Tasks ***
+Main Task
+    First Implemented Keyword
+    Second Implemented keyword
+
+"""
+    uri = uris.from_fs_path(str(tmpdir.join("my.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() <= 4, reason="IF not available in RF 4.")
+def test_flow_explorer_generate_model_import2(rf_server_api, data_regression, tmpdir):
+    from robocorp_ls_core.lsp import TextDocumentItem
+    from robocorp_ls_core import uris
+
+    contents = """
+*** Keywords ***
+First Implemented Keyword
+    Comment  First Implemented Keyword - Comment
+    Second Implemented keyword
+
+Second Implemented keyword
+    Comment  Second Implemented Keyword - Comment
+"""
+
+    uri = uris.from_fs_path(str(tmpdir.join("library.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    contents = """
+*** Settings ***
+Resource    library.robot
+
+*** Tasks ***
+Main First Task
+    First Implemented Keyword
+    Second Implemented keyword
+
+Main Second Task
+    IF    1 == 1    First K    ELSE    Second K
+
+*** Keywords ***
+First K
+    Log    This is the first User Keyword
+    First Implemented Keyword
+
+Second K
+    Log    This is the second User Keyword
+    Second Implemented keyword
+
+
+"""
+    uri = uris.from_fs_path(str(tmpdir.join("my.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() <= 4, reason="IF not available in RF 4.")
+def test_flow_explorer_generate_model_circular_use1(
+    rf_server_api, data_regression, tmpdir
+):
+    from robocorp_ls_core.lsp import TextDocumentItem
+    from robocorp_ls_core import uris
+
+    contents = """
+*** Tasks ***
+Main Second Task
+    IF    1 == 1    First K    ELSE    Second K
+
+*** Keywords ***
+First K
+    Log    This is the first User Keyword
+    Second K
+
+Second K
+    Log    This is the second User Keyword
+    First K
+"""
+
+    uri = uris.from_fs_path(str(tmpdir.join("library.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() <= 4, reason="IF not available in RF 4.")
+def test_flow_explorer_generate_model_circular_use2(
+    rf_server_api, data_regression, tmpdir
+):
+    from robocorp_ls_core.lsp import TextDocumentItem
+    from robocorp_ls_core import uris
+
+    contents = """
+*** Tasks ***
+Main Second Task
+    IF    1 == 1    First K    ELSE    Second K
+
+*** Keywords ***
+First K
+    Log    This is the first User Keyword
+    First K
+
+Second K
+    Log    This is the second User Keyword
+    First K
+    Second K
+"""
+
+    uri = uris.from_fs_path(str(tmpdir.join("library.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() <= 4, reason="IF not available in RF 4.")
+def test_flow_explorer_generate_model_circular_use3(
+    rf_server_api, data_regression, tmpdir
+):
+    from robocorp_ls_core.lsp import TextDocumentItem
+    from robocorp_ls_core import uris
+
+    contents = """
+*** Keywords ***
+First Implemented Keyword
+    Comment  First Implemented Keyword - Comment
+    Second Implemented keyword
+
+Second Implemented keyword
+    Comment  Second Implemented Keyword - Comment
+"""
+
+    uri = uris.from_fs_path(str(tmpdir.join("library.1.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    contents = """
+*** Settings ***
+Resource    library.1.robot
+
+*** Keywords ***
+Third Implemented Keyword
+    Comment  Third Implemented Keyword - Comment
+    Second Implemented keyword
+
+"""
+
+    uri = uris.from_fs_path(str(tmpdir.join("library.2.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    contents = """
+*** Settings ***
+Resource    library.1.robot
+Resource    library.2.robot
+
+*** Tasks ***
+Main First Task
+    First Implemented Keyword
+    Second Implemented keyword
+    Third Implemented Keyword
+
+Main Second Task
+    IF    1 == 1    First K    ELSE    Second K
+
+*** Keywords ***
+First K
+    Log    This is the first User Keyword
+    First Implemented Keyword
+
+Second K
+    Log    This is the second User Keyword
+    Second Implemented keyword
+
+Third K
+    Log    This is the third User Keyword
+    Third Implemented Keyword
+
+"""
+    uri = uris.from_fs_path(str(tmpdir.join("my.robot")))
+    ws = rf_server_api.workspace
+    ws.put_document(TextDocumentItem(uri, text=contents))
+
+    _build_model_and_check(rf_server_api, uri, data_regression)
+
+
+@pytest.mark.skipif(get_robot_major_version() <= 4, reason="IF not available in RF 4.")
+def test_flow_explorer_generate_model_keywords_name(
+    rf_server_api, data_regression, tmpdir
+):
+    from robocorp_ls_core.lsp import TextDocumentItem
+    from robocorp_ls_core import uris
+
+    contents = """
+*** Keywords ***
+my keyword
+    no operation
+
+*** Test Cases ***
+My test
+    my keyword
+    mykeyword
+    My Keyword
+"""
+
+    uri = uris.from_fs_path(str(tmpdir.join("test.robot")))
     ws = rf_server_api.workspace
     ws.put_document(TextDocumentItem(uri, text=contents))
 

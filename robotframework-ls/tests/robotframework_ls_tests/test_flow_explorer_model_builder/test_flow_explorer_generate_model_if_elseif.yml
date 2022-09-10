@@ -46,16 +46,39 @@ tasks:
   - body:
     - body:
       - args:
-        - Some comment
+        - If branch
         assign: []
         body: []
         doc: ''
-        internal_name: comment(builtin)
+        internal_name: log(builtin)
         kind: simple
-        name: Comment (builtin)
+        name: Log (builtin)
         type: keyword
-      condition: ${TRUE} AND ${False}
+      condition: 1 == 1
       type: if-branch
+    - body:
+      - args:
+        - Else If branch
+        assign: []
+        body: []
+        doc: ''
+        internal_name: log(builtin)
+        kind: simple
+        name: Log (builtin)
+        type: keyword
+      condition: 2 == 2
+      type: else-if-branch
+    - body:
+      - args:
+        - Else branch
+        assign: []
+        body: []
+        doc: ''
+        internal_name: log(builtin)
+        kind: simple
+        name: Log (builtin)
+        type: keyword
+      type: else-branch
     type: if
   doc: ''
   internal_name: maintask(my)
