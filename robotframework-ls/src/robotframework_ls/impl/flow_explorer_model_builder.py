@@ -1,6 +1,7 @@
 import os
 from contextlib import contextmanager
-from typing import List, Any, Dict, Set, Tuple, TypedDict
+from typing import List, Any, Dict, Set, Tuple
+from robocorp_ls_core.protocols import TypedDict
 
 from robocorp_ls_core.basic import isinstance_name
 from robotframework_ls.impl.protocols import ICompletionContext, IKeywordFound, INode
@@ -66,7 +67,6 @@ def build_flow_explorer_model(completion_contexts: List[ICompletionContext]) -> 
     from robotframework_ls.impl import ast_utils
 
     suites: list = []
-    model: dict = {"suites": suites}
     recursion_stack: _KeywordRecursionStack = _KeywordRecursionStack()
 
     for completion_context in completion_contexts:
@@ -147,10 +147,15 @@ def build_flow_explorer_model(completion_contexts: List[ICompletionContext]) -> 
                                 user_keywords_collector=user_keywords_collector,
                             )
 
-    if len(suites) == 1:
-        # Special case (for now): If we only have one suite make it top-level
-        return suites[0]
-    return model
+    if not suites:
+        return {}
+
+    # Reorder to the expected structure where we must specify the root suite.
+    root_suite = suites[0]
+    if len(suites) > 1:
+        root_suite["suites"] = suites[1:]
+
+    return root_suite
 
 
 def _build_hierarchy(
