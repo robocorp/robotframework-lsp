@@ -122,6 +122,7 @@ import {
     ROBOCORP_OPEN_FLOW_EXPLORER_TREE_SELECTION,
     ROBOCORP_OPEN_LOCATORS_JSON,
     ROBOCORP_OPEN_ROBOT_CONDA_TREE_SELECTION,
+    ROBOCORP_NEW_ROBOCORP_INSPECTOR_RECORD,
 } from "./robocorpCommands";
 import { disablePythonTerminalActivateEnvironment, installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -343,6 +344,7 @@ function registerRobocorpCodeCommands(C: CommandRegistry) {
     C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER, () => inspector.openRobocorpInspector("browser"));
     C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE, () => inspector.openRobocorpInspector("image"));
     C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS, () => inspector.openRobocorpInspector("windows"));
+    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_RECORD, () => inspector.openRobocorpInspector("record"));
     C.register(ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL, (locator?: LocatorEntry) =>
         copySelectedToClipboard(locator)
     );

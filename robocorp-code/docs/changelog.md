@@ -2,6 +2,9 @@ NEXT
 -----------------------------
 
 - RCC was upgraded to `v11.22.0`.
+- Locators:
+    - `robocorp-inspector` was upgraded to `0.7.1`. 
+    - Added recording functionality to command palette
 
 
 New in 0.36.0 (2022-07-20)

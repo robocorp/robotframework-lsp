@@ -66,10 +66,17 @@ export async function _internalOpenRobocorpInspector(locatorType?: string, locat
         args.push("--database", locatorJson);
     }
 
-    // if locatorType is given prioritize that. Else Ensure that a locator is selected!
     if (locatorType) {
-        args.push("add");
-        args.push(locatorType);
+        if (locatorType == "record") {
+          // TODO: implement code to integrate recording output to locators.json
+            OUTPUT_CHANNEL.appendLine("Recording.");
+            args.push("record")
+        }
+      // if locatorType is given prioritize that. Else Ensure that a locator is selected!
+        else {
+          args.push("add");
+          args.push(locatorType);
+        }
     } else {
         const locatorSelected: LocatorEntry | undefined =
             locator ??
@@ -88,6 +95,7 @@ export async function _internalOpenRobocorpInspector(locatorType?: string, locat
             return;
         }
     }
+    
 
     let resolveProgress = undefined;
     window.withProgress(
