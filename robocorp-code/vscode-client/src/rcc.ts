@@ -289,7 +289,6 @@ export async function getRccLocation(): Promise<string | undefined> {
     return location;
 }
 
-
 export const STATUS_OK = "ok";
 export const STATUS_FATAL = "fatal";
 export const STATUS_FAIL = "fail";
@@ -455,7 +454,7 @@ export async function submitIssue(
             metadata["errorName"] = errorName;
             metadata["errorCode"] = errorCode;
             metadata["errorMessage"] = errorMessage;
-            
+
             const robocorpHome = await getRobocorpHome();
 
             const reportPath: string = path.join(os.tmpdir(), `robocode_issue_report_${Date.now()}.json`);
