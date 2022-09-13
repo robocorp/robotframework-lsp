@@ -1,7 +1,10 @@
 NEXT
 -----------------------------
 
-- RCC was upgraded to `v11.22.0`.
+- Reorganization of the Rocorp View
+  - Actions added as items in the tree and not only on hover to help on discoverability.
+  - Work items and Locators are now in the same tree (so that there's a clear place to extend with new features in the future).
+- RCC was upgraded to `v11.26.3`.
 - Locators:
     - `robocorp-inspector` was upgraded to `0.7.1`. 
     - Added recording functionality to command palette

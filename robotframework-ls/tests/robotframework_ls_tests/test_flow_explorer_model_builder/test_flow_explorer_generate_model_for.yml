@@ -44,19 +44,21 @@ source: my.robot
 tasks:
 - body:
   - body:
-    - body:
-      - args:
-        - Some comment
-        assign: []
-        body: []
-        doc: ''
-        internal_name: comment(builtin)
-        kind: simple
-        name: Comment (builtin)
-        type: keyword
-      condition: ${TRUE} AND ${False}
-      type: if-branch
-    type: if
+    - args:
+      - ${robot}
+      assign: []
+      body: []
+      doc: ''
+      internal_name: comment(builtin)
+      kind: simple
+      name: Comment (builtin)
+      type: keyword
+    kind: IN
+    type: for
+    values:
+    - '@{ROBOTS}'
+    variables:
+    - ${robot}
   doc: ''
   internal_name: maintask(my)
   name: Main Task (my)

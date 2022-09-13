@@ -8,11 +8,14 @@ tasks:
     - Something
     assign: []
     body: []
-    name: Log (BuiltIn)
-    subtype: KEYWORD
+    doc: ''
+    internal_name: log(builtin)
+    kind: simple
+    name: Log (builtin)
     type: keyword
   doc: ''
-  name: My.My first task
+  internal_name: myfirsttask(my)
+  name: My first task (my)
   setup: null
   teardown: null
   type: task
@@ -21,11 +24,14 @@ tasks:
     - Something
     assign: []
     body: []
-    name: Log (BuiltIn)
-    subtype: KEYWORD
+    doc: ''
+    internal_name: log(builtin)
+    kind: simple
+    name: Log (builtin)
     type: keyword
   doc: ''
-  name: My.My second task
+  internal_name: mysecondtask(my)
+  name: My second task (my)
   setup: null
   teardown: null
   type: task

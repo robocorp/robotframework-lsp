@@ -1,0 +1,77 @@
+keywords:
+- args: []
+  body:
+  - args: []
+    assign: []
+    body: []
+    doc: ''
+    internal_name: nooperation(builtin)
+    kind: simple
+    name: no operation (builtin)
+    type: keyword
+  doc: ''
+  internal_name: mykeyword(test)
+  kind: implemented
+  name: my keyword (test)
+  type: user-keyword
+name: Test
+setup: null
+source: test.robot
+tasks:
+- body:
+  - args: []
+    assign: []
+    body:
+    - args: []
+      assign: []
+      body: []
+      doc: ''
+      internal_name: nooperation(builtin)
+      kind: simple
+      name: no operation (builtin)
+      type: keyword
+    doc: ''
+    internal_name: mykeyword(test)
+    kind: simple
+    name: my keyword (test)
+    type: keyword
+  - args: []
+    assign: []
+    body:
+    - args: []
+      assign: []
+      body: []
+      doc: ''
+      internal_name: nooperation(builtin)
+      kind: simple
+      name: no operation (builtin)
+      type: keyword
+    doc: ''
+    internal_name: mykeyword(test)
+    kind: simple
+    name: mykeyword (test)
+    type: keyword
+  - args: []
+    assign: []
+    body:
+    - args: []
+      assign: []
+      body: []
+      doc: ''
+      internal_name: nooperation(builtin)
+      kind: simple
+      name: no operation (builtin)
+      type: keyword
+    doc: ''
+    internal_name: mykeyword(test)
+    kind: simple
+    name: My Keyword (test)
+    type: keyword
+  doc: ''
+  internal_name: mytest(test)
+  name: My test (test)
+  setup: null
+  teardown: null
+  type: task
+teardown: null
+type: suite
