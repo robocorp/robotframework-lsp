@@ -40,7 +40,6 @@ import {
     getRccLocation,
     getRobocorpHome,
     submitIssue,
-    submitIssueUI,
 } from "./rcc";
 import { Timing } from "./time";
 import {
@@ -132,6 +131,7 @@ import { clearRCCEnvironments, clearRobocorpCodeCaches, computeEnvsToCollect } f
 import { Mutex } from "./mutex";
 import { mergeEnviron } from "./subprocess";
 import { feedback } from "./rcc";
+import { showSubmitIssueUI } from "./submitIssue";
 
 interface InterpreterInfo {
     pythonExe: string;
@@ -577,23 +577,21 @@ interface ExecuteWorkspaceCommandArgs {
 export async function doActivate(context: ExtensionContext, C: CommandRegistry) {
     // Note: register the submit issue actions early on so that we can later actually
     // report startup errors.
-    let logPath: string = context.logPath;
-    C.registerWithoutStub(ROBOCORP_SUBMIT_ISSUE, () => {
-        submitIssueUI(logPath);
+    C.registerWithoutStub(ROBOCORP_SUBMIT_ISSUE, async () => {
+        await showSubmitIssueUI(context);
     });
 
     // i.e.: allow other extensions to also use our submit issue api.
     C.registerWithoutStub(
         ROBOCORP_SUBMIT_ISSUE_INTERNAL,
-        (dialogMessage: string, email: string, errorName: string, errorCode: string, errorMessage: string) =>
-            submitIssue(
-                logPath, // gotten from plugin context
-                dialogMessage,
-                email,
-                errorName,
-                errorCode,
-                errorMessage
-            )
+        (
+            dialogMessage: string,
+            email: string,
+            errorName: string,
+            errorCode: string,
+            errorMessage: string,
+            files: string[]
+        ) => submitIssue(dialogMessage, email, errorName, errorCode, errorMessage, files)
     );
 
     C.registerWithoutStub(ROBOCORP_SHOW_OUTPUT, () => OUTPUT_CHANNEL.show());

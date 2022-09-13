@@ -4,6 +4,7 @@ NEXT
 - Reorganization of the Rocorp View
   - Actions added as items in the tree and not only on hover to help on discoverability.
   - Work items and Locators are now in the same tree (so that there's a clear place to extend with new features in the future).
+- Improved UI for submit issue.
 - RCC was upgraded to `v11.26.3`.
 
 

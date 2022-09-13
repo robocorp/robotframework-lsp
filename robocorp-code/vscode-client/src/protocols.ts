@@ -26,6 +26,11 @@ interface PackageInfo {
     sortKey: string;
 }
 
+interface IAccountInfo {
+    fullname: string;
+    email: string;
+}
+
 interface ActionResult<T> {
     success: boolean;
     message: string;

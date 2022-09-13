@@ -5,12 +5,13 @@ import * as crypto from "crypto";
 import * as pathModule from "path";
 import { XHRResponse, configure as configureXHR, xhr } from "./requestLight";
 import { fileExists, getExtensionRelativeFile } from "./files";
-import { workspace, window, ProgressLocation, CancellationToken, Progress, extensions } from "vscode";
+import { workspace, window, ProgressLocation, CancellationToken, Progress, extensions, ExtensionContext } from "vscode";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import { Timing, sleep } from "./time";
 import { execFilePromise, ExecFileReturn, mergeEnviron } from "./subprocess";
 import * as roboConfig from "./robocorpSettings";
 import { runAsAdmin } from "./extensionCreateEnv";
+import { showSubmitIssueUI } from "./submitIssue";
 
 let lastPrintedRobocorpHome: string = "";
 
@@ -288,32 +289,6 @@ export async function getRccLocation(): Promise<string | undefined> {
     return location;
 }
 
-export async function submitIssueUI(logPath: string) {
-    // Collect the issue information and send it using RCC.
-    let email: string;
-    let askEmailMsg: string = "Please provide your e-mail for the issue report";
-    do {
-        email = await window.showInputBox({
-            "prompt": askEmailMsg,
-            "ignoreFocusOut": true,
-        });
-        if (!email) {
-            return;
-        }
-        // if it doesn't have an @, ask again
-        askEmailMsg = "Invalid e-mail provided. Please provide your e-mail for the issue report";
-    } while (email.indexOf("@") == -1);
-
-    let issueDescription: string = await window.showInputBox({
-        "prompt":
-            "Please provide a brief description of the issue (confirming will *SEND* the issue with the collected logs)",
-        "ignoreFocusOut": true,
-    });
-    if (!issueDescription) {
-        return;
-    }
-    await submitIssue(logPath, "Robocorp Code", email, "Robocorp Code", "Robocorp Code", issueDescription);
-}
 
 export const STATUS_OK = "ok";
 export const STATUS_FATAL = "fatal";
@@ -388,13 +363,78 @@ export async function runConfigDiagnostics(
     }
 }
 
+export interface CollectedLogs {
+    logsRootDir: string;
+    logFiles: string[];
+}
+
+export async function collectIssueLogs(logPath: string): Promise<CollectedLogs> {
+    function acceptLogFile(f: string): boolean {
+        let lower = path.basename(f).toLowerCase();
+        if (!lower.endsWith(".log")) {
+            return false;
+        }
+        // Whitelist what we want so that we don't gather unwanted info.
+        if (lower.includes("robocorp code") || lower.includes("robot framework") || lower.includes("exthost")) {
+            return true;
+        }
+        return false;
+    }
+
+    // This should be parent directory for the logs.
+    let logsRootDir: string = path.dirname(logPath);
+    OUTPUT_CHANNEL.appendLine("Log path: " + logsRootDir);
+    let logFiles: string[] = [];
+
+    const stat = await fs.promises.stat(logsRootDir);
+    if (stat.isDirectory()) {
+        // Get the .log files under the logsRootDir and subfolders.
+        const files: string[] = await fs.promises.readdir(logsRootDir);
+        for (const fileI of files) {
+            let f: string = path.join(logsRootDir, fileI);
+            const stat = await fs.promises.stat(f);
+            if (acceptLogFile(f) && stat.isFile()) {
+                logFiles.push(f);
+            } else if (stat.isDirectory()) {
+                // No need to recurse (we just go 1 level deep).
+                let currDir: string = f;
+                const innerFiles: string[] = await fs.promises.readdir(currDir);
+                for (const fileI of innerFiles) {
+                    let f: string = path.join(currDir, fileI);
+                    const stat = await fs.promises.stat(f);
+                    if (acceptLogFile(f) && stat.isFile()) {
+                        logFiles.push(f);
+                    }
+                }
+            }
+        }
+    }
+
+    return {
+        "logsRootDir": logsRootDir,
+        "logFiles": logFiles,
+    };
+}
+
+async function collectIssueBaseMetadata(): Promise<any> {
+    let version = extensions.getExtension("robocorp.robocorp-code").packageJSON.version;
+    const metadata = {
+        platform: os.platform(),
+        osRelease: os.release(),
+        nodeVersion: process.version,
+        version: version,
+        controller: "rcc.robocorpcode",
+    };
+    return metadata;
+}
+
 export async function submitIssue(
-    logPath: string,
     dialogMessage: string,
     email: string,
     errorName: string,
     errorCode: string,
-    errorMessage: string
+    errorMessage: string,
+    files: string[] // See also: collectIssueLogs(logPath);
 ): Promise<undefined> {
     let errored: boolean = false;
     try {
@@ -407,70 +447,25 @@ export async function submitIssue(
                 return;
             }
 
-            function acceptLogFile(f: string): boolean {
-                let lower = path.basename(f).toLowerCase();
-                if (!lower.endsWith(".log")) {
-                    return false;
-                }
-                // Whitelist what we want so that we don't gather unwanted info.
-                if (lower.includes("robocorp code") || lower.includes("robot framework") || lower.includes("exthost")) {
-                    return true;
-                }
-                return false;
-            }
+            const metadata = await collectIssueBaseMetadata();
 
-            // This should be parent directory for the logs.
-            let logsRootDir: string = path.dirname(logPath);
-            OUTPUT_CHANNEL.appendLine("Log path: " + logsRootDir);
-            let logFiles: string[] = [];
+            // Add required metadata info from parameters.
+            metadata["dialogMessage"] = dialogMessage;
+            metadata["email"] = email;
+            metadata["errorName"] = errorName;
+            metadata["errorCode"] = errorCode;
+            metadata["errorMessage"] = errorMessage;
+            
+            const robocorpHome = await getRobocorpHome();
 
-            const stat = await fs.promises.stat(logsRootDir);
-            if (stat.isDirectory()) {
-                // Get the .log files under the logsRootDir and subfolders.
-                const files: string[] = await fs.promises.readdir(logsRootDir);
-                for (const fileI of files) {
-                    let f: string = path.join(logsRootDir, fileI);
-                    const stat = await fs.promises.stat(f);
-                    if (acceptLogFile(f) && stat.isFile()) {
-                        logFiles.push(f);
-                    } else if (stat.isDirectory()) {
-                        // No need to recurse (we just go 1 level deep).
-                        let currDir: string = f;
-                        const innerFiles: string[] = await fs.promises.readdir(currDir);
-                        for (const fileI of innerFiles) {
-                            let f: string = path.join(currDir, fileI);
-                            const stat = await fs.promises.stat(f);
-                            if (acceptLogFile(f) && stat.isFile()) {
-                                logFiles.push(f);
-                            }
-                        }
-                    }
-                }
-            }
-
-            let version = extensions.getExtension("robocorp.robocorp-code").packageJSON.version;
-            const metadata = {
-                logsRootDir,
-                platform: os.platform(),
-                osRelease: os.release(),
-                nodeVersion: process.version,
-                version: version,
-                controller: "rcc.robocorpcode",
-                dialogMessage,
-                email,
-                errorName,
-                errorCode,
-                errorMessage,
-            };
             const reportPath: string = path.join(os.tmpdir(), `robocode_issue_report_${Date.now()}.json`);
             fs.writeFileSync(reportPath, JSON.stringify(metadata, null, 4), { encoding: "utf-8" });
             let args: string[] = ["feedback", "issue", "-r", reportPath, "--controller", "RobocorpCode"];
-            for (const file of logFiles) {
+            for (const file of files) {
                 args.push("-a");
                 args.push(file);
             }
 
-            const robocorpHome = await getRobocorpHome();
             const env = createEnvWithRobocorpHome(robocorpHome);
 
             await execFilePromise(rccLocation, args, { "env": env });
