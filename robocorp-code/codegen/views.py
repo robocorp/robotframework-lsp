@@ -205,7 +205,7 @@ TREE_VIEW_CONTAINERS = [
                             MenuGroup.INLINE,
                             "robocorp-code:single-robot-selected && viewItem == newWindowsLocator",
                         ),
-Menu(
+                        Menu(
                             "robocorp.newRobocorpInspectorRecord",
                             MenuGroup.INLINE,
                             "robocorp-code:single-robot-selected && viewItem == newRecord",
