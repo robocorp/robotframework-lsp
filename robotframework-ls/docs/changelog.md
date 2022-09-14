@@ -1,14 +1,11 @@
-NEXT
+New in 1.1.3 (2022-09-14)
 -----------------------------
-
-### New features
-
-- Completions presented for `Variables` under `*** Settings ***`. [#744](https://github.com/robocorp/robotframework-lsp/issues/744)
-- Flow Explorer can now follow keywords defined in other files.
 
 ### Bugfixes
 
 - Snippets take into account the value of `robot.completions.keywords.argumentsSeparator`. [#723](https://github.com/robocorp/robotframework-lsp/issues/723)
+- Completions properly presented for `Variables` under `*** Settings ***`. [#744](https://github.com/robocorp/robotframework-lsp/issues/744)
+- Flow Explorer can now follow keywords defined in other files.
 
 
 New in 1.1.0 (2022-08-24)

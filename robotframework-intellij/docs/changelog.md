@@ -1,3 +1,12 @@
+New in 1.1.3 (2022-09-14)
+-----------------------------
+
+### Bugfixes
+
+- Snippets take into account the value of `robot.completions.keywords.argumentsSeparator`. [#723](https://github.com/robocorp/robotframework-lsp/issues/723)
+- Completions properly presented for `Variables` under `*** Settings ***`. [#744](https://github.com/robocorp/robotframework-lsp/issues/744)
+
+
 New in 1.1.0 (2022-08-24)
 -----------------------------
 

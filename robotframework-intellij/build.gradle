@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '1.1.0'
+version '1.1.3'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,40 +50,14 @@ intellij {
 patchPluginXml {
     changeNotes = """
     <p>
-    <strong>Release 1.1.0</strong>
+    <strong>Release 1.1.3</strong>
     </p>
     
     <ul>
-    <li><strong>New features</strong></li>
-    <ul>
-        <li>[Intellij] When pressing space a completion is no longer applied automatically.</li>
-        <li>[Intellij] The plugin will re-register file associations to <strong>.resource</strong> and <strong>.robot</strong>.</li>
-        <li>Code analysis setting to check if keyword is not used anywhere in the workspace.</li>
-        <ul>
-            <li>Opt-in through the <strong>robot.lint.unusedKeyword:true</strong> setting.</li>
-        </ul>
-        <li>An LRU based on file size now prevents unlimited usage of RAM when caching files loaded from the filesystem.</li>
-        <ul>
-            <li>It's possible to customize the size of the target memory for this LRU through the <strong>RFLS_FILES_TARGET_MEMORY_IN_BYTES</strong> environment variable.</li>
-        </ul>
-        <li>If a keyword call resolves to multiple keywords, the argument analysis is done for all the matches.</li>
-        <li>(Experimental) Support for localization in Robot Framework 5.1.</li>
-        <ul>
-            <li>The language may be set just for a file (with <strong>language: lang</strong> on the top of the file).</li>
-            <li>The language may be specified globally through the setting: <strong>robot.language</strong>.</li>
-            <li>Support for completions with translated section names and settings.</li>
-            <li>Support for syntax highlighting translated bdd prefixes.</li>
-            <li>The language(s) set in the <strong>robot.language</strong> configuration are automatically added as parameter on new launches.</li>
-        </ul>
-    </ul>
-    
     <li><strong>Bugfixes</strong></li>
     <ul>
-    <li>[Intellij] Fixed <strong>NullPointerException</strong> on hover.</li>
-    <li>[Intellij] <strong>&dollar;Prompt&dollar;</strong> macro properly replaced when launching.</li>
-    <li>Operations no longer timeout, rather, they just print to the log (as the timeouts weren't always ideal for slower machines).</li>
-    <li>Fixed issue where references wouldn't be found properly.</li>
-    <li>Variables imported from module folder (<strong>module/__init__.py</strong>) are properly recognized.</li>
+    <li>Snippets take into account the value of <strong>robot.completions.keywords.argumentsSeparator</strong>.</li>
+    <li>Completions properly presented for <strong>Variables</strong> under <strong>*** Settings ***</strong>.</li>
     </ul>
     
     
@@ -135,7 +109,7 @@ patchPluginXml {
     // See https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html?from=jetbrains.org#intellij-platform-based-products-of-recent-ide-versions
 
     sinceBuild = '203'
-    untilBuild = '222.*'
+    untilBuild = '223.*'
 }
 
 test {
