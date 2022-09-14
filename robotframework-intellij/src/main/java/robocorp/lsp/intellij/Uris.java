@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 public class Uris {
 
@@ -39,7 +38,7 @@ public class Uris {
     public static @Nullable File toFile(String uri) {
         try {
             return new File(new URI(uri));
-        } catch (URISyntaxException e) {
+        } catch (Exception e) {
             LOG.error("Error converting uri: " + uri, e);
             return null;
         }
