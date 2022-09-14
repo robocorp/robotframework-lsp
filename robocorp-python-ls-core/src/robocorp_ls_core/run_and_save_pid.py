@@ -39,7 +39,7 @@ if __name__ == "__main__":
     sys.exit(main(args[0], args[1:]))
 
 
-def wait_for_pid_in_file(target_file: str, timeout: float = 10) -> int:
+def wait_for_pid_in_file(target_file: str, timeout: float = 20) -> int:
     import time
     from pathlib import Path
 
