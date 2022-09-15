@@ -1314,3 +1314,36 @@ class RobocorpLanguageServer(PythonLanguageServer):
             return {"success": False, "message": str(e), "result": None}
 
         return {"success": True, "message": None, "result": None}
+
+    @command_dispatcher(commands.ROBOCORP_CONVERT_PROJECT_INTERNAL)
+    def _populate_folder_with_conversion_result(self, opts) -> ActionResultDict:
+        destination_folder_uri = opts["destinationFolderURI"]
+        conversionResult = opts["conversionResult"]
+        log.info(
+            "Dispatched converter internal command with args:",
+            str(destination_folder_uri),
+            str(conversionResult),
+        )
+        try:
+            for index, file in enumerate(conversionResult["files"]):
+                fallback_name = f"tasks{index}.robot" if index >= 1 else "tasks.robot"
+                final_destination = os.path.join(
+                    Path(destination_folder_uri).as_posix(),
+                    file["filename"] if file["filename"] else fallback_name,
+                )
+                log.debug("Writing file:", str(final_destination))
+                Path(final_destination).write_text(file["content"])
+        except Exception as e:
+            log.exception(
+                f"There was an error while populating conversion results: {e}"
+            )
+            return {
+                "result": destination_folder_uri,
+                "success": False,
+                "message": f"There was an error while populating conversion results: {e}",
+            }
+        return {
+            "result": destination_folder_uri,
+            "success": True,
+            "message": None,
+        }

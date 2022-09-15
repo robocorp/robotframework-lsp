@@ -96,6 +96,8 @@
         "onCommand:robocorp.showOutput",
         "onCommand:robocorp.showInterpreterEnvError",
         "onCommand:robocorp.openFlowExplorerTreeSelection",
+        "onCommand:robocorp.convertProject",
+        "onCommand:robocorp.convertProject.internal",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -567,6 +569,16 @@
                 "title": "Open Flow Explorer",
                 "category": "Robocorp",
                 "icon": "$(type-hierarchy-sub)"
+            },
+            {
+                "command": "robocorp.convertProject",
+                "title": "Convert file to Robocorp Project",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.convertProject.internal",
+                "title": "Convert file to Robocorp Project Internals",
+                "category": "Robocorp"
             }
         ],
         "menus": {
@@ -918,6 +930,10 @@
                 },
                 {
                     "command": "robocorp.openFlowExplorerTreeSelection",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.convertProject.internal",
                     "when": "false"
                 }
             ]

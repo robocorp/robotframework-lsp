@@ -77,3 +77,5 @@ export const ROBOCORP_CLEAR_ENV_AND_RESTART = "robocorp.clearEnvAndRestart";  //
 export const ROBOCORP_SHOW_OUTPUT = "robocorp.showOutput";  // Show Robocorp Code > Output logs
 export const ROBOCORP_SHOW_INTERPRETER_ENV_ERROR = "robocorp.showInterpreterEnvError";  // Show error related to interpreter env creation
 export const ROBOCORP_OPEN_FLOW_EXPLORER_TREE_SELECTION = "robocorp.openFlowExplorerTreeSelection";  // Open Flow Explorer
+export const ROBOCORP_CONVERT_PROJECT = "robocorp.convertProject";  // Convert file to Robocorp Project
+export const ROBOCORP_CONVERT_PROJECT_INTERNAL = "robocorp.convertProject.internal";  // Convert file to Robocorp Project Internals

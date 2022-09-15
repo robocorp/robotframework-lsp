@@ -178,7 +178,7 @@ async function downloadBaseAsZip(
     return ret;
 }
 
-async function download(
+export async function download(
     url: string,
     progress: Progress<{ message?: string; increment?: number }>,
     token: CancellationToken,

@@ -565,6 +565,20 @@ COMMANDS = [
         hide_from_command_palette=True,
         icon="$(type-hierarchy-sub)",
     ),
+    Command(
+        "robocorp.convertProject",
+        "Convert file to Robocorp Project",
+        add_to_package_json=True,
+        server_handled=False,
+        hide_from_command_palette=False,
+    ),
+    Command(
+        "robocorp.convertProject.internal",
+        "Convert file to Robocorp Project Internals",
+        add_to_package_json=True,
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
 ]
 
 
