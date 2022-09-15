@@ -96,6 +96,8 @@
         "onCommand:robocorp.showOutput",
         "onCommand:robocorp.showInterpreterEnvError",
         "onCommand:robocorp.openFlowExplorerTreeSelection",
+        "onCommand:robocorp.convertProject",
+        "onCommand:robocorp.saveConvertedProject.internal",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -567,6 +569,16 @@
                 "title": "Open Flow Explorer",
                 "category": "Robocorp",
                 "icon": "$(type-hierarchy-sub)"
+            },
+            {
+                "command": "robocorp.convertProject",
+                "title": "Convert third party RPA file to Robocorp Robot",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.saveConvertedProject.internal",
+                "title": "Save converted Robocorp Project",
+                "category": "Robocorp"
             }
         ],
         "menus": {
@@ -918,6 +930,10 @@
                 },
                 {
                     "command": "robocorp.openFlowExplorerTreeSelection",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.saveConvertedProject.internal",
                     "when": "false"
                 }
             ]

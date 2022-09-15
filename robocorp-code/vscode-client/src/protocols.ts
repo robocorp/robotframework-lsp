@@ -95,3 +95,23 @@ interface LibraryVersionInfoDict {
     // result should still be provided.
     result?: LibraryVersionDict;
 }
+
+// these declarations are a superficial variant of the implemented ones in the converter bundle
+// they might need changes if the Converter API is changed
+enum ConversionResultType {
+    SUCCESS = "Success",
+    FAILURE = "Failure",
+}
+interface RobotFile {
+    content: string;
+    filename: string;
+}
+interface ConversionSuccess {
+    type: ConversionResultType.SUCCESS;
+    files: Array<RobotFile>;
+}
+interface ConversionFailure {
+    type: ConversionResultType.FAILURE;
+    error: string;
+}
+type ConversionResult = ConversionSuccess | ConversionFailure;

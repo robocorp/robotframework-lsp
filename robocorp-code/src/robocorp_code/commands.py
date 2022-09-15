@@ -78,6 +78,8 @@ ROBOCORP_CLEAR_ENV_AND_RESTART = "robocorp.clearEnvAndRestart"  # Clear Robocorp
 ROBOCORP_SHOW_OUTPUT = "robocorp.showOutput"  # Show Robocorp Code > Output logs
 ROBOCORP_SHOW_INTERPRETER_ENV_ERROR = "robocorp.showInterpreterEnvError"  # Show error related to interpreter env creation
 ROBOCORP_OPEN_FLOW_EXPLORER_TREE_SELECTION = "robocorp.openFlowExplorerTreeSelection"  # Open Flow Explorer
+ROBOCORP_CONVERT_PROJECT = "robocorp.convertProject"  # Convert third party RPA file to Robocorp Robot
+ROBOCORP_SAVE_CONVERTED_PROJECT_INTERNAL = "robocorp.saveConvertedProject.internal"  # Save converted Robocorp Project
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,
@@ -105,6 +107,7 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL,
     ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL,
     ROBOCORP_SET_CONNECTED_VAULT_WORKSPACE_INTERNAL,
+    ROBOCORP_SAVE_CONVERTED_PROJECT_INTERNAL,
 ]
 
 # fmt: on

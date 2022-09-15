@@ -24,7 +24,17 @@ import * as path from "path";
 import * as vscode from "vscode";
 import * as cp from "child_process";
 
-import { workspace, Disposable, ExtensionContext, window, commands, extensions, env, Uri } from "vscode";
+import {
+    workspace,
+    Disposable,
+    ExtensionContext,
+    window,
+    commands,
+    extensions,
+    env,
+    Uri,
+    WorkspaceFolder,
+} from "vscode";
 import { LanguageClientOptions, State } from "vscode-languageclient";
 import { LanguageClient, ServerOptions } from "vscode-languageclient/node";
 import * as inspector from "./inspector";
@@ -121,8 +131,9 @@ import {
     ROBOCORP_OPEN_FLOW_EXPLORER_TREE_SELECTION,
     ROBOCORP_OPEN_LOCATORS_JSON,
     ROBOCORP_OPEN_ROBOT_CONDA_TREE_SELECTION,
+    ROBOCORP_CONVERT_PROJECT,
 } from "./robocorpCommands";
-import { disablePythonTerminalActivateEnvironment, installPythonInterpreterCheck } from "./pythonExtIntegration";
+import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
 import { connectVault, disconnectVault } from "./vault";
 import { getLanguageServerPythonInfoUncached } from "./extensionCreateEnv";
@@ -132,6 +143,8 @@ import { Mutex } from "./mutex";
 import { mergeEnviron } from "./subprocess";
 import { feedback } from "./rcc";
 import { showSubmitIssueUI } from "./submitIssue";
+import { ensureConvertBundle } from "./conversion";
+import { TextDecoder } from "util";
 
 interface InterpreterInfo {
     pythonExe: string;
@@ -324,6 +337,100 @@ async function cloudLogoutAndRefresh() {
     refreshCloudTreeView();
 }
 
+async function convertProject() {
+    const DEFAULT_ERROR_MSG = `
+            Could not convert project.
+            Please check the output logs for more details.
+            `;
+    const DEFAULT_ERROR_STATUS = "Error while converting project.";
+
+    const convertBundlePromise = ensureConvertBundle();
+
+    const fileToConvert: Uri[] = await window.showOpenDialog({
+        "canSelectFolders": false,
+        "canSelectFiles": true,
+        "canSelectMany": false,
+        "openLabel": "Select file to convert to Robocorp Robot",
+    });
+    if (!fileToConvert || fileToConvert.length === 0) {
+        return;
+    }
+    const uri = fileToConvert[0];
+
+    try {
+        const converterLocation = await convertBundlePromise;
+        if (!converterLocation) {
+            throw new Error("There was an issue downloading the converter bundle. Please try again.");
+        }
+        const converterBundle = require(converterLocation);
+
+        // let the user decide what type of project will be converted
+        const vendorMap = {
+            "Blue Prism": "blueprism",
+            "UiPath": "uipath",
+            "Automation Anywhere 360": "a360",
+        };
+        const items = Object.keys(vendorMap);
+        const selectedFormat = await window.showQuickPick(items, {
+            "placeHolder": `Please select the file format of ${path.basename(uri.fsPath)} `,
+            "canPickMany": false,
+            "ignoreFocusOut": true,
+        });
+        if (!selectedFormat) {
+            // exit conversion if there is no format selected
+            return;
+        }
+        // let the user decide where the conversion result will be saved
+        const wsFolders: ReadonlyArray<WorkspaceFolder> = workspace.workspaceFolders;
+        let ws: WorkspaceFolder;
+        if (wsFolders.length == 1) {
+            ws = wsFolders[0];
+        } else {
+            ws = await window.showWorkspaceFolderPick({
+                "placeHolder": "Please select the workspace folder for the conversion output",
+                "ignoreFocusOut": true,
+            });
+        }
+        if (!ws) {
+            // exit conversion if there is no workspace
+            return;
+        }
+        const destination = Uri.joinPath(ws.uri, "converted");
+
+        // actual conversion
+        const bytes = await workspace.fs.readFile(uri);
+        const contents = new TextDecoder("utf-8").decode(bytes);
+        const conversionResult: ConversionResult = await converterBundle.convert(vendorMap[selectedFormat], contents);
+        if (!converterBundle.isSuccessful(conversionResult)) {
+            logError(
+                "Error converting file to Robocorp Robot",
+                new Error((<ConversionFailure>conversionResult).error),
+                "EXT_CONVERT_PROJECT"
+            );
+            window.showErrorMessage(DEFAULT_ERROR_MSG);
+            OUTPUT_CHANNEL.show();
+            return;
+        }
+        const populate_action: ActionResult<string> = await commands.executeCommand(
+            "robocorp.saveConvertedProject.internal",
+            {
+                "destinationFolderURI": destination.toString(),
+                "conversionResult": conversionResult,
+                "projectSourceVendor": vendorMap[selectedFormat],
+            }
+        );
+        if (!populate_action.success) {
+            throw new Error(populate_action.message);
+        }
+        window.showInformationMessage("Project conversion succeeded, saved inside ${workspace}/converted.");
+    } catch (err) {
+        logError(DEFAULT_ERROR_STATUS, err, "EXT_CONVERT_PROJECT");
+        window.showErrorMessage(DEFAULT_ERROR_MSG);
+        OUTPUT_CHANNEL.show();
+        return;
+    }
+}
+
 function registerRobocorpCodeCommands(C: CommandRegistry) {
     C.register(ROBOCORP_GET_LANGUAGE_SERVER_PYTHON, () => getLanguageServerPython());
     C.register(ROBOCORP_GET_LANGUAGE_SERVER_PYTHON_INFO, () => getLanguageServerPythonInfo());
@@ -358,6 +465,7 @@ function registerRobocorpCodeCommands(C: CommandRegistry) {
     C.register(ROBOCORP_OPEN_FLOW_EXPLORER_TREE_SELECTION, (robot: RobotEntry) =>
         commands.executeCommand("robot.openFlowExplorer", Uri.file(robot.robot.directory).toString())
     );
+    C.register(ROBOCORP_CONVERT_PROJECT, async () => convertProject());
     C.register(ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION, (robot: RobotEntry) =>
         views.createRccTerminalTreeSelection(robot)
     );

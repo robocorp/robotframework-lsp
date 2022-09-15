@@ -45,3 +45,15 @@ export async function uriExists(uri: Uri) {
         return false;
     }
 }
+
+export async function readFromFile(targetFile: string) {
+    if (!(await fileExists(targetFile))) {
+        return undefined;
+    }
+    const contents = await fs.promises.readFile(targetFile);
+    return contents.toString();
+}
+
+export async function writeToFile(targetFile: string, content: string) {
+    return await fs.promises.writeFile(targetFile, content);
+}
