@@ -24,7 +24,17 @@ import * as path from "path";
 import * as vscode from "vscode";
 import * as cp from "child_process";
 
-import { workspace, Disposable, ExtensionContext, window, commands, extensions, env, Uri } from "vscode";
+import {
+    workspace,
+    Disposable,
+    ExtensionContext,
+    window,
+    commands,
+    extensions,
+    env,
+    Uri,
+    WorkspaceFolder,
+} from "vscode";
 import { LanguageClientOptions, State } from "vscode-languageclient";
 import { LanguageClient, ServerOptions } from "vscode-languageclient/node";
 import * as inspector from "./inspector";
@@ -34,7 +44,6 @@ import * as roboConfig from "./robocorpSettings";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import { fileExists, getExtensionRelativeFile, uriExists } from "./files";
 import {
-    download,
     feedbackAnyError,
     feedbackRobocorpCodeError,
     getEndpointUrl,
@@ -124,10 +133,10 @@ import {
     ROBOCORP_OPEN_ROBOT_CONDA_TREE_SELECTION,
     ROBOCORP_CONVERT_PROJECT,
 } from "./robocorpCommands";
-import { disablePythonTerminalActivateEnvironment, installPythonInterpreterCheck } from "./pythonExtIntegration";
+import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
 import { connectVault, disconnectVault } from "./vault";
-import { getLanguageServerPythonInfoUncached } from "./extensionCreateEnv";
+import { ensureConvertBundle, getLanguageServerPythonInfoUncached } from "./extensionCreateEnv";
 import { registerDebugger } from "./debugger";
 import { clearRCCEnvironments, clearRobocorpCodeCaches, computeEnvsToCollect } from "./clear";
 import { Mutex } from "./mutex";
@@ -326,25 +335,6 @@ async function cloudLogoutAndRefresh() {
     refreshCloudTreeView();
 }
 
-async function ensureConvertBundle() {
-    const url = "https://downloads.robocorp.com/converter/latest/bundle.js";
-    let location = getExtensionRelativeFile("../../vscode-client/out/converterBundle.js", false);
-    if (!(await fileExists(location))) {
-        await window.withProgress(
-            {
-                location: vscode.ProgressLocation.Notification,
-                title: "Downloading converter bundle",
-                cancellable: false,
-            },
-            async (
-                progress: vscode.Progress<{ message?: string; increment?: number }>,
-                token: vscode.CancellationToken
-            ): Promise<string | undefined> => await download(url, progress, token, location)
-        );
-    }
-    return location;
-}
-
 async function convertProject() {
     const DEFAULT_ERROR_MSG = `
             Could not convert project.
@@ -353,10 +343,12 @@ async function convertProject() {
 
     const DEFAULT_ERROR_STATUS = "Error while converting project.";
 
-    const converterLocation = await ensureConvertBundle();
     try {
+        const converterLocation = await ensureConvertBundle(true);
+        if (!converterLocation) {
+            throw new Error("Converter bundle was not found. Possible download issues.");
+        }
         const converterBundle = require(converterLocation);
-        window.setStatusBarMessage("Project conversion has started...");
 
         // let the user decide what type of project will be converted
         const vendorMap = {
@@ -365,57 +357,57 @@ async function convertProject() {
             "Automation Anywhere 360": "a360",
         };
         const items = Object.keys(vendorMap);
-        let selectedItem = await window.showQuickPick(items, {
-            "placeHolder": "Please select vendor of current project",
+        let selectedVendor = await window.showQuickPick(items, {
+            "placeHolder": "Please select the format of current project",
             "canPickMany": false,
-            "ignoreFocusOut": false,
+            "ignoreFocusOut": true,
         });
-        window.setStatusBarMessage(`Selected project type: ${selectedItem}`);
-        if (!selectedItem) {
-            window.setStatusBarMessage("Project conversion was canceled.");
+        if (!selectedVendor) {
+            // exit conversion if there is no item selected
             return;
         }
 
         // let the user decide where the conversion result will be saved
-        const destination = await window.showOpenDialog({
-            title: "Select conversion destination",
-            openLabel: "Select Output Folder",
-            canSelectFiles: false,
-            canSelectFolders: true,
-            canSelectMany: false,
-        });
-        if (!destination || destination.length == 0) {
-            window.setStatusBarMessage("Project conversion was canceled.");
+        let wsFolders: ReadonlyArray<WorkspaceFolder> = workspace.workspaceFolders;
+        let ws: WorkspaceFolder;
+        if (wsFolders.length == 1) {
+            ws = wsFolders[0];
+        } else {
+            ws = await window.showWorkspaceFolderPick({
+                "placeHolder": "Please select the workspace folder for the converter output",
+                "ignoreFocusOut": true,
+            });
+        }
+        if (!ws) {
+            // Operation cancelled.
             return;
         }
-
-        window.setStatusBarMessage("Project conversion is starting...");
+        const destination = Uri.joinPath(ws.uri, "converted");
         const activeTextEditor = window.activeTextEditor;
-        const conversionResult = await converterBundle.convert(
-            vendorMap[selectedItem],
+        const conversionResult: ConversionResult = await converterBundle.convert(
+            vendorMap[selectedVendor],
             activeTextEditor.document.getText()
         );
-        window.setStatusBarMessage("Done converting project.");
-        if (!converterBundle.isSuccessful(conversionResult)) {
+        if (!converterBundle.isSuccessful(conversionResult) && conversionResult.type === "Failure") {
             logError("Error while converting project", new Error(conversionResult.error), "EXT_CONVERT_PROJECT");
-            window.setStatusBarMessage(DEFAULT_ERROR_STATUS);
             window.showErrorMessage(DEFAULT_ERROR_MSG);
             OUTPUT_CHANNEL.show();
             return;
         }
-        const populate_action: { result: string; success: boolean; message: string | null } | null =
-            await commands.executeCommand("robocorp.convertProject.internal", {
-                "destinationFolderURI": destination[0].path,
+        const populate_action: ActionResult<string> = await commands.executeCommand(
+            "robocorp.convertProject.internal",
+            {
+                "destinationFolderURI": destination.toString(),
                 "conversionResult": conversionResult,
-            });
+                "projectSourceVendor": vendorMap[selectedVendor],
+            }
+        );
         if (!populate_action.success) {
             throw new Error(populate_action.message);
         }
-        window.setStatusBarMessage("Project conversion succeeded.");
         window.showInformationMessage("Project conversion succeeded.");
     } catch (err) {
         logError(DEFAULT_ERROR_STATUS, err, "EXT_CONVERT_PROJECT");
-        window.setStatusBarMessage(DEFAULT_ERROR_STATUS);
         window.showErrorMessage(DEFAULT_ERROR_MSG);
         OUTPUT_CHANNEL.show();
         return;

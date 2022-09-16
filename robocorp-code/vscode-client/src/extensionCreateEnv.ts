@@ -3,11 +3,21 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import { workspace, window, Progress, ProgressLocation, ConfigurationTarget, env, Uri } from "vscode";
+import {
+    workspace,
+    window,
+    Progress,
+    ProgressLocation,
+    ConfigurationTarget,
+    env,
+    Uri,
+    CancellationToken,
+} from "vscode";
 import { OUTPUT_CHANNEL } from "./channel";
-import { getExtensionRelativeFile, verifyFileExists } from "./files";
+import { fileExists, getExtensionRelativeFile, readFromFile, verifyFileExists, writeToFile } from "./files";
 import {
     collectBaseEnv,
+    download,
     feedbackRobocorpCodeError,
     getRccLocation,
     getRobocorpHome,
@@ -172,6 +182,67 @@ async function verifyLongPathSupportOnWindows(rccLocation: string): Promise<bool
     return true;
 }
 
+export async function ensureConvertBundle(justCheck: boolean = false) {
+    const versionURL = "https://downloads.robocorp.com/converter/latest/version.txt";
+    const currentVersionLocation = getExtensionRelativeFile("../../vscode-client/out/converterBundle.version", false);
+    const newVersionLocation = getExtensionRelativeFile("../../vscode-client/out/converterBundle.version.new", false);
+
+    const bundleURL = "https://downloads.robocorp.com/converter/latest/bundle.js";
+    const bundleRelativeLocation = "../../vscode-client/out/converterBundle.js";
+    const bundleLocation = getExtensionRelativeFile(bundleRelativeLocation, false);
+
+    // just verify the existence of the converter bundle
+    if (justCheck) {
+        return getExtensionRelativeFile(bundleRelativeLocation, true);
+    }
+
+    // downloading & reading the new version
+    const currentVersion = await readFromFile(currentVersionLocation);
+    let newVersion = undefined;
+    await window.withProgress(
+        {
+            location: ProgressLocation.Notification,
+            title: "Checking converter bundle version",
+            cancellable: false,
+        },
+        async (
+            progress: Progress<{ message?: string; increment?: number }>,
+            token: CancellationToken
+        ): Promise<string | undefined> => {
+            const result = await download(
+                versionURL,
+                progress,
+                token,
+                currentVersion ? newVersionLocation : currentVersionLocation
+            );
+            newVersion = await readFromFile(currentVersion ? newVersionLocation : currentVersionLocation);
+            return result;
+        }
+    );
+
+    // downloading the bundle
+    const downloadBundle = async () =>
+        await window.withProgress(
+            {
+                location: ProgressLocation.Notification,
+                title: "Downloading converter bundle",
+                cancellable: false,
+            },
+            async (
+                progress: Progress<{ message?: string; increment?: number }>,
+                token: CancellationToken
+            ): Promise<string | undefined> => await download(bundleURL, progress, token, bundleLocation)
+        );
+
+    if (!(await fileExists(bundleLocation))) {
+        await downloadBundle();
+    } else if (currentVersion && newVersion && currentVersion !== newVersion) {
+        await writeToFile(currentVersionLocation, newVersion);
+        await downloadBundle();
+    }
+    return bundleLocation;
+}
+
 /**
  * @returns the result of running `get_env_info.py`.
  */
@@ -204,6 +275,13 @@ export async function createDefaultEnv(
     if (!getEnvInfoPy) {
         OUTPUT_CHANNEL.appendLine("Unable to find: ../../bin/create_env/get_env_info.py in extension.");
         feedbackRobocorpCodeError("INIT_GET_ENV_INFO_FAIL");
+        return;
+    }
+
+    const convertBundleLocation = await ensureConvertBundle();
+    if (!convertBundleLocation) {
+        OUTPUT_CHANNEL.appendLine("Unable to get converter bundle from official location.");
+        feedbackRobocorpCodeError("INIT_CONVERT_BUNDLE_NOT_AVAILABLE");
         return;
     }
 
