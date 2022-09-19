@@ -573,8 +573,8 @@ COMMANDS = [
         hide_from_command_palette=False,
     ),
     Command(
-        "robocorp.convertProject.internal",
-        "Convert file to Robocorp Project Internals",
+        "robocorp.saveConvertedProject.internal",
+        "Save converted Robocorp Project",
         add_to_package_json=True,
         server_handled=True,
         hide_from_command_palette=True,

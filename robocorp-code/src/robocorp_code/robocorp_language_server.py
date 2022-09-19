@@ -1315,7 +1315,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
         return {"success": True, "message": None, "result": None}
 
-    @command_dispatcher(commands.ROBOCORP_CONVERT_PROJECT_INTERNAL)
+    @command_dispatcher(commands.ROBOCORP_SAVE_CONVERTED_PROJECT_INTERNAL)
     def _populate_folder_with_conversion_result(self, opts) -> ActionResultDict:
         from robocorp_ls_core.uris import to_fs_path
         from datetime import datetime

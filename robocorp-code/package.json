@@ -97,7 +97,7 @@
         "onCommand:robocorp.showInterpreterEnvError",
         "onCommand:robocorp.openFlowExplorerTreeSelection",
         "onCommand:robocorp.convertProject",
-        "onCommand:robocorp.convertProject.internal",
+        "onCommand:robocorp.saveConvertedProject.internal",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -576,8 +576,8 @@
                 "category": "Robocorp"
             },
             {
-                "command": "robocorp.convertProject.internal",
-                "title": "Convert file to Robocorp Project Internals",
+                "command": "robocorp.saveConvertedProject.internal",
+                "title": "Save converted Robocorp Project",
                 "category": "Robocorp"
             }
         ],
@@ -933,7 +933,7 @@
                     "when": "false"
                 },
                 {
-                    "command": "robocorp.convertProject.internal",
+                    "command": "robocorp.saveConvertedProject.internal",
                     "when": "false"
                 }
             ]

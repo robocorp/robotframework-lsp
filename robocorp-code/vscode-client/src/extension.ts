@@ -395,7 +395,7 @@ async function convertProject() {
             return;
         }
         const populate_action: ActionResult<string> = await commands.executeCommand(
-            "robocorp.convertProject.internal",
+            "robocorp.saveConvertedProject.internal",
             {
                 "destinationFolderURI": destination.toString(),
                 "conversionResult": conversionResult,
