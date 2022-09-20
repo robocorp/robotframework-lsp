@@ -1,3 +1,13 @@
+NEXT
+-----------------------------
+
+### New features
+
+- The Code Lens `Run/Debug` now launches using the test explorer (so, clicking it or the `Run/Debug` in the gutter is the same thing).
+    - A new option: `robot.run.peekError.level` defines up to which level the logs should be shown in the resulting `Peek Error` window.
+    - A new option: `robot.run.peekError.showSummary` defines whether a message should be shown at the task/test level with a summary of the errors.
+
+
 New in 1.1.3 (2022-09-14)
 -----------------------------
 

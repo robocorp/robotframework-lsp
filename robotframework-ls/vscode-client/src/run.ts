@@ -1,9 +1,9 @@
 import {
     commands,
-    debug,
     DebugConfiguration,
-    DebugSessionOptions,
     ExtensionContext,
+    TestItem,
+    TestRunRequest,
     TextEditor,
     Uri,
     window,
@@ -11,13 +11,22 @@ import {
     WorkspaceFolder,
 } from "vscode";
 import { logError, OUTPUT_CHANNEL } from "./channel";
-import * as path from "path";
-import { jsonEscapeUTF } from "./escape";
+import {
+    computeTestId,
+    computeUriTestId,
+    DEBUG_PROFILE,
+    getTestItem,
+    handleTestsCollected,
+    IRange,
+    RUN_PROFILE,
+} from "./testview";
+import { CancellationTokenSource } from "vscode-languageclient";
 
 interface ITestInfo {
     uri: string;
     path: string;
     name: string; // if '*' it means that it should run all tests in the path.
+    range: IRange;
 }
 
 export async function robotRun(params?: ITestInfo) {
@@ -93,15 +102,34 @@ async function _debugSuite(resource: Uri | undefined, noDebug: boolean) {
             }
             resource = activeTextEditor.document.uri;
         }
-        await _debug({ "uri": resource.toString(), "path": resource.fsPath, "name": "*" }, noDebug);
+        await _debug({ "uri": resource.toString(), "path": resource.fsPath, "name": "*", "range": undefined }, noDebug);
     } catch (error) {
         logError("Error debugging suite.", error, "RUN_DEBUG_SUITE");
     }
 }
 
+async function obtainTestItem(uri: Uri, name: string): Promise<TestItem | undefined> {
+    let testId: string;
+    let tests: ITestInfo[] = await commands.executeCommand("robot.listTests", { "uri": uri.toString() });
+    await handleTestsCollected({ "uri": uri.toString(), "testInfo": tests });
+
+    if (name === "*") {
+        testId = computeUriTestId(uri.toString());
+    } else {
+        testId = computeTestId(uri.toString(), name);
+    }
+    let testItem = getTestItem(testId);
+    if (!testItem) {
+        const msg = "Unable to obtain test item from: " + uri + " - " + name;
+        OUTPUT_CHANNEL.appendLine(msg);
+        window.showErrorMessage(msg);
+    }
+
+    return getTestItem(testId);
+}
+
 async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
     let executeUri: Uri;
-    let executePath: string;
     let executeName: string;
 
     if (!params) {
@@ -112,14 +140,13 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
             return;
         }
         let uri = activeTextEditor.document.uri;
-        let tests: [ITestInfo] = await commands.executeCommand("robot.listTests", { "uri": uri.toString() });
+        let tests: ITestInfo[] = await commands.executeCommand("robot.listTests", { "uri": uri.toString() });
         if (!tests) {
             window.showErrorMessage("No tests/tasks found in the currently opened editor.");
             return;
         }
 
         executeUri = uri;
-        executePath = uri.fsPath;
 
         if (tests.length == 1) {
             executeName = tests[0].name;
@@ -140,84 +167,23 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
         }
     } else {
         executeUri = Uri.file(params.path);
-        executePath = params.path;
         executeName = params.name;
     }
 
-    let workspaceFolder = workspace.getWorkspaceFolder(executeUri);
-    if (!workspaceFolder) {
-        let folders = workspace.workspaceFolders;
-        if (folders) {
-            // Use the currently opened folder.
-            workspaceFolder = folders[0];
+    let include: TestItem[] = [];
+    const testItem = await obtainTestItem(executeUri, executeName);
+    if (testItem) {
+        include.push(testItem);
+        const request = new TestRunRequest(include);
+        const cancellationTokenSource = new CancellationTokenSource();
+        if (noDebug) {
+            RUN_PROFILE.runHandler(request, cancellationTokenSource.token);
+        } else {
+            DEBUG_PROFILE.runHandler(request, cancellationTokenSource.token);
         }
-    }
-
-    let cwd: string;
-    let launchTemplate: DebugConfiguration = undefined;
-    if (workspaceFolder) {
-        cwd = workspaceFolder.uri.fsPath;
-        launchTemplate = await readLaunchTemplate(workspaceFolder);
     } else {
-        cwd = path.dirname(executePath);
+        OUTPUT_CHANNEL.appendLine("Could not find test item from: " + executeUri + " - " + executeName);
     }
-
-    let args = [];
-
-    let debugConfiguration: DebugConfiguration = {
-        "type": "robotframework-lsp",
-        "name": "Robot Framework: Launch " + executeName,
-        "request": "launch",
-        "cwd": cwd,
-        "terminal": "integrated",
-        "args": args,
-    };
-
-    if (launchTemplate) {
-        for (var key of Object.keys(launchTemplate)) {
-            if (key !== "type" && key !== "name" && key !== "request") {
-                let value = launchTemplate[key];
-                if (value !== undefined) {
-                    if (key === "args") {
-                        try {
-                            debugConfiguration.args = debugConfiguration.args.concat(value);
-                        } catch (err) {
-                            logError(
-                                "Unable to concatenate: " + debugConfiguration.args + " to: " + value,
-                                err,
-                                "RUN_CONCAT_ARGS"
-                            );
-                        }
-                    } else {
-                        debugConfiguration[key] = value;
-                    }
-                }
-            }
-        }
-    }
-
-    if (debugConfiguration.makeSuite === undefined) {
-        // Not in template (default == true)
-        debugConfiguration.makeSuite = true;
-    }
-
-    // Note that target is unused if RFLS_PRERUN_FILTER_TESTS is specified and makeSuite == true.
-    debugConfiguration.target = executePath;
-
-    let envFiltering = jsonEscapeUTF(
-        JSON.stringify({
-            "include": [[executePath, executeName]],
-            "exclude": [],
-        })
-    );
-    if (debugConfiguration.env) {
-        debugConfiguration.env["RFLS_PRERUN_FILTER_TESTS"] = envFiltering;
-    } else {
-        debugConfiguration.env = { "RFLS_PRERUN_FILTER_TESTS": envFiltering };
-    }
-
-    let debugSessionOptions: DebugSessionOptions = { "noDebug": noDebug };
-    debug.startDebugging(workspaceFolder, debugConfiguration, debugSessionOptions);
 }
 
 export async function registerRunCommands(context: ExtensionContext) {

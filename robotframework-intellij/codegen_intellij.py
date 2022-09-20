@@ -299,6 +299,8 @@ IGNORE_PREFERENCES_NOT_APPLICABLE_TO_INTELLIJ = (
     "robot.codeLens.enable",
     "robot.codeLens.run.enable",
     "robot.codeLens.interactiveConsole.enable",
+    "robot.run.peekError.level",
+    "robot.run.peekError.showSummary",
     )
 
 

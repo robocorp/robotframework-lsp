@@ -73,11 +73,12 @@ def test_events_listener_failure(debugger_api: _DebuggerAPI):
 
     end_test_body = debugger_api.read(EndTestEvent).body
     assert end_test_body.status == "FAIL"
-    if get_robot_major_version() >= 4:
-        # source is not available on RF 3.
-        assert len(end_test_body.failed_keywords) == 1
-        assert end_test_body.failed_keywords[0]["lineno"] == 4
+    assert (
+        "No keyword with name 'This keyword does not exist' found."
+        in end_test_body.message
+    )
 
+    assert "Traceback:" in end_test_body.message
     assert debugger_api.read(EndSuiteEvent)
 
     debugger_api.read(TerminatedEvent)
@@ -112,7 +113,7 @@ def test_events_listener_output(debugger_api: _DebuggerAPI):
     assert debugger_api.read(StartTestEvent)
 
     log_message_body = debugger_api.read(LogMessageEvent).body
-    assert log_message_body.message == "LogNoConsole"
+    assert log_message_body.message.strip() == "LogNoConsole"
     assert log_message_body.level == "INFO"
     assert log_message_body.testName == "Check log"
 

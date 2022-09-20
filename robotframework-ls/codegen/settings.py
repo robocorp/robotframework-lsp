@@ -173,6 +173,17 @@ SETTINGS = {
         "default": [],
         "description": "Language(s) to be used in Robot Framework (passed as the --language argument for robot when launching).",
     },
+    "robot.run.peekError.level": {
+        "type": "string",
+        "enum": ["NONE", "INFO", "WARN", "ERROR"],
+        "default": "ERROR",
+        "description": "Defines the log level for the messages shown on the peek error window.",
+    },
+    "robot.run.peekError.showSummary": {
+        "type": "boolean",
+        "default": False,
+        "description": "Defines whether a message should be shown at the task/test level with a summary of the errors.",
+    },
 }
 
 

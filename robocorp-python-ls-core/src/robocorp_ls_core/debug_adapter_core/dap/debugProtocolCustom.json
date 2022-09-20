@@ -31,6 +31,10 @@
                   "type": "string",
                   "description": "The current test name (if a test is available)."
                 },
+                "testOrSuiteSource": {
+                  "type": "string",
+                  "description": "The current test or suite source (if a test or suite is available)."
+                },
                 "lineno": {
                   "type": "number",
                   "description": "The lineno where this was logged."

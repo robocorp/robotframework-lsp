@@ -13959,6 +13959,10 @@ class LogMessageEvent(BaseSchema):
                     "type": "string",
                     "description": "The current test name (if a test is available)."
                 },
+                "testOrSuiteSource": {
+                    "type": "string",
+                    "description": "The current test or suite source (if a test or suite is available)."
+                },
                 "lineno": {
                     "type": "number",
                     "description": "The lineno where this was logged."
@@ -17743,6 +17747,10 @@ class LogMessageEventBody(BaseSchema):
             "type": "string",
             "description": "The current test name (if a test is available)."
         },
+        "testOrSuiteSource": {
+            "type": "string",
+            "description": "The current test or suite source (if a test or suite is available)."
+        },
         "lineno": {
             "type": "number",
             "description": "The lineno where this was logged."
@@ -17756,17 +17764,19 @@ class LogMessageEventBody(BaseSchema):
 
     __slots__ = list(__props__.keys()) + ['kwargs']
 
-    def __init__(self, message=None, source=None, testName=None, lineno=None, level=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
+    def __init__(self, message=None, source=None, testName=None, testOrSuiteSource=None, lineno=None, level=None, update_ids_from_dap=False, **kwargs):  # noqa (update_ids_from_dap may be unused)
         """
         :param string message: The message logged.
         :param string source: The source where this was logged.
         :param string testName: The current test name (if a test is available).
+        :param string testOrSuiteSource: The current test or suite source (if a test or suite is available).
         :param number lineno: The lineno where this was logged.
         :param string level: The level of the message (DEBUG, INFO, WARN, FAIL, ERROR).
         """
         self.message = message
         self.source = source
         self.testName = testName
+        self.testOrSuiteSource = testOrSuiteSource
         self.lineno = lineno
         self.level = level
         self.kwargs = kwargs
@@ -17776,6 +17786,7 @@ class LogMessageEventBody(BaseSchema):
         message = self.message
         source = self.source
         testName = self.testName
+        testOrSuiteSource = self.testOrSuiteSource
         lineno = self.lineno
         level = self.level
         dct = {
@@ -17786,6 +17797,8 @@ class LogMessageEventBody(BaseSchema):
             dct['source'] = source
         if testName is not None:
             dct['testName'] = testName
+        if testOrSuiteSource is not None:
+            dct['testOrSuiteSource'] = testOrSuiteSource
         if lineno is not None:
             dct['lineno'] = lineno
         if level is not None:
