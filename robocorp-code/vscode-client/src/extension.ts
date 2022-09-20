@@ -136,13 +136,14 @@ import {
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
 import { connectVault, disconnectVault } from "./vault";
-import { ensureConvertBundle, getLanguageServerPythonInfoUncached } from "./extensionCreateEnv";
+import { getLanguageServerPythonInfoUncached } from "./extensionCreateEnv";
 import { registerDebugger } from "./debugger";
 import { clearRCCEnvironments, clearRobocorpCodeCaches, computeEnvsToCollect } from "./clear";
 import { Mutex } from "./mutex";
 import { mergeEnviron } from "./subprocess";
 import { feedback } from "./rcc";
 import { showSubmitIssueUI } from "./submitIssue";
+import { ensureConvertBundle } from "./convertion";
 
 interface InterpreterInfo {
     pythonExe: string;
@@ -340,13 +341,18 @@ async function convertProject() {
             Could not convert project.
             Please check the output logs for more details.
             `;
-
     const DEFAULT_ERROR_STATUS = "Error while converting project.";
 
+    const activeTextEditor = window.activeTextEditor;
+    if (!activeTextEditor) {
+        window.showErrorMessage("Could not detect an active editor");
+        return;
+    }
+
     try {
-        const converterLocation = await ensureConvertBundle(true);
+        const converterLocation = await ensureConvertBundle();
         if (!converterLocation) {
-            throw new Error("Converter bundle was not found. Possible download issues.");
+            throw new Error("Converter bundle was not found. Possible download issues. Please try again.");
         }
         const converterBundle = require(converterLocation);
 
@@ -357,35 +363,35 @@ async function convertProject() {
             "Automation Anywhere 360": "a360",
         };
         const items = Object.keys(vendorMap);
-        let selectedVendor = await window.showQuickPick(items, {
-            "placeHolder": "Please select the format of current project",
+        const selectedFormat = await window.showQuickPick(items, {
+            "placeHolder": `Please select the file format of ${path.basename(activeTextEditor.document.fileName)} `,
             "canPickMany": false,
             "ignoreFocusOut": true,
         });
-        if (!selectedVendor) {
-            // exit conversion if there is no item selected
+        if (!selectedFormat) {
+            // exit conversion if there is no format selected
             return;
         }
-
         // let the user decide where the conversion result will be saved
-        let wsFolders: ReadonlyArray<WorkspaceFolder> = workspace.workspaceFolders;
+        const wsFolders: ReadonlyArray<WorkspaceFolder> = workspace.workspaceFolders;
         let ws: WorkspaceFolder;
         if (wsFolders.length == 1) {
             ws = wsFolders[0];
         } else {
             ws = await window.showWorkspaceFolderPick({
-                "placeHolder": "Please select the workspace folder for the converter output",
+                "placeHolder": "Please select the workspace folder for the conversion output",
                 "ignoreFocusOut": true,
             });
         }
         if (!ws) {
-            // Operation cancelled.
+            // exit conversion if there is no workspace
             return;
         }
         const destination = Uri.joinPath(ws.uri, "converted");
-        const activeTextEditor = window.activeTextEditor;
+
+        // actual conversion
         const conversionResult: ConversionResult = await converterBundle.convert(
-            vendorMap[selectedVendor],
+            vendorMap[selectedFormat],
             activeTextEditor.document.getText()
         );
         if (!converterBundle.isSuccessful(conversionResult) && conversionResult.type === "Failure") {
@@ -399,7 +405,7 @@ async function convertProject() {
             {
                 "destinationFolderURI": destination.toString(),
                 "conversionResult": conversionResult,
-                "projectSourceVendor": vendorMap[selectedVendor],
+                "projectSourceVendor": vendorMap[selectedFormat],
             }
         );
         if (!populate_action.success) {

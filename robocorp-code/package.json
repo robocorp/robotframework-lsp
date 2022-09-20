@@ -572,7 +572,7 @@
             },
             {
                 "command": "robocorp.convertProject",
-                "title": "Convert file to Robocorp Project",
+                "title": "Convert file in active editor to Robocorp Project",
                 "category": "Robocorp"
             },
             {

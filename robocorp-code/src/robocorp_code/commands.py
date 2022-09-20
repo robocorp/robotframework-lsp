@@ -78,7 +78,7 @@ ROBOCORP_CLEAR_ENV_AND_RESTART = "robocorp.clearEnvAndRestart"  # Clear Robocorp
 ROBOCORP_SHOW_OUTPUT = "robocorp.showOutput"  # Show Robocorp Code > Output logs
 ROBOCORP_SHOW_INTERPRETER_ENV_ERROR = "robocorp.showInterpreterEnvError"  # Show error related to interpreter env creation
 ROBOCORP_OPEN_FLOW_EXPLORER_TREE_SELECTION = "robocorp.openFlowExplorerTreeSelection"  # Open Flow Explorer
-ROBOCORP_CONVERT_PROJECT = "robocorp.convertProject"  # Convert file to Robocorp Project
+ROBOCORP_CONVERT_PROJECT = "robocorp.convertProject"  # Convert file in active editor to Robocorp Project
 ROBOCORP_SAVE_CONVERTED_PROJECT_INTERNAL = "robocorp.saveConvertedProject.internal"  # Save converted Robocorp Project
 
 ALL_SERVER_COMMANDS = [
