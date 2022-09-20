@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import { logError } from "./channel";
-import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from "./robocorpViews";
+import { TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from "./robocorpViews";
 import { FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeView } from "./viewsCommon";
 import { basename, dirname, join } from "path";
-import { Uri, TreeItem } from "vscode";
+import { Uri } from "vscode";
 import { RobotSelectionTreeDataProviderBase } from "./viewsRobotSelectionTreeBase";
 
 const fsPromises = fs.promises;
@@ -201,6 +201,7 @@ export class RobotContentTreeDataProvider extends RobotSelectionTreeDataProvider
             try {
                 let robotDir = dirname(robotUri.fsPath);
                 let dirContents = await fsPromises.readdir(robotDir, { withFileTypes: true });
+                sortDirContents(dirContents);
                 for (const dirContent of dirContents) {
                     ret.push({
                         name: dirContent.name,
@@ -222,6 +223,7 @@ export class RobotContentTreeDataProvider extends RobotSelectionTreeDataProvider
             }
             try {
                 let dirContents = await fsPromises.readdir(element.filePath, { withFileTypes: true });
+                sortDirContents(dirContents);
                 for (const dirContent of dirContents) {
                     ret.push({
                         name: dirContent.name,
@@ -235,4 +237,19 @@ export class RobotContentTreeDataProvider extends RobotSelectionTreeDataProvider
             return ret;
         }
     }
+}
+
+function sortDirContents(dirContents: fs.Dirent[]) {
+    dirContents.sort((entry1, entry2) => {
+        if (entry1.isDirectory() != entry2.isDirectory()) {
+            if (entry1.isDirectory()) {
+                return -1;
+            }
+            if (entry2.isDirectory()) {
+                return 1;
+            }
+        }
+
+        return entry1.name.toLowerCase().localeCompare(entry2.name.toLowerCase());
+    });
 }
