@@ -146,7 +146,11 @@ class EventsListenerV2:
     # For keywords we're just interested on tracking failures to send when a test/suite finished.
     # Note: we also try to capture the failure through logged messages.
 
-    def log_message(self, message: Dict[str, Any]) -> None:
+    def message(self, message):
+        if message["level"] in ("FAIL", "ERROR"):
+            return self.log_message(message, skip_error=False)
+
+    def log_message(self, message: Dict[str, Any], skip_error=True) -> None:
         """
         Called when an executed keyword writes a log message.
 
@@ -163,6 +167,16 @@ class EventsListenerV2:
         message_string = message.get("message")
         if not message_string:
             return
+
+        level = message["level"]
+        if skip_error and level in ("ERROR",):
+            # We do this because in RF all the calls to 'log_message'
+            # also generate a call to 'message', so, we want to skip
+            # one of those (but note that the other way around isn't true
+            # and some errors such as import errors are only reported
+            # in 'message' and not 'log_message').
+            return
+
         lst = message_string.splitlines(keepends=False)
         if not lst:
             return
@@ -280,11 +294,6 @@ class EventsListenerV2:
         stack_trace.append("")
 
         return "\n".join(stack_trace)
-
-    def message(self, message):
-        if message["level"] in ("FAIL", "ERROR"):
-            # We also want to show these for system messages.
-            return self.log_message(message)
 
     def start_keyword(self, name: str, attributes: Dict[str, Any]) -> None:
         state = _get_events_state()

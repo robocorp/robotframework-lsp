@@ -556,6 +556,7 @@ def test_debugger_core_stop_on_failure_in_keyword(
     assert busy_wait.proceeded == 1
     assert len(busy_wait.stack) == 1
     assert [x.name for x in busy_wait.stack[0]] == [
+        "Log (FAIL)",
         "This keyword does not exist",
         "TestCase: Check failure",
         "TestSuite: Case Failure",
@@ -616,6 +617,32 @@ def test_debugger_core_stop_on_failure_in_import(
         "Log (ERROR)",
     ]
     # Note: Robot Framework considers it as passed even though there was an import error...
+    assert code == 0
+
+
+def test_debugger_core_stop_on_log_error_once(
+    debugger_api, run_robot_cli, debugger_impl
+) -> None:
+    target = debugger_api.get_dap_case_file("case_log_error.robot")
+
+    debugger_impl.break_on_log_failure = True
+    debugger_impl.break_on_log_error = True
+    busy_wait = DummyBusyWait(debugger_impl)
+    debugger_impl.busy_wait = busy_wait
+    busy_wait.on_wait = [debugger_impl.step_continue]
+
+    code = run_robot_cli(target)
+
+    assert busy_wait.waited == 1
+    assert busy_wait.proceeded == 1
+    assert len(busy_wait.stack) == 1
+    assert [x.name for x in busy_wait.stack[0]] == [
+        "Log (ERROR)",
+        "Log",
+        "TestCase: Check log",
+        "TestSuite: Case Log Error",
+    ]
+    # Note: Robot Framework considers it as passed even though an error was logged...
     assert code == 0
 
 

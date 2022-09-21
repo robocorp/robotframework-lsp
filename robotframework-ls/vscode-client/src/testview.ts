@@ -523,9 +523,11 @@ function handleLogMessage(testRun: vscode.TestRun, event: vscode.DebugSessionCus
         let testName: string | undefined = event.body.testName;
         let uri = vscode.Uri.file(event.body.testOrSuiteSource);
         const uriStr = uri.toString();
-        let testId = uriStr;
+        let testId: string;
         if (testName) {
             testId = computeTestId(uriStr, testName);
+        } else {
+            testId = computeUriTestId(uriStr);
         }
         testItem = getTestItem(testId);
     }

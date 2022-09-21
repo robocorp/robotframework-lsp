@@ -74,31 +74,34 @@ class _RobotTargetComm(threading.Thread):
         self._run_in_debug_mode = debug
 
         log = get_log()
-        if debug:
-            log.debug("Patching execution context...")
+        log.debug("Patching execution context...")
 
-            from robotframework_debug_adapter.debugger_impl import (
-                install_robot_debugger,
-            )
+        from robotframework_debug_adapter.debugger_impl import (
+            install_robot_debugger,
+        )
 
-            try:
-                import robot
-            except ImportError:
-                log.info("Unable to import Robot (debug will not be available).")
-                # If unable to import robot, don't error here (proceed as if
-                # it was without debugging -- it should fail later on when
-                # about to run the code, at which point the actual DAP is
-                # in place).
-                self._debugger_impl = None
-            else:
-                debugger_impl = install_robot_debugger()
-                debugger_impl.busy_wait.before_wait.append(self._notify_stopped)
-                debugger_impl.write_message = self.write_message  # type: ignore
-
-                log.debug("Finished patching execution context.")
-                self._debugger_impl = debugger_impl
-        else:
+        try:
+            import robot
+        except ImportError:
+            log.info("Unable to import Robot (debug will not be available).")
+            # If unable to import robot, don't error here (proceed as if
+            # it was without debugging -- it should fail later on when
+            # about to run the code, at which point the actual DAP is
+            # in place).
             self._debugger_impl = None
+        else:
+            debugger_impl = install_robot_debugger()
+            debugger_impl.busy_wait.before_wait.append(self._notify_stopped)
+            debugger_impl.write_message = self.write_message  # type: ignore
+
+            log.debug("Finished patching execution context.")
+            self._debugger_impl = debugger_impl
+
+        if self._debugger_impl and not self._run_in_debug_mode:
+            # If not running in debug mode (in which case we want the stack
+            # handling and logging but not any breakpoints/stopping), make
+            # sure we disable breaking on logging entries.
+            self._debugger_impl.enable_no_debug_mode()
 
     def _notify_stopped(self):
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StoppedEvent
@@ -271,7 +274,7 @@ class _RobotTargetComm(threading.Thread):
         break_on_log_failure = "logFailure" in filters
         break_on_log_error = "logError" in filters
 
-        if self._debugger_impl:
+        if self._debugger_impl and self._run_in_debug_mode:
             self._debugger_impl.break_on_log_failure = break_on_log_failure
             self._debugger_impl.break_on_log_error = break_on_log_error
         else:
@@ -330,7 +333,7 @@ class _RobotTargetComm(threading.Thread):
                     )
                 )
 
-        if self._debugger_impl:
+        if self._debugger_impl and self._run_in_debug_mode:
             self._debugger_impl.set_breakpoints(filename, robot_breakpoints)
         else:
             if robot_breakpoints:
@@ -355,7 +358,7 @@ class _RobotTargetComm(threading.Thread):
             request, kwargs=dict(body=ContinueResponseBody(allThreadsContinued=True))
         )
 
-        if self._debugger_impl:
+        if self._debugger_impl and self._run_in_debug_mode:
             self._debugger_impl.step_continue()
         else:
             get_log().info("Unable to continue (no debug mode).")
@@ -369,7 +372,7 @@ class _RobotTargetComm(threading.Thread):
 
         response = build_response(request)
 
-        if self._debugger_impl:
+        if self._debugger_impl and self._run_in_debug_mode:
             self._debugger_impl.step_in()
         else:
             get_log().info("Unable to step in (no debug mode).")
@@ -382,7 +385,7 @@ class _RobotTargetComm(threading.Thread):
 
         response = build_response(request)
 
-        if self._debugger_impl:
+        if self._debugger_impl and self._run_in_debug_mode:
             self._debugger_impl.step_next()
         else:
             get_log().info("Unable to step next (no debug mode).")
@@ -396,7 +399,7 @@ class _RobotTargetComm(threading.Thread):
 
         response = build_response(request)
 
-        if self._debugger_impl:
+        if self._debugger_impl and self._run_in_debug_mode:
             self._debugger_impl.step_out()
         else:
             get_log().info("Unable to step out (no debug mode).")
@@ -445,7 +448,7 @@ class _RobotTargetComm(threading.Thread):
 
         thread_id = request.arguments.threadId
 
-        if self._debugger_impl:
+        if self._debugger_impl and self._run_in_debug_mode:
             frames = self._debugger_impl.get_frames(thread_id)
         else:
             frames = []
@@ -480,7 +483,7 @@ class _RobotTargetComm(threading.Thread):
 
         frame_id = request.arguments.frameId
 
-        if self._debugger_impl:
+        if self._debugger_impl and self._run_in_debug_mode:
             scopes = self._debugger_impl.get_scopes(frame_id)
         else:
             scopes = []
@@ -503,7 +506,7 @@ class _RobotTargetComm(threading.Thread):
 
         variables_reference = request.arguments.variablesReference
 
-        if self._debugger_impl:
+        if self._debugger_impl and self._run_in_debug_mode:
             variables = self._debugger_impl.get_variables(variables_reference)
         else:
             variables = []
@@ -539,7 +542,7 @@ class _RobotTargetComm(threading.Thread):
         frame_id = arguments.frameId
         expression = arguments.expression
         context = arguments.context
-        if self._debugger_impl:
+        if self._debugger_impl and self._run_in_debug_mode:
             eval_info = self._debugger_impl.evaluate(frame_id, expression, context)
             try:
                 result = eval_info.future.result()
@@ -593,11 +596,13 @@ def main():
     debug = True if args[2] == "--debug" else False
 
     robot_args = args[3:]
-    if debug:
-        robot_args = [
-            "--listener=robotframework_debug_adapter.listeners.DebugListener",
-            "--listener=robotframework_debug_adapter.listeners.DebugListenerV2",
-        ] + robot_args
+
+    # Always add the listener (because even when not debugging we want
+    # to be able to provide output messages for logging).
+    robot_args = [
+        "--listener=robotframework_debug_adapter.listeners.DebugListener",
+        "--listener=robotframework_debug_adapter.listeners.DebugListenerV2",
+    ] + robot_args
 
     s = connect(port)
 
