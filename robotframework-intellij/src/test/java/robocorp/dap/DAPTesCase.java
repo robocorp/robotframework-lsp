@@ -1,5 +1,6 @@
 package robocorp.dap;
 
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -9,6 +10,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.eclipse.lsp4j.debug.*;
 import org.eclipse.lsp4j.debug.launch.DSPLauncher;
@@ -24,7 +26,9 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -141,5 +145,23 @@ public class DAPTesCase extends LSPTesCase {
 
         // Check that the dap process actually exited.
         Assert.assertTrue(processHandler.getProcess().waitFor(5, TimeUnit.SECONDS));
+    }
+
+    @Test
+    public void testLineMarkerProvider() {
+        PsiFile psiFiles = myFixture.configureByFile("caserunlinemarks.robot");
+        RobotRunnerLineMarkerProvider provider = new RobotRunnerLineMarkerProvider();
+        List<String> caseNames = Arrays.asList("*** Test Cases ***", "First", "Second", "Third",
+                "*** Test Case ***", "Fourth", "Fifth");
+        PsiElement[] children = psiFiles.getChildren();
+        for (PsiElement item : children) {
+            String text = item.getText();
+            LineMarkerInfo<?> lineMarkerInfo = provider.getLineMarkerInfo(item);
+            if (caseNames.contains(text)) {
+                Assert.assertNotNull(lineMarkerInfo);
+            } else {
+                Assert.assertNull(lineMarkerInfo);
+            }
+        }
     }
 }
