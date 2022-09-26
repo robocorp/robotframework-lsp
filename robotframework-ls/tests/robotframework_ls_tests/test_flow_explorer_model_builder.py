@@ -441,7 +441,9 @@ Main Task
     ELSE
         Log    Something on else.
     END
-    [Teardown]  Log    This is teardown zone.
+    [Teardown]  Run Keyword
+    ...     Log     Teardown Keyword 1
+    ...     Log     Teardown Keyword 2
 
 *** Keywords ***
 Main Implemented Keyword
@@ -466,7 +468,9 @@ def test_flow_explorer_generate_model_setup(rf_server_api, data_regression):
     contents = """
 *** Tasks ***
 Main Task
-    [Setup]  Log    This is setup zone.
+    [Setup]  Run Keyword
+    ...     Log     Setup Keyword 1
+    ...     Log     Setup Keyword 2
     IF    1 == 1
         BREAK
     ELSE
