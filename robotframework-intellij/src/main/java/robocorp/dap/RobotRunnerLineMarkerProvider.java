@@ -8,24 +8,27 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import robocorp.lsp.psi.LSPPsiAstElement;
 import robocorp.robot.intellij.RobotElementType;
 import robocorp.robot.intellij.RobotPsiFile;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
 
 public class RobotRunnerLineMarkerProvider implements LineMarkerProvider {
     private static final String ROBOT_FILE_SUFFIX = ".robot";
-    private static final String ROBOT_TEST_CASE_HEAD = "*** Test Cases ***";
-
+    private static final List<String> ROBOT_TEST_CASE_NAME = Arrays.asList("test case", "test cases", "task", "tasks");
 
 
     @Override
     public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
         PsiFile file = element.getContainingFile();
         // is root or isn't .robot
-        if (!(file instanceof RobotPsiFile) || !file.getName().endsWith(ROBOT_FILE_SUFFIX)) {
+        if (!(file instanceof RobotPsiFile) || !file.getName().endsWith(ROBOT_FILE_SUFFIX)
+                || !(element instanceof LSPPsiAstElement)) {
             return null;
         }
         String text = element.getText().strip();
@@ -33,8 +36,12 @@ public class RobotRunnerLineMarkerProvider implements LineMarkerProvider {
         if (text.length() == 0 || element.getFirstChild() == null) {
             return null;
         }
-        if (ROBOT_TEST_CASE_HEAD.equals(text)) {
+        if (isTestCaseElement(element)) {
             return new RobotRunLineMarkerInfo(element.getFirstChild(), new RobotRunAction());
+        }
+        // is keyword
+        if (isKeywordScope(element)) {
+            return null;
         }
         PsiElement prev = element.getPrevSibling();
         // isn't test case
@@ -43,15 +50,33 @@ public class RobotRunnerLineMarkerProvider implements LineMarkerProvider {
         }
         // test case
         for (; prev!= null; prev = prev.getPrevSibling()) {
-            text = prev.getText().strip();
-            if (ROBOT_TEST_CASE_HEAD.equals(text)) {
+            if (isTestCaseElement(prev)) {
                 PsiElement child = element.getFirstChild();
                 return new RobotRunLineMarkerInfo(child, new RobotRunAction(getCaseName(child)));
             }
         }
         return null;
     }
+    private boolean isTestCaseElement(@NotNull PsiElement element) {
+        IElementType elementType = element.getNode().getElementType();
+        if (elementType != RobotElementType.HEADING) {
+            return false;
+        }
 
+        String text = element.getText().replace('*', ' ').toLowerCase().trim();
+        return ROBOT_TEST_CASE_NAME.contains(text);
+    }
+
+    private boolean isKeywordScope(@NotNull PsiElement element) {
+        for (PsiElement prev = element; prev != null; prev = prev.getPrevSibling()) {
+            IElementType elementType = prev.getNode().getElementType();
+            String text = prev.getText().replace('*', ' ').toLowerCase().trim();
+            if (elementType == RobotElementType.HEADING) {
+                return "keywords".equals(text);
+            }
+        }
+        return false;
+    }
 
     private static String getCaseName(PsiElement element) {
         StringBuilder sb = new StringBuilder();
