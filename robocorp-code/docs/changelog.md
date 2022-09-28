@@ -1,8 +1,8 @@
-NEXT
+New in 0.38.0 (2022-09-28)
 -----------------------------
 
 - Integration of converter from third party RPA to Robocorp Robots.
-  - Activate through the `Robocorp: Convert third party RPA file to Robocorp Robot` action.
+  - Activate through the `Robocorp: Convert third party RPA file to Robocorp Robot` command.
 - Entries are now properly sorted in the `ROBOT CONTENT` view.
 
 
