@@ -80,8 +80,7 @@ public class FeatureDefinition {
                 return null;
             }
 
-            Either<List<? extends Location>, List<? extends LocationLink>> listListEither = definition.get(
-                    Timeouts.getDefinitionTimeout(), TimeUnit.SECONDS);
+            Either<List<? extends Location>, List<? extends LocationLink>> listListEither = definition.get(Timeouts.getDefinitionTimeout(), TimeUnit.SECONDS);
             if (listListEither == null) {
                 return null;
             }
@@ -128,10 +127,15 @@ public class FeatureDefinition {
             }
             int startOffset = EditorUtils.LSPPosToOffset(targetDocument, targetRange.getStart());
             int endOffset = EditorUtils.LSPPosToOffset(targetDocument, targetRange.getEnd());
+            if (startOffset == -1 || endOffset == -1) {
+                // Unable to map (may have changed in the meanwhile).
+                return null;
+            }
 
             String text = targetDocument.getText(new TextRange(startOffset, endOffset));
             return new LSPGenericPsiElement(project, targetPsiFile, text, startOffset, endOffset, targetRange, textDocumentIdentifier, pos, languageDefinition);
-        } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException | TimeoutException e) {
+        } catch (ProcessCanceledException | CompletionException | CancellationException | InterruptedException |
+                 TimeoutException e) {
             // If it was cancelled, just ignore it (don't log).
         } catch (Exception e) {
             LOG.error(e);
