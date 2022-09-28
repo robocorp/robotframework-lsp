@@ -44,6 +44,18 @@ def get_menus():
                 "when": "resourceExtname == .robot || resourceExtname == .resource || explorerResourceIsFolder",
             },
         ],
+        "view/title": [
+            {
+                "command": "robot.view.documentation.pin",
+                "when": "view == robot.view.documentation && !robot.view.documentation.isPinned",
+                "group": "navigation",
+            },
+            {
+                "command": "robot.view.documentation.unpin",
+                "when": "view == robot.view.documentation && robot.view.documentation.isPinned",
+                "group": "navigation",
+            },
+        ],
     }
     commands_palette_entry = []
     for command in COMMANDS:
@@ -115,6 +127,25 @@ def get_json_contents():
                 "title": "Robot Framework Language Server Configuration",
                 "type": "object",
                 "properties": get_settings_for_json(),
+            },
+            "viewsContainers": {
+                "panel": [
+                    {
+                        "id": "robot-documentation",
+                        "title": "Robot Documentation",
+                        "icon": "$(notebook)",
+                    }
+                ],
+            },
+            "views": {
+                "robot-documentation": [
+                    {
+                        "type": "webview",
+                        "id": "robot.view.documentation",
+                        "name": "Robot Documentation",
+                        "contextualTitle": "Robot Documentation",
+                    }
+                ],
             },
             "languages": [
                 {
@@ -235,6 +266,7 @@ def get_json_contents():
             "path-exists": "^4.0.0",
             "vscode-languageclient": "^8.0.1",
             "jsonc-parser": "^2.0.3",
+            "marked": "^4.1.0",
         },
         "devDependencies": {
             "@types/mocha": "^2.2.32",

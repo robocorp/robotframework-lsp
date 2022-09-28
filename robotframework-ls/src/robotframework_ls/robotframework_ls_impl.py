@@ -9,9 +9,12 @@ from robocorp_ls_core.basic import (
 )
 import os
 import time
-from robotframework_ls.constants import DEFAULT_COMPLETIONS_TIMEOUT
+from robotframework_ls.constants import (
+    DEFAULT_COMPLETIONS_TIMEOUT,
+    DEFAULT_COLLECT_DOCS_TIMEOUT,
+)
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Any, Optional, Dict, Sequence, Set, ContextManager
+from typing import Any, Optional, Dict, Sequence, Set, ContextManager, Union
 from robocorp_ls_core.protocols import (
     IConfig,
     IWorkspace,
@@ -53,6 +56,7 @@ from robotframework_ls.commands import (
     ROBOT_LINT_WORKSPACE,
     ROBOT_LINT_EXPLORER,
     ROBOT_GENERATE_FLOW_EXPLORER_MODEL,
+    ROBOT_COLLECT_ROBOT_DOCUMENTATION,
 )
 from robocorp_ls_core.jsonrpc.exceptions import JsonRpcException
 import weakref
@@ -550,6 +554,44 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         self._pm.load_plugins_from(Path(directory))
         return True
 
+    @command_dispatcher(ROBOT_COLLECT_ROBOT_DOCUMENTATION)
+    def _collect_robot_documentation(
+        self, opts
+    ) -> Union[ActionResultDict, "partial[Any]"]:
+        uri = opts.get("uri")
+        if not uri:
+            return dict(success=False, message="uri not provided", result=None)
+
+        # We can either accept uri/library name or uri/line/col.
+        # If both are provided the library_name is preferred.
+        library_name = opts.get("library_name")
+        line = opts.get("line")
+        col = opts.get("col")
+        if not library_name:
+            if line is None or col is None:
+                return dict(
+                    success=False,
+                    message="Either library_name or line/col must be provided.",
+                    result=None,
+                )
+
+        rf_api_client = self._server_manager.get_others_api_client(uri)
+        if rf_api_client is not None:
+            func = partial(
+                self._threaded_api_request_no_doc,
+                rf_api_client,
+                "request_collect_robot_documentation",
+                __timeout__=DEFAULT_COLLECT_DOCS_TIMEOUT,
+                doc_uri=uri,
+                library_name=library_name,
+                line=line,
+                col=col,
+            )
+            func = require_monitor(func)
+            return func
+
+        return dict(success=False, message="no api available", result=None)
+
     @command_dispatcher(ROBOT_START_INDEXING_INTERNAL)
     def _start_indexing(self, *arguments):
         self._server_manager.get_regular_rf_api_client("")
@@ -1040,6 +1082,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         rf_api_client: IRobotFrameworkApiClient,
         request_method_name: str,
         monitor: Optional[IMonitor],
+        __timeout__=DEFAULT_COMPLETIONS_TIMEOUT,
         __convert_result__=None,
         **kwargs,
     ):
@@ -1056,7 +1099,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         if wait_for_message_matcher(
             message_matcher,
             rf_api_client.request_cancel,
-            DEFAULT_COMPLETIONS_TIMEOUT,
+            __timeout__,
             monitor,
         ):
             msg = message_matcher.msg

@@ -25,6 +25,9 @@ ROBOT_LINT_EXPLORER = "robot.lint.explorer"  # Lint
 ROBOT_OPEN_FLOW_EXPLORER = "robot.openFlowExplorer"  # Open Robot Flow Explorer
 ROBOT_OPEN_FLOW_EXPLORER_INTERNAL = "robot.openFlowExplorer.internal"  # Open Robot Flow Explorer Internals
 ROBOT_GENERATE_FLOW_EXPLORER_MODEL = "robot.generateFlowExplorerModel"  # Generate Robot Flow Explorer Model
+ROBOT_COLLECT_ROBOT_DOCUMENTATION = "robot.collectRobotDocumentation"  # Collect Robot Documentation
+ROBOT_VIEW_DOCUMENTATION_PIN = "robot.view.documentation.pin"  # Pin Robot Documentation
+ROBOT_VIEW_DOCUMENTATION_UNPIN = "robot.view.documentation.unpin"  # Unpin Robot Documentation
 
 ALL_SERVER_COMMANDS: List[str] = [
     ROBOT_INTERNAL_RFINTERACTIVE_START,
@@ -41,6 +44,7 @@ ALL_SERVER_COMMANDS: List[str] = [
     ROBOT_LINT_EXPLORER,
     ROBOT_OPEN_FLOW_EXPLORER_INTERNAL,
     ROBOT_GENERATE_FLOW_EXPLORER_MODEL,
+    ROBOT_COLLECT_ROBOT_DOCUMENTATION,
 ]
 
 # fmt: on

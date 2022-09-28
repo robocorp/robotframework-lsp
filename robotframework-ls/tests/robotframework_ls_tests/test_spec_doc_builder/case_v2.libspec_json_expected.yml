@@ -11,19 +11,28 @@ keywords:
     kind: POSITIONAL_OR_NAMED
     name: arg1
     repr: arg1=my:,my:something,*foo,**foo,<rara>
+    required: true
+    typedocs: []
+    types: []
   doc: ''
   lineno: 42
   name: Arg String Default
+  shortdoc: ''
   source: null
   tags: []
 - args:
-  - kind: POSITIONAL_OR_NAMED
+  - defaultValue: null
+    kind: POSITIONAL_OR_NAMED
     name: model
     repr: 'model: SomeEnum { v1 | v2 }'
-    types: SomeEnum { v1 | v2 }
+    required: true
+    typedocs: []
+    types:
+    - SomeEnum { v1 | v2 }
   doc: ''
   lineno: 26
   name: Arg With Enum Type
+  shortdoc: ''
   source: null
   tags: []
 - args:
@@ -31,66 +40,105 @@ keywords:
     kind: POSITIONAL_OR_NAMED
     name: model
     repr: 'model: SomeEnum { v1 | v2 } = SomeEnum.v2'
-    types: SomeEnum { v1 | v2 }
+    required: true
+    typedocs: []
+    types:
+    - SomeEnum { v1 | v2 }
   doc: ''
   lineno: 30
   name: Arg With Enum Type And Default
+  shortdoc: ''
   source: null
   tags: []
 - args:
-  - kind: POSITIONAL_OR_NAMED
+  - defaultValue: null
+    kind: POSITIONAL_OR_NAMED
     name: arg1
     repr: arg1
-  - kind: POSITIONAL_OR_NAMED
+    required: true
+    typedocs: []
+    types: []
+  - defaultValue: null
+    kind: POSITIONAL_OR_NAMED
     name: arg2
     repr: arg2
+    required: true
+    typedocs: []
+    types: []
   doc: ''
   lineno: 38
   name: Arg With Positional
+  shortdoc: ''
   source: null
   tags: []
 - args:
-  - kind: POSITIONAL_OR_NAMED
+  - defaultValue: null
+    kind: POSITIONAL_OR_NAMED
     name: arg1
     repr: arg1
+    required: true
+    typedocs: []
+    types: []
   - defaultValue: '10'
     kind: POSITIONAL_OR_NAMED
     name: arg2
     repr: arg2=10
-  - kind: VAR_POSITIONAL
+    required: true
+    typedocs: []
+    types: []
+  - defaultValue: null
+    kind: VAR_POSITIONAL
     name: '@arg3'
     repr: '*arg3'
-  - kind: VAR_NAMED
+    required: true
+    typedocs: []
+    types: []
+  - defaultValue: null
+    kind: VAR_NAMED
     name: '&arg4'
     repr: '**arg4'
+    required: true
+    typedocs: []
+    types: []
   doc: ''
   lineno: 34
   name: Arg With Starargs
+  shortdoc: ''
   source: null
   tags: []
 - args:
-  - kind: POSITIONAL_OR_NAMED
+  - defaultValue: null
+    kind: POSITIONAL_OR_NAMED
     name: model
     repr: 'model: int'
-    types: int
+    required: true
+    typedocs: []
+    types:
+    - int
   doc: 'Some doc in arg\_with\_type.
 
 
     '
   lineno: 20
   name: Arg With Type
+  shortdoc: Some doc in arg\_with\_type.
   source: null
   tags: []
 - args:
-  - kind: POSITIONAL_OR_NAMED
+  - defaultValue: null
+    kind: POSITIONAL_OR_NAMED
     name: model
     repr: model
+    required: true
+    typedocs: []
+    types: []
   doc: 'Some doc in simple\_arg.
 
 
     '
   lineno: 14
   name: Simple Arg
+  shortdoc: Some doc in simple\_arg.
   source: null
   tags: []
 lineno: 1
@@ -100,4 +148,5 @@ source: case_argspec.py
 specversion: '2'
 tags: []
 type: LIBRARY
+typedocs: []
 version: null

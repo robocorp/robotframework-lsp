@@ -169,6 +169,26 @@ COMMANDS: List[Command] = [
         server_handled=True,
         hide_from_command_palette=True,
     ),
+    Command(
+        "robot.collectRobotDocumentation",
+        "Collect Robot Documentation",
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
+    Command(
+        "robot.view.documentation.pin",
+        "Pin Robot Documentation",
+        server_handled=False,
+        hide_from_command_palette=False,
+        icon="$(pin)",
+    ),
+    Command(
+        "robot.view.documentation.unpin",
+        "Unpin Robot Documentation",
+        server_handled=False,
+        hide_from_command_palette=False,
+        icon="$(pinned)",
+    ),
 ]
 
 
@@ -220,6 +240,7 @@ def get_activation_events_for_json():
     activation_events.append("onCommand:robot.getInternalInfo")
     activation_events.append("onCommand:robot.resolveInterpreter")
     activation_events.append("onCommand:robot.listTests")
+    activation_events.append("onView:robot.view.documentation")
 
     for command in COMMANDS:
         activation_events.append("onCommand:" + command.name)

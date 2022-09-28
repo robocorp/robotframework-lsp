@@ -24,11 +24,29 @@ from robotframework_ls.impl.protocols import ISymbolsCache, ILibraryDoc, IKeywor
 from robocorp_ls_core.robotframework_log import get_logger, get_log_level
 import json
 import typing
+import itertools
+import inspect
+from itertools import takewhile
 
 
 log = get_logger(__name__)
 
 _notified_missing_docutils = False
+
+
+def getdoc(item):
+    return inspect.getdoc(item) or ""
+
+
+def getshortdoc(doc_or_item, linesep="\n"):
+    if not doc_or_item:
+        return ""
+
+    from robotframework_ls.impl.robot_formatting.robot_normalizing import is_string
+
+    doc = doc_or_item if is_string(doc_or_item) else getdoc(doc_or_item)
+    lines = takewhile(lambda line: line.strip(), doc.splitlines())
+    return linesep.join(lines)
 
 
 def _rest_to_markdown(doc: str) -> Optional[str]:
@@ -64,7 +82,7 @@ def _rest_to_markdown(doc: str) -> Optional[str]:
     )
 
 
-def _get_formatter(doc_format) -> Optional[Callable[[str], Optional[str]]]:
+def _get_markdown_formatter(doc_format) -> Optional[Callable[[str], Optional[str]]]:
     lower_doc_format = doc_format.lower()
     if lower_doc_format == "robot":
         from robotframework_ls import robot_to_markdown
@@ -206,7 +224,14 @@ class LibraryDoc(object):
             "inits": [init.to_dictionary() for init in self.inits],
             "keywords": [kw.to_dictionary() for kw in self.keywords],
             "dataTypes": data_types,
+            "typedocs": [],
         }
+
+    def copy(self):
+        builder = JsonDocBuilder()
+        spec = self.to_dictionary()
+        filename = self.filename
+        return builder.build_from_dict(filename, spec)
 
     @property  # type: ignore
     @instance_cache
@@ -254,9 +279,34 @@ class LibraryDoc(object):
 
     __str__ = __repr__
 
+    def convert_docs_to_html(self):
+        from robotframework_ls.impl.robot_formatting.robot_html_utils import (
+            DocFormatter,
+        )
+        from robotframework_ls.impl.robot_formatting.robot_html_utils import DocToHtml
+
+        type_docs = ()  # TODO: We don't load this right now...
+
+        formatter = DocFormatter(self.keywords, type_docs, self.doc, self.doc_format)
+        self.doc = formatter.html(self.doc, intro=True)
+        for item in self.inits + self.keywords:
+            # If 'shortdoc' is not set, it is generated automatically based on 'doc'
+            # when accessed. Generate and set it to avoid HTML format affecting it.
+            item.shortdoc = item.shortdoc
+            item.doc = formatter.html(item.doc)
+        for type_doc in type_docs:
+            # Standard docs are always in ROBOT format ...
+            if type_doc.type == type_doc.STANDARD:
+                # ... unless they have been converted to HTML already.
+                if not type_doc.doc.startswith("<p>"):
+                    type_doc.doc = DocToHtml("ROBOT")(type_doc.doc)
+            else:
+                type_doc.doc = formatter.html(type_doc.doc)
+        self.doc_format = "HTML"
+
     def convert_docs_to_markdown(self) -> bool:
         old_doc_format = self.doc_format
-        formatter = _get_formatter(old_doc_format)
+        formatter = _get_markdown_formatter(old_doc_format)
 
         if formatter is not None:
             new_doc = formatter(self.doc)
@@ -266,20 +316,10 @@ class LibraryDoc(object):
 
             self.doc = new_doc
 
-            for init in self.inits:
-                new = formatter(init.doc)
+            for item in itertools.chain(self.inits, self.keywords, self.data_types):
+                new = formatter(item.doc)
                 if new is not None:
-                    init.doc = new
-
-            for keyword in self.keywords:
-                new = formatter(keyword.doc)
-                if new is not None:
-                    keyword.doc = new
-
-            for type_doc in self.data_types:
-                new = formatter(type_doc.doc)
-                if new is not None:
-                    type_doc.doc = new
+                    item.doc = new
 
             self.doc_format = "markdown"
 
@@ -379,12 +419,21 @@ class KeywordArg(object):
             "name": self._arg_name,
             "kind": self.kind,
             "repr": self.original_arg,
+            "required": True,
         }
         if self._default_value is not Sentinel:
             ret["defaultValue"] = self._default_value
+        else:
+            ret["defaultValue"] = None
 
         if self._arg_type is not Sentinel:
-            ret["types"] = self._arg_type
+            arg_type = self._arg_type
+            if not isinstance(arg_type, (list, tuple)):
+                arg_type = [arg_type]
+            ret["types"] = arg_type
+        else:
+            ret["types"] = []
+        ret["typedocs"] = []
 
         return ret
 
@@ -433,8 +482,29 @@ class KeywordDoc(object):
         self._args = args
         self.doc = doc
         self.tags = tags
+        self._shortdoc = ""
         self._source = source
         self.lineno = lineno
+
+    @property
+    def shortdoc(self):
+        return self._shortdoc or self._doc_to_shortdoc()
+
+    def _doc_to_shortdoc(self):
+        doc_format = self.doc_format
+        if doc_format == "HTML":
+            from robotframework_ls.impl.robot_formatting.robot_html_utils import (
+                HtmlToText,
+            )
+
+            doc = HtmlToText().get_shortdoc_from_html(self.doc)
+        else:
+            doc = self.doc
+        return " ".join(getshortdoc(doc).splitlines())
+
+    @shortdoc.setter  # type: ignore
+    def shortdoc(self, shortdoc):
+        self._shortdoc = shortdoc
 
     @property
     def deprecated(self) -> bool:
@@ -481,6 +551,7 @@ class KeywordDoc(object):
             "doc": self.doc,
             "tags": list(self.tags),
             "source": self.source,
+            "shortdoc": self.shortdoc,
             "lineno": self.lineno,
         }
 

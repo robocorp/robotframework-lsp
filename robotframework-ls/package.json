@@ -34,6 +34,7 @@
         "onCommand:robot.getInternalInfo",
         "onCommand:robot.resolveInterpreter",
         "onCommand:robot.listTests",
+        "onView:robot.view.documentation",
         "onCommand:robot.runTest",
         "onCommand:robot.debugTest",
         "onCommand:robot.runSuite",
@@ -56,7 +57,10 @@
         "onCommand:robot.lint.explorer",
         "onCommand:robot.openFlowExplorer",
         "onCommand:robot.openFlowExplorer.internal",
-        "onCommand:robot.generateFlowExplorerModel"
+        "onCommand:robot.generateFlowExplorerModel",
+        "onCommand:robot.collectRobotDocumentation",
+        "onCommand:robot.view.documentation.pin",
+        "onCommand:robot.view.documentation.unpin"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -183,6 +187,23 @@
                 "command": "robot.generateFlowExplorerModel",
                 "title": "Generate Robot Flow Explorer Model",
                 "category": "Robot Framework"
+            },
+            {
+                "command": "robot.collectRobotDocumentation",
+                "title": "Collect Robot Documentation",
+                "category": "Robot Framework"
+            },
+            {
+                "command": "robot.view.documentation.pin",
+                "title": "Pin Robot Documentation",
+                "category": "Robot Framework",
+                "icon": "$(pin)"
+            },
+            {
+                "command": "robot.view.documentation.unpin",
+                "title": "Unpin Robot Documentation",
+                "category": "Robot Framework",
+                "icon": "$(pinned)"
             }
         ],
         "submenus": [
@@ -228,6 +249,18 @@
                     "group": "2_analysis",
                     "submenu": "robotsubmenu",
                     "when": "resourceExtname == .robot || resourceExtname == .resource || explorerResourceIsFolder"
+                }
+            ],
+            "view/title": [
+                {
+                    "command": "robot.view.documentation.pin",
+                    "when": "view == robot.view.documentation && !robot.view.documentation.isPinned",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robot.view.documentation.unpin",
+                    "when": "view == robot.view.documentation && robot.view.documentation.isPinned",
+                    "group": "navigation"
                 }
             ],
             "commandPalette": [
@@ -289,6 +322,10 @@
                 },
                 {
                     "command": "robot.generateFlowExplorerModel",
+                    "when": "false"
+                },
+                {
+                    "command": "robot.collectRobotDocumentation",
                     "when": "false"
                 }
             ]
@@ -558,6 +595,25 @@
                 }
             }
         },
+        "viewsContainers": {
+            "panel": [
+                {
+                    "id": "robot-documentation",
+                    "title": "Robot Documentation",
+                    "icon": "$(notebook)"
+                }
+            ]
+        },
+        "views": {
+            "robot-documentation": [
+                {
+                    "type": "webview",
+                    "id": "robot.view.documentation",
+                    "name": "Robot Documentation",
+                    "contextualTitle": "Robot Documentation"
+                }
+            ]
+        },
         "languages": [
             {
                 "id": "robotframework",
@@ -704,7 +760,8 @@
     "dependencies": {
         "path-exists": "^4.0.0",
         "vscode-languageclient": "^8.0.1",
-        "jsonc-parser": "^2.0.3"
+        "jsonc-parser": "^2.0.3",
+        "marked": "^4.1.0"
     },
     "devDependencies": {
         "@types/mocha": "^2.2.32",

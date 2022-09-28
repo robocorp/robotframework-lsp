@@ -41,6 +41,7 @@ import { clearTestItems, handleTestsCollected, ITestInfoFromUri, setupTestExplor
 import { getPythonExtensionExecutable } from "./pythonExtIntegration";
 import { registerDebugger } from "./debugger";
 import { debounce } from "./common";
+import { RobotDocumentationViewProvider } from "./docs";
 
 interface ExecuteWorkspaceCommandArgs {
     command: string;
@@ -796,6 +797,21 @@ export async function activate(context: ExtensionContext) {
             commands.registerCommand("robot.openFlowExplorer", async (uri?: string) => {
                 const flowBundleHTMLFolderPath = context.asAbsolutePath("assets");
                 return openFlowExplorer(flowBundleHTMLFolderPath, uri);
+            })
+        );
+
+        const provider = new RobotDocumentationViewProvider(context);
+        context.subscriptions.push(
+            vscode.window.registerWebviewViewProvider(RobotDocumentationViewProvider.viewType, provider)
+        );
+        context.subscriptions.push(
+            commands.registerCommand("robot.view.documentation.pin", () => {
+                provider.pin();
+            })
+        );
+        context.subscriptions.push(
+            commands.registerCommand("robot.view.documentation.unpin", () => {
+                provider.unpin();
             })
         );
 

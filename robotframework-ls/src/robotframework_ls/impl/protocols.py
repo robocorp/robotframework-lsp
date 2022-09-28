@@ -353,6 +353,20 @@ class ILibraryDoc(Protocol):
     keywords: List["IKeywordDoc"]
 
 
+class ILibraryDocConversions(ILibraryDoc):
+    """
+    Note: these are actually part of the basic library doc but we
+    put it in a different interface because clients usually shouldn't
+    use it (it's controlled by the libspec manager).
+    """
+
+    def convert_docs_to_html(self):
+        pass
+
+    def convert_docs_to_markdown(self):
+        pass
+
+
 class IKeywordDoc(Protocol):
     name: str
     tags: Tuple[str, ...]

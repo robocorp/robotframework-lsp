@@ -3,10 +3,12 @@ from robocorp_ls_core.options import USE_TIMEOUTS
 from typing import Optional
 from string import Template
 
-DEFAULT_COMPLETIONS_TIMEOUT: int = 4
+DEFAULT_COMPLETIONS_TIMEOUT: int = 8
+DEFAULT_COLLECT_DOCS_TIMEOUT: int = 40
 if not USE_TIMEOUTS:
     # A whole month of timeout seems good enough as a max.
     DEFAULT_COMPLETIONS_TIMEOUT = 60 * 60 * 24 * 30
+    DEFAULT_COLLECT_DOCS_TIMEOUT = DEFAULT_COMPLETIONS_TIMEOUT
 
 # Robot Flow Explorer template used as wrapper for the React Application
 # Substitute the $rfe_options & $rfe_data to render properly

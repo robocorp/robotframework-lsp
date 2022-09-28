@@ -6,9 +6,10 @@ from robocorp_ls_core.lsp import (
     MarkupContentTypedDict,
 )
 from typing import Optional
+from robotframework_ls.impl.protocols import ICompletionContext
 
 
-def hover(completion_context) -> Optional[HoverTypedDict]:
+def hover(completion_context: ICompletionContext) -> Optional[HoverTypedDict]:
     from robotframework_ls.impl.find_definition import find_definition_extended
     from robotframework_ls.impl import ast_utils
 

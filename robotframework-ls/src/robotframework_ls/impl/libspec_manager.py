@@ -9,6 +9,7 @@ from robotframework_ls.impl.protocols import (
     ILibraryDoc,
     ILibraryDocOrError,
     ICompletionContext,
+    ILibraryDocConversions,
 )
 import itertools
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
@@ -80,14 +81,24 @@ def _load_library_doc_and_mtime(libspec_manager, spec_filename: str, obtain_mute
         # We must load it with a mutex to avoid conflicts between generating/reading.
         try:
             mtime = os.path.getmtime(spec_filename)
-            libdoc = load_markdown_json_version(libspec_manager, spec_filename, mtime)
+            if not libspec_manager.is_copy:
+                libdoc = load_markdown_json_version(
+                    libspec_manager, spec_filename, mtime
+                )
 
-            if libdoc is None:
+                if libdoc is None:
+                    builder = robot_specbuilder.SpecDocBuilder()
+                    libdoc = builder.build(spec_filename)
+                    if libdoc.doc_format != "markdown":
+                        libspec_manager.schedule_conversion_to_markdown(spec_filename)
+                return libdoc, mtime
+
+            else:
+                # For a copy we don't use markdown by default, rather
+                # we always use the raw format and convert as needed.
                 builder = robot_specbuilder.SpecDocBuilder()
                 libdoc = builder.build(spec_filename)
-                if libdoc.doc_format != "markdown":
-                    libspec_manager.schedule_conversion_to_markdown(spec_filename)
-            return libdoc, mtime
+                return libdoc, mtime
         except Exception:
             log.exception("Error when loading spec info from: %s", spec_filename)
             return None
@@ -188,7 +199,8 @@ def _dump_spec_filename_additional_info(
     spec.
     """
     try:
-        libspec_manager.schedule_conversion_to_markdown(spec_filename)
+        if not libspec_manager.is_copy:
+            libspec_manager.schedule_conversion_to_markdown(spec_filename)
     except:
         log.exception("Error converting %s to markdown.", spec_filename)
     import json
@@ -432,6 +444,18 @@ class LibspecManager(object):
     # a libspec for a target filename.
     INTERNAL_VERSION = "v2"
 
+    def create_copy(self):
+        return LibspecManager(
+            builtin_libspec_dir=self._builtins_libspec_dir,
+            user_libspec_dir=self._user_libspec_dir,
+            dir_cache_dir=self._dir_cache_dir,
+            observer=None,
+            endpoint=None,
+            pre_generate_libspecs=False,
+            cache_libspec_dir=self._cache_libspec_dir,
+            is_copy=True,
+        )
+
     def __init__(
         self,
         builtin_libspec_dir: Optional[str] = None,
@@ -441,6 +465,8 @@ class LibspecManager(object):
         endpoint: Optional[IEndPoint] = None,
         pre_generate_libspecs: bool = False,
         cache_libspec_dir: Optional[str] = None,
+        *,
+        is_copy: bool = False,
     ):
         """
         :param __internal_libspec_dir__:
@@ -450,10 +476,11 @@ class LibspecManager(object):
         from robocorp_ls_core.cache import DirCache
         from robotframework_ls import robot_config
 
-        dir_cache = DirCache(
-            dir_cache_dir
-            or os.path.join(robot_config.get_robotframework_ls_home(), ".cache")
+        self._is_copy = is_copy
+        self._dir_cache_dir = dir_cache_dir or os.path.join(
+            robot_config.get_robotframework_ls_home(), ".cache"
         )
+        dir_cache = DirCache(self._dir_cache_dir)
 
         self._libspec_dir = self.get_internal_libspec_dir()
 
@@ -570,6 +597,10 @@ class LibspecManager(object):
         self._synchronize()
         log.debug("Finished initializing LibspecManager.")
 
+    @property
+    def is_copy(self):
+        return self._is_copy
+
     def schedule_conversion_to_markdown(self, spec_filename: str):
         if self.libspec_markdown_conversion is not None:
             self.libspec_markdown_conversion.schedule_conversion_to_markdown(
@@ -626,11 +657,11 @@ class LibspecManager(object):
                 self._libspec_warmup.gen_user_libraries(self, make_unique(pre_generate))
 
     @property
-    def user_libspec_dir(self):
+    def user_libspec_dir(self) -> str:
         return self._user_libspec_dir
 
     @property
-    def cache_libspec_dir(self):
+    def cache_libspec_dir(self) -> str:
         return self._cache_libspec_dir
 
     def _on_file_changed(self, spec_file, folder_info_on_change_spec):
