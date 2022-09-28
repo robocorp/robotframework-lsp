@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '1.1.3'
+version '1.2.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,14 +50,19 @@ intellij {
 patchPluginXml {
     changeNotes = """
     <p>
-    <strong>Release 1.1.3</strong>
+    <strong>Release 1.2.0</strong>
     </p>
+    
+    <ul>
+    <li><strong>Features</strong></li>
+    <ul>
+    <li>Tests may be run/debug using action in gutter (patch by @jsmzr).</li>
+    </ul>
     
     <ul>
     <li><strong>Bugfixes</strong></li>
     <ul>
-    <li>Snippets take into account the value of <strong>robot.completions.keywords.argumentsSeparator</strong>.</li>
-    <li>Completions properly presented for <strong>Variables</strong> under <strong>*** Settings ***</strong>.</li>
+    <li>Fix invalid range in go to definition if range becomes invalid during the go to definition action.</li>
     </ul>
     
     
