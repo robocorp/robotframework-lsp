@@ -53,12 +53,14 @@
                                     implementationClass="robocorp.lsp.intellij.FeatureHover"/>
         <lang.foldingBuilder language="RobotFramework"
                              implementationClass="robocorp.lsp.intellij.FeatureCodeFolding"/>
-        <lang.psiStructureViewFactory language="RobotFramework" implementationClass="robocorp.lsp.intellij.FeatureOutline"/>
+        <lang.psiStructureViewFactory language="RobotFramework"
+                                      implementationClass="robocorp.lsp.intellij.FeatureOutline"/>
 
         <configurationType implementation="robocorp.dap.RobotConfigurationType"/>
         <programRunner implementation="robocorp.dap.RobotProgramRunner"/>
         <xdebugger.breakpointType implementation="robocorp.dap.RobotLineBreakpoint"/>
-        <codeInsight.lineMarkerProvider language="RobotFramework" implementationClass="robocorp.dap.RobotRunnerLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="RobotFramework"
+                                        implementationClass="robocorp.dap.linemarker.RobotRunnerLineMarkerProvider"/>
     </extensions>
 
 </idea-plugin>

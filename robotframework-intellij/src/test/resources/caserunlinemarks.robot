@@ -24,3 +24,7 @@ Fourth Test
 
 Fifth Test
     No Operation
+
+
+*** Settings ***
+Library     Collections
