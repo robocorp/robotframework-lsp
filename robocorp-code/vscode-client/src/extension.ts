@@ -400,7 +400,11 @@ async function convertProject() {
         // actual conversion
         const bytes = await workspace.fs.readFile(uri);
         const contents = new TextDecoder("utf-8").decode(bytes);
-        const conversionResult: ConversionResult = await converterBundle.convert(vendorMap[selectedFormat], contents);
+        const home = roboConfig.getHome();
+        const options = {
+            // objectImplFile: workspace.fs.path(home, 'converter/blueprism/robocorp-commons/convert.yaml')
+        };
+        const conversionResult: ConversionResult = await converterBundle.convert(vendorMap[selectedFormat], contents, options);
         if (!converterBundle.isSuccessful(conversionResult)) {
             logError(
                 "Error converting file to Robocorp Robot",
