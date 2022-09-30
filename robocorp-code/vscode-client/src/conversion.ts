@@ -103,8 +103,8 @@ export const getRobocorpCommonsVersion = async (): Promise<{
     currentVersionLocation?: string;
 }> => {
     const versionURL = "https://downloads.robocorp.com/converter/commons/version.txt";
-    const currentVersionLocation = getExtensionRelativeFile("../../vscode-client/out/commons.version", false);
-    const newVersionLocation = getExtensionRelativeFile("../../vscode-client/out/commons.version.new", false);
+    const currentVersionLocation = getExtensionRelativeFile("../../vscode-client/out/robocorp-bp-commons.version", false);
+    const newVersionLocation = getExtensionRelativeFile("../../vscode-client/out/robocorp-bp-commons.version.new", false);
 
     const currentVersion = await readFromFile(currentVersionLocation);
     let newVersion = undefined;
@@ -132,7 +132,7 @@ export const getRobocorpCommonsVersion = async (): Promise<{
 };
 
 
-export async function ensureRobocorpCommons(): Promise<string> {
+export async function ensureRobocorpCommons(): Promise<string | undefined> {
     const converterHome = path.join(getHome(), 'converter');
     const robocorpBpCommonLocation = path.join(converterHome, 'robocorp-bp-common');
 
@@ -179,9 +179,9 @@ export async function ensureRobocorpCommons(): Promise<string> {
             } 
         );
 
-    const warnUser: boolean = false;
-    if (!verifyFileExists(convertYamlLocation, warnUser)) {
+    if (!verifyFileExists(convertYamlLocation, false)) {
         await downloadCommons();
+        await unzipCommons();
     } else if (!ROBOCORP_COMMONS_STATUS.alreadyCheckedVersion) {
         ROBOCORP_COMMONS_STATUS.alreadyCheckedVersion = true;
         const { currentVersion, newVersion, currentVersionLocation } = await getRobocorpCommonsVersion();
@@ -193,14 +193,20 @@ export async function ensureRobocorpCommons(): Promise<string> {
                 "canPickMany": false,
                 "ignoreFocusOut": true,
             });
-            if (!shouldUpgrade || shouldUpgrade === "No") {
-                // do not continue with download & use current version
-                return convertYamlLocation;
+            if (shouldUpgrade && shouldUpgrade !== "No") {
+                await writeToFile(currentVersionLocation, newVersion);
+                await downloadCommons();
+                await unzipCommons();
             }
-            await writeToFile(currentVersionLocation, newVersion);
-            await downloadCommons();
-            await unzipCommons();
+           
         }
     }
+
+    if (!verifyFileExists(convertYamlLocation, false)) {
+        // something bad happened, just return undefined
+        // in this way the converter won't try to use any common model
+        return undefined;
+    }
+
     return convertYamlLocation;
 }

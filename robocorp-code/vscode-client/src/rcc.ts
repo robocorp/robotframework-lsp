@@ -215,6 +215,7 @@ export async function download(
             let response: XHRResponse = await xhr({
                 "url": url,
                 "onProgress": onProgress,
+                timeout: 5000, /* 5 sec */
             });
             if (response.status == 200) {
                 // Ok, we've been able to get it.

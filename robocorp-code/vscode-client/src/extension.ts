@@ -143,7 +143,7 @@ import { Mutex } from "./mutex";
 import { mergeEnviron } from "./subprocess";
 import { feedback } from "./rcc";
 import { showSubmitIssueUI } from "./submitIssue";
-import { ensureConvertBundle } from "./conversion";
+import { ensureConvertBundle, ensureRobocorpCommons } from "./conversion";
 import { TextDecoder } from "util";
 
 interface InterpreterInfo {
@@ -345,6 +345,7 @@ async function convertProject() {
     const DEFAULT_ERROR_STATUS = "Error while converting project.";
 
     const convertBundlePromise = ensureConvertBundle();
+    const robocorpCommonsPromise = ensureRobocorpCommons()
     try {
         // let the user decide where the conversion result will be saved
         const wsFolders: ReadonlyArray<WorkspaceFolder> = workspace.workspaceFolders;
@@ -385,6 +386,11 @@ async function convertProject() {
         }
         const converterBundle = require(converterLocation);
 
+        const convertYamlLocation = await robocorpCommonsPromise;
+        if (!convertYamlLocation) {
+            console.warn('Cannot find convert.yaml for commons');
+        }
+
         // let the user decide what type of project will be converted
         const vendorMap = {
             "Blue Prism": "blueprism",
@@ -405,11 +411,11 @@ async function convertProject() {
         // actual conversion
         const bytes = await workspace.fs.readFile(uri);
         const contents = new TextDecoder("utf-8").decode(bytes);
-        const home = roboConfig.getHome();
         const options = {
-            // objectImplFile: workspace.fs.path(home, 'converter/blueprism/robocorp-commons/convert.yaml')
+            objectImplFile: convertYamlLocation
         };
-        const conversionResult: ConversionResult = await converterBundle.convert(vendorMap[selectedFormat], contents, options);
+        const vendor = vendorMap[selectedFormat];
+        const conversionResult: ConversionResult = await converterBundle.convert(vendor, contents, options);
         if (!converterBundle.isSuccessful(conversionResult)) {
             logError(
                 "Error converting file to Robocorp Robot",
