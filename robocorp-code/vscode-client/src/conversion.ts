@@ -1,7 +1,7 @@
 import * as path from "path";
 import * as fs from "fs";
 import * as AdmZip from "adm-zip";
-import * as rimraf from 'rimraf'
+import * as rimraf from "rimraf";
 
 import { window, Progress, ProgressLocation, CancellationToken } from "vscode";
 import { getExtensionRelativeFile, readFromFile, verifyFileExists, writeToFile } from "./files";
@@ -96,15 +96,20 @@ export async function ensureConvertBundle(): Promise<string> {
     return bundleLocation;
 }
 
-
 export const getRobocorpCommonsVersion = async (): Promise<{
     currentVersion?: string;
     newVersion?: string;
     currentVersionLocation?: string;
 }> => {
     const versionURL = "https://downloads.robocorp.com/converter/commons/version.txt";
-    const currentVersionLocation = getExtensionRelativeFile("../../vscode-client/out/robocorp-bp-commons.version", false);
-    const newVersionLocation = getExtensionRelativeFile("../../vscode-client/out/robocorp-bp-commons.version.new", false);
+    const currentVersionLocation = getExtensionRelativeFile(
+        "../../vscode-client/out/robocorp-bp-commons.version",
+        false
+    );
+    const newVersionLocation = getExtensionRelativeFile(
+        "../../vscode-client/out/robocorp-bp-commons.version.new",
+        false
+    );
 
     const currentVersion = await readFromFile(currentVersionLocation);
     let newVersion = undefined;
@@ -131,10 +136,9 @@ export const getRobocorpCommonsVersion = async (): Promise<{
     return { currentVersion: currentVersion, newVersion: newVersion, currentVersionLocation: currentVersionLocation };
 };
 
-
 export async function ensureRobocorpCommons(): Promise<string | undefined> {
-    const converterHome = path.join(getHome(), 'converter');
-    const robocorpBpCommonLocation = path.join(converterHome, 'robocorp-bp-common');
+    const converterHome = path.join(getHome(), "converter");
+    const robocorpBpCommonLocation = path.join(converterHome, "robocorp-bp-common");
 
     // common zip
     const commonsURL = "https://downloads.robocorp.com/converter/commons/robocorp-bp-commons.zip";
@@ -142,7 +146,7 @@ export async function ensureRobocorpCommons(): Promise<string | undefined> {
     const commonZipLocation = getExtensionRelativeFile(commonsZipRelativeLocation, false);
 
     // location of convert.yaml
-    const convertYamlLocation = path.join(robocorpBpCommonLocation, 'convert.yaml');
+    const convertYamlLocation = path.join(robocorpBpCommonLocation, "convert.yaml");
 
     const downloadCommons = async () =>
         await window.withProgress(
@@ -169,14 +173,14 @@ export async function ensureRobocorpCommons(): Promise<string | undefined> {
                 token: CancellationToken
             ): Promise<void> => {
                 if (verifyFileExists(robocorpBpCommonLocation, false)) {
-                    rimraf.sync(robocorpBpCommonLocation)
+                    rimraf.sync(robocorpBpCommonLocation);
                 }
 
                 await fs.promises.mkdir(robocorpBpCommonLocation, { recursive: true });
 
                 const zip = new AdmZip(commonZipLocation);
                 zip.extractAllTo(robocorpBpCommonLocation);
-            } 
+            }
         );
 
     if (!verifyFileExists(convertYamlLocation, false)) {
@@ -198,7 +202,6 @@ export async function ensureRobocorpCommons(): Promise<string | undefined> {
                 await downloadCommons();
                 await unzipCommons();
             }
-           
         }
     }
 

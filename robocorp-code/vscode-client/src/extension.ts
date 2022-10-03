@@ -345,7 +345,7 @@ async function convertProject() {
     const DEFAULT_ERROR_STATUS = "Error while converting project.";
 
     const convertBundlePromise = ensureConvertBundle();
-    const robocorpCommonsPromise = ensureRobocorpCommons()
+    const robocorpCommonsPromise = ensureRobocorpCommons();
     try {
         // let the user decide where the conversion result will be saved
         const wsFolders: ReadonlyArray<WorkspaceFolder> = workspace.workspaceFolders;
@@ -388,7 +388,7 @@ async function convertProject() {
 
         const convertYamlLocation = await robocorpCommonsPromise;
         if (!convertYamlLocation) {
-            console.warn('Cannot find convert.yaml for commons');
+            console.warn("Cannot find convert.yaml for commons");
         }
 
         // let the user decide what type of project will be converted
@@ -412,7 +412,7 @@ async function convertProject() {
         const bytes = await workspace.fs.readFile(uri);
         const contents = new TextDecoder("utf-8").decode(bytes);
         const options = {
-            objectImplFile: convertYamlLocation
+            objectImplFile: convertYamlLocation,
         };
         const vendor = vendorMap[selectedFormat];
         const conversionResult: ConversionResult = await converterBundle.convert(vendor, contents, options);
