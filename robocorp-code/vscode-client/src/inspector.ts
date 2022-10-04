@@ -70,7 +70,8 @@ export async function _internalOpenRobocorpInspector(locatorType?: string, locat
         if (locatorType == "record") {
             // TODO: implement code to integrate recording output to locators.json
             OUTPUT_CHANNEL.appendLine("Recording.");
-            args.push("record");
+            args.push("add");
+            args.push("recorder");
         }
         // if locatorType is given prioritize that. Else Ensure that a locator is selected!
         else {
