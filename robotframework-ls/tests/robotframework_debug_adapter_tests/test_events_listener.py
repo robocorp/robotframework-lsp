@@ -66,10 +66,8 @@ def test_events_listener_failure(debugger_api: _DebuggerAPI):
     assert log_message_body.level == "FAIL"
     assert log_message_body.testName == "Check failure"
 
-    if get_robot_major_version() >= 4:
-        # source is not available on RF 3.
-        assert log_message_body.source.endswith("case_failure.robot")
-        assert log_message_body.lineno == 4
+    assert log_message_body.source.endswith("case_failure.robot")
+    assert log_message_body.lineno == 4
 
     end_test_body = debugger_api.read(EndTestEvent).body
     assert end_test_body.status == "FAIL"
@@ -78,7 +76,7 @@ def test_events_listener_failure(debugger_api: _DebuggerAPI):
         in end_test_body.message
     )
 
-    assert "Traceback:" in end_test_body.message
+    assert "Traceback (most recent call last)" in end_test_body.message
     assert debugger_api.read(EndSuiteEvent)
 
     debugger_api.read(TerminatedEvent)
@@ -117,10 +115,8 @@ def test_events_listener_output(debugger_api: _DebuggerAPI):
     assert log_message_body.level == "INFO"
     assert log_message_body.testName == "Check log"
 
-    # Source not available in RF 3.
-    if get_robot_major_version() >= 4:
-        assert log_message_body.source.endswith("case_log_no_console.robot")
-        assert log_message_body.lineno == 4
+    assert log_message_body.source.endswith("case_log_no_console.robot")
+    assert log_message_body.lineno == 4
 
     end_test_body = debugger_api.read(EndTestEvent).body
     assert end_test_body.status == "PASS"
