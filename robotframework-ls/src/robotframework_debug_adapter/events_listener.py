@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Deque
+from typing import Any, Dict, List, Deque, Optional
 from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
     StartSuiteEvent,
     StartSuiteEventBody,
@@ -12,6 +12,8 @@ from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
 from collections import namedtuple
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core import uris
+import sys
+from robotframework_ls.impl.robot_version import get_robot_major_version
 
 log = get_logger(__name__)
 
@@ -146,6 +148,11 @@ class EventsListenerV2:
     # For keywords we're just interested on tracking failures to send when a test/suite finished.
     # Note: we also try to capture the failure through logged messages.
 
+    def __init__(self):
+        from robotframework_ls.impl.robot_version import get_robot_major_version
+
+        self._robot_major_version = get_robot_major_version()
+
     def message(self, message):
         if message["level"] in ("FAIL", "ERROR"):
             return self.log_message(message, skip_error=False)
@@ -207,19 +214,39 @@ class EventsListenerV2:
         if state._source_info_stack:
             from robotframework_debug_adapter import file_utils
 
-            source_info: _SourceInfo = state._source_info_stack[-1]
-            test_name = source_info.test_name  # May be None.
+            source_info: _SourceInfo
 
-            if source is None:
-                source = source_info.source
-                source = file_utils.get_abs_path_real_path_and_base_from_file(source)[0]
+            check = []
+            check.append(
+                state._source_info_stack[-1]
+            )  # Try the real pos, if not possible...
+            try:
+                check.append(state._source_info_stack[1])  # Use the test
+            except IndexError:
+                pass
+            try:
+                check.append(state._source_info_stack[0])  # Use the suite
+            except IndexError:
+                pass
 
-            if lineno is None:
-                lineno = 0
-                try:
-                    lineno = source_info.lineno
-                except AttributeError:
-                    pass
+            for source_info in check:
+                test_name = source_info.test_name  # May be None.
+
+                if source is None:
+                    source = source_info.source
+                    if source is None:
+                        continue
+                    source = file_utils.get_abs_path_real_path_and_base_from_file(
+                        source
+                    )[0]
+
+                    try:
+                        lineno = source_info.lineno
+                    except AttributeError:
+                        pass
+
+                if source:
+                    break
 
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             LogMessageEvent,
@@ -253,18 +280,19 @@ class EventsListenerV2:
         import linecache
 
         stack_trace = []
-        stack_trace.append("Traceback:")
-        found = False
+        stack_trace.append("Traceback (most recent call last):")
+        found = len(state._source_info_stack) > 0
 
         source_info: _SourceInfo
-        for source_info in reversed(state._source_info_stack):
+        for source_info in state._source_info_stack:
             source = source_info.source
+            keyword_name = source_info.keyword_name
+            found = True
             if not source:
+                stack_trace.append(f"  <unknown source> ({keyword_name})")
                 continue
             source = file_utils.get_abs_path_real_path_and_base_from_file(source)[0]
             lineno = source_info.lineno
-
-            keyword_name = source_info.keyword_name
 
             line = ""
             try:
@@ -277,7 +305,6 @@ class EventsListenerV2:
             source = uris.from_fs_path(source)
             if keyword_name:
                 stack_trace.append(f"  {source}#{lineno} ({keyword_name})")
-                found = True
                 if line:
                     stack_trace.append(f"    {line}")
 
@@ -298,8 +325,26 @@ class EventsListenerV2:
     def start_keyword(self, name: str, attributes: Dict[str, Any]) -> None:
         state = _get_events_state()
         state._ignore_failures_in_stack.push(attributes.get("kwname", ""))
-        source = attributes.get("source")
-        lineno = attributes.get("lineno")
+        source: Optional[str] = attributes.get("source")
+        lineno: Optional[int] = attributes.get("lineno")
+        if not source:
+            # HACK for RF 3: try to get the location (since it's not available).
+            if get_robot_major_version() < 4:
+                f: Optional[Any]
+                f = sys._getframe()
+                while f is not None:
+                    if f.f_code.co_name == "run_step":
+                        step = f.f_locals.get("step")
+                        if step is not None:
+                            try:
+                                source = step.source
+                                lineno = step.lineno
+                            except AttributeError:
+                                pass
+                        break  # Break when run_step is found anyways.
+
+                    f = f.f_back
+
         test_name = None
         if state._source_info_stack:
             # Keep same test name

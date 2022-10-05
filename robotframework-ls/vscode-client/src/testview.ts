@@ -532,8 +532,11 @@ function handleLogMessage(testRun: vscode.TestRun, event: vscode.DebugSessionCus
         testItem = getTestItem(testId);
     }
 
-    if (testItem && event.body.source) {
-        let lineno: number | undefined = event.body.lineno - 1;
+    if (testItem && event.body.source && !event.body.source.startsWith("<")) {
+        let lineno: number | undefined = event.body.lineno || 0;
+        if (lineno) {
+            lineno = lineno - 1;
+        }
         let uri = vscode.Uri.file(event.body.source);
         const uriStr = uri.toString();
 
@@ -583,7 +586,7 @@ function handleLogMessage(testRun: vscode.TestRun, event: vscode.DebugSessionCus
         // in the test result.
         testRun.appendOutput(message, location, testItem);
     } else {
-        testRun.appendOutput(message, undefined, undefined);
+        testRun.appendOutput(message);
     }
 }
 
