@@ -1,5 +1,5 @@
 export const debounce = (func, wait) => {
-    let timeout;
+    let timeout: NodeJS.Timeout;
 
     return function wrapper(...args) {
         const later = () => {

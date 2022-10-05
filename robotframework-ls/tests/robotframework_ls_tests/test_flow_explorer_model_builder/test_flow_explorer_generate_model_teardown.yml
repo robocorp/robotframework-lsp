@@ -60,16 +60,19 @@ tasks:
         type: keyword
       type: else-branch
     type: if
-  - args:
-    - This is teardown zone.
-    name: Log
-    subtype: KEYWORD
-    type: keyword
   doc: ''
   internal_name: maintask(my)
   name: Main Task (my)
   setup: null
-  teardown: null
+  teardown:
+    args:
+    - Log
+    - Teardown Keyword 1
+    - Log
+    - Teardown Keyword 2
+    name: Run Keyword
+    subtype: KEYWORD
+    type: keyword
   type: task
 teardown: null
 type: suite

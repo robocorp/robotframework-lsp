@@ -572,6 +572,20 @@ COMMANDS = [
         hide_from_command_palette=True,
         icon="$(type-hierarchy-sub)",
     ),
+    Command(
+        "robocorp.convertProject",
+        "Convert third party RPA file to Robocorp Robot",
+        add_to_package_json=True,
+        server_handled=False,
+        hide_from_command_palette=False,
+    ),
+    Command(
+        "robocorp.saveConvertedProject.internal",
+        "Save converted Robocorp Project",
+        add_to_package_json=True,
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
 ]
 
 

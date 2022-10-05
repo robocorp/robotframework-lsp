@@ -17,7 +17,7 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
     }
 
     private async _fillRoots(ret: CloudEntry[]) {
-        let accountInfoResult: ActionResult<any> = await vscode.commands.executeCommand(
+        let accountInfoResult: ActionResult<IAccountInfo> = await vscode.commands.executeCommand(
             roboCommands.ROBOCORP_GET_LINKED_ACCOUNT_INFO_INTERNAL
         );
 
@@ -32,9 +32,9 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
                 },
             });
         } else {
-            let accountInfo = accountInfoResult.result;
+            const accountInfo: IAccountInfo = accountInfoResult.result;
             ret.push({
-                "label": "Linked: " + accountInfo["fullname"] + " (" + accountInfo["email"] + ")",
+                "label": "Linked: " + accountInfo.fullname + " (" + accountInfo.email + ")",
                 "iconPath": "link",
                 "viewItemContextValue": "cloudLogoutItem",
             });

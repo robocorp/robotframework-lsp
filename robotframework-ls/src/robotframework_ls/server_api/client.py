@@ -367,6 +367,26 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             self._build_msg("evaluatableExpression", doc_uri=doc_uri, position=position)
         )
 
+    def request_collect_robot_documentation(
+        self,
+        doc_uri,
+        library_name: Optional[str] = None,
+        line: Optional[int] = None,
+        col: Optional[int] = None,
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(
+            self._build_msg(
+                "collectRobotDocumentation",
+                doc_uri=doc_uri,
+                library_name=library_name,
+                line=line,
+                col=col,
+            )
+        )
+
     def request_rf_info(self, doc_uri) -> Optional[IIdMessageMatcher]:
         """
         :Note: async complete.

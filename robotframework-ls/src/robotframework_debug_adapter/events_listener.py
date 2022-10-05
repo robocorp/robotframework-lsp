@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Deque
+from typing import Any, Dict, List, Deque
 from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
     StartSuiteEvent,
     StartSuiteEventBody,
@@ -11,6 +11,7 @@ from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
 )
 from collections import namedtuple
 from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core import uris
 
 log = get_logger(__name__)
 
@@ -23,7 +24,7 @@ def send_event(event):
         robot_target_comm.write_message(event)
 
 
-_SourceInfo = namedtuple("_SourceInfo", "source, lineno, test_name")
+_SourceInfo = namedtuple("_SourceInfo", "source, lineno, test_name, keyword_name, args")
 
 
 class _EventsState:
@@ -33,11 +34,11 @@ class _EventsState:
             IgnoreFailuresInStack,
         )
 
-        self._failed_keywords: Optional[List[Dict[str, Any]]] = None
         self._failure_messages: List[str] = []
-        self._add_to_test_failure: str = ""
         self._source_info_stack: Deque[_SourceInfo] = deque()
         self._ignore_failures_in_stack = IgnoreFailuresInStack()
+        self._current_suite_filename = None
+        self._current_test_filename = None
 
 
 _global_events_state = _EventsState()
@@ -67,21 +68,19 @@ class EventsListenerV3:
             tests.append(test.name)
 
         state = _get_events_state()
-        state._source_info_stack.append(_SourceInfo(source, None, None))
+        state._current_suite_filename = source
+        state._source_info_stack.append(_SourceInfo(source, None, None, None, None))
 
         send_event(StartSuiteEvent(StartSuiteEventBody(name, source, tests)))
 
     def start_test(self, data, result) -> None:
         state = _get_events_state()
 
-        if state._failure_messages:
-            state._add_to_test_failure = "\n".join(state._failure_messages)
-            state._failure_messages = []
-
         name = data.name
         source = data.source
+        state._current_test_filename = source
         lineno = data.lineno
-        state._source_info_stack.append(_SourceInfo(source, lineno, name))
+        state._source_info_stack.append(_SourceInfo(source, lineno, name, None, None))
 
         send_event(StartTestEvent(StartTestEventBody(name, source, lineno)))
 
@@ -90,6 +89,7 @@ class EventsListenerV3:
     def end_suite(self, data, result) -> None:
         state = _get_events_state()
         try:
+            state._current_suite_filename = None
             send_event(
                 EndSuiteEvent(
                     EndSuiteEventBody(
@@ -98,27 +98,29 @@ class EventsListenerV3:
                         status=result.status,
                         source=data.source,
                         message=result.message.strip(),
-                        failed_keywords=state._failed_keywords,
+                        failed_keywords=[],
                     )
                 )
             )
         finally:
-            state._failed_keywords = None
             state._source_info_stack.pop()
 
     def end_test(self, data, result) -> None:
         state = _get_events_state()
         try:
-            msg = result.message.strip()
-            if state._add_to_test_failure:
-                msg = state._add_to_test_failure + "\n" + msg
-                state._add_to_test_failure = ""
+            state._current_test_filename = None
+            lst = []
 
             if state._failure_messages:
-                if msg:
-                    msg += "\n"
-                msg += "\n".join(state._failure_messages)
-                state._failure_messages = []
+                lst.extend(state._failure_messages)
+
+            msg = "\n".join(lst)
+
+            stripped_msg = result.message.strip()
+            if stripped_msg not in msg:
+                msg = stripped_msg + "\n" + msg
+
+            state._failure_messages = []
 
             send_event(
                 EndTestEvent(
@@ -128,12 +130,11 @@ class EventsListenerV3:
                         status=result.status,
                         source=data.source,
                         message=msg.strip(),
-                        failed_keywords=state._failed_keywords,
+                        failed_keywords=[],
                     )
                 )
             )
         finally:
-            state._failed_keywords = None
             state._source_info_stack.pop()
 
 
@@ -145,7 +146,11 @@ class EventsListenerV2:
     # For keywords we're just interested on tracking failures to send when a test/suite finished.
     # Note: we also try to capture the failure through logged messages.
 
-    def log_message(self, message: Dict[str, Any]) -> None:
+    def message(self, message):
+        if message["level"] in ("FAIL", "ERROR"):
+            return self.log_message(message, skip_error=False)
+
+    def log_message(self, message: Dict[str, Any], skip_error=True) -> None:
         """
         Called when an executed keyword writes a log message.
 
@@ -162,6 +167,23 @@ class EventsListenerV2:
         message_string = message.get("message")
         if not message_string:
             return
+
+        level = message["level"]
+        if skip_error and level in ("ERROR",):
+            # We do this because in RF all the calls to 'log_message'
+            # also generate a call to 'message', so, we want to skip
+            # one of those (but note that the other way around isn't true
+            # and some errors such as import errors are only reported
+            # in 'message' and not 'log_message').
+            return
+
+        lst = message_string.splitlines(keepends=False)
+        if not lst:
+            return
+
+        message_string = "\n".join(lst)
+        if not message_string.endswith("\n"):
+            message_string += "\n"
 
         state = _get_events_state()
 
@@ -204,6 +226,11 @@ class EventsListenerV2:
             LogMessageEventBody,
         )
 
+        is_failure = message["level"] in ("FAIL", "ERROR")  # FAIL/WARN/INFO/DEBUG/TRACE
+
+        if is_failure:
+            message_string = f"{message_string}\n{self._print_stack_trace(state)}"
+
         send_event(
             LogMessageEvent(
                 body=LogMessageEventBody(
@@ -211,18 +238,62 @@ class EventsListenerV2:
                     lineno=lineno,
                     message=f"{message_string}",
                     level=level,
+                    testOrSuiteSource=state._current_test_filename
+                    or state._current_suite_filename,
                     testName=test_name,
                 )
             )
         )
 
-        if message["level"] in ("FAIL", "ERROR"):  # FAIL/WARN/INFO/DEBUG/TRACE
-            state._failure_messages.append(message["message"])
+        if is_failure:
+            state._failure_messages.append(message_string)
 
-    def message(self, message):
-        if message["level"] in ("FAIL", "ERROR"):
-            # We also want to show these for system messages.
-            return self.log_message(message)
+    def _print_stack_trace(self, state):
+        from robotframework_debug_adapter import file_utils
+        import linecache
+
+        stack_trace = []
+        stack_trace.append("Traceback:")
+        found = False
+
+        source_info: _SourceInfo
+        for source_info in reversed(state._source_info_stack):
+            source = source_info.source
+            if not source:
+                continue
+            source = file_utils.get_abs_path_real_path_and_base_from_file(source)[0]
+            lineno = source_info.lineno
+
+            keyword_name = source_info.keyword_name
+
+            line = ""
+            try:
+                line = linecache.getline(source, lineno).strip()
+            except:
+                pass
+
+            # We need to put the file in uri format#lineno.
+            # see: https://github.com/microsoft/vscode/issues/150702
+            source = uris.from_fs_path(source)
+            if keyword_name:
+                stack_trace.append(f"  {source}#{lineno} ({keyword_name})")
+                found = True
+                if line:
+                    stack_trace.append(f"    {line}")
+
+            else:
+                test_name = source_info.test_name
+                if test_name:
+                    found = True
+                    stack_trace.append(f"  {source}#{lineno} [{test_name}]")
+                    if line:
+                        stack_trace.append(f"    {line}")
+
+        if not found:
+            return ""
+        stack_trace.append("")
+
+        return "\n".join(stack_trace)
 
     def start_keyword(self, name: str, attributes: Dict[str, Any]) -> None:
         state = _get_events_state()
@@ -233,40 +304,15 @@ class EventsListenerV2:
         if state._source_info_stack:
             # Keep same test name
             test_name = state._source_info_stack[-1].test_name
-        state._source_info_stack.append(_SourceInfo(source, lineno, test_name))
+        state._source_info_stack.append(
+            _SourceInfo(source, lineno, test_name, name, attributes.get("args", ()))
+        )
 
     def end_keyword(self, name: str, attributes: Dict[str, Any]) -> None:
+        state = _get_events_state()
         try:
-            state = _get_events_state()
-            status = attributes.get("status")
-            # Status could be PASS, FAIL, SKIP or NOT RUN. SKIP and NOT RUN
-            if status == "FAIL":
+            state._source_info_stack.pop()
+        except:
+            log.exception("Error in state._source_info_stack.pop()")
 
-                if state._ignore_failures_in_stack.ignore():
-                    return
-
-                if state._failed_keywords is None:
-                    state._failed_keywords = []
-                source = attributes.get("source")
-                if not source:
-                    return
-                lineno = attributes.get("lineno")
-                if lineno is None:
-                    return
-
-                state._failed_keywords.append(
-                    {
-                        "name": name,
-                        "source": source,
-                        "lineno": lineno,
-                        "failure_messages": state._failure_messages,
-                    }
-                )
-                state._failure_messages = []
-        finally:
-            try:
-                state._source_info_stack.pop()
-            except:
-                log.exception("Error in state._source_info_stack.pop()")
-
-            state._ignore_failures_in_stack.pop()
+        state._ignore_failures_in_stack.pop()

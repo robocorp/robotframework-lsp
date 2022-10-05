@@ -415,6 +415,17 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
         :Note: async complete.
         """
 
+    def request_collect_robot_documentation(
+        self,
+        doc_uri,
+        library_name: Optional[str] = None,
+        line: Optional[int] = None,
+        col: Optional[int] = None,
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+
     def request_rf_info(self, doc_uri: str) -> Optional[IIdMessageMatcher]:
         """
         :Note: async complete.

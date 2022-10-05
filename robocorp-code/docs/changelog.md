@@ -1,9 +1,18 @@
-NEXT
+New in 0.38.0 (2022-09-28)
 -----------------------------
 
-- Reorganization of the Rocorp View
+- Integration of converter from third party RPA to Robocorp Robots.
+  - Activate through the `Robocorp: Convert third party RPA file to Robocorp Robot` command.
+- Entries are now properly sorted in the `ROBOT CONTENT` view.
+
+
+New in 0.37.0 (2022-09-14)
+-----------------------------
+
+- Reorganization of the Rocorp Views
   - Actions added as items in the tree and not only on hover to help on discoverability.
-  - Work items and Locators are now in the same tree (so that there's a clear place to extend with new features in the future).
+  - `Work items` and `Locators` are now in the same `Resources` tree (so that there's a clear place to extend with new features in the future).
+- Improved UI for submit issue.
 - RCC was upgraded to `v11.26.3`.
 - Locators:
     - `robocorp-inspector` was upgraded to `0.7.1`. 

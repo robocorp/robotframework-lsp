@@ -1314,3 +1314,51 @@ class RobocorpLanguageServer(PythonLanguageServer):
             return {"success": False, "message": str(e), "result": None}
 
         return {"success": True, "message": None, "result": None}
+
+    @command_dispatcher(commands.ROBOCORP_SAVE_CONVERTED_PROJECT_INTERNAL)
+    def _populate_folder_with_conversion_result(self, opts) -> ActionResultDict:
+        from robocorp_ls_core.uris import to_fs_path
+        from datetime import datetime
+
+        source_vendor = opts["projectSourceVendor"]
+        conversion_result = opts["conversionResult"]
+        destination_folder_uri = opts["destinationFolderURI"]
+        destination_folder = (
+            Path(to_fs_path(destination_folder_uri))
+            .joinpath(
+                Path(f"results_{str(source_vendor)}_{int(datetime.now().timestamp())}")
+            )
+            .as_posix()
+        )
+        log.info(
+            "Dispatched converter internal command with args:",
+            str(destination_folder),
+            str(conversion_result),
+        )
+        try:
+            if self._validate_directory(destination_folder) is not None:
+                Path(destination_folder).mkdir(parents=True, exist_ok=True)
+            for index, file in enumerate(conversion_result["files"]):
+                final_destination = os.path.join(
+                    destination_folder,
+                    file["filename"]
+                    if file["filename"]
+                    else f"converted_tasks{index}.robot",
+                )
+                log.debug("Writing file:", str(final_destination))
+                Path(final_destination).write_text(file["content"])
+            log.info("Output folder for conversion results:", destination_folder)
+        except Exception as e:
+            log.exception(
+                f"There was an error while populating conversion results: {e}"
+            )
+            return {
+                "result": destination_folder_uri,
+                "success": False,
+                "message": f"There was an error while populating conversion results: {e}",
+            }
+        return {
+            "result": destination_folder_uri,
+            "success": True,
+            "message": None,
+        }

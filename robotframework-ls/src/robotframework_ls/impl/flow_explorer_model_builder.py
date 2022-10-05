@@ -1,6 +1,6 @@
 import os
 from contextlib import contextmanager
-from typing import List, Any, Dict, Set, Tuple
+from typing import List, Any, Dict, Set, Tuple, Optional
 from robocorp_ls_core.protocols import TypedDict
 
 from robocorp_ls_core.basic import isinstance_name
@@ -90,7 +90,6 @@ def build_flow_explorer_model(completion_contexts: List[ICompletionContext]) -> 
                 "teardown": None,
             }
             suites.append(suite)
-
             for test in ast_utils.iter_tests(ast):
                 test_name = f"{test.node.name} ({suite_name.lower()})"
                 test_body: list = []
@@ -115,6 +114,7 @@ def build_flow_explorer_model(completion_contexts: List[ICompletionContext]) -> 
                             memo={},
                             recursion_stack=recursion_stack,
                             user_keywords_collector=user_keywords_collector,
+                            parent_node=test_info,
                         )
             for user_keyword in ast_utils.iter_keywords(ast):
                 user_keyword_name = f"{user_keyword.node.name} ({suite_name.lower()})"
@@ -167,6 +167,7 @@ def _build_hierarchy(
     memo: dict,
     recursion_stack: _KeywordRecursionStack,
     user_keywords_collector: _UserKeywordCollector,
+    parent_node: Optional[Dict] = None,
 ):
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl import ast_utils_keyword_usage
@@ -265,17 +266,20 @@ def _build_hierarchy(
                                 "args": keyword["args"],
                             }
                             user_keywords_collector.append(user_keyword)
-
-                elif isinstance_name(keyword_usage_node, "Teardown") or isinstance_name(
-                    keyword_usage_node, "Setup"
-                ):
-                    keyword = {
+                elif isinstance_name(keyword_usage_node, "Teardown") and parent_node:
+                    parent_node["teardown"] = {
                         "type": "keyword",
                         "subtype": "KEYWORD",
                         "args": keyword_usage_node.args,
                         "name": keyword_usage_node.name,
                     }
-                    parent_body.append(keyword)
+                elif isinstance_name(keyword_usage_node, "Setup") and parent_node:
+                    parent_node["setup"] = {
+                        "type": "keyword",
+                        "subtype": "KEYWORD",
+                        "args": keyword_usage_node.args,
+                        "name": keyword_usage_node.name,
+                    }
     elif isinstance_name(curr_ast, "If"):
         if_body: list = []
         if_info: Dict[str, Any] = {"type": "if", "body": if_body}

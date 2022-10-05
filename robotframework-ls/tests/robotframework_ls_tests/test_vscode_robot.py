@@ -1835,11 +1835,60 @@ Another keyword
     assert completions_message_matcher.msg["error"]["message"] == "Request Cancelled"
 
 
+def test_collect_robot_documentation(
+    language_server_tcp: ILanguageServerClient, ws_root_path
+):
+    from robocorp_ls_core.workspace import Document
+
+    language_server = language_server_tcp
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+
+    uri = "unnamed"
+    language_server.open_doc(uri, 1)
+    contents = """
+*** Settings ***
+Library    Collections
+
+*** Keyword ***
+My keyword
+    Append to list"""
+    language_server.change_doc(uri, 2, contents)
+
+    doc = Document(uri, contents)
+
+    found = language_server.execute_command(
+        "robot.collectRobotDocumentation", [{"library_name": "BuiltIn"}]
+    )["result"]
+    assert not found["success"]
+    assert found["message"] == "uri not provided"
+
+    found = language_server.execute_command(
+        "robot.collectRobotDocumentation", [{"uri": uri, "library_name": "BuiltIn"}]
+    )["result"]
+    assert found["success"], f"Found: {found}"
+    assert found["result"]["libdoc_json"]["name"] == "BuiltIn"
+
+    line, col = doc.get_last_line_col_with_contents("Library    Collections")
+
+    # Generate it for Collections
+    found = language_server.execute_command(
+        "robot.collectRobotDocumentation", [{"uri": uri, "line": line, "col": col}]
+    )["result"]
+    assert found["success"], f"Found: {found}"
+    assert found["result"]["libdoc_json"]["name"] == "Collections"
+
+    line, col = doc.get_last_line_col_with_contents("*** Keyword ***")
+    found = language_server.execute_command(
+        "robot.collectRobotDocumentation", [{"uri": uri, "line": line, "col": col}]
+    )["result"]
+    assert not found["success"], f"Found: {found}"
+    assert "No custom documentation available for" in found["message"]
+
+
 def test_dependency_graph_integration_base(
     language_server_tcp: ILanguageServerClient, ws_root_path
 ):
     from robocorp_ls_core import uris
-    import sys
     from robocorp_ls_core.workspace import Document
 
     language_server = language_server_tcp

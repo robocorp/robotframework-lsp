@@ -40,6 +40,18 @@ export interface ITestInfoFromUri {
 
 const controller = vscode.tests.createTestController("robotframework-lsp.testController", "Robot Framework");
 
+const runProfile = controller.createRunProfile("Run", vscode.TestRunProfileKind.Run, (request, token) => {
+    runHandler(false, request, token);
+});
+
+const debugProfile = controller.createRunProfile("Debug", vscode.TestRunProfileKind.Debug, (request, token) => {
+    runHandler(true, request, token);
+});
+
+export const TEST_CONTROLLER = controller;
+export const RUN_PROFILE = runProfile;
+export const DEBUG_PROFILE = debugProfile;
+
 // Note: we cannot assign the resolveHandler (if we do that
 // VSCode will clear the existing items, which is not what
 // we want -- with our current approach we start collecting
@@ -83,17 +95,23 @@ const runIdToDebugSession = new Map<string, vscode.DebugSession>();
 // `${uri} [${testName}]`
 const testItemIdToTestItem = new WeakValueMap<string, vscode.TestItem>();
 
-function computeTestIdFromTestInfo(uriAsStr: string, test: ITestInfoFromSymbolsCache): string {
-    if (process.platform == "win32") {
-        uriAsStr = uriAsStr.toLowerCase();
+export function computeUriTestId(uri: string): string {
+    if (uri.startsWith("id:")) {
+        throw new Error("It seems that this uri is actually a test id already.");
     }
-    return `${uriAsStr} [${test.name}]`;
-}
-
-function computeTestId(uri: string, name: string): string {
     if (process.platform == "win32") {
         uri = uri.toLowerCase();
     }
+    return "id:" + uri;
+}
+
+export function computeTestIdFromTestInfo(uriAsStr: string, test: ITestInfoFromSymbolsCache): string {
+    uriAsStr = computeUriTestId(uriAsStr);
+    return `${uriAsStr} [${test.name}]`;
+}
+
+export function computeTestId(uri: string, name: string): string {
+    uri = computeUriTestId(uri);
     return `${uri} [${name}]`;
 }
 
@@ -107,8 +125,8 @@ function getType(testItem: vscode.TestItem): ItemType {
 
 function removeTreeStructure(uri: vscode.Uri) {
     while (true) {
-        const uriAsStr = uri.toString();
-        let testItem = testItemIdToTestItem.get(uriAsStr);
+        const uriAsStr = computeUriTestId(uri.toString());
+        let testItem = getTestItem(uriAsStr);
         if (!testItem) {
             return;
         }
@@ -153,9 +171,9 @@ function addTreeStructure(workspaceFolder: vscode.WorkspaceFolder, uri: vscode.U
     for (const part of parts) {
         const next = `${prev}/${part}`;
         const nextUri = uri.with({ "path": next });
-        const nextUriStr = nextUri.toString();
+        const nextUriStr = computeUriTestId(nextUri.toString());
 
-        ret = testItemIdToTestItem.get(nextUriStr);
+        ret = getTestItem(nextUriStr);
         if (!ret) {
             // Just create if it still wasn't created (otherwise we'd override
             // the previously created item/children structure).
@@ -217,199 +235,220 @@ export async function handleTestsCollected(testInfo: ITestInfoFromUri) {
     file.children.replace(children);
 }
 
-export async function setupTestExplorerSupport() {
-    async function runHandler(shouldDebug: boolean, request: vscode.TestRunRequest, token: vscode.CancellationToken) {
-        const run = controller.createTestRun(request);
-        const queue: vscode.TestItem[] = [];
+export function getTestItem(testId: string): vscode.TestItem {
+    if (!testId.startsWith("id:")) {
+        throw new Error("Expected testId to start with 'id:'. Found: " + testId);
+    }
+    return testItemIdToTestItem.get(testId);
+}
 
-        if (request.include) {
-            request.include.forEach((test) => queue.push(test));
+async function runHandler(shouldDebug: boolean, request: vscode.TestRunRequest, token: vscode.CancellationToken) {
+    const queue: vscode.TestItem[] = [];
+
+    if (request.include) {
+        request.include.forEach((test) => queue.push(test));
+    } else {
+        controller.items.forEach((test) => queue.push(test));
+    }
+
+    let includeTests: vscode.TestItem[] = [];
+    let excludeTests: vscode.TestItem[] = [];
+    let workspaceFolders = new Set<vscode.WorkspaceFolder>();
+
+    while (queue.length > 0 && !token.isCancellationRequested) {
+        const test = queue.pop()!;
+        let uri = test.uri;
+        let workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+        if (workspaceFolder) {
+            workspaceFolders.add(workspaceFolder);
         } else {
-            controller.items.forEach((test) => queue.push(test));
+            OUTPUT_CHANNEL.appendLine("Could not find workspace folder for uri: " + uri);
         }
+        includeTests.push(test);
+    }
 
-        let includeTests: vscode.TestItem[] = [];
-        let excludeTests: vscode.TestItem[] = [];
-        let workspaceFolders = new Set<vscode.WorkspaceFolder>();
-
-        while (queue.length > 0 && !token.isCancellationRequested) {
-            const test = queue.pop()!;
-            let uri = test.uri;
-            let workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-            if (workspaceFolder) {
-                workspaceFolders.add(workspaceFolder);
-            } else {
-                OUTPUT_CHANNEL.appendLine("Could not find workspace folder for uri: " + uri);
-            }
-            includeTests.push(test);
-        }
-
-        if (request.exclude) {
-            for (const test of request.exclude) {
-                excludeTests.push(test);
-            }
-        }
-
-        if (token.isCancellationRequested) {
-            return;
-        }
-
-        if (workspaceFolders.size > 1) {
-            OUTPUT_CHANNEL.appendLine(
-                "Note: tests span more than 1 workspace folder. Launch templates will only take the first one into account."
-            );
-        } else if (workspaceFolders.size == 0) {
-            vscode.window.showErrorMessage("Unable to launch because workspace folder is not available.");
-            return;
-        }
-        let wsFoldersAsArray: vscode.WorkspaceFolder[] = [];
-        for (const ws of workspaceFolders) {
-            wsFoldersAsArray.push(ws);
-        }
-        const runId = nextRunId();
-        runIdToTestRun.set(runId, run);
-        // Make sure to end the run after all tests have been executed:
-
-        let launched = await launch(wsFoldersAsArray, runId, includeTests, excludeTests, shouldDebug);
-        if (!launched) {
-            handleTestRunFinished(runId);
+    if (request.exclude) {
+        for (const test of request.exclude) {
+            excludeTests.push(test);
         }
     }
 
-    async function launch(
-        workspaceFolders: vscode.WorkspaceFolder[],
-        runId: string,
-        includeTests: vscode.TestItem[], // the tests to be included
-        excludeTests: vscode.TestItem[], // the tests to be excluded
-        shouldDebug: boolean
-    ): Promise<boolean> {
-        let cwd: string;
-        let launchTemplate: vscode.DebugConfiguration = undefined;
-        cwd = workspaceFolders[0].uri.fsPath;
-        launchTemplate = await readLaunchTemplate(workspaceFolders[0]);
+    if (token.isCancellationRequested) {
+        return;
+    }
 
-        let args: string[] = [];
-
-        // We want the events both in run and debug in this case.
-        args.push("--listener=robotframework_debug_adapter.events_listener.EventsListenerV2");
-        args.push("--listener=robotframework_debug_adapter.events_listener.EventsListenerV3");
-
-        // Include/exclude tests based on RFLS_PRERUN_FILTERING env variable.
-        let envFiltering: string | undefined = undefined;
-        function convertToFiltering(collection: vscode.TestItem[]) {
-            let ret = [];
-            for (const test of collection) {
-                if (getType(test) === ItemType.TestCase) {
-                    let data = testData.get(test);
-                    if (!data) {
-                        OUTPUT_CHANNEL.appendLine("Unable to find test data for: " + test.id);
-                        continue;
-                    }
-                    ret.push([test.uri.fsPath, data.testInfo.name]);
-                } else {
-                    ret.push([test.uri.fsPath, "*"]);
-                }
-            }
-            return ret;
-        }
-
-        envFiltering = jsonEscapeUTF(
-            JSON.stringify({
-                "include": convertToFiltering(includeTests),
-                "exclude": convertToFiltering(excludeTests),
-            })
+    if (workspaceFolders.size > 1) {
+        OUTPUT_CHANNEL.appendLine(
+            "Note: tests span more than 1 workspace folder. Launch templates will only take the first one into account."
         );
+    } else if (workspaceFolders.size == 0) {
+        vscode.window.showErrorMessage("Unable to launch because workspace folder is not available.");
+        return;
+    }
+    let wsFoldersAsArray: vscode.WorkspaceFolder[] = [];
+    for (const ws of workspaceFolders) {
+        wsFoldersAsArray.push(ws);
+    }
 
-        let debugConfiguration: vscode.DebugConfiguration = {
-            "type": "robotframework-lsp",
-            "runId": runId,
-            "name": "Robot Framework: Launch " + runId,
-            "request": "launch",
-            "cwd": cwd,
-            "terminal": "integrated",
-            "env": {},
-            "args": args,
-        };
+    // Note: make sure to end the run after all tests have been executed.
+    const run = controller.createTestRun(request);
+    const runId: string = obtainRunId(run);
 
-        if (launchTemplate) {
-            for (var key of Object.keys(launchTemplate)) {
-                if (key !== "type" && key !== "name" && key !== "request") {
-                    let value = launchTemplate[key];
-                    if (value !== undefined) {
-                        if (key === "args") {
-                            try {
-                                debugConfiguration.args = debugConfiguration.args.concat(value);
-                            } catch (err) {
-                                logError(
-                                    "Unable to concatenate: " + debugConfiguration.args + " to: " + value,
-                                    err,
-                                    "RUN_CONCAT_ARGS"
-                                );
-                            }
-                        } else {
-                            debugConfiguration[key] = value;
+    await launch(wsFoldersAsArray, runId, includeTests, excludeTests, shouldDebug);
+}
+
+function obtainRunId(run: vscode.TestRun): string {
+    const runId = nextRunId();
+    runIdToTestRun.set(runId, run);
+    return runId;
+}
+
+function handleTestRunFinished(runId: string) {
+    if (runIdToDebugSession.has(runId)) {
+        runIdToDebugSession.delete(runId);
+    }
+    if (runIdToTestRun.has(runId)) {
+        const testRun = runIdToTestRun.get(runId);
+        runIdToTestRun.delete(runId);
+        testRun.end();
+    }
+}
+
+async function launch(
+    workspaceFolders: vscode.WorkspaceFolder[],
+    runId: string,
+    includeTests: vscode.TestItem[], // the tests to be included
+    excludeTests: vscode.TestItem[], // the tests to be excluded
+    shouldDebug: boolean
+): Promise<boolean> {
+    let cwd: string;
+    let launchTemplate: vscode.DebugConfiguration = undefined;
+    cwd = workspaceFolders[0].uri.fsPath;
+    launchTemplate = await readLaunchTemplate(workspaceFolders[0]);
+
+    let args: string[] = [];
+
+    // We want the events both in run and debug in this case.
+    args.push("--listener=robotframework_debug_adapter.events_listener.EventsListenerV2");
+    args.push("--listener=robotframework_debug_adapter.events_listener.EventsListenerV3");
+
+    // Include/exclude tests based on RFLS_PRERUN_FILTERING env variable.
+    let envFiltering: string | undefined = undefined;
+    function convertToFiltering(collection: vscode.TestItem[]) {
+        let ret = [];
+        for (const test of collection) {
+            if (getType(test) === ItemType.TestCase) {
+                let data = testData.get(test);
+                if (!data) {
+                    OUTPUT_CHANNEL.appendLine("Unable to find test data for: " + test.id);
+                    continue;
+                }
+                ret.push([test.uri.fsPath, data.testInfo.name]);
+            } else {
+                ret.push([test.uri.fsPath, "*"]);
+            }
+        }
+        return ret;
+    }
+
+    envFiltering = jsonEscapeUTF(
+        JSON.stringify({
+            "include": convertToFiltering(includeTests),
+            "exclude": convertToFiltering(excludeTests),
+        })
+    );
+
+    let debugConfiguration: vscode.DebugConfiguration = {
+        "type": "robotframework-lsp",
+        "runId": runId,
+        "name": "Robot Framework: Launch " + runId,
+        "request": "launch",
+        "cwd": cwd,
+        "terminal": "integrated",
+        "env": {},
+        "args": args,
+    };
+
+    if (launchTemplate) {
+        for (var key of Object.keys(launchTemplate)) {
+            if (key !== "type" && key !== "name" && key !== "request") {
+                let value = launchTemplate[key];
+                if (value !== undefined) {
+                    if (key === "args") {
+                        try {
+                            debugConfiguration.args = debugConfiguration.args.concat(value);
+                        } catch (err) {
+                            logError(
+                                "Unable to concatenate: " + debugConfiguration.args + " to: " + value,
+                                err,
+                                "RUN_CONCAT_ARGS"
+                            );
                         }
+                    } else {
+                        debugConfiguration[key] = value;
                     }
                 }
             }
         }
+    }
 
-        if (debugConfiguration.makeSuite === undefined) {
-            // Not in template (default == true)
-            debugConfiguration.makeSuite = true;
-        }
+    if (debugConfiguration.makeSuite === undefined) {
+        // Not in template (default == true)
+        debugConfiguration.makeSuite = true;
+    }
 
-        // Note that target is unused if RFLS_PRERUN_FILTER_TESTS is specified and makeSuite == true.
-        let targetAsSet = new Set<string>();
-        for (const test of includeTests) {
-            targetAsSet.add(test.uri.fsPath);
-        }
-        let target: string[] = [];
-        for (const s of targetAsSet) {
-            target.push(s);
-        }
-        debugConfiguration.target = target;
+    // Note that target is unused if RFLS_PRERUN_FILTER_TESTS is specified and makeSuite == true.
+    let targetAsSet = new Set<string>();
+    for (const test of includeTests) {
+        targetAsSet.add(test.uri.fsPath);
+    }
+    let target: string[] = [];
+    for (const s of targetAsSet) {
+        target.push(s);
+    }
+    debugConfiguration.target = target;
 
-        if (debugConfiguration.makeSuite) {
-            if (workspaceFolders.length > 1) {
-                let suiteTarget = [];
-                for (const ws of workspaceFolders) {
-                    suiteTarget.push(ws.uri.fsPath);
-                }
-                debugConfiguration["suiteTarget"] = suiteTarget;
+    if (debugConfiguration.makeSuite) {
+        if (workspaceFolders.length > 1) {
+            let suiteTarget = [];
+            for (const ws of workspaceFolders) {
+                suiteTarget.push(ws.uri.fsPath);
             }
-        }
-
-        if (!debugConfiguration.env) {
-            debugConfiguration.env = { "RFLS_PRERUN_FILTER_TESTS": envFiltering };
-        } else {
-            debugConfiguration.env["RFLS_PRERUN_FILTER_TESTS"] = envFiltering;
-        }
-
-        let debugSessionOptions: vscode.DebugSessionOptions = { "noDebug": !shouldDebug };
-        let started = await vscode.debug.startDebugging(workspaceFolders[0], debugConfiguration, debugSessionOptions);
-        return started;
-    }
-
-    const runProfile = controller.createRunProfile("Run", vscode.TestRunProfileKind.Run, (request, token) => {
-        runHandler(false, request, token);
-    });
-
-    const debugProfile = controller.createRunProfile("Debug", vscode.TestRunProfileKind.Debug, (request, token) => {
-        runHandler(true, request, token);
-    });
-
-    function handleTestRunFinished(runId: string) {
-        if (runIdToDebugSession.has(runId)) {
-            runIdToDebugSession.delete(runId);
-        }
-        if (runIdToTestRun.has(runId)) {
-            const testRun = runIdToTestRun.get(runId);
-            runIdToTestRun.delete(runId);
-            testRun.end();
+            debugConfiguration["suiteTarget"] = suiteTarget;
         }
     }
 
+    if (!debugConfiguration.env) {
+        debugConfiguration.env = { "RFLS_PRERUN_FILTER_TESTS": envFiltering };
+    } else {
+        debugConfiguration.env["RFLS_PRERUN_FILTER_TESTS"] = envFiltering;
+    }
+
+    let debugSessionOptions: vscode.DebugSessionOptions = { "noDebug": !shouldDebug };
+    const started: boolean = await launchDebugSession(
+        runId,
+        workspaceFolders[0],
+        debugConfiguration,
+        debugSessionOptions
+    );
+    return started;
+}
+
+async function launchDebugSession(
+    runId: string,
+    workspaceFolder: vscode.WorkspaceFolder,
+    debugConfiguration: vscode.DebugConfiguration,
+    debugSessionOptions: vscode.DebugSessionOptions
+) {
+    debugConfiguration.runId = runId;
+    let started = await vscode.debug.startDebugging(workspaceFolder, debugConfiguration, debugSessionOptions);
+    if (!started) {
+        handleTestRunFinished(runId);
+    }
+    return started;
+}
+
+export async function setupTestExplorerSupport() {
     function isRelatedSession(session: vscode.DebugSession) {
         return session.configuration.type === "robotframework-lsp" && session.configuration.runId !== undefined;
     }
@@ -480,43 +519,72 @@ function handleLogMessage(testRun: vscode.TestRun, event: vscode.DebugSessionCus
     let location = undefined;
 
     // If we report this here, VSCode may not show the error messages properly, so, leave it out for now.
-    // if (event.body.source) {
-    //     let testName: string | undefined = event.body.testName;
-    //     let lineno: number | undefined = event.body.lineno - 1;
-    //     let uri = vscode.Uri.file(event.body.source);
-    //     const uriStr = uri.toString();
+    if (event.body.testOrSuiteSource) {
+        let testName: string | undefined = event.body.testName;
+        let uri = vscode.Uri.file(event.body.testOrSuiteSource);
+        const uriStr = uri.toString();
+        let testId: string;
+        if (testName) {
+            testId = computeTestId(uriStr, testName);
+        } else {
+            testId = computeUriTestId(uriStr);
+        }
+        testItem = getTestItem(testId);
+    }
 
-    //     let testId = uriStr;
-    //     if (testName) {
-    //         testId = computeTestId(uriStr, testName);
-    //     }
+    if (testItem && event.body.source) {
+        let lineno: number | undefined = event.body.lineno - 1;
+        let uri = vscode.Uri.file(event.body.source);
+        const uriStr = uri.toString();
 
-    //     testItem = testItemIdToTestItem.get(testId);
-    //     if (lineno !== undefined && testItem !== undefined) {
-    //         let range = new vscode.Position(lineno, 0);
-    //         location = new vscode.Location(uri, range);
-    //     }
-    // }
+        if (lineno !== undefined && testItem !== undefined) {
+            let range = new vscode.Position(lineno, 0);
+            location = new vscode.Location(uri, range);
+        }
+    }
 
     try {
-        message = message.replaceAll(/(?:\r\n|\r|\n)/g, "\r\n");
+        message = message.split(/(?:\r\n|\r|\n)/g).join("\r\n");
     } catch (err) {
-        logError("Error handling log message: " + JSON.stringify(event.body), err, "HANDLE_LOG_MESSAGE");
+        logError(
+            "Error handling log message: " + JSON.stringify(message) + " (" + typeof message + ")",
+            err,
+            "HANDLE_LOG_MESSAGE"
+        );
     }
 
     message = `[${level}]: ${message}`;
 
+    const config = vscode.workspace.getConfiguration("robot.run.peekError");
+    let configLevel: string = config.get<string>("level", "ERROR").toUpperCase().trim();
+    if (configLevel != "INFO" && configLevel != "WARN" && configLevel != "ERROR" && configLevel != "NONE") {
+        OUTPUT_CHANNEL.appendLine("Invalid robot.run.peekError.level: " + configLevel);
+        configLevel = "ERROR";
+    }
+
+    let addToConsoleWithLocation: boolean;
     switch (level) {
+        case "INFO":
+            addToConsoleWithLocation = configLevel == "INFO";
+            break;
         case "WARN":
             message = yellow + message + reset;
+            addToConsoleWithLocation = configLevel == "INFO" || configLevel == "WARN";
             break;
         case "FAIL":
         case "ERROR":
+            addToConsoleWithLocation = configLevel == "INFO" || configLevel == "WARN" || configLevel == "ERROR";
             message = red + message + reset;
             break;
     }
 
-    testRun.appendOutput(message, location, testItem);
+    if (addToConsoleWithLocation) {
+        // When it's added to the console with the location it also appears
+        // in the test result.
+        testRun.appendOutput(message, location, testItem);
+    } else {
+        testRun.appendOutput(message, undefined, undefined);
+    }
 }
 
 function handleSuiteStart(testRun: vscode.TestRun, event: vscode.DebugSessionCustomEvent) {
@@ -524,7 +592,7 @@ function handleSuiteStart(testRun: vscode.TestRun, event: vscode.DebugSessionCus
     const testNames: string[] = event.body.tests;
     for (const testName of testNames) {
         const testId = computeTestId(uriStr, testName);
-        const testItem = testItemIdToTestItem.get(testId);
+        const testItem = getTestItem(testId);
         if (!testItem) {
             OUTPUT_CHANNEL.appendLine("Did not find test item: " + testId);
             continue;
@@ -538,7 +606,7 @@ function handleTestStart(testRun: vscode.TestRun, event: vscode.DebugSessionCust
     const testUriStr = vscode.Uri.file(event.body.source).toString();
     const testName = event.body.name;
     const testId = computeTestId(testUriStr, testName);
-    const testItem = testItemIdToTestItem.get(testId);
+    const testItem = getTestItem(testId);
     if (!testItem) {
         OUTPUT_CHANNEL.appendLine("Did not find test item: " + testId);
     } else {
@@ -546,48 +614,23 @@ function handleTestStart(testRun: vscode.TestRun, event: vscode.DebugSessionCust
     }
 }
 
-function failedKeywordsToTestMessage(event: vscode.DebugSessionCustomEvent): vscode.TestMessage[] {
+function buildTestMessages(event: vscode.DebugSessionCustomEvent): vscode.TestMessage[] {
     let messages: vscode.TestMessage[] = [];
     let msg = event.body.message;
-    if (!msg) {
-        msg = "";
-    }
-    let failedKeywords = event.body.failed_keywords;
-    if (failedKeywords) {
-        for (const failed of failedKeywords) {
-            let errorMsg = "";
-            for (const s of failed.failure_messages) {
-                errorMsg += s;
-            }
-
-            if (failed.source) {
-                messages.push({
-                    "message": errorMsg,
-                    "location": {
-                        "uri": vscode.Uri.file(failed.source),
-                        "range": new vscode.Range(
-                            new vscode.Position(failed.lineno - 1, 0),
-                            new vscode.Position(failed.lineno - 1, 0)
-                        ),
-                    },
-                });
-            } else {
-                if (msg.length == 0) {
-                    msg += "\n";
-                }
-                msg += errorMsg;
-            }
+    if (msg) {
+        let config = vscode.workspace.getConfiguration("robot.run.peekError");
+        if (config.get("showSummary", false)) {
+            messages.push({
+                "message": msg,
+            });
         }
     }
-    messages.push({
-        "message": msg,
-    });
     return messages;
 }
 
 function handleSuiteEnd(testRun: vscode.TestRun, event: vscode.DebugSessionCustomEvent) {
-    const uriStr = vscode.Uri.file(event.body.source).toString();
-    const testItem = testItemIdToTestItem.get(uriStr);
+    const uriStr = computeUriTestId(vscode.Uri.file(event.body.source).toString());
+    const testItem = getTestItem(uriStr);
     markTestRun(testItem, uriStr, testRun, event);
 }
 
@@ -595,7 +638,7 @@ function handleTestEnd(testRun: vscode.TestRun, event: vscode.DebugSessionCustom
     const testUriStr = vscode.Uri.file(event.body.source).toString();
     const testName = event.body.name;
     const testId = computeTestId(testUriStr, testName);
-    const testItem = testItemIdToTestItem.get(testId);
+    const testItem = getTestItem(testId);
     markTestRun(testItem, testId, testRun, event);
 }
 
@@ -616,10 +659,10 @@ function markTestRun(
                 testRun.passed(testItem, event.body.elapsedtime);
                 break;
             case "FAIL":
-                testRun.failed(testItem, failedKeywordsToTestMessage(event), event.body.elapsedtime);
+                testRun.failed(testItem, buildTestMessages(event), event.body.elapsedtime);
                 break;
             default:
-                testRun.errored(testItem, failedKeywordsToTestMessage(event), event.body.elapsedtime);
+                testRun.errored(testItem, buildTestMessages(event), event.body.elapsedtime);
                 break;
         }
     }

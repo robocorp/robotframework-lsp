@@ -96,6 +96,9 @@ class IRobotDebugger(Protocol):
     def write_message(self, msg):
         pass
 
+    def enable_no_debug_mode(self):
+        pass
+
 
 class INextId(Protocol):
     def __call__(self) -> T:

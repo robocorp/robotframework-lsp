@@ -1,14 +1,37 @@
-NEXT
+New in 1.2.0 (2022-09-28)
 -----------------------------
 
 ### New features
 
-- Completions presented for `Variables` under `*** Settings ***`. [#744](https://github.com/robocorp/robotframework-lsp/issues/744)
-- Flow Explorer can now follow keywords defined in other files.
+- The Code Lens `Run/Debug` now launches using the test explorer (so, clicking it or the `Run/Debug` in the gutter is the same thing).
+    - A new option: `robot.run.peekError.level` defines up to which level the logs should be shown in the resulting `Peek Error` window.
+    - A new option: `robot.run.peekError.showSummary` defines whether a message should be shown at the task/test level with a summary of the errors.
+    - Traceback is shown on error in `Peek Error` window.
+    
+    ![Peek error traceback](./images/changelog/1_2_0/peek_error_traceback.png)
+    
+- Log messages now appear in the `DEBUG CONSOLE` view even when running without debugging.
+
+    ![Log Messages](./images/changelog/1_2_0/log_messages.png)
+    
+- A `ROBOT DOCUMENTATION` view is now available for showing documentation.
+    - When the cursor is over a library name, shows the full documentation for that library.
+    
+    ![Robot Documentation](./images/changelog/1_2_0/robot_documentation.png)
+    
+- Flow Explorer now has custom handling for `[Setup]` and `[Teardown]`.
+
+    ![Flow Explorer Setup/Teardown](./images/changelog/1_2_0/flow_explorer_setup_teardown.png)
+
+
+New in 1.1.3 (2022-09-14)
+-----------------------------
 
 ### Bugfixes
 
 - Snippets take into account the value of `robot.completions.keywords.argumentsSeparator`. [#723](https://github.com/robocorp/robotframework-lsp/issues/723)
+- Completions properly presented for `Variables` under `*** Settings ***`. [#744](https://github.com/robocorp/robotframework-lsp/issues/744)
+- Flow Explorer can now follow keywords defined in other files.
 
 
 New in 1.1.0 (2022-08-24)

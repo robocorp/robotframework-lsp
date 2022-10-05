@@ -334,6 +334,68 @@ def test_libspec_manager_caches(libspec_manager, workspace_dir):
     wait_for_test_condition(check_spec_2_a, sleep=1 / 5.0)
 
 
+def test_libspec_manager_json_html(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    import json
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    completion_context = CompletionContext(doc)
+
+    library_doc = libspec_manager.get_library_doc_or_error(
+        "case1_library",
+        create=True,
+        completion_context=completion_context,
+    ).library_doc
+    assert library_doc.doc_format == "ROBOT"
+    library_doc.convert_docs_to_markdown()
+    assert library_doc.doc_format == "markdown"
+    as_json = json.dumps(library_doc.to_dictionary())
+    assert "<p>" not in as_json
+
+    # While the default is ROBOT and converts to markdown on request, when we
+    # select the html_json format it always pre-converts internally before and
+    # always provides as html without any additional work (this is done because
+    # the conversion may be a slow process, but for the html_json we need to
+    # have it fully converted before using anyways whereas in the default usage
+    # we may just use it partially, so, we schedule the conversion in a thread
+    # and use convert as needed in the regular case).
+
+    libspec_manager = libspec_manager.create_copy()
+    library_doc = libspec_manager.get_library_doc_or_error(
+        "case1_library",
+        create=True,
+        completion_context=completion_context,
+    ).library_doc
+    assert library_doc.doc_format == "ROBOT"
+    library_doc.convert_docs_to_html()
+    assert library_doc.doc_format == "HTML"
+
+    as_json = json.dumps(library_doc.to_dictionary())
+    assert "<p>" in as_json
+
+
+def test_libspec_manager_json_html_builtin(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    workspace.set_root("case1", libspec_manager=libspec_manager)
+    doc = workspace.get_doc("case1.robot")
+    completion_context = CompletionContext(doc)
+
+    libspec_manager = libspec_manager.create_copy()
+    library_doc = libspec_manager.get_library_doc_or_error(
+        "Collections",
+        create=True,
+        completion_context=completion_context,
+    ).library_doc
+    assert library_doc.doc_format == "HTML"
+    import json
+
+    as_json = json.dumps(library_doc.to_dictionary())
+    assert '"name": "Collections"' in as_json
+    assert "<p>" in as_json
+
+
 def test_libspec_manager_basic(workspace, libspec_manager):
     from robotframework_ls.impl import robot_constants
     from robotframework_ls.impl.robot_version import get_robot_major_version

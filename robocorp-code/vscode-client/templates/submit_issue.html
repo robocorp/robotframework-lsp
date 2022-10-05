@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Issue</title>
+    <style>
+        body {
+            font-family: var(--vscode-editor-font-family);
+            font-weight: var(--vscode-editor-font-weight);
+            font-size: var(--vscode-editor-font-size);
+        }
+
+        div.settings {
+            display: inline-grid;
+            grid-gap: 5px;
+            width: 800px;
+        }
+
+        div.settings input {
+            color: var(--vscode-editor-foreground);
+            background-color: var(--vscode-editor-background);
+            border-width: 1px;
+            border-color: var(--vscode-editor-foreground);
+            padding: 5px;
+        }
+
+        div.settings textarea {
+            color: var(--vscode-editor-foreground);
+            background-color: var(--vscode-editor-background);
+            border-width: 1px;
+            border-color: var(--vscode-editor-foreground);
+            padding: 5px;
+        }
+
+        div.settings label {
+            margin-top: 15px;
+        }
+
+        #submit {
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<script id="data" type="application/json">
+    {"files": ["c:/temp/foo.txt"]}
+</script>
+
+<script>
+    function escapeHtml(unsafe) {
+        return unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+    }
+    function toBase64(s) {
+        const codeUnits = new Uint16Array(s.length);
+        for (let i = 0; i < codeUnits.length; i++) {
+            codeUnits[i] = s.charCodeAt(i);
+        }
+        return btoa(String.fromCharCode(...new Uint8Array(codeUnits.buffer)));
+    }
+    function fromBase64(s) {
+        const binary = atob(s);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < bytes.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return String.fromCharCode(...new Uint16Array(bytes.buffer));
+    }
+
+    let vscode;
+    try {
+        vscode = acquireVsCodeApi();
+    } catch (err) {
+        // ignore
+    }
+    function showError(err) {
+        const errorEl = document.getElementById('error');
+        errorEl.innerHTML = err;
+        errorEl.style.display = "block";
+    }
+    function onClickViewFile(fileAsBase64) {
+        const filename = fromBase64(fileAsBase64);
+        if (vscode) {
+            vscode.postMessage({
+                command: 'onClickViewFile',
+                filename: filename
+            })
+        } else {
+            console.log('View file: ' + filename);
+        }
+    }
+    function onClickSubmit() {
+        const email = document.getElementById('email').value;
+        if (!email) {
+            return showError("Issue not sent (please provide e-mail).");
+        }
+        if (email.indexOf("@") == -1) {
+            return showError("Issue not sent (please provide a valid e-mail).");
+        }
+
+        const summary = document.getElementById('summary').value;
+        if (!summary.trim()) {
+            return showError("Issue not sent (please provide the summary).");
+        }
+
+        const details = document.getElementById('details').value;
+        if (!summary.trim()) {
+            return showError("Issue not sent (please provide the details).");
+        }
+
+        const files = [];
+        for (const element of document.getElementsByClassName("fileCheck")) {
+            if (element.checked) {
+                files.push(fromBase64(element.dataset['file']));
+            }
+        }
+
+        let contents = {
+            'email': email,
+            'summary': summary,
+            'details': details,
+            'files': files,
+        }
+
+        const errorEl = document.getElementById('error');
+        errorEl.style.display = "none";
+
+        if (vscode) {
+            // Disable button while sending.
+            const submitBt = document.getElementById('submit');
+            submitBt.value = "Please wait, sending issue...";
+            submitBt.disabled = true;
+            vscode.postMessage({
+                command: 'onClickSubmit',
+                contents: contents
+            })
+        } else {
+            console.log("Post message", contents);
+        }
+    }
+
+    window.addEventListener('message', event => {
+        const message = event.data;
+
+        switch (message.command) {
+            case 'issueSent':
+                // Re-enable button after sending.
+                const submitBt = document.getElementById('submit');
+                submitBt.disabled = false;
+                submitBt.value = "Submit"
+                break;
+        }
+    });
+</script>
+
+<body>
+    <div>
+        <div>Submit Issue to Robocorp<br /><br /></div>
+        <div>Note: it may be worth checking out:<br />
+            <br />
+            &#8226; <a href="https://robocorp.com/docs/troubleshooting">Troubleshooting Docs</a><br />
+            &#8226; <a href="https://forum.robocorp.com/c/troubleshooting/">Troubleshooting Forum</a><br />
+            <br />
+            -- maybe someone else already stumbled through the same issue you have.<br /><br />
+        </div>
+        <div>
+            If the above troubleshooting didn't help, please fill the information below and press "Submit".
+        </div>
+        <div class="settings">
+            <label>E-mail (used to get updates on your issue):</label>
+            <input type="text" id="email" />
+
+            <label>Summary (brief introduction on the issue you're experiencing):</label>
+            <input type="text" id="summary" />
+
+            <label>Details (step-by-step instructions and details on how to reproduce the issue):</label>
+            <textarea rows="20" cols="60" id="details">
+*** Steps To Reproduce Issue ***
+
+
+*** Additional Information ***
+
+If this failure is specific to some Robot, please paste the
+robot.yaml and conda.yaml contents below.
+
+--- robot.yaml contents ---
+
+--- conda.yaml contents ---
+        </textarea>
+
+            <label id="additionalFiles">Logs attached (some more information to help us diagnose your issue):</label>
+
+            <div style="display: none; color: var(--vscode-errorForeground)" id="error"></div>
+            <input value="Submit" type="submit" id="submit" onclick="onClickSubmit()" />
+        </div>
+    </div>
+    <br/>
+    <br/>
+    <br/>
+    <br/>
+</body>
+
+<script>
+    const beforeElement = document.getElementById('error');
+
+    const data = document.getElementById('data').innerText;
+    const inputData = JSON.parse(data);
+    const inputFiles = inputData.files;
+    const inputEmail = inputData.email;
+    if (inputEmail) {
+        document.getElementById('email').value = inputEmail;
+    }
+    for (const it of inputFiles) {
+        var template = document.createElement('template');
+        const basename = it.split(/[\\/]/).pop();
+        const asBase64 = toBase64(it);
+        const html = `<div>
+            <input class="fileCheck" type="checkbox" checked="true" data-file="${asBase64}" style="display:none"/>
+            <label>&#8226; ${escapeHtml(basename)} (<a href="#" onClick="onClickViewFile('${asBase64}')">click to view</a>)</label>
+        </div>`
+
+        template.innerHTML = html.trim();
+        beforeElement.parentElement.insertBefore(template.content.firstChild, beforeElement);
+    }
+
+</script>
+
+</html>

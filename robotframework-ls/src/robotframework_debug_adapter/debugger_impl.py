@@ -45,6 +45,7 @@ from robotframework_ls.impl.robot_constants import (
     get_builtin_variables,
     ROBOT_AND_TXT_FILE_EXTENSIONS,
 )
+import time
 
 
 @lru_cache(None)
@@ -586,6 +587,7 @@ class _RobotDebuggerImpl(object):
 
         self._exc_name = None
         self._exc_description = None
+        self._last_time_time_output_event = 0
 
         def is_true_in_env(key):
             return os.getenv(key, "0").lower() in (
@@ -597,6 +599,11 @@ class _RobotDebuggerImpl(object):
         self.break_on_log_failure = is_true_in_env("RFLS_BREAK_ON_FAILURE")
         self.break_on_log_error = is_true_in_env("RFLS_BREAK_ON_ERROR")
         self._ignore_failures_in_stack = IgnoreFailuresInStack()
+
+    def enable_no_debug_mode(self):
+        self._skip_breakpoints += 1
+        self.break_on_log_failure = False
+        self.break_on_log_error = False
 
     def write_message(self, msg):
         log.critical(
@@ -1104,10 +1111,23 @@ class _RobotDebuggerImpl(object):
     def end_test(self, data, result):
         self._stack_ctx_entries_deque.pop()
 
-    def log_message(self, message):
+    def log_message(self, message, skip_error=True):
         from robotframework_debug_adapter.message_utils import (
             extract_source_and_line_from_message,
         )
+
+        level = message.level
+        if level not in ("ERROR", "FAIL", "WARN", "INFO"):
+            # Exclude TRACE/DEBUG/HTML for now (we could make that configurable...)
+            return
+
+        if skip_error and level in ("ERROR",):
+            # We do this because in RF all the calls to 'log_message'
+            # also generate a call to 'message', so, we want to skip
+            # one of those (but note that the other way around isn't true
+            # and some errors such as import errors are only reported
+            # in 'message' and not 'log_message').
+            return
 
         # When debugging show any message in the console (if possible with the
         # current keyword as the source).
@@ -1118,44 +1138,60 @@ class _RobotDebuggerImpl(object):
             source_and_line = extract_source_and_line_from_message(message.message)
 
             if source_and_line is not None:
-                source, lineno = source_and_line
-                source = Source(path=source)
+                path, lineno = source_and_line
+                source = Source(path=path)
             else:
                 if self._stack_ctx_entries_deque:
                     lineno = 0
                     step_entry: _StepEntry = self._stack_ctx_entries_deque[-1]
-                    source = step_entry.source
-                    source = Source(path=source)
+                    path = step_entry.source
+                    source = Source(path=path)
                     try:
                         lineno = step_entry.lineno
                     except AttributeError:
                         pass
+
+            if not self._last_time_time_output_event:
+                self._last_time_time_output_event = time.time()
+                delta = 0
+            else:
+                curr_time = time.time()
+                delta = curr_time - self._last_time_time_output_event
+                self._last_time_time_output_event = curr_time
+
+            level = self._translate_level(level)
+
+            delta_str: str = f"{delta:.2f}"
+            if delta_str != "0.00":
+                output = f"[{level} (+{delta_str}s)] {message.message}\n"
+            else:
+                output = f"[{level}] {message.message}\n"
 
             self.write_message(
                 OutputEvent(
                     body=OutputEventBody(
                         source=source,
                         line=lineno,
-                        output=f"{message.message}\n",
+                        output=output,
                         category="console",
                     )
                 )
             )
-            self._break_on_log_or_system_message(message)
+            self._break_on_log_or_system_message(message, path, lineno)
         except:
             log.exception("Error handling log_message.")
 
+    @classmethod
+    def _translate_level(cls, level):
+        if level not in ("ERROR", "FAIL", "WARN"):
+            level = level.lower()
+        return level
+
     def message(self, message):
         if message.level in ("FAIL", "ERROR"):
-            # We also want to show in the console, not just check breaks.
-            return self.log_message(message)
-        else:
-            try:
-                self._break_on_log_or_system_message(message)
-            except:
-                log.exception("Error handling (system) message.")
+            return self.log_message(message, skip_error=False)
 
-    def _break_on_log_or_system_message(self, message):
+    def _break_on_log_or_system_message(self, message, path, lineno):
         stop_reason = None
         if message.level == "FAIL":
             if self.break_on_log_failure:
@@ -1171,15 +1207,8 @@ class _RobotDebuggerImpl(object):
             if self._ignore_failures_in_stack.ignore():
                 return
 
-            from robotframework_debug_adapter.message_utils import (
-                extract_source_and_line_from_message,
-            )
-
-            source_and_line = extract_source_and_line_from_message(message.message)
-            entry = None
-            if source_and_line is not None:
-                source, lineno = source_and_line
-                entry = _LogEntry(message.level, source, lineno, "LOG")
+            if path is not None and lineno is not None:
+                entry = _LogEntry(message.level, path, lineno, "LOG")
                 self._stack_ctx_entries_deque.append(entry)
 
             self._exc_name = exc_name + message.message

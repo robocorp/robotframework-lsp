@@ -389,6 +389,7 @@ public final class FastStringBuffer implements CharSequence {
      * @return a new string with the contents of this buffer.
      */
     @Override
+    @NotNull
     public String toString() {
         return new String(value, 0, count);
     }
@@ -735,6 +736,7 @@ public final class FastStringBuffer implements CharSequence {
         }
 
         @Override
+        @NotNull
         public Iterator<Character> iterator() {
             return new Iterator<Character>() {
 
@@ -1041,6 +1043,7 @@ public final class FastStringBuffer implements CharSequence {
         }
 
         @Override
+        @NotNull
         public CharSequence subSequence(int start, int end) {
             return new BufCharSequence(value, fStart + start, fStart + end);
         }
@@ -1052,6 +1055,7 @@ public final class FastStringBuffer implements CharSequence {
     }
 
     @Override
+    @NotNull
     public CharSequence subSequence(int start, int end) {
         return new BufCharSequence(this.value, start, end);
     }

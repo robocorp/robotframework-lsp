@@ -142,4 +142,5 @@ public class DAPTesCase extends LSPTesCase {
         // Check that the dap process actually exited.
         Assert.assertTrue(processHandler.getProcess().waitFor(5, TimeUnit.SECONDS));
     }
+
 }

@@ -627,9 +627,15 @@ def test_failure(debugger_api: _DebuggerAPI):
     debugger_api.configuration_done()
 
     json_hit = debugger_api.wait_for_thread_stopped(
-        name="This keyword does not exist", reason="exception"
+        name="Log (FAIL)", reason="exception"
     )
 
+    assert ([x["name"] for x in json_hit.stack_trace_response.body.stackFrames]) == [
+        "Log (FAIL)",
+        "This keyword does not exist",
+        "TestCase: Check failure",
+        "TestSuite: Case Failure",
+    ]
     debugger_api.continue_event(json_hit.thread_id)
 
     debugger_api.read(TerminatedEvent)

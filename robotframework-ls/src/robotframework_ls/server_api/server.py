@@ -895,6 +895,61 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
         return list_tests(completion_context)
 
+    def m_collect_robot_documentation(
+        self,
+        doc_uri: str,
+        library_name: Optional[str] = None,
+        line: Optional[int] = None,
+        col: Optional[int] = None,
+    ):
+        func = partial(
+            self._threaded_collect_robot_documentation,
+            doc_uri,
+            library_name,
+            line,
+            col,
+        )
+        func = require_monitor(func)
+        return func
+
+    def _threaded_collect_robot_documentation(
+        self,
+        doc_uri: str,
+        library_name: Optional[str],
+        line: Optional[int],
+        col: Optional[int],
+        monitor: IMonitor,
+    ):
+        from robotframework_ls.impl.collect_robot_documentation import (
+            collect_robot_documentation,
+        )
+
+        if line is None:
+            line = 0
+        if col is None:
+            col = 0
+
+        ctx: Optional[ICompletionContext] = self._create_completion_context(
+            doc_uri, line, col, monitor
+        )
+        if ctx is None:
+            return {
+                "success": False,
+                "message": "Unable to create context to generate lib docs.",
+                "result": None,
+            }
+
+        try:
+            return collect_robot_documentation(library_name, ctx)
+        except Exception as e:
+            msg = f"Error collecting documentation: {str(e)}"
+            log.exception(msg)
+            return {
+                "success": False,
+                "message": msg,
+                "result": None,
+            }
+
     def m_evaluatable_expression(self, doc_uri: str, position: PositionTypedDict):
         func = partial(self._threaded_evaluatable_expression, doc_uri, position)
         func = require_monitor(func)

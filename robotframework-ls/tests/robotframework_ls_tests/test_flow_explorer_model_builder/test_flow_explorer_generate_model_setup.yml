@@ -43,11 +43,6 @@ setup: null
 source: my.robot
 tasks:
 - body:
-  - args:
-    - This is setup zone.
-    name: Log
-    subtype: KEYWORD
-    type: keyword
   - body:
     - body:
       - type: break
@@ -68,7 +63,15 @@ tasks:
   doc: ''
   internal_name: maintask(my)
   name: Main Task (my)
-  setup: null
+  setup:
+    args:
+    - Log
+    - Setup Keyword 1
+    - Log
+    - Setup Keyword 2
+    name: Run Keyword
+    subtype: KEYWORD
+    type: keyword
   teardown: null
   type: task
 teardown: null
