@@ -6,47 +6,52 @@ from robot.api.parsing import (
     End,
     ForHeader,
     IfHeader,
-    ModelTransformer,
     ModelVisitor,
     Token,
 )
 
 from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
+from robotidy.transformers import Transformer
 from robotidy.utils import is_suite_templated, round_to_four
 
 
-class AlignTestCases(ModelTransformer):
+class AlignTemplatedTestCases(Transformer):
     """
-    Align Test Cases to columns.
+    Align templated Test Cases to columns.
 
-    Currently only templated tests are supported. Following code:
+    Following code:
 
-        *** Test Cases ***    baz    qux
-        # some comment
-        test1    hi    hello
-        test2 long test name    asdfasdf    asdsdfgsdfg
+    ```robotframework
+    *** Test Cases ***    baz    qux
+    # some comment
+    test1    hi    hello
+    test2 long test name    asdfasdf    asdsdfgsdfg
+    ```
 
     will be transformed to:
 
-        *** Test Cases ***      baz         qux
-        # some comment
-        test1                   hi          hello
-        test2 long test name    asdfasdf    asdsdfgsdfg
-                                bar1        bar2
+    ```robotframework
+    *** Test Cases ***      baz         qux
+    # some comment
+    test1                   hi          hello
+    test2 long test name    asdfasdf    asdsdfgsdfg
+                            bar1        bar2
+    ```
 
     If you don't want to align test case section that does not contain header names (in above example baz and quz are
     header names) then configure `only_with_headers` parameter:
 
-        robotidy -c AlignSettingsSection:only_with_hedaers:True <src>
+    ```
+    robotidy -c AlignSettingsSection:only_with_hedaers:True <src>
+    ```
 
-    Supports global formatting params: ``--startline``, ``--endline``.
-
-    See https://robotidy.readthedocs.io/en/latest/transformers/AlignTestCases.html for more examples.
+    For non-templated test cases use ``AlignTestCasesSection`` transformer.
     """
 
     ENABLED = False
 
     def __init__(self, only_with_headers: bool = False, min_width: int = None):
+        super().__init__()
         self.only_with_headers = only_with_headers
         self.min_width = min_width
         self.widths = None
@@ -79,7 +84,7 @@ class AlignTestCases(ModelTransformer):
     @skip_if_disabled
     def visit_Statement(self, statement):  # noqa
         if statement.type == Token.TESTCASE_NAME:
-            self.test_name_len = len(statement.tokens[0].value)
+            self.test_name_len = len(statement.data_tokens[0].value) if statement.data_tokens else 0
             self.name_line = statement.lineno
         elif statement.type == Token.TESTCASE_HEADER:
             self.align_header(statement)

@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from robot.api.parsing import ModelTransformer, Token
+from robot.api.parsing import Token
 
 try:
     from robot.api.parsing import Break, Continue
@@ -8,47 +8,49 @@ except ImportError:
     Continue, Break = None, None
 
 from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
-from robotidy.utils import ROBOT_VERSION, after_last_dot, normalize_name, wrap_in_if_and_replace_statement
+from robotidy.transformers import Transformer
+from robotidy.utils import after_last_dot, normalize_name, wrap_in_if_and_replace_statement
 
 
-class ReplaceBreakContinue(ModelTransformer):
+class ReplaceBreakContinue(Transformer):
     """
     Replace Continue For Loop and Exit For Loop keyword variants with CONTINUE and BREAK statements.
 
     Following code:
 
-        *** Keywords ***
-        Keyword
-            FOR    ${var}    IN  1  2
-                Continue For Loop
-                Continue For Loop If    $condition
-                Exit For Loop
-                Exit For Loop If    $condition
-            END
+    ```robotframework
+    *** Keywords ***
+    Keyword
+        FOR    ${var}    IN  1  2
+            Continue For Loop
+            Continue For Loop If    $condition
+            Exit For Loop
+            Exit For Loop If    $condition
+        END
+    ```
 
     will be transformed to:
 
-        *** Keywords ***
-        Keyword
-            FOR    ${var}    IN  1  2
+    ```robotframework
+    *** Keywords ***
+    Keyword
+        FOR    ${var}    IN  1  2
+            CONTINUE
+            IF    $condition
                 CONTINUE
-                IF    $condition
-                    CONTINUE
-                END
-                BREAK
-                IF    $condition
-                    BREAK
-                END
             END
-
-    Supports global formatting params: ``--startline`` and ``--endline``.
-
-    See https://robotidy.readthedocs.io/en/latest/transformers/ReplaceBreakContinue.html for more examples.
+            BREAK
+            IF    $condition
+                BREAK
+            END
+        END
+    ```
     """
 
     MIN_VERSION = 5
 
     def __init__(self):
+        super().__init__()
         self.in_loop = False
 
     def visit_File(self, node):  # noqa

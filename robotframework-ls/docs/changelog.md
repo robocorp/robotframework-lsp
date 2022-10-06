@@ -4,6 +4,7 @@ New in 1.3.0 (2022-10-06)
 ### New features
 
 - Robocop updated to 2.5.0.
+- Robotidy updated to 3.2.0.
 
 
 ### Bugfixes

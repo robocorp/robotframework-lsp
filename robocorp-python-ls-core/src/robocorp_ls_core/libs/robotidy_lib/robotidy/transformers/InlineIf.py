@@ -1,6 +1,6 @@
 from itertools import chain
 
-from robot.api.parsing import Comment, ElseHeader, ElseIfHeader, End, If, IfHeader, KeywordCall, ModelTransformer, Token
+from robot.api.parsing import Comment, ElseHeader, ElseIfHeader, End, If, IfHeader, KeywordCall, Token
 
 try:
     from robot.api.parsing import Break, Continue, InlineIfHeader, ReturnStatement
@@ -8,55 +8,59 @@ except ImportError:
     ReturnStatement, Break, Continue, InlineIfHeader = None, None, None, None
 
 from robotidy.disablers import skip_section_if_disabled
-from robotidy.utils import ROBOT_VERSION, flatten_multiline, get_comments, normalize_name
+from robotidy.transformers import Transformer
+from robotidy.utils import flatten_multiline, get_comments, normalize_name
 
 
-class InlineIf(ModelTransformer):
+class InlineIf(Transformer):
     """
     Replaces IF blocks with inline IF.
 
     It will only replace IF block if it can fit in one line shorter than `line_length` (default 80) parameter and return
     variables matches for all ELSE and ELSE IF branches.
 
-    Following code::
+    Following code:
 
-        *** Test Cases ***
-        Test
-            IF    $condition1
-                Keyword    argument
-            END
-            IF    $condition2
-                ${var}  Keyword
-            ELSE
-                ${var}  Keyword 2
-            END
-            IF    $condition1
-                Keyword    argument
-                Keyword 2
-            END
+    ```robotframework
+    *** Test Cases ***
+    Test
+        IF    $condition1
+            Keyword    argument
+        END
+        IF    $condition2
+            ${var}  Keyword
+        ELSE
+            ${var}  Keyword 2
+        END
+        IF    $condition1
+            Keyword    argument
+            Keyword 2
+        END
+    ```
 
     will be transformed to:
 
-        *** Test Cases ***
-        Test
-            IF    $condition1    Keyword    argument
-            ${var}    IF    $condition2    Keyword    ELSE    Keyword 2
-            IF    $condition1
-                Keyword    argument
-                Keyword 2
-            END
+    ```robotframework
+    *** Test Cases ***
+    Test
+        IF    $condition1    Keyword    argument
+        ${var}    IF    $condition2    Keyword    ELSE    Keyword 2
+        IF    $condition1
+            Keyword    argument
+            Keyword 2
+        END
+    ```
 
     Too long inline IFs (over `line_length` character limit) will be replaced with normal IF block.
     You can decide to not replace IF blocks containing ELSE or ELSE IF branches by setting `skip_else` to True.
 
     Supports global formatting params: `--startline` and `--endline`.
-
-    See https://robotidy.readthedocs.io/en/latest/transformers/InlineIf.html for more examples.
     """
 
     MIN_VERSION = 5
 
     def __init__(self, line_length: int = 80, skip_else: bool = False):
+        super().__init__()
         self.line_length = line_length
         self.skip_else = skip_else
 

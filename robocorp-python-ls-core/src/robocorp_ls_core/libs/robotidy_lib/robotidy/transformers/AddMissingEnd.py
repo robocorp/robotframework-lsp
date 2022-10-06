@@ -1,4 +1,4 @@
-from robot.api.parsing import Comment, EmptyLine, End, ModelTransformer, Token
+from robot.api.parsing import Comment, EmptyLine, End, Token
 
 try:
     from robot.api.parsing import InlineIfHeader
@@ -6,25 +6,35 @@ except ImportError:
     InlineIfHeader = None
 
 from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
+from robotidy.transformers import Transformer
 
 
-class AddMissingEnd(ModelTransformer):
+class AddMissingEnd(Transformer):
     """
     Add missing END token to FOR loops and IF statements.
 
     Following code:
 
+    ```robotframework
+    *** Keywords ***
+    Keyword
         FOR    ${x}    IN    foo    bar
             Log    ${x}
+    ```
 
     will be transformed to:
 
+    ```robotframework
+    *** Keywords ***
+    Keyword
         FOR    ${x}    IN    foo    bar
             Log    ${x}
         END
-
-    Supports global formatting params: ``--startline`` and ``--endline``.
+    ```
     """
+
+    def __init__(self):
+        super().__init__()  # workaround for our dynamically imported classes with args from cli/config
 
     def fix_block(self, node, expected_type):
         self.generic_visit(node)

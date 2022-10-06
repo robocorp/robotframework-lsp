@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: robotframework-tidy
-Version: 2.2
+Version: 3.2
 Summary: Code autoformatter for Robot Framework
 Home-page: https://github.com/MarketSquare/robotframework-tidy
 Author: MarketSquare - Robot Framework community
@@ -24,12 +24,26 @@ Classifier: Intended Audience :: Developers
 Requires-Python: >=3.7
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: click (>=7.0)
+Requires-Dist: robotframework (>=4.0)
+Requires-Dist: click (>=7.1.2)
 Requires-Dist: colorama (>=0.4.3)
 Requires-Dist: packaging (>=21.0)
 Requires-Dist: pathspec (<0.10.0,>=0.9.0)
-Requires-Dist: robotframework (>=4.0)
-Requires-Dist: toml (>=0.10.2)
+Requires-Dist: tomli (>=2.0.0)
+Requires-Dist: rich-click (==1.4)
+Provides-Extra: dev
+Requires-Dist: coverage ; extra == 'dev'
+Requires-Dist: invoke ; extra == 'dev'
+Requires-Dist: jinja2 ; extra == 'dev'
+Requires-Dist: pyflakes (==2.4.*) ; extra == 'dev'
+Requires-Dist: pylama ; extra == 'dev'
+Requires-Dist: pytest ; extra == 'dev'
+Requires-Dist: pre-commit ; extra == 'dev'
+Provides-Extra: doc
+Requires-Dist: sphinx ; extra == 'doc'
+Requires-Dist: furo ; extra == 'doc'
+Requires-Dist: sphinx-design ; extra == 'doc'
+Requires-Dist: sphinx-copybutton (==0.3.3) ; extra == 'doc'
 
 [![Unit-tests](https://img.shields.io/github/workflow/status/MarketSquare/robotframework-tidy/Unit%20tests/main)](https://github.com/MarketSquare/robotframework-tidy/actions?query=workflow%3A%22Unit+tests%22 "GitHub Workflow Unit Tests Status")
 ![Codecov](https://img.shields.io/codecov/c/github/MarketSquare/robotframework-tidy/main "Code coverage on master branch")
@@ -149,5 +163,3 @@ Test1
     [Teardown]    Teardown Keyword
 
 ```
-
-

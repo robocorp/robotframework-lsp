@@ -1,11 +1,12 @@
-from robot.api.parsing import ElseHeader, ElseIfHeader, End, If, IfHeader, KeywordCall, ModelTransformer, Token
+from robot.api.parsing import ElseHeader, ElseIfHeader, End, If, IfHeader, KeywordCall, Token
 
 from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
+from robotidy.transformers import Transformer
 from robotidy.utils import after_last_dot, normalize_name
 
 
 def insert_separators(indent, tokens, separator):
-    yield Token(Token.SEPARATOR, indent + separator)
+    yield Token(Token.SEPARATOR, indent)
     for token in tokens[:-1]:
         yield token
         yield Token(Token.SEPARATOR, separator)
@@ -13,19 +14,26 @@ def insert_separators(indent, tokens, separator):
     yield Token(Token.EOL)
 
 
-class ReplaceRunKeywordIf(ModelTransformer):
+class ReplaceRunKeywordIf(Transformer):
     """
     Replace ``Run Keyword If`` keyword calls with IF expressions.
 
     Following code:
 
+    ```robotframework
+    *** Keywords ***
+    Keyword
         Run Keyword If  ${condition}
         ...  Keyword  ${arg}
         ...  ELSE IF  ${condition2}  Keyword2
         ...  ELSE  Keyword3
+    ```
 
     Will be transformed to:
 
+    ```robotframework
+    *** Keywords ***
+    Keyword
         IF    ${condition}
             Keyword    ${arg}
         ELSE IF    ${condition2}
@@ -33,34 +41,50 @@ class ReplaceRunKeywordIf(ModelTransformer):
         ELSE
             Keyword3
         END
+    ```
 
-    Any return value will be applied to every ELSE/ELSE IF branch:
+    Any return value will be applied to every ``ELSE``/``ELSE IF`` branch:
 
+    ```robotframework
+    *** Keywords ***
+    Keyword
         ${var}  Run Keyword If  ${condition}  Keyword  ELSE  Keyword2
+    ```
 
     Output:
 
+    ```robotframework
+    *** Keywords ***
+    Keyword
         IF    ${condition}
             ${var}    Keyword
         ELSE
             ${var}    Keyword2
         END
+    ```
 
     Run Keywords inside Run Keyword If will be split into separate keywords:
 
-       Run Keyword If  ${condition}  Run Keywords  Keyword  ${arg}  AND  Keyword2
+    ```robotframework
+    *** Keywords ***
+    Keyword
+        Run Keyword If  ${condition}  Run Keywords  Keyword  ${arg}  AND  Keyword2
+    ```
 
     Output:
 
+    ```robotframework
+    *** Keywords ***
+    Keyword
         IF    ${condition}
             Keyword    ${arg}
             Keyword2
         END
-
-    Supports global formatting params: ``--spacecount``, ``--separator``, ``--startline`` and ``--endline``.
-
-    See https://robotidy.readthedocs.io/en/latest/transformers/ReplaceRunKeywordIf.html for more examples.
+    ```
     """
+
+    def __init__(self):
+        super().__init__()  # workaround for our dynamically imported classes with args from cli/config
 
     @skip_section_if_disabled
     def visit_Section(self, node):  # noqa
@@ -116,7 +140,7 @@ class ReplaceRunKeywordIf(ModelTransformer):
                     ]
                 )
                 args = branch[1:]
-            keywords = self.create_keywords(args, assign, separator.value)
+            keywords = self.create_keywords(args, assign, separator.value + self.formatting_config.indent)
             if_block = If(header=header, body=keywords, orelse=prev_if)
             prev_if = if_block
         prev_if.end = end

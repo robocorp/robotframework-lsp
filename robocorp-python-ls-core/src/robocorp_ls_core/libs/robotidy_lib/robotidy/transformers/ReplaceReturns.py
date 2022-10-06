@@ -1,6 +1,4 @@
-from typing import Iterable
-
-from robot.api.parsing import Comment, EmptyLine, ModelTransformer, Token
+from robot.api.parsing import Comment, EmptyLine
 
 try:
     from robot.api.parsing import ReturnStatement
@@ -8,8 +6,8 @@ except ImportError:
     ReturnStatement = None
 
 from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
+from robotidy.transformers import Transformer
 from robotidy.utils import (
-    ROBOT_VERSION,
     after_last_dot,
     create_statement_from_tokens,
     normalize_name,
@@ -17,42 +15,43 @@ from robotidy.utils import (
 )
 
 
-class ReplaceReturns(ModelTransformer):
+class ReplaceReturns(Transformer):
     """
     Replace return statements (such as [Return] setting or Return From Keyword keyword) with RETURN statement.
 
     Following code:
 
-        *** Keywords ***
-        Keyword
-            Return From Keyword If    $condition    2
-            Sub Keyword
-            [Return]    1
+    ```robotframework
+    *** Keywords ***
+    Keyword
+        Return From Keyword If    $condition    2
+        Sub Keyword
+        [Return]    1
 
-        Keyword 2
-            Return From Keyword    ${arg}
+    Keyword 2
+        Return From Keyword    ${arg}
+    ```
 
     will be transformed to:
 
-            *** Keywords ***
-            Keyword
-                IF    $condition
-                    RETURN    2
-                END
-                Sub Keyword
-                RETURN    1
+    ```robotframework
+    *** Keywords ***
+    Keyword
+        IF    $condition
+            RETURN    2
+        END
+        Sub Keyword
+        RETURN    1
 
-            Keyword 2
-                RETURN    ${arg}
-
-    Supports global formatting params: ``--startline`` and ``--endline``.
-
-    See https://robotidy.readthedocs.io/en/latest/transformers/ReplaceReturns.html for more examples.
+    Keyword 2
+        RETURN    ${arg}
+    ```
     """
 
     MIN_VERSION = 5
 
     def __init__(self):
+        super().__init__()
         self.return_statement = None
 
     @skip_section_if_disabled

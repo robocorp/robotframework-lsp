@@ -786,8 +786,8 @@ def test_code_format_integrated(
 
     from robot import get_version
 
-    version = get_version(naked=True).split(".")[0]
-    if version == "5":
+    version = int(get_version(naked=True).split(".")[0])
+    if version >= 5:
         if formatter == OPTION_ROBOT_CODE_FORMATTER_BUILTIN_TIDY:
             try:
                 from robot.tidy import Tidy
@@ -797,7 +797,7 @@ def test_code_format_integrated(
 
     basename = "test_code_format_integrated_text_edits_" + formatter
     if formatter == OPTION_ROBOT_CODE_FORMATTER_ROBOTIDY:
-        basename += "_" + version
+        basename += f"_{version}"
     data_regression.check(
         ret,
         basename=basename,

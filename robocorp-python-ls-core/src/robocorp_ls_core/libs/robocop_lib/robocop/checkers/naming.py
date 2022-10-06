@@ -333,7 +333,9 @@ class InvalidCharactersInNameChecker(VisitorChecker):
             suite_name = Path(source).stem
             if "__init__" in suite_name:
                 suite_name = Path(source).parent.name
-            for iter in self.param("not-allowed-char-in-filename", "pattern").finditer(suite_name):
+            for iter in self.param("not-allowed-char-in-filename", "pattern").finditer(
+                suite_name
+            ):
                 self.report(
                     "not-allowed-char-in-filename",
                     character=iter.group(),
@@ -359,7 +361,9 @@ class InvalidCharactersInNameChecker(VisitorChecker):
             #   2. ` Two `
             #   3. ` Argument` - last part is searched in finditer part after this loop
             tmp_node_name = node_name[start_pos : variable[0]]
-            match = self.param("not-allowed-char-in-name", "pattern").search(tmp_node_name)
+            match = self.param("not-allowed-char-in-name", "pattern").search(
+                tmp_node_name
+            )
             if match:
                 self.report(
                     "not-allowed-char-in-name",
@@ -370,7 +374,9 @@ class InvalidCharactersInNameChecker(VisitorChecker):
                 )
             start_pos = variable[1]
 
-        for iter in self.param("not-allowed-char-in-name", "pattern").finditer(node_name, start_pos):
+        for iter in self.param("not-allowed-char-in-name", "pattern").finditer(
+            node_name, start_pos
+        ):
             self.report(
                 "not-allowed-char-in-name",
                 character=iter.group(),
@@ -433,6 +439,19 @@ class KeywordNamingChecker(VisitorChecker):
             "except": reserved_error_msg("except", "'TRY EXCEPT'"),
             "finally": reserved_error_msg("finally", "'TRY EXCEPT'"),
         },
+        6: {
+            "if": uppercase_error_msg("if"),
+            "else if": uppercase_error_msg("else if"),
+            "else": uppercase_error_msg("else"),
+            "for": reserved_error_msg("for", "'FOR' loop"),
+            "end": reserved_error_msg("end", "'FOR', 'IF' or 'TRY EXCEPT'"),
+            "while": uppercase_error_msg("while"),
+            "continue": uppercase_error_msg("continue"),
+            "return": uppercase_error_msg("return"),
+            "try": reserved_error_msg("try", "'TRY EXCEPT'"),
+            "except": reserved_error_msg("except", "'TRY EXCEPT'"),
+            "finally": reserved_error_msg("finally", "'TRY EXCEPT'"),
+        },
     }
     else_statements = {"else", "else if"}
     bdd = {"given", "when", "and", "but", "then"}
@@ -450,7 +469,9 @@ class KeywordNamingChecker(VisitorChecker):
         self.check_bdd_keywords(node.name, node)
         self.check_keyword_naming_with_subkeywords(node, Token.NAME)
 
-    visit_TestTeardown = visit_SuiteTeardown = visit_Teardown = visit_TestSetup = visit_SuiteSetup = visit_Setup
+    visit_TestTeardown = (
+        visit_SuiteTeardown
+    ) = visit_Teardown = visit_TestSetup = visit_SuiteSetup = visit_Setup
 
     def visit_Keyword(self, node):  # noqa
         if not node.name:
@@ -460,7 +481,11 @@ class KeywordNamingChecker(VisitorChecker):
         self.generic_visit(node)
 
     def visit_KeywordCall(self, node):  # noqa
-        if self.inside_if_block and node.keyword and node.keyword.lower() in self.else_statements:
+        if (
+            self.inside_if_block
+            and node.keyword
+            and node.keyword.lower() in self.else_statements
+        ):
             self.report("else-not-upper-case", node=node, col=keyword_col(node))
         self.check_keyword_naming_with_subkeywords(node, Token.KEYWORD)
         self.check_bdd_keywords(node.keyword, node)
@@ -478,8 +503,12 @@ class KeywordNamingChecker(VisitorChecker):
         if self.check_if_keyword_is_reserved(keyword_name, node):
             return
         normalized = remove_robot_vars(keyword_name)
-        normalized = self.param("wrong-case-in-keyword-name", "pattern").sub("", normalized)
-        normalized = normalized.split(".")[-1]  # remove any imports ie ExternalLib.SubLib.Log -> Log
+        normalized = self.param("wrong-case-in-keyword-name", "pattern").sub(
+            "", normalized
+        )
+        normalized = normalized.split(".")[
+            -1
+        ]  # remove any imports ie ExternalLib.SubLib.Log -> Log
         normalized = normalized.replace("'", "")  # replace ' apostrophes
         if "_" in normalized:
             self.report(
@@ -490,7 +519,10 @@ class KeywordNamingChecker(VisitorChecker):
                 end_col=node.end_col_offset + 1,
             )
         words = self.letter_pattern.sub(" ", normalized).split(" ")
-        if self.param("wrong-case-in-keyword-name", "convention") == "first_word_capitalized":
+        if (
+            self.param("wrong-case-in-keyword-name", "convention")
+            == "first_word_capitalized"
+        ):
             words = words[:1]
         if any(word[0].islower() for word in words if word):
             self.report(
@@ -505,9 +537,19 @@ class KeywordNamingChecker(VisitorChecker):
         if not keyword_name or keyword_name.lower() not in self.bdd:
             return
         arg = node.get_token(Token.ARGUMENT)
-        suffix = f". Use one space between: '{keyword_name.title()} {arg.value}'" if arg else ""
+        suffix = (
+            f". Use one space between: '{keyword_name.title()} {arg.value}'"
+            if arg
+            else ""
+        )
         col = token_col(node, Token.NAME, Token.KEYWORD)
-        self.report("bdd-without-keyword-call", keyword_name=keyword_name, error_msg=suffix, node=node, col=col)
+        self.report(
+            "bdd-without-keyword-call",
+            keyword_name=keyword_name,
+            error_msg=suffix,
+            node=node,
+            col=col,
+        )
 
     def check_if_keyword_is_reserved(self, keyword_name, node):
         # if there is typo in syntax, it is interpreted as keyword
@@ -537,9 +579,13 @@ class SettingsNamingChecker(VisitorChecker):
         "empty-library-alias",
         "duplicated-library-alias",
     )
-    ALIAS_TOKENS = [Token.WITH_NAME] if ROBOT_VERSION.major < 5 else [Token.WITH_NAME, "AS"]
+    ALIAS_TOKENS = (
+        [Token.WITH_NAME] if ROBOT_VERSION.major < 5 else [Token.WITH_NAME, "AS"]
+    )
     # Separating alias values since RF 3 uses WITH_NAME instead of WITH NAME
-    ALIAS_TOKENS_VALUES = ["WITH NAME"] if ROBOT_VERSION.major < 5 else [Token.WITH_NAME, "AS"]
+    ALIAS_TOKENS_VALUES = (
+        ["WITH NAME"] if ROBOT_VERSION.major < 5 else [Token.WITH_NAME, "AS"]
+    )
 
     def __init__(self):
         self.section_name_pattern = re.compile(r"\*\*\*\s.+\s\*\*\*")
@@ -547,10 +593,15 @@ class SettingsNamingChecker(VisitorChecker):
 
     def visit_SectionHeader(self, node):  # noqa
         name = node.data_tokens[0].value
-        if not self.section_name_pattern.match(name) or not (name.istitle() or name.isupper()):
+        if not self.section_name_pattern.match(name) or not (
+            name.istitle() or name.isupper()
+        ):
             valid_name = f"*** {node.name.title()} ***"
             self.report(
-                "section-name-invalid", section_title_case=valid_name, section_upper_case=valid_name.upper(), node=node
+                "section-name-invalid",
+                section_title_case=valid_name,
+                section_upper_case=valid_name.upper(),
+                node=node,
             )
 
     def visit_Setup(self, node):  # noqa
@@ -572,7 +623,11 @@ class SettingsNamingChecker(VisitorChecker):
         visit_ResourceImport
     ) = (
         visit_VariablesImport
-    ) = visit_Documentation = visit_Tags = visit_Timeout = visit_Template = visit_Arguments = visit_Return = visit_Setup
+    ) = (
+        visit_Documentation
+    ) = (
+        visit_Tags
+    ) = visit_Timeout = visit_Template = visit_Arguments = visit_Return = visit_Setup
 
     def visit_LibraryImport(self, node):  # noqa
         self.check_setting_name(node.data_tokens[0].value, node)
@@ -582,7 +637,9 @@ class SettingsNamingChecker(VisitorChecker):
                 if arg.value and arg.value in self.ALIAS_TOKENS_VALUES:
                     self.report("empty-library-alias", node=arg, col=arg.col_offset + 1)
         else:
-            if node.alias.replace(" ", "") == node.name.replace(" ", ""):  # New Name == NewName
+            if node.alias.replace(" ", "") == node.name.replace(
+                " ", ""
+            ):  # New Name == NewName
                 name_token = node.get_tokens(Token.NAME)[-1]
                 self.report(
                     "duplicated-library-alias",
@@ -607,7 +664,9 @@ class TestCaseNamingChecker(VisitorChecker):
         if not node.name:
             self.report("test-case-name-is-empty", node=node)
         elif not node.name[0].isupper():
-            self.report("not-capitalized-test-case-title", test_name=node.name, node=node)
+            self.report(
+                "not-capitalized-test-case-title", test_name=node.name, node=node
+            )
 
 
 class VariableNamingChecker(VisitorChecker):
@@ -633,7 +692,11 @@ class VariableNamingChecker(VisitorChecker):
             if not child.data_tokens:
                 continue
             token = child.data_tokens[0]
-            if token.type == Token.VARIABLE and token.value and not token.value.isupper():
+            if (
+                token.type == Token.VARIABLE
+                and token.value
+                and not token.value.isupper()
+            ):
                 self.report(
                     "section-variable-not-uppercase",
                     variable_name=token.value,
@@ -653,7 +716,10 @@ class VariableNamingChecker(VisitorChecker):
 
         if not node.keyword:
             return
-        if normalize_robot_name(node.keyword, remove_prefix="builtin.") in self.set_variable_variants:
+        if (
+            normalize_robot_name(node.keyword, remove_prefix="builtin.")
+            in self.set_variable_variants
+        ):
             if len(node.data_tokens) < 2:
                 return
             token = node.data_tokens[1]
@@ -706,12 +772,17 @@ class SimilarVariableChecker(VisitorChecker):
             # read arguments from Test Case or Keyword
             if isinstance(child, Arguments):
                 for token in child.get_tokens(Token.ARGUMENT):
-                    self.variables[normalize_robot_var_name(token.value)].add(token.value)
+                    self.variables[normalize_robot_var_name(token.value)].add(
+                        token.value
+                    )
 
     def find_similar_variables(self, tokens, node):
         for token in tokens:
             normalized_token = normalize_robot_var_name(token.value)
-            if normalized_token in self.variables and token.value not in self.variables[normalized_token]:
+            if (
+                normalized_token in self.variables
+                and token.value not in self.variables[normalized_token]
+            ):
                 self.report(
                     "possible-variable-overwriting",
                     variable_name=token.value,
@@ -747,7 +818,9 @@ class DeprecatedStatementChecker(VisitorChecker):
     def visit_SuiteSetup(self, node):  # noqa
         self.check_if_keyword_is_deprecated(node.name, node)
 
-    visit_TestSetup = visit_Setup = visit_SuiteTeardown = visit_TestTeardown = visit_Teardown = visit_SuiteSetup
+    visit_TestSetup = (
+        visit_Setup
+    ) = visit_SuiteTeardown = visit_TestTeardown = visit_Teardown = visit_SuiteSetup
 
     def visit_Return(self, node):  # noqa
         """For RETURN use visit_ReturnStatement - visit_Return will most likely visit RETURN in the future"""
@@ -763,7 +836,9 @@ class DeprecatedStatementChecker(VisitorChecker):
         )
 
     def check_if_keyword_is_deprecated(self, keyword_name, node):
-        normalized_keyword_name = normalize_robot_name(keyword_name, remove_prefix="builtin.")
+        normalized_keyword_name = normalize_robot_name(
+            keyword_name, remove_prefix="builtin."
+        )
         deprecated_statements = self.deprecated_keywords.get(ROBOT_VERSION.major, {})
         if normalized_keyword_name in deprecated_statements:
             alternative = deprecated_statements[normalized_keyword_name]
@@ -778,9 +853,15 @@ class DeprecatedStatementChecker(VisitorChecker):
             )
 
     def visit_LibraryImport(self, node):  # noqa
-        if ROBOT_VERSION.major < 5 or (ROBOT_VERSION.major == 5 and ROBOT_VERSION.minor == 0):
+        if ROBOT_VERSION.major < 5 or (
+            ROBOT_VERSION.major == 5 and ROBOT_VERSION.minor == 0
+        ):
             return
         with_name_token = node.get_token(Token.WITH_NAME)
         if not with_name_token or with_name_token.value == "AS":
             return
-        self.report("deprecated-with-name", node=with_name_token, col=with_name_token.col_offset + 1)
+        self.report(
+            "deprecated-with-name",
+            node=with_name_token,
+            col=with_name_token.col_offset + 1,
+        )

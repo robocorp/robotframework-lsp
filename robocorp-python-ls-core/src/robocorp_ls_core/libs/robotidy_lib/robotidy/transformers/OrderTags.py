@@ -1,41 +1,44 @@
-from robot.api.parsing import DefaultTags, ForceTags, ModelTransformer, Tags, Token
+from robot.api.parsing import DefaultTags, ForceTags, Tags, Token
 
 from robotidy.disablers import skip_section_if_disabled
+from robotidy.transformers import Transformer
 
 
-class OrderTags(ModelTransformer):
+class OrderTags(Transformer):
     """
     Order tags.
 
     Tags are ordered in lexicographic order like this:
 
-        *** Test Cases ***
-        Tags Upper Lower
-            [Tags]    ba    Ab    Bb    Ca    Cb    aa
-            My Keyword
-
-        *** Keywords ***
+    ```robotframework
+    *** Test Cases ***
+    Tags Upper Lower
+        [Tags]    ba    Ab    Bb    Ca    Cb    aa
         My Keyword
-            [Tags]    ba    Ab    Bb    Ca    Cb    aa
-            No Operation
+
+    *** Keywords ***
+    My Keyword
+        [Tags]    ba    Ab    Bb    Ca    Cb    aa
+        No Operation
+    ```
 
     To:
 
-        *** Test Cases ***
-        Tags Upper Lower
-            [Tags]    aa    Ab    ba    Bb    Ca    Cb
-            My Keyword
-
-        *** Keywords ***
+    ```robotframework
+    *** Test Cases ***
+    Tags Upper Lower
+        [Tags]    aa    Ab    ba    Bb    Ca    Cb
         My Keyword
-            [Tags]    aa    Ab    ba    Bb    Ca    Cb
-            No Operation
+
+    *** Keywords ***
+    My Keyword
+        [Tags]    aa    Ab    ba    Bb    Ca    Cb
+        No Operation
+    ```
 
     Default order can be changed using following parameters:
       - ``case_sensitive = False``
       - ``reverse = False``
-
-    See https://robotidy.readthedocs.io/en/latest/transformers/OrderTags.html for more examples.
     """
 
     ENABLED = False
@@ -47,6 +50,7 @@ class OrderTags(ModelTransformer):
         default_tags: bool = True,
         force_tags: bool = True,
     ):
+        super().__init__()
         self.key = self.get_key(case_sensitive)
         self.reverse = reverse
         self.default_tags = default_tags

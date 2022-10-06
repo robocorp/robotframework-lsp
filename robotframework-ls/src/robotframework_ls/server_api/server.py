@@ -739,8 +739,8 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
             try:
                 new_contents = robot_tidy_source_format(ast, dirname)
-            except ImportError:
-                log.critical(
+            except (ImportError, AttributeError):
+                log.exception(
                     "Unable to code-format because robotidy could not be imported."
                 )
                 return []
