@@ -1,3 +1,12 @@
+New in 1.3.0 (2022-10-06)
+-----------------------------
+
+### New features
+
+- Vendored Robocop updated to 2.5.0.
+- Vendored Robotidy updated to 3.2.0.
+
+
 New in 1.2.0 (2022-09-28)
 -----------------------------
 
