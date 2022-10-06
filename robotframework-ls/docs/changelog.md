@@ -1,3 +1,18 @@
+New in 1.3.0 (2022-10-06)
+-----------------------------
+
+### New features
+
+- Robocop updated to 2.5.0.
+
+
+### Bugfixes
+
+- Get stack location on `Robot Framework 3`. [#774](https://github.com/robocorp/robotframework-lsp/issues/774)
+- Properly show errors even if the stack location cannot be found. [#774](https://github.com/robocorp/robotframework-lsp/issues/774)
+- Traceback order now matches the same order as Python . [#772](https://github.com/robocorp/robotframework-lsp/issues/772)
+
+
 New in 1.2.0 (2022-09-28)
 -----------------------------
 

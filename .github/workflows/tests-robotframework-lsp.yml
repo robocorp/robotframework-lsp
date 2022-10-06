@@ -23,6 +23,7 @@ jobs:
         name: [
           "windows-py37-pip-v3",
           "ubuntu-py38-pip-v4",
+          "ubuntu-py39-pip-v5",
           "ubuntu-py310-master",
 #           "ubuntu-pypy3-master",
 #           "macos-py37",
@@ -34,6 +35,9 @@ jobs:
             os: windows-latest
           - name: "ubuntu-py38-pip-v4"
             python: "3.8"
+            os: ubuntu-latest
+          - name: "ubuntu-py39-pip-v5"
+            python: "3.9"
             os: ubuntu-latest
           - name: "ubuntu-py310-master"
             python: "3.10"
@@ -74,6 +78,9 @@ jobs:
     - name: Install robotframework from pip
       run: python -W ignore -m pip install "robotframework>=4.0,<5.0"
       if: contains(matrix.name, '-pip-v4')
+    - name: Install robotframework from pip
+      run: python -W ignore -m pip install "robotframework>=5.0,<6.0"
+      if: contains(matrix.name, '-pip-v5')
     - name: Install robotremoteserver via pip
       run: python -W ignore -m pip install robotremoteserver
     - name: Vendor robocorp_ls_core/robotframework_interactive
