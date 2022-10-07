@@ -143,7 +143,7 @@ import { Mutex } from "./mutex";
 import { mergeEnviron } from "./subprocess";
 import { feedback } from "./rcc";
 import { showSubmitIssueUI } from "./submitIssue";
-import { ensureConvertBundle, ensureRobocorpCommons } from "./conversion";
+import { ensureConvertBundle } from "./conversion";
 import { TextDecoder } from "util";
 
 interface InterpreterInfo {
@@ -345,7 +345,6 @@ async function convertProject() {
     const DEFAULT_ERROR_STATUS = "Error while converting project.";
 
     const convertBundlePromise = ensureConvertBundle();
-    const robocorpCommonsPromise = ensureRobocorpCommons();
     try {
         // let the user decide where the conversion result will be saved
         const wsFolders: ReadonlyArray<WorkspaceFolder> = workspace.workspaceFolders;
@@ -384,12 +383,7 @@ async function convertProject() {
         if (!converterLocation) {
             throw new Error("There was an issue downloading the converter bundle. Please try again.");
         }
-        const converterBundle = require(converterLocation);
-
-        const convertYamlLocation = await robocorpCommonsPromise;
-        if (!convertYamlLocation) {
-            console.warn("Cannot find convert.yaml for commons");
-        }
+        const converterBundle = require(converterLocation.pathToExecutable);
 
         // let the user decide what type of project will be converted
         const vendorMap = {
@@ -412,7 +406,7 @@ async function convertProject() {
         const bytes = await workspace.fs.readFile(uri);
         const contents = new TextDecoder("utf-8").decode(bytes);
         const options = {
-            objectImplFile: convertYamlLocation,
+            objectImplFile: converterLocation.pathToConvertYaml,
         };
         const vendor = vendorMap[selectedFormat];
         const conversionResult: ConversionResult = await converterBundle.convert(vendor, contents, options);
