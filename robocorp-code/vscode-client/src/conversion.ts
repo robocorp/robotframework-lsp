@@ -1,7 +1,7 @@
 import * as AdmZip from "adm-zip";
 import * as rimraf from "rimraf";
 
-import * as path from 'path';
+import * as path from "path";
 
 import { window, Progress, ProgressLocation, CancellationToken } from "vscode";
 import { getExtensionRelativeFile, readFromFile, verifyFileExists, writeToFile } from "./files";
@@ -78,7 +78,7 @@ export async function ensureConvertBundle(): Promise<{
 
         const zip = new AdmZip(bundleLocation);
         zip.extractAllTo(bundleFolderLocation);
-    }
+    };
 
     // if the bundle file doesn't exit or isn't marked as being downloaded, force download
     const warnUser: boolean = false;
@@ -101,14 +101,13 @@ export async function ensureConvertBundle(): Promise<{
                 await downloadBundle();
                 await unzipCommons();
             }
-           
         }
     }
 
     // TODO simplify nesting
-    const executable = path.join(bundleFolderLocation, 'converter-with-commons', 'bundle.js');
-    const convertYaml = path.join(bundleFolderLocation, 'converter-with-commons', 'robocorp-commons', 'convert.yaml');
-    
+    const executable = path.join(bundleFolderLocation, "converter-with-commons", "bundle.js");
+    const convertYaml = path.join(bundleFolderLocation, "converter-with-commons", "robocorp-commons", "convert.yaml");
+
     return {
         pathToExecutable: executable,
         pathToConvertYaml: verifyFileExists(convertYaml) ? convertYaml : undefined,
