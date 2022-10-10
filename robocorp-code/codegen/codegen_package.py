@@ -132,6 +132,8 @@ def get_json_contents():
             "@types/mocha": "^2.2.32",
             "@types/node": "^13.0.00",
             "@types/vscode": "1.65.0",
+            "@types/adm-zip": "^0.5.0",
+            "@types/rimraf": "^3.0.2",
             "prettier": "2.4.1",
             "vscode-test": "1.5.1",
             "typescript": "^4.5.4",
@@ -142,6 +144,8 @@ def get_json_contents():
             "http-proxy-agent": "^2.1.0",
             "https-proxy-agent": "^2.2.4",
             "vscode-nls": "^4.1.2",
+            "adm-zip": "^0.5.9",
+            "rimraf": "^3.0.2",
         },
     }
     return base_package_contents

@@ -955,22 +955,22 @@
         "prettier-fix": "npx prettier -w vscode-client/**/*.ts"
     },
     "devDependencies": {
-        "@types/adm-zip": "^0.5.0",
         "@types/mocha": "^2.2.32",
         "@types/node": "^13.0.00",
-        "@types/rimraf": "^3.0.2",
         "@types/vscode": "1.65.0",
+        "@types/adm-zip": "^0.5.0",
+        "@types/rimraf": "^3.0.2",
         "prettier": "2.4.1",
-        "typescript": "^4.5.4",
-        "vscode-test": "1.5.1"
+        "vscode-test": "1.5.1",
+        "typescript": "^4.5.4"
     },
     "dependencies": {
-        "adm-zip": "^0.5.9",
+        "vscode-languageclient": "^7.0.0",
+        "path-exists": "^4.0.0",
         "http-proxy-agent": "^2.1.0",
         "https-proxy-agent": "^2.2.4",
-        "path-exists": "^4.0.0",
-        "rimraf": "^3.0.2",
-        "vscode-languageclient": "^7.0.0",
-        "vscode-nls": "^4.1.2"
+        "vscode-nls": "^4.1.2",
+        "adm-zip": "^0.5.9",
+        "rimraf": "^3.0.2"
     }
 }
