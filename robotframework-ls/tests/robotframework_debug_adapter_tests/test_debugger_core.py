@@ -623,6 +623,9 @@ def test_debugger_core_stop_on_failure_in_import(
 def test_debugger_core_stop_on_log_error_once(
     debugger_api, run_robot_cli, debugger_impl
 ) -> None:
+    # Note: logging only happens in the main thread, so, we can't use
+    # robot_thread.run_target(target)!
+
     target = debugger_api.get_dap_case_file("case_log_error.robot")
 
     debugger_impl.break_on_log_failure = True
@@ -747,6 +750,7 @@ def test_debugger_core_evaluate(
 
     from robotframework_debug_adapter.debugger_impl import InvalidFrameIdError
     from robotframework_debug_adapter.debugger_impl import InvalidFrameTypeError
+    from robotframework_debug_adapter.debugger_impl import UnableToEvaluateError
 
     thread_id = debugger_impl.get_current_thread_id(robot_thread)
     target = debugger_api_core.get_dap_case_file("case_evaluate.robot")
@@ -771,11 +775,11 @@ def test_debugger_core_evaluate(
         with pytest.raises(InvalidFrameIdError):
             eval_info.future.result()
 
-        # Fail because the stack selected is not a keyword stack.
+        # Fail because the stack selected is not the top entry.
         eval_info = debugger_impl.evaluate(
             frame_ids[-1], "Create File    %s    content=%s" % (filename, content)
         )
-        with pytest.raises(InvalidFrameTypeError):
+        with pytest.raises(UnableToEvaluateError):
             eval_info.future.result()
 
         assert not os.path.exists(filename)
@@ -836,3 +840,48 @@ def test_debugger_core_evaluate_assign(
 
     finally:
         debugger_impl.step_continue()
+
+
+def test_debugger_core_evaluate_at_except_break(
+    debugger_api, debugger_impl, run_robot_cli
+) -> None:
+    # Note: logging only happens in the main thread, so, we can't use
+    # robot_thread.run_target(target)!
+    target = debugger_api.get_dap_case_file("case_log_error.robot")
+
+    debugger_impl.break_on_log_failure = True
+    debugger_impl.break_on_log_error = True
+    busy_wait = DummyBusyWait(debugger_impl)
+    debugger_impl.busy_wait = busy_wait
+
+    eval_info = None
+
+    def on_wait_put_eval():
+        nonlocal eval_info
+        thread_id = debugger_impl.get_current_thread_id()
+        frame_ids = list(debugger_impl.iter_frame_ids(thread_id))
+        # Keyword evaluation works
+        eval_info = debugger_impl.evaluate(
+            frame_ids[0], "${lst}=    Create list    a    b"
+        )
+
+    def on_wait_evaluated():
+        nonlocal eval_info
+        assert eval_info.future.result() == ["a", "b"]
+        debugger_impl.step_continue()
+
+    busy_wait.on_wait = [on_wait_put_eval, on_wait_evaluated]
+
+    code = run_robot_cli(target)
+
+    assert busy_wait.waited == 1
+    assert busy_wait.proceeded == 2
+    assert len(busy_wait.stack) == 2
+    assert [x.name for x in busy_wait.stack[0]] == [
+        "Log (ERROR)",
+        "Log",
+        "TestCase: Check log",
+        "TestSuite: Case Log Error",
+    ]
+    # Note: Robot Framework considers it as passed even though an error was logged...
+    assert code == 0

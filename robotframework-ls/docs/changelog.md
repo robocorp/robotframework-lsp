@@ -1,3 +1,11 @@
+Next
+-----------------------------
+
+### Bugfixes
+
+- If a user is paused in a log message break he should still be able to evaluate keywords based on the previous stack context.
+
+
 New in 1.3.0 (2022-10-06)
 -----------------------------
 
