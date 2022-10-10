@@ -16,7 +16,7 @@ export const getConverterBundleVersion = async (): Promise<{
     newVersion?: string;
     currentVersionLocation?: string;
 }> => {
-    const versionURL = "https://downloads.robocorp.com/converter/latest/version.txt";
+    const versionURL = "https://downloads.robocorp.com/converter/latest/version-with-commons.txt";
     const currentVersionLocation = getExtensionRelativeFile("../../vscode-client/out/converterBundle.version", false);
     const newVersionLocation = getExtensionRelativeFile("../../vscode-client/out/converterBundle.version.new", false);
 
