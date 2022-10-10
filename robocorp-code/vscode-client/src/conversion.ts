@@ -104,9 +104,8 @@ export async function ensureConvertBundle(): Promise<{
         }
     }
 
-    // TODO simplify nesting
-    const executable = path.join(bundleFolderLocation, "converter-with-commons", "bundle.js");
-    const convertYaml = path.join(bundleFolderLocation, "converter-with-commons", "robocorp-commons", "convert.yaml");
+    const executable = path.join(bundleFolderLocation, "bundle.js");
+    const convertYaml = path.join(bundleFolderLocation, "robocorp-commons", "convert.yaml");
 
     return {
         pathToExecutable: executable,
