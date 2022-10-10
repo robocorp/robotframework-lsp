@@ -70,7 +70,7 @@ export async function ensureConvertBundle(): Promise<{
             ): Promise<string | undefined> => await download(bundleURL, progress, token, bundleLocation)
         );
 
-    const unzipCommons = async () => {
+    const unzipBundle = async () => {
         // remove previous bundle if it exists
         if (verifyFileExists(bundleFolderLocation, false)) {
             rimraf.sync(bundleFolderLocation);
@@ -84,7 +84,7 @@ export async function ensureConvertBundle(): Promise<{
     const warnUser: boolean = false;
     if (!verifyFileExists(bundleLocation, warnUser)) {
         await downloadBundle();
-        await unzipCommons();
+        await unzipBundle();
     } else if (!CONVERSION_STATUS.alreadyCheckedVersion) {
         CONVERSION_STATUS.alreadyCheckedVersion = true;
         const { currentVersion, newVersion, currentVersionLocation } = await getConverterBundleVersion();
@@ -99,7 +99,7 @@ export async function ensureConvertBundle(): Promise<{
             if (shouldUpgrade && shouldUpgrade !== "No") {
                 await writeToFile(currentVersionLocation, newVersion);
                 await downloadBundle();
-                await unzipCommons();
+                await unzipBundle();
             }
         }
     }
