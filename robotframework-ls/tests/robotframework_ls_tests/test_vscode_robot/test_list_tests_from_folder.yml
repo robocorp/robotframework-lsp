@@ -1,0 +1,30 @@
+- name: Log It
+  path: /robot1.robot
+  range:
+    end:
+      character: 6
+      line: 2
+    start:
+      character: 0
+      line: 2
+  uri: /robot1.robot
+- name: Log It2
+  path: /robot1.robot
+  range:
+    end:
+      character: 7
+      line: 6
+    start:
+      character: 0
+      line: 6
+  uri: /robot1.robot
+- name: Log It2
+  path: /sub/robot1.robot
+  range:
+    end:
+      character: 7
+      line: 2
+    start:
+      character: 0
+      line: 2
+  uri: /sub/robot1.robot

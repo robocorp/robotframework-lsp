@@ -18,6 +18,7 @@ import {
     getTestItem,
     handleTestsCollected,
     IRange,
+    ITestInfoFromSymbolsCache,
     RUN_PROFILE,
 } from "./testview";
 import { CancellationTokenSource } from "vscode-languageclient";
@@ -109,9 +110,23 @@ async function _debugSuite(resource: Uri | undefined, noDebug: boolean) {
 }
 
 async function obtainTestItem(uri: Uri, name: string): Promise<TestItem | undefined> {
+    // Note: listing and making sure everything is in sync.
     let testId: string;
     let tests: ITestInfo[] = await commands.executeCommand("robot.listTests", { "uri": uri.toString() });
-    await handleTestsCollected({ "uri": uri.toString(), "testInfo": tests });
+    const uriToTests = new Map<string, ITestInfo[]>();
+
+    // We need to group (in case it was a directory).
+    for (const t of tests) {
+        let existing: undefined | ITestInfo[] = uriToTests.get(t.uri);
+        if (!existing) {
+            existing = [];
+            uriToTests.set(t.uri.toString(), existing);
+        }
+        existing.push(t);
+    }
+    for (const [key, t] of uriToTests.entries()) {
+        await handleTestsCollected({ "uri": key, "testInfo": t });
+    }
 
     if (name === "*") {
         testId = computeUriTestId(uri.toString());

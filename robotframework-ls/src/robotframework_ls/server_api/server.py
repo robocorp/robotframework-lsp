@@ -40,6 +40,7 @@ import sys
 import threading
 from robocorp_ls_core.jsonrpc.exceptions import JsonRpcException
 import os
+from robocorp_ls_core import uris
 
 
 log = get_logger(__name__)
@@ -888,12 +889,28 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         self, doc_uri: str, monitor: IMonitor
     ) -> List[ITestInfoTypedDict]:
         from robotframework_ls.impl.code_lens import list_tests
+        from pathlib import Path
 
-        completion_context = self._create_completion_context(doc_uri, 0, 0, monitor)
-        if completion_context is None:
-            return []
+        path = Path(uris.to_fs_path(doc_uri))
+        if path.is_dir():
+            tests = []
+            for p in path.rglob("*.robot"):
+                doc_uri = uris.from_fs_path(str(p))
+                completion_context = self._create_completion_context(
+                    doc_uri, 0, 0, monitor
+                )
 
-        return list_tests(completion_context)
+                if completion_context is None:
+                    continue
+
+                tests.extend(list_tests(completion_context))
+            return tests
+        else:
+            completion_context = self._create_completion_context(doc_uri, 0, 0, monitor)
+            if completion_context is None:
+                return []
+
+            return list_tests(completion_context)
 
     def m_collect_robot_documentation(
         self,

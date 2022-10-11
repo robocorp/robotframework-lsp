@@ -4,6 +4,7 @@ Next
 ### Bugfixes
 
 - If a user is paused in a log message break he should still be able to evaluate keywords based on the previous stack context.
+- Right click on folder and selecting `Robot Framework -> Run/Debug Tests/Tasks Suite` properly runs tests again. [#776](https://github.com/robocorp/robotframework-lsp/issues/776)
 
 
 New in 1.3.0 (2022-10-06)
