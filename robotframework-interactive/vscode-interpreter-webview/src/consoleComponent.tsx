@@ -146,6 +146,7 @@ function configEditor(editor: monaco.editor.IStandaloneCodeEditor, history, hand
         keybindings: [monaco.KeyCode.Enter],
         run: async () => {
             let value = editor.getValue();
+            value = value.replace(/(?:\r\n|\r)/g, "\n");
             let x: any = editor; // hack to get access to the _modelData.
             let codeAsHtml = x._modelData.viewModel.getRichTextToCopy([editor.getModel().getFullModelRange()], false);
             history.push(value);

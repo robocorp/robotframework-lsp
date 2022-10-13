@@ -400,7 +400,7 @@ class RobotFrameworkInterpreter(object):
         else:
             if not code.strip().startswith("*"):
                 last_mode, indent = self._last_block_mode_and_indent
-                indented_code = indent.join(code.split("\n"))
+                indented_code = ("\n" + indent).join(code.split("\n"))
                 ret = {
                     "prefix": last_mode,
                     "indent": indent,
@@ -417,6 +417,8 @@ class RobotFrameworkInterpreter(object):
             # need to hijack it too...
             sys.__stdout__ = self._stdout  # type:ignore
             sys.__stderr__ = self._stderr  # type:ignore
+
+            code = code.replace("\r\n", "\n").replace("\r", "\n")
             return self._evaluate(code)
         except Exception as e:
             if not self.on_exception_handled(e):
@@ -446,7 +448,6 @@ class RobotFrameworkInterpreter(object):
         SettingsBuilder = facade.SettingsBuilder
         EXECUTION_CONTEXTS = facade.EXECUTION_CONTEXTS
         SuiteBuilder = facade.SuiteBuilder
-
         code = self.compute_evaluate_text(code)["full_code"]
 
         model = get_model(

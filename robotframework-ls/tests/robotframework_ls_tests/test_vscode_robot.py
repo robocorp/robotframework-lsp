@@ -1333,11 +1333,12 @@ def test_rf_interactive_integrated_basic(
         [
             {
                 "interpreter_id": 1,
-                "code": """
-*** Task ***
-Some task
-    Log    Something     console=True
-""",
+                "code": (
+                    "\r"
+                    "*** Task ***\r"
+                    "Some task\r"
+                    "    Log    Something     console=True\r"
+                ),
             }
         ],
     )
