@@ -37,6 +37,12 @@ class _EventsState:
         )
 
         self._failure_messages: List[str] = []
+
+        self._last_failure_message = ""
+        self._last_failure_message_full_stacktrace = ""
+        self._last_failure_message_reported_at = None
+
+        self._failed_keywords: List[dict] = []
         self._source_info_stack: Deque[_SourceInfo] = deque()
         self._ignore_failures_in_stack = IgnoreFailuresInStack()
         self._current_suite_filename = None
@@ -92,6 +98,9 @@ class EventsListenerV3:
         state = _get_events_state()
         try:
             state._current_suite_filename = None
+            failed_keywords = tuple(reversed(state._failed_keywords))
+            state._failed_keywords = []
+
             send_event(
                 EndSuiteEvent(
                     EndSuiteEventBody(
@@ -100,7 +109,7 @@ class EventsListenerV3:
                         status=result.status,
                         source=data.source,
                         message=result.message.strip(),
-                        failed_keywords=[],
+                        failed_keywords=failed_keywords,
                     )
                 )
             )
@@ -123,6 +132,10 @@ class EventsListenerV3:
                 msg = stripped_msg + "\n" + msg
 
             state._failure_messages = []
+            state._last_failure_message = ""
+
+            failed_keywords = tuple(reversed(state._failed_keywords))
+            state._failed_keywords = []
 
             send_event(
                 EndTestEvent(
@@ -132,7 +145,7 @@ class EventsListenerV3:
                         status=result.status,
                         source=data.source,
                         message=msg.strip(),
-                        failed_keywords=[],
+                        failed_keywords=failed_keywords,
                     )
                 )
             )
@@ -255,6 +268,7 @@ class EventsListenerV2:
 
         is_failure = message["level"] in ("FAIL", "ERROR")  # FAIL/WARN/INFO/DEBUG/TRACE
 
+        base_message_string = message_string
         if is_failure:
             message_string = f"{message_string}\n{self._print_stack_trace(state)}"
 
@@ -274,6 +288,9 @@ class EventsListenerV2:
 
         if is_failure:
             state._failure_messages.append(message_string)
+            state._last_failure_message = base_message_string
+            state._last_failure_message_full_stacktrace = message_string
+            state._last_failure_message_reported_at = (source, lineno)
 
     def _print_stack_trace(self, state):
         from robotframework_debug_adapter import file_utils
@@ -356,8 +373,31 @@ class EventsListenerV2:
     def end_keyword(self, name: str, attributes: Dict[str, Any]) -> None:
         state = _get_events_state()
         try:
-            state._source_info_stack.pop()
+            source_info: _SourceInfo = state._source_info_stack.pop()
         except:
             log.exception("Error in state._source_info_stack.pop()")
+            return
+        try:
+            if state._ignore_failures_in_stack.ignore():
+                return
 
-        state._ignore_failures_in_stack.pop()
+            status = attributes.get("status")
+
+            # Status could be PASS, FAIL, SKIP or NOT RUN
+            if status == "FAIL":
+                key = (source_info.source, source_info.lineno)
+                if key == state._last_failure_message_reported_at:
+                    msg = "[FAIL] " + state._last_failure_message_full_stacktrace
+                else:
+                    msg = "[FAIL INSIDE] " + state._last_failure_message
+                state._failed_keywords.append(
+                    {
+                        "name": source_info.keyword_name,
+                        "source": source_info.source,
+                        "lineno": source_info.lineno,
+                        "message": msg,
+                    }
+                )
+
+        finally:
+            state._ignore_failures_in_stack.pop()

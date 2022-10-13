@@ -41,7 +41,6 @@ def test_events_listener_failure(debugger_api: _DebuggerAPI):
         TerminatedEvent,
     )
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import LogMessageEvent
-    from robotframework_ls.impl.robot_version import get_robot_major_version
 
     target = debugger_api.get_dap_case_file("case_failure.robot")
     debugger_api.target = target
@@ -75,6 +74,8 @@ def test_events_listener_failure(debugger_api: _DebuggerAPI):
         "No keyword with name 'This keyword does not exist' found."
         in end_test_body.message
     )
+    assert len(end_test_body.failed_keywords) == 1
+    assert end_test_body.failed_keywords[0]["lineno"] == 4
 
     assert "Traceback (most recent call last)" in end_test_body.message
     assert debugger_api.read(EndSuiteEvent)
