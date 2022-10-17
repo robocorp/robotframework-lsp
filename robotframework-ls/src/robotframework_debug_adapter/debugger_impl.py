@@ -1181,6 +1181,7 @@ class _RobotDebuggerImpl(object):
         try:
             source = None
             lineno = None
+            path = None
 
             source_and_line = extract_source_and_line_from_message(message.message)
 
