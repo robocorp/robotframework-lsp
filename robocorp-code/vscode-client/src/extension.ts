@@ -391,13 +391,12 @@ async function convertProject() {
         }
         const converterBundle = require(converterLocation.pathToExecutable);
 
-
         let conversionResult: ConversionResult = null;
         const vendor = vendorMap[selectedFormat];
 
         // let the user decide what should be converted
-        switch(vendor) {
-            case vendorMap['Automation Anywhere 360']: {
+        switch (vendor) {
+            case vendorMap["Automation Anywhere 360"]: {
                 const folderToConvert: Uri[] = await window.showOpenDialog({
                     "canSelectFolders": true,
                     "canSelectFiles": false,
@@ -414,8 +413,8 @@ async function convertProject() {
                 conversionResult = await converterBundle.convert(vendor, undefined, options);
                 break;
             }
-            case vendorMap['Blue Prism']:
-            case vendorMap['UiPath']: {
+            case vendorMap["Blue Prism"]:
+            case vendorMap["UiPath"]: {
                 const fileToConvert: Uri[] = await window.showOpenDialog({
                     "canSelectFolders": false,
                     "canSelectFiles": true,
