@@ -1,3 +1,8 @@
+import * as AdmZip from "adm-zip";
+import * as rimraf from "rimraf";
+
+import * as path from "path";
+
 import { window, Progress, ProgressLocation, CancellationToken } from "vscode";
 import { getExtensionRelativeFile, readFromFile, verifyFileExists, writeToFile } from "./files";
 import { download } from "./rcc";
@@ -11,7 +16,7 @@ export const getConverterBundleVersion = async (): Promise<{
     newVersion?: string;
     currentVersionLocation?: string;
 }> => {
-    const versionURL = "https://downloads.robocorp.com/converter/latest/version.txt";
+    const versionURL = "https://downloads.robocorp.com/converter/latest/version-with-commons.txt";
     const currentVersionLocation = getExtensionRelativeFile("../../vscode-client/out/converterBundle.version", false);
     const newVersionLocation = getExtensionRelativeFile("../../vscode-client/out/converterBundle.version.new", false);
 
@@ -41,10 +46,15 @@ export const getConverterBundleVersion = async (): Promise<{
     return { currentVersion: currentVersion, newVersion: newVersion, currentVersionLocation: currentVersionLocation };
 };
 
-export async function ensureConvertBundle(): Promise<string> {
-    const bundleURL = "https://downloads.robocorp.com/converter/latest/bundle.js";
-    const bundleRelativeLocation = "../../vscode-client/out/converterBundle.js";
+export async function ensureConvertBundle(): Promise<{
+    pathToExecutable: string;
+    pathToConvertYaml?: string;
+}> {
+    const bundleURL = "https://downloads.robocorp.com/converter/latest/converter-with-commons.zip";
+    const bundleRelativeLocation = "../../vscode-client/out/converter-with-commons.zip";
     const bundleLocation = getExtensionRelativeFile(bundleRelativeLocation, false);
+    const bundleFolderRelativeLocation = "../../vscode-client/out/converter-with-commons";
+    const bundleFolderLocation = getExtensionRelativeFile(bundleFolderRelativeLocation, false);
 
     // downloading the bundle
     const downloadBundle = async () =>
@@ -60,10 +70,21 @@ export async function ensureConvertBundle(): Promise<string> {
             ): Promise<string | undefined> => await download(bundleURL, progress, token, bundleLocation)
         );
 
+    const unzipBundle = async () => {
+        // remove previous bundle if it exists
+        if (verifyFileExists(bundleFolderLocation, false)) {
+            rimraf.sync(bundleFolderLocation);
+        }
+
+        const zip = new AdmZip(bundleLocation);
+        zip.extractAllTo(bundleFolderLocation);
+    };
+
     // if the bundle file doesn't exit or isn't marked as being downloaded, force download
     const warnUser: boolean = false;
     if (!verifyFileExists(bundleLocation, warnUser)) {
         await downloadBundle();
+        await unzipBundle();
     } else if (!CONVERSION_STATUS.alreadyCheckedVersion) {
         CONVERSION_STATUS.alreadyCheckedVersion = true;
         const { currentVersion, newVersion, currentVersionLocation } = await getConverterBundleVersion();
@@ -75,13 +96,19 @@ export async function ensureConvertBundle(): Promise<string> {
                 "canPickMany": false,
                 "ignoreFocusOut": true,
             });
-            if (!shouldUpgrade || shouldUpgrade === "No") {
-                // do not continue with download & use current version
-                return bundleLocation;
+            if (shouldUpgrade && shouldUpgrade !== "No") {
+                await writeToFile(currentVersionLocation, newVersion);
+                await downloadBundle();
+                await unzipBundle();
             }
-            await writeToFile(currentVersionLocation, newVersion);
-            await downloadBundle();
         }
     }
-    return bundleLocation;
+
+    const executable = path.join(bundleFolderLocation, "bundle.js");
+    const convertYaml = path.join(bundleFolderLocation, "robocorp-commons", "convert.yaml");
+
+    return {
+        pathToExecutable: executable,
+        pathToConvertYaml: verifyFileExists(convertYaml) ? convertYaml : undefined,
+    };
 }

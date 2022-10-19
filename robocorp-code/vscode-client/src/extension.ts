@@ -383,7 +383,7 @@ async function convertProject() {
         if (!converterLocation) {
             throw new Error("There was an issue downloading the converter bundle. Please try again.");
         }
-        const converterBundle = require(converterLocation);
+        const converterBundle = require(converterLocation.pathToExecutable);
 
         // let the user decide what type of project will be converted
         const vendorMap = {
@@ -405,7 +405,11 @@ async function convertProject() {
         // actual conversion
         const bytes = await workspace.fs.readFile(uri);
         const contents = new TextDecoder("utf-8").decode(bytes);
-        const conversionResult: ConversionResult = await converterBundle.convert(vendorMap[selectedFormat], contents);
+        const options = {
+            objectImplFile: converterLocation.pathToConvertYaml,
+        };
+        const vendor = vendorMap[selectedFormat];
+        const conversionResult: ConversionResult = await converterBundle.convert(vendor, contents, options);
         if (!converterBundle.isSuccessful(conversionResult)) {
             logError(
                 "Error converting file to Robocorp Robot",
