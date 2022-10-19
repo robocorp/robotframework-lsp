@@ -367,24 +367,6 @@ async function convertProject() {
         }
         const destination = Uri.joinPath(ws.uri, "converted");
 
-        // let the user decide what file should be converted
-        const fileToConvert: Uri[] = await window.showOpenDialog({
-            "canSelectFolders": false,
-            "canSelectFiles": true,
-            "canSelectMany": false,
-            "openLabel": "Select file to convert",
-        });
-        if (!fileToConvert || fileToConvert.length === 0) {
-            return;
-        }
-        const uri = fileToConvert[0];
-
-        const converterLocation = await convertBundlePromise;
-        if (!converterLocation) {
-            throw new Error("There was an issue downloading the converter bundle. Please try again.");
-        }
-        const converterBundle = require(converterLocation.pathToExecutable);
-
         // let the user decide what type of project will be converted
         const vendorMap = {
             "Blue Prism": "blueprism",
@@ -393,7 +375,7 @@ async function convertProject() {
         };
         const items = Object.keys(vendorMap);
         const selectedFormat = await window.showQuickPick(items, {
-            "placeHolder": `Please select the file format of ${path.basename(uri.fsPath)} `,
+            "placeHolder": `Please select the bot format`,
             "canPickMany": false,
             "ignoreFocusOut": true,
         });
@@ -402,14 +384,60 @@ async function convertProject() {
             return;
         }
 
-        // actual conversion
-        const bytes = await workspace.fs.readFile(uri);
-        const contents = new TextDecoder("utf-8").decode(bytes);
-        const options = {
-            objectImplFile: converterLocation.pathToConvertYaml,
-        };
+        // actual converson
+        const converterLocation = await convertBundlePromise;
+        if (!converterLocation) {
+            throw new Error("There was an issue downloading the converter bundle. Please try again.");
+        }
+        const converterBundle = require(converterLocation.pathToExecutable);
+
+
+        let conversionResult: ConversionResult = null;
         const vendor = vendorMap[selectedFormat];
-        const conversionResult: ConversionResult = await converterBundle.convert(vendor, contents, options);
+
+        // let the user decide what should be converted
+        switch(vendor) {
+            case vendorMap['Automation Anywhere 360']: {
+                const folderToConvert: Uri[] = await window.showOpenDialog({
+                    "canSelectFolders": true,
+                    "canSelectFiles": false,
+                    "canSelectMany": false,
+                    "openLabel": `Select a ${vendor} project to convert`,
+                });
+                if (!folderToConvert || folderToConvert.length === 0) {
+                    return;
+                }
+                const uri = folderToConvert[0];
+                const options = {
+                    projectFolderPath: uri.fsPath,
+                };
+                conversionResult = await converterBundle.convert(vendor, undefined, options);
+                break;
+            }
+            case vendorMap['Blue Prism']:
+            case vendorMap['UiPath']: {
+                const fileToConvert: Uri[] = await window.showOpenDialog({
+                    "canSelectFolders": false,
+                    "canSelectFiles": true,
+                    "canSelectMany": false,
+                    "openLabel": `Select a ${vendor} file to convert`,
+                });
+                if (!fileToConvert || fileToConvert.length === 0) {
+                    return;
+                }
+                const uri = fileToConvert[0];
+                const bytes = await workspace.fs.readFile(uri);
+                const contents = new TextDecoder("utf-8").decode(bytes);
+                const options = {
+                    objectImplFile: converterLocation.pathToConvertYaml,
+                };
+                conversionResult = await converterBundle.convert(vendor, contents, options);
+                break;
+            }
+            default:
+                throw new Error(`Unknown format ${vendor}`);
+        }
+
         if (!converterBundle.isSuccessful(conversionResult)) {
             logError(
                 "Error converting file to Robocorp Robot",
