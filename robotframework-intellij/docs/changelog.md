@@ -1,3 +1,12 @@
+New in 1.3.5 (2022-10-19)
+-----------------------------
+
+### Bugfixes
+
+- If a user is paused in a log message break he should still be able to evaluate keywords based on the previous stack context.
+- Fixed internal issue in debugger where a `path` variable could be accessed when undefined.
+
+
 New in 1.3.0 (2022-10-06)
 -----------------------------
 
