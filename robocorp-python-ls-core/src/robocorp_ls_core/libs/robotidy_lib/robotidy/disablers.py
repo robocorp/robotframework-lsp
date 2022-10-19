@@ -11,26 +11,27 @@ def skip_if_disabled(func):
     """
 
     @functools.wraps(func)
-    def wrapper(self, node, *args):
+    def wrapper(self, node, *args, **kwargs):
         if self.disablers.is_node_disabled(node):
             return node
-        return func(self, node, *args)
+        return func(self, node, *args, **kwargs)
 
     return wrapper
 
 
 def skip_section_if_disabled(func):
     """
-    Does the same checks as ``skip_if_disabled`` and additionally checks if the section header does not contain disabler
+    Does the same checks as ``skip_if_disabled`` and additionally checks
+    if the section header does not contain disabler
     """
 
     @functools.wraps(func)
-    def wrapper(self, node, *args):
+    def wrapper(self, node, *args, **kwargs):
         if self.disablers.is_node_disabled(node):
             return node
         if self.disablers.is_header_disabled(node.lineno):
             return node
-        return func(self, node, *args)
+        return func(self, node, *args, **kwargs)
 
     return wrapper
 
@@ -90,17 +91,17 @@ class RegisterDisablers(ModelVisitor):
         self.start_line = start_line
         self.end_line = end_line
         self.disablers = DisabledLines(self.start_line, self.end_line, None)
+        self.disabler_pattern = re.compile(r"\s*#\s?robotidy:\s?(?P<disabler>on|off)")
         self.stack = []
         self.file_disabled = False
 
     def any_disabler_open(self):
         return any(disabler for disabler in self.stack)
 
-    @staticmethod
-    def get_disabler(comment):
+    def get_disabler(self, comment):
         if not comment.value:
             return None
-        return re.match(r"\s*#\s?robotidy:\s?(?P<disabler>on|off)", comment.value)
+        return self.disabler_pattern.match(comment.value)
 
     def close_disabler(self, end_line):
         disabler = self.stack.pop()

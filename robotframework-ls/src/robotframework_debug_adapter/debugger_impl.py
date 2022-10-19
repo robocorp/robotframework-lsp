@@ -234,6 +234,22 @@ class _TestFrameInfo(_BaseFrameInfo):
         return "Test"
 
 
+class _LogFrameInfo(_BaseFrameInfo):
+    def __init__(self, stack_list, dap_frame):
+        self._stack_list = weakref.ref(stack_list)
+        self._dap_frame = dap_frame
+
+    @property
+    def dap_frame(self):
+        return self._dap_frame
+
+    def get_scopes(self) -> List[Scope]:
+        return []
+
+    def get_type_name(self):
+        return "Log"
+
+
 class _KeywordFrameInfo(_BaseFrameInfo):
     def __init__(
         self, stack_list, dap_frame, name, lineno, args, variables, execution_context
@@ -373,6 +389,21 @@ class _StackInfo(object):
         self._frame_id_to_frame_info[frame_id] = _TestFrameInfo(self, dap_frame)
         return frame_id
 
+    def add_log_entry_stack(self, name: str, filename: str, lineno: int) -> int:
+        from robocorp_ls_core.debug_adapter_core.dap import dap_schema
+
+        frame_id: int = next_id()
+        dap_frame = dap_schema.StackFrame(
+            frame_id,
+            name=name,
+            line=lineno,
+            column=0,
+            source=dap_schema.Source(name=os.path.basename(filename), path=filename),
+        )
+        self._dap_frames.append(dap_frame)
+        self._frame_id_to_frame_info[frame_id] = _LogFrameInfo(self, dap_frame)
+        return frame_id
+
     @property
     def dap_frames(self) -> List[StackFrame]:
         """
@@ -439,11 +470,43 @@ class _EvaluationInfo(object):
                 "Unable to find frame id for evaluation: %s" % (frame_id,)
             )
 
+        dap_frames = stack_info.dap_frames
+        if not dap_frames:
+            raise InvalidFrameIdError("No frames for evaluation.")
+
+        top_frame_id = dap_frames[0].id
+        if top_frame_id != frame_id:
+            if get_log_level() >= 2:
+                log.debug(
+                    "Unable to evaluate.\nFrame id for evaluation: %r\nTop frame id: %r.\nDAP frames:\n%s",
+                    frame_id,
+                    top_frame_id,
+                    "\n".join(x.to_json() for x in dap_frames),
+                )
+
+            raise UnableToEvaluateError(
+                "Keyword calls may only be evaluated at the topmost frame."
+            )
+
         info = stack_info._frame_id_to_frame_info.get(frame_id)
         if info is None:
             raise InvalidFrameIdError(
                 "Unable to find frame info for evaluation: %s" % (frame_id,)
             )
+
+        if isinstance(info, _LogFrameInfo):
+            if len(dap_frames) < 2:
+                raise InvalidFrameIdError(
+                    "Unable to evaluate in Log frame entry without a parent."
+                )
+
+            else:
+                frame_id = dap_frames[1].id
+                info = stack_info._frame_id_to_frame_info.get(frame_id)
+                if info is None:
+                    raise InvalidFrameIdError(
+                        "Unable to find frame info for evaluation: %s" % (frame_id,)
+                    )
 
         if not isinstance(info, _KeywordFrameInfo):
             raise InvalidFrameTypeError(
@@ -511,28 +574,12 @@ Evaluation
             node = usage.node
             name = usage.name
 
-            dap_frames = stack_info.dap_frames
-            if dap_frames:
-                top_frame_id = dap_frames[0].id
-                if top_frame_id != frame_id:
-                    if get_log_level() >= 2:
-                        log.debug(
-                            "Unable to evaluate.\nFrame id for evaluation: %r\nTop frame id: %r.\nDAP frames:\n%s",
-                            frame_id,
-                            top_frame_id,
-                            "\n".join(x.to_json() for x in dap_frames),
-                        )
+            assign = node.assign
+            from robot.running import Keyword
 
-                    raise UnableToEvaluateError(
-                        "Keyword calls may only be evaluated at the topmost frame."
-                    )
-
-                assign = node.assign
-                from robot.running import Keyword
-
-                kw = Keyword(name, args=node.args, assign=assign)
-                ctx = info.execution_context
-                return EvaluationResult(kw.run(ctx))
+            kw = Keyword(name, args=node.args, assign=assign)
+            ctx = info.execution_context
+            return EvaluationResult(kw.run(ctx))
 
         raise UnableToEvaluateError("Unable to evaluate: %s" % (self.expression,))
 
@@ -710,7 +757,7 @@ class _RobotDebuggerImpl(object):
                     name = "Log (%s)" % (entry.name,)
                     filename = self._get_filename(entry, "Log")
 
-                    frame_id = stack_info.add_test_entry_stack(
+                    frame_id = stack_info.add_log_entry_stack(
                         name, filename, entry.lineno
                     )
             except:
@@ -1134,6 +1181,7 @@ class _RobotDebuggerImpl(object):
         try:
             source = None
             lineno = None
+            path = None
 
             source_and_line = extract_source_and_line_from_message(message.message)
 

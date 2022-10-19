@@ -1,15 +1,16 @@
 from collections import defaultdict
 
-from robot.api.parsing import Comment, EmptyLine, LibraryImport, ModelTransformer, Token
+from robot.api.parsing import Comment, EmptyLine, LibraryImport, Token
 from robot.libraries import STDLIBS
 
 from robotidy.disablers import skip_section_if_disabled
 from robotidy.exceptions import InvalidParameterValueError
+from robotidy.transformers import Transformer
 
 
-class OrderSettingsSection(ModelTransformer):
+class OrderSettingsSection(Transformer):
     """
-    Order settings inside *** Settings *** section.
+    Order settings inside ``*** Settings ***`` section.
 
     Settings are grouped in following groups:
       - documentation (Documentation, Metadata),
@@ -30,11 +31,11 @@ class OrderSettingsSection(ModelTransformer):
     Setting names omitted from custom order will be removed from the file. In following example we are missing metadata
     therefore all metadata will be removed:
 
-        robotidy --configure OrderSettingsSection:documentation_order=documentation
+    ```
+    robotidy --configure OrderSettingsSection:documentation_order=documentation
+    ```
 
     Parsing errors (such as Resources instead of Resource, duplicated settings) are moved to the end of section.
-
-    See https://robotidy.readthedocs.io/en/latest/transformers/OrderSettingsSection.html for more examples.
     """
 
     def __init__(
@@ -46,6 +47,7 @@ class OrderSettingsSection(ModelTransformer):
         settings_order: str = None,
         tags_order: str = None,
     ):
+        super().__init__()
         self.last_section = None
         self.disabled_group = set()
         self.new_lines_between_groups = new_lines_between_groups

@@ -3,23 +3,43 @@
 
 "use strict";
 
+let lastTheme = undefined;
+
+function logAndReturn(themeName: "my-light" | "my-dark" | "my-hc", reason: string): "my-light" | "my-dark" | "my-hc" {
+    if (lastTheme !== themeName) {
+        lastTheme = themeName;
+        console.log("Using theme: " + themeName + " (" + reason + ")");
+    }
+    return themeName;
+}
+
 // Based on:
 // https://stackoverflow.com/questions/37257911/detect-light-dark-theme-programatically-in-visual-studio-code
 // Note: converts the name to the one expected by monaco.
+
+let foundInBody: "my-light" | "my-dark" | "my-hc" | undefined = undefined;
+
 export function detectBaseTheme(): "my-light" | "my-dark" | "my-hc" {
+    if (foundInBody !== undefined) {
+        return foundInBody;
+    }
     const body = document.body;
 
+    let reason = "No body found when detecting base theme (using dark by default).";
     if (body) {
+        reason = "Computing base theme based on: " + body.className;
         switch (body.className) {
-            default:
             case "vscode-light":
-                return "my-light";
+                foundInBody = logAndReturn("my-light", reason);
             case "vscode-dark":
-                return "my-dark";
+                foundInBody = logAndReturn("my-dark", reason);
             case "vscode-high-contrast":
-                return "my-hc";
+                foundInBody = logAndReturn("my-hc", reason);
+        }
+        if (foundInBody !== undefined) {
+            return foundInBody;
         }
     }
 
-    return "my-dark";
+    return logAndReturn("my-dark", reason);
 }

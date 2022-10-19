@@ -5,10 +5,12 @@ from string import Template
 
 DEFAULT_COMPLETIONS_TIMEOUT: int = 8
 DEFAULT_COLLECT_DOCS_TIMEOUT: int = 40
+DEFAULT_LIST_TESTS_TIMEOUT: int = 20
 if not USE_TIMEOUTS:
     # A whole month of timeout seems good enough as a max.
     DEFAULT_COMPLETIONS_TIMEOUT = 60 * 60 * 24 * 30
     DEFAULT_COLLECT_DOCS_TIMEOUT = DEFAULT_COMPLETIONS_TIMEOUT
+    DEFAULT_LIST_TESTS_TIMEOUT = DEFAULT_COMPLETIONS_TIMEOUT
 
 # Robot Flow Explorer template used as wrapper for the React Application
 # Substitute the $rfe_options & $rfe_data to render properly

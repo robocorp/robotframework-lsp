@@ -15,8 +15,7 @@ import { commands, ExtensionContext, window } from "vscode";
 import * as vscode from "vscode";
 import { feedback, logError, OUTPUT_CHANNEL } from "../channel";
 import { languageServerClient } from "../extension";
-
-const RF_INTERACTIVE_LOCAL_RESOURCE_ROOT = process.env.RF_INTERACTIVE_LOCAL_RESOURCE_ROOT;
+import { uriExists } from "../files";
 
 function getWebviewOptions(localResourceRoot: vscode.Uri): vscode.WebviewOptions & vscode.WebviewPanelOptions {
     return {
@@ -83,8 +82,21 @@ class InteractiveShellPanel {
             "vendored",
             "vscode-interpreter-webview"
         );
-        if (RF_INTERACTIVE_LOCAL_RESOURCE_ROOT) {
-            localResourceRoot = vscode.Uri.file(RF_INTERACTIVE_LOCAL_RESOURCE_ROOT);
+        if (!(await uriExists(localResourceRoot))) {
+            const checkUri = vscode.Uri.joinPath(
+                extensionUri,
+                "..",
+                "robotframework-interactive",
+                "vscode-interpreter-webview",
+                "dist"
+            );
+            if (!(await uriExists(checkUri))) {
+                window.showErrorMessage(
+                    "Unable to find webview in:\n[" + localResourceRoot.fsPath + "],\n[" + checkUri.fsPath + "]"
+                );
+                return;
+            }
+            localResourceRoot = checkUri;
         } else {
             feedback(
                 "vscode.iconsole.used",
@@ -441,6 +453,9 @@ export async function registerInteractiveCommands(context: ExtensionContext) {
             },
         };
         interactiveShellPanel = await InteractiveShellPanel.create(extensionUri, interpreterId, persistable);
+        if (!interactiveShellPanel) {
+            return;
+        }
         interactiveShellPanel.disposables.push(disposeNotification);
         function disposeInterpreter() {
             executeCheckedCommand("robot.internal.rfinteractive.stop", {

@@ -1,47 +1,51 @@
 from collections import defaultdict
 
-from robot.api.parsing import ModelTransformer, Token
+from robot.api.parsing import Token
 from robot.parsing.model import Statement
 
 from robotidy.disablers import skip_section_if_disabled
 from robotidy.exceptions import InvalidParameterValueError
+from robotidy.transformers import Transformer
 from robotidy.utils import is_blank_multiline, left_align, round_to_four, tokens_by_lines
 
 
-class AlignVariablesSection(ModelTransformer):
+class AlignVariablesSection(Transformer):
     """
-    Align variables in *** Variables *** section to columns.
+    Align variables in ``*** Variables ***`` section to columns.
 
     Following code:
 
-        *** Variables ***
-        ${VAR}  1
-        ${LONGER_NAME}  2
-        &{MULTILINE}  a=b
-        ...  b=c
+    ```robotframework
+    *** Variables ***
+    ${VAR}  1
+    ${LONGER_NAME}  2
+    &{MULTILINE}  a=b
+    ...  b=c
+    ```
 
     will be transformed to:
 
-        *** Variables ***
-        ${VAR}          1
-        ${LONGER_NAME}  2
-        &{MULTILINE}    a=b
-        ...             b=c
+    ```robotframework
+    *** Variables ***
+    ${VAR}          1
+    ${LONGER_NAME}  2
+    &{MULTILINE}    a=b
+    ...             b=c
+    ```
 
     You can configure how many columns should be aligned to longest token in given column. The remaining columns
     will use fixed length separator length ``--spacecount``. By default only first two columns are aligned.
     To align first three columns:
 
-       robotidy --transform AlignVariablesSection:up_to_column=3
+    ```console
+    robotidy --transform AlignVariablesSection:up_to_column=3
+    ```
 
     To align all columns set ``up_to_column`` to 0.
-
-    Supports global formatting params: ``--startline`` and ``--endline``.
-
-    See https://robotidy.readthedocs.io/en/latest/transformers/AlignVariablesSection.html for more examples.
     """
 
     def __init__(self, up_to_column: int = 2, skip_types: str = "", min_width: int = None):
+        super().__init__()
         self.up_to_column = up_to_column - 1
         self.min_width = min_width
         self.skip_types = self.parse_skip_types(skip_types)

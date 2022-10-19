@@ -184,6 +184,11 @@ SETTINGS = {
         "default": False,
         "description": "Defines whether a message should be shown at the task/test level with a summary of the errors.",
     },
+    "robot.run.peekError.showErrorsInCallers": {
+        "type": "boolean",
+        "default": True,
+        "description": "Defines whether a message should be shown at each keyword caller when a keyword fails.",
+    },
 }
 
 

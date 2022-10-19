@@ -22,6 +22,11 @@ from robocop.exceptions import InvalidExternalCheckerError
 from robocop.version import __version__
 
 ROBOT_VERSION = version.parse(RF_VERSION)
+ROBOT_WITH_LANG = version.parse("5.1")
+
+
+def rf_supports_lang():
+    return ROBOT_VERSION >= ROBOT_WITH_LANG
 
 
 def modules_in_current_dir(path, module_name):
@@ -124,6 +129,8 @@ def issues_to_lsp_diagnostic(issues) -> List[Dict]:
 
 
 def str2bool(v):
+    if isinstance(v, bool):
+        return v
     return v.lower() in ("yes", "true", "1")
 
 

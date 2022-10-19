@@ -1,49 +1,46 @@
 {
-  "name": "vscode-robot-interpreter-webview",
-  "version": "0.0.1",
-  "description": "A RobotFramework interpreter to be used in RobotFramework Language Server.",
-  "private": true,
-  "scripts": {
-    "build-prod": "webpack --env production",
-    "build-dev": "webpack --env development",
-    "watch-build-dev": "webpack --watch --env development",
-    "build": "webpack",
-    "start": "webpack serve --hot --inline --progress --port 8886"
-  },
-  "scriptsComments": {
-    "Comment1": "To develop the library, the recommended way to work with it is changing the launch.json to include an environment variable such as",
-    "Comment2": "RF_INTERACTIVE_LOCAL_RESOURCE_ROOT as in the example below, then, running yarn install/yarn watch-build-dev to automatically",
-    "Comment3": "regenerate the contents when the webview contents are changed.",
-    "RF_INTERACTIVE_LOCAL_RESOURCE_ROOT": "X:/vscode-robot/robotframework-lsp/robotframework-interactive/vscode-interpreter-webview/dist",
-    "Note": "Execute commands with yarn -- i.e.: yarn watch-build-dev"
-  },
-  "keywords": [],
-  "author": "Fabio Zadrozny",
-  "publisher": "robocorp",
-  "license": "Apache 2.0",
-  "prettier": {
-    "tabWidth": 4,
-    "printWidth": 120,
-    "quoteProps": "preserve"
-  },
-  "devDependencies": {
-    "@types/react": "^17.0.10",
-    "@types/react-dom": "^17.0.7",
-    "css-loader": "^5.2.6",
-    "html-webpack-plugin": "^5.3.1",
-    "monaco-editor-webpack-plugin": "^3.1.0",
-    "style-loader": "^2.0.0",
-    "ts-loader": "^9.2.3",
-    "typescript": "^4.3.2",
-    "webpack": "^5.38.1",
-    "webpack-cli": "^4.7.2",
-    "webpack-dev-server": "^3.11.2",
-    "prettier": "2.4.1"
-  },
-  "dependencies": {
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-monaco-editor": "^0.43.0",
-    "react-split-pane": "^0.1.92"
-  }
+    "name": "vscode-robot-interpreter-webview",
+    "version": "0.0.1",
+    "description": "A RobotFramework interpreter to be used in RobotFramework Language Server.",
+    "private": true,
+    "scripts": {
+        "build-prod": "webpack --env production",
+        "build-dev": "webpack --env development",
+        "watch-build-dev": "webpack --watch --env development",
+        "build": "webpack",
+        "start": "webpack serve --hot --inline --progress --port 8886"
+    },
+    "scriptsComments": {
+        "Comment1": "To develop the library run `yarn install`/`yarn watch-build-dev` to automatically",
+        "Comment2": "regenerate the contents when the webview contents are changed."
+    },
+    "keywords": [],
+    "author": "Fabio Zadrozny",
+    "publisher": "robocorp",
+    "license": "Apache 2.0",
+    "prettier": {
+        "tabWidth": 4,
+        "printWidth": 120,
+        "quoteProps": "preserve"
+    },
+    "devDependencies": {
+        "@types/react": "^17.0.10",
+        "@types/react-dom": "^17.0.7",
+        "css-loader": "^6.7.1",
+        "html-webpack-plugin": "^5.5.0",
+        "monaco-editor-webpack-plugin": "^3.1.0",
+        "style-loader": "^2.0.0",
+        "ts-loader": "^9.4.1",
+        "typescript": "^4.3.2",
+        "webpack": "^5.74.0",
+        "webpack-cli": "^4.10.0",
+        "webpack-dev-server": "^4.11.1",
+        "prettier": "2.4.1"
+    },
+    "dependencies": {
+        "react": "^17.0.2",
+        "react-dom": "^17.0.2",
+        "react-monaco-editor": "^0.43.0",
+        "react-split-pane": "^0.1.92"
+    }
 }

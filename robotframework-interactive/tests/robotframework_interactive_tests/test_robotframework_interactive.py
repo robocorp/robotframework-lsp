@@ -235,6 +235,28 @@ def test_output_and_errors(interpreter: _InterpreterInfo):
     )
 
 
+def test_new_lines_and_output_1(interpreter: _InterpreterInfo):
+    assert "Robot Interactive Console" in interpreter.stream_stdout.getvalue()
+    assert "Output:" not in interpreter.stream_stdout.getvalue()
+
+    interpreter.interpreter.evaluate(
+        "*** Task ***\r"
+        "    ${a}=    Set Variable    somevariabletolog\r"
+        "    Log to console    ${a}"
+    )
+    assert interpreter.stream_stdout.getvalue().count("somevariabletolog") == 1
+
+
+def test_new_lines_and_output_2(interpreter: _InterpreterInfo):
+    assert "Robot Interactive Console" in interpreter.stream_stdout.getvalue()
+    assert "Output:" not in interpreter.stream_stdout.getvalue()
+
+    interpreter.interpreter.evaluate(
+        "${a}=    Set Variable    somevariabletolog\r" "Log to console    ${a}"
+    )
+    assert interpreter.stream_stdout.getvalue().count("somevariabletolog") == 1
+
+
 def test_full_doc_basic(interpreter: _InterpreterInfo):
     evaluate = interpreter.interpreter.evaluate
     contents = (

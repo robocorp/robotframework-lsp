@@ -12,6 +12,7 @@ import time
 from robotframework_ls.constants import (
     DEFAULT_COMPLETIONS_TIMEOUT,
     DEFAULT_COLLECT_DOCS_TIMEOUT,
+    DEFAULT_LIST_TESTS_TIMEOUT,
 )
 from robocorp_ls_core.robotframework_log import get_logger
 from typing import Any, Optional, Dict, Sequence, Set, ContextManager, Union
@@ -852,10 +853,11 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         rf_api_client = self._server_manager.get_others_api_client(doc_uri)
         if rf_api_client is not None:
             func = partial(
-                self._threaded_api_request,
+                self._threaded_api_request_no_doc,
                 rf_api_client,
                 "request_list_tests",
                 doc_uri=doc_uri,
+                __timeout__=DEFAULT_LIST_TESTS_TIMEOUT,
             )
             func = require_monitor(func)
             return func

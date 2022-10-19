@@ -37,6 +37,7 @@ OPTION_ROBOT_INTERACTIVE_CONSOLE_ARGUMENTS = "robot.interactiveConsole.arguments
 OPTION_ROBOT_LANGUAGE = "robot.language"
 OPTION_ROBOT_RUN_PEEK_ERROR_LEVEL = "robot.run.peekError.level"
 OPTION_ROBOT_RUN_PEEK_ERROR_SHOW_SUMMARY = "robot.run.peekError.showSummary"
+OPTION_ROBOT_RUN_PEEK_ERROR_SHOW_ERRORS_IN_CALLERS = "robot.run.peekError.showErrorsInCallers"
 
 ALL_ROBOT_OPTIONS = frozenset(
     (
@@ -76,6 +77,7 @@ ALL_ROBOT_OPTIONS = frozenset(
         OPTION_ROBOT_LANGUAGE,
         OPTION_ROBOT_RUN_PEEK_ERROR_LEVEL,
         OPTION_ROBOT_RUN_PEEK_ERROR_SHOW_SUMMARY,
+        OPTION_ROBOT_RUN_PEEK_ERROR_SHOW_ERRORS_IN_CALLERS,
     )
 )
 

@@ -1,3 +1,32 @@
+New in 1.3.5 (2022-10-19)
+-----------------------------
+
+### Bugfixes
+
+- If a user is paused in a log message break he should still be able to evaluate keywords based on the previous stack context.
+- Right click on folder and selecting `Robot Framework -> Run/Debug Tests/Tasks Suite` properly runs tests again. [#776](https://github.com/robocorp/robotframework-lsp/issues/776)
+- In the `interactive console`, if a multi-line statement is entered without a `***` section prefix, properly indent considering new lines.
+- Colors in the `interactive console` could be wrong on some cases.
+- Restore behavior that showed errors for keyword callers in peek error window (configurable through `robot.run.peekError.showErrorsInCallers`).
+- Fixed internal issue in debugger where a `path` variable could be accessed when undefined.
+
+
+New in 1.3.0 (2022-10-06)
+-----------------------------
+
+### New features
+
+- Vendored Robocop updated to 2.5.0.
+- Vendored Robotidy updated to 3.2.0.
+
+
+### Bugfixes
+
+- Get stack location on `Robot Framework 3`. [#774](https://github.com/robocorp/robotframework-lsp/issues/774)
+- Properly show errors even if the stack location cannot be found. [#774](https://github.com/robocorp/robotframework-lsp/issues/774)
+- Traceback order now matches the same order as Python . [#772](https://github.com/robocorp/robotframework-lsp/issues/772)
+
+
 New in 1.2.0 (2022-09-28)
 -----------------------------
 

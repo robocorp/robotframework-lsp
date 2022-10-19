@@ -1,40 +1,44 @@
-from robot.api.parsing import ModelTransformer, Token
+from robot.api.parsing import Token
 from robot.utils.normalizing import normalize_whitespace
 
 from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
+from robotidy.transformers import Transformer
 
 
-class NormalizeSettingName(ModelTransformer):
+class NormalizeSettingName(Transformer):
     """
     Normalize setting name.
     Ensure that setting names are title case without leading or trailing whitespace. For example from:
 
-        *** Settings ***
-        library    library.py
-        test template    Template
-        FORCE taGS    tag1
+    ```robotframework
+    *** Settings ***
+    library    library.py
+    test template    Template
+    FORCE taGS    tag1
 
-        *** Keywords ***
-        Keyword
-            [arguments]    ${arg}
-            [ SETUP]   Setup Keyword
+    *** Keywords ***
+    Keyword
+        [arguments]    ${arg}
+        [ DOCUMENTATION]   Setup Keyword
+    ```
 
     To:
 
-        *** Settings ***
-        Library    library.py
-        Test Template    Template
-        Force Tags    tag1
+    ```robotframework
+    *** Settings ***
+    Library    library.py
+    Test Template    Template
+    Force Tags    tag1
 
-        *** Keywords ***
-        Keyword
-            [Arguments]    ${arg}
-            [Setup]   Setup Keyword
-
-    Supports global formatting params: ``--startline`` and ``--endline``.
-
-    See https://robotidy.readthedocs.io/en/latest/transformers/NormalizeSettingName.html for more examples.
+    *** Keywords ***
+    Keyword
+        [Arguments]    ${arg}
+        [Documentation]   Setup Keyword
+    ```
     """
+
+    def __init__(self):
+        super().__init__()  # workaround for our dynamically imported classes with args from cli/config
 
     @skip_section_if_disabled
     def visit_Section(self, node):  # noqa

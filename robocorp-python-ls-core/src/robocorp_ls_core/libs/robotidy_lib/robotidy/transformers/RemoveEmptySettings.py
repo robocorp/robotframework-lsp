@@ -1,13 +1,14 @@
 import ast
 
-from robot.api.parsing import ModelTransformer, Token
+from robot.api.parsing import Token
 
 from robotidy.disablers import skip_section_if_disabled
 from robotidy.exceptions import InvalidParameterValueError
+from robotidy.transformers import Transformer
 
 
 # TODO: preserve comments?
-class RemoveEmptySettings(ModelTransformer):
+class RemoveEmptySettings(Transformer):
     """
     Remove empty settings.
 
@@ -17,26 +18,29 @@ class RemoveEmptySettings(ModelTransformer):
         - always : works on every settings
 
     Empty settings that are overwriting suite settings will be converted to be more explicit
-    (given that there is related suite settings present)::
+    (given that there is related suite settings present):
 
-        No timeout
+    ```robotframework
+    *** Keywords ***
+    Keyword
+    No timeout
         [Documentation]    Empty timeout means no timeout even when Test Timeout has been used.
         [Timeout]
+    ```
 
-    To::
-
-        No timeout
+    To:
+    ```robotframework
+    *** Keywords ***
+    No timeout
         [Documentation]    Disabling timeout with NONE works too and is more explicit.
         [Timeout]    NONE
+    ```
 
     You can disable that behavior by changing ``more_explicit`` parameter value to ``False``.
-
-    Supports global formatting params: ``--startline`` and ``--endline``.
-
-    See https://robotidy.readthedocs.io/en/latest/transformers/RemoveEmptySettings.html for more examples.
     """
 
     def __init__(self, work_mode: str = "overwrite_ok", more_explicit: bool = True):
+        super().__init__()
         if work_mode not in ("overwrite_ok", "always"):
             raise InvalidParameterValueError(
                 self.__class__.__name__, "work_mode", work_mode, "Possible values:\n    overwrite_ok\n    always"

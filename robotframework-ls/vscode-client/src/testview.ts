@@ -532,8 +532,11 @@ function handleLogMessage(testRun: vscode.TestRun, event: vscode.DebugSessionCus
         testItem = getTestItem(testId);
     }
 
-    if (testItem && event.body.source) {
-        let lineno: number | undefined = event.body.lineno - 1;
+    if (testItem && event.body.source && !event.body.source.startsWith("<")) {
+        let lineno: number | undefined = event.body.lineno || 0;
+        if (lineno) {
+            lineno = lineno - 1;
+        }
         let uri = vscode.Uri.file(event.body.source);
         const uriStr = uri.toString();
 
@@ -553,7 +556,7 @@ function handleLogMessage(testRun: vscode.TestRun, event: vscode.DebugSessionCus
         );
     }
 
-    message = `[${level}]: ${message}`;
+    message = `[LOG ${level}] ${message}`;
 
     const config = vscode.workspace.getConfiguration("robot.run.peekError");
     let configLevel: string = config.get<string>("level", "ERROR").toUpperCase().trim();
@@ -583,7 +586,7 @@ function handleLogMessage(testRun: vscode.TestRun, event: vscode.DebugSessionCus
         // in the test result.
         testRun.appendOutput(message, location, testItem);
     } else {
-        testRun.appendOutput(message, undefined, undefined);
+        testRun.appendOutput(message);
     }
 }
 
@@ -617,12 +620,30 @@ function handleTestStart(testRun: vscode.TestRun, event: vscode.DebugSessionCust
 function buildTestMessages(event: vscode.DebugSessionCustomEvent): vscode.TestMessage[] {
     let messages: vscode.TestMessage[] = [];
     let msg = event.body.message;
+    let config = vscode.workspace.getConfiguration("robot.run.peekError");
     if (msg) {
-        let config = vscode.workspace.getConfiguration("robot.run.peekError");
         if (config.get("showSummary", false)) {
             messages.push({
-                "message": msg,
+                "message": `[TEST] ${msg}`,
             });
+        }
+    }
+
+    const failedKeywords = event.body.failed_keywords;
+    if (failedKeywords) {
+        if (config.get("showErrorsInCallers", false)) {
+            for (const failed of failedKeywords) {
+                messages.push({
+                    "message": failed.message,
+                    "location": {
+                        "uri": vscode.Uri.file(failed.source),
+                        "range": new vscode.Range(
+                            new vscode.Position(failed.lineno - 1, 0),
+                            new vscode.Position(failed.lineno - 1, 0)
+                        ),
+                    },
+                });
+            }
         }
     }
     return messages;

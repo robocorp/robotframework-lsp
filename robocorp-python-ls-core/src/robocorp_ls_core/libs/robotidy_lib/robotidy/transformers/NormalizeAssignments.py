@@ -2,13 +2,14 @@ import ast
 import re
 from collections import Counter
 
-from robot.api.parsing import ModelTransformer, Token, Variable
+from robot.api.parsing import Token, Variable
 
 from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
 from robotidy.exceptions import InvalidParameterValueError
+from robotidy.transformers import Transformer
 
 
-class NormalizeAssignments(ModelTransformer):
+class NormalizeAssignments(Transformer):
     """
     Normalize assignments.
 
@@ -18,43 +19,45 @@ class NormalizeAssignments(ModelTransformer):
 
     In this code most common is no equal sign at all. We should remove `=` signs from all lines:
 
-        *** Variables ***
-        ${var} =  ${1}
-        @{list}  a
-        ...  b
-        ...  c
+    ```robotframework
+    *** Variables ***
+    ${var} =  ${1}
+    @{list}  a
+    ...  b
+    ...  c
 
-        ${variable}=  10
+    ${variable}=  10
 
 
-        *** Keywords ***
-        Keyword
-            ${var}  Keyword1
-            ${var}   Keyword2
-            ${var}=    Keyword
+    *** Keywords ***
+    Keyword
+        ${var}  Keyword1
+        ${var}   Keyword2
+        ${var}=    Keyword
+    ```
 
     To:
 
-        *** Variables ***
-        ${var}  ${1}
-        @{list}  a
-        ...  b
-        ...  c
+    ```robotframework
+    *** Variables ***
+    ${var}  ${1}
+    @{list}  a
+    ...  b
+    ...  c
 
-        ${variable}  10
+    ${variable}  10
 
 
-        *** Keywords ***
-        Keyword
-            ${var}  Keyword1
-            ${var}   Keyword2
-            ${var}    Keyword
+    *** Keywords ***
+    Keyword
+        ${var}  Keyword1
+        ${var}   Keyword2
+        ${var}    Keyword
+    ```
 
     You can configure that behaviour to automatically add desired equal sign with `equal_sign_type`
     (default `autodetect`) and `equal_sign_type_variables` (default `remove`) parameters.
     (possible types are: `autodetect`, `remove`, `equal_sign` ('='), `space_and_equal_sign` (' =').
-
-    See https://robotidy.readthedocs.io/en/latest/transformers/NormalizeAssignments.html for more examples.
     """
 
     def __init__(
@@ -62,6 +65,7 @@ class NormalizeAssignments(ModelTransformer):
         equal_sign_type: str = "autodetect",
         equal_sign_type_variables: str = "remove",
     ):
+        super().__init__()
         self.remove_equal_sign = re.compile(r"\s?=$")
         self.file_equal_sign_type = None
         self.file_equal_sign_type_variables = None

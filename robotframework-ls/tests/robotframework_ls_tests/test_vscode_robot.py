@@ -786,8 +786,8 @@ def test_code_format_integrated(
 
     from robot import get_version
 
-    version = get_version(naked=True).split(".")[0]
-    if version == "5":
+    version = int(get_version(naked=True).split(".")[0])
+    if version >= 5:
         if formatter == OPTION_ROBOT_CODE_FORMATTER_BUILTIN_TIDY:
             try:
                 from robot.tidy import Tidy
@@ -797,7 +797,7 @@ def test_code_format_integrated(
 
     basename = "test_code_format_integrated_text_edits_" + formatter
     if formatter == OPTION_ROBOT_CODE_FORMATTER_ROBOTIDY:
-        basename += "_" + version
+        basename += f"_{version}"
     data_regression.check(
         ret,
         basename=basename,
@@ -1064,6 +1064,61 @@ Log It2
     data_regression.check(found)
 
 
+def _fix_test_uris(tests, base_path):
+    from robocorp_ls_core import uris
+
+    base_uri = uris.from_fs_path(base_path)
+
+    for test in tests:
+        test["path"] = test["path"][len(base_path) :].replace("\\", "/")
+        test["uri"] = test["uri"][len(base_uri) :].replace("\\", "/")
+
+
+def test_list_tests_from_folder(
+    language_server_io: ILanguageServerClient, ws_root_path, data_regression
+):
+    from robocorp_ls_core import uris
+
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+
+    root = Path(ws_root_path)
+    root.mkdir(exist_ok=True)
+    sub = root / "sub"
+    sub.mkdir(exist_ok=True)
+    (root / "robot1.robot").write_text(
+        """
+*** Test Case ***
+Log It
+    Log    
+
+*** Task ***
+Log It2
+    Log    
+
+""",
+        encoding="utf-8",
+    )
+
+    (sub / "robot1.robot").write_text(
+        """
+*** Task ***
+Log It2
+    Log    
+
+""",
+        encoding="utf-8",
+    )
+
+    ret = language_server.execute_command(
+        "robot.listTests", [{"uri": uris.from_fs_path(ws_root_path)}]
+    )
+    found = ret["result"]
+    _fix_test_uris(found, ws_root_path)
+    data_regression.check(found)
+
+
 def test_rf_info_integrated(
     language_server_io: ILanguageServerClient, ws_root_path, data_regression
 ):
@@ -1278,11 +1333,12 @@ def test_rf_interactive_integrated_basic(
         [
             {
                 "interpreter_id": 1,
-                "code": """
-*** Task ***
-Some task
-    Log    Something     console=True
-""",
+                "code": (
+                    "\r"
+                    "*** Task ***\r"
+                    "Some task\r"
+                    "    Log    Something     console=True\r"
+                ),
             }
         ],
     )

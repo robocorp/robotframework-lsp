@@ -1,40 +1,87 @@
 """
 Comments checkers
 """
+import re
+
 from codecs import BOM_UTF8, BOM_UTF16_BE, BOM_UTF16_LE, BOM_UTF32_BE, BOM_UTF32_LE
 
+from robot.api import Token
 from robot.utils import FileReader
 
 from robocop.checkers import RawFileChecker, VisitorChecker
-from robocop.rules import Rule, RuleSeverity
+from robocop.rules import Rule, RuleSeverity, RuleParam
 from robocop.utils import ROBOT_VERSION
+from robocop.exceptions import ConfigGeneralError
+
+def regex(value):
+    converted = rf'{value}'
+    try:
+        return re.compile(converted)
+    except re.error as regex_err:
+        raise ValueError(f'Regex error: {regex_err}')
 
 rules = {
     "0701": Rule(
+        RuleParam(
+            name="markers",
+            default="todo,fixme",
+            converter=str,
+            desc="List of case-insensitive markers that violate the rule in comments.",
+        ),
         rule_id="0701",
         name="todo-in-comment",
-        msg="Found {{ todo_or_fixme }} in comment",
+        msg="Found a marker '{{ marker }}' in the comments",
         severity=RuleSeverity.WARNING,
         docs="""
+        Report occurrences of the configured, case-insensitive marker in the comments.
+        By default, it reports TODO and FIXME markers.
+
         Example::
         
             # TODO: Refactor this code
-            # fixme 
+            # fixme
         
+        Configuration example::
+
+            robocop --configure "todo-in-comment:markers:todo,Remove me,Fix this!"
+
         """,
     ),
     "0702": Rule(
+        RuleParam(
+            name="block",
+            default="^###",
+            converter=regex,
+            desc="Block comment regex pattern.",
+        ),
         rule_id="0702",
         name="missing-space-after-comment",
         msg="Missing blank space after comment character",
         severity=RuleSeverity.WARNING,
         docs="""
-        Make sure to have one blank space after '#' comment character
+        Make sure to have one blank space after '#' comment character.
+        Configured regex for block comment should take into account the first character is `#`.
 
         Example::
         
             #bad
             # good
+            ### good block
+
+        Configuration example::
+
+            robocop --configure missing-space-after-comment:block:^#[*]+
+
+            Allows commenting like:
+
+                #*****
+                #
+                # Important topics here!
+                #
+                #*****
+                or
+                #* Headers *#
+
         """,
     ),
     "0703": Rule(
@@ -105,6 +152,23 @@ class CommentChecker(VisitorChecker):
         "invalid-comment",
     )
 
+    def __init__(self):
+        self._markers = None
+        self._block = None
+        super().__init__()
+
+    @property
+    def markers(self):
+        if not self._markers:
+            self._markers = self.param("todo-in-comment", "markers").lower().split(",")
+        return self._markers
+
+    @property
+    def block(self):
+        if not self._block:
+            self._block = self.param("missing-space-after-comment", "block")
+        return self._block
+
     def visit_Comment(self, node):  # noqa
         self.find_comments(node)
 
@@ -118,9 +182,27 @@ class CommentChecker(VisitorChecker):
         self.find_comments(node)
 
     def find_comments(self, node):
-        for token in node.tokens:
-            if token.type == "COMMENT":
-                self.check_comment_content(token)
+        """
+        Find comments in node and check them for validity.
+        Line can have only one comment, but the comment can contain separators.
+        If the comment have separator it will be recognized as COMMENT, SEPARATOR, COMMENT in AST.
+        We need to merge such comments into one for validity checks.
+        """
+        for line in node.lines:
+            first_comment = None
+            merged_comment = ""
+            prev_sep = ""
+            for token in line:
+                if token.type == Token.SEPARATOR:
+                    prev_sep = token.value
+                elif token.type == Token.COMMENT:
+                    if first_comment:
+                        merged_comment += prev_sep + token.value
+                    else:
+                        merged_comment = token.value
+                        first_comment = token
+            if first_comment:
+                self.check_comment_content(first_comment, merged_comment)
 
     def check_invalid_comments(self, name, node):
         if ROBOT_VERSION.major != 3:
@@ -129,28 +211,26 @@ class CommentChecker(VisitorChecker):
             hash_pos = name.find("#")
             self.report("invalid-comment", node=node, col=node.col_offset + hash_pos + 1)
 
-    def check_comment_content(self, token):
-        if "todo" in token.value.lower():
+    def check_comment_content(self, token, content):
+        low_content = content.lower()
+        for violation in [marker for marker in self.markers if marker in low_content]:
+            index = low_content.find(violation)
             self.report(
                 "todo-in-comment",
-                todo_or_fixme="TODO",
+                marker=content[index:index+len(violation)],
                 lineno=token.lineno,
-                col=token.col_offset + 1 + token.value.lower().find("todo"),
+                col=token.col_offset + 1 + index,
             )
-        if "fixme" in token.value.lower():
-            self.report(
-                "todo-in-comment",
-                todo_or_fixme="FIXME",
-                lineno=token.lineno,
-                col=token.col_offset + 1 + token.value.lower().find("fixme"),
-            )
-        if token.value.startswith("#") and token.value != "#":
-            if not token.value.startswith("# "):
+        if content.startswith("#") and not self.is_block_comment(content):
+            if not content.startswith("# "):
                 self.report(
                     "missing-space-after-comment",
                     lineno=token.lineno,
                     col=token.col_offset + 1,
                 )
+
+    def is_block_comment(self, comment):
+        return comment == "#" or self.block.match(comment) is not None
 
 
 class IgnoredDataChecker(RawFileChecker):
