@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import { workspace, window, Progress, ProgressLocation, ConfigurationTarget, env, Uri } from "vscode";
-import { OUTPUT_CHANNEL } from "./channel";
+import { logError, OUTPUT_CHANNEL } from "./channel";
 import { getExtensionRelativeFile, verifyFileExists } from "./files";
 import {
     collectBaseEnv,
@@ -78,25 +78,29 @@ async function enableWindowsLongPathSupport(rccLocation: string) {
 
 async function isLongPathSupportEnabledOnWindows(rccLocation: string): Promise<boolean> {
     let enabled: boolean = true;
+    let stdout = "<not collected>";
+    let stderr = "<not collected>";
     try {
         let configureLongpathsOutput: ExecFileReturn = await execFilePromise(rccLocation, ["configure", "longpaths"], {
             env: { ...process.env },
         });
-        if (
-            configureLongpathsOutput.stdout.indexOf("OK.") != -1 ||
-            configureLongpathsOutput.stderr.indexOf("OK.") != -1
-        ) {
+        stdout = configureLongpathsOutput.stdout;
+        stderr = configureLongpathsOutput.stderr;
+        if (stdout.indexOf("OK.") != -1 || stderr.indexOf("OK.") != -1) {
             enabled = true;
         } else {
             enabled = false;
         }
     } catch (error) {
         enabled = false;
+        logError("There was some error with rcc configure longpaths.", error, "RCC_CONFIGURE_LONGPATHS");
     }
     if (enabled) {
         OUTPUT_CHANNEL.appendLine("Windows long paths support enabled");
     } else {
-        OUTPUT_CHANNEL.appendLine("Windows long paths support NOT enabled.");
+        OUTPUT_CHANNEL.appendLine(
+            `Windows long paths support NOT enabled.\nRCC stdout:\n${stdout}\nRCC stderr:\n${stderr}`
+        );
     }
     return enabled;
 }
