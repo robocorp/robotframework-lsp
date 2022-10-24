@@ -61,6 +61,7 @@
         "onCommand:robocorp.newRobocorpInspectorBrowser",
         "onCommand:robocorp.newRobocorpInspectorImage",
         "onCommand:robocorp.newRobocorpInspectorWindows",
+        "onCommand:robocorp.newRobocorpInspectorWebRecorder",
         "onCommand:robocorp.editRobocorpInspectorLocator",
         "onCommand:robocorp.copyLocatorToClipboard.internal",
         "onCommand:robocorp.openRobotTreeSelection",
@@ -384,6 +385,12 @@
             {
                 "command": "robocorp.newRobocorpInspectorWindows",
                 "title": "Add Windows Locator",
+                "category": "Robocorp",
+                "icon": "$(add)"
+            },
+            {
+                "command": "robocorp.newRobocorpInspectorWebRecorder",
+                "title": "Record Browser actions as code (beta)",
                 "category": "Robocorp",
                 "icon": "$(add)"
             },
@@ -723,6 +730,11 @@
                 {
                     "command": "robocorp.newRobocorpInspectorWindows",
                     "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == newWindowsLocator",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.newRobocorpInspectorWebRecorder",
+                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == newWebRecorder",
                     "group": "inline"
                 },
                 {

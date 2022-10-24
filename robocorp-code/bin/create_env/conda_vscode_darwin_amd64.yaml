@@ -1,16 +1,15 @@
 channels:
-  - conda-forge
+    - conda-forge
 
 dependencies:
+    - python=3.9.13
 
-  - python=3.8.10
+    # https://pip.pypa.io/en/stable/news/
+    - pip=22.1.2
 
-  # https://pip.pypa.io/en/stable/news/
-  - pip=20.1
+    # https://anaconda.org/conda-forge/python.app/files
+    - python.app=1.3
 
-  # https://anaconda.org/conda-forge/python.app/files
-  - python.app=1.3
-
-  - pip:
-    - robocorp-inspector==0.6.5
-    - robotframework==4.1
+    - pip:
+          - robocorp-inspector==0.8.1
+          - robotframework==4.1

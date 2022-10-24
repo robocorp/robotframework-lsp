@@ -21,6 +21,9 @@ New in 0.37.0 (2022-09-14)
   - `Work items` and `Locators` are now in the same `Resources` tree (so that there's a clear place to extend with new features in the future).
 - Improved UI for submit issue.
 - RCC was upgraded to `v11.26.3`.
+- Locators:
+    - `robocorp-inspector` was upgraded to `0.7.1`. 
+    - Added recording functionality to command palette
 
 
 New in 0.36.0 (2022-07-20)

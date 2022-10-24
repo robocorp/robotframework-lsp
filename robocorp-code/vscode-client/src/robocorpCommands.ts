@@ -42,6 +42,7 @@ export const ROBOCORP_OPEN_CLOUD_HOME = "robocorp.openCloudHome";  // Open cloud
 export const ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER = "robocorp.newRobocorpInspectorBrowser";  // Add Browser Locator
 export const ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE = "robocorp.newRobocorpInspectorImage";  // Add Image Locator
 export const ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS = "robocorp.newRobocorpInspectorWindows";  // Add Windows Locator
+export const ROBOCORP_NEW_ROBOCORP_INSPECTOR_WEB_RECORDER = "robocorp.newRobocorpInspectorWebRecorder";  // Record Browser actions as code (beta)
 export const ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR = "robocorp.editRobocorpInspectorLocator";  // Edit locator
 export const ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL = "robocorp.copyLocatorToClipboard.internal";  // Copy locator name to clipboard
 export const ROBOCORP_OPEN_ROBOT_TREE_SELECTION = "robocorp.openRobotTreeSelection";  // Configure Robot (robot.yaml)

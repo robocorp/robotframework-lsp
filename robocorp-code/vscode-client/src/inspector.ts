@@ -9,17 +9,27 @@ import { OUTPUT_CHANNEL } from "./channel";
 import { ChildProcess } from "child_process";
 import { feedback } from "./rcc";
 
-let _openingInspector: boolean = false;
-let _startingRootWindowNotified: boolean = false;
+export enum InspectorType {
+    Browser = "browser",
+    Windows = "windows",
+    Image = "image",
+    WebRecorder = "web-recorder",
+}
 
-export async function openRobocorpInspector(locatorType?: string, locator?: LocatorEntry): Promise<void> {
-    if (locatorType === "windows" && process.platform !== "win32") {
+export type InspectorTypes = `${InspectorType}`;
+
+let _openingInspector: { [K in InspectorTypes]: boolean };
+let _startingRootWindowNotified: { [K in InspectorTypes]: boolean };
+
+export async function openRobocorpInspector(locatorType?: InspectorTypes, locator?: LocatorEntry): Promise<void> {
+    const localLocatorType = locatorType !== undefined ? locatorType : InspectorType.Browser;
+    if (localLocatorType === InspectorType.Windows && process.platform !== "win32") {
         window.showInformationMessage("This feature is Windows specific and not supported on other platforms.");
         return; // Windows only feature
     }
 
-    if (_openingInspector) {
-        if (!_startingRootWindowNotified) {
+    if (_openingInspector[localLocatorType]) {
+        if (!_startingRootWindowNotified[localLocatorType]) {
             return; // We should be showing the progress already, so, don't do anything.
         }
         window.showInformationMessage(
@@ -28,26 +38,27 @@ export async function openRobocorpInspector(locatorType?: string, locator?: Loca
         return;
     }
     try {
-        _openingInspector = true;
-        return await _internalOpenRobocorpInspector(locatorType, locator);
+        _openingInspector[localLocatorType] = true;
+        return await _internalOpenRobocorpInspector(localLocatorType, locator);
     } finally {
-        _openingInspector = false;
-        _startingRootWindowNotified = false;
+        _openingInspector[localLocatorType] = false;
+        _startingRootWindowNotified[localLocatorType] = false;
     }
 }
 
-export async function _internalOpenRobocorpInspector(locatorType?: string, locator?: LocatorEntry): Promise<void> {
+export async function _internalOpenRobocorpInspector(
+    locatorType?: InspectorTypes,
+    locator?: LocatorEntry
+): Promise<void> {
     let locatorJson;
     const args: string[] = [];
-    let selectedEntry: RobotEntry = getSelectedRobot({
-        noSelectionMessage: "Please select a robot first.",
-    });
+    let selectedEntry: RobotEntry = getSelectedRobot();
     let robot: LocalRobotMetadataInfo | undefined = selectedEntry?.robot;
-    if (!robot) {
+    if (robot === undefined) {
         // Ask for the robot to be used and then show dialog with the options.
         robot = await listAndAskRobotSelection(
             "Please select the Robot where the locators should be saved.",
-            "Unable to create locator (no Robot detected in the Workspace)."
+            "Unable to open Inspector (no Robot detected in the Workspace)."
         );
         if (!robot) {
             return;
@@ -66,9 +77,9 @@ export async function _internalOpenRobocorpInspector(locatorType?: string, locat
         args.push("--database", locatorJson);
     }
 
-    // if locatorType is given prioritize that. Else Ensure that a locator is selected!
     if (locatorType) {
-        args.push("add");
+        // if locatorType is given prioritize that. Else Ensure that a locator is selected!
+        args.push("open");
         args.push(locatorType);
     } else {
         const locatorSelected: LocatorEntry | undefined =
@@ -123,7 +134,7 @@ export async function _internalOpenRobocorpInspector(locatorType?: string, locat
                 const s = "" + data;
                 append(s);
                 if (s.includes("Starting root window")) {
-                    _startingRootWindowNotified = true;
+                    _startingRootWindowNotified[locatorType] = true;
                     resolveProgress();
                 }
             });
@@ -138,7 +149,7 @@ export async function _internalOpenRobocorpInspector(locatorType?: string, locat
             process.platform === "darwin"
                 ? path.join(path.dirname(inspectorLaunchInfo.pythonExe), "pythonw")
                 : inspectorLaunchInfo.pythonExe;
-        const launchResult: ExecFileReturn = await startInspectorCLI(
+        await startInspectorCLI(
             pythonExecutablePath,
             args,
             robot.directory,

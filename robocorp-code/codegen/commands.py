@@ -324,6 +324,13 @@ COMMANDS = [
         icon="$(add)",
     ),
     Command(
+        "robocorp.newRobocorpInspectorWebRecorder",
+        "Record Browser actions as code (beta)",
+        add_to_package_json=True,
+        server_handled=False,
+        icon="$(add)",
+    ),
+    Command(
         "robocorp.editRobocorpInspectorLocator",
         "Edit locator",
         add_to_package_json=True,
