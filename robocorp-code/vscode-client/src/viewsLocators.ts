@@ -75,18 +75,16 @@ export class LocatorsTreeDataProvider
         const type: string = entry instanceof LocatorEntryNode ? entry.locatorType : entry.type;
         // https://microsoft.github.io/vscode-codicons/dist/codicon.html
         let iconPath = "file-media";
-        if (type === "browser") {
+        if (type === InspectorType.Browser) {
             iconPath = "globe";
-        } else if (type === "image") {
+        } else if (type === InspectorType.Image) {
             iconPath = "file-media";
-        } else if (type === "error") {
-            iconPath = "error";
-        } else if (type === "info") {
-            iconPath = "error";
-        } else if (type === "windows") {
+        } else if (type === InspectorType.Windows) {
             iconPath = "multiple-windows";
-        } else if (type === "web-recorder") {
-            iconPath = "browser";
+        } else if (type === InspectorType.WebRecorder) {
+            iconPath = "globe";
+        } else if (type === "error" || type === "info") {
+            iconPath = "error";
         } else {
             OUTPUT_CHANNEL.appendLine("No custom icon for: " + type);
         }

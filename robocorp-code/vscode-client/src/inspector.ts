@@ -18,15 +18,8 @@ export enum InspectorType {
 
 export type InspectorTypes = `${InspectorType}`;
 
-export const DEFAULT_INSPECTOR_VALUE = {
-    browser: false,
-    image: false,
-    windows: false,
-    "web-recorder": false,
-};
-
-let _openingInspector: { [K in InspectorTypes]: boolean } = DEFAULT_INSPECTOR_VALUE;
-let _startingRootWindowNotified: { [K in InspectorTypes]: boolean } = DEFAULT_INSPECTOR_VALUE;
+let _openingInspector: { [K in InspectorTypes]: boolean };
+let _startingRootWindowNotified: { [K in InspectorTypes]: boolean };
 
 export async function openRobocorpInspector(locatorType?: InspectorTypes, locator?: LocatorEntry): Promise<void> {
     const localLocatorType = locatorType !== undefined ? locatorType : InspectorType.Browser;
