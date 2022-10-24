@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { OUTPUT_CHANNEL } from "./channel";
+import { InspectorType, InspectorTypes } from "./inspector";
 import * as roboCommands from "./robocorpCommands";
 import { getSelectedRobot, LocatorEntry, RobotEntry } from "./viewsCommon";
 
@@ -84,6 +85,8 @@ export class LocatorsTreeDataProvider
             iconPath = "error";
         } else if (type === "windows") {
             iconPath = "multiple-windows";
+        } else if (type === "web-recorder") {
+            iconPath = "browser";
         } else {
             OUTPUT_CHANNEL.appendLine("No custom icon for: " + type);
         }
@@ -94,12 +97,14 @@ export class LocatorsTreeDataProvider
             const treeItem = new vscode.TreeItem(node.caption);
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
             treeItem.iconPath = new vscode.ThemeIcon(iconPath);
-            if (entry.locatorType === "browser") {
+            if (entry.locatorType === InspectorType.Browser) {
                 treeItem.contextValue = "newBrowserLocator";
-            } else if (entry.locatorType === "image") {
+            } else if (entry.locatorType === InspectorType.Image) {
                 treeItem.contextValue = "newImageLocator";
-            } else if (entry.locatorType === "windows") {
+            } else if (entry.locatorType === InspectorType.Windows) {
                 treeItem.contextValue = "newWindowsLocator";
+            } else if (entry.locatorType === InspectorType.WebRecorder) {
+                treeItem.contextValue = "newWebRecorder";
             }
             return treeItem;
         }
@@ -148,9 +153,10 @@ class LocatorCreationNode {
 function buildTree(entries: LocatorEntry[]): any[] {
     // Roots may mix LocatorEntryNode along with LocatorEntry (if it's an error).
     const roots: any[] = [
-        new LocatorEntryNode("browser", "Browser", true),
-        new LocatorEntryNode("image", "Image", true),
-        new LocatorEntryNode("windows", "Windows", true),
+        new LocatorEntryNode(InspectorType.Browser, "Browser", true),
+        new LocatorEntryNode(InspectorType.Image, "Image", true),
+        new LocatorEntryNode(InspectorType.Windows, "Windows", true),
+        new LocatorEntryNode(InspectorType.WebRecorder, "WebRecorder", true),
     ];
     const typeToElement = {};
     roots.forEach((element) => {

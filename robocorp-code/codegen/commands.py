@@ -324,8 +324,8 @@ COMMANDS = [
         icon="$(add)",
     ),
     Command(
-        "robocorp.newRobocorpInspectorRecord",
-        "Record browser automation",
+        "robocorp.newRobocorpInspectorWebRecorder",
+        "Record Browser actions as code (beta)",
         add_to_package_json=True,
         server_handled=False,
         icon="$(add)",
