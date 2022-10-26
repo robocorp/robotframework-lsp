@@ -35,6 +35,7 @@
         "onCommand:robot.resolveInterpreter",
         "onCommand:robot.listTests",
         "onView:robot.view.documentation",
+        "onView:robot.view.output",
         "onCommand:robot.runTest",
         "onCommand:robot.debugTest",
         "onCommand:robot.runSuite",
@@ -60,7 +61,8 @@
         "onCommand:robot.generateFlowExplorerModel",
         "onCommand:robot.collectRobotDocumentation",
         "onCommand:robot.view.documentation.pin",
-        "onCommand:robot.view.documentation.unpin"
+        "onCommand:robot.view.documentation.unpin",
+        "onCommand:robot.convertOutputXMLToRobostream"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -204,6 +206,11 @@
                 "title": "Unpin Robot Documentation",
                 "category": "Robot Framework",
                 "icon": "$(pinned)"
+            },
+            {
+                "command": "robot.convertOutputXMLToRobostream",
+                "title": "Convert output.xml to robocorp stream",
+                "category": "Robot Framework"
             }
         ],
         "submenus": [
@@ -326,6 +333,10 @@
                 },
                 {
                     "command": "robot.collectRobotDocumentation",
+                    "when": "false"
+                },
+                {
+                    "command": "robot.convertOutputXMLToRobostream",
                     "when": "false"
                 }
             ]
@@ -606,6 +617,11 @@
                     "id": "robot-documentation",
                     "title": "Robot Documentation",
                     "icon": "$(notebook)"
+                },
+                {
+                    "id": "robot-output",
+                    "title": "Robot Output",
+                    "icon": "$(output)"
                 }
             ]
         },
@@ -616,6 +632,14 @@
                     "id": "robot.view.documentation",
                     "name": "Robot Documentation",
                     "contextualTitle": "Robot Documentation"
+                }
+            ],
+            "robot-output": [
+                {
+                    "type": "webview",
+                    "id": "robot.view.output",
+                    "name": "Robot Output",
+                    "contextualTitle": "Robot Output"
                 }
             ]
         },

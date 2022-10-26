@@ -42,6 +42,7 @@ import { getPythonExtensionExecutable } from "./pythonExtIntegration";
 import { registerDebugger } from "./debugger";
 import { debounce } from "./common";
 import { RobotDocumentationViewProvider } from "./docs";
+import { RobotOutputViewProvider } from "./output/outView";
 
 interface ExecuteWorkspaceCommandArgs {
     command: string;
@@ -813,6 +814,11 @@ export async function activate(context: ExtensionContext) {
             commands.registerCommand("robot.view.documentation.unpin", () => {
                 provider.unpin();
             })
+        );
+        const outputProvider = new RobotOutputViewProvider(context);
+        const options = { webviewOptions: { retainContextWhenHidden: true } };
+        context.subscriptions.push(
+            vscode.window.registerWebviewViewProvider(RobotOutputViewProvider.viewType, outputProvider, options)
         );
 
         registerDebugger();

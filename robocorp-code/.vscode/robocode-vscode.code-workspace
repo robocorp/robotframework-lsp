@@ -13,6 +13,9 @@
             "path": "../../robotframework-interactive"
         },
         {
+            "path": "../../robot-stream"
+        },
+        {
             "path": "../../example-vscode"
         }
     ],

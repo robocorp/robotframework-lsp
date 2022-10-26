@@ -66,6 +66,48 @@ def get_menus():
     return ret
 
 
+def collect_views_containers():
+    ret = {
+        "panel": [
+            {
+                "id": "robot-documentation",
+                "title": "Robot Documentation",
+                "icon": "$(notebook)",
+            },
+            {
+                "id": "robot-output",
+                "title": "Robot Output",
+                "icon": "$(output)",
+            },
+        ],
+    }
+
+    return ret
+
+
+def collect_views():
+    ret = {
+        "robot-documentation": [
+            {
+                "type": "webview",
+                "id": "robot.view.documentation",
+                "name": "Robot Documentation",
+                "contextualTitle": "Robot Documentation",
+            }
+        ],
+        "robot-output": [
+            {
+                "type": "webview",
+                "id": "robot.view.output",
+                "name": "Robot Output",
+                "contextualTitle": "Robot Output",
+            }
+        ],
+    }
+
+    return ret
+
+
 def get_json_contents():
     from robotframework_ls import __version__
     from commands import get_commands_for_json
@@ -128,25 +170,8 @@ def get_json_contents():
                 "type": "object",
                 "properties": get_settings_for_json(),
             },
-            "viewsContainers": {
-                "panel": [
-                    {
-                        "id": "robot-documentation",
-                        "title": "Robot Documentation",
-                        "icon": "$(notebook)",
-                    }
-                ],
-            },
-            "views": {
-                "robot-documentation": [
-                    {
-                        "type": "webview",
-                        "id": "robot.view.documentation",
-                        "name": "Robot Documentation",
-                        "contextualTitle": "Robot Documentation",
-                    }
-                ],
-            },
+            "viewsContainers": collect_views_containers(),
+            "views": collect_views(),
             "languages": [
                 {
                     "id": "robotframework",

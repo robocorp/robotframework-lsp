@@ -58,9 +58,11 @@ from robotframework_ls.commands import (
     ROBOT_LINT_EXPLORER,
     ROBOT_GENERATE_FLOW_EXPLORER_MODEL,
     ROBOT_COLLECT_ROBOT_DOCUMENTATION,
+    ROBOT_CONVERT_OUTPUT_xml_to_rfstream,
 )
 from robocorp_ls_core.jsonrpc.exceptions import JsonRpcException
 import weakref
+from io import StringIO
 
 
 log = get_logger(__name__)
@@ -657,6 +659,52 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         log.info("Unable to provide evaluatable expression (no api available).")
         return None
+
+    @command_dispatcher(ROBOT_CONVERT_OUTPUT_xml_to_rfstream)
+    def _convert_output_xml_to_rfstream(self, opts: Dict[str, Any]):
+        def convert_in_thread():
+            from robotframework_ls import import_robot_stream
+
+            import_robot_stream()
+
+            from robot_stream import xml_to_rfstream
+
+            source = opts.get("xml_path")
+            if source:
+                with tempfile.NamedTemporaryFile(
+                    "w", suffix=".robostream", delete=False
+                ) as temp:
+
+                    def write(contents):
+                        temp.write(contents)
+
+                    xml_to_rfstream.convert_xml_to_rfstream(source, write)
+
+                # Note that we just send the temp file if an input file was received
+                # (usually this should only happen if it's too big).
+                # The client is responsible for deleting it after using it.
+                return temp.name
+
+            # We received contents (return contents too).
+            xml_contents = opts.get("xml_contents")
+            if xml_contents is None:
+                raise RuntimeError(
+                    f"Expected either xml_path or xml_contents. Keys: {list(opts.keys())}"
+                )
+
+            source = StringIO()
+            source.write(xml_contents)
+            source.seek(0)
+
+            full_contents = []
+
+            def write2(contents):
+                full_contents.append(contents)
+
+            xml_to_rfstream.convert_xml_to_rfstream(source, write2)
+            return "".join(full_contents)
+
+        return convert_in_thread
 
     @command_dispatcher(ROBOT_WAIT_FULL_TEST_COLLECTION_INTERNAL)
     def _wait_for_full_test_collection(self, *arguments):

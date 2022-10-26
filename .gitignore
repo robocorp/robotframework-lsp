@@ -124,6 +124,7 @@ node_modules
 **/log.html
 **/output.xml
 **/report.html
+**/*.rfstream
 **/.mypy_cache
 
 # copied files to package, in lieu of symlinks

@@ -58,25 +58,16 @@ def import_robocorp_ls_core():
             )
 
 
-def import_rf_interactive():
-    """
-    Helper function to make sure that robotframework_interactive is imported properly
-    (either in dev or in release mode).
-    """
-
+def _import_helper(import_callback, project_name):
     try:
-        import robotframework_interactive
+        import_callback()
     except ImportError:
         log_contents = []
-        use_folder = None
         try:
             src_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             log_contents.append("Source folder: %s" % (src_folder,))
-            src_core_folder = os.path.abspath(
-                os.path.join(
-                    src_folder, "..", "..", "robotframework-interactive", "src"
-                )
-            )
+            check_path = [src_folder, "..", "..", project_name, "src"]
+            src_core_folder = os.path.abspath(os.path.join(*check_path))
 
             if os.path.isdir(src_core_folder):
                 log_contents.append("Dev mode detected. Found: %s" % (src_core_folder,))
@@ -95,7 +86,7 @@ def import_rf_interactive():
                 ), "Expected: %s to exist and be a directory." % (use_folder,)
 
             sys.path.append(use_folder)
-            import robotframework_interactive
+            import_callback()
         except:
             try:
                 if use_folder:
@@ -107,3 +98,27 @@ def import_rf_interactive():
             raise ImportError(
                 "Error importing robocorp_ls_core. Log: %s" % "\n".join(log_contents)
             )
+
+
+def import_rf_interactive():
+    """
+    Helper function to make sure that robotframework_interactive is imported properly
+    (either in dev or in release mode).
+    """
+
+    def import_callback():
+        import robotframework_interactive
+
+    _import_helper(import_callback, "robotframework-interactive")
+
+
+def import_robot_stream():
+    """
+    Helper function to make sure that robot_stream is imported properly
+    (either in dev or in release mode).
+    """
+
+    def import_callback():
+        import robot_stream
+
+    _import_helper(import_callback, "robot-stream")

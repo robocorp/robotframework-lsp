@@ -147,6 +147,8 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Topic :: Text Editors",
         "Topic :: Text Editors :: Integrated Development Environments (IDE)",
         "Topic :: Software Development :: Debuggers",

@@ -1,0 +1,156 @@
+from contextlib import contextmanager
+import functools
+import sys
+import io
+from pathlib import Path
+from typing import Optional
+
+# Flags to debug during development (should be == False on repository).
+show_summary = False
+show_contents = False
+show_out_as_json_str = False
+build_contents_locally = False
+
+
+@contextmanager
+def after(obj, method_name, callback):
+    original_method = getattr(obj, method_name)
+
+    @functools.wraps(original_method)
+    def new_method(*args, **kwargs):
+        ret = original_method(*args, **kwargs)
+        callback(*args, **kwargs)
+        return ret
+
+    setattr(obj, method_name, new_method)
+    try:
+        yield
+    finally:
+        setattr(obj, method_name, original_method)
+
+
+class _GeneratedInfo:
+    def __init__(self, robot_stream, xml_output: Path, outdir: Path):
+        from robot_stream import RFStream
+
+        self.robot_stream: RFStream = robot_stream
+        self.outdir: Path = outdir
+        self.xml_output: Path = xml_output
+
+
+def run_with_listener(
+    datadir,
+    outdir: Optional[Path] = None,
+    max_file_size="500kb",
+    max_files=5,
+    robot_file: Optional[Path] = None,
+) -> _GeneratedInfo:
+    import robot
+    from robot_stream import RFStream
+
+    if outdir is None:
+        outdir = datadir / "out"
+        if build_contents_locally:
+            outdir = Path(".") / "out_test"
+
+    created = []
+
+    def on_created(robot_stream, *args, **kwargs):
+        created.append(robot_stream)
+
+    with after(RFStream, "__init__", on_created):
+        outdir_to_listener = str(outdir).replace(":", "<COLON>")
+        if robot_file is None:
+            robot_file = datadir / "robot1.robot"
+        xml_output = outdir / "output.xml"
+        report_output = outdir / "report.html"
+        log_output = outdir / "log.html"
+        robot.run_cli(
+            [
+                "-l",
+                str(log_output),
+                "-r",
+                str(report_output),
+                "-o",
+                str(xml_output),
+                "--listener",
+                f"robot_stream.RFStream:--dir={outdir_to_listener}:--max-file-size={max_file_size}:--max-files={max_files}",
+                str(robot_file),
+            ],
+            exit=False,
+        )
+
+    assert len(created) == 1
+
+    if show_summary:
+        print(f"output.xml size: {xml_output.stat().st_size/8} bytes")
+    return _GeneratedInfo(created[0], xml_output, outdir)
+
+
+def test_rotate_logs(datadir):
+    generated_info = run_with_listener(
+        datadir, robot_file=datadir / "robot2.robot", max_file_size="50kb", max_files=2
+    )
+    files = tuple(generated_info.outdir.glob("*.rfstream"))
+    assert len(files) == 2, f"Found: {files}"
+
+
+def test_robot_stream(datadir):
+    from robot_stream import iter_decoded_log_format
+    from io import StringIO
+
+    generated_info = run_with_listener(datadir)
+    robot_stream = generated_info.robot_stream
+    xml_output = generated_info.xml_output
+
+    impl = robot_stream.robot_output_impl
+    assert impl.current_file.exists()
+    contents = impl.current_file.read_text("utf-8")
+    if show_contents:
+        print("Contents of: ", impl.current_file)
+        print("-----")
+        print(contents)
+        print("-----")
+
+    if show_out_as_json_str:
+        import json
+
+        print(repr(json.dumps(contents)))
+
+    if show_summary:
+        print("-----")
+        print(f"Size: {len(contents)/8} bytes")
+        print("-----")
+
+    decoded_len = 0
+    for line in iter_decoded_log_format(StringIO(contents)):
+        if show_contents:
+            print(line)
+        decoded_len += len(line)
+
+    if show_summary:
+        print(f"Decoded size: {decoded_len/8} bytes")
+
+    from robot_stream.xml_to_rfstream import (
+        convert_xml_to_rfstream,
+    )
+
+    txt = xml_output.read_text("utf-8")
+
+    source = io.StringIO()
+    source.write(txt)
+    source.seek(0)
+
+    converted = generated_info.outdir / "converted_xml.rfstream"
+    with open(converted, "w") as stream:
+
+        def write(s):
+            if show_contents:
+                sys.stdout.write(s)
+            stream.write(s)
+
+        convert_xml_to_rfstream(source, write=write)
+
+    # contents = converted.read_text("utf-8")
+    # for line in iter_decoded_log_format(StringIO(contents)):
+    #     print(line)
