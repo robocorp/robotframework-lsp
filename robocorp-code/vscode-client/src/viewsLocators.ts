@@ -154,7 +154,6 @@ function buildTree(entries: LocatorEntry[]): any[] {
         new LocatorEntryNode(InspectorType.Browser, "Browser", true),
         new LocatorEntryNode(InspectorType.Image, "Image", true),
         new LocatorEntryNode(InspectorType.Windows, "Windows", true),
-        new LocatorEntryNode(InspectorType.WebRecorder, "WebRecorder", true),
     ];
     const typeToElement = {};
     roots.forEach((element) => {

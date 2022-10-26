@@ -9,5 +9,5 @@ dependencies:
     - pywin32=303
 
     - pip:
-          - robocorp-inspector==0.8.1
+          - robocorp-inspector==0.8.2
           - robotframework==4.1

@@ -132,17 +132,17 @@ function getBaseAsZipBasename() {
     if (process.platform == "win32") {
         if (process.arch === "x64" || process.env.hasOwnProperty("PROCESSOR_ARCHITEW6432")) {
             // Check if node is a 64 bit process or if it's a 32 bit process running in a 64 bit processor.
-            basename = "70b59d4c81da85ab_windows_amd64.zip";
+            basename = "399434b9649683d3_windows_amd64.zip";
         } else {
             // Do we even have a way to test a 32 bit build?
             throw Error("Win 32 bits not supported.");
         }
     } else if (process.platform == "darwin") {
-        basename = "2ba4485d786d4e50_darwin_amd64.zip";
+        basename = "eb6ff3da7a543590_darwin_amd64.zip";
     } else {
         // Linux
         if (process.arch === "x64") {
-            basename = "7015fd7b9802e058_linux_amd64.zip";
+            basename = "34e5b698835ffe32_linux_amd64.zip";
         } else {
             throw Error("Linux 32 bits not supported.");
         }
