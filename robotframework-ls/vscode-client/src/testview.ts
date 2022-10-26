@@ -198,6 +198,9 @@ export async function handleTestsCollected(testInfo: ITestInfoFromUri) {
     const uri = vscode.Uri.parse(testInfo.uri);
 
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+    if (workspaceFolder === undefined) {
+        return;
+    }
 
     if (testInfo.testInfo.length === 0) {
         removeTreeStructure(uri);
