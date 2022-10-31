@@ -46,8 +46,60 @@ class _KeywordData:
         self.doc = ""
         self.sent = False
 
+    @property
+    def name(self):
+        return self.attrs.get("name")
+
+    @property
+    def type(self):
+        return "KEYWORD"
+
     def __str__(self):
-        return f'_KeywordData({self.attrs.get("name")})'
+        return f"_KeywordData({self.name})"
+
+    __repr__ = __str__
+
+
+class _ForData(_KeywordData):
+    def __init__(self, attrs):
+        _KeywordData.__init__(self, attrs)
+        self.var = "<unset>"
+        self.values = []
+
+    @property
+    def flavor(self):
+        return self.attrs.get("flavor", "<unknown-flavor>")
+
+    @property
+    def type(self):
+        return "FOR"
+
+    @property
+    def name(self):
+        return f"{self.var} {self.flavor} [{' | '.join(self.values)}]"
+
+    def __str__(self):
+        return f"_ForData({self.name})"
+
+    __repr__ = __str__
+
+
+class _IterData(_KeywordData):
+    def __init__(self, attrs):
+        _KeywordData.__init__(self, attrs)
+        self.var_name = "<unset>"
+        self.var = "<unset>"
+
+    @property
+    def type(self):
+        return "ITERATION"
+
+    @property
+    def name(self):
+        return f"{self.var_name} = {self.var}"
+
+    def __str__(self):
+        return f"_IterData({self.name})"
 
     __repr__ = __str__
 
@@ -101,20 +153,21 @@ class _XmlSaxParser(xml.sax.ContentHandler):
         self._need_chars = False
         self._chars = []
         self._curr_message_attrs = None
+        self._found_logs = set()
 
     def startElement(self, name, attrs):
         method = getattr(self, "start_" + name, None)
         if method:
             method(attrs)
-        # else:
-        #     print("Unhandled start:", name)
+        else:
+            print("Unhandled start:", name)
 
     def endElement(self, name):
         method = getattr(self, "end_" + name, None)
         if method:
             method()
-        # else:
-        #     print("Unhandled end:", name)
+        else:
+            print("Unhandled end:", name)
 
     def start_robot(self, attrs):
         assert self._listener is None
@@ -199,7 +252,7 @@ class _XmlSaxParser(xml.sax.ContentHandler):
             if not peek.sent:
                 peek.sent = True
                 attrs = peek.attrs
-                name = attrs.get("name")
+                name = peek.name
                 libname = attrs.get("library", "")
                 doc = peek.doc
                 args = peek.args
@@ -210,7 +263,7 @@ class _XmlSaxParser(xml.sax.ContentHandler):
                         "libname": libname,
                         "doc": doc,
                         "args": args,
-                        "type": "KEYWORD",
+                        "type": peek.type,
                         "timedelta": -1,
                     },
                 )
@@ -222,7 +275,7 @@ class _XmlSaxParser(xml.sax.ContentHandler):
             status = s.status.status
 
             self._listener.end_keyword(
-                s.attrs["name"],
+                s.name,
                 {
                     "status": status,
                     "timedelta": s.status.compute_timedelta(
@@ -232,13 +285,47 @@ class _XmlSaxParser(xml.sax.ContentHandler):
                 },
             )
 
+    def _get_chars_and_disable(self):
+        self._need_chars = False
+        content = "".join(self._chars)
+        self._chars = []
+        return content
+
+    def start_for(self, attrs):
+        self.send_delayed()
+        self._stack.append(_ForData(attrs))
+
+    def start_iter(self, attrs):
+        self.send_delayed()
+        self._stack.append(_IterData(attrs))
+
+    def start_var(self, attrs):
+        self._need_chars = True
+        data = self._stack[-1]
+        if hasattr(data, "var_name"):
+            data.var_name = attrs.get("name")
+
+    def end_var(self):
+        content = self._get_chars_and_disable()
+        data = self._stack[-1]
+        data.var = content
+
+    def start_value(self, attrs):
+        self._need_chars = True
+
+    def end_value(self):
+        content = self._get_chars_and_disable()
+        data = self._stack[-1]
+        data.values.append(content)
+
+    end_for = end_kw
+    end_iter = end_kw
+
     def start_arg(self, attrs):
         self._need_chars = True
 
     def end_arg(self):
-        self._need_chars = False
-        content = "".join(self._chars)
-        self._chars = []
+        content = self._get_chars_and_disable()
         if self._stack:
             peek = self._stack[-1]
             if isinstance(peek, _KeywordData):
@@ -248,9 +335,7 @@ class _XmlSaxParser(xml.sax.ContentHandler):
         self._need_chars = True
 
     def end_doc(self):
-        self._need_chars = False
-        content = "".join(self._chars)
-        self._chars = []
+        content = self._get_chars_and_disable()
         if self._stack:
             peek = self._stack[-1]
             if isinstance(peek, _KeywordData):
@@ -262,19 +347,28 @@ class _XmlSaxParser(xml.sax.ContentHandler):
         self._curr_message_attrs = attrs
 
     def end_msg(self):
-        self._need_chars = False
-        content = "".join(self._chars)
+        content = self._get_chars_and_disable()
+
+        level = self._curr_message_attrs["level"]
+        timestamp = self._curr_message_attrs["timestamp"]
+
         self._chars = []
-        self._listener.log_message(
+        self._curr_message_attrs = None
+
+        key = (level, content, timestamp)
+        if key in self._found_logs:
+            # RF duplicates messages at the end of the log. We just
+            # want to show it once.
+            return
+        self._found_logs.add(key)
+
+        self._listener.message(
             {
-                "level": self._curr_message_attrs["level"],
+                "level": level,
                 "message": content,
-                "timedelta": compute_timedelta(
-                    self._listener.initial_time, self._curr_message_attrs["timestamp"]
-                ),
+                "timedelta": compute_timedelta(self._listener.initial_time, timestamp),
             }
         )
-        self._curr_message_attrs = None
 
     def characters(self, content):
         if self._need_chars:

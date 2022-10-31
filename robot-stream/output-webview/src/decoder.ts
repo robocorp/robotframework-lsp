@@ -43,10 +43,10 @@ function _decodeOid(decoder, oid) {
     return decoder.memo[oid];
 }
 function _decodeFloat(decoder, msg) {
-    return parseInt(msg);
+    return parseFloat(msg);
 }
 function _decodeInt(decoder, msg) {
-    return parseFloat(msg);
+    return parseInt(msg);
 }
 
 function _decodeStr(decoder, msg) {

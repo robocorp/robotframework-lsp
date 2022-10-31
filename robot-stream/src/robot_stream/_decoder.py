@@ -2,17 +2,17 @@ import datetime
 import json
 
 
-def version_decode(decoder, message: str) -> str:
-    return f"VERSION: {message}"
+def version_decode(decoder, message: str):
+    return {"version": message}
 
 
-def simple_decode(decoder, message: str) -> str:
-    return f"INFO: {json.loads(message)}"
+def simple_decode(decoder, message: str):
+    return {"info": json.loads(message)}
 
 
 def decode_time(decoder, time):
     decoder.initial_time = datetime.datetime.fromisoformat(time)
-    return f"INITIAL_TIME: {time}"
+    return {"initial_time": time}
 
 
 def decode_memo(decoder, message):
@@ -20,6 +20,22 @@ def decode_memo(decoder, message):
     memo_value = json.loads(memo_value)
     decoder.memo[memo_id] = memo_value
     return None
+
+
+def _decode_oid(decoder, oid):
+    return decoder.memo[oid]
+
+
+def _decode_float(decoder, msg):
+    return float(msg)
+
+
+def _decode_int(decoder, msg):
+    return int(msg)
+
+
+def _decode_str(decoder, msg):
+    return msg
 
 
 red = "\u001b[31m"
@@ -45,81 +61,73 @@ def _color_name(status):
     return f"{yellow}{status}{reset}"
 
 
-def start_suite(decoder, message):
-    ident = decoder.ident
-    decoder.level += 1
-    name_id, suite_id_id, suite_source_id, time_delta_in_seconds = message.split("|")
-    name = _color_name(decoder.memo[name_id])
-    suite_id = decoder.memo[suite_id_id]
-    suite_source = decoder.memo[suite_source_id]
-    return f"{ident}START SUITE: name: {name} - id: {suite_id} - source: {suite_source} - elapsed: {time_delta_in_seconds}s"
+def _decode(message_definition, level_diff=0):
+    names = []
+    name_to_decode = {}
+    for s in message_definition.split(","):
+        s = s.strip()
+        i = s.find(":")
+        decode = "oid"
+        if i != -1:
+            s, decode = s.split(":")
+        names.append(s)
+        if decode == "oid":
+            name_to_decode[s] = _decode_oid
+
+        elif decode == "int":
+            name_to_decode[s] = _decode_int
+
+        elif decode == "float":
+            name_to_decode[s] = _decode_float
+
+        elif decode == "str":
+            name_to_decode[s] = _decode_str
+
+        else:
+            raise RuntimeError(f"Unexpected: {decode}")
+
+    def dec_impl(decoder, message):
+        decoder.level += level_diff
+        splitted = message.split("|")
+        ret = {}
+        for i, s in enumerate(splitted):
+            name = names[i]
+            try:
+                ret[name] = name_to_decode[name](decoder, s)
+            except:
+                ret[name] = None
+        return ret
+
+    return dec_impl
 
 
-def end_suite(decoder, message):
-    decoder.level -= 1
-    ident = decoder.ident
-    status_id, time_delta_in_seconds = message.split("|")
-    status = _color_status(decoder.memo[status_id])
-    return f"{ident}END SUITE: status: {status} - elapsed: {time_delta_in_seconds}s"
+start_suite = _decode(
+    "name:oid, suite_id:oid, suite_source:oid, time_delta_in_seconds:float",
+    level_diff=+1,
+)
 
+end_suite = _decode("status:oid, time_delta_in_seconds:float", level_diff=-1)
 
-def start_task_or_test(decoder, message):
-    ident = decoder.ident
-    decoder.level += 1
-    name_id, suite_id_id, line, time_delta = message.split("|")
-    name = _color_name(decoder.memo[name_id])
-    suite_id = decoder.memo[suite_id_id]
-    return f"{ident}START TASK/TEST: name: {name} - id: {suite_id} - line: {line} - elapsed: {time_delta}s"
+start_task_or_test = _decode(
+    "name:oid, suite_id:oid, lineno:int, time_delta_in_seconds:float", level_diff=+1
+)
 
+end_task_or_test = _decode(
+    "status:oid, message:oid, time_delta_in_seconds:float", level_diff=-1
+)
 
-def end_task_or_test(decoder, message):
-    decoder.level -= 1
-    ident = decoder.ident
-    status_id, message_id, time_delta_in_seconds = message.split("|")
-    status = _color_status(decoder.memo[status_id])
-    message = decoder.memo[message_id]
-    return f"{ident}END TASK/TEST: status: {status} - message: {message} - elapsed: {time_delta_in_seconds}s"
+start_keyword = _decode(
+    "name:oid, libname:oid, keyword_type:oid, doc:oid, source:oid, lineno:int, time_delta_in_seconds:float",
+    level_diff=+1,
+)
 
+end_keyword = _decode("status:oid, time_delta_in_seconds:float", level_diff=-1)
 
-def start_keyword(decoder, message):
-    ident = decoder.ident
-    decoder.level += 1
-    (
-        name_id,
-        libname_id,
-        type_id,
-        doc_id,
-        source_id,
-        lineno,
-        time_delta_in_seconds,
-    ) = message.split("|")
-    keyword_type = _color_name(decoder.memo[type_id])
-    name = _color_name(decoder.memo[name_id])
-    libname = decoder.memo[libname_id]
-    doc = decoder.memo[doc_id]
-    source = decoder.memo[source_id]
-    return f"{ident}START {keyword_type}: name: {name} - libname: {libname} - doc: {doc} - elapsed: {time_delta_in_seconds}s"
-
-
-def end_keyword(decoder, message):
-    decoder.level -= 1
-    ident = decoder.ident
-    status_id, time_delta_in_seconds = message.split("|")
-    status = _color_status(decoder.memo[status_id])
-
-    return f"{ident}END: status: {status} - elapsed: {time_delta_in_seconds}s"
-
-
-def decode_log(decoder, message):
-    ident = decoder.ident
-    level, message_id, time_delta_in_seconds = message.split("|")
-    message = decoder.memo[message_id]
-
-    return f"{ident}LOG: level: {level}: {message} - elapsed: {time_delta_in_seconds}s"
+decode_log = _decode("level:str, message:oid, time_delta_in_seconds:float")
 
 
 def keyword_argument(decoder, message):
-    return f"{decoder.ident}KEYWORD ARGUMENT: {decoder.memo[message]}"
+    return {"argument": decoder.memo[message]}
 
 
 _MESSAGE_TYPE_INFO = {
@@ -150,7 +158,24 @@ class Decoder:
 
     def decode_message_type(self, message_type, message):
         handler = _MESSAGE_TYPE_INFO[message_type]
-        return handler(self, message)
+        ret = {"message_type": message_type}
+        try:
+            r = handler(self, message)
+            if not r:
+                if message_type == "M":
+                    return None
+                raise RuntimeError(
+                    f"No return when decoding: {message_type} - {message}"
+                )
+                if not isinstance(r, dict):
+                    ret[
+                        "error"
+                    ] = f"Expected dict return when decoding: {message_type} - {message}. Found: {ret}"
+
+            ret.update(r)
+        except Exception as e:
+            ret["error"] = f"Error decoding: {message_type}: {e}"
+        return ret
 
 
 def iter_decoded_log_format(stream):

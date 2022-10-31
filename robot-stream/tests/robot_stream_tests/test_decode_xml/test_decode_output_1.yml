@@ -1,0 +1,85 @@
+- message_type: V
+  version: '1'
+- initial_time: '2022-10-31T07:45:57.116'
+  message_type: T
+- info: sys.platform=win32
+  message_type: I
+- info: python=3.8.1 (default, Jan  8 2020, 15:55:49) [MSC v.1916 64 bit (AMD64)]
+  message_type: I
+- info: Generated from output.xml
+  message_type: I
+- info: robot=<not loaded>
+  message_type: I
+- message_type: SS
+  name: Robot Check
+  suite_id: s1
+  suite_source: x:\vscode-robot\local_test\robot_check
+  time_delta_in_seconds: -1.0
+- message_type: SS
+  name: Checkmy
+  suite_id: s1-s1
+  suite_source: x:\vscode-robot\local_test\robot_check\checkmy.robot
+  time_delta_in_seconds: -1.0
+- lineno: 5
+  message_type: ST
+  name: My test
+  suite_id: s1-s1-t1
+  time_delta_in_seconds: -1.0
+- level: I
+  message: ${split} = ['Hello', 'How are', 'you']
+  message_type: L
+  time_delta_in_seconds: 0.055
+- doc: 'Split the source string by the occurrences of the pattern,
+
+    returning a list containing the resulting substrings.  If
+
+    capturing parentheses are used in pattern, then the text of all
+
+    groups in the pattern are also returned as part of the resulting
+
+    list.  If maxsplit is nonzero, at most maxsplit splits occur,
+
+    and the remainder of the string is returned as the final element
+
+    of the list.'
+  keyword_type: KEYWORD
+  libname: re
+  lineno: null
+  message_type: SK
+  name: Split
+  source: null
+  time_delta_in_seconds: -1.0
+- argument: \#|!
+  message_type: KA
+- argument: Hello#How are!you
+  message_type: KA
+- message_type: EK
+  status: PASS
+  time_delta_in_seconds: 0.057
+- level: I
+  message: '[''Hello'', ''How are'', ''you'']'
+  message_type: L
+  time_delta_in_seconds: 0.059
+- doc: Logs the given message with the given level.
+  keyword_type: KEYWORD
+  libname: BuiltIn
+  lineno: null
+  message_type: SK
+  name: Log
+  source: null
+  time_delta_in_seconds: -1.0
+- argument: ${split}
+  message_type: KA
+- message_type: EK
+  status: PASS
+  time_delta_in_seconds: 0.059
+- message: ''
+  message_type: ET
+  status: PASS
+  time_delta_in_seconds: 0.059
+- message_type: ES
+  status: PASS
+  time_delta_in_seconds: -1.0
+- message_type: ES
+  status: PASS
+  time_delta_in_seconds: -1.0

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 5.0.1 (Python 3.7.5 on win32)" generated="20221031 07:45:57.116" rpa="false" schemaversion="3">
+<suite id="s1" name="Robot Check" source="x:\vscode-robot\local_test\robot_check">
+<suite id="s1-s1" name="Checkmy" source="x:\vscode-robot\local_test\robot_check\checkmy.robot">
+<test id="s1-s1-t1" name="My test" line="5">
+<kw name="Split" library="re">
+<var>${split}</var>
+<arg>\#|!</arg>
+<arg>Hello#How are!you</arg>
+<doc>Split the source string by the occurrences of the pattern,
+returning a list containing the resulting substrings.  If
+capturing parentheses are used in pattern, then the text of all
+groups in the pattern are also returned as part of the resulting
+list.  If maxsplit is nonzero, at most maxsplit splits occur,
+and the remainder of the string is returned as the final element
+of the list.</doc>
+<msg timestamp="20221031 07:45:57.171" level="INFO">${split} = ['Hello', 'How are', 'you']</msg>
+<status status="PASS" starttime="20221031 07:45:57.171" endtime="20221031 07:45:57.173"/>
+</kw>
+<kw name="Log" library="BuiltIn">
+<arg>${split}</arg>
+<doc>Logs the given message with the given level.</doc>
+<msg timestamp="20221031 07:45:57.175" level="INFO">['Hello', 'How are', 'you']</msg>
+<status status="PASS" starttime="20221031 07:45:57.174" endtime="20221031 07:45:57.175"/>
+</kw>
+<status status="PASS" starttime="20221031 07:45:57.169" endtime="20221031 07:45:57.175"/>
+</test>
+<status status="PASS" starttime="20221031 07:45:57.159" endtime="20221031 07:45:57.177"/>
+</suite>
+<status status="PASS" starttime="20221031 07:45:57.123" endtime="20221031 07:45:57.181"/>
+</suite>
+<statistics>
+<total>
+<stat pass="1" fail="0" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat pass="1" fail="0" skip="0" id="s1" name="Robot Check">Robot Check</stat>
+<stat pass="1" fail="0" skip="0" id="s1-s1" name="Checkmy">Robot Check.Checkmy</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>

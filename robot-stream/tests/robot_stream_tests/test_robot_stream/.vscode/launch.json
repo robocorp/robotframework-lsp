@@ -9,7 +9,7 @@
             "name": "Robot Framework: Launch .robot file",
             "request": "launch",
             "cwd": "^\"\\${workspaceFolder}\"",
-            "target": "^\"\\${workspaceFolder}/robot1.robot\"",
+            "target": "${file}",
             "terminal": "integrated",
             "env": {"PYTHONPATH": "${workspaceFolder}/../../../src"},
             "args": ["--listener",  "robot_stream.RFStream"]
