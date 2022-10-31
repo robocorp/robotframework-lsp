@@ -1,20 +1,21 @@
 import { iter_decoded_log_format } from "./decoder";
 import { addLevel, getIntLevelFromLevelStr } from "./handleLevel";
 import { acceptLevel, addStatus, getIntLevelFromStatus } from "./handleStatus";
-import { IContentAdded, IOpts } from "./protocols";
+import { IContentAdded, IFilterLevel, IOpts, IState } from "./protocols";
 import { getSampleContents } from "./sample";
 import "./style.css";
 import { addTreeContent } from "./tree";
-import { requestToHandler, sendEventToClient, nextMessageSeq, IEventMessage } from "./vscodeComm";
+import { requestToHandler, sendEventToClient, nextMessageSeq, IEventMessage, getState, setState } from "./vscodeComm";
 
 let lastOpts: IOpts | undefined = undefined;
 
-export function updateFilterLevel(filterLevel: "FAIL" | "WARN" | "PASS") {
+export function updateFilterLevel(filterLevel: IFilterLevel) {
     if (!lastOpts) {
         return;
     }
-    if (lastOpts.filterLevel !== filterLevel) {
-        lastOpts.filterLevel = filterLevel;
+    if (lastOpts.state.filterLevel !== filterLevel) {
+        lastOpts.state.filterLevel = filterLevel;
+        setState(lastOpts.state);
         main(lastOpts);
     }
 }
@@ -25,6 +26,8 @@ async function main(opts: IOpts) {
     totalFailures = 0;
     updateSummary();
 
+    const filterLevelEl: HTMLSelectElement = <HTMLSelectElement>document.getElementById("filterLevel");
+    filterLevelEl.value = opts.state.filterLevel;
     const mainDiv: HTMLElement = document.getElementById("mainTree");
     mainDiv.replaceChildren(); // clear all children
 
@@ -191,7 +194,7 @@ function onEndUpdateMaxLevelFoundInHierarchyFromStatus(current: IContentAdded, p
 }
 
 function onEndSetStatusOrRemove(opts: IOpts, current: IContentAdded, status: string) {
-    console.log("Level: ", current.maxLevelFoundInHierarchy, "for", current.decodedMessage);
+    // console.log("Level: ", current.maxLevelFoundInHierarchy, "for", current.decodedMessage);
     if (acceptLevel(opts, current.maxLevelFoundInHierarchy)) {
         const summary = current.summary;
         addStatus(summary, status);
@@ -211,9 +214,12 @@ function onClickReference(message) {
 }
 
 function setContents(msg) {
+    const state = getState();
+
     main({
         outputFileContents: msg.outputFileContents,
-        filterLevel: "PASS",
+        runId: msg.runId,
+        state: state,
         viewMode: "flat",
         onClickReference: onClickReference,
     });
@@ -223,7 +229,7 @@ requestToHandler["setContents"] = setContents;
 
 function onChangedFilterLevel() {
     const filterLevel = document.getElementById("filterLevel");
-    const value: "FAIL" | "WARN" | "PASS" = <"FAIL" | "WARN" | "PASS">(<HTMLSelectElement>filterLevel).value;
+    const value: IFilterLevel = <IFilterLevel>(<HTMLSelectElement>filterLevel).value;
     updateFilterLevel(value);
 }
 

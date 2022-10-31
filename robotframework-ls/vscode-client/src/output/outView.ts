@@ -192,7 +192,7 @@ export class RobotOutputViewProvider implements vscode.WebviewViewProvider {
             }
             text = converted;
         }
-        webview.postMessage({ type: "request", command: "setContents", "outputFileContents": text });
+        webview.postMessage({ type: "request", command: "setContents", "outputFileContents": text, "runId": filePath });
     }
 }
 

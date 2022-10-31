@@ -9,7 +9,7 @@ export function addStatus(summary: HTMLElement, status: string) {
 }
 
 export function acceptLevel(opts: IOpts, statusLevel: number) {
-    switch (opts.filterLevel) {
+    switch (opts.state.filterLevel) {
         case "FAIL":
             return statusLevel >= 2;
         case "WARN":

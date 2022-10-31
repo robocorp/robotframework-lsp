@@ -1,8 +1,15 @@
 import { IMessage } from "./decoder";
 
+export interface IState {
+    filterLevel: IFilterLevel;
+}
+
+export type IFilterLevel = "FAIL" | "WARN" | "PASS";
+
 export interface IOpts {
     outputFileContents: string;
-    filterLevel: "FAIL" | "WARN" | "PASS";
+    runId: string;
+    state: IState | undefined;
     viewMode: "hierarchy" | "flat";
     onClickReference: Function | undefined;
 }

@@ -1,5 +1,9 @@
+import { IFilterLevel, IState } from "./protocols";
+
 interface IVSCode {
     postMessage(message: any): void;
+    getState(): any;
+    setState(state: any);
 }
 
 export let vscode: IVSCode; // Loaded in index.htoml
@@ -124,4 +128,38 @@ let _lastMessageId: number = 0;
 export function nextMessageSeq(): number {
     _lastMessageId += 1;
     return _lastMessageId;
+}
+
+let _globalState: IState = { filterLevel: "PASS" };
+
+export function getState(): IState {
+    let vscodeRef = undefined;
+    try {
+        vscodeRef = vscode;
+    } catch (err) {}
+
+    if (vscodeRef) {
+        let ret = vscodeRef.getState();
+        if (!ret) {
+            // Initial state.
+            ret = _globalState;
+        }
+        console.log("getState", JSON.stringify(ret));
+        return ret;
+    }
+    return _globalState;
+}
+
+export function setState(state: IState) {
+    console.log("setState", JSON.stringify(state));
+    let vscodeRef = undefined;
+    try {
+        vscodeRef = vscode;
+    } catch (err) {}
+
+    if (vscodeRef) {
+        vscodeRef.setState(state);
+    } else {
+        _globalState = state;
+    }
 }
